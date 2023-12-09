@@ -1,0 +1,34 @@
+.form-control,
+.form-select {
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    font-size: 1rem;
+    height: auto;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #0056b3;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(0, 86, 179, 0.6)!important;
+}
+
+.DrpDown {
+    display: block;
+    width: 100%;
+    border: 1px solid #ced4da;
+    /* match other inputs */
+    border-radius: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    /* match other inputs */
+    font-size: 1rem;
+    /* match other inputs */
+    line-height: 1.5;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    /* Add more styles to match the design of other input fields */
+}
+
+.dropdown-item {
+    white-space: normal !important;
+    overflow: clip;
+}
