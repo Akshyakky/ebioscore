@@ -1,29 +1,31 @@
 import React from "react";
-import { Container } from "react-bootstrap";
 import { useSelector } from "react-redux";
-import Navigation from "../../components/Navigation/Navigation";
+import SideBar from "../Navigation/SideBar";
 import { RootState } from "../../store/store";
+import Footer from "../Footer";
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  debugger;
   const userInfo = useSelector((state: RootState) => state.userDetails);
+  const effectiveUserID = userInfo
+    ? userInfo.adminYN === "Y"
+      ? 0
+      : userInfo.userID
+    : -1;
 
   return (
     <>
-      <div>
+      <div className="app-container">
+        {" "}
+        {/* Apply the class here */}
         {userInfo && (
-          <Navigation userID={userInfo.userID} token={userInfo.token} />
+          <SideBar userID={effectiveUserID} token={userInfo.token} />
         )}
-        <main>{children}</main>
-        <div className="footer">
-          <Container>
-            <p>Your Footer Content</p>
-          </Container>
-        </div>
+        <main>{children}</main> {/* This is where the main content goes */}
+        <Footer /> {/* This is your Footer component */}
       </div>
     </>
   );

@@ -5,18 +5,18 @@ const API_BASE_URL = `${APIConfig.commonURL}`;
 
 // Define the structure of your Module and SubModule DTOs
 export interface ModuleDto {
-  AuGrpID: number;
-  Title: string;
-  Link: string;
-  ICon: string;
+  auGrpID: number;
+  title: string;
+  link: string;
+  iCon: string;
   // Add other properties as needed
 }
 
 export interface SubModuleDto {
-  AuGrpID: number;
-  Title: string;
-  Link: string;
-  ICon: string;
+  auGrpID: number;
+  title: string;
+  link: string;
+  iCon: string;
   // Add other properties as needed
 }
 

@@ -9,18 +9,18 @@ import {
   Col,
   Dropdown,
 } from "react-bootstrap";
-import logo from "../../assets/images/eBios.png";
-import { getCompanies } from "../../services/companyService";
+import logo from "../../../assets/images/eBios.png";
+import { getCompanies } from "../../../services/companyService";
 import { Link } from "react-router-dom";
-import { getClientParameter } from "../../services/clientParameterService";
+import { getClientParameter } from "../../../services/clientParameterService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignInAlt } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
-import "../../../src/assets/styles/Common.css";
-import AuthService from "../../services/AuthService";
+import "../../../../src/assets/styles/Common.css";
+import AuthService from "../../../services/AuthService";
 import axios from "axios";
 import { useDispatch } from "react-redux";
-import { SET_USER_DETAILS } from "../../store/userTypes";
+import { SET_USER_DETAILS } from "../../../store/userTypes";
 
 type Company = {
   compID: number;
@@ -132,12 +132,12 @@ const LoginPage = () => {
         Password: Password,
       });
       if (tokenResponse.token) {
-        debugger;
         dispatch({
           type: SET_USER_DETAILS,
           payload: {
             userID: tokenResponse.user.userID, // should be number | null
-            token: tokenResponse.token, // should be string | null
+            token: tokenResponse.token,
+            adminYN: tokenResponse.user.adminYN, // should be string | null
           },
         });
         console.log(

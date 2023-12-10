@@ -37,3 +37,23 @@
   }
 }
 
+
+/* App.css or your stylesheet name */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Use viewport height to ensure minimum height */
+}
+
+main {
+  flex: 1; /* This will allow the main content to expand */
+}
+
+
+.footer {
+  width: 100%; /* Full width of the container */
+  display: flex;
+  justify-content: center; /* Center footer content horizontally */
+  align-items: center; /* Center footer content vertically */
+  text-align: center;
+}
