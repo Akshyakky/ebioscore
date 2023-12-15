@@ -53,6 +53,12 @@ import {
   // ... import other icons as needed
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { logout } from "../../store/actionCreators";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import AuthService from "../../services/AuthService";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/reducers";
 
 const iconMap: { [key: string]: any } = {
   faDashboard: faDashboard,
@@ -105,6 +111,22 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
   const [filterKeyword, setFilterKeyword] = useState<string>("");
   const location = useLocation();
   const [pageTitle, setPageTitle] = useState<string>("Default Page Title");
+  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    if (token) {
+      try {
+        const response = await AuthService.logout(token);
+        console.log(response.Message); // Handle the response message
+        dispatch(logout()); // Clear Redux state
+        navigate("/login"); // Redirect to login page immediately
+      } catch (error) {
+        console.error("Logout failed:", error);
+      }
+    }
+  };
 
   useEffect(() => {
     switch (location.pathname) {
@@ -114,6 +136,9 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
       case "/dashboard":
         setPageTitle("Dashboard");
         break;
+        case "/RegistrationPage":
+          setPageTitle("Registration");
+          break;
       // Add more cases for other paths as needed
       default:
         setPageTitle("Default Page Title");
@@ -123,20 +148,23 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
 
   useEffect(() => {
     const fetchNavigationData = async () => {
-      const modulesData = await moduleService.getActiveModules(
-        userID ?? 0,
-        token ?? ""
-      );
-      setModules(modulesData);
-      const subModulesData = await moduleService.getActiveSubModules(
-        userID ?? 0,
-        token ?? ""
-      );
-      setSubModules(subModulesData);
+      if (token) {
+        // Check if token is available
+        const modulesData = await moduleService.getActiveModules(
+          userID ?? 0,
+          token
+        );
+        setModules(modulesData);
+        const subModulesData = await moduleService.getActiveSubModules(
+          userID ?? 0,
+          token
+        );
+        setSubModules(subModulesData);
+      }
     };
 
     fetchNavigationData();
-  }, [userID, token]);
+  }, [userID, token]); // Dependencies
 
   const toggleModule = (moduleId: number) => {
     setActiveModuleId(activeModuleId === moduleId ? null : moduleId);
@@ -176,7 +204,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
 
   return (
     <>
-      <Navbar expand={false} className="bg-body-tertiary mb-3">
+      <Navbar expand={false} className="bg-body-tertiary mb-1">
         <Container fluid>
           <Navbar.Toggle aria-controls="offcanvasNavbar">
             <FontAwesomeIcon icon={faBars} />
@@ -189,7 +217,8 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
             title={
               <>
                 <FontAwesomeIcon icon={faUser} className="me-2" />
-                Profile
+                {userInfo.userName || "Profile"}{" "}
+                {/* Display user name or fallback to 'Profile' */}
               </>
             }
             className="custom-profile-dropdown me-2" // Added custom class here
@@ -225,7 +254,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
               Most Used Modules
             </NavDropdown.Item>
             <NavDropdown.Divider />
-            <NavDropdown.Item href="#logout">
+            <NavDropdown.Item href="#logout" onClick={handleLogout}>
               <FontAwesomeIcon icon={faSignOutAlt} className="me-2" />
               Logout
             </NavDropdown.Item>

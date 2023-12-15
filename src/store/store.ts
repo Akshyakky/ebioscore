@@ -1,16 +1,16 @@
 // store.ts
-import { createStore, combineReducers } from 'redux';
-import userDetailsReducer from './userReducer';
-import { UserState } from './userTypes';
+import { combineReducers, createStore } from 'redux';
+import { persistStore, persistReducer } from "redux-persist";
+import storage from "redux-persist/lib/storage";
+import rootReducer, { RootState } from "./reducers";
 
-const rootReducer = combineReducers({
-  userDetails: userDetailsReducer,
-});
-
-export type RootState = {
-  userDetails: UserState;
+const persistConfig = {
+  key: "root",
+  storage,
+  whitelist: ["userDetails"], // assuming you want to persist userDetails
 };
 
-const store = createStore(rootReducer);
+const persistedReducer = persistReducer<RootState>(persistConfig, rootReducer);
 
-export default store;
+export const store = createStore(persistedReducer);
+export const persistor = persistStore(store);

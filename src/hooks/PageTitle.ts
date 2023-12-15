@@ -10,6 +10,8 @@ export const PageTitle: React.FC = () => {
       title = "Login - eBios";
     } else if (location.pathname === "/dashboard") {
       title = "Dashboard - eBios";
+    } else if (location.pathname === "/RegistrationPage") {
+      title = "Registration - eBios";
     }
     document.title = title;
   }, [location]);

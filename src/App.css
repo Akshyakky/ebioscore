@@ -32,6 +32,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -42,18 +43,24 @@
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* Use viewport height to ensure minimum height */
+  min-height: 100vh;
+  /* Use viewport height to ensure minimum height */
 }
 
 main {
-  flex: 1; /* This will allow the main content to expand */
+  flex: 1;
+  padding-top: 72px;
+  padding-bottom: 10px;
+  /* This will allow the main content to expand */
 }
 
-
 .footer {
-  width: 100%; /* Full width of the container */
+  width: 100%;
+  /* Full width of the container */
   display: flex;
-  justify-content: center; /* Center footer content horizontally */
-  align-items: center; /* Center footer content vertically */
+  justify-content: center;
+  /* Center footer content horizontally */
+  align-items: center;
+  /* Center footer content vertically */
   text-align: center;
 }

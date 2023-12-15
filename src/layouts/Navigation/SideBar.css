@@ -189,11 +189,19 @@
 }
 
 .custom-profile-dropdown {
-    background-color: #ffffff !important; /* Example background color */
-    color: #333 !important; /* Example text color */
-    border-radius: 5px !important; /* Example border radius */
+    background-color: #ffffff !important;
+    /* Example background color */
+    color: #333 !important;
+    /* Example text color */
+    border-radius: 5px !important;
+    /* Example border radius */
     padding: 10px;
     border-bottom: groove;
     /* Add other styling as needed */
-  }
-  
+}
+
+.sidebar {
+    position: fixed;
+    z-index: 777;
+    width: 100%;
+}

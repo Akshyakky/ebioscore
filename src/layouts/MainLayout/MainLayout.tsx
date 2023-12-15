@@ -1,7 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import SideBar from "../Navigation/SideBar";
-import { RootState } from "../../store/store";
+import { RootState } from "../../store/reducers";
 import Footer from "../Footer";
 
 interface MainLayoutProps {
@@ -17,17 +17,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     : -1;
 
   return (
-    <>
-      <div className="app-container">
-        {" "}
-        {/* Apply the class here */}
-        {userInfo && (
+    <div className="app-container">
+      {userInfo && (
+        <div className="sidebar">
           <SideBar userID={effectiveUserID} token={userInfo.token} />
-        )}
-        <main>{children}</main> {/* This is where the main content goes */}
-        <Footer /> {/* This is your Footer component */}
-      </div>
-    </>
+        </div>
+      )}
+      <main>{children}</main>
+      <Footer />
+    </div>
   );
 };
 

@@ -32,3 +32,29 @@
     white-space: normal !important;
     overflow: clip;
 }
+
+/* Styles the scrollbar track (the background) */
+::-webkit-scrollbar-track {
+    background-color: #f5f5f5; /* Light grey background */
+    border-radius: 10px; /* Optional: Rounds the corners of the track */
+  }
+  
+  /* Styles the scrollbar thumb (the moving part) */
+  ::-webkit-scrollbar-thumb {
+    background-color: #414141; /* Darker grey thumb */
+    border-radius: 10px; /* Optional: Rounds the corners of the thumb */
+    border: 3px solid #f5f5f5; /* Matches the track color */
+  }
+  
+  /* Sets the size of the scrollbar */
+  ::-webkit-scrollbar {
+    width: 11px; /* Width of the vertical scrollbar */
+  }
+  
+  /* Optional: Styles the scrollbar upon hovering */
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #000000; /* Darker grey to indicate hover state */
+  }
+  
+
+  

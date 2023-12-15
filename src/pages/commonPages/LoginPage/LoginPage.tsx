@@ -14,7 +14,7 @@ import { getCompanies } from "../../../services/companyService";
 import { Link } from "react-router-dom";
 import { getClientParameter } from "../../../services/clientParameterService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSignInAlt } from "@fortawesome/free-solid-svg-icons";
+import { faSignInAlt, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import "../../../../src/assets/styles/Common.css";
 import AuthService from "../../../services/AuthService";
@@ -138,6 +138,7 @@ const LoginPage = () => {
             userID: tokenResponse.user.userID, // should be number | null
             token: tokenResponse.token,
             adminYN: tokenResponse.user.adminYN, // should be string | null
+            userName: tokenResponse.user.userName,
           },
         });
         console.log(
@@ -258,23 +259,26 @@ const LoginPage = () => {
                   </Dropdown>
                 </Form.Group>
 
-                <Form.Group controlId="formUsername" className="mb-3">
+                <Form.Floating className="mb-3">
                   <Form.Control
+                    id="floatingInputCustom"
                     type="text"
-                    placeholder="Enter Username"
+                    placeholder="Username"
                     onChange={(e) => setUsername(e.target.value)}
                     required
                   />
-                </Form.Group>
+                  <label htmlFor="floatingInputCustom">Enter Username</label>
+                </Form.Floating>
 
-                <Form.Group controlId="formPassword" className="mb-2">
+                <Form.Floating className="mb-2">
                   <Form.Control
                     type="password"
                     placeholder="Enter Password"
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
-                </Form.Group>
+                  <label htmlFor="floatingPasswordCustom">Enter Password</label>
+                </Form.Floating>
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <Form.Text className="text-muted">
                     Forgot your password?
@@ -295,7 +299,7 @@ const LoginPage = () => {
                 >
                   {isLoggingIn ? (
                     <>
-                      <FontAwesomeIcon icon={faSignInAlt} spin />
+                      <FontAwesomeIcon icon={faSpinner} spin />
                       {" Signing In..."}
                     </>
                   ) : (

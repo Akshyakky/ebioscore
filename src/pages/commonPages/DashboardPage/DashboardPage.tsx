@@ -21,7 +21,7 @@ import { faEye, faUser, faUsers } from "@fortawesome/free-solid-svg-icons";
 import MainLayout from "../../../layouts/MainLayout/MainLayout";
 import { DashBoardService } from "../../../services/DashBoardService";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../store/store";
+import { RootState } from "../../../store/reducers";
 import { useLoading } from "../../../context/LoadingContext";
 
 // Define the interface for the count data
