@@ -16,16 +16,18 @@ import {
   Col,
   ButtonGroup,
 } from "react-bootstrap";
-import TextBox from "../../../components/TextBox/TextBox ";
 import MainLayout from "../../../layouts/MainLayout/MainLayout";
-import DropdownSelect from "../../../components/DropDown/DropdownSelect";
-import RadioGroup from "../../../components/RadioGroup/RadioGroup";
 import CustomGrid from "../../../components/CustomGrid/CustomGrid";
 import FixedButton from "../../../components/Button/Button";
 import "./RegistrationPage.css";
 import { RegistrationService } from "../../../services/RegistrationService/RegistrationService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/reducers";
+import PersonalDetails from "./PersonalDetails";
+import ContactDetails from "./ContactDetails";
+import VisitDetails from "./VisitDetails";
+import MembershipScheme from "./MembershipScheme";
+import { RegsitrationFormData } from "../../../types/registrationFormData";
 
 interface Kin {
   id: number;
@@ -39,13 +41,6 @@ interface Kin {
 }
 
 const RegistrationPage: React.FC = () => {
-  const [selectedValue, setSelectedValue] = useState("");
-  const [ageOrDob, setAgeOrDob] = useState("DOB");
-  const [ageUnit, setAgeUnit] = useState("years");
-  const [receiveSMS, setReceiveSMS] = useState("no");
-  const [receiveEmail, setReceiveEmail] = useState("no");
-  const [visitTypes, setVisitTypes] = useState("H");
-  const [UHID, setUHID] = useState<string>("");
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
   const [gridData, setGridData] = useState<Kin[]>([
@@ -62,14 +57,47 @@ const RegistrationPage: React.FC = () => {
     // ... more kin objects
   ]);
 
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    ageOrDob: "",
+  const [formData, setFormData] = useState<RegsitrationFormData>({
+    UHID: "",
+    regDate: new Date().toISOString().split("T")[0],
+    pic: { value: "", label: "" },
+    mobileNo: "",
+    title: { value: "", label: "" },
+    firstName: "",
+    lastName: "",
+    idNo: "",
+    gender: { value: "", label: "" },
+    ageOrDob: "DOB",
+    ageUnit: "years",
     age: 0,
     dob: "",
+    passportID: "",
+    nationality: { value: "0", label: "" },
+    address: "",
+    area: { value: "0", label: "" },
+    city: { value: "0", label: "" },
+    country: { value: "0", label: "" },
+    postCode: "",
+    email: "",
+    company: { value: "0", label: "" },
+    smsYN: "no",
+    emailYN: "no",
+    visitType: "H",
+    department: { value: "0", label: "" },
+    attendingPhy: { value: "0", label: "" },
+    primaryIntroducingSource: { value: "0", label: "" },
+    membershipScheme: { value: "0", label: "" },
+    membershipExpiryDate: "",
+    nextOfKin: [
+      {
+        NokRegisterYN: "",
+        NoKName: "",
+        NokRelationShipID: 0,
+        NokRelationShip: "",
+        NokDOB: "",
+      },
+    ],
+    insuranceDetails: [{ InsuranceID: 0, InsuranceName: "" }],
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -77,43 +105,25 @@ const RegistrationPage: React.FC = () => {
     // Handle form submission logic here
     console.log(formData);
   };
-  const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAgeOrDob(e.target.value);
-  };
-  const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedValue(e.target.value);
-  };
-  const options = [
-    { value: "option1", label: "Option 1" },
-    { value: "option2", label: "Option 2" },
-    { value: "option3", label: "Option 3" },
-    // Add more options as needed
-  ];
-  const radioOptions = [
-    { value: "Age", label: "Age" },
-    { value: "DOB", label: "DOB" },
-  ];
-  const ageUnitOptions = [
-    { value: "years", label: "Years" },
-    { value: "months", label: "Months" },
-    { value: "days", label: "Days" },
-  ];
-
-  const smsOptions = [
-    { value: "yes", label: "Yes" },
-    { value: "no", label: "No" },
-  ];
-
-  const emailOptions = [
-    { value: "yes", label: "Yes" },
-    { value: "no", label: "No" },
-  ];
-
-  const visitOptions = [
-    { value: "H", label: "Hospital" },
-    { value: "P", label: "Physician" },
-    { value: "N", label: "None" },
-  ];
+  const handleDropdownChange =
+    (
+      name: keyof RegsitrationFormData,
+      options: { value: string; label: string }[]
+    ) =>
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const selectedOption = options.find(
+        (option) => option.value === e.target.value
+      );
+      if (selectedOption) {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          [name]: {
+            value: selectedOption.value,
+            label: selectedOption.label,
+          },
+        }));
+      }
+    };
 
   const gridColumns = [
     { key: "name", header: "Name" },
@@ -123,7 +133,6 @@ const RegistrationPage: React.FC = () => {
     { key: "address", header: "Address" },
     { key: "mobile", header: "Mobile" },
     { key: "city", header: "City" },
-    // ... other column definitions as needed
   ];
   const handleClear = () => {
     // Clear form logic
@@ -140,7 +149,10 @@ const RegistrationPage: React.FC = () => {
           token,
           "GetLatestUHID"
         );
-        setUHID(latestUHID);
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          UHID: latestUHID,
+        }));
       } catch (error) {
         // Handle the error as needed, possibly updating the UI to inform the user
       }
@@ -149,7 +161,7 @@ const RegistrationPage: React.FC = () => {
     if (token) {
       fetchLatestUHID();
     }
-  }, [token]); // Run the effect when the token changes
+  }, [token, setFormData]); // If formData is a state variable, setFormData is stable and won't change, so it's safe to add here
 
   return (
     <MainLayout>
@@ -174,392 +186,27 @@ const RegistrationPage: React.FC = () => {
         </Row>
         <Form onSubmit={handleSubmit}>
           {/* Personal Details */}
-          <section aria-labelledby="personal-details-header">
-            <Row>
-              <Col>
-                <h1 id="personal-details-header" className="section-header">
-                  Personal Details
-                </h1>
-              </Col>
-            </Row>
-            <Row className="justify-content-between">
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <TextBox
-                  ControlID="UHID"
-                  title="UHID"
-                  type="text"
-                  size="sm"
-                  placeholder="Search through UHID, Name, DOB, Phone No...."
-                  onChange={(e) => setUHID(e.target.value)}
-                  value={UHID}
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <TextBox
-                  ControlID="RegDate"
-                  title="Registration Date"
-                  type="date"
-                  size="sm"
-                  placeholder="Reg Date"
-                  value=""
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <DropdownSelect
-                  label="Payment Source [PIC]"
-                  name="PIC"
-                  value={selectedValue}
-                  options={options}
-                  onChange={handleDropdownChange}
-                  size="sm"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <TextBox
-                  ControlID="MobileNo"
-                  title="Mobile No"
-                  type="text"
-                  size="sm"
-                  placeholder="Mobile No"
-                  value=""
-                />
-              </Col>
-            </Row>
-            <Row className="justify-content-between">
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <DropdownSelect
-                  label="Title"
-                  name="Title"
-                  value={selectedValue}
-                  options={options}
-                  onChange={handleDropdownChange}
-                  size="sm"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <TextBox
-                  ControlID="FirstName"
-                  title="First Name"
-                  type="text"
-                  size="sm"
-                  placeholder="First Name"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <TextBox
-                  ControlID="LastName"
-                  title="Last Name"
-                  type="text"
-                  size="sm"
-                  placeholder="Last Name"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <TextBox
-                  ControlID="AadhaarNo"
-                  title="Aadhaar No"
-                  type="text"
-                  size="sm"
-                  placeholder="Aadhaar No"
-                />
-              </Col>
-            </Row>
-            <Row className="justify-content-between">
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <DropdownSelect
-                  label="Gender"
-                  name="Gender"
-                  value={selectedValue}
-                  options={options}
-                  onChange={handleDropdownChange}
-                  size="sm"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <Row>
-                  <Col
-                    xs={3}
-                    md={3}
-                    lg={3}
-                    xl={3}
-                    xxl={3}
-                    className="d-flex justify-content-center"
-                  >
-                    {/* Second element here */}
-                    <RadioGroup
-                      name="ageOrDob"
-                      options={radioOptions}
-                      selectedValue={ageOrDob}
-                      onChange={handleRadioChange}
-                      inline={true}
-                    />
-                  </Col>
-                  <Col
-                    xs={9}
-                    md={9}
-                    lg={9}
-                    xl={9}
-                    xxl={9}
-                    className="d-flex justify-content-start"
-                  >
-                    {ageOrDob === "Age" ? (
-                      <>
-                        <TextBox
-                          ControlID="Age"
-                          title="Age"
-                          type="number"
-                          size="sm"
-                          placeholder="Enter age"
-                          value={formData.age.toString()} // Assuming 'age' is part of your formData state
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              age: parseInt(e.target.value),
-                            })
-                          }
-                        />
-                        <DropdownSelect
-                          label="Age Unit"
-                          name="AgeUnit"
-                          value={ageUnit}
-                          options={ageUnitOptions}
-                          onChange={(e) => setAgeUnit(e.target.value)}
-                          size="sm"
-                        />
-                      </>
-                    ) : (
-                      <TextBox
-                        ControlID="DOB"
-                        title="Date of Birth"
-                        type="date"
-                        size="sm"
-                        value={formData.dob} // Assuming 'dob' is part of your formData state
-                        onChange={(e) =>
-                          setFormData({ ...formData, dob: e.target.value })
-                        }
-                      />
-                    )}
-                  </Col>
-                </Row>
-              </Col>
-
-              {/* Placeholder for additional columns */}
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <TextBox
-                  ControlID="PssnID"
-                  title="Int. ID/Passport ID"
-                  type="text"
-                  size="sm"
-                  placeholder="Int. ID/Passport ID"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <DropdownSelect
-                  label="Nationality"
-                  name="myDropdown"
-                  value={selectedValue}
-                  options={options}
-                  onChange={handleDropdownChange}
-                  size="sm"
-                />
-              </Col>
-            </Row>
-          </section>
+          <PersonalDetails
+            formData={formData}
+            setFormData={setFormData}
+            handleDropdownChange={handleDropdownChange}
+          />
           {/* Contact Details */}
-          <section aria-labelledby="contact-details-header">
-            <Row>
-              <Col>
-                <h1 id="contact-details-header" className="section-header">
-                  Contact Details
-                </h1>
-              </Col>
-            </Row>
-            <Row className="justify-content-between">
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <TextBox
-                  ControlID="Address"
-                  title="Address"
-                  type="text"
-                  size="sm"
-                  placeholder="Address"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <DropdownSelect
-                  label="Area"
-                  name="Area"
-                  value={selectedValue}
-                  options={options}
-                  onChange={handleDropdownChange}
-                  size="sm"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <DropdownSelect
-                  label="City"
-                  name="City"
-                  value={selectedValue}
-                  options={options}
-                  onChange={handleDropdownChange}
-                  size="sm"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <DropdownSelect
-                  label="Country"
-                  name="Country"
-                  value={selectedValue}
-                  options={options}
-                  onChange={handleDropdownChange}
-                  size="sm"
-                />
-              </Col>
-            </Row>
-            <Row className="justify-content-between">
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <TextBox
-                  ControlID="PostCode"
-                  title="Post Code"
-                  type="text"
-                  size="sm"
-                  placeholder="Post Code"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <TextBox
-                  ControlID="Email"
-                  title="Email"
-                  type="email"
-                  size="sm"
-                  placeholder="Email"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <DropdownSelect
-                  label="Company"
-                  name="Company"
-                  value={selectedValue}
-                  options={options}
-                  onChange={handleDropdownChange}
-                  size="sm"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <Row>
-                  <Col xs={6} sm={6} md={6} lg={6} xl={6} xxl={6}>
-                    <RadioGroup
-                      name="receiveSMS"
-                      label="Receive SMS"
-                      options={smsOptions}
-                      selectedValue={receiveSMS}
-                      onChange={(e) => setReceiveSMS(e.target.value)}
-                      inline={true}
-                    />
-                  </Col>
-                  <Col xs={6} sm={6} md={6} lg={6} xl={6} xxl={6}>
-                    <RadioGroup
-                      name="receiveEmail"
-                      label="Receive Email"
-                      options={emailOptions}
-                      selectedValue={receiveEmail}
-                      onChange={(e) => setReceiveEmail(e.target.value)}
-                      inline={true}
-                    />
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-          </section>
-          <section aria-labelledby="visit-details-header">
-            <Row>
-              <Col>
-                <h1 id="visit-details-header" className="section-header">
-                  Visit Details
-                </h1>
-              </Col>
-            </Row>
-            <Row className="justify-content-between">
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <RadioGroup
-                  name="visitDetails"
-                  label="Visit To"
-                  options={visitOptions}
-                  selectedValue={visitTypes}
-                  onChange={(e) => setVisitTypes(e.target.value)}
-                  inline={true}
-                />
-              </Col>
-              {visitTypes === "H" && (
-                <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                  <DropdownSelect
-                    label="Department"
-                    name="Department"
-                    value={selectedValue}
-                    options={options}
-                    onChange={handleDropdownChange}
-                    size="sm"
-                  />
-                </Col>
-              )}
-              {visitTypes === "P" && (
-                <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                  <DropdownSelect
-                    name="AttendingPhysician"
-                    label="Attending Physician"
-                    value={selectedValue}
-                    options={options}
-                    onChange={handleDropdownChange}
-                    size="sm"
-                  />
-                </Col>
-              )}
-              {(visitTypes === "P" || visitTypes === "H") && (
-                <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                  <DropdownSelect
-                    name="PrimaryIntroducingSource"
-                    label="Primary Introducing Source"
-                    value={selectedValue}
-                    options={options}
-                    onChange={handleDropdownChange}
-                    size="sm"
-                  />
-                </Col>
-              )}
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}></Col>
-            </Row>
-          </section>
-          <section aria-labelledby="membership-scheme-header">
-            <Row>
-              <Col>
-                <h1 id="membership-scheme-header" className="section-header">
-                  Membership Scheme
-                </h1>
-              </Col>
-            </Row>
-            <Row className="justify-content-between">
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <DropdownSelect
-                  name="MembershipScheme"
-                  label="Membership Scheme"
-                  value={selectedValue}
-                  options={options}
-                  onChange={handleDropdownChange}
-                  size="sm"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-                <TextBox
-                  ControlID="MembeshipExpDate"
-                  title="Membership Expiry Date"
-                  type="date"
-                  size="sm"
-                  placeholder="Membership Expiry Date"
-                />
-              </Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}></Col>
-              <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}></Col>
-            </Row>
-          </section>
+          <ContactDetails
+            formData={formData}
+            setFormData={setFormData}
+            handleDropdownChange={handleDropdownChange}
+          />
+          <VisitDetails
+            formData={formData}
+            setFormData={setFormData}
+            handleDropdownChange={handleDropdownChange}
+          />
+          <MembershipScheme
+            formData={formData}
+            setFormData={setFormData}
+            handleDropdownChange={handleDropdownChange}
+          />
           <section aria-labelledby="NOK-header">
             <Row>
               <Col>

@@ -10,12 +10,13 @@ interface TextBoxProps {
   placeholder?: string;
   type?: string;
   className?: string;
-  style?: React.CSSProperties; // Added inline style prop
+  style?: React.CSSProperties; 
   size?: "sm" | "lg";
   isMandatory?: boolean;
   disabled?: boolean;
   readOnly?: boolean;
-  ariaLabel?: string; // Added for accessibility
+  ariaLabel?: string; 
+  maxLength?: number; 
 }
 
 const TextBox: React.FC<TextBoxProps> = ({
@@ -31,7 +32,8 @@ const TextBox: React.FC<TextBoxProps> = ({
   isMandatory = false,
   disabled = false,
   readOnly = false,
-  ariaLabel = "", // Default value for aria-label
+  ariaLabel = "",
+  maxLength
 }) => {
   const controlId = `txt${ControlID}`;
 
@@ -51,8 +53,9 @@ const TextBox: React.FC<TextBoxProps> = ({
           size={size}
           disabled={disabled}
           readOnly={readOnly}
-          aria-label={ariaLabel || title} // Ensure accessibility label is set
-          isInvalid={isMandatory && !value} // Optional: Show validation feedback if mandatory and no value is set
+          aria-label={ariaLabel || title} 
+          isInvalid={isMandatory && !value} 
+          maxLength={maxLength}
         />
         {isMandatory && !value && (
           <Form.Control.Feedback type="invalid">
