@@ -1,8 +1,11 @@
 import { Row, Col } from "react-bootstrap";
 import DropdownSelect from "../../../components/DropDown/DropdownSelect";
 import TextBox from "../../../components/TextBox/TextBox ";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { RegsitrationFormData } from "../../../types/registrationFormData";
+import { BillingService } from "../../../services/BillingService/BillingService";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../store/reducers";
 
 interface MembershipSchemeProps {
   formData: RegsitrationFormData;
@@ -12,11 +15,43 @@ interface MembershipSchemeProps {
     options: { value: string; label: string }[]
   ) => (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
-
+interface DropdownOption {
+  value: string;
+  label: string;
+}
 const MembershipScheme: React.FC<MembershipSchemeProps> = ({
   formData,
   setFormData,
 }) => {
+  const [membershipSchemes, setMembershipScheme] = useState<DropdownOption[]>(
+    []
+  );
+  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const token = userInfo.token!;
+  const compID = userInfo.compID!;
+  const endpointMembershipScheme = "GetActivePatMemberships";
+
+  useEffect(() => {
+    const loadDropdownData = async () => {
+      try {
+        const membershipSchemes = await BillingService.fetchMembershipScheme(
+          token,
+          endpointMembershipScheme,
+          compID
+        );
+        const membershipSchemeOptions = membershipSchemes.map((item) => ({
+          value: item.value,
+          label: item.label,
+        }));
+        setMembershipScheme(membershipSchemeOptions);
+      } catch (error) {
+        console.error("Failed to fetch membership scheme:", error);
+      }
+    };
+
+    loadDropdownData();
+  }, [token]);
+
   const handleDropdownChange =
     (
       name: keyof RegsitrationFormData,
@@ -39,11 +74,6 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
       }
     };
 
-  const membershipSchemes = [
-    { value: "1", label: "Membership Scheme 1" },
-    { value: "2", label: "Membership Scheme 2" },
-    { value: "3", label: "Membership Scheme 3" },
-  ];
   return (
     <section aria-labelledby="membership-scheme-header">
       <Row>

@@ -6,9 +6,8 @@ const getLatestUHID = async (
   token: string,
   endpoint: string
 ): Promise<string> => {
-  const url = `${APIConfig.patientAdministrationURL}${endpoint}`;
-
   try {
+    const url = `${APIConfig.patientAdministrationURL}${endpoint}`;
     const headers = { Authorization: `Bearer ${token}` };
     const response = await axios.get(url, {
       headers,

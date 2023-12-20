@@ -1,7 +1,7 @@
 import axios from "axios";
 import { APIConfig } from "../apiConfig";
 
-const API_BASE_URL = `${APIConfig.commonURL}`;
+const API_BASE_URL = `${APIConfig.moduleURL}`;
 
 // Define the structure of your Module and SubModule DTOs
 export interface ModuleDto {

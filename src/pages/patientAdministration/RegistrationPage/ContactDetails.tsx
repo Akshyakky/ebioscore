@@ -3,7 +3,16 @@ import TextBox from "../../../components/TextBox/TextBox ";
 import DropdownSelect from "../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../components/RadioGroup/RadioGroup";
 import { RegsitrationFormData } from "../../../types/registrationFormData";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../store/reducers";
+import { AppModifyList } from "../../../services/CommonService/AppModifyListService";
+import { useLoading } from "../../../context/LoadingContext";
 
+interface DropdownOption {
+  value: string;
+  label: string;
+}
 interface ContactDetailsProps {
   formData: RegsitrationFormData;
   setFormData: React.Dispatch<React.SetStateAction<RegsitrationFormData>>;
@@ -12,10 +21,81 @@ interface ContactDetailsProps {
     options: { value: string; label: string }[]
   ) => (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
+
+// Assuming token is a string, endpoint is a string, and fieldCode is a string
+const useDropdownFetcher = (
+  token: string,
+  endpoint: string,
+  fieldCode: string
+) => {
+  const [options, setOptions] = useState<DropdownOption[]>([]);
+  const [error, setError] = useState<any>(null); // Use 'any' or a more specific type for error
+  const { setLoading } = useLoading();
+  useEffect(() => {
+    let cancel = false;
+    const fetchOptions = async () => {
+      try {
+        setLoading(true);
+        const data = await AppModifyList.fetchAppModifyList(
+          token,
+          endpoint,
+          fieldCode
+        );
+        if (!cancel) {
+          setOptions(
+            data.map((item) => ({ value: item.value, label: item.label }))
+          );
+        }
+      } catch (err) {
+        if (!cancel) {
+          console.error(`Error fetching ${fieldCode} values:`, err);
+          setError(err);
+        }
+      } finally {
+        if (!cancel) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchOptions();
+
+    return () => {
+      cancel = true;
+    };
+  }, [token, endpoint, fieldCode]);
+
+  return { options, error };
+};
+
 const ContactDetails: React.FC<ContactDetailsProps> = ({
   formData,
   setFormData,
 }) => {
+  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const token = userInfo.token!;
+  const endPointAppModifyList = "GetActiveAppModifyFieldsAsync";
+  const { options: areaValues } = useDropdownFetcher(
+    token,
+    endPointAppModifyList,
+    "AREA"
+  );
+  const { options: cityValues } = useDropdownFetcher(
+    token,
+    endPointAppModifyList,
+    "CITY"
+  );
+  const { options: countryValues } = useDropdownFetcher(
+    token,
+    endPointAppModifyList,
+    "COUNTRY"
+  );
+  const { options: companyValues } = useDropdownFetcher(
+    token,
+    endPointAppModifyList,
+    "COMPANY"
+  );
+
   const handleDropdownChange =
     (
       name: keyof RegsitrationFormData,
@@ -53,26 +133,6 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
   const emailOptions = [
     { value: "yes", label: "Yes" },
     { value: "no", label: "No" },
-  ];
-  const areaValues = [
-    { value: "1", label: "Jokatte" },
-    { value: "2", label: "Baikampady" },
-    { value: "3", label: "Surathkal" },
-  ];
-  const cityValues = [
-    { value: "1", label: "Mangalore" },
-    { value: "2", label: "Bangalore" },
-    { value: "3", label: "Mysore" },
-  ];
-  const countryValues = [
-    { value: "1", label: "India" },
-    { value: "2", label: "America" },
-    { value: "3", label: "Australia" },
-  ];
-  const companyValues = [
-    { value: "1", label: "Company 1" },
-    { value: "2", label: "Company 2" },
-    { value: "3", label: "Company 3" },
   ];
   return (
     <section aria-labelledby="contact-details-header">

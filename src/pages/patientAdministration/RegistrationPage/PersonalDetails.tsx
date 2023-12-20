@@ -3,6 +3,12 @@ import TextBox from "../../../components/TextBox/TextBox ";
 import DropdownSelect from "../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../components/RadioGroup/RadioGroup";
 import { RegsitrationFormData } from "../../../types/registrationFormData";
+import { BillingService } from "../../../services/BillingService/BillingService";
+import { ConstantValues } from "../../../services/CommonService/ConstantValuesService";
+import { AppModifyList } from "../../../services/CommonService/AppModifyListService";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../store/reducers";
 
 interface PersonalDetailsProps {
   formData: RegsitrationFormData;
@@ -13,10 +19,30 @@ interface PersonalDetailsProps {
   ) => (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
+interface PicValue {
+  pTypeID: string; // Adjust types based on your actual data structure
+  pTypeName: string;
+}
+
+interface DropdownOption {
+  value: string;
+  label: string;
+}
+
 const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   formData,
   setFormData,
 }) => {
+  const [picValues, setPicValues] = useState<DropdownOption[]>([]);
+  const [titleValues, setTitleValues] = useState<DropdownOption[]>([]);
+  const [genderValues, setGenderValues] = useState<DropdownOption[]>([]);
+  const [ageUnitOptions, setAgeValues] = useState<DropdownOption[]>([]);
+  const [nationalityValues, setNationalityValues] = useState<DropdownOption[]>(
+    []
+  );
+
+  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const token = userInfo.token!;
   const handleDropdownChange =
     (
       name: keyof RegsitrationFormData,
@@ -46,35 +72,91 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         [name]: e.target.value,
       }));
     };
+  const endpointPIC = "GetPICDropDownValues";
+  const endpointConstantValues = "GetConstantValues";
+  const endPointAppModifyList = "GetActiveAppModifyFieldsAsync";
+  useEffect(() => {
+    const loadDropdownValues = async () => {
+      try {
+        const response = await BillingService.fetchPicValues(
+          token,
+          endpointPIC
+        );
+        let data: PicValue[];
+        if (typeof response === "string") {
+          data = JSON.parse(response) as PicValue[];
+        } else {
+          data = response as PicValue[];
+        }
 
-  const picValues = [
-    { value: "1", label: "PIC 1" },
-    { value: "2", label: "PIC 2" },
-    { value: "3", label: "PIC 3" },
-  ];
-  const titleValues = [
-    { value: "Mr", label: "Title 1" },
-    { value: "Mrs", label: "Title 2" },
-    { value: "Miss", label: "Title 3" },
-  ];
-  const genderValues = [
-    { value: "MALE", label: "Male" },
-    { value: "FEMALE", label: "Female" },
-    { value: "OTHER", label: "Other" },
-  ];
+        const transformedData: DropdownOption[] = data.map(
+          (item: PicValue) => ({
+            value: item.pTypeID,
+            label: item.pTypeName,
+          })
+        );
+        setPicValues(transformedData);
+
+        const responseTitle = await ConstantValues.fetchConstantValues(
+          token,
+          endpointConstantValues,
+          "PTIT"
+        );
+        const transformedTitleData: DropdownOption[] = responseTitle.map(
+          (item) => ({
+            value: item.value, // Assuming the API response matches the DropdownOption structure
+            label: item.label,
+          })
+        );
+        setTitleValues(transformedTitleData);
+
+        const responseGender = await ConstantValues.fetchConstantValues(
+          token,
+          endpointConstantValues,
+          "PSEX"
+        );
+        const transformedGenderData: DropdownOption[] = responseGender.map(
+          (item) => ({
+            value: item.value,
+            label: item.label,
+          })
+        );
+        setGenderValues(transformedGenderData);
+        const responseAge = await ConstantValues.fetchConstantValues(
+          token,
+          endpointConstantValues,
+          "PAT"
+        );
+        const transformedAgeData: DropdownOption[] = responseAge.map(
+          (item) => ({
+            value: item.value,
+            label: item.label,
+          })
+        );
+        setAgeValues(transformedAgeData);
+        const responseNationality = await AppModifyList.fetchAppModifyList(
+          token,
+          endPointAppModifyList,
+          "NATIONALITY"
+        );
+        const transformedNationalityData: DropdownOption[] =
+          responseNationality.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }));
+        setNationalityValues(transformedNationalityData);
+      } catch (error) {
+        console.error("Error fetching dropdown values:", error);
+        // Error handling
+      }
+    };
+
+    loadDropdownValues();
+  }, [token]);
+
   const radioOptions = [
     { value: "Age", label: "Age" },
     { value: "DOB", label: "DOB" },
-  ];
-  const ageUnitOptions = [
-    { value: "years", label: "Years" },
-    { value: "months", label: "Months" },
-    { value: "days", label: "Days" },
-  ];
-  const nationalityValues = [
-    { value: "1", label: "India" },
-    { value: "2", label: "America" },
-    { value: "3", label: "Australia" },
   ];
 
   return (

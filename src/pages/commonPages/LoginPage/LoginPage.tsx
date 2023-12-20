@@ -139,6 +139,7 @@ const LoginPage = () => {
             token: tokenResponse.token,
             adminYN: tokenResponse.user.adminYN, // should be string | null
             userName: tokenResponse.user.userName,
+            compID: parseInt(company),
           },
         });
         console.log(

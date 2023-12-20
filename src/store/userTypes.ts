@@ -6,6 +6,7 @@ export interface UserState {
   token: string | null;
   adminYN: string | null;
   userName: string | null;
+  compID:number|null;
 }
 
 // Action Types

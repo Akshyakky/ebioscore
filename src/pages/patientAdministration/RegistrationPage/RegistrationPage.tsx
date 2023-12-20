@@ -70,7 +70,7 @@ const RegistrationPage: React.FC = () => {
     ageOrDob: "DOB",
     ageUnit: "years",
     age: 0,
-    dob: "",
+    dob: new Date().toISOString().split("T")[0],
     passportID: "",
     nationality: { value: "0", label: "" },
     address: "",
@@ -87,7 +87,7 @@ const RegistrationPage: React.FC = () => {
     attendingPhy: { value: "0", label: "" },
     primaryIntroducingSource: { value: "0", label: "" },
     membershipScheme: { value: "0", label: "" },
-    membershipExpiryDate: "",
+    membershipExpiryDate: new Date().toISOString().split("T")[0],
     nextOfKin: [
       {
         NokRegisterYN: "",

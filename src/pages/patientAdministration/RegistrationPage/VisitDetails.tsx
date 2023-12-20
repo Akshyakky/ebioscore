@@ -2,6 +2,11 @@ import { Row, Col } from "react-bootstrap";
 import DropdownSelect from "../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../components/RadioGroup/RadioGroup";
 import { RegsitrationFormData } from "../../../types/registrationFormData";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../store/reducers";
+import { DepartmentService } from "../../../services/CommonService/DepartmentService";
+import { ContactMastService } from "../../../services/CommonService/ContactMastService";
 
 interface VisitDetailsProps {
   formData: RegsitrationFormData;
@@ -11,25 +16,71 @@ interface VisitDetailsProps {
     options: { value: string; label: string }[]
   ) => (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
+interface DropdownOption {
+  value: string;
+  label: string;
+}
 const VisitDetails: React.FC<VisitDetailsProps> = ({
   formData,
   setFormData,
 }) => {
-  const departmentValues = [
-    { value: "1", label: "Department 1" },
-    { value: "2", label: "Department 2" },
-    { value: "3", label: "Department 3" },
-  ];
-  const attendingPhy = [
-    { value: "1", label: "Physician 1" },
-    { value: "2", label: "Physician 2" },
-    { value: "3", label: "Physician 3" },
-  ];
-  const primaryIntroducingSource = [
-    { value: "1", label: "Primary Introducing Source 1" },
-    { value: "2", label: "Primary Introducing Source 2" },
-    { value: "3", label: "Primary Introducing Source 3" },
-  ];
+  const [departmentValues, setDepartmentValues] = useState<DropdownOption[]>(
+    []
+  );
+  const [attendingPhy, setAttendingPhy] = useState<DropdownOption[]>([]);
+  const [primaryIntroducingSource, setprimaryIntroducingSource] = useState<
+    DropdownOption[]
+  >([]);
+  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const token = userInfo.token!;
+  const compID = userInfo.compID!;
+  const endpointDepartment = "GetActiveRegistrationDepartments";
+  const endpointAttendingPhy = "GetActiveConsultants";
+  const endpointPrimaryIntroducingSource = "GetActiveReferralContacts";
+  useEffect(() => {
+    const loadDropdownData = async () => {
+      try {
+        const departments = await DepartmentService.fetchDepartments(
+          token,
+          endpointDepartment,
+          compID
+        );
+        const departmentOptions = departments.map((item) => ({
+          value: item.value,
+          label: item.label,
+        }));
+        setDepartmentValues(departmentOptions);
+
+        const attendingPhy = await ContactMastService.fetchAttendingPhysician(
+          token,
+          endpointAttendingPhy,
+          compID
+        );
+        const attendingPhyOptions = attendingPhy.map((item) => ({
+          value: item.value,
+          label: item.label,
+        }));
+        setAttendingPhy(attendingPhyOptions);
+        const primaryIntroducingSource =
+          await ContactMastService.fetchRefferalPhy(
+            token,
+            endpointPrimaryIntroducingSource,
+            compID
+          );
+        const primaryIntroducingSourceOption = primaryIntroducingSource.map(
+          (item) => ({
+            value: item.value,
+            label: item.label,
+          })
+        );
+        setprimaryIntroducingSource(primaryIntroducingSourceOption);
+      } catch (error) {
+        console.error("Failed to fetch departments:", error);
+      }
+    };
+
+    loadDropdownData();
+  }, [token]);
 
   const visitOptions = [
     { value: "H", label: "Hospital" },

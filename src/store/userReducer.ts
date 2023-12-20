@@ -12,6 +12,7 @@ const initialState: UserState = {
   token: null,
   adminYN: null,
   userName: null,
+  compID: null,
 };
 
 const userReducer = (
@@ -26,6 +27,7 @@ const userReducer = (
         token: action.payload.token,
         adminYN: action.payload.adminYN,
         userName: action.payload.userName,
+        compID: action.payload.compID,
       };
     case LOGOUT:
       return initialState;
