@@ -10,13 +10,15 @@ interface TextBoxProps {
   placeholder?: string;
   type?: string;
   className?: string;
-  style?: React.CSSProperties; 
+  style?: React.CSSProperties;
   size?: "sm" | "lg";
   isMandatory?: boolean;
   disabled?: boolean;
   readOnly?: boolean;
-  ariaLabel?: string; 
-  maxLength?: number; 
+  ariaLabel?: string;
+  maxLength?: number;
+  isSubmitted?: boolean;
+  errorMessage?: string;
 }
 
 const TextBox: React.FC<TextBoxProps> = ({
@@ -33,10 +35,17 @@ const TextBox: React.FC<TextBoxProps> = ({
   disabled = false,
   readOnly = false,
   ariaLabel = "",
-  maxLength
+  maxLength,
+  isSubmitted = false,
+  errorMessage,
 }) => {
   const controlId = `txt${ControlID}`;
+  // Determine if the textbox is invalid
+  const isInvalid = (isMandatory && isSubmitted && !value) || !!errorMessage;
 
+  // Determine the error message to display
+  const errorToShow =
+    errorMessage || (isMandatory && !value ? `${title} is required.` : "");
   return (
     <Form.Group as={Col} controlId={controlId} className="mb-3">
       <FloatingLabel
@@ -53,13 +62,13 @@ const TextBox: React.FC<TextBoxProps> = ({
           size={size}
           disabled={disabled}
           readOnly={readOnly}
-          aria-label={ariaLabel || title} 
-          isInvalid={isMandatory && !value} 
+          aria-label={ariaLabel || title}
+          isInvalid={isInvalid}
           maxLength={maxLength}
         />
-        {isMandatory && !value && (
+        {isInvalid && (
           <Form.Control.Feedback type="invalid">
-            {title} is required.
+            {errorToShow}
           </Form.Control.Feedback>
         )}
       </FloatingLabel>

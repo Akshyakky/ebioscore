@@ -35,7 +35,6 @@ const fetchMembershipScheme = async (
   const url = `${APIConfig.billingURL}BillingDropDowns/${endpoint}?compId=${compId}`;
   const headers = { Authorization: `Bearer ${token}` };
   const response = await axios.get<MemSchemeAPIResponse[]>(url, { headers });
-  debugger;
   return response.data.map((item) => ({
     value: item.patMemID,
     label: item.patMemName,

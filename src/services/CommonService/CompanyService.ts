@@ -1,7 +1,7 @@
 import axios from "axios";
-import { APIConfig } from "../apiConfig";
+import { APIConfig } from "../../apiConfig";
 
-export const getCompanies = async () => {
+const getCompanies = async () => {
   try {
     const response = await axios.get(`${APIConfig.moduleURL}GetCompanies`, {
       timeout: 10000, // Example of a 10-second timeout
@@ -30,4 +30,8 @@ export const getCompanies = async () => {
       throw new Error("An unexpected error occurred");
     }
   }
+};
+
+export const CompanyService = {
+  getCompanies,
 };

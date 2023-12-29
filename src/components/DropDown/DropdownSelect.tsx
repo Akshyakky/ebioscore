@@ -11,7 +11,8 @@ interface DropdownSelectProps {
   disabled?: boolean;
   isMandatory?: boolean;
   defaultText?: string;
-  className?: string; // Added for custom styling
+  className?: string;
+  isSubmitted?: boolean;
 }
 
 const DropdownSelect: React.FC<DropdownSelectProps> = ({
@@ -25,6 +26,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   isMandatory = false,
   defaultText,
   className,
+  isSubmitted = false,
 }) => {
   return (
     <FloatingLabel controlId={`ddl${name}`} label={label} className={className}>
@@ -36,9 +38,9 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
         disabled={disabled}
         aria-label={label}
         aria-required={isMandatory}
-        className={isMandatory && !value ? "is-invalid" : ""}
+        className={isMandatory && isSubmitted && !value ? "is-invalid" : ""}
       >
-        <option value="" disabled={value !== ""}>
+        <option value={"" || 0} disabled={value !== ""}>
           {defaultText || label}
         </option>
         {options.map((option) => (

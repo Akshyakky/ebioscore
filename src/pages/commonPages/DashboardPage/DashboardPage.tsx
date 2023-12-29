@@ -19,7 +19,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faUser, faUsers } from "@fortawesome/free-solid-svg-icons";
 import MainLayout from "../../../layouts/MainLayout/MainLayout";
-import { DashBoardService } from "../../../services/DashBoardService";
+import { DashBoardService } from "../../../services/DashboardService/DashBoardService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/reducers";
 import { useLoading } from "../../../context/LoadingContext";
@@ -54,10 +54,32 @@ const titleMapping: TitleMapping = {
 };
 
 const DashboardPage: React.FC = () => {
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date();
+  const setStartOfDay = (date: Date) => {
+    const utcDate = new Date(
+      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0)
+    );
+    return utcDate.toISOString();
+  };
+
+  const setEndOfDay = (date: Date) => {
+    const utcDate = new Date(
+      Date.UTC(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        23,
+        59,
+        59,
+        999
+      )
+    );
+    return utcDate.toISOString();
+  };
+
   const [dateRange, setDateRange] = useState({
-    fromDate: today,
-    toDate: today,
+    fromDate: setStartOfDay(today),
+    toDate: setEndOfDay(today),
   });
   const [selectedOption, setSelectedOption] = useState("TD");
   const [counts, setCounts] = useState<Record<string, CountData>>({});
@@ -73,46 +95,57 @@ const DashboardPage: React.FC = () => {
 
     switch (event.target.value) {
       case "TD": // Today
-        from = to = today;
+        from = setStartOfDay(new Date(today));
+        to = setEndOfDay(new Date(today));
         break;
       case "YD": // Yesterday
-        from = to = new Date(today.setDate(today.getDate() - 1));
+        from = setStartOfDay(new Date(today.setDate(today.getDate() - 1)));
+        to = setEndOfDay(new Date(today.setDate(today.getDate())));
         break;
       case "TW": // This Week
-        from = startOfWeek(today);
-        to = endOfWeek(today);
+        from = setStartOfDay(startOfWeek(today));
+        to = setEndOfDay(endOfWeek(today));
         break;
       case "LW": // Last Week
-        from = startOfWeek(new Date(today.setDate(today.getDate() - 7)));
-        to = endOfWeek(new Date(today.setDate(today.getDate() - 7)));
+        from = setStartOfDay(
+          startOfWeek(new Date(today.setDate(today.getDate() - 7)))
+        );
+        to = setEndOfDay(endOfWeek(new Date(today.setDate(today.getDate()))));
         break;
       case "TM": // This Month
-        from = startOfMonth(today);
-        to = endOfMonth(today);
+        from = setStartOfDay(startOfMonth(today));
+        to = setEndOfDay(endOfMonth(today));
         break;
       case "LM": // Last Month
-        from = startOfMonth(new Date(today.setMonth(today.getMonth() - 1)));
-        to = endOfMonth(new Date(today.setMonth(today.getMonth() - 1)));
+        from = setStartOfDay(
+          startOfMonth(new Date(today.setMonth(today.getMonth() - 1)))
+        );
+        to = setEndOfDay(
+          endOfMonth(new Date(today.setMonth(today.getMonth())))
+        );
         break;
       case "TY": // This Year
-        from = startOfYear(today);
-        to = endOfYear(today);
+        from = setStartOfDay(startOfYear(today));
+        to = setEndOfDay(endOfYear(today));
         break;
       case "LY": // Last Year
-        from = startOfYear(
-          new Date(today.setFullYear(today.getFullYear() - 1))
+        from = setStartOfDay(
+          startOfYear(new Date(today.setFullYear(today.getFullYear() - 1)))
         );
-        to = endOfYear(new Date(today.setFullYear(today.getFullYear() - 1)));
+        to = setEndOfDay(
+          endOfYear(new Date(today.setFullYear(today.getFullYear())))
+        );
         break;
       case "DT": // Date Range
         return; // The user will pick the dates
       default:
-        from = to = today;
+        from = setStartOfDay(new Date(today));
+        to = setEndOfDay(new Date(today));
     }
 
     setDateRange({
-      fromDate: from.toISOString().split("T")[0],
-      toDate: to.toISOString().split("T")[0],
+      fromDate: from,
+      toDate: to,
     });
   };
 
@@ -133,8 +166,8 @@ const DashboardPage: React.FC = () => {
         "TransferPayDetail",
         "AdvanceCollection",
       ];
-
       for (const category of categories) {
+        debugger;
         const myCountResult = await DashBoardService.fetchCount(
           `Get${category}Userwise`,
           dateRange,
@@ -227,7 +260,7 @@ const DashboardPage: React.FC = () => {
                           size="sm"
                           type="date"
                           name="from"
-                          value={dateRange.fromDate}
+                          value={String(dateRange.fromDate)}
                           onChange={handleDateRangeChange}
                         />
                       </Form.Group>
@@ -241,7 +274,7 @@ const DashboardPage: React.FC = () => {
                           size="sm"
                           type="date"
                           name="to"
-                          value={dateRange.toDate}
+                          value={String(dateRange.toDate)}
                           onChange={handleDateRangeChange}
                         />
                       </Form.Group>

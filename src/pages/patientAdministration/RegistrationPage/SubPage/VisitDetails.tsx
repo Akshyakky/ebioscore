@@ -1,20 +1,18 @@
 import { Row, Col } from "react-bootstrap";
-import DropdownSelect from "../../../components/DropDown/DropdownSelect";
-import RadioGroup from "../../../components/RadioGroup/RadioGroup";
-import { RegsitrationFormData } from "../../../types/registrationFormData";
+import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
+import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
+import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../store/reducers";
-import { DepartmentService } from "../../../services/CommonService/DepartmentService";
-import { ContactMastService } from "../../../services/CommonService/ContactMastService";
+import { RootState } from "../../../../store/reducers";
+import { DepartmentService } from "../../../../services/CommonService/DepartmentService";
+import { ContactMastService } from "../../../../services/CommonService/ContactMastService";
+import { useLoading } from "../../../../context/LoadingContext";
 
 interface VisitDetailsProps {
   formData: RegsitrationFormData;
   setFormData: React.Dispatch<React.SetStateAction<RegsitrationFormData>>;
-  handleDropdownChange: (
-    name: keyof RegsitrationFormData,
-    options: { value: string; label: string }[]
-  ) => (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  isSubmitted: boolean;
 }
 interface DropdownOption {
   value: string;
@@ -23,6 +21,7 @@ interface DropdownOption {
 const VisitDetails: React.FC<VisitDetailsProps> = ({
   formData,
   setFormData,
+  isSubmitted,
 }) => {
   const [departmentValues, setDepartmentValues] = useState<DropdownOption[]>(
     []
@@ -34,18 +33,20 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
   const compID = userInfo.compID!;
+  const { setLoading } = useLoading();
   const endpointDepartment = "GetActiveRegistrationDepartments";
   const endpointAttendingPhy = "GetActiveConsultants";
   const endpointPrimaryIntroducingSource = "GetActiveReferralContacts";
   useEffect(() => {
     const loadDropdownData = async () => {
       try {
-        const departments = await DepartmentService.fetchDepartments(
+        setLoading(true);
+        const departmentValues = await DepartmentService.fetchDepartments(
           token,
           endpointDepartment,
           compID
         );
-        const departmentOptions = departments.map((item) => ({
+        const departmentOptions = departmentValues.map((item) => ({
           value: item.value,
           label: item.label,
         }));
@@ -56,10 +57,12 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
           endpointAttendingPhy,
           compID
         );
-        const attendingPhyOptions = attendingPhy.map((item) => ({
-          value: item.value,
-          label: item.label,
-        }));
+        const attendingPhyOptions: DropdownOption[] = attendingPhy.map(
+          (item) => ({
+            value: item.value,
+            label: item.label,
+          })
+        );
         setAttendingPhy(attendingPhyOptions);
         const primaryIntroducingSource =
           await ContactMastService.fetchRefferalPhy(
@@ -67,15 +70,16 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
             endpointPrimaryIntroducingSource,
             compID
           );
-        const primaryIntroducingSourceOption = primaryIntroducingSource.map(
-          (item) => ({
+        const primaryIntroducingSourceOption: DropdownOption[] =
+          primaryIntroducingSource.map((item) => ({
             value: item.value,
             label: item.label,
-          })
-        );
+          }));
         setprimaryIntroducingSource(primaryIntroducingSourceOption);
       } catch (error) {
         console.error("Failed to fetch departments:", error);
+      } finally {
+        setLoading(false); // Set loading to false after fetching data
       }
     };
 
@@ -89,25 +93,41 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
   ];
   const handleDropdownChange =
     (
-      name: keyof RegsitrationFormData,
-      options: { value: string; label: string }[]
+      valuePath: (string | number)[],
+      textPath: (string | number)[],
+      options: DropdownOption[]
     ) =>
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      // Find the option that matches the event target value
+      const selectedValue = e.target.value;
       const selectedOption = options.find(
-        (option) => option.value === e.target.value
+        (option) => option.value === selectedValue
       );
 
-      if (selectedOption) {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          [name]: {
-            value: selectedOption.value,
-            label: selectedOption.label,
-          },
-        }));
-      }
+      setFormData((prevFormData) => {
+        // Recursive function to update the state
+        function updateState(
+          obj: any,
+          path: (string | number)[],
+          newValue: any
+        ): any {
+          const [first, ...rest] = path;
+
+          if (rest.length === 0) {
+            return { ...obj, [first]: newValue };
+          } else {
+            return { ...obj, [first]: updateState(obj[first], rest, newValue) };
+          }
+        }
+
+        const newData = updateState(prevFormData, valuePath, selectedValue);
+        return updateState(
+          newData,
+          textPath,
+          selectedOption ? selectedOption.label : ""
+        );
+      });
     };
+
   const handleRadioButtonChange =
     (name: keyof RegsitrationFormData) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,47 +151,59 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
             name="visitDetails"
             label="Visit To"
             options={visitOptions}
-            selectedValue={formData.visitType}
-            onChange={handleRadioButtonChange("visitType")}
+            selectedValue={formData.RNote}
+            onChange={handleRadioButtonChange("RNote")}
             inline={true}
           />
         </Col>
-        {formData.visitType === "H" && (
+        {formData.RNote === "H" && (
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
             <DropdownSelect
               label="Department"
               name="Department"
-              value={formData.department.value}
+              value={String(formData.DeptID)}
               options={departmentValues}
-              onChange={handleDropdownChange("department", departmentValues)}
-              size="sm"
+              onChange={handleDropdownChange(
+                ["DeptID"],
+                ["DeptName"],
+                departmentValues
+              )}
+              isSubmitted={isSubmitted}
+              isMandatory={true}
             />
           </Col>
         )}
-        {formData.visitType === "P" && (
+        {formData.RNote === "P" && (
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
             <DropdownSelect
               name="AttendingPhysician"
               label="Attending Physician"
-              value={formData.attendingPhy.value}
+              value={String(formData.ConsultantID)}
               options={attendingPhy}
-              onChange={handleDropdownChange("attendingPhy", attendingPhy)}
-              size="sm"
+              onChange={handleDropdownChange(
+                ["ConsultantID"],
+                ["ConsultantName"],
+                attendingPhy
+              )}
+              isSubmitted={isSubmitted}
+              isMandatory={true}
             />
           </Col>
         )}
-        {(formData.visitType === "P" || formData.visitType === "H") && (
+        {(formData.RNote === "P" || formData.RNote === "H") && (
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
             <DropdownSelect
               name="PrimaryIntroducingSource"
               label="Primary Introducing Source"
-              value={formData.primaryIntroducingSource.value}
+              value={String(formData.SourceID)}
               options={primaryIntroducingSource}
               onChange={handleDropdownChange(
-                "primaryIntroducingSource",
-                primaryIntroducingSource
+                ["SourceID"],
+                ["SourceName"],
+                attendingPhy
               )}
-              size="sm"
+              isSubmitted={isSubmitted}
+              isMandatory={true}
             />
           </Col>
         )}

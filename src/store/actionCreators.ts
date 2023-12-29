@@ -1,5 +1,4 @@
 // actionCreators.ts
-
 import { LOGOUT } from './userTypes';
 
 // Action creator for logout

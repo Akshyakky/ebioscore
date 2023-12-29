@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import moduleService from "../../services/moduleService";
-import { ModuleDto, SubModuleDto } from "../../types/types";
+import moduleService from "../../services/CommonService/ModuleService";
+import { ModuleDto, SubModuleDto } from "../../interfaces/Common/Modules";
 import {
   Navbar,
   Container,
@@ -56,7 +56,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { logout } from "../../store/actionCreators";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import AuthService from "../../services/AuthService";
+import AuthService from "../../services/AuthService/AuthService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/reducers";
 

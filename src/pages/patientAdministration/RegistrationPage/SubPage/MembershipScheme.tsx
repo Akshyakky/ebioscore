@@ -1,19 +1,15 @@
 import { Row, Col } from "react-bootstrap";
-import DropdownSelect from "../../../components/DropDown/DropdownSelect";
-import TextBox from "../../../components/TextBox/TextBox ";
+import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
+import TextBox from "../../../../components/TextBox/TextBox ";
 import React, { useState, useEffect } from "react";
-import { RegsitrationFormData } from "../../../types/registrationFormData";
-import { BillingService } from "../../../services/BillingService/BillingService";
+import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
+import { BillingService } from "../../../../services/BillingService/BillingService";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../store/reducers";
+import { RootState } from "../../../../store/reducers";
 
 interface MembershipSchemeProps {
   formData: RegsitrationFormData;
   setFormData: React.Dispatch<React.SetStateAction<RegsitrationFormData>>;
-  handleDropdownChange: (
-    name: keyof RegsitrationFormData,
-    options: { value: string; label: string }[]
-  ) => (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 interface DropdownOption {
   value: string;
@@ -54,24 +50,39 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
 
   const handleDropdownChange =
     (
-      name: keyof RegsitrationFormData,
-      options: { value: string; label: string }[]
+      valuePath: (string | number)[],
+      textPath: (string | number)[],
+      options: DropdownOption[]
     ) =>
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      // Find the option that matches the event target value
+      const selectedValue = e.target.value;
       const selectedOption = options.find(
-        (option) => option.value === e.target.value
+        (option) => option.value === selectedValue
       );
 
-      if (selectedOption) {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          [name]: {
-            value: selectedOption.value,
-            label: selectedOption.label,
-          },
-        }));
-      }
+      setFormData((prevFormData) => {
+        // Recursive function to update the state
+        function updateState(
+          obj: any,
+          path: (string | number)[],
+          newValue: any
+        ): any {
+          const [first, ...rest] = path;
+
+          if (rest.length === 0) {
+            return { ...obj, [first]: newValue };
+          } else {
+            return { ...obj, [first]: updateState(obj[first], rest, newValue) };
+          }
+        }
+
+        const newData = updateState(prevFormData, valuePath, selectedValue);
+        return updateState(
+          newData,
+          textPath,
+          selectedOption ? selectedOption.label : ""
+        );
+      });
     };
 
   return (
@@ -88,10 +99,11 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
           <DropdownSelect
             name="MembershipScheme"
             label="Membership Scheme"
-            value={formData.membershipScheme.value}
+            value={String(formData.PatMemID)}
             options={membershipSchemes}
             onChange={handleDropdownChange(
-              "membershipScheme",
+              ["PatMemID"],
+              ["PatMemName"],
               membershipSchemes
             )}
             size="sm"
@@ -107,10 +119,10 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
             onChange={(e) =>
               setFormData({
                 ...formData,
-                membershipExpiryDate: e.target.value,
+                PatMemSchemeExpiryDate: e.target.value,
               })
             }
-            value={formData.membershipExpiryDate}
+            value={formData.PatMemSchemeExpiryDate}
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}></Col>

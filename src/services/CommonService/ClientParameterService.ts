@@ -1,5 +1,5 @@
 import axios from "axios";
-import { APIConfig } from "../apiConfig";
+import { APIConfig } from "../../apiConfig";
 
 /**
  * Fetch client parameters from the server.
@@ -7,7 +7,7 @@ import { APIConfig } from "../apiConfig";
  * @returns {Promise<any>} - The fetched client parameters.
  * @throws {Error} - Throws an error if the request fails.
  */
-export const getClientParameter = async (clientCode: string): Promise<any> => {
+const getClientParameter = async (clientCode: string): Promise<any> => {
   try {
     const response = await axios.get(
       `${APIConfig.moduleURL}GetClientParameter`,
@@ -27,4 +27,8 @@ export const getClientParameter = async (clientCode: string): Promise<any> => {
       throw error;
     }
   }
+};
+
+export const ClientParameterService = {
+  getClientParameter,
 };

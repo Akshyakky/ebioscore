@@ -35,6 +35,6 @@ const fetchAppModifyList = async (
     throw error;
   }
 };
-export const AppModifyList = {
+export const AppModifyListService = {
   fetchAppModifyList,
 };

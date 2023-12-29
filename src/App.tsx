@@ -15,7 +15,7 @@ import { PageTitle } from "../src/hooks/PageTitle";
 import { LoadingProvider } from "./context/LoadingContext";
 import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
 import ProtectedRoute from "./components/ProtectedRoute";
-import RegistrationPage from "./pages/patientAdministration/RegistrationPage/RegistrationPage";
+import RegistrationPage from "./pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
 
 const App: React.FC = () => {
   return (

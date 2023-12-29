@@ -1,10 +1,5 @@
 // userReducer.ts
-import {
-  UserState,
-  UserDetailsAction,
-  SET_USER_DETAILS,
-  LOGOUT,
-} from "./userTypes";
+import { UserState, SET_USER_DETAILS, LOGOUT } from "./userTypes";
 import { AnyAction } from "redux";
 
 const initialState: UserState = {

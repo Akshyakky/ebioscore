@@ -1,5 +1,4 @@
 // userTypes.ts
-
 // State Type
 export interface UserState {
   userID: number | null;

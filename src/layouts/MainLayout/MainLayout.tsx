@@ -1,6 +1,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import SideBar from "../Navigation/SideBar";
+import SideBar from "../SideBar/SideBar";
 import { RootState } from "../../store/reducers";
 import Footer from "../Footer";
 

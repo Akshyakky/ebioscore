@@ -1,5 +1,5 @@
 import axios from "axios";
-import { APIConfig } from "../apiConfig";
+import { APIConfig } from "../../apiConfig";
 
 const API_BASE_URL = `${APIConfig.moduleURL}`;
 

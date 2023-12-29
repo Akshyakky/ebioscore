@@ -1,26 +1,25 @@
 import { Row, Col } from "react-bootstrap";
-import TextBox from "../../../components/TextBox/TextBox ";
-import DropdownSelect from "../../../components/DropDown/DropdownSelect";
-import RadioGroup from "../../../components/RadioGroup/RadioGroup";
-import { RegsitrationFormData } from "../../../types/registrationFormData";
-import { BillingService } from "../../../services/BillingService/BillingService";
-import { ConstantValues } from "../../../services/CommonService/ConstantValuesService";
-import { AppModifyList } from "../../../services/CommonService/AppModifyListService";
+import TextBox from "../../../../components/TextBox/TextBox ";
+import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
+import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
+import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
+import { BillingService } from "../../../../services/BillingService/BillingService";
+import { ConstantValues } from "../../../../services/CommonService/ConstantValuesService";
+import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../store/reducers";
+import { RootState } from "../../../../store/reducers";
+import { useLoading } from "../../../../context/LoadingContext";
 
 interface PersonalDetailsProps {
   formData: RegsitrationFormData;
   setFormData: React.Dispatch<React.SetStateAction<RegsitrationFormData>>;
-  handleDropdownChange: (
-    name: keyof RegsitrationFormData,
-    options: { value: string; label: string }[]
-  ) => (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  isSubmitted: boolean;
+  formErrors: any;
 }
 
 interface PicValue {
-  pTypeID: string; // Adjust types based on your actual data structure
+  pTypeID: string;
   pTypeName: string;
 }
 
@@ -32,6 +31,8 @@ interface DropdownOption {
 const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   formData,
   setFormData,
+  isSubmitted,
+  formErrors,
 }) => {
   const [picValues, setPicValues] = useState<DropdownOption[]>([]);
   const [titleValues, setTitleValues] = useState<DropdownOption[]>([]);
@@ -40,30 +41,52 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const [nationalityValues, setNationalityValues] = useState<DropdownOption[]>(
     []
   );
-
+  const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
+
   const handleDropdownChange =
     (
-      name: keyof RegsitrationFormData,
-      options: { value: string; label: string }[]
+      valuePath: (string | number)[],
+      textPath: (string | number)[],
+      options: DropdownOption[]
     ) =>
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      // Find the option that matches the event target value
+      const selectedValue = e.target.value;
       const selectedOption = options.find(
-        (option) => option.value === e.target.value
+        (option) => option.value === selectedValue
       );
 
-      if (selectedOption) {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          [name]: {
-            value: selectedOption.value,
-            label: selectedOption.label,
-          },
-        }));
-      }
+      setFormData((prevFormData) => {
+        // Recursive function to update the state
+        function updateState(
+          obj: any,
+          path: (string | number)[],
+          newValue: any
+        ): any {
+          const [first, ...rest] = path;
+
+          if (rest.length === 0) {
+            // If newValue is empty and path is not empty, skip updating this path
+            if (newValue === '' && path.length > 0) {
+              return obj;
+            }
+            return { ...obj, [first]: newValue };
+          } else {
+            return { ...obj, [first]: updateState(obj[first], rest, newValue) };
+          }
+        }
+
+        let newData = updateState(prevFormData, valuePath, selectedValue);
+        // Update text path only if selectedOption is found
+        if (selectedOption) {
+          newData = updateState(newData, textPath, selectedOption.label);
+        }
+        return newData;
+      });
     };
+
+
   const handleRadioButtonChange =
     (name: keyof RegsitrationFormData) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,6 +101,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   useEffect(() => {
     const loadDropdownValues = async () => {
       try {
+        setLoading(true);
         const response = await BillingService.fetchPicValues(
           token,
           endpointPIC
@@ -104,7 +128,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         );
         const transformedTitleData: DropdownOption[] = responseTitle.map(
           (item) => ({
-            value: item.value, // Assuming the API response matches the DropdownOption structure
+            value: item.value,
             label: item.label,
           })
         );
@@ -134,11 +158,12 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           })
         );
         setAgeValues(transformedAgeData);
-        const responseNationality = await AppModifyList.fetchAppModifyList(
-          token,
-          endPointAppModifyList,
-          "NATIONALITY"
-        );
+        const responseNationality =
+          await AppModifyListService.fetchAppModifyList(
+            token,
+            endPointAppModifyList,
+            "NATIONALITY"
+          );
         const transformedNationalityData: DropdownOption[] =
           responseNationality.map((item) => ({
             value: item.value,
@@ -148,15 +173,50 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
         // Error handling
+      } finally {
+        setLoading(false); // Set loading to false after fetching data
       }
     };
 
     loadDropdownValues();
   }, [token]);
 
+  const calculateAge = (dob: string | number | Date) => {
+    const birthday = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthday.getFullYear();
+    const m = today.getMonth() - birthday.getMonth();
+
+    if (m < 0 || (m === 0 && today.getDate() < birthday.getDate())) {
+      age--;
+    }
+
+    if (age === 0) {
+      // Calculate age in months
+      const ageInMonths = today.getMonth() - birthday.getMonth();
+      return { age: ageInMonths, ageType: "Months" };
+    } else if (age < 0) {
+      // Handle future date of birth
+      return { age: 0, ageType: "Years" };
+    } else {
+      return { age: age, ageType: "Years" };
+    }
+  };
+
+  useEffect(() => {
+    if (formData.PDob) {
+      const { age, ageType } = calculateAge(formData.PDob);
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        PApproxAge: age.toString(),
+        PAgeType: ageType,
+      }));
+    }
+  }, [formData.PDob]);
+
   const radioOptions = [
-    { value: "Age", label: "Age" },
-    { value: "DOB", label: "DOB" },
+    { value: "N", label: "Age" },
+    { value: "Y", label: "DOB" },
   ];
 
   return (
@@ -176,8 +236,12 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             type="text"
             size="sm"
             placeholder="Search through UHID, Name, DOB, Phone No...."
-            value={formData.UHID}
-            onChange={(e) => setFormData({ ...formData, UHID: e.target.value })}
+            value={formData.PChartCode}
+            onChange={(e) =>
+              setFormData({ ...formData, PChartCode: e.target.value })
+            }
+            isSubmitted={isSubmitted}
+            isMandatory={true}
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
@@ -187,20 +251,28 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             type="date"
             size="sm"
             placeholder="Reg Date"
-            value={formData.regDate}
+            value={formData.PRegDate}
             onChange={(e) =>
-              setFormData({ ...formData, regDate: e.target.value })
+              setFormData({ ...formData, PRegDate: e.target.value })
             }
+            isSubmitted={isSubmitted}
+            isMandatory={true}
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
           <DropdownSelect
             label="Payment Source [PIC]"
             name="PIC"
-            value={formData.pic.value}
+            value={String(formData.PTypeID)}
             options={picValues}
-            onChange={handleDropdownChange("pic", picValues)}
+            onChange={handleDropdownChange(
+              ["PTypeID"],
+              ["PTypeName"],
+              picValues
+            )}
             size="sm"
+            isMandatory={true}
+            isSubmitted={isSubmitted}
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
@@ -210,11 +282,19 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             type="text"
             size="sm"
             placeholder="Mobile No"
-            value={formData.mobileNo}
+            value={formData.PatAddress.PAddPhone1}
             onChange={(e) =>
-              setFormData({ ...formData, mobileNo: e.target.value })
+              setFormData((prevFormData) => ({
+                ...prevFormData,
+                PatAddress: {
+                  ...prevFormData.PatAddress,
+                  PAddPhone1: e.target.value,
+                },
+              }))
             }
             maxLength={20}
+            isSubmitted={isSubmitted}
+            isMandatory={true}
           />
         </Col>
       </Row>
@@ -223,10 +303,16 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           <DropdownSelect
             label="Title"
             name="Title"
-            value={formData.title.value}
+            value={formData.PTitleValue}
             options={titleValues}
-            onChange={handleDropdownChange("title", titleValues)}
+            onChange={handleDropdownChange(
+              ["PTitleValue"],
+              ["PTitle"],
+              titleValues
+            )}
             size="sm"
+            isMandatory={true}
+            isSubmitted={isSubmitted}
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
@@ -237,9 +323,12 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             size="sm"
             placeholder="First Name"
             onChange={(e) =>
-              setFormData({ ...formData, firstName: e.target.value })
+              setFormData({ ...formData, PFName: e.target.value })
             }
-            value={formData.firstName}
+            value={formData.PFName}
+            isSubmitted={isSubmitted}
+            isMandatory={true}
+            errorMessage={formErrors.firstName}
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
@@ -250,9 +339,11 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             size="sm"
             placeholder="Last Name"
             onChange={(e) =>
-              setFormData({ ...formData, lastName: e.target.value })
+              setFormData({ ...formData, PLName: e.target.value })
             }
-            value={formData.lastName}
+            value={formData.PLName}
+            isSubmitted={isSubmitted}
+            isMandatory={true}
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
@@ -262,8 +353,12 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             type="text"
             size="sm"
             placeholder="Aadhaar No"
-            onChange={(e) => setFormData({ ...formData, idNo: e.target.value })}
-            value={formData.idNo}
+            onChange={(e) =>
+              setFormData({ ...formData, PssnID: e.target.value })
+            }
+            value={formData.PssnID}
+            isSubmitted={isSubmitted}
+            isMandatory={true}
           />
         </Col>
       </Row>
@@ -272,10 +367,16 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           <DropdownSelect
             label="Gender"
             name="Gender"
-            value={formData.gender.value}
+            value={formData.PGenderValue}
             options={genderValues}
-            onChange={handleDropdownChange("gender", genderValues)}
+            onChange={handleDropdownChange(
+              ["PGenderValue"],
+              ["PGender"],
+              genderValues
+            )}
             size="sm"
+            isMandatory={true}
+            isSubmitted={isSubmitted}
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
@@ -292,8 +393,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
               <RadioGroup
                 name="ageOrDob"
                 options={radioOptions}
-                selectedValue={formData.ageOrDob}
-                onChange={handleRadioButtonChange("ageOrDob")}
+                selectedValue={formData.DobYN}
+                onChange={handleRadioButtonChange("DobYN")}
                 inline={true}
               />
             </Col>
@@ -305,7 +406,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
               xxl={9}
               className="d-flex justify-content-start"
             >
-              {formData.ageOrDob === "Age" ? (
+              {formData.DobYN === "N" ? (
                 <>
                   <TextBox
                     ControlID="Age"
@@ -313,26 +414,32 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                     type="number"
                     size="sm"
                     placeholder="Enter age"
-                    value={formData.age.toString()}
+                    value={formData.PatOverview.PAgeNumber.toString()}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        age: parseInt(e.target.value),
-                      })
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        PatOverview: {
+                          ...prevFormData.PatOverview,
+                          PAgeNumber: parseInt(e.target.value),
+                        },
+                      }))
                     }
+                    isSubmitted={isSubmitted}
+                    isMandatory={true}
                   />
                   <DropdownSelect
                     label="Age Unit"
                     name="AgeUnit"
-                    value={formData.ageUnit}
+                    value={formData.PatOverview.PageDescription}
                     options={ageUnitOptions}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        ageUnit: e.target.value,
-                      })
-                    }
+                    onChange={handleDropdownChange(
+                      ["PatOverview", "PageDescriptionValue"],
+                      ["PatOverview", "PageDescription"],
+                      ageUnitOptions
+                    )}
                     size="sm"
+                    isMandatory={true}
+                    isSubmitted={isSubmitted}
                   />
                 </>
               ) : (
@@ -341,10 +448,12 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                   title="Date of Birth"
                   type="date"
                   size="sm"
-                  value={formData.dob}
+                  value={formData.PDob}
                   onChange={(e) =>
-                    setFormData({ ...formData, dob: e.target.value })
+                    setFormData({ ...formData, PDob: e.target.value })
                   }
+                  isSubmitted={isSubmitted}
+                  isMandatory={true}
                 />
               )}
             </Col>
@@ -359,9 +468,9 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             type="text"
             size="sm"
             placeholder="Int. ID/Passport ID"
-            value={formData.passportID}
+            value={formData.IntIdPsprt}
             onChange={(e) =>
-              setFormData({ ...formData, passportID: e.target.value })
+              setFormData({ ...formData, IntIdPsprt: e.target.value })
             }
           />
         </Col>
@@ -369,9 +478,13 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           <DropdownSelect
             label="Nationality"
             name="Nationality"
-            value={formData.nationality.value}
+            value={formData.PatAddress.PAddCountry}
             options={nationalityValues}
-            onChange={handleDropdownChange("nationality", nationalityValues)}
+            onChange={handleDropdownChange(
+              ["PatAddress", "PAddCountry"],
+              ["PatAddress", "PAddCountry"],
+              nationalityValues
+            )}
             size="sm"
           />
         </Col>

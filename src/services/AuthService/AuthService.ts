@@ -1,6 +1,6 @@
 // src/services/AuthService.ts
 import axios, { AxiosError } from "axios";
-import { APIConfig } from "../apiConfig";
+import { APIConfig } from "../../apiConfig";
 
 const API_URL = `${APIConfig.authURL}`; // Base URL for your API
 

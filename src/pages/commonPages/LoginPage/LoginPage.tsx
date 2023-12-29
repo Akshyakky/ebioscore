@@ -10,14 +10,14 @@ import {
   Dropdown,
 } from "react-bootstrap";
 import logo from "../../../assets/images/eBios.png";
-import { getCompanies } from "../../../services/companyService";
+import { CompanyService } from "../../../services/CommonService/CompanyService";
 import { Link } from "react-router-dom";
-import { getClientParameter } from "../../../services/clientParameterService";
+import { ClientParameterService } from "../../../services/CommonService/ClientParameterService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignInAlt, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import "../../../../src/assets/styles/Common.css";
-import AuthService from "../../../services/AuthService";
+import AuthService from "../../../services/AuthService/AuthService";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { SET_USER_DETAILS } from "../../../store/userTypes";
@@ -43,7 +43,7 @@ const LoginPage = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const companyData = await getCompanies();
+        const companyData = await CompanyService.getCompanies();
         setCompanies(companyData);
       } catch (error) {
         console.error("Fetching companies failed: ", error);
@@ -76,8 +76,12 @@ const LoginPage = () => {
 
   const checkExpiryDates = async () => {
     try {
-      const amcDetails = await getClientParameter("AMCSUP");
-      const licenseDetails = await getClientParameter("CINLIC");
+      const amcDetails = await ClientParameterService.getClientParameter(
+        "AMCSUP"
+      );
+      const licenseDetails = await ClientParameterService.getClientParameter(
+        "CINLIC"
+      );
 
       const amcDaysRemaining = checkDateValidity(amcDetails[0].clParValue);
       const licenseDaysRemaining = checkDateValidity(
