@@ -86,6 +86,7 @@ export interface RegsitrationFormData {
     PChartCode: string;
     PAddType: string;
     PAddMailYN: string;
+    PAddSMSYN: string;
     PAddEmail: string;
     PAddStreet: string;
     PAddStreet1: string;
@@ -106,3 +107,4 @@ export interface RegsitrationFormData {
     PChartCompID: number;
   };
 }
+

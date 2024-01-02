@@ -9,15 +9,13 @@ import { RootState } from "../../../../store/reducers";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "react-bootstrap";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 
 interface MembershipSchemeProps {
   formData: RegsitrationFormData;
   setFormData: React.Dispatch<React.SetStateAction<RegsitrationFormData>>;
 }
-interface DropdownOption {
-  value: string;
-  label: string;
-}
+
 const MembershipScheme: React.FC<MembershipSchemeProps> = ({
   formData,
   setFormData,

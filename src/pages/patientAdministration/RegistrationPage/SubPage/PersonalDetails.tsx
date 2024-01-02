@@ -13,6 +13,7 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "react-bootstrap";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 
 interface PersonalDetailsProps {
   formData: RegsitrationFormData;
@@ -24,11 +25,6 @@ interface PersonalDetailsProps {
 interface PicValue {
   pTypeID: string;
   pTypeName: string;
-}
-
-interface DropdownOption {
-  value: string;
-  label: string;
 }
 
 const PersonalDetails: React.FC<PersonalDetailsProps> = ({

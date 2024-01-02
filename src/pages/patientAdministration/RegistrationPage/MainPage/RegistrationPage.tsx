@@ -6,7 +6,6 @@ import {
   faRedo,
   faSave,
   faTrash,
-  faStar,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
@@ -34,6 +33,8 @@ import { ApiError } from "../../../../interfaces/Common/ApiError";
 import { useLoading } from "../../../../context/LoadingContext";
 import NextOfKinPopup from "../SubPage/NextOfKin";
 import { Kin } from "../../../../interfaces/PatientAdministration/NextOfKinData";
+import PatientInsurancePopup from "../SubPage/PatientInsurance";
+import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
 
 interface FormErrors {
   firstName?: string;
@@ -43,6 +44,7 @@ interface FormErrors {
 
 const RegistrationPage: React.FC = () => {
   const [showKinPopup, setShowKinPopup] = useState(false);
+  const [showInsurancePopup, setInsurancePopup] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const { setLoading } = useLoading();
@@ -58,6 +60,20 @@ const RegistrationPage: React.FC = () => {
       address: "123 Main St",
       mobile: "555-1234",
       city: "Anytown",
+      patientType: "Registered",
+      NokFName: "",
+      NokLName: "",
+      NokBirthDate: "",
+      NokAddress: "",
+      NokArea: "",
+      NokCity: "",
+      NokCountry: "",
+      PAddPhone1: "",
+      NokPostCode: "",
+      NokNationality: "",
+      PNokPssnID: "",
+      PAddPhone2: "",
+      PAddPhone3: "",
     },
     // ... more kin objects
   ]);
@@ -149,7 +165,8 @@ const RegistrationPage: React.FC = () => {
       PChartID: 0,
       PChartCode: "",
       PAddType: "",
-      PAddMailYN: "Y",
+      PAddMailYN: "N",
+      PAddSMSYN: "N",
       PAddEmail: "",
       PAddStreet: "",
       PAddStreet1: "",
@@ -177,6 +194,12 @@ const RegistrationPage: React.FC = () => {
   const handleCloseKinPopup = () => {
     setShowKinPopup(false);
   };
+  const handleOpenPInsurancePopup = () => {
+    setInsurancePopup(true);
+  };
+  const handleClosePInsurancePopup = () => {
+    setInsurancePopup(false);
+  };
 
   const handleSaveKinDetails = (kinDetails: Kin) => {
     // If id is undefined, assign a new id
@@ -188,6 +211,12 @@ const RegistrationPage: React.FC = () => {
     };
 
     setGridData([...gridData, newKin]);
+  };
+
+  const handleSaveInsurance = (insuranceData: InsuranceFormState) => {
+    // Process the insurance data
+    console.log(insuranceData);
+    handleClosePInsurancePopup();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -358,6 +387,13 @@ const RegistrationPage: React.FC = () => {
               </Col>
             </Row>
           </section>
+
+          <PatientInsurancePopup
+            show={showInsurancePopup}
+            handleClose={handleClosePInsurancePopup}
+            handleSave={handleSaveInsurance}
+          />
+
           <section aria-labelledby="NOK-header">
             <Row>
               <Col>
@@ -366,8 +402,9 @@ const RegistrationPage: React.FC = () => {
                     variant="dark border"
                     size="sm"
                     style={{ marginRight: "8px" }}
+                    onClick={handleOpenPInsurancePopup}
                   >
-                    <FontAwesomeIcon icon={faStar} />
+                    <FontAwesomeIcon icon={faPlus} />
                   </Button>
                   Insurance Details
                 </h1>

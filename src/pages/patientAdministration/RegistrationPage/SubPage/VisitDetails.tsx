@@ -11,16 +11,14 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "react-bootstrap";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 
 interface VisitDetailsProps {
   formData: RegsitrationFormData;
   setFormData: React.Dispatch<React.SetStateAction<RegsitrationFormData>>;
   isSubmitted: boolean;
 }
-interface DropdownOption {
-  value: string;
-  label: string;
-}
+
 const VisitDetails: React.FC<VisitDetailsProps> = ({
   formData,
   setFormData,

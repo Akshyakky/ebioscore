@@ -11,11 +11,8 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "react-bootstrap";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 
-interface DropdownOption {
-  value: string;
-  label: string;
-}
 interface ContactDetailsProps {
   formData: RegsitrationFormData;
   setFormData: React.Dispatch<React.SetStateAction<RegsitrationFormData>>;
@@ -307,7 +304,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 label="Receive SMS"
                 options={smsOptions}
                 selectedValue={formData.PatAddress.PAddMailYN}
-                onChange={handleRadioButtonChange(["PatAddress", "PAddMailYN"])}
+                onChange={handleRadioButtonChange(["PatAddress", "PAddSMSYN"])}
                 inline={true}
               />
             </Col>
