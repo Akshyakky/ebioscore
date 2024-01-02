@@ -8,6 +8,9 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
 import { useLoading } from "../../../../context/LoadingContext";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Button } from "react-bootstrap";
 
 interface DropdownOption {
   value: string;
@@ -132,7 +135,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
     };
   const handleRadioButtonChange =
     (path: (string | number)[]) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      debugger
+      debugger;
       const newValue = e.target.value;
 
       setFormData((prevFormData) => {
@@ -169,7 +172,14 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
       <Row>
         <Col>
           <h1 id="contact-details-header" className="section-header">
-            Contact Details
+            <Button
+              variant="dark border"
+              size="sm"
+              style={{ marginRight: "8px" }}
+            >
+              <FontAwesomeIcon icon={faStar} />
+            </Button>
+            CONTACT DETAILS
           </h1>
         </Col>
       </Row>

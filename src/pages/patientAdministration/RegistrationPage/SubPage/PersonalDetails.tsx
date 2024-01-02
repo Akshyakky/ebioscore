@@ -10,6 +10,9 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { useLoading } from "../../../../context/LoadingContext";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Button } from "react-bootstrap";
 
 interface PersonalDetailsProps {
   formData: RegsitrationFormData;
@@ -68,7 +71,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
 
           if (rest.length === 0) {
             // If newValue is empty and path is not empty, skip updating this path
-            if (newValue === '' && path.length > 0) {
+            if (newValue === "" && path.length > 0) {
               return obj;
             }
             return { ...obj, [first]: newValue };
@@ -85,7 +88,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         return newData;
       });
     };
-
 
   const handleRadioButtonChange =
     (name: keyof RegsitrationFormData) =>
@@ -224,7 +226,14 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       <Row>
         <Col>
           <h1 id="personal-details-header" className="section-header">
-            Personal Details
+            <Button
+              variant="dark border"
+              size="sm"
+              style={{ marginRight: "8px" }}
+            >
+              <FontAwesomeIcon icon={faStar} />
+            </Button>
+            PERSONAL DETAILS
           </h1>
         </Col>
       </Row>

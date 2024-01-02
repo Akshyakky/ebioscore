@@ -6,8 +6,10 @@ import {
   faRedo,
   faSave,
   faTrash,
+  faStar,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import {
   Form,
   Button,
@@ -30,17 +32,9 @@ import MembershipScheme from "../SubPage/MembershipScheme";
 import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import { ApiError } from "../../../../interfaces/Common/ApiError";
 import { useLoading } from "../../../../context/LoadingContext";
+import NextOfKinPopup from "../SubPage/NextOfKin";
+import { Kin } from "../../../../interfaces/PatientAdministration/NextOfKinData";
 
-interface Kin {
-  id: number;
-  name: string;
-  relationship: string;
-  dob: string;
-  postCode: string;
-  address: string;
-  mobile: string;
-  city: string;
-}
 interface FormErrors {
   firstName?: string;
   lastName?: string;
@@ -48,6 +42,7 @@ interface FormErrors {
 }
 
 const RegistrationPage: React.FC = () => {
+  const [showKinPopup, setShowKinPopup] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const { setLoading } = useLoading();
@@ -175,6 +170,25 @@ const RegistrationPage: React.FC = () => {
       PChartCompID: 0,
     },
   });
+
+  const handleOpenKinPopup = () => {
+    setShowKinPopup(true);
+  };
+  const handleCloseKinPopup = () => {
+    setShowKinPopup(false);
+  };
+
+  const handleSaveKinDetails = (kinDetails: Kin) => {
+    // If id is undefined, assign a new id
+    const newId = kinDetails.id ?? gridData.length + 1;
+
+    const newKin: Kin = {
+      ...kinDetails,
+      id: newId,
+    };
+
+    setGridData([...gridData, newKin]);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -314,10 +328,26 @@ const RegistrationPage: React.FC = () => {
             isSubmitted={isSubmitted}
           />
           <MembershipScheme formData={formData} setFormData={setFormData} />
+
+          <NextOfKinPopup
+            show={showKinPopup}
+            handleClose={handleCloseKinPopup}
+            handleSave={handleSaveKinDetails}
+          />
+
           <section aria-labelledby="NOK-header">
             <Row>
               <Col>
                 <h1 id="NOK-header" className="section-header">
+                  <Button
+                    variant="dark border"
+                    size="sm"
+                    onClick={handleOpenKinPopup}
+                    title="Add Next Of Kin"
+                    style={{ marginRight: "8px" }}
+                  >
+                    <FontAwesomeIcon icon={faPlus} />
+                  </Button>
                   Next Of Kin
                 </h1>
               </Col>
@@ -332,6 +362,13 @@ const RegistrationPage: React.FC = () => {
             <Row>
               <Col>
                 <h1 id="insurance-details-header" className="section-header">
+                  <Button
+                    variant="dark border"
+                    size="sm"
+                    style={{ marginRight: "8px" }}
+                  >
+                    <FontAwesomeIcon icon={faStar} />
+                  </Button>
                   Insurance Details
                 </h1>
               </Col>

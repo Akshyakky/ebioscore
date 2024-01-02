@@ -8,6 +8,9 @@ import { RootState } from "../../../../store/reducers";
 import { DepartmentService } from "../../../../services/CommonService/DepartmentService";
 import { ContactMastService } from "../../../../services/CommonService/ContactMastService";
 import { useLoading } from "../../../../context/LoadingContext";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Button } from "react-bootstrap";
 
 interface VisitDetailsProps {
   formData: RegsitrationFormData;
@@ -141,7 +144,14 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
       <Row>
         <Col>
           <h1 id="visit-details-header" className="section-header">
-            Visit Details
+            <Button
+              variant="dark border"
+              size="sm"
+              style={{ marginRight: "8px" }}
+            >
+              <FontAwesomeIcon icon={faStar} />
+            </Button>
+            VISIT DETAILS
           </h1>
         </Col>
       </Row>

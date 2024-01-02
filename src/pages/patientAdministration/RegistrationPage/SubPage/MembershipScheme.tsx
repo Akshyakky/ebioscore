@@ -6,6 +6,9 @@ import { RegsitrationFormData } from "../../../../interfaces/PatientAdministrati
 import { BillingService } from "../../../../services/BillingService/BillingService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Button } from "react-bootstrap";
 
 interface MembershipSchemeProps {
   formData: RegsitrationFormData;
@@ -90,7 +93,14 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
       <Row>
         <Col>
           <h1 id="membership-scheme-header" className="section-header">
-            Membership Scheme
+            <Button
+              variant="dark border"
+              size="sm"
+              style={{ marginRight: "8px" }}
+            >
+              <FontAwesomeIcon icon={faStar} />
+            </Button>
+            MEMBERSHIP SCHEME
           </h1>
         </Col>
       </Row>
