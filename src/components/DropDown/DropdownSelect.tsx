@@ -32,7 +32,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
     <FloatingLabel controlId={`ddl${name}`} label={label} className={className}>
       <Form.Select
         name={name}
-        value={value}
+        value={value || ""}
         onChange={onChange}
         size={size}
         disabled={disabled}
@@ -44,7 +44,10 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
           {defaultText || label}
         </option>
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option
+            key={option.value || option.label}
+            value={option.value || option.label}
+          >
             {option.label}
           </option>
         ))}

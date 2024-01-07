@@ -136,6 +136,8 @@ const LoginPage = () => {
         Password: Password,
       });
       if (tokenResponse.token) {
+        const jwtToken = JSON.parse(atob(tokenResponse.token.split(".")[1]));
+        const tokenExpiryTime = new Date(jwtToken.exp * 1000);
         dispatch({
           type: SET_USER_DETAILS,
           payload: {
@@ -144,6 +146,7 @@ const LoginPage = () => {
             adminYN: tokenResponse.user.adminYN, // should be string | null
             userName: tokenResponse.user.userName,
             compID: parseInt(company),
+            tokenExpiry: tokenExpiryTime,
           },
         });
         console.log(
@@ -208,8 +211,14 @@ const LoginPage = () => {
         background: "linear-gradient(to right, #285E6A, #134450)",
       }}
     >
-      <Row className="justify-content-center" style={{ maxWidth: "450px" }}>
-        <Col xs={12} sm={12} md={12} lg={12}>
+      <Row className="justify-content-center">
+        <Col
+          xs={12}
+          sm={12}
+          md={12}
+          lg={12}
+          style={{ maxWidth: "400px", minWidth: "400px" }}
+        >
           <Card className="shadow-sm p-4 mb-5 bg-white rounded">
             <div className="text-center">
               {" "}

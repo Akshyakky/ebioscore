@@ -1,13 +1,20 @@
 export interface InsuranceFormState {
-  insurance: string;
-  policyHolder: string;
-  policyNumber: string;
-  groupNumber: string;
-  policyStartDate: string;
-  policyEndDate: string;
-  guarantor: string;
-  relation: string;
-  coveredFor: string;
-  address1: string;
-  address2: string;
+  OPIPInsID: number;
+  InsurID: number;
+  InsurName: string;
+  PolicyHolder: string;
+  PolicyNumber: string;
+  GroupNumber: string;
+  PolicyStartDate: string;
+  PolicyEndDate: string;
+  Guarantor: string;
+  Relation: string;
+  RelationValue: string;
+  CoveredID: number;
+  CoveredFor: string;
+  Address1: string;
+  Address2: string;
+  Phone1: string;
+  Phone2: string;
+  Remarks: string;
 }

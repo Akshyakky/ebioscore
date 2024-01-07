@@ -1,11 +1,7 @@
 // services/ContactMastService.ts
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
-
-interface DropdownDto {
-  label: string;
-  value: string;
-}
+import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 
 interface PhyAPIResponse {
   consultantID: string;
@@ -20,7 +16,7 @@ const fetchAttendingPhysician = async (
   token: string,
   endpoint: string,
   compId: number
-): Promise<DropdownDto[]> => {
+): Promise<DropdownOption[]> => {
   const url = `${APIConfig.commonURL}HospitalAdministration/${endpoint}?compId=${compId}`;
   const headers = { Authorization: `Bearer ${token}` };
   const response = await axios.get<PhyAPIResponse[]>(url, { headers });
@@ -33,7 +29,7 @@ const fetchRefferalPhy = async (
   token: string,
   endpoint: string,
   compId: number
-): Promise<DropdownDto[]> => {
+): Promise<DropdownOption[]> => {
   const url = `${APIConfig.commonURL}HospitalAdministration/${endpoint}?compId=${compId}`;
   const headers = { Authorization: `Bearer ${token}` };
   const response = await axios.get<RefAPIResponse[]>(url, { headers });

@@ -1,9 +1,9 @@
 // actionCreators.ts
-import { LOGOUT } from './userTypes';
+import { LOGOUT } from "./userTypes";
 
 // Action creator for logout
 export const logout = () => {
   return {
-    type: LOGOUT
+    type: LOGOUT,
   };
 };

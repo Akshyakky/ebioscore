@@ -1,11 +1,7 @@
 // services/DepartmentService.ts
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
-
-interface DepartmentDto {
-  label: string;
-  value: string;
-}
+import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 
 interface APIResponse {
   deptID: string;
@@ -16,7 +12,7 @@ const fetchDepartments = async (
   token: string,
   endpoint: string,
   compId: number
-): Promise<DepartmentDto[]> => {
+): Promise<DropdownOption[]> => {
   try {
     const url = `${APIConfig.commonURL}Department/${endpoint}?compId=${compId}`;
     const headers = { Authorization: `Bearer ${token}` };

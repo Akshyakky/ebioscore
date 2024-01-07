@@ -1,11 +1,7 @@
 // BillingService.ts
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
-
-interface DropdownDto {
-  label: string;
-  value: string;
-}
+import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 
 interface MemSchemeAPIResponse {
   patMemID: string;
@@ -31,7 +27,7 @@ const fetchMembershipScheme = async (
   token: string,
   endpoint: string,
   compId: number
-): Promise<DropdownDto[]> => {
+): Promise<DropdownOption[]> => {
   const url = `${APIConfig.billingURL}BillingDropDowns/${endpoint}?compId=${compId}`;
   const headers = { Authorization: `Bearer ${token}` };
   const response = await axios.get<MemSchemeAPIResponse[]>(url, { headers });

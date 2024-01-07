@@ -1,8 +1,6 @@
 // RegistrationService.ts
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
-import { ApiPatientData } from "../../models/PatientAdministration/ApiPatientData";
-import { transformToApiData } from "../../utils/PatientAdministration/RegDataToApi";
 import { RegsitrationFormData } from "../../interfaces/PatientAdministration/registrationFormData";
 
 const getLatestUHID = async (

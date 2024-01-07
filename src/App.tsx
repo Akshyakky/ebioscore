@@ -1,3 +1,4 @@
+//App.tsx
 import React from "react";
 import "./App.css";
 import {
@@ -18,6 +19,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RegistrationPage from "./pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
 
 const App: React.FC = () => {
+
   return (
     <ReduxProvider store={store}>
       <PersistGate loading={null} persistor={persistor}>
@@ -36,7 +38,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-               <Route
+              <Route
                 path="/RegistrationPage"
                 element={
                   <ProtectedRoute>

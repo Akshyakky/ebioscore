@@ -189,16 +189,25 @@
 }
 
 .custom-profile-dropdown {
-    background-color: #ffffff !important;
-    /* Example background color */
-    color: #333 !important;
-    /* Example text color */
-    border-radius: 5px !important;
-    /* Example border radius */
-    padding: 10px;
-    border-bottom: groove;
-    /* Add other styling as needed */
+    background-color: #f8f9fa; /* Light grey background for subtle contrast */
+    color: #50596c; /* Dark grey for better readability */
+    border-radius: 5px;
+    
+    border: none; /* Remove the border-bottom groove for a cleaner look */
+    box-shadow: 0 2px 4px 0 rgba(0,0,0,.1); /* Add shadow for depth */
+    font-family: 'Open Sans', sans-serif; /* Example font */
 }
+
+.custom-profile-dropdown:hover,
+.custom-profile-dropdown:focus {
+    background-color: #e9ecef; /* Slightly darker background on hover/focus */
+    cursor: pointer;
+}
+
+.faUser {
+    margin-right: 8px; /* Increased spacing between icon and text */
+}
+
 
 .sidebar {
     position: fixed;

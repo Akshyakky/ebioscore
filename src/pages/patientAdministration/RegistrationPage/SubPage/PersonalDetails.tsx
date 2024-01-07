@@ -14,6 +14,8 @@ import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "react-bootstrap";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import useDropdownChange from "../../../../hooks/useDropdownChange";
+import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 
 interface PersonalDetailsProps {
   formData: RegsitrationFormData;
@@ -40,59 +42,14 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const [nationalityValues, setNationalityValues] = useState<DropdownOption[]>(
     []
   );
+  const { handleDropdownChange } =
+    useDropdownChange<RegsitrationFormData>(setFormData);
+  const { handleRadioButtonChange } =
+    useRadioButtonChange<RegsitrationFormData>(setFormData);
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
 
-  const handleDropdownChange =
-    (
-      valuePath: (string | number)[],
-      textPath: (string | number)[],
-      options: DropdownOption[]
-    ) =>
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const selectedValue = e.target.value;
-      const selectedOption = options.find(
-        (option) => option.value === selectedValue
-      );
-
-      setFormData((prevFormData) => {
-        // Recursive function to update the state
-        function updateState(
-          obj: any,
-          path: (string | number)[],
-          newValue: any
-        ): any {
-          const [first, ...rest] = path;
-
-          if (rest.length === 0) {
-            // If newValue is empty and path is not empty, skip updating this path
-            if (newValue === "" && path.length > 0) {
-              return obj;
-            }
-            return { ...obj, [first]: newValue };
-          } else {
-            return { ...obj, [first]: updateState(obj[first], rest, newValue) };
-          }
-        }
-
-        let newData = updateState(prevFormData, valuePath, selectedValue);
-        // Update text path only if selectedOption is found
-        if (selectedOption) {
-          newData = updateState(newData, textPath, selectedOption.label);
-        }
-        return newData;
-      });
-    };
-
-  const handleRadioButtonChange =
-    (name: keyof RegsitrationFormData) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        [name]: e.target.value,
-      }));
-    };
   const endpointPIC = "GetPICDropDownValues";
   const endpointConstantValues = "GetConstantValues";
   const endPointAppModifyList = "GetActiveAppModifyFieldsAsync";
@@ -435,7 +392,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                   <DropdownSelect
                     label="Age Unit"
                     name="AgeUnit"
-                    value={formData.PatOverview.PageDescription}
+                    value={formData.PatOverview.PageDescriptionValue}
                     options={ageUnitOptions}
                     onChange={handleDropdownChange(
                       ["PatOverview", "PageDescriptionValue"],
@@ -483,10 +440,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           <DropdownSelect
             label="Nationality"
             name="Nationality"
-            value={formData.PatAddress.PAddCountry}
+            value={formData.PatAddress.PAddCountryValue}
             options={nationalityValues}
             onChange={handleDropdownChange(
-              ["PatAddress", "PAddCountry"],
+              ["PatAddress", "PAddCountryValue"],
               ["PatAddress", "PAddCountry"],
               nationalityValues
             )}

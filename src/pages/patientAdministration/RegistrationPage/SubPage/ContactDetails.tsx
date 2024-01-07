@@ -12,6 +12,8 @@ import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "react-bootstrap";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import useDropdownChange from "../../../../hooks/useDropdownChange";
+import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 
 interface ContactDetailsProps {
   formData: RegsitrationFormData;
@@ -60,7 +62,7 @@ const useDropdownFetcher = (
     return () => {
       cancel = true;
     };
-  }, [token, endpoint, fieldCode]);
+  }, [token, fieldCode]);
 
   return { options, error };
 };
@@ -72,6 +74,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
 }) => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
+
+  const { handleDropdownChange } =
+    useDropdownChange<RegsitrationFormData>(setFormData);
+  const { handleRadioButtonChange } =
+    useRadioButtonChange<RegsitrationFormData>(setFormData);
+
   const endPointAppModifyList = "GetActiveAppModifyFieldsAsync";
   const { options: areaValues } = useDropdownFetcher(
     token,
@@ -86,74 +94,13 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
   const { options: countryValues } = useDropdownFetcher(
     token,
     endPointAppModifyList,
-    "NATIONALITY"
+    "ACTUALCOUNTRY"
   );
   const { options: companyValues } = useDropdownFetcher(
     token,
     endPointAppModifyList,
     "COMPANY"
   );
-
-  const handleDropdownChange =
-    (
-      valuePath: (string | number)[],
-      textPath: (string | number)[],
-      options: DropdownOption[]
-    ) =>
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const selectedValue = e.target.value;
-      const selectedOption = options.find(
-        (option) => option.value === selectedValue
-      );
-
-      setFormData((prevFormData) => {
-        // Recursive function to update the state
-        function updateState(
-          obj: any,
-          path: (string | number)[],
-          newValue: any
-        ): any {
-          const [first, ...rest] = path;
-
-          if (rest.length === 0) {
-            return { ...obj, [first]: newValue };
-          } else {
-            return { ...obj, [first]: updateState(obj[first], rest, newValue) };
-          }
-        }
-
-        const newData = updateState(prevFormData, valuePath, selectedValue);
-        return updateState(
-          newData,
-          textPath,
-          selectedOption ? selectedOption.label : ""
-        );
-      });
-    };
-  const handleRadioButtonChange =
-    (path: (string | number)[]) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      debugger;
-      const newValue = e.target.value;
-
-      setFormData((prevFormData) => {
-        // Function to recursively update the state
-        function updateState(
-          obj: any,
-          path: (string | number)[],
-          value: any
-        ): any {
-          const [first, ...rest] = path;
-
-          if (rest.length === 0) {
-            return { ...obj, [first]: value };
-          } else {
-            return { ...obj, [first]: updateState(obj[first], rest, value) };
-          }
-        }
-
-        return updateState(prevFormData, path, newValue);
-      });
-    };
 
   const smsOptions = [
     { value: "Y", label: "Yes" },
@@ -204,10 +151,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           <DropdownSelect
             label="Area"
             name="Area"
-            value={formData.PatAddress.PatArea}
+            value={formData.PatAddress.PatAreaValue}
             options={areaValues}
             onChange={handleDropdownChange(
-              ["PatAddress", "PatArea"],
+              ["PatAddress", "PatAreaValue"],
               ["PatAddress", "PatArea"],
               areaValues
             )}
@@ -218,12 +165,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           <DropdownSelect
             label="City"
             name="City"
-            value={formData.PatAddress.PAddCity}
+            value={String(formData.PatAddress.PAddCityValue)}
             options={cityValues}
             onChange={handleDropdownChange(
+              ["PatAddress", "PAddCityValue"],
               ["PatAddress", "PAddCity"],
-              ["PatAddress", "PAddCity"],
-              areaValues
+              cityValues
             )}
             size="sm"
           />
@@ -232,10 +179,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           <DropdownSelect
             label="Country"
             name="Country"
-            value={formData.PatAddress.PAddActualCountry}
+            value={formData.PatAddress.PAddActualCountryValue}
             options={countryValues}
             onChange={handleDropdownChange(
-              ["PatAddress", "PAddActualCountry"],
+              ["PatAddress", "PAddActualCountryValue"],
               ["PatAddress", "PAddActualCountry"],
               countryValues
             )}
@@ -286,12 +233,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           <DropdownSelect
             label="Company"
             name="Company"
-            value={formData.PatCompName}
+            value={formData.PatCompNameValue}
             options={companyValues}
             onChange={handleDropdownChange(
+              ["PatCompNameValue"],
               ["PatCompName"],
-              ["PatCompName"],
-              countryValues
+              companyValues
             )}
             size="sm"
           />
@@ -303,7 +250,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 name="receiveSMS"
                 label="Receive SMS"
                 options={smsOptions}
-                selectedValue={formData.PatAddress.PAddMailYN}
+                selectedValue={formData.PatAddress.PAddSMSYN}
                 onChange={handleRadioButtonChange(["PatAddress", "PAddSMSYN"])}
                 inline={true}
               />

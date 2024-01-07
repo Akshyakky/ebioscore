@@ -8,7 +8,7 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faEdit } from "@fortawesome/free-solid-svg-icons";
 import {
   Form,
   Button,
@@ -50,33 +50,10 @@ const RegistrationPage: React.FC = () => {
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
-  const [gridData, setGridData] = useState<Kin[]>([
-    {
-      id: 1,
-      name: "Jane Doe",
-      relationship: "Sister",
-      dob: "03-06-1997",
-      postCode: "12345",
-      address: "123 Main St",
-      mobile: "555-1234",
-      city: "Anytown",
-      patientType: "Registered",
-      NokFName: "",
-      NokLName: "",
-      NokBirthDate: "",
-      NokAddress: "",
-      NokArea: "",
-      NokCity: "",
-      NokCountry: "",
-      PAddPhone1: "",
-      NokPostCode: "",
-      NokNationality: "",
-      PNokPssnID: "",
-      PAddPhone2: "",
-      PAddPhone3: "",
-    },
-    // ... more kin objects
-  ]);
+  const [gridKinData, setGridKinData] = useState<Kin[]>([]);
+  const [gridPatientInsuranceData, setGridPatientInsuranceData] = useState<
+    InsuranceFormState[]
+  >([]);
 
   const [formData, setFormData] = useState<RegsitrationFormData>({
     PChartID: 0,
@@ -136,6 +113,7 @@ const RegistrationPage: React.FC = () => {
     SourceName: "",
     PPob: "",
     PatCompName: "",
+    PatCompNameValue: "",
     PatDataFormYN: "N",
     IntIdPsprt: "",
     TransferYN: "N",
@@ -170,10 +148,12 @@ const RegistrationPage: React.FC = () => {
       PAddEmail: "",
       PAddStreet: "",
       PAddStreet1: "",
+      PAddCityValue: "",
       PAddCity: "",
       PAddState: "",
       PAddPostcode: "",
       PAddCountry: "",
+      PAddCountryValue: "",
       PAddPhone1: "",
       PAddPhone2: "",
       PAddPhone3: "",
@@ -181,7 +161,9 @@ const RegistrationPage: React.FC = () => {
       CompCode: "",
       CompID: 0,
       CompName: "",
+      PAddActualCountryValue: "",
       PAddActualCountry: "",
+      PatAreaValue: "",
       PatArea: "",
       PatDoorNo: "",
       PChartCompID: 0,
@@ -190,9 +172,11 @@ const RegistrationPage: React.FC = () => {
 
   const handleOpenKinPopup = () => {
     setShowKinPopup(true);
+    setEditingKinData(undefined);
   };
   const handleCloseKinPopup = () => {
     setShowKinPopup(false);
+    setEditingKinData(undefined);
   };
   const handleOpenPInsurancePopup = () => {
     setInsurancePopup(true);
@@ -202,20 +186,39 @@ const RegistrationPage: React.FC = () => {
   };
 
   const handleSaveKinDetails = (kinDetails: Kin) => {
-    // If id is undefined, assign a new id
-    const newId = kinDetails.id ?? gridData.length + 1;
+    setGridKinData((prevGridData) => {
+      const updatedGridData = [...prevGridData];
+      const index = updatedGridData.findIndex(
+        (kin) => kin.PNokID === kinDetails.PNokID
+      );
 
-    const newKin: Kin = {
-      ...kinDetails,
-      id: newId,
-    };
-
-    setGridData([...gridData, newKin]);
+      if (index !== -1) {
+        updatedGridData[index] = kinDetails; // Edit existing
+      } else {
+        const newId = updatedGridData.length + 1;
+        updatedGridData.push({ ...kinDetails, PNokID: newId }); // Add new
+      }
+      return updatedGridData;
+    });
+    handleCloseKinPopup(); // Should be inside the state update callback if using functional update form
   };
 
   const handleSaveInsurance = (insuranceData: InsuranceFormState) => {
-    // Process the insurance data
-    console.log(insuranceData);
+    setGridPatientInsuranceData((prevData) => {
+      // Check if the insuranceData is new or existing
+      const existingIndex = prevData.findIndex(
+        (ins) => ins.OPIPInsID === insuranceData.OPIPInsID
+      );
+      if (existingIndex >= 0) {
+        // Replace the existing data
+        return prevData.map((ins, index) =>
+          index === existingIndex ? insuranceData : ins
+        );
+      } else {
+        // Add new insurance data
+        return [...prevData, insuranceData];
+      }
+    });
     handleClosePInsurancePopup();
   };
 
@@ -225,15 +228,100 @@ const RegistrationPage: React.FC = () => {
     console.log(formData);
   };
 
-  const gridColumns = [
-    { key: "name", header: "Name" },
-    { key: "relationship", header: "Relationship" },
-    { key: "dob", header: "DOB" },
-    { key: "postCode", header: "Post Code" },
-    { key: "address", header: "Address" },
-    { key: "mobile", header: "Mobile" },
-    { key: "city", header: "City" },
+  const gridKinColumns = [
+    {
+      key: "Nokedit",
+      header: "Edit",
+      render: (row: Kin) => (
+        <Button size="sm" onClick={() => handleEditKin(row)}>
+          <FontAwesomeIcon icon={faEdit} />
+        </Button>
+      ),
+    },
+    { key: "PNokRegYN", header: "NOK Type" },
+    {
+      key: "PNokFName",
+      header: "Name",
+      render: (row: Kin) => `${row.PNokFName} ${row.PNokLName}`,
+    },
+    { key: "PNokRelName", header: "Relationship" },
+    { key: "PNokDob", header: "DOB" },
+    { key: "NokPostCode", header: "Post Code" },
+    {
+      key: "Address",
+      header: "Address",
+      render: (row: Kin) =>
+        `${row.NokAddress} Area : ${row.PNokArea} City :  ${row.PNokCity} Country : ${row.PNokActualCountry} Nationality : ${row.PNokCountryValue}`,
+    },
+    { key: "PAddPhone1", header: "Mobile" },
+    { key: "PNokPssnID", header: "Passport Id/No" },
+    {
+      key: "Nokdelete",
+      header: "Delete",
+      render: (row: Kin) => (
+        <Button size="sm" onClick={() => handleDeleteKin(row.PNokID)}>
+          <FontAwesomeIcon icon={faTrash} />
+        </Button>
+      ),
+    },
   ];
+  const [editingKinData, setEditingKinData] = useState<Kin | undefined>(
+    undefined
+  );
+  const handleEditKin = (kin: Kin) => {
+    setEditingKinData(kin);
+    setShowKinPopup(true);
+  };
+  const gridPatientInsuranceColumns = [
+    {
+      key: "PInsuredit",
+      header: "Edit",
+      render: (row: InsuranceFormState) => (
+        <Button size="sm" onClick={() => handleEditPatientInsurance(row)}>
+          <FontAwesomeIcon icon={faEdit} />
+        </Button>
+      ),
+    },
+    { key: "InsurName", header: "Insurance Name" },
+    { key: "PolicyNumber", header: "Policy Number" },
+    { key: "CoveredFor", header: "Covered For" },
+    { key: "PolicyHolder", header: "Policy Holder" },
+    { key: "GroupNumber", header: "Group Number" },
+    { key: "PolicyStartDate", header: "Start Date" },
+    { key: "PolicyEndDate", header: "End Date" },
+    { key: "Guarantor", header: "Guarantor" },
+    { key: "Relation", header: "Relation" },    {
+      key: "PInsurdelete",
+      header: "Delete",
+      render: (row: InsuranceFormState) => (
+        <Button
+          size="sm"
+          onClick={() => handleDeletePatientInsurance(row.OPIPInsID)}
+        >
+          <FontAwesomeIcon icon={faTrash} />
+        </Button>
+      ),
+    },
+  ];
+  const [editingPatientInsuranceData, setEditingPatientInsuranceData] =
+    useState<InsuranceFormState | undefined>(undefined);
+  const handleEditPatientInsurance = (PatientInsurance: InsuranceFormState) => {
+    setEditingPatientInsuranceData(PatientInsurance);
+    setInsurancePopup(true);
+  };
+
+  const handleDeletePatientInsurance = (id: number) => {
+    const updatedGridData = gridPatientInsuranceData.filter(
+      (Insurance) => Insurance.OPIPInsID !== id
+    );
+    setGridPatientInsuranceData(updatedGridData);
+  };
+
+  const handleDeleteKin = (id: number) => {
+    const updatedGridData = gridKinData.filter((kin) => kin.PNokID !== id);
+    setGridKinData(updatedGridData);
+  };
+
   const handleClear = () => {
     // Clear form logic
     window.location.reload();
@@ -362,6 +450,7 @@ const RegistrationPage: React.FC = () => {
             show={showKinPopup}
             handleClose={handleCloseKinPopup}
             handleSave={handleSaveKinDetails}
+            editData={editingKinData}
           />
 
           <section aria-labelledby="NOK-header">
@@ -383,7 +472,7 @@ const RegistrationPage: React.FC = () => {
             </Row>
             <Row className="justify-content-between">
               <Col xs={12} sm={12} md={12} lg={12} xl={12} xxl={12}>
-                <CustomGrid columns={gridColumns} data={gridData} />
+                <CustomGrid columns={gridKinColumns} data={gridKinData} />
               </Col>
             </Row>
           </section>
@@ -392,6 +481,7 @@ const RegistrationPage: React.FC = () => {
             show={showInsurancePopup}
             handleClose={handleClosePInsurancePopup}
             handleSave={handleSaveInsurance}
+            editData={editingPatientInsuranceData}
           />
 
           <section aria-labelledby="NOK-header">
@@ -412,7 +502,10 @@ const RegistrationPage: React.FC = () => {
             </Row>
             <Row className="justify-content-between">
               <Col xs={12} sm={12} md={12} lg={12} xl={12} xxl={12}>
-                <CustomGrid columns={gridColumns} data={gridData} />
+                <CustomGrid
+                  columns={gridPatientInsuranceColumns}
+                  data={gridPatientInsuranceData}
+                />
               </Col>
             </Row>
           </section>

@@ -56,6 +56,7 @@ export interface RegsitrationFormData {
   SourceName: string;
   PPob: string;
   PatCompName: string;
+  PatCompNameValue: string;
   PatDataFormYN: string;
   IntIdPsprt: string;
   TransferYN: string;
@@ -91,9 +92,11 @@ export interface RegsitrationFormData {
     PAddStreet: string;
     PAddStreet1: string;
     PAddCity: string;
+    PAddCityValue: String;
     PAddState: string;
     PAddPostcode: string;
     PAddCountry: string;
+    PAddCountryValue: string;
     PAddPhone1: string;
     PAddPhone2: string;
     PAddPhone3: string;
@@ -102,9 +105,10 @@ export interface RegsitrationFormData {
     CompID: number;
     CompName: string;
     PAddActualCountry: string;
+    PAddActualCountryValue: string;
     PatArea: string;
+    PatAreaValue: string;
     PatDoorNo: string;
     PChartCompID: number;
   };
 }
-

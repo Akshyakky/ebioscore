@@ -5,7 +5,8 @@ export interface UserState {
   token: string | null;
   adminYN: string | null;
   userName: string | null;
-  compID:number|null;
+  compID: number | null;
+  tokenExpiry: number | null; // UNIX timestamp in milliseconds
 }
 
 // Action Types

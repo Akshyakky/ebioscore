@@ -1,17 +1,31 @@
-// useRadioButtonChange.ts
-import { useState } from 'react';
+import { Dispatch, SetStateAction } from "react";
 
-const useRadioButtonChange = <T extends object>(initialData: T) => {
-  const [formData, setFormData] = useState<T>(initialData);
+const useRadioButtonChange = <T extends object>(
+  setFormData: Dispatch<SetStateAction<T>>
+) => {
+  const handleRadioButtonChange = (path: string | (string | number)[]) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const pathArray = Array.isArray(path) ? path : [path];
 
-  const handleRadioButtonChange = (name: keyof T) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      [name]: e.target.value
-    }));
+    setFormData(prevFormData => {
+      let newData: any = { ...prevFormData };
+      let current: any = newData;
+
+      for (let i = 0; i < pathArray.length - 1; i++) {
+        const key = pathArray[i];
+        if (!(key in current)) {
+          current[key] = typeof pathArray[i + 1] === 'number' ? [] : {};
+        }
+        current = current[key];
+      }
+
+      current[pathArray[pathArray.length - 1]] = e.target.value;
+
+      return newData as T;
+    });
   };
 
-  return { formData, handleRadioButtonChange };
+  return { handleRadioButtonChange };
 };
+
 
 export default useRadioButtonChange;

@@ -136,9 +136,9 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
       case "/dashboard":
         setPageTitle("Dashboard");
         break;
-        case "/RegistrationPage":
-          setPageTitle("Registration");
-          break;
+      case "/RegistrationPage":
+        setPageTitle("Registration");
+        break;
       // Add more cases for other paths as needed
       default:
         setPageTitle("Default Page Title");
@@ -210,16 +210,16 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
             <FontAwesomeIcon icon={faBars} />
           </Navbar.Toggle>
 
-          <Navbar.Brand>{pageTitle}</Navbar.Brand>
+          <h3>{pageTitle}</h3>
           <NavDropdown
             id="dropdown-button-dark-example2"
             menuVariant="dark"
             title={
-              <>
+              <div style={{ display: "inline-block", padding: "10px" }}>
                 <FontAwesomeIcon icon={faUser} className="me-2" />
                 {userInfo.userName || "Profile"}{" "}
                 {/* Display user name or fallback to 'Profile' */}
-              </>
+              </div>
             }
             className="custom-profile-dropdown me-2" // Added custom class here
             data-bs-theme="dark"

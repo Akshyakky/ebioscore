@@ -12,33 +12,43 @@ import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import TextBox from "../../../../components/TextBox/TextBox ";
 import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSave, faTimes } from "@fortawesome/free-solid-svg-icons";
 
 interface NextOfKinPopupProps {
   show: boolean;
   handleClose: () => void;
   handleSave: (kinDetails: Kin) => void;
+  editData?: Kin | null;
 }
 
 const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
   show,
   handleClose,
   handleSave,
+  editData,
 }) => {
   const [kinData, setKinData] = useState<Kin>({
-    name: "",
-    mobile: "",
-    relationship: "",
-    patientType: "Reg",
-    NokFName: "",
-    NokLName: "",
-    NokBirthDate: "",
+    PNokID: 0,
+    PNokRelName: "",
+    PNokRelNameValue: "",
+    PNokRegYN: "Y",
+    PNokTitleValue: "",
+    PNokTitle: "",
+    PNokFName: "",
+    PNokLName: "",
+    PNokDob: "",
     NokAddress: "",
-    NokArea: "",
-    NokCity: "",
-    NokCountry: "",
+    PNokAreaValue: "",
+    PNokArea: "",
+    PNokCityValue: "",
+    PNokCity: "",
+    PNokActualCountryValue: "",
+    PNokActualCountry: "",
     PAddPhone1: "",
     NokPostCode: "",
-    NokNationality: "",
+    PNokCountryValue: "",
+    PNokCountry: "",
     PNokPssnID: "",
     PAddPhone2: "",
     PAddPhone3: "",
@@ -47,8 +57,8 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
-  const { handleDropdownChange } = useDropdownChange(kinData);
-  const { handleRadioButtonChange } = useRadioButtonChange(kinData);
+  const { handleDropdownChange } = useDropdownChange<Kin>(setKinData);
+  const { handleRadioButtonChange } = useRadioButtonChange<Kin>(setKinData);
   const [relationValues, setRelationValues] = useState<DropdownOption[]>([]);
   const [areaValues, setAreaValues] = useState<DropdownOption[]>([]);
   const [cityValues, setCityValues] = useState<DropdownOption[]>([]);
@@ -64,8 +74,8 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
   };
 
   const regOptions = [
-    { value: "Reg", label: "Registered" },
-    { value: "NonReg", label: "Non Registered" },
+    { value: "Y", label: "Registered" },
+    { value: "N", label: "Non Registered" },
   ];
 
   const endpointConstantValues = "GetConstantValues";
@@ -125,7 +135,7 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
         const responseCountry = await AppModifyListService.fetchAppModifyList(
           token,
           endPointAppModifyList,
-          "NATIONALITY"
+          "ACTUALCOUNTRY"
         );
         const transformedCountryData: DropdownOption[] = responseCountry.map(
           (item) => ({
@@ -143,9 +153,20 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
 
     loadDropdownValues();
   }, [token]);
-
+  
+  useEffect(() => {
+    if (editData) {
+      setKinData(editData);
+    }
+  }, [editData]);
   return (
-    <Modal className="custom-large-modal" show={show} onHide={handleClose}>
+    <Modal
+      className="custom-large-modal"
+      scrollable={true}
+      show={show}
+      onHide={handleClose}
+      backdrop={"static"}
+    >
       <Modal.Header closeButton className="bg-dark text-white">
         <Modal.Title>Add Next of Kin</Modal.Title>
       </Modal.Header>
@@ -156,8 +177,8 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               name="RegOrNonReg"
               label="NOK Type"
               options={regOptions}
-              selectedValue={kinData.patientType}
-              onChange={handleRadioButtonChange("patientType")}
+              selectedValue={kinData.PNokRegYN}
+              onChange={handleRadioButtonChange("PNokRegYN")}
               inline={true}
             />
           </Col>
@@ -165,11 +186,11 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             <DropdownSelect
               label="Title"
               name="Title"
-              value={kinData.patientType}
+              value={String(kinData.PNokTitleValue)}
               options={titleValues}
               onChange={handleDropdownChange(
-                ["PTitleValue"],
-                ["PTitle"],
+                ["PNokTitleValue"],
+                ["PNokTitle"],
                 titleValues
               )}
               size="sm"
@@ -184,9 +205,9 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               size="sm"
               placeholder="First Name"
               onChange={(e) =>
-                setKinData({ ...kinData, NokFName: e.target.value })
+                setKinData({ ...kinData, PNokFName: e.target.value })
               }
-              value={kinData.NokFName}
+              value={kinData.PNokFName}
               isMandatory={true}
             />
           </Col>
@@ -198,9 +219,9 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               size="sm"
               placeholder="Last Name"
               onChange={(e) =>
-                setKinData({ ...kinData, NokLName: e.target.value })
+                setKinData({ ...kinData, PNokLName: e.target.value })
               }
-              value={kinData.NokFName}
+              value={kinData.PNokLName}
               isMandatory={true}
             />
           </Col>
@@ -210,11 +231,11 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             <DropdownSelect
               label="Relationship"
               name="Relationship"
-              value={kinData.patientType}
+              value={kinData.PNokRelNameValue}
               options={relationValues}
               onChange={handleDropdownChange(
-                ["relationshipValues"],
-                ["relationship"],
+                ["PNokRelNameValue"],
+                ["PNokRelName"],
                 relationValues
               )}
               size="sm"
@@ -229,9 +250,9 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               size="sm"
               placeholder="Birth Date"
               onChange={(e) =>
-                setKinData({ ...kinData, NokBirthDate: e.target.value })
+                setKinData({ ...kinData, PNokDob: e.target.value })
               }
-              value={kinData.NokFName}
+              value={kinData.PNokDob}
               isMandatory={true}
             />
           </Col>
@@ -267,11 +288,11 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             <DropdownSelect
               label="Area"
               name="Area"
-              value={kinData.NokArea}
+              value={kinData.PNokAreaValue}
               options={areaValues}
               onChange={handleDropdownChange(
-                ["PatArea"],
-                ["PatArea"],
+                ["PNokAreaValue"],
+                ["PNokArea"],
                 areaValues
               )}
               size="sm"
@@ -281,11 +302,11 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             <DropdownSelect
               label="City"
               name="City"
-              value={kinData.NokCity}
+              value={kinData.PNokCityValue}
               options={cityValues}
               onChange={handleDropdownChange(
-                ["PAddCity"],
-                ["PAddCity"],
+                ["PNokCityValue"],
+                ["PNokCity"],
                 areaValues
               )}
               size="sm"
@@ -295,11 +316,11 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             <DropdownSelect
               label="Country"
               name="Country"
-              value={kinData.NokCountry}
+              value={kinData.PNokActualCountryValue}
               options={countryValues}
               onChange={handleDropdownChange(
-                ["PAddActualCountry"],
-                ["PAddActualCountry"],
+                ["PNokActualCountryValue"],
+                ["PNokActualCountry"],
                 countryValues
               )}
               size="sm"
@@ -324,11 +345,11 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             <DropdownSelect
               label="Nationality"
               name="Nationality"
-              value={kinData.NokNationality}
+              value={kinData.PNokCountryValue}
               options={countryValues}
               onChange={handleDropdownChange(
-                ["PAddActualCountry"],
-                ["PAddActualCountry"],
+                ["PNokCountryValue"],
+                ["PNokCountry"],
                 countryValues
               )}
               size="sm"
@@ -344,7 +365,7 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               onChange={(e) =>
                 setKinData({ ...kinData, PNokPssnID: e.target.value })
               }
-              value={kinData.NokPostCode}
+              value={kinData.PNokPssnID}
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
@@ -357,7 +378,7 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               onChange={(e) =>
                 setKinData({ ...kinData, PAddPhone2: e.target.value })
               }
-              value={kinData.NokPostCode}
+              value={kinData.PAddPhone2}
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
@@ -370,17 +391,17 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               onChange={(e) =>
                 setKinData({ ...kinData, PAddPhone3: e.target.value })
               }
-              value={kinData.NokPostCode}
+              value={kinData.PAddPhone3}
             />
           </Col>
         </Row>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={handleClose}>
-          Close
+        <Button variant="secondary" size="sm" onClick={handleClose}>
+          <FontAwesomeIcon icon={faTimes} /> Close
         </Button>
-        <Button variant="primary" onClick={handleSubmit}>
-          Save
+        <Button variant="primary" size="sm" onClick={handleSubmit}>
+          <FontAwesomeIcon icon={faSave} /> Save
         </Button>
       </Modal.Footer>
     </Modal>

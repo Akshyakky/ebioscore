@@ -10,6 +10,7 @@ import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button } from "react-bootstrap";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import useDropdownChange from "../../../../hooks/useDropdownChange";
 
 interface MembershipSchemeProps {
   formData: RegsitrationFormData;
@@ -23,6 +24,8 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
   const [membershipSchemes, setMembershipScheme] = useState<DropdownOption[]>(
     []
   );
+  const { handleDropdownChange } =
+    useDropdownChange<RegsitrationFormData>(setFormData);
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
   const compID = userInfo.compID!;
@@ -48,43 +51,6 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
 
     loadDropdownData();
   }, [token]);
-
-  const handleDropdownChange =
-    (
-      valuePath: (string | number)[],
-      textPath: (string | number)[],
-      options: DropdownOption[]
-    ) =>
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const selectedValue = e.target.value;
-      const selectedOption = options.find(
-        (option) => option.value === selectedValue
-      );
-
-      setFormData((prevFormData) => {
-        // Recursive function to update the state
-        function updateState(
-          obj: any,
-          path: (string | number)[],
-          newValue: any
-        ): any {
-          const [first, ...rest] = path;
-
-          if (rest.length === 0) {
-            return { ...obj, [first]: newValue };
-          } else {
-            return { ...obj, [first]: updateState(obj[first], rest, newValue) };
-          }
-        }
-
-        const newData = updateState(prevFormData, valuePath, selectedValue);
-        return updateState(
-          newData,
-          textPath,
-          selectedOption ? selectedOption.label : ""
-        );
-      });
-    };
 
   return (
     <section aria-labelledby="membership-scheme-header">
