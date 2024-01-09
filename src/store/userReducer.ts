@@ -8,6 +8,8 @@ const initialState: UserState = {
   adminYN: null,
   userName: null,
   compID: null,
+  compName: null,
+  compCode: null,
   tokenExpiry: null,
 };
 
@@ -24,6 +26,8 @@ const userReducer = (
         adminYN: action.payload.adminYN,
         userName: action.payload.userName,
         compID: action.payload.compID,
+        compCode: action.payload.compCode,
+        compName: action.payload.compName,
         tokenExpiry: action.payload.tokenExpiry,
       };
     case LOGOUT:

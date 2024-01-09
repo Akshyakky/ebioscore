@@ -1,31 +1,43 @@
 import { Dispatch, SetStateAction } from "react";
+import { RadioButtonOption } from "../interfaces/Common/RadioButtonOption";
 
 const useRadioButtonChange = <T extends object>(
   setFormData: Dispatch<SetStateAction<T>>
 ) => {
-  const handleRadioButtonChange = (path: string | (string | number)[]) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const pathArray = Array.isArray(path) ? path : [path];
+  const handleRadioButtonChange =
+    (
+      valuePath: (string | number)[],
+      textPath: (string | number)[],
+      options: RadioButtonOption[]
+    ) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedValue = e.target.value;
+      const selectedOption = options.find(
+        (option) => option.value === selectedValue
+      );
 
-    setFormData(prevFormData => {
-      let newData: any = { ...prevFormData };
-      let current: any = newData;
+      setFormData((prevFormData) => {
+        let newData: any = { ...prevFormData };
+        let valueCurrent: any = newData;
+        let textCurrent: any = newData;
 
-      for (let i = 0; i < pathArray.length - 1; i++) {
-        const key = pathArray[i];
-        if (!(key in current)) {
-          current[key] = typeof pathArray[i + 1] === 'number' ? [] : {};
+        for (let i = 0; i < valuePath.length - 1; i++) {
+          valueCurrent = valueCurrent[valuePath[i]];
         }
-        current = current[key];
-      }
+        valueCurrent[valuePath[valuePath.length - 1]] = selectedValue;
 
-      current[pathArray[pathArray.length - 1]] = e.target.value;
+        if (selectedOption && textPath.length > 0) {
+          for (let i = 0; i < textPath.length - 1; i++) {
+            textCurrent = textCurrent[textPath[i]];
+          }
+          textCurrent[textPath[textPath.length - 1]] = selectedOption.label;
+        }
 
-      return newData as T;
-    });
-  };
+        return newData;
+      });
+    };
 
   return { handleRadioButtonChange };
 };
-
 
 export default useRadioButtonChange;

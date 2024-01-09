@@ -26,37 +26,63 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
   handleSave,
   editData,
 }) => {
+  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const token = userInfo.token!;
   // State for the insurance form
-  const [insuranceForm, setInsuranceForm] = useState<InsuranceFormState>({
+  const insuranceFormInitialState: InsuranceFormState = {
     OPIPInsID: 0,
+    PChartID: 0,
     InsurID: 0,
+    InsurCode: "",
     InsurName: "",
-    PolicyHolder: "",
     PolicyNumber: "",
+    PolicyHolder: "",
     GroupNumber: "",
-    PolicyStartDate: "",
-    PolicyEndDate: "",
+    PolicyStartDt: "",
+    PolicyEndDt: "",
     Guarantor: "",
-    RelationValue: "",
+    RelationVal: "",
     Relation: "",
-    CoveredID: 0,
-    CoveredFor: "",
     Address1: "",
     Address2: "",
     Phone1: "",
     Phone2: "",
-    Remarks: "",
-  });
+    RActiveYN: "Y",
+    RCreatedID: userInfo.userID !== null ? userInfo.userID : 0,
+    RCreatedBy: userInfo.userName !== null ? userInfo.userName : "",
+    RCreatedOn: new Date().toISOString().split("T")[0],
+    RModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
+    RModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
+    RModifiedOn: new Date().toISOString().split("T")[0],
+    RNotes: "",
+    CompID: userInfo.compID !== null ? userInfo.compID : 0,
+    CompCode: userInfo.compCode !== null ? userInfo.compCode : "",
+    CompName: userInfo.compName !== null ? userInfo.compName : "",
+    InsurStatusCode: "",
+    InsurStatusName: "",
+    PChartCode: "",
+    PChartCompID: "0",
+    ReferenceNo: "",
+    TransferYN: "N",
+    CoveredVal: "",
+    CoveredFor: "",
+  };
+
+  const [insuranceForm, setInsuranceForm] = useState<InsuranceFormState>(
+    insuranceFormInitialState
+  );
   const [insuranceOptions, setInsuranceOptions] = useState<DropdownOption[]>(
     []
   );
   const [relationValues, setRelationValues] = useState<DropdownOption[]>([]);
   const [coverForValues, setCoverForValues] = useState<DropdownOption[]>([]);
-  const userInfo = useSelector((state: RootState) => state.userDetails);
-  const token = userInfo.token!;
 
   const { handleDropdownChange } =
     useDropdownChange<InsuranceFormState>(setInsuranceForm);
+
+  const resetInsuranceFormData = () => {
+    setInsuranceForm(insuranceFormInitialState);
+  };
 
   useEffect(() => {
     if (editData) {
@@ -66,6 +92,11 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
   // Function to handle form submission
   const handleSubmit = () => {
     handleSave(insuranceForm);
+    resetInsuranceFormData();
+    handleClose();
+  };
+  const handleCloseWithClear = () => {
+    resetInsuranceFormData();
     handleClose();
   };
   const endpoint = "GetAllActiveForDropDown";
@@ -192,11 +223,11 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
               type="date"
               size="sm"
               placeholder="Policy Start Date"
-              value={insuranceForm.PolicyStartDate}
+              value={insuranceForm.PolicyStartDt}
               onChange={(e) =>
                 setInsuranceForm({
                   ...insuranceForm,
-                  PolicyStartDate: e.target.value,
+                  PolicyStartDt: e.target.value,
                 })
               }
             />
@@ -208,11 +239,11 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
               type="date"
               size="sm"
               placeholder="Policy End Date"
-              value={insuranceForm.PolicyEndDate}
+              value={insuranceForm.PolicyEndDt}
               onChange={(e) =>
                 setInsuranceForm({
                   ...insuranceForm,
-                  PolicyEndDate: e.target.value,
+                  PolicyEndDt: e.target.value,
                 })
               }
             />
@@ -237,10 +268,10 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
             <DropdownSelect
               label="Relationship"
               name="Relationship"
-              value={insuranceForm.RelationValue}
+              value={insuranceForm.RelationVal}
               options={relationValues}
               onChange={handleDropdownChange(
-                ["RelationValue"],
+                ["RelationVal"],
                 ["Relation"],
                 relationValues
               )}
@@ -253,10 +284,10 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
             <DropdownSelect
               label="CoveredFor"
               name="Covered For"
-              value={String(insuranceForm.CoveredID)}
+              value={String(insuranceForm.CoveredVal)}
               options={coverForValues}
               onChange={handleDropdownChange(
-                ["CoveredID"],
+                ["CoveredVal"],
                 ["CoveredFor"],
                 coverForValues
               )}
@@ -336,11 +367,11 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
               type="text"
               size="sm"
               placeholder="Remarks"
-              value={insuranceForm.Remarks}
+              value={insuranceForm.RNotes}
               onChange={(e) =>
                 setInsuranceForm({
                   ...insuranceForm,
-                  Remarks: e.target.value,
+                  RNotes: e.target.value,
                 })
               }
             />
@@ -348,7 +379,7 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
         </Row>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" size="sm" onClick={handleClose}>
+        <Button variant="secondary" size="sm" onClick={handleCloseWithClear}>
           <FontAwesomeIcon icon={faTimes} /> Close
         </Button>
         <Button variant="primary" size="sm" onClick={handleSubmit}>

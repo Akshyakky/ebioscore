@@ -121,12 +121,16 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
             name="visitDetails"
             label="Visit To"
             options={visitOptions}
-            selectedValue={formData.RNote}
-            onChange={handleRadioButtonChange("RNote")}
+            selectedValue={formData.OPVisits.VisitTypeVal}
+            onChange={handleRadioButtonChange(
+              ["OPVisits", "VisitTypeVal"],
+              ["OPVisits", "VisitType"],
+              visitOptions
+            )}
             inline={true}
           />
         </Col>
-        {formData.RNote === "H" && (
+        {formData.OPVisits.VisitTypeVal === "H" && (
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
             <DropdownSelect
               label="Department"
@@ -143,7 +147,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
             />
           </Col>
         )}
-        {formData.RNote === "P" && (
+        {formData.OPVisits.VisitTypeVal === "P" && (
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
             <DropdownSelect
               name="AttendingPhysician"
@@ -160,7 +164,8 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
             />
           </Col>
         )}
-        {(formData.RNote === "P" || formData.RNote === "H") && (
+        {(formData.OPVisits.VisitTypeVal === "P" ||
+          formData.OPVisits.VisitTypeVal === "H") && (
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
             <DropdownSelect
               name="PrimaryIntroducingSource"
@@ -170,7 +175,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
               onChange={handleDropdownChange(
                 ["SourceID"],
                 ["SourceName"],
-                attendingPhy
+                primaryIntroducingSource
               )}
               isSubmitted={isSubmitted}
               isMandatory={true}

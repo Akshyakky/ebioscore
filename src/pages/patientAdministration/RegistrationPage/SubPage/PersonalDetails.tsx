@@ -265,10 +265,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           <DropdownSelect
             label="Title"
             name="Title"
-            value={formData.PTitleValue}
+            value={formData.PTitleVal}
             options={titleValues}
             onChange={handleDropdownChange(
-              ["PTitleValue"],
+              ["PTitleVal"],
               ["PTitle"],
               titleValues
             )}
@@ -329,10 +329,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           <DropdownSelect
             label="Gender"
             name="Gender"
-            value={formData.PGenderValue}
+            value={formData.PGenderVal}
             options={genderValues}
             onChange={handleDropdownChange(
-              ["PGenderValue"],
+              ["PGenderVal"],
               ["PGender"],
               genderValues
             )}
@@ -355,8 +355,12 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
               <RadioGroup
                 name="ageOrDob"
                 options={radioOptions}
-                selectedValue={formData.DobYN}
-                onChange={handleRadioButtonChange("DobYN")}
+                selectedValue={formData.PDobOrAgeVal}
+                onChange={handleRadioButtonChange(
+                  ["PDobOrAgeVal"],
+                  ["PDobOrAge"],
+                  radioOptions
+                )}
                 inline={true}
               />
             </Col>
@@ -368,7 +372,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
               xxl={9}
               className="d-flex justify-content-start"
             >
-              {formData.DobYN === "N" ? (
+              {formData.PDobOrAgeVal === "N" ? (
                 <>
                   <TextBox
                     ControlID="Age"
@@ -392,10 +396,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                   <DropdownSelect
                     label="Age Unit"
                     name="AgeUnit"
-                    value={formData.PatOverview.PageDescriptionValue}
+                    value={formData.PatOverview.PageDescriptionVal}
                     options={ageUnitOptions}
                     onChange={handleDropdownChange(
-                      ["PatOverview", "PageDescriptionValue"],
+                      ["PatOverview", "PageDescriptionVal"],
                       ["PatOverview", "PageDescription"],
                       ageUnitOptions
                     )}
@@ -440,10 +444,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           <DropdownSelect
             label="Nationality"
             name="Nationality"
-            value={formData.PatAddress.PAddCountryValue}
+            value={formData.PatAddress.PAddCountryVal}
             options={nationalityValues}
             onChange={handleDropdownChange(
-              ["PatAddress", "PAddCountryValue"],
+              ["PatAddress", "PAddCountryVal"],
               ["PatAddress", "PAddCountry"],
               nationalityValues
             )}

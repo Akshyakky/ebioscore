@@ -1,27 +1,39 @@
 // interfaces/Kin.ts
-
-export interface Kin {
+export interface NextOfKinKinFormState {
   PNokID: number;
-  PNokRelName: string;
-  PNokRelNameValue: string;
-  PNokRegYN: string;
-  PNokTitleValue: string;
+  PChartID: number;
+  PNokPChartID: number;
+  PNokRegStatusVal: string; 
+  PNokRegStatus: string;   
+  PNokPssnID: string;
+  PNokDob: string;
+  PNokRelNameVal: string; //2
+  PNokRelName : string;
+  PNokTitleVal: string; //3
   PNokTitle: string;
   PNokFName: string;
+  PNokMName: string;
   PNokLName: string;
-  PNokDob: string;
-  NokAddress: string;
-  PNokAreaValue: string;
-  PNokArea: string;
-  PNokCityValue: string;
-  PNokCity: string;
-  PNokActualCountryValue: string;
+  PNokActualCountryVal: string; //4
   PNokActualCountry: string;
-  PAddPhone1: string;
-  NokPostCode: string;
-  PNokCountryValue: string;
+  PNokAreaVal: string; //5
+  PNokArea: string;
+  PNokCityVal: string; //6
+  PNokCity: string;
+  PNokCountryVal: string; //7
   PNokCountry: string;
-  PNokPssnID: string;
+  PNokDoorNo: string;
+  PAddPhone1: string;
   PAddPhone2: string;
   PAddPhone3: string;
+  PNokPostcode: string;
+  PNokState: string;
+  PNokStreet: string;
+  RActiveYN: string;
+  RCreatedID: number;
+  RCreatedBy: string;
+  RCreatedOn: string;
+  RModifiedID: number;
+  RModifiedBy: string;
+  RModifiedOn: string;
 }

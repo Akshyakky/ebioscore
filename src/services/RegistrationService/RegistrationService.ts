@@ -2,13 +2,15 @@
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
 import { RegsitrationFormData } from "../../interfaces/PatientAdministration/registrationFormData";
+import { NextOfKinKinFormState } from "../../interfaces/PatientAdministration/NextOfKinData";
+import { InsuranceFormState } from "../../interfaces/PatientAdministration/InsuranceDetails";
 
 const getLatestUHID = async (
   token: string,
   endpoint: string
 ): Promise<string> => {
   try {
-    const url = `${APIConfig.patientAdministrationURL}${endpoint}`;
+    const url = `${APIConfig.patientAdministrationURL}Registration/${endpoint}`;
     const headers = { Authorization: `Bearer ${token}` };
     const response = await axios.get(url, {
       headers,
@@ -29,7 +31,7 @@ export const saveRegistration = async (
   formData: RegsitrationFormData
 ): Promise<any> => {
   try {
-    const url = `${APIConfig.patientAdministrationURL}SavePatientRegistration`;
+    const url = `${APIConfig.patientAdministrationURL}Registration/SavePatientRegistration`;
     //const apiData: ApiPatientData = transformToApiData(formData);
     const headers = {
       Authorization: `Bearer ${token}`,
@@ -52,7 +54,64 @@ export const saveRegistration = async (
   }
 };
 
+// Add the saveNokDetails method to your RegistrationService
+
+export const saveNokDetails = async (
+  token: string,
+  nokData: NextOfKinKinFormState
+): Promise<any> => {
+  try {
+    const url = `${APIConfig.patientAdministrationURL}PatNok/SaveNokDetails`;
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+    const response = await axios.post(url, nokData, { headers });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      // Type guard for AxiosError
+      if (error.response && error.response.status === 400) {
+        // Handle validation error
+        throw error.response.data;
+      }
+    }
+    // Handle other types of errors
+    console.error("An unexpected error occurred:", error);
+    throw new Error("An unexpected error occurred");
+  }
+};
+
+export const savePatientInsuranceDetails = async (
+  token: string,
+  insuranceData: InsuranceFormState
+): Promise<any> => {
+  try {
+    const url = `${APIConfig.patientAdministrationURL}OPIPInsurances/AddOrUpdateOPIPInsurance`;
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+    const response = await axios.post(url, insuranceData, { headers });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      // Type guard for AxiosError
+      if (error.response && error.response.status === 400) {
+        // Handle validation error
+        throw error.response.data;
+      }
+    }
+    // Handle other types of errors
+    console.error("An unexpected error occurred:", error);
+    throw new Error("An unexpected error occurred");
+  }
+};
+
+// Add saveNokDetails to the exported object
 export const RegistrationService = {
   getLatestUHID,
   saveRegistration,
+  saveNokDetails,
+  savePatientInsuranceDetails
 };

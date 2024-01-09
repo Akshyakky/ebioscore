@@ -8,24 +8,41 @@ import { LOGOUT } from "../store/userTypes"; // Import the LOGOUT action type
 const useCheckTokenExpiry = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const token = useSelector((state: RootState) => state.userDetails.token);
   const tokenExpiry = useSelector(
     (state: RootState) => state.userDetails.tokenExpiry
   );
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    let inactivityTimer: number;
+    let lastActivityTime = Date.now();
+
+    const resetInactivityTimer = () => {
+      lastActivityTime = Date.now();
+    };
+
+    const checkInactivity = () => {
       const currentTime = Date.now();
-      if (tokenExpiry && currentTime >= tokenExpiry) {
-        // Dispatch the logout action directly
+      if (tokenExpiry && currentTime - lastActivityTime >= tokenExpiry) {
         dispatch({ type: LOGOUT });
-        // Navigate to the login page
         navigate("/login");
       }
-    }, 60000); // Check every minute
+    };
 
-    return () => clearInterval(interval);
-  }, [token, tokenExpiry, dispatch, navigate]);
+    window.addEventListener("mousemove", resetInactivityTimer);
+    window.addEventListener("mousedown", resetInactivityTimer);
+    window.addEventListener("keypress", resetInactivityTimer);
+    window.addEventListener("scroll", resetInactivityTimer);
+
+    inactivityTimer = window.setInterval(checkInactivity, 60000); // Check every minute
+
+    return () => {
+      clearInterval(inactivityTimer);
+      window.removeEventListener("mousemove", resetInactivityTimer);
+      window.removeEventListener("mousedown", resetInactivityTimer);
+      window.removeEventListener("keypress", resetInactivityTimer);
+      window.removeEventListener("scroll", resetInactivityTimer);
+    };
+  }, [dispatch, navigate, tokenExpiry]);
 
   return null;
 };

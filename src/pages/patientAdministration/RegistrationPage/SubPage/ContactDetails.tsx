@@ -151,10 +151,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           <DropdownSelect
             label="Area"
             name="Area"
-            value={formData.PatAddress.PatAreaValue}
+            value={formData.PatAddress.PatAreaVal}
             options={areaValues}
             onChange={handleDropdownChange(
-              ["PatAddress", "PatAreaValue"],
+              ["PatAddress", "PatAreaVal"],
               ["PatAddress", "PatArea"],
               areaValues
             )}
@@ -165,10 +165,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           <DropdownSelect
             label="City"
             name="City"
-            value={String(formData.PatAddress.PAddCityValue)}
+            value={String(formData.PatAddress.PAddCityVal)}
             options={cityValues}
             onChange={handleDropdownChange(
-              ["PatAddress", "PAddCityValue"],
+              ["PatAddress", "PAddCityVal"],
               ["PatAddress", "PAddCity"],
               cityValues
             )}
@@ -179,10 +179,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           <DropdownSelect
             label="Country"
             name="Country"
-            value={formData.PatAddress.PAddActualCountryValue}
+            value={formData.PatAddress.PAddActualCountryVal}
             options={countryValues}
             onChange={handleDropdownChange(
-              ["PatAddress", "PAddActualCountryValue"],
+              ["PatAddress", "PAddActualCountryVal"],
               ["PatAddress", "PAddActualCountry"],
               countryValues
             )}
@@ -233,10 +233,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           <DropdownSelect
             label="Company"
             name="Company"
-            value={formData.PatCompNameValue}
+            value={formData.PatCompNameVal}
             options={companyValues}
             onChange={handleDropdownChange(
-              ["PatCompNameValue"],
+              ["PatCompNameVal"],
               ["PatCompName"],
               companyValues
             )}
@@ -250,8 +250,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 name="receiveSMS"
                 label="Receive SMS"
                 options={smsOptions}
-                selectedValue={formData.PatAddress.PAddSMSYN}
-                onChange={handleRadioButtonChange(["PatAddress", "PAddSMSYN"])}
+                selectedValue={formData.PatAddress.PAddSMSVal}
+                onChange={handleRadioButtonChange(
+                  ["PatAddress", "PAddSMSVal"],
+                  ["PatAddress", "PAddSMS"],
+                  smsOptions
+                )}
                 inline={true}
               />
             </Col>
@@ -260,8 +264,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 name="receiveEmail"
                 label="Receive Email"
                 options={emailOptions}
-                selectedValue={formData.PatAddress.PAddMailYN}
-                onChange={handleRadioButtonChange(["PatAddress", "PAddMailYN"])}
+                selectedValue={formData.PatAddress.PAddMailVal}
+                onChange={handleRadioButtonChange(
+                  ["PatAddress", "PAddMailVal"],
+                  ["PatAddress", "PAddMail"],
+                  emailOptions
+                )}
                 inline={true}
               />
             </Col>

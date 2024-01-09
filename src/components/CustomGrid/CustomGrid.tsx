@@ -1,4 +1,3 @@
-import React from "react";
 import { Table } from "react-bootstrap";
 
 // Define a generic type with an index signature
@@ -7,6 +6,7 @@ type GenericObject = { [key: string]: any };
 interface Column<T> {
   key: string;
   header: string;
+  visible: boolean;
   render?: (item: T) => JSX.Element | string;
 }
 
@@ -26,21 +26,26 @@ const CustomGrid = <T extends GenericObject>({
     }
     return item[column.key];
   };
+
   return (
     <Table striped bordered hover responsive>
       <thead>
         <tr>
-          {columns.map((col) => (
-            <th key={col.key}>{col.header}</th>
-          ))}
+          {columns
+            .filter((col) => col.visible)
+            .map((col) => (
+              <th key={col.key}>{col.header}</th>
+            ))}
         </tr>
       </thead>
       <tbody>
         {data.map((item, rowIndex) => (
           <tr key={`row-${rowIndex}`}>
-            {columns.map((col) => (
-              <td key={`${col.key}-${rowIndex}`}>{renderCell(item, col)}</td>
-            ))}
+            {columns
+              .filter((col) => col.visible)
+              .map((col) => (
+                <td key={`${col.key}-${rowIndex}`}>{renderCell(item, col)}</td>
+              ))}
           </tr>
         ))}
       </tbody>

@@ -23,14 +23,15 @@ import { useDispatch } from "react-redux";
 import { SET_USER_DETAILS } from "../../../store/userTypes";
 
 type Company = {
-  compID: number;
+  compIDCompCode: string;
   compName: string;
 };
 
 const LoginPage = () => {
   const [UserName, setUsername] = useState("");
   const [Password, setPassword] = useState("");
-  const [company, setCompany] = useState("");
+  const [companyID, setCompanyID] = useState("");
+  const [companyCode, setCompanyCode] = useState("");
   const [companies, setCompanies] = useState<Company[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -124,7 +125,7 @@ const LoginPage = () => {
       return;
     }
 
-    if (!company || company === "") {
+    if (!companyID || companyID === "") {
       setErrorMessage("Please select a company.");
       return; // Exit the function if no company is selected
     }
@@ -145,7 +146,9 @@ const LoginPage = () => {
             token: tokenResponse.token,
             adminYN: tokenResponse.user.adminYN, // should be string | null
             userName: tokenResponse.user.userName,
-            compID: parseInt(company),
+            compID: parseInt(companyID),
+            compCode: companyCode,
+            compName: selectedCompanyName,
             tokenExpiry: tokenExpiryTime,
           },
         });
@@ -157,7 +160,9 @@ const LoginPage = () => {
           tokenResponse.user.conID,
           tokenResponse.user.adminYN,
           tokenResponse.user.physicianYN,
-          parseInt(company)
+          parseInt(companyID),
+          companyCode,
+          selectedCompanyName
         );
         navigate("/dashboard");
         // Save the token in local storage or context, handle user redirection, etc.
@@ -195,11 +200,31 @@ const LoginPage = () => {
     }
   };
 
-  const handleSelectCompany = (compID: number, compName: string) => {
-    setCompany(compID.toString());
-    setSelectedCompanyName(compName); // Update the display name
-    if (errorMessage === "Please select a company.") {
-      setErrorMessage("");
+  const handleSelectCompany = (CompIDCompCode: string, compName: string) => {
+    debugger;
+    // Check if CompIDCompCode is a string and not undefined
+    if (typeof CompIDCompCode === "string") {
+      const parts = CompIDCompCode.split(",");
+      if (parts.length >= 2) {
+        setCompanyID(parts[0].toString());
+        setCompanyCode(parts[1].toString());
+        setSelectedCompanyName(compName);
+        if (errorMessage === "Please select a company.") {
+          setErrorMessage("");
+        }
+      } else {
+        console.error(
+          "CompIDCompCode does not contain a comma: ",
+          CompIDCompCode
+        );
+        // Handle the error case here, such as setting an error message
+      }
+    } else {
+      console.error(
+        "CompIDCompCode is undefined or not a string: ",
+        CompIDCompCode
+      );
+      // Handle the error case here, such as setting an error message
     }
   };
 
@@ -261,9 +286,9 @@ const LoginPage = () => {
                     <Dropdown.Menu className="w-100">
                       {companies.map((c) => (
                         <Dropdown.Item
-                          key={c.compID}
+                          key={c.compIDCompCode}
                           onClick={() =>
-                            handleSelectCompany(c.compID, c.compName)
+                            handleSelectCompany(c.compIDCompCode, c.compName)
                           }
                         >
                           {c.compName}

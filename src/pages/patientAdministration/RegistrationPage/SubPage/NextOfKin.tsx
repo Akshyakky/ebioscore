@@ -1,6 +1,6 @@
-import React, { useState, ChangeEvent, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal, Button, Row, Col } from "react-bootstrap";
-import { Kin } from "../../../../interfaces/PatientAdministration/NextOfKinData";
+import { NextOfKinKinFormState } from "../../../../interfaces/PatientAdministration/NextOfKinData";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { useLoading } from "../../../../context/LoadingContext";
@@ -18,8 +18,8 @@ import { faSave, faTimes } from "@fortawesome/free-solid-svg-icons";
 interface NextOfKinPopupProps {
   show: boolean;
   handleClose: () => void;
-  handleSave: (kinDetails: Kin) => void;
-  editData?: Kin | null;
+  handleSave: (kinDetails: NextOfKinKinFormState) => void;
+  editData?: NextOfKinKinFormState | null;
 }
 
 const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
@@ -28,51 +28,72 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
   handleSave,
   editData,
 }) => {
-  const [kinData, setKinData] = useState<Kin>({
-    PNokID: 0,
-    PNokRelName: "",
-    PNokRelNameValue: "",
-    PNokRegYN: "Y",
-    PNokTitleValue: "",
-    PNokTitle: "",
-    PNokFName: "",
-    PNokLName: "",
-    PNokDob: "",
-    NokAddress: "",
-    PNokAreaValue: "",
-    PNokArea: "",
-    PNokCityValue: "",
-    PNokCity: "",
-    PNokActualCountryValue: "",
-    PNokActualCountry: "",
-    PAddPhone1: "",
-    NokPostCode: "",
-    PNokCountryValue: "",
-    PNokCountry: "",
-    PNokPssnID: "",
-    PAddPhone2: "",
-    PAddPhone3: "",
-  });
-  const [titleValues, setTitleValues] = useState<DropdownOption[]>([]);
-  const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
-  const { handleDropdownChange } = useDropdownChange<Kin>(setKinData);
-  const { handleRadioButtonChange } = useRadioButtonChange<Kin>(setKinData);
+  const nextOfKinInitialFormState: NextOfKinKinFormState = {
+    PNokID: 0,
+    PChartID: 0,
+    PNokPChartID: 0,
+    PNokRegStatusVal: "Y",
+    PNokRegStatus: "Registered",
+    PNokPssnID: "",
+    PNokDob: "",
+    PNokRelNameVal: "",
+    PNokRelName: "",
+    PNokTitleVal: "",
+    PNokTitle: "",
+    PNokFName: "",
+    PNokMName: "",
+    PNokLName: "",
+    PNokActualCountryVal: "",
+    PNokActualCountry: "",
+    PNokAreaVal: "",
+    PNokArea: "",
+    PNokCityVal: "",
+    PNokCity: "",
+    PNokCountryVal: "",
+    PNokCountry: "",
+    PNokDoorNo: "",
+    PAddPhone1: "",
+    PAddPhone2: "",
+    PAddPhone3: "",
+    PNokPostcode: "",
+    PNokState: "",
+    PNokStreet: "",
+    RActiveYN: "Y",
+    RCreatedID: userInfo.userID !== null ? userInfo.userID : 0,
+    RCreatedBy: userInfo.userName !== null ? userInfo.userName : "",
+    RCreatedOn: new Date().toISOString().split("T")[0],
+    RModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
+    RModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
+    RModifiedOn: new Date().toISOString().split("T")[0],
+  };
+  const [nextOfkinData, setNextOfKinData] = useState<NextOfKinKinFormState>(
+    nextOfKinInitialFormState
+  );
+  const [titleValues, setTitleValues] = useState<DropdownOption[]>([]);
+  const { setLoading } = useLoading();
+
+  const { handleDropdownChange } =
+    useDropdownChange<NextOfKinKinFormState>(setNextOfKinData);
+  const { handleRadioButtonChange } =
+    useRadioButtonChange<NextOfKinKinFormState>(setNextOfKinData);
   const [relationValues, setRelationValues] = useState<DropdownOption[]>([]);
   const [areaValues, setAreaValues] = useState<DropdownOption[]>([]);
   const [cityValues, setCityValues] = useState<DropdownOption[]>([]);
   const [countryValues, setCountryValues] = useState<DropdownOption[]>([]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setKinData({ ...kinData, [e.target.name]: e.target.value });
-  };
-
   const handleSubmit = () => {
-    handleSave(kinData);
+    handleSave(nextOfkinData);
+    resetNextOfKinFormData();
+  };
+  const resetNextOfKinFormData = () => {
+    setNextOfKinData(nextOfKinInitialFormState);
+  };
+  const handleCloseWithClear = () => {
+    resetNextOfKinFormData();
     handleClose();
   };
-
   const regOptions = [
     { value: "Y", label: "Registered" },
     { value: "N", label: "Non Registered" },
@@ -153,10 +174,10 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
 
     loadDropdownValues();
   }, [token]);
-  
+
   useEffect(() => {
     if (editData) {
-      setKinData(editData);
+      setNextOfKinData(editData);
     }
   }, [editData]);
   return (
@@ -177,8 +198,12 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               name="RegOrNonReg"
               label="NOK Type"
               options={regOptions}
-              selectedValue={kinData.PNokRegYN}
-              onChange={handleRadioButtonChange("PNokRegYN")}
+              selectedValue={nextOfkinData.PNokRegStatusVal}
+              onChange={handleRadioButtonChange(
+                ["PNokRegStatusVal"],
+                ["PNokRegStatus"],
+                regOptions
+              )}
               inline={true}
             />
           </Col>
@@ -186,10 +211,10 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             <DropdownSelect
               label="Title"
               name="Title"
-              value={String(kinData.PNokTitleValue)}
+              value={String(nextOfkinData.PNokTitleVal)}
               options={titleValues}
               onChange={handleDropdownChange(
-                ["PNokTitleValue"],
+                ["PNokTitleVal"],
                 ["PNokTitle"],
                 titleValues
               )}
@@ -205,9 +230,12 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               size="sm"
               placeholder="First Name"
               onChange={(e) =>
-                setKinData({ ...kinData, PNokFName: e.target.value })
+                setNextOfKinData({
+                  ...nextOfkinData,
+                  PNokFName: e.target.value,
+                })
               }
-              value={kinData.PNokFName}
+              value={nextOfkinData.PNokFName}
               isMandatory={true}
             />
           </Col>
@@ -219,9 +247,12 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               size="sm"
               placeholder="Last Name"
               onChange={(e) =>
-                setKinData({ ...kinData, PNokLName: e.target.value })
+                setNextOfKinData({
+                  ...nextOfkinData,
+                  PNokLName: e.target.value,
+                })
               }
-              value={kinData.PNokLName}
+              value={nextOfkinData.PNokLName}
               isMandatory={true}
             />
           </Col>
@@ -231,10 +262,10 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             <DropdownSelect
               label="Relationship"
               name="Relationship"
-              value={kinData.PNokRelNameValue}
+              value={nextOfkinData.PNokRelNameVal}
               options={relationValues}
               onChange={handleDropdownChange(
-                ["PNokRelNameValue"],
+                ["PNokRelNameVal"],
                 ["PNokRelName"],
                 relationValues
               )}
@@ -250,9 +281,9 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               size="sm"
               placeholder="Birth Date"
               onChange={(e) =>
-                setKinData({ ...kinData, PNokDob: e.target.value })
+                setNextOfKinData({ ...nextOfkinData, PNokDob: e.target.value })
               }
-              value={kinData.PNokDob}
+              value={nextOfkinData.PNokDob}
               isMandatory={true}
             />
           </Col>
@@ -262,9 +293,9 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             type="text"
             size="sm"
             placeholder="Mobile No"
-            value={kinData.PAddPhone1}
+            value={nextOfkinData.PAddPhone1}
             onChange={(e) =>
-              setKinData({ ...kinData, PAddPhone1: e.target.value })
+              setNextOfKinData({ ...nextOfkinData, PAddPhone1: e.target.value })
             }
             maxLength={20}
           />
@@ -276,9 +307,12 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               size="sm"
               placeholder="Address"
               onChange={(e) =>
-                setKinData({ ...kinData, NokAddress: e.target.value })
+                setNextOfKinData({
+                  ...nextOfkinData,
+                  PNokStreet: e.target.value,
+                })
               }
-              value={kinData.NokAddress}
+              value={nextOfkinData.PNokStreet}
               isMandatory={true}
             />
           </Col>
@@ -288,10 +322,10 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             <DropdownSelect
               label="Area"
               name="Area"
-              value={kinData.PNokAreaValue}
+              value={nextOfkinData.PNokAreaVal}
               options={areaValues}
               onChange={handleDropdownChange(
-                ["PNokAreaValue"],
+                ["PNokAreaVal"],
                 ["PNokArea"],
                 areaValues
               )}
@@ -302,10 +336,10 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             <DropdownSelect
               label="City"
               name="City"
-              value={kinData.PNokCityValue}
+              value={nextOfkinData.PNokCityVal}
               options={cityValues}
               onChange={handleDropdownChange(
-                ["PNokCityValue"],
+                ["PNokCityVal"],
                 ["PNokCity"],
                 areaValues
               )}
@@ -316,10 +350,10 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             <DropdownSelect
               label="Country"
               name="Country"
-              value={kinData.PNokActualCountryValue}
+              value={nextOfkinData.PNokActualCountryVal}
               options={countryValues}
               onChange={handleDropdownChange(
-                ["PNokActualCountryValue"],
+                ["PNokActualCountryVal"],
                 ["PNokActualCountry"],
                 countryValues
               )}
@@ -334,9 +368,12 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               size="sm"
               placeholder="Post Code"
               onChange={(e) =>
-                setKinData({ ...kinData, NokPostCode: e.target.value })
+                setNextOfKinData({
+                  ...nextOfkinData,
+                  PNokPostcode: e.target.value,
+                })
               }
-              value={kinData.NokPostCode}
+              value={nextOfkinData.PNokPostcode}
             />
           </Col>
         </Row>
@@ -345,10 +382,10 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             <DropdownSelect
               label="Nationality"
               name="Nationality"
-              value={kinData.PNokCountryValue}
+              value={nextOfkinData.PNokCountryVal}
               options={countryValues}
               onChange={handleDropdownChange(
-                ["PNokCountryValue"],
+                ["PNokCountryVal"],
                 ["PNokCountry"],
                 countryValues
               )}
@@ -363,9 +400,12 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               size="sm"
               placeholder="Passport No"
               onChange={(e) =>
-                setKinData({ ...kinData, PNokPssnID: e.target.value })
+                setNextOfKinData({
+                  ...nextOfkinData,
+                  PNokPssnID: e.target.value,
+                })
               }
-              value={kinData.PNokPssnID}
+              value={nextOfkinData.PNokPssnID}
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
@@ -376,9 +416,12 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               size="sm"
               placeholder="Work Phone No"
               onChange={(e) =>
-                setKinData({ ...kinData, PAddPhone2: e.target.value })
+                setNextOfKinData({
+                  ...nextOfkinData,
+                  PAddPhone2: e.target.value,
+                })
               }
-              value={kinData.PAddPhone2}
+              value={nextOfkinData.PAddPhone2}
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
@@ -389,15 +432,18 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               size="sm"
               placeholder="Land Line No"
               onChange={(e) =>
-                setKinData({ ...kinData, PAddPhone3: e.target.value })
+                setNextOfKinData({
+                  ...nextOfkinData,
+                  PAddPhone3: e.target.value,
+                })
               }
-              value={kinData.PAddPhone3}
+              value={nextOfkinData.PAddPhone3}
             />
           </Col>
         </Row>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" size="sm" onClick={handleClose}>
+        <Button variant="secondary" size="sm" onClick={handleCloseWithClear}>
           <FontAwesomeIcon icon={faTimes} /> Close
         </Button>
         <Button variant="primary" size="sm" onClick={handleSubmit}>
