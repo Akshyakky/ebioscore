@@ -119,3 +119,12 @@ export interface RegsitrationFormData {
     PChartCompID: number;
   };
 }
+
+export interface PatientSearchResult {
+  pChartID: number;
+  pChartCode: string;
+  pDob: string;
+  pfName: string;
+  plName: string;
+  pAddPhone1: string;
+}

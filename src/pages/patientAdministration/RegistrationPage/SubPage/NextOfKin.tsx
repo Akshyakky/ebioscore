@@ -10,7 +10,7 @@ import { ConstantValues } from "../../../../services/CommonService/ConstantValue
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
-import TextBox from "../../../../components/TextBox/TextBox ";
+import TextBox from "../../../../components/TextBox/TextBox";
 import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSave, faTimes } from "@fortawesome/free-solid-svg-icons";

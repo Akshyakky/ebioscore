@@ -98,7 +98,8 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
     { value: "P", label: "Physician" },
     { value: "N", label: "None" },
   ];
-
+  const isHospitalVisit = formData.OPVisits.VisitTypeVal === "H";
+  const isPhysicianVisit = formData.OPVisits.VisitTypeVal === "P";
   return (
     <section aria-labelledby="visit-details-header">
       <Row>
@@ -130,7 +131,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
             inline={true}
           />
         </Col>
-        {formData.OPVisits.VisitTypeVal === "H" && (
+        {isHospitalVisit && (
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
             <DropdownSelect
               label="Department"
@@ -143,11 +144,11 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
                 departmentValues
               )}
               isSubmitted={isSubmitted}
-              isMandatory={true}
+              isMandatory={isHospitalVisit}
             />
           </Col>
         )}
-        {formData.OPVisits.VisitTypeVal === "P" && (
+        {isPhysicianVisit && (
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
             <DropdownSelect
               name="AttendingPhysician"
@@ -160,12 +161,11 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
                 attendingPhy
               )}
               isSubmitted={isSubmitted}
-              isMandatory={true}
+              isMandatory={isPhysicianVisit}
             />
           </Col>
         )}
-        {(formData.OPVisits.VisitTypeVal === "P" ||
-          formData.OPVisits.VisitTypeVal === "H") && (
+        {(isPhysicianVisit || isHospitalVisit) && (
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
             <DropdownSelect
               name="PrimaryIntroducingSource"
@@ -178,7 +178,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
                 primaryIntroducingSource
               )}
               isSubmitted={isSubmitted}
-              isMandatory={true}
+              isMandatory={isPhysicianVisit || isHospitalVisit}
             />
           </Col>
         )}

@@ -1,11 +1,14 @@
 // RegistrationService.ts
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
-import { RegsitrationFormData } from "../../interfaces/PatientAdministration/registrationFormData";
+import {
+  PatientSearchResult,
+  RegsitrationFormData,
+} from "../../interfaces/PatientAdministration/registrationFormData";
 import { NextOfKinKinFormState } from "../../interfaces/PatientAdministration/NextOfKinData";
 import { InsuranceFormState } from "../../interfaces/PatientAdministration/InsuranceDetails";
 
-const getLatestUHID = async (
+export const getLatestUHID = async (
   token: string,
   endpoint: string
 ): Promise<string> => {
@@ -23,6 +26,31 @@ const getLatestUHID = async (
       error
     );
     throw error;
+  }
+};
+
+export const searchPatients = async (
+  token: string,
+  endpoint: string,
+  searchTerm: string
+): Promise<{ data: PatientSearchResult[]; success: boolean }> => {
+  try {
+    const url = `${APIConfig.patientAdministrationURL}Registration/${endpoint}`;
+    const headers = { Authorization: `Bearer ${token}` };
+    const response = await axios.get(url, {
+      headers,
+      params: { searchTerm },
+    });
+    debugger;
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 400) {
+        throw error.response.data;
+      }
+    }
+    console.error(`Error during patient search: ${error}`);
+    throw new Error("An error occurred during patient search");
   }
 };
 
@@ -108,10 +136,28 @@ export const savePatientInsuranceDetails = async (
   }
 };
 
+export const getPatientDetails = async (
+  token: string,
+  pChartID: number
+): Promise<{ data: RegsitrationFormData; success: boolean }> => {
+  try {
+    const url = `${APIConfig.patientAdministrationURL}Registration/GetPatientDetails/${pChartID}`;
+    const headers = { Authorization: `Bearer ${token}` };
+    const response = await axios.get(url, { headers });
+
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching patient details: ${error}`);
+    throw error;
+  }
+};
+
 // Add saveNokDetails to the exported object
 export const RegistrationService = {
   getLatestUHID,
+  searchPatients,
   saveRegistration,
   saveNokDetails,
-  savePatientInsuranceDetails
+  savePatientInsuranceDetails,
+  getPatientDetails,
 };

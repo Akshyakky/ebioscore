@@ -1,0 +1,80 @@
+.autocomplete-suggestions {
+    position: absolute;
+    z-index: 1000;
+    width: 100%;
+    max-height: 300px;
+    /* Adjust based on your preference */
+    overflow-y: auto;
+    /* Adds a scrollbar when necessary */
+    background: #ffffff;
+    border: 1px solid #ccc;
+    /* Adjust the border color to match your theme */
+    border-top: none;
+    list-style-type: none;
+    padding-left: 0;
+    margin-top: 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* Optional: adds shadow for depth */
+    border-radius: 0 0 4px 4px;
+    /* Optional: rounds the bottom corners */
+}
+
+.autocomplete-suggestions li {
+    padding: 8px 12px;
+    /* Adjust the padding to better fit the content */
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    /* Lighter border for each item */
+    font-size: 14px;
+    /* Adjust font size as needed */
+}
+
+.autocomplete-suggestions li:last-child {
+    border-bottom: none;
+    /* Remove bottom border for the last item */
+}
+
+.autocomplete-suggestions li:hover {
+    background-color: #afaeae;
+    color: #004f74;
+    /* A very light grey for hover state */
+}
+
+.highlight {
+    color: #004f74;
+    /* A color that matches your app theme */
+    background-color: #e1eff7;
+    /* A softer, lighter background color for contrast */
+    padding: 0 2px;
+    /* Slight padding around the highlight */
+}
+
+
+/* Clearfix for the floating elements */
+.autocomplete-suggestions:after {
+    content: "";
+    display: block;
+    clear: both;
+}
+
+/* Style for list item hover but not selected */
+.autocomplete-suggestions li:hover:not(.selected) {
+    background-color: #f9f9f9;
+    /* Light grey for hover */
+    color: #004f74;
+    /* Text color for hover */
+}
+
+/* Style for list item that is selected */
+.autocomplete-suggestions li.selected {
+    background-color: #0056b3;
+    /* Blue for selected item */
+    color: white;
+    /* Text color for selected item */
+}
+
+/* Optional: if you want a different style for selected item on hover */
+.autocomplete-suggestions li.selected:hover {
+    background-color: #004f74;
+    /* Slightly darker blue for hover on selected item */
+}

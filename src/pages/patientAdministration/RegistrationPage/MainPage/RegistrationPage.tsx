@@ -35,6 +35,7 @@ import NextOfKinPopup from "../SubPage/NextOfKin";
 import { NextOfKinKinFormState } from "../../../../interfaces/PatientAdministration/NextOfKinData";
 import PatientInsurancePopup from "../SubPage/PatientInsurance";
 import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
+import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
 
 interface FormErrors {
   firstName?: string;
@@ -80,7 +81,7 @@ const RegistrationPage: React.FC = () => {
     RModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
     RModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
     RModifiedOn: new Date().toISOString().split("T")[0],
-    RActiveYN: "N",
+    RActiveYN: "Y",
     RNotes: "",
     CompID: userInfo.compID !== null ? userInfo.compID : 0,
     CompCode: userInfo.compCode !== null ? userInfo.compCode : "",
@@ -180,6 +181,7 @@ const RegistrationPage: React.FC = () => {
 
   const [formData, setFormData] =
     useState<RegsitrationFormData>(regFormInitialState);
+  const { fetchLatestUHID, loading } = useRegistrationUtils(token);
 
   const handleOpenKinPopup = () => {
     setShowKinPopup(true);
@@ -479,20 +481,6 @@ const RegistrationPage: React.FC = () => {
   function isApiError(error: unknown): error is ApiError {
     return typeof error === "object" && error !== null && "errors" in error;
   }
-  const fetchLatestUHID = async () => {
-    setLoading(true);
-    try {
-      const latestUHID = await RegistrationService.getLatestUHID(
-        token,
-        "GetLatestUHID"
-      );
-      return latestUHID;
-    } catch (error) {
-      // Handle the error as needed
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchLatestUHID().then((latestUHID) => {

@@ -1,5 +1,5 @@
 import { Row, Col } from "react-bootstrap";
-import TextBox from "../../../../components/TextBox/TextBox ";
+import TextBox from "../../../../components/TextBox/TextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";

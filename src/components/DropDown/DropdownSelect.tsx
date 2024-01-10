@@ -28,6 +28,8 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   className,
   isSubmitted = false,
 }) => {
+  const isEmptyValue = (val: string) => val === "" || val === "0";
+
   return (
     <FloatingLabel controlId={`ddl${name}`} label={label} className={className}>
       <Form.Select
@@ -38,7 +40,9 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
         disabled={disabled}
         aria-label={label}
         aria-required={isMandatory}
-        className={isMandatory && isSubmitted && !value ? "is-invalid" : ""}
+        className={
+          isMandatory && isSubmitted && isEmptyValue(value) ? "is-invalid" : ""
+        }
       >
         <option value={"" || 0} disabled={value !== ""}>
           {defaultText || label}
@@ -52,7 +56,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
           </option>
         ))}
       </Form.Select>
-      {isMandatory && !value && (
+      {isMandatory && isSubmitted && isEmptyValue(value) && (
         <Form.Control.Feedback type="invalid">
           {label} is required.
         </Form.Control.Feedback>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Button, Col, Row } from "react-bootstrap";
 import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
-import TextBox from "../../../../components/TextBox/TextBox ";
+import TextBox from "../../../../components/TextBox/TextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { InsuranceCarrierService } from "../../../../services/CommonService/InsuranceCarrierService";

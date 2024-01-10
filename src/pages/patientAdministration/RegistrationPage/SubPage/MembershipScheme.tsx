@@ -1,6 +1,6 @@
 import { Row, Col } from "react-bootstrap";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import TextBox from "../../../../components/TextBox/TextBox ";
+import TextBox from "../../../../components/TextBox/TextBox";
 import React, { useState, useEffect } from "react";
 import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import { BillingService } from "../../../../services/BillingService/BillingService";

@@ -19,6 +19,7 @@ interface TextBoxProps {
   maxLength?: number;
   isSubmitted?: boolean;
   errorMessage?: string;
+  max?: string;
 }
 
 const TextBox: React.FC<TextBoxProps> = ({
@@ -38,6 +39,7 @@ const TextBox: React.FC<TextBoxProps> = ({
   maxLength,
   isSubmitted = false,
   errorMessage,
+  max,
 }) => {
   const controlId = `txt${ControlID}`;
   // Determine if the textbox is invalid
@@ -65,6 +67,7 @@ const TextBox: React.FC<TextBoxProps> = ({
           aria-label={ariaLabel || title}
           isInvalid={isInvalid}
           maxLength={maxLength}
+          max={max}
         />
         {isInvalid && (
           <Form.Control.Feedback type="invalid">

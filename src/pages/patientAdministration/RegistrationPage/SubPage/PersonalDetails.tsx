@@ -1,5 +1,5 @@
 import { Row, Col } from "react-bootstrap";
-import TextBox from "../../../../components/TextBox/TextBox ";
+import TextBox from "../../../../components/TextBox/TextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
@@ -16,6 +16,10 @@ import { Button } from "react-bootstrap";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
+import AutocompleteTextBox from "../../../../components/AutocompleteTextBox/AutocompleteTextBox";
+import { RegistrationService } from "../../../../services/RegistrationService/RegistrationService";
+import { formatDate } from "../../../../utils/Common/dateUtils";
+import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
 
 interface PersonalDetailsProps {
   formData: RegsitrationFormData;
@@ -42,6 +46,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const [nationalityValues, setNationalityValues] = useState<DropdownOption[]>(
     []
   );
+
   const { handleDropdownChange } =
     useDropdownChange<RegsitrationFormData>(setFormData);
   const { handleRadioButtonChange } =
@@ -49,7 +54,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
-
+  const { fetchLatestUHID, loading } = useRegistrationUtils(token);
   const endpointPIC = "GetPICDropDownValues";
   const endpointConstantValues = "GetConstantValues";
   const endPointAppModifyList = "GetActiveAppModifyFieldsAsync";
@@ -173,7 +178,89 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     { value: "N", label: "Age" },
     { value: "Y", label: "DOB" },
   ];
+  const endpointUHIDAutocomplete = "PatientAutocompleteSearch";
+  const fetchPatientSuggestions = async (input: string) => {
+    try {
+      const results = await RegistrationService.searchPatients(
+        token,
+        endpointUHIDAutocomplete,
+        input
+      );
+      const suggestions = results.data.map(
+        (result) =>
+          `${result.pChartCode} | ${result.pfName} ${
+            result.plName
+          } | ${formatDate(result.pDob)} | ${result.pAddPhone1}`
+      );
+      return suggestions;
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      return [];
+    }
+  };
 
+  const handleUHIDBlur = () => {
+    if (!formData.PChartCode) {
+      fetchLatestUHID().then((latestUHID) => {
+        if (latestUHID) {
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            PChartCode: latestUHID,
+          }));
+        }
+      });
+    }
+  };
+
+  const getTodayDate = () => {
+    const today = new Date();
+    const month = `0${today.getMonth() + 1}`.slice(-2); //
+    const day = `0${today.getDate()}`.slice(-2);
+    return `${today.getFullYear()}-${month}-${day}`;
+  };
+  const handleAutocompleteSelect = (selectedItem: string) => {
+    // Assuming the selectedItem format is 'PChartCode | Name | DOB | Phone'
+    const pChartCode = selectedItem.split(" | ")[0];
+    handleUHIDSelection(pChartCode);
+  };
+  const handleUHIDSelection = async (selectedUHID: string) => {
+    // Extract PChartID from the selected string
+    const pChartIDStr = extractNumericPart(extractPChartID(selectedUHID));
+
+    if (pChartIDStr) {
+      const pChartID = parseInt(pChartIDStr, 10); // Convert the string to a number
+
+      if (!isNaN(pChartID)) {
+        try {
+          setLoading(true);
+          const patientDetails = await RegistrationService.getPatientDetails(
+            token,
+            pChartID // Passing a number now
+          );
+          if (patientDetails && patientDetails.data) {
+            // Update the form state with the fetched patient details
+            setFormData(patientDetails.data);
+          }
+        } catch (error) {
+          console.error("Error fetching patient details:", error);
+          // Handle error
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+  };
+
+  const extractPChartID = (selectedString: string) => {
+    // Implement logic to extract PChartID from the selected string
+    // Example: Assuming the format is 'PChartID | Name | DOB | Phone'
+    const parts = selectedString.split(" | ");
+    return parts[0]; // This depends on your actual string format
+  };
+  const extractNumericPart = (uhid: string) => {
+    const match = uhid.match(/\d+/); // Regular expression to find numeric part
+    return match ? match[0] : null;
+  };
   return (
     <section aria-labelledby="personal-details-header">
       <Row>
@@ -192,7 +279,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       </Row>
       <Row className="justify-content-between">
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <TextBox
+          <AutocompleteTextBox
             ControlID="UHID"
             title="UHID"
             type="text"
@@ -202,6 +289,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             onChange={(e) =>
               setFormData({ ...formData, PChartCode: e.target.value })
             }
+            onBlur={handleUHIDBlur}
+            //onSelect={handleAutocompleteSelect}
+            fetchSuggestions={fetchPatientSuggestions}
+            inputValue={formData.PChartCode}
             isSubmitted={isSubmitted}
             isMandatory={true}
           />
@@ -404,8 +495,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                       ageUnitOptions
                     )}
                     size="sm"
-                    isMandatory={true}
                     isSubmitted={isSubmitted}
+                    isMandatory={true}
                   />
                 </>
               ) : (
@@ -418,6 +509,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                   onChange={(e) =>
                     setFormData({ ...formData, PDob: e.target.value })
                   }
+                  max={getTodayDate()}
                   isSubmitted={isSubmitted}
                   isMandatory={true}
                 />
