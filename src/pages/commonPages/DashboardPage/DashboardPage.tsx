@@ -167,7 +167,6 @@ const DashboardPage: React.FC = () => {
         "AdvanceCollection",
       ];
       for (const category of categories) {
-        debugger;
         const myCountResult = await DashBoardService.fetchCount(
           `Get${category}Userwise`,
           dateRange,

@@ -201,7 +201,6 @@ const LoginPage = () => {
   };
 
   const handleSelectCompany = (CompIDCompCode: string, compName: string) => {
-    debugger;
     // Check if CompIDCompCode is a string and not undefined
     if (typeof CompIDCompCode === "string") {
       const parts = CompIDCompCode.split(",");

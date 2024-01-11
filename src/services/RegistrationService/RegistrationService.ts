@@ -1,4 +1,4 @@
-// RegistrationService.ts
+// service/RegistrationService/RegistrationService.ts
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
 import {
@@ -18,8 +18,7 @@ export const getLatestUHID = async (
     const response = await axios.get(url, {
       headers,
     });
-
-    return response.data; // Axios automatically parses the JSON response
+    return response.data;
   } catch (error) {
     console.error(
       `There was a problem fetching the latest UHID from ${endpoint}:`,
@@ -41,7 +40,6 @@ export const searchPatients = async (
       headers,
       params: { searchTerm },
     });
-    debugger;
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -60,7 +58,6 @@ export const saveRegistration = async (
 ): Promise<any> => {
   try {
     const url = `${APIConfig.patientAdministrationURL}Registration/SavePatientRegistration`;
-    //const apiData: ApiPatientData = transformToApiData(formData);
     const headers = {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -70,19 +67,14 @@ export const saveRegistration = async (
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      // Type guard for AxiosError
       if (error.response && error.response.status === 400) {
-        // Handle validation error
         throw error.response.data;
       }
     }
-    // Handle other types of errors
     console.error("An unexpected error occurred:", error);
     throw new Error("An unexpected error occurred");
   }
 };
-
-// Add the saveNokDetails method to your RegistrationService
 
 export const saveNokDetails = async (
   token: string,
@@ -98,13 +90,10 @@ export const saveNokDetails = async (
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      // Type guard for AxiosError
       if (error.response && error.response.status === 400) {
-        // Handle validation error
         throw error.response.data;
       }
     }
-    // Handle other types of errors
     console.error("An unexpected error occurred:", error);
     throw new Error("An unexpected error occurred");
   }
@@ -124,13 +113,10 @@ export const savePatientInsuranceDetails = async (
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      // Type guard for AxiosError
       if (error.response && error.response.status === 400) {
-        // Handle validation error
         throw error.response.data;
       }
     }
-    // Handle other types of errors
     console.error("An unexpected error occurred:", error);
     throw new Error("An unexpected error occurred");
   }
@@ -152,7 +138,36 @@ export const getPatientDetails = async (
   }
 };
 
-// Add saveNokDetails to the exported object
+export const getPatNokDetails = async (
+  token: string,
+  pChartID: number
+): Promise<{ data: NextOfKinKinFormState[]; success: boolean }> => {
+  try {
+    const url = `${APIConfig.patientAdministrationURL}PatNok/GetNokDetailsByPChartID/${pChartID}`;
+    const headers = { Authorization: `Bearer ${token}` };
+    const response = await axios.get(url, { headers });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching patient Nok details: ${error}`);
+    throw error;
+  }
+};
+
+export const getPatientInsuranceDetails = async (
+  token: string,
+  pChartID: number
+): Promise<{ data: InsuranceFormState[]; success: boolean }> => {
+  try {
+    const url = `${APIConfig.patientAdministrationURL}OPIPInsurances/GetOPIPInsuranceByPCharID/${pChartID}`;
+    const headers = { Authorization: `Bearer ${token}` };
+    const response = await axios.get(url, { headers });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching patient insurance details: ${error}`);
+    throw error;
+  }
+};
+
 export const RegistrationService = {
   getLatestUHID,
   searchPatients,
@@ -160,4 +175,6 @@ export const RegistrationService = {
   saveNokDetails,
   savePatientInsuranceDetails,
   getPatientDetails,
+  getPatNokDetails,
+  getPatientInsuranceDetails,
 };

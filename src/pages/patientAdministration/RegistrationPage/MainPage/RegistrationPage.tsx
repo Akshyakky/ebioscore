@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   faPrint,
   faFileExcel,
@@ -370,6 +370,7 @@ const RegistrationPage: React.FC = () => {
         }));
       }
     });
+    window.scrollTo(0, 0);
   };
 
   const validateFormData = () => {
@@ -481,18 +482,288 @@ const RegistrationPage: React.FC = () => {
   function isApiError(error: unknown): error is ApiError {
     return typeof error === "object" && error !== null && "errors" in error;
   }
-
-  useEffect(() => {
-    fetchLatestUHID().then((latestUHID) => {
-      if (latestUHID) {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          PChartCode: latestUHID,
-        }));
+  const handlePatientSelect = (selectedSuggestion: string) => {
+    setLoading(true);
+    try {
+      const pChartID = extractPChartID(selectedSuggestion);
+      if (pChartID) {
+        // Fetch patient details and update form
+        fetchPatientDetailsAndUpdateForm(pChartID);
       }
-    });
-  }, [token]);
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+  };
+  const fetchPatientDetailsAndUpdateForm = async (pChartID: number) => {
+    setLoading(true);
+    try {
+      const patientDetails = await RegistrationService.getPatientDetails(
+        token,
+        pChartID
+      );
+      if (patientDetails.success) {
+        //Pass only the 'data' part to setFormData
+        //setFormData(patientDetails.data);
+        const transformedData = transformDataToMatchFormDataStructure(
+          patientDetails.data
+        );
+        setFormData(transformedData);
 
+        await fetchAdditionalPatientDetails(pChartID);
+      } else {
+        // Handle the case where fetching patient details is not successful
+        console.error("Fetching patient details was not successful");
+      }
+    } catch (error) {
+      console.error("Error fetching patient details:", error);
+      // Handle error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to extract PChartID from PChartCode
+  const extractPChartID = (pChartCode: string) => {
+    const regex = /(\d+)/; // Regular expression to extract number
+    const matches = pChartCode.match(regex);
+    return matches ? parseInt(matches[0]) : null;
+  };
+  const fetchAdditionalPatientDetails = async (pChartID: number) => {
+    setLoading(true);
+    try {
+      const nokDetails = await RegistrationService.getPatNokDetails(
+        token,
+        pChartID
+      );
+      if (nokDetails.success) {
+        const transfermedData = transformDataToMatchNOKDataStructure(
+          nokDetails.data
+        );
+        setGridKinData(transfermedData);
+      }
+
+      const insuranceDetails =
+        await RegistrationService.getPatientInsuranceDetails(token, pChartID);
+      if (insuranceDetails.success) {
+        const transfermedData = transformDataToMatchInsuranceDataStructure(
+          insuranceDetails.data
+        );
+        setGridPatientInsuranceData(transfermedData);
+      }
+    } catch (error) {
+      console.error("Error fetching additional patient details:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const transformDataToMatchInsuranceDataStructure = (
+    data: any[]
+  ): InsuranceFormState[] => {
+    return data.map((ins) => ({
+      OPIPInsID: ins.opipInsID,
+      PChartID: ins.pChartID,
+      InsurID: ins.insurID,
+      InsurCode: ins.insurCode,
+      InsurName: ins.insurName,
+      PolicyNumber: ins.policyNumber,
+      PolicyHolder: ins.policyHolder,
+      GroupNumber: ins.groupNumber,
+      PolicyStartDt: ins.policyStartDt.split("T")[0],
+      PolicyEndDt: ins.policyEndDt.split("T")[0],
+      Guarantor: ins.guarantor,
+      RelationVal: ins.relationVal,
+      Relation: ins.relation,
+      Address1: ins.address1,
+      Address2: ins.address2,
+      Phone1: ins.phone1,
+      Phone2: ins.phone2,
+      RActiveYN: ins.rActiveYN,
+      RCreatedID: ins.rCreatedID,
+      RCreatedBy: ins.rCreatedBy,
+      RCreatedOn: ins.rCreatedOn.split("T")[0],
+      RModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
+      RModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
+      RModifiedOn: new Date().toISOString().split("T")[0],
+      RNotes: ins.rNotes,
+      CompID: userInfo.compID !== null ? userInfo.compID : 0,
+      CompCode: userInfo.compCode !== null ? userInfo.compCode : "",
+      CompName: userInfo.compName !== null ? userInfo.compName : "",
+      InsurStatusCode: ins.insurStatusCode,
+      InsurStatusName: ins.insurStatusName,
+      PChartCode: ins.pChartCode,
+      PChartCompID: ins.pChartCompID,
+      ReferenceNo: ins.referenceNo,
+      TransferYN: ins.transferYN,
+      CoveredVal: ins.coveredVal,
+      CoveredFor: ins.coveredFor,
+    }));
+  };
+  const transformDataToMatchNOKDataStructure = (
+    data: any[]
+  ): NextOfKinKinFormState[] => {
+    return data.map((nok) => ({
+      PNokID: nok.pNokID,
+      PChartID: nok.pChartID,
+      PNokPChartID: nok.pNokPChartID,
+      PNokRegStatusVal: nok.pNokRegStatusVal,
+      PNokRegStatus: nok.pNokRegStatus,
+      PNokPssnID: nok.pNokPssnID,
+      PNokDob: nok.pNokDob.split("T")[0],
+      PNokRelNameVal: nok.pNokRelNameVal,
+      PNokRelName: nok.pNokRelName,
+      PNokTitleVal: nok.pNokTitleVal,
+      PNokTitle: nok.pNokTitle,
+      PNokFName: nok.pNokFName,
+      PNokMName: nok.pNokMName,
+      PNokLName: nok.pNokLName,
+      PNokActualCountryVal: nok.pNokActualCountryVal,
+      PNokActualCountry: nok.pNokActualCountry,
+      PNokAreaVal: nok.pNokAreaVal,
+      PNokArea: nok.pNokArea,
+      PNokCityVal: nok.pNokCityVal,
+      PNokCity: nok.pNokCity,
+      PNokCountryVal: nok.pNokCountryVal,
+      PNokCountry: nok.pNokCountry,
+      PNokDoorNo: nok.pNokDoorNo,
+      PAddPhone1: nok.pAddPhone1,
+      PAddPhone2: nok.pAddPhone2,
+      PAddPhone3: nok.pAddPhone3,
+      PNokPostcode: nok.pNokPostcode,
+      PNokState: nok.pNokState,
+      PNokStreet: nok.pNokStreet,
+      RActiveYN: nok.rActiveYN,
+      RCreatedID: nok.rCreatedID,
+      RCreatedBy: nok.rCreatedBy,
+      RCreatedOn: nok.rCreatedOn.split("T")[0],
+      RModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
+      RModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
+      RModifiedOn: new Date().toISOString().split("T")[0],
+    }));
+  };
+  const transformDataToMatchFormDataStructure = (data: any) => {
+    // Transform the data from the backend to match the frontend form state structure.
+    // Example:
+    return {
+      //...data, // This will take care of all matching field names
+      PChartID: data.pChartID,
+      PChartCode: data.pChartCode,
+      PRegDate: data.pRegDate.split("T")[0],
+      PTitleVal: data.pTitleVal,
+      PTitle: data.pTitle,
+      PFName: data.pfName,
+      PMName: data.pmName,
+      PLName: data.plName,
+      PDobOrAgeVal: data.pDobOrAgeVal,
+      PDobOrAge: data.pDobOrAge,
+      PDob: data.pDob.split("T")[0],
+      PAgeType: data.pAgeType,
+      PApproxAge: data.pApproxAge,
+      PGender: data.pGender,
+      PGenderVal: data.pGenderVal,
+      PssnID: data.pssnID,
+      PBldGrp: data.pBldGrp,
+      RCreatedID: data.rCreatedID,
+      RCreatedBy: data.rCreatedBy,
+      RCreatedOn: data.rCreatedOn,
+      RModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
+      RModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
+      RModifiedOn: new Date().toISOString().split("T")[0],
+      RActiveYN: data.rActiveYN,
+      RNotes: data.rNotes,
+      CompID: data.compID,
+      CompCode: data.compCode,
+      CompName: data.compName,
+      PFhName: data.pFhName,
+      PTypeID: data.pTypeID,
+      PTypeCode: data.pTypeCode,
+      PTypeName: data.pTypeName,
+      FatherBldGrp: data.fatherBldGrp,
+      SapID: data.sapID,
+      PatMemID: data.patMemID,
+      PatMemName: data.patMemName,
+      PatMemDescription: data.patMemDescription,
+      PatMemSchemeExpiryDate: data.patMemSchemeExpiryDate,
+      PatSchemeExpiryDateYN: data.patSchemeExpiryDateYN,
+      PatSchemeDescriptionYN: data.patSchemeDescriptionYN,
+      CancelReason: data.cancelReason,
+      CancelYN: data.cancelYN,
+      ConsultantID: data.consultantID,
+      ConsultantName: data.consultantName,
+      DeptID: data.deptID,
+      DeptName: data.deptName,
+      FacultyID: data.facultyID,
+      Faculty: data.faculty,
+      LangType: data.langType,
+      PChartCompID: data.pChartCompID,
+      PExpiryDate: data.pExpiryDate,
+      PhysicianRoom: data.physicianRoom,
+      RegTypeVal: data.regTypeVal,
+      RegType: data.regType,
+      SourceID: data.sourceID,
+      SourceName: data.sourceName,
+      PPob: data.pPob,
+      PatCompName: data.patCompName,
+      PatCompNameVal: data.patCompNameVal,
+      PatDataFormYN: data.patDataFormYN,
+      IntIdPsprt: data.intIdPsprt,
+      TransferYN: data.transferYN,
+      PatOverview: data.PatOverview || {
+        PatOverID: data.patOverID,
+        PChartID: data.pChartID,
+        PChartCode: data.pChartCode,
+        PPhoto: data.pPhoto,
+        PMaritalStatus: data.pMaritalStatus,
+        PReligion: data.pReligion,
+        PEducation: data.pEducation,
+        POccupation: data.pOccupation,
+        PEmployer: data.pEmployer,
+        PAgeNumber: data.pAgeNumber,
+        PageDescription: data.pageDescription,
+        PageDescriptionVal: data.pageDescriptionVal,
+        Ethnicity: data.ethnicity,
+        PCountryOfOrigin: data.pCountryOfOrigin,
+        CompID: data.compID,
+        CompCode: data.compCode,
+        CompName: data.compName,
+        PChartCompID: data.pChartCompID,
+        TransferYN: data.transferYN,
+      },
+      PatAddress: data.PatAddress || {
+        PAddID: data.patAddress.pAddID,
+        PChartID: data.patAddress.pChartID,
+        PChartCode: data.patAddress.pChartCode,
+        PAddType: data.patAddress.pAddType,
+        PAddMailVal: data.patAddress.pAddMailVal,
+        PAddMail: data.patAddress.pAddMail,
+        PAddSMSVal: data.patAddress.pAddSMSVal,
+        PAddSMS: data.patAddress.pAddSMS,
+        PAddEmail: data.patAddress.pAddEmail,
+        PAddStreet: data.patAddress.pAddStreet,
+        PAddStreet1: data.patAddress.pAddStreet1,
+        PAddCityVal: data.patAddress.pAddCityVal,
+        PAddCity: data.patAddress.pAddCity,
+        PAddState: data.patAddress.pAddState,
+        PAddPostcode: data.patAddress.pAddPostcode,
+        PAddCountry: data.patAddress.pAddCountry,
+        PAddCountryVal: data.patAddress.pAddCountryVal,
+        PAddPhone1: data.patAddress.pAddPhone1,
+        PAddPhone2: data.patAddress.pAddPhone2,
+        PAddPhone3: data.patAddress.pAddPhone3,
+        PAddWorkPhone: data.patAddress.pAddWorkPhone,
+        CompID: data.patAddress.compID,
+        CompCode: data.patAddress.compCode,
+        CompName: data.patAddress.compName,
+        PAddActualCountryVal: data.patAddress.pAddActualCountryVal,
+        PAddActualCountry: data.patAddress.pAddActualCountry,
+        PatAreaVal: data.patAddress.patAreaVal,
+        PatArea: data.patAddress.patArea,
+        PatDoorNo: data.patAddress.patDoorNo,
+        PChartCompID: data.patAddress.pChartCompID,
+      },
+      OPVisits: data.opVisits || { VisitTypeVal: "H", VisitType: "Hospital" },
+    };
+  };
   return (
     <MainLayout>
       <Container fluid>
@@ -521,6 +792,7 @@ const RegistrationPage: React.FC = () => {
             setFormData={setFormData}
             isSubmitted={isSubmitted}
             formErrors={formErrors}
+            onPatientSelect={handlePatientSelect}
           />
           {/* Contact Details */}
           <ContactDetails

@@ -125,7 +125,7 @@ const AutocompleteTextBox: React.FC<AutocompleteTextBoxProps> = ({
       onSelectSuggestion(suggestion);
     }
     setSuggestionsVisible(false);
-    setSelectedIndex(-1); // Reset selected index when a suggestion is clicked
+    setSelectedIndex(-1);
   };
 
   // Determine if the textbox is invalid

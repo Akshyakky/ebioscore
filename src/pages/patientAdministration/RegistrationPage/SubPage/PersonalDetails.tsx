@@ -26,6 +26,7 @@ interface PersonalDetailsProps {
   setFormData: React.Dispatch<React.SetStateAction<RegsitrationFormData>>;
   isSubmitted: boolean;
   formErrors: any;
+  onPatientSelect: (selectedSuggestion: string) => void;
 }
 
 interface PicValue {
@@ -38,6 +39,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   setFormData,
   isSubmitted,
   formErrors,
+  onPatientSelect,
 }) => {
   const [picValues, setPicValues] = useState<DropdownOption[]>([]);
   const [titleValues, setTitleValues] = useState<DropdownOption[]>([]);
@@ -198,7 +200,16 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       return [];
     }
   };
-
+  useEffect(() => {
+    fetchLatestUHID().then((latestUHID) => {
+      if (latestUHID) {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          PChartCode: latestUHID,
+        }));
+      }
+    });
+  }, [token]);
   const handleUHIDBlur = () => {
     if (!formData.PChartCode) {
       fetchLatestUHID().then((latestUHID) => {
@@ -218,49 +229,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     const day = `0${today.getDate()}`.slice(-2);
     return `${today.getFullYear()}-${month}-${day}`;
   };
-  const handleAutocompleteSelect = (selectedItem: string) => {
-    // Assuming the selectedItem format is 'PChartCode | Name | DOB | Phone'
-    const pChartCode = selectedItem.split(" | ")[0];
-    handleUHIDSelection(pChartCode);
-  };
-  const handleUHIDSelection = async (selectedUHID: string) => {
-    // Extract PChartID from the selected string
-    const pChartIDStr = extractNumericPart(extractPChartID(selectedUHID));
 
-    if (pChartIDStr) {
-      const pChartID = parseInt(pChartIDStr, 10); // Convert the string to a number
-
-      if (!isNaN(pChartID)) {
-        try {
-          setLoading(true);
-          const patientDetails = await RegistrationService.getPatientDetails(
-            token,
-            pChartID // Passing a number now
-          );
-          if (patientDetails && patientDetails.data) {
-            // Update the form state with the fetched patient details
-            setFormData(patientDetails.data);
-          }
-        } catch (error) {
-          console.error("Error fetching patient details:", error);
-          // Handle error
-        } finally {
-          setLoading(false);
-        }
-      }
-    }
-  };
-
-  const extractPChartID = (selectedString: string) => {
-    // Implement logic to extract PChartID from the selected string
-    // Example: Assuming the format is 'PChartID | Name | DOB | Phone'
-    const parts = selectedString.split(" | ");
-    return parts[0]; // This depends on your actual string format
-  };
-  const extractNumericPart = (uhid: string) => {
-    const match = uhid.match(/\d+/); // Regular expression to find numeric part
-    return match ? match[0] : null;
-  };
   return (
     <section aria-labelledby="personal-details-header">
       <Row>
@@ -290,11 +259,11 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
               setFormData({ ...formData, PChartCode: e.target.value })
             }
             onBlur={handleUHIDBlur}
-            //onSelect={handleAutocompleteSelect}
             fetchSuggestions={fetchPatientSuggestions}
             inputValue={formData.PChartCode}
             isSubmitted={isSubmitted}
             isMandatory={true}
+            onSelectSuggestion={onPatientSelect}
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
