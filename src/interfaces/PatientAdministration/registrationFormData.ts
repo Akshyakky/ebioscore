@@ -119,7 +119,21 @@ export interface RegsitrationFormData {
     PChartCompID: number;
   };
 }
-
+export interface RegistrationFormErrors {
+  firstName?: string;
+  lastName?: string;
+  pChartCode?: string;
+  registrationDate?: string;
+  paymentSource?: string;
+  mobileNumber?: string;
+  title?: string;
+  indetityNo?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  department?: string;
+  attendingPhysician?: string;
+  primaryIntroducingSource?: string;
+}
 export interface PatientSearchResult {
   pChartID: number;
   pChartCode: string;
@@ -127,4 +141,8 @@ export interface PatientSearchResult {
   pfName: string;
   plName: string;
   pAddPhone1: string;
+  pRegDate: string;
+  gender: string;
+  pssnID: string;
+  pTypeName: string;
 }

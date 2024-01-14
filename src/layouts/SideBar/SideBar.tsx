@@ -204,7 +204,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
 
   return (
     <>
-      <Navbar expand={false} className="bg-body-tertiary mb-1">
+      <Navbar expand={false} className="bg-body-tertiary mb-1 border-bottom">
         <Container fluid>
           <Navbar.Toggle aria-controls="offcanvasNavbar">
             <FontAwesomeIcon icon={faBars} />

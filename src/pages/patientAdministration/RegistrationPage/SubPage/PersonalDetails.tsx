@@ -1,5 +1,5 @@
 import { Row, Col } from "react-bootstrap";
-import TextBox from "../../../../components/TextBox/TextBox";
+import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
@@ -16,7 +16,7 @@ import { Button } from "react-bootstrap";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
-import AutocompleteTextBox from "../../../../components/AutocompleteTextBox/AutocompleteTextBox";
+import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import { RegistrationService } from "../../../../services/RegistrationService/RegistrationService";
 import { formatDate } from "../../../../utils/Common/dateUtils";
 import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
@@ -56,7 +56,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
-  const { fetchLatestUHID, loading } = useRegistrationUtils(token);
+  const { fetchLatestUHID } = useRegistrationUtils(token);
   const endpointPIC = "GetPICDropDownValues";
   const endpointConstantValues = "GetConstantValues";
   const endPointAppModifyList = "GetActiveAppModifyFieldsAsync";
@@ -146,35 +146,55 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const calculateAge = (dob: string | number | Date) => {
     const birthday = new Date(dob);
     const today = new Date();
-    let age = today.getFullYear() - birthday.getFullYear();
-    const m = today.getMonth() - birthday.getMonth();
 
-    if (m < 0 || (m === 0 && today.getDate() < birthday.getDate())) {
+    // Calculate the difference in years
+    let age = today.getFullYear() - birthday.getFullYear();
+    const monthDiff = today.getMonth() - birthday.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthday.getDate())
+    ) {
       age--;
     }
-
     if (age === 0) {
-      // Calculate age in months
-      const ageInMonths = today.getMonth() - birthday.getMonth();
-      return { age: ageInMonths, ageType: "Months" };
+      const ageInMonths =
+        monthDiff + (today.getDate() < birthday.getDate() ? -1 : 0);
+      if (ageInMonths <= 0) {
+        const ageInDays = Math.floor(
+          (today.getTime() - birthday.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        return { age: ageInDays, ageType: "Days", ageUnit: "LBN2" };
+      } else {
+        return { age: ageInMonths, ageType: "Months", ageUnit: "LBN3" };
+      }
     } else if (age < 0) {
       // Handle future date of birth
-      return { age: 0, ageType: "Years" };
+      return { age: 0, ageType: "Years", ageUnit: "LBN4" };
     } else {
-      return { age: age, ageType: "Years" };
+      return { age: age, ageType: "Years", ageUnit: "LBN4" };
     }
   };
 
-  useEffect(() => {
-    if (formData.PDob) {
-      const { age, ageType } = calculateAge(formData.PDob);
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        PApproxAge: age.toString(),
-        PAgeType: ageType,
-      }));
+  const handleDOBChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDOB = e.target.value;
+    if (newDOB) {
+      const { age, ageType, ageUnit } = calculateAge(newDOB);
+      setFormData((prevFormData) => {
+        return {
+          ...prevFormData,
+          PApproxAge: age.toString(),
+          PAgeType: ageType,
+          PatOverview: {
+            ...prevFormData.PatOverview,
+            PageDescription: ageType,
+            PageDescriptionVal: ageUnit, // Set the value based on age unit
+            PAgeNumber: age,
+          },
+        };
+      });
     }
-  }, [formData.PDob]);
+  };
 
   const radioOptions = [
     { value: "N", label: "Age" },
@@ -267,7 +287,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <TextBox
+          <FloatingLabelTextBox
             ControlID="RegDate"
             title="Registration Date"
             type="date"
@@ -279,6 +299,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             }
             isSubmitted={isSubmitted}
             isMandatory={true}
+            errorMessage={formErrors.registrationDate}
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
@@ -298,7 +319,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <TextBox
+          <FloatingLabelTextBox
             ControlID="MobileNo"
             title="Mobile No"
             type="text"
@@ -338,7 +359,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <TextBox
+          <FloatingLabelTextBox
             ControlID="FirstName"
             title="First Name"
             type="text"
@@ -354,7 +375,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <TextBox
+          <FloatingLabelTextBox
             ControlID="LastName"
             title="Last Name"
             type="text"
@@ -369,7 +390,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <TextBox
+          <FloatingLabelTextBox
             ControlID="AadhaarNo"
             title="Aadhaar No"
             type="text"
@@ -434,7 +455,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             >
               {formData.PDobOrAgeVal === "N" ? (
                 <>
-                  <TextBox
+                  <FloatingLabelTextBox
                     ControlID="Age"
                     title="Age"
                     type="number"
@@ -469,15 +490,16 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                   />
                 </>
               ) : (
-                <TextBox
+                <FloatingLabelTextBox
                   ControlID="DOB"
                   title="Date of Birth"
                   type="date"
                   size="sm"
                   value={formData.PDob}
-                  onChange={(e) =>
-                    setFormData({ ...formData, PDob: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, PDob: e.target.value });
+                    handleDOBChange(e);
+                  }}
                   max={getTodayDate()}
                   isSubmitted={isSubmitted}
                   isMandatory={true}
@@ -489,7 +511,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
 
         {/* Placeholder for additional columns */}
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <TextBox
+          <FloatingLabelTextBox
             ControlID="PssnID"
             title="Int. ID/Passport ID"
             type="text"

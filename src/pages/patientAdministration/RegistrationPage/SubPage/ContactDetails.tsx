@@ -1,5 +1,5 @@
 import { Row, Col } from "react-bootstrap";
-import TextBox from "../../../../components/TextBox/TextBox";
+import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
@@ -129,7 +129,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
       </Row>
       <Row className="justify-content-between">
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <TextBox
+          <FloatingLabelTextBox
             ControlID="Address"
             title="Address"
             type="text"
@@ -192,7 +192,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
       </Row>
       <Row className="justify-content-between">
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <TextBox
+          <FloatingLabelTextBox
             ControlID="PostCode"
             title="Post Code"
             type="text"
@@ -211,7 +211,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <TextBox
+          <FloatingLabelTextBox
             ControlID="Email"
             title="Email"
             type="email"

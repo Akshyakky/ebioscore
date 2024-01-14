@@ -1,6 +1,6 @@
 import { Row, Col } from "react-bootstrap";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import TextBox from "../../../../components/TextBox/TextBox";
+import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import React, { useState, useEffect } from "react";
 import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import { BillingService } from "../../../../services/BillingService/BillingService";
@@ -84,7 +84,7 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
           />
         </Col>
         <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <TextBox
+          <FloatingLabelTextBox
             ControlID="MembeshipExpDate"
             title="Membership Expiry Date"
             type="date"

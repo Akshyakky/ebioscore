@@ -1,5 +1,6 @@
 // interfaces/Kin.ts
 export interface NextOfKinKinFormState {
+  ID:number;
   PNokID: number;
   PChartID: number;
   PNokPChartID: number;

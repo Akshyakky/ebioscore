@@ -168,6 +168,29 @@ export const getPatientInsuranceDetails = async (
   }
 };
 
+export const searchPatientDetails = async (
+  token: string,
+  searchTerm: string
+): Promise<{ data: any[]; success: boolean }> => {
+  try {
+    const url = `${APIConfig.patientAdministrationURL}Registration/SearchPatientDetails`;
+    const headers = { Authorization: `Bearer ${token}` };
+    const response = await axios.get(url, {
+      headers,
+      params: { query: searchTerm },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 400) {
+        throw error.response.data;
+      }
+    }
+    console.error(`Error during patient details search: ${error}`);
+    throw new Error("An error occurred during patient details search");
+  }
+};
+
 export const RegistrationService = {
   getLatestUHID,
   searchPatients,
@@ -177,4 +200,5 @@ export const RegistrationService = {
   getPatientDetails,
   getPatNokDetails,
   getPatientInsuranceDetails,
+  searchPatientDetails,
 };

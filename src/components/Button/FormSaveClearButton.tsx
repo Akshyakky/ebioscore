@@ -1,10 +1,10 @@
-// FixedButtons.tsx
+// FormSaveClearButton.tsx
 import React from "react";
 import { Button, Row, Col } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
-interface FixedButtonProps {
+interface FormSaveClearButtonProps {
   clearText: string;
   saveText: string;
   onClear: () => void;
@@ -13,7 +13,7 @@ interface FixedButtonProps {
   saveIcon?: IconDefinition;
 }
 
-const FixedButtons: React.FC<FixedButtonProps> = ({
+const FormSaveClearButton: React.FC<FormSaveClearButtonProps> = ({
   clearText,
   saveText,
   onClear,
@@ -39,4 +39,4 @@ const FixedButtons: React.FC<FixedButtonProps> = ({
   );
 };
 
-export default FixedButtons;
+export default FormSaveClearButton;

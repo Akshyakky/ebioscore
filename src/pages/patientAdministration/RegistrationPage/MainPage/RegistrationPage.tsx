@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   faPrint,
   faFileExcel,
@@ -9,17 +9,10 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faEdit } from "@fortawesome/free-solid-svg-icons";
-import {
-  Form,
-  Button,
-  Container,
-  Row,
-  Col,
-  ButtonGroup,
-} from "react-bootstrap";
+import { Form, Button, Container, Row, Col } from "react-bootstrap";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
-import FixedButton from "../../../../components/Button/Button";
+import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import "./RegistrationPage.css";
 import { RegistrationService } from "../../../../services/RegistrationService/RegistrationService";
 import { useSelector } from "react-redux";
@@ -28,7 +21,10 @@ import PersonalDetails from "../SubPage/PersonalDetails";
 import ContactDetails from "../SubPage/ContactDetails";
 import VisitDetails from "../SubPage/VisitDetails";
 import MembershipScheme from "../SubPage/MembershipScheme";
-import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
+import {
+  RegistrationFormErrors,
+  RegsitrationFormData,
+} from "../../../../interfaces/PatientAdministration/registrationFormData";
 import { ApiError } from "../../../../interfaces/Common/ApiError";
 import { useLoading } from "../../../../context/LoadingContext";
 import NextOfKinPopup from "../SubPage/NextOfKin";
@@ -36,27 +32,27 @@ import { NextOfKinKinFormState } from "../../../../interfaces/PatientAdministrat
 import PatientInsurancePopup from "../SubPage/PatientInsurance";
 import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
 import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
-
-interface FormErrors {
-  firstName?: string;
-  lastName?: string;
-  // ... other fields as needed
-}
+import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
+import PatientSearch from "../../CommonPage/AdvanceSearch/PatientSearch";
+import { PatientSearchContext } from "../../../../context/PatientSearchContext";
 
 const RegistrationPage: React.FC = () => {
   const [showKinPopup, setShowKinPopup] = useState(false);
   const [showInsurancePopup, setInsurancePopup] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [formErrors, setFormErrors] = useState<RegistrationFormErrors>({});
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
   const [gridNextOfKinData, setGridKinData] = useState<NextOfKinKinFormState[]>(
     []
   );
+  const [showPatientSearch, setShowPatientSearch] = useState(false);
+
   const [gridPatientInsuranceData, setGridPatientInsuranceData] = useState<
     InsuranceFormState[]
   >([]);
+
   const regFormInitialState: RegsitrationFormData = {
     PChartID: 0,
     PChartCode: "",
@@ -181,7 +177,7 @@ const RegistrationPage: React.FC = () => {
 
   const [formData, setFormData] =
     useState<RegsitrationFormData>(regFormInitialState);
-  const { fetchLatestUHID, loading } = useRegistrationUtils(token);
+  const { fetchLatestUHID } = useRegistrationUtils(token);
 
   const handleOpenKinPopup = () => {
     setShowKinPopup(true);
@@ -199,40 +195,49 @@ const RegistrationPage: React.FC = () => {
   };
   const handleSaveKinDetails = (kinDetails: NextOfKinKinFormState) => {
     setGridKinData((prevGridData) => {
-      // Check if the kinDetails is new or existing
-      const existingIndex = prevGridData.findIndex(
-        (kin) => kin.PNokID === kinDetails.PNokID
-      );
-
-      if (existingIndex >= 0) {
-        // Update the existing entry
-        return prevGridData.map((item, index) =>
-          index === existingIndex ? kinDetails : item
-        );
-      } else {
-        return [...prevGridData, kinDetails];
+      // Check if this is a new entry (PNokID not present or 0)
+      if (!kinDetails.PNokID && !kinDetails.ID) {
+        return [
+          ...prevGridData,
+          { ...kinDetails, ID: generateNewId(prevGridData) },
+        ];
       }
+      if (!kinDetails.PNokID) {
+        return prevGridData.map((item) =>
+          item.ID === kinDetails.ID ? kinDetails : item
+        );
+      }
+      // Update the existing entry
+      return prevGridData.map((item) =>
+        item.PNokID === kinDetails.PNokID ? kinDetails : item
+      );
     });
     handleCloseKinPopup();
   };
-
   const handleSaveInsurance = (insuranceData: InsuranceFormState) => {
     setGridPatientInsuranceData((prevData) => {
-      // Check if the insuranceData is new or existing
-      const existingIndex = prevData.findIndex(
-        (ins) => ins.OPIPInsID === insuranceData.OPIPInsID
-      );
-      if (existingIndex >= 0) {
-        // Replace the existing data
-        return prevData.map((ins, index) =>
-          index === existingIndex ? insuranceData : ins
-        );
-      } else {
-        // Add new insurance data
-        return [...prevData, insuranceData];
+      // Check if this is a new entry (OPIPInsID not present or 0)
+      if (!insuranceData.OPIPInsID && !insuranceData.ID) {
+        return [...prevData, { ...insuranceData, ID: generateNewId(prevData) }];
       }
+      if (!insuranceData.OPIPInsID) {
+        return prevData.map((item) =>
+          item.ID === insuranceData.ID ? insuranceData : item
+        );
+      }
+      // Update the existing entry
+      return prevData.map((item) =>
+        item.OPIPInsID === insuranceData.OPIPInsID ? insuranceData : item
+      );
     });
     handleClosePInsurancePopup();
+  };
+  const generateNewId = <T extends { ID: number }>(data: T[]): number => {
+    const maxId = data.reduce(
+      (max, item) => (item.ID > max ? item.ID : max),
+      0
+    );
+    return maxId + 1;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -374,13 +379,49 @@ const RegistrationPage: React.FC = () => {
   };
 
   const validateFormData = () => {
-    const errors: FormErrors = {};
+    const errors: RegistrationFormErrors = {};
     // Check each mandatory field
-    if (!formData.PFName.trim()) {
+    if (!formData.PChartCode.trim()) {
+      errors.pChartCode = "UHID is required.";
+    } else if (!formData.PRegDate.trim()) {
+      errors.registrationDate = "Registration Date is required";
+    } else if (!formData.PFName.trim()) {
       errors.firstName = "First Name is required.";
+    } else if (!formData.PLName.trim()) {
+      errors.lastName = "Last name is required";
+    } else if (formData.PTypeID === 0 || !formData.PTypeName.trim()) {
+      errors.paymentSource = "Payment Source is required";
+    } else if (!formData.PatAddress.PAddPhone1.trim()) {
+      errors.mobileNumber = "Mobile No is required";
+    } else if (!formData.PTitleVal.trim() || !formData.PTitle.trim()) {
+      errors.title = "Title is required";
+    } else if (!formData.PssnID.trim()) {
+      errors.indetityNo = "Indentity Number is required";
+    } else if (
+      (formData.PDobOrAge === "DOB" && !formData.PDob.trim()) ||
+      (formData.PDobOrAge === "Age" &&
+        formData.PatOverview.PAgeNumber === 0 &&
+        !formData.PatOverview.PageDescriptionVal.trim())
+    ) {
+      errors.dateOfBirth = "Date of birth or Age is required";
+    } else if (
+      formData.OPVisits.VisitTypeVal === "H" &&
+      (formData.DeptID === 0 || !formData.DeptName.trim())
+    ) {
+      errors.department = "Department is required";
+    } else if (
+      formData.OPVisits.VisitTypeVal === "P" &&
+      (formData.ConsultantID === 0 || !formData.ConsultantName.trim())
+    ) {
+      errors.attendingPhysician = "Attending Physician is required";
+    } else if (
+      (formData.OPVisits.VisitTypeVal === "H" ||
+        formData.OPVisits.VisitTypeVal === "P") &&
+      (formData.SourceID === 0 || !formData.SourceName.trim())
+    ) {
+      errors.primaryIntroducingSource =
+        "Primary Introducing Source is required";
     }
-    // ... add similar checks for other mandatory fields ...
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0; // Return true if no errors
   };
@@ -509,7 +550,6 @@ const RegistrationPage: React.FC = () => {
           patientDetails.data
         );
         setFormData(transformedData);
-
         await fetchAdditionalPatientDetails(pChartID);
       } else {
         // Handle the case where fetching patient details is not successful
@@ -561,6 +601,7 @@ const RegistrationPage: React.FC = () => {
     data: any[]
   ): InsuranceFormState[] => {
     return data.map((ins) => ({
+      ID: 0,
       OPIPInsID: ins.opipInsID,
       PChartID: ins.pChartID,
       InsurID: ins.insurID,
@@ -603,6 +644,7 @@ const RegistrationPage: React.FC = () => {
     data: any[]
   ): NextOfKinKinFormState[] => {
     return data.map((nok) => ({
+      ID: 0,
       PNokID: nok.pNokID,
       PChartID: nok.pChartID,
       PNokPChartID: nok.pNokPChartID,
@@ -683,7 +725,7 @@ const RegistrationPage: React.FC = () => {
       PatMemID: data.patMemID,
       PatMemName: data.patMemName,
       PatMemDescription: data.patMemDescription,
-      PatMemSchemeExpiryDate: data.patMemSchemeExpiryDate,
+      PatMemSchemeExpiryDate: data.patMemSchemeExpiryDate.split("T")[0],
       PatSchemeExpiryDateYN: data.patSchemeExpiryDateYN,
       PatSchemeDescriptionYN: data.patSchemeDescriptionYN,
       CancelReason: data.cancelReason,
@@ -696,7 +738,7 @@ const RegistrationPage: React.FC = () => {
       Faculty: data.faculty,
       LangType: data.langType,
       PChartCompID: data.pChartCompID,
-      PExpiryDate: data.pExpiryDate,
+      PExpiryDate: data.pExpiryDate.split("T")[0],
       PhysicianRoom: data.physicianRoom,
       RegTypeVal: data.regTypeVal,
       RegType: data.regType,
@@ -764,27 +806,33 @@ const RegistrationPage: React.FC = () => {
       OPVisits: data.opVisits || { VisitTypeVal: "H", VisitType: "Hospital" },
     };
   };
+  const { performSearch } = useContext(PatientSearchContext);
+  const handleAdvancedSearch = async () => {
+    setShowPatientSearch(true); // Show the PatientSearch modal
+    await performSearch(""); // Perform search with empty string
+  };
+  // const onAdvancedSearchClick = () => {
+  //   setShowPatientSearch(true);
+  // };
+  const actionButtons = [
+    {
+      icon: faSearch,
+      text: "Advanced Search",
+      onClick: handleAdvancedSearch,
+    },
+    { icon: faPrint, text: "Print Form" /*onClick:  function or handler */ },
+    // Add more buttons as needed
+  ];
+
   return (
     <MainLayout>
       <Container fluid>
-        <Row className="mb-1">
-          <Col xs={12} sm={12} md={12} lg={12} xl={12} xxl={12}>
-            <ButtonGroup>
-              <Button variant="dark" size="sm" className="">
-                <FontAwesomeIcon icon={faSearch} /> Advanced Search
-              </Button>
-              <Button variant="dark" size="sm" className="">
-                <FontAwesomeIcon icon={faRedo} /> Reprint
-              </Button>
-              <Button variant="dark" size="sm" className="">
-                <FontAwesomeIcon icon={faFileExcel} /> Export to Excel
-              </Button>
-              <Button variant="dark" size="sm" className="">
-                <FontAwesomeIcon icon={faPrint} /> Print Form
-              </Button>
-            </ButtonGroup>
-          </Col>
-        </Row>
+        <ActionButtonGroup buttons={actionButtons} />
+        {/* Patient Search Modal */}
+        <PatientSearch
+          show={showPatientSearch}
+          handleClose={() => setShowPatientSearch(false)}
+        />
         <Form onSubmit={handleSubmit}>
           {/* Personal Details */}
           <PersonalDetails
@@ -872,7 +920,7 @@ const RegistrationPage: React.FC = () => {
           </section>
         </Form>
       </Container>
-      <FixedButton
+      <FormSaveClearButton
         clearText="Clear"
         saveText="Save"
         onClear={handleClear}

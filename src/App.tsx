@@ -17,9 +17,9 @@ import { LoadingProvider } from "./context/LoadingContext";
 import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RegistrationPage from "./pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
+import { PatientSearchProvider } from "./context/PatientSearchContext";
 
 const App: React.FC = () => {
-
   return (
     <ReduxProvider store={store}>
       <PersistGate loading={null} persistor={persistor}>
@@ -42,7 +42,9 @@ const App: React.FC = () => {
                 path="/RegistrationPage"
                 element={
                   <ProtectedRoute>
-                    <RegistrationPage />
+                    <PatientSearchProvider>
+                      <RegistrationPage />
+                    </PatientSearchProvider>
                   </ProtectedRoute>
                 }
               />

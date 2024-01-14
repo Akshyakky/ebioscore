@@ -1,28 +1,8 @@
 import React from "react";
 import { FloatingLabel, Col, Form } from "react-bootstrap";
+import { TextBoxProps } from "../../../interfaces/Common/TextBoxProps";
 
-// Define TypeScript interface for the component props
-interface TextBoxProps {
-  ControlID: string;
-  title?: string;
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder?: string;
-  type?: string;
-  className?: string;
-  style?: React.CSSProperties;
-  size?: "sm" | "lg";
-  isMandatory?: boolean;
-  disabled?: boolean;
-  readOnly?: boolean;
-  ariaLabel?: string;
-  maxLength?: number;
-  isSubmitted?: boolean;
-  errorMessage?: string;
-  max?: string;
-}
-
-const TextBox: React.FC<TextBoxProps> = ({
+const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   ControlID,
   title,
   value = "",
@@ -79,4 +59,4 @@ const TextBox: React.FC<TextBoxProps> = ({
   );
 };
 
-export default TextBox;
+export default FloatingLabelTextBox;

@@ -18,7 +18,7 @@ interface TextBoxProps {
   ariaLabelIcon?: string;
 }
 
-const TextBoxWithICon: React.FC<TextBoxProps> = ({
+const IConTextBox: React.FC<TextBoxProps> = ({
   ControlID,
   title,
   value = "",
@@ -68,4 +68,4 @@ const TextBoxWithICon: React.FC<TextBoxProps> = ({
   );
 };
 
-export default TextBoxWithICon;
+export default IConTextBox;

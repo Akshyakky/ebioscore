@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Button, Col, Row } from "react-bootstrap";
 import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
-import TextBox from "../../../../components/TextBox/TextBox";
+import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { InsuranceCarrierService } from "../../../../services/CommonService/InsuranceCarrierService";
@@ -28,8 +28,10 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
 }) => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
+  const [isSubmitted, setIsSubmitted] = useState(false);
   // State for the insurance form
   const insuranceFormInitialState: InsuranceFormState = {
+    ID: 0,
     OPIPInsID: 0,
     PChartID: 0,
     InsurID: 0,
@@ -38,8 +40,8 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
     PolicyNumber: "",
     PolicyHolder: "",
     GroupNumber: "",
-    PolicyStartDt: "",
-    PolicyEndDt: "",
+    PolicyStartDt: new Date().toISOString().split("T")[0],
+    PolicyEndDt: new Date().toISOString().split("T")[0],
     Guarantor: "",
     RelationVal: "",
     Relation: "",
@@ -91,13 +93,18 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
   }, [editData]);
   // Function to handle form submission
   const handleSubmit = () => {
-    handleSave(insuranceForm);
-    resetInsuranceFormData();
-    handleClose();
+    setIsSubmitted(true);
+    if (insuranceForm.InsurName.trim()) {
+      handleSave(insuranceForm);
+      resetInsuranceFormData();
+      handleClose();
+      setIsSubmitted(false);
+    }
   };
   const handleCloseWithClear = () => {
     resetInsuranceFormData();
     handleClose();
+    setIsSubmitted(false);
   };
   const endpoint = "GetAllActiveForDropDown";
   const endPointAppModifyList = "GetActiveAppModifyFieldsAsync";
@@ -164,10 +171,11 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 insuranceOptions
               )}
               isMandatory={true}
+              isSubmitted={isSubmitted}
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="PolicyHolder"
               title="Policy Holder"
               type="text"
@@ -183,7 +191,7 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="PolicyNumber"
               title="Policy Number"
               type="text"
@@ -196,10 +204,12 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                   PolicyNumber: e.target.value,
                 })
               }
+              isMandatory={true}
+              isSubmitted={isSubmitted}
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="GroupNumber"
               title="Group Number"
               type="text"
@@ -217,7 +227,7 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
         </Row>
         <Row>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="PolicyStartDate"
               title="Policy Start Date"
               type="date"
@@ -233,7 +243,7 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="PolicyEndDate"
               title="Policy End Date"
               type="date"
@@ -249,7 +259,7 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="Guarantor"
               title="Guarantor"
               type="text"
@@ -295,7 +305,7 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="Address1"
               title="Address 1"
               type="text"
@@ -311,7 +321,7 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="Address2"
               title="Address 2"
               type="text"
@@ -327,7 +337,7 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="Phone1"
               title="Phone 1"
               type="text"
@@ -345,7 +355,7 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
         </Row>
         <Row>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="Phone2"
               title="Phone 2"
               type="text"
@@ -361,7 +371,7 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="Remarks"
               title="Remarks"
               type="text"

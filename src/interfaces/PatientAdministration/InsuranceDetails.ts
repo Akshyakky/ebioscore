@@ -1,4 +1,5 @@
 export interface InsuranceFormState {
+  ID: number;
   OPIPInsID: number;
   PChartID: number;
   InsurID: number;

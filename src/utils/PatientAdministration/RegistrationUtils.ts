@@ -1,13 +1,15 @@
-import { useState } from 'react';
-import { RegistrationService } from '../../services/RegistrationService/RegistrationService';
+import { RegistrationService } from "../../services/RegistrationService/RegistrationService";
+import { useLoading } from "../../context/LoadingContext";
 
-const useRegistrationUtils = (token:string) => {
-  const [loading, setLoading] = useState(false);
-
+const useRegistrationUtils = (token: string) => {
+  const { setLoading } = useLoading();
   const fetchLatestUHID = async () => {
     setLoading(true);
     try {
-      const latestUHID = await RegistrationService.getLatestUHID(token, "GetLatestUHID");
+      const latestUHID = await RegistrationService.getLatestUHID(
+        token,
+        "GetLatestUHID"
+      );
       return latestUHID;
     } catch (error) {
       console.error("Error fetching latest UHID:", error);
@@ -17,7 +19,7 @@ const useRegistrationUtils = (token:string) => {
     }
   };
 
-  return { fetchLatestUHID, loading };
+  return { fetchLatestUHID };
 };
 
 export default useRegistrationUtils;

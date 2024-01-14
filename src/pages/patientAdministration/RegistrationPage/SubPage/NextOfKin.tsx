@@ -10,7 +10,7 @@ import { ConstantValues } from "../../../../services/CommonService/ConstantValue
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
-import TextBox from "../../../../components/TextBox/TextBox";
+import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSave, faTimes } from "@fortawesome/free-solid-svg-icons";
@@ -30,14 +30,17 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
 }) => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const nextOfKinInitialFormState: NextOfKinKinFormState = {
+    ID: 0,
     PNokID: 0,
     PChartID: 0,
     PNokPChartID: 0,
     PNokRegStatusVal: "Y",
     PNokRegStatus: "Registered",
     PNokPssnID: "",
-    PNokDob: "",
+    PNokDob: new Date().toISOString().split("T")[0],
     PNokRelNameVal: "",
     PNokRelName: "",
     PNokTitleVal: "",
@@ -84,13 +87,24 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
   const [countryValues, setCountryValues] = useState<DropdownOption[]>([]);
 
   const handleSubmit = () => {
-    handleSave(nextOfkinData);
-    resetNextOfKinFormData();
+    setIsSubmitted(true);
+    if (
+      nextOfkinData.PNokTitle.trim() &&
+      nextOfkinData.PNokFName.trim() &&
+      nextOfkinData.PNokLName.trim() &&
+      nextOfkinData.PAddPhone1.trim() &&
+      nextOfkinData.PNokRelName.trim()
+    ) {
+      handleSave(nextOfkinData);
+      resetNextOfKinFormData();
+      setIsSubmitted(false);
+    }
   };
   const resetNextOfKinFormData = () => {
     setNextOfKinData(nextOfKinInitialFormState);
   };
   const handleCloseWithClear = () => {
+    setIsSubmitted(false);
     resetNextOfKinFormData();
     handleClose();
   };
@@ -220,10 +234,11 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               )}
               size="sm"
               isMandatory={true}
+              isSubmitted={isSubmitted}
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="FirstName"
               title="First Name"
               type="text"
@@ -237,10 +252,11 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               }
               value={nextOfkinData.PNokFName}
               isMandatory={true}
+              isSubmitted={isSubmitted}
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="Last Name"
               title="Last Name"
               type="text"
@@ -254,6 +270,7 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               }
               value={nextOfkinData.PNokLName}
               isMandatory={true}
+              isSubmitted={isSubmitted}
             />
           </Col>
         </Row>
@@ -271,10 +288,11 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               )}
               size="sm"
               isMandatory={true}
+              isSubmitted={isSubmitted}
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="BirthDate"
               title="Birth Date"
               type="date"
@@ -284,10 +302,9 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
                 setNextOfKinData({ ...nextOfkinData, PNokDob: e.target.value })
               }
               value={nextOfkinData.PNokDob}
-              isMandatory={true}
             />
           </Col>
-          <TextBox
+          <FloatingLabelTextBox
             ControlID="MobileNo"
             title="Mobile No"
             type="text"
@@ -298,9 +315,11 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               setNextOfKinData({ ...nextOfkinData, PAddPhone1: e.target.value })
             }
             maxLength={20}
+            isMandatory={true}
+            isSubmitted={isSubmitted}
           />
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="Address"
               title="Address"
               type="text"
@@ -361,7 +380,7 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="PostCode"
               title="Post Code"
               type="text"
@@ -393,7 +412,7 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="PassportNo"
               title="Passport No"
               type="text"
@@ -409,7 +428,7 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="WorkPhoneNo"
               title="Work Phone No"
               type="text"
@@ -425,7 +444,7 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
             />
           </Col>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <TextBox
+            <FloatingLabelTextBox
               ControlID="LandLineNo"
               title="Land Line No"
               type="text"
