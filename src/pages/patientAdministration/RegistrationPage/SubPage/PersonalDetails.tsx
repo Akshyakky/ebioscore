@@ -220,6 +220,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       return [];
     }
   };
+
   useEffect(() => {
     fetchLatestUHID().then((latestUHID) => {
       if (latestUHID) {
@@ -230,6 +231,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       }
     });
   }, [token]);
+
   const handleUHIDBlur = () => {
     if (!formData.PChartCode) {
       fetchLatestUHID().then((latestUHID) => {

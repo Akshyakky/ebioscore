@@ -2,15 +2,21 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { Modal, Form, Row, Col } from "react-bootstrap";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faTimes, faPen } from "@fortawesome/free-solid-svg-icons";
 import { PatientSearchContext } from "../../../../context/PatientSearchContext";
 import { debounce } from "../../../../utils/Common/debounceUtils";
+import { PatientSearchResult } from "../../../../interfaces/PatientAdministration/registrationFormData";
 
 interface PatientSearchProps {
   show: boolean;
   handleClose: () => void;
+  onEditPatient: (patientId: string) => void;
 }
-const PatientSearch = ({ show, handleClose }: PatientSearchProps) => {
+const PatientSearch = ({
+  show,
+  handleClose,
+  onEditPatient,
+}: PatientSearchProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const { performSearch, searchResults } = useContext(PatientSearchContext);
   const debouncedSearch = useCallback(
@@ -24,19 +30,51 @@ const PatientSearch = ({ show, handleClose }: PatientSearchProps) => {
       debouncedSearch(searchTerm);
     }
   }, [searchTerm, debouncedSearch]);
-
+  const handleEditAndClose = (patientId: string) => {
+    onEditPatient(patientId);
+    handleClose();
+  };
   const columns = [
     {
-      key: "pChartID",
+      key: "PatientEdit",
       header: "Edit",
       visible: true,
+      render: (row: PatientSearchResult) => (
+        <CustomButton
+          text="Edit"
+          onClick={() => handleEditAndClose(row.pChartID.toString())}
+          icon={faPen}
+          // Add any additional styling or properties needed
+        />
+      ),
     },
     { key: "pChartCode", header: "UHID", visible: true },
-    { key: "pfName", header: "Patient Name", visible: true },
-    { key: "pRegDate", header: "Registration Date", visible: true },
-    { key: "gender", header: "Gender", visible: true },
-    { key: "pAddPhone1", header: "Mobile No", visible: true },
-    { key: "pDob", header: "DOB", visible: true },
+    {
+      key: "patientName",
+      header: "Patient Name",
+      visible: true,
+      render: (row: PatientSearchResult) =>
+        `${row.pTitle} ${row.pfName} ${row.plName}`,
+    },
+    {
+      key: "RegDate",
+      header: "Registration Date",
+      visible: true,
+      render: (row: PatientSearchResult) => `${row.pRegDate.split("T")[0]} `,
+    },
+    { key: "pGender", header: "Gender", visible: true },
+    {
+      key: "MobileNo ",
+      header: "Mobile No",
+      visible: true,
+      render: (row: any) => `${row.pAddPhone1}`,
+    },
+    {
+      key: "Dob",
+      header: "DOB",
+      visible: true,
+      render: (row: PatientSearchResult) => `${row.pDob.split("T")[0]} `,
+    },
     { key: "pssnID", header: "Identity No", visible: true },
     { key: "pTypeName", header: "Payment Source", visible: true },
   ];

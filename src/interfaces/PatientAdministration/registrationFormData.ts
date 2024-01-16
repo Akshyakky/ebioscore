@@ -140,9 +140,10 @@ export interface PatientSearchResult {
   pDob: string;
   pfName: string;
   plName: string;
+  pTitle: string;
   pAddPhone1: string;
   pRegDate: string;
-  gender: string;
+  pGender: string;
   pssnID: string;
   pTypeName: string;
 }

@@ -14,6 +14,8 @@ import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTe
 import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSave, faTimes } from "@fortawesome/free-solid-svg-icons";
+import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
+import { usePatientAutocomplete } from "../../../../hooks/usePatientAutocomplete";
 
 interface NextOfKinPopupProps {
   show: boolean;
@@ -31,12 +33,14 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { fetchPatientSuggestions } = usePatientAutocomplete(token);
 
   const nextOfKinInitialFormState: NextOfKinKinFormState = {
     ID: 0,
     PNokID: 0,
     PChartID: 0,
     PNokPChartID: 0,
+    PNokPChartCode: "",
     PNokRegStatusVal: "Y",
     PNokRegStatus: "Registered",
     PNokPssnID: "",
@@ -74,6 +78,7 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
   const [nextOfkinData, setNextOfKinData] = useState<NextOfKinKinFormState>(
     nextOfKinInitialFormState
   );
+  const { PNokRegStatusVal } = nextOfkinData;
   const [titleValues, setTitleValues] = useState<DropdownOption[]>([]);
   const { setLoading } = useLoading();
 
@@ -206,7 +211,7 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
         <Modal.Title>Add Next of Kin</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Row>
+        <Row className="pb-3">
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
             <RadioGroup
               name="RegOrNonReg"
@@ -221,6 +226,32 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               inline={true}
             />
           </Col>
+          {PNokRegStatusVal === "Y" && (
+            <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+              <AutocompleteTextBox
+                ControlID="UHID"
+                title="UHID"
+                type="text"
+                size="sm"
+                placeholder="Search through UHID, Name, DOB, Phone No...."
+                value={nextOfkinData.PNokPChartCode}
+                onChange={(e) =>
+                  setNextOfKinData({
+                    ...nextOfkinData,
+                    PNokPChartCode: e.target.value,
+                  })
+                }
+                //onBlur={handleUHIDBlur}
+                fetchSuggestions={fetchPatientSuggestions}
+                inputValue={nextOfkinData.PNokPChartCode}
+                isSubmitted={isSubmitted}
+                isMandatory={true}
+                //onSelectSuggestion={onPatientSelect}
+              />
+            </Col>
+          )}
+        </Row>
+        <Row>
           <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
             <DropdownSelect
               label="Title"

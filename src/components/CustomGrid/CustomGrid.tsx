@@ -34,6 +34,14 @@ const CustomGrid = <T extends GenericObject>({
     maxHeight: maxHeight,
     overflowY: "auto",
   };
+
+  const stickyHeaderStyle: CSSProperties = {
+    position: "sticky",
+    top: 0,
+    backgroundColor: "#fff",
+    zIndex: 10,
+  };
+
   return (
     <div style={containerStyle}>
       <Table striped bordered hover responsive>
@@ -42,7 +50,9 @@ const CustomGrid = <T extends GenericObject>({
             {columns
               .filter((col) => col.visible)
               .map((col) => (
-                <th key={col.key}>{col.header}</th>
+                <th key={col.key} style={stickyHeaderStyle}>
+                  {col.header}
+                </th>
               ))}
           </tr>
         </thead>

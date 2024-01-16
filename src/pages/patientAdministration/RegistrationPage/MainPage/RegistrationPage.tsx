@@ -1,9 +1,7 @@
 import React, { useContext, useState } from "react";
 import {
   faPrint,
-  faFileExcel,
   faSearch,
-  faRedo,
   faSave,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
@@ -648,6 +646,7 @@ const RegistrationPage: React.FC = () => {
       PNokID: nok.pNokID,
       PChartID: nok.pChartID,
       PNokPChartID: nok.pNokPChartID,
+      PNokPChartCode: nok.pNokPChartCode,
       PNokRegStatusVal: nok.pNokRegStatusVal,
       PNokRegStatus: nok.pNokRegStatus,
       PNokPssnID: nok.pNokPssnID,
@@ -832,6 +831,7 @@ const RegistrationPage: React.FC = () => {
         <PatientSearch
           show={showPatientSearch}
           handleClose={() => setShowPatientSearch(false)}
+          onEditPatient={handlePatientSelect}
         />
         <Form onSubmit={handleSubmit}>
           {/* Personal Details */}
