@@ -18,6 +18,7 @@ import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RegistrationPage from "./pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
 import { PatientSearchProvider } from "./context/PatientSearchContext";
+import ReportPage from "./pages/patientAdministration/ReportPage/MainPage/ReportPage";
 
 const App: React.FC = () => {
   return (
@@ -45,6 +46,14 @@ const App: React.FC = () => {
                     <PatientSearchProvider>
                       <RegistrationPage />
                     </PatientSearchProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/RoutineReportsPA"
+                element={
+                  <ProtectedRoute>
+                    <ReportPage />
                   </ProtectedRoute>
                 }
               />

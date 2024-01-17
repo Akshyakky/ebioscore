@@ -39,8 +39,10 @@ const CustomGrid = <T extends GenericObject>({
     position: "sticky",
     top: 0,
     backgroundColor: "#fff",
-    zIndex: 10,
+    zIndex: 1020, // higher than the z-index of elements below
+    boxShadow: "0 2px 2px -1px rgba(0, 0, 0, 0.4)",
   };
+ 
 
   return (
     <div style={containerStyle}>

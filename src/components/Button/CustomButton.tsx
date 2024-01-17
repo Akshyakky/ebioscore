@@ -11,6 +11,7 @@ interface CustomButtonProps {
   text?: string;
   onClick?: MouseEventHandler<HTMLButtonElement>;
   className?: string;
+  disabled?: boolean;
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({
@@ -20,6 +21,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   text,
   onClick,
   className,
+  disabled,
   ...props
 }) => {
   return (
@@ -28,6 +30,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       size={size}
       onClick={onClick}
       className={className}
+      disabled={disabled}
       {...props}
     >
       {icon && <FontAwesomeIcon icon={icon} className={text ? "me-1" : ""} />}
