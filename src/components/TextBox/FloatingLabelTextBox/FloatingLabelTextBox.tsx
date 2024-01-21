@@ -1,5 +1,6 @@
 import React from "react";
-import { FloatingLabel, Col, Form } from "react-bootstrap";
+import TextField from "@mui/material/TextField";
+import FormControl from "@mui/material/FormControl";
 import { TextBoxProps } from "../../../interfaces/Common/TextBoxProps";
 
 const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
@@ -10,7 +11,7 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   placeholder,
   type = "text",
   className,
-  style, // Added inline style
+  style,
   size,
   isMandatory = false,
   disabled = false,
@@ -20,42 +21,44 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   isSubmitted = false,
   errorMessage,
   max,
+  autoComplete = "on",
 }) => {
   const controlId = `txt${ControlID}`;
-  // Determine if the textbox is invalid
   const isInvalid = (isMandatory && isSubmitted && !value) || !!errorMessage;
-
-  // Determine the error message to display
   const errorToShow =
     errorMessage || (isMandatory && !value ? `${title} is required.` : "");
+
   return (
-    <Form.Group as={Col} controlId={controlId} className="mb-3">
-      <FloatingLabel
-        controlId={controlId}
+    <FormControl
+      variant="outlined"
+      fullWidth
+      margin="normal"
+      className={className}
+      style={style}
+    >
+      <TextField
+        id={controlId}
         label={title || ""}
-        className={className}
-        style={style}
-      >
-        <Form.Control
-          type={type}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder || title} // placeholder must be set for floating label to work
-          size={size}
-          disabled={disabled}
-          readOnly={readOnly}
-          aria-label={ariaLabel || title}
-          isInvalid={isInvalid}
-          maxLength={maxLength}
-          max={max}
-        />
-        {isInvalid && (
-          <Form.Control.Feedback type="invalid">
-            {errorToShow}
-          </Form.Control.Feedback>
-        )}
-      </FloatingLabel>
-    </Form.Group>
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder || title}
+        size={size}
+        disabled={disabled}
+        InputProps={{
+          readOnly: readOnly,
+          inputProps: {
+            "aria-label": ariaLabel || title,
+            maxLength: maxLength,
+            max: max,
+          },
+        }}
+        error={isInvalid}
+        helperText={isInvalid ? errorToShow : ""}
+        autoComplete={autoComplete}
+      />
+      {/* {isInvalid && <FormHelperText error>{errorToShow}</FormHelperText>} */}
+    </FormControl>
   );
 };
 

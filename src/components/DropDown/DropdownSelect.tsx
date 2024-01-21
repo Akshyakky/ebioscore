@@ -1,13 +1,20 @@
 import React from "react";
-import { Form, FloatingLabel } from "react-bootstrap";
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
+} from "@mui/material";
+import { SelectChangeEvent } from "@mui/material/Select";
 
 interface DropdownSelectProps {
   label: string;
   name: string;
   value: string;
   options: Array<{ value: string; label: string }>;
-  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  size?: "sm" | "lg";
+  onChange: (event: SelectChangeEvent<unknown>, child: React.ReactNode) => void;
+  size?: "small" | "medium";
   disabled?: boolean;
   isMandatory?: boolean;
   defaultText?: string;
@@ -21,7 +28,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   value,
   options,
   onChange,
-  size,
+  size = "medium",
   disabled,
   isMandatory = false,
   defaultText,
@@ -29,39 +36,40 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   isSubmitted = false,
 }) => {
   const isEmptyValue = (val: string) => val === "" || val === "0";
+  const hasError = isMandatory && isSubmitted && isEmptyValue(value);
 
   return (
-    <FloatingLabel controlId={`ddl${name}`} label={label} className={className}>
-      <Form.Select
+    <FormControl
+      variant="outlined"
+      size={size}
+      fullWidth
+      className={className}
+      error={hasError}
+      margin="normal"
+    >
+      <InputLabel id={`ddl-label-${name}`} htmlFor={`ddl${name}`}>
+        {label}
+      </InputLabel>
+      <Select
+        labelId={`ddl-label-${name}`}
+        id={`ddl${name}`}
         name={name}
-        value={value || ""}
+        value={value}
         onChange={onChange}
-        size={size}
+        label={label}
         disabled={disabled}
-        aria-label={label}
-        aria-required={isMandatory}
-        className={
-          isMandatory && isSubmitted && isEmptyValue(value) ? "is-invalid" : ""
-        }
+        displayEmpty
       >
-        <option value={"" || 0} disabled={value !== ""}>
-          {defaultText || label}
-        </option>
+        {/* disabled={value !== ""} */}
+        <MenuItem value={""}>{defaultText || `${label}`}</MenuItem>
         {options.map((option) => (
-          <option
-            key={option.value || option.label}
-            value={option.value || option.label}
-          >
+          <MenuItem key={option.value} value={option.value}>
             {option.label}
-          </option>
+          </MenuItem>
         ))}
-      </Form.Select>
-      {isMandatory && isSubmitted && isEmptyValue(value) && (
-        <Form.Control.Feedback type="invalid">
-          {label} is required.
-        </Form.Control.Feedback>
-      )}
-    </FloatingLabel>
+      </Select>
+      {hasError && <FormHelperText>{label} is required.</FormHelperText>}
+    </FormControl>
   );
 };
 

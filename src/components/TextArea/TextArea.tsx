@@ -1,5 +1,5 @@
 import React from "react";
-import { Form } from "react-bootstrap";
+import { FormControl, TextField, FormHelperText } from "@mui/material";
 
 interface TextAreaProps {
   label: string;
@@ -12,6 +12,7 @@ interface TextAreaProps {
   readOnly?: boolean;
   className?: string; // For custom styling
   placeholder?: string; // Optional: placeholder text
+  style?: React.CSSProperties;
 }
 
 const TextArea: React.FC<TextAreaProps> = ({
@@ -25,25 +26,29 @@ const TextArea: React.FC<TextAreaProps> = ({
   readOnly = false,
   className,
   placeholder,
+  style
 }) => {
   return (
-    <Form.Group className={className}>
-      <Form.Label>
-        {label}
-        {isMandatory && <span className="text-danger">*</span>}
-      </Form.Label>
-      <Form.Control
-        as="textarea"
+    <FormControl className={className} fullWidth margin="normal" style={style}>
+      <TextField
+        label={label}
         name={name}
         value={value}
         onChange={onChange}
+        multiline
         rows={rows}
         disabled={disabled}
-        readOnly={readOnly}
+        InputProps={{
+          readOnly: readOnly,
+        }}
         placeholder={placeholder}
-        aria-required={isMandatory}
+        required={isMandatory}
+        variant="outlined"
       />
-    </Form.Group>
+      {isMandatory && (
+        <FormHelperText error>{label} is required</FormHelperText>
+      )}
+    </FormControl>
   );
 };
 

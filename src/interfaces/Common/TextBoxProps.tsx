@@ -7,7 +7,7 @@ export interface TextBoxProps {
   type?: string;
   className?: string;
   style?: React.CSSProperties;
-  size?: "sm" | "lg";
+  size?: "small" | "medium";
   isMandatory?: boolean;
   disabled?: boolean;
   readOnly?: boolean;
@@ -16,4 +16,5 @@ export interface TextBoxProps {
   isSubmitted?: boolean;
   errorMessage?: string;
   max?: string;
+  autoComplete?: string;
 }

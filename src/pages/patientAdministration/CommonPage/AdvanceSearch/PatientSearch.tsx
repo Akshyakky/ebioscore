@@ -1,12 +1,22 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { Modal, Form, Row, Col } from "react-bootstrap";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Grid,
+  Box,
+  Typography,
+  styled,
+} from "@mui/material";
+import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
-import { faTimes, faPen } from "@fortawesome/free-solid-svg-icons";
 import { PatientSearchContext } from "../../../../context/PatientSearchContext";
 import { debounce } from "../../../../utils/Common/debounceUtils";
 import { PatientSearchResult } from "../../../../interfaces/PatientAdministration/registrationFormData";
-
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
 interface PatientSearchProps {
   show: boolean;
   handleClose: () => void;
@@ -43,8 +53,7 @@ const PatientSearch = ({
         <CustomButton
           text="Edit"
           onClick={() => handleEditAndClose(row.pChartID.toString())}
-          icon={faPen}
-          // Add any additional styling or properties needed
+          icon={EditIcon}
         />
       ),
     },
@@ -78,42 +87,74 @@ const PatientSearch = ({
     { key: "pssnID", header: "Identity No", visible: true },
     { key: "pTypeName", header: "Payment Source", visible: true },
   ];
-
+  // const StyledDialog = styled(Dialog)(({ theme }) => ({
+  //   "& .MuiDialogTitle-root": {
+  //     backgroundColor: theme.palette.primary.main,
+  //     color: theme.palette.primary.contrastText,
+  //   },
+  //   "& .MuiDialogContent-root": {
+  //     paddingTop: theme.spacing(1),
+  //     paddingBottom: theme.spacing(1),
+  //   },
+  //   "& .MuiDialogActions-root": {
+  //     padding: theme.spacing(1),
+  //     justifyContent: "flex-end",
+  //   },
+  // }));
   return (
-    <Modal
-      show={show}
-      className="custom-large-modal"
-      onHide={handleClose}
-      size="lg"
+    <Dialog
+      open={show}
+      onClose={(event, reason) => {
+        if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
+          handleClose();
+        }
+      }}
+      maxWidth="lg"
+      fullWidth
     >
-      <Modal.Header closeButton>
-        <Modal.Title>Patient Search</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form>
-          <Row className="pb-2">
-            <Col md={3} lg={3} sm={12} xs={12} xl={3} xxl={3}>
-              <Form.Control
-                type="text"
-                placeholder="Search through the result"
+      <DialogTitle>
+        <Typography variant="h6">Patient Search</Typography>
+      </DialogTitle>
+      <DialogContent
+        sx={{
+          minHeight: "600px", // Adjust the value as needed
+          maxHeight: "600px", // Adjust the value as needed
+          overflowY: "auto", // Add scroll if content is larger than maxHeight
+        }}
+      >
+        <Box>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6} lg={4}>
+              <FloatingLabelTextBox
+                ControlID="SearchTerm"
+                title="Search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Enter UHID, name, or mobile number"
+                size="small"
+                autoComplete="off"
               />
-            </Col>
-          </Row>
-        </Form>
-        <CustomGrid columns={columns} data={searchResults} maxHeight="600px" />
-      </Modal.Body>
-      <Modal.Footer>
-        <CustomButton
-          variant="secondary"
-          text="Close"
-          icon={faTimes}
-          size="sm"
-          onClick={handleClose}
+            </Grid>
+          </Grid>
+        </Box>
+        <CustomGrid
+          columns={columns}
+          data={searchResults}
+          minHeight="500px"
+          maxHeight="500px"
         />
-      </Modal.Footer>
-    </Modal>
+      </DialogContent>
+      <DialogActions>
+        <CustomButton
+          variant="contained"
+          text="Close"
+          icon={CloseIcon}
+          size="medium"
+          onClick={handleClose}
+          color="secondary"
+        />
+      </DialogActions>
+    </Dialog>
   );
 };
 

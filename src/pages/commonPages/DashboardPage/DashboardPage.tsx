@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import {
   Container,
-  Row,
-  Col,
-  Form,
+  Grid,
+  Box,
   Card,
-  Button,
+  CardContent,
+  Typography,
   Badge,
-} from "react-bootstrap";
+  SelectChangeEvent,
+} from "@mui/material";
 import {
   startOfWeek,
   endOfWeek,
@@ -16,13 +17,17 @@ import {
   startOfYear,
   endOfYear,
 } from "date-fns";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faUser, faUsers } from "@fortawesome/free-solid-svg-icons";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import GroupIcon from "@mui/icons-material/Group";
+import PersonIcon from "@mui/icons-material/Person";
 import MainLayout from "../../../layouts/MainLayout/MainLayout";
 import { DashBoardService } from "../../../services/DashboardService/DashBoardService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/reducers";
 import { useLoading } from "../../../context/LoadingContext";
+import DropdownSelect from "../../../components/DropDown/DropdownSelect";
+import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import CustomButton from "../../../components/Button/CustomButton";
 
 // Define the interface for the count data
 interface CountData {
@@ -88,8 +93,9 @@ const DashboardPage: React.FC = () => {
   const token = userInfo.token!;
   const { setLoading } = useLoading();
 
-  const handleSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedOption(event.target.value);
+  const handleSelect = (event: SelectChangeEvent<unknown>) => {
+    const selectedValue = event.target.value as string;
+    setSelectedOption(selectedValue);
     const today = new Date();
     let from, to;
 
@@ -218,127 +224,99 @@ const DashboardPage: React.FC = () => {
     await fetchData();
     setShowCounts(true); // Set showCounts to true after data is fetched
   };
-
+  const dateRangeOptions = [
+    { value: "TD", label: "Today" },
+    { value: "YD", label: "Yesterday" },
+    { value: "TW", label: "This Week" },
+    { value: "LW", label: "Last Week" },
+    { value: "TM", label: "This Month" },
+    { value: "LM", label: "Last Month" },
+    { value: "TY", label: "This Year" },
+    { value: "LY", label: "Last Year" },
+    { value: "DT", label: "Date Range" },
+  ];
   return (
     <MainLayout>
-      <Container fluid>
-        <Row>
-          {/* Main Content */}
-          <Col md={12} lg={12} className="ml-sm-auto px-md-4">
-            {/* Date Range and Dropdown */}
-            <Row className="align-items-center pt-3 pb-2 mb-3 border-bottom">
-              <Col md={3}>
-                <Form.Label>Select date range</Form.Label>
-                <Form.Select
-                  id="drpFilter"
-                  title="Select Period"
-                  onChange={handleSelect}
-                  size="sm"
-                >
-                  <option value="TD">Today</option>
-                  <option value="YD">Yesterday</option>
-                  <option value="TW">This Week</option>
-                  <option value="LW">Last Week</option>
-                  <option value="TM">This Month</option>
-                  <option value="LM">Last Month</option>
-                  <option value="TY">This Year</option>
-                  <option value="LY">Last Year</option>
-                  <option value="DT">Date Range</option>
-                </Form.Select>
+      <Container maxWidth="lg">
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Box display="flex" alignItems="center" gap={2}>
+              <DropdownSelect
+                label="Select date range"
+                name="dateRange"
+                value={selectedOption}
+                options={dateRangeOptions}
+                onChange={handleSelect}
+                size="small"
+              />
 
-                {/* Conditional Date Range Picker */}
-              </Col>
               {selectedOption === "DT" && (
-                <Col md={6}>
-                  <Row>
-                    {/* From Date */}
-                    <Col md={6}>
-                      <Form.Group>
-                        <Form.Label>From</Form.Label>
-                        <Form.Control
-                          size="sm"
-                          type="date"
-                          name="from"
-                          value={String(dateRange.fromDate)}
-                          onChange={handleDateRangeChange}
-                        />
-                      </Form.Group>
-                    </Col>
-
-                    {/* To Date */}
-                    <Col sm={6}>
-                      <Form.Group>
-                        <Form.Label>To</Form.Label>
-                        <Form.Control
-                          size="sm"
-                          type="date"
-                          name="to"
-                          value={String(dateRange.toDate)}
-                          onChange={handleDateRangeChange}
-                        />
-                      </Form.Group>
-                    </Col>
-                  </Row>
-                </Col>
+                <Box display="flex" gap={2}>
+                  <FloatingLabelTextBox
+                    ControlID="fromDate"
+                    title="From"
+                    type="date"
+                    size="small"
+                    value={String(dateRange.fromDate)}
+                    onChange={handleDateRangeChange}
+                  />
+                  <FloatingLabelTextBox
+                    ControlID="toDate"
+                    title="To"
+                    type="date"
+                    size="small"
+                    value={String(dateRange.toDate)}
+                    onChange={handleDateRangeChange}
+                  />
+                </Box>
               )}
-              <Col md={3} className="d-flex align-items-center">
-                <Form.Group>
-                  <Button
-                    className="mt-md-4 btn-sm"
-                    onClick={handleShowButtonClick}
-                  >
-                    <FontAwesomeIcon icon={faEye} /> Show
-                  </Button>
-                </Form.Group>
-              </Col>
-            </Row>
 
-            {showCounts && (
-              <Row>
-                {Object.entries(counts).map(
-                  ([key, countData]) =>
-                    countData.show && ( // Only render the card if `show` is true
-                      <Col md={6} lg={3} key={key} className="mb-4">
-                        <Card className="shadow-sm h-100">
-                          <Card.Body>
-                            <Card.Title className="d-flex align-items-center justify-content-between">
-                              <span className="text-capitalize">
-                                {titleMapping[key.toLowerCase()] || key}{" "}
-                                {/* Use the mapping or default to key */}
-                              </span>
-                              <FontAwesomeIcon
-                                icon={faUsers}
-                                className="text-secondary"
-                              />
-                            </Card.Title>
-                            <hr />
-                            {countData.myCount !== null && ( // Only show if `myCount` is not null
-                              <Badge bg="primary" className="me-2">
-                                <FontAwesomeIcon
-                                  icon={faUser}
-                                  className="me-1"
-                                />
-                                My Count: {countData.myCount}
-                              </Badge>
-                            )}
-                            {countData.overallCount !== null && ( // Only show if `overallCount` is not null
-                              <Badge bg="success">
-                                <FontAwesomeIcon
-                                  icon={faUsers}
-                                  className="me-1"
-                                />
-                                Overall: {countData.overallCount}
-                              </Badge>
-                            )}
-                          </Card.Body>
-                        </Card>
-                      </Col>
-                    )
-                )}
-              </Row>
-            )}
-          </Col>
-        </Row>
+              <CustomButton
+                variant="contained"
+                size="small"
+                onClick={handleShowButtonClick}
+                icon={VisibilityIcon}
+                text="Show"
+              />
+            </Box>
+          </Grid>
+
+          {showCounts && (
+            <Grid container spacing={2}>
+              {Object.entries(counts).map(([key, countData]) =>
+                countData.show ? (
+                  <Grid item xs={12} md={6} lg={3} key={key}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6">
+                          {titleMapping[key.toLowerCase()] || key}
+                        </Typography>
+                        <Box display="flex" gap={2}>
+                          {countData.myCount !== null && (
+                            <Badge
+                              badgeContent={`My Count: ${countData.myCount}`}
+                              color="primary"
+                            >
+                              <PersonIcon />
+                            </Badge>
+                          )}
+                          {countData.overallCount !== null && (
+                            <Badge
+                              badgeContent={`Overall: ${countData.overallCount}`}
+                              color="success"
+                            >
+                              <GroupIcon />
+                            </Badge>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ) : null
+              )}
+            </Grid>
+          )}
+        </Grid>
       </Container>
     </MainLayout>
   );

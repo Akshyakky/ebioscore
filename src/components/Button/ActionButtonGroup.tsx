@@ -1,15 +1,16 @@
 //Button/ActionButtonGroup.tsx
 import React from "react";
-import { Col, Row, ButtonGroup } from "react-bootstrap";
+import Grid from "@mui/material/Grid";
+import ButtonGroup from "@mui/material/ButtonGroup";
 import CustomButton from "./CustomButton";
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { SvgIconComponent } from "@mui/icons-material";
 
-interface ButtonProps {
-  variant?: string;
-  size?: "sm" | "lg";
-  icon?: IconProp;
+export interface ButtonProps {
+  variant?: "text" | "outlined" | "contained";
+  size?: "small" | "medium" | "large";
+  icon?: SvgIconComponent;
   text?: string;
-  onClick?: () => void;
+  onClick?: () => void | Promise<void>;
   className?: string;
 }
 
@@ -19,14 +20,17 @@ interface ActionButtonGroupProps {
 
 const ActionButtonGroup: React.FC<ActionButtonGroupProps> = ({ buttons }) => {
   return (
-    <Row className="mb-1">
-      <Col xs={12} sm={12} md={12} lg={12} xl={12} xxl={12}>
-        <ButtonGroup>
+    <Grid container spacing={1}>
+      <Grid item xs={12}>
+        <ButtonGroup
+          variant="contained"
+          aria-label="outlined primary button group"
+        >
           {buttons.map((button, index) => (
             <CustomButton
               key={index}
-              variant={button.variant || "dark"}
-              size={button.size || "sm"}
+              variant={button.variant || "text"}
+              size={button.size || "small"}
               icon={button.icon}
               text={button.text}
               onClick={button.onClick}
@@ -34,8 +38,8 @@ const ActionButtonGroup: React.FC<ActionButtonGroupProps> = ({ buttons }) => {
             />
           ))}
         </ButtonGroup>
-      </Col>
-    </Row>
+      </Grid>
+    </Grid>
   );
 };
 

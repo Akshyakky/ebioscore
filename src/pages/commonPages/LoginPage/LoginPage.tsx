@@ -1,26 +1,28 @@
 import React, { useState, useEffect } from "react";
 import {
-  Form,
+  Container,
+  Box,
+  Card,
+  CardContent,
   Button,
   Alert,
-  Card,
-  Container,
-  Row,
-  Col,
-  Dropdown,
-} from "react-bootstrap";
+  CircularProgress,
+  Link,
+  createTheme,
+  ThemeProvider,
+} from "@mui/material";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
 import logo from "../../../assets/images/eBios.png";
 import { CompanyService } from "../../../services/CommonService/CompanyService";
-import { Link } from "react-router-dom";
 import { ClientParameterService } from "../../../services/CommonService/ClientParameterService";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSignInAlt, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import "../../../../src/assets/styles/Common.css";
 import AuthService from "../../../services/AuthService/AuthService";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { SET_USER_DETAILS } from "../../../store/userTypes";
+import DropdownSelect from "../../../components/DropDown/DropdownSelect";
+import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 
 type Company = {
   compIDCompCode: string;
@@ -201,164 +203,165 @@ const LoginPage = () => {
   };
 
   const handleSelectCompany = (CompIDCompCode: string, compName: string) => {
-    // Check if CompIDCompCode is a string and not undefined
-    if (typeof CompIDCompCode === "string") {
-      const parts = CompIDCompCode.split(",");
-      if (parts.length >= 2) {
-        setCompanyID(parts[0].toString());
-        setCompanyCode(parts[1].toString());
-        setSelectedCompanyName(compName);
-        if (errorMessage === "Please select a company.") {
-          setErrorMessage("");
-        }
-      } else {
-        console.error(
-          "CompIDCompCode does not contain a comma: ",
-          CompIDCompCode
-        );
-        // Handle the error case here, such as setting an error message
+    const parts = CompIDCompCode.split(",");
+    if (parts.length >= 2) {
+      setCompanyID(parts[0]);
+      setCompanyCode(parts[1]);
+      setSelectedCompanyName(compName);
+      // If there was an error message about company selection, clear it
+      if (errorMessage.includes("Please select a company.")) {
+        setErrorMessage("");
       }
     } else {
-      console.error(
-        "CompIDCompCode is undefined or not a string: ",
-        CompIDCompCode
-      );
-      // Handle the error case here, such as setting an error message
+      setCompanyID("0");
+      setCompanyCode("");
+      setSelectedCompanyName("");
+      setErrorMessage("Please select a company");
     }
   };
 
+  const theme = createTheme({
+    typography: {
+      fontFamily: [
+        "Segoe UI",
+        "Tahoma",
+        "Geneva",
+        "Verdana",
+        "sans-serif",
+      ].join(","),
+    },
+    components: {
+      MuiTextField: {
+        defaultProps: {
+          variant: "outlined",
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            fontWeight: "bold", // Makes text bold
+            textTransform: "none", // Keeps the text casing as it is
+            borderRadius: 8, // Rounded corners
+            padding: "10px 20px", // Adjust padding for better sizing
+            // More styles can be added here
+          },
+        },
+      },
+    },
+  });
   return (
-    <Container
-      fluid
-      className="vh-100 d-flex justify-content-center align-items-center"
-      style={{
-        background: "linear-gradient(to right, #285E6A, #134450)",
-      }}
-    >
-      <Row className="justify-content-center">
-        <Col
-          xs={12}
-          sm={12}
-          md={12}
-          lg={12}
-          style={{ maxWidth: "400px", minWidth: "400px" }}
-        >
-          <Card className="shadow-sm p-4 mb-5 bg-white rounded">
-            <div className="text-center">
-              {" "}
-              {/* This div will center its contents horizontally */}
+    <ThemeProvider theme={theme}>
+      <Container
+        maxWidth="sm"
+        sx={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "#f0f0f0",
+        }}
+      >
+        <Card sx={{ minWidth: 350 }}>
+          <CardContent>
+            <Box textAlign="center" mb={4} mt={2}>
               <img
                 src={logo}
                 alt="Company Logo"
-                className="img-fluid" // responsive image size
-                style={{ maxWidth: "150px" }} // limit the size of the logo
+                style={{ maxWidth: "150px" }}
               />
-            </div>
-            <Card.Body>
-              {/* <h1 className="h3 mb-3 font-weight-normal">e-Bios</h1> */}
-              {/* <h2 className="h5 mb-3 font-weight-normal">
-                Hospital Information System
-              </h2> */}
-              {amcExpiryMessage && (
-                <Alert variant="warning" className="text-break">
-                  {amcExpiryMessage}
-                </Alert>
-              )}
-              {licenseExpiryMessage && (
-                <Alert
-                  variant={licenseDaysRemaining <= 0 ? "danger" : "warning"}
-                  className="text-break"
-                >
-                  {licenseExpiryMessage}
-                </Alert>
-              )}
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-3">
-                  <Dropdown>
-                    <Dropdown.Toggle
-                      variant="outline-secondary"
-                      id="dropdown-company"
-                      className="w-100 DrpDown"
-                    >
-                      {selectedCompanyName}
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu className="w-100">
-                      {companies.map((c) => (
-                        <Dropdown.Item
-                          key={c.compIDCompCode}
-                          onClick={() =>
-                            handleSelectCompany(c.compIDCompCode, c.compName)
-                          }
-                        >
-                          {c.compName}
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </Form.Group>
+            </Box>
 
-                <Form.Floating className="mb-3">
-                  <Form.Control
-                    id="floatingInputCustom"
-                    type="text"
-                    placeholder="Username"
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                  />
-                  <label htmlFor="floatingInputCustom">Enter Username</label>
-                </Form.Floating>
+            {amcExpiryMessage && (
+              <Alert severity="warning">{amcExpiryMessage}</Alert>
+            )}
+            {licenseExpiryMessage && (
+              <Alert severity={licenseDaysRemaining <= 0 ? "error" : "warning"}>
+                {licenseExpiryMessage}
+              </Alert>
+            )}
 
-                <Form.Floating className="mb-2">
-                  <Form.Control
-                    type="password"
-                    placeholder="Enter Password"
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <label htmlFor="floatingPasswordCustom">Enter Password</label>
-                </Form.Floating>
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <Form.Text className="text-muted">
-                    Forgot your password?
-                  </Form.Text>
-                  <Link
-                    to="/ForgotPasswordPage"
-                    className="text-decoration-none"
-                  >
-                    Reset it
-                  </Link>
-                </div>
+            <Box
+              component="form"
+              onSubmit={handleSubmit}
+              noValidate
+              sx={{ mt: 1 }}
+            >
+              <DropdownSelect
+                label="Select Company"
+                name="companyID"
+                value={
+                  companyID && companyCode ? `${companyID},${companyCode}` : ""
+                }
+                options={companies.map((c) => ({
+                  value: c.compIDCompCode,
+                  label: c.compName,
+                }))}
+                onChange={(event) => {
+                  const compIDCompCode = event.target.value as string;
+                  const selectedCompany = companies.find(
+                    (c) => c.compIDCompCode === compIDCompCode
+                  );
+                  handleSelectCompany(
+                    compIDCompCode,
+                    selectedCompany?.compName || ""
+                  );
+                }}
+                size="small"
+              />
 
-                <Button
-                  variant="primary"
-                  type="submit"
-                  className="w-100 btn btn-lg btn-primary"
-                  disabled={isLoggingIn}
-                >
-                  {isLoggingIn ? (
-                    <>
-                      <FontAwesomeIcon icon={faSpinner} spin />
-                      {" Signing In..."}
-                    </>
+              <FloatingLabelTextBox
+                ControlID="username"
+                title="Username"
+                value={UserName}
+                onChange={(e) => setUsername(e.target.value)}
+                size="small"
+                isMandatory
+              />
+
+              <FloatingLabelTextBox
+                ControlID="password"
+                title="Password"
+                type="password"
+                value={Password}
+                onChange={(e) => setPassword(e.target.value)}
+                size="small"
+                isMandatory
+              />
+
+              <Box textAlign="right">
+                <Link href="/ForgotPasswordPage" variant="body2">
+                  Forgot password?
+                </Link>
+              </Box>
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                color="primary"
+                sx={{
+                  mt: 3,
+                  mb: 2,
+                  boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.25)",
+                }}
+                disabled={isLoggingIn}
+                startIcon={
+                  isLoggingIn ? (
+                    <CircularProgress size={20} />
                   ) : (
-                    <>
-                      <FontAwesomeIcon icon={faSignInAlt} />
-                      {" Sign In"}
-                    </>
-                  )}
-                </Button>
+                    <LockOpenIcon />
+                  )
+                }
+              >
+                {isLoggingIn ? "Signing In..." : "Sign In"}
+              </Button>
 
-                {errorMessage && (
-                  <Alert variant="danger" className="mt-3 text-break">
-                    {errorMessage}
-                  </Alert>
-                )}
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
+              {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+            </Box>
+          </CardContent>
+        </Card>
+      </Container>
+    </ThemeProvider>
   );
 };
 

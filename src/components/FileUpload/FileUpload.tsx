@@ -1,5 +1,8 @@
 import React from "react";
-import { Form } from "react-bootstrap";
+import FormControl from "@mui/material/FormControl";
+import InputLabel from "@mui/material/InputLabel";
+import Input from "@mui/material/Input";
+import FormHelperText from "@mui/material/FormHelperText";
 
 interface FileUploadProps {
   label: string;
@@ -21,20 +24,24 @@ const FileUpload: React.FC<FileUploadProps> = ({
   className,
 }) => {
   return (
-    <Form.Group className={className}>
-      <Form.Label>
+    <FormControl className={className}>
+      <InputLabel htmlFor={name}>
         {label}
         {isMandatory && <span className="text-danger">*</span>}
-      </Form.Label>
-      <Form.Control
+      </InputLabel>
+      <Input
+        id={name}
         type="file"
-        name={name}
+        inputProps={{
+          multiple,
+          disabled,
+          "aria-required": isMandatory ? true : undefined,
+        }}
         onChange={onChange}
-        multiple={multiple}
         disabled={disabled}
-        aria-required={isMandatory}
       />
-    </Form.Group>
+      {isMandatory && <FormHelperText error={true}>Required</FormHelperText>}
+    </FormControl>
   );
 };
 

@@ -65,15 +65,3 @@ main {
   text-align: center;
 }
 
-/* In your global.css or equivalent file */
-.modal-header {
-  background-color: #272727;
-  /* Or any dark color you prefer */
-  color: #fff;
-  /* Adjust text color for visibility */
-}
-
-.custom-large-modal .modal-dialog {
-  max-width: 90vw;
-  width: auto;
-}

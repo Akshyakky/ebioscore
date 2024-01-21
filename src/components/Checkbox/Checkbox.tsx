@@ -1,5 +1,7 @@
 import React from "react";
-import { Form } from "react-bootstrap";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormGroup from "@mui/material/FormGroup";
 
 interface CheckboxProps {
   label: string;
@@ -11,7 +13,7 @@ interface CheckboxProps {
   className?: string; // For custom styling
 }
 
-const Checkbox: React.FC<CheckboxProps> = ({
+const CustomCheckbox: React.FC<CheckboxProps> = ({
   label,
   name,
   checked,
@@ -19,25 +21,30 @@ const Checkbox: React.FC<CheckboxProps> = ({
   isMandatory = false,
   disabled = false,
   className,
+  ...props // for additional FormControlLabelProps
 }) => {
   return (
-    <Form.Group className={className}>
-      <Form.Check
-        type="checkbox"
-        name={name}
+    <FormGroup className={className}>
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={checked}
+            onChange={onChange}
+            name={name}
+            disabled={disabled}
+            color="primary" // You can customize the color
+          />
+        }
         label={
           <>
             {label}
             {isMandatory && <span className="text-danger">*</span>}
           </>
         }
-        checked={checked}
-        onChange={onChange}
-        disabled={disabled}
-        aria-required={isMandatory}
+        {...props} // Spread any additional props
       />
-    </Form.Group>
+    </FormGroup>
   );
 };
 
-export default Checkbox;
+export default CustomCheckbox;

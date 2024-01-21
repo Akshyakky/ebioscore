@@ -1,4 +1,5 @@
-import { Row, Col } from "react-bootstrap";
+import { Grid, Typography, Box } from "@mui/material";
+import StarIcon from "@mui/icons-material/Star";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
@@ -10,9 +11,6 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { useLoading } from "../../../../context/LoadingContext";
-import { faStar } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "react-bootstrap";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
@@ -254,27 +252,19 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
 
   return (
     <section aria-labelledby="personal-details-header">
-      <Row>
-        <Col>
-          <h1 id="personal-details-header" className="section-header">
-            <Button
-              variant="dark border"
-              size="sm"
-              style={{ marginRight: "8px" }}
-            >
-              <FontAwesomeIcon icon={faStar} />
-            </Button>
-            PERSONAL DETAILS
-          </h1>
-        </Col>
-      </Row>
-      <Row className="justify-content-between">
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+      <Box>
+        <Typography variant="h6" id="personal-details-header">
+          PERSONAL DETAILS
+        </Typography>
+      </Box>
+
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <AutocompleteTextBox
             ControlID="UHID"
             title="UHID"
             type="text"
-            size="sm"
+            size="small"
             placeholder="Search through UHID, Name, DOB, Phone No...."
             value={formData.PChartCode}
             onChange={(e) =>
@@ -287,13 +277,13 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             isMandatory={true}
             onSelectSuggestion={onPatientSelect}
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <FloatingLabelTextBox
             ControlID="RegDate"
             title="Registration Date"
             type="date"
-            size="sm"
+            size="small"
             placeholder="Reg Date"
             value={formData.PRegDate}
             onChange={(e) =>
@@ -303,29 +293,29 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             isMandatory={true}
             errorMessage={formErrors.registrationDate}
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <DropdownSelect
             label="Payment Source [PIC]"
             name="PIC"
-            value={String(formData.PTypeID)}
+            value={formData.PTypeID === 0 ? "" : String(formData.PTypeID)}
             options={picValues}
             onChange={handleDropdownChange(
               ["PTypeID"],
               ["PTypeName"],
               picValues
             )}
-            size="sm"
+            size="small"
             isMandatory={true}
             isSubmitted={isSubmitted}
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <FloatingLabelTextBox
             ControlID="MobileNo"
             title="Mobile No"
             type="text"
-            size="sm"
+            size="small"
             placeholder="Mobile No"
             value={formData.PatAddress.PAddPhone1}
             onChange={(e) =>
@@ -341,10 +331,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             isSubmitted={isSubmitted}
             isMandatory={true}
           />
-        </Col>
-      </Row>
-      <Row className="justify-content-between">
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+      </Grid>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <DropdownSelect
             label="Title"
             name="Title"
@@ -355,17 +345,17 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
               ["PTitle"],
               titleValues
             )}
-            size="sm"
+            size="small"
             isMandatory={true}
             isSubmitted={isSubmitted}
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <FloatingLabelTextBox
             ControlID="FirstName"
             title="First Name"
             type="text"
-            size="sm"
+            size="small"
             placeholder="First Name"
             onChange={(e) =>
               setFormData({ ...formData, PFName: e.target.value })
@@ -375,13 +365,13 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             isMandatory={true}
             errorMessage={formErrors.firstName}
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <FloatingLabelTextBox
             ControlID="LastName"
             title="Last Name"
             type="text"
-            size="sm"
+            size="small"
             placeholder="Last Name"
             onChange={(e) =>
               setFormData({ ...formData, PLName: e.target.value })
@@ -390,13 +380,13 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             isSubmitted={isSubmitted}
             isMandatory={true}
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <FloatingLabelTextBox
             ControlID="AadhaarNo"
             title="Aadhaar No"
             type="text"
-            size="sm"
+            size="small"
             placeholder="Aadhaar No"
             onChange={(e) =>
               setFormData({ ...formData, PssnID: e.target.value })
@@ -405,10 +395,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             isSubmitted={isSubmitted}
             isMandatory={true}
           />
-        </Col>
-      </Row>
-      <Row className="justify-content-between">
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+      </Grid>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <DropdownSelect
             label="Gender"
             name="Gender"
@@ -419,22 +409,14 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
               ["PGender"],
               genderValues
             )}
-            size="sm"
+            size="small"
             isMandatory={true}
             isSubmitted={isSubmitted}
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <Row>
-            <Col
-              xs={3}
-              md={3}
-              lg={3}
-              xl={3}
-              xxl={3}
-              className="d-flex justify-content-center"
-            >
-              {/* Second element here */}
+        </Grid>
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={4} md={2} lg={2}>
               <RadioGroup
                 name="ageOrDob"
                 options={radioOptions}
@@ -446,22 +428,16 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                 )}
                 inline={true}
               />
-            </Col>
-            <Col
-              xs={9}
-              md={9}
-              lg={9}
-              xl={9}
-              xxl={9}
-              className="d-flex justify-content-start"
-            >
-              {formData.PDobOrAgeVal === "N" ? (
-                <>
+            </Grid>
+
+            {formData.PDobOrAgeVal === "N" ? (
+              <>
+                <Grid item xs={6} sm={6} md={6} lg={6}>
                   <FloatingLabelTextBox
                     ControlID="Age"
                     title="Age"
                     type="number"
-                    size="sm"
+                    size="small"
                     placeholder="Enter age"
                     value={formData.PatOverview.PAgeNumber.toString()}
                     onChange={(e) =>
@@ -476,6 +452,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                     isSubmitted={isSubmitted}
                     isMandatory={true}
                   />
+                </Grid>
+                <Grid item xs={6} sm={4} md={4} lg={4}>
                   <DropdownSelect
                     label="Age Unit"
                     name="AgeUnit"
@@ -486,17 +464,19 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                       ["PatOverview", "PageDescription"],
                       ageUnitOptions
                     )}
-                    size="sm"
+                    size="small"
                     isSubmitted={isSubmitted}
                     isMandatory={true}
                   />
-                </>
-              ) : (
+                </Grid>
+              </>
+            ) : (
+              <Grid item xs={12} sm={10} md={10} lg={10}>
                 <FloatingLabelTextBox
                   ControlID="DOB"
                   title="Date of Birth"
                   type="date"
-                  size="sm"
+                  size="small"
                   value={formData.PDob}
                   onChange={(e) => {
                     setFormData({ ...formData, PDob: e.target.value });
@@ -506,26 +486,26 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                   isSubmitted={isSubmitted}
                   isMandatory={true}
                 />
-              )}
-            </Col>
-          </Row>
-        </Col>
+              </Grid>
+            )}
+          </Grid>
+        </Grid>
 
         {/* Placeholder for additional columns */}
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <FloatingLabelTextBox
             ControlID="PssnID"
             title="Int. ID/Passport ID"
             type="text"
-            size="sm"
+            size="small"
             placeholder="Int. ID/Passport ID"
             value={formData.IntIdPsprt}
             onChange={(e) =>
               setFormData({ ...formData, IntIdPsprt: e.target.value })
             }
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <DropdownSelect
             label="Nationality"
             name="Nationality"
@@ -536,10 +516,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
               ["PatAddress", "PAddCountry"],
               nationalityValues
             )}
-            size="sm"
+            size="small"
           />
-        </Col>
-      </Row>
+        </Grid>
+      </Grid>
     </section>
   );
 };

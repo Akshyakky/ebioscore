@@ -1,5 +1,11 @@
-import { CSSProperties } from "react";
-import { Table } from "react-bootstrap";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell, { tableCellClasses } from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import { styled } from "@mui/material/styles";
 
 // Define a generic type with an index signature
 type GenericObject = { [key: string]: any };
@@ -15,6 +21,7 @@ interface CustomGridProps<T> {
   columns: Column<T>[];
   data: T[];
   maxHeight?: string; // Optional max height
+  minHeight?: string;
 }
 
 // Ensure T extends GenericObject to provide an index signature
@@ -22,6 +29,7 @@ const CustomGrid = <T extends GenericObject>({
   columns,
   data,
   maxHeight,
+  minHeight,
 }: CustomGridProps<T>) => {
   const renderCell = (item: T, column: Column<T>) => {
     if (column.render) {
@@ -29,50 +37,62 @@ const CustomGrid = <T extends GenericObject>({
     }
     return item[column.key];
   };
-  // Custom styles for the container
-  const containerStyle: CSSProperties = {
-    maxHeight: maxHeight,
-    overflowY: "auto",
-  };
+  const StyledTableRow = styled(TableRow)(({ theme }) => ({
+    "&:nth-of-type(odd)": {
+      backgroundColor: theme.palette.action.hover,
+    },
+    // hide last border
+    "&:last-child td, &:last-child th": {
+      border: 0,
+    },
+  }));
 
-  const stickyHeaderStyle: CSSProperties = {
-    position: "sticky",
-    top: 0,
-    backgroundColor: "#fff",
-    zIndex: 1020, // higher than the z-index of elements below
-    boxShadow: "0 2px 2px -1px rgba(0, 0, 0, 0.4)",
-  };
- 
+  const StyledTableCell = styled(TableCell)(({ theme }) => ({
+    [`&.${tableCellClasses.head}`]: {
+      backgroundColor: theme.palette.primary.dark, // Adjust color to match your theme
+      color: theme.palette.common.white,
+      fontWeight: "bold",
+      textAlign: "left",
+    },
+    [`&.${tableCellClasses.body}`]: {
+      fontSize: 14,
+      // Other body styles...
+    },
+  }));
 
   return (
-    <div style={containerStyle}>
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
+    <TableContainer
+      component={Paper}
+      style={{ maxHeight: maxHeight, minHeight: minHeight }}
+    >
+      <Table stickyHeader size="small" aria-label="customized table">
+        <TableHead>
+          <StyledTableRow>
             {columns
               .filter((col) => col.visible)
               .map((col) => (
-                <th key={col.key} style={stickyHeaderStyle}>
-                  {col.header}
-                </th>
+                <StyledTableCell key={col.key}>{col.header}</StyledTableCell>
               ))}
-          </tr>
-        </thead>
-        <tbody>
+          </StyledTableRow>
+        </TableHead>
+        <TableBody>
           {data.map((item, rowIndex) => (
-            <tr key={`row-${rowIndex}`}>
+            <StyledTableRow
+              sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+              key={`row-${rowIndex}`}
+            >
               {columns
                 .filter((col) => col.visible)
                 .map((col) => (
-                  <td key={`${col.key}-${rowIndex}`}>
+                  <StyledTableCell key={`${col.key}-${rowIndex}`}>
                     {renderCell(item, col)}
-                  </td>
+                  </StyledTableCell>
                 ))}
-            </tr>
+            </StyledTableRow>
           ))}
-        </tbody>
+        </TableBody>
       </Table>
-    </div>
+    </TableContainer>
   );
 };
 

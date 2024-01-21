@@ -1,5 +1,11 @@
 import React from "react";
-import { Form } from "react-bootstrap";
+import {
+  FormControl,
+  FormControlLabel,
+  Radio,
+  RadioGroup as MuiRadioGroup,
+  FormLabel,
+} from "@mui/material";
 
 interface RadioOption {
   value: string;
@@ -10,11 +16,11 @@ interface RadioGroupProps {
   name: string;
   options: RadioOption[];
   selectedValue: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>, value: string) => void;
   isMandatory?: boolean;
   disabled?: boolean;
-  className?: string; // For custom styling
-  inline?: boolean; // To render the radio buttons inline
+  className?: string;
+  inline?: boolean;
   label?: string;
 }
 
@@ -30,28 +36,27 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
   label = "",
 }) => {
   return (
-    <Form.Group className={className}>
-      {label && <Form.Label className="radio-group-label">{label}</Form.Label>}
-      {options.map((option, index) => {
-        const id = `${name}-${index}`;
-        return (
-          <Form.Check
-            key={id}
-            id={id}
-            type="radio"
-            inline={inline}
-            name={name}
-            label={option.label}
+    <FormControl component="fieldset" className={className}>
+      {label && <FormLabel>{label}</FormLabel>}
+      <MuiRadioGroup
+        name={name}
+        value={selectedValue}
+        onChange={onChange}
+        row={inline}
+      >
+        {options.map((option, index) => (
+          <FormControlLabel
+            key={`${name}-${index}`}
             value={option.value}
-            checked={selectedValue === option.value}
-            onChange={onChange}
+            control={<Radio />}
+            label={option.label}
             disabled={disabled}
-            aria-required={isMandatory}
-            className="form-check-inline"
+            required={isMandatory}
+            sx={{ mb: -2 }}
           />
-        );
-      })}
-    </Form.Group>
+        ))}
+      </MuiRadioGroup>
+    </FormControl>
   );
 };
 

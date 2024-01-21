@@ -1,4 +1,4 @@
-import { Row, Col } from "react-bootstrap";
+import { Grid, Typography, Box } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
@@ -8,12 +8,10 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
 import { useLoading } from "../../../../context/LoadingContext";
-import { faStar } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "react-bootstrap";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
+import StarIcon from "@mui/icons-material/Star";
 
 interface ContactDetailsProps {
   formData: RegsitrationFormData;
@@ -113,27 +111,18 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
   ];
   return (
     <section aria-labelledby="contact-details-header">
-      <Row>
-        <Col>
-          <h1 id="contact-details-header" className="section-header">
-            <Button
-              variant="dark border"
-              size="sm"
-              style={{ marginRight: "8px" }}
-            >
-              <FontAwesomeIcon icon={faStar} />
-            </Button>
-            CONTACT DETAILS
-          </h1>
-        </Col>
-      </Row>
-      <Row className="justify-content-between">
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+      <Box>
+        <Typography variant="h6" id="contact-details-header">
+          CONTACT DETAILS
+        </Typography>
+      </Box>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={3}>
           <FloatingLabelTextBox
             ControlID="Address"
             title="Address"
             type="text"
-            size="sm"
+            size="small"
             placeholder="Address"
             value={formData.PatAddress.PAddStreet}
             onChange={(e) =>
@@ -146,8 +135,8 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
               }))
             }
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
           <DropdownSelect
             label="Area"
             name="Area"
@@ -158,10 +147,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
               ["PatAddress", "PatArea"],
               areaValues
             )}
-            size="sm"
+            size="small"
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
           <DropdownSelect
             label="City"
             name="City"
@@ -172,10 +161,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
               ["PatAddress", "PAddCity"],
               cityValues
             )}
-            size="sm"
+            size="small"
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
           <DropdownSelect
             label="Country"
             name="Country"
@@ -186,17 +175,17 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
               ["PatAddress", "PAddActualCountry"],
               countryValues
             )}
-            size="sm"
+            size="small"
           />
-        </Col>
-      </Row>
-      <Row className="justify-content-between">
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+      </Grid>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={3}>
           <FloatingLabelTextBox
             ControlID="PostCode"
             title="Post Code"
             type="text"
-            size="sm"
+            size="small"
             placeholder="Post Code"
             onChange={(e) =>
               setFormData((prevFormData) => ({
@@ -209,13 +198,13 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
             }
             value={formData.PatAddress.PAddPostcode}
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
           <FloatingLabelTextBox
             ControlID="Email"
             title="Email"
             type="email"
-            size="sm"
+            size="small"
             placeholder="Email"
             onChange={(e) =>
               setFormData((prevFormData) => ({
@@ -228,8 +217,8 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
             }
             value={formData.PatAddress.PAddEmail}
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
           <DropdownSelect
             label="Company"
             name="Company"
@@ -240,12 +229,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
               ["PatCompName"],
               companyValues
             )}
-            size="sm"
+            size="small"
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-          <Row>
-            <Col xs={6} sm={6} md={6} lg={6} xl={6} xxl={6}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={6}>
               <RadioGroup
                 name="receiveSMS"
                 label="Receive SMS"
@@ -258,8 +247,8 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 )}
                 inline={true}
               />
-            </Col>
-            <Col xs={6} sm={6} md={6} lg={6} xl={6} xxl={6}>
+            </Grid>
+            <Grid item xs={12} sm={6} md={6}>
               <RadioGroup
                 name="receiveEmail"
                 label="Receive Email"
@@ -272,10 +261,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 )}
                 inline={true}
               />
-            </Col>
-          </Row>
-        </Col>
-      </Row>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Grid>
     </section>
   );
 };

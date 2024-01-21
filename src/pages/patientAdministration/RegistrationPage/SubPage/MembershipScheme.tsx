@@ -1,4 +1,3 @@
-import { Row, Col } from "react-bootstrap";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import React, { useState, useEffect } from "react";
@@ -6,11 +5,10 @@ import { RegsitrationFormData } from "../../../../interfaces/PatientAdministrati
 import { BillingService } from "../../../../services/BillingService/BillingService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import { faStar } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "react-bootstrap";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
+import { Grid, Typography, Box } from "@mui/material";
+import StarIcon from "@mui/icons-material/Star";
 
 interface MembershipSchemeProps {
   formData: RegsitrationFormData;
@@ -54,41 +52,32 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
 
   return (
     <section aria-labelledby="membership-scheme-header">
-      <Row>
-        <Col>
-          <h1 id="membership-scheme-header" className="section-header">
-            <Button
-              variant="dark border"
-              size="sm"
-              style={{ marginRight: "8px" }}
-            >
-              <FontAwesomeIcon icon={faStar} />
-            </Button>
-            MEMBERSHIP SCHEME
-          </h1>
-        </Col>
-      </Row>
-      <Row className="justify-content-between">
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+      <Box>
+        <Typography variant="h6" id="membership-scheme-header">
+          MEMBERSHIP SCHEME
+        </Typography>
+      </Box>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={3}>
           <DropdownSelect
             name="MembershipScheme"
             label="Membership Scheme"
-            value={String(formData.PatMemID)}
+            value={formData.PatMemID === 0 ? "" : String(formData.PatMemID)}
             options={membershipSchemes}
             onChange={handleDropdownChange(
               ["PatMemID"],
               ["PatMemName"],
               membershipSchemes
             )}
-            size="sm"
+            size="small"
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
           <FloatingLabelTextBox
             ControlID="MembeshipExpDate"
             title="Membership Expiry Date"
             type="date"
-            size="sm"
+            size="small"
             placeholder="Membership Expiry Date"
             onChange={(e) =>
               setFormData({
@@ -98,10 +87,10 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
             }
             value={formData.PatMemSchemeExpiryDate}
           />
-        </Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}></Col>
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}></Col>
-      </Row>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}></Grid>
+        <Grid item xs={12} sm={6} md={3}></Grid>
+      </Grid>
     </section>
   );
 };

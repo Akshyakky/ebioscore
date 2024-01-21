@@ -1,216 +1,134 @@
-/* Define a color scheme */
-:root {
-    --background-color: #f7f9fc;
-    /* A serene light blue-gray that suggests a clean, open space */
-    --Header-color: #102a43;
-    /* A deep blue that appears both professional and anchored */
-    --HeaderText-color: #ffffff;
-    /* Bright white to ensure legibility against the dark header */
-    --mainMenuText-color: #334e68;
-    /* A dark slate blue that's softer than black for text readability */
-    --mainMenuBackGround-color: #ffffff;
-    /* Crisp white for a clean, uncluttered main menu background */
-    --mainMenuBackGroundHover-color: #d1e1f0;
-    /* A gentle cornflower blue providing a soothing hover effect */
-    --subMenuBackGround-color: #e1e5ee;
-    /* A pale pastel blue that differentiates submenus without high contrast */
-    --subMenuText-color: #486581;
-    /* A muted blue for submenu text, ensuring a hierarchical contrast */
-    --mainMenuBackGroundHoverBoxShadow-color: rgba(0, 63, 145, 0.15);
-    /* A subtle blue shadow for depth on hover */
-    --subMenuBackGroundHover-color: #cadbee;
-    /* A slightly brighter blue for submenu items on hover */
-    --activeMenuBackGround-color: #0056b3;
-    /* A confident medium blue for active menu item background */
-    --activeMenuText-color: #ffffff;
-    /* White text for active items to maintain contrast */
-}
-
-
-.collapse {
-    transition: height 1.35s ease;
-}
-
 /* SideBar.css */
-
-/* General Reset */
-.nav-link {
-    color: var(--mainMenuText-color);
+:root {
+    --primary-color: #1665D8;
+    /* A strong shade of blue for primary actions */
+    --hover-color: rgba(22, 101, 216, 0.2);
+    /* Lighter blue for hover states */
+    --icon-color: #6C757D;
+    /* A neutral shade for icons */
+    --active-icon-color: #ffffff;
+    /* White for active icons for contrast */
+    --background-color: #0A192F;
+    /* A deep navy blue for the sidebar background */
+    --text-color: #ffffff;
+    /* White for text for readability */
+    --submenu-color: #112240;
+    /* A slightly lighter navy shade for submenu backgrounds */
+    --submenu-text-color: #8892B0;
+    /* A soft blue for submenu text */
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Maintain the modern font */
 }
 
-.nav-link:hover {
-    color: var(--Header-color);
+.drawer-content {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    overflow-x: hidden;
 }
 
-/* Sidebar Styles */
-.bg-body-tertiary {
+.MuiListItem-root {
+    padding-left: 16px;
+    padding-right: 16px;
+    transition: background-color 0.3s;
+}
+
+.MuiListItemText-root {
+    margin-left: -8px;
+}
+
+.MuiListItem-root:hover {
+    background-color: var(--hover-color);
+}
+
+.active-menu-item {
+    background-color: var(--primary-color);
+    color: var(--active-icon-color);
+}
+
+.active-submenu-item {
+    background-color: var(--submenu-color);
+    color: var(--submenu-text-color);
+
+    .MuiListItemIcon-root {
+        color: var(--active-icon-color);
+    }
+}
+
+.active-submenu-item,
+.MuiListItem-root:hover {
+    background-color: var(--primary-color);
+    color: var(--active-icon-color);
+}
+
+.MuiListItemIcon-root,
+.list-item-icon {
+    color: var(--icon-color);
+    min-width: 36px;
+    transition: color 0.3s;
+}
+
+.active-submenu-item .MuiListItemIcon-root,
+.MuiListItem-root:hover .MuiListItemIcon-root {
+    color: var(--active-icon-color);
+}
+
+.MuiDrawer-paper {
+    padding-top: 10px;
     background-color: var(--background-color);
 }
 
-/* Navbar Brand */
-.navbar-brand {
-    color: var(--Header-color);
-    font-weight: bold;
+::-webkit-scrollbar {
+    width: 0px;
 }
 
-/* Offcanvas Styles */
-.offcanvas-header {
-    background-color: var(--Header-color);
-    color: var(--HeaderText-color);
+::-webkit-scrollbar-track {
+    background: var(--background-color);
 }
 
-.offcanvas-title {
-    font-weight: bold;
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
 }
 
-.offcanvas-body {
-    background-color: var(--background-color);
-    padding-top: 20px;
+::-webkit-scrollbar-thumb:hover {
+    background: #145DA0;
 }
 
-/* Search Bar Styles */
-.form-control {
-    border-radius: 5px;
-    border: 1px solid var(--primary-color);
+.MuiTextField-root {
+    margin: 1em;
+    background: #ffffff;
+    border-radius: 4px;
 }
 
-/* Menu Item Styles */
-.nav-item {
-    background-color: var(--mainMenuBackGround-color);
-    margin-bottom: 5px;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-}
-
-.nav-item:hover {
-    box-shadow: 0 4px 8px var(--mainMenuBackGroundHoverBoxShadow-color);
-    background-color: var(--mainMenuBackGroundHover-color);
-}
-
-.fa-icon {
-    width: 20px;
-    text-align: center;
-    color: #0056b3;
-}
-
-/* Submenu Styles */
-.collapse {
-    background-color: var(--subMenuBackGround-color);
-}
-
-.pl-4 {
-    padding-left: 1.5rem;
-}
-
-.sidebar-link {
-    display: flex;
-    align-items: center;
-    padding: 10px;
+.NavLink {
     text-decoration: none;
-    color: var(--mainMenuText-color);
+    color: inherit;
+    display: block;
 }
 
-.sidebar-icon {
-    margin-right: 10px;
-    /* Adjust as needed */
-    min-width: 20px;
-    /* Adjust to your icon size to ensure alignment */
+.MuiAppBar-colorPrimary {
+    background-color: #0A192F;
+    color: var(--text-color);
 }
 
-.sidebar-text {
-    flex: 1;
-    /* This makes sure the text takes up the rest of the space */
+.MuiToolbar-regular {
+    padding-left: 16px;
+    padding-right: 16px;
 }
 
-.sidebar-container {
-    -ms-overflow-style: none;
-    /* IE and Edge */
-    scrollbar-width: none;
-    /* Firefox */
+.submenu-item {
+    background-color: var(--submenu-color);
 }
 
-.sidebar-container::-webkit-scrollbar {
-    display: none;
-    /* Chrome, Safari, and Opera */
+.NavLink-submenu {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    background-color: var(--submenu-color);
 }
 
-/* Custom close button styles using the default button */
-.offcanvas-header .btn-close {
-    color: #0056b3;
-    /* Change color to a dark blue */
-}
-
-/* Styling for the close button on hover */
-.offcanvas-header .btn-close:hover {
-    color: #003d66;
-    /* A darker shade of blue on hover */
-}
-
-/* Additional styling for focus outline to maintain accessibility */
-.offcanvas-header .btn-close:focus {
-    box-shadow: 0 0 0 .25rem rgba(0, 86, 179, 0.25);
-    /* Blue glow for focus */
-    outline: none;
-    /* Remove default focus outline */
-}
-
-/* If you want to add a background or border to the button */
-.offcanvas-header .btn-close {
-    background-color: #e7eff8;
-    /* Light blue background */
-    border-radius: 50%;
-    /* Circular shape */
-}
-
-/* Toggle Button Base Style */
-.navbar-toggler {
-    border: none;
-    background: transparent;
-    /* Clear background */
-    box-shadow: none;
-    /* No shadow for a flat look */
-}
-
-/* Toggle Icon Style */
-.navbar-toggler-icon {
-    color: var(--mainMenuText-color);
-    /* Modern shade of green */
-    font-size: 1.5rem;
-    /* Appropriate size for visibility */
-}
-
-/* Hover and Focus Styles */
-.navbar-toggler:hover,
-.navbar-toggler:focus {
-    color: var(--mainMenuText-color);
-    /* Darker shade of green on hover */
-    background-color: rgba(76, 175, 80, 0.1);
-    /* Soft green background on hover */
-}
-
-.custom-profile-dropdown {
-    background-color: #f8f9fa; /* Light grey background for subtle contrast */
-    color: #50596c; /* Dark grey for better readability */
-    border-radius: 5px;
-    
-    border: none; /* Remove the border-bottom groove for a cleaner look */
-    box-shadow: 0 2px 4px 0 rgba(0,0,0,.1); /* Add shadow for depth */
-    font-family: 'Open Sans', sans-serif; /* Example font */
-}
-
-.custom-profile-dropdown:hover,
-.custom-profile-dropdown:focus {
-    background-color: #e9ecef; /* Slightly darker background on hover/focus */
-    cursor: pointer;
-}
-
-.faUser {
-    margin-right: 8px; /* Increased spacing between icon and text */
-}
-
-
-.sidebar {
-    position: fixed;
-    z-index: 777;
-    width: 100%;
+.button-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
 }

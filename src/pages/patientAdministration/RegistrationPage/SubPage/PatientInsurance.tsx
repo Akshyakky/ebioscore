@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Button, Col, Row } from "react-bootstrap";
 import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
@@ -10,8 +9,16 @@ import { RootState } from "../../../../store/reducers";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
 import { ConstantValues } from "../../../../services/CommonService/ConstantValuesService";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSave, faTimes } from "@fortawesome/free-solid-svg-icons";
+import {
+  Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import SaveIcon from "@mui/icons-material/Save";
+import CustomButton from "../../../../components/Button/CustomButton";
 
 interface PatientInsuranceModalProps {
   show: boolean;
@@ -148,18 +155,11 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
     loadDropdownData();
   }, [token]);
   return (
-    <Modal
-      className="custom-large-modal"
-      show={show}
-      onHide={handleClose}
-      scrollable={true}
-    >
-      <Modal.Header closeButton className="bg-dark text-white">
-        <Modal.Title>Patient Insurance</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Row>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+    <Dialog open={show} onClose={handleClose} maxWidth="lg" fullWidth>
+      <DialogTitle>Patient Insurance</DialogTitle>
+      <DialogContent>
+        <Grid container spacing={2}>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <DropdownSelect
               label="Insurance"
               name="Insurance"
@@ -172,14 +172,15 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
               )}
               isMandatory={true}
               isSubmitted={isSubmitted}
+              size="small"
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <FloatingLabelTextBox
               ControlID="PolicyHolder"
               title="Policy Holder"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Policy Holder"
               value={insuranceForm.PolicyHolder}
               onChange={(e) =>
@@ -189,13 +190,13 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 })
               }
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <FloatingLabelTextBox
               ControlID="PolicyNumber"
               title="Policy Number"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Policy Number"
               value={insuranceForm.PolicyNumber}
               onChange={(e) =>
@@ -207,13 +208,13 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
               isMandatory={true}
               isSubmitted={isSubmitted}
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <FloatingLabelTextBox
               ControlID="GroupNumber"
               title="Group Number"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Group Number"
               value={insuranceForm.GroupNumber}
               onChange={(e) =>
@@ -223,15 +224,15 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 })
               }
             />
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+        </Grid>
+        <Grid container spacing={2}>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <FloatingLabelTextBox
               ControlID="PolicyStartDate"
               title="Policy Start Date"
               type="date"
-              size="sm"
+              size="small"
               placeholder="Policy Start Date"
               value={insuranceForm.PolicyStartDt}
               onChange={(e) =>
@@ -241,13 +242,13 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 })
               }
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <FloatingLabelTextBox
               ControlID="PolicyEndDate"
               title="Policy End Date"
               type="date"
-              size="sm"
+              size="small"
               placeholder="Policy End Date"
               value={insuranceForm.PolicyEndDt}
               onChange={(e) =>
@@ -257,13 +258,13 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 })
               }
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <FloatingLabelTextBox
               ControlID="Guarantor"
               title="Guarantor"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Guarantor"
               value={insuranceForm.Guarantor}
               onChange={(e) =>
@@ -273,8 +274,8 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 })
               }
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <DropdownSelect
               label="Relationship"
               name="Relationship"
@@ -285,12 +286,12 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 ["Relation"],
                 relationValues
               )}
-              size="sm"
+              size="small"
             />
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+        </Grid>
+        <Grid container spacing={2}>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <DropdownSelect
               label="CoveredFor"
               name="Covered For"
@@ -301,15 +302,15 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 ["CoveredFor"],
                 coverForValues
               )}
-              size="sm"
+              size="small"
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <FloatingLabelTextBox
               ControlID="Address1"
               title="Address 1"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Address 1"
               value={insuranceForm.Address1}
               onChange={(e) =>
@@ -319,13 +320,13 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 })
               }
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <FloatingLabelTextBox
               ControlID="Address2"
               title="Address 2"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Address 2"
               value={insuranceForm.Address2}
               onChange={(e) =>
@@ -335,13 +336,13 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 })
               }
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <FloatingLabelTextBox
               ControlID="Phone1"
               title="Phone 1"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Phone 1"
               value={insuranceForm.Phone1}
               onChange={(e) =>
@@ -351,15 +352,15 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 })
               }
             />
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+        </Grid>
+        <Grid container spacing={2}>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <FloatingLabelTextBox
               ControlID="Phone2"
               title="Phone 2"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Phone 2"
               value={insuranceForm.Phone2}
               onChange={(e) =>
@@ -369,13 +370,13 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 })
               }
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={3} lg={3} sm={12} xs={12} xl={3}>
             <FloatingLabelTextBox
               ControlID="Remarks"
               title="Remarks"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Remarks"
               value={insuranceForm.RNotes}
               onChange={(e) =>
@@ -385,18 +386,24 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
                 })
               }
             />
-          </Col>
-        </Row>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" size="sm" onClick={handleCloseWithClear}>
-          <FontAwesomeIcon icon={faTimes} /> Close
-        </Button>
-        <Button variant="primary" size="sm" onClick={handleSubmit}>
-          <FontAwesomeIcon icon={faSave} /> Save
-        </Button>
-      </Modal.Footer>
-    </Modal>
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <CustomButton
+          icon={CloseIcon}
+          variant="contained"
+          size="small"
+          onClick={handleCloseWithClear}
+        />
+        <CustomButton
+          icon={SaveIcon}
+          variant="contained"
+          size="small"
+          onClick={handleSubmit}
+        />
+      </DialogActions>
+    </Dialog>
   );
 };
 

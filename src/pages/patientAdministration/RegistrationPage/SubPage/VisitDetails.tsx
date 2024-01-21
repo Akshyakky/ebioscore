@@ -1,4 +1,5 @@
-import { Row, Col } from "react-bootstrap";
+import { Grid, Typography, Box } from "@mui/material";
+import StarIcon from "@mui/icons-material/Star";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
@@ -8,9 +9,6 @@ import { RootState } from "../../../../store/reducers";
 import { DepartmentService } from "../../../../services/CommonService/DepartmentService";
 import { ContactMastService } from "../../../../services/CommonService/ContactMastService";
 import { useLoading } from "../../../../context/LoadingContext";
-import { faStar } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "react-bootstrap";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
@@ -102,22 +100,13 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
   const isPhysicianVisit = formData.OPVisits.VisitTypeVal === "P";
   return (
     <section aria-labelledby="visit-details-header">
-      <Row>
-        <Col>
-          <h1 id="visit-details-header" className="section-header">
-            <Button
-              variant="dark border"
-              size="sm"
-              style={{ marginRight: "8px" }}
-            >
-              <FontAwesomeIcon icon={faStar} />
-            </Button>
-            VISIT DETAILS
-          </h1>
-        </Col>
-      </Row>
-      <Row className="justify-content-between">
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+      <Box>
+        <Typography variant="h6" id="visit-details-header">
+          VISIT DETAILS
+        </Typography>
+      </Box>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={3}>
           <RadioGroup
             name="visitDetails"
             label="Visit To"
@@ -130,13 +119,13 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
             )}
             inline={true}
           />
-        </Col>
+        </Grid>
         {isHospitalVisit && (
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          <Grid item xs={12} sm={6} md={3}>
             <DropdownSelect
               label="Department"
               name="Department"
-              value={String(formData.DeptID)}
+              value={formData.DeptID === 0 ? "" : String(formData.DeptID)}
               options={departmentValues}
               onChange={handleDropdownChange(
                 ["DeptID"],
@@ -145,15 +134,18 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
               )}
               isSubmitted={isSubmitted}
               isMandatory={isHospitalVisit}
+              size="small"
             />
-          </Col>
+          </Grid>
         )}
         {isPhysicianVisit && (
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          <Grid item xs={12} sm={6} md={3}>
             <DropdownSelect
               name="AttendingPhysician"
               label="Attending Physician"
-              value={String(formData.ConsultantID)}
+              value={
+                formData.ConsultantID === 0 ? "" : String(formData.ConsultantID)
+              }
               options={attendingPhy}
               onChange={handleDropdownChange(
                 ["ConsultantID"],
@@ -162,15 +154,16 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
               )}
               isSubmitted={isSubmitted}
               isMandatory={isPhysicianVisit}
+              size="small"
             />
-          </Col>
+          </Grid>
         )}
         {(isPhysicianVisit || isHospitalVisit) && (
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          <Grid item xs={12} sm={6} md={3}>
             <DropdownSelect
               name="PrimaryIntroducingSource"
               label="Primary Introducing Source"
-              value={String(formData.SourceID)}
+              value={formData.SourceID === 0 ? "" : String(formData.SourceID)}
               options={primaryIntroducingSource}
               onChange={handleDropdownChange(
                 ["SourceID"],
@@ -179,11 +172,12 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
               )}
               isSubmitted={isSubmitted}
               isMandatory={isPhysicianVisit || isHospitalVisit}
+              size="small"
             />
-          </Col>
+          </Grid>
         )}
-        <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}></Col>
-      </Row>
+        <Grid item xs={12} sm={6} md={3}></Grid>
+      </Grid>
     </section>
   );
 };

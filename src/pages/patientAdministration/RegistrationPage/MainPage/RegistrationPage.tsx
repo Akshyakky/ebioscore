@@ -1,13 +1,9 @@
 import React, { useContext, useState } from "react";
-import {
-  faPrint,
-  faSearch,
-  faSave,
-  faTrash,
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faEdit } from "@fortawesome/free-solid-svg-icons";
-import { Form, Button, Container, Row, Col } from "react-bootstrap";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SaveIcon from "@mui/icons-material/Save";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import { Container, Grid, Paper, Typography, Box } from "@mui/material";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
@@ -30,9 +26,14 @@ import { NextOfKinKinFormState } from "../../../../interfaces/PatientAdministrat
 import PatientInsurancePopup from "../SubPage/PatientInsurance";
 import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
 import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
-import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
+import ActionButtonGroup, {
+  ButtonProps,
+} from "../../../../components/Button/ActionButtonGroup";
 import PatientSearch from "../../CommonPage/AdvanceSearch/PatientSearch";
 import { PatientSearchContext } from "../../../../context/PatientSearchContext";
+import CustomButton from "../../../../components/Button/CustomButton";
+import SearchIcon from "@mui/icons-material/Search";
+import PrintIcon from "@mui/icons-material/Print";
 
 const RegistrationPage: React.FC = () => {
   const [showKinPopup, setShowKinPopup] = useState(false);
@@ -238,21 +239,18 @@ const RegistrationPage: React.FC = () => {
     return maxId + 1;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitted(true);
-    console.log(formData);
-  };
-
   const gridKinColumns = [
     {
       key: "Nokedit",
       header: "Edit",
       visible: true,
       render: (row: NextOfKinKinFormState) => (
-        <Button size="sm" onClick={() => handleEditKin(row)}>
-          <FontAwesomeIcon icon={faEdit} />
-        </Button>
+        <CustomButton
+          size="small"
+          onClick={() => handleEditKin(row)}
+          icon={EditIcon}
+          color="primary"
+        />
       ),
     },
     { key: "PNokRegStatus", header: "NOK Type", visible: true },
@@ -284,13 +282,12 @@ const RegistrationPage: React.FC = () => {
       header: "Delete",
       visible: true,
       render: (row: NextOfKinKinFormState) => (
-        <Button
-          size="sm"
-          variant="danger"
+        <CustomButton
+          size="small"
           onClick={() => handleDeleteKin(row.PNokID)}
-        >
-          <FontAwesomeIcon icon={faTrash} />
-        </Button>
+          icon={DeleteIcon}
+          color="error"
+        />
       ),
     },
   ];
@@ -307,9 +304,12 @@ const RegistrationPage: React.FC = () => {
       header: "Edit",
       visible: true,
       render: (row: InsuranceFormState) => (
-        <Button size="sm" onClick={() => handleEditPatientInsurance(row)}>
-          <FontAwesomeIcon icon={faEdit} />
-        </Button>
+        <CustomButton
+          size="small"
+          onClick={() => handleEditPatientInsurance(row)}
+          icon={EditIcon}
+          color="primary"
+        />
       ),
     },
     { key: "InsurName", header: "Insurance Name", visible: true },
@@ -326,13 +326,12 @@ const RegistrationPage: React.FC = () => {
       header: "Delete",
       visible: true,
       render: (row: InsuranceFormState) => (
-        <Button
-          size="sm"
-          variant="danger"
+        <CustomButton
+          size="small"
           onClick={() => handleDeletePatientInsurance(row.OPIPInsID)}
-        >
-          <FontAwesomeIcon icon={faTrash} />
-        </Button>
+          icon={DeleteIcon}
+          color="error"
+        />
       ),
     },
   ];
@@ -813,27 +812,35 @@ const RegistrationPage: React.FC = () => {
   // const onAdvancedSearchClick = () => {
   //   setShowPatientSearch(true);
   // };
-  const actionButtons = [
+  const actionButtons: ButtonProps[] = [
     {
-      icon: faSearch,
+      variant: "contained",
+      size: "medium",
+      icon: SearchIcon,
       text: "Advanced Search",
       onClick: handleAdvancedSearch,
     },
-    { icon: faPrint, text: "Print Form" /*onClick:  function or handler */ },
-    // Add more buttons as needed
+    {
+      variant: "contained",
+      icon: PrintIcon,
+      text: "Print Form",
+      size: "medium",
+    },
   ];
 
   return (
     <MainLayout>
-      <Container fluid>
-        <ActionButtonGroup buttons={actionButtons} />
+      <Container maxWidth={false}>
+        <Box sx={{ marginBottom: 2 }}>
+          <ActionButtonGroup buttons={actionButtons} />
+        </Box>
         {/* Patient Search Modal */}
         <PatientSearch
           show={showPatientSearch}
           handleClose={() => setShowPatientSearch(false)}
           onEditPatient={handlePatientSelect}
         />
-        <Form onSubmit={handleSubmit}>
+        <Paper variant="outlined" sx={{ padding: 2 }}>
           {/* Personal Details */}
           <PersonalDetails
             formData={formData}
@@ -863,27 +870,27 @@ const RegistrationPage: React.FC = () => {
           />
 
           <section aria-labelledby="NOK-header">
-            <Row>
-              <Col>
-                <h1 id="NOK-header" className="section-header">
-                  <Button
-                    variant="dark border"
-                    size="sm"
-                    onClick={handleOpenKinPopup}
-                    title="Add Next Of Kin"
-                    style={{ marginRight: "8px" }}
-                  >
-                    <FontAwesomeIcon icon={faPlus} />
-                  </Button>
+            <Grid container justifyContent="space-between" alignItems="center">
+              <Grid item>
+                <Typography variant="h6" id="NOK-header">
                   Next Of Kin
-                </h1>
-              </Col>
-            </Row>
-            <Row className="justify-content-between">
-              <Col xs={12} sm={12} md={12} lg={12} xl={12} xxl={12}>
+                </Typography>
+              </Grid>
+              <Grid item>
+                <CustomButton
+                  text="Add Next Of Kin"
+                  onClick={handleOpenKinPopup}
+                  icon={AddIcon} // Ensure AddIcon is imported
+                  color="primary"
+                  variant="text"
+                />
+              </Grid>
+            </Grid>
+            <Grid container justifyContent="space-between">
+              <Grid item xs={12}>
                 <CustomGrid columns={gridKinColumns} data={gridNextOfKinData} />
-              </Col>
-            </Row>
+              </Grid>
+            </Grid>
           </section>
 
           <PatientInsurancePopup
@@ -893,40 +900,41 @@ const RegistrationPage: React.FC = () => {
             editData={editingPatientInsuranceData}
           />
 
-          <section aria-labelledby="NOK-header">
-            <Row>
-              <Col>
-                <h1 id="insurance-details-header" className="section-header">
-                  <Button
-                    variant="dark border"
-                    size="sm"
-                    style={{ marginRight: "8px" }}
-                    onClick={handleOpenPInsurancePopup}
-                  >
-                    <FontAwesomeIcon icon={faPlus} />
-                  </Button>
+          <section aria-labelledby="Insurance-header">
+            <Grid container justifyContent="space-between" alignItems="center">
+              <Grid item>
+                <Typography variant="h6" id="insurance-details-header">
                   Insurance Details
-                </h1>
-              </Col>
-            </Row>
-            <Row className="justify-content-between">
-              <Col xs={12} sm={12} md={12} lg={12} xl={12} xxl={12}>
+                </Typography>
+              </Grid>
+              <Grid item>
+                <CustomButton
+                  text="Add Next Of Kin"
+                  onClick={handleOpenPInsurancePopup}
+                  icon={AddIcon} // Ensure AddIcon is imported
+                  color="primary"
+                  variant="text"
+                />
+              </Grid>
+            </Grid>
+            <Grid container justifyContent="space-between">
+              <Grid item xs={12}>
                 <CustomGrid
                   columns={gridPatientInsuranceColumns}
                   data={gridPatientInsuranceData}
                 />
-              </Col>
-            </Row>
+              </Grid>
+            </Grid>
           </section>
-        </Form>
+        </Paper>
       </Container>
       <FormSaveClearButton
         clearText="Clear"
         saveText="Save"
         onClear={handleClear}
         onSave={handleSave}
-        clearIcon={faTrash}
-        saveIcon={faSave}
+        clearIcon={DeleteIcon}
+        saveIcon={SaveIcon}
       />
     </MainLayout>
   );

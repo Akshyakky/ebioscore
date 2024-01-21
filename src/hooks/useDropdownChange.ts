@@ -1,8 +1,8 @@
-import { Dispatch, SetStateAction } from "react";
 import { DropdownOption } from "../interfaces/Common/DropdownOption";
+import { SelectChangeEvent } from "@mui/material";
 
 const useDropdownChange = <T extends object>(
-  setFormData: Dispatch<SetStateAction<T>>
+  setFormData: React.Dispatch<React.SetStateAction<T>>
 ) => {
   const handleDropdownChange =
     (
@@ -10,7 +10,7 @@ const useDropdownChange = <T extends object>(
       textPath: (string | number)[],
       options: DropdownOption[]
     ) =>
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
+    (e: SelectChangeEvent<unknown>, child?: React.ReactNode) => {
       const selectedValue = e.target.value;
       const selectedOption = options.find(
         (option) => String(option.value) === String(selectedValue)

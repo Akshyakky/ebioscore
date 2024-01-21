@@ -13,7 +13,7 @@ interface LoadSuccessParameters {
   // Add other properties from the event if necessary
 }
 
-const PdfViewer = () => {
+const RoutineReportsPA = () => {
   const [file, setFile] = useState<string | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -135,4 +135,4 @@ const PdfViewer = () => {
   );
 };
 
-export default PdfViewer;
+export default RoutineReportsPA;

@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { FloatingLabel, Col, Form } from "react-bootstrap";
-import "./AutocompleteTextBox.css";
-
+import React, { useState, useEffect } from "react";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
+import FormControl from "@mui/material/FormControl";
 interface AutocompleteTextBoxProps {
   ControlID: string;
   title?: string;
@@ -13,7 +13,7 @@ interface AutocompleteTextBoxProps {
   type?: string;
   className?: string;
   style?: React.CSSProperties;
-  size?: "sm" | "lg";
+  size?: "small" | "medium";
   isMandatory?: boolean;
   disabled?: boolean;
   readOnly?: boolean;
@@ -30,8 +30,8 @@ const AutocompleteTextBox: React.FC<AutocompleteTextBoxProps> = ({
   title,
   value = "",
   onChange,
-  onSelectSuggestion,
   fetchSuggestions,
+  onSelectSuggestion,
   placeholder,
   type = "text",
   className,
@@ -44,149 +44,122 @@ const AutocompleteTextBox: React.FC<AutocompleteTextBoxProps> = ({
   maxLength,
   isSubmitted = false,
   errorMessage,
-  inputValue,
   onBlur,
 }) => {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [isSuggestionsVisible, setSuggestionsVisible] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [inputValue, setInputValue] = useState(value);
+  const [options, setOptions] = useState<string[]>([]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "ArrowDown") {
-      e.preventDefault(); // Prevents scrolling the page
-      setSelectedIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % suggestions.length;
-        scrollSuggestionIntoView(nextIndex);
-        return nextIndex;
-      });
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault(); // Prevents scrolling the page
-      setSelectedIndex((prevIndex) => {
-        const nextIndex =
-          (prevIndex - 1 + suggestions.length) % suggestions.length;
-        scrollSuggestionIntoView(nextIndex);
-        return nextIndex;
-      });
-    } else if (e.key === "Enter" && selectedIndex >= 0) {
-      e.preventDefault(); // Prevent form submission
-      handleSuggestionClick(suggestions[selectedIndex]);
+  const fetchOptions = async (input: string) => {
+    if (fetchSuggestions) {
+      const fetchedSuggestions = await fetchSuggestions(input);
+      setOptions(fetchedSuggestions);
     }
   };
 
-  const scrollSuggestionIntoView = (index: number) => {
-    const suggestionElement = document.querySelector(
-      `.autocomplete-suggestion-${index}`
+  useEffect(() => {
+    fetchOptions(inputValue);
+  }, [inputValue]);
+
+  const handleInputChange = (
+    event: React.SyntheticEvent<Element, Event> | null,
+    newInputValue: string
+  ) => {
+    setInputValue(newInputValue);
+    if (onChange && event) {
+      onChange(event as React.ChangeEvent<HTMLInputElement>);
+    }
+  };
+
+  const handleSelect = (
+    event: React.SyntheticEvent,
+    newValue: string | null
+  ) => {
+    if (onSelectSuggestion && newValue) {
+      onSelectSuggestion(newValue);
+    }
+  };
+
+  const highlightMatch = (text: string, query: string) => {
+    const regex = new RegExp(query, "gi");
+    const parts = text.split(regex);
+    const matches = text.match(regex);
+
+    return (
+      <>
+        {parts.map((part, index) => (
+          <span key={index}>
+            {part}
+            {index < parts.length - 1 && matches && matches[index] && (
+              <span style={{ fontWeight: 700, color: "#1976d2" }}>
+                {matches[index]}
+              </span>
+            )}
+          </span>
+        ))}
+      </>
     );
-    suggestionElement?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  const renderOption = (
+    props: React.HTMLAttributes<HTMLLIElement>,
+    option: string
+  ) => {
+    return <li {...props}>{highlightMatch(option, inputValue)}</li>;
   };
 
   const controlId = `txt${ControlID}`;
-  // This function returns an array with the non-matched and matched parts of the suggestion
-  const highlightMatch = (suggestion: string, inputValue: string) => {
-    const matchIndex = suggestion
-      .toLowerCase()
-      .indexOf(inputValue.toLowerCase());
-    if (matchIndex === -1) {
-      return [suggestion];
-    }
-    const beforeMatch = suggestion.slice(0, matchIndex);
-    const matchText = suggestion.slice(
-      matchIndex,
-      matchIndex + inputValue.length
-    );
-    const afterMatch = suggestion.slice(matchIndex + inputValue.length);
-    return [
-      beforeMatch,
-      <span key="match" className="highlight">
-        {matchText}
-      </span>,
-      afterMatch,
-    ];
-  };
-
-  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedIndex(-1);
-    if (onChange) {
-      onChange(e);
-    }
-
-    const inputValue = e.target.value;
-    if (inputValue && fetchSuggestions) {
-      const fetchedSuggestions = await fetchSuggestions(inputValue);
-      setSuggestions(fetchedSuggestions);
-      setSuggestionsVisible(true);
-    } else {
-      setSuggestionsVisible(false);
-    }
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    if (onSelectSuggestion) {
-      onSelectSuggestion(suggestion);
-    }
-    setSuggestionsVisible(false);
-    setSelectedIndex(-1);
-  };
-
-  // Determine if the textbox is invalid
   const isInvalid = (isMandatory && isSubmitted && !value) || !!errorMessage;
-
-  // Determine the error message to display
   const errorToShow =
     errorMessage || (isMandatory && !value ? `${title} is required.` : "");
 
   return (
-    <Form.Group as={Col} controlId={controlId} className="mb-3">
-      <FloatingLabel
-        controlId={controlId}
-        label={title || ""}
-        className={className}
-        style={style}
-      >
-        <Form.Control
-          type={type}
-          value={value}
-          onChange={handleInputChange}
-          placeholder={placeholder || title}
-          size={size}
-          disabled={disabled}
-          readOnly={readOnly}
-          aria-label={ariaLabel || title}
-          isInvalid={isInvalid}
-          maxLength={maxLength}
-          autoComplete="off"
-          onBlur={onBlur}
-          onKeyDown={handleKeyDown}
-        />
-        {isInvalid && (
-          <Form.Control.Feedback type="invalid">
-            {errorToShow}
-          </Form.Control.Feedback>
+    <FormControl fullWidth className={className} margin="normal" style={style}>
+      <Autocomplete
+        id={controlId}
+        freeSolo
+        options={options}
+        inputValue={value || ""}
+        onInputChange={handleInputChange}
+        onChange={handleSelect}
+        renderOption={renderOption}
+        ListboxProps={{
+          sx: {
+            "& .MuiAutocomplete-option": {
+              fontSize: "1rem", // Example font size, adjust as needed
+              padding: "10px 15px", // Adjust padding as needed
+              display: "block", // Allows text to wrap as in a standard block element
+              whiteSpace: "wrap", // Allows text to wrap to next line
+              textAlign: "left", // Aligns text to the left
+              lineHeight: "1.5", // Adjust line height to ensure readability of wrapped text
+            },
+          },
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={title}
+            type={type}
+            placeholder={placeholder}
+            size={size}
+            disabled={disabled}
+            onChange={onChange}
+            InputProps={{
+              ...params.InputProps,
+              readOnly: readOnly,
+              inputProps: {
+                ...params.inputProps,
+                "aria-label": ariaLabel || title,
+                maxLength: maxLength,
+              },
+            }}
+            value={value}
+            error={isInvalid}
+            helperText={isInvalid ? errorToShow : ""}
+          />
         )}
-        {isSuggestionsVisible && suggestions.length > 0 && (
-          <ul className="autocomplete-suggestions">
-            {suggestions.map((suggestion, index) => {
-              const isSelected = index === selectedIndex;
-              const parts = highlightMatch(suggestion, inputValue || "");
-              return (
-                <li
-                  key={index}
-                  className={`autocomplete-suggestion-${index} ${
-                    isSelected ? "selected" : ""
-                  }`}
-                  onClick={() => handleSuggestionClick(suggestion)}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                >
-                  {parts.map((part, index) => (
-                    <React.Fragment key={index}>{part}</React.Fragment>
-                  ))}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </FloatingLabel>
-    </Form.Group>
+        onBlur={onBlur}
+      />
+    </FormControl>
   );
 };
 

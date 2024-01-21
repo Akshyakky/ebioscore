@@ -1,16 +1,17 @@
 // FormSaveClearButton.tsx
 import React from "react";
-import { Button, Row, Col } from "react-bootstrap";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import { Grid } from "@mui/material";
+import CustomButton from "./CustomButton";
+import { SvgIconComponent } from "@mui/icons-material";
+import "./Button.css";
 
 interface FormSaveClearButtonProps {
   clearText: string;
   saveText: string;
   onClear: () => void;
   onSave: () => void;
-  clearIcon?: IconDefinition;
-  saveIcon?: IconDefinition;
+  clearIcon?: SvgIconComponent;
+  saveIcon?: SvgIconComponent;
 }
 
 const FormSaveClearButton: React.FC<FormSaveClearButtonProps> = ({
@@ -22,20 +23,26 @@ const FormSaveClearButton: React.FC<FormSaveClearButtonProps> = ({
   saveIcon,
 }) => {
   return (
-    <Row className="fixed-buttons-container">
-      <Col className="text-start">
-        <Button variant="secondary" onClick={onClear}>
-          {clearIcon && <FontAwesomeIcon icon={clearIcon} className="me-2" />}
-          {clearText}
-        </Button>
-      </Col>
-      <Col className="text-end">
-        <Button variant="primary" onClick={onSave}>
-          {saveIcon && <FontAwesomeIcon icon={saveIcon} className="me-2" />}
-          {saveText}
-        </Button>
-      </Col>
-    </Row>
+    <Grid container className="fixed-buttons-container">
+      <Grid item xs={6} className="text-start">
+        <CustomButton
+          text={clearText}
+          onClick={onClear}
+          icon={clearIcon}
+          variant="contained" // You can customize this as needed
+          color="error" // Material UI color scheme
+        />
+      </Grid>
+      <Grid item xs={6} className="text-end">
+        <CustomButton
+          text={saveText}
+          onClick={onSave}
+          icon={saveIcon}
+          variant="contained" // You can customize this as needed
+          color="success" // Material UI color scheme
+        />
+      </Grid>
+    </Grid>
   );
 };
 

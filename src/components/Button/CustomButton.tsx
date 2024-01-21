@@ -1,27 +1,36 @@
 //Button/CustomButton.tsx
-import React, { MouseEventHandler } from "react";
-import { Button } from "react-bootstrap";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import React from "react";
+import Button from "@mui/material/Button";
+import { SvgIconComponent } from "@mui/icons-material";
 
 interface CustomButtonProps {
-  variant?: string;
-  size?: "sm" | "lg"; // Update this line
-  icon?: IconProp;
+  variant?: "text" | "outlined" | "contained";
+  size?: "small" | "medium" | "large";
+  icon?: SvgIconComponent;
   text?: string;
-  onClick?: MouseEventHandler<HTMLButtonElement>;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
   className?: string;
   disabled?: boolean;
+  color?:
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "error"
+    | "info"
+    | "success"
+    | "warning"
+    | "success";
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({
-  variant = "primary",
-  size, // Remove the default value for size
-  icon,
+  variant = "contained",
+  size = "medium",
+  icon: Icon, // using SvgIconComponent
   text,
   onClick,
   className,
   disabled,
+  color,
   ...props
 }) => {
   return (
@@ -31,9 +40,10 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       onClick={onClick}
       className={className}
       disabled={disabled}
+      startIcon={Icon ? <Icon /> : null}
+      color={color}
       {...props}
     >
-      {icon && <FontAwesomeIcon icon={icon} className={text ? "me-1" : ""} />}
       {text}
     </Button>
   );

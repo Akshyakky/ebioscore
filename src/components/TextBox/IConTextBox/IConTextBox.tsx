@@ -1,5 +1,10 @@
 import React from "react";
-import { FormControl, FormGroup, FormLabel, InputGroup } from "react-bootstrap";
+import TextField from "@mui/material/TextField";
+import FormControl from "@mui/material/FormControl";
+import InputAdornment from "@mui/material/InputAdornment";
+import FormLabel from "@mui/material/FormLabel";
+import FormGroup from "@mui/material/FormGroup";
+import IconButton from "@mui/material/IconButton";
 
 interface TextBoxProps {
   ControlID: string;
@@ -9,16 +14,16 @@ interface TextBoxProps {
   placeholder?: string;
   type?: string;
   className?: string;
-  size?: "sm" | "lg";
+  size?: "small" | "medium"; // Adjusted for Material UI sizes
   disabled?: boolean;
   icon?: React.ReactNode;
-  onIconClick?: () => void; // Add an onClick handler for the icon
+  onIconClick?: () => void;
   isMandatory?: boolean;
   readOnly?: boolean;
   ariaLabelIcon?: string;
 }
 
-const IConTextBox: React.FC<TextBoxProps> = ({
+const IconTextBox: React.FC<TextBoxProps> = ({
   ControlID,
   title,
   value = "",
@@ -32,40 +37,47 @@ const IConTextBox: React.FC<TextBoxProps> = ({
   onIconClick,
   isMandatory = false,
   readOnly = false,
-  ariaLabelIcon, // Accessible label for the icon
+  ariaLabelIcon,
 }) => {
   const controlId = `txt${ControlID}`;
 
   return (
-    <FormGroup controlId={controlId}>
+    <FormGroup>
       {title && (
-        <FormLabel>
+        <FormLabel htmlFor={controlId}>
           {title}
           {isMandatory && <span className="text-danger">*</span>}
         </FormLabel>
       )}
-      <InputGroup size={size}>
-        <FormControl
+      <FormControl variant="outlined" fullWidth>
+        <TextField
+          id={controlId}
           type={type}
+          label={title}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
           className={className}
+          size={size}
           disabled={disabled}
-          readOnly={readOnly}
+          InputProps={{
+            readOnly: readOnly,
+            endAdornment: icon ? (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={ariaLabelIcon}
+                  onClick={onIconClick}
+                  edge="end"
+                >
+                  {icon}
+                </IconButton>
+              </InputAdornment>
+            ) : null,
+          }}
         />
-        {icon && (
-          <InputGroup.Text
-            onClick={onIconClick ? onIconClick : undefined}
-            style={{ cursor: onIconClick ? "pointer" : "default" }}
-            aria-label={ariaLabelIcon}
-          >
-            {icon}
-          </InputGroup.Text>
-        )}
-      </InputGroup>
+      </FormControl>
     </FormGroup>
   );
 };
 
-export default IConTextBox;
+export default IconTextBox;

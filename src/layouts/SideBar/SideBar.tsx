@@ -1,155 +1,82 @@
 import React, { useState, useEffect } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import moduleService from "../../services/CommonService/ModuleService";
 import { ModuleDto, SubModuleDto } from "../../interfaces/Common/Modules";
 import {
-  Navbar,
-  Container,
-  Offcanvas,
-  Nav,
-  NavDropdown,
-  Form,
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  IconButton,
+  Typography,
+  TextField,
+  Box,
+  Divider,
   Collapse,
-} from "react-bootstrap";
+  AppBar,
+  Toolbar,
+  CssBaseline,
+  InputAdornment,
+  useTheme,
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import { Icon } from "@iconify/react";
 import "./SideBar.css";
-import {
-  faDashboard,
-  faDesktop,
-  faFemale,
-  faHeartbeat,
-  faHSquare,
-  faIndustry,
-  faMedkit,
-  faMoneyBill,
-  faStethoscope,
-  faTty,
-  faUniversity,
-  faUserLock,
-  faUserMd,
-  faUserNurse,
-  faUserPlus,
-  faUsers,
-  faUserShield,
-  faHandshakeAngle,
-  faBedPulse,
-  faWheelchair,
-  faPeopleArrows,
-  faFileLines,
-  faBell,
-  faClipboard,
-  faBed,
-  faPersonMilitaryToPerson,
-  faBaby,
-  faHospitalUser,
-  faBars,
-  faUserCircle,
-  faFileAlt,
-  faLock,
-  faUserCog,
-  faStream,
-  faStar,
-  faSignOutAlt,
-  faUser,
-  // ... import other icons as needed
-} from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { logout } from "../../store/actionCreators";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import AuthService from "../../services/AuthService/AuthService";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store/reducers";
-
-const iconMap: { [key: string]: any } = {
-  faDashboard: faDashboard,
-  faUsers: faUsers,
-  faUserShield: faUserShield,
-  faTachometer: faStethoscope,
-  faUserPlus: faUserPlus,
-  faUserMd: faUserMd,
-  faMoneyBill: faMoneyBill,
-  faDesktop: faDesktop,
-  faHSquare: faHSquare,
-  faStethoscope: faStethoscope,
-  faUserLock: faUserLock,
-  faFemale: faFemale,
-  faUniversity: faUniversity,
-  faIndustry: faIndustry,
-  faMedkit: faMedkit,
-  faHeartbeat: faHeartbeat,
-  faTty: faTty,
-  faUserNurse: faUserNurse,
-  faHandshakeAngle: faHandshakeAngle,
-  faBedPulse: faBedPulse,
-  faWheelchair: faWheelchair,
-  faPeopleArrows: faPeopleArrows,
-  faFileLines: faFileLines,
-  faBell: faBell,
-  faClipboard: faClipboard,
-  faBed: faBed,
-  faPersonMilitaryToPerson: faPersonMilitaryToPerson,
-  faBaby: faBaby,
-  faHospitalUser: faHospitalUser,
-  // ... map other icon names to their respective components
-};
+import { usePageTitle } from "../../hooks/usePageTitle";
+import ProfileMenu from "./ProfileMenu";
+import CloseIcon from "@mui/icons-material/Close";
+import SearchIcon from "@mui/icons-material/Search";
 
 interface SideBarProps {
   userID: number | null;
   token: string | null;
 }
-// Custom styles to ensure proper alignment and prevent wrapping
-const customDropdownStyles: React.CSSProperties = {
-  minWidth: "250px",
-  whiteSpace: "nowrap",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-};
+const drawerWidth = 340;
 const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
+  usePageTitle();
   const [modules, setModules] = useState<ModuleDto[]>([]);
   const [subModules, setSubModules] = useState<SubModuleDto[]>([]);
   const [activeModuleId, setActiveModuleId] = useState<number | null>(null);
   const [filterKeyword, setFilterKeyword] = useState<string>("");
-  const location = useLocation();
-  const [pageTitle, setPageTitle] = useState<string>("Default Page Title");
-  const userInfo = useSelector((state: RootState) => state.userDetails);
-  const dispatch = useDispatch();
+  const { pageTitle } = usePageTitle();
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const theme = useTheme();
 
-  const handleLogout = async () => {
-    if (token) {
-      try {
-        const response = await AuthService.logout(token);
-        console.log(response.Message); // Handle the response message
-        dispatch(logout()); // Clear Redux state
-        navigate("/login"); // Redirect to login page immediately
-      } catch (error) {
-        console.error("Logout failed:", error);
-      }
-    }
+  const handleSubModuleClick = (path: any) => {
+    handleDrawerClose();
+    navigate(path);
+  };
+
+  const handleDrawerToggle = () => {
+    setOpen(!open);
+  };
+
+  const handleDrawerClose = () => {
+    setOpen(false);
   };
 
   useEffect(() => {
-    switch (location.pathname) {
-      case "/login":
-        setPageTitle("Login");
-        break;
-      case "/dashboard":
-        setPageTitle("Dashboard");
-        break;
-      case "/RegistrationPage":
-        setPageTitle("Registration");
-        break;
-      // Add more cases for other paths as needed
-      default:
-        setPageTitle("Default Page Title");
-        break;
+    const handleOutsideClick = (event: MouseEvent) => {
+      const drawer = document.querySelector(".MuiDrawer-root");
+      if (drawer && !drawer.contains(event.target as Node)) {
+        handleDrawerClose();
+      }
+    };
+
+    if (open) {
+      document.addEventListener("mousedown", handleOutsideClick);
     }
-  }, [location]);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [open]);
 
   useEffect(() => {
     const fetchNavigationData = async () => {
       if (token) {
-        // Check if token is available
         const modulesData = await moduleService.getActiveModules(
           userID ?? 0,
           token
@@ -164,13 +91,12 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
     };
 
     fetchNavigationData();
-  }, [userID, token]); // Dependencies
+  }, [userID, token]);
 
   const toggleModule = (moduleId: number) => {
     setActiveModuleId(activeModuleId === moduleId ? null : moduleId);
   };
 
-  // Determine if a module should be displayed
   const shouldDisplayModule = (module: ModuleDto) => {
     return (
       module.title.toLowerCase().includes(filterKeyword.toLowerCase()) ||
@@ -182,18 +108,14 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
     );
   };
 
-  // Filter modules based on the search term or if any of its submodules match the search term
   const filteredModules = modules.filter(shouldDisplayModule);
 
-  // Determine submodules to display based on the search term
   const getFilteredSubModules = (module: ModuleDto) => {
     if (module.title.toLowerCase().includes(filterKeyword.toLowerCase())) {
-      // If the module matches, display all its submodules
       return subModules.filter(
         (subModule) => subModule.auGrpID === module.auGrpID
       );
     } else {
-      // Otherwise, filter submodules
       return subModules.filter(
         (subModule) =>
           subModule.auGrpID === module.auGrpID &&
@@ -201,127 +123,146 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
       );
     }
   };
+  const openDrawerStyle = {
+    width: `calc(100% - ${drawerWidth}px)`,
+    marginLeft: `${drawerWidth}px`,
+    transition: theme.transitions.create(["margin", "width"], {
+      easing: theme.transitions.easing.easeInOut,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+  };
 
+  const closedDrawerStyle = {
+    width: `100%`,
+    transition: theme.transitions.create(["margin", "width"], {
+      easing: theme.transitions.easing.easeInOut,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  };
   return (
-    <>
-      <Navbar expand={false} className="bg-body-tertiary mb-1 border-bottom">
-        <Container fluid>
-          <Navbar.Toggle aria-controls="offcanvasNavbar">
-            <FontAwesomeIcon icon={faBars} />
-          </Navbar.Toggle>
-
-          <h3>{pageTitle}</h3>
-          <NavDropdown
-            id="dropdown-button-dark-example2"
-            menuVariant="dark"
-            title={
-              <div style={{ display: "inline-block", padding: "10px" }}>
-                <FontAwesomeIcon icon={faUser} className="me-2" />
-                {userInfo.userName || "Profile"}{" "}
-                {/* Display user name or fallback to 'Profile' */}
-              </div>
-            }
-            className="custom-profile-dropdown me-2" // Added custom class here
-            data-bs-theme="dark"
-            drop="start"
+    <Box sx={{ display: "flex" }}>
+      <CssBaseline />
+      <AppBar
+        position="fixed"
+        sx={{
+          ...(open ? openDrawerStyle : closedDrawerStyle),
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            onClick={handleDrawerToggle}
+            edge="start"
+            sx={{ mr: 2 }}
           >
-            <NavDropdown.Item href="#settings" style={customDropdownStyles}>
-              <FontAwesomeIcon icon={faUserCircle} className="me-2" />
-              View Profile
-            </NavDropdown.Item>
-            <NavDropdown.Item href="#/action-2">
-              <FontAwesomeIcon icon={faFileAlt} className="me-2" />
-              My Reports
-            </NavDropdown.Item>
-            <NavDropdown.Item href="#/action-3">
-              <FontAwesomeIcon icon={faBell} className="me-2" />
-              What's New
-            </NavDropdown.Item>
-            <NavDropdown.Item href="#/action-3">
-              <FontAwesomeIcon icon={faLock} className="me-2" />
-              Release Lock
-            </NavDropdown.Item>
-            <NavDropdown.Item href="#/action-3">
-              <FontAwesomeIcon icon={faUserCog} className="me-2" />
-              Admin View
-            </NavDropdown.Item>
-            <NavDropdown.Item href="#/action-3">
-              <FontAwesomeIcon icon={faStream} className="me-2" />
-              Recently Used Modules
-            </NavDropdown.Item>
-            <NavDropdown.Item href="#/action-3">
-              <FontAwesomeIcon icon={faStar} className="me-2" />
-              Most Used Modules
-            </NavDropdown.Item>
-            <NavDropdown.Divider />
-            <NavDropdown.Item href="#logout" onClick={handleLogout}>
-              <FontAwesomeIcon icon={faSignOutAlt} className="me-2" />
-              Logout
-            </NavDropdown.Item>
-          </NavDropdown>
-          <Navbar.Offcanvas
-            id="offcanvasNavbar"
-            aria-labelledby="offcanvasNavbarLabel"
-            placement="start"
-          >
-            <Offcanvas.Header closeButton>
-              <Offcanvas.Title id="offcanvasNavbarLabel">
-                eBios Core
-              </Offcanvas.Title>
-            </Offcanvas.Header>
-            <Offcanvas.Body className="sidebar-container">
-              <Form className="d-flex mb-3">
-                <Form.Control
-                  type="search"
-                  placeholder="Search"
-                  className="me-2"
-                  aria-label="Search"
-                  onChange={(e) => setFilterKeyword(e.target.value)}
-                />
-              </Form>
-              <Nav className="flex-column">
-                {filteredModules.map((module) => (
-                  <Nav.Item key={"module-" + module.auGrpID} className="mb-2">
-                    <NavLink
-                      to="#"
-                      className="text-decoration-none sidebar-link"
-                      onClick={() => toggleModule(module.auGrpID)}
-                    >
-                      <FontAwesomeIcon
-                        icon={iconMap[module.iCon] || faUsers}
-                        className="sidebar-icon"
-                      />
-                      <span className="ms-2 sidebar-text">{module.title}</span>
-                    </NavLink>
-                    <Collapse in={activeModuleId === module.auGrpID}>
-                      <div>
-                        {getFilteredSubModules(module).map(
-                          (subModule, index) => (
-                            <NavLink
-                              key={`subModule-${subModule.auGrpID}-${index}`}
-                              to={subModule.link}
-                              className="d-block text-decoration-none pl-4 sidebar-link"
-                            >
-                              <FontAwesomeIcon
-                                icon={iconMap[subModule.iCon] || faUsers}
-                                className="sidebar-icon"
-                              />
-                              <span className="ms-2 sidebar-text">
-                                {subModule.title}
-                              </span>
-                            </NavLink>
-                          )
-                        )}
-                      </div>
-                    </Collapse>
-                  </Nav.Item>
-                ))}
-              </Nav>
-            </Offcanvas.Body>
-          </Navbar.Offcanvas>
-        </Container>
-      </Navbar>
-    </>
+            {open ? <CloseIcon /> : <MenuIcon />} {/* Here is the change */}
+          </IconButton>
+          <Typography variant="h6" noWrap component="div">
+            {pageTitle}
+          </Typography>
+          <Box flexGrow={1} />
+          <ProfileMenu />
+        </Toolbar>
+      </AppBar>
+      <Drawer
+        variant="persistent"
+        anchor="left"
+        open={open}
+        onClose={handleDrawerClose}
+        sx={{
+          "& .MuiDrawer-paper": { boxSizing: "border-box" },
+        }}
+      >
+        {/* <Toolbar
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: (theme) => theme.spacing(0, 1),
+            // necessary for content to be below app bar
+            ...theme.mixins.toolbar,
+          }}
+        >
+          <Typography variant="h6" noWrap>
+            eBios Core
+          </Typography>
+          <IconButton onClick={handleDrawerClose}>
+            <CloseIcon />
+          </IconButton>
+        </Toolbar> 
+        <Divider />*/}
+        <Box sx={{ padding: 1 }}>
+          <TextField
+            variant="outlined"
+            size="small"
+            fullWidth
+            placeholder="Search"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            onChange={(e) => setFilterKeyword(e.target.value)}
+          />
+        </Box>
+        <Divider />
+        <div className="drawer-content">
+          <List>
+            {filteredModules.map((module) => (
+              <React.Fragment key={"module-" + module.auGrpID}>
+                <ListItem
+                  button
+                  onClick={() => toggleModule(module.auGrpID)}
+                  className={
+                    activeModuleId === module.auGrpID ? "active-menu-item" : ""
+                  }
+                >
+                  <ListItemIcon className="list-item-icon">
+                    <Icon icon={module.iCon} />
+                  </ListItemIcon>
+                  <ListItemText primary={module.title} />
+                </ListItem>
+                <Collapse
+                  in={activeModuleId === module.auGrpID}
+                  timeout="auto"
+                  unmountOnExit
+                >
+                  <List component="div" disablePadding>
+                    {getFilteredSubModules(module).map((subModule, index) => (
+                      <NavLink
+                        to={subModule.link}
+                        key={`subModule-${subModule.auGrpID}-${index}`}
+                        className={({ isActive }) =>
+                          isActive
+                            ? "active-submenu-item NavLink-submenu"
+                            : "NavLink-submenu"
+                        }
+                        // onClick={handleDrawerClose}
+                        onClick={(e) => {
+                          e.preventDefault(); // Prevent default anchor behavior
+                          handleSubModuleClick(subModule.link); // Navigate programmatically
+                        }}
+                      >
+                        <ListItem button sx={{ pl: 2 }}>
+                          <ListItemIcon className="list-item-icon">
+                            <Icon icon={subModule.iCon} />
+                          </ListItemIcon>
+                          <ListItemText primary={subModule.title} />
+                        </ListItem>
+                      </NavLink>
+                    ))}
+                  </List>
+                </Collapse>
+              </React.Fragment>
+            ))}
+          </List>
+        </div>
+      </Drawer>
+    </Box>
   );
 };
 

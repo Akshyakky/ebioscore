@@ -1,5 +1,7 @@
 import React from "react";
-import { Form, Col } from "react-bootstrap";
+import TextField from "@mui/material/TextField";
+import FormControl from "@mui/material/FormControl";
+import FormHelperText from "@mui/material/FormHelperText";
 import { TextBoxProps } from "../../../interfaces/Common/TextBoxProps";
 
 const NormalTextBox: React.FC<TextBoxProps> = ({
@@ -27,32 +29,34 @@ const NormalTextBox: React.FC<TextBoxProps> = ({
     errorMessage || (isMandatory && !value ? `${title} is required.` : "");
 
   return (
-    <Form.Group
-      as={Col}
-      controlId={controlId}
-      className={`mb-3 ${className}`}
+    <FormControl
+      fullWidth
+      variant="outlined"
+      className={className}
       style={style}
     >
-      {title && <Form.Label>{title}</Form.Label>}
-      <Form.Control
+      <TextField
+        id={controlId}
+        label={title}
         type={type}
         value={value}
         onChange={onChange}
         placeholder={placeholder || title}
         size={size}
         disabled={disabled}
-        readOnly={readOnly}
-        aria-label={ariaLabel || title}
-        isInvalid={isInvalid}
-        maxLength={maxLength}
-        max={max}
+        InputProps={{
+          readOnly: readOnly,
+          inputProps: {
+            "aria-label": ariaLabel || title,
+            maxLength: maxLength,
+            max: max,
+          },
+        }}
+        error={isInvalid}
+        helperText={isInvalid && errorToShow}
       />
-      {isInvalid && (
-        <Form.Control.Feedback type="invalid">
-          {errorToShow}
-        </Form.Control.Feedback>
-      )}
-    </Form.Group>
+      {isInvalid && <FormHelperText error>{errorToShow}</FormHelperText>}
+    </FormControl>
   );
 };
 

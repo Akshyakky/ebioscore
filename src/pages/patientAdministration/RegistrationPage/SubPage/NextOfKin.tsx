@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Button, Row, Col } from "react-bootstrap";
+import {
+  Dialog,
+  Grid,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import SaveIcon from "@mui/icons-material/Save";
 import { NextOfKinKinFormState } from "../../../../interfaces/PatientAdministration/NextOfKinData";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
@@ -12,10 +20,9 @@ import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSave, faTimes } from "@fortawesome/free-solid-svg-icons";
 import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import { usePatientAutocomplete } from "../../../../hooks/usePatientAutocomplete";
+import CustomButton from "../../../../components/Button/CustomButton";
 
 interface NextOfKinPopupProps {
   show: boolean;
@@ -200,19 +207,11 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
     }
   }, [editData]);
   return (
-    <Modal
-      className="custom-large-modal"
-      scrollable={true}
-      show={show}
-      onHide={handleClose}
-      backdrop={"static"}
-    >
-      <Modal.Header closeButton className="bg-dark text-white">
-        <Modal.Title>Add Next of Kin</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Row className="pb-3">
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+    <Dialog open={show} onClose={handleClose} maxWidth="lg" fullWidth>
+      <DialogTitle>Add Next Of Kin</DialogTitle>
+      <DialogContent>
+        <Grid container>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <RadioGroup
               name="RegOrNonReg"
               label="NOK Type"
@@ -225,14 +224,14 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               )}
               inline={true}
             />
-          </Col>
+          </Grid>
           {PNokRegStatusVal === "Y" && (
-            <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+            <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
               <AutocompleteTextBox
                 ControlID="UHID"
                 title="UHID"
                 type="text"
-                size="sm"
+                size="small"
                 placeholder="Search through UHID, Name, DOB, Phone No...."
                 value={nextOfkinData.PNokPChartCode}
                 onChange={(e) =>
@@ -248,11 +247,11 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
                 isMandatory={true}
                 //onSelectSuggestion={onPatientSelect}
               />
-            </Col>
+            </Grid>
           )}
-        </Row>
-        <Row>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+        </Grid>
+        <Grid container spacing={2}>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <DropdownSelect
               label="Title"
               name="Title"
@@ -263,17 +262,17 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
                 ["PNokTitle"],
                 titleValues
               )}
-              size="sm"
+              size="small"
               isMandatory={true}
               isSubmitted={isSubmitted}
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <FloatingLabelTextBox
               ControlID="FirstName"
               title="First Name"
               type="text"
-              size="sm"
+              size="small"
               placeholder="First Name"
               onChange={(e) =>
                 setNextOfKinData({
@@ -285,13 +284,13 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               isMandatory={true}
               isSubmitted={isSubmitted}
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <FloatingLabelTextBox
               ControlID="Last Name"
               title="Last Name"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Last Name"
               onChange={(e) =>
                 setNextOfKinData({
@@ -303,10 +302,10 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               isMandatory={true}
               isSubmitted={isSubmitted}
             />
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+        </Grid>
+        <Grid container spacing={2}>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <DropdownSelect
               label="Relationship"
               name="Relationship"
@@ -317,44 +316,51 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
                 ["PNokRelName"],
                 relationValues
               )}
-              size="sm"
+              size="small"
               isMandatory={true}
               isSubmitted={isSubmitted}
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <FloatingLabelTextBox
               ControlID="BirthDate"
               title="Birth Date"
               type="date"
-              size="sm"
+              size="small"
               placeholder="Birth Date"
               onChange={(e) =>
                 setNextOfKinData({ ...nextOfkinData, PNokDob: e.target.value })
               }
               value={nextOfkinData.PNokDob}
             />
-          </Col>
-          <FloatingLabelTextBox
-            ControlID="MobileNo"
-            title="Mobile No"
-            type="text"
-            size="sm"
-            placeholder="Mobile No"
-            value={nextOfkinData.PAddPhone1}
-            onChange={(e) =>
-              setNextOfKinData({ ...nextOfkinData, PAddPhone1: e.target.value })
-            }
-            maxLength={20}
-            isMandatory={true}
-            isSubmitted={isSubmitted}
-          />
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
+            <FloatingLabelTextBox
+              ControlID="MobileNo"
+              title="Mobile No"
+              type="text"
+              size="small"
+              placeholder="Mobile No"
+              value={nextOfkinData.PAddPhone1}
+              onChange={(e) =>
+                setNextOfKinData({
+                  ...nextOfkinData,
+                  PAddPhone1: e.target.value,
+                })
+              }
+              maxLength={20}
+              isMandatory={true}
+              isSubmitted={isSubmitted}
+            />
+          </Grid>
+        </Grid>
+        <Grid container spacing={2}>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <FloatingLabelTextBox
               ControlID="Address"
               title="Address"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Address"
               onChange={(e) =>
                 setNextOfKinData({
@@ -365,10 +371,8 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               value={nextOfkinData.PNokStreet}
               isMandatory={true}
             />
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <DropdownSelect
               label="Area"
               name="Area"
@@ -379,10 +383,10 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
                 ["PNokArea"],
                 areaValues
               )}
-              size="sm"
+              size="small"
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <DropdownSelect
               label="City"
               name="City"
@@ -393,10 +397,12 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
                 ["PNokCity"],
                 areaValues
               )}
-              size="sm"
+              size="small"
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+        </Grid>
+        <Grid container spacing={2}>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <DropdownSelect
               label="Country"
               name="Country"
@@ -407,15 +413,15 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
                 ["PNokActualCountry"],
                 countryValues
               )}
-              size="sm"
+              size="small"
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <FloatingLabelTextBox
               ControlID="PostCode"
               title="Post Code"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Post Code"
               onChange={(e) =>
                 setNextOfKinData({
@@ -425,10 +431,26 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               }
               value={nextOfkinData.PNokPostcode}
             />
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
+            <FloatingLabelTextBox
+              ControlID="LandLineNo"
+              title="Land Line No"
+              type="text"
+              size="small"
+              placeholder="Land Line No"
+              onChange={(e) =>
+                setNextOfKinData({
+                  ...nextOfkinData,
+                  PAddPhone3: e.target.value,
+                })
+              }
+              value={nextOfkinData.PAddPhone3}
+            />
+          </Grid>
+        </Grid>
+        <Grid container spacing={2}>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <DropdownSelect
               label="Nationality"
               name="Nationality"
@@ -439,15 +461,15 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
                 ["PNokCountry"],
                 countryValues
               )}
-              size="sm"
+              size="small"
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <FloatingLabelTextBox
               ControlID="PassportNo"
               title="Passport No"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Passport No"
               onChange={(e) =>
                 setNextOfKinData({
@@ -457,13 +479,13 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               }
               value={nextOfkinData.PNokPssnID}
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
+          </Grid>
+          <Grid item md={4} lg={4} sm={12} xs={12} xl={4}>
             <FloatingLabelTextBox
               ControlID="WorkPhoneNo"
               title="Work Phone No"
               type="text"
-              size="sm"
+              size="small"
               placeholder="Work Phone No"
               onChange={(e) =>
                 setNextOfKinData({
@@ -473,34 +495,28 @@ const NextOfKinPopup: React.FC<NextOfKinPopupProps> = ({
               }
               value={nextOfkinData.PAddPhone2}
             />
-          </Col>
-          <Col xs={12} sm={6} md={6} lg={3} xl={3} xxl={3}>
-            <FloatingLabelTextBox
-              ControlID="LandLineNo"
-              title="Land Line No"
-              type="text"
-              size="sm"
-              placeholder="Land Line No"
-              onChange={(e) =>
-                setNextOfKinData({
-                  ...nextOfkinData,
-                  PAddPhone3: e.target.value,
-                })
-              }
-              value={nextOfkinData.PAddPhone3}
-            />
-          </Col>
-        </Row>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" size="sm" onClick={handleCloseWithClear}>
-          <FontAwesomeIcon icon={faTimes} /> Close
-        </Button>
-        <Button variant="primary" size="sm" onClick={handleSubmit}>
-          <FontAwesomeIcon icon={faSave} /> Save
-        </Button>
-      </Modal.Footer>
-    </Modal>
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <CustomButton
+          variant="contained"
+          size="medium"
+          onClick={handleCloseWithClear}
+          text="Close"
+          color="secondary"
+          icon={CloseIcon}
+        />
+        <CustomButton
+          icon={SaveIcon}
+          variant="contained"
+          size="medium"
+          text="Save"
+          color="success"
+          onClick={handleSubmit}
+        />
+      </DialogActions>
+    </Dialog>
   );
 };
 
