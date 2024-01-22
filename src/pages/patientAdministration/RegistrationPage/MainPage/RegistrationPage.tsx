@@ -34,6 +34,7 @@ import { PatientSearchContext } from "../../../../context/PatientSearchContext";
 import CustomButton from "../../../../components/Button/CustomButton";
 import SearchIcon from "@mui/icons-material/Search";
 import PrintIcon from "@mui/icons-material/Print";
+import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
 
 const RegistrationPage: React.FC = () => {
   const [showKinPopup, setShowKinPopup] = useState(false);
@@ -523,9 +524,9 @@ const RegistrationPage: React.FC = () => {
   const handlePatientSelect = (selectedSuggestion: string) => {
     setLoading(true);
     try {
-      const pChartID = extractPChartID(selectedSuggestion);
+      const numbersArray = extractNumbers(selectedSuggestion);
+      const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
       if (pChartID) {
-        // Fetch patient details and update form
         fetchPatientDetailsAndUpdateForm(pChartID);
       }
     } catch (error) {
@@ -560,12 +561,6 @@ const RegistrationPage: React.FC = () => {
     }
   };
 
-  // Function to extract PChartID from PChartCode
-  const extractPChartID = (pChartCode: string) => {
-    const regex = /(\d+)/; // Regular expression to extract number
-    const matches = pChartCode.match(regex);
-    return matches ? parseInt(matches[0]) : null;
-  };
   const fetchAdditionalPatientDetails = async (pChartID: number) => {
     setLoading(true);
     try {

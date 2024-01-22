@@ -8,15 +8,23 @@ interface MemSchemeAPIResponse {
   patMemName: string;
 }
 
+interface PaymentSource {
+  pTypeID: string;
+  pTypeName: string;
+}
+
 const fetchPicValues = async (
   token: string,
   endpoint: string
-): Promise<string> => {
+): Promise<DropdownOption[]> => {
   try {
     const url = `${APIConfig.billingURL}BillingDropDowns/${endpoint}`;
     const headers = { Authorization: `Bearer ${token}` };
-    const response = await axios.get(url, { headers });
-    return response.data;
+    const response = await axios.get<PaymentSource[]>(url, { headers });
+    return response.data.map((item) => ({
+      value: item.pTypeID,
+      label: item.pTypeName,
+    }));
   } catch (error) {
     console.error("Error fetching pic values:", error);
     throw error;

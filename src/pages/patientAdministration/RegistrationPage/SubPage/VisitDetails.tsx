@@ -1,5 +1,4 @@
 import { Grid, Typography, Box } from "@mui/material";
-import StarIcon from "@mui/icons-material/Star";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";

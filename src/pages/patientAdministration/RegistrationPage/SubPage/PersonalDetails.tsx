@@ -1,5 +1,4 @@
 import { Grid, Typography, Box } from "@mui/material";
-import StarIcon from "@mui/icons-material/Star";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
@@ -11,13 +10,15 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { useLoading } from "../../../../context/LoadingContext";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import {
+  DropdownOption,
+  PicValue,
+} from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
-import { RegistrationService } from "../../../../services/RegistrationService/RegistrationService";
-import { formatDate } from "../../../../utils/Common/dateUtils";
 import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
+import { usePatientAutocomplete } from "../../../../hooks/usePatientAutocomplete";
 
 interface PersonalDetailsProps {
   formData: RegsitrationFormData;
@@ -25,11 +26,6 @@ interface PersonalDetailsProps {
   isSubmitted: boolean;
   formErrors: any;
   onPatientSelect: (selectedSuggestion: string) => void;
-}
-
-interface PicValue {
-  pTypeID: string;
-  pTypeName: string;
 }
 
 const PersonalDetails: React.FC<PersonalDetailsProps> = ({
@@ -55,6 +51,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
   const { fetchLatestUHID } = useRegistrationUtils(token);
+  const { fetchPatientSuggestions } = usePatientAutocomplete(token);
   const endpointPIC = "GetPICDropDownValues";
   const endpointConstantValues = "GetConstantValues";
   const endPointAppModifyList = "GetActiveAppModifyFieldsAsync";
@@ -62,23 +59,15 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     const loadDropdownValues = async () => {
       try {
         setLoading(true);
-        const response = await BillingService.fetchPicValues(
+        const responsePIC = await BillingService.fetchPicValues(
           token,
           endpointPIC
         );
-        let data: PicValue[];
-        if (typeof response === "string") {
-          data = JSON.parse(response) as PicValue[];
-        } else {
-          data = response as PicValue[];
-        }
 
-        const transformedData: DropdownOption[] = data.map(
-          (item: PicValue) => ({
-            value: item.pTypeID,
-            label: item.pTypeName,
-          })
-        );
+        const transformedData: DropdownOption[] = responsePIC.map((item) => ({
+          value: item.value,
+          label: item.label,
+        }));
         setPicValues(transformedData);
 
         const responseTitle = await ConstantValues.fetchConstantValues(
@@ -198,26 +187,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     { value: "N", label: "Age" },
     { value: "Y", label: "DOB" },
   ];
-  const endpointUHIDAutocomplete = "PatientAutocompleteSearch";
-  const fetchPatientSuggestions = async (input: string) => {
-    try {
-      const results = await RegistrationService.searchPatients(
-        token,
-        endpointUHIDAutocomplete,
-        input
-      );
-      const suggestions = results.data.map(
-        (result) =>
-          `${result.pChartCode} | ${result.pfName} ${
-            result.plName
-          } | ${formatDate(result.pDob)} | ${result.pAddPhone1}`
-      );
-      return suggestions;
-    } catch (error) {
-      console.error("Error fetching suggestions:", error);
-      return [];
-    }
-  };
 
   useEffect(() => {
     fetchLatestUHID().then((latestUHID) => {
