@@ -147,3 +147,12 @@ export interface PatientSearchResult {
   pssnID: string;
   pTypeName: string;
 }
+
+export interface PatientDemographicDetails {
+  pChartCode: string;
+  patientName: string;
+  gender: string;
+  dateOfBirthOrAge: string;
+  patientType: string;
+  patientPaymentSource: string;
+}

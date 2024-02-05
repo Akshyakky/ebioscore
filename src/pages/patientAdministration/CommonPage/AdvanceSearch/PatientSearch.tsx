@@ -7,7 +7,6 @@ import {
   Grid,
   Box,
   Typography,
-  styled,
 } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";

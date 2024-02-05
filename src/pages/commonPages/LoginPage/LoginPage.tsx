@@ -23,6 +23,9 @@ import { useDispatch } from "react-redux";
 import { SET_USER_DETAILS } from "../../../store/userTypes";
 import DropdownSelect from "../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import {
+  notifySuccess,
+} from "../../../utils/Common/toastManager";
 
 type Company = {
   compIDCompCode: string;
@@ -166,6 +169,7 @@ const LoginPage = () => {
           companyCode,
           selectedCompanyName
         );
+        notifySuccess("Login successful!");
         navigate("/dashboard");
         // Save the token in local storage or context, handle user redirection, etc.
         // localStorage.setItem('token', tokenResponse.token);

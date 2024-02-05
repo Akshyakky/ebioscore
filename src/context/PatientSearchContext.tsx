@@ -4,6 +4,7 @@ import { RegistrationService } from "../services/RegistrationService/Registratio
 import { useLoading } from "./LoadingContext";
 import { RootState } from "../store/reducers";
 import { useSelector } from "react-redux";
+import { notifyError } from "../utils/Common/toastManager";
 
 interface PatientSearchContextProps {
   searchResults: PatientSearchResult[];
@@ -38,9 +39,11 @@ export const PatientSearchProvider = ({
       } else {
         // Handle the case where success is false
         console.error("Search was not successful");
+        notifyError("Search failed. Please try again.");
       }
     } catch (error) {
       console.error("Error performing search", error);
+      notifyError("An error occurred during the search.");
       // Handle the error appropriately
     } finally {
       setLoading(false);

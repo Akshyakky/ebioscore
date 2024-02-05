@@ -24,6 +24,10 @@ interface LoginCredentials {
   Password: string;
 }
 
+interface TokenExpiryCheckResponse {
+  isExpired: boolean;
+}
+
 export const AuthService = {
   generateToken: async (
     credentials: LoginCredentials
@@ -60,6 +64,38 @@ export const AuthService = {
 
       // Error handling similar to generateToken method
       if (axios.isAxiosError(axiosError)) {
+        if (axiosError.response) {
+          console.error(
+            "There was a problem with the request:",
+            axiosError.response.data
+          );
+        } else if (axiosError.request) {
+          console.error("No response received:", axiosError.request);
+        } else {
+          console.error("Error setting up the request:", axiosError.message);
+        }
+      } else {
+        console.error("An unexpected error occurred:", axiosError);
+      }
+      throw axiosError;
+    }
+  },
+  checkTokenExpiry: async (
+    token: string
+  ): Promise<TokenExpiryCheckResponse> => {
+    try {
+      const response = await axios.post(`${API_URL}CheckTokenExpiry`, {
+        Token: token,
+      });
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError; // Type assertion
+
+      // Error handling similar to other methods
+      if (axios.isAxiosError(axiosError)) {
+        if (axiosError.response && axiosError.response.status === 401) {
+          return { isExpired: true }; // Token is expired
+        }
         if (axiosError.response) {
           console.error(
             "There was a problem with the request:",

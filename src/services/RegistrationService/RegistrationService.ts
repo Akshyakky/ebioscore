@@ -2,11 +2,13 @@
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
 import {
+  PatientDemographicDetails,
   PatientSearchResult,
   RegsitrationFormData,
 } from "../../interfaces/PatientAdministration/registrationFormData";
 import { NextOfKinKinFormState } from "../../interfaces/PatientAdministration/NextOfKinData";
 import { InsuranceFormState } from "../../interfaces/PatientAdministration/InsuranceDetails";
+import { OperationResult } from "../../interfaces/Common/OperationResult";
 
 export const getLatestUHID = async (
   token: string,
@@ -24,7 +26,7 @@ export const getLatestUHID = async (
       `There was a problem fetching the latest UHID from ${endpoint}:`,
       error
     );
-    throw error;
+    throw error; 
   }
 };
 
@@ -165,7 +167,7 @@ export const getPatientInsuranceDetails = async (
   } catch (error) {
     console.error(`Error fetching patient insurance details: ${error}`);
     throw error;
-  }
+  } 
 };
 
 export const searchPatientDetails = async (
@@ -191,6 +193,27 @@ export const searchPatientDetails = async (
   }
 };
 
+export const PatientGemogrpah = async (
+  token: string,
+  pChartID: number
+): Promise<OperationResult<PatientDemographicDetails>> => {
+  const url = `${APIConfig.patientAdministrationURL}Registration/PatientDemogrpah/${pChartID}`;
+  const headers = { Authorization: `Bearer ${token}` };
+  try {
+    const response = await axios.get(url, { headers });
+    return {
+      success: true,
+      data: response.data as PatientDemographicDetails,
+    };
+  } catch (error) {
+    console.error(`Error during fetching patient demographics: ${error}`);
+    return {
+      success: false,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    };
+  }
+};
+
 export const RegistrationService = {
   getLatestUHID,
   searchPatients,
@@ -201,4 +224,5 @@ export const RegistrationService = {
   getPatNokDetails,
   getPatientInsuranceDetails,
   searchPatientDetails,
+  PatientGemogrpah,
 };

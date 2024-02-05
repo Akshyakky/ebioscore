@@ -27,6 +27,7 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import ProfileMenu from "./ProfileMenu";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
+import { notifyError } from "../../utils/Common/toastManager";
 
 interface SideBarProps {
   userID: number | null;
@@ -77,16 +78,21 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
   useEffect(() => {
     const fetchNavigationData = async () => {
       if (token) {
-        const modulesData = await moduleService.getActiveModules(
-          userID ?? 0,
-          token
-        );
-        setModules(modulesData);
-        const subModulesData = await moduleService.getActiveSubModules(
-          userID ?? 0,
-          token
-        );
-        setSubModules(subModulesData);
+        try {
+          const modulesData = await moduleService.getActiveModules(
+            userID ?? 0,
+            token
+          );
+          setModules(modulesData);
+          const subModulesData = await moduleService.getActiveSubModules(
+            userID ?? 0,
+            token
+          );
+          setSubModules(subModulesData);
+        } catch (error) {
+          console.error("Error fetching navigation data:", error);
+          notifyError("Error fetching navigation data");
+        }
       }
     };
 
@@ -175,24 +181,6 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
           "& .MuiDrawer-paper": { boxSizing: "border-box" },
         }}
       >
-        {/* <Toolbar
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: (theme) => theme.spacing(0, 1),
-            // necessary for content to be below app bar
-            ...theme.mixins.toolbar,
-          }}
-        >
-          <Typography variant="h6" noWrap>
-            eBios Core
-          </Typography>
-          <IconButton onClick={handleDrawerClose}>
-            <CloseIcon />
-          </IconButton>
-        </Toolbar> 
-        <Divider />*/}
         <Box sx={{ padding: 1 }}>
           <TextField
             variant="outlined"
@@ -241,10 +229,9 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
                             ? "active-submenu-item NavLink-submenu"
                             : "NavLink-submenu"
                         }
-                        // onClick={handleDrawerClose}
                         onClick={(e) => {
-                          e.preventDefault(); // Prevent default anchor behavior
-                          handleSubModuleClick(subModule.link); // Navigate programmatically
+                          e.preventDefault();
+                          handleSubModuleClick(subModule.link);
                         }}
                       >
                         <ListItem button sx={{ pl: 2 }}>

@@ -1,5 +1,4 @@
 // GlobalSpinner.tsx
-import React from "react";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useLoading } from "../../context/LoadingContext";
 import { Box } from "@mui/material";

@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import AuthService from "../../services/AuthService/AuthService";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../store/actionCreators";
+import { notifyError } from "../../utils/Common/toastManager";
 
 const ProfileMenu = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -35,6 +36,7 @@ const ProfileMenu = () => {
         navigate("/login");
       } catch (error) {
         console.error("Logout failed:", error);
+        notifyError("Logout failed");
       }
     }
   };

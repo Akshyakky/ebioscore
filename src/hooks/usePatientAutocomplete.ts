@@ -1,11 +1,14 @@
 // hooks/usePatientAutocomplete.ts
 import { formatDate } from "../utils/Common/dateUtils";
 import { RegistrationService } from "../services/RegistrationService/RegistrationService";
+import { notifyError } from "../utils/Common/toastManager";
 
 export const usePatientAutocomplete = (token: any) => {
-  // No need for useState here if suggestions are not stored in the hook
-
   const fetchPatientSuggestions = async (input: string): Promise<string[]> => {
+    if (!input.trim()) {
+      return [];
+    }
+
     try {
       const results = await RegistrationService.searchPatients(
         token,
@@ -20,6 +23,7 @@ export const usePatientAutocomplete = (token: any) => {
       );
     } catch (error) {
       console.error("Error fetching suggestions:", error);
+      notifyError("Error fetching patient suggestions.");
       return []; // Return an empty array in case of an error
     }
   };

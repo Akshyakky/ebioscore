@@ -27,7 +27,7 @@ interface PatientInsuranceModalProps {
   editData?: InsuranceFormState | null;
 }
 
-const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
+const PatientInsuranceForm: React.FC<PatientInsuranceModalProps> = ({
   show,
   handleClose,
   handleSave,
@@ -36,7 +36,6 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
   const [isSubmitted, setIsSubmitted] = useState(false);
-  // State for the insurance form
   const insuranceFormInitialState: InsuranceFormState = {
     ID: 0,
     OPIPInsID: 0,
@@ -391,15 +390,19 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
       </DialogContent>
       <DialogActions>
         <CustomButton
+          text="Close"
           icon={CloseIcon}
           variant="contained"
-          size="small"
+          size="medium"
+          color="secondary"
           onClick={handleCloseWithClear}
         />
         <CustomButton
+          text="Save"
           icon={SaveIcon}
           variant="contained"
-          size="small"
+          size="medium"
+          color="success"
           onClick={handleSubmit}
         />
       </DialogActions>
@@ -407,4 +410,4 @@ const PatientInsurancePopup: React.FC<PatientInsuranceModalProps> = ({
   );
 };
 
-export default PatientInsurancePopup;
+export default PatientInsuranceForm;

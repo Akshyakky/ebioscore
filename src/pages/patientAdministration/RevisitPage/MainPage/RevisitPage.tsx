@@ -1,8 +1,11 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import { Box, Container, Grid, Paper } from "@mui/material";
 import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
-import { revisitFormData } from "../../../../interfaces/PatientAdministration/revisitFormData";
+import {
+  RevisitFormErrors,
+  revisitFormData,
+} from "../../../../interfaces/PatientAdministration/revisitFormData";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { useLoading } from "../../../../context/LoadingContext";
@@ -16,12 +19,7 @@ import PatientSearch from "../../CommonPage/AdvanceSearch/PatientSearch";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
 import { usePatientAutocomplete } from "../../../../hooks/usePatientAutocomplete";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import {
-  DepartmentValue,
-  DropdownOption,
-  PhysicianValue,
-  PicValue,
-} from "../../../../interfaces/Common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { BillingService } from "../../../../services/BillingService/BillingService";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
@@ -29,46 +27,131 @@ import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import { DepartmentService } from "../../../../services/CommonService/DepartmentService";
 import { ContactMastService } from "../../../../services/CommonService/ContactMastService";
 import useDropdown from "../../../../hooks/useDropdown";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SaveIcon from "@mui/icons-material/Save";
+import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
+import PatientVisitHistory from "../SubPage/PatientVisitHisotry";
+import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
+import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
+import { RevisitService } from "../../../../services/RevisitService/RevisitService";
+import GeneralAlert from "../../../../components/GeneralAlert/GeneralAlert";
 
 const RevisitPage: React.FC = () => {
+  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const token = userInfo.token!;
   const revisitInitialState: revisitFormData = {
+    opVID: 0,
     pChartID: 0,
-    pChartCode: "",
-    pTypeID: 0,
-    pTypeName: "",
-    pVisitType: "H",
-    pVisitTypeText: "",
-    deptID: 0,
-    deptName: "",
+    pVisitDate: new Date().toISOString().split("T")[0],
+    patOPIP: "O",
     attndPhyID: 0,
     attendingPhysicianName: "",
+    refSourceID: 0,
+    refSource: "",
     primPhyID: 0,
     primaryPhysicianName: "",
+    pVisitStatus: "W",
+    pVisitType: "P",
+    pVisitTypeText: "",
+    rActiveYN: "Y",
+    rCreatedID: userInfo.userID !== null ? userInfo.userID : 0,
+    rCreatedBy: userInfo.userName !== null ? userInfo.userName : "",
+    rCreatedOn: new Date().toISOString().split("T")[0],
+    rModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
+    rModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
+    rModifiedOn: new Date().toISOString().split("T")[0],
+    rNotes: "",
+    pTypeID: 0,
+    pTypeCode: "",
+    pTypeName: "",
+    compID: userInfo.compID !== null ? userInfo.compID : 0,
+    compCode: userInfo.compCode !== null ? userInfo.compCode : "",
+    compName: userInfo.compName !== null ? userInfo.compName : "",
+    crossConsultation: "N",
+    deptID: 0,
+    deptName: "",
+    opNumber: "",
+    pChartCode: "",
+    pChartCompID: 0,
+    refFacultyID: 0,
+    refFaculty: "",
+    sourceID: 0,
+    source: "",
+    refSourceID2: 0,
+    refSource2: "",
+    oldPChartID: 0,
+    transferYN: "N",
   };
+  const uhidRef = useRef<HTMLInputElement>(null);
   const [revisitFormData, setRevisitFormData] =
     useState<revisitFormData>(revisitInitialState);
   const { handleDropdownChange } =
     useDropdownChange<revisitFormData>(setRevisitFormData);
   const { handleRadioButtonChange } =
     useRadioButtonChange<revisitFormData>(setRevisitFormData);
+  const [selectedPChartID, setSelectedPChartID] = useState<number | 0>(0);
   const { setLoading } = useLoading();
-  const userInfo = useSelector((state: RootState) => state.userDetails);
-  const token = userInfo.token!;
+
   const [showPatientSearch, setShowPatientSearch] = useState(false);
   const { fetchPatientSuggestions } = usePatientAutocomplete(token);
-  const handlePatientSelect = (selectedSuggestion: string) => {
+  const [shouldClearInsuranceData, setShouldClearInsuranceData] =
+    useState(false);
+  const [successAlert, setSuccessAlert] = useState({
+    open: false,
+    message: "",
+  });
+  const [formErrors, setFormErrors] = useState<RevisitFormErrors>({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const validateForm = () => {
+    const errors: RevisitFormErrors = {};
+    if (!revisitFormData.pChartCode) {
+      errors.pChartCode = "UHID is required.";
+    }
+    if (revisitFormData.pTypeID === 0) {
+      errors.pTypeID = "Payment Source is required.";
+    }
+    if (isHospitalVisit && revisitFormData.deptID === 0) {
+      errors.deptID = "Department is required for hospital visits.";
+    }
+    if (isPhysicianVisit && revisitFormData.attndPhyID === 0) {
+      errors.attndPhyID =
+        "Attending Physician is required for physician visits.";
+    }
+    if (revisitFormData.primPhyID === 0) {
+      errors.primPhyID = "Primary Introducing Source is required.";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handlePatientSelect = async (selectedSuggestion: string) => {
     setLoading(true);
     try {
       const numbersArray = extractNumbers(selectedSuggestion);
       const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
       if (pChartID) {
-        // Fetch patient details and update form
+        setSelectedPChartID(pChartID);
+        // Update the UHID TextBox with the selected UHID
+        setRevisitFormData((prevFormData) => ({
+          ...prevFormData,
+          pChartCode: selectedSuggestion.split("|")[0].trim(), // Assuming UHID is in the selectedSuggestion
+          pChartID: pChartID, // Set the extracted pChartID
+        }));
       }
     } catch (error) {
+      setSelectedPChartID(0);
+      setRevisitFormData((prevFormData) => ({
+        ...prevFormData,
+        pChartCode: "",
+        pChartID: 0,
+      }));
     } finally {
       setLoading(false);
     }
   };
+
   const handleAdvancedSearch = async () => {
     setShowPatientSearch(true);
     await performSearch("");
@@ -93,7 +176,7 @@ const RevisitPage: React.FC = () => {
   // Transform functions for each dropdown
   const transformPicValues = (data: DropdownOption[]): DropdownOption[] =>
     data.map((item) => ({
-      value: item.value.toString(), // Ensure value is a string
+      value: item.value.toString(),
       label: item.label,
     }));
 
@@ -121,7 +204,6 @@ const RevisitPage: React.FC = () => {
       label: item.label,
     }));
 
-  // Use the custom hook for dropdowns
   const picResult = useDropdown(
     BillingService.fetchPicValues,
     transformPicValues,
@@ -154,9 +236,85 @@ const RevisitPage: React.FC = () => {
   ];
   const isHospitalVisit = revisitFormData.pVisitType === "H";
   const isPhysicianVisit = revisitFormData.pVisitType === "P";
+  useEffect(() => {
+    if (uhidRef.current) {
+      uhidRef.current.focus();
+    }
+  }, []);
+
+  const handleClear = () => {
+    setRevisitFormData(revisitInitialState);
+    setSelectedPChartID(0);
+    setShouldClearInsuranceData(true);
+    setIsSubmitted(false);
+    setFormErrors({});
+
+    // Set focus to UHID field
+    if (uhidRef.current) {
+      uhidRef.current.focus();
+    }
+  };
+
+  const handleSave = async () => {
+    setIsSubmitted(true);
+    setLoading(true);
+    try {
+      if (!validateForm()) {
+        return; // Stop the save operation
+      }
+      const response = await RevisitService.saveOPVisits(
+        token,
+        revisitFormData
+      );
+      if (response && response.success) {
+        setSuccessAlert({
+          open: true,
+          message: "Save successful",
+        });
+        setRevisitFormData(revisitInitialState); // Reset form data
+        handleClear();
+        // Optionally, you can add a notification or alert to show success message
+      } else {
+        // Handle scenario when save is not successful
+        console.error("Save failed", response);
+        // Show error message to the user
+      }
+    } catch (error) {
+      console.error("Error in saving OP Visits", error);
+      // Show error message to the user
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseSuccessAlert = () => {
+    setSuccessAlert({ ...successAlert, open: false });
+  };
+
+  const successActions = [{ label: "OK", onClick: handleCloseSuccessAlert }];
+
+  const onInsuranceSave = async () => {};
+
+  // Reset shouldClearInsuranceData after it's been set to true
+  useEffect(() => {
+    if (shouldClearInsuranceData) {
+      // Reset the flag after the effect in InsurancePage has been triggered
+      setShouldClearInsuranceData(false);
+    }
+  }, [shouldClearInsuranceData]);
   return (
     <MainLayout>
       <Container maxWidth={false}>
+        {/* Success Alert */}
+        {successAlert.open && (
+          <GeneralAlert
+            open={successAlert.open}
+            onClose={handleCloseSuccessAlert}
+            message={successAlert.message}
+            severity="success"
+            actions={successActions}
+          />
+        )}
         <Box sx={{ marginBottom: 2 }}>
           <ActionButtonGroup buttons={actionButtons} />
         </Box>
@@ -167,9 +325,10 @@ const RevisitPage: React.FC = () => {
         />
         <Paper variant="elevation" sx={{ padding: 2 }}>
           <section aria-labelledby="personal-details-header">
-            <Grid container spacing={2}>
+            <Grid container spacing={2} alignItems="flex-start">
               <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
                 <AutocompleteTextBox
+                  ref={uhidRef}
                   ControlID="UHID"
                   title="UHID"
                   type="text"
@@ -185,9 +344,17 @@ const RevisitPage: React.FC = () => {
                   fetchSuggestions={fetchPatientSuggestions}
                   isMandatory={true}
                   onSelectSuggestion={handlePatientSelect}
+                  isSubmitted={isSubmitted}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={9} lg={9} xl={9}>
+                <PatientDemographics
+                  pChartID={selectedPChartID}
+                  token={token}
                 />
               </Grid>
             </Grid>
+
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
                 <DropdownSelect
@@ -200,12 +367,13 @@ const RevisitPage: React.FC = () => {
                   }
                   options={picValues}
                   onChange={handleDropdownChange(
-                    ["PTypeID"],
-                    ["PTypeName"],
+                    ["pTypeID"],
+                    ["pTypeName"],
                     picValues
                   )}
                   size="small"
                   isMandatory={true}
+                  isSubmitted={isSubmitted}
                 />
               </Grid>
             </Grid>
@@ -238,12 +406,13 @@ const RevisitPage: React.FC = () => {
                     }
                     options={departmentValues}
                     onChange={handleDropdownChange(
-                      ["DeptID"],
-                      ["DeptName"],
+                      ["deptID"],
+                      ["deptName"],
                       departmentValues
                     )}
                     isMandatory={isHospitalVisit}
                     size="small"
+                    isSubmitted={isSubmitted}
                   />
                 )}
                 {isPhysicianVisit && (
@@ -253,7 +422,7 @@ const RevisitPage: React.FC = () => {
                     value={
                       revisitFormData.attndPhyID === 0
                         ? ""
-                        : String(revisitFormData.attendingPhysicianName)
+                        : String(revisitFormData.attndPhyID)
                     }
                     options={attendingPhysicians}
                     onChange={handleDropdownChange(
@@ -263,6 +432,7 @@ const RevisitPage: React.FC = () => {
                     )}
                     isMandatory={isPhysicianVisit}
                     size="small"
+                    isSubmitted={isSubmitted}
                   />
                 )}
               </Grid>
@@ -285,12 +455,28 @@ const RevisitPage: React.FC = () => {
                   )}
                   isMandatory={isPhysicianVisit || isHospitalVisit}
                   size="small"
+                  isSubmitted={isSubmitted}
                 />
               </Grid>
             </Grid>
           </section>
+          <InsurancePage
+            pChartID={selectedPChartID}
+            token={token}
+            onSaveInsurance={onInsuranceSave}
+            shouldClearData={shouldClearInsuranceData}
+          />
+          <PatientVisitHistory pChartID={selectedPChartID} token={token} />
         </Paper>
       </Container>
+      <FormSaveClearButton
+        clearText="Clear"
+        saveText="Save"
+        onClear={handleClear}
+        onSave={handleSave}
+        clearIcon={DeleteIcon}
+        saveIcon={SaveIcon}
+      />
     </MainLayout>
   );
 };

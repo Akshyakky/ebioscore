@@ -37,3 +37,15 @@ export interface InsuranceFormState {
   CoveredVal: string;
   CoveredFor: string;
 }
+
+export interface InsuranceGridProps {
+  data: InsuranceFormState[];
+  onEdit: (insurance: InsuranceFormState) => void;
+  onDelete: (id: number) => void;
+}
+
+export interface InsuranceFormProps {
+  onSave: (insurance: InsuranceFormState) => void;
+  onCancel: () => void;
+  initialData?: InsuranceFormState;
+}

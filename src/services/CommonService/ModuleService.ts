@@ -29,11 +29,15 @@ const moduleService = {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-    const response = await axios.get<ModuleDto[]>(url, {
-      params: { userID },
-      headers,
-    });
-    return response.data;
+    try {
+      const response = await axios.get<ModuleDto[]>(url, {
+        params: { userID },
+        headers,
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error("Failed to load modules");
+    }
   },
 
   getActiveSubModules: async (
@@ -44,11 +48,15 @@ const moduleService = {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-    const response = await axios.get<SubModuleDto[]>(url, {
-      params: { userID },
-      headers,
-    });
-    return response.data;
+    try {
+      const response = await axios.get<SubModuleDto[]>(url, {
+        params: { userID },
+        headers,
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error("Failed to load submodules");
+    }
   },
 };
 

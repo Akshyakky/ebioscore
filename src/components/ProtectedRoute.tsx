@@ -1,25 +1,41 @@
 // src/components/ProtectedRoute.tsx
-import React from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { Navigate } from "react-router-dom";
-import { RootState } from "../store/reducers"; // Adjust the import path as needed
-import useCheckTokenExpiry from "../hooks/useCheckTokenExpiry"; // Adjust the import path as needed
+import { RootState } from "../store/reducers";
+import useCheckTokenExpiry from "../hooks/useCheckTokenExpiry";
+import { logout } from "../store/actionCreators";
+import AuthService from "../services/AuthService/AuthService";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode; // Define the type for children
+  children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  useCheckTokenExpiry(); // Using the hook here
+  const isTokenExpired = useCheckTokenExpiry();
   const token = useSelector((state: RootState) => state.userDetails.token);
+  const dispatch = useDispatch();
 
-  if (!token) {
-    // If there is no token, redirect to the login page
+  useEffect(() => {
+    const performLogout = async () => {
+      if (isTokenExpired && token) {
+        try {
+          await AuthService.logout(token);
+          dispatch(logout());
+        } catch (error) {
+          console.error("Error during logout:", error);
+        }
+      }
+    };
+
+    performLogout();
+  }, [isTokenExpired, token, dispatch]);
+
+  if (!token || isTokenExpired) {
     return <Navigate to="/login" />;
   }
 
-  return <>{children}</>; // Use React Fragment to wrap children
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;
-

@@ -6,14 +6,11 @@ import { RegsitrationFormData } from "../../../../interfaces/PatientAdministrati
 import { BillingService } from "../../../../services/BillingService/BillingService";
 import { ConstantValues } from "../../../../services/CommonService/ConstantValuesService";
 import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { useLoading } from "../../../../context/LoadingContext";
-import {
-  DropdownOption,
-  PicValue,
-} from "../../../../interfaces/Common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
@@ -52,6 +49,12 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const token = userInfo.token!;
   const { fetchLatestUHID } = useRegistrationUtils(token);
   const { fetchPatientSuggestions } = usePatientAutocomplete(token);
+  const uhidRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (uhidRef.current) {
+      uhidRef.current.focus();
+    }
+  }, []);
   const endpointPIC = "GetPICDropDownValues";
   const endpointConstantValues = "GetConstantValues";
   const endPointAppModifyList = "GetActiveAppModifyFieldsAsync";
@@ -230,6 +233,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <AutocompleteTextBox
+            ref={uhidRef}
             ControlID="UHID"
             title="UHID"
             type="text"

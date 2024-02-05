@@ -28,7 +28,8 @@ import { useLoading } from "../../../context/LoadingContext";
 import DropdownSelect from "../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomButton from "../../../components/Button/CustomButton";
-
+import { ThemeProvider } from "styled-components";
+import { styled, useTheme } from "@mui/material/styles";
 // Define the interface for the count data
 interface CountData {
   myCount: number | null;
@@ -40,7 +41,35 @@ interface CountData {
 type TitleMapping = {
   [key: string]: string;
 };
+// Your existing StyledBadge component
+const StyledLeftBadge = styled(Badge)(({ theme }) => ({
+  "& .MuiBadge-badge": {
+    right: -3, // Adjust this value to move horizontally
+    top: 13, // Adjust this value to move vertically
+    padding: "4px 4px",
+    transform: "scale(1) translate(80%, -50%)", // Adjust this value as needed
+    transformOrigin: "100% 0%", // Adjust the origin of the transform
+  },
+}));
 
+const StyledRightBadge = styled(Badge)(({ theme }) => ({
+  "& .MuiBadge-badge": {
+    right: -3, // Adjust this value to move horizontally
+    top: 13, // Adjust this value to move vertically
+    padding: "4px 4px",
+    transform: "scale(1) translate(-150%, -50%)", // Adjust this value as needed
+    transformOrigin: "100% 0%", // Adjust the origin of the transform
+  },
+}));
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  boxShadow: "0px 8px 16px rgba(0,0,0,0.1)",
+  transition: "transform 0.3s ease-in-out",
+  "&:hover": {
+    transform: "scale(1.05)",
+  },
+  // Add other styles for the card here
+}));
 // Define the mapping object with explicit types
 const titleMapping: TitleMapping = {
   registration: "Registration",
@@ -235,90 +264,101 @@ const DashboardPage: React.FC = () => {
     { value: "LY", label: "Last Year" },
     { value: "DT", label: "Date Range" },
   ];
+  const theme = useTheme();
   return (
-    <MainLayout>
-      <Container maxWidth="lg">
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <Box display="flex" alignItems="center" gap={2}>
-              <DropdownSelect
-                label="Select date range"
-                name="dateRange"
-                value={selectedOption}
-                options={dateRangeOptions}
-                onChange={handleSelect}
-                size="small"
-              />
+    <ThemeProvider theme={theme}>
+      <MainLayout>
+        <Container maxWidth="lg">
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <DropdownSelect
+                  label="Select date range"
+                  name="dateRange"
+                  value={selectedOption}
+                  options={dateRangeOptions}
+                  onChange={handleSelect}
+                  size="small"
+                />
 
-              {selectedOption === "DT" && (
-                <Box display="flex" gap={2}>
-                  <FloatingLabelTextBox
-                    ControlID="fromDate"
-                    title="From"
-                    type="date"
-                    size="small"
-                    value={String(dateRange.fromDate)}
-                    onChange={handleDateRangeChange}
-                  />
-                  <FloatingLabelTextBox
-                    ControlID="toDate"
-                    title="To"
-                    type="date"
-                    size="small"
-                    value={String(dateRange.toDate)}
-                    onChange={handleDateRangeChange}
-                  />
-                </Box>
-              )}
+                {selectedOption === "DT" && (
+                  <Box display="flex" gap={2}>
+                    <FloatingLabelTextBox
+                      ControlID="fromDate"
+                      title="From"
+                      type="date"
+                      size="small"
+                      value={String(dateRange.fromDate)}
+                      onChange={handleDateRangeChange}
+                    />
+                    <FloatingLabelTextBox
+                      ControlID="toDate"
+                      title="To"
+                      type="date"
+                      size="small"
+                      value={String(dateRange.toDate)}
+                      onChange={handleDateRangeChange}
+                    />
+                  </Box>
+                )}
 
-              <CustomButton
-                variant="contained"
-                size="small"
-                onClick={handleShowButtonClick}
-                icon={VisibilityIcon}
-                text="Show"
-              />
-            </Box>
-          </Grid>
+                <CustomButton
+                  variant="contained"
+                  size="small"
+                  onClick={handleShowButtonClick}
+                  icon={VisibilityIcon}
+                  text="Show"
+                />
+              </Box>
+            </Grid>
 
-          {showCounts && (
-            <Grid container spacing={2}>
-              {Object.entries(counts).map(([key, countData]) =>
-                countData.show ? (
-                  <Grid item xs={12} md={6} lg={3} key={key}>
-                    <Card>
-                      <CardContent>
-                        <Typography variant="h6">
-                          {titleMapping[key.toLowerCase()] || key}
-                        </Typography>
-                        <Box display="flex" gap={2}>
-                          {countData.myCount !== null && (
-                            <Badge
-                              badgeContent={`My Count: ${countData.myCount}`}
+            {showCounts && (
+              <Grid container spacing={3}>
+                {Object.entries(counts).map(([key, countData]) =>
+                  countData.show ? (
+                    <Grid item xs={12} sm={6} lg={4} key={key}>
+                      <StyledCard raised>
+                        <CardContent>
+                          <Typography variant="h6" gutterBottom>
+                            {titleMapping[key.toLowerCase()] || key}
+                          </Typography>
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            alignItems="center"
+                          >
+                            <StyledLeftBadge
+                              badgeContent={countData.myCount ?? "0"} // Fallback to '0' if null
                               color="primary"
+                              anchorOrigin={{
+                                vertical: "top",
+                                horizontal: "right",
+                              }}
                             >
                               <PersonIcon />
-                            </Badge>
-                          )}
-                          {countData.overallCount !== null && (
-                            <Badge
-                              badgeContent={`Overall: ${countData.overallCount}`}
-                              color="success"
+                            </StyledLeftBadge>
+                            <StyledRightBadge
+                              badgeContent={countData.overallCount ?? "0"} // Fallback to '0' if null
+                              color="secondary"
+                              anchorOrigin={{
+                                vertical: "top",
+                                horizontal: "right",
+                              }}
                             >
                               <GroupIcon />
-                            </Badge>
-                          )}
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ) : null
-              )}
-            </Grid>
-          )}
-        </Grid>
-      </Container>
-    </MainLayout>
+                            </StyledRightBadge>
+                          </Box>
+                        </CardContent>
+                      </StyledCard>
+                    </Grid>
+                  ) : null
+                )}
+              </Grid>
+            )}
+          </Grid>
+        </Container>
+      </MainLayout>
+    </ThemeProvider>
   );
 };
 

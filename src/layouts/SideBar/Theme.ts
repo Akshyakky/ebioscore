@@ -1,4 +1,4 @@
-// Theme.ts
+//layouts/SodeBar/Theme.ts
 import { createTheme } from "@mui/material/styles";
 const drawerWidth = 340;
 const theme = createTheme({

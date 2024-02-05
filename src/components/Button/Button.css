@@ -2,7 +2,6 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding-right: 10px;
 }
 
 .fixed-buttons-container {
@@ -10,8 +9,11 @@
   bottom: 0;
   left: 0;
   width: 100%;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-right: 15px;
+  padding-left: 15px;
   background: #fff;
-  /* Adjust the color to match your design */
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-  /* Optional */
+  z-index: 777;
 }
