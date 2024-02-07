@@ -65,13 +65,11 @@ const InsurancePage: React.FC<InsurancePageProps> = ({
 
   const handleEditPatientInsurance = (PatientInsurance: InsuranceFormState) => {
     console.log("triggered");
-    debugger;
     setEditingPatientInsuranceData(PatientInsurance);
     setInsurancePopup(true);
   };
 
   const handleDeletePatientInsurance = (id: number) => {
-    debugger;
     const updatedGridData = gridPatientInsuranceData.filter(
       (Insurance) => Insurance.OPIPInsID !== id
     );

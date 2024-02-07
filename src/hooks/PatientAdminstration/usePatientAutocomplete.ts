@@ -1,7 +1,7 @@
 // hooks/usePatientAutocomplete.ts
-import { formatDate } from "../utils/Common/dateUtils";
-import { RegistrationService } from "../services/RegistrationService/RegistrationService";
-import { notifyError } from "../utils/Common/toastManager";
+import { formatDate } from "../../utils/Common/dateUtils";
+import { RegistrationService } from "../../services/RegistrationService/RegistrationService";
+import { notifyError } from "../../utils/Common/toastManager";
 
 export const usePatientAutocomplete = (token: any) => {
   const fetchPatientSuggestions = async (input: string): Promise<string[]> => {

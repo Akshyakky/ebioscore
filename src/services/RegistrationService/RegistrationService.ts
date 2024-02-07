@@ -193,11 +193,11 @@ export const searchPatientDetails = async (
   }
 };
 
-export const PatientGemogrpah = async (
+export const PatientDemoGraph = async (
   token: string,
   pChartID: number
 ): Promise<OperationResult<PatientDemographicDetails>> => {
-  const url = `${APIConfig.patientAdministrationURL}Registration/PatientDemogrpah/${pChartID}`;
+  const url = `${APIConfig.patientAdministrationURL}Registration/PatientDemoGraph/${pChartID}`;
   const headers = { Authorization: `Bearer ${token}` };
   try {
     const response = await axios.get(url, { headers });
@@ -224,5 +224,5 @@ export const RegistrationService = {
   getPatNokDetails,
   getPatientInsuranceDetails,
   searchPatientDetails,
-  PatientGemogrpah,
+  PatientDemoGraph,
 };

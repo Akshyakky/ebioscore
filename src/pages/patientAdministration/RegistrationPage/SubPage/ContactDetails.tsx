@@ -11,7 +11,6 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
-import StarIcon from "@mui/icons-material/Star";
 
 interface ContactDetailsProps {
   formData: RegsitrationFormData;

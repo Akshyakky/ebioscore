@@ -17,7 +17,7 @@ import ActionButtonGroup, {
 import { PatientSearchContext } from "../../../../context/PatientSearchContext";
 import PatientSearch from "../../CommonPage/AdvanceSearch/PatientSearch";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
-import { usePatientAutocomplete } from "../../../../hooks/usePatientAutocomplete";
+import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { BillingService } from "../../../../services/BillingService/BillingService";

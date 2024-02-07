@@ -21,7 +21,7 @@ import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
 import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
-import { usePatientAutocomplete } from "../../../../hooks/usePatientAutocomplete";
+import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import CustomButton from "../../../../components/Button/CustomButton";
 
 interface NextOfKinPopupProps {

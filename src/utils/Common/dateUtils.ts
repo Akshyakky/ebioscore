@@ -5,3 +5,4 @@ export function formatDate(isoString: string) {
   const year = date.getFullYear();
   return `${day}/${month}/${year}`;
 }
+

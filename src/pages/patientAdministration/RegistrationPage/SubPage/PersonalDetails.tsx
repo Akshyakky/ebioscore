@@ -15,7 +15,7 @@ import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
-import { usePatientAutocomplete } from "../../../../hooks/usePatientAutocomplete";
+import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 
 interface PersonalDetailsProps {
   formData: RegsitrationFormData;
