@@ -3,6 +3,7 @@ import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import { GetPatientVisitHistory } from "../../../../interfaces/PatientAdministration/revisitFormData";
 import { Grid, Typography } from "@mui/material";
 import { RevisitService } from "../../../../services/RevisitService/RevisitService";
+import { formatDate } from "../../../../utils/Common/dateUtils";
 interface PatientVisitHistoryProps {
   pChartID: number;
   token: string;
@@ -42,6 +43,7 @@ const PatientVisitHistory: React.FC<PatientVisitHistoryProps> = ({
       key: "visitDate",
       header: "Visit Date & Time",
       visible: true,
+      formatter: (value: string) => formatDate(value),
     },
     {
       key: "departmentName",

@@ -15,6 +15,7 @@ interface Column<T> {
   header: string;
   visible: boolean;
   render?: (item: T) => JSX.Element | string;
+  formatter?: (value: any) => string;
 }
 
 interface CustomGridProps<T> {
@@ -34,9 +35,12 @@ const CustomGrid = <T extends GenericObject>({
   const renderCell = (item: T, column: Column<T>) => {
     if (column.render) {
       return column.render(item);
+    } else if (column.formatter) {
+      return column.formatter(item[column.key]);
     }
     return item[column.key];
   };
+
   const StyledTableRow = styled(TableRow)(({ theme }) => ({
     "&:nth-of-type(odd)": {
       backgroundColor: theme.palette.action.hover,

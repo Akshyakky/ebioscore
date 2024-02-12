@@ -39,7 +39,21 @@ const fetchRefferalPhy = async (
   }));
 };
 
+const fetchAvailableAttendingPhysicians = async (
+  token: string,
+  pChartID: number
+): Promise<DropdownOption[]> => {
+  const url = `${APIConfig.commonURL}HospitalAdministration/GetAvailableConsultantsForPatientToday?pChartID=${pChartID}`;
+  const headers = { Authorization: `Bearer ${token}` };
+  const response = await axios.get<PhyAPIResponse[]>(url, { headers });
+  return response.data.map((item) => ({
+    value: item.consultantID,
+    label: item.consultantName,
+  }));
+};
+
 export const ContactMastService = {
   fetchAttendingPhysician,
   fetchRefferalPhy,
+  fetchAvailableAttendingPhysicians,
 };

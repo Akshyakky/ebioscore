@@ -102,6 +102,8 @@ const RevisitPage: React.FC = () => {
   });
   const [formErrors, setFormErrors] = useState<RevisitFormErrors>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [availableAttendingPhysicians, setAvailableAttendingPhysicians] =
+    useState<DropdownOption[]>([]);
 
   const validateForm = () => {
     const errors: RevisitFormErrors = {};
@@ -127,26 +129,51 @@ const RevisitPage: React.FC = () => {
   };
 
   const handlePatientSelect = async (selectedSuggestion: string) => {
+    debugger;
     setLoading(true);
     try {
       const numbersArray = extractNumbers(selectedSuggestion);
       const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
       if (pChartID) {
         setSelectedPChartID(pChartID);
-        // Update the UHID TextBox with the selected UHID
-        setRevisitFormData((prevFormData) => ({
-          ...prevFormData,
-          pChartCode: selectedSuggestion.split("|")[0].trim(), // Assuming UHID is in the selectedSuggestion
-          pChartID: pChartID, // Set the extracted pChartID
-        }));
+        const availablePhysicians =
+          await ContactMastService.fetchAvailableAttendingPhysicians(
+            token,
+            pChartID
+          );
+        setAvailableAttendingPhysicians(availablePhysicians);
+
+        // Fetch the last visit details using the pChartID
+        const lastVisitResult =
+          await RevisitService.getLastVisitDetailsByPChartID(token, pChartID);
+        if (lastVisitResult && lastVisitResult.success) {
+          // Check if last visited physician is in the list of available physicians
+          const isAttendingPhysicianAvailable = availablePhysicians.some(
+            (physician) => physician.value === lastVisitResult.data.attndPhyID
+          );
+
+          // Update the form data
+          setRevisitFormData((prevFormData) => ({
+            ...prevFormData,
+            pChartCode: selectedSuggestion.split("|")[0].trim(), // UHID
+            pChartID: pChartID,
+            // If the last visited physician is not available, set attndPhyID to empty
+            attndPhyID: isAttendingPhysicianAvailable
+              ? lastVisitResult.data.attndPhyID
+              : 0,
+            deptID: lastVisitResult.data.deptID || prevFormData.deptID,
+            pTypeID: lastVisitResult.data.pTypeID || prevFormData.pTypeID,
+            primPhyID: lastVisitResult.data.primPhyID || prevFormData.primPhyID,
+          }));
+        } else {
+          console.error(
+            "Failed to fetch last visit details or no details available"
+          );
+        }
       }
     } catch (error) {
-      setSelectedPChartID(0);
-      setRevisitFormData((prevFormData) => ({
-        ...prevFormData,
-        pChartCode: "",
-        pChartID: 0,
-      }));
+      console.error("Error in handlePatientSelect:", error);
+      // Handle error scenario, maybe show an error message to the user
     } finally {
       setLoading(false);
     }
@@ -188,14 +215,6 @@ const RevisitPage: React.FC = () => {
       label: item.label,
     }));
 
-  const transformAttendingPhysicians = (
-    data: DropdownOption[]
-  ): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
   const transformprimaryIntroducingSource = (
     data: DropdownOption[]
   ): DropdownOption[] =>
@@ -214,11 +233,6 @@ const RevisitPage: React.FC = () => {
     transformDepartmentValues,
     [token, "GetActiveRegistrationDepartments", userInfo.compID ?? 0]
   );
-  const attendingPhysiciansResult = useDropdown(
-    ContactMastService.fetchAttendingPhysician,
-    transformAttendingPhysicians,
-    [token, "GetActiveConsultants", userInfo.compID ?? 0]
-  );
   const primaryIntroducingSourceResult = useDropdown(
     ContactMastService.fetchRefferalPhy,
     transformprimaryIntroducingSource,
@@ -226,8 +240,6 @@ const RevisitPage: React.FC = () => {
   );
   const picValues = picResult.options as DropdownOption[];
   const departmentValues = departmentResult.options as DropdownOption[];
-  const attendingPhysicians =
-    attendingPhysiciansResult.options as DropdownOption[];
   const primaryIntroducingSource =
     primaryIntroducingSourceResult.options as DropdownOption[];
   const visitOptions = [
@@ -424,11 +436,11 @@ const RevisitPage: React.FC = () => {
                         ? ""
                         : String(revisitFormData.attndPhyID)
                     }
-                    options={attendingPhysicians}
+                    options={availableAttendingPhysicians}
                     onChange={handleDropdownChange(
                       ["attndPhyID"],
                       ["attendingPhysicianName"],
-                      attendingPhysicians
+                      availableAttendingPhysicians
                     )}
                     isMandatory={isPhysicianVisit}
                     size="small"

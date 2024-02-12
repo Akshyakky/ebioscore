@@ -25,7 +25,7 @@ export const saveOPVisits = async (
   token: string,
   opVisitsData: revisitFormData
 ): Promise<OperationResult<revisitFormData>> => {
-  const url = `${APIConfig.patientAdministrationURL}Revisit/SaveOPVisits`;
+  const url = `${APIConfig.patientAdministrationURL}Revisit/SaveVisitDetails`;
   const headers = { Authorization: `Bearer ${token}` };
 
   try {
@@ -36,8 +36,22 @@ export const saveOPVisits = async (
     throw error;
   }
 };
-
+export const getLastVisitDetailsByPChartID = async (
+  token: string,
+  pChartID: number
+) => {
+  const url = `${APIConfig.patientAdministrationURL}Revisit/GetLastVisitDetails/${pChartID}`;
+  const headers = { Authorization: `Bearer ${token}` };
+  try {
+    const response = await axios.get(url, { headers });
+    return response.data; // Assuming the API returns OperationResult<dynamic>
+  } catch (error) {
+    console.error(`Error fetching last visit details: ${error}`);
+    throw error;
+  }
+};
 export const RevisitService = {
   getPatientHistoryByPChartID,
   saveOPVisits,
+  getLastVisitDetailsByPChartID,
 };
