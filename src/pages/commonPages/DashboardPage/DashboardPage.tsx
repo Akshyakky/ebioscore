@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Container,
   Grid,
@@ -93,7 +93,7 @@ const DashboardPage: React.FC = () => {
     const utcDate = new Date(
       Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0)
     );
-    return utcDate.toISOString();
+    return utcDate.toISOString().split("T")[0]; // Return only the date part
   };
 
   const setEndOfDay = (date: Date) => {
@@ -113,7 +113,7 @@ const DashboardPage: React.FC = () => {
 
   const [dateRange, setDateRange] = useState({
     fromDate: setStartOfDay(today),
-    toDate: setEndOfDay(today),
+    toDate: setStartOfDay(today),
   });
   const [selectedOption, setSelectedOption] = useState("TD");
   const [counts, setCounts] = useState<Record<string, CountData>>({});
@@ -121,6 +121,15 @@ const DashboardPage: React.FC = () => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
   const { setLoading } = useLoading();
+
+  useEffect(() => {
+    if (new Date(dateRange.fromDate) > new Date(dateRange.toDate)) {
+      setDateRange((prev) => ({
+        ...prev,
+        fromDate: prev.toDate, // Reset fromDate to toDate if it's after toDate
+      }));
+    }
+  }, [dateRange.fromDate, dateRange.toDate]);
 
   const handleSelect = (event: SelectChangeEvent<unknown>) => {
     const selectedValue = event.target.value as string;
@@ -249,6 +258,7 @@ const DashboardPage: React.FC = () => {
   const handleDateRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDateRange({ ...dateRange, [e.target.name]: e.target.value });
   };
+
   const handleShowButtonClick = async () => {
     await fetchData();
     setShowCounts(true); // Set showCounts to true after data is fetched
@@ -271,7 +281,7 @@ const DashboardPage: React.FC = () => {
         <Container maxWidth="lg">
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <Box display="flex" alignItems="center" gap={2}>
+              <Box display="flex" alignItems="center" gap={3}>
                 <DropdownSelect
                   label="Select date range"
                   name="dateRange"
@@ -288,7 +298,7 @@ const DashboardPage: React.FC = () => {
                       title="From"
                       type="date"
                       size="small"
-                      value={String(dateRange.fromDate)}
+                      value={dateRange.fromDate}
                       onChange={handleDateRangeChange}
                     />
                     <FloatingLabelTextBox
@@ -296,7 +306,7 @@ const DashboardPage: React.FC = () => {
                       title="To"
                       type="date"
                       size="small"
-                      value={String(dateRange.toDate)}
+                      value={dateRange.toDate}
                       onChange={handleDateRangeChange}
                     />
                   </Box>
@@ -304,7 +314,7 @@ const DashboardPage: React.FC = () => {
 
                 <CustomButton
                   variant="contained"
-                  size="small"
+                  size="medium"
                   onClick={handleShowButtonClick}
                   icon={VisibilityIcon}
                   text="Show"

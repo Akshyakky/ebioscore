@@ -21,8 +21,9 @@ interface Column<T> {
 interface CustomGridProps<T> {
   columns: Column<T>[];
   data: T[];
-  maxHeight?: string; // Optional max height
+  maxHeight?: string;
   minHeight?: string;
+  searchTerm?: string;
 }
 
 // Ensure T extends GenericObject to provide an index signature
@@ -31,14 +32,36 @@ const CustomGrid = <T extends GenericObject>({
   data,
   maxHeight,
   minHeight,
+  searchTerm,
 }: CustomGridProps<T>) => {
-  const renderCell = (item: T, column: Column<T>) => {
-    if (column.render) {
+  const highlightMatch = (text: string, searchTerm: string) => {
+    const parts = text.split(new RegExp(`(${searchTerm})`, "gi"));
+    return (
+      <>
+        {parts.map((part, index) =>
+          part.toLowerCase() === searchTerm.toLowerCase() ? (
+            <span key={index} style={{ backgroundColor: "yellow" }}>
+              {part}
+            </span>
+          ) : (
+            part
+          )
+        )}
+      </>
+    );
+  };
+
+  const renderCell = (item: T, column: Column<T>, searchTerm: string = "") => {
+    const cellContent = item[column.key];
+
+    if (searchTerm && typeof cellContent === "string") {
+      return highlightMatch(cellContent, searchTerm);
+    } else if (column.render) {
       return column.render(item);
     } else if (column.formatter) {
       return column.formatter(item[column.key]);
     }
-    return item[column.key];
+    return cellContent;
   };
 
   const StyledTableRow = styled(TableRow)(({ theme }) => ({
@@ -89,7 +112,7 @@ const CustomGrid = <T extends GenericObject>({
                 .filter((col) => col.visible)
                 .map((col) => (
                   <StyledTableCell key={`${col.key}-${rowIndex}`}>
-                    {renderCell(item, col)}
+                    {renderCell(item, col, searchTerm)}
                   </StyledTableCell>
                 ))}
             </StyledTableRow>

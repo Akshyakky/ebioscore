@@ -23,14 +23,8 @@ import { useDispatch } from "react-redux";
 import { SET_USER_DETAILS } from "../../../store/userTypes";
 import DropdownSelect from "../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import {
-  notifySuccess,
-} from "../../../utils/Common/toastManager";
-
-type Company = {
-  compIDCompCode: string;
-  compName: string;
-};
+import { notifySuccess } from "../../../utils/Common/toastManager";
+import { Company } from "../../../types/Common/Company.type";
 
 const LoginPage = () => {
   const [UserName, setUsername] = useState("");
@@ -51,6 +45,18 @@ const LoginPage = () => {
       try {
         const companyData = await CompanyService.getCompanies();
         setCompanies(companyData);
+        if (companyData.length === 1) {
+          // Automatically select the only company
+          const singleCompany = companyData[0];
+          const compIDCompCode = singleCompany.compIDCompCode;
+          const parts = compIDCompCode.split(",");
+          if (parts.length >= 2) {
+            setCompanyID(parts[0]);
+            setCompanyCode(parts[1]);
+            setSelectedCompanyName(singleCompany.compName);
+            setErrorMessage("");
+          }
+        }
       } catch (error) {
         console.error("Fetching companies failed: ", error);
         setErrorMessage("Failed to load companies.");

@@ -10,19 +10,14 @@ import {
 import { Provider as ReduxProvider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { store, persistor } from "./store/store";
-import LoginPage from "./pages/commonPages/LoginPage/LoginPage";
-import DashboardPage from "./pages/commonPages/DashboardPage/DashboardPage";
 import { LoadingProvider } from "./context/LoadingContext";
 import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
 import ProtectedRoute from "./components/ProtectedRoute";
-import RegistrationPage from "./pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
-import { PatientSearchProvider } from "./context/PatientSearchContext";
-import RoutineReportsPA from "./pages/patientAdministration/ReportPage/MainPage/RoutineReportsPAPage";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "../src/layouts/SideBar/Theme";
-import RevisitPage from "./pages/patientAdministration/RevisitPage/MainPage/RevisitPage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import routeConfig from "./routes/routeConfig";
 
 const App: React.FC = () => {
   return (
@@ -35,7 +30,7 @@ const App: React.FC = () => {
               {/* ToastContainer added here */}
               <ToastContainer
                 position="top-right"
-                autoClose={3000}
+                autoClose={1500}
                 hideProgressBar={false}
                 newestOnTop={false}
                 closeOnClick
@@ -45,43 +40,34 @@ const App: React.FC = () => {
                 pauseOnHover
               />
               <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/RegistrationPage"
-                  element={
-                    <ProtectedRoute>
-                      <PatientSearchProvider>
-                        <RegistrationPage />
-                      </PatientSearchProvider>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/RevisitPage"
-                  element={
-                    <ProtectedRoute>
-                      <PatientSearchProvider>
-                        <RevisitPage />
-                      </PatientSearchProvider>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/RoutineReportsPA"
-                  element={
-                    <ProtectedRoute>
-                      <RoutineReportsPA />
-                    </ProtectedRoute>
-                  }
-                />
+                {routeConfig.map(
+                  ({
+                    path,
+                    component: Component,
+                    protected: isProtected,
+                    provider: Provider,
+                  }) => (
+                    <Route
+                      key={path}
+                      path={path}
+                      element={
+                        isProtected ? (
+                          <ProtectedRoute>
+                            {Provider ? (
+                              <Provider>
+                                <Component />
+                              </Provider>
+                            ) : (
+                              <Component />
+                            )}
+                          </ProtectedRoute>
+                        ) : (
+                          <Component />
+                        )
+                      }
+                    />
+                  )
+                )}
                 <Route path="/" element={<Navigate replace to="/login" />} />
               </Routes>
             </Router>

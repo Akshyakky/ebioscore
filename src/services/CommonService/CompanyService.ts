@@ -3,9 +3,7 @@ import { APIConfig } from "../../apiConfig";
 
 const getCompanies = async () => {
   try {
-    const response = await axios.get(`${APIConfig.moduleURL}GetCompanies`, {
-      timeout: 10000, // Example of a 10-second timeout
-    });
+    const response = await axios.get(`${APIConfig.moduleURL}GetCompanies`);
     // Add response validation or transformation here if needed
     return response.data;
   } catch (error) {

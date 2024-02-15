@@ -44,6 +44,41 @@ const theme = createTheme({
         },
       },
     },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          // This targets the Paper component inside the Dialog
+          boxShadow: "none", // Example of removing the default shadow
+          // ... Add other global dialog styles here
+        },
+      },
+    },
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#f5f5f5",
+          color: "#333",
+          borderBottom: "1px solid #ccc",
+          // ... Your custom title styles here
+        },
+      },
+    },
+    MuiDialogContent: {
+      styleOverrides: {
+        root: {
+          // ... Your custom content styles here
+        },
+      },
+    },
+    MuiDialogActions: {
+      styleOverrides: {
+        root: {
+          borderTop: "1px solid #ccc",
+          backgroundColor: "#f5f5f5",
+          // ... Your custom action styles here
+        },
+      },
+    },
     // ... other component overrides
   },
   typography: {
