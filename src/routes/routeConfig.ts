@@ -3,7 +3,7 @@ import LoginPage from "../pages/commonPages/LoginPage/LoginPage";
 import DashboardPage from "../pages/commonPages/DashboardPage/DashboardPage";
 import RegistrationPage from "../pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
 import RevisitPage from "../pages/patientAdministration/RevisitPage/MainPage/RevisitPage";
-import RoutineReportsPA from "../pages/patientAdministration/ReportPage/MainPage/RoutineReportsPAPage";
+import RoutineReportsPA from "../pages/patientAdministration/RoutineReportsPage/MainPage/RoutineReportsPAPage";
 import ListOfReportsPage from "../pages/routineReports/MainPage/ListOfReportsPage";
 import { PatientSearchProvider } from "../context/PatientSearchContext";
 

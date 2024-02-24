@@ -210,7 +210,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
                   }
                 >
                   <ListItemIcon className="list-item-icon">
-                    <Icon icon={module.iCon} />
+                    <Icon icon={module.iCon} style={{ fontSize: "24px" }} />
                   </ListItemIcon>
                   <ListItemText primary={module.title} />
                 </ListItem>
@@ -236,7 +236,10 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
                       >
                         <ListItem button sx={{ pl: 2 }}>
                           <ListItemIcon className="list-item-icon">
-                            <Icon icon={subModule.iCon} />
+                            <Icon
+                              icon={subModule.iCon}
+                              style={{ fontSize: "20px" }}
+                            />
                           </ListItemIcon>
                           <ListItemText primary={subModule.title} />
                         </ListItem>

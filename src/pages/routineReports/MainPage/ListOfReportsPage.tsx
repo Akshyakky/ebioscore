@@ -22,6 +22,7 @@ const ListOfReportsPage: React.FC<ListOfReportsPageProps> = () => {
   const { data: reports } = useReportsData<RoutineReports>(fetchReports, 4);
   const [isCriteriaOpen, setIsCriteriaOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState(0);
   const {
     searchTerm,
     setSearchTerm,
@@ -36,7 +37,7 @@ const ListOfReportsPage: React.FC<ListOfReportsPageProps> = () => {
       visible: true,
       render: (report) => (
         <CustomButton
-          onClick={() => openCriteriaModal(report.repName)}
+          onClick={() => openCriteriaModal(report)}
           text="Print"
           icon={PrintIcon}
         />
@@ -53,10 +54,11 @@ const ListOfReportsPage: React.FC<ListOfReportsPageProps> = () => {
     console.log("Printing to PDF");
     // Implement the print functionality here
   };
-  const openCriteriaModal = (reportName: string) => {
-    setSelectedReportName(reportName);
-    setIsCriteriaOpen(true); // Ensure ReportCriteria is rendered
-    setIsModalOpen(true); // Open the modal
+  const openCriteriaModal = (report: RoutineReports) => {
+    setSelectedReportName(report.repName);
+    setSelectedReportId(report.repID);
+    setIsCriteriaOpen(true);
+    setIsModalOpen(true);
   };
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -94,12 +96,12 @@ const ListOfReportsPage: React.FC<ListOfReportsPageProps> = () => {
               </Grid>
             </Grid>
           </Box>
-
           {isCriteriaOpen && (
             <ReportCriteria
               onExportExcel={handleExportExcel}
               onPrintPDF={handlePrintPDF}
               reportName={selectedReportName}
+              reportId={selectedReportId}
               isModalOpen={isModalOpen}
               handleCloseModal={handleCloseModal}
             />

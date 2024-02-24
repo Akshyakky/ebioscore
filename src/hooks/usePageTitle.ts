@@ -11,18 +11,17 @@ const pageTitleMap: PageTitleMap = {
   "/RegistrationPage": "Registration",
   "/RoutineReportsPA": "Routine Reports [PA]",
   "/RevisitPage": "Revisit",
+  "/ListOfReportsPage": "Routine Reports [FO]",
   // Add more mappings as needed
 };
 
 export const usePageTitle = () => {
-  const [pageTitle, setPageTitle] = useState(
-    "eBios - Your Healthcare Solution"
-  );
+  const [pageTitle, setPageTitle] = useState("eBios - Healthcare Solution");
   const location = useLocation();
 
   useEffect(() => {
     const titleSuffix =
-      pageTitleMap[location.pathname] || "Your Healthcare Solution";
+      pageTitleMap[location.pathname] || "eBios Healthcare Solution";
     const title = `eBios - ${titleSuffix}`;
     document.title = title;
     setPageTitle(titleSuffix);
