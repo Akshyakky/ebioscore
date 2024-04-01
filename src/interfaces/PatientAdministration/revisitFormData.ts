@@ -59,3 +59,11 @@ export interface RevisitFormErrors {
   primPhyID?: string;
   // Add other fields as needed
 }
+
+export enum DateFilterType {
+  Today = "Today",
+  LastOneWeek = "LastOneWeek",
+  LastOneMonth = "LastOneMonth",
+  LastThreeMonths = "LastThreeMonths",
+  Custom = "Custom",
+}

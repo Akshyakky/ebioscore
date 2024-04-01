@@ -28,7 +28,6 @@ import { useLoading } from "../../../context/LoadingContext";
 import DropdownSelect from "../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomButton from "../../../components/Button/CustomButton";
-import { ThemeProvider } from "styled-components";
 import { styled, useTheme } from "@mui/material/styles";
 // Define the interface for the count data
 interface CountData {
@@ -276,99 +275,97 @@ const DashboardPage: React.FC = () => {
   ];
   const theme = useTheme();
   return (
-    <ThemeProvider theme={theme}>
-      <MainLayout>
-        <Container maxWidth="lg">
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Box display="flex" alignItems="center" gap={3}>
-                <DropdownSelect
-                  label="Select date range"
-                  name="dateRange"
-                  value={selectedOption}
-                  options={dateRangeOptions}
-                  onChange={handleSelect}
-                  size="small"
-                />
+    <MainLayout>
+      <Container maxWidth="lg">
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Box display="flex" alignItems="center" gap={3}>
+              <DropdownSelect
+                label="Select date range"
+                name="dateRange"
+                value={selectedOption}
+                options={dateRangeOptions}
+                onChange={handleSelect}
+                size="small"
+              />
 
-                {selectedOption === "DT" && (
-                  <Box display="flex" gap={2}>
-                    <FloatingLabelTextBox
-                      ControlID="fromDate"
-                      title="From"
-                      type="date"
-                      size="small"
-                      value={dateRange.fromDate}
-                      onChange={handleDateRangeChange}
-                    />
-                    <FloatingLabelTextBox
-                      ControlID="toDate"
-                      title="To"
-                      type="date"
-                      size="small"
-                      value={dateRange.toDate}
-                      onChange={handleDateRangeChange}
-                    />
-                  </Box>
-                )}
+              {selectedOption === "DT" && (
+                <Box display="flex" gap={2}>
+                  <FloatingLabelTextBox
+                    ControlID="fromDate"
+                    title="From"
+                    type="date"
+                    size="small"
+                    value={dateRange.fromDate}
+                    onChange={handleDateRangeChange}
+                  />
+                  <FloatingLabelTextBox
+                    ControlID="toDate"
+                    title="To"
+                    type="date"
+                    size="small"
+                    value={dateRange.toDate}
+                    onChange={handleDateRangeChange}
+                  />
+                </Box>
+              )}
 
-                <CustomButton
-                  variant="contained"
-                  size="medium"
-                  onClick={handleShowButtonClick}
-                  icon={VisibilityIcon}
-                  text="Show"
-                />
-              </Box>
-            </Grid>
-
-            {showCounts && (
-              <Grid container spacing={3}>
-                {Object.entries(counts).map(([key, countData]) =>
-                  countData.show ? (
-                    <Grid item xs={12} sm={6} lg={4} key={key}>
-                      <StyledCard raised>
-                        <CardContent>
-                          <Typography variant="h6" gutterBottom>
-                            {titleMapping[key.toLowerCase()] || key}
-                          </Typography>
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="center"
-                          >
-                            <StyledLeftBadge
-                              badgeContent={countData.myCount ?? "0"} // Fallback to '0' if null
-                              color="primary"
-                              anchorOrigin={{
-                                vertical: "top",
-                                horizontal: "right",
-                              }}
-                            >
-                              <PersonIcon />
-                            </StyledLeftBadge>
-                            <StyledRightBadge
-                              badgeContent={countData.overallCount ?? "0"} // Fallback to '0' if null
-                              color="secondary"
-                              anchorOrigin={{
-                                vertical: "top",
-                                horizontal: "right",
-                              }}
-                            >
-                              <GroupIcon />
-                            </StyledRightBadge>
-                          </Box>
-                        </CardContent>
-                      </StyledCard>
-                    </Grid>
-                  ) : null
-                )}
-              </Grid>
-            )}
+              <CustomButton
+                variant="contained"
+                size="medium"
+                onClick={handleShowButtonClick}
+                icon={VisibilityIcon}
+                text="Show"
+              />
+            </Box>
           </Grid>
-        </Container>
-      </MainLayout>
-    </ThemeProvider>
+
+          {showCounts && (
+            <Grid container spacing={3}>
+              {Object.entries(counts).map(([key, countData]) =>
+                countData.show ? (
+                  <Grid item xs={12} sm={6} lg={4} key={key}>
+                    <StyledCard raised>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          {titleMapping[key.toLowerCase()] || key}
+                        </Typography>
+                        <Box
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                        >
+                          <StyledLeftBadge
+                            badgeContent={countData.myCount ?? "0"} // Fallback to '0' if null
+                            color="primary"
+                            anchorOrigin={{
+                              vertical: "top",
+                              horizontal: "right",
+                            }}
+                          >
+                            <PersonIcon />
+                          </StyledLeftBadge>
+                          <StyledRightBadge
+                            badgeContent={countData.overallCount ?? "0"} // Fallback to '0' if null
+                            color="secondary"
+                            anchorOrigin={{
+                              vertical: "top",
+                              horizontal: "right",
+                            }}
+                          >
+                            <GroupIcon />
+                          </StyledRightBadge>
+                        </Box>
+                      </CardContent>
+                    </StyledCard>
+                  </Grid>
+                ) : null
+              )}
+            </Grid>
+          )}
+        </Grid>
+      </Container>
+    </MainLayout>
   );
 };
 

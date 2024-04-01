@@ -20,7 +20,7 @@ const routeConfig = [
     path: "/revisitpage",
     component: RevisitPage,
     protected: true,
-    provider: PatientSearchProvider,
+    providers: [PatientSearchProvider],
   },
   { path: "/routinereportspa", component: RoutineReportsPA, protected: true },
   { path: "/listofreportspage", component: ListOfReportsPage, protected: true },

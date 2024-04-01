@@ -35,6 +35,7 @@ import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
 import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
 import { RevisitService } from "../../../../services/RevisitService/RevisitService";
 import GeneralAlert from "../../../../components/GeneralAlert/GeneralAlert";
+import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientSearch";
 
 const RevisitPage: React.FC = () => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
@@ -104,6 +105,8 @@ const RevisitPage: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [availableAttendingPhysicians, setAvailableAttendingPhysicians] =
     useState<DropdownOption[]>([]);
+  const [showWaitingPatientSearch, setShowWaitingPatientSearch] =
+    useState(false);
 
   const validateForm = () => {
     const errors: RevisitFormErrors = {};
@@ -113,10 +116,10 @@ const RevisitPage: React.FC = () => {
     if (revisitFormData.pTypeID === 0) {
       errors.pTypeID = "Payment Source is required.";
     }
-    if (isHospitalVisit && revisitFormData.deptID === 0) {
+    if (isHospitalVisit() && revisitFormData.deptID === 0) {
       errors.deptID = "Department is required for hospital visits.";
     }
-    if (isPhysicianVisit && revisitFormData.attndPhyID === 0) {
+    if (isPhysicianVisit() && revisitFormData.attndPhyID === 0) {
       errors.attndPhyID =
         "Attending Physician is required for physician visits.";
     }
@@ -129,7 +132,6 @@ const RevisitPage: React.FC = () => {
   };
 
   const handlePatientSelect = async (selectedSuggestion: string) => {
-    debugger;
     setLoading(true);
     try {
       const numbersArray = extractNumbers(selectedSuggestion);
@@ -142,22 +144,17 @@ const RevisitPage: React.FC = () => {
             pChartID
           );
         setAvailableAttendingPhysicians(availablePhysicians);
-
-        // Fetch the last visit details using the pChartID
         const lastVisitResult =
           await RevisitService.getLastVisitDetailsByPChartID(token, pChartID);
         if (lastVisitResult && lastVisitResult.success) {
-          // Check if last visited physician is in the list of available physicians
           const isAttendingPhysicianAvailable = availablePhysicians.some(
             (physician) => physician.value === lastVisitResult.data.attndPhyID
           );
 
-          // Update the form data
           setRevisitFormData((prevFormData) => ({
             ...prevFormData,
-            pChartCode: selectedSuggestion.split("|")[0].trim(), // UHID
+            pChartCode: selectedSuggestion.split("|")[0].trim(),
             pChartID: pChartID,
-            // If the last visited physician is not available, set attndPhyID to empty
             attndPhyID: isAttendingPhysicianAvailable
               ? lastVisitResult.data.attndPhyID
               : 0,
@@ -173,7 +170,6 @@ const RevisitPage: React.FC = () => {
       }
     } catch (error) {
       console.error("Error in handlePatientSelect:", error);
-      // Handle error scenario, maybe show an error message to the user
     } finally {
       setLoading(false);
     }
@@ -182,6 +178,9 @@ const RevisitPage: React.FC = () => {
   const handleAdvancedSearch = async () => {
     setShowPatientSearch(true);
     await performSearch("");
+  };
+  const handleWaitingSearch = async () => {
+    setShowWaitingPatientSearch(true);
   };
   const actionButtons: ButtonProps[] = [
     {
@@ -193,6 +192,13 @@ const RevisitPage: React.FC = () => {
     },
     {
       variant: "contained",
+      size: "medium",
+      icon: SearchIcon,
+      text: "Waiting Search",
+      onClick: handleWaitingSearch,
+    },
+    {
+      variant: "contained",
       icon: PrintIcon,
       text: "Print Form",
       size: "medium",
@@ -200,7 +206,6 @@ const RevisitPage: React.FC = () => {
   ];
   const { performSearch } = useContext(PatientSearchContext);
 
-  // Transform functions for each dropdown
   const transformPicValues = (data: DropdownOption[]): DropdownOption[] =>
     data.map((item) => ({
       value: item.value.toString(),
@@ -246,8 +251,8 @@ const RevisitPage: React.FC = () => {
     { value: "H", label: "Hospital" },
     { value: "P", label: "Physician" },
   ];
-  const isHospitalVisit = revisitFormData.pVisitType === "H";
-  const isPhysicianVisit = revisitFormData.pVisitType === "P";
+  const isHospitalVisit = () => revisitFormData.pVisitType === "H";
+  const isPhysicianVisit = () => revisitFormData.pVisitType === "P";
   useEffect(() => {
     if (uhidRef.current) {
       uhidRef.current.focus();
@@ -261,7 +266,6 @@ const RevisitPage: React.FC = () => {
     setIsSubmitted(false);
     setFormErrors({});
 
-    // Set focus to UHID field
     if (uhidRef.current) {
       uhidRef.current.focus();
     }
@@ -272,7 +276,7 @@ const RevisitPage: React.FC = () => {
     setLoading(true);
     try {
       if (!validateForm()) {
-        return; // Stop the save operation
+        return;
       }
       const response = await RevisitService.saveOPVisits(
         token,
@@ -283,17 +287,13 @@ const RevisitPage: React.FC = () => {
           open: true,
           message: "Save successful",
         });
-        setRevisitFormData(revisitInitialState); // Reset form data
+        setRevisitFormData(revisitInitialState);
         handleClear();
-        // Optionally, you can add a notification or alert to show success message
       } else {
-        // Handle scenario when save is not successful
         console.error("Save failed", response);
-        // Show error message to the user
       }
     } catch (error) {
       console.error("Error in saving OP Visits", error);
-      // Show error message to the user
     } finally {
       setLoading(false);
     }
@@ -307,17 +307,14 @@ const RevisitPage: React.FC = () => {
 
   const onInsuranceSave = async () => {};
 
-  // Reset shouldClearInsuranceData after it's been set to true
   useEffect(() => {
     if (shouldClearInsuranceData) {
-      // Reset the flag after the effect in InsurancePage has been triggered
       setShouldClearInsuranceData(false);
     }
   }, [shouldClearInsuranceData]);
   return (
     <MainLayout>
       <Container maxWidth={false}>
-        {/* Success Alert */}
         {successAlert.open && (
           <GeneralAlert
             open={successAlert.open}
@@ -334,6 +331,12 @@ const RevisitPage: React.FC = () => {
           show={showPatientSearch}
           handleClose={() => setShowPatientSearch(false)}
           onEditPatient={handlePatientSelect}
+        />
+        <WaitingPatientSearch
+          userInfo={userInfo}
+          show={showWaitingPatientSearch}
+          handleClose={() => setShowWaitingPatientSearch(false)}
+          onPatientSelect={handlePatientSelect}
         />
         <Paper variant="elevation" sx={{ padding: 2 }}>
           <section aria-labelledby="personal-details-header">
@@ -422,7 +425,7 @@ const RevisitPage: React.FC = () => {
                       ["deptName"],
                       departmentValues
                     )}
-                    isMandatory={isHospitalVisit}
+                    isMandatory={isHospitalVisit()}
                     size="small"
                     isSubmitted={isSubmitted}
                   />
@@ -442,7 +445,7 @@ const RevisitPage: React.FC = () => {
                       ["attendingPhysicianName"],
                       availableAttendingPhysicians
                     )}
-                    isMandatory={isPhysicianVisit}
+                    isMandatory={isPhysicianVisit()}
                     size="small"
                     isSubmitted={isSubmitted}
                   />
@@ -465,7 +468,7 @@ const RevisitPage: React.FC = () => {
                     ["primaryPhysicianName"],
                     primaryIntroducingSource
                   )}
-                  isMandatory={isPhysicianVisit || isHospitalVisit}
+                  isMandatory={isPhysicianVisit() || isHospitalVisit()}
                   size="small"
                   isSubmitted={isSubmitted}
                 />

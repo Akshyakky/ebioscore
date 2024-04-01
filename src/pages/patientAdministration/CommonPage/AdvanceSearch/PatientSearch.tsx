@@ -86,20 +86,7 @@ const PatientSearch = ({
     { key: "pssnID", header: "Identity No", visible: true },
     { key: "pTypeName", header: "Payment Source", visible: true },
   ];
-  // const StyledDialog = styled(Dialog)(({ theme }) => ({
-  //   "& .MuiDialogTitle-root": {
-  //     backgroundColor: theme.palette.primary.main,
-  //     color: theme.palette.primary.contrastText,
-  //   },
-  //   "& .MuiDialogContent-root": {
-  //     paddingTop: theme.spacing(1),
-  //     paddingBottom: theme.spacing(1),
-  //   },
-  //   "& .MuiDialogActions-root": {
-  //     padding: theme.spacing(1),
-  //     justifyContent: "flex-end",
-  //   },
-  // }));
+
   return (
     <Dialog
       open={show}

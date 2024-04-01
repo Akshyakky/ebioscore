@@ -26,7 +26,7 @@ export const getLatestUHID = async (
       `There was a problem fetching the latest UHID from ${endpoint}:`,
       error
     );
-    throw error; 
+    throw error;
   }
 };
 
@@ -167,7 +167,7 @@ export const getPatientInsuranceDetails = async (
   } catch (error) {
     console.error(`Error fetching patient insurance details: ${error}`);
     throw error;
-  } 
+  }
 };
 
 export const searchPatientDetails = async (

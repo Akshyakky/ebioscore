@@ -46,6 +46,7 @@ const App: React.FC = () => {
                     component: Component,
                     protected: isProtected,
                     provider: Provider,
+                    providers,
                   }) => (
                     <Route
                       key={path}
@@ -53,10 +54,13 @@ const App: React.FC = () => {
                       element={
                         isProtected ? (
                           <ProtectedRoute>
-                            {Provider ? (
-                              <Provider>
+                            {providers ? (
+                              providers.reduceRight(
+                                (children, Provider) => (
+                                  <Provider>{children}</Provider>
+                                ),
                                 <Component />
-                              </Provider>
+                              )
                             ) : (
                               <Component />
                             )}

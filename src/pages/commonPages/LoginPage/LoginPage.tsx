@@ -140,6 +140,16 @@ const LoginPage = () => {
       setErrorMessage("Please select a company.");
       return; // Exit the function if no company is selected
     }
+
+    if (!UserName) {
+      setErrorMessage("Username is required.");
+      return; // Exit the function if the username is not filled out
+   }
+   if (!Password) {
+      setErrorMessage("Password is required.");
+      return; // Exit the function if the password is not filled out
+   }
+   
     // Start the login process
     setIsLoggingIn(true);
     try {
@@ -230,148 +240,109 @@ const LoginPage = () => {
     }
   };
 
-  const theme = createTheme({
-    typography: {
-      fontFamily: [
-        "Segoe UI",
-        "Tahoma",
-        "Geneva",
-        "Verdana",
-        "sans-serif",
-      ].join(","),
-    },
-    components: {
-      MuiTextField: {
-        defaultProps: {
-          variant: "outlined",
-        },
-      },
-      MuiButton: {
-        styleOverrides: {
-          root: {
-            fontWeight: "bold", // Makes text bold
-            textTransform: "none", // Keeps the text casing as it is
-            borderRadius: 8, // Rounded corners
-            padding: "10px 20px", // Adjust padding for better sizing
-            // More styles can be added here
-          },
-        },
-      },
-    },
-  });
   return (
-    <ThemeProvider theme={theme}>
-      <Container
-        maxWidth="sm"
-        sx={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#f0f0f0",
-        }}
-      >
-        <Card sx={{ minWidth: 350 }}>
-          <CardContent>
-            <Box textAlign="center" mb={4} mt={2}>
-              <img
-                src={logo}
-                alt="Company Logo"
-                style={{ maxWidth: "150px" }}
-              />
+    <Container
+      maxWidth="sm"
+      sx={{
+        height: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#f0f0f0",
+      }}
+    >
+      <Card sx={{ minWidth: 350 }}>
+        <CardContent>
+          <Box textAlign="center" mb={4} mt={2}>
+            <img src={logo} alt="Company Logo" style={{ maxWidth: "150px" }} />
+          </Box>
+
+          {amcExpiryMessage && (
+            <Alert severity="warning">{amcExpiryMessage}</Alert>
+          )}
+          {licenseExpiryMessage && (
+            <Alert severity={licenseDaysRemaining <= 0 ? "error" : "warning"}>
+              {licenseExpiryMessage}
+            </Alert>
+          )}
+
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            noValidate
+            sx={{ mt: 1 }}
+          >
+            <DropdownSelect
+              label="Select Company"
+              name="companyID"
+              value={
+                companyID && companyCode ? `${companyID},${companyCode}` : ""
+              }
+              options={companies.map((c) => ({
+                value: c.compIDCompCode,
+                label: c.compName,
+              }))}
+              onChange={(event) => {
+                const compIDCompCode = event.target.value as string;
+                const selectedCompany = companies.find(
+                  (c) => c.compIDCompCode === compIDCompCode
+                );
+                handleSelectCompany(
+                  compIDCompCode,
+                  selectedCompany?.compName || ""
+                );
+              }}
+              size="small"
+            />
+
+            <FloatingLabelTextBox
+              ControlID="username"
+              title="Username"
+              value={UserName}
+              onChange={(e) => setUsername(e.target.value)}
+              size="small"
+              isMandatory={true}
+            />
+
+            <FloatingLabelTextBox
+              ControlID="password"
+              title="Password"
+              type="password"
+              value={Password}
+              onChange={(e) => setPassword(e.target.value)}
+              size="small"
+              isMandatory={true}
+            />
+
+            <Box textAlign="right">
+              <Link href="/ForgotPasswordPage" variant="body2">
+                Forgot password?
+              </Link>
             </Box>
 
-            {amcExpiryMessage && (
-              <Alert severity="warning">{amcExpiryMessage}</Alert>
-            )}
-            {licenseExpiryMessage && (
-              <Alert severity={licenseDaysRemaining <= 0 ? "error" : "warning"}>
-                {licenseExpiryMessage}
-              </Alert>
-            )}
-
-            <Box
-              component="form"
-              onSubmit={handleSubmit}
-              noValidate
-              sx={{ mt: 1 }}
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              color="primary"
+              sx={{
+                mt: 3,
+                mb: 2,
+                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.25)",
+              }}
+              disabled={isLoggingIn}
+              startIcon={
+                isLoggingIn ? <CircularProgress size={20} /> : <LockOpenIcon />
+              }
             >
-              <DropdownSelect
-                label="Select Company"
-                name="companyID"
-                value={
-                  companyID && companyCode ? `${companyID},${companyCode}` : ""
-                }
-                options={companies.map((c) => ({
-                  value: c.compIDCompCode,
-                  label: c.compName,
-                }))}
-                onChange={(event) => {
-                  const compIDCompCode = event.target.value as string;
-                  const selectedCompany = companies.find(
-                    (c) => c.compIDCompCode === compIDCompCode
-                  );
-                  handleSelectCompany(
-                    compIDCompCode,
-                    selectedCompany?.compName || ""
-                  );
-                }}
-                size="small"
-              />
+              {isLoggingIn ? "Signing In..." : "Sign In"}
+            </Button>
 
-              <FloatingLabelTextBox
-                ControlID="username"
-                title="Username"
-                value={UserName}
-                onChange={(e) => setUsername(e.target.value)}
-                size="small"
-                isMandatory
-              />
-
-              <FloatingLabelTextBox
-                ControlID="password"
-                title="Password"
-                type="password"
-                value={Password}
-                onChange={(e) => setPassword(e.target.value)}
-                size="small"
-                isMandatory
-              />
-
-              <Box textAlign="right">
-                <Link href="/ForgotPasswordPage" variant="body2">
-                  Forgot password?
-                </Link>
-              </Box>
-
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                color="primary"
-                sx={{
-                  mt: 3,
-                  mb: 2,
-                  boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.25)",
-                }}
-                disabled={isLoggingIn}
-                startIcon={
-                  isLoggingIn ? (
-                    <CircularProgress size={20} />
-                  ) : (
-                    <LockOpenIcon />
-                  )
-                }
-              >
-                {isLoggingIn ? "Signing In..." : "Sign In"}
-              </Button>
-
-              {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
-            </Box>
-          </CardContent>
-        </Card>
-      </Container>
-    </ThemeProvider>
+            {errorMessage && <Alert severity="error">{errorMessage}</Alert>}
+          </Box>
+        </CardContent>
+      </Card>
+    </Container>
   );
 };
 

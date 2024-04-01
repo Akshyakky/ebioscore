@@ -8,7 +8,7 @@ import { logout } from "../store/actionCreators";
 import AuthService from "../services/AuthService/AuthService";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: React.ReactNode; // Explicitly type the children prop
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {

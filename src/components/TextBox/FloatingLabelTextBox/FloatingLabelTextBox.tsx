@@ -45,6 +45,7 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
         placeholder={placeholder || title}
         size={size}
         disabled={disabled}
+        required={isMandatory}
         InputProps={{
           readOnly: readOnly,
           inputProps: {
