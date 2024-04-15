@@ -45,7 +45,7 @@ const App: React.FC = () => {
                     path,
                     component: Component,
                     protected: isProtected,
-                    provider: Provider,
+                    //provider: Provider,
                     providers,
                   }) => (
                     <Route

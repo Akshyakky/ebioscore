@@ -62,7 +62,7 @@ const RegistrationPage: React.FC = () => {
     PDobOrAge: "",
     PDob: new Date().toISOString().split("T")[0],
     PAgeType: "",
-    PApproxAge: "",
+    PApproxAge: 0,
     PGender: "",
     PGenderVal: "",
     PssnID: "",
@@ -173,6 +173,7 @@ const RegistrationPage: React.FC = () => {
 
   const [formData, setFormData] =
     useState<RegsitrationFormData>(regFormInitialState);
+  const [triggerInsuranceSave, setTriggerInsuranceSave] = useState(false);
   const { fetchLatestUHID } = useRegistrationUtils(token);
 
   const handleOpenKinPopup = () => {
@@ -354,11 +355,13 @@ const RegistrationPage: React.FC = () => {
     setIsSubmitted(true);
     setLoading(true);
     try {
+      debugger;
       const isFormValid = validateFormData();
       if (!isFormValid) {
         console.log("Validation failed. Please fill all mandatory fields.");
         return;
       }
+      setTriggerInsuranceSave(true);
       const registrationResponse = await RegistrationService.saveRegistration(
         token,
         formData
@@ -367,7 +370,6 @@ const RegistrationPage: React.FC = () => {
       const pChartID = registrationResponse.pChartID;
       if (pChartID) {
         await handleFinalSaveNokDetails(pChartID);
-        onInsuranceSave();
       }
       handleClear();
     } catch (error) {
@@ -632,6 +634,7 @@ const RegistrationPage: React.FC = () => {
   };
   const { performSearch } = useContext(PatientSearchContext);
   const handleAdvancedSearch = async () => {
+    debugger;
     setShowPatientSearch(true);
     await performSearch("");
   };
@@ -650,11 +653,7 @@ const RegistrationPage: React.FC = () => {
       size: "medium",
     },
   ];
-  const onInsuranceSave = async () => {
-    // Handle actions after insurance details are saved
-    console.log("Insurance details have been saved.");
-    // Additional logic if needed
-  };
+
   return (
     <MainLayout>
       <Container maxWidth={false}>
@@ -723,8 +722,9 @@ const RegistrationPage: React.FC = () => {
           <InsurancePage
             pChartID={selectedPChartID}
             token={token}
-            onSaveInsurance={onInsuranceSave}
+            onSave={() => {}}
             shouldClearData={shouldClearInsuranceData}
+            triggerSave={triggerInsuranceSave}
           />
         </Paper>
       </Container>

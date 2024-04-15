@@ -11,7 +11,7 @@ export interface RegsitrationFormData {
   PDobOrAge: string;
   PDob: string;
   PAgeType: string;
-  PApproxAge: string;
+  PApproxAge: number;
   PGender: string;
   PGenderVal: string;
   PssnID: string;

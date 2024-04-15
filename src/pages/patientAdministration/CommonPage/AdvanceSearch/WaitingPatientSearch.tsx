@@ -88,7 +88,6 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
   // Define a function to handle the cancellation of a visit
   const handleCancelVisit = async (opVID: string) => {
     try {
-      debugger;
       // Call the cancelVisit service method
       const result = await RevisitService.cancelVisit(
         userInfo.token!,

@@ -107,6 +107,7 @@ const RevisitPage: React.FC = () => {
     useState<DropdownOption[]>([]);
   const [showWaitingPatientSearch, setShowWaitingPatientSearch] =
     useState(false);
+  const [triggerInsuranceSave, setTriggerInsuranceSave] = useState(false);
 
   const validateForm = () => {
     const errors: RevisitFormErrors = {};
@@ -278,6 +279,7 @@ const RevisitPage: React.FC = () => {
       if (!validateForm()) {
         return;
       }
+      setTriggerInsuranceSave(true);
       const response = await RevisitService.saveOPVisits(
         token,
         revisitFormData
@@ -304,8 +306,6 @@ const RevisitPage: React.FC = () => {
   };
 
   const successActions = [{ label: "OK", onClick: handleCloseSuccessAlert }];
-
-  const onInsuranceSave = async () => {};
 
   useEffect(() => {
     if (shouldClearInsuranceData) {
@@ -478,8 +478,9 @@ const RevisitPage: React.FC = () => {
           <InsurancePage
             pChartID={selectedPChartID}
             token={token}
-            onSaveInsurance={onInsuranceSave}
+            onSave={() => {}} // This can be an empty function or a function that handles the save completion
             shouldClearData={shouldClearInsuranceData}
+            triggerSave={triggerInsuranceSave} // Pass the trigger state as a prop
           />
           <PatientVisitHistory pChartID={selectedPChartID} token={token} />
         </Paper>

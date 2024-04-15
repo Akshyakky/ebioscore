@@ -14,7 +14,7 @@ const routeConfig = [
     path: "/registrationpage",
     component: RegistrationPage,
     protected: true,
-    provider: PatientSearchProvider,
+    providers: [PatientSearchProvider], //provider: PatientSearchProvider,
   },
   {
     path: "/revisitpage",

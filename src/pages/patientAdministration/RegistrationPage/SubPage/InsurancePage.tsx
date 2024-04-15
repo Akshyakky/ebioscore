@@ -8,18 +8,19 @@ import addIcon from "@mui/icons-material/Add";
 import { RegistrationService } from "../../../../services/RegistrationService/RegistrationService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-type SaveInsuranceCallback = () => void;
 interface InsurancePageProps {
   pChartID: number;
   token: string;
-  onSaveInsurance: SaveInsuranceCallback;
   shouldClearData: boolean;
+  onSave: (data: InsuranceFormState[]) => void;
+  triggerSave: boolean;
 }
 const InsurancePage: React.FC<InsurancePageProps> = ({
   pChartID,
   token,
-  onSaveInsurance,
   shouldClearData,
+  onSave,
+  triggerSave,
 }) => {
   const [showInsurancePopup, setInsurancePopup] = useState(false);
   const [editingPatientInsuranceData, setEditingPatientInsuranceData] =
@@ -28,10 +29,15 @@ const InsurancePage: React.FC<InsurancePageProps> = ({
     InsuranceFormState[]
   >([]);
   const userInfo = useSelector((state: RootState) => state.userDetails);
-
+  useEffect(() => {
+    if (triggerSave) {
+      handleFinalSavePatientInsuranceDetails();
+    }
+  }, [triggerSave]);
   const handleFinalSavePatientInsuranceDetails = async () => {
     try {
       // Create an array of save operations
+
       const saveOperations = gridPatientInsuranceData.map((pInsurance) => {
         const pInsuranceData = { ...pInsurance, PChartID: pChartID };
         return RegistrationService.savePatientInsuranceDetails(
@@ -44,10 +50,8 @@ const InsurancePage: React.FC<InsurancePageProps> = ({
       const results = await Promise.all(saveOperations);
       console.log("Patient Insurance details saved successfully:", results);
 
-      // Call onSaveInsurance after all details are saved
-      if (onSaveInsurance) {
-        onSaveInsurance();
-      }
+      // Call the external save function after the save operations have completed
+      onSave(gridPatientInsuranceData);
     } catch (error) {
       console.error(
         "An error occurred while saving Patient Insurance details:",
@@ -55,13 +59,6 @@ const InsurancePage: React.FC<InsurancePageProps> = ({
       );
     }
   };
-
-  // Call handleFinalSavePatientInsuranceDetails when gridPatientInsuranceData changes
-  useEffect(() => {
-    if (gridPatientInsuranceData.length > 0 && pChartID) {
-      handleFinalSavePatientInsuranceDetails();
-    }
-  }, [gridPatientInsuranceData, pChartID, token]);
 
   const handleEditPatientInsurance = (PatientInsurance: InsuranceFormState) => {
     console.log("triggered");

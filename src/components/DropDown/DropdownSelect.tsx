@@ -47,7 +47,11 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
       error={hasError}
       margin="normal"
     >
-      <InputLabel id={`ddl-label-${name}`} htmlFor={`ddl${name}`}>
+      <InputLabel
+        id={`ddl-label-${name}`}
+        htmlFor={`ddl${name}`}
+
+      >
         {label}
       </InputLabel>
       <Select

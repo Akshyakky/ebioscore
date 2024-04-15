@@ -30,6 +30,7 @@ export const PatientSearchProvider = ({
   const performSearch = async (searchTerm: string): Promise<void> => {
     setLoading(true);
     try {
+      debugger
       const result = await RegistrationService.searchPatientDetails(
         token,
         searchTerm

@@ -162,7 +162,11 @@ const PatientInsuranceForm: React.FC<PatientInsuranceModalProps> = ({
             <DropdownSelect
               label="Insurance"
               name="Insurance"
-              value={String(insuranceForm.InsurID)}
+              value={
+                insuranceForm.InsurID === 0
+                  ? ""
+                  : insuranceForm.InsurID.toString()
+              }
               options={insuranceOptions}
               onChange={handleDropdownChange(
                 ["InsurID"],

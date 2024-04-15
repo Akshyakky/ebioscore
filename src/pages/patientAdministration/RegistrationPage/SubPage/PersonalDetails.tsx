@@ -133,6 +133,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     loadDropdownValues();
   }, [token]);
 
+  useEffect(() => {
+    calculateAge(new Date());
+  });
+
   const calculateAge = (dob: string | number | Date) => {
     const birthday = new Date(dob);
     const today = new Date();
@@ -173,7 +177,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       setFormData((prevFormData) => {
         return {
           ...prevFormData,
-          PApproxAge: age.toString(),
+          PApproxAge: age,
           PAgeType: ageType,
           PatOverview: {
             ...prevFormData.PatOverview,
@@ -264,14 +268,13 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             }
             isSubmitted={isSubmitted}
             isMandatory={true}
-            errorMessage={formErrors.registrationDate}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
           <DropdownSelect
             label="Payment Source [PIC]"
             name="PIC"
-            value={formData.PTypeID === 0 ? "" : String(formData.PTypeID)}
+            value={formData.PTypeID === 0 ? "" : formData.PTypeID.toString()}
             options={picValues}
             onChange={handleDropdownChange(
               ["PTypeID"],
@@ -336,7 +339,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             value={formData.PFName}
             isSubmitted={isSubmitted}
             isMandatory={true}
-            errorMessage={formErrors.firstName}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
