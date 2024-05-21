@@ -2,7 +2,7 @@ import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import React, { useState, useEffect } from "react";
 import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
-import { BillingService } from "../../../../services/BillingService/BillingService";
+import { BillingService } from "../../../../services/BillingServices/BillingService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";

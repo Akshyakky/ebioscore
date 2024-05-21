@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   FormControl,
   InputLabel,
@@ -35,8 +35,8 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   className,
   isSubmitted = false,
 }) => {
-  const isEmptyValue = (val: string) => val === "" || val === "0";
-  const hasError = isMandatory && isSubmitted && isEmptyValue(value);
+  const isEmptyValue = useMemo(() => (val: string) => val === "" || val === "0", []);
+  const hasError = useMemo(() => isMandatory && isSubmitted && isEmptyValue(value), [isMandatory, isSubmitted, value, isEmptyValue]);
 
   return (
     <FormControl
@@ -47,11 +47,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
       error={hasError}
       margin="normal"
     >
-      <InputLabel
-        id={`ddl-label-${name}`}
-        htmlFor={`ddl${name}`}
-
-      >
+      <InputLabel id={`ddl-label-${name}`} htmlFor={`ddl${name}`}>
         {label}
       </InputLabel>
       <Select
@@ -64,8 +60,9 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
         disabled={disabled}
         displayEmpty
       >
-        {/* disabled={value !== ""} */}
-        <MenuItem value={""}>{defaultText || `${label}`}</MenuItem>
+        <MenuItem value="">
+          {defaultText || `${label}`}
+        </MenuItem>
         {options.map((option) => (
           <MenuItem key={option.value} value={option.value}>
             {option.label}

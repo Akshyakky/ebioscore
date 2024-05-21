@@ -1,12 +1,12 @@
+import React, { useState, useEffect } from "react";
 import { Grid, Typography, Box } from "@mui/material";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
-import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import { DepartmentService } from "../../../../services/CommonService/DepartmentService";
-import { ContactMastService } from "../../../../services/CommonService/ContactMastService";
+import { DepartmentService } from "../../../../services/CommonServices/DepartmentService";
+import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import { useLoading } from "../../../../context/LoadingContext";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
@@ -16,12 +16,14 @@ interface VisitDetailsProps {
   formData: RegsitrationFormData;
   setFormData: React.Dispatch<React.SetStateAction<RegsitrationFormData>>;
   isSubmitted: boolean;
+  isEditMode: boolean; // New prop to control edit mode
 }
 
 const VisitDetails: React.FC<VisitDetailsProps> = ({
   formData,
   setFormData,
   isSubmitted,
+  isEditMode = false, // Destructure the new prop
 }) => {
   const [departmentValues, setDepartmentValues] = useState<DropdownOption[]>(
     []
@@ -41,6 +43,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
   const endpointDepartment = "GetActiveRegistrationDepartments";
   const endpointAttendingPhy = "GetActiveConsultants";
   const endpointPrimaryIntroducingSource = "GetActiveReferralContacts";
+
   useEffect(() => {
     const loadDropdownData = async () => {
       try {
@@ -68,6 +71,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
           })
         );
         setAttendingPhy(attendingPhyOptions);
+
         const primaryIntroducingSource =
           await ContactMastService.fetchRefferalPhy(
             token,
@@ -83,7 +87,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
       } catch (error) {
         console.error("Failed to fetch departments:", error);
       } finally {
-        setLoading(false); // Set loading to false after fetching data
+        setLoading(false);
       }
     };
 
@@ -97,6 +101,12 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
   ];
   const isHospitalVisit = formData.OPVisits.VisitTypeVal === "H";
   const isPhysicianVisit = formData.OPVisits.VisitTypeVal === "P";
+
+  // Conditionally render the section based on isEditMode
+  if (isEditMode) {
+    return null; // Do not render the section in edit mode
+  }
+
   return (
     <section aria-labelledby="visit-details-header">
       <Box>

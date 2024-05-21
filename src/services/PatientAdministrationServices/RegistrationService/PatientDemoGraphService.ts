@@ -1,8 +1,8 @@
 // PatientDemoGraphService.ts
 import axios from "axios";
-import { APIConfig } from "../../apiConfig";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { PatientDemoGraph } from "../../interfaces/PatientAdministration/patientDemoGraph";
+import { APIConfig } from "../../../apiConfig";
+import { OperationResult } from "../../../interfaces/Common/OperationResult";
+import { PatientDemoGraph } from "../../../interfaces/PatientAdministration/patientDemoGraph";
 
 export const getPatientDemographicsByPChartID = async (
   token: string,

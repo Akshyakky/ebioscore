@@ -1,13 +1,18 @@
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
 import { TextBoxProps } from "../../../interfaces/Common/TextBoxProps";
 
-const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
+interface FloatingLabelTextBoxProps extends TextBoxProps {
+  inputPattern?: RegExp; // Optional prop for input pattern
+  name?: string;
+}
+
+const FloatingLabelTextBox: React.FC<FloatingLabelTextBoxProps> = ({
   ControlID,
   title,
   value = "",
-  onChange,
+  onChange = () => {},
   placeholder,
   type = "text",
   className,
@@ -22,11 +27,31 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   errorMessage,
   max,
   autoComplete = "on",
+  inputPattern,
+  name,
 }) => {
-  const controlId = `txt${ControlID}`;
-  const isInvalid = (isMandatory && isSubmitted && !value) || !!errorMessage;
-  const errorToShow =
-    errorMessage || (isMandatory && !value ? `${title} is required.` : "");
+  const controlId = useMemo(() => `txt${ControlID}`, [ControlID]);
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      if (!inputPattern || inputPattern.test(newValue)) {
+        onChange(e);
+      }
+    },
+    [onChange, inputPattern]
+  );
+
+  const isInvalid = useMemo(
+    () => (isMandatory && isSubmitted && !value) || !!errorMessage,
+    [isMandatory, isSubmitted, value, errorMessage]
+  );
+
+  const errorToShow = useMemo(
+    () =>
+      errorMessage || (isMandatory && !value ? `${title} is required.` : ""),
+    [errorMessage, isMandatory, value, title]
+  );
 
   return (
     <FormControl
@@ -38,10 +63,11 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
     >
       <TextField
         id={controlId}
+        name={name}
         label={title || ""}
         type={type}
         value={value}
-        onChange={onChange}
+        onChange={handleChange}
         placeholder={placeholder || title}
         size={size}
         disabled={disabled}
@@ -57,8 +83,8 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
         error={isInvalid}
         helperText={isInvalid ? errorToShow : ""}
         autoComplete={autoComplete}
+        aria-describedby={isInvalid ? `${controlId}-error` : undefined}
       />
-      {/* {isInvalid && <FormHelperText error>{errorToShow}</FormHelperText>} */}
     </FormControl>
   );
 };

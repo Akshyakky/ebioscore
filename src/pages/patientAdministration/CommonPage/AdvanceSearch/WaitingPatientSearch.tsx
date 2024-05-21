@@ -16,7 +16,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import CloseIcon from "@mui/icons-material/Close";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DateFilterType } from "../../../../interfaces/PatientAdministration/revisitFormData";
-import { RevisitService } from "../../../../services/RevisitService/RevisitService";
+import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
 import { UserState } from "../../../../store/userTypes";
 
 interface WaitingPatientSearchProps {
@@ -238,7 +238,12 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
         />
       </DialogContent>
       <DialogActions>
-        <CustomButton icon={CloseIcon} text="Close" onClick={handleClose} />
+        <CustomButton
+          icon={CloseIcon}
+          text="Close"
+          color="secondary"
+          onClick={handleClose}
+        />
       </DialogActions>
     </Dialog>
   );

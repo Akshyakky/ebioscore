@@ -1,14 +1,14 @@
 // service/RegistrationService/RegistrationService.ts
 import axios from "axios";
-import { APIConfig } from "../../apiConfig";
+import { APIConfig } from "../../../apiConfig";
 import {
   PatientDemographicDetails,
   PatientSearchResult,
   RegsitrationFormData,
-} from "../../interfaces/PatientAdministration/registrationFormData";
-import { NextOfKinKinFormState } from "../../interfaces/PatientAdministration/NextOfKinData";
-import { InsuranceFormState } from "../../interfaces/PatientAdministration/InsuranceDetails";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
+} from "../../../interfaces/PatientAdministration/registrationFormData";
+import { NextOfKinKinFormState } from "../../../interfaces/PatientAdministration/NextOfKinData";
+import { InsuranceFormState } from "../../../interfaces/PatientAdministration/InsuranceDetails";
+import { OperationResult } from "../../../interfaces/Common/OperationResult";
 
 export const getLatestUHID = async (
   token: string,

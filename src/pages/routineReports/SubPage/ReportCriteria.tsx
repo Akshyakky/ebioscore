@@ -15,7 +15,7 @@ import PrintIcon from "@mui/icons-material/Print";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import { CompanyService } from "../../../services/CommonService/CompanyService";
+import { CompanyService } from "../../../services/CommonServices/CompanyService";
 import { Company } from "../../../types/Common/Company.type";
 import MultiSelectDropdown from "../../../components/DropDown/MultiSelectDropdown";
 import { ExportService } from "../../../services/RoutineReportService/ExportService";

@@ -8,4 +8,5 @@ export const APIConfig = {
   commonURL: process.env.REACT_APP_COMMONURL,
   routineReportURL: process.env.REACT_APP_ROUTINEREPORTURL,
   securityManagementURL: process.env.REACT_APP_SECURITY_MANAGEMENT_URL,
+  hospitalAdministrations: process.env.REACT_APP_HOSPITAL_ADMINISTRATION_URL,
 };

@@ -1,11 +1,11 @@
 import axios from "axios";
-import { APIConfig } from "../../apiConfig";
+import { APIConfig } from "../../../apiConfig";
 import {
   DateFilterType,
   GetPatientVisitHistory,
   revisitFormData,
-} from "../../interfaces/PatientAdministration/revisitFormData";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
+} from "../../../interfaces/PatientAdministration/revisitFormData";
+import { OperationResult } from "../../../interfaces/Common/OperationResult";
 
 export const getPatientHistoryByPChartID = async (
   token: string,

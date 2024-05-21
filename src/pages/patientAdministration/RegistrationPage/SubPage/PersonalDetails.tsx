@@ -1,19 +1,19 @@
+import React, { useState, useEffect, useRef } from "react";
 import { Grid, Typography, Box } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
+import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
-import { BillingService } from "../../../../services/BillingService/BillingService";
-import { ConstantValues } from "../../../../services/CommonService/ConstantValuesService";
-import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
-import React, { useState, useEffect, useRef } from "react";
+import { BillingService } from "../../../../services/BillingServices/BillingService";
+import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
+import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { useLoading } from "../../../../context/LoadingContext";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
-import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 
@@ -36,97 +36,68 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const [titleValues, setTitleValues] = useState<DropdownOption[]>([]);
   const [genderValues, setGenderValues] = useState<DropdownOption[]>([]);
   const [ageUnitOptions, setAgeValues] = useState<DropdownOption[]>([]);
-  const [nationalityValues, setNationalityValues] = useState<DropdownOption[]>(
-    []
-  );
-
-  const { handleDropdownChange } =
-    useDropdownChange<RegsitrationFormData>(setFormData);
-  const { handleRadioButtonChange } =
-    useRadioButtonChange<RegsitrationFormData>(setFormData);
+  const [nationalityValues, setNationalityValues] = useState<DropdownOption[]>([]);
+  const { handleDropdownChange } = useDropdownChange<RegsitrationFormData>(setFormData);
+  const { handleRadioButtonChange } = useRadioButtonChange<RegsitrationFormData>(setFormData);
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
   const { fetchLatestUHID } = useRegistrationUtils(token);
   const { fetchPatientSuggestions } = usePatientAutocomplete(token);
   const uhidRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (uhidRef.current) {
       uhidRef.current.focus();
     }
   }, []);
+
   const endpointPIC = "GetPICDropDownValues";
   const endpointConstantValues = "GetConstantValues";
   const endPointAppModifyList = "GetActiveAppModifyFieldsAsync";
+  
   useEffect(() => {
     const loadDropdownValues = async () => {
       try {
         setLoading(true);
-        const responsePIC = await BillingService.fetchPicValues(
-          token,
-          endpointPIC
-        );
-
+        const responsePIC = await BillingService.fetchPicValues(token, endpointPIC);
         const transformedData: DropdownOption[] = responsePIC.map((item) => ({
           value: item.value,
           label: item.label,
         }));
         setPicValues(transformedData);
 
-        const responseTitle = await ConstantValues.fetchConstantValues(
-          token,
-          endpointConstantValues,
-          "PTIT"
-        );
-        const transformedTitleData: DropdownOption[] = responseTitle.map(
-          (item) => ({
-            value: item.value,
-            label: item.label,
-          })
-        );
+        const responseTitle = await ConstantValues.fetchConstantValues(token, endpointConstantValues, "PTIT");
+        const transformedTitleData: DropdownOption[] = responseTitle.map((item) => ({
+          value: item.value,
+          label: item.label,
+        }));
         setTitleValues(transformedTitleData);
 
-        const responseGender = await ConstantValues.fetchConstantValues(
-          token,
-          endpointConstantValues,
-          "PSEX"
-        );
-        const transformedGenderData: DropdownOption[] = responseGender.map(
-          (item) => ({
-            value: item.value,
-            label: item.label,
-          })
-        );
+        const responseGender = await ConstantValues.fetchConstantValues(token, endpointConstantValues, "PSEX");
+        const transformedGenderData: DropdownOption[] = responseGender.map((item) => ({
+          value: item.value,
+          label: item.label,
+        }));
         setGenderValues(transformedGenderData);
-        const responseAge = await ConstantValues.fetchConstantValues(
-          token,
-          endpointConstantValues,
-          "PAT"
-        );
-        const transformedAgeData: DropdownOption[] = responseAge.map(
-          (item) => ({
-            value: item.value,
-            label: item.label,
-          })
-        );
+        
+        const responseAge = await ConstantValues.fetchConstantValues(token, endpointConstantValues, "PAT");
+        const transformedAgeData: DropdownOption[] = responseAge.map((item) => ({
+          value: item.value,
+          label: item.label,
+        }));
         setAgeValues(transformedAgeData);
-        const responseNationality =
-          await AppModifyListService.fetchAppModifyList(
-            token,
-            endPointAppModifyList,
-            "NATIONALITY"
-          );
-        const transformedNationalityData: DropdownOption[] =
-          responseNationality.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }));
+        
+        const responseNationality = await AppModifyListService.fetchAppModifyList(token, endPointAppModifyList, "NATIONALITY");
+        const transformedNationalityData: DropdownOption[] = responseNationality.map((item) => ({
+          value: item.value,
+          label: item.label,
+        }));
         setNationalityValues(transformedNationalityData);
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
-        // Error handling
       } finally {
-        setLoading(false); // Set loading to false after fetching data
+        setLoading(false);
       }
     };
 
@@ -140,30 +111,21 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const calculateAge = (dob: string | number | Date) => {
     const birthday = new Date(dob);
     const today = new Date();
-
-    // Calculate the difference in years
     let age = today.getFullYear() - birthday.getFullYear();
     const monthDiff = today.getMonth() - birthday.getMonth();
 
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthday.getDate())
-    ) {
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthday.getDate())) {
       age--;
     }
     if (age === 0) {
-      const ageInMonths =
-        monthDiff + (today.getDate() < birthday.getDate() ? -1 : 0);
+      const ageInMonths = monthDiff + (today.getDate() < birthday.getDate() ? -1 : 0);
       if (ageInMonths <= 0) {
-        const ageInDays = Math.floor(
-          (today.getTime() - birthday.getTime()) / (1000 * 60 * 60 * 24)
-        );
+        const ageInDays = Math.floor((today.getTime() - birthday.getTime()) / (1000 * 60 * 60 * 24));
         return { age: ageInDays, ageType: "Days", ageUnit: "LBN2" };
       } else {
         return { age: ageInMonths, ageType: "Months", ageUnit: "LBN3" };
       }
     } else if (age < 0) {
-      // Handle future date of birth
       return { age: 0, ageType: "Years", ageUnit: "LBN4" };
     } else {
       return { age: age, ageType: "Years", ageUnit: "LBN4" };
@@ -174,19 +136,17 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     const newDOB = e.target.value;
     if (newDOB) {
       const { age, ageType, ageUnit } = calculateAge(newDOB);
-      setFormData((prevFormData) => {
-        return {
-          ...prevFormData,
-          PApproxAge: age,
-          PAgeType: ageType,
-          PatOverview: {
-            ...prevFormData.PatOverview,
-            PageDescription: ageType,
-            PageDescriptionVal: ageUnit, // Set the value based on age unit
-            PAgeNumber: age,
-          },
-        };
-      });
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        PApproxAge: age,
+        PAgeType: ageType,
+        PatOverview: {
+          ...prevFormData.PatOverview,
+          PageDescription: ageType,
+          PageDescriptionVal: ageUnit,
+          PAgeNumber: age,
+        },
+      }));
     }
   };
 
@@ -221,9 +181,21 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
 
   const getTodayDate = () => {
     const today = new Date();
-    const month = `0${today.getMonth() + 1}`.slice(-2); //
+    const month = `0${today.getMonth() + 1}`.slice(-2);
     const day = `0${today.getDate()}`.slice(-2);
     return `${today.getFullYear()}-${month}-${day}`;
+  };
+
+  const handleNameChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: string
+  ) => {
+    const value = e.target.value;
+    const validatedValue = value.replace(/[^a-zA-Z\s]/g, "").toUpperCase();
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [field]: validatedValue,
+    }));
   };
 
   return (
@@ -306,6 +278,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             maxLength={20}
             isSubmitted={isSubmitted}
             isMandatory={true}
+            inputPattern={/^\d*$/} // Only allow numbers
           />
         </Grid>
       </Grid>
@@ -333,9 +306,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             type="text"
             size="small"
             placeholder="First Name"
-            onChange={(e) =>
-              setFormData({ ...formData, PFName: e.target.value })
-            }
+            onChange={(e) => handleNameChange(e, "PFName")}
             value={formData.PFName}
             isSubmitted={isSubmitted}
             isMandatory={true}
@@ -348,9 +319,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             type="text"
             size="small"
             placeholder="Last Name"
-            onChange={(e) =>
-              setFormData({ ...formData, PLName: e.target.value })
-            }
+            onChange={(e) => handleNameChange(e, "PLName")}
             value={formData.PLName}
             isSubmitted={isSubmitted}
             isMandatory={true}
@@ -369,6 +338,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             value={formData.PssnID}
             isSubmitted={isSubmitted}
             isMandatory={true}
+            inputPattern={/^\d*$/} // Only allow numbers
           />
         </Grid>
       </Grid>

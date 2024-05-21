@@ -3,12 +3,12 @@ import { InsuranceFormState } from "../../../../interfaces/PatientAdministration
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import { InsuranceCarrierService } from "../../../../services/CommonService/InsuranceCarrierService";
+import { InsuranceCarrierService } from "../../../../services/CommonServices/InsuranceCarrierService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
-import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
-import { ConstantValues } from "../../../../services/CommonService/ConstantValuesService";
+import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
+import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
 import {
   Grid,
   Dialog,

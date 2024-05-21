@@ -6,7 +6,7 @@ import { RegsitrationFormData } from "../../../../interfaces/PatientAdministrati
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
+import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
 import { useLoading } from "../../../../context/LoadingContext";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";

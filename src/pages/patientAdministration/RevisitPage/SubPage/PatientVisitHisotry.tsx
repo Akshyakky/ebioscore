@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import { GetPatientVisitHistory } from "../../../../interfaces/PatientAdministration/revisitFormData";
 import { Grid, Typography } from "@mui/material";
-import { RevisitService } from "../../../../services/RevisitService/RevisitService";
+import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
 import { formatDate } from "../../../../utils/Common/dateUtils";
 interface PatientVisitHistoryProps {
   pChartID: number;

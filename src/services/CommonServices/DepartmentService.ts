@@ -27,6 +27,7 @@ const fetchDepartments = async (
     throw error;
   }
 };
+
 export const DepartmentService = {
   fetchDepartments,
 };

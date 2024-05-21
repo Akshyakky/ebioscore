@@ -20,12 +20,12 @@ import extractNumbers from "../../../../utils/PatientAdministration/extractNumbe
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import { BillingService } from "../../../../services/BillingService/BillingService";
+import { BillingService } from "../../../../services/BillingServices/BillingService";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
-import { DepartmentService } from "../../../../services/CommonService/DepartmentService";
-import { ContactMastService } from "../../../../services/CommonService/ContactMastService";
+import { DepartmentService } from "../../../../services/CommonServices/DepartmentService";
+import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import useDropdown from "../../../../hooks/useDropdown";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
@@ -33,7 +33,7 @@ import FormSaveClearButton from "../../../../components/Button/FormSaveClearButt
 import PatientVisitHistory from "../SubPage/PatientVisitHisotry";
 import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
 import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
-import { RevisitService } from "../../../../services/RevisitService/RevisitService";
+import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
 import GeneralAlert from "../../../../components/GeneralAlert/GeneralAlert";
 import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientSearch";
 

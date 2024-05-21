@@ -6,6 +6,7 @@ import RevisitPage from "../pages/patientAdministration/RevisitPage/MainPage/Rev
 import RoutineReportsPA from "../pages/patientAdministration/RoutineReportsPage/MainPage/RoutineReportsPAPage";
 import ListOfReportsPage from "../pages/routineReports/MainPage/ListOfReportsPage";
 import { PatientSearchProvider } from "../context/PatientSearchContext";
+import ContactListPage from "../pages/hospitalAdministration/ContactListPage/MainPage/ContactListPage";
 
 const routeConfig = [
   { path: "/login", component: LoginPage, protected: false },
@@ -24,6 +25,7 @@ const routeConfig = [
   },
   { path: "/routinereportspa", component: RoutineReportsPA, protected: true },
   { path: "/listofreportspage", component: ListOfReportsPage, protected: true },
+  { path: "/ContactListPage", component: ContactListPage, protected: true },
   // Add more routes here as needed
 ];
 

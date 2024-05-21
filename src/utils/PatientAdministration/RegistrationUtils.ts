@@ -1,4 +1,4 @@
-import { RegistrationService } from "../../services/RegistrationService/RegistrationService";
+import { RegistrationService } from "../../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { useLoading } from "../../context/LoadingContext";
 
 const useRegistrationUtils = (token: string) => {

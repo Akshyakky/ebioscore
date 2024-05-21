@@ -5,7 +5,7 @@ import PatientInsuranceGrid from "./PatientInsuranceGrid";
 import { Grid, Typography } from "@mui/material";
 import CustomButton from "../../../../components/Button/CustomButton";
 import addIcon from "@mui/icons-material/Add";
-import { RegistrationService } from "../../../../services/RegistrationService/RegistrationService";
+import { RegistrationService } from "../../../../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 interface InsurancePageProps {

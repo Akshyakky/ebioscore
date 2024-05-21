@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { RegistrationService } from "../../../../services/RegistrationService/RegistrationService";
+import { RegistrationService } from "../../../../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { PatientDemographicDetails } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import { useLoading } from "../../../../context/LoadingContext";
 import { OperationResult } from "../../../../interfaces/Common/OperationResult";
@@ -25,7 +25,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import EditIcon from "@mui/icons-material/Edit";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import { ConstantValues } from "../../../../services/CommonService/ConstantValuesService";
+import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdown from "../../../../hooks/useDropdown";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
@@ -36,9 +36,9 @@ import {
 import CustomButton from "../../../../components/Button/CustomButton";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
-import { BillingService } from "../../../../services/BillingService/BillingService";
-import { AppModifyListService } from "../../../../services/CommonService/AppModifyListService";
-import { PatientDemoGraphService } from "../../../../services/RegistrationService/PatientDemoGraphService";
+import { BillingService } from "../../../../services/BillingServices/BillingService";
+import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
+import { PatientDemoGraphService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientDemoGraphService";
 
 interface PatientDemographicsProps {
   pChartID: number;

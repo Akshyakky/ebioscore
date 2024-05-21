@@ -1,6 +1,6 @@
 // hooks/usePatientAutocomplete.ts
 import { formatDate } from "../../utils/Common/dateUtils";
-import { RegistrationService } from "../../services/RegistrationService/RegistrationService";
+import { RegistrationService } from "../../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { notifyError } from "../../utils/Common/toastManager";
 
 export const usePatientAutocomplete = (token: any) => {

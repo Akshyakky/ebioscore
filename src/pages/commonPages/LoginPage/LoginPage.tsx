@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Container,
   Box,
@@ -8,15 +8,12 @@ import {
   Alert,
   CircularProgress,
   Link,
-  createTheme,
-  ThemeProvider,
 } from "@mui/material";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import logo from "../../../assets/images/eBios.png";
-import { CompanyService } from "../../../services/CommonService/CompanyService";
-import { ClientParameterService } from "../../../services/CommonService/ClientParameterService";
+import { CompanyService } from "../../../services/CommonServices/CompanyService";
+import { ClientParameterService } from "../../../services/CommonServices/ClientParameterService";
 import { useNavigate } from "react-router-dom";
-import "../../../../src/assets/styles/Common.css";
 import AuthService from "../../../services/AuthService/AuthService";
 import axios from "axios";
 import { useDispatch } from "react-redux";
@@ -25,8 +22,9 @@ import DropdownSelect from "../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import { notifySuccess } from "../../../utils/Common/toastManager";
 import { Company } from "../../../types/Common/Company.type";
+import "../../../../src/assets/styles/Common.css";
 
-const LoginPage = () => {
+const LoginPage: React.FC = () => {
   const [UserName, setUsername] = useState("");
   const [Password, setPassword] = useState("");
   const [companyID, setCompanyID] = useState("");
@@ -34,11 +32,18 @@ const LoginPage = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [amcExpiryMessage, setAmcExpiryMessage] = useState("");
+  const [licenseExpiryMessage, setLicenseExpiryMessage] = useState("");
+  const [licenseDaysRemaining, setLicenseDaysRemaining] = useState(0);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [selectedCompanyName, setSelectedCompanyName] =
-    useState("Select Company");
+  const selectedCompanyName = useMemo(() => {
+    const selectedCompany = companies.find(
+      (c) => c.compIDCompCode === `${companyID},${companyCode}`
+    );
+    return selectedCompany?.compName || "Select Company";
+  }, [companyID, companyCode, companies]);
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -46,16 +51,10 @@ const LoginPage = () => {
         const companyData = await CompanyService.getCompanies();
         setCompanies(companyData);
         if (companyData.length === 1) {
-          // Automatically select the only company
-          const singleCompany = companyData[0];
-          const compIDCompCode = singleCompany.compIDCompCode;
-          const parts = compIDCompCode.split(",");
-          if (parts.length >= 2) {
-            setCompanyID(parts[0]);
-            setCompanyCode(parts[1]);
-            setSelectedCompanyName(singleCompany.compName);
-            setErrorMessage("");
-          }
+          handleSelectCompany(
+            companyData[0].compIDCompCode,
+            companyData[0].compName
+          );
         }
       } catch (error) {
         console.error("Fetching companies failed: ", error);
@@ -64,42 +63,30 @@ const LoginPage = () => {
     };
 
     fetchCompanies();
+    checkExpiryDates();
   }, []);
 
-  const [amcExpiryMessage, setAmcExpiryMessage] = useState("");
-  const [licenseExpiryMessage, setLicenseExpiryMessage] = useState("");
-  const [licenseDaysRemaining, setLicenseDaysRemaining] = useState(0);
-
-  const checkDateValidity = (dateString: string) => {
-    // Split the string into parts
-    const parts = dateString.split("/");
-    // Assuming the format is DD/MM/YYYY, construct a new Date object
-    const day = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in JavaScript Date
-    const year = parseInt(parts[2], 10);
-
+  const checkDateValidity = (dateString: string): number => {
+    const [day, month, year] = dateString.split("/").map(Number);
     const today = new Date();
-    const targetDate = new Date(year, month, day);
+    const targetDate = new Date(year, month - 1, day);
     const differenceInTime = targetDate.getTime() - today.getTime();
-    const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-
-    return differenceInDays;
+    return differenceInTime / (1000 * 3600 * 24);
   };
 
   const checkExpiryDates = async () => {
     try {
-      const amcDetails = await ClientParameterService.getClientParameter(
-        "AMCSUP"
-      );
-      const licenseDetails = await ClientParameterService.getClientParameter(
-        "CINLIC"
-      );
+      const [amcDetails, licenseDetails] = await Promise.all([
+        ClientParameterService.getClientParameter("AMCSUP"),
+        ClientParameterService.getClientParameter("CINLIC"),
+      ]);
 
       const amcDaysRemaining = checkDateValidity(amcDetails[0].clParValue);
       const licenseDaysRemaining = checkDateValidity(
         licenseDetails[0].clParValue
       );
       setLicenseDaysRemaining(licenseDaysRemaining);
+
       if (amcDaysRemaining <= 30) {
         setAmcExpiryMessage(
           `Your AMC support will expire in ${Math.ceil(
@@ -109,8 +96,6 @@ const LoginPage = () => {
       }
       if (licenseDaysRemaining < 0) {
         setLicenseExpiryMessage("Cannot log in. Your License has expired");
-        // Optionally, you can also handle the logic here to prevent login
-        // e.g., disable the login form, redirect to a different page, etc.
       } else if (licenseDaysRemaining <= 30) {
         setLicenseExpiryMessage(
           `Your License will expire in ${Math.ceil(
@@ -120,42 +105,33 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error("Failed to fetch client parameters:", error);
-      // Handle error messages as well
     }
   };
 
-  useEffect(() => {
-    checkExpiryDates();
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     if (licenseExpiryMessage === "Cannot log in. Your License has expired") {
       setErrorMessage(licenseExpiryMessage);
       return;
     }
-
-    if (!companyID || companyID === "") {
+    if (!companyID) {
       setErrorMessage("Please select a company.");
-      return; // Exit the function if no company is selected
+      return;
     }
-
     if (!UserName) {
       setErrorMessage("Username is required.");
-      return; // Exit the function if the username is not filled out
-   }
-   if (!Password) {
+      return;
+    }
+    if (!Password) {
       setErrorMessage("Password is required.");
-      return; // Exit the function if the password is not filled out
-   }
-   
-    // Start the login process
+      return;
+    }
+
     setIsLoggingIn(true);
     try {
       const tokenResponse = await AuthService.generateToken({
-        UserName: UserName,
-        Password: Password,
+        UserName,
+        Password,
       });
       if (tokenResponse.token) {
         const jwtToken = JSON.parse(atob(tokenResponse.token.split(".")[1]));
@@ -163,9 +139,9 @@ const LoginPage = () => {
         dispatch({
           type: SET_USER_DETAILS,
           payload: {
-            userID: tokenResponse.user.userID, // should be number | null
+            userID: tokenResponse.user.userID,
             token: tokenResponse.token,
-            adminYN: tokenResponse.user.adminYN, // should be string | null
+            adminYN: tokenResponse.user.adminYN,
             userName: tokenResponse.user.userName,
             compID: parseInt(companyID),
             compCode: companyCode,
@@ -173,48 +149,26 @@ const LoginPage = () => {
             tokenExpiry: tokenExpiryTime,
           },
         });
-        console.log(
-          "Token:",
-          tokenResponse.token,
-          tokenResponse.user.userName,
-          tokenResponse.user.userID,
-          tokenResponse.user.conID,
-          tokenResponse.user.adminYN,
-          tokenResponse.user.physicianYN,
-          parseInt(companyID),
-          companyCode,
-          selectedCompanyName
-        );
         notifySuccess("Login successful!");
         navigate("/dashboard");
-        // Save the token in local storage or context, handle user redirection, etc.
-        // localStorage.setItem('token', tokenResponse.token);
-        // Redirect to another page or update state as needed
       } else {
-        // Handle failed login attempt
         setErrorMessage(
           tokenResponse.user.ErrorMessage || "Invalid credentials"
         );
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        // We can now safely access error.response because we know it's an AxiosError
         if (error.response) {
-          // If the request was made and the server responded with a status code
-          // that falls out of the range of 2xx, the error message is available here
           setErrorMessage(
             error.response.data.errorMessage ||
               "An error occurred during login."
           );
         } else {
-          // The request was made but no response was received, `error.request` is an instance of XMLHttpRequest
           setErrorMessage("No response received from the server.");
         }
       } else if (error instanceof Error) {
-        // If it's a different type of error
         setErrorMessage(error.message);
       } else {
-        // If the error is not an Error object or an AxiosError
         setErrorMessage("An unexpected error occurred");
       }
     } finally {
@@ -223,19 +177,14 @@ const LoginPage = () => {
   };
 
   const handleSelectCompany = (CompIDCompCode: string, compName: string) => {
-    const parts = CompIDCompCode.split(",");
-    if (parts.length >= 2) {
-      setCompanyID(parts[0]);
-      setCompanyCode(parts[1]);
-      setSelectedCompanyName(compName);
-      // If there was an error message about company selection, clear it
-      if (errorMessage.includes("Please select a company.")) {
-        setErrorMessage("");
-      }
+    const [compID, compCode] = CompIDCompCode.split(",");
+    if (compID && compCode) {
+      setCompanyID(compID);
+      setCompanyCode(compCode);
+      setErrorMessage("");
     } else {
       setCompanyID("0");
       setCompanyCode("");
-      setSelectedCompanyName("");
       setErrorMessage("Please select a company");
     }
   };
@@ -301,7 +250,7 @@ const LoginPage = () => {
               value={UserName}
               onChange={(e) => setUsername(e.target.value)}
               size="small"
-              isMandatory={true}
+              isMandatory
             />
 
             <FloatingLabelTextBox
@@ -311,7 +260,7 @@ const LoginPage = () => {
               value={Password}
               onChange={(e) => setPassword(e.target.value)}
               size="small"
-              isMandatory={true}
+              isMandatory
             />
 
             <Box textAlign="right">
