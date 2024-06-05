@@ -5,7 +5,7 @@ import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteText
 import {
   RevisitFormErrors,
   revisitFormData,
-} from "../../../../interfaces/PatientAdministration/revisitFormData";
+} from "../../../../interfaces/patientAdministration/revisitFormData";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { useLoading } from "../../../../context/LoadingContext";
@@ -19,7 +19,7 @@ import PatientSearch from "../../CommonPage/AdvanceSearch/PatientSearch";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/common/DropdownOption";
 import { BillingService } from "../../../../services/BillingServices/BillingService";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";

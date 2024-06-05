@@ -1,4 +1,4 @@
-import { DropdownOption } from "../interfaces/Common/DropdownOption";
+import { DropdownOption } from "../interfaces/common/DropdownOption";
 import { SelectChangeEvent } from "@mui/material";
 
 const useDropdownChange = <T extends object>(
@@ -10,30 +10,41 @@ const useDropdownChange = <T extends object>(
       textPath: (string | number)[],
       options: DropdownOption[]
     ) =>
-    (e: SelectChangeEvent<unknown>, child?: React.ReactNode) => {
+    (e: SelectChangeEvent<string>, child?: React.ReactNode) => {
+      debugger;
       const selectedValue = e.target.value;
       const selectedOption = options.find(
-        (option) => String(option.value) === String(selectedValue)
+        (option) =>
+          String(option.value) === String(selectedValue) ||
+          option.label === selectedValue
       );
+
       setFormData((prevFormData) => {
         let newData = { ...prevFormData } as any;
 
+        // Function to safely navigate through nested properties
+        const navigateAndSet = (path: (string | number)[], value: any) => {
+          let current = newData;
+          for (let i = 0; i < path.length - 1; i++) {
+            if (!current[path[i]]) {
+              current[path[i]] = {};
+            }
+            current = current[path[i]];
+          }
+          current[path[path.length - 1]] = value;
+        };
+
         // Update value if valuePath is provided
         if (valuePath.length > 0) {
-          let current = newData;
-          for (let i = 0; i < valuePath.length - 1; i++) {
-            current = current[valuePath[i]];
-          }
-          current[valuePath[valuePath.length - 1]] = selectedValue;
+          navigateAndSet(
+            valuePath,
+            selectedOption ? selectedOption.value : selectedValue
+          );
         }
 
-        // Update text if textPath is provided and selectedOption is found
+        // Update text if textPath is provided and selectedOption exists
         if (textPath.length > 0 && selectedOption) {
-          let current = newData;
-          for (let i = 0; i < textPath.length - 1; i++) {
-            current = current[textPath[i]];
-          }
-          current[textPath[textPath.length - 1]] = selectedOption.label;
+          navigateAndSet(textPath, selectedOption.label);
         }
 
         return newData;
@@ -42,4 +53,5 @@ const useDropdownChange = <T extends object>(
 
   return { handleDropdownChange };
 };
+
 export default useDropdownChange;

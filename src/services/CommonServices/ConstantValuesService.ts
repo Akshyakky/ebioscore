@@ -1,7 +1,7 @@
 // ConstantValues.ts
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
-import { DropdownOption } from "../../interfaces/Common/DropdownOption";
+import { DropdownOption } from "../../interfaces/common/DropdownOption";
 
 interface APIResponse {
   consValue: string;

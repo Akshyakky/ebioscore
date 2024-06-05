@@ -4,14 +4,14 @@ import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTe
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
-import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
+import { RegsitrationFormData } from "../../../../interfaces/patientAdministration/registrationFormData";
 import { BillingService } from "../../../../services/BillingServices/BillingService";
 import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
 import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { useLoading } from "../../../../context/LoadingContext";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";

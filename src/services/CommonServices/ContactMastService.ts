@@ -1,12 +1,13 @@
-// services/ContactMastService.ts
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
-import { DropdownOption } from "../../interfaces/Common/DropdownOption";
+import { DropdownOption } from "../../interfaces/common/DropdownOption";
+import { OperationResult } from "../../interfaces/common/OperationResult";
 
 interface PhyAPIResponse {
   consultantID: string;
   consultantName: string;
 }
+
 interface RefAPIResponse {
   referralId: string;
   referralName: string;
@@ -19,12 +20,21 @@ const fetchAttendingPhysician = async (
 ): Promise<DropdownOption[]> => {
   const url = `${APIConfig.commonURL}HospitalAdministration/${endpoint}?compId=${compId}`;
   const headers = { Authorization: `Bearer ${token}` };
-  const response = await axios.get<PhyAPIResponse[]>(url, { headers });
-  return response.data.map((item) => ({
-    value: item.consultantID,
-    label: item.consultantName,
-  }));
+  const response = await axios.get<OperationResult<PhyAPIResponse[]>>(url, {
+    headers,
+  });
+
+  if (response.data.success) {
+    const data = response.data.data ?? [];
+    return data.map((item) => ({
+      value: item.consultantID,
+      label: item.consultantName,
+    }));
+  } else {
+    throw new Error(response.data.errorMessage || "Unknown error occurred");
+  }
 };
+
 const fetchRefferalPhy = async (
   token: string,
   endpoint: string,
@@ -32,11 +42,19 @@ const fetchRefferalPhy = async (
 ): Promise<DropdownOption[]> => {
   const url = `${APIConfig.commonURL}HospitalAdministration/${endpoint}?compId=${compId}`;
   const headers = { Authorization: `Bearer ${token}` };
-  const response = await axios.get<RefAPIResponse[]>(url, { headers });
-  return response.data.map((item) => ({
-    value: item.referralId,
-    label: item.referralName,
-  }));
+  const response = await axios.get<OperationResult<RefAPIResponse[]>>(url, {
+    headers,
+  });
+
+  if (response.data.success) {
+    const data = response.data.data ?? [];
+    return data.map((item) => ({
+      value: item.referralId,
+      label: item.referralName,
+    }));
+  } else {
+    throw new Error(response.data.errorMessage || "Unknown error occurred");
+  }
 };
 
 const fetchAvailableAttendingPhysicians = async (
@@ -45,11 +63,19 @@ const fetchAvailableAttendingPhysicians = async (
 ): Promise<DropdownOption[]> => {
   const url = `${APIConfig.commonURL}HospitalAdministration/GetAvailableConsultantsForPatientToday?pChartID=${pChartID}`;
   const headers = { Authorization: `Bearer ${token}` };
-  const response = await axios.get<PhyAPIResponse[]>(url, { headers });
-  return response.data.map((item) => ({
-    value: item.consultantID,
-    label: item.consultantName,
-  }));
+  const response = await axios.get<OperationResult<PhyAPIResponse[]>>(url, {
+    headers,
+  });
+
+  if (response.data.success) {
+    const data = response.data.data ?? [];
+    return data.map((item) => ({
+      value: item.consultantID,
+      label: item.consultantName,
+    }));
+  } else {
+    throw new Error(response.data.errorMessage || "Unknown error occurred");
+  }
 };
 
 export const ContactMastService = {

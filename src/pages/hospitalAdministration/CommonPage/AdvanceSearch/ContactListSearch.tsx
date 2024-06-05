@@ -1,33 +1,33 @@
-import { useCallback, useContext, useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Grid,
-  Box,
-  Typography,
-} from "@mui/material";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
+import React, { useCallback, useContext, useEffect, useState } from "react";
+import { ContactListSearchResult } from "../../../../interfaces/hospitalAdministration/ContactListData";
 import CustomButton from "../../../../components/Button/CustomButton";
-import { PatientSearchContext } from "../../../../context/PatientSearchContext";
-import { debounce } from "../../../../utils/Common/debounceUtils";
-import { PatientSearchResult } from "../../../../interfaces/patientAdministration/registrationFormData";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
-interface PatientSearchProps {
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Typography,
+} from "@mui/material";
+import { Box } from "@mui/system";
+import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
+import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import { ContactListSearchContext } from "../../../../context/hospitalAdministration/ContactListSearchContext";
+import { debounce } from "../../../../utils/Common/debounceUtils";
+interface ContactListSearchResultProps {
   show: boolean;
   handleClose: () => void;
-  onEditPatient: (patientId: string) => void;
-}                 
-const PatientSearch = ({
+  onEditContactList: (conID: number) => void;
+}
+const ContactListSearch: React.FC<ContactListSearchResultProps> = ({
   show,
   handleClose,
-  onEditPatient,
-}: PatientSearchProps) => {
+  onEditContactList,
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { performSearch, searchResults } = useContext(PatientSearchContext);
+  const { performSearch, searchResults } = useContext(ContactListSearchContext);
   const debouncedSearch = useCallback(
     debounce((searchQuery: string) => {
       performSearch(searchQuery);
@@ -39,73 +39,63 @@ const PatientSearch = ({
       debouncedSearch(searchTerm);
     }
   }, [searchTerm, debouncedSearch]);
-  const handleEditAndClose = (patientId: string) => {
-    onEditPatient(patientId);
+  const handleEditAndClose = (conID: number) => {
+    onEditContactList(conID);
     handleClose();
   };
   const columns = [
     {
-      key: "PatientEdit",
+      key: "ContactListEdit",
       header: "Edit",
       visible: true,
-      render: (row: PatientSearchResult) => (
+      render: (row: ContactListSearchResult) => (
         <CustomButton
           text="Edit"
-          onClick={() => handleEditAndClose(row.pChartID.toString())}
+          onClick={() => handleEditAndClose(row.conID)}
           icon={EditIcon}
         />
       ),
     },
-    { key: "pChartCode", header: "UHID", visible: true },
     {
-      key: "patientName",
-      header: "Patient Name",
+      key: "conName",
+      header: "Name",
       visible: true,
-      render: (row: PatientSearchResult) =>
-        `${row.pTitle} ${row.pfName} ${row.plName}`,
     },
     {
-      key: "RegDate",
-      header: "Registration Date",
+      key: "deptName",
+      header: "Department",
       visible: true,
-      render: (row: PatientSearchResult) => `${row.pRegDate.split("T")[0]} `,
-    },
-    { key: "pGender", header: "Gender", visible: true },
-    {
-      key: "MobileNo ",
-      header: "Mobile No",
-      visible: true,
-      render: (row: any) => `${row.pAddPhone1}`,
     },
     {
-      key: "Dob",
-      header: "DOB",
+      key: "conEmpYN",
+      header: "Employee",
       visible: true,
-      render: (row: PatientSearchResult) => `${row.pDob.split("T")[0]} `,
     },
-    { key: "pssnID", header: "Identity No", visible: true },
-    { key: "pTypeName", header: "Payment Source", visible: true },
+    {
+      key: "rActive",
+      header: "Record Status",
+      visible: true,
+    },
   ];
-
   return (
     <Dialog
       open={show}
       onClose={(event, reason) => {
         if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
-          handleClose();  
+          handleClose();
         }
       }}
       maxWidth="lg"
       fullWidth
     >
       <DialogTitle>
-        <Typography variant="h6">Patient Search</Typography>
+        <Typography variant="h6">Contact List Search</Typography>
       </DialogTitle>
       <DialogContent
         sx={{
-          minHeight: "600px", // Adjust the value as needed
-          maxHeight: "600px", // Adjust the value as needed
-          overflowY: "auto", // Add scroll if content is larger than maxHeight
+          minHeight: "600px",
+          maxHeight: "600px",
+          overflowY: "auto",
         }}
       >
         <Box>
@@ -144,4 +134,4 @@ const PatientSearch = ({
   );
 };
 
-export default PatientSearch;
+export default ContactListSearch;

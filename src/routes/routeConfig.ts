@@ -7,6 +7,8 @@ import RoutineReportsPA from "../pages/patientAdministration/RoutineReportsPage/
 import ListOfReportsPage from "../pages/routineReports/MainPage/ListOfReportsPage";
 import { PatientSearchProvider } from "../context/PatientSearchContext";
 import ContactListPage from "../pages/hospitalAdministration/ContactListPage/MainPage/ContactListPage";
+import { ContactListSearchProvider } from "../context/hospitalAdministration/ContactListSearchContext";
+import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
 
 const routeConfig = [
   { path: "/login", component: LoginPage, protected: false },
@@ -25,7 +27,17 @@ const routeConfig = [
   },
   { path: "/routinereportspa", component: RoutineReportsPA, protected: true },
   { path: "/listofreportspage", component: ListOfReportsPage, protected: true },
-  { path: "/ContactListPage", component: ContactListPage, protected: true },
+  {
+    path: "/ContactListPage",
+    component: ContactListPage,
+    protected: true,
+    providers: [ContactListSearchProvider],
+  },
+  {
+    path: "/UserListPage",
+    component: UserListPage,
+    protected: true,
+  },
   // Add more routes here as needed
 ];
 

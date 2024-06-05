@@ -1,11 +1,11 @@
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import React, { useState, useEffect } from "react";
-import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
+import { RegsitrationFormData } from "../../../../interfaces/patientAdministration/registrationFormData";
 import { BillingService } from "../../../../services/BillingServices/BillingService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { Grid, Typography, Box } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";

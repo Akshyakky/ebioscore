@@ -1,9 +1,16 @@
-//HospitalAdministrationServices/ContactListService.ts
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { APIConfig } from "../../../apiConfig";
-import { DropdownOption } from "../../../interfaces/Common/DropdownOption";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
+import { DropdownOption } from "../../../interfaces/common/DropdownOption";
+import { OperationResult } from "../../../interfaces/common/OperationResult";
 import { ContactListData } from "../../../interfaces/hospitalAdministration/ContactListData";
+
+interface ErrorResponse {
+  errors?: Record<string, string[]>;
+}
+
+function isAxiosError(error: unknown): error is AxiosError {
+  return axios.isAxiosError(error);
+}
 
 const fetchActiveSpecialties = async (
   token: string,
@@ -11,7 +18,6 @@ const fetchActiveSpecialties = async (
 ): Promise<DropdownOption[]> => {
   try {
     const url = `${APIConfig.hospitalAdministrations}ContactList/GetActiveSpecialites?compId=${compId}`;
-    debugger;
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -41,7 +47,60 @@ const saveContactList = async (
     });
     return response.data;
   } catch (error) {
+    if (isAxiosError(error) && error.response) {
+      const errorResponse = error.response.data as ErrorResponse;
+      if (errorResponse.errors) {
+        return { success: false, validationErrors: errorResponse.errors };
+      }
+    }
     console.error("Error saving contact list:", error);
+    throw error;
+  }
+};
+
+const searchContactListDetails = async (
+  token: string,
+  searchTerm: string
+): Promise<{ data: any[]; success: boolean }> => {
+  try {
+    const url = `${APIConfig.hospitalAdministrations}ContactList/SearchContactList`;
+    const headers = { Authorization: `Bearer ${token}` };
+    const response = await axios.get(url, {
+      headers,
+      params: { searchTerm },
+    });
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error) && error.response) {
+      console.error(
+        "Error response from searchContactListDetails:",
+        error.response.data
+      );
+    } else {
+      console.error("Error during contact list search:", error);
+    }
+    throw error;
+  }
+};
+
+const fetchContactDetails = async (
+  token: string,
+  conID: number
+): Promise<ContactListData> => {
+  try {
+    const url = `${APIConfig.hospitalAdministrations}ContactList/GetContactDetails${conID}`;
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (response.data.success) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message);
+    }
+  } catch (error) {
+    console.error("Error fetching contact details:", error);
     throw error;
   }
 };
@@ -49,4 +108,6 @@ const saveContactList = async (
 export const ContactListService = {
   fetchActiveSpecialties,
   saveContactList,
+  searchContactListDetails,
+  fetchContactDetails,
 };

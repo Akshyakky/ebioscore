@@ -4,4 +4,5 @@ export interface OperationResult<T> {
   data?: T;
   errorMessage?: string;
   affectedRows?: number;
+  validationErrors?: Record<string, string[]>;
 }

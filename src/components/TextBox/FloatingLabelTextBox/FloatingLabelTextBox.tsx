@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from "react";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
-import { TextBoxProps } from "../../../interfaces/Common/TextBoxProps";
+import { TextBoxProps } from "../../../interfaces/common/TextBoxProps";
 
 interface FloatingLabelTextBoxProps extends TextBoxProps {
   inputPattern?: RegExp; // Optional prop for input pattern

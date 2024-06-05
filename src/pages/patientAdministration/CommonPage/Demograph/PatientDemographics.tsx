@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { RegistrationService } from "../../../../services/PatientAdministrationServices/RegistrationService/RegistrationService";
-import { PatientDemographicDetails } from "../../../../interfaces/PatientAdministration/registrationFormData";
+import { PatientDemographicDetails } from "../../../../interfaces/patientAdministration/registrationFormData";
 import { useLoading } from "../../../../context/LoadingContext";
-import { OperationResult } from "../../../../interfaces/Common/OperationResult";
+import { OperationResult } from "../../../../interfaces/common/OperationResult";
 import {
   notifyError,
   notifySuccess,
@@ -26,13 +26,13 @@ import EditIcon from "@mui/icons-material/Edit";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/common/DropdownOption";
 import useDropdown from "../../../../hooks/useDropdown";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import {
   PatientDemoGraph,
   PatientDemoGraphError,
-} from "../../../../interfaces/PatientAdministration/patientDemoGraph";
+} from "../../../../interfaces/patientAdministration/patientDemoGraph";
 import CustomButton from "../../../../components/Button/CustomButton";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";

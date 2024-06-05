@@ -1,5 +1,5 @@
   import React from "react";
-  import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
+  import { InsuranceFormState } from "../../../../interfaces/patientAdministration/InsuranceDetails";
   import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
   import CustomButton from "../../../../components/Button/CustomButton";
   import EditIcon from "@mui/icons-material/Edit";

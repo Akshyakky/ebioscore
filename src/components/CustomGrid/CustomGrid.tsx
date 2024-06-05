@@ -7,7 +7,6 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
 
-// Define a generic type with an index signature
 type GenericObject = { [key: string]: any };
 
 interface Column<T> {
@@ -26,7 +25,6 @@ interface CustomGridProps<T> {
   searchTerm?: string;
 }
 
-// Ensure T extends GenericObject to provide an index signature
 const CustomGrid = <T extends GenericObject>({
   columns,
   data,
@@ -68,7 +66,6 @@ const CustomGrid = <T extends GenericObject>({
     "&:nth-of-type(odd)": {
       backgroundColor: theme.palette.action.hover,
     },
-    // hide last border
     "&:last-child td, &:last-child th": {
       border: 0,
     },
@@ -76,14 +73,13 @@ const CustomGrid = <T extends GenericObject>({
 
   const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
-      backgroundColor: theme.palette.primary.dark, // Adjust color to match your theme
+      backgroundColor: theme.palette.primary.dark,
       color: theme.palette.common.white,
       fontWeight: "bold",
       textAlign: "left",
     },
     [`&.${tableCellClasses.body}`]: {
       fontSize: 14,
-      // Other body styles...
     },
   }));
 

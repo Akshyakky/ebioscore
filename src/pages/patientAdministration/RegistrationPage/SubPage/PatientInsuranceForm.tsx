@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
+import { InsuranceFormState } from "../../../../interfaces/patientAdministration/InsuranceDetails";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/common/DropdownOption";
 import { InsuranceCarrierService } from "../../../../services/CommonServices/InsuranceCarrierService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";

@@ -1,5 +1,5 @@
 import React, { createContext, useState } from "react";
-import { PatientSearchResult } from "../interfaces/PatientAdministration/registrationFormData";
+import { PatientSearchResult } from "../interfaces/patientAdministration/registrationFormData";
 import { RegistrationService } from "../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { useLoading } from "./LoadingContext";
 import { RootState } from "../store/reducers";
@@ -30,7 +30,6 @@ export const PatientSearchProvider = ({
   const performSearch = async (searchTerm: string): Promise<void> => {
     setLoading(true);
     try {
-      debugger
       const result = await RegistrationService.searchPatientDetails(
         token,
         searchTerm

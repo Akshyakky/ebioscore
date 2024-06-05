@@ -13,7 +13,7 @@ interface DropdownSelectProps {
   name: string;
   value: string;
   options: Array<{ value: string; label: string }>;
-  onChange: (event: SelectChangeEvent<unknown>, child: React.ReactNode) => void;
+  onChange: (event: SelectChangeEvent<string>, child: React.ReactNode) => void;
   size?: "small" | "medium";
   disabled?: boolean;
   isMandatory?: boolean;
@@ -35,8 +35,20 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   className,
   isSubmitted = false,
 }) => {
-  const isEmptyValue = useMemo(() => (val: string) => val === "" || val === "0", []);
-  const hasError = useMemo(() => isMandatory && isSubmitted && isEmptyValue(value), [isMandatory, isSubmitted, value, isEmptyValue]);
+  const isEmptyValue = useMemo(() => value === "" || value === "0", [value]);
+  const hasError = useMemo(
+    () => isMandatory && isSubmitted && isEmptyValue,
+    [isMandatory, isSubmitted, isEmptyValue]
+  );
+
+  const displayValue = useMemo(() => {
+    debugger;
+    const selectedOption = options.find(
+      (option) =>
+        String(option.value) === String(value) || option.label === value
+    );
+    return selectedOption ? selectedOption.value : "";
+  }, [value, options]);
 
   return (
     <FormControl
@@ -54,17 +66,18 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
         labelId={`ddl-label-${name}`}
         id={`ddl${name}`}
         name={name}
-        value={value}
+        value={displayValue}
         onChange={onChange}
         label={label}
         disabled={disabled}
         displayEmpty
       >
-        <MenuItem value="">
-          {defaultText || `${label}`}
-        </MenuItem>
+        <MenuItem value="">{defaultText || `${label}`}</MenuItem>
         {options.map((option) => (
-          <MenuItem key={option.value} value={option.value}>
+          <MenuItem
+            key={option.value || option.label}
+            value={option.value || option.label}
+          >
             {option.label}
           </MenuItem>
         ))}

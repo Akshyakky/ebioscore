@@ -2,7 +2,7 @@ import React from "react";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
 import FormHelperText from "@mui/material/FormHelperText";
-import { TextBoxProps } from "../../../interfaces/Common/TextBoxProps";
+import { TextBoxProps } from "../../../interfaces/common/TextBoxProps";
 
 const NormalTextBox: React.FC<TextBoxProps> = ({
   ControlID,

@@ -13,11 +13,11 @@ import MembershipScheme from "../SubPage/MembershipScheme";
 import {
   RegistrationFormErrors,
   RegsitrationFormData,
-} from "../../../../interfaces/PatientAdministration/registrationFormData";
-import { ApiError } from "../../../../interfaces/Common/ApiError";
+} from "../../../../interfaces/patientAdministration/registrationFormData";
+import { ApiError } from "../../../../interfaces/common/ApiError";
 import { useLoading } from "../../../../context/LoadingContext";
 import NextOfKinPopup from "../SubPage/NextOfKin";
-import { NextOfKinKinFormState } from "../../../../interfaces/PatientAdministration/NextOfKinData";
+import { NextOfKinKinFormState } from "../../../../interfaces/patientAdministration/NextOfKinData";
 import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
 import ActionButtonGroup, {
   ButtonProps,

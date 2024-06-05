@@ -15,7 +15,7 @@ import {
 import CancelIcon from "@mui/icons-material/Cancel";
 import CloseIcon from "@mui/icons-material/Close";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import { DateFilterType } from "../../../../interfaces/PatientAdministration/revisitFormData";
+import { DateFilterType } from "../../../../interfaces/patientAdministration/revisitFormData";
 import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
 import { UserState } from "../../../../store/userTypes";
 

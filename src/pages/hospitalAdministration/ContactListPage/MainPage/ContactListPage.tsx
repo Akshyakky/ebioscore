@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useContext } from "react";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import { Box, Container, Grid, Paper, Typography } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -16,16 +16,22 @@ import FormSaveClearButton from "../../../../components/Button/FormSaveClearButt
 import MultiSelectDropdown from "../../../../components/DropDown/MultiSelectDropdown";
 import { useLoading } from "../../../../context/LoadingContext";
 import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/common/DropdownOption";
 import { RootState } from "../../../../store/reducers";
 import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
 import { DepartmentService } from "../../../../services/CommonServices/DepartmentService";
 import { ContactListService } from "../../../../services/HospitalAdministrationServices/ContactListService/ContactListService";
-import { SelectChangeEvent } from "@mui/material/Select";
 import { ContactListData } from "../../../../interfaces/hospitalAdministration/ContactListData";
+import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch";
+import { ContactListSearchContext } from "../../../../context/hospitalAdministration/ContactListSearchContext";
+import useDropdownChange from "../../../../hooks/useDropdownChange";
+
+interface ValidationErrors {
+  [key: string]: string[];
+}
 
 const ContactListPage: React.FC = () => {
-  const { token, compID } = useSelector(
+  const { token, compID, userID, userName, compCode, compName } = useSelector(
     (state: RootState) => state.userDetails
   );
 
@@ -36,63 +42,93 @@ const ContactListPage: React.FC = () => {
     isSuperSpeciality: false,
     isUserRequired: false,
     isAuthorisedUser: false,
+    isContract: false,
   };
 
   const getInitialContactListState = (): ContactListData => ({
-    conID: 0,
-    conCode: "",
-    conTitle: "",
-    conFName: "",
-    conLName: "",
-    conMName: "",
-    conDob: undefined,
-    conGender: "",
-    conSSNID: "",
-    conBldGrp: "",
-    conCat: "",
-    conEmpYN: "N",
-    notes: "",
-    conEmpStatus: "",
-    consValue: "",
-    allergicToAllergence: "",
-    allergicToMedicine: "",
-    aPHYRMID: 0,
-    aPhyRoomName: "",
-    compID: compID || 0,
-    compCode: "",
-    compName: "",
-    deptID: 0,
-    deptName: "",
-    designation: "",
-    emergenContactName: "",
-    iPP: 0,
-    oPP: 0,
-    isAuthorizedUserYN: "N",
-    isContractYN: "N",
-    isSuperSpecialtyYN: "N",
-    maritalStatus: "",
-    tINNo: "",
-    accCode: "",
-    accPayCode: "",
-    gESYCode: "",
-    digSignPath: "",
-    stampPath: "",
-    payPolicy: 0,
-    nationality: "",
-    email: "",
-    postCode: "",
-    emergencyContactNo: "",
-    address: "",
-    state: "",
-    city: "",
-    IncomeAccountCode: "",
-    MobileNo: "",
+    contactMastDto: {
+      conID: 0,
+      conCode: "",
+      conTitle: "",
+      conFName: "",
+      conLName: "",
+      conMName: "",
+      conDob: new Date().toISOString().split("T")[0],
+      conGender: "",
+      conSSNID: "",
+      conBldGrp: "",
+      conCat: "",
+      consValue: "",
+      conEmpYN: "N",
+      rActiveYN: "Y",
+      rCreatedOn: new Date().toISOString().split("T")[0],
+      rCreatedID: userID!,
+      rCreatedBy: userName!,
+      rModifiedOn: new Date().toISOString().split("T")[0],
+      rModifiedID: userID!,
+      rModifiedBy: userName!,
+      compID: compID!,
+      compCode: compCode!,
+      compName: compName!,
+      notes: "",
+      conEmpStatus: "",
+      allergicToAllergence: "",
+      allergicToMedicine: "",
+      aPHYRMID: 0,
+      aPhyRoomName: "",
+      deptID: 0,
+      deptName: "",
+      designation: "",
+      emergenContactName: "",
+      iPP: 0,
+      oPP: 0,
+      isAuthorizedUserYN: "N",
+      isContractYN: "N",
+      isSuperSpecialtyYN: "N",
+      isEmployeeYN: "N",
+      isRefferalYN: "N",
+      isAppointmentYN: "N",
+      isUserRequiredYN: "N",
+      maritalStatus: "",
+      tINNo: "",
+      accCode: "",
+      accPayCode: "",
+      gESYCode: "",
+      digSignPath: "",
+      stampPath: "",
+      payPolicy: 0,
+      transferYN: "N",
+    },
+    contactAddressDto: {
+      cAddID: 0,
+      conID: 0,
+      conCode: "",
+      cAddType: "",
+      cAddMail: "N",
+      cAddPostCode: "",
+      cAddPSSID: "",
+      compID: 0,
+      compCode: "",
+      compName: "",
+      cAddCity: "",
+      cAddCountry: "",
+      cAddEmail: "",
+      cAddPhone1: "",
+      cAddPhone2: "",
+      cAddPhone3: "",
+      cAddState: "",
+      cAddStreet: "",
+      cAddStreet1: "",
+      transferYN: "N",
+    },
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [switchStates, setSwitchStates] = useState(initialSwitchStates);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const today = new Date().toISOString().split("T")[0];
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
   const [dropdownValues, setDropdownValues] = useState({
     titleOptions: [] as DropdownOption[],
     genderOptions: [] as DropdownOption[],
@@ -113,8 +149,12 @@ const ContactListPage: React.FC = () => {
     []
   );
   const { setLoading } = useLoading();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { performSearch } = useContext(ContactListSearchContext);
+  const { handleDropdownChange } =
+    useDropdownChange<ContactListData>(setContactList);
 
-  const loadDropdownValues = async () => {
+  const loadDropdownValues = useCallback(async () => {
     setLoading(true);
     try {
       const [
@@ -208,33 +248,133 @@ const ContactListPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, compID, setLoading]);
 
   useEffect(() => {
     loadDropdownValues();
-  }, [token]);
+  }, [loadDropdownValues]);
+
+  useEffect(() => {
+    if (contactList.contactAddressDto.conCode) {
+      setContactList((prev) => ({
+        ...prev,
+        contactMastDto: {
+          ...prev.contactMastDto,
+          conCode: prev.contactAddressDto.conCode,
+        },
+      }));
+    }
+  }, [contactList.contactAddressDto.conCode]);
+
+  const handleAdvancedSearch = async () => {
+    setIsSearchOpen(true);
+    await performSearch("");
+  };
+
+  const handleEditContactList = async (conID: number) => {
+    setLoading(true);
+    try {
+      const contactDetails = await ContactListService.fetchContactDetails(
+        token!,
+        conID
+      );
+      if (
+        contactDetails &&
+        contactDetails.contactMastDto &&
+        contactDetails.contactAddressDto
+      ) {
+        setContactList(contactDetails);
+      } else {
+        throw new Error("Invalid contact details structure");
+      }
+    } catch (error) {
+      console.error("Error fetching contact details:", error);
+    } finally {
+      setLoading(false);
+      setIsSearchOpen(false);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setContactList((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setContactList((prev) => {
+      // Check if the field belongs to ContactAddressDto
+      if (name in prev.contactAddressDto) {
+        // Additional handling for cAddEmail
+        if (name === "cAddEmail") {
+          return {
+            ...prev,
+            contactAddressDto: {
+              ...prev.contactAddressDto,
+              [name]: value,
+              cAddMail: validateEmail(value) ? "Y" : "N",
+            },
+          };
+        }
+        return {
+          ...prev,
+          contactAddressDto: {
+            ...prev.contactAddressDto,
+            [name]: value,
+          },
+        };
+      }
+      // Additional handling for conCode
+      if (name === "conCode") {
+        return {
+          ...prev,
+          contactMastDto: {
+            ...prev.contactMastDto,
+            [name]: value,
+          },
+          contactAddressDto: {
+            ...prev.contactAddressDto,
+            conCode: value,
+          },
+        };
+      }
+      // Otherwise, update ContactMastDto
+      return {
+        ...prev,
+        contactMastDto: {
+          ...prev.contactMastDto,
+          [name]: value,
+        },
+      };
+    });
+  };
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
   const handleSwitchChange =
     (name: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setSwitchStates({
-        ...switchStates,
+      const checkedValue = event.target.checked ? "Y" : "N";
+      setSwitchStates((prev) => ({
+        ...prev,
         [name]: event.target.checked,
-      });
+      }));
       setContactList((prev) => ({
         ...prev,
-        [name]: event.target.checked ? "Y" : "N",
+        contactMastDto: {
+          ...prev.contactMastDto,
+          [`${name}YN`]: checkedValue,
+        },
+        contactAddressDto:
+          name === "isEmployee" || name === "isAuthorisedUser"
+            ? {
+                ...prev.contactAddressDto,
+                [`${name}YN`]: checkedValue,
+              }
+            : prev.contactAddressDto,
       }));
     };
 
   const handleSave = async () => {
+    setIsSubmitted(true);
+    setLoading(true);
     try {
       const result = await ContactListService.saveContactList(
         token!,
@@ -242,25 +382,25 @@ const ContactListPage: React.FC = () => {
       );
       if (result.success) {
         console.log("Contact list saved successfully:", result.data);
+        alert("Contact list saved successfully");
+        handleClear();
       } else {
+        setValidationErrors(result.validationErrors || {});
         console.error("Failed to save contact list:", result);
       }
     } catch (error) {
       console.error("Error saving contact list:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleClear = () => {
     setContactList(getInitialContactListState());
     setSwitchStates(initialSwitchStates);
-  };
-
-  const handleCategoryChange = (event: SelectChangeEvent<unknown>) => {
-    setSelectedCategory(event.target.value as string);
-    setContactList((prev) => ({
-      ...prev,
-      conCat: event.target.value as string,
-    }));
+    setSelectedSpecialities([]);
+    setIsSubmitted(false);
+    setValidationErrors({});
   };
 
   const actionButtons: ButtonProps[] = [
@@ -269,7 +409,7 @@ const ContactListPage: React.FC = () => {
       size: "medium",
       icon: SearchIcon,
       text: "Advanced Search",
-      onClick: async () => {},
+      onClick: handleAdvancedSearch,
     },
   ];
 
@@ -290,18 +430,28 @@ const ContactListPage: React.FC = () => {
                   type="text"
                   size="small"
                   name="conCode"
-                  value={contactList.conCode}
+                  value={contactList.contactAddressDto.conCode}
                   isSubmitted={isSubmitted}
                   onChange={handleInputChange}
+                  isMandatory
                 />
+                {validationErrors["contactMastDto.conCode"] && (
+                  <span style={{ color: "red" }}>
+                    {validationErrors["contactMastDto.conCode"]}
+                  </span>
+                )}
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <DropdownSelect
                   name="conCat"
                   label="Category"
-                  value={selectedCategory}
+                  value={contactList.contactMastDto.consValue}
                   options={dropdownValues.categoryOptions}
-                  onChange={handleCategoryChange}
+                  onChange={handleDropdownChange(
+                    ["contactMastDto", "consValue"],
+                    ["contactMastDto", "conCat"],
+                    dropdownValues.categoryOptions
+                  )}
                   isMandatory
                   size="small"
                   isSubmitted={isSubmitted}
@@ -312,23 +462,22 @@ const ContactListPage: React.FC = () => {
                   name="deptID"
                   label="Department"
                   value={
-                    contactList.deptID === 0
+                    contactList.contactMastDto.deptID === 0
                       ? ""
-                      : contactList.deptID.toString()
+                      : String(contactList.contactMastDto.deptID)
                   }
                   options={dropdownValues.departmentOptions}
-                  onChange={(e) =>
-                    setContactList((prev) => ({
-                      ...prev,
-                      deptID: parseInt(e.target.value as string),
-                    }))
-                  }
+                  onChange={handleDropdownChange(
+                    ["contactMastDto", "deptID"],
+                    ["contactMastDto", "deptName"],
+                    dropdownValues.departmentOptions
+                  )}
                   isMandatory
                   size="small"
                   isSubmitted={isSubmitted}
                 />
               </Grid>
-              {selectedCategory === "PHY" && (
+              {contactList.contactMastDto.consValue === "PHY" && (
                 <Grid item xs={12} sm={6} md={3}>
                   <MultiSelectDropdown
                     label="Speciality"
@@ -341,6 +490,8 @@ const ContactListPage: React.FC = () => {
                     }
                     size="small"
                     multiple
+                    isMandatory
+                    isSubmitted={isSubmitted}
                   />
                 </Grid>
               )}
@@ -355,14 +506,13 @@ const ContactListPage: React.FC = () => {
                 <DropdownSelect
                   name="conTitle"
                   label="Title"
-                  value={contactList.conTitle}
+                  value={contactList.contactMastDto.conTitle}
                   options={dropdownValues.titleOptions}
-                  onChange={(e) =>
-                    setContactList((prev) => ({
-                      ...prev,
-                      conTitle: e.target.value as string,
-                    }))
-                  }
+                  onChange={handleDropdownChange(
+                    [""],
+                    ["contactMastDto", "conTitle"],
+                    dropdownValues.titleOptions
+                  )}
                   isMandatory
                   size="small"
                   isSubmitted={isSubmitted}
@@ -376,10 +526,16 @@ const ContactListPage: React.FC = () => {
                   type="text"
                   name="conFName"
                   size="small"
-                  value={contactList.conFName}
+                  value={contactList.contactMastDto.conFName}
                   isSubmitted={isSubmitted}
                   onChange={handleInputChange}
+                  isMandatory
                 />
+                {validationErrors["contactMastDto.conFName"] && (
+                  <span style={{ color: "red" }}>
+                    {validationErrors["contactMastDto.conFName"]}
+                  </span>
+                )}
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <FloatingLabelTextBox
@@ -389,23 +545,23 @@ const ContactListPage: React.FC = () => {
                   type="text"
                   name="conLName"
                   size="small"
-                  value={contactList.conLName}
+                  value={contactList.contactMastDto.conLName}
                   isSubmitted={isSubmitted}
                   onChange={handleInputChange}
+                  isMandatory
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <DropdownSelect
                   name="conGender"
                   label="Gender"
-                  value={contactList.conGender || ""}
+                  value={contactList.contactMastDto.conGender || ""}
                   options={dropdownValues.genderOptions}
-                  onChange={(e) =>
-                    setContactList((prev) => ({
-                      ...prev,
-                      conGender: e.target.value as string,
-                    }))
-                  }
+                  onChange={handleDropdownChange(
+                    [""],
+                    ["contactMastDto", "conGender"],
+                    dropdownValues.genderOptions
+                  )}
                   isMandatory
                   size="small"
                   isSubmitted={isSubmitted}
@@ -422,8 +578,10 @@ const ContactListPage: React.FC = () => {
                   name="conDob"
                   size="small"
                   value={
-                    contactList.conDob
-                      ? contactList.conDob.toISOString().split("T")[0]
+                    contactList.contactMastDto.conDob
+                      ? contactList.contactMastDto.conDob
+                          .toString()
+                          .split("T")[0]
                       : today
                   }
                   max={today}
@@ -435,15 +593,13 @@ const ContactListPage: React.FC = () => {
                 <DropdownSelect
                   name="conBldGrp"
                   label="Blood Group"
-                  value={contactList.conBldGrp || ""}
+                  value={contactList.contactMastDto.conBldGrp || ""}
                   options={dropdownValues.bloodGroupOptions}
-                  onChange={(e) =>
-                    setContactList((prev) => ({
-                      ...prev,
-                      conBldGrp: e.target.value as string,
-                    }))
-                  }
-                  isMandatory
+                  onChange={handleDropdownChange(
+                    [""],
+                    ["contactMastDto", "conBldGrp"],
+                    dropdownValues.bloodGroupOptions
+                  )}
                   size="small"
                   isSubmitted={isSubmitted}
                 />
@@ -452,15 +608,13 @@ const ContactListPage: React.FC = () => {
                 <DropdownSelect
                   name="maritalStatus"
                   label="Marital Status"
-                  value={contactList.maritalStatus || ""}
+                  value={contactList.contactMastDto.maritalStatus || ""}
                   options={dropdownValues.maritalStatusOptions}
-                  onChange={(e) =>
-                    setContactList((prev) => ({
-                      ...prev,
-                      maritalStatus: e.target.value as string,
-                    }))
-                  }
-                  isMandatory
+                  onChange={handleDropdownChange(
+                    [""],
+                    ["contactMastDto", "maritalStatus"],
+                    dropdownValues.maritalStatusOptions
+                  )}
                   size="small"
                   isSubmitted={isSubmitted}
                 />
@@ -473,7 +627,7 @@ const ContactListPage: React.FC = () => {
                   type="text"
                   name="conSSNID"
                   size="small"
-                  value={contactList.conSSNID}
+                  value={contactList.contactMastDto.conSSNID}
                   isSubmitted={isSubmitted}
                   onChange={handleInputChange}
                 />
@@ -491,60 +645,54 @@ const ContactListPage: React.FC = () => {
                   ControlID="txtMobileNo"
                   placeholder="Mobile No"
                   type="text"
-                  name="conFName"
+                  name="cAddPhone1"
                   size="small"
-                  value={contactList.MobileNo}
+                  value={contactList.contactAddressDto.cAddPhone1}
                   isSubmitted={isSubmitted}
                   onChange={handleInputChange}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <DropdownSelect
-                  name="city"
+                  name="cAddCity"
                   label="City"
-                  value={contactList.city}
+                  value={contactList.contactAddressDto.cAddCity || ""}
                   options={dropdownValues.cityOptions}
-                  onChange={(e) =>
-                    setContactList((prev) => ({
-                      ...prev,
-                      city: e.target.value as string,
-                    }))
-                  }
-                  isMandatory
+                  onChange={handleDropdownChange(
+                    [""],
+                    ["contactAddressDto", "cAddCity"],
+                    dropdownValues.cityOptions
+                  )}
                   size="small"
                   isSubmitted={isSubmitted}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <DropdownSelect
-                  name="state"
+                  name="cAddState"
                   label="State"
-                  value={contactList.state}
+                  value={contactList.contactAddressDto.cAddState || ""}
                   options={dropdownValues.stateOptions}
-                  onChange={(e) =>
-                    setContactList((prev) => ({
-                      ...prev,
-                      state: e.target.value as string,
-                    }))
-                  }
-                  isMandatory
+                  onChange={handleDropdownChange(
+                    [""],
+                    ["contactAddressDto", "cAddState"],
+                    dropdownValues.stateOptions
+                  )}
                   size="small"
                   isSubmitted={isSubmitted}
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <DropdownSelect
-                  name="nationality"
+                  name="cAddCountry"
                   label="Nationality"
-                  value={contactList.nationality}
+                  value={contactList.contactAddressDto.cAddCountry || ""}
                   options={dropdownValues.nationalityOptions}
-                  onChange={(e) =>
-                    setContactList((prev) => ({
-                      ...prev,
-                      nationality: e.target.value as string,
-                    }))
-                  }
-                  isMandatory
+                  onChange={handleDropdownChange(
+                    [""],
+                    ["contactAddressDto", "cAddCountry"],
+                    dropdownValues.nationalityOptions
+                  )}
                   size="small"
                   isSubmitted={isSubmitted}
                 />
@@ -557,9 +705,9 @@ const ContactListPage: React.FC = () => {
                   ControlID="MailID"
                   placeholder="E-Mail ID"
                   type="email"
-                  name="email"
+                  name="cAddEmail"
                   size="small"
-                  value={contactList.email}
+                  value={contactList.contactAddressDto.cAddEmail}
                   isSubmitted={isSubmitted}
                   onChange={handleInputChange}
                 />
@@ -570,9 +718,9 @@ const ContactListPage: React.FC = () => {
                   ControlID="PostCode"
                   placeholder="Post Code"
                   type="text"
-                  name="postCode"
+                  name="cAddPostCode"
                   size="small"
-                  value={contactList.postCode}
+                  value={contactList.contactAddressDto.cAddPostCode}
                   isSubmitted={isSubmitted}
                   onChange={handleInputChange}
                 />
@@ -585,7 +733,7 @@ const ContactListPage: React.FC = () => {
                   type="text"
                   name="emergenContactName"
                   size="small"
-                  value={contactList.emergenContactName}
+                  value={contactList.contactMastDto.emergenContactName}
                   isSubmitted={isSubmitted}
                   onChange={handleInputChange}
                 />
@@ -596,9 +744,9 @@ const ContactListPage: React.FC = () => {
                   ControlID="EmergencyContactNo"
                   placeholder="Emergency Contact No"
                   type="text"
-                  name="emergenContactNo"
+                  name="cAddPhone2"
                   size="small"
-                  value={contactList.emergencyContactNo}
+                  value={contactList.contactAddressDto.cAddPhone2}
                   isSubmitted={isSubmitted}
                   onChange={handleInputChange}
                 />
@@ -608,12 +756,15 @@ const ContactListPage: React.FC = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <TextArea
                   label="Address"
-                  name="address"
-                  value={contactList.address}
+                  name="cAddStreet"
+                  value={contactList.contactAddressDto.cAddStreet || ""}
                   onChange={(e) =>
                     setContactList((prev) => ({
                       ...prev,
-                      address: e.target.value,
+                      contactAddressDto: {
+                        ...prev.contactAddressDto,
+                        cAddStreet: e.target.value,
+                      },
                     }))
                   }
                   placeholder="Address"
@@ -635,9 +786,10 @@ const ContactListPage: React.FC = () => {
                   type="text"
                   name="accCode"
                   size="small"
-                  value={contactList.accCode}
+                  value={contactList.contactMastDto.accCode}
                   isSubmitted={isSubmitted}
                   onChange={handleInputChange}
+                  isMandatory={contactList.contactMastDto.consValue === "PHY"} // Make Account Code mandatory if Category is PHY
                 />
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
@@ -648,20 +800,7 @@ const ContactListPage: React.FC = () => {
                   type="text"
                   name="accPayCode"
                   size="small"
-                  value={contactList.accPayCode}
-                  isSubmitted={isSubmitted}
-                  onChange={handleInputChange}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <FloatingLabelTextBox
-                  title="Physician Income Account Code"
-                  ControlID="PhysicianIncomeAccountCode"
-                  placeholder="Physician Income Account Code"
-                  type="text"
-                  name="physicianIncomeAccCode"
-                  size="small"
-                  value={contactList.IncomeAccountCode} //contactList.physicianIncomeAccCode
+                  value={contactList.contactMastDto.accPayCode}
                   isSubmitted={isSubmitted}
                   onChange={handleInputChange}
                 />
@@ -670,15 +809,13 @@ const ContactListPage: React.FC = () => {
                 <DropdownSelect
                   name="conEmpStatus"
                   label="Employee Status"
-                  value={contactList.conEmpStatus || ""}
+                  value={contactList.contactMastDto.conEmpStatus || ""}
                   options={dropdownValues.employeeStatusOptions}
-                  onChange={(e) =>
-                    setContactList((prev) => ({
-                      ...prev,
-                      conEmpStatus: e.target.value as string,
-                    }))
-                  }
-                  isMandatory
+                  onChange={handleDropdownChange(
+                    [""],
+                    ["contactMastDto", "conEmpStatus"],
+                    dropdownValues.employeeStatusOptions
+                  )}
                   size="small"
                   isSubmitted={isSubmitted}
                 />
@@ -688,7 +825,7 @@ const ContactListPage: React.FC = () => {
               {[
                 { label: "is Employee", name: "isEmployee" },
                 { label: "is Referral", name: "isReferral" },
-                ...(selectedCategory === "PHY"
+                ...(contactList.contactMastDto.consValue === "PHY"
                   ? [
                       { label: "is Appointment", name: "isAppointment" },
                       {
@@ -697,8 +834,12 @@ const ContactListPage: React.FC = () => {
                       },
                     ]
                   : []),
-                { label: "is User Required", name: "isUserRequired" },
-                { label: "is Authorised User", name: "isAuthorisedUser" },
+                ...(switchStates.isEmployee
+                  ? [
+                      { label: "is User Required", name: "isUserRequired" },
+                      { label: "is Authorised User", name: "isAuthorisedUser" },
+                    ]
+                  : []),
               ].map((switchItem) => (
                 <Grid item xs={12} sm={3} md={2} key={switchItem.name}>
                   <CustomSwitch
@@ -723,6 +864,11 @@ const ContactListPage: React.FC = () => {
         onSave={handleSave}
         clearIcon={DeleteIcon}
         saveIcon={SaveIcon}
+      />
+      <ContactListSearch
+        show={isSearchOpen}
+        handleClose={() => setIsSearchOpen(false)}
+        onEditContactList={handleEditContactList}
       />
     </MainLayout>
   );
