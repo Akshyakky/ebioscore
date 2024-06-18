@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { InsuranceFormState } from "../../../../interfaces/patientAdministration/InsuranceDetails";
+import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
 import PatientInsuranceForm from "./PatientInsuranceForm";
 import PatientInsuranceGrid from "./PatientInsuranceGrid";
 import { Grid, Typography } from "@mui/material";

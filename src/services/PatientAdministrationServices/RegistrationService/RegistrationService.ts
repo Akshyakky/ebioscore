@@ -5,10 +5,10 @@ import {
   PatientDemographicDetails,
   PatientSearchResult,
   RegsitrationFormData,
-} from "../../../interfaces/patientAdministration/registrationFormData";
-import { NextOfKinKinFormState } from "../../../interfaces/patientAdministration/NextOfKinData";
-import { InsuranceFormState } from "../../../interfaces/patientAdministration/InsuranceDetails";
-import { OperationResult } from "../../../interfaces/common/OperationResult";
+} from "../../../interfaces/PatientAdministration/registrationFormData";
+import { NextOfKinKinFormState } from "../../../interfaces/PatientAdministration/NextOfKinData";
+import { InsuranceFormState } from "../../../interfaces/PatientAdministration/InsuranceDetails";
+import { OperationResult } from "../../../interfaces/Common/OperationResult";
 
 export const getLatestUHID = async (
   token: string,

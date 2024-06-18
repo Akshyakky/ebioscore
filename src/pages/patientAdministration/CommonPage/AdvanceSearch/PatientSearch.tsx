@@ -13,7 +13,7 @@ import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { PatientSearchContext } from "../../../../context/PatientSearchContext";
 import { debounce } from "../../../../utils/Common/debounceUtils";
-import { PatientSearchResult } from "../../../../interfaces/patientAdministration/registrationFormData";
+import { PatientSearchResult } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 interface PatientSearchProps {

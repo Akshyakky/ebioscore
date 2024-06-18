@@ -8,9 +8,9 @@ import SearchIcon from "@mui/icons-material/Search";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import { DropdownOption } from "../../../../interfaces/common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
-import { UserListData } from "../../../../interfaces/securityManagement/UserListData";
+import { UserListData } from "../../../../interfaces/SecurityManagement/UserListData";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import FloatingLabelFileUpload from "../../../../components/FileUpload/FileUpload";
@@ -91,13 +91,13 @@ const UserListPage: React.FC = () => {
               </Grid>
               <Grid item xs={12} sm={6} md={3}>
                 <Grid item xs={12} sm={6} md={3}>
-                  <CustomSwitch
-                    label="Is Super User"
+                  {/* <CustomSwitch */}
+                    {/* label="Is Super User"
                     size="medium"
                     color="secondary"
                     checked={false}
                     onChange={}
-                  />
+                  /> */}
                 </Grid>
               </Grid>
               <Grid container spacing={2} alignItems="flex-start">

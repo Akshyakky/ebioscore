@@ -5,7 +5,7 @@ import CustomGrid from "../../../components/CustomGrid/CustomGrid";
 import {
   Column,
   RoutineReports,
-} from "../../../interfaces/routineReports/RoutineReports.interface";
+} from "../../../interfaces/RoutineReports/RoutineReports.interface";
 import { fetchReports } from "../../../services/ReportService/ReportService";
 import CustomButton from "../../../components/Button/CustomButton";
 import PrintIcon from "@mui/icons-material/Print";

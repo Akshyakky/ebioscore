@@ -8,14 +8,14 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
-import { NextOfKinKinFormState } from "../../../../interfaces/patientAdministration/NextOfKinData";
+import { NextOfKinKinFormState } from "../../../../interfaces/PatientAdministration/NextOfKinData";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
-import { DropdownOption } from "../../../../interfaces/common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";

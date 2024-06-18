@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { APIConfig } from "../../../apiConfig";
-import { DropdownOption } from "../../../interfaces/common/DropdownOption";
-import { OperationResult } from "../../../interfaces/common/OperationResult";
+import { DropdownOption } from "../../../interfaces/Common/DropdownOption";
+import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { ContactListData } from "../../../interfaces/hospitalAdministration/ContactListData";
 
 interface ErrorResponse {

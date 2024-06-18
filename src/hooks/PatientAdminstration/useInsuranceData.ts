@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { InsuranceFormState } from "../../interfaces/patientAdministration/InsuranceDetails";
+import { InsuranceFormState } from "../../interfaces/PatientAdministration/InsuranceDetails";
 
 const useInsuranceData = (initialData: InsuranceFormState[] = []) => {
   const [insuranceData, setInsuranceData] =

@@ -1,6 +1,6 @@
 // ReportService/ReportService.ts
 import axios from "axios";
-import { RoutineReports } from "../../interfaces/routineReports/RoutineReports.interface";
+import { RoutineReports } from "../../interfaces/RoutineReports/RoutineReports.interface";
 import { APIConfig } from "../../apiConfig";
 
 // Updated to accept auGrpID as a parameter

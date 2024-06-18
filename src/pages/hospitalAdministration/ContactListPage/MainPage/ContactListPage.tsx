@@ -16,7 +16,7 @@ import FormSaveClearButton from "../../../../components/Button/FormSaveClearButt
 import MultiSelectDropdown from "../../../../components/DropDown/MultiSelectDropdown";
 import { useLoading } from "../../../../context/LoadingContext";
 import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
-import { DropdownOption } from "../../../../interfaces/common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { RootState } from "../../../../store/reducers";
 import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
 import { DepartmentService } from "../../../../services/CommonServices/DepartmentService";

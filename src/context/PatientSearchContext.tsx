@@ -1,5 +1,5 @@
 import React, { createContext, useState } from "react";
-import { PatientSearchResult } from "../interfaces/patientAdministration/registrationFormData";
+import { PatientSearchResult } from "../interfaces/PatientAdministration/registrationFormData";
 import { RegistrationService } from "../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { useLoading } from "./LoadingContext";
 import { RootState } from "../store/reducers";

@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Grid, Typography, Box } from "@mui/material";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
-import { RegsitrationFormData } from "../../../../interfaces/patientAdministration/registrationFormData";
+import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { DepartmentService } from "../../../../services/CommonServices/DepartmentService";
 import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import { useLoading } from "../../../../context/LoadingContext";
-import { DropdownOption } from "../../../../interfaces/common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 

@@ -2,13 +2,13 @@ import { Grid, Typography, Box } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
-import { RegsitrationFormData } from "../../../../interfaces/patientAdministration/registrationFormData";
+import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
 import { useLoading } from "../../../../context/LoadingContext";
-import { DropdownOption } from "../../../../interfaces/common/DropdownOption";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 

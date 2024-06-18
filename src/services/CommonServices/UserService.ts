@@ -1,8 +1,8 @@
 //services/CommonService/UserService.ts
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
-import { OperationResult } from "../../interfaces/common/OperationResult";
-import { UserLockData } from "../../interfaces/securityManagement/UserLockData.interface";
+import { OperationResult } from "../../interfaces/Common/OperationResult";
+import { UserLockData } from "../../interfaces/SecurityManagement/UserLockData.interface";
 
 export const saveAppUserLock = async (
   token: string,

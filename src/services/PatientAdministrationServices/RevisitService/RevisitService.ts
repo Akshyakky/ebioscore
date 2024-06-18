@@ -4,8 +4,8 @@ import {
   DateFilterType,
   GetPatientVisitHistory,
   revisitFormData,
-} from "../../../interfaces/patientAdministration/revisitFormData";
-import { OperationResult } from "../../../interfaces/common/OperationResult";
+} from "../../../interfaces/PatientAdministration/revisitFormData";
+import { OperationResult } from "../../../interfaces/Common/OperationResult";
 
 export const getPatientHistoryByPChartID = async (
   token: string,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import moduleService from "../../services/CommonServices/ModuleService";
-import { ModuleDto, SubModuleDto } from "../../interfaces/common/Modules";
+import { ModuleDto, SubModuleDto } from "../../interfaces/Common/Modules";
 import {
   Drawer,
   List,

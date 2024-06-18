@@ -1,7 +1,7 @@
 // BillingService.ts
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
-import { DropdownOption } from "../../interfaces/common/DropdownOption";
+import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 
 interface MemSchemeAPIResponse {
   patMemID: string;

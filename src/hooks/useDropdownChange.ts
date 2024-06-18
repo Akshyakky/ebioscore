@@ -1,4 +1,4 @@
-import { DropdownOption } from "../interfaces/common/DropdownOption";
+import { DropdownOption } from "../interfaces/Common/DropdownOption";
 import { SelectChangeEvent } from "@mui/material";
 
 const useDropdownChange = <T extends object>(
