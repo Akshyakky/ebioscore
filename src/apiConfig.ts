@@ -1,12 +1,13 @@
 // src/apiConfig.ts
 export const APIConfig = {
-  moduleURL: process.env.REACT_APP_MODULE_URL,
-  dashBoardURL: process.env.REACT_APP_DASHBOARD_URL,
-  authURL: process.env.REACT_APP_AUTH_URL,
-  patientAdministrationURL: process.env.REACT_APP_PATIENT_ADMINISTRATION_URL,
-  billingURL: process.env.REACT_APP_BILLING_URL,
-  commonURL: process.env.REACT_APP_COMMONURL,
-  routineReportURL: process.env.REACT_APP_ROUTINEREPORTURL,
-  securityManagementURL: process.env.REACT_APP_SECURITY_MANAGEMENT_URL,
-  hospitalAdministrations: process.env.REACT_APP_HOSPITAL_ADMINISTRATION_URL,
+  moduleURL: import.meta.env.VITE_MODULE_URL,
+  dashBoardURL: import.meta.env.VITE_DASHBOARD_URL,
+  authURL: import.meta.env.VITE_AUTH_URL,
+  patientAdministrationURL: import.meta.env.VITE_PATIENT_ADMINISTRATION_URL,
+  billingURL: import.meta.env.VITE_BILLING_URL,
+  commonURL: import.meta.env.VITE_COMMONURL,
+  routineReportURL: import.meta.env.VITE_ROUTINEREPORTURL,
+  securityManagementURL: import.meta.env.VITE_SECURITY_MANAGEMENT_URL,
+  hospitalAdministrations: import.meta.env.VITE_HOSPITAL_ADMINISTRATION_URL,
 };
+

@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { ContactListSearchResult } from "../../../../interfaces/hospitalAdministration/ContactListData";
+import { ContactListSearchResult } from "../../../../interfaces/HospitalAdministration/ContactListData";
 import CustomButton from "../../../../components/Button/CustomButton";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
