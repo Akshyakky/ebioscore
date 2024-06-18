@@ -3,7 +3,7 @@ import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
 import { TextBoxProps } from "../../../interfaces/common/TextBoxProps";
 
-interface FloatingLabelTextBoxProps extends TextBoxProps {
+export interface FloatingLabelTextBoxProps extends TextBoxProps {
   inputPattern?: RegExp; // Optional prop for input pattern
   name?: string;
 }

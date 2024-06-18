@@ -5,17 +5,22 @@ import ActionButtonGroup, {
   ButtonProps,
 } from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SaveIcon from "@mui/icons-material/Save";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DropdownOption } from "../../../../interfaces/common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { UserListData } from "../../../../interfaces/securityManagement/UserListData";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
-import FileUpload from "../../../../components/FileUpload/FileUpload";
+import FloatingLabelFileUpload from "../../../../components/FileUpload/FileUpload";
+import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 
 const UserListPage: React.FC = () => {
   const [userList, setUserList] = useState<UserListData>();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
   const [dropdownValues, setDropdownValues] = useState({
     categoryOptions: [] as DropdownOption[],
     usersOptions: [] as DropdownOption[],
@@ -34,6 +39,15 @@ const UserListPage: React.FC = () => {
       onClick: handleAdvancedSearch,
     },
   ];
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setFile(files[0]);
+      setErrorMessage(""); // Clear any previous error messages
+    }
+  };
+  const handleSave = async () => {};
+  const handleClear = () => {};
   return (
     <MainLayout>
       <Container maxWidth={false}>
@@ -126,16 +140,29 @@ const UserListPage: React.FC = () => {
             </Grid>
             <Grid container spacing={2} alignItems="flex-start">
               <Grid item xs={12} sm={6} md={3}>
-                <FileUpload
-                  label="Digital Signature"
-                  name="DigitalSignature"
-                  onChange={}
+                <FloatingLabelFileUpload
+                  ControlID="fileUpload1"
+                  title="Upload File"
+                  onChange={handleFileChange}
+                  isMandatory={true}
+                  isSubmitted={isSubmitted}
+                  errorMessage={errorMessage}
+                  accept=".jpg,.png,.pdf" // Accept only jpg, png, and pdf files
+                  multiple={false}
                 />
               </Grid>
             </Grid>
           </section>
         </Paper>
       </Container>
+      <FormSaveClearButton
+        clearText="Clear"
+        saveText="Save"
+        onClear={handleClear}
+        onSave={handleSave}
+        clearIcon={DeleteIcon}
+        saveIcon={SaveIcon}
+      />
     </MainLayout>
   );
 };
