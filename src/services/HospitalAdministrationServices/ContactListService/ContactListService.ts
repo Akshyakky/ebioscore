@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 import { APIConfig } from "../../../apiConfig";
 import { DropdownOption } from "../../../interfaces/Common/DropdownOption";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { ContactListData } from "../../../interfaces/hospitalAdministration/ContactListData";
+import { ContactListData } from "../../../interfaces/HospitalAdministration/ContactListData";
 
 interface ErrorResponse {
   errors?: Record<string, string[]>;

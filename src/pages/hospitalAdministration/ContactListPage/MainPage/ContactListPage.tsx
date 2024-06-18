@@ -21,7 +21,7 @@ import { RootState } from "../../../../store/reducers";
 import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
 import { DepartmentService } from "../../../../services/CommonServices/DepartmentService";
 import { ContactListService } from "../../../../services/HospitalAdministrationServices/ContactListService/ContactListService";
-import { ContactListData } from "../../../../interfaces/hospitalAdministration/ContactListData";
+import { ContactListData } from "../../../../interfaces/HospitalAdministration/ContactListData";
 import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch";
 import { ContactListSearchContext } from "../../../../context/hospitalAdministration/ContactListSearchContext";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
