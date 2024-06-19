@@ -9,6 +9,7 @@ import { PatientSearchProvider } from "../context/PatientSearchContext";
 import ContactListPage from "../pages/hospitalAdministration/ContactListPage/MainPage/ContactListPage";
 import { ContactListSearchProvider } from "../context/hospitalAdministration/ContactListSearchContext";
 import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
+import ProfileListPage from "../pages/securityManagement/ProfileListPage/MainPage/ProfileListPage";
 
 const routeConfig = [
   { path: "/login", component: LoginPage, protected: false },
@@ -36,6 +37,11 @@ const routeConfig = [
   {
     path: "/UserListPage",
     component: UserListPage,
+    protected: true,
+  },
+  {
+    path: "/ProfileListPage",
+    component: ProfileListPage,
     protected: true,
   },
   // Add more routes here as needed

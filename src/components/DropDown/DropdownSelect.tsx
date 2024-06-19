@@ -42,7 +42,6 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   );
 
   const displayValue = useMemo(() => {
-    debugger;
     const selectedOption = options.find(
       (option) =>
         String(option.value) === String(value) || option.label === value

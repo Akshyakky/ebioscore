@@ -14,6 +14,7 @@ const pageTitleMap: PageTitleMap = {
   "/ListOfReportsPage": "Routine Reports [FO]",
   "/ContactListPage": "Contact List",
   "/UserListPage": "User List",
+  "/ProfileListPage": "Profile List",
   // Add more mappings as needed
 };
 

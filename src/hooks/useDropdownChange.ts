@@ -11,7 +11,6 @@ const useDropdownChange = <T extends object>(
       options: DropdownOption[]
     ) =>
     (e: SelectChangeEvent<string>, child?: React.ReactNode) => {
-      debugger;
       const selectedValue = e.target.value;
       const selectedOption = options.find(
         (option) =>
