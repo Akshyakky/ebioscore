@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
-import { Container, Grid, Paper, Typography } from "@mui/material";
+import React, { useState } from "react";
+import { Grid, Paper } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
+import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
+import { ProfileMastDto } from "../../../../interfaces/SecurityManagement/ProfileListData";
+import { OperationResult } from "../../../../interfaces/Common/OperationResult";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../../store/reducers";
+import TextArea from "../../../../components/TextArea/TextArea";
 
 interface ProfileDetailsProps {
   onSave: () => void;
@@ -11,25 +17,76 @@ interface ProfileDetailsProps {
 }
 
 const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onSave, onClear }) => {
-  const [profileCode, setProfileCode] = useState("");
-  const [profileName, setProfileName] = useState("");
+  const { token, compID } = useSelector(
+    (state: RootState) => state.userDetails
+  );
+
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const [profileMastDto, setProfileMastDto] = useState<ProfileMastDto>({
+    profileID: 0,
+    profileCode: "",
+    profileName: "",
+    rActiveYN: "Y",
+    compID: compID!,
+    rNotes: "",
+  });
 
   const handleSave = async () => {
-    console.log("Profile Code:", profileCode);
-    console.log("Profile Name:", profileName);
-    alert("Data Saved");
-    onSave();
+    setIsSubmitted(true);
+    const profileService = new ProfileService();
+    try {
+      if (
+        profileMastDto.profileCode !== "" ||
+        profileMastDto.profileName !== ""
+      ) {
+        const result: OperationResult<ProfileMastDto> =
+          await profileService.saveOrUpdateProfile(token!, profileMastDto);
+        if (result.success) {
+          console.log("Profile saved successfully", result.data);
+          onSave();
+        } else {
+          console.error("Error saving profile", result.errorMessage);
+          alert(`Error: ${result.errorMessage}`);
+        }
+      }
+    } catch (error: any) {
+      console.error("Error saving profile", error);
+      alert(`Error: ${error.message}`);
+    }
   };
 
   const handleClear = () => {
-    setProfileCode("");
-    setProfileName("");
-    alert("Data Cleared");
+    setProfileMastDto({
+      ...profileMastDto,
+      profileCode: "",
+      profileName: "",
+      rNotes:""
+    });
     onClear();
+    setIsSubmitted(false)
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setProfileMastDto((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+
+    
+  };
+
+  const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setProfileMastDto((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
   };
 
   return (
-    <>
+    <Paper variant="elevation" sx={{ padding: 2 }}>
       <section>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={3}>
@@ -38,11 +95,14 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onSave, onClear }) => {
               ControlID="ProfileCode"
               placeholder="Profile Code"
               type="text"
-              name="ProfileCode"
+              name="profileCode"
               size="small"
-              value={profileCode}
-              onChange={(e) => setProfileCode(e.target.value)}
+              value={profileMastDto.profileCode}
+              onChange={handleInputChange}
               isMandatory={true}
+              isSubmitted={isSubmitted}
+              inputPattern={/^[a-zA-Z0-9]*$/}
+              maxLength={10}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
@@ -51,14 +111,32 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onSave, onClear }) => {
               ControlID="ProfileName"
               placeholder="Profile Name"
               type="text"
-              name="ProfileName"
+              name="profileName"
               size="small"
-              value={profileName}
-              onChange={(e) => setProfileName(e.target.value)}
+              value={profileMastDto.profileName}
+              onChange={handleInputChange}
               isMandatory={true}
+              isSubmitted={isSubmitted}
+              inputPattern={/^[a-zA-Z0-9]*$/}
+              maxLength={60}
             />
           </Grid>
+
+         
         </Grid>
+<Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={3}>
+            <TextArea
+              label="Notes"
+              name="rNotes"
+              value={profileMastDto.rNotes || ""}
+              onChange={handleTextAreaChange}
+              placeholder="Notes"
+              rows={2}
+              
+            />
+          </Grid>
+          </Grid>
       </section>
 
       <FormSaveClearButton
@@ -69,7 +147,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onSave, onClear }) => {
         clearIcon={DeleteIcon}
         saveIcon={SaveIcon}
       />
-    </>
+    </Paper>
   );
 };
 

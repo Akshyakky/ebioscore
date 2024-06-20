@@ -10,14 +10,40 @@ import SaveIcon from "@mui/icons-material/Save";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
-import { UserListData } from "../../../../interfaces/SecurityManagement/UserListData";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import FloatingLabelFileUpload from "../../../../components/FileUpload/FileUpload";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-
+import { UserListData } from "../../../../interfaces/SecurityManagement/UserListData";
+const defaultUserListData: UserListData = {
+  appID: 0,
+  appUserName: "",
+  appGeneralCode: "",
+  rActiveYN: "",
+  rCreatedOn: new Date(),
+  rCreatedID: 0,
+  rCreatedBy: "",
+  rModifiedOn: new Date(),
+  rModifiedID: 0,
+  rModifiedBy: "",
+  rNotes: "",
+  conID: 0,
+  appUcatCode: "",
+  appUcatType: "",
+  adminUserYN: "",
+  compCode: "",
+  compID: 0,
+  compName: "",
+  conCompId: 0,
+  digSignPath: "",
+  transferYN: "",
+  appCode: "",
+  appUAccess: "",
+  profileID: 0,
+};
 const UserListPage: React.FC = () => {
-  const [userList, setUserList] = useState<UserListData>();
+  const [userList, setUserList] = useState<UserListData>(defaultUserListData);
+
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -92,7 +118,7 @@ const UserListPage: React.FC = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <Grid item xs={12} sm={6} md={3}>
                   {/* <CustomSwitch */}
-                    {/* label="Is Super User"
+                  {/* label="Is Super User"
                     size="medium"
                     color="secondary"
                     checked={false}

@@ -13,12 +13,14 @@ export interface ModuleDto {
 }
 
 export interface SubModuleDto {
+  mainModuleId: any;
   auGrpID: number;
   title: string;
   link: string;
   iCon: string;
   // Add other properties as needed
 }
+
 
 const moduleService = {
   getActiveModules: async (

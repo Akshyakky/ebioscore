@@ -90,3 +90,4 @@ export interface ContactListSearchResult {
   refferalYN: string;
   rActiveYN: string;
 }
+
