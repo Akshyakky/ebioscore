@@ -1,54 +1,76 @@
-import React, { useState } from "react";
-import { Grid, Paper } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Grid, Paper, FormControlLabel } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
-import { ProfileMastDto } from "../../../../interfaces/SecurityManagement/ProfileListData";
+import { ProfileMastDto, ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import { OperationResult } from "../../../../interfaces/Common/OperationResult";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import TextArea from "../../../../components/TextArea/TextArea";
+import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 
 interface ProfileDetailsProps {
+  profile: ProfileListSearchResult | null;
   onSave: () => void;
   onClear: () => void;
+  isEditMode: boolean;
+  refreshProfiles: () => void;
 }
 
-const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onSave, onClear }) => {
-  const { token, compID } = useSelector(
-    (state: RootState) => state.userDetails
-  );
+const ProfileDetails: React.FC<ProfileDetailsProps> = ({ profile, onSave, onClear, isEditMode, refreshProfiles }) => {
+  const { token, compID } = useSelector((state: RootState) => state.userDetails);
 
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const [profileMastDto, setProfileMastDto] = useState<ProfileMastDto>({
-    profileID: 0,
-    profileCode: "",
-    profileName: "",
-    rActiveYN: "Y",
+    profileID: profile?.profileID || 0,
+    profileCode: profile?.profileCode || "",
+    profileName: profile?.profileName || "",
+    rActiveYN: profile?.status === "Hidden" ? "N" : "Y",
     compID: compID!,
-    rNotes: "",
+    rNotes: profile?.rNotes || "",
   });
+
+  useEffect(() => {
+    if (profile) {
+      setProfileMastDto({
+        profileID: profile.profileID,
+        profileCode: profile.profileCode,
+        profileName: profile.profileName,
+        rActiveYN: profile.status === "Hidden" ? "N" : "Y",
+        compID: compID!,
+        rNotes: profile.rNotes,
+      });
+    } else {
+      setProfileMastDto((prevState) => ({
+        ...prevState,
+        rActiveYN: "Y",
+      }));
+    }
+  }, [profile, compID]);
 
   const handleSave = async () => {
     setIsSubmitted(true);
     const profileService = new ProfileService();
     try {
-      if (
-        profileMastDto.profileCode !== "" ||
-        profileMastDto.profileName !== ""
-      ) {
-        const result: OperationResult<ProfileMastDto> =
-          await profileService.saveOrUpdateProfile(token!, profileMastDto);
+      if (profileMastDto.profileCode !== "" && profileMastDto.profileName !== "") {
+        console.log("Saving profile with data:", profileMastDto);
+
+        const result: OperationResult<ProfileMastDto> = await profileService.saveOrUpdateProfile(token!, profileMastDto);
+
         if (result.success) {
           console.log("Profile saved successfully", result.data);
           onSave();
+          refreshProfiles(); // Refresh profiles after saving
         } else {
           console.error("Error saving profile", result.errorMessage);
           alert(`Error: ${result.errorMessage}`);
         }
+      } else {
+        alert("Profile Code and Profile Name are required fields.");
       }
     } catch (error: any) {
       console.error("Error saving profile", error);
@@ -58,13 +80,15 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onSave, onClear }) => {
 
   const handleClear = () => {
     setProfileMastDto({
-      ...profileMastDto,
+      profileID: 0,
       profileCode: "",
       profileName: "",
-      rNotes:""
+      rActiveYN: "Y",
+      compID: compID!,
+      rNotes: "",
     });
     onClear();
-    setIsSubmitted(false)
+    setIsSubmitted(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,8 +97,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onSave, onClear }) => {
       ...prevState,
       [name]: value,
     }));
-
-    
   };
 
   const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -82,6 +104,14 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onSave, onClear }) => {
     setProfileMastDto((prevState) => ({
       ...prevState,
       [name]: value,
+    }));
+  };
+
+  const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const checkedValue = event.target.checked ? "N" : "Y";
+    setProfileMastDto((prevState) => ({
+      ...prevState,
+      rActiveYN: checkedValue,
     }));
   };
 
@@ -101,7 +131,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onSave, onClear }) => {
               onChange={handleInputChange}
               isMandatory={true}
               isSubmitted={isSubmitted}
-              inputPattern={/^[a-zA-Z0-9]*$/}
+              inputPattern={/^[a-zA-Z0-9 ]*$/} // Allow both characters and numbers and spaces
               maxLength={10}
             />
           </Grid>
@@ -117,15 +147,13 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onSave, onClear }) => {
               onChange={handleInputChange}
               isMandatory={true}
               isSubmitted={isSubmitted}
-              inputPattern={/^[a-zA-Z0-9]*$/}
+              inputPattern={/^[a-zA-Z0-9 ]*$/} // Allow spaces as well
               maxLength={60}
             />
           </Grid>
-
-         
         </Grid>
-<Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={3}>
             <TextArea
               label="Notes"
               name="rNotes"
@@ -133,10 +161,26 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ onSave, onClear }) => {
               onChange={handleTextAreaChange}
               placeholder="Notes"
               rows={2}
-              
             />
           </Grid>
+        </Grid>
+        {isEditMode && (
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControlLabel
+                control={
+                  <CustomSwitch
+                    size="medium"
+                    color="secondary"
+                    checked={profileMastDto.rActiveYN === "N"}
+                    onChange={handleSwitchChange}
+                  />
+                }
+                label={profileMastDto.rActiveYN === "N" ? "Hidden" : "Hide"}
+              />
+            </Grid>
           </Grid>
+        )}
       </section>
 
       <FormSaveClearButton

@@ -36,9 +36,13 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const [titleValues, setTitleValues] = useState<DropdownOption[]>([]);
   const [genderValues, setGenderValues] = useState<DropdownOption[]>([]);
   const [ageUnitOptions, setAgeValues] = useState<DropdownOption[]>([]);
-  const [nationalityValues, setNationalityValues] = useState<DropdownOption[]>([]);
-  const { handleDropdownChange } = useDropdownChange<RegsitrationFormData>(setFormData);
-  const { handleRadioButtonChange } = useRadioButtonChange<RegsitrationFormData>(setFormData);
+  const [nationalityValues, setNationalityValues] = useState<DropdownOption[]>(
+    []
+  );
+  const { handleDropdownChange } =
+    useDropdownChange<RegsitrationFormData>(setFormData);
+  const { handleRadioButtonChange } =
+    useRadioButtonChange<RegsitrationFormData>(setFormData);
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
@@ -55,44 +59,71 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const endpointPIC = "GetPICDropDownValues";
   const endpointConstantValues = "GetConstantValues";
   const endPointAppModifyList = "GetActiveAppModifyFieldsAsync";
-  
+
   useEffect(() => {
     const loadDropdownValues = async () => {
       try {
         setLoading(true);
-        const responsePIC = await BillingService.fetchPicValues(token, endpointPIC);
+        const responsePIC = await BillingService.fetchPicValues(
+          token,
+          endpointPIC
+        );
         const transformedData: DropdownOption[] = responsePIC.map((item) => ({
           value: item.value,
           label: item.label,
         }));
         setPicValues(transformedData);
 
-        const responseTitle = await ConstantValues.fetchConstantValues(token, endpointConstantValues, "PTIT");
-        const transformedTitleData: DropdownOption[] = responseTitle.map((item) => ({
-          value: item.value,
-          label: item.label,
-        }));
+        const responseTitle = await ConstantValues.fetchConstantValues(
+          token,
+          endpointConstantValues,
+          "PTIT"
+        );
+        const transformedTitleData: DropdownOption[] = responseTitle.map(
+          (item) => ({
+            value: item.value,
+            label: item.label,
+          })
+        );
         setTitleValues(transformedTitleData);
 
-        const responseGender = await ConstantValues.fetchConstantValues(token, endpointConstantValues, "PSEX");
-        const transformedGenderData: DropdownOption[] = responseGender.map((item) => ({
-          value: item.value,
-          label: item.label,
-        }));
+        const responseGender = await ConstantValues.fetchConstantValues(
+          token,
+          endpointConstantValues,
+          "PSEX"
+        );
+        const transformedGenderData: DropdownOption[] = responseGender.map(
+          (item) => ({
+            value: item.value,
+            label: item.label,
+          })
+        );
         setGenderValues(transformedGenderData);
-        
-        const responseAge = await ConstantValues.fetchConstantValues(token, endpointConstantValues, "PAT");
-        const transformedAgeData: DropdownOption[] = responseAge.map((item) => ({
-          value: item.value,
-          label: item.label,
-        }));
+
+        const responseAge = await ConstantValues.fetchConstantValues(
+          token,
+          endpointConstantValues,
+          "PAT"
+        );
+        const transformedAgeData: DropdownOption[] = responseAge.map(
+          (item) => ({
+            value: item.value,
+            label: item.label,
+          })
+        );
         setAgeValues(transformedAgeData);
-        
-        const responseNationality = await AppModifyListService.fetchAppModifyList(token, endPointAppModifyList, "NATIONALITY");
-        const transformedNationalityData: DropdownOption[] = responseNationality.map((item) => ({
-          value: item.value,
-          label: item.label,
-        }));
+
+        const responseNationality =
+          await AppModifyListService.fetchAppModifyList(
+            token,
+            endPointAppModifyList,
+            "NATIONALITY"
+          );
+        const transformedNationalityData: DropdownOption[] =
+          responseNationality.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }));
         setNationalityValues(transformedNationalityData);
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
@@ -114,13 +145,19 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     let age = today.getFullYear() - birthday.getFullYear();
     const monthDiff = today.getMonth() - birthday.getMonth();
 
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthday.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthday.getDate())
+    ) {
       age--;
     }
     if (age === 0) {
-      const ageInMonths = monthDiff + (today.getDate() < birthday.getDate() ? -1 : 0);
+      const ageInMonths =
+        monthDiff + (today.getDate() < birthday.getDate() ? -1 : 0);
       if (ageInMonths <= 0) {
-        const ageInDays = Math.floor((today.getTime() - birthday.getTime()) / (1000 * 60 * 60 * 24));
+        const ageInDays = Math.floor(
+          (today.getTime() - birthday.getTime()) / (1000 * 60 * 60 * 24)
+        );
         return { age: ageInDays, ageType: "Days", ageUnit: "LBN2" };
       } else {
         return { age: ageInMonths, ageType: "Months", ageUnit: "LBN3" };

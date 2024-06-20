@@ -10,6 +10,7 @@ import ContactListPage from "../pages/hospitalAdministration/ContactListPage/Mai
 import { ContactListSearchProvider } from "../context/hospitalAdministration/ContactListSearchContext";
 import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
 import ProfileListPage from "../pages/securityManagement/ProfileListPage/MainPage/ProfileListPage";
+import { ProfileListSearchProvider } from "../context/SecurityManagement/ProfileListSearchContext";
 
 const routeConfig = [
   { path: "/login", component: LoginPage, protected: false },
@@ -43,6 +44,7 @@ const routeConfig = [
     path: "/ProfileListPage",
     component: ProfileListPage,
     protected: true,
+    providers: [ProfileListSearchProvider],
   },
   // Add more routes here as needed
 ];

@@ -1,10 +1,15 @@
-// services/ProfileService.ts
-
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { ProfileMastDto } from "../../interfaces/SecurityManagement/ProfileListData";
-import { ProfileDetailDto } from "../../interfaces/SecurityManagement/ProfileListData";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { APIConfig } from "../../apiConfig";
+import { OperationResult } from "../../interfaces/Common/OperationResult";
+import {
+  ProfileMastDto,
+  ProfileDetailDto,
+  ProfileListSearchResult,
+} from "../../interfaces/SecurityManagement/ProfileListData";
+
+function isAxiosError(error: unknown): error is AxiosError {
+  return axios.isAxiosError(error);
+}
 
 export class ProfileService {
   async saveOrUpdateProfile(
@@ -23,7 +28,7 @@ export class ProfileService {
       );
       return response.data;
     } catch (error) {
-      return this.handleError(error);
+      return this.handleError<ProfileMastDto>(error);
     }
   }
 
@@ -33,7 +38,7 @@ export class ProfileService {
   ): Promise<OperationResult<ProfileDetailDto>> {
     try {
       const response = await axios.post<OperationResult<ProfileDetailDto>>(
-        `${APIConfig.securityManagementURL}/SaveOrUpdateProfileDetail`,
+        `${APIConfig.securityManagementURL}Profile/SaveOrUpdateProfileDetail`,
         profileDetailDto,
         {
           headers: {
@@ -43,18 +48,36 @@ export class ProfileService {
       );
       return response.data;
     } catch (error) {
-      return this.handleError(error);
+      return this.handleError<ProfileDetailDto>(error);
     }
   }
 
-  private handleError(error: any): OperationResult<any> {
+  async getAllProfileDetails(token: string): Promise<ProfileListSearchResult[]> {
+    try {
+      const url = `${APIConfig.securityManagementURL}Profile/GetAllProfileDetails`;
+      console.log("Fetching all profile details from URL:", url);
+      const response = await axios.get<ProfileListSearchResult[]>(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Received response:", response.data);
+      return response.data;
+    } catch (error) {
+      if (isAxiosError(error) && error.response) {
+        console.error("Error response from getAllProfileDetails:", error.response.data);
+      } else {
+        console.error("Error during fetching profile details:", error);
+      }
+      throw error;
+    }
+  }
+
+  private handleError<T>(error: any): OperationResult<T> {
     let errorMessage = "An unknown error occurred.";
     if (axios.isAxiosError(error)) {
       if (error.response) {
-        errorMessage =
-          error.response.data.errorMessage ||
-          error.response.data.message ||
-          errorMessage;
+        errorMessage = error.response.data.errorMessage || error.response.data.message || errorMessage;
       } else if (error.request) {
         errorMessage = "No response received from the server.";
       } else {
@@ -66,6 +89,8 @@ export class ProfileService {
     return {
       success: false,
       errorMessage: errorMessage,
-    };
+    } as OperationResult<T>;
   }
 }
+
+export default new ProfileService();

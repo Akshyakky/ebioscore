@@ -13,7 +13,7 @@ interface TextAreaProps {
   className?: string; // For custom styling
   placeholder?: string; // Optional: placeholder text
   style?: React.CSSProperties;
-  maxLength?:number;
+  maxLength?: number;
 }
 
 const TextArea: React.FC<TextAreaProps> = ({
@@ -28,7 +28,6 @@ const TextArea: React.FC<TextAreaProps> = ({
   className,
   placeholder,
   style,
- 
 }) => {
   return (
     <FormControl className={className} fullWidth margin="normal" style={style}>
@@ -39,7 +38,6 @@ const TextArea: React.FC<TextAreaProps> = ({
         onChange={onChange}
         multiline
         rows={rows}
-
         disabled={disabled}
         InputProps={{
           readOnly: readOnly,

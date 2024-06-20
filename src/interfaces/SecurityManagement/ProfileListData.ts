@@ -17,3 +17,11 @@ export interface ProfileDetailDto {
   rNotes: string;
   reportYN: string;
 }
+
+export interface ProfileListSearchResult {
+  profileID: number;
+  profileCode: string;
+  profileName: string;
+  status: string;
+  rNotes: string;
+}
