@@ -6,6 +6,7 @@ import { TextBoxProps } from "../../../interfaces/Common/TextBoxProps";
 export interface FloatingLabelTextBoxProps extends TextBoxProps {
   inputPattern?: RegExp; // Optional prop for input pattern
   name?: string;
+  onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void; // Add the onKeyPress prop
 }
 
 const FloatingLabelTextBox: React.FC<FloatingLabelTextBoxProps> = ({
@@ -29,6 +30,7 @@ const FloatingLabelTextBox: React.FC<FloatingLabelTextBoxProps> = ({
   autoComplete = "on",
   inputPattern,
   name,
+  onKeyPress, // Add the onKeyPress prop
 }) => {
   const controlId = useMemo(() => `txt${ControlID}`, [ControlID]);
 
@@ -68,6 +70,7 @@ const FloatingLabelTextBox: React.FC<FloatingLabelTextBoxProps> = ({
         type={type}
         value={value}
         onChange={handleChange}
+        onKeyPress={onKeyPress} // Pass the onKeyPress prop
         placeholder={placeholder || title}
         size={size}
         disabled={disabled}

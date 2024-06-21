@@ -82,12 +82,23 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
     },
   ];
 
+  const handleDialogClose = () => {
+    setSearchTerm(""); // Clear the search term when dialog is closed
+    handleClose();
+  };
+
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      setSearchTerm(""); // Clear the search term when Enter is pressed
+    }
+  };
+
   return (
     <Dialog
       open={show}
       onClose={(event, reason) => {
         if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
-          handleClose();
+          handleDialogClose();
         }
       }}
       maxWidth="lg"
@@ -118,6 +129,7 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
                 placeholder="Enter profile code or name"
                 size="small"
                 autoComplete="off"
+                onKeyPress={handleKeyPress} // Add key press handler
               />
             </Grid>
           </Grid>
@@ -146,7 +158,7 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
           text="Close"
           icon={CloseIcon}
           size="medium"
-          onClick={handleClose}
+          onClick={handleDialogClose}
           color="secondary"
         />
       </DialogActions>

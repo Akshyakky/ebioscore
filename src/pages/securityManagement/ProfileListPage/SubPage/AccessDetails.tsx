@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Grid, useTheme, SelectChangeEvent } from "@mui/material";
+import { Grid, SelectChangeEvent } from "@mui/material";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { usePageTitle } from "../../../../hooks/usePageTitle";
@@ -22,13 +22,13 @@ const AccessDetails: React.FC<SideBarProps> = ({ userID, token }) => {
   const [selectedSubModule, setSelectedSubModule] = useState<string>("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { pageTitle } = usePageTitle();
-  const theme = useTheme();
 
   useEffect(() => {
     const fetchMainModules = async () => {
       if (token) {
         try {
           const modulesData = await moduleService.getActiveModules(userID ?? 0, token);
+          console.log("Fetched Main Modules: ", modulesData);
           setDropdownValues((prevValues) => ({
             ...prevValues,
             mainModulesOptions: modulesData.map((module) => ({
@@ -50,10 +50,12 @@ const AccessDetails: React.FC<SideBarProps> = ({ userID, token }) => {
     const selectedValue = event.target.value;
     setSelectedMainModule(selectedValue);
     try {
-      const subModulesData = await moduleService.getActiveSubModules(parseInt(selectedValue), token ?? "");
+      const subModulesData = await moduleService.getActiveSubModules(userID ?? 0, token ?? "");
+      const filteredSubModules = subModulesData.filter(subModule => subModule.auGrpID === parseInt(selectedValue));
+      console.log("Fetched Sub Modules for Main Module ", selectedValue, ": ", filteredSubModules);
       setDropdownValues((prevValues) => ({
         ...prevValues,
-        subModulesOptions: subModulesData.map((subModule) => ({
+        subModulesOptions: filteredSubModules.map((subModule) => ({
           label: subModule.title,
           value: subModule.auGrpID.toString(),
         })),
@@ -70,6 +72,15 @@ const AccessDetails: React.FC<SideBarProps> = ({ userID, token }) => {
     setSelectedSubModule(event.target.value);
   };
 
+  const handleClear = () => {
+    setSelectedMainModule("");
+    setSelectedSubModule("");
+    setDropdownValues((prevValues) => ({
+      ...prevValues,
+      subModulesOptions: [],
+    }));
+  };
+
   return (
     <>
       <section>
@@ -84,6 +95,8 @@ const AccessDetails: React.FC<SideBarProps> = ({ userID, token }) => {
               isMandatory
               size="small"
               isSubmitted={isSubmitted}
+              clearable
+              onClear={handleClear}
             />
 
             <DropdownSelect

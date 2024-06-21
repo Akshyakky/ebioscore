@@ -5,8 +5,12 @@ import {
   Select,
   MenuItem,
   FormHelperText,
+  IconButton,
+  InputAdornment,
+  useTheme,
 } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
+import ClearIcon from "@mui/icons-material/Clear";
 
 interface DropdownSelectProps {
   label: string;
@@ -20,6 +24,8 @@ interface DropdownSelectProps {
   defaultText?: string;
   className?: string;
   isSubmitted?: boolean;
+  clearable?: boolean; // Add this prop
+  onClear?: () => void; // Add this prop
 }
 
 const DropdownSelect: React.FC<DropdownSelectProps> = ({
@@ -34,7 +40,10 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   defaultText,
   className,
   isSubmitted = false,
+  clearable = false, // Default to false
+  onClear,
 }) => {
+  const theme = useTheme();
   const isEmptyValue = useMemo(() => value === "" || value === "0", [value]);
   const hasError = useMemo(
     () => isMandatory && isSubmitted && isEmptyValue,
@@ -69,9 +78,29 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
         onChange={onChange}
         label={label}
         disabled={disabled}
-        displayEmpty
+        endAdornment={
+          clearable && value ? (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="clear selection"
+                onClick={onClear}
+                edge="end"
+                size="small"
+                sx={{
+                  padding: "2px",
+                  margin: "8px",
+                  "&:hover": {
+                    backgroundColor: theme.palette.action.hover,
+                    color: "#000000",
+                  },
+                }}
+              >
+                <ClearIcon sx={{ fontSize: "18px" }} />
+              </IconButton>
+            </InputAdornment>
+          ) : null
+        }
       >
-        <MenuItem value="">{defaultText || `${label}`}</MenuItem>
         {options.map((option) => (
           <MenuItem
             key={option.value || option.label}

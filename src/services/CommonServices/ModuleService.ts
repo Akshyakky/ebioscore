@@ -13,7 +13,7 @@ export interface ModuleDto {
 }
 
 export interface SubModuleDto {
-  mainModuleId: any;
+  userID: number;
   auGrpID: number;
   title: string;
   link: string;
@@ -21,12 +21,8 @@ export interface SubModuleDto {
   // Add other properties as needed
 }
 
-
 const moduleService = {
-  getActiveModules: async (
-    userID: number,
-    token: string
-  ): Promise<ModuleDto[]> => {
+  getActiveModules: async (userID: number, token: string): Promise<ModuleDto[]> => {
     const url = `${API_BASE_URL}GetModules`;
     const headers = {
       Authorization: `Bearer ${token}`,
@@ -42,10 +38,7 @@ const moduleService = {
     }
   },
 
-  getActiveSubModules: async (
-    userID: number,
-    token: string
-  ): Promise<SubModuleDto[]> => {
+  getActiveSubModules: async (userID: number, token: string): Promise<SubModuleDto[]> => {
     const url = `${API_BASE_URL}GetSubModules`;
     const headers = {
       Authorization: `Bearer ${token}`,
