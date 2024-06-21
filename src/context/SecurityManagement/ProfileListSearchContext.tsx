@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import { useLoading } from "../LoadingContext";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/reducers";
@@ -10,13 +10,16 @@ interface ProfileListSearchContextProps {
   searchResults: ProfileListSearchResult[];
   performSearch: (searchTerm: string) => Promise<void>;
   fetchAllProfiles: () => Promise<void>;
+  updateProfileStatus: (profileID: number, status: string) => void; // Add this method
 }
 
-export const ProfileListSearchContext = createContext<ProfileListSearchContextProps>({
-  searchResults: [],
-  performSearch: async () => {},
-  fetchAllProfiles: async () => {},
-});
+export const ProfileListSearchContext =
+  createContext<ProfileListSearchContextProps>({
+    searchResults: [],
+    performSearch: async () => {},
+    fetchAllProfiles: async () => {},
+    updateProfileStatus: () => {}, // Initialize with an empty function
+  });
 
 interface ProfileListSearchProviderProps {
   children: React.ReactNode;
@@ -26,7 +29,9 @@ export const ProfileListSearchProvider = ({
   children,
 }: ProfileListSearchProviderProps) => {
   const [allProfiles, setAllProfiles] = useState<ProfileListSearchResult[]>([]);
-  const [searchResults, setSearchResults] = useState<ProfileListSearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<ProfileListSearchResult[]>(
+    []
+  );
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo?.token;
@@ -44,7 +49,7 @@ export const ProfileListSearchProvider = ({
             profileCode: profile.profileCode,
             profileName: profile.profileName,
             status: profile.status,
-            rNotes: profile.rNotes
+            rNotes: profile.rNotes,
           })
         );
         setAllProfiles(mappedResults);
@@ -71,15 +76,32 @@ export const ProfileListSearchProvider = ({
     } else {
       const filteredResults = allProfiles.filter(
         (profile) =>
-          profile.profileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          profile.profileName
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
           profile.profileCode.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setSearchResults(filteredResults);
     }
   };
 
+  const updateProfileStatus = (profileID: number, status: string) => {
+    const updatedProfiles = allProfiles.map((profile) =>
+      profile.profileID === profileID ? { ...profile, status } : profile
+    );
+    setAllProfiles(updatedProfiles);
+    setSearchResults(updatedProfiles);
+  };
+
   return (
-    <ProfileListSearchContext.Provider value={{ searchResults, performSearch, fetchAllProfiles }}>
+    <ProfileListSearchContext.Provider
+      value={{
+        searchResults,
+        performSearch,
+        fetchAllProfiles,
+        updateProfileStatus,
+      }}
+    >
       {children}
     </ProfileListSearchContext.Provider>
   );

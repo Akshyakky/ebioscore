@@ -52,7 +52,9 @@ export class ProfileService {
     }
   }
 
-  async getAllProfileDetails(token: string): Promise<ProfileListSearchResult[]> {
+  async getAllProfileDetails(
+    token: string
+  ): Promise<ProfileListSearchResult[]> {
     try {
       const url = `${APIConfig.securityManagementURL}Profile/GetAllProfileDetails`;
       console.log("Fetching all profile details from URL:", url);
@@ -65,7 +67,10 @@ export class ProfileService {
       return response.data;
     } catch (error) {
       if (isAxiosError(error) && error.response) {
-        console.error("Error response from getAllProfileDetails:", error.response.data);
+        console.error(
+          "Error response from getAllProfileDetails:",
+          error.response.data
+        );
       } else {
         console.error("Error during fetching profile details:", error);
       }
@@ -77,7 +82,10 @@ export class ProfileService {
     let errorMessage = "An unknown error occurred.";
     if (axios.isAxiosError(error)) {
       if (error.response) {
-        errorMessage = error.response.data.errorMessage || error.response.data.message || errorMessage;
+        errorMessage =
+          error.response.data.errorMessage ||
+          error.response.data.message ||
+          errorMessage;
       } else if (error.request) {
         errorMessage = "No response received from the server.";
       } else {

@@ -30,7 +30,9 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
   onEditProfile,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { performSearch, searchResults } = useContext(ProfileListSearchContext);
+  const { performSearch, searchResults, updateProfileStatus } = useContext(
+    ProfileListSearchContext
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   const debouncedSearch = useCallback(
@@ -73,7 +75,9 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
       header: "Status",
       visible: true,
       render: (row: ProfileListSearchResult) => (
-        <span>{row.status === "N" ? "Active" : "Hidden"}</span>
+        <Typography variant="body2">
+          {row.status === "Hidden" ? "Hidden" : "Active"}
+        </Typography>
       ),
     },
   ];

@@ -5,7 +5,10 @@ import FormSaveClearButton from "../../../../components/Button/FormSaveClearButt
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
-import { ProfileMastDto, ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
+import {
+  ProfileMastDto,
+  ProfileListSearchResult,
+} from "../../../../interfaces/SecurityManagement/ProfileListData";
 import { OperationResult } from "../../../../interfaces/Common/OperationResult";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
@@ -18,10 +21,20 @@ interface ProfileDetailsProps {
   onClear: () => void;
   isEditMode: boolean;
   refreshProfiles: () => void;
+  updateProfileStatus: (profileID: number, status: string) => void;
 }
 
-const ProfileDetails: React.FC<ProfileDetailsProps> = ({ profile, onSave, onClear, isEditMode, refreshProfiles }) => {
-  const { token, compID } = useSelector((state: RootState) => state.userDetails);
+const ProfileDetails: React.FC<ProfileDetailsProps> = ({
+  profile,
+  onSave,
+  onClear,
+  isEditMode,
+  refreshProfiles,
+  updateProfileStatus,
+}) => {
+  const { token, compID } = useSelector(
+    (state: RootState) => state.userDetails
+  );
 
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -29,7 +42,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ profile, onSave, onClea
     profileID: profile?.profileID || 0,
     profileCode: profile?.profileCode || "",
     profileName: profile?.profileName || "",
-    rActiveYN: profile?.status === "Hidden" ? "N" : "Y",
+    rActiveYN: profile ? (profile.status === "Hidden" ? "N" : "Y") : "Y", // Default to "Active" for new profiles
     compID: compID!,
     rNotes: profile?.rNotes || "",
   });
@@ -40,15 +53,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ profile, onSave, onClea
         profileID: profile.profileID,
         profileCode: profile.profileCode,
         profileName: profile.profileName,
-        rActiveYN: profile.status === "Hidden" ? "N" : "Y",
+        rActiveYN: profile.status === "Hidden" ? "N" : "Y", // Ensure correct mapping
         compID: compID!,
         rNotes: profile.rNotes,
       });
-    } else {
-      setProfileMastDto((prevState) => ({
-        ...prevState,
-        rActiveYN: "Y",
-      }));
     }
   }, [profile, compID]);
 
@@ -56,15 +64,23 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ profile, onSave, onClea
     setIsSubmitted(true);
     const profileService = new ProfileService();
     try {
-      if (profileMastDto.profileCode !== "" && profileMastDto.profileName !== "") {
+      if (
+        profileMastDto.profileCode !== "" &&
+        profileMastDto.profileName !== ""
+      ) {
         console.log("Saving profile with data:", profileMastDto);
 
-        const result: OperationResult<ProfileMastDto> = await profileService.saveOrUpdateProfile(token!, profileMastDto);
+        const result: OperationResult<ProfileMastDto> =
+          await profileService.saveOrUpdateProfile(token!, profileMastDto);
 
         if (result.success) {
           console.log("Profile saved successfully", result.data);
           onSave();
           refreshProfiles(); // Refresh profiles after saving
+          updateProfileStatus(
+            profileMastDto.profileID,
+            profileMastDto.rActiveYN === "N" ? "Hidden" : "Active"
+          ); // Update status in ProfileListSearch
         } else {
           console.error("Error saving profile", result.errorMessage);
           alert(`Error: ${result.errorMessage}`);
@@ -74,7 +90,21 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ profile, onSave, onClea
       }
     } catch (error: any) {
       console.error("Error saving profile", error);
-      alert(`Error: ${error.message}`);
+      if (error.response) {
+        // Server responded with a status other than 2xx
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+        console.error("Response headers:", error.response.headers);
+        alert(`Error: ${error.response.data?.message || error.message}`);
+      } else if (error.request) {
+        // Request was made but no response was received
+        console.error("Request data:", error.request);
+        alert("Error: No response received from server.");
+      } else {
+        // Something else happened
+        console.error("Error message:", error.message);
+        alert(`Error: ${error.message}`);
+      }
     }
   };
 
@@ -113,6 +143,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ profile, onSave, onClea
       ...prevState,
       rActiveYN: checkedValue,
     }));
+    updateProfileStatus(
+      profileMastDto.profileID,
+      checkedValue === "N" ? "Hidden" : "Active"
+    ); // Update status in ProfileListSearch
   };
 
   return (
@@ -176,7 +210,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ profile, onSave, onClea
                     onChange={handleSwitchChange}
                   />
                 }
-                label={profileMastDto.rActiveYN === "N" ? "Hidden" : "Hide"}
+                label={profileMastDto.rActiveYN === "N" ? "Hidden" : "Active"}
               />
             </Grid>
           </Grid>

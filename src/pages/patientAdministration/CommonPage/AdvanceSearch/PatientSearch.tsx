@@ -20,7 +20,7 @@ interface PatientSearchProps {
   show: boolean;
   handleClose: () => void;
   onEditPatient: (patientId: string) => void;
-}                 
+}
 const PatientSearch = ({
   show,
   handleClose,
@@ -92,7 +92,7 @@ const PatientSearch = ({
       open={show}
       onClose={(event, reason) => {
         if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
-          handleClose();  
+          handleClose();
         }
       }}
       maxWidth="lg"
