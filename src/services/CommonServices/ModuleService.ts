@@ -3,13 +3,11 @@ import { APIConfig } from "../../apiConfig";
 
 const API_BASE_URL = `${APIConfig.moduleURL}`;
 
-// Define the structure of your Module and SubModule DTOs
 export interface ModuleDto {
   auGrpID: number;
   title: string;
   link: string;
   iCon: string;
-  // Add other properties as needed
 }
 
 export interface SubModuleDto {
@@ -18,11 +16,18 @@ export interface SubModuleDto {
   title: string;
   link: string;
   iCon: string;
-  // Add other properties as needed
+}
+
+export interface ReportPermissionDto {
+  permissionID: number;
+  permissionName: string;
 }
 
 const moduleService = {
-  getActiveModules: async (userID: number, token: string): Promise<ModuleDto[]> => {
+  getActiveModules: async (
+    userID: number,
+    token: string
+  ): Promise<ModuleDto[]> => {
     const url = `${API_BASE_URL}GetModules`;
     const headers = {
       Authorization: `Bearer ${token}`,
@@ -38,7 +43,10 @@ const moduleService = {
     }
   },
 
-  getActiveSubModules: async (userID: number, token: string): Promise<SubModuleDto[]> => {
+  getActiveSubModules: async (
+    userID: number,
+    token: string
+  ): Promise<SubModuleDto[]> => {
     const url = `${API_BASE_URL}GetSubModules`;
     const headers = {
       Authorization: `Bearer ${token}`,

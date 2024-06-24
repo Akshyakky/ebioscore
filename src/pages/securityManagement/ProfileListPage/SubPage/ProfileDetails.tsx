@@ -4,7 +4,6 @@ import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTe
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 import {
   ProfileMastDto,
   ProfileListSearchResult,
@@ -14,6 +13,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import TextArea from "../../../../components/TextArea/TextArea";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
+import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 
 interface ProfileDetailsProps {
   profile: ProfileListSearchResult | null;
@@ -80,7 +80,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           updateProfileStatus(
             profileMastDto.profileID,
             profileMastDto.rActiveYN === "N" ? "Hidden" : "Active"
-          ); // Update status in ProfileListSearch
+          ); 
         } else {
           console.error("Error saving profile", result.errorMessage);
           alert(`Error: ${result.errorMessage}`);
