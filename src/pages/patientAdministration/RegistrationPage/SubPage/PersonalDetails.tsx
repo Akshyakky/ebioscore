@@ -262,6 +262,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             isSubmitted={isSubmitted}
             isMandatory={true}
             onSelectSuggestion={onPatientSelect}
+            maxLength={20}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
@@ -334,6 +335,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             size="small"
             isMandatory={true}
             isSubmitted={isSubmitted}
+            // maxLength={10}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
@@ -347,6 +349,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             value={formData.PFName}
             isSubmitted={isSubmitted}
             isMandatory={true}
+            maxLength={100}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
@@ -360,6 +363,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             value={formData.PLName}
             isSubmitted={isSubmitted}
             isMandatory={true}
+            maxLength={100}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
@@ -376,6 +380,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             isSubmitted={isSubmitted}
             isMandatory={true}
             inputPattern={/^\d*$/} // Only allow numbers
+            maxLength={30}
           />
         </Grid>
       </Grid>
@@ -409,6 +414,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                   radioOptions
                 )}
                 inline={true}
+                // maxLength={10}
               />
             </Grid>
 
@@ -433,6 +439,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                     }
                     isSubmitted={isSubmitted}
                     isMandatory={true}
+                    maxLength={1}
                   />
                 </Grid>
                 <Grid item xs={6} sm={4} md={4} lg={4}>
@@ -467,6 +474,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
                   max={getTodayDate()}
                   isSubmitted={isSubmitted}
                   isMandatory={true}
+                  maxLength={1}
                 />
               </Grid>
             )}
@@ -485,6 +493,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             onChange={(e) =>
               setFormData({ ...formData, IntIdPsprt: e.target.value })
             }
+            maxLength={30}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
