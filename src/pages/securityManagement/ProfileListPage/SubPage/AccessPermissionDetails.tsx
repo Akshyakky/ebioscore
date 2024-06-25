@@ -86,6 +86,15 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({ userID, token, profil
                 value: permission.operationID.toString(),
               })),
             }));
+
+            // Retrieve and set persisted permissions from local storage
+            const persistedPermissions = JSON.parse(localStorage.getItem('permissions') || '{}');
+            setPermissions((prevPermissions) =>
+              prevPermissions.map((permission) => ({
+                ...permission,
+                allow: persistedPermissions[permission.permissionID] ?? permission.allow,
+              }))
+            );
           } else {
             console.error("Error fetching report permissions:", reportPermissionsData.errorMessage);
             notifyError("Error fetching report permissions");
@@ -134,6 +143,13 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({ userID, token, profil
 
     setPermissions(updatedPermissions);
 
+    // Persist the updated permissions to local storage
+    const persistedPermissions = updatedPermissions.reduce((acc, permission) => {
+      acc[permission.permissionID] = permission.allow;
+      return acc;
+    }, {} as Record<number, boolean>);
+    localStorage.setItem('permissions', JSON.stringify(persistedPermissions));
+
     if (token && profileID) {
       const profileDetail: ProfileDetailDto = {
         profDetID: 0,
@@ -174,6 +190,13 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({ userID, token, profil
     setPermissions(updatedPermissions);
     setSelectAllChecked(allow);
 
+    // Persist the updated permissions to local storage
+    const persistedPermissions = updatedPermissions.reduce((acc, permission) => {
+      acc[permission.permissionID] = permission.allow;
+      return acc;
+    }, {} as Record<number, boolean>);
+    localStorage.setItem('permissions', JSON.stringify(persistedPermissions));
+
     if (token && profileID) {
       try {
         const profileDetails: ProfileDetailDto[] = updatedPermissions.map((permission) => ({
@@ -213,6 +236,9 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({ userID, token, profil
       subModulesOptions: [],
       reportPermissionsOptions: [],
     }));
+
+    // Clear the persisted permissions from local storage
+    localStorage.removeItem('permissions');
   };
 
   const handleReportPermissionChange = (event: SelectChangeEvent<string>) => {
