@@ -31,7 +31,7 @@ const ColorSwitch = styled(Switch)(({ theme, color }) => ({
 }));
 
 const CustomSwitch: React.FC<CustomSwitchProps> = ({
-  label = "Default Label",
+  label = "",
   size = "medium",
   color = "#4CAF50", // Default color green
   checked,

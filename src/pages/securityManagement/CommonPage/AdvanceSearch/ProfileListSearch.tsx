@@ -10,6 +10,7 @@ import {
   Typography,
   CircularProgress,
   Box,
+  FormControlLabel,
 } from "@mui/material";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
@@ -17,6 +18,14 @@ import { debounce } from "../../../../utils/Common/debounceUtils";
 import { ProfileListSearchContext } from "../../../../context/SecurityManagement/ProfileListSearchContext";
 import { ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import EditIcon from "@mui/icons-material/Edit";
+import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
+import {
+  notifySuccess,
+  notifyError,
+} from "../../../../utils/Common/toastManager";
+import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../../store/reducers";
 
 interface ProfileListSearchResultProps {
   show: boolean;
@@ -34,6 +43,9 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
     ProfileListSearchContext
   );
   const [isLoading, setIsLoading] = useState(false);
+  const { token, compID } = useSelector(
+    (state: RootState) => state.userDetails
+  );
 
   const debouncedSearch = useCallback(
     debounce((searchQuery: string) => {
@@ -51,6 +63,34 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
   const handleEditAndClose = (profile: ProfileListSearchResult) => {
     onEditProfile(profile);
     handleClose();
+  };
+
+  const handleSwitchChange = async (
+    profile: ProfileListSearchResult,
+    checked: boolean
+  ) => {
+    const profileService = new ProfileService();
+    const updatedStatus = checked ? "Active" : "Hidden";
+    const profileMastDto = {
+      ...profile,
+      rActiveYN: checked ? "Y" : "N",
+      compID: compID!,
+    };
+
+    try {
+      const result = await profileService.saveOrUpdateProfile(
+        token!,
+        profileMastDto
+      );
+      if (result.success) {
+        notifySuccess(`Profile status updated to ${updatedStatus}`);
+        updateProfileStatus(profile.profileID, updatedStatus);
+      } else {
+        notifyError(`Error updating profile status: ${result.errorMessage}`);
+      }
+    } catch (error) {
+      notifyError("Error updating profile status");
+    }
   };
 
   const columns = [
@@ -78,6 +118,26 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
         <Typography variant="body2">
           {row.status === "Hidden" ? "Hidden" : "Active"}
         </Typography>
+      ),
+    },
+    {
+      key: "profileStatus",
+      header: "Profile Status",
+      visible: true,
+      render: (row: ProfileListSearchResult) => (
+        <FormControlLabel
+          control={
+            <CustomSwitch
+              size="medium"
+              color="secondary"
+              checked={row.status !== "Hidden"}
+              onChange={(event) =>
+                handleSwitchChange(row, event.target.checked)
+              }
+            />
+          }
+          label={row.status === "Hidden" ? "Hidden" : "Active"}
+        />
       ),
     },
   ];

@@ -7,16 +7,11 @@ export interface ProfileMastDto {
   rNotes: string;
 }
 
-// Assuming this file is located at src/interfaces/SecurityManagement/ProfileListData.ts
-
-// Assuming this file is located at src/interfaces/SecurityManagement/ProfileListData.ts
-
 export interface ProfileDetailDto {
   profDetID: number;
   profileID: number;
   profileName: string;
   aOPRID: number;
-  // operationID: number; // Add this property
   compID: number;
   rActiveYN: string;
   rNotes: string;
@@ -25,7 +20,7 @@ export interface ProfileDetailDto {
 
 export interface OperationResult<T> {
   success: boolean;
-  data?: T; // data can be undefined
+  data?: T;
   affectedRows?: number;
   errorMessage?: string;
   errors?: any[];
@@ -40,6 +35,24 @@ export interface ProfileListSearchResult {
 }
 export interface ReportPermissionDto {
   operationID: number;
+  profDetID: number;
   operationName: string;
   allow: boolean;
+}
+
+export interface ReportPermission {
+  reportID: number;
+  reportName: string;
+  allow: boolean;
+  profDetID?: number;
+  profileID: number;
+}
+
+export interface ProfileDetailsDropdowns {
+  mainModuleID: string;
+  mainModuleName: string;
+  subModuleID: string;
+  subModuleName: string;
+  repMainModuleID: string;
+  repMainModuleName: string;
 }

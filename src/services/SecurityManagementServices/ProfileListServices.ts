@@ -6,6 +6,7 @@ import {
   ProfileDetailDto,
   ProfileListSearchResult,
   ReportPermissionDto,
+  ReportPermission,
 } from "../../interfaces/SecurityManagement/ProfileListData";
 
 function isAxiosError(error: unknown): error is AxiosError {
@@ -98,6 +99,28 @@ export class ProfileService {
       return response.data;
     } catch (error) {
       return this.handleError<ReportPermissionDto[]>(error);
+    }
+  }
+
+  async getProfileReportOperations(
+    token: string,
+    subID: number,
+    compID: number,
+    profileID: number
+  ): Promise<OperationResult<ReportPermission[]>> {
+    try {
+      const response = await axios.get<OperationResult<ReportPermission[]>>(
+        `${APIConfig.securityManagementURL}SecurityManagement/GetProfileReportOperations`,
+        {
+          params: { subID, compID, profileID },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      return this.handleError<ReportPermission[]>(error);
     }
   }
 

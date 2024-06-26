@@ -13,6 +13,7 @@ export interface ModuleDto {
 export interface SubModuleDto {
   userID: number;
   auGrpID: number;
+  subID: number;
   title: string;
   link: string;
   iCon: string;

@@ -2,7 +2,9 @@ import React, { useContext, useState } from "react";
 import { Box, Container } from "@mui/material";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import SearchIcon from "@mui/icons-material/Search";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
+import ActionButtonGroup, {
+  ButtonProps,
+} from "../../../../components/Button/ActionButtonGroup";
 import ProfileDetails from "../SubPage/ProfileDetails";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
@@ -14,8 +16,14 @@ import AccessPermissionDetails from "../SubPage/AccessPermissionDetails";
 const ProfileListPage: React.FC = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState<ProfileListSearchResult | null>(null);
-  const { fetchAllProfiles, searchResults, updateProfileStatus } = useContext(ProfileListSearchContext);
+  const [selectedProfile, setSelectedProfile] =
+    useState<ProfileListSearchResult | null>(null);
+  const { fetchAllProfiles, updateProfileStatus } = useContext(
+    ProfileListSearchContext
+  );
+
+  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const { token } = userInfo;
 
   const handleAdvancedSearch = async () => {
     setIsSearchDialogOpen(true);
@@ -32,22 +40,9 @@ const ProfileListPage: React.FC = () => {
     setIsSaved(true);
   };
 
-  const userInfo = useSelector((state: RootState) => state.userDetails);
-  const effectiveUserID = userInfo ? (userInfo.adminYN === "Y" ? 0 : userInfo.userID) : -1;
-
-  const actionButtons: ButtonProps[] = [
-    {
-      variant: "contained",
-      size: "medium",
-      icon: SearchIcon,
-      text: "Advanced Search",
-      onClick: handleAdvancedSearch,
-    },
-  ];
-
-  const handleSave = () => {
+  const handleSave = async (profile: ProfileListSearchResult) => {
     setIsSaved(true);
-    setSelectedProfile(null);
+    setSelectedProfile(profile);
   };
 
   const handleClear = () => {
@@ -58,6 +53,22 @@ const ProfileListPage: React.FC = () => {
   const refreshProfiles = async () => {
     await fetchAllProfiles();
   };
+
+  const effectiveUserID = userInfo
+    ? userInfo.adminYN === "Y"
+      ? 0
+      : userInfo.userID
+    : -1;
+
+  const actionButtons: ButtonProps[] = [
+    {
+      variant: "contained",
+      size: "medium",
+      icon: SearchIcon,
+      text: "Advanced Search",
+      onClick: handleAdvancedSearch,
+    },
+  ];
 
   return (
     <MainLayout>
@@ -74,11 +85,9 @@ const ProfileListPage: React.FC = () => {
           updateProfileStatus={updateProfileStatus}
         />
         {isSaved && selectedProfile && (
-          <AccessPermissionDetails 
-            userID={effectiveUserID} 
-            token={userInfo.token} 
-            profileID={selectedProfile.profileID} 
-            profileName={selectedProfile.profileName} // Pass profileName
+          <AccessPermissionDetails
+            profileID={selectedProfile.profileID}
+            profileName={selectedProfile.profileName}
           />
         )}
         <ProfileListSearch
