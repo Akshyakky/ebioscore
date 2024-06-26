@@ -80,7 +80,7 @@ export class ProfileService {
     }
   }
 
-  async getReportPermissions(
+  async GetProfileModuleOperations(
     token: string,
     subID: number,
     compID: number,

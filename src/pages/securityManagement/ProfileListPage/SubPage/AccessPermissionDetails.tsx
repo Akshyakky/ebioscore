@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import {
   Grid,
-  SelectChangeEvent,
-  FormControlLabel,
-  Checkbox,
   Paper,
   Typography,
+  FormControlLabel,
+  Checkbox,
+  SelectChangeEvent,
 } from "@mui/material";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
@@ -92,7 +92,6 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
             adminYN === "Y" ? 0 : userID ?? 0,
             token
           );
-          console.log("Fetched Main Modules: ", modulesData);
           setDropdownValues((prevValues) => ({
             ...prevValues,
             mainModulesOptions: modulesData.map((module) => ({
@@ -105,37 +104,33 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
             })),
           }));
         } catch (error) {
-          console.error("Error fetching main modules:", error);
           notifyError("Error fetching main modules");
         }
       }
     };
 
     fetchMainModules();
-  }, [userID, token]);
+  }, [token]);
 
   useEffect(() => {
-    if (
-      profileDetailsDropdowns.mainModuleID &&
-      profileDetailsDropdowns.subModuleID
-    ) {
-      const fetchPermissions = async () => {
+    const fetchPermissions = async () => {
+      if (
+        profileDetailsDropdowns.mainModuleID &&
+        profileDetailsDropdowns.subModuleID &&
+        token
+      ) {
         try {
           const reportPermissionsData: OperationResult<ReportPermissionDto[]> =
-            await ProfileService.getReportPermissions(
-              token ?? "",
+            await ProfileService.GetProfileModuleOperations(
+              token,
               parseInt(profileDetailsDropdowns.subModuleID),
               parseInt(profileDetailsDropdowns.mainModuleID),
               profileID
             );
 
           if (reportPermissionsData.success && reportPermissionsData.data) {
-            console.log(
-              "Fetched Report Permissions: ",
-              reportPermissionsData.data
-            );
             setPermissions(
-              (reportPermissionsData.data ?? []).map((permission) => ({
+              reportPermissionsData.data.map((permission) => ({
                 profDetID: permission.profDetID,
                 operationID: permission.operationID,
                 operationName: permission.operationName,
@@ -144,7 +139,7 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
             );
             setDropdownValues((prevValues) => ({
               ...prevValues,
-              reportPermissionsOptions: (reportPermissionsData.data ?? []).map(
+              reportPermissionsOptions: (reportPermissionsData.data??[]).map(
                 (permission) => ({
                   label: permission.operationName,
                   value: permission.operationID.toString(),
@@ -152,41 +147,32 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
               ),
             }));
           } else {
-            console.error(
-              "Error fetching report permissions:",
-              reportPermissionsData.errorMessage
-            );
             notifyError("Error fetching report permissions");
           }
         } catch (error) {
-          console.error("Error fetching report permissions:", error);
           notifyError("Error fetching report permissions");
         }
-      };
+      }
+    };
 
-      fetchPermissions();
-    }
+    fetchPermissions();
   }, [profileDetailsDropdowns.subModuleID]);
 
   useEffect(() => {
-    if (selectedReportMainModule) {
-      const fetchReportPermissions = async () => {
+    const fetchReportPermissions = async () => {
+      if (selectedReportMainModule && token) {
         try {
           const reportPermissionsData: OperationResult<ReportPermission[]> =
             await ProfileService.getProfileReportOperations(
-              token ?? "",
+              token,
               parseInt(selectedReportMainModule),
               compID!,
               profileID
             );
 
           if (reportPermissionsData.success && reportPermissionsData.data) {
-            console.log(
-              "Fetched Report Permissions: ",
-              reportPermissionsData.data
-            );
             setReportPermissions(
-              (reportPermissionsData.data ?? []).map((permission) => ({
+              reportPermissionsData.data.map((permission) => ({
                 profDetID: permission.profDetID,
                 reportID: permission.reportID,
                 reportName: permission.reportName,
@@ -194,81 +180,65 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
               }))
             );
           } else {
-            console.error(
-              "Error fetching report permissions:",
-              reportPermissionsData.errorMessage
-            );
             notifyError("Error fetching report permissions");
           }
         } catch (error) {
-          console.error("Error fetching report permissions:", error);
           notifyError("Error fetching report permissions");
         }
-      };
+      }
+    };
 
-      fetchReportPermissions();
-    }
-  }, [selectedReportMainModule, compID, token, profileID]);
+    fetchReportPermissions();
+  }, [selectedReportMainModule]);
 
   useEffect(() => {
-    const allSelected = permissions.every((permission) => permission.allow);
-    setSelectAllChecked(allSelected);
+    setSelectAllChecked(permissions.every((permission) => permission.allow));
   }, [permissions]);
 
   useEffect(() => {
-    const allSelected = reportPermissions.every(
-      (permission) => permission.allow
+    setSelectAllReportChecked(
+      reportPermissions.every((permission) => permission.allow)
     );
-    setSelectAllReportChecked(allSelected);
   }, [reportPermissions]);
 
-  const fetchSubModules = async () => {
-    if (profileDetailsDropdowns.mainModuleID) {
-      try {
-        const subModulesData = await moduleService.getActiveSubModules(
-          adminYN === "Y" ? 0 : userID ?? 0,
-          token ?? ""
-        );
-        const filteredSubModules = subModulesData.filter(
-          (subModule) =>
-            subModule.auGrpID.toString() ===
-            profileDetailsDropdowns.mainModuleID
-        );
-        console.log(
-          "Fetched Sub Modules for Main Module ",
-          profileDetailsDropdowns.mainModuleID,
-          ": ",
-          filteredSubModules
-        );
-        setDropdownValues((prevValues) => ({
-          ...prevValues,
-          subModulesOptions: filteredSubModules.map((subModule) => ({
-            label: subModule.title,
-            value: subModule.subID.toString(),
-          })),
-        }));
-        setProfileDetailsDropdowns((prevValues) => ({
-          ...prevValues,
-          subModuleID: "",
-          subModuleName: "",
-        })); // Reset selected submodule when main module changes
-        setPermissions([]); // Reset permissions when main module changes
-        setReportPermissions([]); // Reset report permissions when main module changes
-      } catch (error) {
-        console.error("Error fetching submodules:", error);
-        notifyError("Error fetching submodules");
-      }
-    }
-  };
-
   useEffect(() => {
+    const fetchSubModules = async () => {
+      if (profileDetailsDropdowns.mainModuleID && token) {
+        try {
+          const subModulesData = await moduleService.getActiveSubModules(
+            adminYN === "Y" ? 0 : userID ?? 0,
+            token
+          );
+          const filteredSubModules = subModulesData.filter(
+            (subModule) =>
+              subModule.auGrpID.toString() ===
+              profileDetailsDropdowns.mainModuleID
+          );
+          setDropdownValues((prevValues) => ({
+            ...prevValues,
+            subModulesOptions: filteredSubModules.map((subModule) => ({
+              label: subModule.title,
+              value: subModule.subID.toString(),
+            })),
+          }));
+          setProfileDetailsDropdowns((prevValues) => ({
+            ...prevValues,
+            subModuleID: "",
+            subModuleName: "",
+          })); // Reset selected submodule when main module changes
+          setPermissions([]); // Reset permissions when main module changes
+          setReportPermissions([]); // Reset report permissions when main module changes
+        } catch (error) {
+          notifyError("Error fetching submodules");
+        }
+      }
+    };
+
     fetchSubModules();
   }, [profileDetailsDropdowns.mainModuleID]);
 
   const handleReportMainModuleChange = (event: SelectChangeEvent<string>) => {
-    const selectedValue = event.target.value;
-    console.log("Report Main Module Selected: ", selectedValue); // Log selected value
-    setSelectedReportMainModule(selectedValue);
+    setSelectedReportMainModule(event.target.value);
   };
 
   const handlePermissionChange = async (
@@ -285,7 +255,7 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
 
     setPermissions([...permissions]);
 
-    if (token && profileID) {
+    if ( profileID) {
       const profileDetail: ProfileDetailDto = {
         profDetID: existingPermission?.profDetID || 0,
         profileID: profileID,
@@ -297,18 +267,11 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
         reportYN: "N",
       };
 
-      console.log("Saving permission with data:", profileDetail);
-
       try {
         const result: OperationResult<ProfileDetailDto> =
-          await ProfileService.saveOrUpdateProfileDetail(token, profileDetail);
-
-        console.log("API call result:", result);
+          await ProfileService.saveOrUpdateProfileDetail(token!, profileDetail);
 
         if (result.success) {
-          console.log(
-            `Permission ${permissionID} saved successfully, Allow: ${allow}`
-          );
           if (existingPermission) {
             existingPermission.profDetID = result.data?.profDetID;
           }
@@ -318,13 +281,9 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
             notifyError(`Module Permission Removed`);
           }
         } else {
-          console.error(
-            `Error saving permission ${permissionID}: ${result.errorMessage}`
-          );
           notifyError(`Error saving permission ${permissionID}`);
         }
       } catch (error) {
-        console.error("Error saving permissions:", error);
         notifyError("Error saving permissions");
       }
     }
@@ -344,7 +303,7 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
 
     setReportPermissions([...reportPermissions]);
 
-    if (token && profileID) {
+    if ( profileID) {
       const profileDetail: ProfileDetailDto = {
         profDetID: existingReportPermission?.profDetID || 0,
         profileID: profileID,
@@ -356,18 +315,11 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
         reportYN: "Y",
       };
 
-      console.log("Saving report permission with data:", profileDetail);
-
       try {
         const result: OperationResult<ProfileDetailDto> =
-          await ProfileService.saveOrUpdateProfileDetail(token, profileDetail);
-
-        console.log("API call result:", result);
+          await ProfileService.saveOrUpdateProfileDetail(token!, profileDetail);
 
         if (result.success) {
-          console.log(
-            `Report Permission ${reportID} saved successfully, Allow: ${allow}`
-          );
           if (existingReportPermission) {
             existingReportPermission.profDetID = result.data?.profDetID;
           }
@@ -375,13 +327,9 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
             allow ? `Module Permission Applied` : `Module Permission Removed`
           );
         } else {
-          console.error(
-            `Error saving report permission ${reportID}: ${result.errorMessage}`
-          );
           notifyError(`Error saving report permission ${reportID}`);
         }
       } catch (error) {
-        console.error("Error saving report permissions:", error);
         notifyError("Error saving report permissions");
       }
     }
@@ -399,7 +347,7 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
     setPermissions(updatedPermissions);
     setSelectAllChecked(allow);
 
-    if (token && profileID) {
+    if ( profileID) {
       try {
         const profileDetails: ProfileDetailDto[] = updatedPermissions.map(
           (permission) => ({
@@ -415,14 +363,9 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
         );
 
         for (const detail of profileDetails) {
-          console.log("Saving permission with data:", detail);
-
           const result: OperationResult<ProfileDetailDto> =
-            await ProfileService.saveOrUpdateProfileDetail(token, detail);
+            await ProfileService.saveOrUpdateProfileDetail(token!, detail);
           if (result.success) {
-            console.log(
-              `Permission ${detail.aOPRID} saved successfully, Allow: ${allow}`
-            );
             const updatedPermission = permissions.find(
               (permission) => permission.operationID === detail.aOPRID
             );
@@ -453,7 +396,7 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
     setReportPermissions(updatedReportPermissions);
     setSelectAllReportChecked(allow);
 
-    if (token && profileID) {
+    if ( profileID) {
       try {
         const profileDetails: ProfileDetailDto[] = updatedReportPermissions.map(
           (permission) => ({
@@ -469,14 +412,9 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
         );
 
         for (const detail of profileDetails) {
-          console.log("Saving report permission with data:", detail);
-
           const result: OperationResult<ProfileDetailDto> =
-            await ProfileService.saveOrUpdateProfileDetail(token, detail);
+            await ProfileService.saveOrUpdateProfileDetail(token!, detail);
           if (result.success) {
-            console.log(
-              `Report Permission ${detail.aOPRID} saved successfully, Allow: ${allow}`
-            );
             const updatedReportPermission = reportPermissions.find(
               (permission) => permission.reportID === detail.aOPRID
             );
@@ -504,6 +442,7 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
       subModulesOptions: [],
       reportPermissionsOptions: [],
     }));
+    setProfileDetailsDropdowns(getInitialProfileDetailsDropdownsState()); // Reset profileDetailsDropdowns state
   };
 
   const handleReportPermissionClear = () => {

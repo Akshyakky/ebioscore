@@ -13,6 +13,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import TextArea from "../../../../components/TextArea/TextArea";
 import ProfileService from "../../../../services/SecurityManagementServices/ProfileListServices";
+import { notifySuccess, notifyError } from "../../../../utils/Common/toastManager";
 
 interface ProfileDetailsProps {
   profile: ProfileListSearchResult | null;
@@ -79,18 +80,19 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             profileMastDto.profileID,
             profileMastDto.rActiveYN === "N" ? "Hidden" : "Active"
           );
+          notifySuccess("Profile saved successfully");
         } else {
-          console.error("Error saving profile", result.errorMessage);
+          notifyError("Error saving profile");
         }
       } else {
-        alert("Profile Code and Profile Name are required fields.");
+        notifyError("Profile Code and Profile Name are required fields.");
       }
     } catch (error: any) {
-      console.error("Error saving profile", error);
+      notifyError("Error saving profile");
       if (error.response) {
         console.error("Response data:", error.response.data);
       } else if (error.request) {
-        alert("Error: No response received from server.");
+        notifyError("Error: No response received from server.");
       } else {
         console.error("Error message:", error.message);
       }
