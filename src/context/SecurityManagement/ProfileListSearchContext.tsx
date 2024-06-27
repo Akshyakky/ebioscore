@@ -10,7 +10,7 @@ interface ProfileListSearchContextProps {
   searchResults: ProfileListSearchResult[];
   performSearch: (searchTerm: string) => Promise<void>;
   fetchAllProfiles: () => Promise<void>;
-  updateProfileStatus: (profileID: number, status: string) => void; // Add this method
+  updateProfileStatus: (profileID: number, status: string) => void;
 }
 
 export const ProfileListSearchContext =
@@ -18,7 +18,7 @@ export const ProfileListSearchContext =
     searchResults: [],
     performSearch: async () => {},
     fetchAllProfiles: async () => {},
-    updateProfileStatus: () => {}, // Initialize with an empty function
+    updateProfileStatus: () => {},
   });
 
 interface ProfileListSearchProviderProps {

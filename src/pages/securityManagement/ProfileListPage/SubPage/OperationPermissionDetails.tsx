@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Grid,
-  Paper,
-  Typography,
-  FormControlLabel,
-  Checkbox,
-  SelectChangeEvent,
-} from "@mui/material";
+import { Grid, Paper, Typography, SelectChangeEvent } from "@mui/material";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import moduleService from "../../../../services/CommonServices/ModuleService";
@@ -24,8 +17,9 @@ import {
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
-//AKYComment:Rename Sidebar with actual name
-interface SideBarProps {
+import CustomCheckbox from "../../../../components/Checkbox/Checkbox";
+
+interface OperationPermissionProps {
   profileID: number;
   profileName: string;
 }
@@ -44,7 +38,7 @@ interface ReportPermission {
   allow: boolean;
 }
 
-const OperationPermissionDetails: React.FC<SideBarProps> = ({
+const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
   profileID,
   profileName,
 }) => {
@@ -65,8 +59,8 @@ const OperationPermissionDetails: React.FC<SideBarProps> = ({
     ReportPermission[]
   >([]);
   const [selectAllChecked, setSelectAllChecked] = useState(false);
-  const [selectAllReportChecked, setSelectAllReportChecked] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [, setSelectAllReportChecked] = useState(false);
+  const [isSubmitted] = useState(false);
 
   const getInitialProfileDetailsDropdownsState =
     (): ProfileDetailsDropdowns => ({
@@ -261,7 +255,7 @@ const OperationPermissionDetails: React.FC<SideBarProps> = ({
         profileID: profileID,
         profileName: profileName,
         aOPRID: permissionID,
-        compID: 1, //AKYCOmment:Pass proper CompID from Redux UserInfo
+        compID: compID!,
         rActiveYN: allow ? "Y" : "N",
         rNotes: "",
         reportYN: "N",
@@ -309,7 +303,7 @@ const OperationPermissionDetails: React.FC<SideBarProps> = ({
         profileID: profileID,
         profileName: profileName,
         aOPRID: reportID,
-        compID: 1, //AKYCOmment:Pass proper CompID from Redux UserInfo
+        compID: compID!,
         rActiveYN: allow ? "Y" : "N",
         rNotes: "",
         reportYN: "Y",
@@ -404,7 +398,7 @@ const OperationPermissionDetails: React.FC<SideBarProps> = ({
             profileID: profileID,
             profileName: profileName,
             aOPRID: permission.reportID,
-            compID: 1, //AKYCOmment:Pass proper CompID from Redux UserInfo
+            compID: compID!,
             rActiveYN: allow ? "Y" : "N",
             rNotes: "",
             reportYN: "Y",
@@ -435,14 +429,14 @@ const OperationPermissionDetails: React.FC<SideBarProps> = ({
 
   const handleClear = () => {
     setPermissions([]);
-    setSelectedReportMainModule(""); // Reset report main module when clearing
+    setSelectedReportMainModule("");
     setReportPermissions([]);
     setDropdownValues((prevValues) => ({
       ...prevValues,
       subModulesOptions: [],
       reportPermissionsOptions: [],
     }));
-    setProfileDetailsDropdowns(getInitialProfileDetailsDropdownsState()); // Reset profileDetailsDropdowns state
+    setProfileDetailsDropdowns(getInitialProfileDetailsDropdownsState());
   };
 
   const handleReportPermissionClear = () => {
@@ -515,19 +509,12 @@ const OperationPermissionDetails: React.FC<SideBarProps> = ({
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={selectAllChecked}
-                            onChange={handleSelectAllChange}
-                            color="primary"
-                          />
-                        }
-                        label={
-                          <Typography variant="subtitle1">
-                            <strong>Allow [Select All]</strong>
-                          </Typography>
-                        }
+                      <CustomCheckbox
+                        label="Allow [Select All]"
+                        name="selectAll"
+                        checked={selectAllChecked}
+                        onChange={handleSelectAllChange}
+                        isMandatory={false}
                       />
                     </Grid>
                   </Grid>
@@ -544,7 +531,9 @@ const OperationPermissionDetails: React.FC<SideBarProps> = ({
                         {permission.operationName}
                       </Grid>
                       <Grid item xs={6}>
-                        <Checkbox
+                        <CustomCheckbox
+                          label=""
+                          name={`permission_${permission.operationID}`}
                           checked={permission.allow}
                           onChange={(event) =>
                             handlePermissionChange(
@@ -552,7 +541,7 @@ const OperationPermissionDetails: React.FC<SideBarProps> = ({
                               event.target.checked
                             )
                           }
-                          color="primary"
+                          isMandatory={false}
                         />
                       </Grid>
                     </Grid>
@@ -586,7 +575,7 @@ const OperationPermissionDetails: React.FC<SideBarProps> = ({
               clearable
               onClear={handleReportPermissionClear}
             />
-            {/* AKYComment:Use Generic Components Check Box [CustomCheckbox] */}
+
             {selectedReportMainModule && (
               <>
                 <Grid
@@ -601,19 +590,12 @@ const OperationPermissionDetails: React.FC<SideBarProps> = ({
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={selectAllReportChecked}
-                          onChange={handleSelectAllReportChange}
-                          color="primary"
-                        />
-                      }
-                      label={
-                        <Typography variant="subtitle1">
-                          <strong>Allow [Select All]</strong>
-                        </Typography>
-                      }
+                    <CustomCheckbox
+                      label="Allow [Select All]"
+                      name="selectAll"
+                      checked={selectAllChecked}
+                      onChange={handleSelectAllChange}
+                      isMandatory={false}
                     />
                   </Grid>
                 </Grid>
@@ -630,7 +612,9 @@ const OperationPermissionDetails: React.FC<SideBarProps> = ({
                       {permission.reportName}
                     </Grid>
                     <Grid item xs={6}>
-                      <Checkbox
+                      <CustomCheckbox
+                        label=""
+                        name={`reportPermission_${permission.reportID}`}
                         checked={permission.allow}
                         onChange={(event) =>
                           handleReportPermissionChange(
@@ -638,7 +622,7 @@ const OperationPermissionDetails: React.FC<SideBarProps> = ({
                             event.target.checked
                           )
                         }
-                        color="primary"
+                        isMandatory={false}
                       />
                     </Grid>
                   </Grid>

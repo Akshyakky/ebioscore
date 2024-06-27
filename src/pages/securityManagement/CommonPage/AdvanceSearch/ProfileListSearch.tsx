@@ -8,7 +8,6 @@ import {
   DialogTitle,
   Grid,
   Typography,
-  CircularProgress,
   Box,
   FormControlLabel,
 } from "@mui/material";
@@ -26,6 +25,7 @@ import {
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
+import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 
 interface ProfileListSearchResultProps {
   show: boolean;
@@ -93,6 +93,12 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
     }
   };
 
+  // Create a new data array with an index starting at 1
+  const dataWithIndex = searchResults.map((item, index) => ({
+    ...item,
+    serialNumber: index + 1,
+  }));
+
   const columns = [
     {
       key: "PatientEdit",
@@ -106,7 +112,7 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
         />
       ),
     },
-    { key: "profileID", header: "Sl.No", visible: true },
+    { key: "serialNumber", header: "Sl.No", visible: true },
     { key: "profileCode", header: "Profile Code", visible: true },
     { key: "profileName", header: "Profile Name", visible: true },
     { key: "rNotes", header: "Notes", visible: true },
@@ -149,7 +155,7 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
-      setSearchTerm(""); // Clear the search term when Enter is pressed
+      setSearchTerm("");
     }
   };
 
@@ -189,12 +195,11 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
                 placeholder="Enter profile code or name"
                 size="small"
                 autoComplete="off"
-                onKeyPress={handleKeyPress} // Add key press handler
+                onKeyPress={handleKeyPress}
               />
             </Grid>
           </Grid>
         </Box>
-        {/* AKYComment:Remove spinner from here use GlobalSpinner Instead */}
         {isLoading ? (
           <Box
             display="flex"
@@ -202,12 +207,12 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
             alignItems="center"
             minHeight="500px"
           >
-            <CircularProgress />
+            <GlobalSpinner />
           </Box>
         ) : (
           <CustomGrid
             columns={columns}
-            data={searchResults}
+            data={dataWithIndex}
             minHeight="500px"
             maxHeight="500px"
           />

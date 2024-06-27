@@ -24,8 +24,8 @@ interface DropdownSelectProps {
   defaultText?: string;
   className?: string;
   isSubmitted?: boolean;
-  clearable?: boolean; // Add this prop
-  onClear?: () => void; // Add this prop
+  clearable?: boolean;
+  onClear?: () => void;
 }
 
 const DropdownSelect: React.FC<DropdownSelectProps> = ({
@@ -40,7 +40,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   defaultText,
   className,
   isSubmitted = false,
-  clearable = false, // Default to false
+  clearable = false,
   onClear,
 }) => {
   const theme = useTheme();
@@ -102,6 +102,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
           ) : null
         }
       >
+        <MenuItem value="">{defaultText || `${label}`}</MenuItem>
         <MenuItem value="">{defaultText || `${label}`}</MenuItem>
         {options.map((option) => (
           <MenuItem
