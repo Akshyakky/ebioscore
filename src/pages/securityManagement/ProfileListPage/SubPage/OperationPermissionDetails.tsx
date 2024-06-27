@@ -24,7 +24,7 @@ import {
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
-
+//AKYComment:Rename Sidebar with actual name
 interface SideBarProps {
   profileID: number;
   profileName: string;
@@ -44,7 +44,7 @@ interface ReportPermission {
   allow: boolean;
 }
 
-const AccessPermissionDetails: React.FC<SideBarProps> = ({
+const OperationPermissionDetails: React.FC<SideBarProps> = ({
   profileID,
   profileName,
 }) => {
@@ -74,7 +74,7 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
       mainModuleName: "",
       subModuleID: "0",
       subModuleName: "",
-      repMainModuleID: "",
+      repMainModuleID: "0",
       repMainModuleName: "",
     });
   const [profileDetailsDropdowns, setProfileDetailsDropdowns] =
@@ -139,7 +139,7 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
             );
             setDropdownValues((prevValues) => ({
               ...prevValues,
-              reportPermissionsOptions: (reportPermissionsData.data??[]).map(
+              reportPermissionsOptions: (reportPermissionsData.data ?? []).map(
                 (permission) => ({
                   label: permission.operationName,
                   value: permission.operationID.toString(),
@@ -225,9 +225,9 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
             ...prevValues,
             subModuleID: "",
             subModuleName: "",
-          })); // Reset selected submodule when main module changes
-          setPermissions([]); // Reset permissions when main module changes
-          setReportPermissions([]); // Reset report permissions when main module changes
+          }));
+          setPermissions([]);
+          setReportPermissions([]);
         } catch (error) {
           notifyError("Error fetching submodules");
         }
@@ -255,13 +255,13 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
 
     setPermissions([...permissions]);
 
-    if ( profileID) {
+    if (profileID) {
       const profileDetail: ProfileDetailDto = {
         profDetID: existingPermission?.profDetID || 0,
         profileID: profileID,
         profileName: profileName,
         aOPRID: permissionID,
-        compID: 1,
+        compID: 1, //AKYCOmment:Pass proper CompID from Redux UserInfo
         rActiveYN: allow ? "Y" : "N",
         rNotes: "",
         reportYN: "N",
@@ -303,13 +303,13 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
 
     setReportPermissions([...reportPermissions]);
 
-    if ( profileID) {
+    if (profileID) {
       const profileDetail: ProfileDetailDto = {
         profDetID: existingReportPermission?.profDetID || 0,
         profileID: profileID,
         profileName: profileName,
         aOPRID: reportID,
-        compID: 1,
+        compID: 1, //AKYCOmment:Pass proper CompID from Redux UserInfo
         rActiveYN: allow ? "Y" : "N",
         rNotes: "",
         reportYN: "Y",
@@ -347,7 +347,7 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
     setPermissions(updatedPermissions);
     setSelectAllChecked(allow);
 
-    if ( profileID) {
+    if (profileID) {
       try {
         const profileDetails: ProfileDetailDto[] = updatedPermissions.map(
           (permission) => ({
@@ -396,7 +396,7 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
     setReportPermissions(updatedReportPermissions);
     setSelectAllReportChecked(allow);
 
-    if ( profileID) {
+    if (profileID) {
       try {
         const profileDetails: ProfileDetailDto[] = updatedReportPermissions.map(
           (permission) => ({
@@ -404,7 +404,7 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
             profileID: profileID,
             profileName: profileName,
             aOPRID: permission.reportID,
-            compID: 1,
+            compID: 1, //AKYCOmment:Pass proper CompID from Redux UserInfo
             rActiveYN: allow ? "Y" : "N",
             rNotes: "",
             reportYN: "Y",
@@ -586,7 +586,7 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
               clearable
               onClear={handleReportPermissionClear}
             />
-
+            {/* AKYComment:Use Generic Components Check Box [CustomCheckbox] */}
             {selectedReportMainModule && (
               <>
                 <Grid
@@ -652,4 +652,4 @@ const AccessPermissionDetails: React.FC<SideBarProps> = ({
   );
 };
 
-export default AccessPermissionDetails;
+export default OperationPermissionDetails;

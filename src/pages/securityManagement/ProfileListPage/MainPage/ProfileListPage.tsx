@@ -6,12 +6,10 @@ import ActionButtonGroup, {
   ButtonProps,
 } from "../../../../components/Button/ActionButtonGroup";
 import ProfileDetails from "../SubPage/ProfileDetails";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import ProfileListSearch from "../../CommonPage/AdvanceSearch/ProfileListSearch";
 import { ProfileListSearchContext } from "../../../../context/SecurityManagement/ProfileListSearchContext";
 import { ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
-import AccessPermissionDetails from "../SubPage/AccessPermissionDetails";
+import OperationPermissionDetails from "../SubPage/OperationPermissionDetails";
 
 const ProfileListPage: React.FC = () => {
   const [isSaved, setIsSaved] = useState(false);
@@ -21,9 +19,6 @@ const ProfileListPage: React.FC = () => {
   const { fetchAllProfiles, updateProfileStatus } = useContext(
     ProfileListSearchContext
   );
-
-  const userInfo = useSelector((state: RootState) => state.userDetails);
-  const { token } = userInfo;
 
   const handleAdvancedSearch = async () => {
     setIsSearchDialogOpen(true);
@@ -54,12 +49,6 @@ const ProfileListPage: React.FC = () => {
     await fetchAllProfiles();
   };
 
-  const effectiveUserID = userInfo
-    ? userInfo.adminYN === "Y"
-      ? 0
-      : userInfo.userID
-    : -1;
-
   const actionButtons: ButtonProps[] = [
     {
       variant: "contained",
@@ -85,7 +74,7 @@ const ProfileListPage: React.FC = () => {
           updateProfileStatus={updateProfileStatus}
         />
         {isSaved && selectedProfile && (
-          <AccessPermissionDetails
+          <OperationPermissionDetails
             profileID={selectedProfile.profileID}
             profileName={selectedProfile.profileName}
           />

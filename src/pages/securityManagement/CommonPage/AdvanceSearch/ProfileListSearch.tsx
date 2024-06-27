@@ -143,7 +143,7 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
   ];
 
   const handleDialogClose = () => {
-    setSearchTerm(""); // Clear the search term when dialog is closed
+    setSearchTerm("");
     handleClose();
   };
 
@@ -194,6 +194,7 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
             </Grid>
           </Grid>
         </Box>
+        {/* AKYComment:Remove spinner from here use GlobalSpinner Instead */}
         {isLoading ? (
           <Box
             display="flex"
