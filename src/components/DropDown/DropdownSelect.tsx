@@ -78,7 +78,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
         onChange={onChange}
         label={label}
         disabled={disabled}
-        displayEmpty
+        // displayEmpty
         endAdornment={
           clearable && value ? (
             <InputAdornment position="end">
@@ -102,6 +102,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
           ) : null
         }
       >
+        <MenuItem value="">{defaultText || `${label}`}</MenuItem>
         <MenuItem value="">{defaultText || `${label}`}</MenuItem>
         {options.map((option) => (
           <MenuItem
