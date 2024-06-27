@@ -66,6 +66,7 @@ export const getWaitingPatientDetails = async (
     params.append("AttendingPhysicianID", attendingPhysicianID.toString());
   if (dateFilterType !== undefined)
     params.append("dateFilterType", dateFilterType);
+  else params.append("dateFilterType", DateFilterType.Today);
   if (startDate !== undefined)
     params.append("startDate", startDate.toISOString().split("T")[0]); // Format as YYYY-MM-DD
   if (endDate !== undefined)
