@@ -67,3 +67,10 @@ export enum DateFilterType {
   LastThreeMonths = "LastThreeMonths",
   Custom = "Custom",
 }
+
+
+
+export interface RevisitListData {
+  contactMastDto: revisitFormData;
+  // contactAddressDto: ContactAddressData;
+}

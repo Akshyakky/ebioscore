@@ -4,11 +4,11 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
 import { useLoading } from "../../../../context/LoadingContext";
-import {
-  InsuranceFormState,
-} from "../../../../interfaces/PatientAdministration/InsuranceDetails";
+import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
+import ActionButtonGroup, {
+  ButtonProps,
+} from "../../../../components/Button/ActionButtonGroup";
 
 import {
   Search as SearchIcon,
@@ -27,7 +27,8 @@ const AdmissionPage: React.FC = () => {
   const { performSearch } = useContext(PatientSearchContext);
   const token = userInfo.token!;
   const [selectedPChartID, setSelectedPChartID] = useState<number | 0>(0);
-  const [shouldClearInsuranceData, setShouldClearInsuranceData] = useState(false);
+  const [shouldClearInsuranceData, setShouldClearInsuranceData] =
+    useState(false);
   const [triggerInsuranceSave, setTriggerInsuranceSave] = useState(false);
   const { setLoading } = useLoading();
 
@@ -72,36 +73,34 @@ const AdmissionPage: React.FC = () => {
   ];
 
   return (
-
     <MainLayout>
-    <Container maxWidth={false}>
-    <Box sx={{ marginBottom: 2 }}>
+      <Container maxWidth={false}>
+        <Box sx={{ marginBottom: 2 }}>
           <ActionButtonGroup buttons={actionButtons} />
         </Box>
-      <Paper variant="outlined" sx={{ padding: 2 }}>
-        <Grid container justifyContent="space-between" alignItems="center">
-          <Grid item>
+        <Paper variant="outlined" sx={{ padding: 2 }}>
+          <Grid container justifyContent="space-between" alignItems="center">
+            <Grid item></Grid>
           </Grid>
-        </Grid>
-        <InsurancePage
-          pChartID={selectedPChartID}
-          token={token}
-          onSave={handleSaveInsuranceData}
-          shouldClearData={shouldClearInsuranceData}
-          triggerSave={triggerInsuranceSave}
-        />
-      </Paper>
-      <Box sx={{ marginTop: 2 }}>
-      <FormSaveClearButton
-        clearText="Clear"
-        saveText="Save"
-        onClear={handleClear}
-        onSave={handleSave}
-        clearIcon={DeleteIcon}
-        saveIcon={SaveIcon}
-      />
-      </Box>
-    </Container>
+          <InsurancePage
+            pChartID={selectedPChartID}
+            token={token}
+            onSave={handleSaveInsuranceData}
+            shouldClearData={shouldClearInsuranceData}
+            triggerSave={triggerInsuranceSave}
+          />
+        </Paper>
+        <Box sx={{ marginTop: 2 }}>
+          <FormSaveClearButton
+            clearText="Clear"
+            saveText="Save"
+            onClear={handleClear}
+            onSave={handleSave}
+            clearIcon={DeleteIcon}
+            saveIcon={SaveIcon}
+          />
+        </Box>
+      </Container>
     </MainLayout>
   );
 };

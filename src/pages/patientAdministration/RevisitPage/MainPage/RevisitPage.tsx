@@ -1,9 +1,16 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import { Box, Container, Grid, Paper } from "@mui/material";
 import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import {
   RevisitFormErrors,
+  RevisitListData,
   revisitFormData,
 } from "../../../../interfaces/PatientAdministration/revisitFormData";
 import { useSelector } from "react-redux";
@@ -21,12 +28,9 @@ import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/u
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { BillingService } from "../../../../services/BillingServices/BillingService";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
-import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import { DepartmentService } from "../../../../services/CommonServices/DepartmentService";
 import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
-import useDropdown from "../../../../hooks/useDropdown";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
@@ -36,11 +40,15 @@ import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics"
 import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
 import GeneralAlert from "../../../../components/GeneralAlert/GeneralAlert";
 import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientSearch";
+import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
+import useDropdownChange from "../../../../hooks/useDropdownChange";
 
 const RevisitPage: React.FC = () => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
-  const revisitInitialState: revisitFormData = {
+  const compID = userInfo.compID!;
+
+  const revisitInitialState = (): revisitFormData => ({
     opVID: 0,
     pChartID: 0,
     pVisitDate: new Date().toISOString().split("T")[0],
@@ -82,14 +90,12 @@ const RevisitPage: React.FC = () => {
     refSource2: "",
     oldPChartID: 0,
     transferYN: "N",
-  };
+  });
+
+  const [revisitFormData, setRevisitFormData] = useState<revisitFormData>(
+    revisitInitialState()
+  );
   const uhidRef = useRef<HTMLInputElement>(null);
-  const [revisitFormData, setRevisitFormData] =
-    useState<revisitFormData>(revisitInitialState);
-  const { handleDropdownChange } =
-    useDropdownChange<revisitFormData>(setRevisitFormData);
-  const { handleRadioButtonChange } =
-    useRadioButtonChange<revisitFormData>(setRevisitFormData);
   const [selectedPChartID, setSelectedPChartID] = useState<number | 0>(0);
   const { setLoading } = useLoading();
 
@@ -108,6 +114,62 @@ const RevisitPage: React.FC = () => {
   const [showWaitingPatientSearch, setShowWaitingPatientSearch] =
     useState(false);
   const [triggerInsuranceSave, setTriggerInsuranceSave] = useState(false);
+  const [picValues, setPicValues] = useState<DropdownOption[]>([]);
+  const [departmentValues, setDepartmentValues] = useState<DropdownOption[]>(
+    []
+  );
+  const [primaryIntroducingSource, setPrimaryIntroducingSource] = useState<
+    DropdownOption[]
+  >([]);
+  const { handleDropdownChange } =
+    useDropdownChange<revisitFormData>(setRevisitFormData);
+
+  const loadDropdownValues = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [picValues, departmentValues, primaryIntroducingSource] =
+        await Promise.all([
+          BillingService.fetchPicValues(token, "GetPICDropDownValues"),
+          DepartmentService.fetchDepartments(
+            token,
+            "GetActiveRegistrationDepartments",
+            compID
+          ),
+          ContactMastService.fetchRefferalPhy(
+            token,
+            "GetActiveReferralContacts",
+            compID
+          ),
+        ]);
+
+      setPicValues(
+        picValues.map((item) => ({
+          value: item.value.toString(),
+          label: item.label,
+        }))
+      );
+      setDepartmentValues(
+        departmentValues.map((item) => ({
+          value: item.value.toString(),
+          label: item.label,
+        }))
+      );
+      setPrimaryIntroducingSource(
+        primaryIntroducingSource.map((item) => ({
+          value: item.value.toString(),
+          label: item.label,
+        }))
+      );
+    } catch (error) {
+      console.error("Error loading dropdown values:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, compID, setLoading]);
+
+  useEffect(() => {
+    loadDropdownValues();
+  }, [loadDropdownValues]);
 
   const validateForm = () => {
     const errors: RevisitFormErrors = {};
@@ -130,6 +192,31 @@ const RevisitPage: React.FC = () => {
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  const handleRadioButtonChange = (field: string[], textField: string[]) => async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    setRevisitFormData((prevState) => ({
+      ...prevState,
+      [field[0]]: value,
+      [textField[0]]: event.target.labels ? event.target.labels[0].textContent : "",
+    }));
+  
+    if (value === "H") {
+      // Fetch and set department values
+      const departmentValues = await DepartmentService.fetchDepartments(token, "GetActiveRegistrationDepartments", compID);
+      setDepartmentValues(departmentValues.map((item) => ({
+        value: item.value.toString(),
+        label: item.label,
+      })));
+    } else if (value === "P") {
+      // Fetch and set attending physicians
+      const availablePhysicians = await ContactMastService.fetchAvailableAttendingPhysicians(token, selectedPChartID);
+      setAvailableAttendingPhysicians(availablePhysicians.map((item) => ({
+        value: item.value.toString(),
+        label: item.label,
+      })));
+    }
   };
 
   const handlePatientSelect = async (selectedSuggestion: string) => {
@@ -180,9 +267,11 @@ const RevisitPage: React.FC = () => {
     setShowPatientSearch(true);
     await performSearch("");
   };
+
   const handleWaitingSearch = async () => {
     setShowWaitingPatientSearch(true);
   };
+
   const actionButtons: ButtonProps[] = [
     {
       variant: "contained",
@@ -207,53 +296,9 @@ const RevisitPage: React.FC = () => {
   ];
   const { performSearch } = useContext(PatientSearchContext);
 
-  const transformPicValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
-  const transformDepartmentValues = (
-    data: DropdownOption[]
-  ): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
-  const transformprimaryIntroducingSource = (
-    data: DropdownOption[]
-  ): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
-  const picResult = useDropdown(
-    BillingService.fetchPicValues,
-    transformPicValues,
-    [token, "GetPICDropDownValues"]
-  );
-  const departmentResult = useDropdown(
-    DepartmentService.fetchDepartments,
-    transformDepartmentValues,
-    [token, "GetActiveRegistrationDepartments", userInfo.compID ?? 0]
-  );
-  const primaryIntroducingSourceResult = useDropdown(
-    ContactMastService.fetchRefferalPhy,
-    transformprimaryIntroducingSource,
-    [token, "GetActiveReferralContacts", userInfo.compID ?? 0]
-  );
-  const picValues = picResult.options as DropdownOption[];
-  const departmentValues = departmentResult.options as DropdownOption[];
-  const primaryIntroducingSource =
-    primaryIntroducingSourceResult.options as DropdownOption[];
-  const visitOptions = [
-    { value: "H", label: "Hospital" },
-    { value: "P", label: "Physician" },
-  ];
   const isHospitalVisit = () => revisitFormData.pVisitType === "H";
   const isPhysicianVisit = () => revisitFormData.pVisitType === "P";
+
   useEffect(() => {
     if (uhidRef.current) {
       uhidRef.current.focus();
@@ -312,6 +357,11 @@ const RevisitPage: React.FC = () => {
       setShouldClearInsuranceData(false);
     }
   }, [shouldClearInsuranceData]);
+
+  const handleSaveInsuranceData = (data: InsuranceFormState[]) => {
+    console.log("Insurance data saved:", data);
+  };
+
   return (
     <MainLayout>
       <Container maxWidth={false}>
@@ -397,12 +447,14 @@ const RevisitPage: React.FC = () => {
                 <RadioGroup
                   name="visitDetails"
                   label="Visit To"
-                  options={visitOptions}
+                  options={[
+                    { value: "H", label: "Hospital" },
+                    { value: "P", label: "Physician" },
+                  ]}
                   selectedValue={revisitFormData.pVisitType}
                   onChange={handleRadioButtonChange(
                     ["pVisitType"],
-                    ["pVisitTypeText"],
-                    visitOptions
+                    ["pVisitTypeText"]
                   )}
                   inline={true}
                 />
@@ -410,7 +462,7 @@ const RevisitPage: React.FC = () => {
             </Grid>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-                {isHospitalVisit && (
+                {isHospitalVisit() && (
                   <DropdownSelect
                     label="Department"
                     name="Department"
@@ -430,7 +482,7 @@ const RevisitPage: React.FC = () => {
                     isSubmitted={isSubmitted}
                   />
                 )}
-                {isPhysicianVisit && (
+                {isPhysicianVisit() && (
                   <DropdownSelect
                     name="AttendingPhysician"
                     label="Attending Physician"
@@ -478,9 +530,9 @@ const RevisitPage: React.FC = () => {
           <InsurancePage
             pChartID={selectedPChartID}
             token={token}
-            onSave={() => {}} // This can be an empty function or a function that handles the save completion
+            onSave={handleSaveInsuranceData}
             shouldClearData={shouldClearInsuranceData}
-            triggerSave={triggerInsuranceSave} // Pass the trigger state as a prop
+            triggerSave={triggerInsuranceSave}
           />
           <PatientVisitHistory pChartID={selectedPChartID} token={token} />
         </Paper>
@@ -496,4 +548,5 @@ const RevisitPage: React.FC = () => {
     </MainLayout>
   );
 };
+
 export default RevisitPage;
