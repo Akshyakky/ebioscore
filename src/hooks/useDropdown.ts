@@ -1,15 +1,6 @@
-// hooks/useDropdown.ts
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { DropdownOption } from "../interfaces/Common/DropdownOption";
 
-// Assuming DropdownOption is already defined somewhere in your project
-interface DropdownOption {
-  value: string | number;
-  label: string;
-}
-
-// Assuming that the serviceFunction returns a promise of an array of data items
-// and that transformData is a function that takes the service function's return type
-// and converts it to an array of DropdownOption
 const useDropdown = (
   serviceFunction: (...args: any[]) => Promise<any[]>,
   transformData: (data: any[]) => DropdownOption[],
@@ -19,12 +10,16 @@ const useDropdown = (
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  const memoizedServiceFunction = useCallback(serviceFunction, []);
+  const memoizedTransformData = useCallback(transformData, []);
+  const memoizedParams = useMemo(() => params, [params]);
+
   useEffect(() => {
     const loadOptions = async () => {
       setLoading(true);
       try {
-        const response = await serviceFunction(...params);
-        setOptions(transformData(response));
+        const response = await memoizedServiceFunction(...memoizedParams);
+        setOptions(memoizedTransformData(response));
       } catch (err) {
         setError(err instanceof Error ? err : new Error("Error fetching data"));
       } finally {
@@ -33,7 +28,7 @@ const useDropdown = (
     };
 
     loadOptions();
-  }, [serviceFunction, transformData, params]);
+  }, [memoizedServiceFunction, memoizedTransformData, memoizedParams]);
 
   return { options, loading, error };
 };

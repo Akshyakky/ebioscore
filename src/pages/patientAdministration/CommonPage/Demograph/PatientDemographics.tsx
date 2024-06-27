@@ -1,26 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { RegistrationService } from "../../../../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { PatientDemographicDetails } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import { useLoading } from "../../../../context/LoadingContext";
 import { OperationResult } from "../../../../interfaces/Common/OperationResult";
-import {
-  notifyError,
-  notifySuccess,
-} from "../../../../utils/Common/toastManager";
-import {
-  Avatar,
-  Box,
-  Card,
-  CardContent,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  IconButton,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
+import { Avatar, Box, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, Tooltip, Typography } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import EditIcon from "@mui/icons-material/Edit";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
@@ -29,10 +13,7 @@ import { ConstantValues } from "../../../../services/CommonServices/ConstantValu
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdown from "../../../../hooks/useDropdown";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
-import {
-  PatientDemoGraph,
-  PatientDemoGraphError,
-} from "../../../../interfaces/PatientAdministration/patientDemoGraph";
+import { PatientDemoGraph, PatientDemoGraphError } from "../../../../interfaces/PatientAdministration/patientDemoGraph";
 import CustomButton from "../../../../components/Button/CustomButton";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
@@ -45,12 +26,8 @@ interface PatientDemographicsProps {
   token: string;
 }
 
-const PatientDemographics: React.FC<PatientDemographicsProps> = ({
-  pChartID,
-  token,
-}) => {
-  const [patientDetails, setPatientDetails] =
-    useState<PatientDemographicDetails | null>(null);
+const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID, token }) => {
+  const [patientDetails, setPatientDetails] = useState<PatientDemographicDetails | null>(null);
   const [open, setOpen] = useState(false);
   const { setLoading } = useLoading();
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -82,18 +59,13 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     pAddEmail: "",
     refSource: "",
   };
-  const [patientDemoGraph, setPatientDemoGraph] = useState<PatientDemoGraph>(
-    patientDemoGraphInitialState
-  );
-  const { handleDropdownChange } =
-    useDropdownChange<PatientDemoGraph>(setPatientDemoGraph);
+  const [patientDemoGraph, setPatientDemoGraph] = useState<PatientDemoGraph>(patientDemoGraphInitialState);
+  const { handleDropdownChange } = useDropdownChange<PatientDemoGraph>(setPatientDemoGraph);
+
   const fetchPatientDetails = async () => {
     setLoading(true);
     try {
-      const response = await RegistrationService.PatientDemoGraph(
-        token,
-        pChartID
-      );
+      const response = await RegistrationService.PatientDemoGraph(token, pChartID);
       if (response.success && response.data) {
         setPatientDetails(response.data);
       } else {
@@ -115,14 +87,11 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
   const formatDate = (dateString: string) => {
     return dateString.split("T")[0]; // Extracts the date part from the ISO string
   };
+
   const fetchPatientDemographics = async () => {
     setLoading(true);
     try {
-      const response: OperationResult<PatientDemoGraph> =
-        await PatientDemoGraphService.getPatientDemographicsByPChartID(
-          token,
-          pChartID
-        );
+      const response: OperationResult<PatientDemoGraph> = await PatientDemoGraphService.getPatientDemographicsByPChartID(token, pChartID);
       if (response.success && response.data) {
         const formattedData = {
           ...response.data,
@@ -134,13 +103,12 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
         notifyError("Patient demographic details not found.");
       }
     } catch (error) {
-      notifyError(
-        "An error occurred while fetching patient demographic details."
-      );
+      notifyError("An error occurred while fetching patient demographic details.");
     } finally {
       setLoading(false);
     }
   };
+
   const handleClickOpen = () => {
     fetchPatientDemographics();
     setOpen(true);
@@ -190,10 +158,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }
     setLoading(true);
     try {
-      const result = await PatientDemoGraphService.savePatientDemographics(
-        token,
-        patientDemoGraph
-      );
+      const result = await PatientDemoGraphService.savePatientDemographics(token, patientDemoGraph);
       if (result.success) {
         notifySuccess("Patient details saved successfully.");
         handleClose();
@@ -208,89 +173,67 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }
   };
 
-  const transformTitleValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-  const titleResult = useDropdown(
-    ConstantValues.fetchConstantValues,
-    transformTitleValues,
-    [token, "GetConstantValues", "PTIT"]
-  );
+  const transformTitleValues = (data: DropdownOption[]): DropdownOption[] => data.map((item) => ({
+    value: item.value.toString(),
+    label: item.label,
+  }));
+
+  const memoizedParams = useMemo(() => [token, "GetConstantValues", "PTIT"], [token]);
+  const titleResult = useDropdown(ConstantValues.fetchConstantValues, transformTitleValues, memoizedParams);
   const titleValues = titleResult.options as DropdownOption[];
 
-  const transformGenderValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-  const genderResult = useDropdown(
-    ConstantValues.fetchConstantValues,
-    transformGenderValues,
-    [token, "GetConstantValues", "PSEX"]
-  );
+  const transformGenderValues = (data: DropdownOption[]): DropdownOption[] => data.map((item) => ({
+    value: item.value.toString(),
+    label: item.label,
+  }));
+
+  const memoizedParamsForGender = useMemo(() => [token, "GetConstantValues", "PSEX"], [token]);
+  const genderResult = useDropdown(ConstantValues.fetchConstantValues, transformGenderValues, memoizedParamsForGender);
   const genderValues = genderResult.options as DropdownOption[];
 
-  const transformBloodGrpValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
+  const transformBloodGrpValues = (data: DropdownOption[]): DropdownOption[] => data.map((item) => ({
+    value: item.value.toString(),
+    label: item.label,
+  }));
 
-  const bloodGrpResult = useDropdown(
-    ConstantValues.fetchConstantValues,
-    transformBloodGrpValues,
-    [token, "GetConstantValues", "PBLD"]
-  );
+  const memoizedParamsForBloodGrp = useMemo(() => [token, "GetConstantValues", "PBLD"], [token]);
+  const bloodGrpResult = useDropdown(ConstantValues.fetchConstantValues, transformBloodGrpValues, memoizedParamsForBloodGrp);
   const bloodGrpValues = bloodGrpResult.options as DropdownOption[];
-  const transformPicValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-  const picResult = useDropdown(
-    BillingService.fetchPicValues,
-    transformPicValues,
-    [token, "GetPICDropDownValues"]
-  );
+
+  const transformPicValues = (data: DropdownOption[]): DropdownOption[] => data.map((item) => ({
+    value: item.value.toString(),
+    label: item.label,
+  }));
+
+  const memoizedParamsForPic = useMemo(() => [token, "GetPICDropDownValues"], [token]);
+  const picResult = useDropdown(BillingService.fetchPicValues, transformPicValues, memoizedParamsForPic);
   const picValues = picResult.options as DropdownOption[];
 
-  const transformAreaValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-  const areaResult = useDropdown(
-    AppModifyListService.fetchAppModifyList,
-    transformAreaValues,
-    [token, "GetActiveAppModifyFieldsAsync", "AREA"]
-  );
+  const transformAreaValues = (data: DropdownOption[]): DropdownOption[] => data.map((item) => ({
+    value: item.value.toString(),
+    label: item.label,
+  }));
+
+  const memoizedParamsForArea = useMemo(() => [token, "GetActiveAppModifyFieldsAsync", "AREA"], [token]);
+  const areaResult = useDropdown(AppModifyListService.fetchAppModifyList, transformAreaValues, memoizedParamsForArea);
   const areaValues = areaResult.options as DropdownOption[];
 
-  const transformCityValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-  const cityResult = useDropdown(
-    AppModifyListService.fetchAppModifyList,
-    transformCityValues,
-    [token, "GetActiveAppModifyFieldsAsync", "CITY"]
-  );
+  const transformCityValues = (data: DropdownOption[]): DropdownOption[] => data.map((item) => ({
+    value: item.value.toString(),
+    label: item.label,
+  }));
+
+  const memoizedParamsForCity = useMemo(() => [token, "GetActiveAppModifyFieldsAsync", "CITY"], [token]);
+  const cityResult = useDropdown(AppModifyListService.fetchAppModifyList, transformCityValues, memoizedParamsForCity);
   const cityValues = cityResult.options as DropdownOption[];
-  const transformNationalityValues = (
-    data: DropdownOption[]
-  ): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-  const nationalityResult = useDropdown(
-    AppModifyListService.fetchAppModifyList,
-    transformNationalityValues,
-    [token, "GetActiveAppModifyFieldsAsync", "ACTUALCOUNTRY"]
-  );
+
+  const transformNationalityValues = (data: DropdownOption[]): DropdownOption[] => data.map((item) => ({
+    value: item.value.toString(),
+    label: item.label,
+  }));
+
+  const memoizedParamsForNationality = useMemo(() => [token, "GetActiveAppModifyFieldsAsync", "ACTUALCOUNTRY"], [token]);
+  const nationalityResult = useDropdown(AppModifyListService.fetchAppModifyList, transformNationalityValues, memoizedParamsForNationality);
   const nationalityValues = nationalityResult.options as DropdownOption[];
 
   if (!pChartID || pChartID === 0) {
@@ -299,32 +242,10 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
 
   return (
     <>
-      <Card
-        sx={{
-          minWidth: 275,
-          boxShadow: 1,
-          "&:hover": { boxShadow: 4 },
-          marginTop: "10px",
-        }}
-      >
-        <CardContent
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            padding: "8px",
-            "&:last-child": {
-              paddingBottom: "8px",
-            },
-          }}
-        >
+      <Card sx={{ minWidth: 275, boxShadow: 1, "&:hover": { boxShadow: 4 }, marginTop: "10px" }}>
+        <CardContent sx={{ display: "flex", alignItems: "center", justifyContent: "flex-start", padding: "8px", "&:last-child": { paddingBottom: "8px" } }}>
           <Tooltip title="Edit Patient Details" placement="top" arrow>
-            <IconButton
-              onClick={handleClickOpen}
-              color="primary"
-              size="small"
-              sx={{ mr: 1 }}
-            >
+            <IconButton onClick={handleClickOpen} color="primary" size="small" sx={{ mr: 1 }}>
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -336,23 +257,13 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
             </Grid>
             <Grid item>
               <Typography variant="body2" component="div" noWrap>
-                {patientDetails?.patientName} | Gender: {patientDetails?.gender}
-                | DOB/Age: {patientDetails?.dateOfBirthOrAge}
+                {patientDetails?.patientName} | Gender: {patientDetails?.gender} | DOB/Age: {patientDetails?.dateOfBirthOrAge}
               </Typography>
             </Grid>
           </Grid>
         </CardContent>
       </Card>
-      <Dialog
-        open={open}
-        onClose={(event, reason) => {
-          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
-            handleClose();
-          }
-        }}
-        fullWidth
-        maxWidth="sm"
-      >
+      <Dialog open={open} onClose={(event, reason) => { if (reason !== "backdropClick" && reason !== "escapeKeyDown") { handleClose(); } }} fullWidth maxWidth="sm">
         <DialogTitle>
           <Typography variant="h6">Edit Patient Details</Typography>
         </DialogTitle>
@@ -367,12 +278,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   type="text"
                   size="small"
                   value={patientDemoGraph.pChartCode}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pChartCode: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setPatientDemoGraph({ ...patientDemoGraph, pChartCode: e.target.value })}
                   isSubmitted={isSubmitted}
                   isMandatory={true}
                   disabled={true}
@@ -385,11 +291,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   size="small"
                   isMandatory={true}
                   isSubmitted={isSubmitted}
-                  onChange={handleDropdownChange(
-                    ["pTitleVal"],
-                    ["pTitle"],
-                    titleValues
-                  )}
+                  onChange={handleDropdownChange(["pTitleVal"], ["pTitle"], titleValues)}
                 />
                 <FloatingLabelTextBox
                   ControlID="PFName"
@@ -398,12 +300,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   type="text"
                   size="small"
                   value={patientDemoGraph.pfName}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pfName: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setPatientDemoGraph({ ...patientDemoGraph, pfName: e.target.value })}
                   isSubmitted={isSubmitted}
                   isMandatory={true}
                 />
@@ -414,12 +311,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   type="text"
                   size="small"
                   value={patientDemoGraph.plName}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      plName: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setPatientDemoGraph({ ...patientDemoGraph, plName: e.target.value })}
                   isSubmitted={isSubmitted}
                   isMandatory={true}
                 />
@@ -430,12 +322,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   type="date"
                   size="small"
                   value={patientDemoGraph.dob}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      dob: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setPatientDemoGraph({ ...patientDemoGraph, dob: e.target.value })}
                   isSubmitted={isSubmitted}
                   isMandatory={true}
                 />
@@ -444,25 +331,17 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   name="Gender"
                   value={patientDemoGraph.pGenderVal}
                   options={genderValues}
-                  onChange={handleDropdownChange(
-                    ["pGenderVal"],
-                    ["pGender"],
-                    genderValues
-                  )}
+                  onChange={handleDropdownChange(["pGenderVal"], ["pGender"], genderValues)}
                   size="small"
                   isMandatory={true}
                   isSubmitted={isSubmitted}
                 />
                 <DropdownSelect
-                  label="BloodGrp"
+                  label="Blood Group"
                   name="BloodGrp"
                   value={patientDemoGraph.pBldGrp}
                   options={bloodGrpValues}
-                  onChange={handleDropdownChange(
-                    ["BloodGrpVal"],
-                    ["BloodGrp"],
-                    genderValues
-                  )}
+                  onChange={handleDropdownChange(["pBldGrp"], ["pBldGrp"], bloodGrpValues)}
                   size="small"
                 />
                 <DropdownSelect
@@ -470,11 +349,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   name="PIC"
                   value={String(patientDemoGraph.pTypeID)}
                   options={picValues}
-                  onChange={handleDropdownChange(
-                    ["pTypeID"],
-                    ["pTypeName"],
-                    picValues
-                  )}
+                  onChange={handleDropdownChange(["pTypeID"], ["pTypeName"], picValues)}
                   size="small"
                   isMandatory={true}
                   isSubmitted={isSubmitted}
@@ -486,12 +361,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   type="date"
                   size="small"
                   value={patientDemoGraph.pRegDate}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pRegDate: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setPatientDemoGraph({ ...patientDemoGraph, pRegDate: e.target.value })}
                   isSubmitted={isSubmitted}
                   isMandatory={true}
                   disabled={true}
@@ -500,15 +370,10 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   ControlID="IdentityNo"
                   title="Aadhaar No"
                   placeholder="Aadhaar No"
-                  type="texttype"
+                  type="text"
                   size="small"
                   value={patientDemoGraph.pssnID}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pssnID: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setPatientDemoGraph({ ...patientDemoGraph, pssnID: e.target.value })}
                   isSubmitted={isSubmitted}
                   isMandatory={true}
                 />
@@ -519,12 +384,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   type="text"
                   size="small"
                   value={patientDemoGraph.intIdPsprt}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      intIdPsprt: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setPatientDemoGraph({ ...patientDemoGraph, intIdPsprt: e.target.value })}
                 />
                 <FloatingLabelTextBox
                   ControlID="Address"
@@ -533,23 +393,14 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   type="text"
                   size="small"
                   value={patientDemoGraph.pAddStreet}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pAddStreet: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setPatientDemoGraph({ ...patientDemoGraph, pAddStreet: e.target.value })}
                 />
                 <DropdownSelect
                   label="Area"
                   name="Area"
                   value={patientDemoGraph.patAreaVal}
                   options={areaValues}
-                  onChange={handleDropdownChange(
-                    ["patAreaVal"],
-                    ["patArea"],
-                    areaValues
-                  )}
+                  onChange={handleDropdownChange(["patAreaVal"], ["patArea"], areaValues)}
                   size="small"
                 />
                 <DropdownSelect
@@ -557,11 +408,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   name="City"
                   value={patientDemoGraph.pAddCityVal}
                   options={cityValues}
-                  onChange={handleDropdownChange(
-                    ["pAddCityVal"],
-                    ["pAddCity"],
-                    cityValues
-                  )}
+                  onChange={handleDropdownChange(["pAddCityVal"], ["pAddCity"], cityValues)}
                   size="small"
                 />
                 <DropdownSelect
@@ -569,11 +416,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   name="Nationality"
                   value={patientDemoGraph.pAddActualCountryVal}
                   options={nationalityValues}
-                  onChange={handleDropdownChange(
-                    ["pAddActualCountryVal"],
-                    ["pAddActualCountry"],
-                    nationalityValues
-                  )}
+                  onChange={handleDropdownChange(["pAddActualCountryVal"], ["pAddActualCountry"], nationalityValues)}
                   size="small"
                 />
                 <FloatingLabelTextBox
@@ -583,12 +426,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   type="text"
                   size="small"
                   value={patientDemoGraph.pAddPhone1}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pAddPhone1: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setPatientDemoGraph({ ...patientDemoGraph, pAddPhone1: e.target.value })}
                   isMandatory={true}
                   isSubmitted={isSubmitted}
                 />
@@ -599,12 +437,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   size="small"
                   placeholder="Email"
                   value={patientDemoGraph.pAddEmail}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pAddEmail: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setPatientDemoGraph({ ...patientDemoGraph, pAddEmail: e.target.value })}
                 />
                 <FloatingLabelTextBox
                   ControlID="RefferalSource"
@@ -614,34 +447,15 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                   placeholder="Refferal Source"
                   value={patientDemoGraph.refSource}
                   disabled={true}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      refSource: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setPatientDemoGraph({ ...patientDemoGraph, refSource: e.target.value })}
                 />
               </Grid>
             </Grid>
           </Box>
         </DialogContent>
         <DialogActions>
-          <CustomButton
-            variant="contained"
-            text="Close"
-            icon={CloseIcon}
-            size="medium"
-            onClick={handleClose}
-            color="secondary"
-          />
-          <CustomButton
-            variant="contained"
-            text="Save"
-            icon={SaveIcon}
-            size="medium"
-            onClick={handlePatientSave}
-            color="success"
-          />
+          <CustomButton variant="contained" text="Close" icon={CloseIcon} size="medium" onClick={handleClose} color="secondary" />
+          <CustomButton variant="contained" text="Save" icon={SaveIcon} size="medium" onClick={handlePatientSave} color="success" />
         </DialogActions>
       </Dialog>
     </>

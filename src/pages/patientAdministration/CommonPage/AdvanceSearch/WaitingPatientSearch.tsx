@@ -43,7 +43,6 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
     Array<{ value: string; label: string }>
   >([]);
 
-  // Fetch waiting patient details on component mount and whenever parameters change
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -57,10 +56,9 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
           fromDate,
           toDate
         );
-        setSearchResults(data.data || []); // Assuming the API returns a property named 'data' with the results
+        setSearchResults(data.data || []);
       } catch (error) {
         console.error("Failed to fetch waiting patient details", error);
-        // Optionally, handle the error (e.g., state management or user notification)
       }
     };
 
@@ -80,31 +78,23 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
   ) => {
     setAttendingPhy(event.target.value as string);
   };
-  // Define a function to handle patient selection
   const handlePatientSelect = (patientId: string) => {
     onPatientSelect(patientId);
     handleClose();
   };
-  // Define a function to handle the cancellation of a visit
   const handleCancelVisit = async (opVID: string) => {
     try {
-      // Call the cancelVisit service method
       const result = await RevisitService.cancelVisit(
         userInfo.token!,
         parseInt(opVID),
         userInfo.userName!
       );
       if (result.success) {
-        // If the cancellation was successful, you might want to refresh the search results
-        // or show a success message to the user.
-        // For example, you could call fetchData() again to refresh the search results.
         alert("Visit cancellation was successful.");
       } else {
-        // If the cancellation failed, show an error message to the user.
         alert("Failed to cancel the visit: " + result.errorMessage);
       }
     } catch (error) {
-      // Handle any unexpected errors
       console.error("An error occurred while canceling the visit:", error);
       alert("An error occurred while canceling the visit.");
     }
@@ -198,7 +188,6 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
                     if (selectedDate && toDate && selectedDate <= toDate) {
                       setFromDate(selectedDate);
                     } else {
-                      // Display an error message or handle the case when the selected date is invalid
                       alert("From Date cannot be greater than To Date");
                     }
                   }}
@@ -219,7 +208,6 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
                     if (selectedDate && fromDate && selectedDate >= fromDate) {
                       setToDate(selectedDate);
                     } else {
-                      // Display an error message or handle the case when the selected date is invalid
                       alert("To Date cannot be less than From Date");
                     }
                   }}
