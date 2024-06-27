@@ -103,7 +103,6 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
         }
       >
         <MenuItem value="">{defaultText || `${label}`}</MenuItem>
-        <MenuItem value="">{defaultText || `${label}`}</MenuItem>
         {options.map((option) => (
           <MenuItem
             key={option.value || option.label}

@@ -1,6 +1,5 @@
 //interfaces/OperationResultts
 export interface OperationResult<T> {
-  length: number;
   success: boolean;
   data?: T;
   errorMessage?: string;

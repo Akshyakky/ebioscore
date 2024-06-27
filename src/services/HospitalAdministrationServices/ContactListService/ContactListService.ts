@@ -17,12 +17,13 @@ const fetchActiveSpecialties = async (
   compId: number
 ): Promise<DropdownOption[]> => {
   try {
-    const url = `${APIConfig.hospitalAdministrations}ContactList/GetActiveSpecialites?compId=${compId}`;
+    const url = `${APIConfig.hospitalAdministrations}ContactList/GetActiveSpecialities?compId=${compId}`;
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
+
     return response.data.map((item: any) => ({
       value: item.facId,
       label: item.facName,
@@ -88,7 +89,7 @@ const fetchContactDetails = async (
   conID: number
 ): Promise<ContactListData> => {
   try {
-    const url = `${APIConfig.hospitalAdministrations}ContactList/GetContactDetails${conID}`;
+    const url = `${APIConfig.hospitalAdministrations}ContactList/GetContactDetails/${conID}`;
     const response = await axios.get(url, {
       headers: {
         Authorization: `Bearer ${token}`,
