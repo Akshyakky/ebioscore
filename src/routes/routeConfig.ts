@@ -8,10 +8,11 @@ import ListOfReportsPage from "../pages/routineReports/MainPage/ListOfReportsPag
 import { PatientSearchProvider } from "../context/PatientSearchContext";
 import ContactListPage from "../pages/hospitalAdministration/ContactListPage/MainPage/ContactListPage";
 import { ContactListSearchProvider } from "../context/hospitalAdministration/ContactListSearchContext";
-import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
+import UserListPage from "../pages/securityManagement/UserListPage/SubPage/UserDetails";
 import ProfileListPage from "../pages/securityManagement/ProfileListPage/MainPage/ProfileListPage";
 import { ProfileListSearchProvider } from "../context/SecurityManagement/ProfileListSearchContext";
 import AdmissionPage from "../pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
+import { UserListSearchContext, UserListSearchProvider } from "../context/SecurityManagement/UserListSearchContext";
 
 
 const routeConfig = [
@@ -41,7 +42,10 @@ const routeConfig = [
     path: "/UserListPage",
     component: UserListPage,
     protected: true,
+    providers: [UserListSearchProvider],
   },
+
+  
   {
     path: "/ProfileListPage",
     component: ProfileListPage,
