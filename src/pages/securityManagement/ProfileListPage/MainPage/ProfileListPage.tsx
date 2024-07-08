@@ -8,10 +8,33 @@ import ActionButtonGroup, {
 import ProfileDetails from "../SubPage/ProfileDetails";
 import ProfileListSearch from "../../CommonPage/AdvanceSearch/ProfileListSearch";
 import { ProfileListSearchContext } from "../../../../context/SecurityManagement/ProfileListSearchContext";
-import { ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
+import {
+  ProfileDetailDto,
+  ProfileListSearchResult,
+} from "../../../../interfaces/SecurityManagement/ProfileListData";
 import OperationPermissionDetails from "../SubPage/OperationPermissionDetails";
+import { OperationResult } from "../../../../interfaces/Common/OperationResult";
+import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
+import { RootState } from "../../../../store/reducers";
+import { useSelector } from "react-redux";
 
-const ProfileListPage: React.FC = () => {
+interface ModuleOperation {
+  profDetID?: number;
+  operationID: number;
+  operationName: string;
+  allow: boolean;
+}
+
+interface OperationPermissionProps {
+  profileID: number;
+  profileName: string;
+  handleSelectAllChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+const ProfileListPage: React.FC<OperationPermissionProps> = ({
+  profileID,
+  profileName,
+}) => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] =
@@ -19,6 +42,12 @@ const ProfileListPage: React.FC = () => {
   const { fetchAllProfiles, updateProfileStatus } = useContext(
     ProfileListSearchContext
   );
+  const { token, compID } = useSelector(
+    (state: RootState) => state.userDetails
+  );
+  const [permissions, setPermissions] = useState<ModuleOperation[]>([]);
+  const [, setSelectAllChecked] = useState(false);
+ 
 
   const handleAdvancedSearch = async () => {
     setIsSearchDialogOpen(true);
@@ -49,6 +78,92 @@ const ProfileListPage: React.FC = () => {
     await fetchAllProfiles();
   };
 
+  const saveProfileDetails = async (permission: ProfileDetailDto) => {
+    if (selectedProfile && token) {
+      try {
+        const result = await ProfileService.saveOrUpdateProfileDetail(token, {
+          profDetID: permission.profDetID || 0,
+          profileID: selectedProfile.profileID || 0,
+          profileName: selectedProfile.profileName,
+          aOPRID: permission.aOPRID, // Assuming 'operationID' is 'aOPRID'
+          compID: permission.compID || 0,
+          rActiveYN: permission.rActiveYN,
+          rNotes: permission.rNotes,
+          reportYN: permission.reportYN,
+        });
+
+        if (result.success) {
+          const updatedPermission = {
+            ...permission,
+            profDetID: result.data?.profDetID,
+          };
+          console.log("Updated permission:", updatedPermission);
+          return updatedPermission;
+        } else {
+          console.error(
+            `Error saving module permission ${permission.aOPRID}: ${result.errorMessage}`
+          );
+          return permission; // Return original permission on error
+        }
+      } catch (error) {
+        console.error(
+          `Error saving module permission ${permission.aOPRID}:`,
+          error
+        );
+        return permission; // Return original permission on error
+      }
+    }
+  };
+
+  const handleSelectAllChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const allow = event.target.checked;
+    const updatedPermissions = permissions.map((permission) => ({
+      ...permission,
+      allow,
+    }));
+
+    setPermissions(updatedPermissions);
+    setSelectAllChecked(allow);
+
+    if (profileID) {
+      try {
+        const profileDetails: ProfileDetailDto[] = updatedPermissions.map(
+          (permission) => ({
+            profDetID: permission.profDetID || 0,
+            profileID: profileID,
+            profileName: profileName,
+            aOPRID: permission.operationID,
+            compID: compID!,
+            rActiveYN: allow ? "Y" : "N",
+            rNotes: "",
+            reportYN: "N",
+          })
+        );
+
+        for (const detail of profileDetails) {
+          const result: OperationResult<ProfileDetailDto> =
+            await ProfileService.saveOrUpdateProfileDetail(token!, detail);
+          if (result.success) {
+            const updatedPermission = permissions.find(
+              (permission) => permission.operationID === detail.aOPRID
+            );
+            if (updatedPermission) {
+              updatedPermission.profDetID = result.data?.profDetID;
+            }
+          } else {
+            console.error(
+              `Error saving permission ${detail.aOPRID}: ${result.errorMessage}`
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error saving permissions:", error);
+      }
+    }
+  };
+
   const actionButtons: ButtonProps[] = [
     {
       variant: "contained",
@@ -77,6 +192,8 @@ const ProfileListPage: React.FC = () => {
           <OperationPermissionDetails
             profileID={selectedProfile.profileID}
             profileName={selectedProfile.profileName}
+            saveModulePermission={saveProfileDetails}
+            saveReportPermission={saveProfileDetails}
           />
         )}
         <ProfileListSearch

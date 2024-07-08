@@ -13,6 +13,7 @@ export interface ProfileDetailDto {
   profileName: string;
   aOPRID: number;
   compID: number;
+  
   rActiveYN: string;
   rNotes: string;
   reportYN: string;
@@ -41,6 +42,10 @@ export interface ReportPermissionDto {
 }
 
 export interface ReportPermission {
+  apAccessID: number;
+  repID: any;
+  allowYN: any;
+  rActiveYN: any;
   reportID: number;
   reportName: string;
   allow: boolean;

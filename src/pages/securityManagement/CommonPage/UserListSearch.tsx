@@ -14,7 +14,6 @@ import { UserListSearchContext } from "../../../context/SecurityManagement/UserL
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/reducers";
 import { debounce } from "../../../utils/Common/debounceUtils";
-import { UserListService } from "../../../services/SecurityManagementServices/UserListService";
 import { notifyError, notifySuccess } from "../../../utils/Common/toastManager";
 import CustomButton from "../../../components/Button/CustomButton";
 import CustomSwitch from "../../../components/Checkbox/ColorSwitch";
@@ -22,6 +21,7 @@ import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextB
 import GlobalSpinner from "../../../components/GlobalSpinner/GlobalSpinner";
 import CustomGrid from "../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
+import { UserListService } from "../../../services/SecurityManagementServices/UserListService";
 
 interface UserListSearchResultProps {
   show: boolean;
@@ -39,16 +39,14 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     UserListSearchContext
   );
   const [isLoading, setIsLoading] = useState(false);
-  const { token, compID } = useSelector(
-    (state: RootState) => state.userDetails
-  );
-
+  const { token } = useSelector((state: RootState) => state.userDetails);
 
   const debouncedSearch = useCallback(
     debounce((searchQuery: string) => {
       setIsLoading(true);
-      performSearch(searchQuery);
-      setIsLoading(false);
+      performSearch(searchQuery).finally(() => {
+        setIsLoading(false);
+      });
     }, 300),
     [performSearch]
   );
@@ -66,27 +64,37 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     profile: UserListData,
     checked: boolean
   ) => {
-    const updatedStatus = checked ? "Y" : "N";
-    const userMastDto = {
-      ...profile,
-      rActiveYN: updatedStatus,
-      compID: compID!,
-    };
-
     try {
-      const result = await UserListService.saveUser(token!, userMastDto);
+      console.log("Profile data:", profile);
+
+      if (!profile.appID) {
+        console.error("Profile appID is undefined or null.");
+        return;
+      }
+
+      const updatedStatus = checked;
+      const result = await UserListService.updateUserActiveStatus(
+        token!,
+        profile.appID,
+        checked
+      );
+
       if (result.success) {
-        notifySuccess(`User status updated to ${updatedStatus === "Y" ? "Active" : "Hidden"}`);
-        updateUserStatus(profile.appID, updatedStatus);
+        notifySuccess(
+          `User status updated to ${
+            updatedStatus === true ? "Active" : "Hidden"
+          }`
+        );
+        updateUserStatus(profile.appID, checked);
       } else {
-        notifyError (`Error updating user status: ${result.errorMessage}`);
+        notifyError(`Error updating user status: ${result.errorMessage}`);
       }
     } catch (error) {
       notifyError("Error updating user status");
+      console.error("Error:", error);
     }
   };
 
-  // Create a new data array with an index starting at 1
   const dataWithIndex = searchResults.map((item, index) => ({
     ...item,
     serialNumber: index + 1,
@@ -106,8 +114,8 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
       ),
     },
     { key: "serialNumber", header: "Sl.No", visible: true },
-    { key: "conName", header: "User Name", visible: true },
-    { key: "appGeneralCode", header: "Login Name", visible: true },
+    { key: "fullName", header: "User Name", visible: true },
+    { key: "loginName", header: "Login Name", visible: true },
     { key: "rNotes", header: "Notes", visible: true },
     {
       key: "status",
@@ -127,10 +135,15 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
         <CustomSwitch
           size="medium"
           color="secondary"
-          checked={row.rActiveYN !== "N"}
+          checked={row.rActiveYN === "Y"}
           onChange={(event) => handleSwitchChange(row, event.target.checked)}
         />
       ),
+    },
+    {
+      key: "appID",
+      header: "App ID",
+      visible: false,
     },
   ];
 
@@ -164,11 +177,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
         </Box>
       </DialogTitle>
       <DialogContent
-        sx={{
-          minHeight: "600px",
-          maxHeight: "600px",
-          overflowY: "auto",
-        }}
+        sx={{ minHeight: "600px", maxHeight: "600px", overflowY: "auto" }}
       >
         <Box>
           <Grid container spacing={2}>
