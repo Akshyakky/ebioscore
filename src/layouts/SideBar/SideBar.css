@@ -1,24 +1,25 @@
-/* SideBar.css */
 :root {
-    --primary-color: #1665D8;
-    /* A strong shade of blue for primary actions */
-    --hover-color: rgba(22, 101, 216, 0.2);
-    /* Lighter blue for hover states */
-    --icon-color: #0088ff;
-    /* A neutral shade for icons */
+    --primary-color: #2979ff;
+    /* Blue */
+    --hover-color: rgba(41, 121, 255, 0.2);
+    /* Light Blue Hover */
+    --icon-color: #90caf9;
+    /* Light Blue */
     --active-icon-color: #ffffff;
-    /* White for active icons for contrast */
-    --background-color: #0A192F;
-    /* A deep navy blue for the sidebar background */
+    /* White */
+    --background-color: #253147;
+    /* Dark Blue */
     --text-color: #ffffff;
-    /* White for text for readability */
+    /* White */
     --submenu-color: #112240;
-    /* A slightly lighter navy shade for submenu backgrounds */
-    --submenu-text-color: #8892B0;
-    /* A soft blue for submenu text */
-    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* Maintain the modern font */
+    /* Darker Blue */
+    --submenu-text-color: #8892b0;
+    /* Light Blue */
+    --font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    --hover-bg-color: rgba(255, 255, 255, 0.1);
+    /* Light Hover Background */
 }
+
 
 .drawer-content {
     background-color: var(--background-color);
@@ -27,17 +28,18 @@
 }
 
 .MuiListItem-root {
-    padding-left: 16px;
-    padding-right: 16px;
-    transition: background-color 0.3s;
+    padding: 0 16px;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .MuiListItemText-root {
     margin-left: -8px;
+    color: var(--text-color);
 }
 
 .MuiListItem-root:hover {
-    background-color: var(--hover-color);
+    background-color: var(--hover-bg-color);
+    color: var(--active-icon-color);
 }
 
 .active-menu-item {
@@ -48,16 +50,6 @@
 .active-submenu-item {
     background-color: var(--submenu-color);
     color: var(--submenu-text-color);
-
-    .MuiListItemIcon-root {
-        color: var(--active-icon-color);
-    }
-}
-
-.active-submenu-item,
-.MuiListItem-root:hover {
-    background-color: var(--primary-color);
-    color: var(--active-icon-color);
 }
 
 .MuiListItemIcon-root,
@@ -67,8 +59,9 @@
     transition: color 0.3s;
 }
 
+.MuiListItem-root:hover .MuiListItemIcon-root,
 .active-submenu-item .MuiListItemIcon-root,
-.MuiListItem-root:hover .MuiListItemIcon-root {
+.active-menu-item .MuiListItemIcon-root {
     color: var(--active-icon-color);
 }
 
@@ -90,7 +83,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #145DA0;
+    background: #145da0;
 }
 
 .MuiTextField-root {
@@ -106,17 +99,12 @@
 }
 
 .MuiAppBar-colorPrimary {
-    background-color: #0A192F;
+    background-color: var(--primary-color);
     color: var(--text-color);
 }
 
 .MuiToolbar-regular {
-    padding-left: 16px;
-    padding-right: 16px;
-}
-
-.submenu-item {
-    background-color: var(--submenu-color);
+    padding: 0 16px;
 }
 
 .NavLink-submenu {
@@ -131,4 +119,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 150px;
+}
+
+.icon {
+    color: var(--icon-color);
+    transition: color 0.3s;
+}
+
+.icon:hover {
+    color: var(--active-icon-color);
 }

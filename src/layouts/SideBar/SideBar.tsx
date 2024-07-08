@@ -33,7 +33,9 @@ interface SideBarProps {
   userID: number | null;
   token: string | null;
 }
+
 const drawerWidth = 340;
+
 const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
   usePageTitle();
   const [modules, setModules] = useState<ModuleDto[]>([]);
@@ -45,7 +47,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
   const navigate = useNavigate();
   const theme = useTheme();
 
-  const handleSubModuleClick = (path: any) => {
+  const handleSubModuleClick = (path: string) => {
     handleDrawerClose();
     navigate(path);
   };
@@ -129,6 +131,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
       );
     }
   };
+
   const openDrawerStyle = {
     width: `calc(100% - ${drawerWidth}px)`,
     marginLeft: `${drawerWidth}px`,
@@ -145,6 +148,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
       duration: theme.transitions.duration.enteringScreen,
     }),
   };
+
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
@@ -163,7 +167,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
             edge="start"
             sx={{ mr: 2 }}
           >
-            {open ? <CloseIcon /> : <MenuIcon />} {/* Here is the change */}
+            {open ? <CloseIcon /> : <MenuIcon />}
           </IconButton>
           <Typography variant="h6" noWrap component="div">
             {pageTitle}
@@ -210,7 +214,11 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
                   }
                 >
                   <ListItemIcon className="list-item-icon">
-                    <Icon icon={module.iCon} style={{ fontSize: "24px" }} />
+                    <Icon
+                      icon={module.iCon}
+                      style={{ fontSize: "24px" }}
+                      className="icon"
+                    />
                   </ListItemIcon>
                   <ListItemText primary={module.title} />
                 </ListItem>
@@ -239,6 +247,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
                             <Icon
                               icon={subModule.iCon}
                               style={{ fontSize: "20px" }}
+                              className="icon"
                             />
                           </ListItemIcon>
                           <ListItemText primary={subModule.title} />
