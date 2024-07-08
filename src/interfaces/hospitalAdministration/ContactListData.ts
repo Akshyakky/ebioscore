@@ -76,6 +76,7 @@ export interface ContactAddressData {
 }
 
 export interface ContactListData {
+
   contactMastDto: ContactMastData;
   contactAddressDto: ContactAddressData;
 }

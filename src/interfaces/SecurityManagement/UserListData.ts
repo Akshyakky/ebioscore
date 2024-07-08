@@ -1,13 +1,12 @@
-
 export interface UserListData {
     appID: number;
     appUserName: string;
     appGeneralCode: string;
     rActiveYN: string;
-    rCreatedOn: Date;
+    rCreatedOn: string; // Use string type for API compatibility
     rCreatedID: number;
     rCreatedBy: string;
-    rModifiedOn: Date;
+    rModifiedOn: string; 
     rModifiedID: number;
     rModifiedBy: string;
     rNotes?: string;
@@ -24,4 +23,24 @@ export interface UserListData {
     appCode: string;
     appUAccess?: string;
     profileID?: number;
-}
+    conName: string;
+  }
+
+
+  export interface UserListSearchResult {
+    profileID: number;
+    profileCode: string;
+    profileName: string;
+    status: string;
+    rNotes: string;
+  }
+
+  export interface serMastDto {
+    profileID: number;
+    profileCode: string;
+    profileName: string;
+    rActiveYN: string;
+    compID: number;
+    rNotes: string;
+  }
+

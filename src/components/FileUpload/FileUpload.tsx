@@ -1,7 +1,6 @@
 import React, { useMemo, useCallback, useState } from "react";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
-import TextField from "@mui/material/TextField";
 import { FloatingLabelTextBoxProps } from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox"; 
 
 interface FloatingLabelFileUploadProps extends FloatingLabelTextBoxProps {
@@ -25,29 +24,19 @@ const FloatingLabelFileUpload: React.FC<FloatingLabelFileUploadProps> = ({
   multiple = false,
   name,
 }) => {
-  const [fileName, setFileName] = useState("");
+  const [filePath, setFilePath] = useState("");
   const controlId = useMemo(() => `file${ControlID}`, [ControlID]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       if (files && files.length > 0) {
-        setFileName(multiple ? Array.from(files).map(file => file.name).join(", ") : files[0].name);
+        const file = files[0];
+        setFilePath(URL.createObjectURL(file));
         onChange(e);
       }
     },
     [onChange, multiple]
-  );
-
-  const isInvalid = useMemo(
-    () => (isMandatory && isSubmitted && !fileName) || !!errorMessage,
-    [isMandatory, isSubmitted, fileName, errorMessage]
-  );
-
-  const errorToShow = useMemo(
-    () =>
-      errorMessage || (isMandatory && !fileName ? `${title} is required.` : ""),
-    [errorMessage, isMandatory, fileName, title]
   );
 
   return (
@@ -74,16 +63,13 @@ const FloatingLabelFileUpload: React.FC<FloatingLabelFileUploadProps> = ({
           {title}
         </Button>
       </label>
-      <TextField
-        value={fileName}
-        placeholder={title}
-        InputProps={{
-          readOnly: true,
-        }}
-        error={isInvalid}
-        helperText={isInvalid ? errorToShow : ""}
-        aria-describedby={isInvalid ? `${controlId}-error` : undefined}
-      />
+      {filePath && (
+        <img
+          src={filePath}
+          alt="Uploaded File"
+          style={{ display: "block", marginTop: "10px", maxWidth: "100%" }}
+        />
+      )}
     </FormControl>
   );
 };
