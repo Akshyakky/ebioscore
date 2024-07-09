@@ -68,7 +68,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
   user,
   onSave,
   onClear,
-  isEditMode,
   refreshUsers,
   updateUserStatus,
 }) => {
@@ -90,8 +89,11 @@ const UserDetails: React.FC<UserDetailsProps> = ({
   useEffect(() => {
     if (user) {
       setUserList(user);
+    } else {
+      setUserList(defaultUserListData);
     }
   }, [user]);
+
 
   const handleDropdownChange = async (
     fieldNames: (keyof UserListData)[],
@@ -128,6 +130,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       setUserList(updatedState);
     }
   };
+
+  // appUAccess
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -191,8 +195,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     }
   }, [token]);
 
-
-  
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
@@ -204,27 +206,29 @@ const UserDetails: React.FC<UserDetailsProps> = ({
 
   const handleSave = async () => {
     setIsSubmitted(true);
+
+    // Validate password confirmation
     if (password !== confirmPassword) {
       setPasswordError("Passwords do not match");
       return;
     } else {
       setPasswordError("");
     }
-
+    debugger;
     try {
-      if (userList.conName && userList.appGeneralCode) {
+      if (userList.conName ) {
         const userData: UserListData = {
           ...userList,
           rCreatedOn: new Date(userList.rCreatedOn).toISOString(),
           rModifiedOn: new Date(userList.rModifiedOn).toISOString(),
-          appGeneralCode: password,
+          appGeneralCode: userList.appGeneralCode,
           rActiveYN: userList.rActiveYN,
           adminUserYN: userList.adminUserYN,
           appUserName: userList.conName,
           appUcatCode: userList.appUcatCode,
           appUcatType: userList.appUcatType,
           compCode: userList.compCode,
-          appCode: userList.appGeneralCode,
+          appCode: userList.appCode,
           appUAccess: password,
           profileID: userList.profileID,
         };
@@ -233,7 +237,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({
 
         if (result.success) {
           notifySuccess("User saved successfully");
+          onSave(userData);
           refreshUsers();
+        
         } else {
           notifyError("Error saving user");
           console.error("Failed to save user:", result.errorMessage);
@@ -246,7 +252,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       if (error.response) {
         console.error("Response data:", error.response.data);
       } else if (error.request) {
-        notifyError("Error: No response received from server.");
+        console.error("No response received from server.");
       } else {
         console.error("Error message:", error.message);
       }
@@ -262,6 +268,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     setPasswordError("");
     setIsSubmitted(false);
     notifySuccess("Form cleared successfully");
+    onClear();
   };
 
   return (
@@ -274,7 +281,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               label="Select User"
               value={userList.conID?.toString() || ""}
               options={dropdownValues.usersOptions}
-              onChange={(e: SelectChangeEvent<string>) =>
+              onChange={(e: any) =>
                 handleDropdownChange(
                   ["conName", "conID", "appUserName"],
                   e.target.value,
@@ -294,9 +301,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               type="text"
               name="LoginName"
               size="small"
-              value={userList.appGeneralCode || ""}
+              value={userList.appCode || ""}
               onChange={(e) =>
-                setUserList({ ...userList, appGeneralCode: e.target.value })
+                setUserList({ ...userList, appCode: e.target.value })
               }
               isSubmitted={isSubmitted}
               isMandatory
@@ -313,6 +320,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               onChange={(e) => setPassword(e.target.value)}
               isSubmitted={isSubmitted}
               isMandatory
+          
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>

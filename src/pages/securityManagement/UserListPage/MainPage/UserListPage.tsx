@@ -1,10 +1,8 @@
 import React, { useState, useContext } from "react";
-import { Box, Container } from "@mui/material";
+import { Box, Container, Snackbar } from "@mui/material";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import SearchIcon from "@mui/icons-material/Search";
-import ActionButtonGroup, {
-  ButtonProps,
-} from "../../../../components/Button/ActionButtonGroup";
+import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import { UserListSearchContext } from "../../../../context/SecurityManagement/UserListSearchContext";
 import UserListSearch from "../../CommonPage/UserListSearch";
 import UserDetails from "../SubPage/UserDetails";
@@ -17,13 +15,7 @@ import { useSelector } from "react-redux";
 import { UserListService } from "../../../../services/SecurityManagementServices/UserListService";
 import OperationPermissionDetails from "../../ProfileListPage/SubPage/OperationPermissionDetails";
 import { OperationPermissionDetailsDto } from "../../../../interfaces/SecurityManagement/OperationPermissionDetailsDto";
-
-interface ModuleOperation {
-  profDetID?: number;
-  operationID: number;
-  operationName: string;
-  allow: boolean;
-}
+import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
 
 interface OperationPermissionProps {
   profileID: number;
@@ -42,20 +34,44 @@ const UserListPage: React.FC<OperationPermissionProps> = ({
     (state: RootState) => state.userDetails
   );
 
+  const handleEditUser = (user: UserListData) => {
+    setSelectedUser(user);
+    setIsSearchDialogOpen(false);
+    setIsSaved(true);
+  };
+
   const handleSave = async (user: UserListData) => {
-    console.log("Saving user:", user);
     setIsSaved(true);
     setSelectedUser(user);
+    try {
+      // Example logging data
+      console.log("User data saved:", user);
+      notifySuccess("Profile saved successfully");
+      // Clear fields after successful save
+      handleClear();
+    } catch (error) {
+      console.error("Error logging data:", error);
+      notifyError("Error saving profile");
+    }
+  };
+
+  const handleSaveWithoutArgs = async () => {
+    if (selectedUser) {
+      try {
+        await handleSave(selectedUser);
+      } catch (error) {
+        console.error("Error saving user data:", error);
+        notifyError("Error saving profile");
+      }
+    }
   };
 
   const handleClear = () => {
-    console.log("Clearing form");
     setIsSaved(false);
     setSelectedUser(null);
   };
 
   const refreshUsers = async () => {
-    console.log("Refreshing users");
     await fetchAllUsers();
   };
 
@@ -67,23 +83,14 @@ const UserListPage: React.FC<OperationPermissionProps> = ({
     setIsSearchDialogOpen(false);
   };
 
-  const handleEditUser = (user: UserListData) => {
-    console.log("Editing user:", user);
-    setSelectedUser(user);
-    setIsSaved(true);
-    setIsSearchDialogOpen(false);
-  };
-
-  const saveUserPermission = async (
-    permission: OperationPermissionDetailsDto
-  ) => {
+  const saveUserPermission = async (permission: OperationPermissionDetailsDto) => {
     if (selectedUser && token) {
       try {
         const result = await UserListService.saveOrUpdateUserPermission(token, {
           auAccessID: permission.profDetID || 0,
           appID: selectedUser.appID,
           appUName: selectedUser.appUserName,
-          aOPRID: permission.operationID,
+          aOPRID: permission.operationID, 
           allowYN: permission.allow ? "Y" : "N",
           rActiveYN: permission.allow ? "Y" : "N",
           rCreatedID: 0,
@@ -99,29 +106,31 @@ const UserListPage: React.FC<OperationPermissionProps> = ({
           profileID: selectedUser.profileID || 0,
           repID: 0,
         });
-
+  
         if (result.success) {
           const updatedPermission = {
             ...permission,
             profDetID: result.data?.auAccessID,
           };
-          console.log("Updated permission:", updatedPermission);
           return updatedPermission;
         } else {
           console.error(
             `Error saving module permission ${permission.operationID}: ${result.errorMessage}`
           );
+          notifyError(`Error saving module permission ${permission.operationID}`);
           return permission; // Return original permission on error
         }
       } catch (error) {
         console.error(
-          `Error saving module permission ${permission.aOPRID}:`,
+          `Error saving module permission ${permission.operationID}:`,
           error
         );
+        notifyError(`Error saving module permission ${permission.operationID}`);
         return permission; // Return original permission on error
       }
     }
   };
+  
 
   const saveUserReportPermission = async (
     permission: OperationPermissionDetailsDto
@@ -151,29 +160,35 @@ const UserListPage: React.FC<OperationPermissionProps> = ({
             repID: permission.repID || 0,
           }
         );
-
+  
         if (result.success) {
           const updatedPermission = {
             ...permission,
             repID: result.data?.repID,
           };
-          console.log("Updated permission:", updatedPermission);
           return updatedPermission;
         } else {
           console.error(
-            `Error saving module permission ${permission.repID}: ${result.errorMessage}`
+            `Error saving report permission ${permission.repID}: ${result.errorMessage}`
           );
+          notifyError(`Error saving report permission ${permission.repID}`);
           return permission; // Return original permission on error
         }
       } catch (error) {
         console.error(
-          `Error saving module permission ${permission.aOPRID}:`,
+          `Error saving report permission ${permission.repID}:`,
           error
         );
+        notifyError(`Error saving report permission ${permission.repID}`);
         return permission; // Return original permission on error
       }
+    } else {
+      console.error("Selected user or token is missing.");
+      notifyError("Unable to save report permission: Selected user or token is missing.");
+      return permission; // Return original permission if selectedUser or token is missing
     }
   };
+  
 
   return (
     <MainLayout>
@@ -195,7 +210,7 @@ const UserListPage: React.FC<OperationPermissionProps> = ({
           onSave={handleSave}
           onClear={handleClear}
           user={selectedUser}
-          isEditMode={!!selectedUser}
+          isEditMode={!!selectedUser} // Set isEditMode to true if selectedUser exists
           refreshUsers={refreshUsers}
           updateUserStatus={updateUserStatus}
         />
@@ -207,26 +222,14 @@ const UserListPage: React.FC<OperationPermissionProps> = ({
               saveModulePermission={saveUserPermission}
               saveReportPermission={saveUserReportPermission}
             />
-            <Box sx={{ marginTop: 2 }}>
-              <FormSaveClearButton
-                clearText="Clear"
-                saveText="Save Module Permissions"
-                onClear={handleClear}
-                onSave={handleClear}
-                clearIcon={DeleteIcon}
-                saveIcon={SaveIcon}
-              />
-            </Box>
-            <Box sx={{ marginTop: 2 }}>
-              <FormSaveClearButton
-                clearText="Clear"
-                saveText="Save Report Permissions"
-                onClear={handleClear}
-                onSave={handleClear}
-                clearIcon={DeleteIcon}
-                saveIcon={SaveIcon}
-              />
-            </Box>
+            <FormSaveClearButton
+              saveIcon={SaveIcon}
+              clearText="Clear"
+              saveText="Save Report Permissions"
+              clearIcon={DeleteIcon}
+              onClear={handleClear}
+              onSave={handleSaveWithoutArgs} // Use the wrapper function here
+            />
           </>
         )}
         <UserListSearch

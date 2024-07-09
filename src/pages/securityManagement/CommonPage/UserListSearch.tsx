@@ -26,7 +26,7 @@ import { UserListService } from "../../../services/SecurityManagementServices/Us
 interface UserListSearchResultProps {
   show: boolean;
   handleClose: () => void;
-  onEditProfile: (profile: UserListData) => void;
+  onEditProfile: (user: UserListData) => void;
 }
 
 const UserListSearch: React.FC<UserListSearchResultProps> = ({
@@ -55,19 +55,29 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     debouncedSearch(searchTerm);
   }, [searchTerm, debouncedSearch]);
 
-  const handleEditAndClose = (profile: UserListData) => {
-    onEditProfile(profile);
-    handleClose();
+  const handleEditAndClose = async (user: UserListData) => {
+    try {
+      const userDetails = await UserListService.getUserDetails(token!, user.appID);
+      if (userDetails.success && userDetails.data) {
+        onEditProfile(userDetails.data); // Pass fetched user details to onEditProfile
+      } else {
+        notifyError("Failed to fetch user details.");
+      }
+      handleClose();
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+      notifyError("Error fetching user details");
+    }
   };
 
   const handleSwitchChange = async (
-    profile: UserListData,
+    user: UserListData,
     checked: boolean
   ) => {
     try {
-      console.log("Profile data:", profile);
+      console.log("Profile data:", user);
 
-      if (!profile.appID) {
+      if (!user.appID) {
         console.error("Profile appID is undefined or null.");
         return;
       }
@@ -75,7 +85,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
       const updatedStatus = checked;
       const result = await UserListService.updateUserActiveStatus(
         token!,
-        profile.appID,
+        user.appID,
         checked
       );
 
@@ -85,7 +95,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
             updatedStatus === true ? "Active" : "Hidden"
           }`
         );
-        updateUserStatus(profile.appID, checked);
+        updateUserStatus(user.appID, checked);
       } else {
         notifyError(`Error updating user status: ${result.errorMessage}`);
       }
