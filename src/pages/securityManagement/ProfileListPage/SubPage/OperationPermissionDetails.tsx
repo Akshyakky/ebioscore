@@ -5,7 +5,6 @@ import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import moduleService from "../../../../services/CommonServices/ModuleService";
 import {
   notifyError,
-  notifySuccess,
 } from "../../../../utils/Common/toastManager";
 import {
   OperationResult,
@@ -236,35 +235,39 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
   };
 
   const handlePermissionChange = async (
+    
     permissionID: number,
     allow: boolean
   ) => {
     let existingPermission = permissions.find(
       (permission) => permission.operationID === permissionID
     );
-
+    // debugger
     if (existingPermission) {
       existingPermission.allow = allow;
     }
-
+  
     setPermissions([...permissions]);
-
-    // if (profileID)
-    {
+ 
+    if (profileID) {
+      const rActiveYN = allow ==true? "Y" : "N";
+      const allowYN=allow==true?"Y":"N"
+       // Set rActiveYN based on allow value
+  
       const profileDetail: OperationPermissionDetailsDto = {
         profDetID: existingPermission?.profDetID || 0,
         profileID: profileID,
         profileName: profileName,
         aOPRID: permissionID,
         compID: compID!,
-        rActiveYN: allow ? "Y" : "N",
+        rActiveYN: rActiveYN, // Pass correct rActiveYN value here
         rNotes: "",
         reportYN: "N",
-        repID: 0,
+        repID: permissionID, 
         auAccessID: 0,
         appID: 0,
         appUName: "",
-        allowYN: "",
+        allowYN: allowYN,
         rCreatedID: 0,
         rCreatedBy: "",
         rCreatedOn: "",
@@ -274,10 +277,36 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
         compCode: "",
         compName: "",
       };
-
+  
       saveModulePermission(profileDetail);
     }
   };
+  
+
+
+
+
+
+
+  //  const handleSelectAllChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const { checked } = event.target;
+  //   setPermissions(
+  //     permissions.map((permission) => ({
+  //       ...permission,
+  //       allow: checked,
+  //     }))
+  //   );
+  //   setSelectAllChecked(checked);
+
+  //   permissions.forEach((permission) => {
+  //     handlePermissionChange(permission.operationID, checked);
+  //   });
+  // };
+
+
+
+
+  
 
   const handleReportPermissionChange = async (
     reportID: number,
@@ -300,14 +329,14 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
         profileName: profileName,
         aOPRID: reportID,
         compID: compID!,
-        rActiveYN: allow ? "Y" : "N",
+        rActiveYN: allow==true ? "Y" : "N",
         rNotes: "",
-        reportYN: "Y",
-        repID: 0,
+        reportYN: "N",
+        repID: reportID,
         auAccessID: 0,
         appID: 0,
         appUName: "",
-        allowYN: "",
+        allowYN:allow==true ? "Y" : "N",
         rCreatedID: 0,
         rCreatedBy: "",
         rCreatedOn: "",
@@ -321,54 +350,137 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
     }
   };
 
+
+
+
+
+  // For Report Permission Details
   const handleSelectAllReportChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const allow = event.target.checked;
+  
+    // Update reportPermissions state to reflect the new 'allow' value for all permissions
     const updatedReportPermissions = reportPermissions.map((permission) => ({
       ...permission,
       allow,
     }));
-
+  
     setReportPermissions(updatedReportPermissions);
-    setSelectAllReportChecked(allow);
-
+    setSelectAllReportChecked(allow); // Update local state with updated permissions
+  
     if (profileID) {
       try {
-        const profileDetails: ProfileDetailDto[] = updatedReportPermissions.map(
+        // Create an array of profile details to save/update
+        const profileDetails: OperationPermissionDetailsDto[] = updatedReportPermissions.map(
           (permission) => ({
             profDetID: permission.profDetID || 0,
             profileID: profileID,
             profileName: profileName,
             aOPRID: permission.reportID,
             compID: compID!,
-            rActiveYN: allow ? "Y" : "N",
+            rActiveYN: allow==true ? "Y" : "N", // Set rActiveYN based on 'allow' value
             rNotes: "",
-            reportYN: "Y",
+            reportYN: "N",
+            repID: permission.reportID,
+            auAccessID: 0,
+            appID: 0,
+            appUName: "",
+            allowYN: allow ? "Y" : "N", // Set allowYN based on 'allow' value
+            rCreatedID: 0,
+            rCreatedBy: "",
+            rCreatedOn: "",
+            rModifiedID: 0,
+            rModifiedBy: "",
+            rModifiedOn: "",
+            compCode: "",
+            compName: "",
           })
         );
-
+  
+        // Save each profile detail
         for (const detail of profileDetails) {
-          const result: OperationResult<ProfileDetailDto> =
-            await ProfileService.saveOrUpdateProfileDetail(token!, detail);
-          if (result.success) {
-            const updatedReportPermission = reportPermissions.find(
-              (permission) => permission.reportID === detail.aOPRID
-            );
-            if (updatedReportPermission) {
-              updatedReportPermission.profDetID = result.data?.profDetID;
-            }
-          } else {
-            console.error(
-              `Error saving report permission ${detail.aOPRID}: ${result.errorMessage}`
-            );
-          }
+          await saveReportPermission(detail);
         }
       } catch (error) {
         console.error("Error saving report permissions:", error);
       }
     }
   };
+  
+
+
+
+
+  // For Module Permission Details 
+
+  const handleSelectAllChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const allow = event.target.checked;
+  
+    // Update permissions state to reflect the new 'allow' value for all permissions
+    const updatedPermissions = permissions.map(permission => ({
+      ...permission,
+      allow: allow,
+    }));
+  
+    setPermissions(updatedPermissions);
+    setSelectAllChecked(allow);
+  
+    if (profileID) {
+      try {
+        // Create an array of profile details to save/update
+        const profileDetails: OperationPermissionDetailsDto[] = updatedPermissions.map(permission => ({
+          profDetID: permission.profDetID || 0,
+          profileID: profileID,
+          profileName: profileName,
+          aOPRID: permission.operationID,
+          compID: compID!,
+          rActiveYN: allow ==true? "Y" : "N", // Set rActiveYN based on 'allow' value
+          rNotes: "",
+          reportYN: "N",
+          repID: permission.operationID,
+          auAccessID: 0,
+          appID: 0,
+          appUName: "",
+          allowYN: allow ? "Y" : "N", // Set allowYN based on 'allow' value
+          rCreatedID: 0,
+          rCreatedBy: "",
+          rCreatedOn: "",
+          rModifiedID: 0,
+          rModifiedBy: "",
+          rModifiedOn: "",
+          compCode: "",
+          compName: "",
+        }));
+  
+        // Use retry logic to attempt saving/updating multiple times
+        let retryCount = 3;
+        let success = false;
+        while (retryCount > 0 && !success) {
+          try {
+            for (const detail of profileDetails) {
+              await saveModulePermission(detail);
+            }
+            success = true; // Mark success if all operations complete without error
+          } catch (error) {
+            console.error(`Error saving permissions: ${error}`);
+            retryCount--;
+            // Optionally add delay before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
+          }
+        }
+  
+        if (!success) {
+          console.error(`Failed to save permissions after retries.`);
+          // Handle failure case, possibly notify the user or take corrective action
+        }
+      } catch (error) {
+        console.error("Error saving permissions:", error);
+      }
+    }
+  };
+  
+ 
 
   const handleClear = () => {
     setPermissions([]);
@@ -385,6 +497,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
   const handleReportPermissionClear = () => {
     setReportPermissions([]);
     setSelectAllReportChecked(false);
+    setSelectAllChecked(false)
   };
 
   return (
@@ -452,13 +565,13 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      {/* <CustomCheckbox
+                      <CustomCheckbox
                         label="Allow [Select All]"
                         name="selectAll"
                         checked={selectAllChecked}
                         onChange={handleSelectAllChange}
                         isMandatory={false}
-                      /> */}
+                      />
                     </Grid>
                   </Grid>
 
@@ -509,7 +622,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
             <DropdownSelect
               name="ReportMainModules"
               label="Report Main Modules"
-              value={selectedReportMainModule}
+              value={selectedReportMainModule || ""}
               options={dropdownValues.reportMainModulesOptions}
               onChange={handleReportMainModuleChange}
               isMandatory
@@ -535,7 +648,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
                   <Grid item xs={6}>
                     <CustomCheckbox
                       label="Allow [Select All]"
-                      name="selectAll"
+                      name="selectAllReports"
                       checked={selectAllReportChecked}
                       onChange={handleSelectAllReportChange}
                       isMandatory={false}
@@ -557,12 +670,13 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
                     <Grid item xs={6}>
                       <CustomCheckbox
                         label=""
-                        name={`reportPermission_${permission.reportID}`}
+                        name={`allow_report_${permission.reportID}`}
                         checked={permission.allow}
                         onChange={(event) =>
                           handleReportPermissionChange(
                             permission.reportID,
-                            event.target.checked
+                            event.target.checked,
+                            
                           )
                         }
                         isMandatory={false}

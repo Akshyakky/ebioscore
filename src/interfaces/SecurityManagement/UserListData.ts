@@ -24,6 +24,7 @@ export interface UserListData {
   appUAccess?: string;
   profileID?: number;
   conName: string;
+  repID:number;
   
 }
 
@@ -92,7 +93,6 @@ interface UserPermission {
   reportName: string;
   allow: boolean;
 }
-
 
 
 

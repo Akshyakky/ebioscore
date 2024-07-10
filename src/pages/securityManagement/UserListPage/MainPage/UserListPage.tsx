@@ -16,6 +16,7 @@ import { UserListService } from "../../../../services/SecurityManagementServices
 import OperationPermissionDetails from "../../ProfileListPage/SubPage/OperationPermissionDetails";
 import { OperationPermissionDetailsDto } from "../../../../interfaces/SecurityManagement/OperationPermissionDetailsDto";
 import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
+import axios from "axios";
 
 interface OperationPermissionProps {
   profileID: number;
@@ -86,13 +87,15 @@ const UserListPage: React.FC<OperationPermissionProps> = ({
   const saveUserPermission = async (permission: OperationPermissionDetailsDto) => {
     if (selectedUser && token) {
       try {
+        // debugger
+
         const result = await UserListService.saveOrUpdateUserPermission(token, {
           auAccessID: permission.profDetID || 0,
           appID: selectedUser.appID,
           appUName: selectedUser.appUserName,
           aOPRID: permission.operationID, 
-          allowYN: permission.allow ? "Y" : "N",
-          rActiveYN: permission.allow ? "Y" : "N",
+          allowYN: permission.allowYN, // Adjust based on checkbox state
+          rActiveYN: permission.rActiveYN, // Assuming this should also depend on permission.allow
           rCreatedID: 0,
           rCreatedBy: "",
           rCreatedOn: new Date().toISOString(),
@@ -131,33 +134,34 @@ const UserListPage: React.FC<OperationPermissionProps> = ({
     }
   };
   
+  
 
-  const saveUserReportPermission = async (
-    permission: OperationPermissionDetailsDto
-  ) => {
+
+  const saveUserReportPermission = async (permission: OperationPermissionDetailsDto) => {
     if (selectedUser && token) {
       try {
+        // debugger
         const result = await UserListService.saveOrUpdateUserReportPermission(
           token,
           {
-            auAccessID: permission.auAccessID || 0,
-            appID: permission.appID,
-            appUName: permission.appUName,
-            aOPRID: permission.aOPRID,
-            allowYN: permission.allowYN,
-            rActiveYN: permission.rActiveYN,
-            rCreatedID: permission.rCreatedID,
-            rCreatedBy: permission.rCreatedBy,
-            rCreatedOn: permission.rCreatedOn,
-            rModifiedID: permission.rModifiedID,
-            rModifiedBy: permission.rModifiedBy,
-            rModifiedOn: permission.rModifiedOn,
-            rNotes: permission.rNotes,
-            compID: permission.compID,
-            compCode: permission.compCode,
-            compName: permission.compName,
-            profileID: permission.profileID,
-            repID: permission.repID || 0,
+            auAccessID: permission.profDetID || 0,
+            appID: selectedUser.appID,
+            appUName: selectedUser.appUserName,
+            aOPRID: permission.operationID, 
+            allowYN: permission.allowYN, // Adjust based on checkbox state
+            rActiveYN: permission.rActiveYN, // Assuming this should also depend on permission.allow
+            rCreatedID: 0,
+            rCreatedBy: "",
+            rCreatedOn: new Date().toISOString(),
+            rModifiedID: 0,
+            rModifiedBy: "",
+            rModifiedOn: new Date().toISOString(),
+            rNotes: "",
+            compID: compID || 0,
+            compCode: "",
+            compName: "",
+            profileID: selectedUser.profileID || 0,
+            repID: permission.repID,
           }
         );
   
@@ -174,20 +178,36 @@ const UserListPage: React.FC<OperationPermissionProps> = ({
           notifyError(`Error saving report permission ${permission.repID}`);
           return permission; // Return original permission on error
         }
-      } catch (error) {
-        console.error(
-          `Error saving report permission ${permission.repID}:`,
-          error
-        );
-        notifyError(`Error saving report permission ${permission.repID}`);
+      } catch (error: any) {
+        if (axios.isAxiosError(error)) {
+          if (error.response) {
+            console.error("Server responded with status:", error.response.status);
+            console.error("Response data:", error.response.data);
+            notifyError(`Server responded with status: ${error.response.status}`);
+          } else if (error.request) {
+            console.error("No response received:", error.request);
+            notifyError("No response received from server");
+          } else {
+            console.error("Error setting up request:", error.message);
+            notifyError("Error setting up request to server");
+          }
+        } else {
+          console.error("Other error occurred:", error.message);
+          notifyError("Unknown error occurred");
+        }
         return permission; // Return original permission on error
       }
     } else {
       console.error("Selected user or token is missing.");
-      notifyError("Unable to save report permission: Selected user or token is missing.");
+      notifyError(
+        "Unable to save report permission: Selected user or token is missing."
+      );
       return permission; // Return original permission if selectedUser or token is missing
     }
   };
+  
+  
+  
   
 
   return (

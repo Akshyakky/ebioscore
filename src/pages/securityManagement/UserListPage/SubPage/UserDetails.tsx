@@ -62,6 +62,7 @@ const defaultUserListData: UserListData = {
   appCode: "",
   appUAccess: "",
   profileID: 0,
+  repID: 0
 };
 
 const UserDetails: React.FC<UserDetailsProps> = ({
@@ -78,7 +79,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
   const [errorMessage, setErrorMessage] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+  // const [passwordError, setPasswordError] = useState("");
   const [dropdownValues, setDropdownValues] = useState({
     categoryOptions: [] as DropdownOption[],
     usersOptions: [] as DropdownOption[],
@@ -209,12 +210,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({
 
     // Validate password confirmation
     if (password !== confirmPassword) {
-      setPasswordError("Passwords do not match");
+      // setPasswordError("Passwords do not match");
       return;
     } else {
-      setPasswordError("");
+      // setPasswordError("");
     }
-    debugger;
+  
     try {
       if (userList.conName ) {
         const userData: UserListData = {
@@ -265,7 +266,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     setErrorMessage("");
     setPassword("");
     setConfirmPassword("");
-    setPasswordError("");
+    // setPasswordError("");
     setIsSubmitted(false);
     notifySuccess("Form cleared successfully");
     onClear();
@@ -334,9 +335,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               onChange={(e) => setConfirmPassword(e.target.value)}
               isSubmitted={isSubmitted}
             />
-            {passwordError && (
+            {/* {passwordError && (
               <Typography style={{ color: "red" }}>{passwordError}</Typography>
-            )}
+            )} */}
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <DropdownSelect
