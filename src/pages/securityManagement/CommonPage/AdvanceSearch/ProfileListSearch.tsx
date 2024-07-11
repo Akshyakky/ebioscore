@@ -22,10 +22,10 @@ import {
   notifySuccess,
   notifyError,
 } from "../../../../utils/Common/toastManager";
-import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
+import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 
 interface ProfileListSearchResultProps {
   show: boolean;
@@ -69,7 +69,6 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
     profile: ProfileListSearchResult,
     checked: boolean
   ) => {
-    const profileService = new ProfileService();
     const updatedStatus = checked ? "Active" : "Hidden";
     const profileMastDto = {
       ...profile,
@@ -78,7 +77,7 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
     };
 
     try {
-      const result = await profileService.saveOrUpdateProfile(
+      const result = await ProfileService.saveOrUpdateProfile(
         token!,
         profileMastDto
       );
@@ -233,3 +232,7 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
 };
 
 export default ProfileListSearch;
+
+// Create AnotherFielsds For AppId
+// Write Service for gGetAllDetaila{Appid } in Service List
+// then Add That to USerListAge

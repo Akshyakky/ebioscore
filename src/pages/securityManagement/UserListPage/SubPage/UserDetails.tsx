@@ -1,12 +1,6 @@
 import React, { useState, useEffect, ChangeEvent, useContext } from "react";
-import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import { Box, Container, Grid, Paper, Typography } from "@mui/material";
-import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
-import SearchIcon from "@mui/icons-material/Search";
-import DeleteIcon from "@mui/icons-material/Delete";
-import SaveIcon from "@mui/icons-material/Save";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
@@ -17,18 +11,16 @@ import { UserListService } from "../../../../services/SecurityManagementServices
 import { SelectChangeEvent } from "@mui/material/Select";
 import { ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import { ContactListService } from "../../../../services/HospitalAdministrationServices/ContactListService/ContactListService";
-import ProfileListServices from "../../../../services/SecurityManagementServices/ProfileListServices";
 import {
   notifyError,
   notifySuccess,
 } from "../../../../utils/Common/toastManager";
 import FloatingLabelFileUpload from "../../../../components/FileUpload/FileUpload";
-import UserListSearch from "../../CommonPage/UserListSearch";
-import {
-  UserListData,
-  UserListSearchResult,
-} from "../../../../interfaces/SecurityManagement/UserListData";
-import { UserListSearchContext } from "../../../../context/SecurityManagement/UserListSearchContext";
+import { UserListData } from "../../../../interfaces/SecurityManagement/UserListData";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import DeleteIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Edit";
+import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 
 interface Company {
   compIDCompCode: string;
@@ -36,12 +28,12 @@ interface Company {
 }
 
 interface UserDetailsProps {
-  profile: UserListSearchResult | null;
-  onSave: (profile: UserListSearchResult) => void;
+  user: UserListData | null;
+  onSave: (user: UserListData) => void;
   onClear: () => void;
   isEditMode: boolean;
-  refreshProfiles: () => void;
-  updateProfileStatus: (profileID: number, status: string) => void;
+  refreshUsers: () => void;
+  updateUserStatus: (userID: number, status: boolean) => void;
 }
 
 const defaultUserListData: UserListData = {
@@ -70,32 +62,39 @@ const defaultUserListData: UserListData = {
   appCode: "",
   appUAccess: "",
   profileID: 0,
+  repID: 0
 };
 
 const UserDetails: React.FC<UserDetailsProps> = ({
-  profile,
+  user,
   onSave,
   onClear,
-  refreshProfiles,
-  updateProfileStatus,
+  refreshUsers,
+  updateUserStatus,
 }) => {
   const { token } = useSelector((state: RootState) => state.userDetails);
-
   const [userList, setUserList] = useState<UserListData>(defaultUserListData);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+  // const [passwordError, setPasswordError] = useState("");
   const [dropdownValues, setDropdownValues] = useState({
     categoryOptions: [] as DropdownOption[],
     usersOptions: [] as DropdownOption[],
     companyOptions: [] as DropdownOption[],
     profileOptions: [] as DropdownOption[],
   });
-  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
-  const { fetchAllUsers, updateUserStatus } = useContext(UserListSearchContext);
+
+  useEffect(() => {
+    if (user) {
+      setUserList(user);
+    } else {
+      setUserList(defaultUserListData);
+    }
+  }, [user]);
+
 
   const handleDropdownChange = async (
     fieldNames: (keyof UserListData)[],
@@ -133,17 +132,17 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     }
   };
 
+  // appUAccess
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const result = await UserListService.getActiveWorkingUsers(token!);
-        console.log("Fetched users:", result);
         if (result.success && result.data) {
           const usersOptions = result.data.map((user) => ({
             label: user.conName,
             value: user.conID.toString(),
           }));
-          console.log("Users options:", usersOptions);
           setDropdownValues((prevState) => ({ ...prevState, usersOptions }));
         } else {
           console.error("Failed to fetch users:", result.errorMessage);
@@ -156,13 +155,11 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     const fetchCompanies = async () => {
       try {
         const companyData: Company[] = await CompanyService.getCompanies();
-        console.log("Fetched companies:", companyData);
         if (companyData && companyData.length > 0) {
           const companyOptions = companyData.map((company) => ({
             label: company.compName,
             value: company.compIDCompCode,
           }));
-          console.log("Company options:", companyOptions);
           setDropdownValues((prevState) => ({ ...prevState, companyOptions }));
         } else {
           console.error("Failed to fetch companies");
@@ -176,14 +173,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     const fetchProfiles = async () => {
       try {
         const profileData: ProfileListSearchResult[] =
-          await ProfileListServices.getAllProfileDetails(token!);
-        console.log("Fetched profiles:", profileData);
+          await ProfileService.getAllProfileDetails(token!);
         if (profileData && profileData.length > 0) {
           const profileOptions = profileData.map((profile) => ({
             label: profile.profileName,
             value: profile.profileID.toString(),
           }));
-          console.log("Profile options:", profileOptions);
           setDropdownValues((prevState) => ({ ...prevState, profileOptions }));
         } else {
           console.error("Failed to fetch profiles");
@@ -201,15 +196,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     }
   }, [token]);
 
-  const handleAdvancedSearch = async () => {
-    setIsSearchDialogOpen(true);
-    await fetchAllUsers();
-  };
-
-  const handleCloseSearchDialog = () => {
-    setIsSearchDialogOpen(false);
-  };
-
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
@@ -221,27 +207,29 @@ const UserDetails: React.FC<UserDetailsProps> = ({
 
   const handleSave = async () => {
     setIsSubmitted(true);
+
+    // Validate password confirmation
     if (password !== confirmPassword) {
-      setPasswordError("Passwords do not match");
+      // setPasswordError("Passwords do not match");
       return;
     } else {
-      setPasswordError("");
+      // setPasswordError("");
     }
-
+  
     try {
-      if (userList.conName && userList.appGeneralCode) {
+      if (userList.conName ) {
         const userData: UserListData = {
           ...userList,
           rCreatedOn: new Date(userList.rCreatedOn).toISOString(),
           rModifiedOn: new Date(userList.rModifiedOn).toISOString(),
-          appGeneralCode: password,
+          appGeneralCode: userList.appGeneralCode,
           rActiveYN: userList.rActiveYN,
           adminUserYN: userList.adminUserYN,
           appUserName: userList.conName,
           appUcatCode: userList.appUcatCode,
           appUcatType: userList.appUcatType,
           compCode: userList.compCode,
-          appCode: userList.appGeneralCode,
+          appCode: userList.appCode,
           appUAccess: password,
           profileID: userList.profileID,
         };
@@ -250,6 +238,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({
 
         if (result.success) {
           notifySuccess("User saved successfully");
+          onSave(userData);
+          refreshUsers();
+        
         } else {
           notifyError("Error saving user");
           console.error("Failed to save user:", result.errorMessage);
@@ -262,7 +253,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       if (error.response) {
         console.error("Response data:", error.response.data);
       } else if (error.request) {
-        notifyError("Error: No response received from server.");
+        console.error("No response received from server.");
       } else {
         console.error("Error message:", error.message);
       }
@@ -275,182 +266,157 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     setErrorMessage("");
     setPassword("");
     setConfirmPassword("");
-    setPasswordError("");
+    // setPasswordError("");
     setIsSubmitted(false);
     notifySuccess("Form cleared successfully");
-  };
-
-  const handleEditProfile = (profile: UserListData) => {
-    setUserList(profile);
-    handleCloseSearchDialog();
+    onClear();
   };
 
   return (
-    <MainLayout>
-      <Container maxWidth={false}>
-        <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup
-            buttons={[
-              {
-                variant: "contained",
-                size: "medium",
-                icon: SearchIcon,
-                text: "Advanced Search",
-                onClick: handleAdvancedSearch,
-              },
-            ]}
-          />
-        </Box>
-        <Paper variant="elevation" sx={{ padding: 2 }}>
-          <section>
-            <Grid container spacing={2} alignItems="flex-start">
-              <Grid item xs={12} sm={6} md={3}>
-                <DropdownSelect
-                  name="SelectUser"
-                  label="Select User"
-                  value={userList.conName}
-                  options={dropdownValues.usersOptions}
-                  onChange={(e: SelectChangeEvent<string>) =>
-                    handleDropdownChange(
-                      ["conName", "conID", "appUserName"],
-                      e.target.value,
-                      dropdownValues.usersOptions
-                    )
-                  }
-                  isMandatory
-                  size="small"
-                  isSubmitted={isSubmitted}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <FloatingLabelTextBox
-                  title="Login Name"
-                  ControlID="LoginName"
-                  placeholder="Login Name"
-                  type="text"
-                  name="LoginName"
-                  size="small"
-                  value={userList.appGeneralCode}
-                  onChange={(e) =>
-                    setUserList({ ...userList, appGeneralCode: e.target.value })
-                  }
-                  isSubmitted={isSubmitted}
-                  isMandatory
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <FloatingLabelTextBox
-                  title="Password"
-                  ControlID="Password"
-                  placeholder="Password"
-                  type="password"
-                  size="small"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  isSubmitted={isSubmitted}
-                  isMandatory
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <FloatingLabelTextBox
-                  title="Confirm Password"
-                  ControlID="ConfirmPassword"
-                  placeholder="Confirm Password"
-                  type="password"
-                  size="small"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  isSubmitted={isSubmitted}
-                />
-                {passwordError && (
-                  <Typography style={{ color: "red" }}>
-                    {passwordError}
-                  </Typography>
-                )}
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <DropdownSelect
-                  name="Company"
-                  label="Company"
-                  value={userList.compName}
-                  options={dropdownValues.companyOptions}
-                  onChange={(e: SelectChangeEvent<string>) =>
-                    handleDropdownChange(
-                      ["compName", "compCode", "compID"],
-                      e.target.value,
-                      dropdownValues.companyOptions
-                    )
-                  }
-                  isMandatory
-                  size="small"
-                  isSubmitted={isSubmitted}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <DropdownSelect
-                  name="Profile"
-                  label="Profile"
-                  value={(userList.profileID || 0).toString()}
-                  options={dropdownValues.profileOptions}
-                  onChange={(e: SelectChangeEvent<string>) =>
-                    handleDropdownChange(
-                      ["profileID"],
-                      e.target.value,
-                      dropdownValues.profileOptions
-                    )
-                  }
-                  isMandatory
-                  size="small"
-                  isSubmitted={isSubmitted}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={6}>
-                <CustomSwitch
-                  label="Is Super User"
-                  size="medium"
-                  color="secondary"
-                  checked={userList.adminUserYN === "Y"}
-                  onChange={(e) =>
-                    setUserList({
-                      ...userList,
-                      adminUserYN: e.target.checked ? "Y" : "N",
-                    })
-                  }
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={6}>
-                <Grid item xs={12} sm={6} md={6}>
-                  <FloatingLabelFileUpload
-                    ControlID="fileUpload1"
-                    title="Digital Signature"
-                    onChange={handleFileChange}
-                    isMandatory={true}
-                    isSubmitted={isSubmitted}
-                    errorMessage={errorMessage}
-                    accept=".jpg,.png,.pdf"
-                    multiple={false}
-                    name="digitalSignature"
-                  />
-                </Grid>
-              </Grid>
+    <Paper variant="elevation" sx={{ padding: 2 }}>
+      <section>
+        <Grid container spacing={2} alignItems="flex-start">
+          <Grid item xs={12} sm={6} md={3}>
+            <DropdownSelect
+              name="SelectUser"
+              label="Select User"
+              value={userList.conID?.toString() || ""}
+              options={dropdownValues.usersOptions}
+              onChange={(e: any) =>
+                handleDropdownChange(
+                  ["conName", "conID", "appUserName"],
+                  e.target.value,
+                  dropdownValues.usersOptions
+                )
+              }
+              isMandatory
+              size="small"
+              isSubmitted={isSubmitted}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <FloatingLabelTextBox
+              title="Login Name"
+              ControlID="LoginName"
+              placeholder="Login Name"
+              type="text"
+              name="LoginName"
+              size="small"
+              value={userList.appCode || ""}
+              onChange={(e) =>
+                setUserList({ ...userList, appCode: e.target.value })
+              }
+              isSubmitted={isSubmitted}
+              isMandatory
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <FloatingLabelTextBox
+              title="Password"
+              ControlID="Password"
+              placeholder="Password"
+              type="password"
+              size="small"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              isSubmitted={isSubmitted}
+              isMandatory
+          
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <FloatingLabelTextBox
+              title="Confirm Password"
+              ControlID="ConfirmPassword"
+              placeholder="Confirm Password"
+              type="password"
+              size="small"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              isSubmitted={isSubmitted}
+            />
+            {/* {passwordError && (
+              <Typography style={{ color: "red" }}>{passwordError}</Typography>
+            )} */}
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <DropdownSelect
+              name="Company"
+              label="Company"
+              value={userList.compCode || ""}
+              options={dropdownValues.companyOptions}
+              onChange={(e: SelectChangeEvent<string>) =>
+                handleDropdownChange(
+                  ["compName", "compCode", "compID"],
+                  e.target.value,
+                  dropdownValues.companyOptions
+                )
+              }
+              isMandatory
+              size="small"
+              isSubmitted={isSubmitted}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <DropdownSelect
+              name="Profile"
+              label="Profile"
+              value={(userList.profileID || 0).toString()}
+              options={dropdownValues.profileOptions}
+              onChange={(e: SelectChangeEvent<string>) =>
+                handleDropdownChange(
+                  ["profileID"],
+                  e.target.value,
+                  dropdownValues.profileOptions
+                )
+              }
+              isMandatory
+              size="small"
+              isSubmitted={isSubmitted}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={6}>
+            <CustomSwitch
+              label="Is Super User"
+              size="medium"
+              color="secondary"
+              checked={userList.adminUserYN === "Y"}
+              onChange={(e) =>
+                setUserList({
+                  ...userList,
+                  adminUserYN: e.target.checked ? "Y" : "N",
+                })
+              }
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={6}>
+            <Grid item xs={12} sm={6} md={6}>
+              <FloatingLabelFileUpload
+                ControlID="fileUpload1"
+                title="Digital Signature"
+                onChange={handleFileChange}
+                isMandatory={true}
+                isSubmitted={isSubmitted}
+                errorMessage={errorMessage}
+                accept=".jpg,.png,.pdf"
+                multiple={false}
+                name="digitalSignature"
+              />
             </Grid>
-          </section>
-        </Paper>
-      </Container>
-      <FormSaveClearButton
-        clearText="Clear"
-        saveText="Save"
-        onClear={handleClear}
-        onSave={handleSave}
-        clearIcon={DeleteIcon}
-        saveIcon={SaveIcon}
-      />
-      <UserListSearch
-        show={isSearchDialogOpen}
-        handleClose={handleCloseSearchDialog}
-        onEditProfile={handleEditProfile}
-      />
-    </MainLayout>
+          </Grid>
+        </Grid>
+      </section>
+      <Box sx={{ marginTop: 2 }}>
+        <FormSaveClearButton
+          clearText="Clear"
+          saveText="Save"
+          onClear={handleClear}
+          onSave={handleSave}
+          clearIcon={DeleteIcon}
+          saveIcon={SaveIcon}
+        />
+      </Box>
+    </Paper>
   );
 };
 

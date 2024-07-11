@@ -12,8 +12,8 @@ import { OperationResult } from "../../../../interfaces/Common/OperationResult";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import TextArea from "../../../../components/TextArea/TextArea";
-import ProfileService from "../../../../services/SecurityManagementServices/ProfileListServices";
 import { notifySuccess, notifyError } from "../../../../utils/Common/toastManager";
+import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 
 interface ProfileDetailsProps {
   profile: ProfileListSearchResult | null;

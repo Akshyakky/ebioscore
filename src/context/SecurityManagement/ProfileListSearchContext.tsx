@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store/reducers";
 import { notifyError } from "../../utils/Common/toastManager";
 import { ProfileListSearchResult } from "../../interfaces/SecurityManagement/ProfileListData";
-import ProfileService from "../../services/SecurityManagementServices/ProfileListServices";
+import { ProfileService } from "../../services/SecurityManagementServices/ProfileListServices";
 
 interface ProfileListSearchContextProps {
   searchResults: ProfileListSearchResult[];
