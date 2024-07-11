@@ -25,6 +25,7 @@ import { ContactListData } from "../../../../interfaces/HospitalAdministration/C
 import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch";
 import { ContactListSearchContext } from "../../../../context/hospitalAdministration/ContactListSearchContext";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
+import { ValidationError } from "../../../../interfaces/Common/OperationResult";
 
 interface ValidationErrors {
   [key: string]: string[];
@@ -385,7 +386,18 @@ const ContactListPage: React.FC = () => {
         alert("Contact list saved successfully");
         handleClear();
       } else {
-        setValidationErrors(result.validationErrors || {});
+        const validationErrors = result.validationErrors || [];
+        const validationErrorsMap: ValidationErrors = validationErrors.reduce(
+          (acc: ValidationErrors, err: ValidationError) => {
+            if (!acc[err.propertyName]) {
+              acc[err.propertyName] = [];
+            }
+            acc[err.propertyName].push(err.errorMessage);
+            return acc;
+          },
+          {}
+        );
+        setValidationErrors(validationErrorsMap);
         console.error("Failed to save contact list:", result);
       }
     } catch (error) {

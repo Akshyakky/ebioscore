@@ -1,0 +1,39 @@
+export interface PatNokDetailsDto {
+    pNokID: number;
+    pChartID: number;
+    pNokPChartID?: number;
+    pNokRegStatusVal: string; 
+    pNokRegStatus: string;
+    pNokPssnID?: string;
+    pNokDob?: Date;
+    pNokRelNameVal: string;
+    pNokRelName: string;
+    pNokTitleVal: string;
+    pNokTitle: string;
+    pNokFName: string;
+    pNokMName?: string;
+    pNokLName?: string;
+    pNokActualCountryVal?: string;
+    pNokActualCountry?: string;
+    pNokAreaVal?: string;
+    pNokArea?: string;
+    pNokCityVal?: string;
+    pNokCity?: string;
+    pNokCountryVal?: string;
+    pNokCountry?: string;
+    pNokDoorNo?: string;
+    pAddPhone1?: string;
+    pAddPhone2?: string;
+    pAddPhone3?: string;
+    pNokPostcode?: string;
+    pNokState?: string;
+    pNokStreet?: string;
+    rActiveYN: string; 
+    rCreatedID: number;
+    rCreatedBy?: string;
+    rCreatedOn: Date;
+    rModifiedID?: number;
+    rModifiedBy?: string;
+    rModifiedOn: Date;
+  }
+  

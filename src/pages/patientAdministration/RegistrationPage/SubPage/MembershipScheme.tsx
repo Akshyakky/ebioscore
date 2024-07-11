@@ -1,17 +1,18 @@
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import React, { useState, useEffect } from "react";
-import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import { BillingService } from "../../../../services/BillingServices/BillingService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { Grid, Typography, Box } from "@mui/material";
+import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
+import { formatDt } from "../../../../utils/Common/dateUtils";
 
 interface MembershipSchemeProps {
-  formData: RegsitrationFormData;
-  setFormData: React.Dispatch<React.SetStateAction<RegsitrationFormData>>;
+  formData: PatientRegistrationDto;
+  setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
 }
 
 const MembershipScheme: React.FC<MembershipSchemeProps> = ({
@@ -22,7 +23,7 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
     []
   );
   const { handleDropdownChange } =
-    useDropdownChange<RegsitrationFormData>(setFormData);
+    useDropdownChange<PatientRegistrationDto>(setFormData);
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
   const compID = userInfo.compID!;
@@ -61,11 +62,15 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
           <DropdownSelect
             name="MembershipScheme"
             label="Membership Scheme"
-            value={formData.PatMemID === 0 ? "" : String(formData.PatMemID)}
+            value={
+              formData.PatRegisters.patMemID === 0
+                ? ""
+                : String(formData.PatRegisters.patMemID)
+            }
             options={membershipSchemes}
             onChange={handleDropdownChange(
-              ["PatMemID"],
-              ["PatMemName"],
+              ["patMemID"],
+              ["patMemName"],
               membershipSchemes
             )}
             size="small"
@@ -79,12 +84,17 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
             size="small"
             placeholder="Membership Expiry Date"
             onChange={(e) =>
-              setFormData({
-                ...formData,
-                PatMemSchemeExpiryDate: e.target.value,
-              })
+              setFormData((prevFormData) => ({
+                ...prevFormData,
+                PatRegisters: {
+                  ...prevFormData.PatRegisters,
+                  patMemSchemeExpiryDate: new Date(e.target.value),
+                },
+              }))
             }
-            value={formData.PatMemSchemeExpiryDate}
+            value={formatDt(
+              new Date(formData.PatRegisters.patMemSchemeExpiryDate)
+            )}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}></Grid>
