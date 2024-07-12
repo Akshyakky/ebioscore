@@ -1,8 +1,12 @@
-//interfaces/OperationResultts
+//interfaces/OperationResults
+export interface ValidationError {
+  propertyName: string;
+  errorMessage: string;
+}
 export interface OperationResult<T> {
   success: boolean;
   data?: T;
   errorMessage?: string;
   affectedRows?: number;
-  validationErrors?: Record<string, string[]>;
+  validationErrors?: ValidationError[];
 }

@@ -3,10 +3,7 @@ import { APIConfig } from "../../../apiConfig";
 import { DropdownOption } from "../../../interfaces/Common/DropdownOption";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { ContactListData } from "../../../interfaces/HospitalAdministration/ContactListData";
-
-interface ErrorResponse {
-  errors?: Record<string, string[]>;
-}
+import { handleError } from "../../CommonServices/HandlerError";
 
 function isAxiosError(error: unknown): error is AxiosError {
   return axios.isAxiosError(error);
@@ -40,22 +37,19 @@ const saveContactList = async (
 ): Promise<OperationResult<ContactListData>> => {
   try {
     const url = `${APIConfig.hospitalAdministrations}ContactList/SaveContactList`;
-    const response = await axios.post(url, contactListDto, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await axios.post<OperationResult<ContactListData>>(
+      url,
+      contactListDto,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
     return response.data;
   } catch (error) {
-    if (isAxiosError(error) && error.response) {
-      const errorResponse = error.response.data as ErrorResponse;
-      if (errorResponse.errors) {
-        return { success: false, validationErrors: errorResponse.errors };
-      }
-    }
-    console.error("Error saving contact list:", error);
-    throw error;
+    return handleError(error);
   }
 };
 

@@ -10,10 +10,7 @@ import PersonalDetails from "../SubPage/PersonalDetails";
 import ContactDetails from "../SubPage/ContactDetails";
 import VisitDetails from "../SubPage/VisitDetails";
 import MembershipScheme from "../SubPage/MembershipScheme";
-import {
-  RegistrationFormErrors,
-  RegsitrationFormData,
-} from "../../../../interfaces/PatientAdministration/registrationFormData";
+import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
 import { ApiError } from "../../../../interfaces/Common/ApiError";
 import { useLoading } from "../../../../context/LoadingContext";
 import NextOfKinPopup from "../SubPage/NextOfKin";
@@ -35,6 +32,8 @@ import {
 } from "@mui/icons-material";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
 import InsurancePage from "../SubPage/InsurancePage";
+import { RegistrationFormErrors } from "../../../../interfaces/PatientAdministration/registrationFormData";
+import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
 
 const RegistrationPage: React.FC = () => {
   const [showKinPopup, setShowKinPopup] = useState(false);
@@ -50,7 +49,7 @@ const RegistrationPage: React.FC = () => {
   const [selectedPChartID, setSelectedPChartID] = useState<number | 0>(0);
   const [shouldClearInsuranceData, setShouldClearInsuranceData] =
     useState(false);
-  const [formData, setFormData] = useState<RegsitrationFormData>(
+  const [formData, setFormData] = useState<PatientRegistrationDto>(
     initializeFormData(userInfo)
   );
   const [triggerInsuranceSave, setTriggerInsuranceSave] = useState(false);
@@ -118,7 +117,10 @@ const RegistrationPage: React.FC = () => {
       if (latestUHID) {
         setFormData((prevFormData) => ({
           ...prevFormData,
-          PChartCode: latestUHID,
+          PatRegisters: {
+            ...prevFormData.PatRegisters,
+            pChartCode: latestUHID,
+          },
         }));
       }
     });
@@ -128,43 +130,52 @@ const RegistrationPage: React.FC = () => {
 
   const validateFormData = useCallback(() => {
     const errors: RegistrationFormErrors = {};
-    if (!formData.PChartCode.trim()) {
+    if (!formData.PatRegisters.pChartCode.trim()) {
       errors.pChartCode = "UHID is required.";
-    } else if (!formData.PRegDate.trim()) {
+    } else if (!formData.PatRegisters.pRegDate) {
       errors.registrationDate = "Registration Date is required";
-    } else if (!formData.PFName.trim()) {
+    } else if (!formData.PatRegisters.pFName) {
       errors.firstName = "First Name is required.";
-    } else if (!formData.PLName.trim()) {
+    } else if (!formData.PatRegisters.pLName) {
       errors.lastName = "Last name is required";
-    } else if (formData.PTypeID === 0 || !formData.PTypeName.trim()) {
+    } else if (
+      formData.PatRegisters.pTypeID === 0 ||
+      !formData.PatRegisters.pTypeName
+    ) {
       errors.paymentSource = "Payment Source is required";
-    } else if (!formData.PatAddress.PAddPhone1.trim()) {
+    } else if (!formData.PatAddress.pAddPhone1) {
       errors.mobileNumber = "Mobile No is required";
-    } else if (!formData.PTitleVal.trim() || !formData.PTitle.trim()) {
+    } else if (
+      !formData.PatRegisters.pTitleVal ||
+      !formData.PatRegisters.pTitle
+    ) {
       errors.title = "Title is required";
-    } else if (!formData.PssnID.trim()) {
+    } else if (!formData.PatRegisters.pssnID) {
       errors.indetityNo = "Indentity Number is required";
     } else if (
-      (formData.PDobOrAge === "DOB" && !formData.PDob.trim()) ||
-      (formData.PDobOrAge === "Age" &&
-        formData.PatOverview.PAgeNumber === 0 &&
-        !formData.PatOverview.PageDescriptionVal.trim())
+      (formData.PatRegisters.pDobOrAge === "DOB" &&
+        !formData.PatRegisters.pDob) ||
+      (formData.PatRegisters.pDobOrAge === "Age" &&
+        formData.PatOverview.pAgeNumber === 0 &&
+        !formData.PatOverview.pAgeDescriptionVal)
     ) {
       errors.dateOfBirth = "Date of birth or Age is required";
     } else if (
-      formData.OPVisits.VisitTypeVal === "H" &&
-      (formData.DeptID === 0 || !formData.DeptName.trim())
+      formData.Opvisits.visitTypeVal === "H" &&
+      (formData.PatRegisters.deptID === 0 || !formData.PatRegisters.deptName)
     ) {
       errors.department = "Department is required";
     } else if (
-      formData.OPVisits.VisitTypeVal === "P" &&
-      (formData.ConsultantID === 0 || !formData.ConsultantName.trim())
+      formData.Opvisits.visitTypeVal === "P" &&
+      (formData.PatRegisters.consultantID === 0 ||
+        !formData.PatRegisters.consultantName)
     ) {
       errors.attendingPhysician = "Attending Physician is required";
     } else if (
-      (formData.OPVisits.VisitTypeVal === "H" ||
-        formData.OPVisits.VisitTypeVal === "P") &&
-      (formData.SourceID === 0 || !formData.SourceName.trim())
+      (formData.Opvisits.visitTypeVal === "H" ||
+        formData.Opvisits.visitTypeVal === "P") &&
+      (formData.PatRegisters.sourceID === 0 ||
+        !formData.PatRegisters.sourceName)
     ) {
       errors.primaryIntroducingSource =
         "Primary Introducing Source is required";
@@ -183,12 +194,12 @@ const RegistrationPage: React.FC = () => {
         return;
       }
       setTriggerInsuranceSave(true);
-      const registrationResponse = await RegistrationService.saveRegistration(
+      const registrationResponse = await PatientService.savePatient(
         token,
         formData
       );
       alert("Registration saved successfully!");
-      const pChartID = registrationResponse.pChartID;
+      const pChartID = registrationResponse.data;
       if (pChartID) {
         await handleFinalSaveNokDetails(pChartID);
       }
@@ -254,20 +265,18 @@ const RegistrationPage: React.FC = () => {
     async (pChartID: number) => {
       setLoading(true);
       try {
-        const patientDetails = await RegistrationService.getPatientDetails(
+        const patientDetails = await PatientService.getPatientDetails(
           token,
           pChartID
         );
-        if (patientDetails.success) {
-          const transformedData = transformDataToMatchFormDataStructure(
-            patientDetails.data,
-            userInfo
-          );
+        if (patientDetails.success && patientDetails.data) {
           setEditMode(true);
-          setFormData(transformedData);
+          setFormData(patientDetails.data);
           await fetchAdditionalPatientDetails(pChartID);
         } else {
-          console.error("Fetching patient details was not successful");
+          console.error(
+            "Fetching patient details was not successful or data is undefined"
+          );
         }
       } catch (error) {
         console.error("Error fetching patient details:", error);
@@ -275,7 +284,7 @@ const RegistrationPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [token, setLoading, userInfo]
+    [token, setLoading]
   );
 
   const fetchAdditionalPatientDetails = useCallback(
@@ -346,130 +355,6 @@ const RegistrationPage: React.FC = () => {
       RModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
       RModifiedOn: new Date().toISOString().split("T")[0],
     }));
-  };
-
-  const transformDataToMatchFormDataStructure = (
-    data: any,
-    userInfo: any
-  ): RegsitrationFormData => {
-    return {
-      PChartID: data.pChartID,
-      PChartCode: data.pChartCode,
-      PRegDate: data.pRegDate.split("T")[0],
-      PTitleVal: data.pTitleVal,
-      PTitle: data.pTitle,
-      PFName: data.pfName,
-      PMName: data.pmName,
-      PLName: data.plName,
-      PDobOrAgeVal: data.pDobOrAgeVal,
-      PDobOrAge: data.pDobOrAge,
-      PDob: data.pDob.split("T")[0],
-      PAgeType: data.pAgeType,
-      PApproxAge: data.pApproxAge,
-      PGender: data.pGender,
-      PGenderVal: data.pGenderVal,
-      PssnID: data.pssnID,
-      PBldGrp: data.pBldGrp,
-      RCreatedID: data.rCreatedID,
-      RCreatedBy: data.rCreatedBy,
-      RCreatedOn: data.rCreatedOn,
-      RModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
-      RModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
-      RModifiedOn: new Date().toISOString().split("T")[0],
-      RActiveYN: data.rActiveYN,
-      RNotes: data.rNotes,
-      CompID: data.compID,
-      CompCode: data.compCode,
-      CompName: data.compName,
-      PFhName: data.pFhName,
-      PTypeID: data.pTypeID,
-      PTypeCode: data.pTypeCode,
-      PTypeName: data.pTypeName,
-      FatherBldGrp: data.fatherBldGrp,
-      SapID: data.sapID,
-      PatMemID: data.patMemID,
-      PatMemName: data.patMemName,
-      PatMemDescription: data.patMemDescription,
-      PatMemSchemeExpiryDate: data.patMemSchemeExpiryDate.split("T")[0],
-      PatSchemeExpiryDateYN: data.patSchemeExpiryDateYN,
-      PatSchemeDescriptionYN: data.patSchemeDescriptionYN,
-      CancelReason: data.cancelReason,
-      CancelYN: data.cancelYN,
-      ConsultantID: data.consultantID,
-      ConsultantName: data.consultantName,
-      DeptID: data.deptID,
-      DeptName: data.deptName,
-      FacultyID: data.facultyID,
-      Faculty: data.faculty,
-      LangType: data.langType,
-      PChartCompID: data.pChartCompID,
-      PExpiryDate: data.pExpiryDate.split("T")[0],
-      PhysicianRoom: data.physicianRoom,
-      RegTypeVal: data.regTypeVal,
-      RegType: data.regType,
-      SourceID: data.sourceID,
-      SourceName: data.sourceName,
-      PPob: data.pPob,
-      PatCompName: data.patCompName,
-      PatCompNameVal: data.patCompNameVal,
-      PatDataFormYN: data.patDataFormYN,
-      IntIdPsprt: data.intIdPsprt,
-      TransferYN: data.transferYN,
-      PatOverview: data.PatOverview || {
-        PatOverID: data.patOverID,
-        PChartID: data.pChartID,
-        PChartCode: data.pChartCode,
-        PPhoto: data.pPhoto,
-        PMaritalStatus: data.pMaritalStatus,
-        PReligion: data.pReligion,
-        PEducation: data.pEducation,
-        POccupation: data.pOccupation,
-        PEmployer: data.pEmployer,
-        PAgeNumber: data.pAgeNumber,
-        PageDescription: data.pageDescription,
-        PageDescriptionVal: data.pageDescriptionVal,
-        Ethnicity: data.ethnicity,
-        PCountryOfOrigin: data.pCountryOfOrigin,
-        CompID: data.compID,
-        CompCode: data.compCode,
-        CompName: data.compName,
-        PChartCompID: data.pChartCompID,
-        TransferYN: data.transferYN,
-      },
-      PatAddress: data.PatAddress || {
-        PAddID: data.patAddress.pAddID,
-        PChartID: data.patAddress.pChartID,
-        PChartCode: data.patAddress.pChartCode,
-        PAddType: data.patAddress.pAddType,
-        PAddMailVal: data.patAddress.pAddMailVal,
-        PAddMail: data.patAddress.pAddMail,
-        PAddSMSVal: data.patAddress.pAddSMSVal,
-        PAddSMS: data.patAddress.pAddSMS,
-        PAddEmail: data.patAddress.pAddEmail,
-        PAddStreet: data.patAddress.pAddStreet,
-        PAddStreet1: data.patAddress.pAddStreet1,
-        PAddCityVal: data.patAddress.pAddCityVal,
-        PAddCity: data.patAddress.pAddCity,
-        PAddState: data.patAddress.pAddState,
-        PAddPostcode: data.patAddress.pAddPostcode,
-        PAddCountry: data.patAddress.pAddCountry,
-        PAddCountryVal: data.patAddress.pAddCountryVal,
-        PAddPhone1: data.patAddress.pAddPhone1,
-        PAddPhone2: data.patAddress.pAddPhone2,
-        PAddPhone3: data.patAddress.pAddPhone3,
-        PAddWorkPhone: data.patAddress.pAddWorkPhone,
-        CompID: data.patAddress.compID,
-        CompCode: data.patAddress.compCode,
-        CompName: data.patAddress.compName,
-        PAddActualCountryVal: data.patAddress.pAddActualCountryVal,
-        PAddActualCountry: data.patAddress.pAddActualCountry,
-        PatAreaVal: data.patAddress.patAreaVal,
-        PatArea: data.patAddress.patArea,
-        PatDoorNo: data.patAddress.patDoorNo,
-        PChartCompID: data.patAddress.pChartCompID,
-      },
-      OPVisits: data.opVisits || { VisitTypeVal: "H", VisitType: "Hospital" },
-    };
   };
 
   const handleAdvancedSearch = async () => {
@@ -639,125 +524,127 @@ const RegistrationPage: React.FC = () => {
   );
 };
 
-const initializeFormData = (userInfo: any): RegsitrationFormData => ({
-  PChartID: 0,
-  PChartCode: "",
-  PRegDate: new Date().toISOString().split("T")[0],
-  PTitleVal: "",
-  PTitle: "",
-  PFName: "",
-  PMName: "",
-  PLName: "",
-  PDobOrAgeVal: "Y",
-  PDobOrAge: "",
-  PDob: new Date().toISOString().split("T")[0],
-  PAgeType: "",
-  PApproxAge: 0,
-  PGender: "",
-  PGenderVal: "",
-  PssnID: "",
-  PBldGrp: "",
-  RCreatedID: userInfo.userID !== null ? userInfo.userID : 0,
-  RCreatedBy: userInfo.userName !== null ? userInfo.userName : "",
-  RCreatedOn: new Date().toISOString().split("T")[0],
-  RModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
-  RModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
-  RModifiedOn: new Date().toISOString().split("T")[0],
-  RActiveYN: "Y",
-  RNotes: "",
-  CompID: userInfo.compID !== null ? userInfo.compID : 0,
-  CompCode: userInfo.compCode !== null ? userInfo.compCode : "",
-  CompName: userInfo.compName !== null ? userInfo.compName : "",
-  PFhName: "",
-  PTypeID: 0,
-  PTypeCode: "",
-  PTypeName: "",
-  FatherBldGrp: "",
-  SapID: "",
-  PatMemID: 0,
-  PatMemName: "",
-  PatMemDescription: "",
-  PatMemSchemeExpiryDate: new Date().toISOString().split("T")[0],
-  PatSchemeExpiryDateYN: "N",
-  PatSchemeDescriptionYN: "N",
-  CancelReason: "",
-  CancelYN: "N",
-  ConsultantID: 0,
-  ConsultantName: "",
-  DeptID: 0,
-  DeptName: "",
-  FacultyID: 0,
-  Faculty: "",
-  LangType: "",
-  PChartCompID: 0,
-  PExpiryDate: new Date().toISOString().split("T")[0],
-  PhysicianRoom: "",
-  RegTypeVal: "GEN",
-  RegType: "",
-  SourceID: 0,
-  SourceName: "",
-  PPob: "",
-  PatCompName: "",
-  PatCompNameVal: "",
-  PatDataFormYN: "N",
-  IntIdPsprt: "",
-  TransferYN: "N",
-  OPVisits: {
-    VisitTypeVal: "H",
-    VisitType: "Hospital",
-  },
-  PatOverview: {
-    PatOverID: 0,
-    PChartID: 0,
-    PChartCode: "",
-    PPhoto: "",
-    PMaritalStatus: "",
-    PReligion: "",
-    PEducation: "",
-    POccupation: "",
-    PEmployer: "",
-    PAgeNumber: 0,
-    PageDescription: "",
-    PageDescriptionVal: "",
-    Ethnicity: "",
-    PCountryOfOrigin: "",
-    CompID: userInfo.compID !== null ? userInfo.compID : 0,
-    CompCode: userInfo.compCode !== null ? userInfo.compCode : "",
-    CompName: userInfo.compName !== null ? userInfo.compName : "",
-    PChartCompID: 0,
-    TransferYN: "N",
+const initializeFormData = (userInfo: any): PatientRegistrationDto => ({
+  PatRegisters: {
+    pChartID: 0,
+    pChartCode: "",
+    pRegDate: new Date(),
+    pTitleVal: "",
+    pTitle: "",
+    pFName: "",
+    pMName: "",
+    pLName: "",
+    pDobOrAgeVal: "Y",
+    pDobOrAge: "",
+    pDob: new Date(),
+    pAgeType: "",
+    pApproxAge: 0,
+    pGender: "",
+    pGenderVal: "",
+    pssnID: "",
+    pBldGrp: "",
+    rCreatedID: userInfo.userID !== null ? userInfo.userID : 0,
+    rCreatedBy: userInfo.userName !== null ? userInfo.userName : "",
+    rCreatedOn: new Date(),
+    rModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
+    rModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
+    rModifiedOn: new Date(),
+    rActiveYN: "Y",
+    rNotes: "",
+    compID: userInfo.compID !== null ? userInfo.compID : 0,
+    compCode: userInfo.compCode !== null ? userInfo.compCode : "",
+    compName: userInfo.compName !== null ? userInfo.compName : "",
+    pFhName: "",
+    pTypeID: 0,
+    pTypeCode: "",
+    pTypeName: "",
+    fatherBldGrp: "",
+    sapID: "",
+    patMemID: 0,
+    patMemName: "",
+    patMemDescription: "",
+    patMemSchemeExpiryDate: new Date(),
+    patSchemeExpiryDateYN: "N",
+    patSchemeDescriptionYN: "N",
+    cancelReason: "",
+    cancelYN: "N",
+    consultantID: 0,
+    consultantName: "",
+    deptID: 0,
+    deptName: "",
+    facultyID: 0,
+    faculty: "",
+    langType: "",
+    pChartCompID: 0,
+    pExpiryDate: new Date(),
+    physicianRoom: "",
+    regTypeVal: "GEN",
+    regType: "",
+    sourceID: 0,
+    sourceName: "",
+    pPob: "",
+    patCompName: "",
+    patCompNameVal: "",
+    patDataFormYN: "N",
+    intIdPsprt: "",
+    transferYN: "N",
   },
   PatAddress: {
-    PAddID: 0,
-    PChartID: 0,
-    PChartCode: "",
-    PAddType: "",
-    PAddMailVal: "N",
-    PAddMail: "",
-    PAddSMSVal: "N",
-    PAddSMS: "",
-    PAddEmail: "",
-    PAddStreet: "",
-    PAddStreet1: "",
-    PAddCityVal: "",
-    PAddCity: "",
-    PAddState: "",
-    PAddPostcode: "",
-    PAddCountry: "",
-    PAddCountryVal: "",
-    PAddPhone1: "",
-    PAddPhone2: "",
-    PAddPhone3: "",
-    PAddWorkPhone: "",
-    CompID: userInfo.compID !== null ? userInfo.compID : 0,
-    CompCode: userInfo.compCode !== null ? userInfo.compCode : "",
-    CompName: userInfo.compName !== null ? userInfo.compName : "",
-    PAddActualCountryVal: "",
-    PAddActualCountry: "",
-    PatAreaVal: "",
-    PatArea: "",
-    PatDoorNo: "",
-    PChartCompID: 0,
+    pAddID: 0,
+    pChartID: 0,
+    pChartCode: "",
+    pAddType: "",
+    pAddMailVal: "N",
+    pAddMail: "",
+    pAddSMSVal: "N",
+    pAddSMS: "",
+    pAddEmail: "",
+    pAddStreet: "",
+    pAddStreet1: "",
+    pAddCityVal: "",
+    pAddCity: "",
+    pAddState: "",
+    pAddPostcode: "",
+    pAddCountry: "",
+    pAddCountryVal: "",
+    pAddPhone1: "",
+    pAddPhone2: "",
+    pAddPhone3: "",
+    pAddWorkPhone: "",
+    compID: userInfo.compID !== null ? userInfo.compID : 0,
+    compCode: userInfo.compCode !== null ? userInfo.compCode : "",
+    compName: userInfo.compName !== null ? userInfo.compName : "",
+    pAddActualCountryVal: "",
+    pAddActualCountry: "",
+    patAreaVal: "",
+    patArea: "",
+    patDoorNo: "",
+    pChartCompID: 0,
+  },
+  PatOverview: {
+    patOverID: 0,
+    pChartID: 0,
+    pChartCode: "",
+    pPhoto: "",
+    pMaritalStatus: "",
+    pReligion: "",
+    pEducation: "",
+    pOccupation: "",
+    pEmployer: "",
+    pAgeNumber: 0,
+    pAgeDescription: "",
+    pAgeDescriptionVal: "",
+    ethnicity: "",
+    pCountryOfOrigin: "",
+    compID: userInfo.compID !== null ? userInfo.compID : 0,
+    compCode: userInfo.compCode !== null ? userInfo.compCode : "",
+    compName: userInfo.compName !== null ? userInfo.compName : "",
+    pChartCompID: 0,
+    transferYN: "N",
+  },
+  Opvisits: {
+    visitTypeVal: "H",
+    visitType: "Hospital",
   },
 });
 

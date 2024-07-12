@@ -33,9 +33,8 @@ import { styled, useTheme } from "@mui/material/styles";
 
 // Define the interface for the count data
 interface CountData {
-  myCount: number | null;
-  overallCount: number | null;
-  show: boolean;
+  myCount: number;
+  overallCount: number;
 }
 
 // Define the type with an index signature
@@ -234,26 +233,15 @@ const DashboardPage: React.FC = () => {
         const isOverallCountAvailable =
           !overallCountResult.unauthorized && !overallCountResult.error;
 
-        if (isMyCountAvailable || isOverallCountAvailable) {
-          setCounts((prevCounts) => ({
-            ...prevCounts,
-            [category.toLowerCase()]: {
-              myCount: isMyCountAvailable ? myCountResult.count : null,
-              overallCount: isOverallCountAvailable
-                ? overallCountResult.count
-                : null,
-              show: true, // Set show to true if either count is available
-            },
-          }));
-        } else {
-          setCounts((prevCounts) => ({
-            ...prevCounts,
-            [category.toLowerCase()]: {
-              ...prevCounts[category.toLowerCase()],
-              show: false, // Set show to false if neither count is available
-            },
-          }));
-        }
+        setCounts((prevCounts) => ({
+          ...prevCounts,
+          [category.toLowerCase()]: {
+            myCount: isMyCountAvailable ? myCountResult.count : 0,
+            overallCount: isOverallCountAvailable
+              ? overallCountResult.count
+              : 0,
+          },
+        }));
       }
     } catch (error) {
       console.error("Error in fetchData", error);
@@ -263,7 +251,23 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleDateRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDateRange({ ...dateRange, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    setDateRange((prevDateRange) => {
+      const newDateRange = { ...prevDateRange, [name]: value };
+
+      // Validation to ensure "To Date" cannot be earlier than "From Date"
+      if (new Date(newDateRange.fromDate) > new Date(newDateRange.toDate)) {
+        // If the "From Date" is greater than the "To Date", adjust the "To Date"
+        if (name === "fromDate") {
+          newDateRange.toDate = value;
+        } else if (name === "toDate") {
+          newDateRange.fromDate = value;
+        }
+      }
+
+      return newDateRange;
+    });
   };
 
   const handleShowButtonClick = async () => {
@@ -292,94 +296,103 @@ const DashboardPage: React.FC = () => {
           elevation={3}
           sx={{ padding: theme.spacing(5), marginTop: theme.spacing(5) }}
         >
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Box display="flex" alignItems="center" gap={3}>
-                <DropdownSelect
-                  label="Select date range"
-                  name="dateRange"
-                  value={selectedOption}
-                  options={dateRangeOptions}
-                  onChange={handleSelect}
-                  size="small"
-                />
-
-                {selectedOption === "DT" && (
-                  <Box display="flex" gap={2}>
-                    <FloatingLabelTextBox
-                      ControlID="fromDate"
-                      title="From"
-                      type="date"
-                      size="small"
-                      value={dateRange.fromDate}
-                      onChange={handleDateRangeChange}
-                    />
-                    <FloatingLabelTextBox
-                      ControlID="toDate"
-                      title="To"
-                      type="date"
-                      size="small"
-                      value={dateRange.toDate}
-                      onChange={handleDateRangeChange}
-                    />
-                  </Box>
-                )}
-
-                <CustomButton
-                  variant="contained"
-                  size="medium"
-                  onClick={handleShowButtonClick}
-                  icon={VisibilityIcon}
-                  text="Show"
-                  color="primary"
-                />
-              </Box>
+          <Typography variant="h6" sx={{ borderBottom: "1px solid #000" }}>
+            Statistics
+          </Typography>
+          <Grid container spacing={3} alignItems="center">
+            <Grid item xs={12} sm={3} md={3} lg={3}>
+              <DropdownSelect
+                label="Select date range"
+                name="dateRange"
+                value={selectedOption}
+                options={dateRangeOptions}
+                onChange={handleSelect}
+                size="small"
+              />
             </Grid>
-
-            {showCounts && (
-              <Grid container spacing={3}>
-                {Object.entries(counts).map(([key, countData]) =>
-                  countData.show ? (
-                    <Grid item xs={12} sm={6} lg={4} key={key}>
-                      <StyledCard>
-                        <CardContent>
-                          <Typography variant="h6" gutterBottom>
-                            {titleMapping[key.toLowerCase()] || key}
-                          </Typography>
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="center"
-                          >
-                            <StyledLeftBadge
-                              badgeContent={countData.myCount ?? "0"} // Fallback to '0' if null
-                              color="primary"
-                              anchorOrigin={{
-                                vertical: "top",
-                                horizontal: "right",
-                              }}
-                            >
-                              <PersonIcon />
-                            </StyledLeftBadge>
-                            <StyledRightBadge
-                              badgeContent={countData.overallCount ?? "0"} // Fallback to '0' if null
-                              color="secondary"
-                              anchorOrigin={{
-                                vertical: "top",
-                                horizontal: "right",
-                              }}
-                            >
-                              <GroupIcon />
-                            </StyledRightBadge>
-                          </Box>
-                        </CardContent>
-                      </StyledCard>
-                    </Grid>
-                  ) : null
-                )}
-              </Grid>
+            {selectedOption === "DT" && (
+              <>
+                <Grid item xs={12} sm={3} md={3} lg={3}>
+                  <FloatingLabelTextBox
+                    ControlID="fromDate"
+                    title="From"
+                    type="date"
+                    size="small"
+                    value={dateRange.fromDate}
+                    onChange={handleDateRangeChange}
+                    name="fromDate"
+                    ariaLabel="From Date"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3} md={3} lg={3}>
+                  <FloatingLabelTextBox
+                    ControlID="toDate"
+                    title="To"
+                    type="date"
+                    size="small"
+                    value={dateRange.toDate}
+                    onChange={handleDateRangeChange}
+                    name="toDate"
+                    ariaLabel="To Date"
+                  />
+                </Grid>
+              </>
             )}
+            <Grid item xs={12} sm={3} md={3} lg={3}>
+              <CustomButton
+                variant="contained"
+                size="medium"
+                onClick={handleShowButtonClick}
+                icon={VisibilityIcon}
+                text="SHOW"
+                color="primary"
+              />
+            </Grid>
           </Grid>
+
+          {showCounts && (
+            <Grid container spacing={3} sx={{ marginTop: theme.spacing(3) }}>
+              {Object.entries(counts).map(([key, countData]) => (
+                <Grid item xs={12} sm={6} lg={4} key={key}>
+                  <StyledCard>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        {titleMapping[key.toLowerCase()] || key}
+                      </Typography>
+                      <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                      >
+                        <StyledLeftBadge
+                          badgeContent={countData.myCount}
+                          color="primary"
+                          anchorOrigin={{
+                            vertical: "top",
+                            horizontal: "right",
+                          }}
+                          showZero
+                        >
+                          <PersonIcon />
+                        </StyledLeftBadge>
+                        <StyledRightBadge
+                          badgeContent={countData.overallCount}
+                          color="secondary"
+                          anchorOrigin={{
+                            vertical: "top",
+                            horizontal: "right",
+                          }}
+                          showZero
+                        >
+                          <GroupIcon />
+                        </StyledRightBadge>
+                      </Box>
+                    </CardContent>
+                  </StyledCard>
+                </Grid>
+              ))}
+            </Grid>
+          )}
         </Paper>
       </Container>
     </MainLayout>

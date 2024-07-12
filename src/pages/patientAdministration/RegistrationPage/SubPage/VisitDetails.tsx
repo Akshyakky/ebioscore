@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Grid, Typography, Box } from "@mui/material";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
-import { RegsitrationFormData } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { DepartmentService } from "../../../../services/CommonServices/DepartmentService";
@@ -11,10 +10,11 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
+import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
 
 interface VisitDetailsProps {
-  formData: RegsitrationFormData;
-  setFormData: React.Dispatch<React.SetStateAction<RegsitrationFormData>>;
+  formData: PatientRegistrationDto;
+  setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
   isSubmitted: boolean;
   isEditMode: boolean; // New prop to control edit mode
 }
@@ -33,9 +33,9 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
     DropdownOption[]
   >([]);
   const { handleDropdownChange } =
-    useDropdownChange<RegsitrationFormData>(setFormData);
+    useDropdownChange<PatientRegistrationDto>(setFormData);
   const { handleRadioButtonChange } =
-    useRadioButtonChange<RegsitrationFormData>(setFormData);
+    useRadioButtonChange<PatientRegistrationDto>(setFormData);
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
   const compID = userInfo.compID!;
@@ -99,8 +99,8 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
     { value: "P", label: "Physician" },
     { value: "N", label: "None" },
   ];
-  const isHospitalVisit = formData.OPVisits.VisitTypeVal === "H";
-  const isPhysicianVisit = formData.OPVisits.VisitTypeVal === "P";
+  const isHospitalVisit = formData.Opvisits.visitTypeVal === "H";
+  const isPhysicianVisit = formData.Opvisits.visitTypeVal === "P";
 
   // Conditionally render the section based on isEditMode
   if (isEditMode) {
@@ -120,7 +120,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
             name="visitDetails"
             label="Visit To"
             options={visitOptions}
-            selectedValue={formData.OPVisits.VisitTypeVal}
+            selectedValue={formData.Opvisits.visitTypeVal}
             onChange={handleRadioButtonChange(
               ["OPVisits", "VisitTypeVal"],
               ["OPVisits", "VisitType"],
@@ -134,7 +134,11 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
             <DropdownSelect
               label="Department"
               name="Department"
-              value={formData.DeptID === 0 ? "" : String(formData.DeptID)}
+              value={
+                formData.PatRegisters.deptID === 0
+                  ? ""
+                  : String(formData.PatRegisters.deptID)
+              }
               options={departmentValues}
               onChange={handleDropdownChange(
                 ["DeptID"],
@@ -153,7 +157,9 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
               name="AttendingPhysician"
               label="Attending Physician"
               value={
-                formData.ConsultantID === 0 ? "" : String(formData.ConsultantID)
+                formData.PatRegisters.consultantID === 0
+                  ? ""
+                  : String(formData.PatRegisters.consultantID)
               }
               options={attendingPhy}
               onChange={handleDropdownChange(
@@ -172,7 +178,11 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
             <DropdownSelect
               name="PrimaryIntroducingSource"
               label="Primary Introducing Source"
-              value={formData.SourceID === 0 ? "" : String(formData.SourceID)}
+              value={
+                formData.PatRegisters.sourceID === 0
+                  ? ""
+                  : String(formData.PatRegisters.sourceID)
+              }
               options={primaryIntroducingSource}
               onChange={handleDropdownChange(
                 ["SourceID"],
