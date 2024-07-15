@@ -19,13 +19,16 @@ import FloatingLabelFileUpload from "../../../../components/FileUpload/FileUploa
 import { UserListData } from "../../../../interfaces/SecurityManagement/UserListData";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import DeleteIcon from "@mui/icons-material/Edit";
-import SaveIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save"
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
+import { url } from "inspector";
 
 interface Company {
   compIDCompCode: string;
   compName: string;
 }
+
+
 
 interface UserDetailsProps {
   user: UserListData | null;
@@ -79,7 +82,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
   const [errorMessage, setErrorMessage] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  // const [passwordError, setPasswordError] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [dropdownValues, setDropdownValues] = useState({
     categoryOptions: [] as DropdownOption[],
     usersOptions: [] as DropdownOption[],
@@ -94,6 +97,30 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       setUserList(defaultUserListData);
     }
   }, [user]);
+
+
+  useEffect(() => {
+    const fetchImage = async () => {
+      try {
+        const response = await fetch(userList.digSignPath);
+        if (!response.ok) {
+          throw new Error('Failed to fetch image');
+        }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setImageUrl(url);
+      } catch (error) {
+        console.error('Error fetching image:', error);
+        // Handle error or set a default image URL
+        setImageUrl('/path/to/default-image.jpg');
+      }
+    };
+
+    fetchImage();
+  }, [userList.digSignPath]);
+  
+
+
 
 
   const handleDropdownChange = async (
@@ -215,9 +242,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     } else {
       // setPasswordError("");
     }
-  
+
     try {
-      if (userList.conName ) {
+      if (userList.conName) {
         const userData: UserListData = {
           ...userList,
           rCreatedOn: new Date(userList.rCreatedOn).toISOString(),
@@ -240,7 +267,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
           notifySuccess("User saved successfully");
           onSave(userData);
           refreshUsers();
-        
+
         } else {
           notifyError("Error saving user");
           console.error("Failed to save user:", result.errorMessage);
@@ -266,7 +293,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     setErrorMessage("");
     setPassword("");
     setConfirmPassword("");
-    // setPasswordError("");
     setIsSubmitted(false);
     notifySuccess("Form cleared successfully");
     onClear();
@@ -321,7 +347,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               onChange={(e) => setPassword(e.target.value)}
               isSubmitted={isSubmitted}
               isMandatory
-          
+
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
@@ -335,9 +361,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               onChange={(e) => setConfirmPassword(e.target.value)}
               isSubmitted={isSubmitted}
             />
-            {/* {passwordError && (
-              <Typography style={{ color: "red" }}>{passwordError}</Typography>
-            )} */}
+
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <DropdownSelect
@@ -394,7 +418,10 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               <FloatingLabelFileUpload
                 ControlID="fileUpload1"
                 title="Digital Signature"
-                onChange={handleFileChange}
+                value={userList.digSignPath || ""}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setUserList({ ...userList, digSignPath: e.target.value })
+                }
                 isMandatory={true}
                 isSubmitted={isSubmitted}
                 errorMessage={errorMessage}
@@ -402,8 +429,13 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                 multiple={false}
                 name="digitalSignature"
               />
+             
+                
+             
+
             </Grid>
           </Grid>
+
         </Grid>
       </section>
       <Box sx={{ marginTop: 2 }}>

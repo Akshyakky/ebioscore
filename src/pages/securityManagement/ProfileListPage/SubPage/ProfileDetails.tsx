@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Grid, Paper } from "@mui/material";
+import { Grid, Paper, Typography } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -130,6 +130,9 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
+      <Typography variant="h6" id="insurance-details-header">
+        PROFILE DETAILS
+      </Typography>
       <section>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={3}>
@@ -192,3 +195,15 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
 };
 
 export default ProfileDetails;
+
+
+
+
+
+
+
+
+
+
+
+

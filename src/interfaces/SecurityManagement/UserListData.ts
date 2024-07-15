@@ -18,7 +18,7 @@ export interface UserListData {
   compID?: number;
   compName: string;
   conCompId?: number;
-  digSignPath?: string;
+  digSignPath: string;
   transferYN?: string;
   appCode: string;
   appUAccess?: string;

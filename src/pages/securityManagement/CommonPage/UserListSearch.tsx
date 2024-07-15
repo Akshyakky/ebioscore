@@ -8,7 +8,7 @@ import {
   Grid,
   Typography,
   Box,
-} from "@mui/material";
+  } from "@mui/material";
 import { UserListData } from "../../../interfaces/SecurityManagement/UserListData";
 import { UserListSearchContext } from "../../../context/SecurityManagement/UserListSearchContext";
 import { useSelector } from "react-redux";
@@ -40,6 +40,23 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
   );
   const [isLoading, setIsLoading] = useState(false);
   const { token } = useSelector((state: RootState) => state.userDetails);
+  const [switchStatus, setSwitchStatus] = useState<{ [key: string]: boolean }>({});
+
+
+
+  useEffect(() => {
+    // Initialize switch status based on searchResults
+    const initialSwitchStatus = searchResults.reduce((acc, item) => {
+      acc[item.appID] = item.rActiveYN === "Y";
+      return acc;
+    }, {} as { [key: string]: boolean });
+
+    setSwitchStatus(initialSwitchStatus);
+  }, [searchResults]);
+
+
+
+
 
   const debouncedSearch = useCallback(
     debounce((searchQuery: string) => {
@@ -55,11 +72,13 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     debouncedSearch(searchTerm);
   }, [searchTerm, debouncedSearch]);
 
+
+
   const handleEditAndClose = async (user: UserListData) => {
     try {
       const userDetails = await UserListService.getUserDetails(token!, user.appID);
       if (userDetails.success && userDetails.data) {
-        onEditProfile(userDetails.data); // Pass fetched user details to onEditProfile
+        onEditProfile(userDetails.data); 
       } else {
         notifyError("Failed to fetch user details.");
       }
@@ -95,6 +114,13 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
             updatedStatus === true ? "Active" : "Hidden"
           }`
         );
+
+        setSwitchStatus(prevState => ({
+          ...prevState,
+          [user.appID]: checked,
+        }));
+
+
         updateUserStatus(user.appID, checked);
       } else {
         notifyError(`Error updating user status: ${result.errorMessage}`);
@@ -108,6 +134,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
   const dataWithIndex = searchResults.map((item, index) => ({
     ...item,
     serialNumber: index + 1,
+    Status: item.rActiveYN === "Y" ? "Active" : "Hidden", 
   }));
 
   const columns = [
@@ -133,7 +160,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
       visible: true,
       render: (row: UserListData) => (
         <Typography variant="body2">
-          {row.rActiveYN === "N" ? "Hidden" : "Active"}
+         {row.rActiveYN === "N" ? "Hidden" : "Active"}
         </Typography>
       ),
     },
@@ -145,7 +172,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
         <CustomSwitch
           size="medium"
           color="secondary"
-          checked={row.rActiveYN === "Y"}
+          checked={switchStatus[row.appID] || false}
           onChange={(event) => handleSwitchChange(row, event.target.checked)}
         />
       ),
