@@ -42,10 +42,8 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [switchStatus, setSwitchStatus] = useState<{ [key: string]: boolean }>({});
 
-
-
+  // Initialize switch status based on searchResults
   useEffect(() => {
-    // Initialize switch status based on searchResults
     const initialSwitchStatus = searchResults.reduce((acc, item) => {
       acc[item.appID] = item.rActiveYN === "Y";
       return acc;
@@ -54,10 +52,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     setSwitchStatus(initialSwitchStatus);
   }, [searchResults]);
 
-
-
-
-
+  // Debounce search term changes for smoother searching
   const debouncedSearch = useCallback(
     debounce((searchQuery: string) => {
       setIsLoading(true);
@@ -72,8 +67,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     debouncedSearch(searchTerm);
   }, [searchTerm, debouncedSearch]);
 
-
-
+  // Fetch user details for editing and close the dialog
   const handleEditAndClose = async (user: UserListData) => {
     try {
       const userDetails = await UserListService.getUserDetails(token!, user.appID);
@@ -89,54 +83,62 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     }
   };
 
-  const handleSwitchChange = async (
-    user: UserListData,
-    checked: boolean
-  ) => {
-    try {
-      console.log("Profile data:", user);
-
-      if (!user.appID) {
-        console.error("Profile appID is undefined or null.");
-        return;
-      }
-
-      const updatedStatus = checked;
-      const result = await UserListService.updateUserActiveStatus(
-        token!,
-        user.appID,
-        checked
-      );
-
-      if (result.success) {
-        notifySuccess(
-          `User status updated to ${
-            updatedStatus === true ? "Active" : "Hidden"
-          }`
-        );
-
-        setSwitchStatus(prevState => ({
-          ...prevState,
-          [user.appID]: checked,
-        }));
-
-
-        updateUserStatus(user.appID, checked);
-      } else {
-        notifyError(`Error updating user status: ${result.errorMessage}`);
-      }
-    } catch (error) {
-      notifyError("Error updating user status");
-      console.error("Error:", error);
+  // Handle switch change for user status
+  // Handle switch change for user status
+const handleSwitchChange = async (user: UserListData, checked: boolean) => {
+  try {
+    if (!user.appID) {
+      console.error("Profile appID is undefined or null.");
+      return;
     }
-  };
 
+    const result = await UserListService.updateUserActiveStatus(
+      token!,
+      user.appID,
+      checked
+    );
+
+    if (result.success) {
+      notifySuccess(`User status updated to ${checked ? "Active" : "Hidden"}`);
+
+      // Update local switch status
+      setSwitchStatus((prevState) => ({
+        ...prevState,
+        [user.appID]: checked,
+      }));
+
+      // Update context or perform other updates as needed
+      updateUserStatus(user.appID, checked);
+    } else {
+      notifyError(`Error updating user status: ${result.errorMessage}`);
+      
+      // Rollback switch status if update fails
+      setSwitchStatus((prevState) => ({
+        ...prevState,
+        [user.appID]: !checked, // revert to previous state
+      }));
+    }
+  } catch (error) {
+    notifyError("Error updating user status");
+    console.error("Error:", error);
+    
+    // Rollback switch status if update fails
+    setSwitchStatus((prevState) => ({
+      ...prevState,
+      [user.appID]: !checked, // revert to previous state
+    }));
+  }
+};
+
+
+  // Prepare data with additional index and status information
   const dataWithIndex = searchResults.map((item, index) => ({
     ...item,
     serialNumber: index + 1,
-    Status: item.rActiveYN === "Y" ? "Active" : "Hidden", 
+    Status: item.rActiveYN === "Y" ? "Active" : "Hidden",
   }));
 
+  // Define columns for custom grid
   const columns = [
     {
       key: "UserEdit",
@@ -160,7 +162,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
       visible: true,
       render: (row: UserListData) => (
         <Typography variant="body2">
-         {row.rActiveYN === "N" ? "Hidden" : "Active"}
+          {row.rActiveYN === "Y" ? "Active" : "Hidden"}
         </Typography>
       ),
     },
@@ -184,11 +186,13 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     },
   ];
 
+  // Close dialog and reset search term
   const handleDialogClose = () => {
     setSearchTerm("");
     handleClose();
   };
 
+  // Handle Enter key press for search
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       setSearchTerm("");

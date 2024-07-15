@@ -13,7 +13,7 @@ export interface ProfileDetailDto {
   profileName: string;
   aOPRID: number;
   compID: number;
-  
+
   rActiveYN: string;
   rNotes: string;
   reportYN: string;
@@ -35,6 +35,7 @@ export interface ProfileListSearchResult {
   rNotes: string;
 }
 export interface ReportPermissionDto {
+  auAccessID: number;
   operationID: number;
   profDetID: number;
   operationName: string;
@@ -61,3 +62,22 @@ export interface ProfileDetailsDropdowns {
   repMainModuleID: string;
   repMainModuleName: string;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

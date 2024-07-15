@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ChangeEvent, useContext } from "react";
-import { Box, Container, Grid, Paper, Typography } from "@mui/material";
+import { Box, Container, Grid, IconButton, Paper, Typography, InputAdornment, TextField, } from "@mui/material";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
@@ -21,7 +21,7 @@ import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import DeleteIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save"
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
-import { url } from "inspector";
+import { TextFields, Visibility, VisibilityOff } from "@mui/icons-material";
 
 interface Company {
   compIDCompCode: string;
@@ -78,11 +78,13 @@ const UserDetails: React.FC<UserDetailsProps> = ({
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [userList, setUserList] = useState<UserListData>(defaultUserListData);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [, setFile] = useState<File | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+  const [, setImageUrl] = useState<string | undefined>(undefined);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [dropdownValues, setDropdownValues] = useState({
     categoryOptions: [] as DropdownOption[],
     usersOptions: [] as DropdownOption[],
@@ -118,7 +120,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
 
     fetchImage();
   }, [userList.digSignPath]);
-  
+
 
 
 
@@ -222,6 +224,42 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       fetchProfiles();
     }
   }, [token]);
+
+
+  const isPasswordValid = (value: string): boolean => {
+    // Regular expressions for password validation
+    const hasCapital = /[A-Z]/.test(value);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+    const hasNumber = /\d/.test(value);
+
+    return hasCapital && hasSpecialChar && hasNumber;
+  };
+
+
+
+  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setPassword(newValue);
+
+    // Example of displaying validation message based on conditions
+    if (!isPasswordValid(newValue)) {
+      console.log('Password does not meet complexity requirements');
+      // Handle displaying error message or UI feedback here
+    }
+  };
+
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleClickShowConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -336,30 +374,49 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               isMandatory
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Password"
-              ControlID="Password"
-              placeholder="Password"
-              type="password"
-              size="small"
+          <Grid item xs={12} sm={6} md={3}
+          >
+            <TextField
+            fullWidth
+              label="Password"
+              type={showPassword ? "text" : "password"}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              isSubmitted={isSubmitted}
-              isMandatory
 
+              onChange={handlePasswordChange}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                   <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                      onMouseDown={handleMouseDownPassword}
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
+
+
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Confirm Password"
-              ControlID="ConfirmPassword"
-              placeholder="Confirm Password"
-              type="password"
-              size="small"
+            <TextField
+              fullWidth
+              label="Confirm Password"
+              type={showConfirmPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              isSubmitted={isSubmitted}
+              InputProps={{
+                endAdornment: (
+                  <IconButton
+                    onClick={handleClickShowConfirmPassword}
+                    onMouseDown={handleMouseDownPassword}
+                  >
+                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                ),
+              }}
             />
 
           </Grid>
@@ -394,12 +451,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                   dropdownValues.profileOptions
                 )
               }
-              isMandatory
+              // isMandatory
               size="small"
               isSubmitted={isSubmitted}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={6}>
+          <Grid item xs={12} sm={6} md={3}>
             <CustomSwitch
               label="Is Super User"
               size="medium"
@@ -429,9 +486,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                 multiple={false}
                 name="digitalSignature"
               />
-             
-                
-             
+
+
+
 
             </Grid>
           </Grid>

@@ -78,7 +78,7 @@ const ProfileListPage: React.FC<OperationPermissionProps> = ({
     await fetchAllProfiles();
   };
 
-  const saveProfileDetails = async (permission: ProfileDetailDto) => {
+  const saveProfileDetails = async (permission: ProfileDetailDto): Promise<void> => {
     if (selectedProfile && token) {
       try {
         const result = await ProfileService.saveOrUpdateProfileDetail(token, {
@@ -91,26 +91,23 @@ const ProfileListPage: React.FC<OperationPermissionProps> = ({
           rNotes: permission.rNotes,
           reportYN: permission.reportYN,
         });
-
+  
         if (result.success) {
           const updatedPermission = {
             ...permission,
             profDetID: result.data?.profDetID,
           };
           console.log("Updated permission:", updatedPermission);
-          return updatedPermission;
         } else {
           console.error(
             `Error saving module permission ${permission.aOPRID}: ${result.errorMessage}`
           );
-          return permission; // Return original permission on error
         }
       } catch (error) {
         console.error(
           `Error saving module permission ${permission.aOPRID}:`,
           error
         );
-        return permission; // Return original permission on error
       }
     }
   };
