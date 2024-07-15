@@ -1,5 +1,6 @@
-//layouts/SodeBar/Theme.ts
+// layouts/SodeBar/Theme.ts
 import { createTheme } from "@mui/material/styles";
+
 const drawerWidth = 340;
 const theme = createTheme({
   palette: {
@@ -47,39 +48,147 @@ const theme = createTheme({
     MuiDialog: {
       styleOverrides: {
         paper: {
-          // This targets the Paper component inside the Dialog
-          boxShadow: "none", // Example of removing the default shadow
-          // ... Add other global dialog styles here
+          boxShadow: "none",
         },
       },
     },
     MuiDialogTitle: {
       styleOverrides: {
         root: {
-          backgroundColor: "#f5f5f5",
-          color: "#333",
-          borderBottom: "1px solid #ccc",
-          // ... Your custom title styles here
+          backgroundColor: "#3371d9",
+          color: "#ffffff",
+          borderBottom: "1px solid #b0c4de",
+          padding: "16px",
+          fontSize: "18px",
+          fontWeight: "bold",
         },
       },
     },
     MuiDialogContent: {
       styleOverrides: {
         root: {
-          // ... Your custom content styles here
+          backgroundColor: "#fff",
+          padding: "16px",
+          color: "#333333",
         },
       },
     },
     MuiDialogActions: {
       styleOverrides: {
         root: {
-          borderTop: "1px solid #ccc",
+          borderTop: "1px solid #b0c4de",
           backgroundColor: "#f5f5f5",
-          // ... Your custom action styles here
+          padding: "8px",
+          display: "flex",
+          justifyContent: "flex-end",
         },
       },
     },
-    // ... other component overrides
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          "& .MuiOutlinedInput-root": {
+            "& fieldset": {
+              borderColor: "#3371d9",
+            },
+            "&:hover fieldset": {
+              borderColor: "#2979ff",
+            },
+            "&.Mui-focused fieldset": {
+              borderColor: "#2979ff",
+            },
+          },
+          "& .MuiInputBase-input": {
+            color: "#333",
+          },
+          "& .MuiFormLabel-root": {
+            color: "#3371d9",
+          },
+          "& .MuiFormLabel-root.Mui-focused": {
+            color: "#2979ff",
+          },
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          "& .MuiOutlinedInput-root": {
+            "& fieldset": {
+              borderColor: "#3371d9",
+            },
+            "&:hover fieldset": {
+              borderColor: "#2979ff",
+            },
+            "&.Mui-focused fieldset": {
+              borderColor: "#2979ff",
+            },
+          },
+          "& .MuiInputBase-input": {
+            color: "#333",
+          },
+          "& .MuiFormLabel-root": {
+            color: "#3371d9",
+          },
+          "& .MuiFormLabel-root.Mui-focused": {
+            color: "#2979ff",
+          },
+        },
+      },
+    },
+    MuiRadio: {
+      styleOverrides: {
+        root: {
+          color: "#3371d9",
+          "&.Mui-checked": {
+            color: "#2979ff",
+          },
+        },
+      },
+    },
+    MuiCheckbox: {
+      styleOverrides: {
+        root: {
+          color: "#3371d9",
+          "&.Mui-checked": {
+            color: "#2979ff",
+          },
+        },
+      },
+    },
+    MuiFormControlLabel: {
+      styleOverrides: {
+        root: {
+          color: "#333",
+        },
+      },
+    },
+    MuiFormControl: {
+      styleOverrides: {
+        root: {
+          "& .MuiFormLabel-root": {
+            color: "#3371d9",
+          },
+          "& .MuiFormLabel-root.Mui-focused": {
+            color: "#2979ff",
+          },
+          "& .MuiOutlinedInput-root": {
+            "& fieldset": {
+              borderColor: "#3371d9",
+            },
+            "&:hover fieldset": {
+              borderColor: "#2979ff",
+            },
+            "&.Mui-focused fieldset": {
+              borderColor: "#2979ff",
+            },
+          },
+          "& .MuiInputBase-input": {
+            color: "#333",
+          },
+        },
+      },
+    },
   },
   typography: {
     fontFamily: ["Segoe UI", "Tahoma", "Geneva", "Verdana", "sans-serif"].join(

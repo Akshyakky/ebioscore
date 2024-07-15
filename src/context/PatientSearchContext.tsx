@@ -1,13 +1,13 @@
 import React, { createContext, useState } from "react";
-import { PatientSearchResult } from "../interfaces/PatientAdministration/registrationFormData";
-import { RegistrationService } from "../services/PatientAdministrationServices/RegistrationService/RegistrationService";
+import { PatientRegistrationDto } from "../interfaces/PatientAdministration/PatientFormData";
+import { searchPatientDetails } from "../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { useLoading } from "./LoadingContext";
 import { RootState } from "../store/reducers";
 import { useSelector } from "react-redux";
 import { notifyError } from "../utils/Common/toastManager";
 
 interface PatientSearchContextProps {
-  searchResults: PatientSearchResult[];
+  searchResults: PatientRegistrationDto[];
   performSearch: (searchTerm: string) => Promise<void>;
 }
 
@@ -23,28 +23,28 @@ interface PatientSearchProviderProps {
 export const PatientSearchProvider = ({
   children,
 }: PatientSearchProviderProps) => {
-  const [searchResults, setSearchResults] = useState<PatientSearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<PatientRegistrationDto[]>(
+    []
+  );
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
+
   const performSearch = async (searchTerm: string): Promise<void> => {
     setLoading(true);
     try {
-      const result = await RegistrationService.searchPatientDetails(
-        token,
-        searchTerm
-      );
+      const result = await searchPatientDetails(token, searchTerm);
+      console.log("Fetched result:", result); // Debug log
       if (result.success) {
-        setSearchResults(result.data);
+        setSearchResults(result.data || []);
+        console.log("Search results updated:", result.data); // Debug log
       } else {
-        // Handle the case where success is false
         console.error("Search was not successful");
         notifyError("Search failed. Please try again.");
       }
     } catch (error) {
       console.error("Error performing search", error);
       notifyError("An error occurred during the search.");
-      // Handle the error appropriately
     } finally {
       setLoading(false);
     }

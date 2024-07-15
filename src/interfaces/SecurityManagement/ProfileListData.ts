@@ -18,15 +18,6 @@ export interface ProfileDetailDto {
   rNotes: string;
   reportYN: string;
 }
-
-export interface OperationResult<T> {
-  success: boolean;
-  data?: T;
-  affectedRows?: number;
-  errorMessage?: string;
-  errors?: any[];
-}
-
 export interface ProfileListSearchResult {
   profileID: number;
   profileCode: string;

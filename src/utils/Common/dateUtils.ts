@@ -6,6 +6,9 @@ export function formatDate(isoString: string) {
   const year = date.getFullYear();
   return `${day}/${month}/${year}`;
 }
-export const formatDt = (date: Date): string => {
-  return date.toISOString().split("T")[0];
+export const formatDt = (date: Date) => {
+  const d = new Date(date);
+  const month = `${d.getMonth() + 1}`.padStart(2, "0");
+  const day = `${d.getDate()}`.padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
 };

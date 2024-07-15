@@ -111,8 +111,8 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
   return (
     <section aria-labelledby="contact-details-header">
       <Box>
-        <Typography variant="h6" id="contact-details-header">
-          CONTACT DETAILS
+        <Typography variant="h6" sx={{ borderBottom: "1px solid #000" }}>
+          Contact Details
         </Typography>
       </Box>
       <Grid container spacing={2}>
@@ -123,12 +123,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
             type="text"
             size="small"
             placeholder="Address"
-            value={formData.PatAddress.pAddStreet || ""}
+            value={formData.patAddress.pAddStreet || ""}
             onChange={(e) =>
               setFormData((prevFormData) => ({
                 ...prevFormData,
-                PatAddress: {
-                  ...prevFormData.PatAddress,
+                patAddress: {
+                  ...prevFormData.patAddress,
                   pAddStreet: e.target.value,
                 },
               }))
@@ -139,11 +139,11 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           <DropdownSelect
             label="Area"
             name="Area"
-            value={formData.PatAddress.patAreaVal || ""}
+            value={formData.patAddress.patAreaVal || ""}
             options={areaValues}
             onChange={handleDropdownChange(
-              ["PatAddress", "patAreaVal"],
-              ["PatAddress", "patArea"],
+              ["patAddress", "patAreaVal"],
+              ["patAddress", "patArea"],
               areaValues
             )}
             size="small"
@@ -153,11 +153,11 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           <DropdownSelect
             label="City"
             name="City"
-            value={formData.PatAddress.pAddCityVal || ""}
+            value={formData.patAddress.pAddCityVal || ""}
             options={cityValues}
             onChange={handleDropdownChange(
-              ["PatAddress", "pAddCityVal"],
-              ["PatAddress", "pAddCity"],
+              ["patAddress", "pAddCityVal"],
+              ["patAddress", "pAddCity"],
               cityValues
             )}
             size="small"
@@ -167,11 +167,11 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           <DropdownSelect
             label="Country"
             name="Country"
-            value={formData.PatAddress.pAddActualCountryVal || ""}
+            value={formData.patAddress.pAddActualCountryVal || ""}
             options={countryValues}
             onChange={handleDropdownChange(
-              ["PatAddress", "pAddActualCountryVal"],
-              ["PatAddress", "pAddActualCountry"],
+              ["patAddress", "pAddActualCountryVal"],
+              ["patAddress", "pAddActualCountry"],
               countryValues
             )}
             size="small"
@@ -189,13 +189,13 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
             onChange={(e) =>
               setFormData((prevFormData) => ({
                 ...prevFormData,
-                PatAddress: {
-                  ...prevFormData.PatAddress,
+                patAddress: {
+                  ...prevFormData.patAddress,
                   pAddPostcode: e.target.value,
                 },
               }))
             }
-            value={formData.PatAddress.pAddPostcode || ""}
+            value={formData.patAddress.pAddPostcode || ""}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
@@ -208,24 +208,24 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
             onChange={(e) =>
               setFormData((prevFormData) => ({
                 ...prevFormData,
-                PatAddress: {
-                  ...prevFormData.PatAddress,
-                  PAddEmail: e.target.value,
+                patAddress: {
+                  ...prevFormData.patAddress,
+                  pAddEmail: e.target.value,
                 },
               }))
             }
-            value={formData.PatAddress.pAddEmail || ""}
+            value={formData.patAddress.pAddEmail || ""}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <DropdownSelect
             label="Company"
             name="Company"
-            value={formData.PatRegisters.patCompNameVal || ""}
+            value={formData.patRegisters.patCompNameVal || ""}
             options={companyValues}
             onChange={handleDropdownChange(
-              ["patCompNameVal"],
-              ["patCompName"],
+              ["patRegisters", "patCompNameVal"],
+              ["patRegisters", "patCompName"],
               companyValues
             )}
             size="small"
@@ -238,10 +238,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 name="receiveSMS"
                 label="Receive SMS"
                 options={smsOptions}
-                selectedValue={formData.PatAddress.pAddSMSVal || ""}
+                selectedValue={formData.patAddress.pAddSMSVal || ""}
                 onChange={handleRadioButtonChange(
-                  ["PatAddress", "pAddSMSVal"],
-                  ["PatAddress", "pAddSMS"],
+                  ["patAddress", "pAddSMSVal"],
+                  ["patAddress", "pAddSMS"],
                   smsOptions
                 )}
                 inline={true}
@@ -252,10 +252,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
                 name="receiveEmail"
                 label="Receive Email"
                 options={emailOptions}
-                selectedValue={formData.PatAddress.pAddMailVal || ""}
+                selectedValue={formData.patAddress.pAddMailVal || ""}
                 onChange={handleRadioButtonChange(
-                  ["PatAddress", "pAddMailVal"],
-                  ["PatAddress", "pAddMail"],
+                  ["patAddress", "pAddMailVal"],
+                  ["patAddress", "pAddMail"],
                   emailOptions
                 )}
                 inline={true}

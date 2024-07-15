@@ -1,62 +1,62 @@
-  import React from "react";
-  import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
-  import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
-  import CustomButton from "../../../../components/Button/CustomButton";
-  import EditIcon from "@mui/icons-material/Edit";
-  import DeleteIcon from "@mui/icons-material/Delete";
+import React from "react";
+import { OPIPInsurancesDto } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
+import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
+import CustomButton from "../../../../components/Button/CustomButton";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
-  interface InsuranceGridProps {
-    insuranceData: InsuranceFormState[];
-    onEdit: (insurance: InsuranceFormState) => void;
-    onDelete: (id: number) => void;
-  }
+interface InsuranceGridProps {
+  insuranceData: OPIPInsurancesDto[];
+  onEdit: (insurance: OPIPInsurancesDto) => void;
+  onDelete: (id: number) => void;
+}
 
-  const PatientInsuranceGrid: React.FC<InsuranceGridProps> = ({
-    insuranceData,
-    onEdit,
-    onDelete,
-  }) => {
-    const gridPatientInsuranceColumns = [
-      {
-        key: "PInsuredit",
-        header: "Edit",
-        visible: true,
-        render: (row: InsuranceFormState) => (
-          <CustomButton
-            size="small"
-            onClick={() => onEdit(row)}
-            icon={EditIcon}
-            color="primary"
-          />
-        ),
-      },
-      { key: "InsurName", header: "Insurance Name", visible: true },
-      { key: "PolicyNumber", header: "Policy Number", visible: true },
-      { key: "CoveredFor", header: "Covered For", visible: true },
-      { key: "PolicyHolder", header: "Policy Holder", visible: true },
-      { key: "GroupNumber", header: "Group Number", visible: true },
-      { key: "PolicyStartDt", header: "Start Date", visible: true },
-      { key: "PolicyEndDt", header: "End Date", visible: true },
-      { key: "Guarantor", header: "Guarantor", visible: true },
-      { key: "Relation", header: "Relation", visible: true },
-      {
-        key: "PInsurdelete",
-        header: "Delete",
-        visible: true,
-        render: (row: InsuranceFormState) => (
-          <CustomButton
-            size="small"
-            onClick={() => onDelete(row.OPIPInsID)}
-            icon={DeleteIcon}
-            color="error"
-          />
-        ),
-      },
-    ];
+const PatientInsuranceGrid: React.FC<InsuranceGridProps> = ({
+  insuranceData,
+  onEdit,
+  onDelete,
+}) => {
+  const gridPatientInsuranceColumns = [
+    {
+      key: "PInsuredit",
+      header: "Edit",
+      visible: true,
+      render: (row: OPIPInsurancesDto) => (
+        <CustomButton
+          size="small"
+          onClick={() => onEdit(row)}
+          icon={EditIcon}
+          color="primary"
+        />
+      ),
+    },
+    { key: "insurName", header: "Insurance Name", visible: true },
+    { key: "policyNumber", header: "Policy Number", visible: true },
+    { key: "coveredFor", header: "Covered For", visible: true },
+    { key: "policyHolder", header: "Policy Holder", visible: true },
+    { key: "groupNumber", header: "Group Number", visible: true },
+    { key: "policyStartDt", header: "Start Date", visible: true },
+    { key: "policyEndDt", header: "End Date", visible: true },
+    { key: "guarantor", header: "Guarantor", visible: true },
+    { key: "relation", header: "Relation", visible: true },
+    {
+      key: "PInsurdelete",
+      header: "Delete",
+      visible: true,
+      render: (row: OPIPInsurancesDto) => (
+        <CustomButton
+          size="small"
+          onClick={() => onDelete(row.oPIPInsID)}
+          icon={DeleteIcon}
+          color="error"
+        />
+      ),
+    },
+  ];
 
-    return (
-      <CustomGrid columns={gridPatientInsuranceColumns} data={insuranceData} />
-    );
-  };
+  return (
+    <CustomGrid columns={gridPatientInsuranceColumns} data={insuranceData} />
+  );
+};
 
-  export default PatientInsuranceGrid;
+export default PatientInsuranceGrid;

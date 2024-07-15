@@ -1,6 +1,9 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import { APIConfig } from "../../apiConfig";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
+import { OperationResult } from "../../interfaces/Common/OperationResult";
+import { handleError } from "./HandlerError";
+import { OPIPInsurancesDto } from "../../interfaces/PatientAdministration/InsuranceDetails";
 
 interface APIResponse {
   insurID: string;
@@ -25,6 +28,68 @@ const fetchInsuranceOptions = async (
   }
 };
 
+export const getOPIPInsuranceByPChartID = async (
+  token: string,
+  pChartID: number
+): Promise<OperationResult<OPIPInsurancesDto[]>> => {
+  try {
+    const response: AxiosResponse<OperationResult<OPIPInsurancesDto[]>> = await axios.get(
+      `${APIConfig.patientAdministrationURL}OPIPInsurances/GetOPIPInsuranceByPChartID/${pChartID}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const addOrUpdateOPIPInsurance = async (
+  token: string,
+  opipInsuranceDto: OPIPInsurancesDto
+): Promise<OperationResult<OPIPInsurancesDto>> => {
+  try {
+    const response: AxiosResponse<OperationResult<OPIPInsurancesDto>> = await axios.post(
+      `${APIConfig.patientAdministrationURL}OPIPInsurances/AddOrUpdateOPIPInsurance`,
+      opipInsuranceDto,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const hideOPIPInsurance = async (
+  token: string,
+  opipInsID: number
+): Promise<OperationResult<OPIPInsurancesDto>> => {
+  try {
+    const response: AxiosResponse<OperationResult<OPIPInsurancesDto>> = await axios.put(
+      `${APIConfig.patientAdministrationURL}OPIPInsurances/HideOPIPInsurance/${opipInsID}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
 export const InsuranceCarrierService = {
   fetchInsuranceOptions,
+  getOPIPInsuranceByPChartID,
+  addOrUpdateOPIPInsurance,
+  hideOPIPInsurance,
 };

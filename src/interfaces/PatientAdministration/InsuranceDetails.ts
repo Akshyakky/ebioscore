@@ -49,3 +49,43 @@ export interface InsuranceFormProps {
   onCancel: () => void;
   initialData?: InsuranceFormState;
 }
+
+export interface OPIPInsurancesDto {
+  ID: number;
+  oPIPInsID: number;
+  pChartID: number;
+  insurID: number;
+  insurCode?: string;
+  insurName: string;
+  policyNumber?: string;
+  policyHolder?: string;
+  groupNumber?: string;
+  policyStartDt: string;
+  policyEndDt: string;
+  guarantor?: string;
+  relationVal: string;
+  relation?: string;
+  address1?: string;
+  address2?: string;
+  phone1?: string;
+  phone2?: string;
+  rActiveYN: string; // Using string to represent char
+  rCreatedID: number;
+  rCreatedOn: Date;
+  rCreatedBy: string;
+  rModifiedID: number;
+  rModifiedOn: Date;
+  rModifiedBy: string;
+  rNotes?: string;
+  compID?: number;
+  compCode?: string;
+  compName?: string;
+  insurStatusCode?: string;
+  insurStatusName?: string;
+  pChartCode?: string;
+  pChartCompID?: number;
+  referenceNo?: string;
+  transferYN?: string; // Using string to represent char
+  coveredVal?: string;
+  coveredFor?: string;
+}

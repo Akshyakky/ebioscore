@@ -11,9 +11,8 @@ import { ContactListSearchProvider } from "../context/hospitalAdministration/Con
 import ProfileListPage from "../pages/securityManagement/ProfileListPage/MainPage/ProfileListPage";
 import { ProfileListSearchProvider } from "../context/SecurityManagement/ProfileListSearchContext";
 import AdmissionPage from "../pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
-import { UserListSearchContext, UserListSearchProvider } from "../context/SecurityManagement/UserListSearchContext";
+import { UserListSearchProvider } from "../context/SecurityManagement/UserListSearchContext";
 import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
-
 
 const routeConfig = [
   { path: "/login", component: LoginPage, protected: false },
@@ -45,7 +44,6 @@ const routeConfig = [
     providers: [UserListSearchProvider],
   },
 
-  
   {
     path: "/ProfileListPage",
     component: ProfileListPage,

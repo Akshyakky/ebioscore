@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,14 +13,16 @@ import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { PatientSearchContext } from "../../../../context/PatientSearchContext";
 import { debounce } from "../../../../utils/Common/debounceUtils";
-import { PatientSearchResult } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
+import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
+
 interface PatientSearchProps {
   show: boolean;
   handleClose: () => void;
   onEditPatient: (patientId: string) => void;
 }
+
 const PatientSearch = ({
   show,
   handleClose,
@@ -32,59 +34,92 @@ const PatientSearch = ({
     debounce((searchQuery: string) => {
       performSearch(searchQuery);
     }, 500),
-    []
+    [performSearch]
   );
+
   useEffect(() => {
     if (searchTerm !== "") {
       debouncedSearch(searchTerm);
     }
   }, [searchTerm, debouncedSearch]);
+
+  useEffect(() => {
+    console.log("Search results:", searchResults); // Debug log
+  }, [searchResults]);
+
   const handleEditAndClose = (patientId: string) => {
     onEditPatient(patientId);
     handleClose();
   };
+
   const columns = [
     {
-      key: "PatientEdit",
+      key: "patRegisters.pChartID",
       header: "Edit",
       visible: true,
-      render: (row: PatientSearchResult) => (
+      render: (row: PatientRegistrationDto) => (
         <CustomButton
           text="Edit"
-          onClick={() => handleEditAndClose(row.pChartID.toString())}
+          onClick={() =>
+            handleEditAndClose(row.patRegisters?.pChartID.toString())
+          }
           icon={EditIcon}
         />
       ),
     },
-    { key: "pChartCode", header: "UHID", visible: true },
     {
-      key: "patientName",
+      key: "patRegisters.pChartCode",
+      header: "UHID",
+      visible: true,
+      render: (row: PatientRegistrationDto) =>
+        row.patRegisters?.pChartCode || "",
+    },
+    {
+      key: "patRegisters.pTitle",
       header: "Patient Name",
       visible: true,
-      render: (row: PatientSearchResult) =>
-        `${row.pTitle} ${row.pfName} ${row.plName}`,
+      render: (row: PatientRegistrationDto) =>
+        `${row.patRegisters?.pTitle || ""} ${row.patRegisters?.pFName || ""} ${row.patRegisters?.pLName || ""}`,
     },
     {
-      key: "RegDate",
+      key: "patRegisters.pRegDate",
       header: "Registration Date",
       visible: true,
-      render: (row: PatientSearchResult) => `${row.pRegDate.split("T")[0]} `,
+      render: (row: PatientRegistrationDto) =>
+        row.patRegisters?.pRegDate.split("T")[0] || "",
     },
-    { key: "pGender", header: "Gender", visible: true },
     {
-      key: "MobileNo ",
+      key: "patRegisters.pGender",
+      header: "Gender",
+      visible: true,
+      render: (row: PatientRegistrationDto) => row.patRegisters?.pGender || "",
+    },
+    {
+      key: "patAddress.pAddPhone1",
       header: "Mobile No",
       visible: true,
-      render: (row: any) => `${row.pAddPhone1}`,
+      render: (row: PatientRegistrationDto) => row.patAddress?.pAddPhone1 || "",
     },
     {
-      key: "Dob",
+      key: "patRegisters.pDob",
       header: "DOB",
       visible: true,
-      render: (row: PatientSearchResult) => `${row.pDob.split("T")[0]} `,
+      render: (row: PatientRegistrationDto) =>
+        row.patRegisters?.pDob.split("T")[0] || "",
     },
-    { key: "pssnID", header: "Identity No", visible: true },
-    { key: "pTypeName", header: "Payment Source", visible: true },
+    {
+      key: "patRegisters.pssnID",
+      header: "Identity No",
+      visible: true,
+      render: (row: PatientRegistrationDto) => row.patRegisters?.pssnID || "",
+    },
+    {
+      key: "patRegisters.pTypeName",
+      header: "Payment Source",
+      visible: true,
+      render: (row: PatientRegistrationDto) =>
+        row.patRegisters?.pTypeName || "",
+    },
   ];
 
   return (
@@ -103,9 +138,9 @@ const PatientSearch = ({
       </DialogTitle>
       <DialogContent
         sx={{
-          minHeight: "600px", // Adjust the value as needed
-          maxHeight: "600px", // Adjust the value as needed
-          overflowY: "auto", // Add scroll if content is larger than maxHeight
+          minHeight: "600px",
+          maxHeight: "600px",
+          overflowY: "auto",
         }}
       >
         <Box>
