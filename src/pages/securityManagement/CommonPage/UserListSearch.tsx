@@ -27,12 +27,14 @@ interface UserListSearchResultProps {
   show: boolean;
   handleClose: () => void;
   onEditProfile: (user: UserListData) => void;
+  selectedUser: UserListData | null
 }
 
 const UserListSearch: React.FC<UserListSearchResultProps> = ({
   show,
   handleClose,
   onEditProfile,
+  selectedUser 
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const { performSearch, searchResults, updateUserStatus } = useContext(

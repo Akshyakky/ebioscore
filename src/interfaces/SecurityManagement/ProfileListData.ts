@@ -13,7 +13,6 @@ export interface ProfileDetailDto {
   profileName: string;
   aOPRID: number;
   compID: number;
-
   rActiveYN: string;
   rNotes: string;
   reportYN: string;
@@ -52,6 +51,7 @@ export interface ReportPermission {
   allow: boolean;
   profDetID?: number;
   profileID: number;
+  reportYN:any;
 }
 
 export interface ProfileDetailsDropdowns {
@@ -62,21 +62,6 @@ export interface ProfileDetailsDropdowns {
   repMainModuleID: string;
   repMainModuleName: string;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

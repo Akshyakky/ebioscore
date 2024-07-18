@@ -8,6 +8,7 @@ import {
   ReportPermissionDto,
   ReportPermission,
 } from "../../interfaces/SecurityManagement/ProfileListData";
+import { ModuleOperation } from "../../pages/securityManagement/ProfileListPage/SubPage/OperationPermissionDetails";
 
 const handleError = <T>(error: any): OperationResult<T> => {
   let errorMessage = "An unknown error occurred.";
@@ -104,20 +105,20 @@ export const ProfileService = {
     subID: number,
     compID: number,
     profileID: number
-  ): Promise<OperationResult<ReportPermissionDto[]>> {
+  ): Promise<OperationResult<ModuleOperation[]>> {
     try {
       const url = `${APIConfig.securityManagementURL}SecurityManagement/GetProfileModuleOperations`;
       const headers = {
         Authorization: `Bearer ${token}`,
       };
       const params = { subID, compID, profileID };
-      const response = await axios.get<OperationResult<ReportPermissionDto[]>>(
+      const response = await axios.get<OperationResult<ModuleOperation[]>>(
         url,
         { params, headers }
       );
       return response.data;
     } catch (error) {
-      return handleError<ReportPermissionDto[]>(error);
+      return handleError<ModuleOperation[]>(error);
     }
   },
 
@@ -143,3 +144,16 @@ export const ProfileService = {
     }
   },
 };
+
+
+
+
+
+
+
+
+
+
+
+
+

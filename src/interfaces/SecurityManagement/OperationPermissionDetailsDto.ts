@@ -1,7 +1,7 @@
 
 export interface OperationPermissionDetailsDto {
     repID: number;
-    auAccessID: number;
+    auAccessID?: number ;
     appID: number;
     appUName: string;
     allowYN: string;
@@ -16,7 +16,7 @@ export interface OperationPermissionDetailsDto {
     operationID?: number;
     operationName?: string;
     allow?: boolean;
-    profDetID: number;
+    profDetID?: number;
     profileID: number;
     profileName: string;
     aOPRID: number;

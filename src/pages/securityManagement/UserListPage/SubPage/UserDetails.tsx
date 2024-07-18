@@ -36,6 +36,7 @@ interface UserDetailsProps {
   onClear: () => void;
   isEditMode: boolean;
   refreshUsers: () => void;
+  onSuperUserChange: (isSuper: boolean) => void
   updateUserStatus: (userID: number, status: boolean) => void;
 }
 
@@ -73,7 +74,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({
   onSave,
   onClear,
   refreshUsers,
-  updateUserStatus,
+  //  updateUserStatus,
+  onSuperUserChange
 }) => {
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [userList, setUserList] = useState<UserListData>(defaultUserListData);
@@ -91,15 +93,31 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     companyOptions: [] as DropdownOption[],
     profileOptions: [] as DropdownOption[],
   });
+  const [isSuperUser, setIsSuperUser] = useState(false);
 
   useEffect(() => {
     if (user) {
       setUserList(user);
+      setIsSuperUser(user.adminUserYN === "Y");
+      if (typeof user.appUAccess === 'string') {
+        setPassword(user.appUAccess); // Initialize password field with saved value
+        setConfirmPassword(user.appUAccess); // Initialize confirm password field with saved value
+      }
     } else {
       setUserList(defaultUserListData);
+      setIsSuperUser(false);
+      setPassword("");
+      setConfirmPassword("");
     }
   }, [user]);
+  // Other useEffect and functions...
 
+  const handleSuperUserChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const isSuper = e.target.checked;
+    setUserList({ ...userList, adminUserYN: isSuper ? "Y" : "N" });
+    setIsSuperUser(isSuper);
+    onSuperUserChange(isSuper); // Update parent state
+  };
 
   useEffect(() => {
     const fetchImage = async () => {
@@ -275,10 +293,10 @@ const UserDetails: React.FC<UserDetailsProps> = ({
 
     // Validate password confirmation
     if (password !== confirmPassword) {
-      // setPasswordError("Passwords do not match");
+      setErrorMessage("Passwords do not match");
       return;
     } else {
-      // setPasswordError("");
+      setErrorMessage("");
     }
 
     try {
@@ -340,6 +358,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <section>
         <Grid container spacing={2} alignItems="flex-start">
+
+          
           <Grid item xs={12} sm={6} md={3}>
             <DropdownSelect
               name="SelectUser"
@@ -358,6 +378,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               isSubmitted={isSubmitted}
             />
           </Grid>
+
+
           <Grid item xs={12} sm={6} md={3}>
             <FloatingLabelTextBox
               title="Login Name"
@@ -374,22 +396,27 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               isMandatory
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}
-          >
-            <TextField
-            fullWidth
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              value={password}
 
+
+
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              type={showPassword ? "text" : "password"}
+              label="Password"
+              variant="outlined"
+              fullWidth
+              value={password}
               onChange={handlePasswordChange}
+              size="small"
+              sx={{ mt: 2   }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                   <IconButton
+                    <IconButton
                       aria-label="toggle password visibility"
                       onClick={handleClickShowPassword}
                       onMouseDown={handleMouseDownPassword}
+                      edge="end"
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -397,29 +424,56 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                 ),
               }}
             />
-
-
+            {isSubmitted && !password && (
+              <Typography variant="caption" color="error">
+                Password is required
+              </Typography>
+            )}
           </Grid>
+
+
+
+
           <Grid item xs={12} sm={6} md={3}>
             <TextField
-              fullWidth
-              label="Confirm Password"
               type={showConfirmPassword ? "text" : "password"}
+              label="Confirm Password"
+              variant="outlined"
+              fullWidth
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              size="small"
+              sx={{ m: 2, }}
               InputProps={{
                 endAdornment: (
-                  <IconButton
-                    onClick={handleClickShowConfirmPassword}
-                    onMouseDown={handleMouseDownPassword}
-                  >
-                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
+                  <InputAdornment position="start">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowConfirmPassword}
+                      onMouseDown={handleMouseDownPassword}
+                      edge="end"
+                    >
+                      {showConfirmPassword ? (
+                        <VisibilityOff />
+                      ) : (
+                        <Visibility />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
                 ),
               }}
             />
-
+            {isSubmitted && password !== confirmPassword && (
+              <Typography variant="caption" color="error">
+                Passwords do not match
+              </Typography>
+            )}
           </Grid>
+
+
+
+
+
           <Grid item xs={12} sm={6} md={3}>
             <DropdownSelect
               name="Company"
@@ -456,20 +510,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               isSubmitted={isSubmitted}
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label="Is Super User"
-              size="medium"
-              color="secondary"
-              checked={userList.adminUserYN === "Y"}
-              onChange={(e) =>
-                setUserList({
-                  ...userList,
-                  adminUserYN: e.target.checked ? "Y" : "N",
-                })
-              }
-            />
-          </Grid>
+       
           <Grid item xs={12} sm={6} md={6}>
             <Grid item xs={12} sm={6} md={6}>
               <FloatingLabelFileUpload
@@ -495,6 +536,18 @@ const UserDetails: React.FC<UserDetailsProps> = ({
 
         </Grid>
       </section>
+
+      <Grid item xs={12} sm={6} md={3}>
+            <CustomSwitch
+              label="Is Super User"
+              size="medium"
+              color="secondary"
+              checked={isSuperUser}
+              onChange={handleSuperUserChange}
+            />
+          </Grid>
+
+
       <Box sx={{ marginTop: 2 }}>
         <FormSaveClearButton
           clearText="Clear"

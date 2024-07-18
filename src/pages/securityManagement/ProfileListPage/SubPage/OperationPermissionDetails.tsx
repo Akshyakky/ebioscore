@@ -8,9 +8,8 @@ import {
 } from "../../../../utils/Common/toastManager";
 import {
   OperationResult,
-  ProfileDetailDto,
   ProfileDetailsDropdowns,
-  ReportPermissionDto,
+  ReportPermission,
 } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
@@ -24,21 +23,17 @@ interface OperationPermissionProps {
   profileName: string;
   saveModulePermission: (permissions: OperationPermissionDetailsDto) => Promise<void>;
   saveReportPermission: (permissions: OperationPermissionDetailsDto) => Promise<void>;
+  permissions: ModuleOperation[];
+  setPermissions: React.Dispatch<React.SetStateAction<ModuleOperation[]>>;
 }
 
-interface ModuleOperation {
+export interface ModuleOperation {
   profDetID?: number;
   operationID: number;
   operationName: string;
   allow: boolean;
   auAccessID?: number;
-}
-
-interface ReportPermission {
-  profDetID?: number;
-  reportID: number;
-  reportName: string;
-  allow: boolean;
+  reportYN: boolean;
 }
 
 const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
@@ -46,6 +41,8 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
   profileName,
   saveModulePermission,
   saveReportPermission,
+  permissions,
+  setPermissions,
 }) => {
   const { token, compID, userID, adminYN } = useSelector(
     (state: RootState) => state.userDetails
@@ -59,11 +56,8 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
   });
 
   const [selectedReportMainModule, setSelectedReportMainModule] = useState<string>("");
-  const [permissions, setPermissions] = useState<ModuleOperation[]>([]);
-  const [reportPermissions, setReportPermissions] = useState<ReportPermission[]>([]);
   const [selectAllChecked, setSelectAllChecked] = useState(false);
   const [selectAllReportChecked, setSelectAllReportChecked] = useState(false);
-  
   const [isSubmitted] = useState(false);
 
   const getInitialProfileDetailsDropdownsState = (): ProfileDetailsDropdowns => ({
@@ -114,7 +108,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
     const fetchPermissions = async () => {
       if (profileDetailsDropdowns.mainModuleID && profileDetailsDropdowns.subModuleID && token) {
         try {
-          const reportPermissionsData: OperationResult<ReportPermissionDto[]> =
+          const reportPermissionsData: OperationResult<ModuleOperation[]> =
             await ProfileService.getProfileModuleOperations(
               token,
               parseInt(profileDetailsDropdowns.subModuleID),
@@ -128,8 +122,11 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
                 operationID: permission.operationID,
                 operationName: permission.operationName,
                 allow: permission.allow,
+                auAccessID: permission.auAccessID,
+                reportYN: false
               }))
             );
+            console.log("set permission data is ", permissions);
             setDropdownValues((prevValues) => ({
               ...prevValues,
               reportPermissionsOptions: (reportPermissionsData.data ?? []).map((permission) => ({
@@ -165,12 +162,14 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
               profileID
             );
           if (reportPermissionsData.success && reportPermissionsData.data) {
-            setReportPermissions(
+            setPermissions(
               reportPermissionsData.data.map((permission) => ({
                 profDetID: permission.profDetID,
-                reportID: permission.reportID,
-                reportName: permission.reportName,
+                operationID: permission.reportID,
+                operationName: permission.reportName,
                 allow: permission.allow,
+                auAccessID: permission.apAccessID,
+                reportYN: true,
               }))
             );
           } else {
@@ -220,28 +219,26 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
     setSelectedReportMainModule(event.target.value);
   };
 
-
-
-
   const handlePermissionChange = async (operationID: number, allow: boolean) => {
     const updatedPermissions = permissions.map((permission) =>
-      permission.operationID === operationID ? { ...permission, allow } : permission
+      permission.operationID === operationID
+        ? { ...permission, allow }
+        : permission
     );
     setPermissions(updatedPermissions);
-  
+
     if (profileID) {
       try {
-        debugger 
         const existingPermission = updatedPermissions.find(
           (permission) => permission.operationID === operationID
         );
         if (!existingPermission) {
           throw new Error("Permission not found");
         }
-  
+
         const profileDetail: OperationPermissionDetailsDto = {
           ...existingPermission,
-          profDetID: existingPermission.profDetID || 0,
+          profDetID: existingPermission.profDetID,
           profileID: profileID,
           profileName: profileName,
           aOPRID: operationID,
@@ -250,7 +247,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
           rNotes: "",
           reportYN: "N",
           repID: 0,
-          auAccessID: existingPermission.auAccessID || 0, // Use auAccessID for update
+          auAccessID: existingPermission.auAccessID ?? 0,
           appID: 0,
           appUName: "",
           allowYN: allow ? "Y" : "N",
@@ -263,76 +260,75 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
           compCode: "",
           compName: ""
         };
-  
 
-        
-        await saveModulePermission(profileDetail); // Assuming saveModulePermission updates existing records
+        // Save the permission
+        await saveModulePermission(profileDetail);
+
       } catch (error) {
         console.error("Error updating permissions:", error);
         notifyError("Error updating permissions");
       }
     }
   };
-  
-const handleReportPermissionChange = async (reportID: number, allow: boolean) => {
-  const updatedReportPermissions = reportPermissions.map((permission) =>
-    permission.reportID === reportID ? { ...permission, allow } : permission
-  );
-  setReportPermissions(updatedReportPermissions);
 
-  if (profileID) {
-    try {
-      const existingReportPermission = updatedReportPermissions.find(
-        (permission) => permission.reportID === reportID
-      );
 
-      if (!existingReportPermission) {
-        throw new Error("Report Permission not found");
+  const handleReportPermissionChange = async (reportID: number, allow: boolean) => {
+    debugger
+    const updatedReportPermissions = permissions.map((permission) =>
+      permission.operationID === reportID ? { ...permission, allow } : permission
+    );
+    setPermissions(updatedReportPermissions);
+
+    if (profileID) {
+      try {
+        const existingReportPermission = updatedReportPermissions.find(
+          (permission) => permission.operationID === reportID
+        );
+        if (!existingReportPermission) {
+          throw new Error("Report permission not found");
+        }
+
+        const reportDetail: OperationPermissionDetailsDto = {
+          ...existingReportPermission,
+          profDetID: existingReportPermission.profDetID,
+          profileID: profileID,
+          profileName: profileName,
+          aOPRID: existingReportPermission.operationID,
+          compID: compID!,
+          rActiveYN: allow ? "Y" : "N",
+          rNotes: "",
+          reportYN: "Y",
+          repID: reportID,
+          auAccessID: existingReportPermission.auAccessID ?? 0,
+          appID: 0,
+          appUName: "",
+          allowYN: allow ? "Y" : "N",
+          rCreatedID: 0,
+          rCreatedBy: "",
+          rCreatedOn: "",
+          rModifiedID: 0,
+          rModifiedBy: "",
+          rModifiedOn: "",
+          compCode: "",
+          compName: ""
+        };
+
+        // Save the report permission
+        await saveReportPermission(reportDetail);
+      } catch (error) {
+        console.error("Error updating report permissions:", error);
+        notifyError("Error updating report permissions");
       }
-
-      const profileDetail: OperationPermissionDetailsDto = {
-        profDetID: existingReportPermission.profDetID || 0,
-        profileID: profileID,
-        profileName: profileName,
-        aOPRID: reportID,
-        compID: compID!,
-        rActiveYN: allow ? "Y" : "N",
-        rNotes: "",
-        reportYN: "Y",
-        repID: reportID,
-        auAccessID: 0,
-        appID: 0,
-        appUName: "",
-        allowYN: allow ? "Y" : "N",
-        rCreatedID: 0,
-        rCreatedBy: "",
-        rCreatedOn: "",
-        rModifiedID: 0,
-        rModifiedBy: "",
-        rModifiedOn: "",
-        compCode: "",
-        compName: ""
-      };
-
-      await saveReportPermission(profileDetail); // Make sure saveReportPermission updates existing record
-    } catch (error) {
-      console.error("Error updating report permissions:", error);
-      notifyError("Error updating report permissions");
     }
-  }
-};
-
-
-
-
+  };
 
   const handleSelectAllReportChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked: boolean = event.target.checked;
-    const updatedReportPermissions = reportPermissions.map((permission) => ({
+    const updatedReportPermissions = permissions.map((permission) => ({
       ...permission,
       allow: checked,
     }));
-    setReportPermissions(updatedReportPermissions);
+    setPermissions(updatedReportPermissions);
 
     try {
       for (const permission of updatedReportPermissions) {
@@ -340,13 +336,13 @@ const handleReportPermissionChange = async (reportID: number, allow: boolean) =>
           profDetID: permission.profDetID!,
           profileID: profileID,
           profileName: profileName,
-          aOPRID: permission.reportID,
+          aOPRID: permission.operationID,
           compID: compID!,
           rActiveYN: checked ? "Y" : "N",
           rNotes: "",
           reportYN: "Y",
-          repID: permission.reportID,
-          auAccessID: 0,
+          repID: permission.operationID,
+          auAccessID: permission.auAccessID,
           appID: 0,
           appUName: "",
           allowYN: checked ? "Y" : "N",
@@ -359,14 +355,12 @@ const handleReportPermissionChange = async (reportID: number, allow: boolean) =>
           compCode: "",
           compName: "",
         };
-
         await saveReportPermission(profileDetail);
       }
     } catch (error) {
       console.error("Error saving all report permissions:", error);
       notifyError("Error saving all report permissions");
     }
-
     setSelectAllReportChecked(checked);
   };
 
@@ -390,7 +384,7 @@ const handleReportPermissionChange = async (reportID: number, allow: boolean) =>
           rNotes: "",
           reportYN: "N",
           repID: 0,
-          auAccessID: 0,
+          auAccessID: permission.auAccessID,
           appID: 0,
           appUName: "",
           allowYN: checked ? "Y" : "N",
@@ -403,21 +397,19 @@ const handleReportPermissionChange = async (reportID: number, allow: boolean) =>
           compCode: "",
           compName: "",
         };
-
         await saveModulePermission(profileDetail);
       }
     } catch (error) {
       console.error("Error saving all permissions:", error);
       notifyError("Error saving all permissions");
     }
-
     setSelectAllChecked(checked);
   };
 
   const handleClear = () => {
     setPermissions([]);
     setSelectedReportMainModule("");
-    setReportPermissions([]);
+    setPermissions([]);
     setDropdownValues((prevValues) => ({
       ...prevValues,
       subModulesOptions: [],
@@ -427,7 +419,7 @@ const handleReportPermissionChange = async (reportID: number, allow: boolean) =>
   };
 
   const handleReportPermissionClear = () => {
-    setReportPermissions([]);
+    setPermissions([]);
     setSelectAllReportChecked(false);
     setDropdownValues((prevValues) => ({
       ...prevValues,
@@ -504,7 +496,7 @@ const handleReportPermissionChange = async (reportID: number, allow: boolean) =>
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      
+
                       <CustomCheckbox
                         label="Allow [Select All]"
                         name="selectAll"
@@ -515,33 +507,35 @@ const handleReportPermissionChange = async (reportID: number, allow: boolean) =>
                     </Grid>
                   </Grid>
 
-                  {permissions.map((permission) => (
-                    <Grid
-                      container
-                      spacing={2}
-                      alignItems="center"
-                      key={permission.operationID}
-                      sx={{ marginTop: 1 }}
-                    >
-                      <Grid item xs={6}>
-                        {permission.operationName}
+                  {permissions
+                    .filter((permission) => !permission.reportYN)
+                    .map((permission) => (
+                      <Grid
+                        container
+                        spacing={2}
+                        alignItems="center"
+                        key={permission.operationID}
+                        sx={{ marginTop: 1 }}
+                      >
+                        <Grid item xs={6}>
+                          {permission.operationName}
+                        </Grid>
+                        <Grid item xs={6}>
+                          <CustomCheckbox
+                            label=""
+                            name={`permission_${permission.operationID}`}
+                            checked={permission.allow}
+                            onChange={(event) =>
+                              handlePermissionChange(
+                                permission.operationID,
+                                event.target.checked
+                              )
+                            }
+                            isMandatory={false}
+                          />
+                        </Grid>
                       </Grid>
-                      <Grid item xs={6}>
-                        <CustomCheckbox
-                          label=""
-                          name={`permission_${permission.operationID}`}
-                          checked={permission.allow}
-                          onChange={(event) =>
-                            handlePermissionChange(
-                              permission.operationID,
-                              event.target.checked
-                            )
-                          }
-                          isMandatory={false}
-                        />
-                      </Grid>
-                    </Grid>
-                  ))}
+                    ))}
                 </>
               )}
           </Paper>
@@ -598,40 +592,42 @@ const handleReportPermissionChange = async (reportID: number, allow: boolean) =>
                   </Grid>
                 </Grid>
 
-                {reportPermissions.map((permission) => (
-                  <Grid
-                    container
-                    spacing={2}
-                    alignItems="center"
-                    key={permission.reportID}
-                    sx={{ marginTop: 1 }}
-                  >
-                    <Grid item xs={6}>
-                      {permission.reportName}
-                    </Grid>
-                    <Grid item xs={6}>
-                      <CustomCheckbox
-                        label=""
-                        name={`reportpermission_${permission.reportID}`}
-                        checked={permission.allow}
-                        onChange={(event) =>
-                          handleReportPermissionChange(
-                            permission.reportID,
-                            event.target.checked,
+                {permissions
+                  .filter((permission) => permission.reportYN)
+                  .map((permission) => (
+                    < Grid
+                      container
+                      spacing={2}
+                      alignItems="center"
+                      key={permission.operationID}
+                      sx={{ marginTop: 1 }}
+                    >
+                      <Grid item xs={6}>
+                        {permission.operationName}
+                      </Grid>
+                      <Grid item xs={6}>
+                        <CustomCheckbox
+                          label=""
+                          name={`reportpermission_${permission.operationID}`}
+                          checked={permission.allow}
+                          onChange={(event) =>
+                            handleReportPermissionChange(
+                              permission.operationID,
+                              event.target.checked,
 
-                          )
-                        }
-                        isMandatory={false}
-                      />
+                            )
+                          }
+                          isMandatory={false}
+                        />
+                      </Grid>
                     </Grid>
-                  </Grid>
-                ))}
+                  ))}
               </>
             )}
           </Paper>
         </Grid>
       </Grid>
-    </section>
+    </section >
   );
 };
 
