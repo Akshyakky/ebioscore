@@ -10,7 +10,7 @@ export const savePatient = async (
 ): Promise<OperationResult<number>> => {
   try {
     const response: AxiosResponse<OperationResult<number>> = await axios.post(
-      `${APIConfig.patientAdministrationURL}Patient/Registration`,
+      `${APIConfig.patientAdministrationURL}Patient/SavePatientRegistration`,
       patientRegistrationDto,
       {
         headers: {

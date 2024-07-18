@@ -99,8 +99,8 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
     { value: "P", label: "Physician" },
     { value: "N", label: "None" },
   ];
-  const isHospitalVisit = formData.Opvisits.visitTypeVal === "H";
-  const isPhysicianVisit = formData.Opvisits.visitTypeVal === "P";
+  const isHospitalVisit = formData.opvisits.visitTypeVal === "H";
+  const isPhysicianVisit = formData.opvisits.visitTypeVal === "P";
 
   // Conditionally render the section based on isEditMode
   if (isEditMode) {
@@ -110,8 +110,8 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
   return (
     <section aria-labelledby="visit-details-header">
       <Box>
-        <Typography variant="h6" id="visit-details-header">
-          VISIT DETAILS
+        <Typography variant="h6" sx={{ borderBottom: "1px solid #000" }}>
+          Visit Details
         </Typography>
       </Box>
       <Grid container spacing={2}>
@@ -120,10 +120,10 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
             name="visitDetails"
             label="Visit To"
             options={visitOptions}
-            selectedValue={formData.Opvisits.visitTypeVal}
+            selectedValue={formData.opvisits.visitTypeVal}
             onChange={handleRadioButtonChange(
-              ["OPVisits", "VisitTypeVal"],
-              ["OPVisits", "VisitType"],
+              ["opvisits", "visitTypeVal"],
+              ["opvisits", "visitType"],
               visitOptions
             )}
             inline={true}
@@ -135,14 +135,14 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
               label="Department"
               name="Department"
               value={
-                formData.PatRegisters.deptID === 0
+                formData.patRegisters.deptID === 0
                   ? ""
-                  : String(formData.PatRegisters.deptID)
+                  : String(formData.patRegisters.deptID)
               }
               options={departmentValues}
               onChange={handleDropdownChange(
-                ["DeptID"],
-                ["DeptName"],
+                ["patRegisters", "deptID"],
+                ["patRegisters", "deptName"],
                 departmentValues
               )}
               isSubmitted={isSubmitted}
@@ -157,14 +157,14 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
               name="AttendingPhysician"
               label="Attending Physician"
               value={
-                formData.PatRegisters.consultantID === 0
+                formData.patRegisters.consultantID === 0
                   ? ""
-                  : String(formData.PatRegisters.consultantID)
+                  : String(formData.patRegisters.consultantID)
               }
               options={attendingPhy}
               onChange={handleDropdownChange(
-                ["ConsultantID"],
-                ["ConsultantName"],
+                ["patRegisters", "consultantID"],
+                ["patRegisters", "consultantName"],
                 attendingPhy
               )}
               isSubmitted={isSubmitted}
@@ -179,14 +179,14 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
               name="PrimaryIntroducingSource"
               label="Primary Introducing Source"
               value={
-                formData.PatRegisters.sourceID === 0
+                formData.patRegisters.sourceID === 0
                   ? ""
-                  : String(formData.PatRegisters.sourceID)
+                  : String(formData.patRegisters.sourceID)
               }
               options={primaryIntroducingSource}
               onChange={handleDropdownChange(
-                ["SourceID"],
-                ["SourceName"],
+                ["patRegisters", "sourceID"],
+                ["patRegisters", "sourceName"],
                 primaryIntroducingSource
               )}
               isSubmitted={isSubmitted}

@@ -8,7 +8,6 @@ import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { Grid, Typography, Box } from "@mui/material";
 import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
-import { formatDt } from "../../../../utils/Common/dateUtils";
 
 interface MembershipSchemeProps {
   formData: PatientRegistrationDto;
@@ -53,8 +52,8 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
   return (
     <section aria-labelledby="membership-scheme-header">
       <Box>
-        <Typography variant="h6" id="membership-scheme-header">
-          MEMBERSHIP SCHEME
+        <Typography variant="h6" sx={{ borderBottom: "1px solid #000" }}>
+          Membershi Scheme
         </Typography>
       </Box>
       <Grid container spacing={2}>
@@ -63,14 +62,14 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
             name="MembershipScheme"
             label="Membership Scheme"
             value={
-              formData.PatRegisters.patMemID === 0
+              formData.patRegisters.patMemID === 0
                 ? ""
-                : String(formData.PatRegisters.patMemID)
+                : String(formData.patRegisters.patMemID)
             }
             options={membershipSchemes}
             onChange={handleDropdownChange(
-              ["patMemID"],
-              ["patMemName"],
+              ["patRegisters", "patMemID"],
+              ["patRegisters", "patMemName"],
               membershipSchemes
             )}
             size="small"
@@ -86,15 +85,13 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
             onChange={(e) =>
               setFormData((prevFormData) => ({
                 ...prevFormData,
-                PatRegisters: {
-                  ...prevFormData.PatRegisters,
-                  patMemSchemeExpiryDate: new Date(e.target.value),
+                patRegisters: {
+                  ...prevFormData.patRegisters,
+                  patMemSchemeExpiryDate: e.target.value,
                 },
               }))
             }
-            value={formatDt(
-              new Date(formData.PatRegisters.patMemSchemeExpiryDate)
-            )}
+            value={formData.patRegisters.patMemSchemeExpiryDate}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}></Grid>

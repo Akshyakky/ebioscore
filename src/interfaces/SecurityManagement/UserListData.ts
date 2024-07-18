@@ -69,15 +69,6 @@ export interface UserPermissionDto {
   operationName?: string;
   allow?: boolean;
 }
-
-export interface OperationResult<T> {
-  success: boolean;
-  data?: T;
-  affectedRows?: number;
-  errorMessage?: string;
-  errors?: any[];
-}
-
 export interface UserPermissionDropdowns {
   mainModuleID: string;
   mainModuleName: string;

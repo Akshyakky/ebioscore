@@ -1,93 +1,87 @@
-import React, { useEffect, useState } from "react";
-import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
-import PatientInsuranceForm from "./PatientInsuranceForm";
-import PatientInsuranceGrid from "./PatientInsuranceGrid";
+import React, {
+  useState,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { Grid, Typography } from "@mui/material";
 import CustomButton from "../../../../components/Button/CustomButton";
-import addIcon from "@mui/icons-material/Add";
-import { RegistrationService } from "../../../../services/PatientAdministrationServices/RegistrationService/RegistrationService";
+import AddIcon from "@mui/icons-material/Add";
+import { OPIPInsurancesDto } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
+import PatientInsuranceForm from "./PatientInsuranceForm";
+import PatientInsuranceGrid from "./PatientInsuranceGrid";
+import { InsuranceCarrierService } from "../../../../services/CommonServices/InsuranceCarrierService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
+
 interface InsurancePageProps {
   pChartID: number;
   token: string;
   shouldClearData: boolean;
-  onSave: (data: InsuranceFormState[]) => void;
-  triggerSave: boolean;
 }
-const InsurancePage: React.FC<InsurancePageProps> = ({
-  pChartID,
-  token,
-  shouldClearData,
-  onSave,
-  triggerSave,
-}) => {
-  const [showInsurancePopup, setInsurancePopup] = useState(false);
-  const [editingPatientInsuranceData, setEditingPatientInsuranceData] =
-    useState<InsuranceFormState | undefined>(undefined);
-  const [gridPatientInsuranceData, setGridPatientInsuranceData] = useState<
-    InsuranceFormState[]
-  >([]);
-  const userInfo = useSelector((state: RootState) => state.userDetails);
-  useEffect(() => {
-    if (triggerSave) {
-      handleFinalSavePatientInsuranceDetails();
-    }
-  }, [triggerSave]);
-  const handleFinalSavePatientInsuranceDetails = async () => {
-    try {
-      // Create an array of save operations
 
-      const saveOperations = gridPatientInsuranceData.map((pInsurance) => {
-        const pInsuranceData = { ...pInsurance, PChartID: pChartID };
-        return RegistrationService.savePatientInsuranceDetails(
+const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
+  { pChartID, token, shouldClearData },
+  ref
+) => {
+  const [showInsurancePopup, setShowInsurancePopup] = useState(false);
+  const [editingInsuranceData, setEditingInsuranceData] = useState<
+    OPIPInsurancesDto | undefined
+  >(undefined);
+  const [gridInsuranceData, setGridInsuranceData] = useState<
+    OPIPInsurancesDto[]
+  >([]);
+
+  const userInfo = useSelector((state: RootState) => state.userDetails);
+
+  useImperativeHandle(ref, () => ({
+    saveInsuranceDetails,
+  }));
+
+  const saveInsuranceDetails = async (pChartID: number) => {
+    try {
+      const saveOperations = gridInsuranceData.map((insurance) => {
+        const insuranceData = { ...insurance, pChartID: pChartID };
+        return InsuranceCarrierService.addOrUpdateOPIPInsurance(
           token,
-          pInsuranceData
+          insuranceData
         );
       });
 
-      // Wait for all operations to complete
       const results = await Promise.all(saveOperations);
-      console.log("Patient Insurance details saved successfully:", results);
-
-      // Call the external save function after the save operations have completed
-      onSave(gridPatientInsuranceData);
+      console.log("Insurance details saved successfully:", results);
     } catch (error) {
-      console.error(
-        "An error occurred while saving Patient Insurance details:",
-        error
-      );
+      console.error("Error saving insurance details:", error);
     }
   };
 
-  const handleEditPatientInsurance = (PatientInsurance: InsuranceFormState) => {
-    console.log("triggered");
-    setEditingPatientInsuranceData(PatientInsurance);
-    setInsurancePopup(true);
+  const handleEditInsurance = (insurance: OPIPInsurancesDto) => {
+    setEditingInsuranceData(insurance);
+    setShowInsurancePopup(true);
   };
 
-  const handleDeletePatientInsurance = (id: number) => {
-    const updatedGridData = gridPatientInsuranceData.filter(
-      (Insurance) => Insurance.OPIPInsID !== id
+  const handleDeleteInsurance = (id: number) => {
+    const updatedGridData = gridInsuranceData.filter(
+      (insurance) => insurance.oPIPInsID !== id
     );
-    setGridPatientInsuranceData(updatedGridData);
+    setGridInsuranceData(updatedGridData);
   };
 
-  const handleSaveInsurance = (insuranceData: InsuranceFormState) => {
-    setGridPatientInsuranceData((prevData) => {
-      if (!insuranceData.OPIPInsID && !insuranceData.ID) {
+  const handleSaveInsurance = (insuranceData: OPIPInsurancesDto) => {
+    setGridInsuranceData((prevData) => {
+      if (!insuranceData.oPIPInsID && !insuranceData.ID) {
         return [...prevData, { ...insuranceData, ID: generateNewId(prevData) }];
       }
-      if (!insuranceData.OPIPInsID) {
+      if (!insuranceData.oPIPInsID) {
         return prevData.map((item) =>
           item.ID === insuranceData.ID ? insuranceData : item
         );
       }
       return prevData.map((item) =>
-        item.OPIPInsID === insuranceData.OPIPInsID ? insuranceData : item
+        item.oPIPInsID === insuranceData.oPIPInsID ? insuranceData : item
       );
     });
-    handleClosePInsurancePopup();
+    handleCloseInsurancePopup();
   };
 
   const generateNewId = <T extends { ID: number }>(data: T[]): number => {
@@ -103,15 +97,12 @@ const InsurancePage: React.FC<InsurancePageProps> = ({
       const fetchInsuranceData = async () => {
         try {
           const insuranceDetails =
-            await RegistrationService.getPatientInsuranceDetails(
+            await InsuranceCarrierService.getOPIPInsuranceByPChartID(
               token,
               pChartID
             );
-          if (insuranceDetails.success) {
-            const transfermedData = transformDataToMatchInsuranceDataStructure(
-              insuranceDetails.data
-            );
-            setGridPatientInsuranceData(transfermedData);
+          if (insuranceDetails.success && insuranceDetails.data) {
+            setGridInsuranceData(insuranceDetails.data);
           }
         } catch (error) {
           console.error("Error fetching insurance data:", error);
@@ -122,61 +113,17 @@ const InsurancePage: React.FC<InsurancePageProps> = ({
     }
   }, [pChartID, token]);
 
-  const transformDataToMatchInsuranceDataStructure = (
-    data: any[]
-  ): InsuranceFormState[] => {
-    return data.map((ins) => ({
-      ID: 0,
-      OPIPInsID: ins.opipInsID,
-      PChartID: ins.pChartID,
-      InsurID: ins.insurID,
-      InsurCode: ins.insurCode,
-      InsurName: ins.insurName,
-      PolicyNumber: ins.policyNumber,
-      PolicyHolder: ins.policyHolder,
-      GroupNumber: ins.groupNumber,
-      PolicyStartDt: ins.policyStartDt.split("T")[0],
-      PolicyEndDt: ins.policyEndDt.split("T")[0],
-      Guarantor: ins.guarantor,
-      RelationVal: ins.relationVal,
-      Relation: ins.relation,
-      Address1: ins.address1,
-      Address2: ins.address2,
-      Phone1: ins.phone1,
-      Phone2: ins.phone2,
-      RActiveYN: ins.rActiveYN,
-      RCreatedID: ins.rCreatedID,
-      RCreatedBy: ins.rCreatedBy,
-      RCreatedOn: ins.rCreatedOn.split("T")[0],
-      RModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
-      RModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
-      RModifiedOn: new Date().toISOString().split("T")[0],
-      RNotes: ins.rNotes,
-      CompID: userInfo.compID !== null ? userInfo.compID : 0,
-      CompCode: userInfo.compCode !== null ? userInfo.compCode : "",
-      CompName: userInfo.compName !== null ? userInfo.compName : "",
-      InsurStatusCode: ins.insurStatusCode,
-      InsurStatusName: ins.insurStatusName,
-      PChartCode: ins.pChartCode,
-      PChartCompID: ins.pChartCompID,
-      ReferenceNo: ins.referenceNo,
-      TransferYN: ins.transferYN,
-      CoveredVal: ins.coveredVal,
-      CoveredFor: ins.coveredFor,
-    }));
+  const handleOpenInsurancePopup = () => {
+    setShowInsurancePopup(true);
   };
 
-  const handleOpenPInsurancePopup = () => {
-    setInsurancePopup(true);
-  };
-
-  const handleClosePInsurancePopup = () => {
-    setInsurancePopup(false);
+  const handleCloseInsurancePopup = () => {
+    setShowInsurancePopup(false);
   };
 
   useEffect(() => {
     if (shouldClearData) {
-      setGridPatientInsuranceData([]); // Clear the insurance data
+      setGridInsuranceData([]);
     }
   }, [shouldClearData]);
 
@@ -191,8 +138,8 @@ const InsurancePage: React.FC<InsurancePageProps> = ({
         <Grid item>
           <CustomButton
             text="Add Insurance Details"
-            onClick={handleOpenPInsurancePopup}
-            icon={addIcon}
+            onClick={handleOpenInsurancePopup}
+            icon={AddIcon}
             color="primary"
             variant="text"
           />
@@ -200,17 +147,17 @@ const InsurancePage: React.FC<InsurancePageProps> = ({
       </Grid>
       <PatientInsuranceForm
         show={showInsurancePopup}
-        handleClose={handleClosePInsurancePopup}
+        handleClose={handleCloseInsurancePopup}
         handleSave={handleSaveInsurance}
-        editData={editingPatientInsuranceData}
+        editData={editingInsuranceData}
       />
       <PatientInsuranceGrid
-        insuranceData={gridPatientInsuranceData}
-        onEdit={handleEditPatientInsurance}
-        onDelete={handleDeletePatientInsurance}
+        insuranceData={gridInsuranceData}
+        onEdit={handleEditInsurance}
+        onDelete={handleDeleteInsurance}
       />
     </>
   );
 };
 
-export default InsurancePage;
+export default forwardRef(InsurancePage);

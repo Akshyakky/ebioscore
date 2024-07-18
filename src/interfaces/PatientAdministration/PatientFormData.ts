@@ -1,7 +1,7 @@
 export interface PatRegistersDto {
   pChartID: number;
   pChartCode: string;
-  pRegDate: Date;
+  pRegDate: string;
   pTitleVal?: string;
   pTitle: string;
   pFName?: string;
@@ -9,7 +9,7 @@ export interface PatRegistersDto {
   pLName?: string;
   pDobOrAgeVal: string;
   pDobOrAge: string;
-  pDob: Date;
+  pDob: string;
   pAgeType?: string;
   pApproxAge?: number;
   pGenderVal?: string;
@@ -36,7 +36,7 @@ export interface PatRegistersDto {
   patMemID?: number;
   patMemName?: string;
   patMemDescription?: string;
-  patMemSchemeExpiryDate: Date;
+  patMemSchemeExpiryDate: string;
   patSchemeExpiryDateYN?: string;
   patSchemeDescriptionYN?: string;
   cancelReason?: string;
@@ -124,8 +124,8 @@ export interface OpvisitDto {
 }
 
 export interface PatientRegistrationDto {
-  PatRegisters: PatRegistersDto;
-  PatAddress: PatAddressDto;
-  PatOverview: PatOverviewDto;
-  Opvisits: OpvisitDto;
+  patRegisters: PatRegistersDto;
+  patAddress: PatAddressDto;
+  patOverview: PatOverviewDto;
+  opvisits: OpvisitDto;
 }
