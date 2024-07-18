@@ -7,9 +7,10 @@ import {
   notifyError,
 } from "../../../../utils/Common/toastManager";
 import {
-  OperationResult,
+  ProfileDetailDto,
   ProfileDetailsDropdowns,
   ReportPermission,
+  ReportPermissionDto,
 } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
@@ -17,6 +18,7 @@ import useDropdownChange from "../../../../hooks/useDropdownChange";
 import CustomCheckbox from "../../../../components/Checkbox/Checkbox";
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 import { OperationPermissionDetailsDto } from "../../../../interfaces/SecurityManagement/OperationPermissionDetailsDto";
+import { OperationResult } from "../../../../interfaces/Common/OperationResult";
 
 interface OperationPermissionProps {
   profileID: number;
@@ -117,7 +119,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
             );
           if (reportPermissionsData.success && reportPermissionsData.data) {
             setPermissions(
-              reportPermissionsData.data.map((permission) => ({
+              reportPermissionsData.data.map((permission: ModuleOperation) => ({
                 profDetID: permission.profDetID,
                 operationID: permission.operationID,
                 operationName: permission.operationName,
@@ -129,7 +131,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
             console.log("set permission data is ", permissions);
             setDropdownValues((prevValues) => ({
               ...prevValues,
-              reportPermissionsOptions: (reportPermissionsData.data ?? []).map((permission) => ({
+              reportPermissionsOptions: (reportPermissionsData.data ?? []).map((permission: ModuleOperation) => ({
                 label: permission.operationName,
                 value: permission.operationID.toString(),
               })),
@@ -163,7 +165,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
             );
           if (reportPermissionsData.success && reportPermissionsData.data) {
             setPermissions(
-              reportPermissionsData.data.map((permission) => ({
+              reportPermissionsData.data.map((permission: ReportPermission) => ({
                 profDetID: permission.profDetID,
                 operationID: permission.reportID,
                 operationName: permission.reportName,
