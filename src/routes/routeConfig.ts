@@ -1,4 +1,3 @@
-// routes/routeConfig.ts
 import LoginPage from "../pages/commonPages/LoginPage/LoginPage";
 import DashboardPage from "../pages/commonPages/DashboardPage/DashboardPage";
 import RegistrationPage from "../pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
@@ -13,6 +12,8 @@ import { ProfileListSearchProvider } from "../context/SecurityManagement/Profile
 import AdmissionPage from "../pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
 import { UserListSearchProvider } from "../context/SecurityManagement/UserListSearchContext";
 import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
+import ResourceListPage from "../pages/frontOffice/ResourceList/MainPage/ResourceListPage";
+import { ResourceListProvider } from "../context/frontOffice/ResourceListContext";
 
 const routeConfig = [
   { path: "/login", component: LoginPage, protected: false },
@@ -21,7 +22,7 @@ const routeConfig = [
     path: "/registrationpage",
     component: RegistrationPage,
     protected: true,
-    providers: [PatientSearchProvider], //provider: PatientSearchProvider,
+    providers: [PatientSearchProvider],
   },
   {
     path: "/revisitpage",
@@ -43,19 +44,23 @@ const routeConfig = [
     protected: true,
     providers: [UserListSearchProvider],
   },
-
   {
     path: "/ProfileListPage",
     component: ProfileListPage,
     protected: true,
     providers: [ProfileListSearchProvider],
   },
-
   {
     path: "/AdmissionPage",
     component: AdmissionPage,
     protected: true,
     providers: [ProfileListSearchProvider],
+  },
+  {
+    path: "/ResourceListPage",
+    component: ResourceListPage,
+    protected: true,
+    providers: [ResourceListProvider],
   },
   // Add more routes here as needed
 ];

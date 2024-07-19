@@ -10,6 +10,7 @@ interface ImportMetaEnv {
   readonly VITE_ROUTINEREPORTURL: string;
   readonly VITE_SECURITY_MANAGEMENT_URL: string;
   readonly VITE_HOSPITAL_ADMINISTRATION_URL: string;
+  readonly VITE_FRONT_OFFICE_URL:string
   // add more environment variables here...
 }
 

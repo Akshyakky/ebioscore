@@ -9,5 +9,6 @@ export const APIConfig = {
   routineReportURL: import.meta.env.VITE_ROUTINEREPORTURL,
   securityManagementURL: import.meta.env.VITE_SECURITY_MANAGEMENT_URL,
   hospitalAdministrations: import.meta.env.VITE_HOSPITAL_ADMINISTRATION_URL,
+  frontOffice:import.meta.env.VITE_FRONT_OFFICE_URL,
 };
 
