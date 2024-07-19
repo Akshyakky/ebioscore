@@ -22,7 +22,7 @@ export interface UserListData {
   transferYN?: string;
   appCode: string;
   appUAccess?: string;
-  profileID?: number;
+  profileID: number;
   conName: string;
   repID:number;
   
@@ -47,7 +47,7 @@ export interface UserMastDto {
 
 export interface UserPermissionDto {
   repID: number;
-  auAccessID: number;
+  auAccessID?: number;
   appID: number;
   appUName: string;
   aOPRID?: number;

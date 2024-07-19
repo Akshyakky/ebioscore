@@ -10,37 +10,46 @@ import { UserListData } from "../../../../interfaces/SecurityManagement/UserList
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 import { UserListService } from "../../../../services/SecurityManagementServices/UserListService";
-import OperationPermissionDetails from "../../ProfileListPage/SubPage/OperationPermissionDetails";
+import OperationPermissionDetails, { ModuleOperation } from "../../ProfileListPage/SubPage/OperationPermissionDetails";
 import { OperationPermissionDetailsDto } from "../../../../interfaces/SecurityManagement/OperationPermissionDetailsDto";
-import { notifyError, } from "../../../../utils/Common/toastManager";
-import axios from "axios";
 
 interface OperationPermissionProps {
   profileID: number;
   appUserName: string;
 }
 
-const UserListPage: React.FC<OperationPermissionProps> = ({
-}) => {
+const UserListPage: React.FC<OperationPermissionProps> = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserListData | null>(null);
   const { fetchAllUsers, updateUserStatus } = useContext(UserListSearchContext);
-  const { token, compID } = useSelector(
-    (state: RootState) => state.userDetails
-  );
+  const { token, compID } = useSelector((state: RootState) => state.userDetails);
 
-  const handleEditUser = (user: UserListData) => {
-    setSelectedUser(user);
+  const [selectedUser, setSelectedUser] = useState<UserListData | null>(null);
+  const [isSuperUser, setIsSuperUser] = useState<boolean>(false);
+  const [permissions, setPermissions] = useState<ModuleOperation[]>([]);
+  const [reportPermissions, setReportPermissions] = useState<ModuleOperation[]>([]);
+
+  const handleSuperUserChange = (isSuper: boolean) => {
+    if (selectedUser) {
+      setSelectedUser({
+        ...selectedUser,
+        adminUserYN: isSuper ? "Y" : "N"
+      });
+      setIsSuperUser(isSuper);
+    }
+  };
+
+  const handleEditUser = (profile: UserListData) => {
+    setSelectedUser(profile);
+    setIsSuperUser(profile.adminUserYN === "Y");
+    setIsSaved(true);
     handleCloseSearchDialog();
-    setIsSaved(false); 
   };
 
   const handleSave = async (profile: UserListData) => {
     setIsSaved(true);
     setSelectedUser(profile);
   };
-
 
   const handleClear = () => {
     setIsSaved(false);
@@ -51,127 +60,103 @@ const UserListPage: React.FC<OperationPermissionProps> = ({
     await fetchAllUsers();
   };
 
-  const handleAdvancedSearch = () => {
+  const handleAdvancedSearch = async () => {
     setIsSearchDialogOpen(true);
+    await fetchAllUsers();
   };
 
   const handleCloseSearchDialog = () => {
     setIsSearchDialogOpen(false);
   };
 
-  const saveUserPermission = async (permission: OperationPermissionDetailsDto) => {
+  const saveUserPermission = async (permission: OperationPermissionDetailsDto): Promise<void> => {
     if (selectedUser && token) {
       try {
         const result = await UserListService.saveOrUpdateUserPermission(token, {
-          auAccessID: permission.profDetID || 0,
+          auAccessID: permission.auAccessID || 0,
           appID: selectedUser.appID,
           appUName: selectedUser.appUserName,
-          aOPRID: permission.operationID, 
-          allowYN: permission.allowYN, 
-          rActiveYN: permission.rActiveYN, 
-          rCreatedID: 0,
-          rCreatedBy: "",
-          rCreatedOn: new Date().toISOString(),
-          rModifiedID: 0,
-          rModifiedBy: "",
-          rModifiedOn: new Date().toISOString(),
-          rNotes: "",
+          aOPRID: permission.aOPRID || 0,
+          allowYN: permission.allowYN,
+          rActiveYN: permission.rActiveYN,
+          rCreatedID: permission.rCreatedID || 0,
+          rCreatedBy: permission.rCreatedBy || "",
+          rCreatedOn: permission.rCreatedOn || new Date().toISOString(),
+          rModifiedID: permission.rModifiedID || 0,
+          rModifiedBy: permission.rModifiedBy || "",
+          rModifiedOn: permission.rModifiedOn || new Date().toISOString(),
+          rNotes: permission.rNotes || "",
           compID: compID || 0,
-          compCode: "",
-          compName: "",
+          compCode: permission.compCode || "",
+          compName: permission.compName || "",
           profileID: selectedUser.profileID || 0,
-          repID: 0,
+          repID: permission.repID || 0,
         });
 
         if (result.success) {
           const updatedPermission = {
             ...permission,
-            profDetID: result.data?.auAccessID,
+            auAccessID: result.data?.auAccessID,
           };
-          return updatedPermission;
-        } else {
-          console.error(
-            `Error saving module permission ${permission.operationID}: ${result.errorMessage}`
+
+          const updatedPermissions = permissions.map((perm) =>
+            perm.operationID === permission.aOPRID
+              ? { ...perm, auAccessID: result.data?.auAccessID, allow: result.data?.rActiveYN === "Y" }
+              : perm,
           );
-          notifyError(`Error saving module permission ${permission.operationID}`);
-          return permission; 
+          setPermissions(updatedPermissions);
+        } else {
+          console.error(`Error saving module permission ${permission.aOPRID}: ${result.errorMessage}`);
         }
       } catch (error) {
-        console.error(
-          `Error saving module permission ${permission.operationID}:`,
-          error
-        );
-        notifyError(`Error saving module permission ${permission.operationID}`);
-        return permission;
+        console.error(`Error saving module permission ${permission.aOPRID}:`, error);
       }
     }
   };
 
-  const saveUserReportPermission = async (permission: OperationPermissionDetailsDto) => {
+  const saveUserReportPermission = async (permission: OperationPermissionDetailsDto): Promise<void> => {
     if (selectedUser && token) {
       try {
-        const result = await UserListService.saveOrUpdateUserReportPermission(
-          token,
-          {
-            auAccessID: permission.profDetID || 0,
-            appID: selectedUser.appID,
-            appUName: selectedUser.appUserName,
-            aOPRID: permission.operationID, 
-            allowYN: permission.allowYN, 
-            rActiveYN: permission.rActiveYN, 
-            rCreatedID: 0,
-            rCreatedBy: "",
-            rCreatedOn: new Date().toISOString(),
-            rModifiedID: 0,
-            rModifiedBy: "",
-            rModifiedOn: new Date().toISOString(),
-            rNotes: "",
-            compID: compID || 0,
-            compCode: "",
-            compName: "",
-            profileID: selectedUser.profileID || 0,
-            repID: permission.repID,
-          }
-        );
+        const result = await UserListService.saveOrUpdateUserReportPermission(token, {
+          auAccessID: permission.auAccessID,
+          appID: selectedUser.appID,
+          appUName: selectedUser.appUserName,
+          aOPRID: permission.aOPRID || 0,
+          allowYN: permission.allowYN,
+          rActiveYN: permission.rActiveYN,
+          rCreatedID: permission.rCreatedID || 0,
+          rCreatedBy: permission.rCreatedBy || "",
+          rCreatedOn: permission.rCreatedOn || new Date().toISOString(),
+          rModifiedID: permission.rModifiedID || 0,
+          rModifiedBy: permission.rModifiedBy || "",
+          rModifiedOn: permission.rModifiedOn || new Date().toISOString(),
+          rNotes: permission.rNotes || "",
+          compID: compID || 0,
+          compCode: permission.compCode || "",
+          compName: permission.compName || "",
+          profileID: selectedUser.profileID || 0,
+          repID: permission.repID || 0,
+          profDetID: permission.profDetID
+        });
 
         if (result.success) {
           const updatedPermission = {
             ...permission,
-            repID: result.data?.repID,
+            profDetID: result.data?.profDetID,
           };
-          return updatedPermission;
-        } else {
-          console.error(
-            `Error saving report permission ${permission.repID}: ${result.errorMessage}`
+
+          const updatedPermissions = permissions.map((perm) =>
+            perm.operationID === permission.aOPRID
+              ? { ...perm, profDetID: result.data?.profDetID, allow: result.data?.rActiveYN === "Y" }
+              : perm,
           );
-          notifyError(`Error saving report permission ${permission.repID}`);
-          return permission;
-        }
-      } catch (error: any) {
-        if (axios.isAxiosError(error)) {
-          if (error.response) {
-            console.error("Server responded with status:", error.response.status);
-            console.error("Response data:", error.response.data);
-            notifyError(`Server responded with status: ${error.response.status}`);
-          } else if (error.request) {
-            console.error("No response received:", error.request);
-            notifyError("No response received from server");
-          } else {
-            console.error("Error setting up request:", error.message);
-            notifyError("Error setting up request to server");
-          }
+          setPermissions(updatedPermissions);
         } else {
-          console.error("Other error occurred:", error.message);
-          notifyError("Unknown error occurred");
+          console.error(`Error saving report permission ${permission.aOPRID}: ${result.errorMessage}`);
         }
-        return permission; 
+      } catch (error) {
+        console.error(`Error saving report permission ${permission.aOPRID}:`, error);
       }
-    } else {
-      console.error("Selected user or token is missing.");
-      notifyError(
-        "Unable to save report permission: Selected user or token is missing."
-      );
-      return permission; 
     }
   };
 
@@ -191,27 +176,35 @@ const UserListPage: React.FC<OperationPermissionProps> = ({
             ]}
           />
         </Box>
+
         <UserDetails
           onSave={handleSave}
           onClear={handleClear}
           user={selectedUser}
-          isEditMode={!!selectedUser} 
+          isEditMode={!!selectedUser}
           refreshUsers={refreshUsers}
           updateUserStatus={updateUserStatus}
+          onSuperUserChange={handleSuperUserChange}
         />
-        {isSaved && selectedUser && (
+
+        {isSaved && selectedUser && !isSuperUser && (
           <OperationPermissionDetails
-              profileID={selectedUser.profileID!}
-              profileName={selectedUser.appUserName}
-              saveModulePermission={saveUserPermission}
-              saveReportPermission={saveUserReportPermission}
-            />  
+            profileID={selectedUser.profileID}
+            profileName={selectedUser.appUserName}
+            saveModulePermission={saveUserPermission}
+            saveReportPermission={saveUserReportPermission}
+            permissions={permissions}
+            setPermissions={setPermissions}
+          />
         )}
+
         <UserListSearch
           show={isSearchDialogOpen}
           handleClose={handleCloseSearchDialog}
           onEditProfile={handleEditUser}
+          selectedUser={selectedUser}
         />
+
       </Container>
     </MainLayout>
   );

@@ -6,6 +6,7 @@ export interface UserState {
   adminYN: string | null;
   userName: string | null;
   compID: number | null;
+  auAccessID:number|null,
   compName: string | null;
   compCode: string | null;
   tokenExpiry: number | null; // UNIX timestamp in milliseconds
