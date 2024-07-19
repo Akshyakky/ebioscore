@@ -112,7 +112,6 @@ const RevisitPage: React.FC = () => {
     useState<DropdownOption[]>([]);
   const [showWaitingPatientSearch, setShowWaitingPatientSearch] =
     useState(false);
-  const [triggerInsuranceSave, setTriggerInsuranceSave] = useState(false);
   const [picValues, setPicValues] = useState<DropdownOption[]>([]);
   const [departmentValues, setDepartmentValues] = useState<DropdownOption[]>(
     []
@@ -120,6 +119,7 @@ const RevisitPage: React.FC = () => {
   const [primaryIntroducingSource, setPrimaryIntroducingSource] = useState<
     DropdownOption[]
   >([]);
+  const insurancePageRef = useRef<any>(null);
   const { handleDropdownChange } =
     useDropdownChange<revisitFormData>(setRevisitFormData);
 
@@ -333,13 +333,13 @@ const RevisitPage: React.FC = () => {
   };
 
   const handleSave = async () => {
+    debugger;
     setIsSubmitted(true);
     setLoading(true);
     try {
       if (!validateForm()) {
         return;
       }
-      setTriggerInsuranceSave(true);
       const response = await RevisitService.saveOPVisits(
         token,
         revisitFormData
@@ -372,10 +372,6 @@ const RevisitPage: React.FC = () => {
       setShouldClearInsuranceData(false);
     }
   }, [shouldClearInsuranceData]);
-
-  const handleSaveInsuranceData = (data: InsuranceFormState[]) => {
-    console.log("Insurance data saved:", data);
-  };
 
   return (
     <MainLayout>
@@ -543,11 +539,10 @@ const RevisitPage: React.FC = () => {
             </Grid>
           </section>
           <InsurancePage
+            ref={insurancePageRef}
             pChartID={selectedPChartID}
             token={token}
-            onSave={handleSaveInsuranceData}
             shouldClearData={shouldClearInsuranceData}
-            triggerSave={triggerInsuranceSave}
           />
           <PatientVisitHistory pChartID={selectedPChartID} token={token} />
         </Paper>

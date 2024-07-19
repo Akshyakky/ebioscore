@@ -6,6 +6,7 @@ import {
   revisitFormData,
 } from "../../../interfaces/PatientAdministration/revisitFormData";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
+import { handleError } from "../../CommonServices/HandlerError";
 
 export const getPatientHistoryByPChartID = async (
   token: string,
@@ -33,24 +34,24 @@ export const saveOPVisits = async (
     const response = await axios.post(url, opVisitsData, { headers });
     return response.data;
   } catch (error) {
-    console.error(`Error saving OP visits data: ${error}`);
-    throw error;
+    return handleError(error);
   }
 };
+
 export const getLastVisitDetailsByPChartID = async (
   token: string,
   pChartID: number
-) => {
+): Promise<OperationResult<any>> => {
   const url = `${APIConfig.patientAdministrationURL}Revisit/GetLastVisitDetails/${pChartID}`;
   const headers = { Authorization: `Bearer ${token}` };
   try {
     const response = await axios.get(url, { headers });
-    return response.data; // Assuming the API returns OperationResult<dynamic>
+    return response.data;
   } catch (error) {
-    console.error(`Error fetching last visit details: ${error}`);
-    throw error;
+    return handleError(error);
   }
 };
+
 export const getWaitingPatientDetails = async (
   token: string,
   attendingPhysicianID?: number,
@@ -76,12 +77,12 @@ export const getWaitingPatientDetails = async (
 
   try {
     const response = await axios.get(`${url}?${params}`, { headers });
-    return response.data; // Assuming the API returns data in the expected format
+    return response.data;
   } catch (error) {
-    console.error(`Error fetching waiting patient details: ${error}`);
-    throw error;
+    return handleError(error);
   }
 };
+
 export const cancelVisit = async (
   token: string,
   opVID: number,
@@ -101,21 +102,10 @@ export const cancelVisit = async (
       affectedRows: response.data.AffectedRows,
     };
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response && error.response.status === 400) {
-        return {
-          success: false,
-          errorMessage: error.response.data.ErrorMessage,
-        };
-      }
-    }
-    console.error("An unexpected error occurred:", error);
-    return {
-      success: false,
-      errorMessage: "An unexpected error occurred",
-    };
+    return handleError(error);
   }
 };
+
 export const RevisitService = {
   getPatientHistoryByPChartID,
   saveOPVisits,

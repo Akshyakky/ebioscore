@@ -13,6 +13,7 @@ import { RootState } from "../../../../store/reducers";
 import NextOfKinForm from "./NextOfKinForm";
 import NextOfKinGrid from "./NextOfKinGrid";
 import { PatNokService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatNokService";
+import { format } from "date-fns";
 
 interface NextOfKinPageProps {
   pChartID: number;
@@ -97,7 +98,11 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
             pChartID
           );
           if (kinDetails.success && kinDetails.data) {
-            setGridKinData(kinDetails.data);
+            const formattedData = kinDetails.data.map((kin) => ({
+              ...kin,
+              pNokDob: format(new Date(kin.pNokDob), "yyyy-MM-dd"),
+            }));
+            setGridKinData(formattedData);
           }
         } catch (error) {
           console.error("Error fetching Next Of Kin data:", error);

@@ -4,6 +4,7 @@ import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { format } from "date-fns";
 
 interface NextOfKinGridProps {
   kinData: PatNokDetailsDto[];
@@ -38,7 +39,13 @@ const NextOfKinGrid: React.FC<NextOfKinGridProps> = ({
       render: (row: PatNokDetailsDto) => `${row.pNokFName} ${row.pNokLName}`,
     },
     { key: "pNokRelName", header: "Relationship", visible: true },
-    { key: "pNokDob", header: "DOB", visible: true },
+    {
+      key: "pNokDob",
+      header: "DOB",
+      visible: true,
+      render: (row: PatNokDetailsDto) =>
+        format(new Date(row.pNokDob), "dd/MM/yyyy"),
+    },
     { key: "pNokPostcode", header: "Post Code", visible: true },
     {
       key: "Address",

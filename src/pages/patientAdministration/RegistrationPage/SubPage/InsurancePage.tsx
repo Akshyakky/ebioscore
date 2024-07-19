@@ -13,6 +13,7 @@ import PatientInsuranceGrid from "./PatientInsuranceGrid";
 import { InsuranceCarrierService } from "../../../../services/CommonServices/InsuranceCarrierService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
+import { format } from "date-fns";
 
 interface InsurancePageProps {
   pChartID: number;
@@ -102,7 +103,15 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
               pChartID
             );
           if (insuranceDetails.success && insuranceDetails.data) {
-            setGridInsuranceData(insuranceDetails.data);
+            const formattedData = insuranceDetails.data.map((insur) => ({
+              ...insur,
+              policyStartDt: format(
+                new Date(insur.policyStartDt),
+                "yyyy-MM-dd"
+              ),
+              policyEndDt: format(new Date(insur.policyEndDt), "yyyy-MM-dd"),
+            }));
+            setGridInsuranceData(formattedData);
           }
         } catch (error) {
           console.error("Error fetching insurance data:", error);

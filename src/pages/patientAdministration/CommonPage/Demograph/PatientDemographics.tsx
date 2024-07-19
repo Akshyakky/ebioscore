@@ -39,6 +39,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import { BillingService } from "../../../../services/BillingServices/BillingService";
 import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
 import { PatientDemoGraphService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientDemoGraphService";
+import { format, parseISO } from "date-fns";
 
 interface PatientDemographicsProps {
   pChartID: number;
@@ -62,13 +63,13 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     pTitle: "",
     pfName: "",
     plName: "",
-    dob: new Date().toISOString().split("T")[0],
+    dob: format(new Date(), "yyyy-MM-dd"),
     pGender: "",
     pGenderVal: "",
     pBldGrp: "",
     pTypeID: 0,
     pTypeName: "",
-    pRegDate: new Date().toISOString().split("T")[0],
+    pRegDate: format(new Date(), "yyyy-MM-dd"),
     pssnID: "",
     intIdPsprt: "",
     pAddStreet: "",
@@ -114,7 +115,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
   }, [pChartID, token, setLoading]);
 
   const formatDate = (dateString: string) => {
-    return dateString.split("T")[0]; // Extracts the date part from the ISO string
+    return format(parseISO(dateString), "yyyy-MM-dd");
   };
 
   const fetchPatientDemographics = async () => {
@@ -646,7 +647,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                 <FloatingLabelTextBox
                   ControlID="RefferalSource"
                   title="Refferal Source"
-                  type="email"
+                  type="text"
                   size="small"
                   placeholder="Refferal Source"
                   value={patientDemoGraph.refSource}

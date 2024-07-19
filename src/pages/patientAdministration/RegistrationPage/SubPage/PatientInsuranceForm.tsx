@@ -19,7 +19,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
 import CustomButton from "../../../../components/Button/CustomButton";
-import { formatDt } from "../../../../utils/Common/dateUtils";
+import { format } from "date-fns";
 
 interface PatientInsuranceModalProps {
   show: boolean;
@@ -47,8 +47,8 @@ const PatientInsuranceForm: React.FC<PatientInsuranceModalProps> = ({
     policyNumber: "",
     policyHolder: "",
     groupNumber: "",
-    policyStartDt: new Date().toISOString().split("T")[0],
-    policyEndDt: new Date().toISOString().split("T")[0],
+    policyStartDt: format(new Date(), "yyyy-MM-dd"),
+    policyEndDt: format(new Date(), "yyyy-MM-dd"),
     guarantor: "",
     relationVal: "",
     relation: "",
@@ -95,7 +95,11 @@ const PatientInsuranceForm: React.FC<PatientInsuranceModalProps> = ({
 
   useEffect(() => {
     if (editData) {
-      setInsuranceForm(editData);
+      setInsuranceForm({
+        ...editData,
+        policyStartDt: format(new Date(editData.policyStartDt), "yyyy-MM-dd"),
+        policyEndDt: format(new Date(editData.policyEndDt), "yyyy-MM-dd"),
+      });
     }
   }, [editData]);
 
