@@ -1,13 +1,14 @@
-import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import React, { useState, useEffect } from "react";
-import { BillingService } from "../../../../services/BillingServices/BillingService";
+import { Grid, Typography, Box } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
+import { BillingService } from "../../../../services/BillingServices/BillingService";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
-import { Grid, Typography, Box } from "@mui/material";
+import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
+import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
+import { format } from "date-fns";
 
 interface MembershipSchemeProps {
   formData: PatientRegistrationDto;
@@ -47,13 +48,24 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
     };
 
     loadDropdownData();
-  }, [token]);
+  }, [token, compID]);
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value;
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      patRegisters: {
+        ...prevFormData.patRegisters,
+        patMemSchemeExpiryDate: newDate,
+      },
+    }));
+  };
 
   return (
     <section aria-labelledby="membership-scheme-header">
       <Box>
         <Typography variant="h6" sx={{ borderBottom: "1px solid #000" }}>
-          Membershi Scheme
+          Membership Scheme
         </Typography>
       </Box>
       <Grid container spacing={2}>
@@ -82,16 +94,11 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
             type="date"
             size="small"
             placeholder="Membership Expiry Date"
-            onChange={(e) =>
-              setFormData((prevFormData) => ({
-                ...prevFormData,
-                patRegisters: {
-                  ...prevFormData.patRegisters,
-                  patMemSchemeExpiryDate: e.target.value,
-                },
-              }))
-            }
-            value={formData.patRegisters.patMemSchemeExpiryDate}
+            onChange={handleDateChange}
+            value={format(
+              new Date(formData.patRegisters.patMemSchemeExpiryDate),
+              "yyyy-MM-dd"
+            )}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={3}></Grid>
@@ -100,4 +107,5 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
     </section>
   );
 };
+
 export default MembershipScheme;

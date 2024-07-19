@@ -16,14 +16,14 @@ interface VisitDetailsProps {
   formData: PatientRegistrationDto;
   setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
   isSubmitted: boolean;
-  isEditMode: boolean; // New prop to control edit mode
+  isEditMode: boolean; 
 }
 
 const VisitDetails: React.FC<VisitDetailsProps> = ({
   formData,
   setFormData,
   isSubmitted,
-  isEditMode = false, // Destructure the new prop
+  isEditMode = false,
 }) => {
   const [departmentValues, setDepartmentValues] = useState<DropdownOption[]>(
     []

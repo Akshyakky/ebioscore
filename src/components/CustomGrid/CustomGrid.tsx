@@ -9,11 +9,15 @@ import { styled } from "@mui/material/styles";
 
 type GenericObject = { [key: string]: any };
 
-interface Column<T> {
+export interface Column<T> {
   key: string;
   header: string;
   visible: boolean;
-  render?: (item: T) => JSX.Element | string;
+  render?: (
+    item: T,
+    rowIndex: number,
+    columnIndex: number
+  ) => JSX.Element | string;
   formatter?: (value: any) => string;
 }
 
@@ -49,13 +53,19 @@ const CustomGrid = <T extends GenericObject>({
     );
   };
 
-  const renderCell = (item: T, column: Column<T>, searchTerm: string = "") => {
+  const renderCell = (
+    item: T,
+    column: Column<T>,
+    rowIndex: number,
+    columnIndex: number,
+    searchTerm: string = ""
+  ) => {
     const cellContent = item[column.key];
 
     if (searchTerm && typeof cellContent === "string") {
       return highlightMatch(cellContent, searchTerm);
     } else if (column.render) {
-      return column.render(item);
+      return column.render(item, rowIndex, columnIndex);
     } else if (column.formatter) {
       return column.formatter(item[column.key]);
     }
@@ -106,9 +116,9 @@ const CustomGrid = <T extends GenericObject>({
             >
               {columns
                 .filter((col) => col.visible)
-                .map((col) => (
+                .map((col, columnIndex) => (
                   <StyledTableCell key={`${col.key}-${rowIndex}`}>
-                    {renderCell(item, col, searchTerm)}
+                    {renderCell(item, col, rowIndex, columnIndex, searchTerm)}
                   </StyledTableCell>
                 ))}
             </StyledTableRow>

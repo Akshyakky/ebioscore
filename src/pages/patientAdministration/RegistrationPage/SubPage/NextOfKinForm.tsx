@@ -23,6 +23,7 @@ import { AppModifyListService } from "../../../../services/CommonServices/AppMod
 import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import CustomButton from "../../../../components/Button/CustomButton";
+import { format } from "date-fns";
 
 interface NextOfKinFormProps {
   show: boolean;
@@ -50,7 +51,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
     pNokRegStatusVal: "Y",
     pNokRegStatus: "Registered",
     pNokPssnID: "",
-    pNokDob: new Date().toISOString().split("T")[0],
+    pNokDob: format(new Date(), "yyyy-MM-dd"),
     pNokRelNameVal: "",
     pNokRelName: "",
     pNokTitleVal: "",
@@ -213,7 +214,10 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
 
   useEffect(() => {
     if (editData) {
-      setNextOfKinData(editData);
+      setNextOfKinData({
+        ...editData,
+        pNokDob: format(new Date(editData.pNokDob), "yyyy-MM-dd"),
+      });
     }
   }, [editData]);
 
@@ -409,7 +413,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
               onChange={handleDropdownChange(
                 ["pNokCityVal"],
                 ["pNokCity"],
-                areaValues
+                cityValues
               )}
               size="small"
             />

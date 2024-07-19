@@ -4,6 +4,7 @@ import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { format } from "date-fns";
 
 interface InsuranceGridProps {
   insuranceData: OPIPInsurancesDto[];
@@ -35,8 +36,20 @@ const PatientInsuranceGrid: React.FC<InsuranceGridProps> = ({
     { key: "coveredFor", header: "Covered For", visible: true },
     { key: "policyHolder", header: "Policy Holder", visible: true },
     { key: "groupNumber", header: "Group Number", visible: true },
-    { key: "policyStartDt", header: "Start Date", visible: true },
-    { key: "policyEndDt", header: "End Date", visible: true },
+    {
+      key: "policyStartDt",
+      header: "Start Date",
+      visible: true,
+      render: (row: OPIPInsurancesDto) =>
+        format(new Date(row.policyStartDt), "dd/MM/yyyy"),
+    },
+    {
+      key: "policyEndDt",
+      header: "End Date",
+      visible: true,
+      render: (row: OPIPInsurancesDto) =>
+        format(new Date(row.policyEndDt), "dd/MM/yyyy"),
+    },
     { key: "guarantor", header: "Guarantor", visible: true },
     { key: "relation", header: "Relation", visible: true },
     {

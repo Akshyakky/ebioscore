@@ -1,13 +1,17 @@
-import { useEffect, useState } from "react";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
+import React, { useEffect, useState } from "react";
+import CustomGrid, {
+  Column,
+} from "../../../../components/CustomGrid/CustomGrid";
 import { GetPatientVisitHistory } from "../../../../interfaces/PatientAdministration/revisitFormData";
 import { Grid, Typography } from "@mui/material";
 import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
-import { formatDate } from "../../../../utils/Common/dateUtils";
+import { format } from "date-fns";
+
 interface PatientVisitHistoryProps {
   pChartID: number;
   token: string;
 }
+
 const PatientVisitHistory: React.FC<PatientVisitHistoryProps> = ({
   pChartID,
   token,
@@ -33,17 +37,21 @@ const PatientVisitHistory: React.FC<PatientVisitHistoryProps> = ({
       setPatientHistoryData([]);
     }
   }, [pChartID, token]);
-  const gridPatientHistoryColumns = [
+
+  const gridPatientHistoryColumns: Column<GetPatientVisitHistory>[] = [
     {
       key: "SlNo",
       header: "#",
       visible: true,
+      render: (_: GetPatientVisitHistory, __: number, index: number) =>
+        (index + 1).toString(),
     },
     {
       key: "visitDate",
       header: "Visit Date & Time",
       visible: true,
-      formatter: (value: string) => formatDate(value),
+      render: (row, rowIndex, columnIndex) =>
+        format(new Date(row.visitDate), "dd/MM/yyyy HH:mm"),
     },
     {
       key: "departmentName",
@@ -62,7 +70,7 @@ const PatientVisitHistory: React.FC<PatientVisitHistoryProps> = ({
     },
     {
       key: "visitType",
-      header: "VisitType",
+      header: "Visit Type",
       visible: true,
     },
     {
@@ -71,6 +79,7 @@ const PatientVisitHistory: React.FC<PatientVisitHistoryProps> = ({
       visible: true,
     },
   ];
+
   return (
     <section aria-labelledby="Insurance-header">
       <Grid container justifyContent="space-between" alignItems="center">
@@ -91,4 +100,5 @@ const PatientVisitHistory: React.FC<PatientVisitHistoryProps> = ({
     </section>
   );
 };
+
 export default PatientVisitHistory;

@@ -34,6 +34,7 @@ import InsurancePage from "../SubPage/InsurancePage";
 import { RegistrationFormErrors } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
 import NextOfKinPage from "../SubPage/NextOfKinPage";
+import { format } from "date-fns";
 
 const RegistrationPage: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -120,19 +121,19 @@ const RegistrationPage: React.FC = () => {
     ) {
       errors.dateOfBirth = "Date of birth or Age is required";
     } else if (
-      formData.opvisits.visitTypeVal === "H" &&
+      formData.opvisits?.visitTypeVal === "H" &&
       (formData.patRegisters.deptID === 0 || !formData.patRegisters.deptName)
     ) {
       errors.department = "Department is required";
     } else if (
-      formData.opvisits.visitTypeVal === "P" &&
+      formData.opvisits?.visitTypeVal === "P" &&
       (formData.patRegisters.consultantID === 0 ||
         !formData.patRegisters.consultantName)
     ) {
       errors.attendingPhysician = "Attending Physician is required";
     } else if (
-      (formData.opvisits.visitTypeVal === "H" ||
-        formData.opvisits.visitTypeVal === "P") &&
+      (formData.opvisits?.visitTypeVal === "H" ||
+        formData.opvisits?.visitTypeVal === "P") &&
       (formData.patRegisters.sourceID === 0 ||
         !formData.patRegisters.sourceName)
     ) {
@@ -216,8 +217,26 @@ const RegistrationPage: React.FC = () => {
         pChartID
       );
       if (patientDetails.success && patientDetails.data) {
+        const formattedData = {
+          ...patientDetails.data,
+          patRegisters: {
+            ...patientDetails.data.patRegisters,
+            pRegDate: format(
+              new Date(patientDetails.data.patRegisters.pRegDate),
+              "yyyy-MM-dd"
+            ),
+            pDob: format(
+              new Date(patientDetails.data.patRegisters.pDob),
+              "yyyy-MM-dd"
+            ),
+            patMemSchemeExpiryDate: format(
+              new Date(patientDetails.data.patRegisters.patMemSchemeExpiryDate),
+              "yyyy-MM-dd"
+            ),
+          },
+        };
         setEditMode(true);
-        setFormData(patientDetails.data);
+        setFormData(formattedData);
       } else {
         console.error(
           "Fetching patient details was not successful or data is undefined"
@@ -275,12 +294,14 @@ const RegistrationPage: React.FC = () => {
             setFormData={setFormData}
             isSubmitted={isSubmitted}
           />
-          <VisitDetails
-            formData={formData}
-            setFormData={setFormData}
-            isSubmitted={isSubmitted}
-            isEditMode={editMode}
-          />
+          {!editMode && formData.opvisits && (
+            <VisitDetails
+              formData={formData}
+              setFormData={setFormData}
+              isSubmitted={isSubmitted}
+              isEditMode={editMode}
+            />
+          )}
           <MembershipScheme formData={formData} setFormData={setFormData} />
           <NextOfKinPage
             ref={nextOfKinPageRef}
@@ -312,7 +333,7 @@ const initializeFormData = (userInfo: any): PatientRegistrationDto => ({
   patRegisters: {
     pChartID: 0,
     pChartCode: "",
-    pRegDate: new Date().toISOString().split("T")[0],
+    pRegDate: format(new Date(), "yyyy-MM-dd"),
     pTitleVal: "",
     pTitle: "",
     pFName: "",
@@ -320,7 +341,7 @@ const initializeFormData = (userInfo: any): PatientRegistrationDto => ({
     pLName: "",
     pDobOrAgeVal: "Y",
     pDobOrAge: "",
-    pDob: new Date().toISOString().split("T")[0],
+    pDob: format(new Date(), "yyyy-MM-dd"),
     pAgeType: "",
     pApproxAge: 0,
     pGender: "",
@@ -347,7 +368,7 @@ const initializeFormData = (userInfo: any): PatientRegistrationDto => ({
     patMemID: 0,
     patMemName: "",
     patMemDescription: "",
-    patMemSchemeExpiryDate: new Date().toISOString().split("T")[0],
+    patMemSchemeExpiryDate: format(new Date(), "yyyy-MM-dd"),
     patSchemeExpiryDateYN: "N",
     patSchemeDescriptionYN: "N",
     cancelReason: "",

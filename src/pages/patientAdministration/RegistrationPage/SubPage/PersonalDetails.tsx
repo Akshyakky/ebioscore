@@ -16,7 +16,12 @@ import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
-import { formatDt } from "../../../../utils/Common/dateUtils";
+import {
+  format,
+  differenceInYears,
+  differenceInMonths,
+  differenceInDays,
+} from "date-fns";
 
 interface PersonalDetailsProps {
   formData: PatientRegistrationDto;
@@ -138,34 +143,21 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   useEffect(() => {
     calculateAge(new Date());
   });
-
   const calculateAge = (dob: string | number | Date) => {
     const birthday = new Date(dob);
     const today = new Date();
-    let age = today.getFullYear() - birthday.getFullYear();
-    const monthDiff = today.getMonth() - birthday.getMonth();
+    const ageInYears = differenceInYears(today, birthday);
+    const ageInMonths = differenceInMonths(today, birthday);
+    const ageInDays = differenceInDays(today, birthday);
 
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthday.getDate())
-    ) {
-      age--;
-    }
-    if (age === 0) {
-      const ageInMonths =
-        monthDiff + (today.getDate() < birthday.getDate() ? -1 : 0);
-      if (ageInMonths <= 0) {
-        const ageInDays = Math.floor(
-          (today.getTime() - birthday.getTime()) / (1000 * 60 * 60 * 24)
-        );
+    if (ageInYears === 0) {
+      if (ageInMonths === 0) {
         return { age: ageInDays, ageType: "Days", ageUnit: "LBN2" };
       } else {
         return { age: ageInMonths, ageType: "Months", ageUnit: "LBN3" };
       }
-    } else if (age < 0) {
-      return { age: 0, ageType: "Years", ageUnit: "LBN4" };
     } else {
-      return { age: age, ageType: "Years", ageUnit: "LBN4" };
+      return { age: ageInYears, ageType: "Years", ageUnit: "LBN4" };
     }
   };
 
@@ -223,10 +215,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   };
 
   const getTodayDate = () => {
-    const today = new Date();
-    const month = `0${today.getMonth() + 1}`.slice(-2);
-    const day = `0${today.getDate()}`.slice(-2);
-    return `${today.getFullYear()}-${month}-${day}`;
+    return format(new Date(), "yyyy-MM-dd");
   };
 
   const handleNameChange = (
