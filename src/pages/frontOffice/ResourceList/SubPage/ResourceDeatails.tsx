@@ -15,6 +15,7 @@ import { RootState } from "../../../../store/reducers";
 interface ResourceDetailsProps {
   resource: ResourceListData | null;
   onSave: (resource: ResourceListData) => void;
+  updateResourceStatus: (resourceID: number, status: string) => void;
   onClear: () => void;
   isEditMode: boolean;
 }

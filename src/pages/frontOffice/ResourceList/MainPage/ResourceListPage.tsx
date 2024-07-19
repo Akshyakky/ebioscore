@@ -7,6 +7,8 @@ import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
 import ResourceDetails from "../SubPage/ResourceDeatails";
 import ResourceListSearch from "../SubPage/ResourceListSearch";
+import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { ResourceListContext } from "../../../../context/frontOffice/ResourceListContext";
 
 interface OperationPermissionProps {
     profileID: number;
@@ -15,10 +17,11 @@ interface OperationPermissionProps {
 
 const ResourceListPage: React.FC<OperationPermissionProps> = () => {
     const [isSaved, setIsSaved] = useState(false);
+    const [selectedResource, setSelectedResource] = useState<ResourceListData | null>(null);
     const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
     //   const { fetchAllUsers, updateUserStatus } = useContext(UserListSearchContext);
     const { token, } = useSelector((state: RootState) => state.userDetails);
-
+    const { fetchAllResources, updateResourceStatus } = useContext(ResourceListContext);
     //   const [selectedUser, setSelectedUser] = useState<UserListData | null>(null);
     const [isSuperUser, setIsSuperUser] = useState<boolean>(false);
     //   const [permissions, setPermissions] = useState<ModuleOperation[]>([]);
@@ -28,19 +31,22 @@ const ResourceListPage: React.FC<OperationPermissionProps> = () => {
 
     const handleAdvancedSearch = async () => {
         setIsSearchDialogOpen(true);
+        await fetchAllResources();
 
     };
 
     const handleCloseSearchDialog = () => {
         setIsSearchDialogOpen(false);
     };
-    const handleSave = async () => {
+    const handleSave = async (resource: ResourceListData) => {
         setIsSaved(true);
+        setSelectedResource(resource);
         // setSelectedUser(profile);
     };
 
     const handleClear = () => {
         setIsSaved(false);
+        setSelectedResource(null);
         // setSelectedUser(null);
     };
 
@@ -67,7 +73,8 @@ const ResourceListPage: React.FC<OperationPermissionProps> = () => {
 
                 <ResourceDetails
                     onSave={handleSave}
-                    onClear={handleClear} resource={null} isEditMode={false}                
+                    onClear={handleClear} resource={null} isEditMode={false} 
+                    updateResourceStatus={updateResourceStatus}               
                 //   refreshUsers={refreshUsers}
                 //   updateUserStatus={updateUserStatus}
                 //   onSuperUserChange={handleSuperUserChange}
@@ -78,7 +85,8 @@ const ResourceListPage: React.FC<OperationPermissionProps> = () => {
                 <ResourceListSearch
                     show={isSearchDialogOpen}
                     handleClose={handleCloseSearchDialog}
-                    onEditProfile={handleEditUser} selectedUser={null}                   
+                    onEditProfile={handleEditUser}
+                    selectedResource={selectedResource}                   
                 />
             </Container>
         </MainLayout>
