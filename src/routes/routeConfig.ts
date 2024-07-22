@@ -14,6 +14,7 @@ import { UserListSearchProvider } from "../context/SecurityManagement/UserListSe
 import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
 import ResourceListPage from "../pages/frontOffice/ResourceList/MainPage/ResourceListPage";
 import { ResourceListProvider } from "../context/frontOffice/ResourceListContext";
+import ReasonListPage from "../pages/frontOffice/ReasonList/MainPage/ReasonListPage";
 
 const routeConfig = [
   { path: "/login", component: LoginPage, protected: false },
@@ -56,12 +57,24 @@ const routeConfig = [
     protected: true,
     providers: [ProfileListSearchProvider],
   },
+
+
   {
     path: "/ResourceListPage",
     component: ResourceListPage,
     protected: true,
     providers: [ResourceListProvider],
   },
+
+
+  {
+    path: "/ReasonListPage",
+    component: ReasonListPage,
+    protected: true,
+    providers: [ResourceListProvider],
+  },
+
+
   // Add more routes here as needed
 ];
 
