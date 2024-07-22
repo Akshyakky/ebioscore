@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import React, { useContext, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
@@ -19,40 +19,34 @@ const ResourceListPage: React.FC<OperationPermissionProps> = () => {
     const [isSaved, setIsSaved] = useState(false);
     const [selectedResource, setSelectedResource] = useState<ResourceListData | null>(null);
     const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
-    //   const { fetchAllUsers, updateUserStatus } = useContext(UserListSearchContext);
-    const { token, } = useSelector((state: RootState) => state.userDetails);
+    const { token } = useSelector((state: RootState) => state.userDetails);
     const { fetchAllResources, updateResourceStatus } = useContext(ResourceListContext);
-    //   const [selectedUser, setSelectedUser] = useState<UserListData | null>(null);
-    const [isSuperUser, setIsSuperUser] = useState<boolean>(false);
-    //   const [permissions, setPermissions] = useState<ModuleOperation[]>([]);
-    //   const [reportPermissions, setReportPermissions] = useState<ModuleOperation[]>([]);
-
-
 
     const handleAdvancedSearch = async () => {
         setIsSearchDialogOpen(true);
         await fetchAllResources();
-
     };
 
     const handleCloseSearchDialog = () => {
         setIsSearchDialogOpen(false);
     };
+
     const handleSave = async (resource: ResourceListData) => {
         setIsSaved(true);
         setSelectedResource(resource);
-        // setSelectedUser(profile);
     };
 
     const handleClear = () => {
         setIsSaved(false);
         setSelectedResource(null);
-        // setSelectedUser(null);
     };
 
-   const  handleEditUser=()=>{
-    console.log("edited ")
-   }
+    const handleEditUser = (resource: ResourceListData) => {
+        debugger 
+        setSelectedResource(resource);
+        setIsSaved(true);
+        handleCloseSearchDialog();
+    };
 
     return (
         <MainLayout>
@@ -70,23 +64,18 @@ const ResourceListPage: React.FC<OperationPermissionProps> = () => {
                         ]}
                     />
                 </Box>
-
                 <ResourceDetails
                     onSave={handleSave}
-                    onClear={handleClear} resource={null} isEditMode={false} 
-                    updateResourceStatus={updateResourceStatus}               
-                //   refreshUsers={refreshUsers}
-                //   updateUserStatus={updateUserStatus}
-                //   onSuperUserChange={handleSuperUserChange}
+                    onClear={handleClear}
+                    resource={selectedResource}
+                    isEditMode={!!selectedResource}
+                    // updateResourceStatus={updateResourceStatus}
                 />
-
-
-
                 <ResourceListSearch
                     show={isSearchDialogOpen}
                     handleClose={handleCloseSearchDialog}
                     onEditProfile={handleEditUser}
-                    selectedResource={selectedResource}                   
+                    selectedResource={selectedResource}
                 />
             </Container>
         </MainLayout>

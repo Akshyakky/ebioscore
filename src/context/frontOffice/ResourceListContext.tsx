@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useLoading } from "../LoadingContext";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/reducers";
@@ -11,7 +11,7 @@ interface ResourceListContextProps {
   searchResults: ResourceListData[];
   performSearch: (searchTerm: string) => Promise<void>;
   fetchAllResources: () => Promise<void>;
-  updateResourceStatus: (resourceID: number, status: string) => void;
+  updateResourceStatus: (resourceID: number, status: string) => Promise<void>;
 }
 
 export const ResourceListContext = createContext<ResourceListContextProps>({
@@ -19,7 +19,7 @@ export const ResourceListContext = createContext<ResourceListContextProps>({
   searchResults: [],
   performSearch: async () => {},
   fetchAllResources: async () => {},
-  updateResourceStatus: () => {},
+  updateResourceStatus: async () => {},
 });
 
 interface ResourceListProviderProps {
@@ -72,12 +72,24 @@ export const ResourceListProvider = ({
     }
   };
 
-  const updateResourceStatus = (resourceID: number, status: string) => {
-    const updatedResources = resourceList.map((resource) =>
-      resource.rLID === resourceID ? { ...resource, status } : resource
-    );
-    setResourceList(updatedResources);
-    setSearchResults(updatedResources);
+  const updateResourceStatus = async (resourceID: number, status: string) => {
+    if (!token) return;
+    try {
+      const response = await ResourceListService.updateResourceActiveStatus(token, resourceID, status === "active");
+      if (response.success) {
+        const updatedResources = resourceList.map((resource) =>
+          resource.rLID === resourceID ? { ...resource, status } : resource
+        );
+        setResourceList(updatedResources);
+        setSearchResults(updatedResources);
+      } else {
+        console.error("Failed to update resource status:", response.errorMessage);
+        notifyError("Failed to update resource status. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error updating resource status", error);
+      notifyError("An error occurred while updating resource status.");
+    }
   };
 
   return (
@@ -93,4 +105,13 @@ export const ResourceListProvider = ({
       {children}
     </ResourceListContext.Provider>
   );
+};
+
+// Custom hook to use the resource context
+export const useResourceList = () => {
+  const context = useContext(ResourceListContext);
+  if (context === undefined) {
+    throw new Error("useResourceList must be used within a ResourceListProvider");
+  }
+  return context;
 };

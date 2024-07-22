@@ -15,7 +15,6 @@ import { RootState } from "../../../../store/reducers";
 interface ResourceDetailsProps {
   resource: ResourceListData | null;
   onSave: (resource: ResourceListData) => void;
-  updateResourceStatus: (resourceID: number, status: string) => void;
   onClear: () => void;
   isEditMode: boolean;
 }
@@ -33,17 +32,18 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     rLCode: resource?.rLCode || "",
     rLName: resource?.rLName || "",
     rNotes: resource?.rNotes || "",
-    rLValidateYN: resource?.rLValidateYN || 'N', // Adjusted default value
-    rLOtYN: resource?.rLOtYN || 'N', // Adjusted default value
-    rActiveYN: resource?.rActiveYN || 'Y', // Adjusted default value
-    rCreatedBy: resource?.rCreatedBy || "", // Adjusted default value
-    rModifiedBy: resource?.rModifiedBy || "", // Adjusted default value
-    rCreatedOn: resource?.rCreatedOn || new Date(), // Adjusted default value
-    rModifiedOn: resource?.rModifiedOn || new Date(), // Adjusted default value
-    rCreatedID: resource?.rCreatedID || 0, // Adjusted default value
-    rModifiedID: resource?.rModifiedID || 0, // Adjusted default value
+    rLValidateYN: resource?.rLValidateYN || 'N', 
+    transferYN: resource?.transferYN || 'N',
+    rLOtYN: resource?.rLOtYN || 'N',
+    rActiveYN: resource?.rActiveYN || 'N',
+    rCreatedBy: resource?.rCreatedBy || "",
+    rModifiedBy: resource?.rModifiedBy || "",
+    rCreatedOn: resource?.rCreatedOn || new Date(),
+    rModifiedOn: resource?.rModifiedOn || new Date(),
+    rCreatedID: resource?.rCreatedID || 0,
+    rModifiedID: resource?.rModifiedID || 0,
   });
-  const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
+  const [activeLabel, setActiveLabel] = useState(resourceData.rActiveYN === 'Y' ? 'Active' : 'Hidden');
 
   useEffect(() => {
     if (resource) {
@@ -52,37 +52,34 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
         rLCode: resource.rLCode || "",
         rLName: resource.rLName || "",
         rNotes: resource.rNotes || "",
-        rLValidateYN: resource.rLValidateYN || 'N', // Adjusted default value
-        rLOtYN: resource.rLOtYN || 'N', // Adjusted default value
-        rActiveYN: resource.rActiveYN || 'Y', // Adjusted default value
-        rCreatedBy: resource.rCreatedBy || "", // Adjusted default value
-        rModifiedBy: resource.rModifiedBy || "", // Adjusted default value
-        rCreatedOn: resource.rCreatedOn || new Date(), // Adjusted default value
-        rModifiedOn: resource.rModifiedOn || new Date(), // Adjusted default value
-        rCreatedID: resource.rCreatedID || 0, // Adjusted default value
-        rModifiedID: resource.rModifiedID || 0, // Adjusted default value
+        rLValidateYN: resource.rLValidateYN || 'N',
+        transferYN: resource?.transferYN || 'N',
+        rLOtYN: resource.rLOtYN || 'N',
+        rActiveYN: resource.rActiveYN || 'N',
+        rCreatedBy: resource.rCreatedBy || "",
+        rModifiedBy: resource.rModifiedBy || "",
+        rCreatedOn: resource.rCreatedOn || new Date(),
+        rModifiedOn: resource.rModifiedOn || new Date(),
+        rCreatedID: resource.rCreatedID || 0,
+        rModifiedID: resource.rModifiedID || 0,
       });
+      setActiveLabel(resource.rActiveYN === 'Y' ? 'Active' : 'Hidden');
     }
   }, [resource]);
 
   const handleSave = async () => {
     setIsSubmitted(true);
-    
-    // Validate resource data
+
     if (!resourceData.rLCode || !resourceData.rLName) {
       notifyError("Resource Code and Resource Name are required fields.");
       return;
     }
 
     try {
-      console.log("Saving resource data:", resourceData);
-      console.log("Token:", token);
       const result = await ResourceListService.saveResourceList(token!, resourceData);
-      console.log("Save result:", result);
       if (result.success) {
         notifySuccess("Resource saved successfully");
         onSave(resourceData);
-        // Clear form data after successful save
         setResourceData({
           rLID: 0,
           rLCode: "",
@@ -90,22 +87,28 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
           rNotes: "",
           rLValidateYN: 'N',
           rLOtYN: 'N',
-          rActiveYN: 'Y',
+          rActiveYN: 'N',
           rCreatedBy: "",
           rModifiedBy: "",
           rCreatedOn: new Date(),
           rModifiedOn: new Date(),
           rCreatedID: 0,
           rModifiedID: 0,
+          transferYN: 'N',
         });
         onClear();
       } else {
         notifyError(result.errorMessage || "An unknown error occurred.");
       }
     } catch (error) {
-      console.error("Error saving or updating resource list:", error);
       notifyError("An error occurred while saving the resource.");
     }
+  };
+
+  const handleActiveToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isActive = e.target.checked;
+    setResourceData({ ...resourceData, rActiveYN: isActive ? 'Y' : 'N' });
+    setActiveLabel(isActive ? 'Active' : 'Hidden');
   };
 
   return (
@@ -157,20 +160,26 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
           <Grid item xs={12} sm={6} md={3}>
             <CustomSwitch
               label="Is Validate"
-              checked={resourceData.rLValidateYN === 'Y'} // Check for string 'Y'
-              onChange={(e) => setResourceData({ ...resourceData, rLValidateYN: e.target.checked ? 'Y' : 'N'})} // Set as string 'Y' or 'N'
+              checked={resourceData.rLValidateYN === 'Y'}
+              onChange={(e) => setResourceData({ ...resourceData, rLValidateYN: e.target.checked ? 'Y' : 'N'})}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <CustomSwitch
               label="Is Operation Theatre"
               checked={resourceData.rLOtYN === 'Y'}
-              onChange={(e) => setResourceData({ ...resourceData, rLOtYN: e.target.checked ? 'Y' : 'N'})} // Ensure 'N' is used when unchecked
+              onChange={(e) => setResourceData({ ...resourceData, rLOtYN: e.target.checked ? 'Y' : 'N'})}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+          <CustomSwitch
+              label={activeLabel}
+              checked={resourceData.rActiveYN === 'Y'}
+              onChange={handleActiveToggle}
             />
           </Grid>
         </Grid>
       </section>
-
       <FormSaveClearButton
         clearText="Clear"
         saveText="Save"

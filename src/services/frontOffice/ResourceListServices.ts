@@ -19,15 +19,11 @@ const saveResourceList = async (
       "Content-Type": "application/json",
     };
 
-    console.log("Sending resource data:", JSON.stringify(resourceListData, null, 2));
-
     const response = await axios.post<OperationResult<ResourceListData>>(
       url,
       resourceListData,
       { headers }
     );
-
-    console.log("Received response:", response.data);
 
     if (response.data && response.data.success !== undefined) {
       if (!response.data.success) {
@@ -39,6 +35,34 @@ const saveResourceList = async (
     }
   } catch (error: any) {
     console.error("Error saving or updating resource list:", error.response?.data || error.message);
+    return handleError<ResourceListData>(error);
+  }
+};
+
+// Service to fetch a resource list by ID
+const getResourceById = async (
+  token: string,
+  id: number
+): Promise<OperationResult<ResourceListData>> => {
+  try {
+    const url = `${APIConfig.frontOffice}ResourceList/GetResourceListById/${id}`;
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+
+    const response = await axios.get<OperationResult<ResourceListData>>(url, { headers });
+
+    if (response.data && response.data.success !== undefined) {
+      if (!response.data.success) {
+        throw new Error(response.data.errorMessage || "Failed to fetch resource list.");
+      }
+      return response.data;
+    } else {
+      throw new Error("Invalid response format received.");
+    }
+  } catch (error: any) {
+    console.error("Error fetching resource list:", error.response?.data || error.message);
     return handleError<ResourceListData>(error);
   }
 };
@@ -68,30 +92,58 @@ const getAllResourceLists = async (token: string): Promise<OperationResult<Resou
   }
 };
 
-// Error handling utility
-const handleError = <T>(error: any): OperationResult<T> => {
-  let errorMessage = "An unknown error occurred.";
-  if (axios.isAxiosError(error)) {
-    if (error.response) {
-      errorMessage =
-        error.response.data.errorMessage ||
-        error.response.data.message ||
-        errorMessage;
-    } else if (error.request) {
-      errorMessage = "No response received from the server.";
+const updateResourceActiveStatus = async (
+  token: string,
+  resourceId: number,
+  isActive: boolean
+): Promise<OperationResult<boolean>> => {
+  try {
+    const url = `${APIConfig.frontOffice}ResourceList/UpdateResourceActiveStatus/${resourceId}`;
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+
+    const body = {
+      isActive,
+    };
+
+    const response = await axios.put<OperationResult<boolean>>(
+      url,
+      body,
+      { headers }
+    );
+
+    if (response.data && response.data.success !== undefined) {
+      if (!response.data.success) {
+        throw new Error(response.data.errorMessage || "Failed to update resource status.");
+      }
+      return response.data;
     } else {
-      errorMessage = error.message;
+      throw new Error("Invalid response format received.");
     }
-  } else {
-    errorMessage = error.message || errorMessage;
+  } catch (error: any) {
+    console.error("Error updating resource active status:", error.response?.data || error.message);
+    return handleError<boolean>(error);
   }
+};
+
+
+
+
+// Helper function to handle errors
+const handleError = <T>(error: any): OperationResult<T> => {
+  const errorMessage = error.response?.data?.errorMessage || error.message || "An error occurred";
   return {
     success: false,
+    data: {} as T,
     errorMessage: errorMessage,
-  } as OperationResult<T>;
+  };
 };
 
 export const ResourceListService = {
   saveResourceList,
+  getResourceById,
   getAllResourceLists,
+  updateResourceActiveStatus
 };
