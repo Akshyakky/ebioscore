@@ -18,38 +18,37 @@ import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
 import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
-import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
+import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
 import { debounce } from "../../../../utils/Common/debounceUtils";
-import { ReasonListService } from "../../../../services/frontOffice/ReasonListService";
+import { BreakListService } from "../../../../services/frontOffice/BreakListService";
 
-interface ReasonListSearchProps {
+interface BreakListSearchProps {
   show: boolean;
   handleClose: () => void;
-  onEditProfile: (reason: ReasonListData) => void;
-  selectedReason: ReasonListData | null;
+  onEditBreak: (breakList: BreakListData) => void;
+  selectedBreak: BreakListData | null;
 }
 
-const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
+const BreakListSearch: React.FC<BreakListSearchProps> = ({
   show,
   handleClose,
-  onEditProfile,
-  
+  onEditBreak,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState<ReasonListData[]>([]);
+  const [searchResults, setSearchResults] = useState<BreakListData[]>([]);
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
 
   const performSearch = async (searchQuery: string) => {
     setIsLoading(true);
     try {
-      const result = await ReasonListService.getAllReasonLists(token!);
+      const result = await BreakListService.getAllBreakLists(token!);
       if (result.success && result.data) {
         const filteredResults = result.data.filter(
-          (reason) =>
-            reason.arlCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            reason.arlName.toLowerCase().includes(searchQuery.toLowerCase())
+          (breakList) =>
+            breakList.bLName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            breakList.bLName.toLowerCase().includes(searchQuery.toLowerCase())
         );
         setSearchResults(filteredResults);
       } else {
@@ -73,7 +72,7 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
 
   useEffect(() => {
     if (show) {
-      performSearch(""); 
+      performSearch("");
     }
   }, [show]);
 
@@ -87,60 +86,60 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
 
   useEffect(() => {
     const initialSwitchStatus = searchResults.reduce((acc, item) => {
-      acc[item.arlID] = item.rActiveYN === "Y";
+      acc[item.bLID] = item.isPhyResYN === "Active";
       return acc;
     }, {} as { [key: number]: boolean });
 
     setSwitchStatus(initialSwitchStatus);
   }, [searchResults]);
 
-  const handleEditAndClose = async (reason: ReasonListData) => {
+  const handleEditAndClose = async (breakList: BreakListData) => {
     try {
-      onEditProfile(reason);
+      onEditBreak(breakList);
       handleClose();
     } catch (error) {
-      notifyError("Error fetching reason details.");
+      notifyError("Error fetching break list details.");
     }
   };
 
-  const handleSwitchChange = async (reason: ReasonListData, checked: boolean) => {
+  const handleSwitchChange = async (breakList: BreakListData, checked: boolean) => {
     try {
-      if (!reason.arlID) {
-        console.error("Reason arlID is undefined or null.");
+      if (!breakList.bLID) {
+        console.error("Break list bLID is undefined or null.");
         return;
       }
 
-      const updatedReason = {
-        ...reason,
-        rActiveYN: checked ? "Y" : "N",
+      const updatedBreakList = {
+        ...breakList,
+        bLStatus: checked ? "Active" : "Inactive",
       };
 
-      const result = await ReasonListService.saveReasonList(token!, updatedReason);
+      const result = await BreakListService.saveBreakList(token!, updatedBreakList);
 
       if (result.success) {
-        notifySuccess(`Reason status updated to ${checked ? "Active" : "Hidden"}`);
+        notifySuccess(`Break list status updated to ${checked ? "Active" : "Inactive"}`);
         setSwitchStatus((prevState) => ({
           ...prevState,
-          [reason.arlID]: checked,
+          [breakList.bLID]: checked,
         }));
       } else {
-        notifyError(`Error updating reason status: ${result.errorMessage}`);
+        notifyError(`Error updating break list status: ${result.errorMessage}`);
         setSwitchStatus((prevState) => ({
           ...prevState,
-          [reason.arlID]: !checked,
+          [breakList.bLID]: !checked,
         }));
       }
     } catch (error) {
-      notifyError("Error updating reason status.");
+      notifyError("Error updating break list status.");
     }
   };
 
   const columns = [
     {
-      key: "ReasonEdit",
+      key: "BreakEdit",
       header: "Edit",
       visible: true,
-      render: (row: ReasonListData) => (
+      render: (row: BreakListData) => (
         <CustomButton
           text="Edit"
           onClick={() => handleEditAndClose(row)}
@@ -149,30 +148,27 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
       ),
     },
     { key: "serialNumber", header: "Sl.No", visible: true },
-    { key: "arlCode", header: "Reason Code", visible: true },
-    { key: "arlName", header: "Reason Description", visible: true },
-    { key: "arlDuration", header: "Duration", visible: true },
-    { key: "rlName", header: "Resource", visible: true }, 
-    { key: "rNotes", header: "Instructions", visible: true }, 
+    { key: "bLName", header: "Break Name", visible: true },
+    { key: "providerName", header: "Provider Name", visible: true },
     {
       key: "status",
       header: "Status",
       visible: true,
-      render: (row: ReasonListData) => (
+      render: (row: BreakListData) => (
         <Typography variant="body2">
-          {switchStatus[row.arlID] ? "Active" : "Hidden"}
+          {switchStatus[row.bLID] ? "Active" : "Inactive"}
         </Typography>
       ),
     },
     {
-      key: "reasonStatus",
-      header: "Reason Status",
+      key: "recordStatus",
+      header: "Record Status",
       visible: true,
-      render: (row: ReasonListData) => (
+      render: (row: BreakListData) => (
         <CustomSwitch
           size="medium"
           color="secondary"
-          checked={switchStatus[row.arlID] || false}
+          checked={switchStatus[row.bLID] || false}
           onChange={(event) => handleSwitchChange(row, event.target.checked)}
         />
       ),
@@ -182,12 +178,7 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
   const dataWithIndex = searchResults.map((item, index) => ({
     ...item,
     serialNumber: index + 1,
-    Status: item.rActiveYN === "Y" ? "Active" : "Hidden",
-    rlName: item.rlName,
-    rNotes: item.rNotes,
   }));
-
-  console.log("Data with index:", dataWithIndex); //
 
   const handleDialogClose = () => {
     setSearchTerm("");
@@ -213,8 +204,8 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
     >
       <DialogTitle>
         <Box>
-          <Typography variant="h6" id="reason-list-header">
-            REASON SEARCH LIST
+          <Typography variant="h6" id="break-list-header">
+            BREAK LIST SEARCH
           </Typography>
         </Box>
       </DialogTitle>
@@ -229,7 +220,7 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
                 title="Search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Enter reason name or code"
+                placeholder="Enter break name or provider name"
                 size="small"
                 autoComplete="off"
                 onKeyPress={handleKeyPress}
@@ -264,4 +255,4 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
   );
 };
 
-export default ReasonListSearch;
+export default BreakListSearch;

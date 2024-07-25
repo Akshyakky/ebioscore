@@ -15,6 +15,7 @@ import UserListPage from "../pages/securityManagement/UserListPage/MainPage/User
 import ResourceListPage from "../pages/frontOffice/ResourceList/MainPage/ResourceListPage";
 import { ResourceListProvider } from "../context/frontOffice/ResourceListContext";
 import ReasonListPage from "../pages/frontOffice/ReasonList/MainPage/ReasonListPage";
+import BreakListPage from "../pages/frontOffice/BreakList/MainPage/BreakListPage";
 
 const routeConfig = [
   { path: "/login", component: LoginPage, protected: false },
@@ -70,6 +71,13 @@ const routeConfig = [
   {
     path: "/ReasonListPage",
     component: ReasonListPage,
+    protected: true,
+    providers: [ResourceListProvider],
+  },
+
+  {
+    path: "/BreakListPage",
+    component: BreakListPage,
     protected: true,
     providers: [ResourceListProvider],
   },
