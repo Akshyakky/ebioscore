@@ -1,16 +1,14 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { Formik, Form, Field, ErrorMessage, useFormik } from "formik";
 import * as Yup from "yup";
 import {
   Button,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormHelperText,
   CircularProgress,
+  FormControl,
+  FormHelperText,
 } from "@mui/material";
+import FloatingLabelTextBox from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import DropdownSelect from "../DropDown/DropdownSelect";
 
 interface FormField {
   fieldName: string;
@@ -96,10 +94,18 @@ const SmartForm: React.FC<SmartFormProps> = ({
     }
   }, [manuallyClearField, editData]);
 
-  const handleFieldChange = (field: FormField, value: any) => {
-    if (onChange) {
-      onChange(field, value);
-    }
+  const handleFieldChange = useCallback(
+    (field: FormField, value: any) => {
+      if (onChange) {
+        onChange(field, value);
+      }
+    },
+    [onChange]
+  );
+
+  const getErrorMessage = (fieldName: string) => {
+    const error = formik.errors[fieldName];
+    return typeof error === "string" ? error : undefined;
   };
 
   return (
@@ -134,101 +140,73 @@ const SmartForm: React.FC<SmartFormProps> = ({
                       </>
                     )}
                     <FormControl fullWidth margin="normal">
-                      <InputLabel htmlFor={field.fieldName}>
-                        {field.label}
-                      </InputLabel>
                       {field.controlType === "Textbox" && (
-                        <Field
-                          as={TextField}
-                          name={field.fieldName}
-                          label={field.label}
-                          variant="outlined"
-                          fullWidth
-                          onChange={(
-                            e: React.ChangeEvent<HTMLInputElement>
-                          ) => {
+                        <FloatingLabelTextBox
+                          ControlID={field.fieldName}
+                          title={field.label}
+                          value={values[field.fieldName]}
+                          onChange={(e) => {
                             handleChange(e);
                             handleFieldChange(field, e.target.value);
                           }}
-                          helperText={<ErrorMessage name={field.fieldName} />}
-                          error={
-                            !!formik.errors[field.fieldName] &&
-                            formik.touched[field.fieldName]
-                          }
+                          isMandatory={field.validation?.tests.some(
+                            (test: any) => test.OPTIONS.name === "required"
+                          )}
+                          errorMessage={getErrorMessage(field.fieldName)}
                         />
                       )}
                       {field.controlType === "Password" && (
-                        <Field
-                          as={TextField}
+                        <FloatingLabelTextBox
+                          ControlID={field.fieldName}
+                          title={field.label}
                           type="password"
-                          name={field.fieldName}
-                          label={field.label}
-                          variant="outlined"
-                          fullWidth
-                          onChange={(
-                            e: React.ChangeEvent<HTMLInputElement>
-                          ) => {
+                          value={values[field.fieldName]}
+                          onChange={(e) => {
                             handleChange(e);
                             handleFieldChange(field, e.target.value);
                           }}
-                          helperText={<ErrorMessage name={field.fieldName} />}
-                          error={
-                            !!formik.errors[field.fieldName] &&
-                            formik.touched[field.fieldName]
-                          }
+                          isMandatory={field.validation?.tests.some(
+                            (test: any) => test.OPTIONS.name === "required"
+                          )}
+                          errorMessage={getErrorMessage(field.fieldName)}
                         />
                       )}
                       {field.controlType === "Date" && (
-                        <Field
-                          as={TextField}
+                        <FloatingLabelTextBox
+                          ControlID={field.fieldName}
+                          title={field.label}
                           type="date"
-                          name={field.fieldName}
-                          label={field.label}
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          variant="outlined"
-                          fullWidth
-                          onChange={(
-                            e: React.ChangeEvent<HTMLInputElement>
-                          ) => {
+                          value={values[field.fieldName]}
+                          onChange={(e) => {
                             handleChange(e);
                             handleFieldChange(field, e.target.value);
                           }}
-                          helperText={<ErrorMessage name={field.fieldName} />}
-                          error={
-                            !!formik.errors[field.fieldName] &&
-                            formik.touched[field.fieldName]
-                          }
+                          isMandatory={field.validation?.tests.some(
+                            (test: any) => test.OPTIONS.name === "required"
+                          )}
+                          errorMessage={getErrorMessage(field.fieldName)}
                         />
                       )}
                       {field.controlType === "Dropdown" && (
-                        <Field
-                          as={Select}
-                          name={field.fieldName}
+                        <DropdownSelect
                           label={field.label}
-                          variant="outlined"
-                          fullWidth
-                          onChange={(
-                            e: React.ChangeEvent<{ value: unknown }>
-                          ) => {
+                          name={field.fieldName}
+                          value={values[field.fieldName]}
+                          options={listData?.[field.fieldName] || []}
+                          onChange={(e) => {
                             handleChange(e);
-                            handleFieldChange(field, e.target.value as string);
+                            handleFieldChange(
+                              field,
+                              (e.target as HTMLInputElement).value
+                            );
                           }}
-                        >
-                          <MenuItem value="">
-                            -- {field.listData?.defaultSelectedText || "Select"}{" "}
-                            --
-                          </MenuItem>
-                          {listData?.[field.fieldName]?.map((item: any) => (
-                            <MenuItem
-                              key={item[field.listData?.valueField as string]}
-                              value={item[field.listData?.valueField as string]}
-                            >
-                              {item[field.listData?.textField as string]}
-                            </MenuItem>
-                          ))}
-                        </Field>
+                          isMandatory={field.validation?.tests.some(
+                            (test: any) => test.OPTIONS.name === "required"
+                          )}
+                          defaultText={field.listData?.defaultSelectedText}
+                          clearable={field.showDropdownAddButton}
+                          onClear={() => handleFieldChange(field, "")}
+                        />
                       )}
                       <FormHelperText>
                         <ErrorMessage name={field.fieldName} />

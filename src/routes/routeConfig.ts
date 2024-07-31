@@ -1,4 +1,3 @@
-// routes/routeConfig.ts
 import LoginPage from "../pages/commonPages/LoginPage/LoginPage";
 import DashboardPage from "../pages/commonPages/DashboardPage/DashboardPage";
 import RegistrationPage from "../pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
@@ -13,15 +12,23 @@ import { ProfileListSearchProvider } from "../context/SecurityManagement/Profile
 import AdmissionPage from "../pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
 import { UserListSearchProvider } from "../context/SecurityManagement/UserListSearchContext";
 import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
+import AppointmentPage from "../pages/frontOffice/AppointmentPage/MainPage/AppointmentPage";
 
-const routeConfig = [
+interface RouteConfig {
+  path: string;
+  component: React.ComponentType<any>;
+  protected: boolean;
+  providers?: React.ComponentType<any>[];
+}
+
+const routeConfig: RouteConfig[] = [
   { path: "/login", component: LoginPage, protected: false },
   { path: "/dashboard", component: DashboardPage, protected: true },
   {
     path: "/registrationpage",
     component: RegistrationPage,
     protected: true,
-    providers: [PatientSearchProvider], //provider: PatientSearchProvider,
+    providers: [PatientSearchProvider],
   },
   {
     path: "/revisitpage",
@@ -32,32 +39,34 @@ const routeConfig = [
   { path: "/routinereportspa", component: RoutineReportsPA, protected: true },
   { path: "/listofreportspage", component: ListOfReportsPage, protected: true },
   {
-    path: "/ContactListPage",
+    path: "/contactlistpage",
     component: ContactListPage,
     protected: true,
     providers: [ContactListSearchProvider],
   },
   {
-    path: "/UserListPage",
+    path: "/userlistpage",
     component: UserListPage,
     protected: true,
     providers: [UserListSearchProvider],
   },
-
   {
-    path: "/ProfileListPage",
+    path: "/profilelistpage",
     component: ProfileListPage,
     protected: true,
     providers: [ProfileListSearchProvider],
   },
-
   {
-    path: "/AdmissionPage",
+    path: "/admissionpage",
     component: AdmissionPage,
     protected: true,
-    providers: [ProfileListSearchProvider],
+    providers: [PatientSearchProvider],
   },
-  // Add more routes here as needed
+  {
+    path: "/appointmentpage",
+    component: AppointmentPage,
+    protected: true,
+  },
 ];
 
 export default routeConfig;

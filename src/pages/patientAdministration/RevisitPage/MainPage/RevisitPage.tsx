@@ -164,7 +164,7 @@ const RevisitPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, compID, setLoading]);
+  }, [token, compID]);
 
   useEffect(() => {
     loadDropdownValues();

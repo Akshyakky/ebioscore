@@ -112,7 +112,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     if (pChartID && pChartID !== 0) {
       fetchPatientDetails();
     }
-  }, [pChartID, token, setLoading]);
+  }, [pChartID, token]);
 
   const formatDate = (dateString: string) => {
     return format(parseISO(dateString), "yyyy-MM-dd");

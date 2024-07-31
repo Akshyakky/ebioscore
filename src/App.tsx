@@ -1,5 +1,4 @@
-//src/App.tsx
-import React from "react";
+import React, { ReactNode } from "react";
 import "./App.css";
 import {
   BrowserRouter as Router,
@@ -19,6 +18,45 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import routeConfig from "./routes/routeConfig";
 
+interface RouteConfig {
+  path: string;
+  component: React.ComponentType<any>;
+  protected: boolean;
+  providers?: React.ComponentType<any>[];
+}
+
+const renderRoutes = (routes: RouteConfig[]) => {
+  return routes.map(
+    ({
+      path,
+      component: Component,
+      protected: isProtected,
+      providers,
+    }: RouteConfig) => (
+      <Route
+        key={path}
+        path={path}
+        element={
+          isProtected ? (
+            <ProtectedRoute>
+              {providers ? (
+                providers.reduceRight<ReactNode>(
+                  (children, Provider) => <Provider>{children}</Provider>,
+                  <Component />
+                )
+              ) : (
+                <Component />
+              )}
+            </ProtectedRoute>
+          ) : (
+            <Component />
+          )
+        }
+      />
+    )
+  );
+};
+
 const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
@@ -27,7 +65,6 @@ const App: React.FC = () => {
           <LoadingProvider>
             <Router>
               <GlobalSpinner />
-              {/* ToastContainer added here */}
               <ToastContainer
                 position="top-right"
                 autoClose={1500}
@@ -40,38 +77,7 @@ const App: React.FC = () => {
                 pauseOnHover
               />
               <Routes>
-                {routeConfig.map(
-                  ({
-                    path,
-                    component: Component,
-                    protected: isProtected,
-                    //provider: Provider,
-                    providers,
-                  }) => (
-                    <Route
-                      key={path}
-                      path={path}
-                      element={
-                        isProtected ? (
-                          <ProtectedRoute>
-                            {providers ? (
-                              providers.reduceRight(
-                                (children, Provider) => (
-                                  <Provider>{children}</Provider>
-                                ),
-                                <Component />
-                              )
-                            ) : (
-                              <Component />
-                            )}
-                          </ProtectedRoute>
-                        ) : (
-                          <Component />
-                        )
-                      }
-                    />
-                  )
-                )}
+                {renderRoutes(routeConfig)}
                 <Route path="/" element={<Navigate replace to="/login" />} />
               </Routes>
             </Router>
@@ -81,4 +87,5 @@ const App: React.FC = () => {
     </ThemeProvider>
   );
 };
+
 export default App;

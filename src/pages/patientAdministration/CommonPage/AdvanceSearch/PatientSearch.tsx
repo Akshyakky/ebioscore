@@ -23,29 +23,28 @@ interface PatientSearchProps {
   onEditPatient: (patientId: string) => void;
 }
 
-const PatientSearch = ({
+const PatientSearch: React.FC<PatientSearchProps> = ({
   show,
   handleClose,
   onEditPatient,
-}: PatientSearchProps) => {
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const { performSearch, searchResults } = useContext(PatientSearchContext);
+
   const debouncedSearch = useCallback(
     debounce((searchQuery: string) => {
-      performSearch(searchQuery);
+      if (searchQuery) {
+        performSearch(searchQuery);
+      }
     }, 500),
     [performSearch]
   );
 
   useEffect(() => {
-    if (searchTerm !== "") {
+    if (searchTerm) {
       debouncedSearch(searchTerm);
     }
   }, [searchTerm, debouncedSearch]);
-
-  useEffect(() => {
-    console.log("Search results:", searchResults); // Debug log
-  }, [searchResults]);
 
   const handleEditAndClose = (patientId: string) => {
     onEditPatient(patientId);
@@ -79,7 +78,9 @@ const PatientSearch = ({
       header: "Patient Name",
       visible: true,
       render: (row: PatientRegistrationDto) =>
-        `${row.patRegisters?.pTitle || ""} ${row.patRegisters?.pFName || ""} ${row.patRegisters?.pLName || ""}`,
+        `${row.patRegisters?.pTitle || ""} ${row.patRegisters?.pFName || ""} ${
+          row.patRegisters?.pLName || ""
+        }`,
     },
     {
       key: "patRegisters.pRegDate",
