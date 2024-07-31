@@ -98,6 +98,7 @@ const BreakListPage: React.FC = () => {
           onSave={handleSave}
           onClear={handleClear}
           isEditMode={isEditMode}
+          setFormData={() => {}} // Temporary fix to avoid TypeScript error
         />
         <BreakListSearch
           show={isSearchDialogOpen}

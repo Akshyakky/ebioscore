@@ -18,11 +18,12 @@ import {
 import CustomButton from "../../../../components/Button/CustomButton";
 import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
+import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
 
 interface ChangeFormDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (details: string) => void; // Update to accept details as argument
+  onSave: (details: string) => void;
   startDate: string;
 }
 
@@ -35,29 +36,36 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
   startDate,
 }) => {
   const [frequency, setFrequency] = useState<string>("None");
-  const [noRepeatEndDate, setNoRepeatEndDate] = useState<string>("");
+  const [noRepeatEndDate, setNoRepeatEndDate] = useState<string>(startDate || "");
   const [everyDays, setEveryDays] = useState<number | "">("");
-  const [endDate, setEndDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>(startDate || "");
   const [selectedWeekdays, setSelectedWeekdays] = useState<string[]>([]);
 
   useEffect(() => {
     if (frequency === "None" && startDate) {
       setNoRepeatEndDate(startDate);
+      setEndDate(startDate);
     } else {
       setNoRepeatEndDate("");
     }
   }, [frequency, startDate]);
 
-  const handleFrequencyChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFrequencyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFrequency(event.target.value);
   };
 
-  const handleEveryDaysChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setEveryDays(Number(event.target.value));
+  const handleEveryDaysChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    // Handle numeric input and empty string
+    if (/^\d*$/.test(value)) {
+      setEveryDays(value === "" ? "" : Number(value));
+    }
+  };
+
+  const validateDates = (): boolean => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    return end > start;
   };
 
   const handleEndDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,11 +100,23 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
   };
 
   const handleSave = () => {
+    // Check if end date is greater than start date
+    if (new Date(endDate) <= new Date(startDate)) {
+      notifyError("End date must be greater than start date."); // Notify error message
+      return;
+    }
+
     const details = generateDetails();
     onSave(details); // Pass the details to the parent component
+
+    // Log the saved data
+    console.log("Saved details:", details);
+
+    // Notify success message
+    notifySuccess("Details saved successfully.");
+
     onClose();
   };
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Change Form</DialogTitle>
@@ -283,10 +303,11 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
                     </Box>
                   </Grid>
 
-                  <Grid item xs={12} md={12} mt={2} mb={2}>
+                  <Grid item xs={12} md={12} mt={2}>
                     <Typography variant="body1" fontWeight={600} color="green">
-                      Every {everyDays} Week[s] on {selectedWeekdays.join(", ")}{" "}
-                      Till: {new Date(endDate).toDateString()}
+                      Every {everyDays} Week[s] on{" "}
+                      {selectedWeekdays.join(", ")} Till:{" "}
+                      {new Date(endDate).toDateString()}
                     </Typography>
                   </Grid>
                 </>
@@ -343,7 +364,8 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
 
                   <Grid item xs={12} md={12} mt={2}>
                     <Typography variant="body1" fontWeight={600} color="green">
-                      Every {everyDays} Month[s] Till: {new Date(endDate).toDateString()}
+                      Every {everyDays} Month[s] Till:{" "}
+                      {new Date(endDate).toDateString()}
                     </Typography>
                   </Grid>
                 </>
@@ -400,7 +422,8 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
 
                   <Grid item xs={12} md={12} mt={2}>
                     <Typography variant="body1" fontWeight={600} color="green">
-                      Every {everyDays} Year[s] Till: {new Date(endDate).toDateString()}
+                      Every {everyDays} Year[s] Till:{" "}
+                      {new Date(endDate).toDateString()}
                     </Typography>
                   </Grid>
                 </>
@@ -409,6 +432,7 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
           </Grid>
         </Grid>
       </DialogContent>
+     
       <DialogActions>
         <CustomButton
           variant="contained"
@@ -433,5 +457,9 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
 
 export default ChangeFormDialog;
 
+
+
+    
+  
 
      
