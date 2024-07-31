@@ -7,7 +7,6 @@ import {
   notifySuccess,
 } from "../../../../utils/Common/toastManager";
 import {
-  OperationResult,
   UserPermissionDto,
   UserPermissionDropdowns,
   UserListData,
@@ -18,6 +17,7 @@ import CustomCheckbox from "../../../../components/Checkbox/Checkbox";
 import moduleService from "../../../../services/CommonServices/ModuleService";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { UserListService } from "../../../../services/SecurityManagementServices/UserListService";
+import { OperationResult } from "../../../../interfaces/Common/OperationResult";
 
 interface UserPermissionProps {
   userID: number;

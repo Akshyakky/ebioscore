@@ -2,7 +2,7 @@
 // State Type
 export interface UserState {
   userID: number | null;
-  token: string | null;
+  token: string ;
   adminYN: string | null;
   userName: string | null;
   compID: number | null;

@@ -19,7 +19,7 @@ import CustomCheckbox from "../../../../components/Checkbox/Checkbox";
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 import { OperationPermissionDetailsDto } from "../../../../interfaces/SecurityManagement/OperationPermissionDetailsDto";
 import { OperationResult } from "../../../../interfaces/Common/OperationResult";
-
+                                                              
 interface OperationPermissionProps {
   profileID: number;
   profileName: string;

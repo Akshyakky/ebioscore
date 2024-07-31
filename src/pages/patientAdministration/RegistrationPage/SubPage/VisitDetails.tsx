@@ -16,7 +16,7 @@ interface VisitDetailsProps {
   formData: PatientRegistrationDto;
   setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
   isSubmitted: boolean;
-  isEditMode: boolean; 
+  isEditMode: boolean;
 }
 
 const VisitDetails: React.FC<VisitDetailsProps> = ({
