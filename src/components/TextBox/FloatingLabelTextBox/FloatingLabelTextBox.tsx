@@ -1,3 +1,4 @@
+// FloatingLabelTextBox.tsx
 import React, { useMemo, useCallback } from "react";
 import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
@@ -93,28 +94,3 @@ const FloatingLabelTextBox: React.FC<FloatingLabelTextBoxProps> = ({
 };
 
 export default FloatingLabelTextBox;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -24,7 +24,7 @@ const useReportsData = <T>(
       .finally(() => {
         setLoading(false); // Stop loading
       });
-  }, [fetchFunction, auGrpID, setLoading]);
+  }, [fetchFunction, auGrpID]);
 
   return { data, error };
 };

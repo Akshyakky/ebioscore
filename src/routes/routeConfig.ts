@@ -16,8 +16,16 @@ import ResourceListPage from "../pages/frontOffice/ResourceList/MainPage/Resourc
 import { ResourceListProvider } from "../context/frontOffice/ResourceListContext";
 import ReasonListPage from "../pages/frontOffice/ReasonList/MainPage/ReasonListPage";
 import BreakListPage from "../pages/frontOffice/BreakList/MainPage/BreakListPage";
+import AppointmentPage from "../pages/frontOffice/AppointmentPage/MainPage/AppointmentPage";
 
-const routeConfig = [
+interface RouteConfig {
+  path: string;
+  component: React.ComponentType<any>;
+  protected: boolean;
+  providers?: React.ComponentType<any>[];
+}
+
+const routeConfig: RouteConfig[] = [
   { path: "/login", component: LoginPage, protected: false },
   { path: "/dashboard", component: DashboardPage, protected: true },
   {
@@ -35,28 +43,28 @@ const routeConfig = [
   { path: "/routinereportspa", component: RoutineReportsPA, protected: true },
   { path: "/listofreportspage", component: ListOfReportsPage, protected: true },
   {
-    path: "/ContactListPage",
+    path: "/contactlistpage",
     component: ContactListPage,
     protected: true,
     providers: [ContactListSearchProvider],
   },
   {
-    path: "/UserListPage",
+    path: "/userlistpage",
     component: UserListPage,
     protected: true,
     providers: [UserListSearchProvider],
   },
   {
-    path: "/ProfileListPage",
+    path: "/profilelistpage",
     component: ProfileListPage,
     protected: true,
     providers: [ProfileListSearchProvider],
   },
   {
-    path: "/AdmissionPage",
+    path: "/admissionpage",
     component: AdmissionPage,
     protected: true,
-    providers: [ProfileListSearchProvider],
+    providers: [PatientSearchProvider],
   },
 
 
@@ -84,6 +92,11 @@ const routeConfig = [
 
 
   // Add more routes here as needed
+  {
+    path: "/appointmentpage",
+    component: AppointmentPage,
+    protected: true,
+  },
 ];
 
 export default routeConfig;

@@ -1,4 +1,4 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useCallback } from "react";
 import { PatientRegistrationDto } from "../interfaces/PatientAdministration/PatientFormData";
 import { searchPatientDetails } from "../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { useLoading } from "./LoadingContext";
@@ -20,35 +20,43 @@ interface PatientSearchProviderProps {
   children: React.ReactNode;
 }
 
-export const PatientSearchProvider = ({
+export const PatientSearchProvider: React.FC<PatientSearchProviderProps> = ({
   children,
-}: PatientSearchProviderProps) => {
+}) => {
   const [searchResults, setSearchResults] = useState<PatientRegistrationDto[]>(
     []
   );
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
-  const token = userInfo.token!;
+  const token = userInfo?.token;
 
-  const performSearch = async (searchTerm: string): Promise<void> => {
-    setLoading(true);
-    try {
-      const result = await searchPatientDetails(token, searchTerm);
-      console.log("Fetched result:", result); // Debug log
-      if (result.success) {
-        setSearchResults(result.data || []);
-        console.log("Search results updated:", result.data); // Debug log
-      } else {
-        console.error("Search was not successful");
-        notifyError("Search failed. Please try again.");
+  const performSearch = useCallback(
+    async (searchTerm: string): Promise<void> => {
+      if (!token) {
+        notifyError("User is not authenticated.");
+        return;
       }
-    } catch (error) {
-      console.error("Error performing search", error);
-      notifyError("An error occurred during the search.");
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      setLoading(true);
+      try {
+        const result = await searchPatientDetails(token, searchTerm);
+        console.log("Fetched result:", result); // Debug log
+        if (result.success) {
+          setSearchResults(result.data || []);
+          console.log("Search results updated:", result.data); // Debug log
+        } else {
+          console.error("Search was not successful");
+          notifyError("Search failed. Please try again.");
+        }
+      } catch (error: any) {
+        console.error("Error performing search", error);
+        notifyError("An error occurred during the search.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token]
+  );
 
   return (
     <PatientSearchContext.Provider value={{ searchResults, performSearch }}>
