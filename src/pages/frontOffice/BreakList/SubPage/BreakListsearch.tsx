@@ -21,6 +21,7 @@ import { notifyError, notifySuccess } from "../../../../utils/Common/toastManage
 import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
 import { debounce } from "../../../../utils/Common/debounceUtils";
 import { BreakListService } from "../../../../services/frontOffice/BreakListService";
+import { ResourceListService } from "../../../../services/frontOffice/ResourceListServices";
 
 interface BreakListSearchProps {
   show: boolean;
@@ -86,19 +87,34 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
 
   useEffect(() => {
     const initialSwitchStatus = searchResults.reduce((acc, item) => {
-      acc[item.bLID] = item.isPhyResYN === "Active";
+      acc[item.bLID] = item.isPhyResYN === "Y";
       return acc;
     }, {} as { [key: number]: boolean });
 
     setSwitchStatus(initialSwitchStatus);
   }, [searchResults]);
 
-  const handleEditAndClose = async (breakList: BreakListData) => {
+  // const handleEditAndClose = async (breakList: BreakListData) => {
+  //   try {
+  //     onEditBreak(breakList);
+  //     handleClose();
+  //   } catch (error) {
+  //     notifyError("Error fetching break list details.");
+  //   }
+  // };
+
+  const handleEditAndClose = async (resource: BreakListData) => {
     try {
-      onEditBreak(breakList);
-      handleClose();
+      const result = await BreakListService.getBreakListById(token!, resource.bLID);
+      if (result.success && result.data) {
+        onEditBreak(result.data);
+        handleClose();
+      } else {
+        notifyError(result.errorMessage || "Error fetching resource details.");
+      }
     } catch (error) {
-      notifyError("Error fetching break list details.");
+      console.error("Error fetching resource details:", error);
+      notifyError("Error fetching resource details.");
     }
   };
 

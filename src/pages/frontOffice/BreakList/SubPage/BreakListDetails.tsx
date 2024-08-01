@@ -43,36 +43,41 @@ interface BreakListDetailsProps {
   onClear: () => void;
   isEditMode: boolean;
   setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
+  formattedEndDate: Date
 }
 
 const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   breakData,
   onSave,
   onClear,
+  formattedEndDate = new Date(), 
+
 }) => {
   const [isSubmitted] = useState(false);
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [resourceList, setResourceList] = useState<ResourceListData[]>([]);
-  const [, setLoadingResources] = useState(false);
-  const [, setAnchorElPhysician] = useState<null | HTMLElement>(null);
+  const [loadingResources, setLoadingResources] = useState(false);
   const [selectAll, setSelectAll] = useState(false);
   const [selectAllPhysicians, setSelectAllPhysicians] = useState(false);
   const [showChangeFormDialog, setShowChangeFormDialog] = useState(false);
   const [isOneDay, setIsOneDay] = useState(false);
   const [physicianList, setPhysicianList] = useState<any[]>([]);
-  const [, setLoadingPhysicians] = useState(false);
+  const [loadingPhysicians, setLoadingPhysicians] = useState(false);
   const [selectedPhysicians, setSelectedPhysicians] = useState<number[]>([]);
   const [everyDays, setEveryDays] = useState<number | undefined>(undefined);
-  const [, setEndDate] = useState<Date | undefined>(undefined);
+  const [endDateState, setEndDateState] = useState<Date>(formattedEndDate);
   const [, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [, setAnchorElPhysician] = useState<null | HTMLElement>(null);
+  const [selectedResourceNames, setSelectedResourceNames] = useState<string[]>([]);
+const [selectedPhysicianNames, setSelectedPhysicianNames] = useState<string[]>([]);
 
   const [breakListData, setBreakListData] = useState<BreakListData>({
     bLID: breakData?.bLID || 0,
     bLName: breakData?.bLName || "",
-    bLStartTime: new Date(breakData?.bLStartTime || new Date()), // Ensure it's a Date
-    bLEndTime: new Date(breakData?.bLEndTime || new Date()), // Ensure it's a Date
-    bLStartDate: breakData?.bLStartDate ? new Date(breakData.bLStartDate) : new Date(), // Ensure it's a Date
-    bLEndDate:  new Date(), // Ensure it's a Date
+    bLStartTime: new Date(breakData?.bLStartTime || new Date()),
+    bLEndTime: new Date(breakData?.bLEndTime || new Date()),
+    bLStartDate: breakData?.bLStartDate ? new Date(breakData.bLStartDate) : new Date(),
+    bLEndDate: breakData?.bLEndDate ? new Date(breakData.bLEndDate) : new Date(),
     bLFrqNo: breakData?.bLFrqNo || 1,
     bLFrqDesc: breakData?.bLFrqDesc || "",
     bLFrqWkDesc: breakData?.bLFrqWkDesc || "",
@@ -80,10 +85,10 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     rActiveYN: breakData?.rActiveYN || "N",
     rCreatedID: breakData?.rCreatedID || 0,
     rCreatedBy: breakData?.rCreatedBy || "",
-    rCreatedOn: new Date(breakData?.rCreatedOn || new Date()), // Ensure it's a Date
+    rCreatedOn: new Date(breakData?.rCreatedOn || new Date()),
     rModifiedID: breakData?.rModifiedID || 0,
     rModifiedBy: breakData?.rModifiedBy || "",
-    rModifiedOn: new Date(breakData?.rModifiedOn || new Date()), // Ensure it's a Date
+    rModifiedOn: new Date(breakData?.rModifiedOn || new Date()),
     rNotes: breakData?.rNotes || "",
     isPhyResYN: breakData?.isPhyResYN || "N",
     compID: breakData?.compID || 0,
@@ -94,32 +99,48 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     frequencyDetails: breakData?.frequencyDetails || "",
   });
 
-  useEffect(() => {
-    const updateEndDate = () => {
-      if (breakListData.bLStartDate && everyDays) {
-        const startDate = new Date(breakListData.bLStartDate);
-        const updatedEndDate = new Date(startDate);
-        updatedEndDate.setDate(updatedEndDate.getDate() + everyDays);
 
-        if (updatedEndDate <= startDate) {
-          notifyError("End Date must be after Start Date.");
-          return;
-        }
-
-        setEndDate(updatedEndDate);
-        setBreakListData((prevData) => ({
-          ...prevData,
-          bLEndDate: updatedEndDate,
-        }));
-      }
-    };
-
-    updateEndDate();
-  }, [breakListData.bLStartDate, everyDays]);
+useEffect(() => {
+  console.log("Received formattedEndDate:", formattedEndDate);
+  if (formattedEndDate instanceof Date && !isNaN(formattedEndDate.getTime())) {
+    setEndDateState(formattedEndDate);
+  } else {
+    console.error("Invalid formattedEndDate:", formattedEndDate);
+  }
+}, [formattedEndDate]);
 
   useEffect(() => {
-    setBreakListData(breakListData);
-  }, [breakListData]);
+    if (breakListData.bLStartDate && endDateState <= breakListData.bLStartDate) {
+ 
+    } else {
+      setBreakListData(prev => ({
+        ...prev,
+        bLEndDate: endDateState,
+      }));
+    }
+  }, [endDateState]);
+
+
+  useEffect(() => {
+    setBreakListData((prev) => ({
+      ...prev,
+      bLEndDate: endDateState, 
+    }));
+  }, [endDateState]);
+
+
+
+ const handleDateChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const parsedDate = parseDateStringToDate(event.target.value);
+    if (parsedDate) {
+      setEndDateState(parsedDate);
+    } else {
+      console.error("Invalid date format");
+    }
+  };
+
+
+
 
   const formatDateToTimeString = (date: Date) => {
     const hours = date.getHours().toString().padStart(2, "0");
@@ -140,25 +161,25 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     const day = date.getDate().toString().padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
-
-  const parseDateStringToDate = (dateString: string) => {
+  
+  const parseDateStringToDate = (dateString: string): Date => {
     const [year, month, day] = dateString.split("-").map(Number);
     return new Date(year, month - 1, day);
   };
-
+  
+  
   const handleSave = async () => {
-    if (!breakListData.bLFrqDesc) {
-      notifyError("Frequency Description is required.");
-      return;
-    }
-
+    debugger
     try {
-      console.log("Saving break list data:", breakListData); // Log the data being sent
-      const result = await BreakListService.saveBreakList(token!, breakListData);
+      console.log("Saving break list data:", breakListData);
+      const result = await BreakListService.saveBreakList(
+        token!,
+        breakListData
+      );
       if (result.success) {
         if (result.data) {
           notifySuccess("Break list saved successfully");
-          console.log("Saved details:", result.data); // Log the data
+          console.log("Saved details:", result.data);
           onSave(result.data);
         } else {
           notifyError("Failed to retrieve data after saving.");
@@ -166,46 +187,44 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
         }
       } else {
         notifyError(result.errorMessage || "Failed to save break list");
-        console.error("Error message:", result.errorMessage); // Log the error message
+        console.error("Error message:", result.errorMessage);
       }
     } catch (error) {
       notifyError("An unexpected error occurred");
-      console.error("Unexpected error:", error); // Log the unexpected error
+      console.error("Unexpected error:", error);
     }
   };
-
 
   const handleClear = () => {
     onClear();
     setBreakListData({
       bLID: 0,
       bLName: "",
-      bLStartTime: new Date(), // Initialize to the current time
-      bLEndTime: new Date(), // Initialize to the current time
-      bLStartDate: new Date(), // Initialize to the current date
-      bLEndDate: new Date(), // Initialize to the current date
+      bLStartTime: new Date(),
+      bLEndTime: new Date(),
+      bLStartDate: new Date(),
+      bLEndDate: new Date(),
       bLFrqNo: 0,
       bLFrqDesc: "",
       bLFrqWkDesc: "",
       bColor: "",
-      rActiveYN: "N", // Adjusted to match the 'Y' | 'N' type
+      rActiveYN: "N",
       rCreatedID: 0,
       rCreatedBy: "",
-      rCreatedOn: new Date(), // Initialize to the current date
+      rCreatedOn: new Date(),
       rModifiedID: 0,
       rModifiedBy: "",
-      rModifiedOn: new Date(), // Initialize to the current date
+      rModifiedOn: new Date(),
       rNotes: "",
-      isPhyResYN: "N", // Adjusted to match the 'Y' | 'N' type
+      isPhyResYN: "N",
       compID: 0,
       compCode: "",
       compName: "",
-      transferYN: "N", // Adjusted to match the 'Y' | 'N' type
+      transferYN: "N",
       resources: [],
-      frequencyDetails: "", // Ensure this field is included
+      frequencyDetails: "",
     });
   };
-
   const handleChangeFormToggle = () => {
     setShowChangeFormDialog(!showChangeFormDialog);
   };
@@ -263,6 +282,13 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     fetchPhysicians();
   }, [token, breakListData.compID]);
 
+   useEffect(() => {
+    fetchResources();
+  }, [token]);
+
+
+
+
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
     setBreakListData({
@@ -280,10 +306,10 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   useEffect(() => {
     setBreakListData((prev) => {
       const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0); // Set to 00:00:00.000
+      startOfDay.setHours(0, 0, 0, 0);
 
       const endOfDay = new Date();
-      endOfDay.setHours(23, 59, 59, 999); // Set to 23:59:59.999
+      endOfDay.setHours(23, 59, 59, 999); 
 
       return {
         ...prev,
@@ -302,28 +328,36 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     setBreakListData((prev) => {
       const updatedResources = newValue
         ? resourceList.map((resource) => ({
-            id: resource.rLID,
-            value: resource.rLID,
-            name: resource.rLName,
-          }))
+          id: resource.rLID,
+          value: resource.rLID,
+          name: resource.rLName,
+        }))
         : [];
 
       return { ...prev, resources: updatedResources };
     });
   };
 
-  const handleResourceCheckboxChange = (
+ const handleResourceCheckboxChange = (
     resourceID: number,
     checked: boolean
   ) => {
-    setBreakListData((prev) => {
+    setBreakListData(prev => {
       const updatedResources = checked
         ? [...prev.resources, { id: resourceID, value: resourceID, name: "" }]
-        : prev.resources.filter((res) => res.id !== resourceID);
+        : prev.resources.filter(res => res.id !== resourceID);
+
+      // Update the selected resource names
+      const updatedResourceNames = resourceList
+        .filter(resource => updatedResources.some(r => r.id === resource.rLID))
+        .map(resource => resource.rLName);
+
+      setSelectedResourceNames(updatedResourceNames);
 
       return { ...prev, resources: updatedResources };
     });
   };
+
 
   const handleSelectAllPhysiciansChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -344,6 +378,13 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
         prev.filter((physicianId) => physicianId !== id)
       );
     }
+  
+    // Update the selected physician names
+    const updatedPhysicianNames = physicianList
+      .filter((physician) => selectedPhysicians.includes(physician.value))
+      .map((physician) => physician.label);
+  
+    setSelectedPhysicianNames(updatedPhysicianNames);
   };
 
   const handleOneDayToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -356,6 +397,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
         BREAK LIST DETAILS
       </Typography>
 
+   
       <section>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12}>
@@ -380,7 +422,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
           </Grid>
         </Grid>
 
-        <Grid container spacing={2} >
+        <Grid container spacing={2}>
           {breakListData.isPhyResYN === "Y" && (
             <Grid item xs={12}>
               <TableContainer
@@ -396,13 +438,11 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
                 <Table stickyHeader>
                   <TableHead>
                     <TableRow sx={{ backgroundColor: "#003366" }}>
-                      {" "}
-                      {/* Deep Blue */}
                       <TableCell>
                         <Checkbox
                           checked={selectAll}
                           onChange={handleSelectAllChange}
-                          sx={{ml:-1}}
+                          sx={{ ml: -1 }}
                         />
                         Select All
                       </TableCell>
@@ -423,8 +463,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
                           },
                           "& td": {
                             color: "#000000", // Black text color initially for readability
-                          
-                          padding: "3px 6px"
+                            padding: "3px 6px",
                           },
                         }}
                       >
@@ -442,12 +481,14 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
                             sx={{
                               "&.Mui-checked": {
                                 color: "#4CAF50", // Medium Green for checked state
-                             padding: "4px 8px"
+                                padding: "4px 8px",
                               },
                             }}
                           />
                         </TableCell>
-                        <TableCell sx={{ "& th": { padding: "4px 8px" } }}>{resource.rLName}</TableCell>
+                        <TableCell sx={{ "& th": { padding: "4px 8px" } }}>
+                          {resource.rLName}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -475,9 +516,9 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
                         <Checkbox
                           checked={selectAllPhysicians}
                           onChange={handleSelectAllPhysiciansChange}
-                          sx={{ml:-1}}
+                          sx={{ ml: -1 }}
                         />
-                        Selecet All
+                        Select All
                       </TableCell>
                       <TableCell>Physician Name</TableCell>
                     </TableRow>
@@ -496,7 +537,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
                           },
                           "& td": {
                             color: "#000000", // Black text color initially for readability
-                          padding: "3px 6px"
+                            padding: "3px 6px",
                           },
                         }}
                       >
@@ -599,12 +640,10 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
                 size="small"
                 type="date"
                 value={formatDateToDateString(breakListData.bLStartDate)}
-                onChange={(e) =>
-                  setBreakListData({
-                    ...breakListData,
-                    bLStartDate: parseDateStringToDate(e.target.value),
-                  })
-                }
+                onChange={(e) => {
+                  const date = parseDateStringToDate(e.target.value);
+                  setBreakListData({ ...breakListData, bLStartDate: date });
+                }}
                 ControlID={""}
               />
             </Grid>
@@ -631,16 +670,8 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
               <TextArea
                 name="frequencyDetails"
                 label="Repeat"
-                value={
-                  breakListData.frequencyDetails
-                  ||""
-                }
-                onChange={(e) => {
-                  setBreakListData({
-                    ...breakListData,
-                    frequencyDetails: e.target.value,
-                  });
-                }}
+                value={breakListData.frequencyDetails}
+                onChange={handleDateChange}
                 placeholder="Repeat"
                 rows={2}
               />

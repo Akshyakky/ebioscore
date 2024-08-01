@@ -98,8 +98,11 @@ const BreakListPage: React.FC = () => {
           onSave={handleSave}
           onClear={handleClear}
           isEditMode={isEditMode}
-          setFormData={() => {}} // Temporary fix to avoid TypeScript error
+          setFormData={() => { }} // Temporary fix to avoid TypeScript error
+          formattedEndDate={new Date()} // Provide a default Date object
         />
+
+
         <BreakListSearch
           show={isSearchDialogOpen}
           handleClose={handleCloseSearchDialog}

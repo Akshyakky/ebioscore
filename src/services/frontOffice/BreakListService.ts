@@ -3,10 +3,15 @@ import { APIConfig } from "../../apiConfig";
 import { OperationResult } from "../../interfaces/Common/OperationResult";
 import { BreakListData } from "../../interfaces/frontOffice/BreakListData";
 
-
 const handleError = <T>(error: any): OperationResult<T> => {
   const errorMessage =
-    error.response?.data?.errorMessage || error.message || "An error occurred";
+    error.response?.data?.errors?.[0]?.errorMessage || error.message || "An error occurred";
+  console.error("Error details:", {
+    data: error.response?.data,
+    status: error.response?.status,
+    headers: error.response?.headers,
+    message: error.message,
+  });
   return {
     success: false,
     data: {} as T,
@@ -14,13 +19,11 @@ const handleError = <T>(error: any): OperationResult<T> => {
   };
 };
 
-
 // Service to save break list data
 const saveBreakList = async (
   token: string,
   breakListData: BreakListData
 ): Promise<OperationResult<BreakListData>> => {
-  debugger
   try {
     const url = `${APIConfig.frontOffice}BreakList/SaveBreakList`;
     const headers = {
@@ -43,11 +46,9 @@ const saveBreakList = async (
       throw new Error("Invalid response format received.");
     }
   } catch (error: any) {
-    console.error("Error saving break list:", error.response?.data || error.message);
     return handleError<BreakListData>(error);
   }
 };
-
 
 // Service to fetch a break list by ID
 const getBreakListById = async (
@@ -61,22 +62,14 @@ const getBreakListById = async (
       "Content-Type": "application/json",
     };
 
-    const response = await axios.get<OperationResult<BreakListData>>(url, {
-      headers,
-    });
+    const response = await axios.get<OperationResult<BreakListData>>(url, { headers });
 
     if (!response.data.success) {
-      throw new Error(
-        response.data.errorMessage || "Failed to fetch break list."
-      );
+      throw new Error(response.data.errorMessage || "Failed to fetch break list.");
     }
 
     return response.data;
-  } catch (error: any) {
-    console.error(
-      "Error fetching break list:",
-      error.response?.data || error.message
-    );
+  } catch (error) {
     return handleError<BreakListData>(error);
   }
 };
@@ -92,22 +85,14 @@ const getAllBreakLists = async (
       "Content-Type": "application/json",
     };
 
-    const response = await axios.get<OperationResult<BreakListData[]>>(url, {
-      headers,
-    });
+    const response = await axios.get<OperationResult<BreakListData[]>>(url, { headers });
 
     if (!response.data.success) {
-      throw new Error(
-        response.data.errorMessage || "Failed to fetch break lists."
-      );
+      throw new Error(response.data.errorMessage || "Failed to fetch break lists.");
     }
 
     return response.data;
   } catch (error: any) {
-    console.error(
-      "Error fetching break lists:",
-      error.response?.data || error.message
-    );
     return handleError<BreakListData[]>(error);
   }
 };
@@ -129,22 +114,14 @@ const updateBreakListActiveStatus = async (
       isActive,
     };
 
-    const response = await axios.put<OperationResult<boolean>>(url, body, {
-      headers,
-    });
+    const response = await axios.put<OperationResult<boolean>>(url, body, { headers });
 
     if (!response.data.success) {
-      throw new Error(
-        response.data.errorMessage || "Failed to update break list status."
-      );
+      throw new Error(response.data.errorMessage || "Failed to update break list status.");
     }
 
     return response.data;
   } catch (error: any) {
-    console.error(
-      "Error updating break list active status:",
-      error.response?.data || error.message
-    );
     return handleError<boolean>(error);
   }
 };
