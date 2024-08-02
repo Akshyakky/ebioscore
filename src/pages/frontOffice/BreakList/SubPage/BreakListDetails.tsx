@@ -56,20 +56,24 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   const [isSubmitted] = useState(false);
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [resourceList, setResourceList] = useState<ResourceListData[]>([]);
-  const [loadingResources, setLoadingResources] = useState(false);
+  const [, setLoadingResources] = useState(false);
   const [selectAll, setSelectAll] = useState(false);
   const [selectAllPhysicians, setSelectAllPhysicians] = useState(false);
   const [showChangeFormDialog, setShowChangeFormDialog] = useState(false);
   const [isOneDay, setIsOneDay] = useState(false);
   const [physicianList, setPhysicianList] = useState<any[]>([]);
-  const [loadingPhysicians, setLoadingPhysicians] = useState(false);
+  const [, setLoadingPhysicians] = useState(false);
   const [selectedPhysicians, setSelectedPhysicians] = useState<number[]>([]);
-  const [everyDays, setEveryDays] = useState<number | undefined>(undefined);
   const [endDateState, setEndDateState] = useState<Date>(formattedEndDate);
   const [, setAnchorEl] = useState<null | HTMLElement>(null);
   const [, setAnchorElPhysician] = useState<null | HTMLElement>(null);
-  const [selectedResourceNames, setSelectedResourceNames] = useState<string[]>([]);
-const [selectedPhysicianNames, setSelectedPhysicianNames] = useState<string[]>([]);
+  const [, setSelectedResourceNames] = useState<string[]>([]);
+const [, setSelectedPhysicianNames] = useState<string[]>([]);
+const [, setSelectedResources] = useState<number[]>([]);
+
+
+
+
 
   const [breakListData, setBreakListData] = useState<BreakListData>({
     bLID: breakData?.bLID || 0,
@@ -78,7 +82,7 @@ const [selectedPhysicianNames, setSelectedPhysicianNames] = useState<string[]>([
     bLEndTime: new Date(breakData?.bLEndTime || new Date()),
     bLStartDate: breakData?.bLStartDate ? new Date(breakData.bLStartDate) : new Date(),
     bLEndDate: breakData?.bLEndDate ? new Date(breakData.bLEndDate) : new Date(),
-    bLFrqNo: breakData?.bLFrqNo || 1,
+    bLFrqNo: breakData?.bLFrqNo || 0,
     bLFrqDesc: breakData?.bLFrqDesc || "",
     bLFrqWkDesc: breakData?.bLFrqWkDesc || "",
     bColor: breakData?.bColor || "",
@@ -90,7 +94,7 @@ const [selectedPhysicianNames, setSelectedPhysicianNames] = useState<string[]>([
     rModifiedBy: breakData?.rModifiedBy || "",
     rModifiedOn: new Date(breakData?.rModifiedOn || new Date()),
     rNotes: breakData?.rNotes || "",
-    isPhyResYN: breakData?.isPhyResYN || "N",
+    isPhyResYN: breakData?.isPhyResYN ?? "N",
     compID: breakData?.compID || 0,
     compCode: breakData?.compCode || "",
     compName: breakData?.compName || "",
@@ -100,14 +104,17 @@ const [selectedPhysicianNames, setSelectedPhysicianNames] = useState<string[]>([
   });
 
 
-useEffect(() => {
-  console.log("Received formattedEndDate:", formattedEndDate);
-  if (formattedEndDate instanceof Date && !isNaN(formattedEndDate.getTime())) {
-    setEndDateState(formattedEndDate);
-  } else {
-    console.error("Invalid formattedEndDate:", formattedEndDate);
-  }
-}, [formattedEndDate]);
+  useEffect(() => {
+    console.log("Received formattedEndDate:", formattedEndDate);
+    if (formattedEndDate instanceof Date && !isNaN(formattedEndDate.getTime())) {
+      setEndDateState(formattedEndDate);
+    } else {
+      console.error("Invalid formattedEndDate:", formattedEndDate);
+    }
+  }, [formattedEndDate]);
+  
+
+
 
   useEffect(() => {
     if (breakListData.bLStartDate && endDateState <= breakListData.bLStartDate) {
@@ -121,16 +128,22 @@ useEffect(() => {
   }, [endDateState]);
 
 
+
+
+
+
   useEffect(() => {
-    setBreakListData((prev) => ({
+    console.log("Updating breakListData with endDateState:", endDateState);
+    setBreakListData(prev => ({
       ...prev,
-      bLEndDate: endDateState, 
+      bLEndDate: endDateState,
     }));
   }, [endDateState]);
 
+  
 
 
- const handleDateChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleDateChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const parsedDate = parseDateStringToDate(event.target.value);
     if (parsedDate) {
       setEndDateState(parsedDate);
@@ -148,6 +161,10 @@ useEffect(() => {
     return `${hours}:${minutes}`;
   };
 
+
+
+
+
   const parseTimeStringToDate = (timeString: string) => {
     const [hours, minutes] = timeString.split(":").map(Number);
     const date = new Date();
@@ -155,27 +172,45 @@ useEffect(() => {
     return date;
   };
 
+
+
+
   const formatDateToDateString = (date: Date) => {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const day = date.getDate().toString().padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
+
+
+
   
   const parseDateStringToDate = (dateString: string): Date => {
     const [year, month, day] = dateString.split("-").map(Number);
     return new Date(year, month - 1, day);
   };
   
-  
   const handleSave = async () => {
-    debugger
     try {
-      console.log("Saving break list data:", breakListData);
-      const result = await BreakListService.saveBreakList(
-        token!,
-        breakListData
-      );
+      if (new Date(breakListData.bLEndDate) <= new Date(breakListData.bLStartDate)) {
+        notifyError("End date must be greater than start date.");
+        return;
+      }
+
+      const frequencyNumber = breakListData.bLFrqNo;
+      if (frequencyNumber <= 0) {
+        notifyError("Frequency number must be greater than 0.");
+        return;
+      }
+
+      const details = breakListData.frequencyDetails;
+
+      const result = await BreakListService.saveBreakList(token!, {
+        ...breakListData,
+        bLEndDate: breakListData.bLEndDate,
+        bLFrqNo: frequencyNumber,
+      });
+
       if (result.success) {
         if (result.data) {
           notifySuccess("Break list saved successfully");
@@ -194,6 +229,7 @@ useEffect(() => {
       console.error("Unexpected error:", error);
     }
   };
+
 
   const handleClear = () => {
     onClear();
@@ -225,9 +261,14 @@ useEffect(() => {
       frequencyDetails: "",
     });
   };
+
+
+
   const handleChangeFormToggle = () => {
     setShowChangeFormDialog(!showChangeFormDialog);
   };
+
+
 
   const handleSaveChanges = (details: string) => {
     setBreakListData({
@@ -235,6 +276,9 @@ useEffect(() => {
       frequencyDetails: details,
     });
   };
+
+
+
 
   const fetchResources = async () => {
     setLoadingResources(true);
@@ -252,11 +296,18 @@ useEffect(() => {
     }
   };
 
+
+
+
   useEffect(() => {
     if (breakListData.isPhyResYN === "Y") {
       fetchResources();
     }
   }, [breakListData.isPhyResYN]);
+
+
+
+
 
   useEffect(() => {
     const fetchPhysicians = async () => {
@@ -282,6 +333,9 @@ useEffect(() => {
     fetchPhysicians();
   }, [token, breakListData.compID]);
 
+
+
+
    useEffect(() => {
     fetchResources();
   }, [token]);
@@ -291,17 +345,35 @@ useEffect(() => {
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
-    setBreakListData({
-      ...breakListData,
-      isPhyResYN: value as "Y" | "N",
-      resources: [],
-    });
-    if (value === "Y") {
+    const newValue = value as "Y" | "N";
+    console.log("Selected Radio Button Value:", newValue); 
+
+    setBreakListData(prev => ({
+      ...prev,
+      isPhyResYN: newValue,
+      resources: newValue === "N" ? [] : prev.resources, 
+    }));
+
+    if (newValue === "Y") {
+      // Show resources selection
+      setAnchorElPhysician(null);
       setAnchorEl(event.currentTarget);
-    } else if (value === "P") {
-      setAnchorElPhysician(event.currentTarget);
+      setSelectedPhysicianNames([]);
+      setSelectedPhysicians([]);
+    } else if (newValue === "N") {
+      // Show physician selection
+      setAnchorEl(event.currentTarget);
+      setAnchorElPhysician(null);
+      setSelectedResourceNames([]);
+      setSelectedResources([]);
     }
   };
+
+  
+  
+
+
+
 
   useEffect(() => {
     setBreakListData((prev) => {
@@ -318,6 +390,10 @@ useEffect(() => {
       };
     });
   }, [isOneDay]);
+
+
+
+
 
   const handleSelectAllChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -337,6 +413,9 @@ useEffect(() => {
       return { ...prev, resources: updatedResources };
     });
   };
+
+
+
 
  const handleResourceCheckboxChange = (
     resourceID: number,
@@ -359,6 +438,8 @@ useEffect(() => {
   };
 
 
+
+
   const handleSelectAllPhysiciansChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -369,6 +450,10 @@ useEffect(() => {
       newValue ? physicianList.map((physician) => physician.value) : []
     );
   };
+
+
+
+
 
   const handlePhysicianCheckboxChange = (id: number, checked: boolean) => {
     if (checked) {
@@ -387,9 +472,19 @@ useEffect(() => {
     setSelectedPhysicianNames(updatedPhysicianNames);
   };
 
+
+
+
+
   const handleOneDayToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsOneDay(event.target.checked);
   };
+
+
+
+
+
+
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -432,7 +527,7 @@ useEffect(() => {
                   maxWidth: "30%",
                   overflow: "auto",
                   mb: 4,
-                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)", // Light shadow for professionalism
+                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)", 
                 }}
               >
                 <Table stickyHeader>
@@ -454,15 +549,15 @@ useEffect(() => {
                       <TableRow
                         key={resource.rLID}
                         sx={{
-                          backgroundColor: "#ffffff", // White background initially
+                          backgroundColor: "#ffffff", 
                           "&:hover": {
-                            backgroundColor: "#003366", // Deep Blue for hover effect
+                            backgroundColor: "#003366", 
                             "& td": {
-                              color: "#f0f0f0", // Light text color for hover effect
+                              color: "#f0f0f0", 
                             },
                           },
                           "& td": {
-                            color: "#000000", // Black text color initially for readability
+                            color: "#000000", 
                             padding: "3px 6px",
                           },
                         }}
@@ -480,7 +575,7 @@ useEffect(() => {
                             }
                             sx={{
                               "&.Mui-checked": {
-                                color: "#4CAF50", // Medium Green for checked state
+                                color: "#4CAF50", 
                                 padding: "4px 8px",
                               },
                             }}
@@ -528,15 +623,15 @@ useEffect(() => {
                       <TableRow
                         key={physician.value}
                         sx={{
-                          backgroundColor: "#ffffff", // White background initially
+                          backgroundColor: "#ffffff", 
                           "&:hover": {
-                            backgroundColor: "#003366", // Deep Blue for hover effect
+                            backgroundColor: "#003366", 
                             "& td": {
-                              color: "#f0f0f0", // Light text color for hover effect
+                              color: "#f0f0f0", 
                             },
                           },
                           "& td": {
-                            color: "#000000", // Black text color initially for readability
+                            color: "#000000", 
                             padding: "3px 6px",
                           },
                         }}
@@ -703,7 +798,7 @@ useEffect(() => {
         </Grid>
       </Grid>
 
-      {/* Physician Dialog */}
+      
       <section>
         <FormSaveClearButton
           onSave={handleSave}
@@ -721,9 +816,12 @@ useEffect(() => {
         onClose={handleChangeFormToggle}
         onSave={handleSaveChanges}
         startDate={formatDateToDateString(breakListData.bLStartDate)}
+        bLFrqNo={breakListData.bLFrqNo}
       />
     </Paper>
   );
 };
 
 export default BreakListDetails;
+
+

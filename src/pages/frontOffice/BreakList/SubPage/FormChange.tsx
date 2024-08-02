@@ -23,8 +23,9 @@ import { notifyError, notifySuccess } from "../../../../utils/Common/toastManage
 interface ChangeFormDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (details: string, formattedEndDate: string) => void;
+  onSave: (details: string, formattedEndDate: string ,bLFrqNo: number) => void;
   startDate: string;
+  bLFrqNo: number;
 }
 
 const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -38,6 +39,7 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
   onClose,
   onSave,
   startDate,
+  bLFrqNo, 
 }) => {
   const [frequency, setFrequency] = useState<string>("None");
   const [noRepeatEndDate, setNoRepeatEndDate] = useState<string>(startDate || "");
@@ -45,6 +47,7 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
   const [endDate, setEndDate] = useState<string>(startDate || "");
   const [selectedWeekdays, setSelectedWeekdays] = useState<string[]>([]);
   const [frequencyDetails, setFrequencyDetails] = useState<string>("");
+  
 
   useEffect(() => {
     if (frequency === "None" && startDate) {
@@ -106,22 +109,36 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
     }
     return details;
   };
+
+
  const handleSave = () => {
-    if (new Date(endDate) <= new Date(startDate)) {
-      notifyError("End date must be greater than start date.");
-      return;
-    }
-    const formattedEndDate = formatDateToDateString(new Date(endDate).toISOString());
-    const details = generateDetails();
-    setFrequencyDetails(details);
-    onSave(details, formattedEndDate); // Pass formattedEndDate
+  if (new Date(endDate) <= new Date(startDate)) {
+    notifyError("End date must be greater than start date.");
+    return;
+  }
+
+  // Validate that everyDays (or bLFrqNo) is greater than 0
+  const frequencyNumber = everyDays || bLFrqNo; // Use everyDays or fallback to bLFrqNo
+  if (frequencyNumber <= 0) {
+    notifyError("Frequency number must be greater than 0.");
+    return;
+  }
+
+  const formattedEndDate = formatDateToDateString(new Date(endDate).toISOString());
+  const details = generateDetails();
+
+  // Pass frequencyNumber instead of bLFrqNo if necessary
+  onSave(details, formattedEndDate, frequencyNumber);
+
+  console.log("Saved details:", details);
+  notifySuccess("Details saved successfully.");
+  onClose();
+  console.log("End Date Value:", endDate);
+  console.log("Formatted End Date:", formattedEndDate);
+  console.log("Frequency Number Value:", frequencyNumber); // Log frequencyNumber for verification
+};
+
   
-    console.log("Saved details:", details);
-    notifySuccess("Details saved successfully.");
-    onClose();
-    console.log("End Date Value:", endDate);
-    console.log("Formatted End Date:", formattedEndDate);
-  };
   
  
 
@@ -460,10 +477,3 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
 };
 
 export default ChangeFormDialog;
-
-
-
-
-
-
-

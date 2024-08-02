@@ -21,7 +21,6 @@ import { notifyError, notifySuccess } from "../../../../utils/Common/toastManage
 import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
 import { debounce } from "../../../../utils/Common/debounceUtils";
 import { BreakListService } from "../../../../services/frontOffice/BreakListService";
-import { ResourceListService } from "../../../../services/frontOffice/ResourceListServices";
 
 interface BreakListSearchProps {
   show: boolean;
@@ -34,12 +33,25 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
   show,
   handleClose,
   onEditBreak,
+  selectedBreak
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<BreakListData[]>([]);
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
+  const [isPhyResYN, setIsPhyResYN] = useState("Y"); 
+
+
+  const [breakListData, setBreakListData] = useState<BreakListData | null>(null);
+
+  // Fetch break list details when a break list is selected for editing
+  useEffect(() => {
+    if (selectedBreak) {
+      setBreakListData(selectedBreak);
+    }
+  }, [selectedBreak]);
+
 
   const performSearch = async (searchQuery: string) => {
     setIsLoading(true);
@@ -48,7 +60,7 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
       if (result.success && result.data) {
         const filteredResults = result.data.filter(
           (breakList) =>
-            breakList.bLName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           
             breakList.bLName.toLowerCase().includes(searchQuery.toLowerCase())
         );
         setSearchResults(filteredResults);
@@ -90,19 +102,10 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
       acc[item.bLID] = item.isPhyResYN === "Y";
       return acc;
     }, {} as { [key: number]: boolean });
-
     setSwitchStatus(initialSwitchStatus);
   }, [searchResults]);
 
-  // const handleEditAndClose = async (breakList: BreakListData) => {
-  //   try {
-  //     onEditBreak(breakList);
-  //     handleClose();
-  //   } catch (error) {
-  //     notifyError("Error fetching break list details.");
-  //   }
-  // };
-
+  
   const handleEditAndClose = async (resource: BreakListData) => {
     try {
       const result = await BreakListService.getBreakListById(token!, resource.bLID);
@@ -165,7 +168,12 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
     },
     { key: "serialNumber", header: "Sl.No", visible: true },
     { key: "bLName", header: "Break Name", visible: true },
-    { key: "providerName", header: "Provider Name", visible: true },
+    { key: "bLName", header: "provider Name", visible: true },
+    {
+      key: "bLName",
+      header: isPhyResYN === "Y" ? "Resource Name" : "Physician Name",
+      visible: true
+    },
     {
       key: "status",
       header: "Status",
