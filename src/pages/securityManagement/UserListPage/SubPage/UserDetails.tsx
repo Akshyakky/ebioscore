@@ -288,6 +288,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     }
   };
 
+  
+
   const handleSave = async () => {
     setIsSubmitted(true);
 
@@ -350,7 +352,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     setPassword("");
     setConfirmPassword("");
     setIsSubmitted(false);
-    notifySuccess("Form cleared successfully");
     onClear();
   };
 
@@ -359,7 +360,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       <section>
         <Grid container spacing={2} alignItems="flex-start">
 
-          
+
           <Grid item xs={12} sm={6} md={3}>
             <DropdownSelect
               name="SelectUser"
@@ -389,9 +390,13 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               name="LoginName"
               size="small"
               value={userList.appCode || ""}
-              onChange={(e) =>
-                setUserList({ ...userList, appCode: e.target.value })
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+                // Allow only alphabets and numbers
+                if (/^[a-zA-Z0-9]*$/.test(value)) {
+                  setUserList({ ...userList, appCode: value });
+                }
+              }}
               isSubmitted={isSubmitted}
               isMandatory
             />
@@ -408,7 +413,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               value={password}
               onChange={handlePasswordChange}
               size="small"
-              sx={{ mt: 2   }}
+              sx={{ mt: 2 }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -510,7 +515,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               isSubmitted={isSubmitted}
             />
           </Grid>
-       
+
           <Grid item xs={12} sm={6} md={6}>
             <Grid item xs={12} sm={6} md={6}>
               <FloatingLabelFileUpload
@@ -538,14 +543,14 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       </section>
 
       <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label="Is Super User"
-              size="medium"
-              color="secondary"
-              checked={isSuperUser}
-              onChange={handleSuperUserChange}
-            />
-          </Grid>
+        <CustomSwitch
+          label="Is Super User"
+          size="medium"
+          color="secondary"
+          checked={isSuperUser}
+          onChange={handleSuperUserChange}
+        />
+      </Grid>
 
 
       <Box sx={{ marginTop: 2 }}>

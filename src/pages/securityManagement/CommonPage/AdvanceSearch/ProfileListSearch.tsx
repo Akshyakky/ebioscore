@@ -82,7 +82,6 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
         profileMastDto
       );
       if (result.success) {
-        notifySuccess(`Profile status updated to ${updatedStatus}`);
         updateProfileStatus(profile.profileID, updatedStatus);
       } else {
         notifyError(`Error updating profile status: ${result.errorMessage}`);
@@ -115,16 +114,7 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
     { key: "profileCode", header: "Profile Code", visible: true },
     { key: "profileName", header: "Profile Name", visible: true },
     { key: "rNotes", header: "Notes", visible: true },
-    {
-      key: "status",
-      header: "Status",
-      visible: true,
-      render: (row: ProfileListSearchResult) => (
-        <Typography variant="body2">
-          {row.status === "Hidden" ? "Hidden" : "Active"}
-        </Typography>
-      ),
-    },
+  
     {
       key: "profileStatus",
       header: "Profile Status",

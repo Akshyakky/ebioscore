@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import SmartForm from "../../../../components/SmartFormComponent/SmartForm";
-import * as Yup from "yup";
 
 const formFields = [
   {
     fieldName: "appointmentDate",
     label: "Appointment Date",
     controlType: "Date",
-    validation: Yup.date().required("Appointment Date is required"),
+    //validation: Yup.date().required("Appointment Date is required"),
     defaultValue: "",
     isVisible: true,
   },
@@ -16,7 +15,7 @@ const formFields = [
     fieldName: "doctorName",
     label: "Doctor Name",
     controlType: "Textbox",
-    validation: Yup.string().required("Doctor Name is required"),
+    // validation: Yup.string().required("Doctor Name is required"),
     defaultValue: "",
     isVisible: true,
   },
@@ -24,7 +23,7 @@ const formFields = [
     fieldName: "department",
     label: "Department",
     controlType: "Dropdown",
-    validation: Yup.string().required("Department is required"),
+    // validation: Yup.string().required("Department is required"),
     defaultValue: "",
     isVisible: true,
     listData: {
@@ -37,7 +36,7 @@ const formFields = [
     fieldName: "patientName",
     label: "Patient Name",
     controlType: "Textbox",
-    validation: Yup.string().required("Patient Name is required"),
+    // validation: Yup.string().required("Patient Name is required"),
     defaultValue: "",
     isVisible: true,
   },
@@ -71,15 +70,14 @@ const AppointmentPage: React.FC = () => {
         <h1>Book an Appointment</h1>
         <SmartForm
           formName="Appointment Booking"
-          formField={formFields}
+          // formField={formFields}
           listData={{ department: departmentOptions }}
           showLoader={false}
           showBreadCrumbs={false}
           initSaveBtnText="Book Appointment"
           onSubmit={handleFormSubmit}
           onChange={handleFieldChange}
-          onDropdownAddButtonClick={handleDropdownAddButtonClick}
-        />
+          onDropdownAddButtonClick={handleDropdownAddButtonClick} formField={[]}        />
       </div>
     </MainLayout>
   );

@@ -8,6 +8,7 @@ import {
   Grid,
   Typography,
   Box,
+  FormControlLabel,
   } from "@mui/material";
 import { UserListData } from "../../../interfaces/SecurityManagement/UserListData";
 import { UserListSearchContext } from "../../../context/SecurityManagement/UserListSearchContext";
@@ -87,50 +88,48 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
 
   // Handle switch change for user status
   // Handle switch change for user status
-const handleSwitchChange = async (user: UserListData, checked: boolean) => {
-  try {
-    if (!user.appID) {
-      console.error("Profile appID is undefined or null.");
-      return;
-    }
+  const handleSwitchChange = async (user: UserListData, checked: boolean) => {
+    try {
+      if (!user.appID) {
+        console.error("Profile appID is undefined or null.");
+        return;
+      }
 
-    const result = await UserListService.updateUserActiveStatus(
-      token!,
-      user.appID,
-      checked
-    );
+      const result = await UserListService.updateUserActiveStatus(
+        token!,
+        user.appID,
+        checked
+      );
 
-    if (result.success) {
-      notifySuccess(`User status updated to ${checked ? "Active" : "Hidden"}`);
+      if (result.success) {
 
-      // Update local switch status
-      setSwitchStatus((prevState) => ({
-        ...prevState,
-        [user.appID]: checked,
-      }));
+        // Update local switch status
+        setSwitchStatus((prevState) => ({
+          ...prevState,
+          [user.appID]: checked,
+        }));
 
-      // Update context or perform other updates as needed
-      updateUserStatus(user.appID, checked);
-    } else {
-      notifyError(`Error updating user status: ${result.errorMessage}`);
-      
+        // Update context or perform other updates as needed
+        updateUserStatus(user.appID, checked);
+      } else {
+
+        // Rollback switch status if update fails
+        setSwitchStatus((prevState) => ({
+          ...prevState,
+          [user.appID]: !checked, // revert to previous state
+        }));
+      }
+    } catch (error) {
+      notifyError("Error updating user status");
+      console.error("Error:", error);
+
       // Rollback switch status if update fails
       setSwitchStatus((prevState) => ({
         ...prevState,
         [user.appID]: !checked, // revert to previous state
       }));
     }
-  } catch (error) {
-    notifyError("Error updating user status");
-    console.error("Error:", error);
-    
-    // Rollback switch status if update fails
-    setSwitchStatus((prevState) => ({
-      ...prevState,
-      [user.appID]: !checked, // revert to previous state
-    }));
-  }
-};
+  };
 
 
   // Prepare data with additional index and status information
@@ -159,25 +158,20 @@ const handleSwitchChange = async (user: UserListData, checked: boolean) => {
     { key: "loginName", header: "Login Name", visible: true },
     { key: "rNotes", header: "Notes", visible: true },
     {
-      key: "status",
-      header: "Status",
-      visible: true,
-      render: (row: UserListData) => (
-        <Typography variant="body2">
-          {row.rActiveYN === "Y" ? "Active" : "Hidden"}
-        </Typography>
-      ),
-    },
-    {
       key: "userStatus",
       header: "User Status",
       visible: true,
       render: (row: UserListData) => (
-        <CustomSwitch
-          size="medium"
-          color="secondary"
-          checked={switchStatus[row.appID] || false}
-          onChange={(event) => handleSwitchChange(row, event.target.checked)}
+        <FormControlLabel
+          control={
+            <CustomSwitch
+              size="medium"
+              color="secondary"
+              checked={switchStatus[row.appID] || false}
+              onChange={(event) => handleSwitchChange(row, event.target.checked)}
+            />
+          }
+          label={switchStatus[row.appID] ? "Active" : "Hidden"}
         />
       ),
     },
