@@ -13,7 +13,7 @@ import { LoadingProvider } from "./context/LoadingContext";
 import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ThemeProvider } from "@mui/material/styles";
-import theme from "../src/layouts/SideBar/Theme";
+import theme from "./layouts/Themes/Theme";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import routeConfig from "./routes/routeConfig";

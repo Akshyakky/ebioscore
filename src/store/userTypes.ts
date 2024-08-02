@@ -1,26 +1,23 @@
 // userTypes.ts
-// State Type
 export interface UserState {
   userID: number | null;
-  token: string ;
+  token: string | null;
   adminYN: string | null;
   userName: string | null;
   compID: number | null;
-  auAccessID:number|null,
   compName: string | null;
   compCode: string | null;
   tokenExpiry: number | null; // UNIX timestamp in milliseconds
 }
 
-// Action Types
 export const SET_USER_DETAILS = "SET_USER_DETAILS";
 export const LOGOUT = "LOGOUT";
 
 export interface SetUserDetailsAction {
   type: typeof SET_USER_DETAILS;
-  payload: UserState; // payload is of type UserState
+  payload: UserState;
 }
-// Define the Logout action interface
+
 export interface LogoutAction {
   type: typeof LOGOUT;
 }

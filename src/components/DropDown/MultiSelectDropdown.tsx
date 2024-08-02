@@ -10,13 +10,14 @@ import {
   ListItemText,
 } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
+import { styled } from "@mui/material/styles";
 
 interface DropdownSelectProps {
   label: string;
   name: string;
-  value: string | string[]; // Adjusted to accept an array for multiple selections
+  value: string | string[];
   options: Array<{ value: string; label: string }>;
-  onChange: (event: SelectChangeEvent<unknown>) => void; // Simplified type for event
+  onChange: (event: SelectChangeEvent<unknown>) => void;
   size?: "small" | "medium";
   disabled?: boolean;
   isMandatory?: boolean;
@@ -25,6 +26,25 @@ interface DropdownSelectProps {
   isSubmitted?: boolean;
   multiple?: boolean;
 }
+
+const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
+  backgroundColor: "#fff",
+  color: "#000",
+  "&:hover": {
+    backgroundColor: "var(--hover-color)",
+  },
+}));
+
+const StyledCheckbox = styled(Checkbox)(({ theme }) => ({
+  color: "var(--primary-color)",
+  "&.Mui-checked": {
+    color: "var(--primary-color)",
+  },
+}));
+
+const StyledListItemText = styled(ListItemText)(({ theme }) => ({
+  color: "#000",
+}));
 
 const MultiSelectDropdown: React.FC<DropdownSelectProps> = ({
   label,
@@ -38,7 +58,7 @@ const MultiSelectDropdown: React.FC<DropdownSelectProps> = ({
   defaultText,
   className,
   isSubmitted = false,
-  multiple = false, // Default to false to maintain backward compatibility
+  multiple = false,
 }) => {
   const isEmptyValue = (val: string | string[]) => {
     return Array.isArray(val) ? val.length === 0 : val === "" || val === "0";
@@ -71,16 +91,16 @@ const MultiSelectDropdown: React.FC<DropdownSelectProps> = ({
         renderValue={
           multiple
             ? (selected) => {
-                return Array.isArray(selected)
-                  ? selected
-                      .map(
-                        (val) =>
-                          options.find((option) => option.value === val)
-                            ?.label || val
-                      )
-                      .join(", ")
-                  : selected;
-              }
+              return Array.isArray(selected)
+                ? selected
+                  .map(
+                    (val) =>
+                      options.find((option) => option.value === val)
+                        ?.label || val
+                  )
+                  .join(", ")
+                : selected;
+            }
             : undefined
         }
       >
@@ -90,20 +110,20 @@ const MultiSelectDropdown: React.FC<DropdownSelectProps> = ({
           </MenuItem>
         )}
         {options.map((option) => (
-          <MenuItem key={option.value} value={option.value}>
+          <StyledMenuItem key={option.value} value={option.value}>
             {multiple ? (
               <>
-                <Checkbox
+                <StyledCheckbox
                   checked={
                     Array.isArray(value) && value.indexOf(option.value) > -1
                   }
                 />
-                <ListItemText primary={option.label} />
+                <StyledListItemText primary={option.label} />
               </>
             ) : (
               option.label
             )}
-          </MenuItem>
+          </StyledMenuItem>
         ))}
       </Select>
       {hasError && <FormHelperText>{label} is required.</FormHelperText>}

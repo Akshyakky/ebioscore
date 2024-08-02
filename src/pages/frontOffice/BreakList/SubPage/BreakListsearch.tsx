@@ -20,7 +20,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
 import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
 import { debounce } from "../../../../utils/Common/debounceUtils";
-import { BreakListService } from "../../../../services/frontOffice/BreakListService";
+import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListService";
 
 interface BreakListSearchProps {
   show: boolean;

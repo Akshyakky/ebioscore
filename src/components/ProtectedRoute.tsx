@@ -21,9 +21,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       if (isTokenExpired && token) {
         try {
           await AuthService.logout(token);
-          dispatch(logout());
         } catch (error) {
           console.error("Error during logout:", error);
+        } finally {
+          dispatch(logout());
         }
       }
     };

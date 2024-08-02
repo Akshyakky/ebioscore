@@ -43,6 +43,10 @@ const ContactListSearch: React.FC<ContactListSearchResultProps> = ({
     onEditContactList(conID);
     handleClose();
   };
+  const handleDialogClose = () => {
+    setSearchTerm("");
+    handleClose();
+  };
   const columns = [
     {
       key: "ContactListEdit",
@@ -126,7 +130,7 @@ const ContactListSearch: React.FC<ContactListSearchResultProps> = ({
           text="Close"
           icon={CloseIcon}
           size="medium"
-          onClick={handleClose}
+          onClick={handleDialogClose}
           color="secondary"
         />
       </DialogActions>
