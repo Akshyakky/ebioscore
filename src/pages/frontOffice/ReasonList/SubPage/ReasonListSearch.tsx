@@ -20,7 +20,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
 import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
 import { debounce } from "../../../../utils/Common/debounceUtils";
-import { ReasonListService } from "../../../../services/frontOffice/ReasonListService";
+import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListService";
 
 interface ReasonListSearchProps {
   show: boolean;

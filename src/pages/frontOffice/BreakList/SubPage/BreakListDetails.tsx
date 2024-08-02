@@ -25,14 +25,14 @@ import {
 import TextArea from "../../../../components/TextArea/TextArea";
 import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
 import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
-import { ResourceListService } from "../../../../services/frontOffice/ResourceListServices";
+import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
 import CustomButton from "../../../../components/Button/CustomButton";
-import { BreakListService } from "../../../../services/frontOffice/BreakListService";
+import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListService";
 import ChangeFormDialog from "./FormChange";
 import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
@@ -314,7 +314,7 @@ const [, setSelectedResources] = useState<number[]>([]);
       setLoadingPhysicians(true);
       try {
         const response = await ContactMastService.fetchAttendingPhysician(
-          token,
+          token!,
           "GetActiveConsultants",
           breakListData.compID || 0
         );

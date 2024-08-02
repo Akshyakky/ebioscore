@@ -22,7 +22,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import GroupIcon from "@mui/icons-material/Group";
 import PersonIcon from "@mui/icons-material/Person";
 import MainLayout from "../../../layouts/MainLayout/MainLayout";
-import { DashBoardService } from "../../../services/DashboardService/DashBoardService";
+import { DashBoardService } from "../../../services/DashboardServices/DashBoardService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store/reducers";
 import { useLoading } from "../../../context/LoadingContext";

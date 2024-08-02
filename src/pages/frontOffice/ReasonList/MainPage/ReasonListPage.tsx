@@ -9,7 +9,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { notifyError } from "../../../../utils/Common/toastManager";
 import { Box, Container } from "@mui/material";
 import ReasonDetails from "../../ReasonList/SubPage/ReasonDetails";
-import { ReasonListService } from "../../../../services/frontOffice/ReasonListService";
+import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListService";
 import ReasonListSearch from "../SubPage/ReasonListSearch";
 
 const ReasonListPage: React.FC = () => {

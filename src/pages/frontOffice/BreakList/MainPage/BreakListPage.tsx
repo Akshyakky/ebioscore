@@ -11,7 +11,7 @@ import { notifyError } from "../../../../utils/Common/toastManager";
 import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import BreakListDetails from "../SubPage/BreakListDetails";
-import { BreakListService } from "../../../../services/frontOffice/BreakListService";
+import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListService";
 import BreakListSearch from "../SubPage/BreakListsearch";
 
 const BreakListPage: React.FC = () => {

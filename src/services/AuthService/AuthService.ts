@@ -14,7 +14,7 @@ interface TokenResponse {
     adminYN: string;
     physicianYN: string;
     errorMessage?: string;
-    compID: number | null;
+    compID: number;
     token: string;
   };
 }
@@ -36,23 +36,8 @@ export const AuthService = {
       const response = await axios.post(`${API_URL}Generate`, credentials);
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError; // Type assertion here
-
-      if (axios.isAxiosError(axiosError)) {
-        if (axiosError.response) {
-          console.error(
-            "There was a problem with the request:",
-            axiosError.response.data
-          );
-        } else if (axiosError.request) {
-          console.error("No response received:", axiosError.request);
-        } else {
-          console.error("Error setting up the request:", axiosError.message);
-        }
-      } else {
-        console.error("An unexpected error occurred:", axiosError);
-      }
-      throw axiosError;
+      handleAxiosError(error);
+      throw error;
     }
   },
   logout: async (token: string): Promise<any> => {
@@ -60,24 +45,8 @@ export const AuthService = {
       const response = await axios.post(`${API_URL}Logout`, { token });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError; // Type assertion
-
-      // Error handling similar to generateToken method
-      if (axios.isAxiosError(axiosError)) {
-        if (axiosError.response) {
-          console.error(
-            "There was a problem with the request:",
-            axiosError.response.data
-          );
-        } else if (axiosError.request) {
-          console.error("No response received:", axiosError.request);
-        } else {
-          console.error("Error setting up the request:", axiosError.message);
-        }
-      } else {
-        console.error("An unexpected error occurred:", axiosError);
-      }
-      throw axiosError;
+      handleAxiosError(error);
+      throw error;
     }
   },
   checkTokenExpiry: async (
@@ -91,21 +60,11 @@ export const AuthService = {
     } catch (error) {
       const axiosError = error as AxiosError; // Type assertion
 
-      // Error handling similar to other methods
       if (axios.isAxiosError(axiosError)) {
         if (axiosError.response && axiosError.response.status === 401) {
           return { isExpired: true }; // Token is expired
         }
-        if (axiosError.response) {
-          console.error(
-            "There was a problem with the request:",
-            axiosError.response.data
-          );
-        } else if (axiosError.request) {
-          console.error("No response received:", axiosError.request);
-        } else {
-          console.error("Error setting up the request:", axiosError.message);
-        }
+        handleAxiosError(axiosError);
       } else {
         console.error("An unexpected error occurred:", axiosError);
       }
@@ -113,6 +72,23 @@ export const AuthService = {
     }
   },
   // ... other authentication related methods
+};
+
+const handleAxiosError = (error: unknown) => {
+  if (axios.isAxiosError(error)) {
+    if (error.response) {
+      console.error(
+        "There was a problem with the request:",
+        error.response.data
+      );
+    } else if (error.request) {
+      console.error("No response received:", error.request);
+    } else {
+      console.error("Error setting up the request:", error.message);
+    }
+  } else {
+    console.error("An unexpected error occurred:", error);
+  }
 };
 
 export default AuthService;

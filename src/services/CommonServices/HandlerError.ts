@@ -1,12 +1,8 @@
+import { notifyError } from "./../../utils/Common/toastManager";
 import { OperationResult } from "../../interfaces/Common/OperationResult";
 
 export const handleError = (error: any): OperationResult<any> => {
-  const result: OperationResult<any> = {
-    success: false,
-    affectedRows: 0,
-    errorMessage: "An unexpected error occurred",
-    validationErrors: [],
-  };
+  const result: OperationResult<any> = error;
 
   if (error.response) {
     const status = error.response.status;
@@ -52,24 +48,34 @@ export const handleError = (error: any): OperationResult<any> => {
     }
 
     if (error.response.data) {
-      if (error.response.data.Errors) {
-        result.validationErrors = error.response.data.Errors.map(
+      if (error.response.data.errors) {
+        result.validationErrors = error.response.data.errors.map(
           (err: any) => ({
-            PropertyName: err.PropertyName,
-            ErrorMessage: err.ErrorMessage,
+            propertyName: err.propertyName,
+            errorMessage: err.errorMessage,
           })
         );
+
+        // Display validation errors using toast
+        result.validationErrors!.forEach((validationError) => {
+          notifyError(
+            `${validationError.propertyName}: ${validationError.errorMessage}`
+          );
+        });
       } else if (error.response.data.message) {
         result.errorMessage = error.response.data.message;
+        notifyError(result.errorMessage!);
       }
     }
   } else if (error.request) {
     // Client-side error or network error
     result.errorMessage =
       "No response received from the server. Please check your network connection.";
+    notifyError(result.errorMessage);
   } else {
     // Other errors (e.g., programming errors)
     result.errorMessage = `An unexpected error occurred: ${error.message}`;
+    notifyError(result.errorMessage);
   }
 
   // Log the error for debugging purposes
