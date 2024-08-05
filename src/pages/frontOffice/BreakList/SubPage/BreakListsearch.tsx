@@ -98,9 +98,11 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
     }
   }, [searchTerm, debouncedSearch, show]);
 
+ 
+
   useEffect(() => {
     const initialSwitchStatus = searchResults.reduce((acc, item) => {
-      acc[item.bLID] = item.isPhyResYN === "Y";
+      acc[item.bLID] = item.rActiveYN === "Y";
       return acc;
     }, {} as { [key: number]: boolean });
     setSwitchStatus(initialSwitchStatus);
@@ -131,13 +133,13 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
 
       const updatedBreakList = {
         ...breakList,
-        bLStatus: checked ? "Active" : "Inactive",
+        rActiveYN: checked ? "Y" as const : "N" as const,
       };
 
       const result = await BreakListService.saveBreakList(token!, updatedBreakList);
 
       if (result.success) {
-        notifySuccess(`Break list status updated to ${checked ? "Active" : "Inactive"}`);
+        notifySuccess(`Break list status updated to ${checked ? "Active" : "Hidden"}`);
         setSwitchStatus((prevState) => ({
           ...prevState,
           [breakList.bLID]: checked,
@@ -153,7 +155,7 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
       notifyError("Error updating break list status.");
     }
   };
-
+ 
   const columns = [
     {
       key: "BreakEdit",
@@ -169,33 +171,28 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
     },
     { key: "serialNumber", header: "Sl.No", visible: true },
     { key: "bLName", header: "Break Name", visible: true },
-    { key: "bLName", header: "provider Name", visible: true },
+    { key: "bLName", header: "Provider Name", visible: true },
     {
       key: "bLName",
       header: isPhyResYN === "Y" ? "Resource Name" : "Physician Name",
       visible: true
     },
     {
-      key: "status",
-      header: "Status",
-      visible: true,
-      render: (row: BreakListData) => (
-        <Typography variant="body2">
-          {switchStatus[row.bLID] ? "Active" : "Inactive"}
-        </Typography>
-      ),
-    },
-    {
       key: "recordStatus",
       header: "Record Status",
       visible: true,
       render: (row: BreakListData) => (
-        <CustomSwitch
-          size="medium"
-          color="secondary"
-          checked={switchStatus[row.bLID] || false}
-          onChange={(event) => handleSwitchChange(row, event.target.checked)}
-        />
+        <Box display="flex" alignItems="center">
+          <Typography variant="body2" sx={{ marginRight: 2 }}>
+            {switchStatus[row.bLID] ? "Active" : "Hidden"}
+          </Typography>
+          <CustomSwitch
+            size="medium"
+            color="secondary"
+            checked={switchStatus[row.bLID] || false}
+            onChange={(event) => handleSwitchChange(row, event.target.checked)}
+          />
+        </Box>
       ),
     },
   ];

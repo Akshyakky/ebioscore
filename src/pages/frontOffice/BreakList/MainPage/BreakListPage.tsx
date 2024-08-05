@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Grid, Paper, Typography, Button, Container, Box } from "@mui/material";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
@@ -22,6 +21,7 @@ const BreakListPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const dispatch = useDispatch();
+  const frequencyNumber = breakList.length;
 
   // Fetch Break List Function
   const fetchBreakList = async () => {
@@ -94,6 +94,7 @@ const BreakListPage: React.FC = () => {
         </Box>
         {loading && <GlobalSpinner />}
         <BreakListDetails
+          frequencyNumber={frequencyNumber} // Pass frequencyNumber here
           breakData={selectedBreak}
           onSave={handleSave}
           onClear={handleClear}

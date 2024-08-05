@@ -36,6 +36,8 @@ import { BreakListService } from "../../../../services/FrontOfficeServices/Break
 import ChangeFormDialog from "./FormChange";
 import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
+import { CompanyService } from "../../../../services/CommonServices/CompanyService";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 
 interface BreakListDetailsProps {
   breakData: BreakListData | null;
@@ -43,15 +45,20 @@ interface BreakListDetailsProps {
   onClear: () => void;
   isEditMode: boolean;
   setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
-  formattedEndDate: Date
+  formattedEndDate: Date;
+  frequencyNumber: number;
+}
+interface Company {
+  compIDCompCode: string;
+  compName: string;
 }
 
 const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   breakData,
   onSave,
   onClear,
-  formattedEndDate = new Date(), 
-
+  formattedEndDate,
+  frequencyNumber
 }) => {
   const [isSubmitted] = useState(false);
   const { token } = useSelector((state: RootState) => state.userDetails);
@@ -68,20 +75,28 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   const [, setAnchorEl] = useState<null | HTMLElement>(null);
   const [, setAnchorElPhysician] = useState<null | HTMLElement>(null);
   const [, setSelectedResourceNames] = useState<string[]>([]);
-const [, setSelectedPhysicianNames] = useState<string[]>([]);
-const [, setSelectedResources] = useState<number[]>([]);
-
-
-
-
+  const [, setSelectedPhysicianNames] = useState<string[]>([]);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [, setSelectedResources] = useState<number[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null); // New state for selected company
+  const [dropdownValues, setDropdownValues] = useState({
+    categoryOptions: [] as DropdownOption[],
+    usersOptions: [] as DropdownOption[],
+    companyOptions: [] as DropdownOption[],
+    profileOptions: [] as DropdownOption[],
+  });
 
   const [breakListData, setBreakListData] = useState<BreakListData>({
     bLID: breakData?.bLID || 0,
     bLName: breakData?.bLName || "",
     bLStartTime: new Date(breakData?.bLStartTime || new Date()),
     bLEndTime: new Date(breakData?.bLEndTime || new Date()),
-    bLStartDate: breakData?.bLStartDate ? new Date(breakData.bLStartDate) : new Date(),
-    bLEndDate: breakData?.bLEndDate ? new Date(breakData.bLEndDate) : new Date(),
+    bLStartDate: breakData?.bLStartDate
+      ? new Date(breakData.bLStartDate)
+      : new Date(),
+    bLEndDate: breakData?.bLEndDate
+      ? new Date(breakData.bLEndDate)
+      : new Date(),
     bLFrqNo: breakData?.bLFrqNo || 0,
     bLFrqDesc: breakData?.bLFrqDesc || "",
     bLFrqWkDesc: breakData?.bLFrqWkDesc || "",
@@ -103,24 +118,30 @@ const [, setSelectedResources] = useState<number[]>([]);
     frequencyDetails: breakData?.frequencyDetails || "",
   });
 
-
   useEffect(() => {
-    console.log("Received formattedEndDate:", formattedEndDate);
-    if (formattedEndDate instanceof Date && !isNaN(formattedEndDate.getTime())) {
-      setEndDateState(formattedEndDate);
-    } else {
-      console.error("Invalid formattedEndDate:", formattedEndDate);
-    }
+    setEndDateState(formattedEndDate);
   }, [formattedEndDate]);
-  
+
+  useEffect(() => {
+    fetchCompanies(); // Fetch companies on component mount
+  }, []);
+
+
+  useEffect(() => {
+    if (breakData) {
+      setBreakListData(prev => ({
+        ...prev,
+        bLStartDate: new Date(breakData.bLStartDate || formattedEndDate),
+        bLEndDate: new Date(breakData.bLEndDate || formattedEndDate),
+      }));
+    }
+  }, [breakData, formattedEndDate]);
 
 
 
   useEffect(() => {
-    if (breakListData.bLStartDate && endDateState <= breakListData.bLStartDate) {
- 
-    } else {
-      setBreakListData(prev => ({
+    if (endDateState && endDateState > breakListData.bLStartDate) {
+      setBreakListData((prev) => ({
         ...prev,
         bLEndDate: endDateState,
       }));
@@ -128,19 +149,30 @@ const [, setSelectedResources] = useState<number[]>([]);
   }, [endDateState]);
 
 
+  useEffect(() => {
+    if (breakListData.bLStartDate && endDateState <= breakListData.bLStartDate) {
+      setBreakListData(prev => ({
+        ...prev,
+        bLEndDate: new Date(breakListData.bLStartDate.getTime() + 24 * 60 * 60 * 1000),
+      }));
+    }
+  }, [endDateState, breakListData.bLStartDate]);
 
-
+  useEffect(() => {
+    setBreakListData(prev => ({
+      ...prev,
+      bLFrqNo: frequencyNumber,
+    }));
+  }, [frequencyNumber]);
 
 
   useEffect(() => {
     console.log("Updating breakListData with endDateState:", endDateState);
-    setBreakListData(prev => ({
+    setBreakListData((prev) => ({
       ...prev,
       bLEndDate: endDateState,
     }));
   }, [endDateState]);
-
-  
 
 
   const handleDateChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -152,18 +184,11 @@ const [, setSelectedResources] = useState<number[]>([]);
     }
   };
 
-
-
-
   const formatDateToTimeString = (date: Date) => {
     const hours = date.getHours().toString().padStart(2, "0");
     const minutes = date.getMinutes().toString().padStart(2, "0");
     return `${hours}:${minutes}`;
   };
-
-
-
-
 
   const parseTimeStringToDate = (timeString: string) => {
     const [hours, minutes] = timeString.split(":").map(Number);
@@ -171,9 +196,6 @@ const [, setSelectedResources] = useState<number[]>([]);
     date.setHours(hours, minutes, 0, 0);
     return date;
   };
-
-
-
 
   const formatDateToDateString = (date: Date) => {
     const year = date.getFullYear();
@@ -183,50 +205,59 @@ const [, setSelectedResources] = useState<number[]>([]);
   };
 
 
-
-  
   const parseDateStringToDate = (dateString: string): Date => {
     const [year, month, day] = dateString.split("-").map(Number);
     return new Date(year, month - 1, day);
   };
-  
-  const handleSave = async () => {
+  const fetchCompanies = async () => {
     try {
-      if (new Date(breakListData.bLEndDate) <= new Date(breakListData.bLStartDate)) {
-        notifyError("End date must be greater than start date.");
-        return;
-      }
-
-      const frequencyNumber = breakListData.bLFrqNo;
-      if (frequencyNumber <= 0) {
-        notifyError("Frequency number must be greater than 0.");
-        return;
-      }
-
-      const details = breakListData.frequencyDetails;
-
-      const result = await BreakListService.saveBreakList(token!, {
-        ...breakListData,
-        bLEndDate: breakListData.bLEndDate,
-        bLFrqNo: frequencyNumber,
-      });
-
-      if (result.success) {
-        if (result.data) {
-          notifySuccess("Break list saved successfully");
-          console.log("Saved details:", result.data);
-          onSave(result.data);
-        } else {
-          notifyError("Failed to retrieve data after saving.");
-          console.error("No data returned after save operation.");
+      const companyData: Company[] = await CompanyService.getCompanies();
+      if (companyData && companyData.length > 0) {
+        const companyOptions = companyData.map((company) => ({
+          label: company.compName,
+          value: company.compIDCompCode,
+        }));
+        setDropdownValues((prevState) => ({ ...prevState, companyOptions }));
+        // Optionally set the first company as default
+        if (companyData.length > 0) {
+          setSelectedCompany(companyData[0]);
+          setBreakListData(prev => ({
+            ...prev,
+            compID: parseInt(companyData[0].compIDCompCode, 10), // Assuming compIDCompCode is a numeric string, parse it to a number
+            compCode: companyData[0].compIDCompCode,
+            compName: companyData[0].compName,
+          }));
         }
       } else {
-        notifyError(result.errorMessage || "Failed to save break list");
-        console.error("Error message:", result.errorMessage);
+        console.error("Failed to fetch companies");
       }
     } catch (error) {
-      notifyError("An unexpected error occurred");
-      console.error("Unexpected error:", error);
+      console.error("Fetching companies failed:", error);
+      setErrorMessage("Failed to load companies.");
+    }
+  };
+
+
+  const handleSave = async () => {
+    debugger
+    try {
+      // Validate data
+      if (!breakListData.bLName || !breakListData.bLStartDate) {
+        throw new Error("Required fields are missing");
+      }
+
+      // Print payload for debugging
+      console.log('Payload being sent to API:', breakListData);
+
+      // Send data to API
+      const response = await BreakListService.saveBreakList(token!, breakListData);
+
+      // Handle success
+      console.log('Save successful:', response);
+      notifySuccess('Break List saved successfully');
+    } catch (error) {
+      console.error('Save failed:', error);
+      notifyError('Failed to save Break List');
     }
   };
 
@@ -262,21 +293,46 @@ const [, setSelectedResources] = useState<number[]>([]);
     });
   };
 
-
-
   const handleChangeFormToggle = () => {
     setShowChangeFormDialog(!showChangeFormDialog);
   };
 
 
+  const handleSaveChanges = (details: string, formattedEndDate: Date, frequencyCode: string, frequencyNumber: number, weekCodes?: string[]) => {
+    debugger;
 
-  const handleSaveChanges = (details: string) => {
-    setBreakListData({
-      ...breakListData,
-      frequencyDetails: details,
-    });
+    try {
+      // Log the formattedEndDate to see its current format
+      console.log("Formatted End Date:", formattedEndDate);
+
+      // Attempt to parse formattedEndDate
+      const parsedEndDate = new Date(formattedEndDate);
+
+      // Check if the parsed date is valid
+      if (isNaN(parsedEndDate.getTime())) {
+        throw new Error("Invalid end date format.");
+      }
+
+      // Ensure end date is greater than start date
+      if (parsedEndDate <= breakListData.bLStartDate) {
+        notifyError("End date must be greater than start date.");
+        return;
+      }
+
+      // Update the state with new values
+      setBreakListData(prev => ({
+        ...prev,
+        frequencyDetails: details,
+        bLEndDate: parsedEndDate,
+        bLFrqNo: frequencyNumber,
+        bLFrqDesc: frequencyCode,
+        bLFrqWkDesc: weekCodes?.join(",") || "",
+      }));
+    } catch (error) {
+      console.error("Error in handleSaveChanges:", error);
+      notifyError("Failed to save changes. Please check the date format.");
+    }
   };
-
 
 
 
@@ -296,18 +352,11 @@ const [, setSelectedResources] = useState<number[]>([]);
     }
   };
 
-
-
-
   useEffect(() => {
     if (breakListData.isPhyResYN === "Y") {
       fetchResources();
     }
   }, [breakListData.isPhyResYN]);
-
-
-
-
 
   useEffect(() => {
     const fetchPhysicians = async () => {
@@ -333,25 +382,19 @@ const [, setSelectedResources] = useState<number[]>([]);
     fetchPhysicians();
   }, [token, breakListData.compID]);
 
-
-
-
-   useEffect(() => {
+  useEffect(() => {
     fetchResources();
   }, [token]);
-
-
-
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
     const newValue = value as "Y" | "N";
-    console.log("Selected Radio Button Value:", newValue); 
+    console.log("Selected Radio Button Value:", newValue);
 
-    setBreakListData(prev => ({
+    setBreakListData((prev) => ({
       ...prev,
       isPhyResYN: newValue,
-      resources: newValue === "N" ? [] : prev.resources, 
+      resources: newValue === "N" ? [] : prev.resources,
     }));
 
     if (newValue === "Y") {
@@ -369,19 +412,13 @@ const [, setSelectedResources] = useState<number[]>([]);
     }
   };
 
-  
-  
-
-
-
-
   useEffect(() => {
     setBreakListData((prev) => {
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
 
       const endOfDay = new Date();
-      endOfDay.setHours(23, 59, 59, 999); 
+      endOfDay.setHours(23, 59, 59, 999);
 
       return {
         ...prev,
@@ -390,10 +427,6 @@ const [, setSelectedResources] = useState<number[]>([]);
       };
     });
   }, [isOneDay]);
-
-
-
-
 
   const handleSelectAllChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -414,31 +447,27 @@ const [, setSelectedResources] = useState<number[]>([]);
     });
   };
 
-
-
-
- const handleResourceCheckboxChange = (
+  const handleResourceCheckboxChange = (
     resourceID: number,
     checked: boolean
   ) => {
-    setBreakListData(prev => {
+    setBreakListData((prev) => {
       const updatedResources = checked
         ? [...prev.resources, { id: resourceID, value: resourceID, name: "" }]
-        : prev.resources.filter(res => res.id !== resourceID);
+        : prev.resources.filter((res) => res.id !== resourceID);
 
       // Update the selected resource names
       const updatedResourceNames = resourceList
-        .filter(resource => updatedResources.some(r => r.id === resource.rLID))
-        .map(resource => resource.rLName);
+        .filter((resource) =>
+          updatedResources.some((r) => r.id === resource.rLID)
+        )
+        .map((resource) => resource.rLName);
 
       setSelectedResourceNames(updatedResourceNames);
 
       return { ...prev, resources: updatedResources };
     });
   };
-
-
-
 
   const handleSelectAllPhysiciansChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -451,10 +480,6 @@ const [, setSelectedResources] = useState<number[]>([]);
     );
   };
 
-
-
-
-
   const handlePhysicianCheckboxChange = (id: number, checked: boolean) => {
     if (checked) {
       setSelectedPhysicians((prev) => [...prev, id]);
@@ -463,28 +488,18 @@ const [, setSelectedResources] = useState<number[]>([]);
         prev.filter((physicianId) => physicianId !== id)
       );
     }
-  
+
     // Update the selected physician names
     const updatedPhysicianNames = physicianList
       .filter((physician) => selectedPhysicians.includes(physician.value))
       .map((physician) => physician.label);
-  
+
     setSelectedPhysicianNames(updatedPhysicianNames);
   };
-
-
-
-
 
   const handleOneDayToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsOneDay(event.target.checked);
   };
-
-
-
-
-
-
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -492,7 +507,6 @@ const [, setSelectedResources] = useState<number[]>([]);
         BREAK LIST DETAILS
       </Typography>
 
-   
       <section>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12}>
@@ -527,7 +541,7 @@ const [, setSelectedResources] = useState<number[]>([]);
                   maxWidth: "30%",
                   overflow: "auto",
                   mb: 4,
-                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)", 
+                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
                 }}
               >
                 <Table stickyHeader>
@@ -549,15 +563,15 @@ const [, setSelectedResources] = useState<number[]>([]);
                       <TableRow
                         key={resource.rLID}
                         sx={{
-                          backgroundColor: "#ffffff", 
+                          backgroundColor: "#ffffff",
                           "&:hover": {
-                            backgroundColor: "#003366", 
+                            backgroundColor: "#003366",
                             "& td": {
-                              color: "#f0f0f0", 
+                              color: "#f0f0f0",
                             },
                           },
                           "& td": {
-                            color: "#000000", 
+                            color: "#000000",
                             padding: "3px 6px",
                           },
                         }}
@@ -575,7 +589,7 @@ const [, setSelectedResources] = useState<number[]>([]);
                             }
                             sx={{
                               "&.Mui-checked": {
-                                color: "#4CAF50", 
+                                color: "#4CAF50",
                                 padding: "4px 8px",
                               },
                             }}
@@ -623,15 +637,15 @@ const [, setSelectedResources] = useState<number[]>([]);
                       <TableRow
                         key={physician.value}
                         sx={{
-                          backgroundColor: "#ffffff", 
+                          backgroundColor: "#ffffff",
                           "&:hover": {
-                            backgroundColor: "#003366", 
+                            backgroundColor: "#003366",
                             "& td": {
-                              color: "#f0f0f0", 
+                              color: "#f0f0f0",
                             },
                           },
                           "& td": {
-                            color: "#000000", 
+                            color: "#000000",
                             padding: "3px 6px",
                           },
                         }}
@@ -748,12 +762,12 @@ const [, setSelectedResources] = useState<number[]>([]);
             <Grid item xs={12} sm={6} md={3} ml={2}>
               <TextArea
                 label="Description"
-                name="bLFrqWkDesc"
-                value={breakListData.bLFrqDesc || ""}
+                name="rNotes"
+                value={breakListData.rNotes || ""}
                 onChange={(e) =>
                   setBreakListData({
                     ...breakListData,
-                    bLFrqDesc: e.target.value,
+                    rNotes: e.target.value,
                   })
                 }
                 placeholder="Enter description"
@@ -782,7 +796,25 @@ const [, setSelectedResources] = useState<number[]>([]);
                 color="secondary"
               />
             </Grid>
+
+          
           </Grid>
+          <Grid item xs={12} sm={6} md={3} >
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={breakListData.rActiveYN === "Y"}
+                    onChange={(e) =>
+                      setBreakListData({
+                        ...breakListData,
+                        rActiveYN: e.target.checked ? "Y" : "N",
+                      })
+                    }
+                  />
+                }
+                label={breakListData.rActiveYN === "Y" ? "Active" : "Hidden"}
+              />
+            </Grid>
         </Grid>
       </section>
 
@@ -798,7 +830,6 @@ const [, setSelectedResources] = useState<number[]>([]);
         </Grid>
       </Grid>
 
-      
       <section>
         <FormSaveClearButton
           onSave={handleSave}
@@ -816,12 +847,10 @@ const [, setSelectedResources] = useState<number[]>([]);
         onClose={handleChangeFormToggle}
         onSave={handleSaveChanges}
         startDate={formatDateToDateString(breakListData.bLStartDate)}
-        bLFrqNo={breakListData.bLFrqNo}
+        frequencyNumber={breakListData.bLFrqNo}
       />
     </Paper>
   );
 };
 
 export default BreakListDetails;
-
-
