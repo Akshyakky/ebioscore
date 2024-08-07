@@ -10,7 +10,7 @@ import { UserListData } from "../../../../interfaces/SecurityManagement/UserList
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 import { UserListService } from "../../../../services/SecurityManagementServices/UserListService";
-import OperationPermissionDetails, { ModuleOperation } from "../../ProfileListPage/SubPage/OperationPermissionDetails";
+import OperationPermissionDetails, { ModuleOperation } from "../../CommonPage/OperationPermissionDetails";
 import { OperationPermissionDetailsDto } from "../../../../interfaces/SecurityManagement/OperationPermissionDetailsDto";
 
 interface OperationPermissionProps {
@@ -27,7 +27,6 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
   const [selectedUser, setSelectedUser] = useState<UserListData | null>(null);
   const [isSuperUser, setIsSuperUser] = useState<boolean>(false);
   const [permissions, setPermissions] = useState<ModuleOperation[]>([]);
-  const [reportPermissions, setReportPermissions] = useState<ModuleOperation[]>([]);
 
   const handleSuperUserChange = (isSuper: boolean) => {
     if (selectedUser) {
@@ -211,14 +210,3 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
 };
 
 export default UserListPage;
-
-
-
-
-
-
-
-
-
-
-

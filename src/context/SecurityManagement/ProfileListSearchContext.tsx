@@ -13,25 +13,20 @@ interface ProfileListSearchContextProps {
   updateProfileStatus: (profileID: number, status: string) => void;
 }
 
-export const ProfileListSearchContext =
-  createContext<ProfileListSearchContextProps>({
-    searchResults: [],
-    performSearch: async () => {},
-    fetchAllProfiles: async () => {},
-    updateProfileStatus: () => {},
-  });
+export const ProfileListSearchContext = createContext<ProfileListSearchContextProps>({
+  searchResults: [],
+  performSearch: async () => { },
+  fetchAllProfiles: async () => { },
+  updateProfileStatus: () => { },
+});
 
 interface ProfileListSearchProviderProps {
   children: React.ReactNode;
 }
 
-export const ProfileListSearchProvider = ({
-  children,
-}: ProfileListSearchProviderProps) => {
+export const ProfileListSearchProvider = ({ children }: ProfileListSearchProviderProps) => {
   const [allProfiles, setAllProfiles] = useState<ProfileListSearchResult[]>([]);
-  const [searchResults, setSearchResults] = useState<ProfileListSearchResult[]>(
-    []
-  );
+  const [searchResults, setSearchResults] = useState<ProfileListSearchResult[]>([]);
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo?.token;
@@ -40,10 +35,10 @@ export const ProfileListSearchProvider = ({
     if (!token) return;
     setLoading(true);
     try {
-      const profiles = await ProfileService.getAllProfileDetails(token);
-      console.log("Fetched profiles:", profiles);
-      if (profiles && profiles.length > 0) {
-        const mappedResults: ProfileListSearchResult[] = profiles.map(
+      const profilesResult = await ProfileService.getAllProfileDetails(token);
+      debugger;
+      if (profilesResult.success && profilesResult.data) {
+        const mappedResults: ProfileListSearchResult[] = profilesResult.data.map(
           (profile: ProfileListSearchResult) => ({
             profileID: profile.profileID,
             profileCode: profile.profileCode,
@@ -55,11 +50,9 @@ export const ProfileListSearchProvider = ({
         setAllProfiles(mappedResults);
         setSearchResults(mappedResults);
       } else {
-        console.error("Failed to fetch profiles: no data found");
-        notifyError("Failed to fetch profiles. Please try again.");
+        notifyError(profilesResult.errorMessage || "Failed to fetch profiles. Please try again.");
       }
     } catch (error) {
-      console.error("Error fetching profiles", error);
       notifyError("An error occurred while fetching profiles.");
     } finally {
       setLoading(false);
@@ -76,9 +69,7 @@ export const ProfileListSearchProvider = ({
     } else {
       const filteredResults = allProfiles.filter(
         (profile) =>
-          profile.profileName
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
+          profile.profileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           profile.profileCode.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setSearchResults(filteredResults);

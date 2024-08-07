@@ -21,15 +21,12 @@ import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import DeleteIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save"
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
-import { TextFields, Visibility, VisibilityOff } from "@mui/icons-material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 interface Company {
   compIDCompCode: string;
   compName: string;
 }
-
-
-
 interface UserDetailsProps {
   user: UserListData | null;
   onSave: (user: UserListData) => void;
@@ -74,7 +71,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
   onSave,
   onClear,
   refreshUsers,
-  //  updateUserStatus,
   onSuperUserChange
 }) => {
   const { token } = useSelector((state: RootState) => state.userDetails);
@@ -100,8 +96,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       setUserList(user);
       setIsSuperUser(user.adminUserYN === "Y");
       if (typeof user.appUAccess === 'string') {
-        setPassword(user.appUAccess); // Initialize password field with saved value
-        setConfirmPassword(user.appUAccess); // Initialize confirm password field with saved value
+        setPassword(user.appUAccess);
+        setConfirmPassword(user.appUAccess);
       }
     } else {
       setUserList(defaultUserListData);
@@ -110,13 +106,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       setConfirmPassword("");
     }
   }, [user]);
-  // Other useEffect and functions...
 
   const handleSuperUserChange = (e: ChangeEvent<HTMLInputElement>) => {
     const isSuper = e.target.checked;
     setUserList({ ...userList, adminUserYN: isSuper ? "Y" : "N" });
     setIsSuperUser(isSuper);
-    onSuperUserChange(isSuper); // Update parent state
+    onSuperUserChange(isSuper);
   };
 
   useEffect(() => {
@@ -131,17 +126,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({
         setImageUrl(url);
       } catch (error) {
         console.error('Error fetching image:', error);
-        // Handle error or set a default image URL
         setImageUrl('/path/to/default-image.jpg');
       }
     };
 
     fetchImage();
   }, [userList.digSignPath]);
-
-
-
-
 
   const handleDropdownChange = async (
     fieldNames: (keyof UserListData)[],
@@ -178,8 +168,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       setUserList(updatedState);
     }
   };
-
-  // appUAccess
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -243,29 +231,20 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     }
   }, [token]);
 
-
   const isPasswordValid = (value: string): boolean => {
-    // Regular expressions for password validation
     const hasCapital = /[A-Z]/.test(value);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value);
     const hasNumber = /\d/.test(value);
-
     return hasCapital && hasSpecialChar && hasNumber;
   };
-
-
 
   const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setPassword(newValue);
-
-    // Example of displaying validation message based on conditions
     if (!isPasswordValid(newValue)) {
       console.log('Password does not meet complexity requirements');
-      // Handle displaying error message or UI feedback here
     }
   };
-
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -288,12 +267,9 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     }
   };
 
-  
-
   const handleSave = async () => {
     setIsSubmitted(true);
 
-    // Validate password confirmation
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match");
       return;
@@ -359,8 +335,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <section>
         <Grid container spacing={2} alignItems="flex-start">
-
-
           <Grid item xs={12} sm={6} md={3}>
             <DropdownSelect
               name="SelectUser"
@@ -380,7 +354,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
             />
           </Grid>
 
-
           <Grid item xs={12} sm={6} md={3}>
             <FloatingLabelTextBox
               title="Login Name"
@@ -392,7 +365,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               value={userList.appCode || ""}
               onChange={(e) => {
                 const value = e.target.value;
-                // Allow only alphabets and numbers
                 if (/^[a-zA-Z0-9]*$/.test(value)) {
                   setUserList({ ...userList, appCode: value });
                 }
@@ -401,8 +373,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               isMandatory
             />
           </Grid>
-
-
 
           <Grid item xs={12} sm={6} md={3}>
             <TextField
@@ -435,10 +405,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               </Typography>
             )}
           </Grid>
-
-
-
-
           <Grid item xs={12} sm={6} md={3}>
             <TextField
               type={showConfirmPassword ? "text" : "password"}
@@ -475,10 +441,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
             )}
           </Grid>
 
-
-
-
-
           <Grid item xs={12} sm={6} md={3}>
             <DropdownSelect
               name="Company"
@@ -510,7 +472,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                   dropdownValues.profileOptions
                 )
               }
-              // isMandatory
               size="small"
               isSubmitted={isSubmitted}
             />
@@ -532,13 +493,8 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                 multiple={false}
                 name="digitalSignature"
               />
-
-
-
-
             </Grid>
           </Grid>
-
         </Grid>
       </section>
 
@@ -551,7 +507,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
           onChange={handleSuperUserChange}
         />
       </Grid>
-
 
       <Box sx={{ marginTop: 2 }}>
         <FormSaveClearButton

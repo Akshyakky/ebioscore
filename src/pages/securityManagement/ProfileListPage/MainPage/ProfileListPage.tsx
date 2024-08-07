@@ -2,45 +2,24 @@ import React, { useContext, useState } from "react";
 import { Box, Container } from "@mui/material";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import SearchIcon from "@mui/icons-material/Search";
-import ActionButtonGroup, {
-  ButtonProps,
-} from "../../../../components/Button/ActionButtonGroup";
+import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import ProfileDetails from "../SubPage/ProfileDetails";
 import ProfileListSearch from "../../CommonPage/AdvanceSearch/ProfileListSearch";
 import { ProfileListSearchContext } from "../../../../context/SecurityManagement/ProfileListSearchContext";
-import {
-  ProfileDetailDto,
-  ProfileListSearchResult,
-} from "../../../../interfaces/SecurityManagement/ProfileListData";
-import OperationPermissionDetails, { ModuleOperation } from "../SubPage/OperationPermissionDetails";
-import { OperationResult } from "../../../../interfaces/Common/OperationResult";
+import { ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
+import OperationPermissionDetails, { ModuleOperation } from "../../CommonPage/OperationPermissionDetails";
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 import { OperationPermissionDetailsDto } from "../../../../interfaces/SecurityManagement/OperationPermissionDetailsDto";
 
-interface OperationPermissionProps {
-  profileID: number;
-  profileName: string;
-  handleSelectAllChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-const ProfileListPage: React.FC<OperationPermissionProps> = ({
-  profileID,
-  profileName,
-}) => {
+const ProfileListPage: React.FC = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
-  const [selectedProfile, setSelectedProfile] =
-    useState<ProfileListSearchResult | null>(null);
-  const { fetchAllProfiles, updateProfileStatus } = useContext(
-    ProfileListSearchContext
-  );
-  const { token, compID } = useSelector(
-    (state: RootState) => state.userDetails
-  );
+  const [selectedProfile, setSelectedProfile] = useState<ProfileListSearchResult | null>(null);
+  const { fetchAllProfiles, updateProfileStatus } = useContext(ProfileListSearchContext);
+  const { token } = useSelector((state: RootState) => state.userDetails);
   const [permissions, setPermissions] = useState<ModuleOperation[]>([]);
-  const [, setSelectAllChecked] = useState(false);
 
   const handleAdvancedSearch = async () => {
     setIsSearchDialogOpen(true);
@@ -57,7 +36,7 @@ const ProfileListPage: React.FC<OperationPermissionProps> = ({
     setIsSaved(true);
   };
 
-  const handleSave = async (profile: ProfileListSearchResult) => {
+  const handleSave = (profile: ProfileListSearchResult) => {
     setIsSaved(true);
     setSelectedProfile(profile);
   };
@@ -72,97 +51,45 @@ const ProfileListPage: React.FC<OperationPermissionProps> = ({
   };
 
   const saveProfileDetails = async (permission: OperationPermissionDetailsDto): Promise<void> => {
-    //  debugger 
     if (selectedProfile && token) {
       try {
+        // Construct the payload with necessary fields
         const payload = {
           profDetID: permission.profDetID || 0,
           profileID: selectedProfile.profileID || 0,
           profileName: selectedProfile.profileName,
-          aOPRID: permission.aOPRID, // Assuming 'operationID' is 'aOPRID'
+          aOPRID: permission.aOPRID,
           compID: permission.compID || 0,
           rActiveYN: permission.rActiveYN,
           rNotes: permission.rNotes,
           reportYN: permission.reportYN,
         };
-        console.log("Payload:", payload);
-        
-        const result = await ProfileService.saveOrUpdateProfileDetail(token, payload);
 
-        if (result.success) {
+        const result = await ProfileService.saveOrUpdateProfileDetail(token, payload);
+        if (result.success && result.data) {
           const updatedPermission = {
             ...permission,
             profDetID: result.data?.profDetID,
           };
-          console.log("Updated permission:", updatedPermission);
 
-          // Update the state or context with the new profDetID
+          // Update permissions array
           const updatedPermissions = permissions.map((perm) =>
             perm.operationID === permission.aOPRID
               ? {
-                  ...perm,
-                  profDetID: result.data?.profDetID,
-                  allow: result.data?.rActiveYN === "Y" ? true : false,
-                 
-                }
+                ...perm,
+                profDetID: result.data?.profDetID,
+                allow: result.data?.rActiveYN === "Y",
+              }
               : perm
           );
 
           setPermissions(updatedPermissions);
+
         } else {
           console.error(`Error saving module permission ${permission.aOPRID}: ${result.errorMessage}`);
         }
       } catch (error) {
         console.error(`Error saving module permission ${permission.aOPRID}:`, error);
-      }
-    }
-  };
-
-  const handleSelectAllChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const allow = event.target.checked;
-    const updatedPermissions = permissions.map((permission) => ({
-      ...permission,
-      allow,
-    }));
-
-    setPermissions(updatedPermissions);
-    setSelectAllChecked(allow);
-
-    if (profileID) {
-      try {
-        const profileDetails: ProfileDetailDto[] = updatedPermissions.map(
-          (permission) => ({
-            profDetID: permission.profDetID || 0,
-            profileID: profileID,
-            profileName: profileName,
-            aOPRID: permission.operationID,
-            compID: compID!,
-            rActiveYN: allow ? "Y" : "N",
-            rNotes: "",
-            reportYN: "N",
-          })
-        );
-
-        for (const detail of profileDetails) {
-          const result: OperationResult<ProfileDetailDto> =
-            await ProfileService.saveOrUpdateProfileDetail(token!, detail);
-          if (result.success) {
-            const updatedPermission = permissions.find(
-              (permission) => permission.operationID === detail.aOPRID
-            );
-            if (updatedPermission) {
-              updatedPermission.profDetID = result.data?.profDetID;
-            }
-          } else {
-            console.error(
-              `Error saving permission ${detail.aOPRID}: ${result.errorMessage}`
-            );
-          }
-        }
-      } catch (error) {
-        console.error("Error saving permissions:", error);
       }
     }
   };
