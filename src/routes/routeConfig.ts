@@ -67,7 +67,6 @@ const routeConfig: RouteConfig[] = [
     providers: [PatientSearchProvider],
   },
 
-
   {
     path: "/ResourceListPage",
     component: ResourceListPage,
@@ -75,23 +74,18 @@ const routeConfig: RouteConfig[] = [
     providers: [ResourceListProvider],
   },
 
-
   {
     path: "/ReasonListPage",
     component: ReasonListPage,
     protected: true,
     providers: [ResourceListProvider],
   },
-
   {
     path: "/BreakListPage",
     component: BreakListPage,
     protected: true,
     providers: [ResourceListProvider],
   },
-
-
-  // Add more routes here as needed
   {
     path: "/appointmentpage",
     component: AppointmentPage,

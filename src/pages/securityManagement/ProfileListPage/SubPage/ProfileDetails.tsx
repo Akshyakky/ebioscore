@@ -4,10 +4,7 @@ import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTe
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import {
-  ProfileMastDto,
-  ProfileListSearchResult,
-} from "../../../../interfaces/SecurityManagement/ProfileListData";
+import { ProfileMastDto, ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import { OperationResult } from "../../../../interfaces/Common/OperationResult";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
@@ -31,10 +28,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   refreshProfiles,
   updateProfileStatus,
 }) => {
-  const { token, compID } = useSelector(
-    (state: RootState) => state.userDetails
-  );
-
+  const { token, compID } = useSelector((state: RootState) => state.userDetails);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const [profileMastDto, setProfileMastDto] = useState<ProfileMastDto>({
@@ -61,41 +55,30 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
 
   const handleSave = async () => {
     setIsSubmitted(true);
-    try {
-      if (profileMastDto.profileCode && profileMastDto.profileName) {
-        const result: OperationResult<ProfileMastDto> =
-          await ProfileService.saveOrUpdateProfile(token!, profileMastDto);
-
-        if (result.success) {
+    if (profileMastDto.profileCode && profileMastDto.profileName) {
+      try {
+        const result: OperationResult<ProfileMastDto> = await ProfileService.saveOrUpdateProfile(token!, profileMastDto);
+        if (result.success && result.data) {
           const savedProfile: ProfileListSearchResult = {
-            profileID: result.data!.profileID,
-            profileCode: result.data!.profileCode,
-            profileName: result.data!.profileName,
-            status: result.data!.rActiveYN === "N" ? "Hidden" : "Active",
-            rNotes: result.data!.rNotes,
+            profileID: result.data.profileID,
+            profileCode: result.data.profileCode,
+            profileName: result.data.profileName,
+            status: result.data.rActiveYN === "N" ? "Hidden" : "Active",
+            rNotes: result.data.rNotes,
           };
           onSave(savedProfile);
           refreshProfiles();
-          updateProfileStatus(
-            profileMastDto.profileID,
-            profileMastDto.rActiveYN === "N" ? "Hidden" : "Active"
-          );
+          updateProfileStatus(profileMastDto.profileID, profileMastDto.rActiveYN === "N" ? "Hidden" : "Active");
           notifySuccess("Profile saved successfully");
         } else {
           notifyError("Error saving profile");
         }
-      } else {
-        notifyError("Profile Code and Profile Name are required fields.");
+      } catch (error) {
+        console.error("Error saving profile:", error);
+        notifyError("Error saving profile");
       }
-    } catch (error: any) {
-      notifyError("Error saving profile");
-      if (error.response) {
-        console.error("Response data:", error.response.data);
-      } else if (error.request) {
-        notifyError("Error: No response received from server.");
-      } else {
-        console.error("Error message:", error.message);
-      }
+    } else {
+      notifyError("Profile Code and Profile Name are required fields.");
     }
   };
 
@@ -114,23 +97,17 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setProfileMastDto((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+    setProfileMastDto((prevState) => ({ ...prevState, [name]: value }));
   };
 
   const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setProfileMastDto((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+    setProfileMastDto((prevState) => ({ ...prevState, [name]: value }));
   };
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
-      <Typography variant="h6" id="insurance-details-header">
+      <Typography variant="h6" id="profile-details-header">
         PROFILE DETAILS
       </Typography>
       <section>
@@ -145,7 +122,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
               size="small"
               value={profileMastDto.profileCode}
               onChange={handleInputChange}
-              isMandatory={true}
+              isMandatory
               isSubmitted={isSubmitted}
               inputPattern={/^[a-zA-Z0-9 ]*$/}
               maxLength={10}
@@ -161,7 +138,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
               size="small"
               value={profileMastDto.profileName}
               onChange={handleInputChange}
-              isMandatory={true}
+              isMandatory
               isSubmitted={isSubmitted}
               inputPattern={/^[a-zA-Z0-9 ]*$/}
               maxLength={60}
@@ -173,7 +150,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             <TextArea
               label="Notes"
               name="rNotes"
-              value={profileMastDto.rNotes || ""}
+              value={profileMastDto.rNotes}
               onChange={handleTextAreaChange}
               placeholder="Notes"
               rows={2}
@@ -181,7 +158,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           </Grid>
         </Grid>
       </section>
-
       <FormSaveClearButton
         clearText="Clear"
         saveText="Save"
@@ -195,31 +171,3 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
 };
 
 export default ProfileDetails;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
