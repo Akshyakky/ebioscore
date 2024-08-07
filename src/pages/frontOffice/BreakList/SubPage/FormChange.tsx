@@ -23,11 +23,31 @@ import { notifyError, notifySuccess } from "../../../../utils/Common/toastManage
 interface ChangeFormDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (details: string, formattedEndDate: string) => void;
+  onSave: (details: string, formattedEndDate: Date, frequencyCode: string, frequencyNumber: number, weekCodes?: string[]) => void;
   startDate: string;
+  frequencyNumber: number;
 }
 
 const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+const frequencyCodeMap: Record<string, string> = {
+  None: "FO70",
+  Daily: "FO71",
+  Weekly: "FO72",
+  Monthly: "FO73",
+  Yearly: "FO74",
+};
+
+const weekdayCodeMap: Record<string, string> = {
+  Sunday: "FO75",
+  Monday: "FO76",
+  Tuesday: "FO77",
+  Wednesday: "FO78",
+  Thursday: "FO79",
+  Friday: "FO80",
+  Saturday: "FO81",
+};
+
 const formatDateToDateString = (date: string): string => {
   const d = new Date(date);
   return `${("0" + d.getDate()).slice(-2)}/${("0" + (d.getMonth() + 1)).slice(-2)}/${d.getFullYear()}`;
@@ -38,13 +58,13 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
   onClose,
   onSave,
   startDate,
+  frequencyNumber,
 }) => {
   const [frequency, setFrequency] = useState<string>("None");
   const [noRepeatEndDate, setNoRepeatEndDate] = useState<string>(startDate || "");
   const [everyDays, setEveryDays] = useState<number | "">("");
   const [endDate, setEndDate] = useState<string>(startDate || "");
   const [selectedWeekdays, setSelectedWeekdays] = useState<string[]>([]);
-  const [frequencyDetails, setFrequencyDetails] = useState<string>("");
 
   useEffect(() => {
     if (frequency === "None" && startDate) {
@@ -66,13 +86,6 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
     }
   };
 
-  const validateDates = (): boolean => {
-    const start = new Date(startDate);
-
-    const end = new Date(endDate);
-    return end > start;
-  };
-
   const handleEndDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newEndDate = event.target.value;
     setEndDate(newEndDate);
@@ -88,10 +101,8 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
   };
 
   const generateDetails = () => {
-    debugger 
     const formattedEndDate = formatDateToDateString(endDate);
 
-    // Adjusting details generation based on frequency
     let details = "";
     if (frequency === "None") {
       details = `No Repeat End Date: ${formatDateToDateString(noRepeatEndDate)}`;
@@ -106,25 +117,38 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
     }
     return details;
   };
- const handleSave = () => {
-    if (new Date(endDate) <= new Date(startDate)) {
+
+  const handleSave = () => {
+    const parsedEndDate = new Date(endDate);
+    const parsedStartDate = new Date(startDate);
+
+    if (parsedEndDate <= parsedStartDate) {
       notifyError("End date must be greater than start date.");
       return;
     }
-    const formattedEndDate = formatDateToDateString(new Date(endDate).toISOString());
+
+    const frequencyNumber = Number(everyDays) || 0;
+    if (frequencyNumber <= 0) {
+      notifyError("Frequency number must be greater than 0.");
+      return;
+    }
+
+    const frequencyCode = frequencyCodeMap[frequency] || "";
+    const weekCodes = frequency === "Weekly"
+      ? selectedWeekdays.map(day => weekdayCodeMap[day])
+      : [];
+
     const details = generateDetails();
-    setFrequencyDetails(details);
-    onSave(details, formattedEndDate); // Pass formattedEndDate
-  
-    console.log("Saved details:", details);
+    onSave(details, parsedEndDate, frequencyCode, frequencyNumber, weekCodes);
+
     notifySuccess("Details saved successfully.");
     onClose();
     console.log("End Date Value:", endDate);
-    console.log("Formatted End Date:", formattedEndDate);
+    console.log("Formatted End Date:", parsedEndDate);
+    console.log("Frequency Number Value:", frequencyNumber);
+    console.log("Frequency Code Value:", frequencyCode); // Log frequencyCode for verification
+    console.log("Weekday Codes:", weekCodes); // Log weekCodes for verification
   };
-  
- 
-
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -143,31 +167,14 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
                 value={frequency}
                 onChange={handleFrequencyChange}
               >
-                <FormControlLabel
-                  value="None"
-                  control={<Radio />}
-                  label="None"
-                />
-                <FormControlLabel
-                  value="Daily"
-                  control={<Radio />}
-                  label="Daily"
-                />
-                <FormControlLabel
-                  value="Weekly"
-                  control={<Radio />}
-                  label="Weekly"
-                />
-                <FormControlLabel
-                  value="Monthly"
-                  control={<Radio />}
-                  label="Monthly"
-                />
-                <FormControlLabel
-                  value="Yearly"
-                  control={<Radio />}
-                  label="Yearly"
-                />
+                {Object.keys(frequencyCodeMap).map((freq) => (
+                  <FormControlLabel
+                    key={freq}
+                    value={freq}
+                    control={<Radio />}
+                    label={freq}
+                  />
+                ))}
               </RadioGroup>
             </FormControl>
           </Grid>
@@ -241,8 +248,8 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
                 </>
               )}
 
-              {/* Weekly Frequency Details */}
-              {frequency === "Weekly" && (
+                 {/* Weekly Frequency Details */}
+                 {frequency === "Weekly" && (
                 <>
                   <Grid item xs={12} sm={8} md={7} mt={4}>
                     <Box display="flex" alignItems="center">
@@ -271,9 +278,9 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
                     </Box>
                   </Grid>
 
-                  <Grid item xs={12} sm={7} md={6} mt={2}>
-                    <Typography variant="body1" sx={{ mb: 2 }} fontWeight={600}>
-                      On :
+                  <Grid item xs={12} sm={12} md={12} mt={4}>
+                    <Typography variant="body1" fontWeight={600}>
+                      Select Weekdays:
                     </Typography>
                     <FormGroup>
                       {weekdays.map((day) => (
@@ -292,7 +299,7 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
                     </FormGroup>
                   </Grid>
 
-                  <Grid item xs={12} sm={8} md={7} mt={2}>
+                  <Grid item xs={12} sm={7} md={6} mt={4}>
                     <Box display="flex" alignItems="center">
                       <Typography
                         variant="body1"
@@ -460,10 +467,3 @@ const ChangeFormDialog: React.FC<ChangeFormDialogProps> = ({
 };
 
 export default ChangeFormDialog;
-
-
-
-
-
-
-
