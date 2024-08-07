@@ -4,6 +4,7 @@ export interface Resource {
   name: string;
 }
 export interface BreakListData {
+  hPLID: number;
   bLID: number;
   bLName: string;
   bLStartTime: Date;   // Adjusted to Date
@@ -30,6 +31,10 @@ export interface BreakListData {
   resources: any[];    // Adjust if you have a specific type for resources
   frequencyDetails: string;
 }
+
+
+
+
 
 
 

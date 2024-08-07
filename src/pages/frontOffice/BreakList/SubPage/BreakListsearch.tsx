@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useCallback } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import {
@@ -18,10 +20,15 @@ import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
 import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
-import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
 import { debounce } from "../../../../utils/Common/debounceUtils";
 import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListService";
+import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices";
+import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
+import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
+import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
+import { PhysicianValue } from "../../../../interfaces/Common/DropdownOption";
 
 interface BreakListSearchProps {
   show: boolean;
@@ -29,6 +36,12 @@ interface BreakListSearchProps {
   onEditBreak: (breakList: BreakListData) => void;
   selectedBreak: BreakListData | null;
 }
+
+interface Physician {
+  value: number;
+  label: string;
+}
+
 
 const BreakListSearch: React.FC<BreakListSearchProps> = ({
   show,
@@ -41,18 +54,33 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
   const [searchResults, setSearchResults] = useState<BreakListData[]>([]);
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
-  const [isPhyResYN, setIsPhyResYN] = useState("Y"); 
-
-
+  const [isPhyResYN,] = useState("Y"); 
+  const [resources, setResources] = useState<{ [id: number]: string }>({});
+  const [physicians, setPhysicians] = useState<{ [id: number]: string }>({});
+  const [resourceList, setResourceList] = useState<ResourceListData[]>([]);
   const [breakListData, setBreakListData] = useState<BreakListData | null>(null);
+  const [breakConDetails, setBreakConDetails] = useState<BreakConDetailData[]>([]);
+  const [, setLoadingResources] = useState(false);
+  const [, setLoadingPhysicians] = useState(false);
+  const [physicianList, setPhysicianList] = useState<Physician[]>([]);
 
   // Fetch break list details when a break list is selected for editing
   useEffect(() => {
     if (selectedBreak) {
+      console.log("Selected break:", selectedBreak);
       setBreakListData(selectedBreak);
+    } else {
+      console.error("Selected break is null or undefined.");
+      setBreakListData(null); // Handle the null case
     }
   }, [selectedBreak]);
 
+
+
+  
+
+ 
+ 
 
   const performSearch = async (searchQuery: string) => {
     setIsLoading(true);
@@ -87,6 +115,8 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
   useEffect(() => {
     if (show) {
       performSearch("");
+      fetchBreakConDetails();
+
     }
   }, [show]);
 
@@ -155,6 +185,66 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
       notifyError("Error updating break list status.");
     }
   };
+
+
+  const fetchResources = async () => {
+    setLoadingResources(true);
+    try {
+      const result = await ResourceListService.getAllResourceLists(token!);
+      if (result.success) {
+        setResourceList(result.data ?? []);
+      } else {
+        notifyError(result.errorMessage || "Failed to fetch resource list.");
+      }
+    } catch (error) {
+      notifyError("An error occurred while fetching the resource list.");
+    } finally {
+      setLoadingResources(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (breakListData?.isPhyResYN === "Y") {
+      fetchResources();
+    }
+  }, [breakListData?.isPhyResYN]);
+  
+  useEffect(() => {
+    const fetchPhysicians = async () => {
+      setLoadingPhysicians(true);
+      try {
+        const response = await ContactMastService.fetchAttendingPhysician(
+          token!,
+          "GetActiveConsultants",
+          breakListData?.compID || 0
+        );
+        const physicianOptions = response.map((item: any) => ({
+          value: item.value,
+          label: item.label,
+        }));
+        setPhysicianList(physicianOptions);
+      } catch (error) {
+        console.error("Failed to fetch physicians:", error);
+      } finally {
+        setLoadingPhysicians(false);
+      }
+    };
+  
+    fetchPhysicians();
+  }, [token, breakListData?.compID]);
+  
+  const fetchBreakConDetails = async () => {
+    try {
+      const result = await BreakListConDetailsService.getAllBreakConDetails(token!);
+      if (result.success && result.data) {
+        setBreakConDetails(result.data);
+      } else {
+        console.error("Failed to fetch break condition details.");
+      }
+    } catch (error) {
+      console.error("Error fetching break condition details:", error);
+    }
+  };
  
   const columns = [
     {
@@ -171,11 +261,28 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
     },
     { key: "serialNumber", header: "Sl.No", visible: true },
     { key: "bLName", header: "Break Name", visible: true },
-    { key: "bLName", header: "Provider Name", visible: true },
     {
-      key: "bLName",
-      header: isPhyResYN === "Y" ? "Resource Name" : "Physician Name",
-      visible: true
+      key: "name",
+      header: "Name",
+      visible: true,
+      render: (row: BreakListData) => {
+        const detail = breakConDetails.find((detail) => detail.bLID === row.bLID);
+  
+        if (!detail) {
+          return "N/A";
+        }
+  
+        const resourceName = resources[detail.hPLID] || "N/A";
+        const physicianName = physicianList.find((physician: Physician) => physician.value === detail.hPLID)?.label || "N/A";
+  
+        if (isPhyResYN === "Y") {
+          return resourceName;
+        } else if (isPhyResYN === "N") {
+          return physicianName;
+        }
+  
+        return "N/A";
+      },
     },
     {
       key: "recordStatus",
@@ -278,3 +385,4 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
 };
 
 export default BreakListSearch;
+      

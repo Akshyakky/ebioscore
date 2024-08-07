@@ -38,6 +38,8 @@ import { ContactMastService } from "../../../../services/CommonServices/ContactM
 import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
 import { CompanyService } from "../../../../services/CommonServices/CompanyService";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
+import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
 
 interface BreakListDetailsProps {
   breakData: BreakListData | null;
@@ -60,7 +62,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   formattedEndDate,
   frequencyNumber
 }) => {
-  const [isSubmitted] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [resourceList, setResourceList] = useState<ResourceListData[]>([]);
   const [, setLoadingResources] = useState(false);
@@ -77,7 +79,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   const [, setSelectedResourceNames] = useState<string[]>([]);
   const [, setSelectedPhysicianNames] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
-  const [, setSelectedResources] = useState<number[]>([]);
+  const [selectedResources, setSelectedResources] = useState<number[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null); // New state for selected company
   const [dropdownValues, setDropdownValues] = useState({
     categoryOptions: [] as DropdownOption[],
@@ -116,6 +118,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     transferYN: breakData?.transferYN || "N",
     resources: breakData?.resources || [],
     frequencyDetails: breakData?.frequencyDetails || "",
+    hPLID:breakData?.hPLID||0
   });
 
   useEffect(() => {
@@ -238,28 +241,93 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   };
 
 
-  const handleSave = async () => {
-    debugger
+
+
+
+  const handleSaveBreakConDetail = async (breakConDetailData: BreakConDetailData) => {
+    // Ensure all required fields are set
+    const payload = {
+      hPLID: breakConDetailData.hPLID ?? null,
+      bCDID: breakConDetailData.bCDID || 0,
+      bLID: breakConDetailData?.bLID || 0,
+      rActiveYN: breakConDetailData.rActiveYN || "N",
+      rCreatedID: breakConDetailData.rCreatedID || 0,
+      rCreatedBy: breakConDetailData.rCreatedBy || "",
+      rCreatedOn: breakConDetailData.rCreatedOn || new Date().toISOString(),
+      rModifiedID: breakConDetailData.rModifiedID || 0,
+      rModifiedBy: breakConDetailData.rModifiedBy || "",
+      rModifiedOn: breakConDetailData.rModifiedOn || new Date().toISOString(),
+      rNotes: breakConDetailData?.rNotes || "",
+      transferYN: breakConDetailData.transferYN || "N",
+      compID: breakConDetailData?.compID || 0,
+      compCode: breakConDetailData?.compCode || "",
+      compName: breakConDetailData?.compName || "",
+    };
+    
+  
+    console.log('Payload being sent:', payload); // Debugging payload
+  
     try {
-      // Validate data
-      if (!breakListData.bLName || !breakListData.bLStartDate) {
-        throw new Error("Required fields are missing");
+      const response = await BreakListConDetailsService.saveBreakConDetail(token!, breakConDetailData);
+      if (response.success) {
+        notifySuccess('Break Condition Detail saved successfully');
+      } else {
+        throw new Error(response.errorMessage || 'Failed to save Break Condition Detail');
       }
+    } catch (error) {
+      console.error('Save failed:', error);
+      notifyError('Failed to save Break Condition Detail');
+    }
+  };
+  
+   const handleSave = async () => {
+    try {
+      // Save Break List
+      const breakListResponse = await BreakListService.saveBreakList(token!, breakListData);
+  
+      if (breakListResponse.success) {
+        notifySuccess('Break List saved successfully');
 
-      // Print payload for debugging
-      console.log('Payload being sent to API:', breakListData);
+        const breakConDetailData: BreakConDetailData = {
+          hPLID: breakListData.isPhyResYN === "Y"
+            ? (selectedResources.length > 0 ? selectedResources[0] : 0) // Ensure we use the selected resource ID if available
+            : (selectedPhysicians.length > 0 ? selectedPhysicians[0] : 0), // Ensure we use the selected physician ID if available
+          bCDID: 0, // Use the exact value for bCDID from response
+          bLID: breakListResponse.data?.bLID || 0,
+          rActiveYN: breakListData?.rActiveYN || "",
+          rCreatedID: breakListData?.rCreatedID || 0,
+          rCreatedBy: breakListData?.rCreatedBy || "",
+          rCreatedOn: new Date(breakListData?.rCreatedOn || new Date()),
+          rModifiedID: breakListData?.rCreatedID || 0,
+          rModifiedBy: breakListData?.rModifiedBy || "",
+          rModifiedOn: new Date(breakListData?.rModifiedOn || new Date()),
+          rNotes: breakListData?.rNotes || "",
+          compID: breakListData?.compID || 0,
+          compCode: breakListData?.compCode || "",
+          compName: breakListData?.compName || "",
+          transferYN: breakListData?.transferYN || "N",
+        };
 
-      // Send data to API
-      const response = await BreakListService.saveBreakList(token!, breakListData);
+        // Debug logging
+        console.log("Prepared BreakConDetailData:", breakConDetailData);
 
-      // Handle success
-      console.log('Save successful:', response);
-      notifySuccess('Break List saved successfully');
+        // Save Break Condition Detail
+        try {
+          await handleSaveBreakConDetail(breakConDetailData);
+        } catch (error: any) {
+          console.error('Error in operation:', error.message || 'An unknown error occurred.');
+          notifyError('Failed to save Break Condition Detail');
+        }
+      } else {
+        throw new Error(breakListResponse.errorMessage || "Failed to save Break List");
+      }
     } catch (error) {
       console.error('Save failed:', error);
       notifyError('Failed to save Break List');
     }
   };
+  
+  
 
 
   const handleClear = () => {
@@ -290,6 +358,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       transferYN: "N",
       resources: [],
       frequencyDetails: "",
+      hPLID:0
     });
   };
 
@@ -351,6 +420,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       setLoadingResources(false);
     }
   };
+  
 
   useEffect(() => {
     if (breakListData.isPhyResYN === "Y") {
@@ -467,6 +537,15 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
 
       return { ...prev, resources: updatedResources };
     });
+
+    // Update selectedResources to reflect the selected state
+    if (checked) {
+      setSelectedResources((prev) => [...prev, resourceID]);
+    } else {
+      setSelectedResources((prev) =>
+        prev.filter((resId) => resId !== resourceID)
+      );
+    }
   };
 
   const handleSelectAllPhysiciansChange = (
