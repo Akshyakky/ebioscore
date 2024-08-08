@@ -1,8 +1,5 @@
-export interface Resource {
-  // Define the structure of a resource item if applicable
-  id: number;
-  name: string;
-}
+
+
 export interface BreakListData {
   hPLID: number;
   bLID: number;
@@ -24,11 +21,11 @@ export interface BreakListData {
   rModifiedOn: Date;   // Adjusted to Date
   rNotes?: string;     // Nullable
   isPhyResYN: 'Y' | 'N'; // Use 'Y' and 'N' to match the char type
-  compID?: number;     // Nullable
+  compID: number;     // Nullable
   compCode?: string;   // Nullable
   compName?: string;   // Nullable
   transferYN?: 'Y' | 'N'; // Nullable and use 'Y' and 'N' to match the char type
-  resources: any[];    // Adjust if you have a specific type for resources
+  resources: string;    // Adjust if you have a specific type for resources
   frequencyDetails: string;
 }
 

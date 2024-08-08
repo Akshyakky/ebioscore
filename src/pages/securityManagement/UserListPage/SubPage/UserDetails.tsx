@@ -22,6 +22,7 @@ import DeleteIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save"
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { OperationResult } from "../../../../interfaces/Common/OperationResult";
 
 interface Company {
   compIDCompCode: string;
@@ -207,10 +208,10 @@ const UserDetails: React.FC<UserDetailsProps> = ({
 
     const fetchProfiles = async () => {
       try {
-        const profileData: ProfileListSearchResult[] =
+        const result: OperationResult<ProfileListSearchResult[]> =
           await ProfileService.getAllProfileDetails(token!);
-        if (profileData && profileData.length > 0) {
-          const profileOptions = profileData.map((profile) => ({
+        if (result.success && result.data && result.data.length > 0) {
+          const profileOptions = result.data.map((profile) => ({
             label: profile.profileName,
             value: profile.profileID.toString(),
           }));

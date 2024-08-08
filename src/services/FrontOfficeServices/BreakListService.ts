@@ -77,23 +77,23 @@ const getBreakListById = async (
 // Service to fetch all break lists
 const getAllBreakLists = async (
   token: string
-): Promise<OperationResult<BreakListData[]>> => {
+): Promise<OperationResult<any[]>> => {
   try {
-    const url = `${APIConfig.frontOffice}BreakList/GetAllBreakLists`;
+    const url = `${APIConfig.frontOffice}BreakConDetail/GetAllBreakConDetails`;
     const headers = {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     };
 
-    const response = await axios.get<OperationResult<BreakListData[]>>(url, { headers });
-
+    const response = await axios.get<OperationResult<any[]>>(url, { headers });
+debugger
     if (!response.data.success) {
       throw new Error(response.data.errorMessage || "Failed to fetch break lists.");
     }
 
     return response.data;
   } catch (error: any) {
-    return handleError<BreakListData[]>(error);
+    return handleError(error);
   }
 };
 
