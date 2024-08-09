@@ -24,7 +24,7 @@ const saveBreakConDetail = async (
   token: string,
   breakConDetailData: BreakConDetailData
 ): Promise<OperationResult<BreakConDetailData>> => {
-debugger 
+debugger
   try {
     const url = `${APIConfig.frontOffice}BreakConDetail/SaveBreakConDetail`;
     const headers = {
@@ -53,29 +53,31 @@ debugger
 
 
 // Service to get all break condition details
-const getAllBreakConDetails = async (token: string): Promise<OperationResult<BreakConDetailData[]>> => {
-  debugger 
+
+
+
+ const getAllBreakConDetails = async (
+  token: string
+): Promise<OperationResult<any[]>> => {
   try {
     const url = `${APIConfig.frontOffice}BreakConDetail/GetAllBreakConDetails`;
     const headers = {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
 
-    const response = await axios.get<OperationResult<BreakConDetailData[]>>(url, { headers });
-
-    if (response.data && response.data.success !== undefined) {
-      if (!response.data.success) {
-        throw new Error(response.data.errorMessage || 'Failed to fetch break condition details.');
-      }
-      return response.data;
-    } else {
-      throw new Error('Invalid response format received.');
+    const response = await axios.get<OperationResult<any[]>>(url, { headers });
+debugger
+    if (!response.data.success) {
+      throw new Error(response.data.errorMessage || "Failed to fetch break lists.");
     }
+
+    return response.data;
   } catch (error: any) {
-    return handleError<BreakConDetailData[]>(error);
+    return handleError(error);
   }
 };
+
 
 // Service to update physician or resource name
 
@@ -85,7 +87,8 @@ const updateBreakConDetailActiveStatus = async (
   token: string,
   bCDID: number,
   isActive: boolean
-): Promise<OperationResult<void>> => {
+): Promise<OperationResult<any[]>> => {
+  debugger 
   try {
     const url = `${APIConfig.frontOffice}BreakConDetail/UpdateBreakConDetailActiveStatus/${bCDID}`;
     const headers = {
@@ -93,9 +96,9 @@ const updateBreakConDetailActiveStatus = async (
       'Content-Type': 'application/json',
     };
 
-    const response = await axios.put<OperationResult<void>>(
+    const response = await axios.put<OperationResult<any[]>>(
       url,
-      { isActive },
+      { isActive }, // Check if this matches the API's expected payload format
       { headers }
     );
 
@@ -108,9 +111,13 @@ const updateBreakConDetailActiveStatus = async (
       throw new Error('Invalid response format received.');
     }
   } catch (error: any) {
-    return handleError<void>(error);
+    return handleError(error);
   }
 };
+
+
+
+
 
 // New service to get break condition detail by ID
 const getBreakConDetailById = async (

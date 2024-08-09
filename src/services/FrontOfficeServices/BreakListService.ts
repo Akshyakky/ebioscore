@@ -21,9 +21,11 @@ const handleError = <T>(error: any): OperationResult<T> => {
 
 // Service to save break list data
 const saveBreakList = async (
+
   token: string,
   breakListData: BreakListData
 ): Promise<OperationResult<BreakListData>> => {
+  debugger 
   try {
     const url = `${APIConfig.frontOffice}BreakList/SaveBreakList`;
     const headers = {
@@ -79,7 +81,7 @@ const getAllBreakLists = async (
   token: string
 ): Promise<OperationResult<any[]>> => {
   try {
-    const url = `${APIConfig.frontOffice}BreakConDetail/GetAllBreakConDetails`;
+    const url = `${APIConfig.frontOffice}BreakList/GetAllBreakLists`;
     const headers = {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",

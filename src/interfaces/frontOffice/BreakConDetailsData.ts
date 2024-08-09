@@ -25,7 +25,7 @@
 
 export interface BreakConDetailData {
   bCDID: number;
-  bLID: number;
+  blID: number;
   hPLID: number;
   rActiveYN: string; // Ensure these are single characters
   rCreatedID: number;
@@ -39,7 +39,7 @@ export interface BreakConDetailData {
   compCode?: string | null;
   compName?: string | null;
   transferYN?: 'Y' | 'N' | null; // Ensure this is a single character
-  recordStatus?: 'Y' | 'N' | null;
+  recordStatus?: string;
 }
 
 
