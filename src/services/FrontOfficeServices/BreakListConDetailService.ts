@@ -20,9 +20,11 @@ const handleError = <T>(error: any): OperationResult<T> => {
 
 // Service to save break condition details
 const saveBreakConDetail = async (
+
   token: string,
   breakConDetailData: BreakConDetailData
 ): Promise<OperationResult<BreakConDetailData>> => {
+debugger 
   try {
     const url = `${APIConfig.frontOffice}BreakConDetail/SaveBreakConDetail`;
     const headers = {
@@ -49,8 +51,10 @@ const saveBreakConDetail = async (
   }
 };
 
+
 // Service to get all break condition details
 const getAllBreakConDetails = async (token: string): Promise<OperationResult<BreakConDetailData[]>> => {
+  debugger 
   try {
     const url = `${APIConfig.frontOffice}BreakConDetail/GetAllBreakConDetails`;
     const headers = {

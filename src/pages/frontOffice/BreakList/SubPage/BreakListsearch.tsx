@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useCallback } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import {
@@ -20,9 +22,13 @@ import EditIcon from "@mui/icons-material/Edit";
 import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
 import { debounce } from "../../../../utils/Common/debounceUtils";
 import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListService";
+import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
+import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices";
 import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
+import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
 import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
+import { PhysicianValue } from "../../../../interfaces/Common/DropdownOption";
 
 interface BreakListSearchProps {
   show: boolean;
@@ -30,6 +36,8 @@ interface BreakListSearchProps {
   onEditBreak: (breakList: BreakListData) => void;
   selectedBreak: BreakListData | null;
 }
+
+
 
 const BreakListSearch: React.FC<BreakListSearchProps> = ({
   show,
@@ -42,8 +50,15 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
   const [searchResults, setSearchResults] = useState<BreakListData[]>([]);
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
-  const [, setBreakListData] = useState<BreakListData | null>(null);
+  const [isPhyResYN] = useState("Y"); 
+  const [resources, setResources] = useState<{ [id: number]: string }>({});
+  const [physicians, setPhysicians] = useState<{ [id: number]: string }>({});
+  const [, setResourceList] = useState<ResourceListData[]>([]);
+  const [breakListData, setBreakListData] = useState<BreakListData | null>(null);
   const [, setBreakConDetails] = useState<BreakConDetailData[]>([]);
+  const [, setLoadingResources] = useState(false);
+  const [, setLoadingPhysicians] = useState(false);
+  const [physicianList, setPhysicianList] = useState<PhysicianValue[]>([]);
 
   useEffect(() => {
     if (selectedBreak) {
@@ -56,6 +71,7 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
   }, [selectedBreak]);
 
   const performSearch = async (searchQuery: string) => {
+    debugger 
     setIsLoading(true);
     try {
       const result = await BreakListService.getAllBreakLists(token!);
@@ -153,6 +169,64 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
     }
   };
 
+  const fetchResources = async () => {
+    setLoadingResources(true);
+    try {
+      const result = await ResourceListService.getAllResourceLists(token!);
+      if (result.success) {
+
+        if (result.data) {
+          const resourcesData = result.data.reduce((acc, resource) => {
+            acc[resource.rLID] = resource.rLName; // Adjust property names as needed
+            return acc;
+          }, {} as { [id: number]: string });
+          setResources(resourcesData);
+        } else {
+          console.error("No data returned from the API.");
+        }
+      } else {
+        notifyError(result.errorMessage || "Failed to fetch resource list.");
+      }
+    } catch (error) {
+      notifyError("An error occurred while fetching the resource list.");
+    } finally {
+      setLoadingResources(false);
+    }
+  };
+
+  useEffect(() => {
+    if (breakListData?.isPhyResYN === "Y") {
+      fetchResources();
+    }
+  }, [breakListData?.isPhyResYN]);
+
+  useEffect(() => {
+    const fetchPhysicians = async () => {
+      setLoadingPhysicians(true);
+      try {
+        const response = await ContactMastService.fetchAttendingPhysician(
+          token!,
+          "GetActiveConsultants",
+          breakListData?.compID || 0
+        );
+        // Directly use the response as it's already an array of DropdownOption
+        const physiciansData = response.reduce((acc, physician) => {
+          if (typeof physician.value === 'number') {
+            acc[physician.value] = physician.label;
+          }
+          return acc;
+        }, {} as { [id: number]: string });
+        setPhysicians(physiciansData);
+      } catch (error) {
+        console.error("Failed to fetch physicians:", error);
+      } finally {
+        setLoadingPhysicians(false);
+      }
+    };
+
+    fetchPhysicians();
+  }, [token, breakListData?.compID]);
+
   useEffect(() => {
     const fetchBreakConDetails = async () => {
       debugger 
@@ -171,6 +245,9 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
 
     fetchBreakConDetails();
   }, [token]);
+
+  
+
 
   const columns = [
     {
@@ -218,7 +295,7 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
     ...item,
     serialNumber: index + 1,
   }));
-  console.log("Data with Index:", dataWithIndex); 
+  console.log("Data with Index:", dataWithIndex); // Add this to verify the mapping
   
 
   const handleDialogClose = () => {
@@ -235,7 +312,7 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
   return (
     <Dialog
       open={show}
-      onClose={(reason) => {
+      onClose={(event, reason) => {
         if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
           handleDialogClose();
         }

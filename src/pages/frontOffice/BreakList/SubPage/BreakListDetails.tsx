@@ -73,13 +73,11 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   const [, setLoadingPhysicians] = useState(false);
   const [selectedPhysicians, setSelectedPhysicians] = useState<number[]>([]);
   const [endDateState, setEndDateState] = useState<Date>(formattedEndDate);
-  const [, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [, setAnchorElPhysician] = useState<null | HTMLElement>(null);
   const [, setSelectedResourceNames] = useState<string[]>([]);
   const [, setSelectedPhysicianNames] = useState<string[]>([]);
   const [, setErrorMessage] = useState("");
   const [selectedResources, setSelectedResources] = useState<number[]>([]);
-  const [, setSelectedCompany] = useState<Company | null>(null); 
+  const [, setSelectedCompany] = useState<Company | null>(null);
   const [, setDropdownValues] = useState({
     categoryOptions: [] as DropdownOption[],
     usersOptions: [] as DropdownOption[],
@@ -106,7 +104,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     rModifiedBy: breakData?.rModifiedBy || "",
     rModifiedOn: new Date(breakData?.rModifiedOn || new Date()),
     rNotes: breakData?.rNotes || "",
-    isPhyResYN: breakData?.isPhyResYN ?? "N",
+    isPhyResYN: breakData?.isPhyResYN ?? "Y",
     compID: breakData?.compID || 0,
     compCode: breakData?.compCode || "",
     compName: breakData?.compName || "",
@@ -115,31 +113,8 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     frequencyDetails: breakData?.frequencyDetails || "",
     hPLID: breakData?.hPLID || 0
   });
-  
 
-  const getResourceNameById = (id: number): string => {
-    const resource = resourceList.find((res) => res.rLID === id);
-    return resource ? resource.rLName : "";
-  };
 
-  // Function to get physician name by ID
-  const getPhysicianNameById = (id: number): string => {
-    const physician = physicianList.find((phy) => phy.value === id);
-    return physician ? physician.label : "";
-  };
-
-  useEffect(() => {
-    if (breakListData.hPLID > 0) {
-      const name = breakListData.isPhyResYN === "Y"
-        ? getResourceNameById(breakListData.hPLID)
-        : getPhysicianNameById(breakListData.hPLID);
-
-      setBreakListData(prev => ({
-        ...prev,
-        conResName: name
-      }));
-    }
-  }, [breakListData.hPLID, breakListData.isPhyResYN, resourceList, physicianList]);
 
   useEffect(() => {
     setEndDateState(formattedEndDate);
@@ -154,7 +129,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       ...prev,
       rActiveYN: breakData?.rActiveYN || "N",
       isPhyResYN: breakData?.isPhyResYN ?? "N",
-      // Ensure other fields are updated accordingly
     }));
   }, [breakData]);
 
@@ -273,14 +247,12 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
 
 
 
-
-
   const handleSaveBreakConDetail = async (breakConDetailData: BreakConDetailData) => {
     // Ensure all required fields are set
     const payload = {
       hPLID: breakConDetailData.hPLID ?? null,
       bCDID: breakConDetailData.bCDID || 0,
-      bLID: breakConDetailData?.blID || 0,
+      bLID: breakConDetailData?.bCDID || 0,
       rActiveYN: breakConDetailData.rActiveYN || "N",
       rCreatedID: breakConDetailData.rCreatedID || 0,
       rCreatedBy: breakConDetailData.rCreatedBy || "",
@@ -293,8 +265,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       compID: breakConDetailData?.compID || 0,
       compCode: breakConDetailData?.compCode || "",
       compName: breakConDetailData?.compName || "",
-      conResName:breakConDetailData?.conResName || "",
-      breakName:breakConDetailData?.breakName || "",
       recordStatus:breakConDetailData?.transferYN || "N"
     };
     
@@ -313,22 +283,27 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       notifyError('Failed to save Break Condition Detail');
     }
   };
-  
-  
+
+
   const handleSave = async () => {
     try {
-      const breakListResponse = await BreakListService.saveBreakList(token!, breakListData);
-
+      const rActiveYN = breakListData.isPhyResYN === "Y" ? "N" : "Y";
+  
+      const breakListResponse = await BreakListService.saveBreakList(token!, {
+        ...breakListData,
+        rActiveYN
+      });
+  
       if (breakListResponse.success) {
         notifySuccess('Break List saved successfully');
-
+  
         const breakConDetailData: BreakConDetailData = {
           hPLID: breakListData.isPhyResYN === "Y"
             ? (selectedResources.length > 0 ? selectedResources[0] : 0)
             : (selectedPhysicians.length > 0 ? selectedPhysicians[0] : 0),
           bCDID: 0,
-          blID: breakListResponse.data?.bLID || 0,
-          rActiveYN: breakListData.rActiveYN || "N",
+          bLID: breakListResponse.data?.bLID || 0,
+          rActiveYN,
           rCreatedID: breakListData?.rCreatedID || 0,
           rCreatedBy: breakListData?.rCreatedBy || "",
           rCreatedOn: new Date(breakListData?.rCreatedOn || new Date()),
@@ -340,11 +315,9 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
           compCode: breakListData?.compCode || "",
           compName: breakListData?.compName || "",
           transferYN: breakListData?.transferYN || "N",
-          breakName: breakListData?.bLName || "",
-          conResName: breakListData?.resources || "",
-          recordStatus:  breakListData?.transferYN || "Y",
-          conID:  breakListData?.hPLID
+          recordStatus: breakListData?.transferYN || "Y",
         };
+  
         await handleSaveBreakConDetail(breakConDetailData);
       } else {
         throw new Error(breakListResponse.errorMessage || 'Failed to save Break List');
@@ -355,7 +328,14 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     }
   };
   
-  
+
+
+
+
+
+
+
+
 
 
   const handleClear = () => {
@@ -386,7 +366,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       transferYN: "N",
       resources: "",
       frequencyDetails: "",
-      hPLID:0
+      hPLID: 0
     });
   };
 
@@ -396,8 +376,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
 
 
   const handleSaveChanges = (details: string, formattedEndDate: Date, frequencyCode: string, frequencyNumber: number, weekCodes?: string[]) => {
-    debugger;
-
     try {
       // Log the formattedEndDate to see its current format
       console.log("Formatted End Date:", formattedEndDate);
@@ -434,7 +412,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
 
 
   const fetchResources = async () => {
-    debugger 
+    debugger
     setLoadingResources(true);
     try {
       const result = await ResourceListService.getAllResourceLists(token!);
@@ -449,7 +427,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       setLoadingResources(false);
     }
   };
-  
+
 
   useEffect(() => {
     if (breakListData.isPhyResYN === "Y") {
@@ -458,7 +436,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   }, [breakListData.isPhyResYN]);
 
   useEffect(() => {
-    debugger 
+    debugger
     const fetchPhysicians = async () => {
       setLoadingPhysicians(true);
       try {
@@ -488,14 +466,18 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
 
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setBreakListData(prev => ({
-      ...prev,
-      isPhyResYN: value as "Y" | "N", // Asserting that value is either "Y" or "N"
-      rActiveYN: value === "Y" ? "N" : "Y" 
+    const value = event.target.value as "Y" | "N"; // Assert the value to be either "Y" or "N"
+
+    setBreakListData(prevState => ({
+      ...prevState,
+      isPhyResYN: value
     }));
   };
-  
+
+
+
+
+
 
   useEffect(() => {
     setBreakListData((prev) => {
@@ -526,8 +508,8 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
           value: resource.rLID,
           name: resource.rLName,
         }))
-        .map(resource => resource.id.toString()) // Convert each resource object to its ID as a string
-        .join(',') // Concatenate IDs into a comma-separated string
+          .map(resource => resource.id.toString()) // Convert each resource object to its ID as a string
+          .join(',') // Concatenate IDs into a comma-separated string
         : prev.resources; // Fallback to previous resources if newValue is false
 
       return {
@@ -548,24 +530,24 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       const resourceIdsArray = prev.resources
         ? prev.resources.split(',').map(Number)
         : [];
-  
+
       // Update the resources array based on checkbox state
       const updatedResourceIdsArray = checked
         ? [...resourceIdsArray, resourceID]
         : resourceIdsArray.filter((id) => id !== resourceID);
-  
+
       // Convert the array back to a comma-separated string
       const updatedResourcesString = updatedResourceIdsArray.join(',');
-  
+
       // Update the selected resource names
       const updatedResourceNames = resourceList
         .filter((resource) =>
           updatedResourceIdsArray.includes(resource.rLID)
         )
         .map((resource) => resource.rLName);
-  
+
       setSelectedResourceNames(updatedResourceNames);
-  
+
       // Return the complete BreakListData object with updated resources
       return {
         ...prev,
@@ -573,14 +555,14 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
         // Include other properties from prev as needed
       };
     });
-  
+
     // Update selectedResources to reflect the selected state
     setSelectedResources((prev) =>
       checked ? [...prev, resourceID] : prev.filter((resId) => resId !== resourceID)
     );
   };
   ;
-  
+
 
   const handleSelectAllPhysiciansChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -643,6 +625,11 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
             </FormControl>
           </Grid>
         </Grid>
+
+
+
+
+
 
         <Grid container spacing={2}>
           {breakListData.isPhyResYN === "Y" && (
@@ -910,24 +897,24 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
               />
             </Grid>
 
-          
+
           </Grid>
           <Grid item xs={12} sm={6} md={3} >
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={breakListData.transferYN === "Y"}
-                    onChange={(e) =>
-                      setBreakListData({
-                        ...breakListData,
-                        transferYN: e.target.checked ? "Y" : "N",
-                      })
-                    }
-                  />
-                }
-                label={breakListData.transferYN === "Y" ? "Active" : "Hidden"}
-              />
-            </Grid>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={breakListData.transferYN === "Y"}
+                  onChange={(e) =>
+                    setBreakListData({
+                      ...breakListData,
+                      transferYN: e.target.checked ? "Y" : "N",
+                    })
+                  }
+                />
+              }
+              label={breakListData.transferYN === "Y" ? "Active" : "Hidden"}
+            />
+          </Grid>
         </Grid>
       </section>
 
