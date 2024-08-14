@@ -257,7 +257,6 @@ const RegistrationPage: React.FC = () => {
   const actionButtons: ButtonProps[] = [
     {
       variant: "contained",
-      size: "medium",
       icon: SearchIcon,
       text: "Advanced Search",
       onClick: handleAdvancedSearch,
@@ -266,7 +265,6 @@ const RegistrationPage: React.FC = () => {
       variant: "contained",
       icon: PrintIcon,
       text: "Print Form",
-      size: "medium",
     },
   ];
 
@@ -274,7 +272,7 @@ const RegistrationPage: React.FC = () => {
     <MainLayout>
       <Container maxWidth={false}>
         <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup buttons={actionButtons} />
+          <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
         </Box>
         <PatientSearch
           show={showPatientSearch}

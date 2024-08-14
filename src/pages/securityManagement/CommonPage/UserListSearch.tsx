@@ -9,7 +9,7 @@ import {
   Typography,
   Box,
   FormControlLabel,
-  } from "@mui/material";
+} from "@mui/material";
 import { UserListData } from "../../../interfaces/SecurityManagement/UserListData";
 import { UserListSearchContext } from "../../../context/SecurityManagement/UserListSearchContext";
 import { useSelector } from "react-redux";
@@ -35,7 +35,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
   show,
   handleClose,
   onEditProfile,
-  selectedUser 
+  selectedUser
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const { performSearch, searchResults, updateUserStatus } = useContext(
@@ -75,7 +75,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     try {
       const userDetails = await UserListService.getUserDetails(token!, user.appID);
       if (userDetails.success && userDetails.data) {
-        onEditProfile(userDetails.data); 
+        onEditProfile(userDetails.data);
       } else {
         notifyError("Failed to fetch user details.");
       }

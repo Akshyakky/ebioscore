@@ -2,6 +2,7 @@ import React from "react";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormGroup from "@mui/material/FormGroup";
+import clsx from "clsx";
 
 interface CheckboxProps {
   label: string;
@@ -10,7 +11,7 @@ interface CheckboxProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isMandatory?: boolean;
   disabled?: boolean;
-  className?: string; // For custom styling
+  className?: string;
 }
 
 const CustomCheckbox: React.FC<CheckboxProps> = ({
@@ -21,10 +22,10 @@ const CustomCheckbox: React.FC<CheckboxProps> = ({
   isMandatory = false,
   disabled = false,
   className,
-  ...props // for additional FormControlLabelProps
+  ...props
 }) => {
   return (
-    <FormGroup className={className}>
+    <FormGroup className={clsx(className)}>
       <FormControlLabel
         control={
           <Checkbox
@@ -32,7 +33,8 @@ const CustomCheckbox: React.FC<CheckboxProps> = ({
             onChange={onChange}
             name={name}
             disabled={disabled}
-            color="primary" // You can customize the color
+            color="primary"
+            inputProps={{ "aria-required": isMandatory }} // Improve accessibility
           />
         }
         label={
@@ -41,7 +43,7 @@ const CustomCheckbox: React.FC<CheckboxProps> = ({
             {isMandatory && <span className="text-danger">*</span>}
           </>
         }
-        {...props} // Spread any additional props
+        {...props}
       />
     </FormGroup>
   );

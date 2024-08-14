@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell, { tableCellClasses } from "@mui/material/TableCell";
@@ -34,7 +35,7 @@ const CustomGrid = <T extends GenericObject>({
   data,
   maxHeight,
   minHeight,
-  searchTerm,
+  searchTerm = "",
 }: CustomGridProps<T>) => {
   const highlightMatch = (text: string, searchTerm: string) => {
     const parts = text.split(new RegExp(`(${searchTerm})`, "gi"));
@@ -93,6 +94,24 @@ const CustomGrid = <T extends GenericObject>({
     },
   }));
 
+  const visibleColumns = useMemo(
+    () => columns.filter((col) => col.visible),
+    [columns]
+  );
+
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return data;
+    return data.filter((item) =>
+      visibleColumns.some((col) => {
+        const cellContent = item[col.key];
+        return (
+          typeof cellContent === "string" &&
+          cellContent.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      })
+    );
+  }, [data, searchTerm, visibleColumns]);
+
   return (
     <TableContainer
       component={Paper}
@@ -101,26 +120,22 @@ const CustomGrid = <T extends GenericObject>({
       <Table stickyHeader size="small" aria-label="customized table">
         <TableHead>
           <StyledTableRow>
-            {columns
-              .filter((col) => col.visible)
-              .map((col) => (
-                <StyledTableCell key={col.key}>{col.header}</StyledTableCell>
-              ))}
+            {visibleColumns.map((col) => (
+              <StyledTableCell key={col.key}>{col.header}</StyledTableCell>
+            ))}
           </StyledTableRow>
         </TableHead>
         <TableBody>
-          {data.map((item, rowIndex) => (
+          {filteredData.map((item, rowIndex) => (
             <StyledTableRow
               sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
               key={`row-${rowIndex}`}
             >
-              {columns
-                .filter((col) => col.visible)
-                .map((col, columnIndex) => (
-                  <StyledTableCell key={`${col.key}-${rowIndex}`}>
-                    {renderCell(item, col, rowIndex, columnIndex, searchTerm)}
-                  </StyledTableCell>
-                ))}
+              {visibleColumns.map((col, columnIndex) => (
+                <StyledTableCell key={`${col.key}-${rowIndex}`}>
+                  {renderCell(item, col, rowIndex, columnIndex, searchTerm)}
+                </StyledTableCell>
+              ))}
             </StyledTableRow>
           ))}
         </TableBody>

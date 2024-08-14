@@ -35,7 +35,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   options,
   onChange,
   size = "medium",
-  disabled,
+  disabled = false,
   isMandatory = false,
   defaultText,
   className,
@@ -44,18 +44,14 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   onClear,
 }) => {
   const theme = useTheme();
+
   const isEmptyValue = useMemo(() => value === "" || value === "0", [value]);
-  const hasError = useMemo(
-    () => isMandatory && isSubmitted && isEmptyValue,
-    [isMandatory, isSubmitted, isEmptyValue]
-  );
+
+  const hasError = isMandatory && isSubmitted && isEmptyValue;
 
   const displayValue = useMemo(() => {
-    const selectedOption = options.find(
-      (option) =>
-        String(option.value) === String(value) || option.label === value
-    );
-    return selectedOption ? selectedOption.value : "";
+    return options.find((option) => String(option.value) === String(value))
+      ?.value || "";
   }, [value, options]);
 
   return (
@@ -67,18 +63,17 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
       error={hasError}
       margin="normal"
     >
-      <InputLabel id={`ddl-label-${name}`} htmlFor={`ddl${name}`}>
+      <InputLabel id={`ddl-label-${name}`} htmlFor={`ddl-${name}`}>
         {label}
       </InputLabel>
       <Select
         labelId={`ddl-label-${name}`}
-        id={`ddl${name}`}
+        id={`ddl-${name}`}
         name={name}
         value={displayValue}
         onChange={onChange}
         label={label}
         disabled={disabled}
-        // displayEmpty
         endAdornment={
           clearable && value ? (
             <InputAdornment position="end">
@@ -92,7 +87,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
                   margin: "8px",
                   "&:hover": {
                     backgroundColor: theme.palette.action.hover,
-                    color: "#000000",
+                    color: theme.palette.text.primary,
                   },
                 }}
               >
@@ -102,12 +97,9 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
           ) : null
         }
       >
-        <MenuItem value="">{defaultText || `${label}`}</MenuItem>
+        <MenuItem value="">{defaultText || `Select ${label}`}</MenuItem>
         {options.map((option) => (
-          <MenuItem
-            key={option.value || option.label}
-            value={option.value || option.label}
-          >
+          <MenuItem key={option.value} value={option.value}>
             {option.label}
           </MenuItem>
         ))}
