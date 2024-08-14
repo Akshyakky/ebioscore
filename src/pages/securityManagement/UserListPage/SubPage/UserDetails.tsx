@@ -490,9 +490,10 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                 isMandatory={true}
                 isSubmitted={isSubmitted}
                 errorMessage={errorMessage}
-                accept=".jpg,.png,.pdf"
+                accept="image/*, application/pdf"
                 multiple={false}
                 name="digitalSignature"
+                preview
               />
             </Grid>
           </Grid>

@@ -64,7 +64,7 @@ const App: React.FC = () => {
         <PersistGate loading={null} persistor={persistor}>
           <LoadingProvider>
             <Router>
-              <GlobalSpinner />
+              <GlobalSpinner delay={500} color="secondary" size={50} />
               <ToastContainer
                 position="top-right"
                 autoClose={1500}

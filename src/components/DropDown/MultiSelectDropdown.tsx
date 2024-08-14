@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   FormControl,
   InputLabel,
@@ -17,7 +17,7 @@ interface DropdownSelectProps {
   name: string;
   value: string | string[];
   options: Array<{ value: string; label: string }>;
-  onChange: (event: SelectChangeEvent<unknown>) => void;
+  onChange: (event: SelectChangeEvent<string | string[]>) => void;
   size?: "small" | "medium";
   disabled?: boolean;
   isMandatory?: boolean;
@@ -60,10 +60,22 @@ const MultiSelectDropdown: React.FC<DropdownSelectProps> = ({
   isSubmitted = false,
   multiple = false,
 }) => {
-  const isEmptyValue = (val: string | string[]) => {
-    return Array.isArray(val) ? val.length === 0 : val === "" || val === "0";
-  };
-  const hasError = isMandatory && isSubmitted && isEmptyValue(value);
+  const isEmptyValue = useMemo(() => {
+    return Array.isArray(value) ? value.length === 0 : value === "" || value === "0";
+  }, [value]);
+
+  const hasError = isMandatory && isSubmitted && isEmptyValue;
+
+  const renderValue = useMemo(() => {
+    return (selected: string | string[]) => {
+      if (Array.isArray(selected)) {
+        return selected
+          .map((val) => options.find((option) => option.value === val)?.label || val)
+          .join(", ");
+      }
+      return options.find((option) => option.value === selected)?.label || selected;
+    };
+  }, [options]);
 
   return (
     <FormControl
@@ -86,23 +98,8 @@ const MultiSelectDropdown: React.FC<DropdownSelectProps> = ({
         onChange={onChange}
         label={label}
         disabled={disabled}
-        displayEmpty
         input={multiple ? <OutlinedInput label={label} /> : undefined}
-        renderValue={
-          multiple
-            ? (selected) => {
-              return Array.isArray(selected)
-                ? selected
-                  .map(
-                    (val) =>
-                      options.find((option) => option.value === val)
-                        ?.label || val
-                  )
-                  .join(", ")
-                : selected;
-            }
-            : undefined
-        }
+        renderValue={renderValue}
       >
         {multiple && (
           <MenuItem disabled value="">

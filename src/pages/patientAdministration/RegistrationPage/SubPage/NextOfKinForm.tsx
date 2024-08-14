@@ -260,7 +260,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
                 inputValue={nextOfkinData.pNokPChartCode}
                 isSubmitted={isSubmitted}
                 isMandatory={true}
-                //onSelectSuggestion={onPatientSelect}
+              //onSelectSuggestion={onPatientSelect}
               />
             </Grid>
           )}
@@ -524,6 +524,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
           text="Close"
           color="secondary"
           icon={CloseIcon}
+          ariaLabel="Close"
         />
         <CustomButton
           icon={SaveIcon}
@@ -532,6 +533,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
           text="Save"
           color="success"
           onClick={handleSubmit}
+          ariaLabel="Save Nok"
         />
       </DialogActions>
     </Dialog>

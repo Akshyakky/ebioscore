@@ -1,9 +1,9 @@
 // FormSaveClearButton.tsx
 import React from "react";
-import { Grid } from "@mui/material";
+import { Grid, useMediaQuery, useTheme } from "@mui/material";
 import CustomButton from "./CustomButton";
 import { SvgIconComponent } from "@mui/icons-material";
-import "./Button.css";
+import styles from "./FormSaveClearButton.module.css";
 
 interface FormSaveClearButtonProps {
   clearText: string;
@@ -12,6 +12,10 @@ interface FormSaveClearButtonProps {
   onSave: () => void;
   clearIcon?: SvgIconComponent;
   saveIcon?: SvgIconComponent;
+  clearColor?: "error" | "primary" | "secondary";
+  saveColor?: "success" | "primary" | "secondary";
+  clearVariant?: "contained" | "outlined" | "text";
+  saveVariant?: "contained" | "outlined" | "text";
 }
 
 const FormSaveClearButton: React.FC<FormSaveClearButtonProps> = ({
@@ -21,25 +25,34 @@ const FormSaveClearButton: React.FC<FormSaveClearButtonProps> = ({
   onSave,
   clearIcon,
   saveIcon,
+  clearColor = "error",
+  saveColor = "success",
+  clearVariant = "contained",
+  saveVariant = "contained",
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   return (
-    <Grid container className="fixed-buttons-container">
-      <Grid item xs={6} className="text-start">
+    <Grid container className={styles.fixedButtonsContainer} spacing={2}>
+      <Grid item xs={6} className={isMobile ? styles.textCenter : styles.textStart}>
         <CustomButton
           text={clearText}
           onClick={onClear}
           icon={clearIcon}
-          variant="contained" // You can customize this as needed
-          color="error" // Material UI color scheme
+          variant={clearVariant}
+          color={clearColor}
+          aria-label="clear form"
         />
       </Grid>
-      <Grid item xs={6} className="text-end">
+      <Grid item xs={6} className={isMobile ? styles.textCenter : styles.textEnd}>
         <CustomButton
           text={saveText}
           onClick={onSave}
           icon={saveIcon}
-          variant="contained" // You can customize this as needed
-          color="success" // Material UI color scheme
+          variant={saveVariant}
+          color={saveColor}
+          aria-label="save form"
         />
       </Grid>
     </Grid>
@@ -47,56 +60,3 @@ const FormSaveClearButton: React.FC<FormSaveClearButtonProps> = ({
 };
 
 export default FormSaveClearButton;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
