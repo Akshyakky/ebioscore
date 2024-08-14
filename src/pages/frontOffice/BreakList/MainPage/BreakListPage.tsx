@@ -1,7 +1,6 @@
-// BreakListPage.tsx
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Grid, Paper, Typography, Button, Container, Box } from "@mui/material";
+import { Container, Box } from "@mui/material";
 import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
@@ -12,18 +11,21 @@ import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import BreakListDetails from "../SubPage/BreakListDetails";
 import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListService";
 import BreakListSearch from "../SubPage/BreakListsearch";
+import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
+import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
 
 const BreakListPage: React.FC = () => {
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [breakList, setBreakList] = useState<BreakListData[]>([]);
   const [selectedBreak, setSelectedBreak] = useState<BreakListData | null>(null);
+  const [breakConDetails, setBreakConDetails] = useState<BreakConDetailData[] | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const dispatch = useDispatch();
   const frequencyNumber = breakList.length;
 
-  // Fetch Break List Function
+
   const fetchBreakList = async () => {
     setLoading(true);
     try {
@@ -43,7 +45,7 @@ const BreakListPage: React.FC = () => {
     fetchBreakList();
   }, [dispatch]);
 
-  // Handle Save Operation
+
   const handleSave = (savedBreak: BreakListData) => {
     if (isEditMode) {
       setBreakList((prev) =>
@@ -54,18 +56,44 @@ const BreakListPage: React.FC = () => {
     }
     setIsEditMode(false);
     setSelectedBreak(null);
+    // setBreakConDetails(null); // Clear breakConDetails on save
   };
 
   // Handle Clear Operation
   const handleClear = () => {
     setSelectedBreak(null);
     setIsEditMode(false);
+    setBreakConDetails(null); // Clear breakConDetails on clear
   };
 
   // Handle Edit Operation
-  const handleEdit = (breakData: BreakListData) => {
-    setSelectedBreak(breakData);
-    setIsEditMode(true);
+  const handleEdit = async (row: BreakConDetailData) => {
+    debugger 
+      console.log("Going to edit data with blID:", row.blID);
+   
+    setLoading(true);
+    try {
+      const breakListResult = await BreakListService.getBreakListById(token!, row.blID);
+      if (breakListResult.success) {
+        console.log("the editing Data",breakListResult)
+        setSelectedBreak(breakListResult.data ? breakListResult.data : null);
+        const breakConResult = await BreakListConDetailsService.getBreakConDetailById(token!, row.blID);
+        if (breakConResult.success) {
+          console.log("the editing con Data",breakConResult)
+          setBreakConDetails(breakConResult.data);
+        } else {
+          notifyError(breakConResult.errorMessage || "Error fetching break connection details.");
+        }
+      } else {
+        notifyError(breakListResult.errorMessage || "Error fetching break list details.");
+      }
+      setIsEditMode(true);
+      setIsSearchDialogOpen(false); 
+    } catch (error) {
+      console.error("Error fetching details:", error);
+      notifyError("Error fetching details.");
+    }
+    setLoading(false);
   };
 
   const handleAdvancedSearch = () => {
@@ -92,17 +120,19 @@ const BreakListPage: React.FC = () => {
             ]}
           />
         </Box>
+
+
         {loading && <GlobalSpinner />}
         <BreakListDetails
-          frequencyNumber={frequencyNumber} // Pass frequencyNumber here
+          frequencyNumber={frequencyNumber}
           breakData={selectedBreak}
+          breakConDetails={breakConDetails} 
           onSave={handleSave}
           onClear={handleClear}
           isEditMode={isEditMode}
-          setFormData={() => { }} // Temporary fix to avoid TypeScript error
-          formattedEndDate={new Date()} // Provide a default Date object
+          setFormData={() => { }} 
+          formattedEndDate={new Date()} 
         />
-
 
         <BreakListSearch
           show={isSearchDialogOpen}
@@ -110,6 +140,9 @@ const BreakListPage: React.FC = () => {
           onEditBreak={handleEdit}
           selectedBreak={selectedBreak}
         />
+
+
+
       </Container>
     </MainLayout>
   );

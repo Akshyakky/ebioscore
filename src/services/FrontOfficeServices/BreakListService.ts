@@ -27,6 +27,15 @@ const saveBreakList = async (
 ): Promise<OperationResult<BreakListData>> => {
   debugger 
   try {
+    const formattedData = {
+      ...breakListData,
+      bLStartTime: breakListData.bLStartTime.toISOString(),
+      bLEndTime: breakListData.bLEndTime.toISOString(),
+      bLStartDate: breakListData.bLStartDate.toISOString(),
+      bLEndDate: breakListData.bLEndDate.toISOString(),
+      // rCreatedOn: breakListData.rCreatedOn.toISOString(),
+      // rModifiedOn: breakListData.rModifiedOn.toISOString()
+    };
     const url = `${APIConfig.frontOffice}BreakList/SaveBreakList`;
     const headers = {
       Authorization: `Bearer ${token}`,
@@ -35,7 +44,7 @@ const saveBreakList = async (
 
     const response = await axios.post<OperationResult<BreakListData>>(
       url,
-      breakListData,
+      formattedData,
       { headers }
     );
 
@@ -55,10 +64,11 @@ const saveBreakList = async (
 // Service to fetch a break list by ID
 const getBreakListById = async (
   token: string,
-  id: number
+  bLID: number
 ): Promise<OperationResult<BreakListData>> => {
+  debugger 
   try {
-    const url = `${APIConfig.frontOffice}BreakList/GetBreakListById/${id}`;
+    const url = `${APIConfig.frontOffice}BreakList/GetBreakListById/${bLID}`;
     const headers = {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
