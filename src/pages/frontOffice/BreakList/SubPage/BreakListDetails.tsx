@@ -286,48 +286,49 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   }, [breakConDetails]);
 
   const handleSaveBreakConDetail = async (breakConDetailData: BreakConDetailData) => {
-    const hPLIDs = breakListData.isPhyResYN === "Y"
-      ? selectedPhysicians
-      : selectedResources;
+    debugger 
+    // Ensure that you are working with a single ID, not an array
+    const hPLID = breakListData.isPhyResYN === "Y"
+      ? selectedPhysicians[0]  // Ensure this is a single number
+      : selectedResources[0];  // Ensure this is a single number
   
-    if (hPLIDs.length === 0) {
-      notifyError('At least one Physician or Resource must be selected.');
-      return;
-    }
+    // Prepare the payload with correct structure
+    const payload: BreakConDetailData = {
+
+      hPLID,  // Ensure this is a single number
+      bCDID: breakConDetailData.bCDID,  // Ensure this is the ID of the record to update
+      blID: breakConDetailData.blID,
+      rActiveYN: breakConDetailData.rActiveYN || "N",
+      rCreatedID: breakConDetailData.rCreatedID || 0,
+      rCreatedBy: breakConDetailData.rCreatedBy || "",
+      rCreatedOn: breakConDetailData.rCreatedOn || new Date().toISOString(),
+      rModifiedID: breakConDetailData.rModifiedID || 0,
+      rModifiedBy: breakConDetailData.rModifiedBy || "",
+      rModifiedOn: breakConDetailData.rModifiedOn || new Date().toISOString(),
+      rNotes: breakConDetailData.rNotes || "",
+      transferYN: breakConDetailData.transferYN || "N",
+      compID: breakConDetailData.compID || 1,
+      compCode: breakConDetailData.compCode || "",
+      compName: breakConDetailData.compName || "",
+      recordStatus: breakConDetailData.recordStatus || "N"
+    };
   
-    for (const hPLID of hPLIDs) {
-      const payload = {
-        hPLID,
-        bCDID: breakConDetailData.bCDID || 0,
-        blID: breakConDetailData.blID,
-        rActiveYN: breakConDetailData.rActiveYN || "N",
-        rCreatedID: breakConDetailData.rCreatedID || 0,
-        rCreatedBy: breakConDetailData.rCreatedBy || "",
-        rCreatedOn: breakConDetailData.rCreatedOn || new Date().toISOString(),
-        rModifiedID: breakConDetailData.rModifiedID || 0,
-        rModifiedBy: breakConDetailData.rModifiedBy || "",
-        rModifiedOn: breakConDetailData.rModifiedOn || new Date().toISOString(),
-        rNotes: breakConDetailData.rNotes || "",
-        transferYN: breakConDetailData.transferYN || "N",
-        compID: breakConDetailData.compID || 1,
-        compCode: breakConDetailData.compCode || "",
-        compName: breakConDetailData.compName || "",
-        recordStatus: breakConDetailData.recordStatus || "N"
-      };
-  
-      try {
-        const response = await BreakListConDetailsService.saveBreakConDetail(token!, payload);
-        if (response.success) {
-          notifySuccess('Break Condition Detail saved successfully');
-        } else {
-          throw new Error(response.errorMessage || 'Failed to save Break Condition Detail');
-        }
-      } catch (error) {
-        console.error('Save failed:', error);
-        notifyError('Failed to save Break Condition Detail');
+    try {
+      // Ensure that the save service correctly updates the existing record
+      const response = await BreakListConDetailsService.saveBreakConDetail(token!, payload);
+      if (response.success) {
+        notifySuccess('Break Condition Detail updated successfully');
+      } else {
+        throw new Error(response.errorMessage || 'Failed to update Break Condition Detail');
       }
+    } catch (error) {
+      console.error('Save failed:', error);
+      notifyError('Failed to update Break Condition Detail');
     }
   };
+  
+  
+  
   
   useEffect(() => {
     if (breakConDetails) {
