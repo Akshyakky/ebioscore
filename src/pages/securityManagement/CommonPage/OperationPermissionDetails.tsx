@@ -308,56 +308,18 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
     }
   };
 
-  const handleSelectAllReportChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const checked: boolean = event.target.checked;
-    const updatedReportPermissions = permissions.map((permission) => ({
-      ...permission,
-      allow: permission.reportYN ? checked : permission.allow,
-    }));
-    setPermissions(updatedReportPermissions);
-
-    try {
-      for (const permission of updatedReportPermissions.filter((p) => p.reportYN)) {
-        const profileDetail: OperationPermissionDetailsDto = {
-          profDetID: permission.profDetID!,
-          profileID: profileID,
-          profileName: profileName,
-          aOPRID: permission.operationID,
-          compID: compID!,
-          rActiveYN: checked ? "Y" : "N",
-          rNotes: "",
-          reportYN: "Y",
-          repID: permission.operationID,
-          auAccessID: permission.auAccessID,
-          appID: 0,
-          appUName: "",
-          allowYN: checked ? "Y" : "N",
-          rCreatedID: 0,
-          rCreatedBy: "",
-          rCreatedOn: "",
-          rModifiedID: 0,
-          rModifiedBy: "",
-          rModifiedOn: "",
-          compCode: "",
-          compName: "",
-        };
-        await saveReportPermission(profileDetail);
-      }
-    } catch (error) {
-      console.error("Error saving all report permissions:", error);
-      notifyError("Error saving all report permissions");
-    }
-    setSelectAllReportChecked(checked);
-  };
-
   const handleSelectAllChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked: boolean = event.target.checked;
+    
+    // Update permissions in state first to reflect the UI changes immediately
     const updatedPermissions = permissions.map((permission) => ({
       ...permission,
       allow: !permission.reportYN ? checked : permission.allow,
     }));
     setPermissions(updatedPermissions);
+    setSelectAllChecked(checked);
 
+    // Then, update the database
     try {
       for (const permission of updatedPermissions.filter((p) => !p.reportYN)) {
         const profileDetail: OperationPermissionDetailsDto = {
@@ -370,7 +332,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
           rNotes: "",
           reportYN: "N",
           repID: 0,
-          auAccessID: permission.auAccessID,
+          auAccessID: permission.auAccessID ?? 0,
           appID: 0,
           appUName: "",
           allowYN: checked ? "Y" : "N",
@@ -383,14 +345,62 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
           compCode: "",
           compName: "",
         };
+
         await saveModulePermission(profileDetail);
       }
     } catch (error) {
-      console.error("Error saving all permissions:", error);
-      notifyError("Error saving all permissions");
+      console.error("Error saving all module permissions:", error);
+      notifyError("Error saving all module permissions");
     }
-    setSelectAllChecked(checked);
-  };
+};
+
+const handleSelectAllReportChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const checked: boolean = event.target.checked;
+
+    // Update permissions in state first to reflect the UI changes immediately
+    const updatedReportPermissions = permissions.map((permission) => ({
+      ...permission,
+      allow: permission.reportYN ? checked : permission.allow,
+    }));
+
+    setSelectAllReportChecked(checked);
+    setPermissions(updatedReportPermissions);
+
+    // Then, update the database
+    try {
+      for (const permission of updatedReportPermissions.filter((p) => p.reportYN)) {
+        const profileDetail: OperationPermissionDetailsDto = {
+          profDetID: permission.profDetID!,
+          profileID: profileID,
+          profileName: profileName,
+          aOPRID: permission.operationID,
+          compID: compID!,
+          rActiveYN: checked ? "Y" : "N",
+          rNotes: "",
+          reportYN: "Y",
+          repID: permission.operationID,
+          auAccessID: permission.auAccessID ?? 0,
+          appID: 0,
+          appUName: "",
+          allowYN: checked ? "Y" : "N",
+          rCreatedID: 0,
+          rCreatedBy: "",
+          rCreatedOn: "",
+          rModifiedID: 0,
+          rModifiedBy: "",
+          rModifiedOn: "",
+          compCode: "",
+          compName: "",
+        };
+
+        await saveReportPermission(profileDetail);
+      }
+    } catch (error) {
+      console.error("Error saving all report permissions:", error);
+      notifyError("Error saving all report permissions");
+    }
+};
+
 
   const handleClear = () => {
     setPermissions([]);
