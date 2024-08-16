@@ -1,7 +1,7 @@
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
 import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { ResourceListData } from "../../interfaces/frontOffice/ResourceListData";
+import { ResourceListData } from "../../interfaces/FrontOffice/ResourceListData";
 
 // Service to save resource list data
 const saveResourceList = async (

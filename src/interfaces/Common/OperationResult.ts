@@ -9,5 +9,4 @@ export interface OperationResult<T> {
   errorMessage?: string;
   affectedRows?: number;
   validationErrors?: ValidationError[];
-  auAccessID?: number;
 }

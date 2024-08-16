@@ -7,7 +7,7 @@ import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
 import ResourceDetails from "../SubPage/ResourceDeatails";
 import ResourceListSearch from "../SubPage/ResourceListSearch";
-import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import { ResourceListContext } from "../../../../context/frontOffice/ResourceListContext";
 
 interface OperationPermissionProps {
@@ -42,7 +42,7 @@ const ResourceListPage: React.FC<OperationPermissionProps> = () => {
     };
 
     const handleEditUser = (resource: ResourceListData) => {
-        debugger 
+        debugger
         setSelectedResource(resource);
         setIsSaved(true);
         handleCloseSearchDialog();
@@ -69,7 +69,7 @@ const ResourceListPage: React.FC<OperationPermissionProps> = () => {
                     onClear={handleClear}
                     resource={selectedResource}
                     isEditMode={!!selectedResource}
-                    // updateResourceStatus={updateResourceStatus}
+                // updateResourceStatus={updateResourceStatus}
                 />
                 <ResourceListSearch
                     show={isSearchDialogOpen}

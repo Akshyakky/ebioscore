@@ -1,7 +1,7 @@
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
 import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { BreakListData } from "../../interfaces/frontOffice/BreakListData";
+import { BreakListData } from "../../interfaces/FrontOffice/BreakListData";
 
 const handleError = <T>(error: any): OperationResult<T> => {
   const errorMessage =

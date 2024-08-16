@@ -2,7 +2,7 @@
 import axios from "axios";
 import { APIConfig } from "../../apiConfig";
 import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { ReasonListData } from "../../interfaces/frontOffice/ReasonListData";
+import { ReasonListData } from "../../interfaces/FrontOffice/ReasonListData";
 
 // Service to save reason list data
 const saveReasonList = async (

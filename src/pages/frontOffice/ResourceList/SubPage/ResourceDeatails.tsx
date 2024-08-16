@@ -7,7 +7,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import TextArea from "../../../../components/TextArea/TextArea";
 import { notifySuccess, notifyError } from "../../../../utils/Common/toastManager";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices";
-import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";

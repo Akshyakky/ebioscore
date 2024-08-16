@@ -10,19 +10,19 @@ import {
   Box,
   FormControlLabel,
 } from "@mui/material";
-import { UserListData } from "../../../interfaces/SecurityManagement/UserListData";
-import { UserListSearchContext } from "../../../context/SecurityManagement/UserListSearchContext";
+import { UserListData } from "../../../../interfaces/SecurityManagement/UserListData";
+import { UserListSearchContext } from "../../../../context/SecurityManagement/UserListSearchContext";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../store/reducers";
-import { debounce } from "../../../utils/Common/debounceUtils";
-import { notifyError, notifySuccess } from "../../../utils/Common/toastManager";
-import CustomButton from "../../../components/Button/CustomButton";
-import CustomSwitch from "../../../components/Checkbox/ColorSwitch";
-import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import GlobalSpinner from "../../../components/GlobalSpinner/GlobalSpinner";
-import CustomGrid from "../../../components/CustomGrid/CustomGrid";
+import { RootState } from "../../../../store/reducers";
+import { debounce } from "../../../../utils/Common/debounceUtils";
+import { notifyError } from "../../../../utils/Common/toastManager";
+import CustomButton from "../../../../components/Button/CustomButton";
+import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
+import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
+import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
-import { UserListService } from "../../../services/SecurityManagementServices/UserListService";
+import { UserListService } from "../../../../services/SecurityManagementServices/UserListService";
 
 interface UserListSearchResultProps {
   show: boolean;
@@ -45,7 +45,6 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [switchStatus, setSwitchStatus] = useState<{ [key: string]: boolean }>({});
 
-  // Initialize switch status based on searchResults
   useEffect(() => {
     const initialSwitchStatus = searchResults.reduce((acc, item) => {
       acc[item.appID] = item.rActiveYN === "Y";
@@ -55,7 +54,6 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     setSwitchStatus(initialSwitchStatus);
   }, [searchResults]);
 
-  // Debounce search term changes for smoother searching
   const debouncedSearch = useCallback(
     debounce((searchQuery: string) => {
       setIsLoading(true);

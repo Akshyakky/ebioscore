@@ -3,7 +3,7 @@ import { useLoading } from "../LoadingContext";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/reducers";
 import { notifyError, notifySuccess } from "../../utils/Common/toastManager";
-import { BreakConDetailData } from "../../interfaces/frontOffice/BreakConDetailsData";
+import { BreakConDetailData } from "../../interfaces/FrontOffice/BreakConDetailsData";
 import { BreakListConDetailsService } from "../../services/FrontOfficeServices/BreakListConDetailService";
 
 interface BreakConDetailsContextProps {

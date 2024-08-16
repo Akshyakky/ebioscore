@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
+import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";

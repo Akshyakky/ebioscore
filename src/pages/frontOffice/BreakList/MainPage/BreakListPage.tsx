@@ -6,12 +6,12 @@ import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
 import { RootState } from "../../../../store/reducers";
 import { notifyError } from "../../../../utils/Common/toastManager";
-import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
+import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import BreakListDetails from "../SubPage/BreakListDetails";
 import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListService";
 import BreakListSearch from "../SubPage/BreakListsearch";
-import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
+import { BreakConDetailData } from "../../../../interfaces/FrontOffice/BreakConDetailsData";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
 
 const BreakListPage: React.FC = () => {

@@ -1,25 +1,22 @@
 // src/pages/frontOffice/AppointmentPage/MainPage/AppointmentPage.tsx
-import React from 'react';
+import React, { useRef } from 'react';
 import SchedulerComponent from '../SubPage/SchedulerComponent';
 import MainLayout from '../../../../layouts/MainLayout/MainLayout';
-import CalendarComponent from '../SubPage/CalendarComponent';
-import BigCalendarComponent from '../SubPage/BigCalendarComponent';
+import SchedulerHeader from '../SubPage/SchedulerHeader';
+import SchedulerFooter from '../SubPage/SchedulerFooter';
 
 const AppointmentPage: React.FC = () => {
+    const schedulerRef = useRef<{ refresh: () => void } | null>(null);
+    const handleRefresh = () => {
+        if (schedulerRef.current) {
+            schedulerRef.current.refresh();
+        }
+    };
     return (
         <MainLayout>
-            <div>
-                <h5>Dev Express Paid</h5>
-                <SchedulerComponent />
-            </div>
-            <div>
-                <h5>Full Calendar Free</h5>
-                <CalendarComponent />
-            </div>
-            <div>
-                <h5>React Big Calendar Free</h5>
-                <BigCalendarComponent />
-            </div>
+            <SchedulerHeader onRefresh={handleRefresh} />
+            <SchedulerComponent ref={schedulerRef} />
+            <SchedulerFooter />
         </MainLayout>
     );
 };

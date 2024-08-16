@@ -4,7 +4,7 @@ import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import SearchIcon from "@mui/icons-material/Search";
 import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import { UserListSearchContext } from "../../../../context/SecurityManagement/UserListSearchContext";
-import UserListSearch from "../../CommonPage/UserListSearch";
+import UserListSearch from "../../CommonPage/AdvanceSearch/UserListSearch";
 import UserDetails from "../SubPage/UserDetails";
 import { UserListData } from "../../../../interfaces/SecurityManagement/UserListData";
 import { RootState } from "../../../../store/reducers";

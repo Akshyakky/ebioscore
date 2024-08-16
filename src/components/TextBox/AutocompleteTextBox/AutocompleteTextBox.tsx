@@ -23,6 +23,8 @@ interface AutocompleteTextBoxProps {
   errorMessage?: string;
   inputValue?: string;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  InputProps?: Partial<React.ComponentProps<typeof TextField>['InputProps']>;
+
 }
 
 const AutocompleteTextBox = forwardRef<
@@ -50,6 +52,7 @@ const AutocompleteTextBox = forwardRef<
       isSubmitted = false,
       errorMessage,
       onBlur,
+      InputProps,
     },
     ref
   ) => {
@@ -158,6 +161,7 @@ const AutocompleteTextBox = forwardRef<
               inputRef={ref}
               InputProps={{
                 ...params.InputProps,
+                ...InputProps,
                 readOnly: readOnly,
                 inputProps: {
                   ...params.inputProps,

@@ -15,7 +15,7 @@ import CustomButton from "../../../../components/Button/CustomButton";
 import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
-import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices";
 import { debounce } from "../../../../utils/Common/debounceUtils";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
