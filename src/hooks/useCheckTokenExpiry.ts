@@ -16,8 +16,8 @@ const useCheckTokenExpiry = (retryCount = 3): boolean => {
       if (token && isMounted) {
         try {
           const response = await AuthService.checkTokenExpiry(token);
-          if (isMounted) {
-            setIsTokenExpired(response.isExpired);
+          if (response.data && isMounted) {
+            setIsTokenExpired(response.data.isExpired);
           }
         } catch (error) {
           if (isMounted && retries < retryCount) {

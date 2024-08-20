@@ -1,13 +1,9 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { APIConfig } from "../../../apiConfig";
 import { DropdownOption } from "../../../interfaces/Common/DropdownOption";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { ContactListData } from "../../../interfaces/HospitalAdministration/ContactListData";
 import { handleError } from "../../CommonServices/HandlerError";
-
-function isAxiosError(error: unknown): error is AxiosError {
-  return axios.isAxiosError(error);
-}
 
 const fetchActiveSpecialties = async (
   token: string,
@@ -26,7 +22,7 @@ const fetchActiveSpecialties = async (
       label: item.facName,
     }));
   } catch (error) {
-    console.error("Error fetching active specialties:", error);
+    handleError(error);
     throw error;
   }
 };
@@ -66,14 +62,7 @@ const searchContactListDetails = async (
     });
     return response.data;
   } catch (error) {
-    if (isAxiosError(error) && error.response) {
-      console.error(
-        "Error response from searchContactListDetails:",
-        error.response.data
-      );
-    } else {
-      console.error("Error during contact list search:", error);
-    }
+    handleError(error);
     throw error;
   }
 };
@@ -95,7 +84,7 @@ const fetchContactDetails = async (
       throw new Error(response.data.message);
     }
   } catch (error) {
-    console.error("Error fetching contact details:", error);
+    handleError(error);
     throw error;
   }
 };

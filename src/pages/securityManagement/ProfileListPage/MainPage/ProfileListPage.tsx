@@ -105,36 +105,34 @@ const ProfileListPage: React.FC = () => {
   ];
 
   return (
-    <MainLayout>
-      <Container maxWidth={false}>
-        <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup buttons={actionButtons} />
-        </Box>
-        <ProfileDetails
-          onSave={handleSave}
-          onClear={handleClear}
-          profile={selectedProfile}
-          isEditMode={!!selectedProfile}
-          refreshProfiles={refreshProfiles}
-          updateProfileStatus={updateProfileStatus}
+    <Container maxWidth={false}>
+      <Box sx={{ marginBottom: 2 }}>
+        <ActionButtonGroup buttons={actionButtons} />
+      </Box>
+      <ProfileDetails
+        onSave={handleSave}
+        onClear={handleClear}
+        profile={selectedProfile}
+        isEditMode={!!selectedProfile}
+        refreshProfiles={refreshProfiles}
+        updateProfileStatus={updateProfileStatus}
+      />
+      {isSaved && selectedProfile && (
+        <OperationPermissionDetails
+          profileID={selectedProfile.profileID}
+          profileName={selectedProfile.profileName}
+          saveModulePermission={saveProfileDetails}
+          saveReportPermission={saveProfileDetails}
+          permissions={permissions}
+          setPermissions={setPermissions}
         />
-        {isSaved && selectedProfile && (
-          <OperationPermissionDetails
-            profileID={selectedProfile.profileID}
-            profileName={selectedProfile.profileName}
-            saveModulePermission={saveProfileDetails}
-            saveReportPermission={saveProfileDetails}
-            permissions={permissions}
-            setPermissions={setPermissions}
-          />
-        )}
-        <ProfileListSearch
-          show={isSearchDialogOpen}
-          handleClose={handleCloseSearchDialog}
-          onEditProfile={handleEditProfile}
-        />
-      </Container>
-    </MainLayout>
+      )}
+      <ProfileListSearch
+        show={isSearchDialogOpen}
+        handleClose={handleCloseSearchDialog}
+        onEditProfile={handleEditProfile}
+      />
+    </Container>
   );
 };
 

@@ -6,9 +6,10 @@ import { RootState } from "../store/reducers";
 import useCheckTokenExpiry from "../hooks/useCheckTokenExpiry";
 import { logout } from "../store/actionCreators";
 import AuthService from "../services/AuthService/AuthService";
+import MainLayout from "../layouts/MainLayout/MainLayout";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode; // Explicitly type the children prop
+  children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
@@ -36,7 +37,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/login" />;
   }
 
-  return <>{children}</>;
+  return <MainLayout>{children}</MainLayout>;
 };
 
 export default ProtectedRoute;

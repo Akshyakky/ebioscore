@@ -49,36 +49,34 @@ const ResourceListPage: React.FC<OperationPermissionProps> = () => {
     };
 
     return (
-        <MainLayout>
-            <Container maxWidth={false}>
-                <Box sx={{ marginBottom: 2 }}>
-                    <ActionButtonGroup
-                        buttons={[
-                            {
-                                variant: "contained",
-                                size: "medium",
-                                icon: SearchIcon,
-                                text: "Advanced Search",
-                                onClick: handleAdvancedSearch,
-                            },
-                        ]}
-                    />
-                </Box>
-                <ResourceDetails
-                    onSave={handleSave}
-                    onClear={handleClear}
-                    resource={selectedResource}
-                    isEditMode={!!selectedResource}
-                // updateResourceStatus={updateResourceStatus}
+        <Container maxWidth={false}>
+            <Box sx={{ marginBottom: 2 }}>
+                <ActionButtonGroup
+                    buttons={[
+                        {
+                            variant: "contained",
+                            size: "medium",
+                            icon: SearchIcon,
+                            text: "Advanced Search",
+                            onClick: handleAdvancedSearch,
+                        },
+                    ]}
                 />
-                <ResourceListSearch
-                    show={isSearchDialogOpen}
-                    handleClose={handleCloseSearchDialog}
-                    onEditProfile={handleEditUser}
-                    selectedResource={selectedResource}
-                />
-            </Container>
-        </MainLayout>
+            </Box>
+            <ResourceDetails
+                onSave={handleSave}
+                onClear={handleClear}
+                resource={selectedResource}
+                isEditMode={!!selectedResource}
+            // updateResourceStatus={updateResourceStatus}
+            />
+            <ResourceListSearch
+                show={isSearchDialogOpen}
+                handleClose={handleCloseSearchDialog}
+                onEditProfile={handleEditUser}
+                selectedResource={selectedResource}
+            />
+        </Container>
     );
 };
 

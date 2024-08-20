@@ -1,8 +1,8 @@
-// src/services/AuthService.ts
-import axios, { AxiosError } from "axios";
+import { OperationResult } from "./../../interfaces/Common/OperationResult";
+import { post } from "../apiService";
 import { APIConfig } from "../../apiConfig";
 
-const API_URL = `${APIConfig.authURL}`; // Base URL for your API
+const API_URL = `${APIConfig.authURL}`;
 
 interface TokenResponse {
   token: string;
@@ -28,67 +28,64 @@ interface TokenExpiryCheckResponse {
   isExpired: boolean;
 }
 
+interface LogoutRequestModel {
+  Token: string;
+}
+
+interface TokenValidationModel {
+  Token: string;
+}
+
+interface TokenRevocationModel {
+  Token: string;
+}
+
 export const AuthService = {
   generateToken: async (
     credentials: LoginCredentials
-  ): Promise<TokenResponse> => {
-    try {
-      const response = await axios.post(`${API_URL}Generate`, credentials);
-      return response.data;
-    } catch (error) {
-      handleAxiosError(error);
-      throw error;
-    }
+  ): Promise<OperationResult<TokenResponse>> => {
+    const url = `${API_URL}Generate`;
+    return await post<TokenResponse, LoginCredentials>(
+      url,
+      credentials,
+      API_URL
+    );
   },
-  logout: async (token: string): Promise<any> => {
-    try {
-      const response = await axios.post(`${API_URL}Logout`, { token });
-      return response.data;
-    } catch (error) {
-      handleAxiosError(error);
-      throw error;
-    }
+
+  logout: async (token: string): Promise<OperationResult<any>> => {
+    const url = `${API_URL}Logout`;
+    const data: LogoutRequestModel = { Token: token };
+    return await post<any, LogoutRequestModel>(url, data, API_URL);
   },
+
   checkTokenExpiry: async (
     token: string
-  ): Promise<TokenExpiryCheckResponse> => {
-    try {
-      const response = await axios.post(`${API_URL}CheckTokenExpiry`, {
-        Token: token,
-      });
-      return response.data;
-    } catch (error) {
-      const axiosError = error as AxiosError; // Type assertion
-
-      if (axios.isAxiosError(axiosError)) {
-        if (axiosError.response && axiosError.response.status === 401) {
-          return { isExpired: true }; // Token is expired
-        }
-        handleAxiosError(axiosError);
-      } else {
-        console.error("An unexpected error occurred:", axiosError);
-      }
-      throw axiosError;
-    }
+  ): Promise<OperationResult<TokenExpiryCheckResponse>> => {
+    const url = `${API_URL}CheckTokenExpiry`;
+    const data: TokenValidationModel = { Token: token };
+    return await post<TokenExpiryCheckResponse, TokenValidationModel>(
+      url,
+      data,
+      API_URL
+    );
   },
-  // ... other authentication related methods
-};
 
-const handleAxiosError = (error: unknown) => {
-  if (axios.isAxiosError(error)) {
-    if (error.response) {
-      console.error(
-        "There was a problem with the request:",
-        error.response.data
-      );
-    } else if (error.request) {
-      console.error("No response received:", error.request);
-    } else {
-      console.error("Error setting up the request:", error.message);
-    }
-  } else {
-    console.error("An unexpected error occurred:", error);
-  }
+  validateToken: async (
+    token: string
+  ): Promise<OperationResult<{ isValid: boolean; userDetails?: any }>> => {
+    const url = `${API_URL}Validate`;
+    const data: TokenValidationModel = { Token: token };
+    return await post<
+      { isValid: boolean; userDetails?: any },
+      TokenValidationModel
+    >(url, data, API_URL);
+  },
+
+  revokeToken: async (token: string): Promise<OperationResult<any>> => {
+    const url = `${API_URL}Revoke`;
+    const data: TokenRevocationModel = { Token: token };
+    return await post<any, TokenRevocationModel>(url, data, API_URL);
+  },
 };
 
 export default AuthService;

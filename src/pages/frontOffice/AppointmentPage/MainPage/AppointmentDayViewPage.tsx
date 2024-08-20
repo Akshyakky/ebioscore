@@ -28,9 +28,9 @@ const AppointmentDayViewPage: React.FC = () => {
     };
 
     return (
-        <MainLayout>
+        <>
             {/* First Header and Scheduler */}
-            <SchedulerHeader onRefresh={handleRefresh1} />
+            < SchedulerHeader onRefresh={handleRefresh1} />
             <SchedulerComponent ref={schedulerRef1} />
 
             {/* Second Header and Scheduler */}
@@ -43,7 +43,7 @@ const AppointmentDayViewPage: React.FC = () => {
 
             {/* Footer */}
             <SchedulerFooter />
-        </MainLayout>
+        </>
     );
 };
 

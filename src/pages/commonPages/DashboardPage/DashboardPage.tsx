@@ -290,112 +290,112 @@ const DashboardPage: React.FC = () => {
   const theme = useTheme();
 
   return (
-    <MainLayout>
-      <Container maxWidth={false}>
-        <Paper
-          elevation={3}
-          sx={{ padding: theme.spacing(5), marginTop: theme.spacing(5) }}
-        >
-          <Typography variant="h6" sx={{ borderBottom: "1px solid #000" }}>
-            Statistics
-          </Typography>
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} sm={3} md={3} lg={3}>
-              <DropdownSelect
-                label="Select date range"
-                name="dateRange"
-                value={selectedOption}
-                options={dateRangeOptions}
-                onChange={handleSelect}
-                size="small"
-              />
-            </Grid>
-            {selectedOption === "DT" && (
-              <>
-                <Grid item xs={12} sm={3} md={3} lg={3}>
-                  <FloatingLabelTextBox
-                    ControlID="fromDate"
-                    title="From"
-                    type="date"
-                    size="small"
-                    value={dateRange.fromDate}
-                    onChange={handleDateRangeChange}
-                    name="fromDate"
-                    ariaLabel="From Date"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={3} md={3} lg={3}>
-                  <FloatingLabelTextBox
-                    ControlID="toDate"
-                    title="To"
-                    type="date"
-                    size="small"
-                    value={dateRange.toDate}
-                    onChange={handleDateRangeChange}
-                    name="toDate"
-                    ariaLabel="To Date"
-                  />
-                </Grid>
-              </>
-            )}
-            <Grid item xs={12} sm={3} md={3} lg={3}>
-              <CustomButton
-                variant="contained"
-                size="medium"
-                onClick={handleShowButtonClick}
-                icon={VisibilityIcon}
-                text="SHOW"
-                color="primary"
-              />
-            </Grid>
-          </Grid>
 
-          {showCounts && (
-            <Grid container spacing={3} sx={{ marginTop: theme.spacing(3) }}>
-              {Object.entries(counts).map(([key, countData]) => (
-                <Grid item xs={12} sm={6} lg={4} key={key}>
-                  <StyledCard>
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom>
-                        {titleMapping[key.toLowerCase()] || key}
-                      </Typography>
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="center"
-                      >
-                        <StyledLeftBadge
-                          badgeContent={countData.myCount}
-                          color="primary"
-                          anchorOrigin={{
-                            vertical: "top",
-                            horizontal: "right",
-                          }}
-                          showZero
-                        >
-                          <PersonIcon />
-                        </StyledLeftBadge>
-                        <StyledRightBadge
-                          badgeContent={countData.overallCount}
-                          color="secondary"
-                          anchorOrigin={{
-                            vertical: "top",
-                            horizontal: "right",
-                          }}
-                          showZero
-                        >
-                          <GroupIcon />
-                        </StyledRightBadge>
-                      </Box>
-                    </CardContent>
-                  </StyledCard>
-                </Grid>
-              ))}
-            </Grid>
+    <Container maxWidth={false}>
+      <Paper
+        elevation={3}
+        sx={{ padding: theme.spacing(5), marginTop: theme.spacing(5) }}
+      >
+        <Typography variant="h6" sx={{ borderBottom: "1px solid #000" }}>
+          Statistics
+        </Typography>
+        <Grid container spacing={3} alignItems="center">
+          <Grid item xs={12} sm={3} md={3} lg={3}>
+            <DropdownSelect
+              label="Select date range"
+              name="dateRange"
+              value={selectedOption}
+              options={dateRangeOptions}
+              onChange={handleSelect}
+              size="small"
+            />
+          </Grid>
+          {selectedOption === "DT" && (
+            <>
+              <Grid item xs={12} sm={3} md={3} lg={3}>
+                <FloatingLabelTextBox
+                  ControlID="fromDate"
+                  title="From"
+                  type="date"
+                  size="small"
+                  value={dateRange.fromDate}
+                  onChange={handleDateRangeChange}
+                  name="fromDate"
+                  ariaLabel="From Date"
+                />
+              </Grid>
+              <Grid item xs={12} sm={3} md={3} lg={3}>
+                <FloatingLabelTextBox
+                  ControlID="toDate"
+                  title="To"
+                  type="date"
+                  size="small"
+                  value={dateRange.toDate}
+                  onChange={handleDateRangeChange}
+                  name="toDate"
+                  ariaLabel="To Date"
+                />
+              </Grid>
+            </>
           )}
-        </Paper>
-      </Container>
-    </MainLayout>
+          <Grid item xs={12} sm={3} md={3} lg={3}>
+            <CustomButton
+              variant="contained"
+              size="medium"
+              onClick={handleShowButtonClick}
+              icon={VisibilityIcon}
+              text="SHOW"
+              color="primary"
+            />
+          </Grid>
+        </Grid>
+
+        {showCounts && (
+          <Grid container spacing={3} sx={{ marginTop: theme.spacing(3) }}>
+            {Object.entries(counts).map(([key, countData]) => (
+              <Grid item xs={12} sm={6} lg={4} key={key}>
+                <StyledCard>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      {titleMapping[key.toLowerCase()] || key}
+                    </Typography>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      <StyledLeftBadge
+                        badgeContent={countData.myCount}
+                        color="primary"
+                        anchorOrigin={{
+                          vertical: "top",
+                          horizontal: "right",
+                        }}
+                        showZero
+                      >
+                        <PersonIcon />
+                      </StyledLeftBadge>
+                      <StyledRightBadge
+                        badgeContent={countData.overallCount}
+                        color="secondary"
+                        anchorOrigin={{
+                          vertical: "top",
+                          horizontal: "right",
+                        }}
+                        showZero
+                      >
+                        <GroupIcon />
+                      </StyledRightBadge>
+                    </Box>
+                  </CardContent>
+                </StyledCard>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Paper>
+    </Container>
+
   );
 };
 

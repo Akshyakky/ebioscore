@@ -74,11 +74,22 @@ export interface ContactAddressData {
   cAddStreet?: string;
   transferYN: string;
 }
+export interface ContactDetailsData {
+  cdID: number;
+  conID: number;
+  facID: number;
+  facName: string;
+  conType: string;
+  compID: number;
+  compCode: string;
+  compName: string;
+  transferYN: string;
+}
 
 export interface ContactListData {
-
   contactMastDto: ContactMastData;
   contactAddressDto: ContactAddressData;
+  contactDetailsDto: ContactDetailsData[];
 }
 
 export interface ContactListSearchResult {
@@ -91,4 +102,3 @@ export interface ContactListSearchResult {
   refferalYN: string;
   rActiveYN: string;
 }
-
