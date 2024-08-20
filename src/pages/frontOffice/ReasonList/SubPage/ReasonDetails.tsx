@@ -17,11 +17,11 @@ import {
   notifyError,
 } from "../../../../utils/Common/toastManager";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices";
-import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
+import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListService";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 

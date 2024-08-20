@@ -51,7 +51,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         rNotes: profile.rNotes,
       });
     }
-  }, [profile, compID]);
+  }, [profile, compID]);//Remove
 
   const handleSave = async () => {
     setIsSubmitted(true);

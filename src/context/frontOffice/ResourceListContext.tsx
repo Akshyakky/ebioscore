@@ -3,7 +3,7 @@ import { useLoading } from "../LoadingContext";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/reducers";
 import { notifyError } from "../../utils/Common/toastManager";
-import { ResourceListData } from "../../interfaces/frontOffice/ResourceListData";
+import { ResourceListData } from "../../interfaces/FrontOffice/ResourceListData";
 import { ResourceListService } from "../../services/FrontOfficeServices/ResourceListServices";
 
 interface ResourceListContextProps {

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
+import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
@@ -71,36 +71,34 @@ const ReasonListPage: React.FC = () => {
     };
 
     return (
-        <MainLayout>
-            <Container maxWidth={false}>
-                <Box sx={{ marginBottom: 2 }}>
-                    <ActionButtonGroup
-                        buttons={[
-                            {
-                                variant: "contained",
-                                size: "medium",
-                                icon: SearchIcon,
-                                text: "Advanced Search",
-                                onClick: handleAdvancedSearch,
-                            },
-                        ]}
-                    />
-                </Box>
-                {loading && <GlobalSpinner />}
-                <ReasonDetails
-                    reason={selectedReason}
-                    onSave={handleSave}
-                    onClear={handleClear}
-                    isEditMode={isEditMode}
+        <Container maxWidth={false}>
+            <Box sx={{ marginBottom: 2 }}>
+                <ActionButtonGroup
+                    buttons={[
+                        {
+                            variant: "contained",
+                            size: "medium",
+                            icon: SearchIcon,
+                            text: "Advanced Search",
+                            onClick: handleAdvancedSearch,
+                        },
+                    ]}
                 />
-                <ReasonListSearch
-                    show={isSearchDialogOpen}
-                    handleClose={handleCloseSearchDialog}
-                    onEditProfile={handleEdit}
-                    selectedReason={selectedReason}
-                />
-            </Container>
-        </MainLayout>
+            </Box>
+            {loading && <GlobalSpinner />}
+            <ReasonDetails
+                reason={selectedReason}
+                onSave={handleSave}
+                onClear={handleClear}
+                isEditMode={isEditMode}
+            />
+            <ReasonListSearch
+                show={isSearchDialogOpen}
+                handleClose={handleCloseSearchDialog}
+                onEditProfile={handleEdit}
+                selectedReason={selectedReason}
+            />
+        </Container>
     );
 };
 

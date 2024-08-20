@@ -23,8 +23,8 @@ import {
   notifyError,
 } from "../../../../utils/Common/toastManager";
 import TextArea from "../../../../components/TextArea/TextArea";
-import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
-import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
+import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
@@ -37,7 +37,7 @@ import ChangeFormDialog from "./FormChange";
 import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import { CompanyService } from "../../../../services/CommonServices/CompanyService";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
+import { BreakConDetailData } from "../../../../interfaces/FrontOffice/BreakConDetailsData";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
 
 interface BreakListDetailsProps {

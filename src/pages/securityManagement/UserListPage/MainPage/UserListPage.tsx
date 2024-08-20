@@ -4,7 +4,7 @@ import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import SearchIcon from "@mui/icons-material/Search";
 import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import { UserListSearchContext } from "../../../../context/SecurityManagement/UserListSearchContext";
-import UserListSearch from "../../CommonPage/UserListSearch";
+import UserListSearch from "../../CommonPage/AdvanceSearch/UserListSearch";
 import UserDetails from "../SubPage/UserDetails";
 import { UserListData } from "../../../../interfaces/SecurityManagement/UserListData";
 import { RootState } from "../../../../store/reducers";
@@ -160,52 +160,50 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
   };
 
   return (
-    <MainLayout>
-      <Container maxWidth={false}>
-        <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup
-            buttons={[
-              {
-                variant: "contained",
-                size: "medium",
-                icon: SearchIcon,
-                text: "Advanced Search",
-                onClick: handleAdvancedSearch,
-              },
-            ]}
-          />
-        </Box>
-
-        <UserDetails
-          onSave={handleSave}
-          onClear={handleClear}
-          user={selectedUser}
-          isEditMode={!!selectedUser}
-          refreshUsers={refreshUsers}
-          updateUserStatus={updateUserStatus}
-          onSuperUserChange={handleSuperUserChange}
+    <Container maxWidth={false}>
+      <Box sx={{ marginBottom: 2 }}>
+        <ActionButtonGroup
+          buttons={[
+            {
+              variant: "contained",
+              size: "medium",
+              icon: SearchIcon,
+              text: "Advanced Search",
+              onClick: handleAdvancedSearch,
+            },
+          ]}
         />
+      </Box>
 
-        {isSaved && selectedUser && !isSuperUser && (
-          <OperationPermissionDetails
-            profileID={selectedUser.profileID}
-            profileName={selectedUser.appUserName}
-            saveModulePermission={saveUserPermission}
-            saveReportPermission={saveUserReportPermission}
-            permissions={permissions}
-            setPermissions={setPermissions}
-          />
-        )}
+      <UserDetails
+        onSave={handleSave}
+        onClear={handleClear}
+        user={selectedUser}
+        isEditMode={!!selectedUser}
+        refreshUsers={refreshUsers}
+        updateUserStatus={updateUserStatus}
+        onSuperUserChange={handleSuperUserChange}
+      />
 
-        <UserListSearch
-          show={isSearchDialogOpen}
-          handleClose={handleCloseSearchDialog}
-          onEditProfile={handleEditUser}
-          selectedUser={selectedUser}
+      {isSaved && selectedUser && !isSuperUser && (
+        <OperationPermissionDetails
+          profileID={selectedUser.profileID}
+          profileName={selectedUser.appUserName}
+          saveModulePermission={saveUserPermission}
+          saveReportPermission={saveUserReportPermission}
+          permissions={permissions}
+          setPermissions={setPermissions}
         />
+      )}
 
-      </Container>
-    </MainLayout>
+      <UserListSearch
+        show={isSearchDialogOpen}
+        handleClose={handleCloseSearchDialog}
+        onEditProfile={handleEditUser}
+        selectedUser={selectedUser}
+      />
+
+    </Container>
   );
 };
 

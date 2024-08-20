@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Grid, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Grid, SelectChangeEvent, Typography } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import MultiSelectDropdown from "../../../../components/DropDown/MultiSelectDropdown";
@@ -56,14 +56,39 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
         (state: RootState) => state.userDetails
     );
     const [isSubmitted, setIsSubmitted] = useState(false);
-    const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
 
     const { handleDropdownChange } = useDropdownChange<ContactListData>(setContactList);
+    const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
+
+    const handleSpecialityChange = (event: SelectChangeEvent<unknown>) => {
+        const target = event.target as HTMLInputElement;
+        const value = target.value;
+        const updatedSpecialities = typeof value === "string" ? value.split(",") : (value as string[]);
+
+        // Update selected specialities state
+        setSelectedSpecialities(updatedSpecialities);
+
+        // Update contact list state
+        setContactList((prev) => ({
+            ...prev,
+            contactDetailsDto: updatedSpecialities.map((val) => ({
+                facID: parseInt(val),
+                facName: dropdownValues.specialityOptions.find((opt) => opt.value === val)?.label || "",
+                compID: compID!,
+                compCode: compCode!,
+                compName: compName!,
+                transferYN: "N",
+                cdID: 0,
+                conID: prev.contactMastDto.conID,
+                conType: ""
+            })),
+        }));
+    };
+
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setContactList((prev) => {
-            // Handle the special case for conCode which is in both contactMastDto and contactAddressDto
             if (name === "conCode") {
                 return {
                     ...prev,
@@ -149,7 +174,7 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
             isAuthorisedUser: false,
             isContract: false,
         });
-        setSelectedSpecialities([]);
+        //setSelectedSpecialities([]);
         setIsSubmitted(false);
     };
 
@@ -213,16 +238,19 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
                                 label="Speciality"
                                 name="selectedSpecialities"
                                 value={selectedSpecialities}
+                                options={dropdownValues.specialityOptions.map(option => ({
+                                    value: option.value,
+                                    label: option.label
+                                }))}
+                                onChange={handleSpecialityChange}
                                 defaultText="Select Specialities"
-                                options={dropdownValues.specialityOptions}
-                                onChange={(e) =>
-                                    setSelectedSpecialities(e.target.value as string[])
-                                }
                                 size="small"
-                                multiple
+                                multiple={true}
                                 isMandatory
                                 isSubmitted={isSubmitted}
                             />
+
+
                         </Grid>
                     )}
                 </Grid>
@@ -640,5 +668,6 @@ function getInitialContactListState(
             cAddStreet1: "",
             transferYN: "N",
         },
+        contactDetailsDto: []
     };
 }

@@ -10,7 +10,7 @@ import {
   Box,
   FormControlLabel,
 } from "@mui/material";
-import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
+import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { debounce } from "../../../../utils/Common/debounceUtils";
@@ -24,7 +24,7 @@ import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
-import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData"
+import { BreakConDetailData } from "../../../../interfaces/FrontOffice/BreakConDetailsData"
 
 interface BreakListSearchProps {
   show: boolean;

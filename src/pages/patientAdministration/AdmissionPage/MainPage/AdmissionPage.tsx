@@ -73,35 +73,33 @@ const AdmissionPage: React.FC = () => {
   ];
 
   return (
-    <MainLayout>
-      <Container maxWidth={false}>
-        <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup buttons={actionButtons} />
-        </Box>
-        <Paper variant="outlined" sx={{ padding: 2 }}>
-          <Grid container justifyContent="space-between" alignItems="center">
-            <Grid item></Grid>
-          </Grid>
-          <InsurancePage
-            pChartID={selectedPChartID}
-            token={token}
-            onSave={handleSaveInsuranceData}
-            shouldClearData={shouldClearInsuranceData}
-            triggerSave={triggerInsuranceSave}
-          />
-        </Paper>
-        <Box sx={{ marginTop: 2 }}>
-          <FormSaveClearButton
-            clearText="Clear"
-            saveText="Save"
-            onClear={handleClear}
-            onSave={handleSave}
-            clearIcon={DeleteIcon}
-            saveIcon={SaveIcon}
-          />
-        </Box>
-      </Container>
-    </MainLayout>
+    <Container maxWidth={false}>
+      <Box sx={{ marginBottom: 2 }}>
+        <ActionButtonGroup buttons={actionButtons} />
+      </Box>
+      <Paper variant="outlined" sx={{ padding: 2 }}>
+        <Grid container justifyContent="space-between" alignItems="center">
+          <Grid item></Grid>
+        </Grid>
+        <InsurancePage
+          pChartID={selectedPChartID}
+          token={token}
+          onSave={handleSaveInsuranceData}
+          shouldClearData={shouldClearInsuranceData}
+          triggerSave={triggerInsuranceSave}
+        />
+      </Paper>
+      <Box sx={{ marginTop: 2 }}>
+        <FormSaveClearButton
+          clearText="Clear"
+          saveText="Save"
+          onClear={handleClear}
+          onSave={handleSave}
+          clearIcon={DeleteIcon}
+          saveIcon={SaveIcon}
+        />
+      </Box>
+    </Container>
   );
 };
 

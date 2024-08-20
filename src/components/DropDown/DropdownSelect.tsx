@@ -50,8 +50,11 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   const hasError = isMandatory && isSubmitted && isEmptyValue;
 
   const displayValue = useMemo(() => {
-    return options.find((option) => String(option.value) === String(value))
-      ?.value || "";
+    const selectedOption = options.find(
+      (option) =>
+        String(option.value) === String(value) || option.label === value
+    );
+    return selectedOption ? selectedOption.value : "";
   }, [value, options]);
 
   return (

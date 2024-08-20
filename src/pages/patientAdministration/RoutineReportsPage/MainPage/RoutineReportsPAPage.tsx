@@ -99,7 +99,7 @@ const RoutineReportsPA = () => {
   };
 
   return (
-    <MainLayout>
+    <>
       <CustomButton
         onClick={() => setCurrentPage(currentPage - 1)}
         disabled={currentPage === 1}
@@ -114,24 +114,26 @@ const RoutineReportsPA = () => {
       <CustomButton onClick={downloadExcel} text="Export to Excel" />
 
       {/* Add this line */}
-      {file && (
-        <Document
-          file={file}
-          onLoadSuccess={onDocumentLoadSuccess}
-          onLoadError={(error) => {
-            console.error("Error while loading document!", error.message);
-            // Implement more sophisticated error handling
-          }}
-        >
-          <Page
-            pageNumber={currentPage}
-            renderAnnotationLayer={false}
-            renderTextLayer={false}
-            loading={<div>Loading...</div>} // Consider replacing this with a spinner or a skeleton screen
-          />
-        </Document>
-      )}
-    </MainLayout>
+      {
+        file && (
+          <Document
+            file={file}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onLoadError={(error) => {
+              console.error("Error while loading document!", error.message);
+              // Implement more sophisticated error handling
+            }}
+          >
+            <Page
+              pageNumber={currentPage}
+              renderAnnotationLayer={false}
+              renderTextLayer={false}
+              loading={<div>Loading...</div>} // Consider replacing this with a spinner or a skeleton screen
+            />
+          </Document>
+        )
+      }
+    </>
   );
 };
 

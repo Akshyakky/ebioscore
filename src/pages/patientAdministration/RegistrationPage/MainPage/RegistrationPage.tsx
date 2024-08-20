@@ -269,7 +269,7 @@ const RegistrationPage: React.FC = () => {
   ];
 
   return (
-    <MainLayout>
+    <>
       <Container maxWidth={false}>
         <Box sx={{ marginBottom: 2 }}>
           <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
@@ -323,7 +323,7 @@ const RegistrationPage: React.FC = () => {
         clearIcon={DeleteIcon}
         saveIcon={SaveIcon}
       />
-    </MainLayout>
+    </>
   );
 };
 

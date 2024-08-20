@@ -167,7 +167,7 @@ const ContactListPage: React.FC = () => {
       if (
         contactDetails &&
         contactDetails.contactMastDto &&
-        contactDetails.contactAddressDto
+        contactDetails.contactAddressDto && contactDetails.contactDetailsDto
       ) {
         setContactList(contactDetails);
         setSwitchStates({
@@ -201,7 +201,7 @@ const ContactListPage: React.FC = () => {
   ];
 
   return (
-    <MainLayout>
+    <>
       <Container maxWidth={false}>
         <Box sx={{ marginBottom: 2 }}>
           <ActionButtonGroup buttons={actionButtons} />
@@ -221,7 +221,7 @@ const ContactListPage: React.FC = () => {
         handleClose={() => setIsSearchOpen(false)}
         onEditContactList={handleEditContactList}
       />
-    </MainLayout>
+    </>
   );
 };
 
@@ -311,5 +311,6 @@ function getInitialContactListState(
       cAddStreet1: "",
       transferYN: "N",
     },
+    contactDetailsDto: []
   };
 }

@@ -6,12 +6,12 @@ import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
 import { RootState } from "../../../../store/reducers";
 import { notifyError } from "../../../../utils/Common/toastManager";
-import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
+import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
 import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import BreakListDetails from "../SubPage/BreakListDetails";
 import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListService";
 import BreakListSearch from "../SubPage/BreakListsearch";
-import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
+import { BreakConDetailData } from "../../../../interfaces/FrontOffice/BreakConDetailsData";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
 
 const BreakListPage: React.FC = () => {
@@ -68,18 +68,18 @@ const BreakListPage: React.FC = () => {
 
   // Handle Edit Operation
   const handleEdit = async (row: BreakConDetailData) => {
-    debugger 
-      console.log("Going to edit data with blID:", row.blID);
-   
+    debugger
+    console.log("Going to edit data with blID:", row.blID);
+
     setLoading(true);
     try {
       const breakListResult = await BreakListService.getBreakListById(token!, row.blID);
       if (breakListResult.success) {
-        console.log("the editing Data",breakListResult)
+        console.log("the editing Data", breakListResult)
         setSelectedBreak(breakListResult.data ? breakListResult.data : null);
         const breakConResult = await BreakListConDetailsService.getBreakConDetailById(token!, row.blID);
         if (breakConResult.success) {
-          console.log("the editing con Data",breakConResult)
+          console.log("the editing con Data", breakConResult)
           setBreakConDetails(breakConResult.data);
         } else {
           notifyError(breakConResult.errorMessage || "Error fetching break connection details.");
@@ -88,7 +88,7 @@ const BreakListPage: React.FC = () => {
         notifyError(breakListResult.errorMessage || "Error fetching break list details.");
       }
       setIsEditMode(true);
-      setIsSearchDialogOpen(false); 
+      setIsSearchDialogOpen(false);
     } catch (error) {
       console.error("Error fetching details:", error);
       notifyError("Error fetching details.");
@@ -105,46 +105,41 @@ const BreakListPage: React.FC = () => {
   };
 
   return (
-    <MainLayout>
-      <Container maxWidth={false}>
-        <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup
-            buttons={[
-              {
-                variant: "contained",
-                size: "medium",
-                icon: SearchIcon,
-                text: "Advanced Search",
-                onClick: handleAdvancedSearch,
-              },
-            ]}
-          />
-        </Box>
-
-
-        {loading && <GlobalSpinner />}
-        <BreakListDetails
-          frequencyNumber={frequencyNumber}
-          breakData={selectedBreak}
-          breakConDetails={breakConDetails} 
-          onSave={handleSave}
-          onClear={handleClear}
-          isEditMode={isEditMode}
-          setFormData={() => { }} 
-          formattedEndDate={new Date()} 
+    <Container maxWidth={false}>
+      <Box sx={{ marginBottom: 2 }}>
+        <ActionButtonGroup
+          buttons={[
+            {
+              variant: "contained",
+              size: "medium",
+              icon: SearchIcon,
+              text: "Advanced Search",
+              onClick: handleAdvancedSearch,
+            },
+          ]}
         />
-
-        <BreakListSearch
-          show={isSearchDialogOpen}
-          handleClose={handleCloseSearchDialog}
-          onEditBreak={handleEdit}
-          selectedBreak={selectedBreak}
-        />
+      </Box>
 
 
+      {loading && <GlobalSpinner />}
+      <BreakListDetails
+        frequencyNumber={frequencyNumber}
+        breakData={selectedBreak}
+        breakConDetails={breakConDetails}
+        onSave={handleSave}
+        onClear={handleClear}
+        isEditMode={isEditMode}
+        setFormData={() => { }}
+        formattedEndDate={new Date()}
+      />
 
-      </Container>
-    </MainLayout>
+      <BreakListSearch
+        show={isSearchDialogOpen}
+        handleClose={handleCloseSearchDialog}
+        onEditBreak={handleEdit}
+        selectedBreak={selectedBreak}
+      />
+    </Container>
   );
 };
 

@@ -195,44 +195,44 @@ const RevisitPage: React.FC = () => {
 
   const handleRadioButtonChange =
     (field: string[], textField: string[]) =>
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const { value } = event.target;
-      setRevisitFormData((prevState) => ({
-        ...prevState,
-        [field[0]]: value,
-        [textField[0]]: event.target.labels
-          ? event.target.labels[0].textContent
-          : "",
-      }));
+      async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const { value } = event.target;
+        setRevisitFormData((prevState) => ({
+          ...prevState,
+          [field[0]]: value,
+          [textField[0]]: event.target.labels
+            ? event.target.labels[0].textContent
+            : "",
+        }));
 
-      if (value === "H") {
-        // Fetch and set department values
-        const departmentValues = await DepartmentService.fetchDepartments(
-          token,
-          "GetActiveRegistrationDepartments",
-          compID
-        );
-        setDepartmentValues(
-          departmentValues.map((item) => ({
-            value: item.value.toString(),
-            label: item.label,
-          }))
-        );
-      } else if (value === "P") {
-        // Fetch and set attending physicians
-        const availablePhysicians =
-          await ContactMastService.fetchAvailableAttendingPhysicians(
+        if (value === "H") {
+          // Fetch and set department values
+          const departmentValues = await DepartmentService.fetchDepartments(
             token,
-            selectedPChartID
+            "GetActiveRegistrationDepartments",
+            compID
           );
-        setAvailableAttendingPhysicians(
-          availablePhysicians.map((item) => ({
-            value: item.value.toString(),
-            label: item.label,
-          }))
-        );
-      }
-    };
+          setDepartmentValues(
+            departmentValues.map((item) => ({
+              value: item.value.toString(),
+              label: item.label,
+            }))
+          );
+        } else if (value === "P") {
+          // Fetch and set attending physicians
+          const availablePhysicians =
+            await ContactMastService.fetchAvailableAttendingPhysicians(
+              token,
+              selectedPChartID
+            );
+          setAvailableAttendingPhysicians(
+            availablePhysicians.map((item) => ({
+              value: item.value.toString(),
+              label: item.label,
+            }))
+          );
+        }
+      };
 
   const handlePatientSelect = async (selectedSuggestion: string) => {
     setLoading(true);
@@ -374,7 +374,7 @@ const RevisitPage: React.FC = () => {
   }, [shouldClearInsuranceData]);
 
   return (
-    <MainLayout>
+    <>
       <Container maxWidth={false}>
         {successAlert.open && (
           <GeneralAlert
@@ -555,7 +555,7 @@ const RevisitPage: React.FC = () => {
         clearIcon={DeleteIcon}
         saveIcon={SaveIcon}
       />
-    </MainLayout>
+    </>
   );
 };
 

@@ -91,7 +91,6 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
     }
   };
 
-  // Create a new data array with an index starting at 1
   const dataWithIndex = searchResults.map((item, index) => ({
     ...item,
     serialNumber: index + 1,
@@ -114,7 +113,7 @@ const ProfileListSearch: React.FC<ProfileListSearchResultProps> = ({
     { key: "profileCode", header: "Profile Code", visible: true },
     { key: "profileName", header: "Profile Name", visible: true },
     { key: "rNotes", header: "Notes", visible: true },
-  
+
     {
       key: "profileStatus",
       header: "Profile Status",

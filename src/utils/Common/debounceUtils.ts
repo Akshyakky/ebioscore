@@ -1,7 +1,7 @@
 export function debounce(func: (...args: any[]) => void, wait: number) {
   let timeout: NodeJS.Timeout | null = null;
 
-  return function (...args: any[]) {
+  function debounced(...args: any[]) {
     const later = () => {
       timeout = null;
       func(...args);
@@ -12,5 +12,14 @@ export function debounce(func: (...args: any[]) => void, wait: number) {
     }
 
     timeout = setTimeout(later, wait);
+  }
+
+  debounced.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
   };
+
+  return debounced;
 }

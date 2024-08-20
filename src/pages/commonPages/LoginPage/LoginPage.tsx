@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Container,
   Box,
@@ -11,7 +11,7 @@ import {
   Typography,
   Grid,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
 } from "@mui/material";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import logo from "../../../assets/images/eBios.png";
@@ -19,7 +19,6 @@ import { CompanyService } from "../../../services/CommonServices/CompanyService"
 import { ClientParameterService } from "../../../services/CommonServices/ClientParameterService";
 import { useNavigate } from "react-router-dom";
 import AuthService from "../../../services/AuthService/AuthService";
-import axios from "axios";
 import { useDispatch } from "react-redux";
 import { SET_USER_DETAILS } from "../../../store/userTypes";
 import DropdownSelect from "../../../components/DropDown/DropdownSelect";
@@ -71,15 +70,15 @@ const LoginPage: React.FC = () => {
     checkExpiryDates();
   }, []);
 
-  const checkDateValidity = (dateString: string): number => {
+  const checkDateValidity = useCallback((dateString: string): number => {
     const [day, month, year] = dateString.split("/").map(Number);
     const today = new Date();
     const targetDate = new Date(year, month - 1, day);
     const differenceInTime = targetDate.getTime() - today.getTime();
     return differenceInTime / (1000 * 3600 * 24);
-  };
+  }, []);
 
-  const checkExpiryDates = async () => {
+  const checkExpiryDates = useCallback(async () => {
     try {
       const [amcDetails, licenseDetails] = await Promise.all([
         ClientParameterService.getClientParameter("AMCSUP"),
@@ -111,9 +110,9 @@ const LoginPage: React.FC = () => {
     } catch (error) {
       console.error("Failed to fetch client parameters:", error);
     }
-  };
+  }, [checkDateValidity]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (licenseExpiryMessage === "Cannot log in. Your License has expired") {
       setErrorMessage(licenseExpiryMessage);
@@ -138,16 +137,16 @@ const LoginPage: React.FC = () => {
         UserName,
         Password,
       });
-      if (tokenResponse.token) {
-        const jwtToken = JSON.parse(atob(tokenResponse.token.split(".")[1]));
+      if (tokenResponse.data?.token) {
+        const jwtToken = JSON.parse(atob(tokenResponse.data.token.split(".")[1]));
         const tokenExpiryTime = new Date(jwtToken.exp * 1000);
         dispatch({
           type: SET_USER_DETAILS,
           payload: {
-            userID: tokenResponse.user.userID,
-            token: tokenResponse.token,
-            adminYN: tokenResponse.user.adminYN,
-            userName: tokenResponse.user.userName,
+            userID: tokenResponse.data.user.userID,
+            token: tokenResponse.data.token,
+            adminYN: tokenResponse.data.user.adminYN,
+            userName: tokenResponse.data.user.userName,
             compID: parseInt(companyID),
             compCode: companyCode,
             compName: selectedCompanyName,
@@ -158,30 +157,17 @@ const LoginPage: React.FC = () => {
         navigate("/dashboard");
       } else {
         setErrorMessage(
-          tokenResponse.user.ErrorMessage || "Invalid credentials"
+          tokenResponse.data?.user.ErrorMessage || "Invalid credentials"
         );
       }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          setErrorMessage(
-            error.response.data.errorMessage ||
-            "An error occurred during login."
-          );
-        } else {
-          setErrorMessage("No response received from the server.");
-        }
-      } else if (error instanceof Error) {
-        setErrorMessage(error.message);
-      } else {
-        setErrorMessage("An unexpected error occurred");
-      }
+      setIsLoggingIn(false);
     } finally {
       setIsLoggingIn(false);
     }
-  };
+  }, [UserName, Password, companyID, companyCode, licenseExpiryMessage, selectedCompanyName, dispatch, navigate]);
 
-  const handleSelectCompany = (CompIDCompCode: string, compName: string) => {
+  const handleSelectCompany = useCallback((CompIDCompCode: string, compName: string) => {
     const [compID, compCode] = CompIDCompCode.split(",");
     if (compID && compCode) {
       setCompanyID(compID);
@@ -192,14 +178,14 @@ const LoginPage: React.FC = () => {
       setCompanyCode("");
       setErrorMessage("Please select a company");
     }
-  };
+  }, []);
+
   const theme = useTheme();
   const matches = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <Container maxWidth={false} disableGutters sx={{ height: '100vh', display: 'flex' }}>
       <Grid container sx={{ height: '100%' }}>
-        {/* Background Image and Shapes */}
         <Grid item xs={12} md={matches ? 12 : 8.4} sx={{
           backgroundImage: `url(${backgroundImage})`,
           backgroundSize: "cover",
@@ -230,7 +216,6 @@ const LoginPage: React.FC = () => {
         }}>
         </Grid>
 
-        {/* Login Form */}
         <Grid item xs={12} md={matches ? 12 : 3.6} sx={{
           display: "flex",
           alignItems: "center",

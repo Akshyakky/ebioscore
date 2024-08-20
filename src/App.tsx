@@ -18,6 +18,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import routeConfig from "./routes/routeConfig";
 
+
 interface RouteConfig {
   path: string;
   component: React.ComponentType<any>;
