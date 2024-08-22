@@ -7,11 +7,11 @@ import SearchIcon from "@mui/icons-material/Search";
 import { RootState } from "../../../../store/reducers";
 import { notifyError } from "../../../../utils/Common/toastManager";
 import BreakListDetails from "../SubPage/BreakListDetails";
-import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListService";
+import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
 import BreakListSearch from "../SubPage/BreakListsearch";
-import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
 import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
 import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
+import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
 
 const BreakListPage: React.FC = () => {
   const { token } = useSelector((state: RootState) => state.userDetails);

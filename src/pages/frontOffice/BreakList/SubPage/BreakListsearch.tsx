@@ -24,11 +24,11 @@ import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTe
 import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
-import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
 import SuspendForm from "./SuspendForm";
 import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { BreakConSuspendService } from "../../../../services/FrontOfficeServices/BreakConSuspendService";
+import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
 
 interface BreakListSearchProps {
   show: boolean;

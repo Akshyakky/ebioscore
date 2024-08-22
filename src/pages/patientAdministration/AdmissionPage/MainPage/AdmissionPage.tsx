@@ -1,11 +1,10 @@
-import React, { useContext, useEffect, useState } from "react";
-import { Container, Paper, Typography, Grid, Box } from "@mui/material";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { Container, Paper, Grid, Box } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
 import { useLoading } from "../../../../context/LoadingContext";
 import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
-import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import ActionButtonGroup, {
   ButtonProps,
 } from "../../../../components/Button/ActionButtonGroup";
@@ -23,6 +22,7 @@ import FormSaveClearButton from "../../../../components/Button/FormSaveClearButt
 
 const AdmissionPage: React.FC = () => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
+  const insurancePageRef = useRef<any>(null);
   const [showPatientSearch, setShowPatientSearch] = useState(false);
   const { performSearch } = useContext(PatientSearchContext);
   const token = userInfo.token!;
@@ -37,10 +37,6 @@ const AdmissionPage: React.FC = () => {
       setShouldClearInsuranceData(false);
     }
   }, [shouldClearInsuranceData]);
-
-  const handleSaveInsuranceData = (data: InsuranceFormState[]) => {
-    console.log("Insurance data saved:", data);
-  };
 
   const handleClear = () => {
     setShouldClearInsuranceData(true);
@@ -82,11 +78,10 @@ const AdmissionPage: React.FC = () => {
           <Grid item></Grid>
         </Grid>
         <InsurancePage
+          ref={insurancePageRef}
           pChartID={selectedPChartID}
           token={token}
-          onSave={handleSaveInsuranceData}
           shouldClearData={shouldClearInsuranceData}
-          triggerSave={triggerInsuranceSave}
         />
       </Paper>
       <Box sx={{ marginTop: 2 }}>

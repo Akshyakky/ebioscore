@@ -24,21 +24,21 @@ import {
 } from "../../../../utils/Common/toastManager";
 import TextArea from "../../../../components/TextArea/TextArea";
 import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
-import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices";
+import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
 import CustomButton from "../../../../components/Button/CustomButton";
-import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListService";
+import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
 import ChangeFormDialog from "./FormChange";
 import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import { CompanyService } from "../../../../services/CommonServices/CompanyService";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
 import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
 import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
+import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
 
 interface BreakListDetailsProps {
   frequencyNumber: number;
@@ -381,7 +381,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       notifyError('Failed to save Break List');
     }
   };
-
 
   const handleClear = () => {
     debugger

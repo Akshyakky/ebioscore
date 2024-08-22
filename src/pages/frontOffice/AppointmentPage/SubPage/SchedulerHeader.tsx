@@ -1,19 +1,12 @@
 import React, { useCallback, useState, useRef, useEffect } from 'react';
-import { Box, Divider, Grid, IconButton, Menu, MenuItem, Tooltip, Typography, Checkbox, FormControlLabel } from '@mui/material';
+import { Box, Divider, Grid, IconButton, Menu, MenuItem, Tooltip, Typography, Checkbox } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PersonIcon from '@mui/icons-material/Person';
 import DomainIcon from '@mui/icons-material/Domain';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import AutocompleteTextBox from '../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox';
-
-const fetchConsultantSuggestions = async (input: string): Promise<string[]> => {
-    return ['Dr. John Doe', 'Dr. Jane Smith', 'Dr. Emily Johnson'];
-};
-
-const fetchResourceSuggestions = async (input: string): Promise<string[]> => {
-    return ['Laboratory', 'Radiology', 'Pharmacy'];
-};
+import { fetchAppointmentConsultants, fetchAllResources } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
 
 interface SchedulerHeaderProps {
     onRefresh: () => void;
@@ -24,6 +17,7 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh }) => {
     const [searchValue, setSearchValue] = useState('');
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [checked, setChecked] = useState<boolean>(false);
+    const [suggestions, setSuggestions] = useState<string[]>([]);
 
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -40,6 +34,31 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh }) => {
             inputRef.current?.focus();
         }, 0);
     }, []);
+
+    const handleFetchSuggestions = useCallback(async () => {
+        try {
+            let result;
+            if (searchType === 'consultant') {
+                result = await fetchAppointmentConsultants();
+            } else {
+                result = await fetchAllResources();
+            }
+
+            if (result && result.success) {
+                const items = result.data || [];
+                setSuggestions(items.map(item => searchType === 'consultant' ? item.conFName : item.rLName));
+            } else {
+                setSuggestions([]);
+            }
+        } catch (error) {
+            console.error("Failed to fetch suggestions", error);
+            setSuggestions([]);
+        }
+    }, [searchType]);
+
+    useEffect(() => {
+        handleFetchSuggestions();
+    }, [searchType]);
 
     const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchValue(e.target.value);
@@ -72,9 +91,10 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh }) => {
                             title={`Search ${searchType}`}
                             value={searchValue}
                             onChange={handleChange}
-                            fetchSuggestions={searchType === 'consultant' ? fetchConsultantSuggestions : fetchResourceSuggestions}
+                            suggestions={suggestions}
                             onSelectSuggestion={handleSelectSuggestion}
                             placeholder={`Search ${searchType}`}
+                            type='text'
                             ref={inputRef}
                             InputProps={{
                                 startAdornment: (

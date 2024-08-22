@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../store/reducers";
 import { notifyError } from "../../utils/Common/toastManager";
 import { ResourceListData } from "../../interfaces/FrontOffice/ResourceListData";
-import { ResourceListService } from "../../services/FrontOfficeServices/ResourceListServices";
+import { ResourceListService } from "../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 
 interface ResourceListContextProps {
   resourceList: ResourceListData[];
@@ -17,9 +17,9 @@ interface ResourceListContextProps {
 export const ResourceListContext = createContext<ResourceListContextProps>({
   resourceList: [],
   searchResults: [],
-  performSearch: async () => {},
-  fetchAllResources: async () => {},
-  updateResourceStatus: async () => {},
+  performSearch: async () => { },
+  fetchAllResources: async () => { },
+  updateResourceStatus: async () => { },
 });
 
 interface ResourceListProviderProps {

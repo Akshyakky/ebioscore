@@ -20,7 +20,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
 import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 import { debounce } from "../../../../utils/Common/debounceUtils";
-import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListService";
+import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
 
 interface ReasonListSearchProps {
   show: boolean;
@@ -33,7 +33,7 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
   show,
   handleClose,
   onEditProfile,
-  
+
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -73,7 +73,7 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
 
   useEffect(() => {
     if (show) {
-      performSearch(""); 
+      performSearch("");
     }
   }, [show]);
 
@@ -152,8 +152,8 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
     { key: "arlCode", header: "Reason Code", visible: true },
     { key: "arlName", header: "Reason Description", visible: true },
     { key: "arlDuration", header: "Duration", visible: true },
-    { key: "rlName", header: "Resource", visible: true }, 
-    { key: "rNotes", header: "Instructions", visible: true }, 
+    { key: "rlName", header: "Resource", visible: true },
+    { key: "rNotes", header: "Instructions", visible: true },
     {
       key: "status",
       header: "Status",

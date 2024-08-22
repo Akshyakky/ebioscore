@@ -7,7 +7,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { notifyError } from "../../../../utils/Common/toastManager";
 import { Box, Container } from "@mui/material";
 import ReasonDetails from "../../ReasonList/SubPage/ReasonDetails";
-import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListService";
+import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
 import ReasonListSearch from "../SubPage/ReasonListSearch";
 import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 

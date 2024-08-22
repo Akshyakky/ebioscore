@@ -9,6 +9,7 @@ interface AutocompleteTextBoxProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fetchSuggestions?: (input: string) => Promise<string[]>;
   onSelectSuggestion?: (suggestion: string) => void;
+  suggestions?: string[];
   placeholder?: string;
   type?: string;
   className?: string;
@@ -39,6 +40,7 @@ const AutocompleteTextBox = forwardRef<
       onChange,
       fetchSuggestions,
       onSelectSuggestion,
+      suggestions = [],
       placeholder,
       type = "text",
       className,
@@ -58,6 +60,15 @@ const AutocompleteTextBox = forwardRef<
   ) => {
     const [inputValue, setInputValue] = useState(value);
     const [options, setOptions] = useState<string[]>([]);
+
+
+    useEffect(() => {
+      if (suggestions && suggestions.length > 0) {
+        setOptions(suggestions);
+      } else if (inputValue) {
+        fetchOptions(inputValue);
+      }
+    }, [suggestions, inputValue]);
 
     const fetchOptions = async (input: string) => {
       if (fetchSuggestions) {
