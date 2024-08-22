@@ -6,13 +6,12 @@ import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
 import { RootState } from "../../../../store/reducers";
 import { notifyError } from "../../../../utils/Common/toastManager";
-import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
-import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import BreakListDetails from "../SubPage/BreakListDetails";
 import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListService";
 import BreakListSearch from "../SubPage/BreakListsearch";
-import { BreakConDetailData } from "../../../../interfaces/FrontOffice/BreakConDetailsData";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
+import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
+import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
 
 const BreakListPage: React.FC = () => {
   const { token } = useSelector((state: RootState) => state.userDetails);
@@ -80,7 +79,9 @@ const BreakListPage: React.FC = () => {
         const breakConResult = await BreakListConDetailsService.getBreakConDetailById(token!, row.blID);
         if (breakConResult.success) {
           console.log("the editing con Data", breakConResult)
-          setBreakConDetails(breakConResult.data);
+          if (breakConResult.data !== undefined) {
+            setBreakConDetails(breakConResult.data);
+          }
         } else {
           notifyError(breakConResult.errorMessage || "Error fetching break connection details.");
         }
@@ -137,8 +138,7 @@ const BreakListPage: React.FC = () => {
         show={isSearchDialogOpen}
         handleClose={handleCloseSearchDialog}
         onEditBreak={handleEdit}
-        selectedBreak={selectedBreak}
-      />
+        selectedBreak={selectedBreak} token={""}      />
     </Container>
   );
 };

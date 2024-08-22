@@ -23,7 +23,6 @@ import {
   notifyError,
 } from "../../../../utils/Common/toastManager";
 import TextArea from "../../../../components/TextArea/TextArea";
-import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
 import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices";
 import { RootState } from "../../../../store/reducers";
@@ -37,13 +36,14 @@ import ChangeFormDialog from "./FormChange";
 import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import { CompanyService } from "../../../../services/CommonServices/CompanyService";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import { BreakConDetailData } from "../../../../interfaces/FrontOffice/BreakConDetailsData";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
+import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
+import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
 
 interface BreakListDetailsProps {
   frequencyNumber: number;
   breakData: BreakListData | null;
-breakConDetails: BreakConDetailData[] | null;
+  breakConDetails: BreakConDetailData[] | null;
   onSave: (savedBreak: BreakListData) => void;
   onClear: () => void;
   isEditMode: boolean;
@@ -128,19 +128,19 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     }
   }, [formattedEndDate]);
 
- useEffect(() => {
-  if (breakConDetails) {
-    breakConDetails.forEach(detail => {
-      if (detail.hPLID) {
-        if (breakListData.isPhyResYN === "Y") {
-          setSelectedPhysicians(prev => [...prev, detail.hPLID]);
-        } else if (breakListData.isPhyResYN === "N") {
-          setSelectedResources(prev => [...prev, detail.hPLID]);
+  useEffect(() => {
+    if (breakConDetails) {
+      breakConDetails.forEach(detail => {
+        if (detail.hPLID) {
+          if (breakListData.isPhyResYN === "Y") {
+            setSelectedPhysicians(prev => [...prev, detail.hPLID]);
+          } else if (breakListData.isPhyResYN === "N") {
+            setSelectedResources(prev => [...prev, detail.hPLID]);
+          }
         }
-      }
-    });
-  }
-}, [breakConDetails, breakListData.isPhyResYN]);
+      });
+    }
+  }, [breakConDetails, breakListData.isPhyResYN]);
 
   useEffect(() => {
     setEndDateState(formattedEndDate);
@@ -286,12 +286,12 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   }, [breakConDetails]);
 
   const handleSaveBreakConDetail = async (breakConDetailData: BreakConDetailData) => {
-    debugger 
+    debugger
     // Ensure that you are working with a single ID, not an array
     const hPLID = breakListData.isPhyResYN === "Y"
       ? selectedPhysicians[0]  // Ensure this is a single number
       : selectedResources[0];  // Ensure this is a single number
-  
+
     // Prepare the payload with correct structure
     const payload: BreakConDetailData = {
 
@@ -312,7 +312,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       compName: breakConDetailData.compName || "",
       recordStatus: breakConDetailData.recordStatus || "N"
     };
-  
+
     try {
       // Ensure that the save service correctly updates the existing record
       const response = await BreakListConDetailsService.saveBreakConDetail(token!, payload);
@@ -326,10 +326,8 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       notifyError('Failed to update Break Condition Detail');
     }
   };
-  
-  
-  
-  
+
+
   useEffect(() => {
     if (breakConDetails) {
       breakConDetails.forEach(detail => {
@@ -342,19 +340,19 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       });
     }
   }, [breakConDetails, breakListData.isPhyResYN]);
-  
+
 
   const handleSave = async () => {
     onSave(breakListData);
-  
+
     try {
       const breakListResponse = await BreakListService.saveBreakList(token!, {
         ...breakListData,
       });
-  
+
       if (breakListResponse.success) {
         notifySuccess('Break List saved successfully');
-  
+
         const breakConDetailData: BreakConDetailData = {
           hPLID: 0, // This will be set within handleSaveBreakConDetail
           bCDID: 0,
@@ -373,7 +371,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
           recordStatus: breakListData?.transferYN || "Y",
           rActiveYN: breakListData.rActiveYN || "N"
         };
-  
+
         await handleSaveBreakConDetail(breakConDetailData);
       } else {
         throw new Error(breakListResponse.errorMessage || 'Failed to save Break List');
@@ -383,9 +381,10 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       notifyError('Failed to save Break List');
     }
   };
-  
+
+
   const handleClear = () => {
-    debugger 
+    debugger
     setBreakListData({
       bLID: 0,
       bLName: "",
@@ -554,7 +553,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   }, [isOneDay]);
 
   const handleResourceCheckboxChange = (resourceID: number, checked: boolean) => {
-    debugger 
+    debugger
     if (checked) {
       setSelectedResources((prev) => [...prev, resourceID]);
     } else {
@@ -568,9 +567,9 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       .filter((resource) => selectedResources.includes(resource.rLID))
       .map((resource) => resource.rLName);
 
-      setSelectedResourceNames(updatedResourceNames);
+    setSelectedResourceNames(updatedResourceNames);
   };
-  
+
 
   const handleSelectAllChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -596,9 +595,9 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     });
   };
 
-  
 
- 
+
+
 
 
 
@@ -666,12 +665,12 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
                 <FormControlLabel
                   value="Y"
                   control={<Radio />}
-                  label="Physician"  
+                  label="Physician"
                 />
                 <FormControlLabel
                   value="N"
                   control={<Radio />}
-                  label="Resources" 
+                  label="Resources"
                 />
               </RadioGroup>
             </FormControl>
@@ -972,7 +971,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       </section>
 
       {/* </Grid> */}
-    
+
 
       <section>
         <FormSaveClearButton
