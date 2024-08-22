@@ -1,5 +1,5 @@
-import LoginPage from "../pages/commonPages/LoginPage/LoginPage";
-import DashboardPage from "../pages/commonPages/DashboardPage/DashboardPage";
+import LoginPage from "../pages/common/LoginPage/LoginPage";
+import DashboardPage from "../pages/common/DashboardPage/DashboardPage";
 import RegistrationPage from "../pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
 import RevisitPage from "../pages/patientAdministration/RevisitPage/MainPage/RevisitPage";
 import RoutineReportsPA from "../pages/patientAdministration/RoutineReportsPage/MainPage/RoutineReportsPAPage";
@@ -17,6 +17,7 @@ import { ResourceListProvider } from "../context/frontOffice/ResourceListContext
 import ReasonListPage from "../pages/frontOffice/ReasonList/MainPage/ReasonListPage";
 import BreakListPage from "../pages/frontOffice/BreakList/MainPage/BreakListPage";
 import AppointmentPage from "../pages/frontOffice/AppointmentPage/MainPage/AppointmentPage";
+import PatientInvoiceCodePage from "../pages/billing/PatientInvoiceCodePage/MainPage/PatientInvoiceCodePage";
 
 interface RouteConfig {
   path: string;
@@ -87,8 +88,13 @@ const routeConfig: RouteConfig[] = [
     providers: [ResourceListProvider],
   },
   {
-    path: "/appointmentpage",
+    path: "/Appointmentpage",
     component: AppointmentPage,
+    protected: true,
+  },
+  {
+    path: "/PatientInvoiceCodePage",
+    component: PatientInvoiceCodePage,
     protected: true,
   },
 ];

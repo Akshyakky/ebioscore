@@ -14,7 +14,7 @@ const FloatingLabelTextBox: React.FC<FloatingLabelTextBoxProps> = ({
   ControlID,
   title,
   value = "",
-  onChange = () => {},
+  onChange = () => { },
   placeholder,
   type = "text",
   className,

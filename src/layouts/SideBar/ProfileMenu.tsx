@@ -31,7 +31,7 @@ const ProfileMenu = () => {
     if (userInfo.token) {
       try {
         const response = await AuthService.logout(userInfo.token);
-        console.log(response.Message);
+        console.log(response.data.Message);
         dispatch(logout());
         navigate("/login");
       } catch (error) {
