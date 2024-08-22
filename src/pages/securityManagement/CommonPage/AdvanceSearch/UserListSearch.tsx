@@ -28,19 +28,17 @@ interface UserListSearchResultProps {
   show: boolean;
   handleClose: () => void;
   onEditProfile: (user: UserListData) => void;
-  selectedUser: UserListData | null
+  selectedUser: UserListData | null;
 }
 
 const UserListSearch: React.FC<UserListSearchResultProps> = ({
   show,
   handleClose,
   onEditProfile,
-  selectedUser
+  selectedUser,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { performSearch, searchResults, updateUserStatus } = useContext(
-    UserListSearchContext
-  );
+  const { performSearch, searchResults, updateUserStatus } = useContext(UserListSearchContext);
   const [isLoading, setIsLoading] = useState(false);
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [switchStatus, setSwitchStatus] = useState<{ [key: string]: boolean }>({});
@@ -57,9 +55,9 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
   const debouncedSearch = useCallback(
     debounce((searchQuery: string) => {
       setIsLoading(true);
-      performSearch(searchQuery).finally(() => {
-        setIsLoading(false);
-      });
+      performSearch(searchQuery)
+        .catch(() => notifyError("Search failed"))
+        .finally(() => setIsLoading(false));
     }, 300),
     [performSearch]
   );
@@ -68,7 +66,6 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     debouncedSearch(searchTerm);
   }, [searchTerm, debouncedSearch]);
 
-  // Fetch user details for editing and close the dialog
   const handleEditAndClose = async (user: UserListData) => {
     try {
       const userDetails = await UserListService.getUserDetails(token!, user.appID);
@@ -83,58 +80,41 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
       notifyError("Error fetching user details");
     }
   };
-  
 
-  // Handle switch change for user status
-  // Handle switch change for user status
   const handleSwitchChange = async (user: UserListData, checked: boolean) => {
     try {
       if (!user.appID) {
         console.error("Profile appID is undefined or null.");
         return;
       }
-  
-      const result = await UserListService.updateUserActiveStatus(
-        token!,
-        user.appID,
-        checked
-      );
-  
+
+      const result = await UserListService.updateUserActiveStatus(token!, user.appID, checked);
+
       if (result.success) {
-        // Update local switch status
-        setSwitchStatus((prevState) => {
-          const updatedState = {
-            ...prevState,
-            [user.appID]: checked,
-          };
-  
-          // Persist the updated state
-          localStorage.setItem(`switchStatus_${user.appID}`, JSON.stringify(checked));
-  
-          return updatedState;
-        });
-  
-        // Update context or perform other updates as needed
-        updateUserStatus(user.appID, checked);
-      } else {
-        // Rollback switch status if update fails
         setSwitchStatus((prevState) => ({
           ...prevState,
-          [user.appID]: !checked, // revert to previous state
+          [user.appID]: checked,
+        }));
+
+        localStorage.setItem(`switchStatus_${user.appID}`, JSON.stringify(checked));
+
+        updateUserStatus(user.appID, checked);
+      } else {
+        setSwitchStatus((prevState) => ({
+          ...prevState,
+          [user.appID]: !checked,
         }));
       }
     } catch (error) {
       notifyError("Error updating user status");
       console.error("Error:", error);
-  
-      // Rollback switch status if update fails
+
       setSwitchStatus((prevState) => ({
         ...prevState,
-        [user.appID]: !checked, // revert to previous state
+        [user.appID]: !checked,
       }));
     }
   };
-  
 
   useEffect(() => {
     const initialSwitchStatus = searchResults.reduce<{ [key: string]: boolean }>((acc, user) => {
@@ -145,17 +125,13 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
 
     setSwitchStatus(initialSwitchStatus);
   }, [searchResults]);
-  
 
-
-  // Prepare data with additional index and status information
   const dataWithIndex = searchResults.map((item, index) => ({
     ...item,
     serialNumber: index + 1,
     Status: item.rActiveYN === "Y" ? "Active" : "Hidden",
   }));
 
-  // Define columns for custom grid
   const columns = [
     {
       key: "UserEdit",
@@ -191,7 +167,6 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
         />
       ),
     },
-    
     {
       key: "appID",
       header: "App ID",
@@ -199,13 +174,11 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     },
   ];
 
-  // Close dialog and reset search term
   const handleDialogClose = () => {
     setSearchTerm("");
     handleClose();
   };
 
-  // Handle Enter key press for search
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       setSearchTerm("");

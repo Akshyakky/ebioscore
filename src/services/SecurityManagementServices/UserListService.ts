@@ -108,6 +108,7 @@ const saveOrUpdateUserReportPermission = async (
   userReportPermission: UserPermissionDto
 ): Promise<OperationResult<UserPermissionDto>> => {
   try {
+    debugger 
     const url = `${APIConfig.securityManagementURL}User/SaveOrUpdateAppReportAccess`;
     const headers = {
       Authorization: `Bearer ${token}`,

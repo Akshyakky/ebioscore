@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
@@ -10,6 +9,7 @@ import { Box, Container } from "@mui/material";
 import ReasonDetails from "../../ReasonList/SubPage/ReasonDetails";
 import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
 import ReasonListSearch from "../SubPage/ReasonListSearch";
+import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 
 const ReasonListPage: React.FC = () => {
     const { token } = useSelector((state: RootState) => state.userDetails);

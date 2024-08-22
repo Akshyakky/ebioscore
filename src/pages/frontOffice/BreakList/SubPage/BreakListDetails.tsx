@@ -23,7 +23,6 @@ import {
   notifyError,
 } from "../../../../utils/Common/toastManager";
 import TextArea from "../../../../components/TextArea/TextArea";
-import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
 import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import { RootState } from "../../../../store/reducers";
@@ -37,7 +36,8 @@ import ChangeFormDialog from "./FormChange";
 import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import { CompanyService } from "../../../../services/CommonServices/CompanyService";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import { BreakConDetailData } from "../../../../interfaces/FrontOffice/BreakConDetailsData";
+import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
+import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
 
 interface BreakListDetailsProps {
@@ -326,8 +326,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       notifyError('Failed to update Break Condition Detail');
     }
   };
-
-
 
 
   useEffect(() => {
