@@ -1,7 +1,7 @@
 import axios from "axios";
-import { APIConfig } from "../../apiConfig";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { ResourceListData } from "../../interfaces/FrontOffice/ResourceListData";
+import { APIConfig } from "../../../apiConfig";
+import { OperationResult } from "../../../interfaces/Common/OperationResult";
+import { ResourceListData } from "../../../interfaces/FrontOffice/ResourceListData";
 
 // Service to save resource list data
 const saveResourceList = async (
@@ -27,14 +27,19 @@ const saveResourceList = async (
 
     if (response.data && response.data.success !== undefined) {
       if (!response.data.success) {
-        throw new Error(response.data.errorMessage || "Failed to save resource list.");
+        throw new Error(
+          response.data.errorMessage || "Failed to save resource list."
+        );
       }
       return response.data;
     } else {
       throw new Error("Invalid response format received.");
     }
   } catch (error: any) {
-    console.error("Error saving or updating resource list:", error.response?.data || error.message);
+    console.error(
+      "Error saving or updating resource list:",
+      error.response?.data || error.message
+    );
     return handleError<ResourceListData>(error);
   }
 };
@@ -51,24 +56,33 @@ const getResourceById = async (
       "Content-Type": "application/json",
     };
 
-    const response = await axios.get<OperationResult<ResourceListData>>(url, { headers });
+    const response = await axios.get<OperationResult<ResourceListData>>(url, {
+      headers,
+    });
 
     if (response.data && response.data.success !== undefined) {
       if (!response.data.success) {
-        throw new Error(response.data.errorMessage || "Failed to fetch resource list.");
+        throw new Error(
+          response.data.errorMessage || "Failed to fetch resource list."
+        );
       }
       return response.data;
     } else {
       throw new Error("Invalid response format received.");
     }
   } catch (error: any) {
-    console.error("Error fetching resource list:", error.response?.data || error.message);
+    console.error(
+      "Error fetching resource list:",
+      error.response?.data || error.message
+    );
     return handleError<ResourceListData>(error);
   }
 };
 
 // Service to fetch all resource lists
-const getAllResourceLists = async (token: string): Promise<OperationResult<ResourceListData[]>> => {
+const getAllResourceLists = async (
+  token: string
+): Promise<OperationResult<ResourceListData[]>> => {
   try {
     const url = `${APIConfig.frontOffice}ResourceList/GetAllResourceLists`;
     const headers = {
@@ -76,18 +90,25 @@ const getAllResourceLists = async (token: string): Promise<OperationResult<Resou
       "Content-Type": "application/json",
     };
 
-    const response = await axios.get<OperationResult<ResourceListData[]>>(url, { headers });
+    const response = await axios.get<OperationResult<ResourceListData[]>>(url, {
+      headers,
+    });
 
     if (response.data && response.data.success !== undefined) {
       if (!response.data.success) {
-        throw new Error(response.data.errorMessage || "Failed to fetch resource lists.");
+        throw new Error(
+          response.data.errorMessage || "Failed to fetch resource lists."
+        );
       }
       return response.data;
     } else {
       throw new Error("Invalid response format received.");
     }
   } catch (error: any) {
-    console.error("Error fetching resource lists:", error.response?.data || error.message);
+    console.error(
+      "Error fetching resource lists:",
+      error.response?.data || error.message
+    );
     return handleError<ResourceListData[]>(error);
   }
 };
@@ -108,32 +129,33 @@ const updateResourceActiveStatus = async (
       isActive,
     };
 
-    const response = await axios.put<OperationResult<boolean>>(
-      url,
-      body,
-      { headers }
-    );
+    const response = await axios.put<OperationResult<boolean>>(url, body, {
+      headers,
+    });
 
     if (response.data && response.data.success !== undefined) {
       if (!response.data.success) {
-        throw new Error(response.data.errorMessage || "Failed to update resource status.");
+        throw new Error(
+          response.data.errorMessage || "Failed to update resource status."
+        );
       }
       return response.data;
     } else {
       throw new Error("Invalid response format received.");
     }
   } catch (error: any) {
-    console.error("Error updating resource active status:", error.response?.data || error.message);
+    console.error(
+      "Error updating resource active status:",
+      error.response?.data || error.message
+    );
     return handleError<boolean>(error);
   }
 };
 
-
-
-
 // Helper function to handle errors
 const handleError = <T>(error: any): OperationResult<T> => {
-  const errorMessage = error.response?.data?.errorMessage || error.message || "An error occurred";
+  const errorMessage =
+    error.response?.data?.errorMessage || error.message || "An error occurred";
   return {
     success: false,
     data: {} as T,
@@ -145,5 +167,5 @@ export const ResourceListService = {
   saveResourceList,
   getResourceById,
   getAllResourceLists,
-  updateResourceActiveStatus
+  updateResourceActiveStatus,
 };

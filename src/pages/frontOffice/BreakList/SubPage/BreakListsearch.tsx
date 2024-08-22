@@ -23,13 +23,13 @@ import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTe
 import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
-import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListConDetailService";
+import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
 import { BreakConDetailData } from "../../../../interfaces/FrontOffice/BreakConDetailsData"
 
 interface BreakListSearchProps {
   show: boolean;
   handleClose: () => void;
-  onEditBreak:(row: BreakConDetailData) => Promise<void>
+  onEditBreak: (row: BreakConDetailData) => Promise<void>
   selectedBreak: BreakListData | null;
 }
 
@@ -45,9 +45,9 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [suspendStatus, setSuspendStatus] = useState<{ [key: number]: boolean }>({});
 
- 
+
   const fetchBreakConDetails = async () => {
-    debugger 
+    debugger
     setIsLoading(true);
     try {
       const result = await BreakListConDetailsService.getAllBreakConDetails(token!);
@@ -69,8 +69,8 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
       setIsLoading(false);
     }
   };
-  
-  
+
+
   useEffect(() => {
     if (searchTerm) {
       debouncedSearch(searchTerm);
@@ -128,26 +128,26 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
       notifyError("Error fetching break connection details.");
     }
   };
-  
-  
-  
-  
+
+
+
+
 
   const handleSwitchChange = async (
     row: BreakConDetailData,
     checked: boolean
   ) => {
     console.log("Switch changed for bCDID:", row.bCDID, "New status:", checked);
-    
+
     try {
       const result = await BreakListConDetailsService.updateBreakConDetailActiveStatus(
         token!,
         row.bCDID,
         checked
       );
-      
+
       console.log("Update result:", result);
-      
+
       if (result.success) {
         setSwitchStatus((prevState) => ({
           ...prevState,
@@ -162,13 +162,13 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
       console.error("Error:", error);
     }
   };
-  
 
 
-  const handleSuspendChange=()=>{
-console.log("the data ")
+
+  const handleSuspendChange = () => {
+    console.log("the data ")
   }
- 
+
 
   const dataWithIndex = searchResults.map((item, index) => ({
     ...item,
@@ -186,7 +186,7 @@ console.log("the data ")
       fetchBreakConDetails();
     }
   }, [show]);
-  
+
 
   // const handleSuspendChange = async (
   //   row: BreakConDetailData,

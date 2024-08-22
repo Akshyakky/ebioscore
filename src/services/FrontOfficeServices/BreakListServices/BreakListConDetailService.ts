@@ -1,7 +1,7 @@
 import axios from "axios";
-import { APIConfig } from "../../apiConfig";
-import { BreakConDetailData } from "../../interfaces/FrontOffice/BreakConDetailsData";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
+import { APIConfig } from "../../../apiConfig";
+import { BreakConDetailData } from "../../../interfaces/FrontOffice/BreakConDetailsData";
+import { OperationResult } from "../../../interfaces/Common/OperationResult";
 
 // Handle errors
 const handleError = <T>(error: any): OperationResult<T> => {

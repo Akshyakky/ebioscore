@@ -16,13 +16,13 @@ import {
   notifySuccess,
   notifyError,
 } from "../../../../utils/Common/toastManager";
-import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices";
+import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
-import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListService";
+import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 
 interface ReasonDetailsProps {

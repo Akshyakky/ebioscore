@@ -7,45 +7,7 @@ export const handleError = (error: any): OperationResult<any> => {
   if (error.response) {
     const status = error.response.status;
 
-    switch (status) {
-      case 400:
-        result.errorMessage =
-          "Bad Request. Please check the data sent to the server.";
-        break;
-      case 401:
-        result.errorMessage = "Unauthorized. Please check your credentials.";
-        break;
-      case 403:
-        result.errorMessage =
-          "Forbidden. You do not have permission to perform this action.";
-        break;
-      case 404:
-        result.errorMessage =
-          "Resource not found. The requested resource does not exist.";
-        break;
-      case 409:
-        result.errorMessage =
-          "Conflict. The request could not be completed due to a conflict with the current state of the resource.";
-        break;
-      case 500:
-        result.errorMessage =
-          "Internal Server Error. Something went wrong on the server.";
-        break;
-      case 502:
-        result.errorMessage =
-          "Bad Gateway. Received an invalid response from the upstream server.";
-        break;
-      case 503:
-        result.errorMessage =
-          "Service Unavailable. The server is currently unable to handle the request.";
-        break;
-      case 504:
-        result.errorMessage =
-          "Gateway Timeout. The server took too long to respond.";
-        break;
-      default:
-        result.errorMessage = `Unexpected error occurred: ${status}. Please try again later.`;
-    }
+    result.errorMessage = getErrorMessageForStatus(status);
 
     if (error.response.data) {
       if (error.response.data.errors) {
@@ -92,4 +54,23 @@ export const handleError = (error: any): OperationResult<any> => {
   });
 
   return result;
+};
+
+const getErrorMessageForStatus = (status: number): string => {
+  const errorMessages: { [key: number]: string } = {
+    400: "Bad Request. Please check the data sent to the server.",
+    401: "Unauthorized. Please check your credentials.",
+    403: "Forbidden. You do not have permission to perform this action.",
+    404: "Resource not found. The requested resource does not exist.",
+    409: "Conflict. The request could not be completed due to a conflict with the current state of the resource.",
+    500: "Internal Server Error. Something went wrong on the server.",
+    502: "Bad Gateway. Received an invalid response from the upstream server.",
+    503: "Service Unavailable. The server is currently unable to handle the request.",
+    504: "Gateway Timeout. The server took too long to respond.",
+  };
+
+  return (
+    errorMessages[status] ||
+    `Unexpected error occurred: ${status}. Please try again later.`
+  );
 };

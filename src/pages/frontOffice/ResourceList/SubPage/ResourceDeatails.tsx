@@ -6,7 +6,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import TextArea from "../../../../components/TextArea/TextArea";
 import { notifySuccess, notifyError } from "../../../../utils/Common/toastManager";
-import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices";
+import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import { useSelector } from "react-redux";
@@ -32,7 +32,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
     rLCode: resource?.rLCode || "",
     rLName: resource?.rLName || "",
     rNotes: resource?.rNotes || "",
-    rLValidateYN: resource?.rLValidateYN || 'N', 
+    rLValidateYN: resource?.rLValidateYN || 'N',
     transferYN: resource?.transferYN || 'N',
     rLOtYN: resource?.rLOtYN || 'N',
     rActiveYN: resource?.rActiveYN || 'N',
@@ -161,18 +161,18 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
             <CustomSwitch
               label="Is Validate"
               checked={resourceData.rLValidateYN === 'Y'}
-              onChange={(e) => setResourceData({ ...resourceData, rLValidateYN: e.target.checked ? 'Y' : 'N'})}
+              onChange={(e) => setResourceData({ ...resourceData, rLValidateYN: e.target.checked ? 'Y' : 'N' })}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <CustomSwitch
               label="Is Operation Theatre"
               checked={resourceData.rLOtYN === 'Y'}
-              onChange={(e) => setResourceData({ ...resourceData, rLOtYN: e.target.checked ? 'Y' : 'N'})}
+              onChange={(e) => setResourceData({ ...resourceData, rLOtYN: e.target.checked ? 'Y' : 'N' })}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-          <CustomSwitch
+            <CustomSwitch
               label={activeLabel}
               checked={resourceData.rActiveYN === 'Y'}
               onChange={handleActiveToggle}

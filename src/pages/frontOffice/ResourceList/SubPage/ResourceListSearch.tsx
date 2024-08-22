@@ -16,7 +16,7 @@ import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
-import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices";
+import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import { debounce } from "../../../../utils/Common/debounceUtils";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
