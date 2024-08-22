@@ -83,6 +83,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
       notifyError("Error fetching user details");
     }
   };
+  
 
   // Handle switch change for user status
   // Handle switch change for user status
@@ -92,25 +93,30 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
         console.error("Profile appID is undefined or null.");
         return;
       }
-
+  
       const result = await UserListService.updateUserActiveStatus(
         token!,
         user.appID,
         checked
       );
-
+  
       if (result.success) {
-
         // Update local switch status
-        setSwitchStatus((prevState) => ({
-          ...prevState,
-          [user.appID]: checked,
-        }));
-
+        setSwitchStatus((prevState) => {
+          const updatedState = {
+            ...prevState,
+            [user.appID]: checked,
+          };
+  
+          // Persist the updated state
+          localStorage.setItem(`switchStatus_${user.appID}`, JSON.stringify(checked));
+  
+          return updatedState;
+        });
+  
         // Update context or perform other updates as needed
         updateUserStatus(user.appID, checked);
       } else {
-
         // Rollback switch status if update fails
         setSwitchStatus((prevState) => ({
           ...prevState,
@@ -120,7 +126,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
     } catch (error) {
       notifyError("Error updating user status");
       console.error("Error:", error);
-
+  
       // Rollback switch status if update fails
       setSwitchStatus((prevState) => ({
         ...prevState,
@@ -128,6 +134,18 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
       }));
     }
   };
+  
+
+  useEffect(() => {
+    const initialSwitchStatus = searchResults.reduce<{ [key: string]: boolean }>((acc, user) => {
+      const storedStatus = localStorage.getItem(`switchStatus_${user.appID}`);
+      acc[user.appID] = storedStatus ? JSON.parse(storedStatus) : false;
+      return acc;
+    }, {});
+
+    setSwitchStatus(initialSwitchStatus);
+  }, [searchResults]);
+  
 
 
   // Prepare data with additional index and status information
@@ -173,6 +191,7 @@ const UserListSearch: React.FC<UserListSearchResultProps> = ({
         />
       ),
     },
+    
     {
       key: "appID",
       header: "App ID",
