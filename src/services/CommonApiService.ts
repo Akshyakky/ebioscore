@@ -83,7 +83,8 @@ export class CommonApiService {
       );
       return response.data;
     } catch (error) {
-      return handleError(error).data;
+      handleError(error);
+      throw error;
     }
   }
 
@@ -103,7 +104,8 @@ export class CommonApiService {
       );
       return response.data;
     } catch (error) {
-      return handleError(error).data;
+      handleError(error);
+      throw error;
     }
   }
 
@@ -122,7 +124,8 @@ export class CommonApiService {
       );
       return response.data;
     } catch (error) {
-      return handleError(error).data;
+      handleError(error);
+      throw error;
     }
   }
 }

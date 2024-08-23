@@ -3,11 +3,11 @@ import { Grid, Paper, Typography, TextField, DialogActions } from '@mui/material
 import CustomButton from '../../../../components/Button/CustomButton';
 import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
-import { BreakListService } from '../../../../services/FrontOfficeServices/BreakListService';
+import { BreakListService } from '../../../../services/FrontOfficeServices/BreakListServices/BreakListService';
 import { BreakConSuspendService } from '../../../../services/FrontOfficeServices/BreakConSuspendService';
 import { BreakConSuspendData } from '../../../../interfaces/frontOffice/BreakConSuspendData';
 import { BreakConDetailData } from '../../../../interfaces/frontOffice/BreakConDetailsData';
-import { BreakListConDetailsService } from '../../../../services/FrontOfficeServices/BreakListConDetailService';
+import { BreakListConDetailsService } from '../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService';
 import { notifySuccess } from '../../../../utils/Common/toastManager';
 
 interface SuspendFormProps {
