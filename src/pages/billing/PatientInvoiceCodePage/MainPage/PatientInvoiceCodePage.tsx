@@ -1,10 +1,20 @@
-import { Box, Container, Paper } from "@mui/material";
+import { Box, Container } from "@mui/material";
 import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import Search from "@mui/icons-material/Search";
 import PatientInvoiceCodeDetails from "../SubPage/PatientInvoiceCodeDetails";
+import PatientInvoiceCodeSearch from "../SubPage/PatientInvoiceCodeSearch";
+import { useState } from "react";
 
 const PatientInvoiceCodePage: React.FC = () => {
-    const handleAdvancedSearch = async () => { }
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+    const handleAdvancedSearch = () => {
+        setIsSearchOpen(true);
+    };
+
+    const handleCloseSearch = () => {
+        setIsSearchOpen(false);
+    };
 
     const actionButtons: ButtonProps[] = [
         {
@@ -22,8 +32,8 @@ const PatientInvoiceCodePage: React.FC = () => {
                     <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
                 </Box>
                 <PatientInvoiceCodeDetails />
+                <PatientInvoiceCodeSearch open={isSearchOpen} onClose={handleCloseSearch} />
             </Container>
-
         </>
     );
 }

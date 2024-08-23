@@ -357,7 +357,6 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
 const handleSelectAllReportChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked: boolean = event.target.checked;
 
-    // Update permissions in state first to reflect the UI changes immediately
     const updatedReportPermissions = permissions.map((permission) => ({
       ...permission,
       allow: permission.reportYN ? checked : permission.allow,
@@ -366,7 +365,6 @@ const handleSelectAllReportChange = async (event: React.ChangeEvent<HTMLInputEle
     setSelectAllReportChecked(checked);
     setPermissions(updatedReportPermissions);
 
-    // Then, update the database
     try {
       for (const permission of updatedReportPermissions.filter((p) => p.reportYN)) {
         const profileDetail: OperationPermissionDetailsDto = {

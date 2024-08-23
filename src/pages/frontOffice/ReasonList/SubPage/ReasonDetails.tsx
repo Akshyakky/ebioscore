@@ -21,9 +21,9 @@ import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceLis
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
+import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 
 interface ReasonDetailsProps {
   reason: ReasonListData | null;

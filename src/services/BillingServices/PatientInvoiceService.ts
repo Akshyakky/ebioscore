@@ -44,7 +44,7 @@ export const updateBPatTypeActiveStatus = async (
 ): Promise<OperationResult<boolean>> => {
   return apiService.put<OperationResult<boolean>>(
     `PatientInvoiceCode/UpdateBPatTypeActiveStatus/${pTypeID}`,
-    { rActive },
+    rActive,
     getToken()
   );
 };
