@@ -4,9 +4,19 @@ import ActionButtonGroup, {
 } from "../../../../components/Button/ActionButtonGroup";
 import Search from "@mui/icons-material/Search";
 import DepartmentListDetails from "../SubPage/DepartmentListDetails";
+import { useState } from "react";
+import DepartmentListSearch from "../SubPage/DepartmentListSearch";
 
 const DepartmentListPage: React.FC = () => {
-  const handleAdvancedSearch = async () => {};
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  const handleAdvancedSearch = () => {
+    setIsSearchOpen(true);
+  };
+
+  const handleCloseSearch = () => {
+    setIsSearchOpen(false);
+  };
 
   const actionButtons: ButtonProps[] = [
     {
@@ -30,6 +40,7 @@ const DepartmentListPage: React.FC = () => {
           />
         </Box>
         <DepartmentListDetails />
+        <DepartmentListSearch open={isSearchOpen} onClose={handleCloseSearch} />
       </Container>
     </>
   );
