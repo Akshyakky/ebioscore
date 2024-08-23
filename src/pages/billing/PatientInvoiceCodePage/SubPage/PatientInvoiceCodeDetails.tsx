@@ -1,6 +1,6 @@
 import { Paper, Typography, Grid } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import TextArea from "../../../../components/TextArea/TextArea";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from '@mui/icons-material/Save';
@@ -13,7 +13,7 @@ import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 
-const PatientInvoiceCodeDetails: React.FC = () => {
+const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({ editData }) => {
     const [formState, setFormState] = useState({
         isSubmitted: false,
         pTypeCode: "",
@@ -25,32 +25,41 @@ const PatientInvoiceCodeDetails: React.FC = () => {
     const { setLoading } = useLoading();
     const serverDate = useServerDate();
 
-    const { compID, compCode, compName, userID, userName } = useMemo(() => ({
-        compID: store.getState().userDetails.compID || 0,
-        compCode: store.getState().userDetails.compCode || "",
-        compName: store.getState().userDetails.compName || "",
-        userID: store.getState().userDetails.userID || 0,
-        userName: store.getState().userDetails.userName || ""
-    }), []);
+    const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
+
+    // Use useEffect to update formState when editData changes
+    useEffect(() => {
+        if (editData) {
+            setFormState({
+                isSubmitted: false,
+                pTypeCode: editData.pTypeCode || "",
+                pTypeName: editData.pTypeName || "",
+                rNotes: editData.rNotes || "",
+                rActiveYN: editData.rActiveYN || "Y"
+            });
+        } else {
+            handleClear();  // Clear the form if editData is not present
+        }
+    }, [editData]);
 
     const createBPatTypeDto = useCallback((): BPatTypeDto => ({
-        pTypeID: 0,
+        pTypeID: editData ? editData.pTypeID : 0,
         pTypeCode: formState.pTypeCode,
         pTypeName: formState.pTypeName,
         rNotes: formState.rNotes,
         rActiveYN: formState.rActiveYN,
-        compID,
-        compCode,
-        compName,
+        compID: compID || 0,
+        compCode: compCode || "",
+        compName: compName || "",
         isInsuranceYN: "N",
         transferYN: "N",
-        rCreatedID: userID,
+        rCreatedID: userID || 0,
         rCreatedOn: serverDate || new Date(),
-        rCreatedBy: userName,
-        rModifiedID: userID,
+        rCreatedBy: userName || "",
+        rModifiedID: userID || 0,
         rModifiedOn: serverDate || new Date(),
-        rModifiedBy: userName,
-    }), [formState, compID, compCode, compName, userID, userName, serverDate]);
+        rModifiedBy: userName || "",
+    }), [formState, editData, compID, compCode, compName, userID, userName, serverDate]);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
