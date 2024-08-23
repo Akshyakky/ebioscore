@@ -20,11 +20,13 @@ import { DepartmentListService } from "../../../../services/BillingServices/Depa
 interface DepartmentListSearchProps {
   open: boolean;
   onClose: () => void;
+  onSelect: (departmentDto: DepartmentDto) => void;
 }
 
 const DepartmentListSearch: React.FC<DepartmentListSearchProps> = ({
   open,
   onClose,
+  onSelect,
 }) => {
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>(
     {}
@@ -55,6 +57,7 @@ const DepartmentListSearch: React.FC<DepartmentListSearchProps> = ({
   };
   const handleEditAndClose = (departmentDto: DepartmentDto) => {
     onClose();
+    onSelect(departmentDto);
   };
   const handleSwitchChange = async (
     departmentDto: DepartmentDto,
