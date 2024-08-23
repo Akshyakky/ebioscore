@@ -13,9 +13,10 @@ import { PatientInvoiceCodeService } from "../../../../services/BillingServices/
 interface PatientInvoiceCodeSearchProps {
     open: boolean;
     onClose: () => void;
+    onSelect: (PIC: BPatTypeDto) => void;
 }
 
-const PatientInvoiceCodeSearch: React.FC<PatientInvoiceCodeSearchProps> = ({ open, onClose }) => {
+const PatientInvoiceCodeSearch: React.FC<PatientInvoiceCodeSearchProps> = ({ open, onClose, onSelect }) => {
     const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [searchResults, setSearchResults] = useState<BPatTypeDto[]>([]);
@@ -42,6 +43,7 @@ const PatientInvoiceCodeSearch: React.FC<PatientInvoiceCodeSearchProps> = ({ ope
 
     const handleEditAndClose = (PIC: BPatTypeDto) => {
         onClose();
+        onSelect(PIC);
     };
 
     const handleSwitchChange = async (PIC: BPatTypeDto, checked: boolean) => {

@@ -18,7 +18,6 @@ export const handleError = (error: any): OperationResult<any> => {
           })
         );
 
-        // Display validation errors using toast
         result.validationErrors!.forEach((validationError) => {
           notifyError(
             `${validationError.propertyName}: ${validationError.errorMessage}`
