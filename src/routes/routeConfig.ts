@@ -18,6 +18,7 @@ import ReasonListPage from "../pages/frontOffice/ReasonList/MainPage/ReasonListP
 import BreakListPage from "../pages/frontOffice/BreakList/MainPage/BreakListPage";
 import AppointmentPage from "../pages/frontOffice/AppointmentPage/MainPage/AppointmentPage";
 import PatientInvoiceCodePage from "../pages/billing/PatientInvoiceCodePage/MainPage/PatientInvoiceCodePage";
+import DepartmentListPage from "../pages/billing/DepartmentListPage/MainPage/DepartmentListPage";
 
 interface RouteConfig {
   path: string;
@@ -95,6 +96,11 @@ const routeConfig: RouteConfig[] = [
   {
     path: "/PatientInvoiceCodePage",
     component: PatientInvoiceCodePage,
+    protected: true,
+  },
+  {
+    path: "/DepartmentListPage",
+    component: DepartmentListPage,
     protected: true,
   },
 ];
