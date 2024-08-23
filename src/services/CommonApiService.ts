@@ -5,6 +5,8 @@ export interface ApiConfig {
   baseURL: string;
 }
 
+type HttpMethod = "get" | "post" | "put" | "delete";
+
 export class CommonApiService {
   private baseURL: string;
 
@@ -19,22 +21,16 @@ export class CommonApiService {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
-
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
-
-    if (additionalHeaders) {
-      Object.assign(headers, additionalHeaders);
-    }
-
-    return headers;
+    return { ...headers, ...additionalHeaders };
   }
 
   private async request<T>(
-    method: "get" | "post" | "put" | "delete",
+    method: HttpMethod,
     endpoint: string,
-    data?: any,
+    data?: unknown,
     token?: string,
     additionalHeaders?: Record<string, string>
   ): Promise<AxiosResponse<T>> {
@@ -44,8 +40,29 @@ export class CommonApiService {
       headers: this.getHeaders(token, additionalHeaders),
       data,
     };
-
     return axios(config);
+  }
+
+  private async makeRequest<T>(
+    method: HttpMethod,
+    endpoint: string,
+    data?: unknown,
+    token?: string,
+    additionalHeaders?: Record<string, string>
+  ): Promise<T> {
+    try {
+      const response = await this.request<T>(
+        method,
+        endpoint,
+        data,
+        token,
+        additionalHeaders
+      );
+      return response.data;
+    } catch (error) {
+      handleError(error);
+      throw error;
+    }
   }
 
   public async get<T>(
@@ -53,60 +70,37 @@ export class CommonApiService {
     token?: string,
     additionalHeaders?: Record<string, string>
   ): Promise<T> {
-    try {
-      const response = await this.request<T>(
-        "get",
-        endpoint,
-        undefined,
-        token,
-        additionalHeaders
-      );
-      return response.data;
-    } catch (error) {
-      return handleError(error).data;
-    }
+    return this.makeRequest<T>(
+      "get",
+      endpoint,
+      undefined,
+      token,
+      additionalHeaders
+    );
   }
 
   public async post<T>(
     endpoint: string,
-    data: any,
+    data: unknown,
     token?: string,
     additionalHeaders?: Record<string, string>
   ): Promise<T> {
-    try {
-      const response = await this.request<T>(
-        "post",
-        endpoint,
-        data,
-        token,
-        additionalHeaders
-      );
-      return response.data;
-    } catch (error) {
-      handleError(error);
-      throw error;
-    }
+    return this.makeRequest<T>(
+      "post",
+      endpoint,
+      data,
+      token,
+      additionalHeaders
+    );
   }
 
   public async put<T>(
     endpoint: string,
-    data: any,
+    data: unknown,
     token?: string,
     additionalHeaders?: Record<string, string>
   ): Promise<T> {
-    try {
-      const response = await this.request<T>(
-        "put",
-        endpoint,
-        data,
-        token,
-        additionalHeaders
-      );
-      return response.data;
-    } catch (error) {
-      handleError(error);
-      throw error;
-    }
+    return this.makeRequest<T>("put", endpoint, data, token, additionalHeaders);
   }
 
   public async delete<T>(
@@ -114,18 +108,12 @@ export class CommonApiService {
     token?: string,
     additionalHeaders?: Record<string, string>
   ): Promise<T> {
-    try {
-      const response = await this.request<T>(
-        "delete",
-        endpoint,
-        undefined,
-        token,
-        additionalHeaders
-      );
-      return response.data;
-    } catch (error) {
-      handleError(error);
-      throw error;
-    }
+    return this.makeRequest<T>(
+      "delete",
+      endpoint,
+      undefined,
+      token,
+      additionalHeaders
+    );
   }
 }
