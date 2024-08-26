@@ -17,6 +17,27 @@ export const saveDepartmentList = async (
     getToken()
   );
 };
+export const getAllDepartments = async (): Promise<
+  OperationResult<DepartmentDto[]>
+> => {
+  return apiService.get<OperationResult<DepartmentDto[]>>(
+    "Department/GetAllDepartments",
+    getToken()
+  );
+};
+export const updateDepartmentActiveStatus = async (
+  deptID: number,
+  rActive: boolean
+): Promise<OperationResult<boolean>> => {
+  return apiService.put<OperationResult<boolean>>(
+    `Department/UpdateDepartmentActiveStatus/${deptID}`,
+    rActive,
+    getToken()
+  );
+};
+
 export const DepartmentListService = {
   saveDepartmentList,
+  getAllDepartments,
+  updateDepartmentActiveStatus,
 };

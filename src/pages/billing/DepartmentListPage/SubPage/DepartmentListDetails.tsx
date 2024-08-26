@@ -1,6 +1,6 @@
 import { Grid, Paper, Typography } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import { useMemo, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import TextArea from "../../../../components/TextArea/TextArea";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from "@mui/icons-material/Save";
@@ -19,7 +19,9 @@ import useDropdown from "../../../../hooks/useDropdown";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 
-const DepartmentListDetails: React.FC = () => {
+const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
+  editData,
+}) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [deptCode, setDeptCode] = useState("");
   const [deptName, setDeptName] = useState("");
@@ -39,14 +41,32 @@ const DepartmentListDetails: React.FC = () => {
   const [rActiveYN, setRActiveYN] = useState("Y");
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-
-  const compID = store.getState().userDetails.compID || 0;
-  const compCode = store.getState().userDetails.compCode || "";
-  const compName = store.getState().userDetails.compName || "";
-  const userID = store.getState().userDetails.userID || 0;
-  const userName = store.getState().userDetails.userName || "";
-
+  const { compID, compCode, compName, userID, userName } =
+    store.getState().userDetails;
   const { token } = useSelector((state: RootState) => state.userDetails);
+
+  useEffect(() => {
+    if (editData) {
+      setDeptCode(editData.deptCode || "");
+      setDeptName(editData.deptName || "");
+      setDeptType(editData.deptType || "");
+      setRNotes(editData.rNotes || "");
+      setUnit(editData.unit || "");
+      setDeptLocation(editData.deptLocation || "");
+      setDlNumber(editData.dlNumber || "");
+      setIsUnitYN(editData.isUnitYN || "N");
+      setAutoConsumptionYN(editData.autoConsumptionYN || "N");
+      setDeptStorePhYN(editData.deptStorePhYN || "N");
+      setDeptStore(editData.deptStore || "N");
+      setIsStoreYN(editData.isStoreYN || "N");
+      setDeptSalesYN(editData.deptSalesYN || "N");
+      setDischargeNoteYN(editData.dischargeNoteYN || "N");
+      setSuperSpecialityYN(editData.superSpecialityYN || "N");
+      setRActiveYN(editData.rActiveYN || "Y");
+    } else {
+      handleClear();
+    }
+  }, [editData]);
 
   const transformDeptTypeValues = (data: DropdownOption[]): DropdownOption[] =>
     data.map((item) => ({
@@ -70,8 +90,9 @@ const DepartmentListDetails: React.FC = () => {
   const handleSave = async () => {
     setIsSubmitted(true);
     setLoading(true);
+
     const departmentDto: DepartmentDto = {
-      deptID: 0,
+      deptID: editData ? editData.deptID : 0,
       deptCode: deptCode,
       deptName: deptName,
       deptType: deptType,
@@ -88,17 +109,18 @@ const DepartmentListDetails: React.FC = () => {
       isStoreYN: isStoreYN,
       autoConsumptionYN: autoConsumptionYN,
       dischargeNoteYN: dischargeNoteYN,
-      compID: compID,
-      compCode: compCode,
-      compName: compName,
+      compID: compID || 0,
+      compCode: compCode || "",
+      compName: compName || "",
       transferYN: "N",
-      rCreatedID: userID,
+      rCreatedID: userID || 0,
       rCreatedOn: serverDate || new Date(),
-      rCreatedBy: userName,
-      rModifiedID: userID,
+      rCreatedBy: userName || "",
+      rModifiedID: userID || 0,
       rModifiedOn: serverDate || new Date(),
-      rModifiedBy: userName,
+      rModifiedBy: userName || "",
     };
+
     try {
       const result =
         await DepartmentListService.saveDepartmentList(departmentDto);
@@ -190,6 +212,8 @@ const DepartmentListDetails: React.FC = () => {
               name="deptType"
             />
           </Grid>
+        </Grid>
+        <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={3}>
             <FloatingLabelTextBox
               title="Department Location"
@@ -251,6 +275,8 @@ const DepartmentListDetails: React.FC = () => {
               }
             />
           </Grid>
+        </Grid>
+        <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={3}>
             <CustomSwitch
               label="Main Store"
@@ -258,7 +284,6 @@ const DepartmentListDetails: React.FC = () => {
               onChange={(e) => setIsStoreYN(e.target.checked ? "Y" : "N")}
             />
           </Grid>
-
           <Grid item xs={12} sm={6} md={3}>
             <CustomSwitch
               label="Sales"
@@ -273,6 +298,8 @@ const DepartmentListDetails: React.FC = () => {
               onChange={(e) => setDischargeNoteYN(e.target.checked ? "Y" : "N")}
             />
           </Grid>
+        </Grid>
+        <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={3}>
             <CustomSwitch
               label="Super Speciality"
