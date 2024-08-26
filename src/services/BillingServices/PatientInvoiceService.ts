@@ -13,17 +13,15 @@ const getToken = () => store.getState().userDetails.token!;
 export const saveBPatType = async (
   bPatTypeDto: BPatTypeDto
 ): Promise<OperationResult<BPatTypeDto>> => {
-  return apiService.post<OperationResult<BPatTypeDto>>(
+  return apiService.post<OperationResult<any>>(
     "PatientInvoiceCode/SaveBPatType",
     bPatTypeDto,
     getToken()
   );
 };
 
-export const getAllBPatTypes = async (): Promise<
-  OperationResult<BPatTypeDto[]>
-> => {
-  return apiService.get<OperationResult<BPatTypeDto[]>>(
+export const getAllBPatTypes = async (): Promise<OperationResult<any[]>> => {
+  return apiService.get<OperationResult<any[]>>(
     "PatientInvoiceCode/GetAllBPatTypes",
     getToken()
   );
@@ -31,8 +29,8 @@ export const getAllBPatTypes = async (): Promise<
 
 export const getBPatTypeById = async (
   pTypeID: number
-): Promise<OperationResult<BPatTypeDto>> => {
-  return apiService.get<OperationResult<BPatTypeDto>>(
+): Promise<OperationResult<any>> => {
+  return apiService.get<OperationResult<any>>(
     `PatientInvoiceCode/GetBPatTypeById/${pTypeID}`,
     getToken()
   );

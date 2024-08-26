@@ -8,7 +8,7 @@ export const handleError = (error: any): OperationResult<any> => {
     const status = error.response.status;
 
     result.errorMessage = getErrorMessageForStatus(status);
-
+    notifyError(result.errorMessage);
     if (error.response.data) {
       if (error.response.data.errors) {
         result.validationErrors = error.response.data.errors.map(
