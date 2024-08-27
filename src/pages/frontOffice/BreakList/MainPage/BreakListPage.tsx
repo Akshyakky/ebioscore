@@ -9,9 +9,9 @@ import { notifyError } from "../../../../utils/Common/toastManager";
 import BreakListDetails from "../SubPage/BreakListDetails";
 import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
 import BreakListSearch from "../SubPage/BreakListsearch";
-import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
 import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
+import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
 
 const BreakListPage: React.FC = () => {
   const { token } = useSelector((state: RootState) => state.userDetails);

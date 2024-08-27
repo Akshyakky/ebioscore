@@ -18,9 +18,9 @@ import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
 import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
-import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 import { debounce } from "../../../../utils/Common/debounceUtils";
 import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
+import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
 
 interface ReasonListSearchProps {
   show: boolean;

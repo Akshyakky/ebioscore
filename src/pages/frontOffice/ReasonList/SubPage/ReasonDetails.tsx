@@ -23,7 +23,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
+import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
 
 interface ReasonDetailsProps {
   reason: ReasonListData | null;

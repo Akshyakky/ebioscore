@@ -1,7 +1,7 @@
+import { BreakListData } from './../../../interfaces/frontOffice/BreakListData';
 import axios from "axios";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { BreakListData } from "../../../interfaces/FrontOffice/BreakListData";
 
 const handleError = <T>(error: any): OperationResult<T> => {
   const errorMessage =
@@ -34,8 +34,7 @@ const saveBreakList = async (
       bLEndTime: breakListData.bLEndTime.toISOString(),
       bLStartDate: breakListData.bLStartDate.toISOString(),
       bLEndDate: breakListData.bLEndDate.toISOString(),
-      // rCreatedOn: breakListData.rCreatedOn.toISOString(),
-      // rModifiedOn: breakListData.rModifiedOn.toISOString()
+      
     };
     const url = `${APIConfig.frontOffice}BreakList/SaveBreakList`;
     const headers = {
