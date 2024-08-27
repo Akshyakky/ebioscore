@@ -1,6 +1,6 @@
-import { Grid, Paper, Typography } from "@mui/material";
+import { Paper, Typography, Grid } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import TextArea from "../../../../components/TextArea/TextArea";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from '@mui/icons-material/Save';
@@ -13,46 +13,65 @@ import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 
-const PatientInvoiceCodeDetails: React.FC = () => {
-    const [isSubmitted, setIsSubmitted] = useState(false);
-    const [pTypeCode, setPTypeCode] = useState("");
-    const [pTypeName, setPTypeName] = useState("");
-    const [rNotes, setRNotes] = useState("");
-    const [rActiveYN, setRActiveYN] = useState("Y");
+const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({ editData }) => {
+    const [formState, setFormState] = useState({
+        isSubmitted: false,
+        pTypeCode: "",
+        pTypeName: "",
+        rNotes: "",
+        rActiveYN: "Y"
+    });
+
     const { setLoading } = useLoading();
     const serverDate = useServerDate();
 
-    const compID = store.getState().userDetails.compID || 0;
-    const compCode = store.getState().userDetails.compCode || "";
-    const compName = store.getState().userDetails.compName || "";
-    const userID = store.getState().userDetails.userID || 0;
-    const userName = store.getState().userDetails.userName || "";
+    const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
+
+    // Use useEffect to update formState when editData changes
+    useEffect(() => {
+        if (editData) {
+            setFormState({
+                isSubmitted: false,
+                pTypeCode: editData.pTypeCode || "",
+                pTypeName: editData.pTypeName || "",
+                rNotes: editData.rNotes || "",
+                rActiveYN: editData.rActiveYN || "Y"
+            });
+        } else {
+            handleClear();  // Clear the form if editData is not present
+        }
+    }, [editData]);
+
+    const createBPatTypeDto = useCallback((): BPatTypeDto => ({
+        pTypeID: editData ? editData.pTypeID : 0,
+        pTypeCode: formState.pTypeCode,
+        pTypeName: formState.pTypeName,
+        rNotes: formState.rNotes,
+        rActiveYN: formState.rActiveYN,
+        compID: compID || 0,
+        compCode: compCode || "",
+        compName: compName || "",
+        isInsuranceYN: "N",
+        transferYN: "N",
+        rCreatedID: userID || 0,
+        rCreatedOn: serverDate || new Date(),
+        rCreatedBy: userName || "",
+        rModifiedID: userID || 0,
+        rModifiedOn: serverDate || new Date(),
+        rModifiedBy: userName || "",
+    }), [formState, editData, compID, compCode, compName, userID, userName, serverDate]);
+
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormState(prev => ({ ...prev, [name]: value }));
+    }, []);
 
     const handleSave = async () => {
-        setIsSubmitted(true);
+        setFormState(prev => ({ ...prev, isSubmitted: true }));
         setLoading(true);
 
-        const bPatTypeDto: BPatTypeDto = {
-            pTypeID: 0,
-            pTypeCode: pTypeCode,
-            pTypeName: pTypeName,
-            rNotes: rNotes,
-            rActiveYN: "Y",
-            compID: compID,
-            compCode: compCode,
-            compName: compName,
-            isInsuranceYN: "N",
-            transferYN: "N",
-            rCreatedID: userID,
-            rCreatedOn: serverDate || new Date(),
-            rCreatedBy: userName,
-            rModifiedID: userID,
-            rModifiedOn: serverDate || new Date(),
-            rModifiedBy: userName,
-        };
-
         try {
-            debugger
+            const bPatTypeDto = createBPatTypeDto();
             const result = await PatientInvoiceCodeService.saveBPatType(bPatTypeDto);
             if (result.success) {
                 showAlert("Success", "Patient Invoice Code saved successfully!", "success", {
@@ -67,19 +86,21 @@ const PatientInvoiceCodeDetails: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }
-
-    const handleClear = () => {
-        setPTypeCode("");
-        setPTypeName("");
-        setRNotes("");
-        setRActiveYN("Y");
-        setIsSubmitted(false);
-    }
-
-    const handleActiveToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRActiveYN(event.target.checked ? "Y" : "N");
     };
+
+    const handleClear = useCallback(() => {
+        setFormState({
+            isSubmitted: false,
+            pTypeCode: "",
+            pTypeName: "",
+            rNotes: "",
+            rActiveYN: "Y"
+        });
+    }, []);
+
+    const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        setFormState(prev => ({ ...prev, rActiveYN: event.target.checked ? "Y" : "N" }));
+    }, []);
 
     return (
         <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -92,26 +113,28 @@ const PatientInvoiceCodeDetails: React.FC = () => {
                         <FloatingLabelTextBox
                             title="Patient Invoice Code"
                             placeholder="Patient Invoice Code"
-                            value={pTypeCode}
-                            onChange={(e) => setPTypeCode(e.target.value)}
+                            value={formState.pTypeCode}
+                            onChange={handleInputChange}
                             isMandatory
                             size="small"
-                            isSubmitted={isSubmitted}
+                            isSubmitted={formState.isSubmitted}
                             name="pTypeCode"
                             ControlID="PICCode"
+                            aria-label="Patient Invoice Code"
                         />
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
                         <FloatingLabelTextBox
                             title="Patient Invoice Name"
                             placeholder="Patient Invoice Name"
-                            value={pTypeName}
-                            onChange={(e) => setPTypeName(e.target.value)}
+                            value={formState.pTypeName}
+                            onChange={handleInputChange}
                             isMandatory
                             size="small"
-                            isSubmitted={isSubmitted}
+                            isSubmitted={formState.isSubmitted}
                             name="pTypeName"
                             ControlID="PatientInvoiceName"
+                            aria-label="Patient Invoice Name"
                         />
                     </Grid>
                 </Grid>
@@ -120,19 +143,21 @@ const PatientInvoiceCodeDetails: React.FC = () => {
                         <TextArea
                             label="Remarks"
                             name="rNotes"
-                            value={rNotes}
+                            value={formState.rNotes}
                             placeholder="Remarks"
-                            onChange={(e) => setRNotes(e.target.value)}
+                            onChange={handleInputChange}
                             rows={2}
+                            aria-label="Remarks"
                         />
                     </Grid>
                 </Grid>
                 <Grid container spacing={2}>
                     <Grid item xs={12} sm={6} md={3}>
                         <CustomSwitch
-                            label={rActiveYN === 'Y' ? 'Active' : 'Hidden'}
-                            checked={rActiveYN === 'Y'}
+                            label={formState.rActiveYN === 'Y' ? 'Active' : 'Hidden'}
+                            checked={formState.rActiveYN === 'Y'}
                             onChange={handleActiveToggle}
+                            aria-label="Active Status"
                         />
                     </Grid>
                 </Grid>

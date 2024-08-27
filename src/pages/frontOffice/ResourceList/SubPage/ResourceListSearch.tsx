@@ -257,7 +257,7 @@ const ResourceListSearch: React.FC<ResourceListSearchProps> = ({
         )}
       </DialogContent>
       <DialogActions>
-      <CustomButton
+        <CustomButton
           variant="contained"
           text="Close"
           icon={CloseIcon}
