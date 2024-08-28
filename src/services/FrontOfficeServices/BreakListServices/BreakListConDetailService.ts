@@ -51,7 +51,6 @@ const getAllBreakConDetails = async (
   token: string
 ): Promise<OperationResult<any[]>> => {
   try {
-    debugger
     const url = `${APIConfig.frontOffice}BreakConDetail/GetAllBreakConDetails`;
     const headers = {
       Authorization: `Bearer ${token}`,
@@ -80,7 +79,6 @@ const updateBreakConDetailActiveStatus = async (
   isActive: boolean
 ): Promise<OperationResult<any>> => {
   try {
-    debugger 
     // Construct the URL for the API request
     const url = `${APIConfig.frontOffice}BreakConDetail/UpdateBreakConDetailActiveStatus/${bCDID}`;
 
@@ -154,8 +152,6 @@ const getBreakConDetailById = async (
     return handleError<BreakConDetailData[]>(error);
   }
 };
-
-
 
 export const BreakListConDetailsService = {
   saveBreakConDetail,

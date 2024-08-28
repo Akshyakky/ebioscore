@@ -88,7 +88,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     profileOptions: [] as DropdownOption[],
   });
   const [formattedText, setFormattedText] = useState<string>("");
-  const serverDate = useServerDate(); 
+  const serverDate = useServerDate();
 
   const [breakListData, setBreakListData] = useState<BreakListData>({
     bLID: breakData?.bLID || 0,
@@ -118,10 +118,9 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     frequencyDetails: breakData?.frequencyDetails || "",
     hPLID: breakData?.hPLID || 0,
   });
-  console.log("The breaklistdate ",breakListData)
+  console.log("The breaklistdate ", breakListData)
 
   useEffect(() => {
-    debugger 
     if (serverDate) {
       setBreakListData(prev => ({
         ...prev,
@@ -158,8 +157,8 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
 
     const weekDescription = breakListData.bLFrqWkDesc
       ? Object.keys(bLFrqWkDesc).find(
-          (key) => bLFrqWkDesc[key] === breakListData.bLFrqWkDesc
-        ) || ""
+        (key) => bLFrqWkDesc[key] === breakListData.bLFrqWkDesc
+      ) || ""
       : "";
 
     const formatted = `Every ${breakListData.bLFrqNo || 0} ${frequencyDescription}${weekDescription ? ` ${weekDescription}` : ""} Till: ${breakListData.bLEndDate.toDateString()}`;
@@ -211,7 +210,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       console.error("Invalid date selected");
     }
   };
-  
+
 
   const formatDateToTimeString = (date: Date): string => {
     const hours = date.getHours().toString().padStart(2, "0");
@@ -279,12 +278,11 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     }
   }, [breakData]);
 
-  useEffect(() => {}, [breakConDetails]);
+  useEffect(() => { }, [breakConDetails]);
 
   const handleSaveBreakConDetail = async (
     breakConDetailData: BreakConDetailData
   ) => {
-    debugger;
     // Ensure that you are working with a single ID, not an array
     const hPLID =
       breakListData.isPhyResYN === "Y"
@@ -386,7 +384,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   };
 
   const handleClear = () => {
-    debugger;
     setBreakListData({
       bLID: 0,
       bLName: "",
@@ -499,7 +496,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
         "GetActiveConsultants",
         breakListData.compID || 1
       );
-      debugger;
       const physicianOptions = response.map((item: any) => ({
         value: item.value,
         label: item.label,
@@ -556,7 +552,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     resourceID: number,
     checked: boolean
   ) => {
-    debugger;
     if (checked) {
       setSelectedResources((prev) => [...prev, resourceID]);
     } else {
@@ -582,13 +577,13 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     setBreakListData((prev) => {
       const updatedResources = newValue
         ? resourceList
-            .map((resource) => ({
-              id: resource.rLID,
-              value: resource.rLID,
-              name: resource.rLName,
-            }))
-            .map((resource) => resource.id.toString()) // Convert each resource object to its ID as a string
-            .join(",") // Concatenate IDs into a comma-separated string
+          .map((resource) => ({
+            id: resource.rLID,
+            value: resource.rLID,
+            name: resource.rLName,
+          }))
+          .map((resource) => resource.id.toString()) // Convert each resource object to its ID as a string
+          .join(",") // Concatenate IDs into a comma-separated string
         : prev.resources; // Fallback to previous resources if newValue is false
 
       return {

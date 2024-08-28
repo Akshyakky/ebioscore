@@ -18,7 +18,6 @@ const saveBreakConSuspend = async (
   breakConSuspendData: BreakConSuspendData
 ): Promise<OperationResult<BreakConSuspendData>> => {
   try {
-    debugger 
     const url = `${APIConfig.frontOffice}BreakConSuspend/SaveBreakConSuspend`;
     const headers = {
       Authorization: `Bearer ${token}`,
@@ -34,7 +33,8 @@ const saveBreakConSuspend = async (
     if (response.data && response.data.success !== undefined) {
       if (!response.data.success) {
         throw new Error(
-          response.data.errorMessage || "Failed to save break connection suspend detail."
+          response.data.errorMessage ||
+            "Failed to save break connection suspend detail."
         );
       }
       return response.data;
@@ -42,7 +42,10 @@ const saveBreakConSuspend = async (
       throw new Error("Invalid response format received.");
     }
   } catch (error: any) {
-    console.error('Error saving break connection suspend:', error.response?.data || error.message);
+    console.error(
+      "Error saving break connection suspend:",
+      error.response?.data || error.message
+    );
     return handleError<BreakConSuspendData>(error);
   }
 };
@@ -58,10 +61,14 @@ const getAllBreakConSuspends = async (
       "Content-Type": "application/json",
     };
 
-    const response = await axios.get<OperationResult<BreakConSuspendData[]>>(url, { headers });
+    const response = await axios.get<OperationResult<BreakConSuspendData[]>>(
+      url,
+      { headers }
+    );
     if (!response.data.success) {
       throw new Error(
-        response.data.errorMessage || "Failed to fetch break connection suspend details."
+        response.data.errorMessage ||
+          "Failed to fetch break connection suspend details."
       );
     }
 
@@ -83,10 +90,14 @@ const getBreakConSuspendById = async (
       "Content-Type": "application/json",
     };
 
-    const response = await axios.get<OperationResult<BreakConSuspendData>>(url, { headers });
+    const response = await axios.get<OperationResult<BreakConSuspendData>>(
+      url,
+      { headers }
+    );
     if (!response.data.success) {
       throw new Error(
-        response.data.errorMessage || "Failed to fetch break connection suspend detail."
+        response.data.errorMessage ||
+          "Failed to fetch break connection suspend detail."
       );
     }
 
@@ -103,17 +114,21 @@ const updateBreakConSuspendActiveStatus = async (
   isActive: boolean
 ): Promise<OperationResult<any>> => {
   try {
-    debugger 
     const url = `${APIConfig.frontOffice}BreakConSuspend/UpdateBreakConSuspendActiveStatus/${bCSID}`;
     const headers = {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     };
 
-    const response = await axios.put<OperationResult<any>>(url, { isActive }, { headers });
+    const response = await axios.put<OperationResult<any>>(
+      url,
+      { isActive },
+      { headers }
+    );
     if (!response.data.success) {
       throw new Error(
-        response.data.errorMessage || "Failed to update break connection suspend active status."
+        response.data.errorMessage ||
+          "Failed to update break connection suspend active status."
       );
     }
 

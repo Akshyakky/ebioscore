@@ -152,55 +152,54 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({
     }
   }, [selectedBreak]);
 
-const handleSwitchChange = async (row: BreakConDetailData, checked: boolean) => {
-  try {
-    debugger 
-    // Ensure bCDID is defined
-    if (!row.bCDID) {
-      console.error("BreakConDetail bCDID is undefined or null.");
-      return;
-    }
+  const handleSwitchChange = async (row: BreakConDetailData, checked: boolean) => {
+    try {
+      // Ensure bCDID is defined
+      if (!row.bCDID) {
+        console.error("BreakConDetail bCDID is undefined or null.");
+        return;
+      }
 
-    // Call the API to update the break condition status with boolean value
-    const result = await BreakListConDetailsService.updateBreakConDetailActiveStatus(token!, row.bCDID, checked);
+      // Call the API to update the break condition status with boolean value
+      const result = await BreakListConDetailsService.updateBreakConDetailActiveStatus(token!, row.bCDID, checked);
 
-    if (result.success) {
-      notifySuccess(`Break condition status updated to ${checked ? "Active" : "Hidden"}`);
-      
-      // Update search results and switch status
-      setSearchResults((prevResults) =>
-        prevResults.map((item) =>
-          item.bCDID === row.bCDID
-            ? {
+      if (result.success) {
+        notifySuccess(`Break condition status updated to ${checked ? "Active" : "Hidden"}`);
+
+        // Update search results and switch status
+        setSearchResults((prevResults) =>
+          prevResults.map((item) =>
+            item.bCDID === row.bCDID
+              ? {
                 ...item,
                 recordStatus: checked ? "Active" : "Hidden", // Update recordStatus
                 rActiveYN: checked ? "Y" : "N", // Update rActiveYN
               }
-            : item
-        )
-      );
-     
+              : item
+          )
+        );
 
-      setSwitchStatus((prevState) => ({
-        ...prevState,
-        [row.bCDID]: checked, // Keep track of switch state
-      }));
-      console.log("The Record status is ", row.recordStatus)
-    } else {
-      notifyError(`Error updating break condition status: ${result.errorMessage}`);
-      setSwitchStatus((prevState) => ({
-        ...prevState,
-        [row.bCDID]: !checked, // Revert to previous state
-      }));
+
+        setSwitchStatus((prevState) => ({
+          ...prevState,
+          [row.bCDID]: checked, // Keep track of switch state
+        }));
+        console.log("The Record status is ", row.recordStatus)
+      } else {
+        notifyError(`Error updating break condition status: ${result.errorMessage}`);
+        setSwitchStatus((prevState) => ({
+          ...prevState,
+          [row.bCDID]: !checked, // Revert to previous state
+        }));
+      }
+    } catch (error) {
+      notifyError("Error updating break condition status.");
+      console.error("Error:", error);
+
     }
-  } catch (error) {
-    notifyError("Error updating break condition status.");
-    console.error("Error:", error);
-   
-  }
-};
+  };
 
-  
+
 
 
 
@@ -264,12 +263,11 @@ const handleSwitchChange = async (row: BreakConDetailData, checked: boolean) => 
   };
 
   const handleDialogClose = () => {
-    debugger
     setSearchTerm("");
     handleClose();
   };
 
-  
+
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       setSearchTerm(searchTerm.trim());
