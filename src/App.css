@@ -38,15 +38,6 @@
   }
 }
 
-
-/* App.css or your stylesheet name */
-.app-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  /* Use viewport height to ensure minimum height */
-}
-
 main {
   flex: 1;
   padding-top: 72px;

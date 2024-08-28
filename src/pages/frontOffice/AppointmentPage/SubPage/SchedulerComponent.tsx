@@ -168,46 +168,44 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onApp
     }, [state.appointments]);
 
     return (
-        <div style={{ height: '100vh', width: '100%' }}>
-            <Scheduler
-                dataSource={dataSource}
-                views={views}
-                firstDayOfWeek={0}
-                defaultCurrentView={state.currentView}
-                currentDate={state.date}
-                onCurrentViewChange={onViewChange}
-                onCurrentDateChange={onCurrentDateChange}
-                startDayHour={0}
-                endDayHour={24}
-                cellDuration={15}
-                showAllDayPanel={false}
-                useDropDownViewSwitcher={false}
-                editing={{
-                    allowAdding: true,
-                    allowDeleting: true,
-                    allowUpdating: true,
-                    allowResizing: true,
-                    allowDragging: true,
-                }}
-                adaptivityEnabled={true}
-                showCurrentTimeIndicator={true}
-                shadeUntilCurrentTime={true}
-                height="100%"
-                width="100%"
-                onAppointmentDblClick={onAppointmentDblClick}
-                onAppointmentClick={onAppointmentClick}
-                onAppointmentFormOpening={onAppointmentFormOpeningHandler}
-                timeCellRender={timeCellTemplate}
-                onContentReady={onContentReady}
-            >
-                <Resource
-                    fieldExpr="AppID"
-                    allowMultiple={true}
-                    dataSource={resourceDataSource}
-                    label="Appointment"
-                />
-            </Scheduler>
-        </div>
+        <Scheduler
+            dataSource={dataSource}
+            views={views}
+            firstDayOfWeek={0}
+            defaultCurrentView={state.currentView}
+            currentDate={state.date}
+            onCurrentViewChange={onViewChange}
+            onCurrentDateChange={onCurrentDateChange}
+            startDayHour={0}
+            endDayHour={24}
+            cellDuration={15}
+            showAllDayPanel={false}
+            useDropDownViewSwitcher={false}
+            editing={{
+                allowAdding: true,
+                allowDeleting: true,
+                allowUpdating: true,
+                allowResizing: true,
+                allowDragging: true,
+            }}
+            adaptivityEnabled={true}
+            showCurrentTimeIndicator={true}
+            shadeUntilCurrentTime={true}
+            height="100%"
+            width="100%"
+            onAppointmentDblClick={onAppointmentDblClick}
+            onAppointmentClick={onAppointmentClick}
+            onAppointmentFormOpening={onAppointmentFormOpeningHandler}
+            timeCellRender={timeCellTemplate}
+            onContentReady={onContentReady}
+        >
+            <Resource
+                fieldExpr="AppID"
+                allowMultiple={true}
+                dataSource={resourceDataSource}
+                label="Appointment"
+            />
+        </Scheduler>
     );
 });
 
