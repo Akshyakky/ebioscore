@@ -333,7 +333,6 @@ const RevisitPage: React.FC = () => {
   };
 
   const handleSave = async () => {
-    debugger;
     setIsSubmitted(true);
     setLoading(true);
     try {

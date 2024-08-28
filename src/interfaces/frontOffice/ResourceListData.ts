@@ -5,10 +5,10 @@ export interface ResourceListData {
   rActiveYN: string;
   rCreatedOn: Date;
   rCreatedID: number;
-  rCreatedBy: string; // Add this
+  rCreatedBy: string;
   rModifiedOn: Date;
   rModifiedID: number;
-  rModifiedBy: string; // Add this
+  rModifiedBy: string;
   rNotes: string;
   rLValidateYN: string;
   rLOtYN: string;
@@ -16,13 +16,4 @@ export interface ResourceListData {
   compCode?: string;
   compName?: string;
   transferYN?: string;
-}
-
-  export interface ResourceDetailsFields {
-  rLID: number;
-  rLCode: string;
-  rLName: string;
-  rNotes: string;
-  rLValidateYN: string;
-  rLOtYN: string;
 }

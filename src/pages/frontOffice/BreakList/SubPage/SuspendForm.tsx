@@ -40,7 +40,6 @@ const SuspendForm: React.FC<SuspendFormProps> = ({ onClose, selectedBreakId, tok
     const [modifiedOn, setModifiedOn] = useState<Date>(new Date());
 
     useEffect(() => {
-        debugger
         if (selectedBreakId && selectedBreakId.blID) {
             const fetchDetails = async () => {
                 try {
@@ -87,7 +86,6 @@ const SuspendForm: React.FC<SuspendFormProps> = ({ onClose, selectedBreakId, tok
     };
 
     const handleSubmit = async () => {
-        debugger
         if (!suspendFromDate || !suspendEndDate) {
             setErrorMessage("Suspend dates are required.");
             return;

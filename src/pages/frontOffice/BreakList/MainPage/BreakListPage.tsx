@@ -67,7 +67,7 @@ const BreakListPage: React.FC = () => {
 
   // Handle Edit Operation
   const handleEdit = async (row: BreakConDetailData) => {
-    debugger
+
     console.log("Going to edit data with blID:", row.blID);
 
     setLoading(true);
@@ -138,7 +138,7 @@ const BreakListPage: React.FC = () => {
         show={isSearchDialogOpen}
         handleClose={handleCloseSearchDialog}
         onEditBreak={handleEdit}
-        selectedBreak={selectedBreak} token={""}      />
+        selectedBreak={selectedBreak} token={""} />
     </Container>
   );
 };

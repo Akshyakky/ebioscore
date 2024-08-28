@@ -39,7 +39,7 @@ export const ResourceListProvider = ({
     if (!token) return;
     setLoading(true);
     try {
-      const response = await ResourceListService.getAllResourceLists(token);
+      const response = await ResourceListService.getAllResourceLists();
       if (response.success && response.data) {
         setResourceList(response.data);
         setSearchResults(response.data);
@@ -75,7 +75,7 @@ export const ResourceListProvider = ({
   const updateResourceStatus = async (resourceID: number, status: string) => {
     if (!token) return;
     try {
-      const response = await ResourceListService.updateResourceActiveStatus(token, resourceID, status === "active");
+      const response = await ResourceListService.updateResourceActiveStatus(resourceID, status === "active");
       if (response.success) {
         const updatedResources = resourceList.map((resource) =>
           resource.rLID === resourceID ? { ...resource, status } : resource

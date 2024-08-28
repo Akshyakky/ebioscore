@@ -91,7 +91,6 @@ const useAppointments = (initialDate: Date, hpID?: number, rlID?: number) => {
 };
 
 const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onAppointmentFormOpening: (startDate?: Date, endDate?: Date) => void }>((props, ref) => {
-    debugger
     const serverDate = useServerDate();
     const initialDate = serverDate || new Date();
     const { hpID, rlID, onAppointmentFormOpening } = props;

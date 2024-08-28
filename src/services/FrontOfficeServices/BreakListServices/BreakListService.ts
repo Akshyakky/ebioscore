@@ -1,4 +1,4 @@
-import { BreakListData } from './../../../interfaces/frontOffice/BreakListData';
+import { BreakListData } from "./../../../interfaces/frontOffice/BreakListData";
 import axios from "axios";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
@@ -26,7 +26,6 @@ const saveBreakList = async (
   token: string,
   breakListData: BreakListData
 ): Promise<OperationResult<BreakListData>> => {
-  debugger;
   try {
     const formattedData = {
       ...breakListData,
@@ -34,7 +33,6 @@ const saveBreakList = async (
       bLEndTime: breakListData.bLEndTime.toISOString(),
       bLStartDate: breakListData.bLStartDate.toISOString(),
       bLEndDate: breakListData.bLEndDate.toISOString(),
-      
     };
     const url = `${APIConfig.frontOffice}BreakList/SaveBreakList`;
     const headers = {
@@ -68,7 +66,6 @@ const getBreakListById = async (
   token: string,
   bLID: number
 ): Promise<OperationResult<BreakListData>> => {
-  debugger;
   try {
     const url = `${APIConfig.frontOffice}BreakList/GetBreakListById/${bLID}`;
     const headers = {
@@ -104,7 +101,6 @@ const getAllBreakLists = async (
     };
 
     const response = await axios.get<OperationResult<any[]>>(url, { headers });
-    debugger;
     if (!response.data.success) {
       throw new Error(
         response.data.errorMessage || "Failed to fetch break lists."
