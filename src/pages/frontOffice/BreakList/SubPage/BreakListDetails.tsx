@@ -23,7 +23,6 @@ import {
   notifyError,
 } from "../../../../utils/Common/toastManager";
 import TextArea from "../../../../components/TextArea/TextArea";
-import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
@@ -40,6 +39,7 @@ import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConD
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
 import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
+import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 
 interface BreakListDetailsProps {
   frequencyNumber: number;
@@ -93,10 +93,10 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   const [breakListData, setBreakListData] = useState<BreakListData>({
     bLID: breakData?.bLID || 0,
     bLName: breakData?.bLName || "",
-    bLStartTime: serverDate ? new Date() : new Date(), // Initialize with server time
+    bLStartTime: serverDate ? new Date(serverDate) : new Date(), // Initialize with server time
     bLEndTime: serverDate ? new Date(serverDate) : new Date(), // Initialize with server time
-    bLStartDate: breakData?.bLStartDate || new Date(),
-    bLEndDate: breakData?.bLEndDate || new Date(),
+    bLStartDate: breakData?.bLStartDate || serverDate || new Date(), // Use server date if available
+    bLEndDate: breakData?.bLEndDate || serverDate || new Date(), // Use server date if available
     bLFrqNo: breakData?.bLFrqNo || 0,
     bLFrqDesc: breakData?.bLFrqDesc || "",
     bLFrqWkDesc: breakData?.bLFrqWkDesc || "",
@@ -124,11 +124,25 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     if (serverDate) {
       setBreakListData(prev => ({
         ...prev,
-        bLStartTime: new Date(serverDate),
-        bLEndTime: new Date(serverDate),
+        bLStartTime: serverDate,
+        bLEndTime: serverDate,
+        bLStartDate: serverDate,
+        bLEndDate: serverDate,
       }));
     }
   }, [serverDate]);
+
+    useEffect(() => {
+    if (breakData) {
+      setBreakListData(prev => ({
+        ...prev,
+        bLStartTime: breakData.bLStartTime || serverDate || new Date(),
+        bLEndTime: breakData.bLEndTime || serverDate || new Date(),
+        bLStartDate: breakData.bLStartDate || serverDate || new Date(),
+        bLEndDate: breakData.bLEndDate || serverDate || new Date(),
+      }));
+    }
+  }, [breakData, serverDate]);
 
   // Example Maps for Frequency and Weekday Descriptions
   const bLFrqDesc: Record<string, string> = {
@@ -312,7 +326,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     try {
       // Ensure that the save service correctly updates the existing record
       const response = await BreakListConDetailsService.saveBreakConDetail(
-        token!,
+  
         payload
       );
       if (response.success) {
@@ -345,7 +359,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     onSave(breakListData);
 
     try {
-      const breakListResponse = await BreakListService.saveBreakList(token!, {
+      const breakListResponse = await BreakListService.saveBreakList( {
         ...breakListData,
       });
 
@@ -469,7 +483,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   const fetchResources = async () => {
     setLoadingResources(true);
     try {
-      const result = await ResourceListService.getAllResourceLists(token!);
+      const result = await ResourceListService.getAllResourceLists();
       if (result.success) {
         setResourceList(result.data ?? []);
       } else {

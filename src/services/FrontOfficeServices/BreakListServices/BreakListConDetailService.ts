@@ -2,156 +2,60 @@ import axios from "axios";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { BreakConDetailData } from "../../../interfaces/frontOffice/BreakConDetailsData";
+import { CommonApiService } from "../../CommonApiService";
+import { store } from "../../../store/store";
 
-// Handle errors
-const handleError = <T>(error: any): OperationResult<T> => {
-  return {
-    success: false,
-    data: {} as T,
-    errorMessage: error.message || "An error occurred",
-  };
-};
 
-// Service to save break condition details
-const saveBreakConDetail = async (
-  token: string,
-  breakConDetailData: BreakConDetailData
+const commonApiService = new CommonApiService({
+  baseURL: APIConfig.frontOffice,
+});
+
+const getToken = () => store.getState().userDetails.token!;
+
+
+export const saveBreakConDetail = async (
+  resourceListData: BreakConDetailData
 ): Promise<OperationResult<BreakConDetailData>> => {
-  try {
-    const url = `${APIConfig.frontOffice}BreakConDetail/SaveBreakConDetail`;
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-
-    const response = await axios.post<OperationResult<BreakConDetailData>>(
-      url,
-      breakConDetailData,
-      { headers }
-    );
-
-    if (response.data && response.data.success !== undefined) {
-      if (!response.data.success) {
-        throw new Error(
-          response.data.errorMessage || "Failed to save break condition detail."
-        );
-      }
-      return response.data;
-    } else {
-      throw new Error("Invalid response format received.");
-    }
-  } catch (error: any) {
-    return handleError<BreakConDetailData>(error);
-  }
+  return commonApiService.post<OperationResult<any>>(
+    "BreakConDetail/SaveBreakConDetail",
+    resourceListData,
+    getToken()
+  );
 };
 
-// Service to get all break condition details
 
-const getAllBreakConDetails = async (
-  token: string
-): Promise<OperationResult<any[]>> => {
-  try {
-    const url = `${APIConfig.frontOffice}BreakConDetail/GetAllBreakConDetails`;
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
 
-    const response = await axios.get<OperationResult<any[]>>(url, { headers });
-    if (!response.data.success) {
-      throw new Error(
-        response.data.errorMessage || "Failed to fetch break lists."
-      );
-    }
-
-    return response.data;
-  } catch (error: any) {
-    return handleError(error);
-  }
+export const getAllBreakConDetails = async (): Promise<
+  OperationResult<any[]>
+> => {
+  return commonApiService.get<OperationResult<any[]>>(
+    "BreakConDetail/GetAllBreakConDetails",
+    getToken()
+  );
 };
 
-// Service to update physician or resource name
-
-// New service to update the active status of a break condition detail
-const updateBreakConDetailActiveStatus = async (
-  token: string,
+export const updateBreakConDetailActiveStatus = async (
   bCDID: number,
   isActive: boolean
-): Promise<OperationResult<any>> => {
-  try {
-    // Construct the URL for the API request
-    const url = `${APIConfig.frontOffice}BreakConDetail/UpdateBreakConDetailActiveStatus/${bCDID}`;
-
-    // Define the headers for the request
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-
-    // Send a PUT request with boolean value in the request body
-    const response = await axios.put<OperationResult<any>>(url, isActive, {
-      headers,
-    });
-
-    // Check if the response indicates success
-    if (response.data.success) {
-      console.log(
-        "Break condition detail active status updated successfully:",
-        response.data.data
-      );
-    } else {
-      console.error(
-        "Failed to update break condition detail active status:",
-        response.data.errorMessage
-      );
-    }
-
-    return response.data;
-  } catch (error) {
-    console.error(
-      "Error updating break condition detail active status:",
-      error
-    );
-    // Handle the error appropriately
-    return handleError<any>(error); // Ensure handleError is properly defined in your project
-  }
+): Promise<OperationResult<boolean>> => {
+  return commonApiService.put<OperationResult<boolean>>(
+    `BreakConDetail/UpdateBreakConDetailActiveStatus/${bCDID}`,
+    isActive,
+    getToken()
+  );
 };
 
-const getBreakConDetailById = async (
-  token: string,
+
+
+export const getBreakConDetailById = async (
   bLID: number
-): Promise<OperationResult<BreakConDetailData[]>> => {
-  try {
-    // Construct the URL for the API endpoint
-    const url = `${APIConfig.frontOffice}BreakConDetail/GetBreakConDetailById/${bLID}`;
-
-    // Set up the headers for the API call
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-
-    // Make the API call using axios
-    const response = await axios.get<OperationResult<BreakConDetailData[]>>(
-      url,
-      { headers }
-    );
-
-    // Check if the response indicates success
-    if (!response.data.success) {
-      throw new Error(
-        response.data.errorMessage ||
-          "Failed to fetch break connection details."
-      );
-    }
-
-    // Return the data from the response
-    return response.data;
-  } catch (error) {
-    // Handle any errors that occur during the API call
-    return handleError<BreakConDetailData[]>(error);
-  }
+): Promise<OperationResult<any>> => {
+  return commonApiService.get<OperationResult<any>>(
+    `BreakConDetail/GetBreakConDetailById/${bLID}`,
+    getToken()
+  );
 };
+
 
 export const BreakListConDetailsService = {
   saveBreakConDetail,
