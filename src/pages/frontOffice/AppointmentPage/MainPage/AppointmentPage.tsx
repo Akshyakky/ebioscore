@@ -1,23 +1,13 @@
 import React, { useRef, useState, useCallback } from 'react';
+import { Box, Paper } from '@mui/material';
 import SchedulerComponent from '../SubPage/SchedulerComponent';
 import SchedulerHeader from '../SubPage/SchedulerHeader';
 import SchedulerFooter from '../SubPage/SchedulerFooter';
 import AppointmentBookingForm from '../SubPage/AppointmentBookingForm';
 import GenericDialog from '../../../../components/GenericDialog/GenericDialog';
 import CustomButton from '../../../../components/Button/CustomButton';
-import styled from 'styled-components';
-const PageContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-`;
+import { Container } from '@mui/system';
 
-const SchedulerContainer = styled.div`
-  flex: 1;
-  overflow: hidden;
-`;
 const AppointmentPage: React.FC = () => {
     const schedulerRef = useRef<{ refresh: () => void } | null>(null);
     const [selectedConID, setSelectedConID] = useState<number | undefined>(undefined);
@@ -68,9 +58,8 @@ const AppointmentPage: React.FC = () => {
 
     const handleSaveBooking = useCallback(() => {
         console.log("Booking Data:", formData);
-        // Save the booking data here, then close the form
         handleAppointmentFormClose();
-        handleRefresh(); // Refresh the scheduler after saving
+        handleRefresh();
     }, [formData, handleAppointmentFormClose, handleRefresh]);
 
     const handleChange = useCallback((name: string, value: any) => {
@@ -96,42 +85,58 @@ const AppointmentPage: React.FC = () => {
     }, []);
 
     return (
-        <PageContainer>
+        <Container maxWidth={false}>
+            <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                height: '90vh',
+                overflow: 'hidden'
+            }}>
+                <Paper elevation={3} sx={{ flexShrink: 0, zIndex: 1 }}>
+                    <SchedulerHeader onRefresh={handleRefresh} onSearchSelection={handleSearchSelection} />
+                </Paper>
 
-            <SchedulerHeader
-                onRefresh={handleRefresh}
-                onSearchSelection={handleSearchSelection}
-            />
-            <SchedulerContainer>
-                <SchedulerComponent
-                    ref={schedulerRef}
-                    hpID={selectedConID}
-                    rlID={selectedRlID}
-                    onAppointmentFormOpening={handleAppointmentFormOpen}
-                />
-            </SchedulerContainer>
+                <Box sx={{
+                    flexGrow: 1,
+                    overflow: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}>
+                    <Box sx={{ flexShrink: 0, bgcolor: 'background.paper', p: 1 }}>
 
-            <SchedulerFooter />
-            <GenericDialog
-                open={isBookingFormOpen}
-                onClose={handleAppointmentFormClose}
-                title="Book Appointment"
-                maxWidth="sm"
-                disableEscapeKeyDown={true}
-                disableBackdropClick={true}
-                dialogContentSx={{ maxHeight: '400px' }}
-                actions={[
-                    <CustomButton key="close" text="Close" onClick={handleAppointmentFormClose} color="inherit" />,
-                    <CustomButton key="clear" text="Clear" onClick={handleClearForm} color="error" sx={{ ml: 2 }} />,
-                    <CustomButton key="save" text="Save" onClick={handleSaveBooking} color="primary" variant="contained" sx={{ ml: 2 }} />,
-                ]}
-            >
-                <AppointmentBookingForm
-                    onChange={handleChange}
-                    formData={formData}
-                />
-            </GenericDialog>
-        </PageContainer>
+                    </Box>
+                    <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+                        <SchedulerComponent
+                            ref={schedulerRef}
+                            hpID={selectedConID}
+                            rlID={selectedRlID}
+                            onAppointmentFormOpening={handleAppointmentFormOpen}
+                        />
+                    </Box>
+                </Box>
+
+                <Paper elevation={3} sx={{ flexShrink: 0, zIndex: 1 }}>
+                    <SchedulerFooter />
+                </Paper>
+
+                <GenericDialog
+                    open={isBookingFormOpen}
+                    onClose={handleAppointmentFormClose}
+                    title="Book Appointment"
+                    maxWidth="sm"
+                    disableEscapeKeyDown={true}
+                    disableBackdropClick={true}
+                    dialogContentSx={{ maxHeight: '400px' }}
+                    actions={[
+                        <CustomButton key="close" text="Close" onClick={handleAppointmentFormClose} color="inherit" />,
+                        <CustomButton key="clear" text="Clear" onClick={handleClearForm} color="error" sx={{ ml: 2 }} />,
+                        <CustomButton key="save" text="Save" onClick={handleSaveBooking} color="primary" variant="contained" sx={{ ml: 2 }} />,
+                    ]}
+                >
+                    <AppointmentBookingForm onChange={handleChange} formData={formData} />
+                </GenericDialog>
+            </Box>
+        </Container>
     );
 };
 
