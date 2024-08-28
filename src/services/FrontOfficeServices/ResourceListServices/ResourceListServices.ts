@@ -1,6 +1,6 @@
+import { ResourceListData } from './../../../interfaces/frontOffice/ResourceListData';
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { ResourceListData } from "../../../interfaces/FrontOffice/ResourceListData";
 import { CommonApiService } from "../../CommonApiService";
 import { store } from "../../../store/store";
 

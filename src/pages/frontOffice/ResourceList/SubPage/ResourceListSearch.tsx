@@ -12,10 +12,10 @@ import {
 import CustomButton from "../../../../components/Button/CustomButton";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
-import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
+import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 
 interface ResourceListSearchProps {
   open: boolean;
