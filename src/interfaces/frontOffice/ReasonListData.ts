@@ -18,7 +18,7 @@ export interface ReasonListData {
     compName: string;
     transferYN: string;
     rlName: string;
-    rlID: string | number;
+    rlID: number;
   }
   
 

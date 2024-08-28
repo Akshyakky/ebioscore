@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Grid,
   IconButton,
@@ -12,65 +12,91 @@ import FormSaveClearButton from "../../../../components/Button/FormSaveClearButt
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import TextArea from "../../../../components/TextArea/TextArea";
-import {
-  notifySuccess,
-  notifyError,
-} from "../../../../utils/Common/toastManager";
-import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
-import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
+import { useLoading } from "../../../../context/LoadingContext";
+import { useServerDate } from "../../../../hooks/Common/useServerDate";
+import { store } from "../../../../store/store";
+import { showAlert } from "../../../../utils/Common/showAlert";
+import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
+import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { notifyError } from "../../../../utils/Common/toastManager";
 
-interface ReasonDetailsProps {
-  reason: ReasonListData | null;
-  onSave: (reason: ReasonListData) => void;
-  onClear: () => void;
-  isEditMode: boolean;
-}
+const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) => {
 
-const ReasonDetails: React.FC<ReasonDetailsProps> = ({
-  reason,
-  onSave,
-  onClear,
-  isEditMode,
-}) => {
-  const { token } = useSelector((state: RootState) => state.userDetails);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [resourceList, setResourceList] = useState<ResourceListData[]>([]);
-  const [reasonData, setReasonData] = useState<ReasonListData>({
-    arlID: reason?.arlID || 0,
-    arlCode: reason?.arlCode || "",
-    arlName: reason?.arlName || "",
-    arlDuration: reason?.arlDuration || 0,
-    arlDurDesc: reason?.arlDurDesc || "",
-    arlColor: reason?.arlColor || 0,
-    rActiveYN: reason?.rActiveYN || "N",
-    rCreatedOn: reason?.rCreatedOn || new Date(),
-    rCreatedID: reason?.rCreatedID || 0,
-    rCreatedBy: reason?.rCreatedBy || "",
-    rModifiedOn: reason?.rModifiedOn || new Date(),
-    rModifiedID: reason?.rModifiedID || 0,
-    rModifiedBy: reason?.rModifiedBy || "",
-    rNotes: reason?.rNotes || "",
-    compCode: reason?.compCode || "",
-    compID: reason?.compID || 0,
-    compName: reason?.compName || "",
-    transferYN: reason?.transferYN || "N",
-    rlName: reason?.rlName || "",
-    rlID: reason?.rlID || 0, // Ensure rlID is set properly
+  const [formState, setFormState] = useState({
+    isSubmitted: false,
+    arlCode: "",
+    arlName: "",
+    rNotes: "",
+    rActiveYN: "Y",
+    arlDuration: 0,
+    rlID: 0
+
   });
-  const [activeLabel, setActiveLabel] = useState(
-    reasonData.rActiveYN === "Y" ? "Active" : "Hidden"
-  );
+
+  const { setLoading } = useLoading();
+  const serverDate = useServerDate();
+  const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
+  const [resourceList, setResourceList] = useState<ResourceListData[]>([]);
+
+  useEffect(() => {
+    if (editData) {
+      setFormState({
+        isSubmitted: false,
+        arlCode: editData.arlCode || "",
+        arlName: editData.arlName || "",
+        rNotes: editData.rNotes || "",
+        rActiveYN: editData.rActiveYN || "Y",
+        arlDuration: editData.arlDuration || 0,
+        rlID: editData.rlID || 0
+      });
+    } else {
+      handleClear();
+    }
+  }, [editData]);
+
+  const handleClear = useCallback(() => {
+    setFormState({
+      isSubmitted: false,
+      arlCode: "",
+      arlName: "",
+      rNotes: "",
+      rActiveYN: "Y",
+      arlDuration: 0,
+      rlID: 0
+    });
+  }, []);
+
+  const createReasonListData = useCallback((): ReasonListData => ({
+    arlID: editData ? editData.arlID : 0,
+    arlCode: formState.arlCode,
+    arlName: formState.arlName,
+    rNotes: formState.rNotes,
+    rActiveYN: formState.rActiveYN,
+    compID: compID || 0,
+    compCode: compCode || "",
+    compName: compName || "",
+    transferYN: "N",
+    rCreatedID: userID || 0,
+    rCreatedOn: serverDate || new Date(),
+    rCreatedBy: userName || "",
+    rModifiedID: userID || 0,
+    rModifiedOn: serverDate || new Date(),
+    rModifiedBy: userName || "",
+    arlDuration: formState.arlDuration,
+    arlDurDesc: "",
+    arlColor: 0,
+    rlName: "",
+    rlID: formState.rlID || 0
+  }), [formState, editData, compID, compCode, compName, userID, userName, serverDate]);
 
   useEffect(() => {
     const fetchResourceList = async () => {
       try {
-        const result = await ResourceListService.getAllResourceLists(token!);
+        const result = await ResourceListService.getAllResourceLists();
         if (result.success) {
           setResourceList(result.data ?? []);
         } else {
@@ -81,107 +107,59 @@ const ReasonDetails: React.FC<ReasonDetailsProps> = ({
       }
     };
     fetchResourceList();
-  }, [token]);
+  }, []);
 
-  useEffect(() => {
-    if (reason) {
-      setReasonData({
-        arlID: reason.arlID,
-        arlCode: reason.arlCode || "",
-        arlName: reason.arlName || "",
-        arlDuration: reason.arlDuration,
-        arlDurDesc: reason.arlDurDesc || "",
-        arlColor: reason.arlColor || 0,
-        rActiveYN: reason.rActiveYN || "N",
-        rCreatedOn: reason.rCreatedOn || new Date(),
-        rCreatedID: reason.rCreatedID || 0,
-        rCreatedBy: reason.rCreatedBy || "",
-        rModifiedOn: reason.rModifiedOn || new Date(),
-        rModifiedID: reason.rModifiedID || 0,
-        rModifiedBy: reason.rModifiedBy || "",
-        rNotes: reason.rNotes || "",
-        compCode: reason.compCode || "",
-        compID: reason.compID || 0,
-        compName: reason.compName || "",
-        transferYN: reason.transferYN || "N",
-        rlName: reason.rlName || "",
-        rlID: reason.rlID || 0,
-      });
-      setActiveLabel(reason.rActiveYN === "Y" ? "Active" : "Hidden");
-    }
-  }, [reason]);
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormState(prev => ({ ...prev, [name]: value }));
+  }, []);
 
   const handleSave = async () => {
-    setIsSubmitted(true);
-
-    if (!reasonData.arlCode || !reasonData.arlName || !reasonData.rlID) {
-      notifyError("Reason Code, Name, and Resource are required fields.");
-      return;
-    }
+    setFormState(prev => ({ ...prev, isSubmitted: true }));
+    setLoading(true);
 
     try {
-      const result = await ReasonListService.saveReasonList(token!, reasonData);
+      const ReasonListData = createReasonListData();
+      const result = await ReasonListService.saveReasonList(ReasonListData);
       if (result.success) {
-        notifySuccess("Reason saved successfully");
-        onSave(reasonData);
-        setReasonData({
-          arlID: 0,
-          arlCode: "",
-          arlName: "",
-          arlDuration: 0,
-          arlDurDesc: "",
-          arlColor: 0,
-          rActiveYN: "N",
-          rCreatedOn: new Date(),
-          rCreatedID: 0,
-          rCreatedBy: "",
-          rModifiedOn: new Date(),
-          rModifiedID: 0,
-          rModifiedBy: "",
-          rNotes: "",
-          compCode: "",
-          compID: 0,
-          compName: "",
-          transferYN: "N",
-          rlName: "",
-          rlID: 0,
+        showAlert("Success", "Resource List saved successfully!", "success", {
+          onConfirm: handleClear
         });
-        onClear();
       } else {
-        notifyError(result.errorMessage || "An unknown error occurred.");
+        showAlert("Error", result.errorMessage || "Failed to save Resource List.", "error");
       }
     } catch (error) {
-      notifyError("An error occurred while saving the reason.");
+      console.error("Error saving Resource List:", error);
+      showAlert("Error", "An unexpected error occurred while saving.", "error");
+    } finally {
+      setLoading(false);
     }
   };
-  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+
+  const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState(prev => ({ ...prev, rActiveYN: event.target.checked ? "Y" : "N" }));
+  }, []);
+
+  const handleDurationChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    action: "increment" | "decrement" | "change"
+  ) => {
     const value = e.target.value;
-    const parsedValue = parseInt(value);
-    setReasonData({
-      ...reasonData,
-      arlDuration: isNaN(parsedValue) ? reasonData.arlDuration : parsedValue,
-    });
+    const parsedValue = value === "" ? 0 : parseInt(value);
+
+    setFormState((prev) => ({
+      ...prev,
+      arlDuration: action === "increment"
+        ? prev.arlDuration + 1
+        : action === "decrement"
+          ? Math.max(0, prev.arlDuration - 1)
+          : isNaN(parsedValue)
+            ? 0
+            : parsedValue,
+    }));
   };
 
-  const incrementDuration = () => {
-    setReasonData({
-      ...reasonData,
-      arlDuration: reasonData.arlDuration + 1,
-    });
-  };
-
-  const decrementDuration = () => {
-    setReasonData({
-      ...reasonData,
-      arlDuration: reasonData.arlDuration > 0 ? reasonData.arlDuration - 1 : 0,
-    });
-  };
-
-  const handleActiveToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const isActive = e.target.checked;
-    setReasonData({ ...reasonData, rActiveYN: isActive ? "Y" : "N" });
-    setActiveLabel(isActive ? "Active" : "Hidden");
-  };
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -194,30 +172,26 @@ const ReasonDetails: React.FC<ReasonDetailsProps> = ({
             <FloatingLabelTextBox
               title="Reason Code"
               placeholder="Enter code"
-              value={reasonData.arlCode}
-              onChange={(e) =>
-                setReasonData({ ...reasonData, arlCode: e.target.value })
-              }
+              value={formState.arlCode}
+              onChange={handleInputChange}
               isMandatory
               size="small"
-              isSubmitted={isSubmitted}
+              isSubmitted={formState.isSubmitted}
               name="arlCode"
-              ControlID=""
+              ControlID="arlCode"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <FloatingLabelTextBox
               title="Reason Name"
               placeholder="Enter name"
-              value={reasonData.arlName}
-              onChange={(e) =>
-                setReasonData({ ...reasonData, arlName: e.target.value })
-              }
+              value={formState.arlName}
+              onChange={handleInputChange}
               isMandatory
               size="small"
-              isSubmitted={isSubmitted}
+              isSubmitted={formState.isSubmitted}
               name="arlName"
-              ControlID=""
+              ControlID="arlName"
             />
           </Grid>
 
@@ -228,19 +202,22 @@ const ReasonDetails: React.FC<ReasonDetailsProps> = ({
               placeholder="Enter duration"
               variant="outlined"
               sx={{ mt: 2 }}
-              value={reasonData.arlDuration}
-              onChange={handleDurationChange}
+              value={formState.arlDuration || ""}
+              onChange={(e) => handleDurationChange(e as React.ChangeEvent<HTMLInputElement>, "change")}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      onClick={incrementDuration}
+                      onClick={() => handleDurationChange({ target: { value: "" } } as any, "increment")}
                       edge="end"
-                    ></IconButton>
+                    >
+                    </IconButton>
                     <IconButton
-                      onClick={decrementDuration}
+                      onClick={() => handleDurationChange({ target: { value: "" } } as any, "decrement")}
                       edge="end"
-                    ></IconButton>
+                    >
+
+                    </IconButton>
                     <Typography
                       variant="body2"
                       sx={{ ml: 1, fontWeight: "550", color: "#313233" }}
@@ -254,6 +231,7 @@ const ReasonDetails: React.FC<ReasonDetailsProps> = ({
               inputProps={{ min: 0 }}
             />
           </Grid>
+
         </Grid>
 
         <Grid container spacing={2}>
@@ -261,10 +239,8 @@ const ReasonDetails: React.FC<ReasonDetailsProps> = ({
             <TextArea
               label="Instruction"
               name="arlDurDesc"
-              value={reasonData.rNotes}
-              onChange={(e) =>
-                setReasonData({ ...reasonData, rNotes: e.target.value })
-              }
+              value={formState.rNotes}
+              onChange={handleInputChange}
               placeholder="Enter instructions"
               rows={2}
             />
@@ -273,9 +249,9 @@ const ReasonDetails: React.FC<ReasonDetailsProps> = ({
           <Grid item xs={12} sm={6} md={3}>
             <DropdownSelect
               label="Resource"
-              value={reasonData.rlID.toString()}
+              value={formState.rlID.toString()}
               onChange={(e) =>
-                setReasonData({ ...reasonData, rlID: parseInt(e.target.value) })
+                setFormState({ ...formState, rlID: parseInt(e.target.value) })
               }
               options={resourceList.map((resource) => ({
                 value: resource.rLID.toString(),
@@ -283,7 +259,7 @@ const ReasonDetails: React.FC<ReasonDetailsProps> = ({
               }))}
               isMandatory
               size="small"
-              isSubmitted={isSubmitted}
+              isSubmitted={formState.isSubmitted}
               name="rlID"
             />
           </Grid>
@@ -292,16 +268,16 @@ const ReasonDetails: React.FC<ReasonDetailsProps> = ({
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={3}>
             <CustomSwitch
-              checked={reasonData.rActiveYN === "Y"}
+              checked={formState.rActiveYN === "Y"}
               onChange={handleActiveToggle}
-              label={activeLabel}
+              label={formState.rActiveYN === 'Y' ? 'Active' : 'Hidden'}
             />
           </Grid>
         </Grid>
         <FormSaveClearButton
           clearText="Clear"
           saveText="Save"
-          onClear={onClear}
+          onClear={handleClear}
           onSave={handleSave}
           clearIcon={DeleteIcon}
           saveIcon={SaveIcon}

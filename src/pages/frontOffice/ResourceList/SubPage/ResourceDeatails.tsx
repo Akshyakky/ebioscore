@@ -6,12 +6,12 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import TextArea from "../../../../components/TextArea/TextArea";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
-import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
+import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 
 const ResourceDetails: React.FC<{ editData?: ResourceListData }> = ({ editData }) => {
 
