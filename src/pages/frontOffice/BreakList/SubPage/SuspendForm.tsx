@@ -110,6 +110,8 @@ const SuspendForm: React.FC<SuspendFormProps> = ({ onClose, selectedBreakId, tok
             compCode: company?.compCode || "",
             compName: company?.compName || "",
             compID: company?.compID || 0,
+            status: "Y",
+            transferYN:"Y"
         };
 
         console.log('Submitting data:', suspendData);
@@ -156,6 +158,8 @@ const SuspendForm: React.FC<SuspendFormProps> = ({ onClose, selectedBreakId, tok
             compCode: company ? company.compCode : "",
             compName: company ? company.compName : "",
             compID: company ? company.compID : 0,
+             status: "Y",
+            transferYN:"Y"
         };
 
         try {
