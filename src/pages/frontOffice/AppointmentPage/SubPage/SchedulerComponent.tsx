@@ -2,8 +2,7 @@ import React, { useEffect, useState, useMemo, useCallback, forwardRef, useImpera
 import { Scheduler, Resource } from 'devextreme-react/scheduler';
 import 'devextreme/dist/css/dx.light.css';
 import { useServerDate } from '../../../../hooks/Common/useServerDate';
-import { AppointmentBookingDTO } from '../../../../interfaces/FrontOffice/AppointmentBookingDTO';
-import { fetchAppointmentsByDate } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
+import { fetchAppointmentsByDateAndType } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
 import { OperationResult } from '../../../../interfaces/Common/OperationResult';
 import { debounce } from '../../../../utils/Common/debounceUtils';
 
@@ -11,12 +10,16 @@ import { debounce } from '../../../../utils/Common/debounceUtils';
 const views: Array<'day' | 'week' | 'workWeek' | 'month'> = ['day', 'week', 'workWeek', 'month'];
 
 interface SchedulerState {
-    appointments: AppointmentBookingDTO[];
+    appointments: any[];
     currentView: 'day' | 'week' | 'workWeek' | 'month';
     date: Date;
 }
+interface SchedulerComponentProps {
+    hpID?: number;
+    rlID?: number;
+}
 
-const useAppointments = (initialDate: Date) => {
+const useAppointments = (initialDate: Date, hpID?: number, rlID?: number) => {
     const [state, setState] = useState<SchedulerState>({
         appointments: [],
         currentView: 'day',
@@ -54,7 +57,7 @@ const useAppointments = (initialDate: Date) => {
         const endDate = end.toISOString().split('T')[0];
 
         try {
-            const result: OperationResult<AppointmentBookingDTO[]> = await fetchAppointmentsByDate(startDate, endDate);
+            const result: OperationResult<any[]> = await fetchAppointmentsByDateAndType(startDate, endDate, hpID, rlID);
             setState(prevState => ({
                 ...prevState,
                 appointments: result.success && result.data ? result.data : [],
@@ -62,7 +65,7 @@ const useAppointments = (initialDate: Date) => {
         } catch (error) {
             setState(prevState => ({ ...prevState, appointments: [] }));
         }
-    }, [calculateDateRange]);
+    }, [calculateDateRange, hpID, rlID]);
 
     const debouncedLoadAppointments = useMemo(
         () => debounce(loadAppointments, 300),
@@ -74,7 +77,7 @@ const useAppointments = (initialDate: Date) => {
         return () => {
             debouncedLoadAppointments.cancel();
         };
-    }, [state.currentView, state.date, debouncedLoadAppointments]);
+    }, [state.currentView, state.date, hpID, rlID, debouncedLoadAppointments]);
 
     const refresh = () => {
         loadAppointments(state.currentView, state.date);
@@ -87,10 +90,13 @@ const useAppointments = (initialDate: Date) => {
     };
 };
 
-const SchedulerComponent = forwardRef((props, ref) => {
+const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onAppointmentFormOpening: (startDate?: Date, endDate?: Date) => void }>((props, ref) => {
+    debugger
     const serverDate = useServerDate();
     const initialDate = serverDate || new Date();
-    const { state, setState, refresh } = useAppointments(initialDate);
+    const { hpID, rlID, onAppointmentFormOpening } = props;
+
+    const { state, setState, refresh } = useAppointments(initialDate, hpID, rlID);
 
     useImperativeHandle(ref, () => ({
         refresh,
@@ -109,17 +115,24 @@ const SchedulerComponent = forwardRef((props, ref) => {
         setState(prevState => ({ ...prevState, date: newDate }));
     }, [setState]);
 
-    const onAppointmentFormOpening = useCallback((e: any) => {
-        // Custom logic for appointment form opening
-    }, []);
+    const onAppointmentFormOpeningHandler = useCallback((e: any) => {
+        e.cancel = true;
+        const startDate = e.appointmentData.startDate;
+        const endDate = e.appointmentData.endDate;
+        if (onAppointmentFormOpening) {
+            onAppointmentFormOpening(startDate, endDate);
+        }
+    }, [onAppointmentFormOpening]);
 
     const onAppointmentClick = useCallback((e: any) => {
-        e.cancel = true; // Prevent default click behavior
-    }, []);
+        e.cancel = true;
+        onAppointmentFormOpeningHandler(e);
+    }, [onAppointmentFormOpeningHandler]);
 
     const onAppointmentDblClick = useCallback((e: any) => {
-        e.cancel = true; // Prevent default double-click behavior
-    }, []);
+        e.cancel = true;
+        onAppointmentFormOpeningHandler(e);
+    }, [onAppointmentFormOpeningHandler]);
 
     const timeCellTemplate = useCallback((cellData: any) => {
         return (
@@ -184,7 +197,7 @@ const SchedulerComponent = forwardRef((props, ref) => {
                 width="100%"
                 onAppointmentDblClick={onAppointmentDblClick}
                 onAppointmentClick={onAppointmentClick}
-                onAppointmentFormOpening={onAppointmentFormOpening}
+                onAppointmentFormOpening={onAppointmentFormOpeningHandler}
                 timeCellRender={timeCellTemplate}
                 onContentReady={onContentReady}
             >

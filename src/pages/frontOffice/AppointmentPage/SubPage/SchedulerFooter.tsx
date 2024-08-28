@@ -1,6 +1,4 @@
 //frontOffice/AppointmentPage/SubPage/SchedulerFooter.tsx
-import React from 'react';
-
 const legends = [
     { color: 'green', label: 'Out Patient' },
     { color: 'red', label: 'In Patient' },

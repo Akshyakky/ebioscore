@@ -10,14 +10,15 @@ import { fetchAppointmentConsultants, fetchAllResources } from '../../../../serv
 
 interface SchedulerHeaderProps {
     onRefresh: () => void;
+    onSearchSelection: (conID?: number, rlID?: number) => void;
 }
 
-const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh }) => {
+const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSelection }) => {
     const [searchType, setSearchType] = useState<'consultant' | 'resource'>('consultant');
     const [searchValue, setSearchValue] = useState('');
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [checked, setChecked] = useState<boolean>(false);
-    const [suggestions, setSuggestions] = useState<string[]>([]);
+    const [suggestions, setSuggestions] = useState<{ label: string; value: number }[]>([]);
 
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -46,7 +47,12 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh }) => {
 
             if (result && result.success) {
                 const items = result.data || [];
-                setSuggestions(items.map(item => searchType === 'consultant' ? item.conFName : item.rLName));
+                setSuggestions(
+                    items.map(item => ({
+                        label: searchType === 'consultant' ? item.conFName : item.rLName,
+                        value: searchType === 'consultant' ? item.conID : item.rlID
+                    }))
+                );
             } else {
                 setSuggestions([]);
             }
@@ -65,8 +71,15 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh }) => {
     }, []);
 
     const handleSelectSuggestion = useCallback((value: string) => {
-        setSearchValue(value);
-    }, []);
+        const selectedItem = suggestions.find(s => s.label === value);
+        if (selectedItem) {
+            setSearchValue(selectedItem.label);
+            onSearchSelection(
+                searchType === 'consultant' ? selectedItem.value : undefined,
+                searchType === 'resource' ? selectedItem.value : undefined
+            );
+        }
+    }, [suggestions, searchType, onSearchSelection]);
 
     const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -91,7 +104,7 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh }) => {
                             title={`Search ${searchType}`}
                             value={searchValue}
                             onChange={handleChange}
-                            suggestions={suggestions}
+                            suggestions={suggestions.map(s => s.label)}
                             onSelectSuggestion={handleSelectSuggestion}
                             placeholder={`Search ${searchType}`}
                             type='text'
@@ -132,13 +145,14 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh }) => {
                 <Grid item xs={12} sm={4} md={6}>
                     <Box display="flex" justifyContent="flex-end" alignItems="center">
                         <Tooltip title="Refresh">
-                            <IconButton onClick={onRefresh} title="Refresh" sx={{ ml: 1 }}>
+                            <IconButton onClick={onRefresh} sx={{ ml: 1 }}>
                                 <RefreshIcon />
                                 <Typography variant="body2" sx={{ ml: 0.5 }}>Refresh</Typography>
                             </IconButton>
                         </Tooltip>
+
                         <Tooltip title="Options">
-                            <IconButton onClick={handleMenuClick} title="More Options">
+                            <IconButton onClick={handleMenuClick}>
                                 <MoreVertIcon />
                                 <Typography variant="body2" sx={{ ml: 0.5 }}>Options</Typography>
                             </IconButton>
