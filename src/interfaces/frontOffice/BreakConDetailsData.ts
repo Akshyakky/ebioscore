@@ -2,7 +2,7 @@ export interface BreakConDetailData {
   bCDID: number;
   blID: number;
   hPLID: number;
-  rActiveYN: string; 
+  rActiveYN: "Y" | "N";
   rCreatedID: number;
   rCreatedBy: string;
   rCreatedOn: Date;
@@ -14,7 +14,7 @@ export interface BreakConDetailData {
   compCode?: string | null;
   compName?: string | null;
   transferYN?: 'Y' | 'N' | null;
-  recordStatus?: string;
+  recordStatus: string;
 }
 
 
