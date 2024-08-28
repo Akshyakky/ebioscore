@@ -44,7 +44,7 @@ const SuspendForm: React.FC<SuspendFormProps> = ({ onClose, selectedBreakId, tok
             const fetchDetails = async () => {
                 try {
                     // Fetch break list details
-                    const breakListResponse = await BreakListService.getBreakListById(token, selectedBreakId.blID);
+                    const breakListResponse = await BreakListService.getBreakListById( selectedBreakId.blID);
                     if (breakListResponse.success && breakListResponse.data) {
                         setBreakFromDate(formatDateToInputString(new Date(breakListResponse.data.bLStartDate)));
                         setBreakToDate(formatDateToInputString(new Date(breakListResponse.data.bLEndDate)));
@@ -63,7 +63,7 @@ const SuspendForm: React.FC<SuspendFormProps> = ({ onClose, selectedBreakId, tok
                     }
 
                     // Fetch break condition details
-                    const breakConDetailResponse = await BreakListConDetailsService.getBreakConDetailById(token, selectedBreakId.blID);
+                    const breakConDetailResponse = await BreakListConDetailsService.getBreakConDetailById( selectedBreakId.blID);
                     if (breakConDetailResponse.success && breakConDetailResponse.data && breakConDetailResponse.data.length > 0) {
                         setHPLID(breakConDetailResponse.data[0].hPLID);
                     } else {

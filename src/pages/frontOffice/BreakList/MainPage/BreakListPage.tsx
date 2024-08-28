@@ -23,12 +23,14 @@ const BreakListPage: React.FC = () => {
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const dispatch = useDispatch();
   const frequencyNumber = breakList.length;
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [selectedData, setSelectedData] = useState<BreakListData | undefined>(undefined);
 
 
   const fetchBreakList = async () => {
     setLoading(true);
     try {
-      const result = await BreakListService.getAllBreakLists(token!);
+      const result = await BreakListService.getAllBreakLists();
       if (result.success) {
         setBreakList(result.data || []);
       } else {
@@ -65,46 +67,28 @@ const BreakListPage: React.FC = () => {
     setBreakConDetails(null); // Clear breakConDetails on clear
   };
 
-  // Handle Edit Operation
-  const handleEdit = async (row: BreakConDetailData) => {
-
-    console.log("Going to edit data with blID:", row.blID);
-
-    setLoading(true);
-    try {
-      const breakListResult = await BreakListService.getBreakListById(token!, row.blID);
-      if (breakListResult.success) {
-        console.log("the editing Data", breakListResult)
-        setSelectedBreak(breakListResult.data ? breakListResult.data : null);
-        const breakConResult = await BreakListConDetailsService.getBreakConDetailById(token!, row.blID);
-        if (breakConResult.success) {
-          console.log("the editing con Data", breakConResult)
-          if (breakConResult.data !== undefined) {
-            setBreakConDetails(breakConResult.data);
-          }
-        } else {
-          notifyError(breakConResult.errorMessage || "Error fetching break connection details.");
-        }
-      } else {
-        notifyError(breakListResult.errorMessage || "Error fetching break list details.");
-      }
-      setIsEditMode(true);
-      setIsSearchDialogOpen(false);
-    } catch (error) {
-      console.error("Error fetching details:", error);
-      notifyError("Error fetching details.");
-    }
-    setLoading(false);
-  };
 
   const handleAdvancedSearch = () => {
-    setIsSearchDialogOpen(true);
-  };
+    setIsSearchOpen(true);
+};
+  // Handle Edit Operation
+
+
+
 
   const handleCloseSearchDialog = () => {
     setIsSearchDialogOpen(false);
   };
 
+  
+  const handleSelect = (data: BreakListData) => {
+    setSelectedData(data);
+};
+
+  
+  const handleCloseSearch = () => {
+    setIsSearchOpen(false);
+};
   return (
     <Container maxWidth={false}>
       <Box sx={{ marginBottom: 2 }}>
@@ -135,10 +119,7 @@ const BreakListPage: React.FC = () => {
       />
 
       <BreakListSearch
-        show={isSearchDialogOpen}
-        handleClose={handleCloseSearchDialog}
-        onEditBreak={handleEdit}
-        selectedBreak={selectedBreak} token={""} />
+       open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect}/>
     </Container>
   );
 };
