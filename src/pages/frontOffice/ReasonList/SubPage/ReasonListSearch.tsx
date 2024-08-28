@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import {
   Dialog,
@@ -15,7 +15,7 @@ import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
 import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
-import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
+import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 
 interface ReasonListSearchProps {
   open: boolean;
@@ -23,7 +23,7 @@ interface ReasonListSearchProps {
   onSelect: (PIC: ReasonListData) => void;
 }
 
-const ReasonListSearch:React.FC<ReasonListSearchProps> = ({ open, onClose, onSelect }) => {
+const ReasonListSearch: React.FC<ReasonListSearchProps> = ({ open, onClose, onSelect }) => {
 
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");

@@ -1,24 +1,44 @@
-import React, { useRef, useState, useCallback } from 'react';
-import { Box, Paper } from '@mui/material';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
+import { Box, Paper, Container } from '@mui/material';
 import SchedulerComponent from '../SubPage/SchedulerComponent';
 import SchedulerHeader from '../SubPage/SchedulerHeader';
 import SchedulerFooter from '../SubPage/SchedulerFooter';
 import AppointmentBookingForm from '../SubPage/AppointmentBookingForm';
 import GenericDialog from '../../../../components/GenericDialog/GenericDialog';
 import CustomButton from '../../../../components/Button/CustomButton';
-import { Container } from '@mui/system';
+import { ReasonListService } from '../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService';
+import { ResourceListService } from '../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices';
+import { DropdownOption } from '../../../../interfaces/Common/DropdownOption';
+
+interface FormData {
+    registrationStatus: string;
+    uhid: string;
+    reasonID: string;
+    reasonName: string;
+    resourceID: string;
+    resourceName: string;
+    instruction: string;
+    appointmentDate: string;
+    appointmentTime: string;
+    appointmentDuration: string;
+    remarks: string;
+}
 
 const AppointmentPage: React.FC = () => {
     const schedulerRef = useRef<{ refresh: () => void } | null>(null);
     const [selectedConID, setSelectedConID] = useState<number | undefined>(undefined);
     const [selectedRlID, setSelectedRlID] = useState<number | undefined>(undefined);
     const [isBookingFormOpen, setIsBookingFormOpen] = useState(false);
+    const [reasonOptions, setReasonOptions] = useState<DropdownOption[]>([]);
+    const [resourceOptions, setResourceOptions] = useState<DropdownOption[]>([]);
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<FormData>({
         registrationStatus: 'Registered',
         uhid: '',
-        reason: '',
-        resource: '',
+        reasonID: '',
+        reasonName: '',
+        resourceID: '',
+        resourceName: '',
         instruction: '',
         appointmentDate: '',
         appointmentTime: '',
@@ -74,14 +94,43 @@ const AppointmentPage: React.FC = () => {
             ...prevData,
             registrationStatus: 'Registered',
             uhid: '',
-            reason: '',
-            resource: '',
+            reasonID: '',
+            reasonName: '',
+            resourceID: '',
+            resourceName: '',
             instruction: '',
             remarks: '',
             appointmentDate: prevData.appointmentDate,
             appointmentTime: prevData.appointmentTime,
             appointmentDuration: '15',
         }));
+    }, []);
+
+    useEffect(() => {
+        const fetchReasonOptions = async () => {
+            const result = await ReasonListService.getAllReasonLists();
+            if (result.success && result.data) {
+                const activeReasons = result.data.filter(reason => reason.rActiveYN === 'Y');
+                setReasonOptions(activeReasons.map(reason => ({
+                    value: reason.arlID,
+                    label: reason.arlName
+                })));
+            }
+        };
+
+        const fetchResourceOptions = async () => {
+            const result = await ResourceListService.getAllResourceLists();
+            if (result.success && result.data) {
+                const activeResources = result.data.filter(resource => resource.rActiveYN === 'Y');
+                setResourceOptions(activeResources.map(resource => ({
+                    value: resource.rLID,
+                    label: resource.rLName
+                })));
+            }
+        };
+
+        fetchReasonOptions();
+        fetchResourceOptions();
     }, []);
 
     return (
@@ -102,9 +151,7 @@ const AppointmentPage: React.FC = () => {
                     display: 'flex',
                     flexDirection: 'column',
                 }}>
-                    <Box sx={{ flexShrink: 0, bgcolor: 'background.paper', p: 1 }}>
-
-                    </Box>
+                    <Box sx={{ flexShrink: 0, bgcolor: 'background.paper', p: 1 }}></Box>
                     <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
                         <SchedulerComponent
                             ref={schedulerRef}
@@ -133,7 +180,12 @@ const AppointmentPage: React.FC = () => {
                         <CustomButton key="save" text="Save" onClick={handleSaveBooking} color="primary" variant="contained" sx={{ ml: 2 }} />,
                     ]}
                 >
-                    <AppointmentBookingForm onChange={handleChange} formData={formData} />
+                    <AppointmentBookingForm
+                        onChange={handleChange}
+                        formData={formData}
+                        reasonOptions={reasonOptions}
+                        resourceOptions={resourceOptions}
+                    />
                 </GenericDialog>
             </Box>
         </Container>

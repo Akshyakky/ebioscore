@@ -3,25 +3,27 @@ import { Box, Grid } from '@mui/material';
 import FloatingLabelTextBox from '../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox';
 import DropdownSelect from '../../../../components/DropDown/DropdownSelect';
 import RadioGroup from '../../../../components/RadioGroup/RadioGroup';
+import { DropdownOption } from '../../../../interfaces/Common/DropdownOption';
 
-const AppointmentBookingForm: React.FC<{ onChange: (name: string, value: any) => void; formData: any }> = ({ onChange, formData }) => {
+interface AppointmentBookingFormProps {
+    onChange: (name: string, value: any) => void;
+    formData: any;
+    reasonOptions: DropdownOption[];
+    resourceOptions: DropdownOption[];
+}
+
+
+const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
+    onChange,
+    formData,
+    reasonOptions,
+    resourceOptions
+}) => {
+
     const registrationOptions = [
         { value: 'Registered', label: 'Registered' },
         { value: 'NonRegistered', label: 'Non Registered' }
     ];
-
-    const reasonOptions = [
-        { value: 'Checkup', label: 'Checkup' },
-        { value: 'Consultation', label: 'Consultation' },
-        { value: 'Follow-up', label: 'Follow-up' }
-    ];
-
-    const resourceOptions = [
-        { value: 'DoctorA', label: 'Doctor A' },
-        { value: 'DoctorB', label: 'Doctor B' },
-        { value: 'DoctorC', label: 'Doctor C' }
-    ];
-
 
     return (
         <Box sx={{ padding: '20px', backgroundColor: '#fff', borderRadius: '8px', width: '100%' }}>
@@ -45,22 +47,31 @@ const AppointmentBookingForm: React.FC<{ onChange: (name: string, value: any) =>
                 size='small'
             />
 
+
             <DropdownSelect
                 label="Reason"
-                name="reason"
-                value={formData.reason}
+                name="reasonID"
+                value={formData.reasonID}
                 options={reasonOptions}
-                onChange={(e) => onChange('reason', e.target.value)}
+                onChange={(e) => {
+                    const selectedOption = reasonOptions.find(option => option.value === e.target.value);
+                    onChange('reasonID', selectedOption?.value);
+                    onChange('reasonName', selectedOption?.label);
+                }}
                 isMandatory={true}
                 size='small'
             />
 
             <DropdownSelect
                 label="Resource"
-                name="resource"
-                value={formData.resource}
+                name="resourceID"
+                value={formData.resourceID}
                 options={resourceOptions}
-                onChange={(e) => onChange('resource', e.target.value)}
+                onChange={(e) => {
+                    const selectedOption = resourceOptions.find(option => option.value === e.target.value);
+                    onChange('resourceID', selectedOption?.value);
+                    onChange('resourceName', selectedOption?.label);
+                }}
                 isMandatory={true}
                 size='small'
             />

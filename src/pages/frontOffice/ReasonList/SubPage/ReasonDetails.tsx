@@ -15,13 +15,13 @@ import TextArea from "../../../../components/TextArea/TextArea";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
+import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
-import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import { notifyError } from "../../../../utils/Common/toastManager";
 
 const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) => {
