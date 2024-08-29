@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import {
   Dialog,
@@ -9,131 +9,67 @@ import {
   Typography,
   Box,
 } from "@mui/material";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import CustomButton from "../../../../components/Button/CustomButton";
-import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
-import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
-import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
-import { debounce } from "../../../../utils/Common/debounceUtils";
 import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
+import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 
 interface ReasonListSearchProps {
-  show: boolean;
-  handleClose: () => void;
-  onEditProfile: (reason: ReasonListData) => void;
-  selectedReason: ReasonListData | null;
+  open: boolean;
+  onClose: () => void;
+  onSelect: (PIC: ReasonListData) => void;
 }
 
-const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
-  show,
-  handleClose,
-  onEditProfile,
+const ReasonListSearch: React.FC<ReasonListSearchProps> = ({ open, onClose, onSelect }) => {
 
-}) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState<ReasonListData[]>([]);
-  const { token } = useSelector((state: RootState) => state.userDetails);
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<ReasonListData[]>([]);
 
-  const performSearch = async (searchQuery: string) => {
-    setIsLoading(true);
-    try {
-      const result = await ReasonListService.getAllReasonLists(token!);
-      if (result.success && result.data) {
-        const filteredResults = result.data.filter(
-          (reason) =>
-            reason.arlCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            reason.arlName.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        setSearchResults(filteredResults);
-      } else {
-        console.error("Failed to fetch search results.");
-        setSearchResults([]);
-      }
-    } catch (error) {
-      console.error("Error fetching search results:", error);
+
+  useEffect(() => {
+    if (open) {
+      fetchAllReasonList();
+    }
+  }, [open]);
+
+  const fetchAllReasonList = async () => {
+    const result = await ReasonListService.getAllReasonLists();
+    if (result.success && result.data) {
+      const initialSwitchStatus = result.data.reduce((statusMap, item) => {
+        statusMap[item.rLID] = item.rActiveYN === "Y";
+        return statusMap;
+      }, {} as { [key: number]: boolean });
+      setSwitchStatus(initialSwitchStatus);
+      setSearchResults(result.data);
+    } else {
       setSearchResults([]);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      performSearch(searchQuery);
-    }, 300),
-    [token]
-  );
+  const handleEditAndClose = (reason: ReasonListData) => {
+    onClose();
+    onSelect(reason);
+  };
 
-  useEffect(() => {
-    if (show) {
-      performSearch("");
-    }
-  }, [show]);
+  const handleSwitchChange = async (reason: ReasonListData, checked: boolean,) => {
 
-  useEffect(() => {
-    if (searchTerm) {
-      debouncedSearch(searchTerm);
-    } else if (show) {
-      performSearch("");
-    }
-  }, [searchTerm, debouncedSearch, show]);
-
-  useEffect(() => {
-    const initialSwitchStatus = searchResults.reduce((acc, item) => {
-      acc[item.arlID] = item.rActiveYN === "Y";
-      return acc;
-    }, {} as { [key: number]: boolean });
-
-    setSwitchStatus(initialSwitchStatus);
-  }, [searchResults]);
-
-  const handleEditAndClose = async (reason: ReasonListData) => {
-    try {
-      onEditProfile(reason);
-      handleClose();
-    } catch (error) {
-      notifyError("Error fetching reason details.");
+    const result = await ReasonListService.updateReasonActiveStatus(reason.arlID, checked);
+    if (result.success) {
+      setSwitchStatus((prev) => ({ ...prev, [reason.arlID]: checked }));
     }
   };
 
-  const handleSwitchChange = async (reason: ReasonListData, checked: boolean) => {
-    try {
-      if (!reason.arlID) {
-        console.error("Reason arlID is undefined or null.");
-        return;
-      }
+  const dataWithIndex = searchResults.map((item, index) => ({
+    ...item,
+    serialNumber: index + 1,
+    Status: item.rActiveYN === "Y" ? "Active" : "Hidden",
+  }));
 
-      const updatedReason = {
-        ...reason,
-        rActiveYN: checked ? "Y" : "N",
-      };
 
-      const result = await ReasonListService.saveReasonList(token!, updatedReason);
-
-      if (result.success) {
-        notifySuccess(`Reason status updated to ${checked ? "Active" : "Hidden"}`);
-        setSwitchStatus((prevState) => ({
-          ...prevState,
-          [reason.arlID]: checked,
-        }));
-      } else {
-        notifyError(`Error updating reason status: ${result.errorMessage}`);
-        setSwitchStatus((prevState) => ({
-          ...prevState,
-          [reason.arlID]: !checked,
-        }));
-      }
-    } catch (error) {
-      notifyError("Error updating reason status.");
-    }
-  };
 
   const columns = [
     {
@@ -179,30 +115,19 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
     },
   ];
 
-  const dataWithIndex = searchResults.map((item, index) => ({
-    ...item,
-    serialNumber: index + 1,
-    Status: item.rActiveYN === "Y" ? "Active" : "Hidden",
-    rlName: item.rlName,
-    rNotes: item.rNotes,
-  }));
-
-  console.log("Data with index:", dataWithIndex); //
 
   const handleDialogClose = () => {
     setSearchTerm("");
-    handleClose();
+    onClose();
   };
 
-  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      setSearchTerm(searchTerm.trim());
-    }
+  const handleSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
   };
 
   return (
     <Dialog
-      open={show}
+      open={open}
       onClose={(event, reason) => {
         if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
           handleDialogClose();
@@ -228,27 +153,15 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({
                 ControlID="SearchTerm"
                 title="Search"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchInputChange}
                 placeholder="Enter reason name or code"
                 size="small"
                 autoComplete="off"
-                onKeyPress={handleKeyPress}
               />
             </Grid>
           </Grid>
         </Box>
-        {isLoading ? (
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            minHeight="500px"
-          >
-            <GlobalSpinner />
-          </Box>
-        ) : (
-          <CustomGrid columns={columns} data={dataWithIndex} />
-        )}
+        <CustomGrid columns={columns} data={dataWithIndex} searchTerm={searchTerm} />
       </DialogContent>
       <DialogActions>
         <CustomButton

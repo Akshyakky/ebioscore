@@ -19,6 +19,7 @@ import BreakListPage from "../pages/frontOffice/BreakList/MainPage/BreakListPage
 import AppointmentPage from "../pages/frontOffice/AppointmentPage/MainPage/AppointmentPage";
 import PatientInvoiceCodePage from "../pages/billing/PatientInvoiceCodePage/MainPage/PatientInvoiceCodePage";
 import DepartmentListPage from "../pages/billing/DepartmentListPage/MainPage/DepartmentListPage";
+import PaymentTypesPage from "../pages/billing/PaymentTypesPage/MainPage/PaymentTypesPage";
 import ServiceGroupsListPage from "../pages/billing/ServiceGroupsListPage/MainPage/ServiceGroupsListPage";
 
 
@@ -108,6 +109,11 @@ const routeConfig: RouteConfig[] = [
   {
     path: "/ServiceGroupsListPage",
     component: ServiceGroupsListPage,
+    protected: true,
+  },
+  {
+    path: "/PaymentTypesPage",
+    component: PaymentTypesPage,
     protected: true,
   },
 ];

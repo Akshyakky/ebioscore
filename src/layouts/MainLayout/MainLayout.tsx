@@ -1,8 +1,9 @@
 import React from "react";
 import { useSelector } from "react-redux";
+import { Box } from "@mui/material";
 import SideBar from "../SideBar/SideBar";
-import { RootState } from "../../store/reducers";
 import Footer from "../Footer";
+import { RootState } from "../../store/reducers";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -17,15 +18,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     : -1;
 
   return (
-    <div className="app-container">
-      {userInfo && (
-        <div className="sidebar">
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Box sx={{ display: 'flex', flex: 1 }}>
+        {userInfo && (
           <SideBar userID={effectiveUserID} token={userInfo.token} />
-        </div>
-      )}
-      <main>{children}</main>
+        )}
+        <Box component="main" sx={{ flexGrow: 1, width: '100%', p: 2, pt: 10, pb: 3 }}>
+          {children}
+        </Box>
+      </Box>
       <Footer />
-    </div>
+    </Box>
   );
 };
 

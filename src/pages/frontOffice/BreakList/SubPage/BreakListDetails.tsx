@@ -23,7 +23,6 @@ import {
   notifyError,
 } from "../../../../utils/Common/toastManager";
 import TextArea from "../../../../components/TextArea/TextArea";
-import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
@@ -37,8 +36,10 @@ import { ContactMastService } from "../../../../services/CommonServices/ContactM
 import { CompanyService } from "../../../../services/CommonServices/CompanyService";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
-import { BreakListData } from "../../../../interfaces/FrontOffice/BreakListData";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
+import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
+import { useServerDate } from "../../../../hooks/Common/useServerDate";
+import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 
 interface BreakListDetailsProps {
   frequencyNumber: number;
@@ -55,7 +56,6 @@ interface Company {
   compName: string;
 }
 
-
 const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   breakData,
   breakConDetails,
@@ -63,7 +63,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   onClear,
   formattedEndDate,
   frequencyNumber,
-
 }) => {
   const [isSubmitted] = useState(false);
   const { token } = useSelector((state: RootState) => state.userDetails);
@@ -88,15 +87,16 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     companyOptions: [] as DropdownOption[],
     profileOptions: [] as DropdownOption[],
   });
-
+  const [formattedText, setFormattedText] = useState<string>("");
+  const serverDate = useServerDate();
 
   const [breakListData, setBreakListData] = useState<BreakListData>({
     bLID: breakData?.bLID || 0,
     bLName: breakData?.bLName || "",
-    bLStartTime: new Date(breakData?.bLStartTime || new Date()),
-    bLEndTime: new Date(breakData?.bLEndTime || new Date()),
-    bLStartDate: breakData?.bLStartDate || new Date(),
-    bLEndDate: breakData?.bLEndDate || new Date(),
+    bLStartTime: serverDate ? new Date(serverDate) : new Date(), // Initialize with server time
+    bLEndTime: serverDate ? new Date(serverDate) : new Date(), // Initialize with server time
+    bLStartDate: breakData?.bLStartDate || serverDate || new Date(), // Use server date if available
+    bLEndDate: breakData?.bLEndDate || serverDate || new Date(), // Use server date if available
     bLFrqNo: breakData?.bLFrqNo || 0,
     bLFrqDesc: breakData?.bLFrqDesc || "",
     bLFrqWkDesc: breakData?.bLFrqWkDesc || "",
@@ -116,26 +116,77 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     transferYN: breakData?.transferYN || "N",
     resources: breakData?.resources || "",
     frequencyDetails: breakData?.frequencyDetails || "",
-    hPLID: breakData?.hPLID || 0
+    hPLID: breakData?.hPLID || 0,
   });
+  console.log("The breaklistdate ", breakListData)
 
   useEffect(() => {
-    if (formattedEndDate) {
+    if (serverDate) {
       setBreakListData(prev => ({
         ...prev,
-        bLEndDate: formattedEndDate,
+        bLStartTime: serverDate,
+        bLEndTime: serverDate,
+        bLStartDate: serverDate,
+        bLEndDate: serverDate,
       }));
     }
-  }, [formattedEndDate]);
+  }, [serverDate]);
+
+    useEffect(() => {
+    if (breakData) {
+      setBreakListData(prev => ({
+        ...prev,
+        bLStartTime: breakData.bLStartTime || serverDate || new Date(),
+        bLEndTime: breakData.bLEndTime || serverDate || new Date(),
+        bLStartDate: breakData.bLStartDate || serverDate || new Date(),
+        bLEndDate: breakData.bLEndDate || serverDate || new Date(),
+      }));
+    }
+  }, [breakData, serverDate]);
+
+  // Example Maps for Frequency and Weekday Descriptions
+  const bLFrqDesc: Record<string, string> = {
+    None: "FO70",
+    Days: "FO71",
+    Weeks: "FO72",
+    Months: "FO73",
+    Years: "FO74",
+  };
+
+  const bLFrqWkDesc: Record<string, string> = {
+    Sunday: "FO75",
+    Monday: "FO76",
+    Tuesday: "FO77",
+    Wednesday: "FO78",
+    Thursday: "FO79",
+    Friday: "FO80",
+    Saturday: "FO81",
+  };
+
+  useEffect(() => {
+    const frequencyDescription =
+      Object.keys(bLFrqDesc).find(
+        (key) => bLFrqDesc[key] === breakListData.bLFrqDesc
+      ) || "Daily"; // Default
+
+    const weekDescription = breakListData.bLFrqWkDesc
+      ? Object.keys(bLFrqWkDesc).find(
+        (key) => bLFrqWkDesc[key] === breakListData.bLFrqWkDesc
+      ) || ""
+      : "";
+
+    const formatted = `Every ${breakListData.bLFrqNo || 0} ${frequencyDescription}${weekDescription ? ` ${weekDescription}` : ""} Till: ${breakListData.bLEndDate.toDateString()}`;
+    setFormattedText(formatted);
+  }, [breakListData, bLFrqDesc, bLFrqWkDesc]);
 
   useEffect(() => {
     if (breakConDetails) {
-      breakConDetails.forEach(detail => {
+      breakConDetails.forEach((detail) => {
         if (detail.hPLID) {
           if (breakListData.isPhyResYN === "Y") {
-            setSelectedPhysicians(prev => [...prev, detail.hPLID]);
+            setSelectedPhysicians((prev) => [...prev, detail.hPLID]);
           } else if (breakListData.isPhyResYN === "N") {
-            setSelectedResources(prev => [...prev, detail.hPLID]);
+            setSelectedResources((prev) => [...prev, detail.hPLID]);
           }
         }
       });
@@ -143,58 +194,15 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
   }, [breakConDetails, breakListData.isPhyResYN]);
 
   useEffect(() => {
-    setEndDateState(formattedEndDate);
-  }, [formattedEndDate]);
-
-  useEffect(() => {
     fetchCompanies();
   }, []);
 
   useEffect(() => {
-    if (breakData) {
-      setBreakListData(prev => ({
-        ...prev,
-        bLStartDate: new Date(breakData.bLStartDate || formattedEndDate),
-        bLEndDate: new Date(breakData.bLEndDate || formattedEndDate),
-      }));
-    }
-  }, [breakData, formattedEndDate]);
-
-  useEffect(() => {
-    if (endDateState && endDateState > breakListData.bLStartDate) {
-      setBreakListData((prev) => ({
-        ...prev,
-        bLEndDate: endDateState,
-      }));
-    }
-  }, [endDateState]);
-
-
-  useEffect(() => {
-    if (breakListData.bLStartDate && endDateState <= breakListData.bLStartDate) {
-      setBreakListData(prev => ({
-        ...prev,
-        bLEndDate: new Date(breakListData.bLStartDate.getTime() + 24 * 60 * 60 * 1000),
-      }));
-    }
-  }, [endDateState, breakListData.bLStartDate]);
-
-  useEffect(() => {
-    setBreakListData(prev => ({
+    setBreakListData((prev) => ({
       ...prev,
       bLFrqNo: frequencyNumber,
     }));
   }, [frequencyNumber]);
-
-
-  useEffect(() => {
-    console.log("Updating breakListData with endDateState:", endDateState);
-    setBreakListData((prev) => ({
-      ...prev,
-      bLEndDate: endDateState,
-    }));
-  }, [endDateState]);
-
 
   const handleDateChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const parsedDate = parseDateStringToDate(event.target.value);
@@ -205,12 +213,24 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     }
   };
 
+  const handleStartDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedDate = new Date(event.target.value); // Use the event value to create a Date object
+    if (!isNaN(selectedDate.getTime())) {
+      setBreakListData((prev) => ({
+        ...prev,
+        bLStartDate: selectedDate, // Set the selected date
+      }));
+    } else {
+      console.error("Invalid date selected");
+    }
+  };
+
+
   const formatDateToTimeString = (date: Date): string => {
     const hours = date.getHours().toString().padStart(2, "0");
     const minutes = date.getMinutes().toString().padStart(2, "0");
     return `${hours}:${minutes}`;
   };
-
 
   const parseTimeStringToDate = (timeString: string): Date => {
     const [hours, minutes] = timeString.split(":").map(Number);
@@ -219,14 +239,12 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     return date;
   };
 
-
   const formatDateToDateString = (date: Date) => {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const day = date.getDate().toString().padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
-
 
   const parseDateStringToDate = (dateString: string): Date => {
     const [year, month, day] = dateString.split("-").map(Number);
@@ -245,9 +263,9 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
         // Optionally set the first company as default
         if (companyData.length > 0) {
           setSelectedCompany(companyData[0]);
-          setBreakListData(prev => ({
+          setBreakListData((prev) => ({
             ...prev,
-            compID: parseInt(companyData[0].compIDCompCode, 10), // Assuming compIDCompCode is a numeric string, parse it to a number
+            compID: parseInt(companyData[0].compIDCompCode, 10),
             compCode: companyData[0].compIDCompCode,
             compName: companyData[0].compName,
           }));
@@ -261,42 +279,34 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     }
   };
 
-
-
-
-
   useEffect(() => {
     // Update state when breakData changes
     if (breakData) {
-      setBreakListData(prev => ({
-        ...prev,
+      setBreakListData((prev) => ({
         ...breakData,
-        bLStartTime: new Date(breakData.bLStartTime || prev.bLStartTime),
-        bLEndTime: new Date(breakData.bLEndTime || prev.bLEndTime),
-        bLStartDate: new Date(breakData.bLStartDate || prev.bLStartDate),
-        bLEndDate: new Date(breakData.bLEndDate || prev.bLEndDate),
-        // Add any additional updates needed
+        bLStartTime: new Date(breakData.bLStartTime),
+        bLEndTime: new Date(breakData.bLEndTime),
+        bLStartDate: new Date(breakData.bLStartDate),
+        bLEndDate: new Date(breakData.bLEndDate),
       }));
     }
   }, [breakData]);
 
-  useEffect(() => {
-    // Update other states based on breakConDetails if needed
-    // For example, update resource or physician lists based on breakConDetails
-  }, [breakConDetails]);
+  useEffect(() => { }, [breakConDetails]);
 
-  const handleSaveBreakConDetail = async (breakConDetailData: BreakConDetailData) => {
-    debugger
+  const handleSaveBreakConDetail = async (
+    breakConDetailData: BreakConDetailData
+  ) => {
     // Ensure that you are working with a single ID, not an array
-    const hPLID = breakListData.isPhyResYN === "Y"
-      ? selectedPhysicians[0]  // Ensure this is a single number
-      : selectedResources[0];  // Ensure this is a single number
+    const hPLID =
+      breakListData.isPhyResYN === "Y"
+        ? selectedPhysicians[0] // Ensure this is a single number
+        : selectedResources[0]; // Ensure this is a single number
 
     // Prepare the payload with correct structure
     const payload: BreakConDetailData = {
-
-      hPLID,  // Ensure this is a single number
-      bCDID: breakConDetailData.bCDID,  // Ensure this is the ID of the record to update
+      hPLID, // Ensure this is a single number
+      bCDID: breakConDetailData.bCDID, // Ensure this is the ID of the record to update
       blID: breakConDetailData.blID,
       rActiveYN: breakConDetailData.rActiveYN || "N",
       rCreatedID: breakConDetailData.rCreatedID || 0,
@@ -310,48 +320,51 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       compID: breakConDetailData.compID || 1,
       compCode: breakConDetailData.compCode || "",
       compName: breakConDetailData.compName || "",
-      recordStatus: breakConDetailData.recordStatus || "N"
+      recordStatus: breakConDetailData.recordStatus || "N",
     };
 
     try {
       // Ensure that the save service correctly updates the existing record
-      const response = await BreakListConDetailsService.saveBreakConDetail(token!, payload);
+      const response = await BreakListConDetailsService.saveBreakConDetail(
+  
+        payload
+      );
       if (response.success) {
-        notifySuccess('Break Condition Detail updated successfully');
+        notifySuccess("Break Condition Detail updated successfully");
       } else {
-        throw new Error(response.errorMessage || 'Failed to update Break Condition Detail');
+        throw new Error(
+          response.errorMessage || "Failed to update Break Condition Detail"
+        );
       }
     } catch (error) {
-      console.error('Save failed:', error);
-      notifyError('Failed to update Break Condition Detail');
+      console.error("Save failed:", error);
+      notifyError("Failed to update Break Condition Detail");
     }
   };
 
-
   useEffect(() => {
     if (breakConDetails) {
-      breakConDetails.forEach(detail => {
+      breakConDetails.forEach((detail) => {
         const hPLID = detail.hPLID; // Access hPLID from each detail in the array
         if (hPLID && breakListData.isPhyResYN === "Y") {
-          setSelectedPhysicians(prev => [...prev, hPLID]);
+          setSelectedPhysicians((prev) => [...prev, hPLID]);
         } else if (hPLID && breakListData.isPhyResYN === "N") {
-          setSelectedResources(prev => [...prev, hPLID]);
+          setSelectedResources((prev) => [...prev, hPLID]);
         }
       });
     }
   }, [breakConDetails, breakListData.isPhyResYN]);
 
-
   const handleSave = async () => {
     onSave(breakListData);
 
     try {
-      const breakListResponse = await BreakListService.saveBreakList(token!, {
+      const breakListResponse = await BreakListService.saveBreakList( {
         ...breakListData,
       });
 
       if (breakListResponse.success) {
-        notifySuccess('Break List saved successfully');
+        notifySuccess("Break List saved successfully");
 
         const breakConDetailData: BreakConDetailData = {
           hPLID: 0, // This will be set within handleSaveBreakConDetail
@@ -369,21 +382,22 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
           compName: breakListData?.compName || "",
           transferYN: breakListData?.transferYN || "N",
           recordStatus: breakListData?.transferYN || "Y",
-          rActiveYN: breakListData.rActiveYN || "N"
+          rActiveYN: breakListData.rActiveYN || "N",
         };
 
         await handleSaveBreakConDetail(breakConDetailData);
       } else {
-        throw new Error(breakListResponse.errorMessage || 'Failed to save Break List');
+        throw new Error(
+          breakListResponse.errorMessage || "Failed to save Break List"
+        );
       }
     } catch (error) {
-      console.error('Save failed:', error);
-      notifyError('Failed to save Break List');
+      console.error("Save failed:", error);
+      notifyError("Failed to save Break List");
     }
   };
 
   const handleClear = () => {
-    debugger
     setBreakListData({
       bLID: 0,
       bLName: "",
@@ -410,11 +424,11 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       transferYN: "N",
       resources: "",
       frequencyDetails: "",
-      hPLID: 0
+      hPLID: 0,
     });
     setSelectedResources([]);
     setSelectedPhysicians([]);
-    setEndDateState(formattedEndDate);
+    setFormattedText("");
     setSelectedCompany(null);
     setDropdownValues({
       categoryOptions: [],
@@ -429,27 +443,30 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     setShowChangeFormDialog(!showChangeFormDialog);
   };
 
-  const handleSaveChanges = (details: string, formattedEndDate: Date, frequencyCode: string, frequencyNumber: number, weekCodes?: string[]) => {
+  const handleSaveChanges = (
+    details: string,
+    formattedEndDate: Date,
+    frequencyCode: string,
+    frequencyNumber: number,
+    weekCodes?: string[]
+  ) => {
     try {
-      // Log the formattedEndDate to see its current format
+
       console.log("Formatted End Date:", formattedEndDate);
 
-      // Attempt to parse formattedEndDate
       const parsedEndDate = new Date(formattedEndDate);
 
-      // Check if the parsed date is valid
       if (isNaN(parsedEndDate.getTime())) {
         throw new Error("Invalid end date format.");
       }
 
-      // Ensure end date is greater than start date
       if (parsedEndDate <= breakListData.bLStartDate) {
         notifyError("End date must be greater than start date.");
         return;
       }
 
       // Update the state with new values
-      setBreakListData(prev => ({
+      setBreakListData((prev) => ({
         ...prev,
         frequencyDetails: details,
         bLEndDate: parsedEndDate,
@@ -463,11 +480,10 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     }
   };
 
-
   const fetchResources = async () => {
     setLoadingResources(true);
     try {
-      const result = await ResourceListService.getAllResourceLists(token!);
+      const result = await ResourceListService.getAllResourceLists();
       if (result.success) {
         setResourceList(result.data ?? []);
       } else {
@@ -480,13 +496,11 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     }
   };
 
-
   useEffect(() => {
     if (breakListData.isPhyResYN === "N") {
       fetchResources();
     }
   }, [breakListData.isPhyResYN]);
-
 
   const fetchPhysicians = async () => {
     setLoadingPhysicians(true);
@@ -496,7 +510,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
         "GetActiveConsultants",
         breakListData.compID || 1
       );
-      debugger
       const physicianOptions = response.map((item: any) => ({
         value: item.value,
         label: item.label,
@@ -509,8 +522,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     }
   };
 
-
-
   useEffect(() => {
     fetchResources();
     fetchPhysicians();
@@ -518,9 +529,9 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value as "Y" | "N";
-    setBreakListData(prevState => ({
+    setBreakListData((prevState) => ({
       ...prevState,
-      isPhyResYN: value
+      isPhyResYN: value,
     }));
   };
 
@@ -551,8 +562,10 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     });
   }, [isOneDay]);
 
-  const handleResourceCheckboxChange = (resourceID: number, checked: boolean) => {
-    debugger
+  const handleResourceCheckboxChange = (
+    resourceID: number,
+    checked: boolean
+  ) => {
     if (checked) {
       setSelectedResources((prev) => [...prev, resourceID]);
     } else {
@@ -569,7 +582,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
     setSelectedResourceNames(updatedResourceNames);
   };
 
-
   const handleSelectAllChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -578,32 +590,22 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
 
     setBreakListData((prev) => {
       const updatedResources = newValue
-        ? resourceList.map((resource) => ({
-          id: resource.rLID,
-          value: resource.rLID,
-          name: resource.rLName,
-        }))
-          .map(resource => resource.id.toString()) // Convert each resource object to its ID as a string
-          .join(',') // Concatenate IDs into a comma-separated string
+        ? resourceList
+          .map((resource) => ({
+            id: resource.rLID,
+            value: resource.rLID,
+            name: resource.rLName,
+          }))
+          .map((resource) => resource.id.toString()) // Convert each resource object to its ID as a string
+          .join(",") // Concatenate IDs into a comma-separated string
         : prev.resources; // Fallback to previous resources if newValue is false
 
       return {
         ...prev,
-        resources: updatedResources
+        resources: updatedResources,
       };
     });
   };
-
-
-
-
-
-
-
-
-
-
-
 
   const handleSelectAllPhysiciansChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -615,10 +617,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       newValue ? physicianList.map((physician) => physician.value) : []
     );
   };
-
-
-
-
 
   const handlePhysicianCheckboxChange = (id: number, checked: boolean) => {
     if (checked) {
@@ -636,11 +634,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
 
     setSelectedPhysicianNames(updatedPhysicianNames);
   };
-
-
-
-
-
 
   const handleOneDayToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsOneDay(event.target.checked);
@@ -675,11 +668,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
             </FormControl>
           </Grid>
         </Grid>
-
-
-
-
-
 
         <Grid container spacing={2}>
           {breakListData.isPhyResYN === "N" && (
@@ -728,9 +716,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
                       >
                         <TableCell>
                           <Checkbox
-                            checked={selectedResources.includes(
-                              resource.rLID
-                            )}
+                            checked={selectedResources.includes(resource.rLID)}
                             onChange={(e) =>
                               handleResourceCheckboxChange(
                                 resource.rLID,
@@ -879,7 +865,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
             />
           </Grid>
 
-
           <Grid item xs={12} sm={6} md={3} mt={2}>
             <FormControlLabel
               control={
@@ -900,10 +885,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
                 size="small"
                 type="date"
                 value={formatDateToDateString(breakListData.bLStartDate)}
-                onChange={(e) => {
-                  const date = parseDateStringToDate(e.target.value);
-                  setBreakListData({ ...breakListData, bLStartDate: date });
-                }}
+                onChange={handleStartDateChange}
                 ControlID={""}
               />
             </Grid>
@@ -930,7 +912,7 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
               <TextArea
                 name="frequencyDetails"
                 label="Repeat"
-                value={breakListData.frequencyDetails}
+                value={formattedText}
                 onChange={handleDateChange}
                 placeholder="Repeat"
                 rows={2}
@@ -947,10 +929,8 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
                 color="secondary"
               />
             </Grid>
-
-
           </Grid>
-          <Grid item xs={12} sm={6} md={3} >
+          <Grid item xs={12} sm={6} md={3}>
             <FormControlLabel
               control={
                 <Switch
@@ -970,7 +950,6 @@ const BreakListDetails: React.FC<BreakListDetailsProps> = ({
       </section>
 
       {/* </Grid> */}
-
 
       <section>
         <FormSaveClearButton

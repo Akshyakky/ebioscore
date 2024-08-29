@@ -3,16 +3,17 @@ import ActionButtonGroup, {
   ButtonProps,
 } from "../../../../components/Button/ActionButtonGroup";
 import Search from "@mui/icons-material/Search";
-import DepartmentListDetails from "../SubPage/DepartmentListDetails";
+import PaymentTypesDetails from "../SubPage/PaymentTypesDetails";
+import PaymentTypesSearch from "../SubPage/PaymentTypesSearch";
 import { useState } from "react";
-import DepartmentListSearch from "../SubPage/DepartmentListSearch";
-import { DepartmentDto } from "./../../../../interfaces/Billing/DepartmentDto";
+import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
 
-const DepartmentListPage: React.FC = () => {
+const PaymentTypesPagePage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<DepartmentDto | undefined>(
+  const [selectedData, setSelectedData] = useState<BPayTypeDto | undefined>(
     undefined
   );
+
   const handleAdvancedSearch = () => {
     setIsSearchOpen(true);
   };
@@ -20,10 +21,11 @@ const DepartmentListPage: React.FC = () => {
   const handleCloseSearch = () => {
     setIsSearchOpen(false);
   };
-  const handleSelect = (data: DepartmentDto) => {
-    console.log(data);
+
+  const handleSelect = (data: BPayTypeDto) => {
     setSelectedData(data);
   };
+
   const actionButtons: ButtonProps[] = [
     {
       variant: "contained",
@@ -45,8 +47,8 @@ const DepartmentListPage: React.FC = () => {
             color="primary"
           />
         </Box>
-        <DepartmentListDetails editData={selectedData} />
-        <DepartmentListSearch
+        <PaymentTypesDetails editData={selectedData} />
+        <PaymentTypesSearch
           open={isSearchOpen}
           onClose={handleCloseSearch}
           onSelect={handleSelect}
@@ -56,4 +58,4 @@ const DepartmentListPage: React.FC = () => {
   );
 };
 
-export default DepartmentListPage;
+export default PaymentTypesPagePage;

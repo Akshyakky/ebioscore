@@ -17,4 +17,9 @@ export interface TextBoxProps {
   errorMessage?: string;
   max?: string;
   autoComplete?: string;
+  inputPattern?: RegExp;
+  name?: string;
+  onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  multiline?: boolean;
+  rows?: number;
 }

@@ -1,45 +1,40 @@
-import { get } from "../../apiService";
+import { CommonApiService } from "../../CommonApiService";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { AppointmentBookingDTO } from "../../../interfaces/FrontOffice/AppointmentBookingDTO";
-import axios from "axios";
-import { handleError } from "../../CommonServices/HandlerError";
 import { store } from "../../../store/store";
 
-export const fetchAppointmentsByDate = async (
+const commonApiService = new CommonApiService({
+  baseURL: APIConfig.frontOffice,
+});
+
+const getToken = () => store.getState().userDetails.token!;
+
+export const fetchAppointmentsByDateAndType = async (
   startDate: string,
-  endDate: string
-): Promise<OperationResult<AppointmentBookingDTO[]>> => {
-  const url = `AppointBooking/GetAppointBookingsByDate?startDate=${startDate}&endDate=${endDate}`;
-  return get<AppointmentBookingDTO[]>(url, APIConfig.frontOffice);
+  endDate: string,
+  hpID?: number,
+  rlID?: number
+): Promise<OperationResult<any[]>> => {
+  const url = `AppointBooking/GetAppointBookingsByDateAndType?startDate=${startDate}&endDate=${endDate}${
+    hpID ? `&hpID=${hpID}` : rlID ? `&rlID=${rlID}` : ""
+  }`;
+  return commonApiService.get<OperationResult<any[]>>(url, getToken());
 };
 
 export const fetchAppointmentConsultants = async (): Promise<
   OperationResult<any[]>
 > => {
-  try {
-    const token = store.getState().userDetails.token;
-    const url = `${APIConfig.frontOffice}AppointBooking/GetAllAppointmentConsultants`;
-    const headers = { Authorization: `Bearer ${token}` };
-    const response = await axios.get<OperationResult<any[]>>(url, { headers });
-    return response.data;
-  } catch (error) {
-    return handleError(error);
-  }
+  const url = `AppointBooking/GetAllAppointmentConsultants`;
+  return commonApiService.get<OperationResult<any[]>>(url, getToken());
 };
 
 export const fetchAllResources = async (): Promise<OperationResult<any[]>> => {
-  try {
-    const token = store.getState().userDetails.token;
-    const url = `${APIConfig.frontOffice}ResourceList/GetAllResourceLists`;
-    const headers = { Authorization: `Bearer ${token}` };
-    const response = await axios.get<OperationResult<any[]>>(url, { headers });
-    return response.data;
-  } catch (error) {
-    return handleError(error);
-  }
+  const url = `ResourceList/GetAllResourceLists`;
+  return commonApiService.get<OperationResult<any[]>>(url, getToken());
 };
 
 export const AppointmentService = {
-  fetchAppointmentsByDate,
+  fetchAppointmentsByDateAndType,
+  fetchAppointmentConsultants,
+  fetchAllResources,
 };

@@ -36,7 +36,6 @@ export const ProfileListSearchProvider = ({ children }: ProfileListSearchProvide
     setLoading(true);
     try {
       const profilesResult = await ProfileService.getAllProfileDetails(token);
-      debugger;
       if (profilesResult.success && profilesResult.data) {
         const mappedResults: ProfileListSearchResult[] = profilesResult.data.map(
           (profile: ProfileListSearchResult) => ({

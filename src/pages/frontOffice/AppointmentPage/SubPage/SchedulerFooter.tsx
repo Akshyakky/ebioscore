@@ -1,29 +1,60 @@
 //frontOffice/AppointmentPage/SubPage/SchedulerFooter.tsx
 import React from 'react';
+import { Box, Chip, Typography, useTheme } from '@mui/material';
 
 const legends = [
-    { color: 'green', label: 'Out Patient' },
-    { color: 'red', label: 'In Patient' },
-    { color: 'yellow', label: 'Visited Patient' },
-    { color: 'blue', label: 'Seen Patient' },
+    { color: 'success.main', label: 'Out Patient' },
+    { color: 'error.main', label: 'In Patient' },
+    { color: 'warning.main', label: 'Visited Patient' },
+    { color: 'primary.main', label: 'Seen Patient' },
     { color: 'orange', label: 'Breaks' },
-    { color: 'grey', label: 'Non Working Hour' },
-    { color: 'purple', label: 'Non Registered Patients' },
-    { color: 'lightcoral', label: 'Elapsed Slots' },
+    { color: 'text.disabled', label: 'Non Working Hour' },
+    { color: 'secondary.main', label: 'Non Registered Patients' },
+    { color: 'error.light', label: 'Elapsed Slots' },
 ];
 
-const SchedulerFooter = () => {
+const SchedulerFooter: React.FC = () => {
+    const theme = useTheme();
+
     return (
-        <div className="scheduler-footer" style={{ display: 'flex', justifyContent: 'space-around' }}>
+        <Box
+            sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+                gap: 1,
+                p: 1,
+                backgroundColor: theme.palette.background.paper,
+                borderTop: `1px solid ${theme.palette.divider}`,
+            }}
+        >
             {legends.map((legend, index) => (
-                <div key={index} style={{ display: 'flex', alignItems: 'center' }}>
-                    <div style={{ width: 20, height: 20, backgroundColor: legend.color, marginRight: 8 }}></div>
-                    <span>{legend.label}</span>
-                </div>
+                <Chip
+                    key={index}
+                    icon={
+                        <Box
+                            sx={{
+                                width: 12,
+                                height: 12,
+                                borderRadius: '50%',
+                                bgcolor: legend.color,
+                                mr: -0.5,
+                            }}
+                        />
+                    }
+                    label={
+                        <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
+                            {legend.label}
+                        </Typography>
+                    }
+                    sx={{
+                        border: `1px solid ${theme.palette.divider}`,
+                        '& .MuiChip-icon': { color: 'transparent' },
+                    }}
+                />
             ))}
-        </div>
+        </Box>
     );
 };
 
 export default SchedulerFooter;
-

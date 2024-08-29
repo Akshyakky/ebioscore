@@ -3,8 +3,8 @@ import { useLoading } from "../LoadingContext";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/reducers";
 import { notifyError, notifySuccess } from "../../utils/Common/toastManager";
-import { BreakListData } from "../../interfaces/FrontOffice/BreakListData";
-import { BreakListService } from "../../services/FrontOfficeServices/BreakListService";
+import { BreakListData } from "../../interfaces/frontOffice/BreakListData";
+import { BreakListService } from "../../services/FrontOfficeServices/BreakListServices/BreakListService";
 
 interface BreakListContextProps {
   breakLists: BreakListData[];

@@ -3,12 +3,12 @@ import { Grid, Paper, Typography, TextField, DialogActions } from '@mui/material
 import CustomButton from '../../../../components/Button/CustomButton';
 import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
-import { BreakListService } from '../../../../services/FrontOfficeServices/BreakListServices/BreakListService';
 import { BreakConSuspendService } from '../../../../services/FrontOfficeServices/BreakConSuspendService';
 import { BreakConSuspendData } from '../../../../interfaces/frontOffice/BreakConSuspendData';
 import { BreakConDetailData } from '../../../../interfaces/frontOffice/BreakConDetailsData';
-import { BreakListConDetailsService } from '../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService';
 import { notifySuccess } from '../../../../utils/Common/toastManager';
+import { BreakListService } from '../../../../services/FrontOfficeServices/BreakListServices/BreakListService';
+import { BreakListConDetailsService } from '../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService';
 
 interface SuspendFormProps {
     onClose: () => void;
@@ -40,12 +40,11 @@ const SuspendForm: React.FC<SuspendFormProps> = ({ onClose, selectedBreakId, tok
     const [modifiedOn, setModifiedOn] = useState<Date>(new Date());
 
     useEffect(() => {
-        debugger
         if (selectedBreakId && selectedBreakId.blID) {
             const fetchDetails = async () => {
                 try {
                     // Fetch break list details
-                    const breakListResponse = await BreakListService.getBreakListById(token, selectedBreakId.blID);
+                    const breakListResponse = await BreakListService.getBreakListById( selectedBreakId.blID);
                     if (breakListResponse.success && breakListResponse.data) {
                         setBreakFromDate(formatDateToInputString(new Date(breakListResponse.data.bLStartDate)));
                         setBreakToDate(formatDateToInputString(new Date(breakListResponse.data.bLEndDate)));
@@ -64,7 +63,7 @@ const SuspendForm: React.FC<SuspendFormProps> = ({ onClose, selectedBreakId, tok
                     }
 
                     // Fetch break condition details
-                    const breakConDetailResponse = await BreakListConDetailsService.getBreakConDetailById(token, selectedBreakId.blID);
+                    const breakConDetailResponse = await BreakListConDetailsService.getBreakConDetailById( selectedBreakId.blID);
                     if (breakConDetailResponse.success && breakConDetailResponse.data && breakConDetailResponse.data.length > 0) {
                         setHPLID(breakConDetailResponse.data[0].hPLID);
                     } else {
@@ -87,7 +86,6 @@ const SuspendForm: React.FC<SuspendFormProps> = ({ onClose, selectedBreakId, tok
     };
 
     const handleSubmit = async () => {
-        debugger
         if (!suspendFromDate || !suspendEndDate) {
             setErrorMessage("Suspend dates are required.");
             return;
@@ -110,6 +108,8 @@ const SuspendForm: React.FC<SuspendFormProps> = ({ onClose, selectedBreakId, tok
             compCode: company?.compCode || "",
             compName: company?.compName || "",
             compID: company?.compID || 0,
+            status: "Y",
+            transferYN:"Y"
         };
 
         console.log('Submitting data:', suspendData);
@@ -156,6 +156,8 @@ const SuspendForm: React.FC<SuspendFormProps> = ({ onClose, selectedBreakId, tok
             compCode: company ? company.compCode : "",
             compName: company ? company.compName : "",
             compID: company ? company.compID : 0,
+             status: "Y",
+            transferYN:"Y"
         };
 
         try {
