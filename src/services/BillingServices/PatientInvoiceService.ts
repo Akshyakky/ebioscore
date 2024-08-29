@@ -19,7 +19,7 @@ export const saveBPatType = async (
     getToken()
   );
 };
-
+ 
 export const getAllBPatTypes = async (): Promise<
   OperationResult<BPatTypeDto[]>
 > => {
