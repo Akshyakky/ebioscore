@@ -1,8 +1,8 @@
-import { ReasonListData } from './../../../interfaces/frontOffice/ReasonListData';
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { CommonApiService } from '../../CommonApiService';
-import { store } from '../../../store/store';
+import { CommonApiService } from "../../CommonApiService";
+import { store } from "../../../store/store";
+import { ReasonListData } from "../../../interfaces/FrontOffice/ReasonListData";
 
 const commonApiService = new CommonApiService({
   baseURL: APIConfig.frontOffice,
@@ -29,16 +29,12 @@ export const getReasonById = async (
   );
 };
 
-
-export const getAllReasonLists = async (): Promise<
-  OperationResult<any[]>
-> => {
+export const getAllReasonLists = async (): Promise<OperationResult<any[]>> => {
   return commonApiService.get<OperationResult<any[]>>(
     "ReasonList/GetAllReasonLists",
     getToken()
   );
 };
-
 
 export const updateReasonActiveStatus = async (
   arlID: number,
@@ -55,5 +51,5 @@ export const ReasonListService = {
   saveReasonList,
   getAllReasonLists,
   updateReasonActiveStatus,
-  getReasonById
+  getReasonById,
 };

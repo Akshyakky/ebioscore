@@ -4,7 +4,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { Box, Container } from "@mui/material";
 import ReasonDetails from "../../ReasonList/SubPage/ReasonDetails";
 import ReasonListSearch from "../SubPage/ReasonListSearch";
-import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
+import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 
 const ReasonListPage: React.FC = () => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
