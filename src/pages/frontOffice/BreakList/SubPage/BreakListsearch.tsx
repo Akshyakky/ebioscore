@@ -105,7 +105,7 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
       setShowSuspendForm(true);
     } else {
       try {
-        const result = await BreakConSuspendService.updateBreakConSuspendActiveStatus(token!, row.bCDID, false);
+        const result = await BreakConSuspendService.updateBreakConSuspendActiveStatus(row.bCDID, false);
         if (result.success) {
           setSuspendStatus((prevState) => ({
             ...prevState,
@@ -138,7 +138,7 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
     if (selectedBreakForSuspend) {
       setIsLoading(true);
       try {
-        const response = await BreakConSuspendService.updateBreakConSuspendActiveStatus(token!, selectedBreakForSuspend.bCDID, false);
+        const response = await BreakConSuspendService.updateBreakConSuspendActiveStatus(selectedBreakForSuspend.bCDID, false);
         if (response.success) {
           notifySuccess("Break resumed successfully.");
           setSwitchStatus((prevState) => ({
