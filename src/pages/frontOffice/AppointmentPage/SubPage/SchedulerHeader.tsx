@@ -10,7 +10,7 @@ import { fetchAppointmentConsultants, fetchAllResources } from '../../../../serv
 
 interface SchedulerHeaderProps {
     onRefresh: () => void;
-    onSearchSelection: (conID?: number, rlID?: number) => void;
+    onSearchSelection: (conID?: number, rlID?: number, rLotYN?: string) => void;
 }
 
 const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSelection }) => {
@@ -18,7 +18,8 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
     const [searchValue, setSearchValue] = useState('');
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [checked, setChecked] = useState<boolean>(false);
-    const [suggestions, setSuggestions] = useState<{ label: string; value: number }[]>([]);
+    const [suggestions, setSuggestions] = useState<{ label: string; value: number; rLotYN?: string }[]>([]);
+    const [rLotYN, setRLotYN] = useState<string | undefined>(undefined);
 
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -31,6 +32,8 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
     const toggleSearchType = useCallback(() => {
         setSearchType(prevState => prevState === 'consultant' ? 'resource' : 'consultant');
         setSearchValue('');
+        setSuggestions([]);
+        setRLotYN(undefined);
         setTimeout(() => {
             inputRef.current?.focus();
         }, 0);
@@ -50,7 +53,8 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
                 setSuggestions(
                     items.map(item => ({
                         label: searchType === 'consultant' ? item.conFName : item.rLName,
-                        value: searchType === 'consultant' ? item.conID : item.rlID
+                        value: searchType === 'consultant' ? item.conID : item.rlID,
+                        rLotYN: searchType === 'resource' ? item.rLotYN : undefined
                     }))
                 );
             } else {
@@ -74,9 +78,12 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
         const selectedItem = suggestions.find(s => s.label === value);
         if (selectedItem) {
             setSearchValue(selectedItem.label);
+            setRLotYN(selectedItem.rLotYN);
+
             onSearchSelection(
                 searchType === 'consultant' ? selectedItem.value : undefined,
-                searchType === 'resource' ? selectedItem.value : undefined
+                searchType === 'resource' ? selectedItem.value : undefined,
+                selectedItem.rLotYN
             );
         }
     }, [suggestions, searchType, onSearchSelection]);

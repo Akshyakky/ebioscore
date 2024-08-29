@@ -10,16 +10,16 @@ interface AppointmentBookingFormProps {
     formData: any;
     reasonOptions: DropdownOption[];
     resourceOptions: DropdownOption[];
+    rLotYN?: string;
 }
-
 
 const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
     onChange,
     formData,
     reasonOptions,
-    resourceOptions
+    resourceOptions,
+    rLotYN
 }) => {
-
     const registrationOptions = [
         { value: 'Registered', label: 'Registered' },
         { value: 'NonRegistered', label: 'Non Registered' }
@@ -47,6 +47,37 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                 size='small'
             />
 
+            {rLotYN === 'N' && (
+                <DropdownSelect
+                    label="Consultant"
+                    name="consultantID"
+                    value={formData.consultantID}
+                    options={reasonOptions}
+                    onChange={(e) => {
+                        const selectedOption = reasonOptions.find(option => option.value === e.target.value);
+                        onChange('consultantID', selectedOption?.value);
+                        onChange('consultantName', selectedOption?.label);
+                    }}
+                    isMandatory={true}
+                    size='small'
+                />
+            )}
+
+            {rLotYN !== 'Y' && (
+                <DropdownSelect
+                    label="Resource"
+                    name="resourceID"
+                    value={formData.resourceID}
+                    options={resourceOptions}
+                    onChange={(e) => {
+                        const selectedOption = resourceOptions.find(option => option.value === e.target.value);
+                        onChange('resourceID', selectedOption?.value);
+                        onChange('resourceName', selectedOption?.label);
+                    }}
+                    isMandatory={true}
+                    size='small'
+                />
+            )}
 
             <DropdownSelect
                 label="Reason"
@@ -57,20 +88,6 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                     const selectedOption = reasonOptions.find(option => option.value === e.target.value);
                     onChange('reasonID', selectedOption?.value);
                     onChange('reasonName', selectedOption?.label);
-                }}
-                isMandatory={true}
-                size='small'
-            />
-
-            <DropdownSelect
-                label="Resource"
-                name="resourceID"
-                value={formData.resourceID}
-                options={resourceOptions}
-                onChange={(e) => {
-                    const selectedOption = resourceOptions.find(option => option.value === e.target.value);
-                    onChange('resourceID', selectedOption?.value);
-                    onChange('resourceName', selectedOption?.label);
                 }}
                 isMandatory={true}
                 size='small'
@@ -115,7 +132,7 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                 ControlID="appointmentDuration"
                 title="Appointment Duration (minutes)"
                 type='text'
-                value={formData.appointmentDuration || 15}
+                value={formData.appointmentDuration || '15'}
                 onChange={(e) => onChange('appointmentDuration', e.target.value)}
                 isMandatory={true}
                 size='small'

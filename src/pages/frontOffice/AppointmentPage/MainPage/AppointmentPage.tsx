@@ -28,6 +28,7 @@ const AppointmentPage: React.FC = () => {
     const schedulerRef = useRef<{ refresh: () => void } | null>(null);
     const [selectedConID, setSelectedConID] = useState<number | undefined>(undefined);
     const [selectedRlID, setSelectedRlID] = useState<number | undefined>(undefined);
+    const [rLotYN, setRLotYN] = useState<string | undefined>(undefined);
     const [isBookingFormOpen, setIsBookingFormOpen] = useState(false);
     const [reasonOptions, setReasonOptions] = useState<DropdownOption[]>([]);
     const [resourceOptions, setResourceOptions] = useState<DropdownOption[]>([]);
@@ -52,9 +53,11 @@ const AppointmentPage: React.FC = () => {
         }
     }, []);
 
-    const handleSearchSelection = useCallback((conID?: number, rlID?: number) => {
+    // Update handleSearchSelection to accept rLotYN
+    const handleSearchSelection = useCallback((conID?: number, rlID?: number, rLotYN?: string) => {
         setSelectedConID(conID);
         setSelectedRlID(rlID);
+        setRLotYN(rLotYN); // Set rLotYN based on the selection
         handleRefresh();
     }, [handleRefresh]);
 
@@ -185,6 +188,7 @@ const AppointmentPage: React.FC = () => {
                         formData={formData}
                         reasonOptions={reasonOptions}
                         resourceOptions={resourceOptions}
+                        rLotYN={rLotYN} // Pass rLotYN to the form
                     />
                 </GenericDialog>
             </Box>
