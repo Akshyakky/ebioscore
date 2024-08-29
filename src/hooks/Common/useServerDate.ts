@@ -6,7 +6,7 @@ import {
 import { OperationResult } from "../../interfaces/Common/OperationResult";
 
 export const useServerDate = () => {
-  const [currentDate, setCurrentDate] = useState<Date | undefined>(undefined);
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
   useEffect(() => {
     const initializeCurrentDate = async () => {

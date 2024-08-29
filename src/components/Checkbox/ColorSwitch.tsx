@@ -1,5 +1,5 @@
 import React from "react";
-import Switch from "@mui/material/Switch";
+import Switch, { SwitchProps } from "@mui/material/Switch";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { styled, useTheme } from "@mui/material/styles";
 
@@ -11,21 +11,25 @@ interface CustomSwitchProps {
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const ColorSwitch = styled(Switch)<{ switchColor?: string }>(({ theme, switchColor }) => ({
+const ColorSwitch = styled(Switch, {
+  shouldForwardProp: (prop) => prop !== "switchColor",
+})<{ switchColor?: string }>(({ theme, switchColor }) => ({
   "& .MuiSwitch-switchBase": {
     color: "#fff",
-  },
-  "& .MuiSwitch-switchBase.Mui-checked": {
-    color: "#fff",
-  },
-  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-    backgroundColor: switchColor || theme.palette.primary.main,
+    "&.Mui-checked": {
+      color: "#fff",
+      "& + .MuiSwitch-track": {
+        backgroundColor: switchColor || theme.palette.primary.main,
+      },
+      "&:hover": {
+        backgroundColor: switchColor
+          ? `${switchColor}B2`
+          : `${theme.palette.primary.main}B2`,
+      },
+    },
   },
   "& .MuiSwitch-track": {
     backgroundColor: "#ccc",
-  },
-  "& .MuiSwitch-switchBase.Mui-checked:hover": {
-    backgroundColor: switchColor ? `${switchColor}B2` : `${theme.palette.primary.main}B2`,
   },
 }));
 

@@ -1,6 +1,6 @@
 import { APIConfig } from "../../apiConfig";
 import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { BreakConSuspendData } from "../../interfaces/frontOffice/BreakConSuspendData";
+import { BreakConSuspendData } from "../../interfaces/FrontOffice/BreakConSuspendData";
 import { CommonApiService } from "../CommonApiService";
 import { store } from "../../store/store";
 

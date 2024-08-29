@@ -3,7 +3,7 @@ import { useLoading } from "../LoadingContext";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/reducers";
 import { notifyError, notifySuccess } from "../../utils/Common/toastManager";
-import { BreakListData } from "../../interfaces/frontOffice/BreakListData";
+import { BreakListData } from "../../interfaces/FrontOffice/BreakListData";
 import { BreakListService } from "../../services/FrontOfficeServices/BreakListServices/BreakListService";
 
 interface BreakListContextProps {
@@ -18,10 +18,10 @@ interface BreakListContextProps {
 export const BreakListContext = createContext<BreakListContextProps>({
   breakLists: [],
   breakList: null,
-  fetchAllBreakLists: async () => {},
-  getBreakListById: async () => {},
-  saveBreakList: async () => {},
-  updateBreakListActiveStatus: async () => {},
+  fetchAllBreakLists: async () => { },
+  getBreakListById: async () => { },
+  saveBreakList: async () => { },
+  updateBreakListActiveStatus: async () => { },
 });
 
 interface BreakListProviderProps {

@@ -4,7 +4,7 @@ import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
 import ResourceDetails from "../SubPage/ResourceDeatails";
 import ResourceListSearch from "../SubPage/ResourceListSearch";
-import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 
 const ResourceListPage: React.FC = () => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);

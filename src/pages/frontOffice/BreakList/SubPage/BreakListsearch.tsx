@@ -1,325 +1,161 @@
-import React, { useCallback, useEffect, useState } from "react";
-import CloseIcon from "@mui/icons-material/Close";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  Typography,
-  Box,
-  FormControlLabel,
-} from "@mui/material";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
-import { debounce } from "../../../../utils/Common/debounceUtils";
-import {
-  notifyError,
-  notifySuccess,
-} from "../../../../utils/Common/toastManager";
-import CustomButton from "../../../../components/Button/CustomButton";
-import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
-import EditIcon from "@mui/icons-material/Edit";
-import SuspendForm from "./SuspendForm";
-import { BreakConDetailData } from "../../../../interfaces/frontOffice/BreakConDetailsData";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import { BreakConSuspendService } from "../../../../services/FrontOfficeServices/BreakConSuspendService";
+import { useEffect, useState } from "react";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
-import { BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
 import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
+import CustomButton from "../../../../components/Button/CustomButton";
+import Edit from "@mui/icons-material/Edit";
+import { Box, Grid, Typography } from "@mui/material";
+import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
+import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
+import Close from "@mui/icons-material/Close";
+import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
+import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 
 interface BreakListSearchProps {
-  open: boolean;
-  onClose: () => void;
-  onSelect: (PIC: BreakListData) => void;
+    open: boolean;
+    onClose: () => void;
+    onSelect: (BreakList: any) => void;
 }
-
-
 const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSelect }) => {
+    const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
+    const [searchTerm, setSearchTerm] = useState("");
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    useEffect(() => {
+        if (open) {
+            getAllBreakConDetails();
+        }
+    }, [open]);
 
+    const getAllBreakConDetails = async () => {
+        const result = await BreakListConDetailsService.getAllBreakConDetails();
+        if (result.success && result.data) {
+            const initialSwitchStatus = result.data.reduce((statusMap, item) => {
+                statusMap[item.bCDID] = item.rActiveYN === "Y";
+                return statusMap;
+            }, {} as { [key: number]: boolean });
+            setSwitchStatus(initialSwitchStatus);
+            setSearchResults(result.data);
+        } else {
+            setSearchResults([]);
+        }
+    };
 
+    const handleEditAndClose = (BreakList: any) => {
+        onClose();
+        onSelect(BreakList);
+    };
 
-  const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<BreakListData[]>([]);
-
-
-  useEffect(() => {
-    if (open) {
-      fetchBreakConDetails();
-    }
-  }, [open]);
-
-
-  const { token } = useSelector((state: RootState) => state.userDetails);
-  const [suspendStatus, setSuspendStatus] = useState<{ [key: number]: boolean }>({});
-
-  const [selectedBreak, setSelectedBreak] = useState<BreakConDetailData | null>(
-    null
-  );
-  const [showSuspendForm, setShowSuspendForm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showResumeButton, setShowResumeButton] = useState(false);
-
-  const [selectedBreakForSuspend,] =
-    useState<BreakConDetailData | null>(null);
-
-  const fetchBreakConDetails = async () => {
-    const result = await BreakListService.getAllBreakLists();
-    if (result.success && result.data) {
-      const initialSwitchStatus = result.data.reduce((statusMap, item) => {
-        statusMap[item.rLID] = item.rActiveYN === "Y";
-        return statusMap;
-      }, {} as { [key: number]: boolean });
-      setSwitchStatus(initialSwitchStatus);
-      setSearchResults(result.data);
-    } else {
-      setSearchResults([]);
-    }
-  };
-
-
-  const handleEditAndClose = (reason: BreakListData) => {
-    onClose();
-    onSelect(reason);
-  };
-
-
-
-  const handleSwitchChange = async (reason: BreakConDetailData, checked: boolean,) => {
-
-    const result = await BreakListConDetailsService.updateBreakConDetailActiveStatus(reason.bCDID, checked);
-    if (result.success) {
-      setSwitchStatus((prev) => ({ ...prev, [reason.bCDID]: checked }));
-    }
-  };
-
-
-  const handleSuspendChange = async (row: BreakConDetailData, checked: boolean) => {
-    debugger
-    if (checked) {
-      setSelectedBreak(row);
-      setShowSuspendForm(true);
-    } else {
-      try {
-        const result = await BreakConSuspendService.updateBreakConSuspendActiveStatus(row.bCDID, false);
+    const handleSwitchChange = async (BreakList: any, checked: boolean) => {
+        const result = await BreakListService.updateBreakListActiveStatus(BreakList.blID, checked);
         if (result.success) {
-          setSuspendStatus((prevState) => ({
-            ...prevState,
-            [row.bCDID]: false,
-          }));
-        } else {
-          notifyError("Error updating suspend status.");
+            setSwitchStatus((prev) => ({ ...prev, [BreakList.blID]: checked }));
         }
-      } catch {
-        notifyError("Error updating suspend status.");
-      }
-    }
-  };
+    };
 
-  const handleSuspendSuccess = () => {
-    if (selectedBreakForSuspend) {
-      setSuspendStatus((prevState) => ({
-        ...prevState,
-        [selectedBreakForSuspend.bCDID]: true,
-      }));
-    }
-    setShowResumeButton(true);
-  };
+    const dataWithIndex = searchResults.map((item, index) => ({
+        ...item,
+        serialNumber: index + 1,
+        Status: switchStatus[item.blID] ? "Active" : "Hidden",
+    }));
 
-  const handleSuspendFormClose = () => {
-    setShowSuspendForm(false);
-  };
+    const columns = [
+        {
+            key: "BreakListEdit",
+            header: "Edit",
+            visible: true,
+            render: (row: any) => (
+                <CustomButton
+                    text="Edit"
+                    onClick={() => handleEditAndClose(row)}
+                    icon={Edit}
+                />
+            )
+        },
+        { key: "serialNumber", header: "Sl No", visible: true },
+        { key: "breakName", header: "Break Name", visible: true },
+        { key: "conResName", header: "Consultant/Resource Name", visible: true },
+        { key: "rNotes", header: "Remarks", visible: true },
+        {
+            key: "recordStatus", header: "Status", visible: true, render: (row: any) => (
+                <Typography variant="body2">
+                    {switchStatus[row.blID] ? "Active" : "Hidden"}
+                </Typography>
+            ),
+        },
+        {
+            key: "BreakStatus", header: "Action", visible: true, render: (row: any) => (
+                <CustomSwitch
+                    size="medium"
+                    color="secondary"
+                    checked={switchStatus[row.blID]}
+                    onChange={(event) => handleSwitchChange(row, event.target.checked)}
+                />
+            ),
+        },
+        {
+            key: "BreakListSuspend",
+            header: "Suspend",
+            visible: true,
+            render: (row: any) => (
+                <CustomButton
+                    text="Suspend"
+                    onClick={() => handleSuspend(row)}
+                    icon={Close}
+                    color="secondary"
+                />
+            )
+        },
+    ];
 
-  const handleResume = async () => {
-    if (selectedBreakForSuspend) {
-      setIsLoading(true);
-      try {
-        const response = await BreakConSuspendService.updateBreakConSuspendActiveStatus(selectedBreakForSuspend.bCDID, false);
-        if (response.success) {
-          notifySuccess("Break resumed successfully.");
-          setSwitchStatus((prevState) => ({
-            ...prevState,
-            [selectedBreakForSuspend.bCDID]: false,
-          }));
-          setShowResumeButton(false);
-        } else {
-          notifyError("Error resuming break.");
-        }
-      } catch {
-        notifyError("Error resuming break.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
+    const handleSuspend = async (BreakList: any) => {
 
-  const handleDialogClose = () => {
-    setSearchTerm("");
-    onClose();
-  };
+    };
 
+    const handleDialogClose = () => {
+        setSearchTerm("");
+        onClose();
+    };
 
-  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      setSearchTerm(searchTerm.trim());
-    }
-  };
+    const handleSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value);
+    };
 
-  const dataWithIndex = searchResults.map((item, index) => ({
-    ...item,
-    serialNumber: index + 1,
-    Status: item.rActiveYN === "Y" ? "Active" : "Hidden",
-  }));
-
-  const columns = [
-    {
-      key: "BreakEdit",
-      header: "Edit",
-      visible: true,
-      render: (row: BreakListData) => (
-        <CustomButton
-          text="Edit"
-          onClick={() => handleEditAndClose(row)}
-          icon={EditIcon}
-        />
-      ),
-    },
-    { key: "serialNumber", header: "S.No", visible: true },
-    { key: "breakName", header: "Break Name", visible: true },
-    // {
-    //   key: "status",
-    //   header: "Status",
-    //   visible: true,
-    //   render: (row: BreakConDetailData) => (
-    //     <Typography variant="body2">
-    //       {switchStatus[row.bCDID] ? "Active" : "Hidden"}
-    //     </Typography>
-    //   ),
-    // },
-    // {
-    //   key: "recordStatus",
-    //   header: "Record Status",
-    //   visible: true,
-    //   render: (row: BreakConDetailData) => (
-    //     <CustomSwitch
-    //       size="medium"
-    //       color="secondary"
-    //       checked={switchStatus[row.bCDID] || false}
-    //       onChange={(event) => handleSwitchChange(row, event.target.checked)}
-    //     />
-    //   ),
-    // },
-    {
-      key: "suspendStatus",
-      header: "Suspend",
-      visible: true,
-      render: (row: BreakConDetailData) => (
-        <FormControlLabel
-          control={
-            <CustomSwitch
-              size="medium"
-              color="secondary"
-              checked={suspendStatus[row.bCDID] || false}
-              onChange={(event) =>
-                handleSuspendChange(row, event.target.checked)
-              }
-            />
-          }
-          label={suspendStatus[row.bCDID] ? "Suspended" : "Not Suspended"}
-        />
-      ),
-    },
-  ];
-
-  return (
-    <Dialog
-      open={open}
-      onClose={(reason) => {
-        if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
-
-        }
-      }}
-      maxWidth="lg"
-      fullWidth
-    >
-      <DialogTitle>
-        <Box>
-          <Typography variant="h6" id="break-list-header">
-            BREAK LIST SEARCH
-          </Typography>
-        </Box>
-      </DialogTitle>
-      <DialogContent
-        sx={{ minHeight: "600px", maxHeight: "600px", overflowY: "auto" }}
-      >
-        <Box>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6} lg={4}>
-              <FloatingLabelTextBox
-                ControlID="SearchTerm"
-                title="Search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Enter break name"
-                size="small"
-                autoComplete="off"
-                onKeyPress={handleKeyPress}
-              />
-            </Grid>
-          </Grid>
-        </Box>
-
-        <CustomGrid columns={columns} data={dataWithIndex} searchTerm={searchTerm} />
-
-      </DialogContent>
-
-      <DialogActions>
-        <CustomButton
-          variant="contained"
-          text="Close"
-          icon={CloseIcon}
-          size="medium"
-          onClick={handleDialogClose}
-          color="secondary"
-        />
-
-        {showResumeButton && (
-          <CustomButton
-            text="Resume"
-            icon={RefreshIcon}
-            onClick={handleResume}
-            color="primary"
-          />
-        )}
-      </DialogActions>
-
-      {showSuspendForm && (
-        <Dialog
-          open={showSuspendForm}
-          onClose={handleSuspendFormClose}
-          maxWidth="md"
-          fullWidth
-        >
-          <DialogTitle>Suspend Break</DialogTitle>
-          <DialogContent>
-            <SuspendForm
-              open={showSuspendForm}
-              onClose={handleSuspendFormClose}
-              selectedBreakId={selectedBreak}
-              onSuspendSuccess={handleSuspendSuccess}
-              token={token || ""}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
-
-
-    </Dialog>
-  );
-};
-
+    return (<>
+        <GenericDialog
+            open={open}
+            onClose={onClose}
+            title="Break Frequency Details"
+            maxWidth="lg"
+            disableEscapeKeyDown={true}
+            disableBackdropClick={true}
+            dialogContentSx={{ maxHeight: '400px' }}
+            fullWidth
+            actions={
+                <CustomButton
+                    variant="contained"
+                    text="Close"
+                    onClick={handleDialogClose}
+                    icon={Close}
+                    size="small"
+                    color="secondary"
+                />
+            }>
+            <Box>
+                <Grid container spacing={2}>
+                    <Grid item xs={12} md={6} lg={4}>
+                        <FloatingLabelTextBox
+                            ControlID="SearchTerm"
+                            title="Search"
+                            value={searchTerm}
+                            onChange={handleSearchInputChange}
+                            placeholder="Enter resource name or code"
+                            size="small"
+                            autoComplete="off"
+                        />
+                    </Grid>
+                </Grid>
+            </Box>
+            <CustomGrid columns={columns} data={dataWithIndex} searchTerm={searchTerm} />
+        </GenericDialog>
+    </>)
+}
 export default BreakListSearch;

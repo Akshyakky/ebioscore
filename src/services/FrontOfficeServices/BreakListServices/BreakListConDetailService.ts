@@ -1,10 +1,8 @@
-import axios from "axios";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { BreakConDetailData } from "../../../interfaces/frontOffice/BreakConDetailsData";
 import { CommonApiService } from "../../CommonApiService";
 import { store } from "../../../store/store";
-
+import { BreakConDetailData } from "../../../interfaces/FrontOffice/BreakListData";
 
 const commonApiService = new CommonApiService({
   baseURL: APIConfig.frontOffice,
@@ -12,18 +10,15 @@ const commonApiService = new CommonApiService({
 
 const getToken = () => store.getState().userDetails.token!;
 
-
 export const saveBreakConDetail = async (
   resourceListData: BreakConDetailData
 ): Promise<OperationResult<BreakConDetailData>> => {
-  return commonApiService.post<OperationResult<any>>(
+  return commonApiService.post<OperationResult<BreakConDetailData>>(
     "BreakConDetail/SaveBreakConDetail",
     resourceListData,
     getToken()
   );
 };
-
-
 
 export const getAllBreakConDetails = async (): Promise<
   OperationResult<any[]>
@@ -45,8 +40,6 @@ export const updateBreakConDetailActiveStatus = async (
   );
 };
 
-
-
 export const getBreakConDetailById = async (
   bLID: number
 ): Promise<OperationResult<any>> => {
@@ -55,7 +48,6 @@ export const getBreakConDetailById = async (
     getToken()
   );
 };
-
 
 export const BreakListConDetailsService = {
   saveBreakConDetail,

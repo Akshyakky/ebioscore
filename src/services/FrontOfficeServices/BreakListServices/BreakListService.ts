@@ -1,5 +1,4 @@
-import { BreakListData } from "./../../../interfaces/frontOffice/BreakListData";
-import axios from "axios";
+import { BreakListData } from "../../../interfaces/FrontOffice/BreakListData";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { CommonApiService } from "../../CommonApiService";
@@ -12,16 +11,14 @@ const commonApiService = new CommonApiService({
 const getToken = () => store.getState().userDetails.token!;
 
 export const saveBreakList = async (
-  resourceListData: BreakListData
+  breakListDto: BreakListData
 ): Promise<OperationResult<BreakListData>> => {
-  return commonApiService.post<OperationResult<any>>(
+  return commonApiService.post<OperationResult<BreakListData>>(
     "BreakList/SaveBreakList",
-    resourceListData,
+    breakListDto,
     getToken()
   );
 };
-
-
 
 export const getBreakListById = async (
   bLID: number
@@ -32,15 +29,12 @@ export const getBreakListById = async (
   );
 };
 
-export const getAllBreakLists = async (): Promise<
-  OperationResult<any[]>
-> => {
+export const getAllBreakLists = async (): Promise<OperationResult<any[]>> => {
   return commonApiService.get<OperationResult<any[]>>(
     "BreakList/GetAllBreakLists",
     getToken()
   );
 };
-
 
 export const updateBreakListActiveStatus = async (
   bLID: number,
@@ -52,8 +46,6 @@ export const updateBreakListActiveStatus = async (
     getToken()
   );
 };
-
-
 
 export const BreakListService = {
   saveBreakList,

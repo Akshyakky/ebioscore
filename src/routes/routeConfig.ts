@@ -87,7 +87,6 @@ const routeConfig: RouteConfig[] = [
     path: "/BreakListPage",
     component: BreakListPage,
     protected: true,
-    providers: [ResourceListProvider],
   },
   {
     path: "/Appointmentpage",
