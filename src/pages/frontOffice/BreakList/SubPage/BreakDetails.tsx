@@ -73,16 +73,50 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
         fetchData();
     }, [selectedOption]);
 
-    const loadEditData = (data: BreakListDto) => {
-        setFormState(prev => ({
-            ...prev,
-            ...data.breakListData,
-            rCreatedOn: data.breakListData.rCreatedOn || serverDate || new Date(),
-            rModifiedOn: data.breakListData.rModifiedOn || serverDate || new Date(),
-        }));
-        setBreakConDetails(data.breakListConDetailsData || []);
-        setSelectedOption(data.breakListData.isPhyResYN === "Y" ? "physician" : "resource");
+    const loadEditData = async (data: any) => {
+        setLoading(true);
+        try {
+            debugger
+            const { blID } = data;
+
+            // Fetch BreakList data by blID
+            const breakListResult = await BreakListService.getBreakListById(blID);
+
+            // Fetch BreakConDetail data by blID
+            const breakConDetailResult = await BreakListConDetailsService.getBreakConDetailById(blID);
+
+            if (breakListResult.success && breakListResult.data) {
+                const breakListData = breakListResult.data;
+
+                setFormState(prev => ({
+                    ...prev,
+                    ...breakListData,
+                    bLStartDate: new Date(breakListData.bLStartDate),
+                    bLEndDate: new Date(breakListData.bLEndDate),
+                    bLStartTime: new Date(breakListData.bLStartTime),
+                    bLEndTime: new Date(breakListData.bLEndTime),
+                    rCreatedOn: new Date(breakListData.rCreatedOn || serverDate),
+                    rModifiedOn: new Date(breakListData.rModifiedOn || serverDate),
+                }));
+                setSelectedOption(breakListData.isPhyResYN === "Y" ? "physician" : "resource");
+            }
+
+            if (breakConDetailResult.success && breakConDetailResult.data) {
+                const breakConDetailsData = breakConDetailResult.data;
+                setBreakConDetails(breakConDetailsData);
+
+                // Set the selected option based on the fetched data
+
+                setSelectedItems(breakConDetailsData.map((detail: BreakConDetailData) => detail.hPLID));
+            }
+        } catch (error) {
+            console.error("Error loading edit data", error);
+            showAlert('Error', 'An error occurred while loading data. Please try again.', 'error');
+        } finally {
+            setLoading(false);
+        }
     };
+
 
     const fetchData = useCallback(async () => {
         setLoading(true);

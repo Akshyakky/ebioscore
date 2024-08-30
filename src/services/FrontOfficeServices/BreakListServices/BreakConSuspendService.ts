@@ -1,4 +1,3 @@
-import axios from "axios";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { BreakConSuspendData } from "../../../interfaces/FrontOffice/BreakConSuspendData";
 import { APIConfig } from "../../../apiConfig";
@@ -10,7 +9,6 @@ const commonApiService = new CommonApiService({
 });
 
 const getToken = () => store.getState().userDetails.token!;
-// Handle errors
 
 export const saveBreakConSuspend = async (
   resourceListData: BreakConSuspendData
