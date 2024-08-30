@@ -1,115 +1,113 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Grid, Paper, Typography } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import TextArea from "../../../../components/TextArea/TextArea";
-import { notifySuccess, notifyError } from "../../../../utils/Common/toastManager";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
-import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
+import { useLoading } from "../../../../context/LoadingContext";
+import { useServerDate } from "../../../../hooks/Common/useServerDate";
+import { store } from "../../../../store/store";
+import { showAlert } from "../../../../utils/Common/showAlert";
+import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 
-interface ResourceDetailsProps {
-  resource: ResourceListData | null;
-  onSave: (resource: ResourceListData) => void;
-  onClear: () => void;
-  isEditMode: boolean;
-}
+const ResourceDetails: React.FC<{ editData?: ResourceListData }> = ({ editData }) => {
 
-const ResourceDetails: React.FC<ResourceDetailsProps> = ({
-  resource,
-  onSave,
-  onClear,
-  isEditMode,
-}) => {
-  const { token } = useSelector((state: RootState) => state.userDetails);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [resourceData, setResourceData] = useState<ResourceListData>({
-    rLID: resource?.rLID || 0,
-    rLCode: resource?.rLCode || "",
-    rLName: resource?.rLName || "",
-    rNotes: resource?.rNotes || "",
-    rLValidateYN: resource?.rLValidateYN || 'N',
-    transferYN: resource?.transferYN || 'N',
-    rLOtYN: resource?.rLOtYN || 'N',
-    rActiveYN: resource?.rActiveYN || 'N',
-    rCreatedBy: resource?.rCreatedBy || "",
-    rModifiedBy: resource?.rModifiedBy || "",
-    rCreatedOn: resource?.rCreatedOn || new Date(),
-    rModifiedOn: resource?.rModifiedOn || new Date(),
-    rCreatedID: resource?.rCreatedID || 0,
-    rModifiedID: resource?.rModifiedID || 0,
+  const [formState, setFormState] = useState({
+    isSubmitted: false,
+    rLCode: "",
+    rLName: "",
+    rNotes: "",
+    rActiveYN: "Y",
+    rLValidateYN: "N",
+    rLOtYN: "N"
   });
-  const [activeLabel, setActiveLabel] = useState(resourceData.rActiveYN === 'Y' ? 'Active' : 'Hidden');
+
+  const { setLoading } = useLoading();
+  const serverDate = useServerDate();
+  const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
 
   useEffect(() => {
-    if (resource) {
-      setResourceData({
-        rLID: resource.rLID,
-        rLCode: resource.rLCode || "",
-        rLName: resource.rLName || "",
-        rNotes: resource.rNotes || "",
-        rLValidateYN: resource.rLValidateYN || 'N',
-        transferYN: resource?.transferYN || 'N',
-        rLOtYN: resource.rLOtYN || 'N',
-        rActiveYN: resource.rActiveYN || 'N',
-        rCreatedBy: resource.rCreatedBy || "",
-        rModifiedBy: resource.rModifiedBy || "",
-        rCreatedOn: resource.rCreatedOn || new Date(),
-        rModifiedOn: resource.rModifiedOn || new Date(),
-        rCreatedID: resource.rCreatedID || 0,
-        rModifiedID: resource.rModifiedID || 0,
+    if (editData) {
+      setFormState({
+        isSubmitted: false,
+        rLCode: editData.rLCode || "",
+        rLName: editData.rLName || "",
+        rNotes: editData.rNotes || "",
+        rActiveYN: editData.rActiveYN || "Y",
+        rLValidateYN: editData.rLValidateYN || "N",
+        rLOtYN: editData.rLOtYN || "N"
       });
-      setActiveLabel(resource.rActiveYN === 'Y' ? 'Active' : 'Hidden');
+    } else {
+      handleClear();
     }
-  }, [resource]);
+  }, [editData]);
+
+  const handleClear = useCallback(() => {
+    setFormState({
+      isSubmitted: false,
+      rLCode: "",
+      rLName: "",
+      rNotes: "",
+      rActiveYN: "Y",
+      rLValidateYN: "N",
+      rLOtYN: "N"
+    });
+  }, []);
+
+  const createResourceListData = useCallback((): ResourceListData => ({
+    rLID: editData ? editData.rLID : 0,
+    rLCode: formState.rLCode,
+    rLName: formState.rLName,
+    rNotes: formState.rNotes,
+    rActiveYN: formState.rActiveYN,
+    compID: compID || 0,
+    compCode: compCode || "",
+    compName: compName || "",
+    transferYN: "N",
+    rCreatedID: userID || 0,
+    rCreatedOn: serverDate || new Date(),
+    rCreatedBy: userName || "",
+    rModifiedID: userID || 0,
+    rModifiedOn: serverDate || new Date(),
+    rModifiedBy: userName || "",
+    rLValidateYN: formState.rLValidateYN,
+    rLOtYN: formState.rLOtYN
+
+  }), [formState, editData, compID, compCode, compName, userID, userName, serverDate]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormState(prev => ({ ...prev, [name]: value }));
+  }, []);
 
   const handleSave = async () => {
-    setIsSubmitted(true);
-
-    if (!resourceData.rLCode || !resourceData.rLName) {
-      notifyError("Resource Code and Resource Name are required fields.");
-      return;
-    }
+    setFormState(prev => ({ ...prev, isSubmitted: true }));
+    setLoading(true);
 
     try {
-      const result = await ResourceListService.saveResourceList(token!, resourceData);
+      const ResourceListData = createResourceListData();
+      const result = await ResourceListService.saveResourceList(ResourceListData);
       if (result.success) {
-        notifySuccess("Resource saved successfully");
-        onSave(resourceData);
-        setResourceData({
-          rLID: 0,
-          rLCode: "",
-          rLName: "",
-          rNotes: "",
-          rLValidateYN: 'N',
-          rLOtYN: 'N',
-          rActiveYN: 'N',
-          rCreatedBy: "",
-          rModifiedBy: "",
-          rCreatedOn: new Date(),
-          rModifiedOn: new Date(),
-          rCreatedID: 0,
-          rModifiedID: 0,
-          transferYN: 'N',
+        showAlert("Success", "Resource List saved successfully!", "success", {
+          onConfirm: handleClear
         });
-        onClear();
       } else {
-        notifyError(result.errorMessage || "An unknown error occurred.");
+        showAlert("Error", result.errorMessage || "Failed to save Resource List.", "error");
       }
     } catch (error) {
-      notifyError("An error occurred while saving the resource.");
+      console.error("Error saving Resource List:", error);
+      showAlert("Error", "An unexpected error occurred while saving.", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleActiveToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const isActive = e.target.checked;
-    setResourceData({ ...resourceData, rActiveYN: isActive ? 'Y' : 'N' });
-    setActiveLabel(isActive ? 'Active' : 'Hidden');
-  };
+  const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState(prev => ({ ...prev, rActiveYN: event.target.checked ? "Y" : "N" }));
+  }, []);
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -122,25 +120,28 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
             <FloatingLabelTextBox
               title="Resource Code"
               placeholder="Enter code"
-              value={resourceData.rLCode}
-              onChange={(e) => setResourceData({ ...resourceData, rLCode: e.target.value })}
+              value={formState.rLCode}
+              onChange={handleInputChange}
+              isSubmitted={formState.isSubmitted}
               isMandatory
               size="small"
-              isSubmitted={isSubmitted}
               name="rLCode"
-              ControlID=""
+              ControlID="rLCode"
+              aria-label="Resource Code"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <FloatingLabelTextBox
               title="Resource Name"
               placeholder="Enter description"
-              value={resourceData.rLName}
-              onChange={(e) => setResourceData({ ...resourceData, rLName: e.target.value })}
+              value={formState.rLName}
+              isSubmitted={formState.isSubmitted}
+              onChange={handleInputChange}
+              isMandatory
               size="small"
-              isSubmitted={isSubmitted}
               name="rLName"
-              ControlID=""
+              ControlID="rLCode"
+              aria-label="Resource Name"
             />
           </Grid>
         </Grid>
@@ -149,8 +150,8 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
             <TextArea
               label="Remarks"
               name="rNotes"
-              value={resourceData.rNotes}
-              onChange={(e) => setResourceData({ ...resourceData, rNotes: e.target.value })}
+              value={formState.rNotes}
+              onChange={handleInputChange}
               placeholder="Notes"
               rows={2}
             />
@@ -160,21 +161,21 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
           <Grid item xs={12} sm={6} md={3}>
             <CustomSwitch
               label="Is Validate"
-              checked={resourceData.rLValidateYN === 'Y'}
-              onChange={(e) => setResourceData({ ...resourceData, rLValidateYN: e.target.checked ? 'Y' : 'N' })}
+              checked={formState.rLValidateYN === 'Y'}
+              onChange={handleActiveToggle}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <CustomSwitch
               label="Is Operation Theatre"
-              checked={resourceData.rLOtYN === 'Y'}
-              onChange={(e) => setResourceData({ ...resourceData, rLOtYN: e.target.checked ? 'Y' : 'N' })}
+              checked={formState.rLOtYN === 'Y'}
+              onChange={handleActiveToggle}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <CustomSwitch
-              label={activeLabel}
-              checked={resourceData.rActiveYN === 'Y'}
+              label={formState.rActiveYN === 'Y' ? 'Active' : 'Hidden'}
+              checked={formState.rActiveYN === 'Y'}
               onChange={handleActiveToggle}
             />
           </Grid>
@@ -183,7 +184,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({
       <FormSaveClearButton
         clearText="Clear"
         saveText="Save"
-        onClear={onClear}
+        onClear={handleClear}
         onSave={handleSave}
         clearIcon={DeleteIcon}
         saveIcon={SaveIcon}

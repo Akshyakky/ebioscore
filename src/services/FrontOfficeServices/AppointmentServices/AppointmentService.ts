@@ -1,7 +1,6 @@
 import { CommonApiService } from "../../CommonApiService";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { AppointmentBookingDTO } from "../../../interfaces/FrontOffice/AppointmentBookingDTO";
 import { store } from "../../../store/store";
 
 const commonApiService = new CommonApiService({
@@ -10,15 +9,16 @@ const commonApiService = new CommonApiService({
 
 const getToken = () => store.getState().userDetails.token!;
 
-export const fetchAppointmentsByDate = async (
+export const fetchAppointmentsByDateAndType = async (
   startDate: string,
-  endDate: string
-): Promise<OperationResult<AppointmentBookingDTO[]>> => {
-  const url = `AppointBooking/GetAppointBookingsByDate?startDate=${startDate}&endDate=${endDate}`;
-  return commonApiService.get<OperationResult<AppointmentBookingDTO[]>>(
-    url,
-    getToken()
-  );
+  endDate: string,
+  hpID?: number,
+  rlID?: number
+): Promise<OperationResult<any[]>> => {
+  const url = `AppointBooking/GetAppointBookingsByDateAndType?startDate=${startDate}&endDate=${endDate}${
+    hpID ? `&hpID=${hpID}` : rlID ? `&rlID=${rlID}` : ""
+  }`;
+  return commonApiService.get<OperationResult<any[]>>(url, getToken());
 };
 
 export const fetchAppointmentConsultants = async (): Promise<
@@ -34,7 +34,7 @@ export const fetchAllResources = async (): Promise<OperationResult<any[]>> => {
 };
 
 export const AppointmentService = {
-  fetchAppointmentsByDate,
+  fetchAppointmentsByDateAndType,
   fetchAppointmentConsultants,
   fetchAllResources,
 };

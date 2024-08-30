@@ -1,50 +1,48 @@
-
 export interface BreakListData {
-  hPLID: number;
   bLID: number;
   bLName: string;
-  bLStartTime: Date;   // Adjusted to Date
-  bLEndTime: Date;     // Adjusted to Date
-  bLStartDate: Date;   // Adjusted to Date
-  bLEndDate: Date;     // Adjusted to Date
+  bLStartTime: Date;
+  bLEndTime: Date;
+  bLStartDate: Date;
+  bLEndDate: Date;
   bLFrqNo: number;
   bLFrqDesc: string;
-  bLFrqWkDesc?: string; // Nullable
-  bColor?: string;     // Nullable
-  rActiveYN?: string; // Use 'Y' and 'N' to match the char type
+  bLFrqWkDesc: string;
+  bColor: string;
+  rActiveYN: string;
   rCreatedID: number;
   rCreatedBy: string;
-  rCreatedOn: Date;    // Adjusted to Date
+  rCreatedOn: Date;
   rModifiedID: number;
   rModifiedBy: string;
-  rModifiedOn: Date;   // Adjusted to Date
-  rNotes?: string;     // Nullable
-  isPhyResYN: string; // Use 'Y' and 'N' to match the char type
-  compID: number;     // Nullable
-  compCode: string;   // Nullable
-  compName: string;   // Nullable
-  transferYN?: 'Y' | 'N'; // Nullable and use 'Y' and 'N' to match the char type
-  resources: string;    // Adjust if you have a specific type for resources
-  frequencyDetails: string;
+  rModifiedOn: Date;
+  rNotes: string;
+  isPhyResYN: string;
+  compID: number;
+  compCode: string;
+  compName: string;
+  transferYN?: string;
 }
 
+export interface BreakConDetailData {
+  bCDID: number;
+  blID: number;
+  hPLID: number;
+  rActiveYN: string;
+  rCreatedID: number;
+  rCreatedBy: string;
+  rCreatedOn: Date;
+  rModifiedID: number;
+  rModifiedBy: string;
+  rModifiedOn: Date;
+  rNotes: string;
+  compID: number;
+  compCode: string;
+  compName: string;
+  transferYN: string;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export interface BreakListDto {
+  breakListData: BreakListData;
+  breakListConDetailsData: BreakConDetailData[];
+}

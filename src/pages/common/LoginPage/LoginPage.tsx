@@ -25,7 +25,6 @@ import DropdownSelect from "../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import { notifySuccess } from "../../../utils/Common/toastManager";
 import { Company } from "../../../types/Common/Company.type";
-import "../../../../src/assets/styles/Common.css";
 import backgroundImage from "/src/assets/images/LoginCoverImage.jpg";
 
 const LoginPage: React.FC = () => {
@@ -184,14 +183,15 @@ const LoginPage: React.FC = () => {
   const matches = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
-    <Container maxWidth={false} disableGutters sx={{ height: '100vh', display: 'flex' }}>
-      <Grid container sx={{ height: '100%' }}>
-        <Grid item xs={12} md={matches ? 12 : 8.4} sx={{
+    <Container maxWidth={false} disableGutters sx={{ minHeight: '100vh', display: 'flex' }}>
+      <Grid container sx={{ minHeight: '100%' }}>
+        <Grid item xs={12} md={8} sx={{
           backgroundImage: `url(${backgroundImage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           clipPath: matches ? 'none' : 'polygon(0% 0%, 75% 0%, 100% 50%, 75% 100%, 0% 100%)',
           position: "relative",
+          minHeight: matches ? '30vh' : 'auto',
           '&::before': {
             content: '""',
             position: 'absolute',
@@ -199,9 +199,9 @@ const LoginPage: React.FC = () => {
             left: 0,
             width: '100%',
             height: '100%',
-            backgroundColor: 'rgba(255, 255, 255, 0.20)',
+            backgroundColor: matches ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 255, 255, 0.20)',
             clipPath: matches ? 'none' : 'inherit',
-            background: "linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 100%)"
+            background: matches ? 'none' : "linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 100%)"
           },
           '&::after': {
             content: '""',
@@ -212,28 +212,29 @@ const LoginPage: React.FC = () => {
             height: '40%',
             backgroundColor: 'rgba(255, 255, 255, 0.20)',
             borderRadius: '50%',
+            display: matches ? 'none' : 'block',
           },
         }}>
         </Grid>
 
-        <Grid item xs={12} md={matches ? 12 : 3.6} sx={{
+        <Grid item xs={12} md={4} sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "20px",
+          padding: matches ? "20px 10px" : "20px",
         }}>
           <Card sx={{
-            minWidth: 350,
-            maxWidth: 400,
+            width: '100%',
+            maxWidth: matches ? 'none' : '400px',
             boxShadow: 6,
             borderRadius: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            padding: '2rem',
+            padding: matches ? '1rem' : '2rem',
           }}>
             <CardContent>
-              <Box textAlign="center" mb={4} mt={2}>
-                <img src={logo} alt="Company Logo" style={{ maxWidth: "150px" }} />
-                <Typography variant="h5" component="h1" sx={{ mt: 2, mb: 2, fontWeight: 'bold', color: '#1976d2' }}>
+              <Box textAlign="center" mb={3} mt={1}>
+                <img src={logo} alt="Company Logo" style={{ maxWidth: "120px" }} />
+                <Typography variant={matches ? "h6" : "h5"} component="h1" sx={{ mt: 2, mb: 2, fontWeight: 'bold', color: '#1976d2' }}>
                   Welcome to e-Bios
                 </Typography>
               </Box>

@@ -4,13 +4,7 @@ import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
 import { TextBoxProps } from "../../../interfaces/Common/TextBoxProps";
 
-export interface FloatingLabelTextBoxProps extends TextBoxProps {
-  inputPattern?: RegExp; // Optional prop for input pattern
-  name?: string;
-  onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void; // Add the onKeyPress prop
-}
-
-const FloatingLabelTextBox: React.FC<FloatingLabelTextBoxProps> = ({
+const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   ControlID,
   title,
   value = "",
@@ -31,7 +25,9 @@ const FloatingLabelTextBox: React.FC<FloatingLabelTextBoxProps> = ({
   autoComplete = "on",
   inputPattern,
   name,
-  onKeyPress, // Add the onKeyPress prop
+  onKeyPress,
+  multiline = false,
+  rows = 0,
 }) => {
   const controlId = useMemo(() => `txt${ControlID}`, [ControlID]);
 
@@ -71,7 +67,7 @@ const FloatingLabelTextBox: React.FC<FloatingLabelTextBoxProps> = ({
         type={type}
         value={value}
         onChange={handleChange}
-        onKeyPress={onKeyPress} // Pass the onKeyPress prop
+        onKeyPress={onKeyPress}
         placeholder={placeholder || title}
         size={size}
         disabled={disabled}
@@ -88,6 +84,8 @@ const FloatingLabelTextBox: React.FC<FloatingLabelTextBoxProps> = ({
         helperText={isInvalid ? errorToShow : ""}
         autoComplete={autoComplete}
         aria-describedby={isInvalid ? `${controlId}-error` : undefined}
+        multiline={multiline}
+        rows={rows}
       />
     </FormControl>
   );

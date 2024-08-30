@@ -1,73 +1,28 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
-import GlobalSpinner from "../../../../components/GlobalSpinner/GlobalSpinner";
 import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
-import { notifyError } from "../../../../utils/Common/toastManager";
 import { Box, Container } from "@mui/material";
 import ReasonDetails from "../../ReasonList/SubPage/ReasonDetails";
-import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
 import ReasonListSearch from "../SubPage/ReasonListSearch";
 import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 
 const ReasonListPage: React.FC = () => {
-    const { token } = useSelector((state: RootState) => state.userDetails);
-    const [reasonList, setReasonList] = useState<ReasonListData[]>([]);
-    const [selectedReason, setSelectedReason] = useState<ReasonListData | null>(null);
-    const [isEditMode, setIsEditMode] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
-
-    // Fetch Reason List Function
-    const fetchReasonList = async () => {
-        setLoading(true);
-        try {
-            const result = await ReasonListService.getAllReasonLists(token!);
-            if (result.success) {
-                setReasonList(result.data || []);
-            } else {
-                notifyError(result.errorMessage || "Failed to fetch reason list.");
-            }
-        } catch (error) {
-            notifyError("An error occurred while fetching the reason list.");
-        }
-        setLoading(false);
-    };
-
-    // Handle Save Operation
-    const handleSave = (savedReason: ReasonListData) => {
-        if (isEditMode) {
-            setReasonList((prev) =>
-                prev.map((reason) => (reason.arlID === savedReason.arlID ? savedReason : reason))
-            );
-        } else {
-            setReasonList((prev) => [...prev, savedReason]);
-        }
-        setIsEditMode(false);
-        setSelectedReason(null);
-    };
-
-    // Handle Clear Operation
-    const handleClear = () => {
-        setSelectedReason(null);
-        setIsEditMode(false);
-    };
-
-    // Handle Edit Operation
-    const handleEdit = (reason: ReasonListData) => {
-        setSelectedReason(reason);
-        setIsEditMode(true);
-    };
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [selectedData, setSelectedData] = useState<ReasonListData | undefined>(undefined);
 
     const handleAdvancedSearch = () => {
-        setIsSearchDialogOpen(true);
-        fetchReasonList();
+        setIsSearchOpen(true);
     };
 
-    const handleCloseSearchDialog = () => {
-        setIsSearchDialogOpen(false);
+    const handleCloseSearch = () => {
+        setIsSearchOpen(false);
     };
+
+    const handleSelect = (data: ReasonListData) => {
+        setSelectedData(data);
+    };
+
+
 
     return (
         <Container maxWidth={false}>
@@ -84,18 +39,11 @@ const ReasonListPage: React.FC = () => {
                     ]}
                 />
             </Box>
-            {loading && <GlobalSpinner />}
             <ReasonDetails
-                reason={selectedReason}
-                onSave={handleSave}
-                onClear={handleClear}
-                isEditMode={isEditMode}
+                editData={selectedData}
             />
             <ReasonListSearch
-                show={isSearchDialogOpen}
-                handleClose={handleCloseSearchDialog}
-                onEditProfile={handleEdit}
-                selectedReason={selectedReason}
+                open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect}
             />
         </Container>
     );

@@ -1,21 +1,23 @@
-import { APIConfig } from "../../apiConfig";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { BreakConSuspendData } from "../../interfaces/FrontOffice/BreakConSuspendData";
-import { CommonApiService } from "../CommonApiService";
-import { store } from "../../store/store";
+import axios from "axios";
+import { OperationResult } from "../../../interfaces/Common/OperationResult";
+import { BreakConSuspendData } from "../../../interfaces/FrontOffice/BreakConSuspendData";
+import { APIConfig } from "../../../apiConfig";
+import { CommonApiService } from "../../CommonApiService";
+import { store } from "../../../store/store";
 
 const commonApiService = new CommonApiService({
   baseURL: APIConfig.frontOffice,
 });
 
 const getToken = () => store.getState().userDetails.token!;
+// Handle errors
 
 export const saveBreakConSuspend = async (
-  breakListData: BreakConSuspendData
+  resourceListData: BreakConSuspendData
 ): Promise<OperationResult<BreakConSuspendData>> => {
   return commonApiService.post<OperationResult<any>>(
     "BreakConSuspend/SaveBreakConSuspend",
-    breakListData,
+    resourceListData,
     getToken()
   );
 };

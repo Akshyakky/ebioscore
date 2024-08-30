@@ -2,6 +2,8 @@ import React from "react";
 import Button from "@mui/material/Button";
 import { SvgIconComponent } from "@mui/icons-material";
 import clsx from "clsx";
+import { SxProps } from "@mui/system";
+import { Theme } from "@mui/material/styles";
 
 export interface CustomButtonProps {
   variant?: "text" | "outlined" | "contained";
@@ -20,6 +22,7 @@ export interface CustomButtonProps {
   | "success"
   | "warning";
   ariaLabel?: string;
+  sx?: SxProps<Theme>;
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({
@@ -32,6 +35,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   disabled,
   color = "primary",
   ariaLabel,
+  sx,
   ...props
 }) => {
   return (
@@ -44,6 +48,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       startIcon={Icon ? <Icon /> : null}
       color={color}
       aria-label={ariaLabel || text}
+      sx={sx}
       {...props}
     >
       {text}

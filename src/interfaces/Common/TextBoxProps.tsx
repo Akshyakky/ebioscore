@@ -1,7 +1,7 @@
 export interface TextBoxProps {
   ControlID: string;
   title?: string;
-  value?: string;
+  value?: any;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   type?: string;
@@ -17,4 +17,9 @@ export interface TextBoxProps {
   errorMessage?: string;
   max?: string;
   autoComplete?: string;
+  inputPattern?: RegExp;
+  name?: string;
+  onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  multiline?: boolean;
+  rows?: number;
 }
