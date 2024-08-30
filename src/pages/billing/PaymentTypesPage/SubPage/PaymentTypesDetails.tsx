@@ -1,11 +1,8 @@
-import { Paper, Typography, Grid } from "@mui/material";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import { Paper, Typography, Grid, SelectChangeEvent } from "@mui/material";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import TextArea from "../../../../components/TextArea/TextArea";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import { PaymentTypesService } from "../../../../services/BillingServices/PaymentTypesService";
 import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
 import { useLoading } from "../../../../context/LoadingContext";
@@ -17,6 +14,7 @@ import useDropdown from "../../../../hooks/useDropdown";
 import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
+import FormField from "../../../../components/FormField/FormField";
 
 const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
   editData,
@@ -49,7 +47,7 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
         rActiveYN: editData.rActiveYN || "Y",
       });
     } else {
-      handleClear(); // Clear the form if editData is not present
+      handleClear();
     }
   }, [editData]);
 
@@ -112,6 +110,14 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
     []
   );
 
+  const handlePayModeChange = useCallback(
+    (event: SelectChangeEvent<string>) => {
+      const { value } = event.target;
+      setFormState((prev) => ({ ...prev, payMode: value }));
+    },
+    []
+  );
+
   const handleSave = async () => {
     setFormState((prev) => ({ ...prev, isSubmitted: true }));
     setLoading(true);
@@ -167,82 +173,70 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
       </Typography>
       <section>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Payment Type Code"
-              placeholder="Payment Type Code"
-              value={formState.payCode}
-              onChange={handleInputChange}
-              isMandatory
-              size="small"
-              isSubmitted={formState.isSubmitted}
-              name="payCode"
-              ControlID="payCode"
-              aria-label="Payment Type Code"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Payment Type Name"
-              placeholder="Payment Type Name"
-              value={formState.payName}
-              onChange={handleInputChange}
-              isMandatory
-              size="small"
-              isSubmitted={formState.isSubmitted}
-              name="payName"
-              ControlID="PaymentTypeName"
-              aria-label="Payment Type Name"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <DropdownSelect
-              label="Payment Type Mode"
-              value={formState.payMode}
-              onChange={(e) => formState.setPayMode(e.target.value)}
-              options={payTypeValues}
-              isMandatory
-              size="small"
-              isSubmitted={formState.isSubmitted}
-              name="payMode"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Bank Charges"
-              placeholder="Bank Charges"
-              value={formState.bankCharge.toFixed(2)}
-              onChange={handleInputChange}
-              size="small"
-              isSubmitted={formState.isSubmitted}
-              name="bankCharge"
-              ControlID="BankCharges"
-              aria-label="Bank Charges"
-            />
-          </Grid>
+          <FormField
+            type="text"
+            label="Payment Type Code"
+            value={formState.payCode}
+            onChange={handleInputChange}
+            isSubmitted={formState.isSubmitted}
+            name="payCode"
+            ControlID="payCode"
+            placeholder="Payment Type Code"
+          />
+          <FormField
+            type="text"
+            label="Payment Type Name"
+            value={formState.payName}
+            onChange={handleInputChange}
+            isSubmitted={formState.isSubmitted}
+            name="payName"
+            ControlID="PaymentTypeName"
+            placeholder="Payment Type Name"
+          />
         </Grid>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextArea
-              label="Remarks"
-              name="rNotes"
-              value={formState.rNotes}
-              placeholder="Remarks"
-              onChange={handleInputChange}
-              rows={2}
-              aria-label="Remarks"
-            />
-          </Grid>
+          <FormField
+            type="select"
+            label="Payment Type Mode"
+            value={formState.payMode}
+            onChange={handlePayModeChange}
+            isSubmitted={formState.isSubmitted}
+            options={payTypeValues}
+            name="payMode"
+            ControlID="payMode"
+          />
+          <FormField
+            type="text"
+            label="Bank Charges"
+            value={formState.bankCharge.toString()}
+            onChange={handleInputChange}
+            isSubmitted={formState.isSubmitted}
+            name="bankCharge"
+            ControlID="BankCharges"
+            placeholder="Bank Charges"
+          />
         </Grid>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
-              checked={formState.rActiveYN === "Y"}
-              onChange={handleActiveToggle}
-              aria-label="Active Status"
-            />
-          </Grid>
+          <FormField
+            type="textarea"
+            label="Remarks"
+            value={formState.rNotes}
+            onChange={handleInputChange}
+            name="rNotes"
+            ControlID="rNotes"
+            placeholder="Remarks"
+          />
+        </Grid>
+        <Grid container spacing={2}>
+          <FormField
+            type="switch"
+            label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
+            value={formState.rActiveYN}
+            checked={formState.rActiveYN === "Y"}
+            onChange={handleActiveToggle}
+            name="rActiveYN"
+            ControlID="rActiveYN"
+          />
         </Grid>
         <FormSaveClearButton
           clearText="Clear"
