@@ -5,7 +5,7 @@ import FormControl from "@mui/material/FormControl";
 interface AutocompleteTextBoxProps {
   ControlID: string;
   title?: string;
-  value?: string;
+  value?: any;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   fetchSuggestions?: (input: string) => Promise<string[]>;
   onSelectSuggestion?: (suggestion: string) => void;
@@ -22,7 +22,7 @@ interface AutocompleteTextBoxProps {
   maxLength?: number;
   isSubmitted?: boolean;
   errorMessage?: string;
-  inputValue?: string;
+  inputValue?: any;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   InputProps?: Partial<React.ComponentProps<typeof TextField>['InputProps']>;
 

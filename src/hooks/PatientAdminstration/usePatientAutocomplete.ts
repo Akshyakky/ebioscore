@@ -17,8 +17,8 @@ export const usePatientAutocomplete = (token: any) => {
       );
       return results.data.map(
         (result) =>
-          `${result.pChartCode} | ${result.pFName} ${
-            result.pLName
+          `${result.pChartCode} | ${result.pfName} ${
+            result.plName
           } | ${formatDate(result.pDob)} | ${result.pAddPhone1}`
       );
     } catch (error) {
