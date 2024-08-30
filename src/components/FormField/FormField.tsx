@@ -1,7 +1,6 @@
 import React from "react";
 import {
   Grid,
-  Switch,
   FormControlLabel,
   SelectChangeEvent,
 } from "@mui/material";
@@ -15,7 +14,7 @@ type DropdownOption = {
   label: string;
 };
 
-type FieldType = "text" | "textarea" | "select" | "switch";
+type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email";
 
 interface BaseFormFieldProps {
   type: FieldType;
@@ -27,10 +26,17 @@ interface BaseFormFieldProps {
   ControlID: string;
   size?: "small" | "medium";
   placeholder?: string;
+  isMandatory?: boolean;
+  errorMessage?: string;
+  disabled?: boolean;
+  readOnly?: boolean;
+  maxLength?: number;
+  min?: number;
+  max?: number;
 }
 
 interface TextFormFieldProps extends BaseFormFieldProps {
-  type: "text" | "textarea";
+  type: "text" | "textarea" | "number" | "email";
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
@@ -66,11 +72,20 @@ const FormField: React.FC<FormFieldProps> = (props) => {
     ControlID,
     size = "small",
     placeholder = "",
+    isMandatory = false,
+    errorMessage,
+    disabled = false,
+    readOnly = false,
+    maxLength,
+    min,
+    max,
   } = props;
 
   const renderField = () => {
     switch (type) {
       case "text":
+      case "number":
+      case "email":
         return (
           <FloatingLabelTextBox
             title={label}
@@ -81,6 +96,15 @@ const FormField: React.FC<FormFieldProps> = (props) => {
             isSubmitted={isSubmitted}
             name={name}
             ControlID={ControlID}
+            type={type}
+            isMandatory={isMandatory}
+            errorMessage={errorMessage}
+            disabled={disabled}
+            readOnly={readOnly}
+            maxLength={maxLength}
+            max={max}
+            min={min}
+            inputPattern={type === "number" ? /^[0-9]*$/ : undefined}
           />
         );
       case "textarea":

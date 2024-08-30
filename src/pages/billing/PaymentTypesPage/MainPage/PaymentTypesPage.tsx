@@ -1,7 +1,5 @@
 import { Box, Container } from "@mui/material";
-import ActionButtonGroup, {
-  ButtonProps,
-} from "../../../../components/Button/ActionButtonGroup";
+import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import Search from "@mui/icons-material/Search";
 import PaymentTypesDetails from "../SubPage/PaymentTypesDetails";
 import PaymentTypesSearch from "../SubPage/PaymentTypesSearch";
@@ -39,20 +37,10 @@ const PaymentTypesPage: React.FC = () => {
     <>
       <Container maxWidth={false}>
         <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup
-            buttons={actionButtons}
-            groupVariant="contained"
-            groupSize="medium"
-            orientation="horizontal"
-            color="primary"
-          />
+          <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
         </Box>
         <PaymentTypesDetails editData={selectedData} />
-        <PaymentTypesSearch
-          open={isSearchOpen}
-          onClose={handleCloseSearch}
-          onSelect={handleSelect}
-        />
+        <PaymentTypesSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
       </Container>
     </>
   );
