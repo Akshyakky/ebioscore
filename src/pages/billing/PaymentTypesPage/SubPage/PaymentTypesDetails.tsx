@@ -1,6 +1,6 @@
 import { Paper, Typography, Grid } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import TextArea from "../../../../components/TextArea/TextArea";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from "@mui/icons-material/Save";
@@ -12,6 +12,11 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import useDropdown from "../../../../hooks/useDropdown";
+import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
+import { RootState } from "../../../../store/reducers";
+import { useSelector } from "react-redux";
 
 const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
   editData,
@@ -28,7 +33,7 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-
+  const { token } = useSelector((state: RootState) => state.userDetails);
   const { compID, compCode, compName, userID, userName } =
     store.getState().userDetails;
 
@@ -47,6 +52,25 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
       handleClear(); // Clear the form if editData is not present
     }
   }, [editData]);
+
+  const transformPayTypeValues = (data: DropdownOption[]): DropdownOption[] =>
+    data.map((item) => ({
+      value: item.value.toString(),
+      label: item.label,
+    }));
+
+  const memoizedParams = useMemo(
+    () => [token, "GetConstantValues", "PAYT"],
+    [token]
+  );
+
+  const payTypeResult = useDropdown(
+    ConstantValues.fetchConstantValues,
+    transformPayTypeValues,
+    memoizedParams
+  );
+
+  const payTypeValues = payTypeResult.options as DropdownOption[];
 
   const createBPayTypeDto = useCallback(
     (): BPayTypeDto => ({
@@ -172,17 +196,15 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Payment Type Mode"
-              placeholder="Payment Type Mode"
+            <DropdownSelect
+              label="Payment Type Mode"
               value={formState.payMode}
-              onChange={handleInputChange}
+              onChange={(e) => formState.setPayMode(e.target.value)}
+              options={payTypeValues}
               isMandatory
               size="small"
               isSubmitted={formState.isSubmitted}
-              name="payName"
-              ControlID="PaymentTypeMode"
-              aria-label="Payment Type Mode"
+              name="payMode"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
