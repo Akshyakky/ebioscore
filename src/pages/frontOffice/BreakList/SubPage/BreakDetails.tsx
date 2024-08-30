@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { BreakListDto, BreakListData, BreakConDetailData } from "../../../../interfaces/FrontOffice/BreakListData";
+import { BreakListDto, BreakListData, BreakConDetailData } from "../../../../interfaces/frontOffice/BreakListData";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { useSelector } from "react-redux";
