@@ -1,23 +1,20 @@
 import { Grid, Paper, Typography } from "@mui/material";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import { useState, useEffect, useMemo } from "react";
-import TextArea from "../../../../components/TextArea/TextArea";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import { useLoading } from "../../../../context/LoadingContext";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { DepartmentDto } from "./../../../../interfaces/Billing/DepartmentDto";
-import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DepartmentListService } from "../../../../services/BillingServices/DepartmentListService";
 import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdown from "../../../../hooks/useDropdown";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
+import FormField from "../../../../components/FormField/FormField";
 
 const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   editData,
@@ -167,6 +164,37 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
     setRActiveYN(event.target.checked ? "Y" : "N");
   };
 
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    switch (name) {
+      case "deptCode":
+        setDeptCode(value);
+        break;
+      case "deptName":
+        setDeptName(value);
+        break;
+      case "deptType":
+        setDeptType(value);
+        break;
+      case "rNotes":
+        setRNotes(value);
+        break;
+      case "unit":
+        setUnit(value);
+        break;
+      case "deptLocation":
+        setDeptLocation(value);
+        break;
+      case "dlNumber":
+        setDlNumber(value);
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Typography variant="h6" id="department-list-header">
@@ -174,171 +202,170 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
       </Typography>
       <section>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Department Code"
-              placeholder="Department Code"
-              value={deptCode}
-              onChange={(e) => setDeptCode(e.target.value)}
-              isMandatory
-              size="small"
-              isSubmitted={isSubmitted}
-              name="deptCode"
-              ControlID="deptCode"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Department Name"
-              placeholder="Department Name"
-              value={deptName}
-              onChange={(e) => setDeptName(e.target.value)}
-              isMandatory
-              size="small"
-              isSubmitted={isSubmitted}
-              name="deptName"
-              ControlID="deptName"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <DropdownSelect
-              label="Department Type"
-              value={deptType}
-              onChange={(e) => setDeptType(e.target.value)}
-              options={deptTypeValues}
-              isMandatory
-              size="small"
-              isSubmitted={isSubmitted}
-              name="deptType"
-            />
-          </Grid>
+          <FormField
+            type="text"
+            label="Department Code"
+            value={deptCode}
+            onChange={handleInputChange}
+            isSubmitted={isSubmitted}
+            name="deptCode"
+            ControlID="deptCode"
+            placeholder="Department Code"
+          />
+          <FormField
+            type="text"
+            label="Department Name"
+            value={deptName}
+            onChange={handleInputChange}
+            isSubmitted={isSubmitted}
+            name="deptName"
+            ControlID="deptName"
+            placeholder="Department Name"
+          />
+          <FormField
+            type="select"
+            label="Department Type"
+            value={deptType}
+            onChange={(e) => setDeptType(e.target.value)}
+            options={deptTypeValues}
+            isSubmitted={isSubmitted}
+            name="deptType"
+            ControlID="deptType"
+          />
         </Grid>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Department Location"
-              placeholder="Department Location"
-              value={deptLocation}
-              onChange={(e) => setDeptLocation(e.target.value)}
-              size="small"
-              isSubmitted={isSubmitted}
-              name="deptLocation"
-              ControlID="deptLocation"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Department Unit"
-              placeholder="Department Unit"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              size="small"
-              isSubmitted={isSubmitted}
-              name="unit"
-              ControlID="unit"
-            />
-          </Grid>
+          <FormField
+            type="text"
+            label="Department Location"
+            value={deptLocation}
+            onChange={handleInputChange}
+            isSubmitted={isSubmitted}
+            name="deptLocation"
+            ControlID="deptLocation"
+            placeholder="Department Location"
+          />
+          <FormField
+            type="text"
+            label="Department Unit"
+            value={unit}
+            onChange={handleInputChange}
+            isSubmitted={isSubmitted}
+            name="unit"
+            ControlID="unit"
+            placeholder="Department Unit"
+          />
         </Grid>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextArea
-              label="Remarks"
-              name="rNotes"
-              value={rNotes}
-              placeholder="Remarks"
-              onChange={(e) => setRNotes(e.target.value)}
-              rows={2}
-            />
-          </Grid>
+          <FormField
+            type="textarea"
+            label="Remarks"
+            value={rNotes}
+            onChange={handleInputChange}
+            name="rNotes"
+            ControlID="rNotes"
+            placeholder="Remarks"
+          />
         </Grid>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label={rActiveYN === "Y" ? "Active" : "Hidden"}
-              checked={rActiveYN === "Y"}
-              onChange={handleActiveToggle}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label="Registration"
-              checked={isUnitYN === "Y"}
-              onChange={(e) => setIsUnitYN(e.target.checked ? "Y" : "N")}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label="Auto Consumption"
-              checked={autoConsumptionYN === "Y"}
-              onChange={(e) =>
-                setAutoConsumptionYN(e.target.checked ? "Y" : "N")
-              }
-            />
-          </Grid>
+          <FormField
+            type="switch"
+            label={rActiveYN === "Y" ? "Active" : "Hidden"}
+            value={rActiveYN}
+            checked={rActiveYN === "Y"}
+            onChange={(e) => setRActiveYN(e.target.checked ? "Y" : "N")}
+            name="rActiveYN"
+            ControlID="rActiveYN"
+          />
+          <FormField
+            type="switch"
+            label="Registration"
+            value={isUnitYN}
+            checked={isUnitYN === "Y"}
+            onChange={(e, checked) => setIsUnitYN(checked ? "Y" : "N")}
+            name="isUnitYN"
+            ControlID="isUnitYN"
+          />
+          <FormField
+            type="switch"
+            label="Auto Consumption"
+            value={autoConsumptionYN}
+            checked={autoConsumptionYN === "Y"}
+            onChange={(e, checked) => setAutoConsumptionYN(checked ? "Y" : "N")}
+            name="autoConsumptionYN"
+            ControlID="autoConsumptionYN"
+          />
         </Grid>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label="Main Store"
-              checked={isStoreYN === "Y"}
-              onChange={(e) => setIsStoreYN(e.target.checked ? "Y" : "N")}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label="Sales"
-              checked={deptSalesYN === "Y"}
-              onChange={(e) => setDeptSalesYN(e.target.checked ? "Y" : "N")}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label="Discharge Note"
-              checked={dischargeNoteYN === "Y"}
-              onChange={(e) => setDischargeNoteYN(e.target.checked ? "Y" : "N")}
-            />
-          </Grid>
+          <FormField
+            type="switch"
+            label="Main Store"
+            value={isStoreYN}
+            checked={isStoreYN === "Y"}
+            onChange={(e, checked) => setIsStoreYN(checked ? "Y" : "N")}
+            name="isStoreYN"
+            ControlID="isStoreYN"
+          />
+          <FormField
+            type="switch"
+            label="Sales"
+            value={deptSalesYN}
+            checked={deptSalesYN === "Y"}
+            onChange={(e, checked) => setDeptSalesYN(checked ? "Y" : "N")}
+            name="deptSalesYN"
+            ControlID="deptSalesYN"
+          />
+          <FormField
+            type="switch"
+            label="Discharge Note"
+            value={dischargeNoteYN}
+            checked={dischargeNoteYN === "Y"}
+            onChange={(e, checked) => setDischargeNoteYN(checked ? "Y" : "N")}
+            name="dischargeNoteYN"
+            ControlID="dischargeNoteYN"
+          />
         </Grid>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label="Super Speciality"
-              checked={superSpecialityYN === "Y"}
-              onChange={(e) =>
-                setSuperSpecialityYN(e.target.checked ? "Y" : "N")
-              }
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label="Inventory"
-              checked={deptStorePhYN === "Y"}
-              onChange={(e) => setDeptStorePhYN(e.target.checked ? "Y" : "N")}
-            />
-          </Grid>
+          <FormField
+            type="switch"
+            label="Super Speciality"
+            value={superSpecialityYN}
+            checked={superSpecialityYN === "Y"}
+            onChange={(e, checked) => setSuperSpecialityYN(checked ? "Y" : "N")}
+            name="superSpecialityYN"
+            ControlID="superSpecialityYN"
+          />
+          <FormField
+            type="switch"
+            label="Inventory"
+            value={deptStorePhYN}
+            checked={deptStorePhYN === "Y"}
+            onChange={(e, checked) => setDeptStorePhYN(checked ? "Y" : "N")}
+            name="deptStorePhYN"
+            ControlID="deptStorePhYN"
+          />
         </Grid>
         <Grid container marginTop={0} spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label="Pharmacy"
-              checked={deptStore === "Y"}
-              onChange={(e) => setDeptStore(e.target.checked ? "Y" : "N")}
+          <FormField
+            type="switch"
+            label="Pharmacy"
+            value={deptStore}
+            checked={deptStore === "Y"}
+            onChange={(e, checked) => setDeptStore(checked ? "Y" : "N")}
+            name="deptStore"
+            ControlID="deptStore"
+          />
+          {deptStore === "Y" && (
+            <FormField
+              type="text"
+              label="DL Number"
+              value={dlNumber}
+              onChange={handleInputChange}
+              isSubmitted={isSubmitted}
+              name="dlNumber"
+              ControlID="dlNumber"
+              placeholder="DL Number"
             />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            {deptStore === "Y" && (
-              <FloatingLabelTextBox
-                title="DL Number"
-                placeholder="DL Number"
-                value={dlNumber}
-                onChange={(e) => setDlNumber(e.target.value)}
-                size="small"
-                isSubmitted={isSubmitted}
-                name="dlNumber"
-                ControlID="dlNumber"
-              />
-            )}
-          </Grid>
+          )}
         </Grid>
         <FormSaveClearButton
           clearText="Clear"

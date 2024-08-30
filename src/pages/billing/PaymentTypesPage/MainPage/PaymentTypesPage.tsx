@@ -8,7 +8,7 @@ import PaymentTypesSearch from "../SubPage/PaymentTypesSearch";
 import { useState } from "react";
 import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
 
-const PaymentTypesPagePage: React.FC = () => {
+const PaymentTypesPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<BPayTypeDto | undefined>(
     undefined
@@ -58,4 +58,4 @@ const PaymentTypesPagePage: React.FC = () => {
   );
 };
 
-export default PaymentTypesPagePage;
+export default PaymentTypesPage;
