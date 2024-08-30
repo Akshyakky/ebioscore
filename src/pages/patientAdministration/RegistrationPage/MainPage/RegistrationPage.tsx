@@ -8,7 +8,6 @@ import React, {
 import { Container, Paper, Box } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import PersonalDetails from "../SubPage/PersonalDetails";
 import ContactDetails from "../SubPage/ContactDetails";

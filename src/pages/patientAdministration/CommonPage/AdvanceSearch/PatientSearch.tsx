@@ -16,6 +16,7 @@ import { debounce } from "../../../../utils/Common/debounceUtils";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
+import { formatDate } from "../../../../utils/Common/dateUtils";
 
 interface PatientSearchProps {
   show: boolean;
@@ -78,8 +79,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       header: "Patient Name",
       visible: true,
       render: (row: PatientRegistrationDto) =>
-        `${row.patRegisters?.pTitle || ""} ${row.patRegisters?.pFName || ""} ${
-          row.patRegisters?.pLName || ""
+        `${row.patRegisters?.pTitle || ""} ${row.patRegisters?.pFName || ""} ${row.patRegisters?.pLName || ""
         }`,
     },
     {
@@ -87,7 +87,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       header: "Registration Date",
       visible: true,
       render: (row: PatientRegistrationDto) =>
-        row.patRegisters?.pRegDate.split("T")[0] || "",
+        formatDate(row.patRegisters?.pRegDate) || "",
     },
     {
       key: "patRegisters.pGender",
@@ -106,7 +106,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       header: "DOB",
       visible: true,
       render: (row: PatientRegistrationDto) =>
-        row.patRegisters?.pDob.split("T")[0] || "",
+        formatDate(row.patRegisters?.pDob) || "",
     },
     {
       key: "patRegisters.pssnID",

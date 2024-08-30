@@ -9,6 +9,9 @@ import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import Close from "@mui/icons-material/Close";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import { formatDate } from "../../../../utils/Common/dateUtils";
+import BreakSuspendDetails from "./BreakSuspendDetails";
+import { useServerDate } from "../../../../hooks/Common/useServerDate";
 
 interface BreakListSearchProps {
     open: boolean;
@@ -16,9 +19,12 @@ interface BreakListSearchProps {
     onSelect: (BreakList: any) => void;
 }
 const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSelect }) => {
+    const serverDate = useServerDate();
     const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
     const [searchTerm, setSearchTerm] = useState("");
     const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [suspendDialogOpen, setSuspendDialogOpen] = useState(false);
+    const [selectedBreak, setSelectedBreak] = useState<any>(null);
     useEffect(() => {
         if (open) {
             getAllBreakConDetails();
@@ -29,7 +35,7 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
         const result = await BreakListConDetailsService.getAllBreakConDetails();
         if (result.success && result.data) {
             const initialSwitchStatus = result.data.reduce((statusMap, item) => {
-                statusMap[item.bCDID] = item.rActiveYN === "Y";
+                statusMap[item.blID] = item.rActiveYN === "Y";
                 return statusMap;
             }, {} as { [key: number]: boolean });
             setSwitchStatus(initialSwitchStatus);
@@ -75,6 +81,18 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
         { key: "conResName", header: "Consultant/Resource Name", visible: true },
         { key: "rNotes", header: "Remarks", visible: true },
         {
+            key: "blStartDate",
+            header: "Break Start Date",
+            visible: true,
+            render: (row: any) => formatDate(row.blStartDate),
+        },
+        {
+            key: "blEndDate",
+            header: "Break End Date",
+            visible: true,
+            render: (row: any) => formatDate(row.blEndDate),
+        },
+        {
             key: "recordStatus", header: "Status", visible: true, render: (row: any) => (
                 <Typography variant="body2">
                     {switchStatus[row.blID] ? "Active" : "Hidden"}
@@ -106,8 +124,18 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
         },
     ];
 
-    const handleSuspend = async (BreakList: any) => {
+    const handleSuspend = (breakData: any) => {
+        setSelectedBreak({
+            ...breakData,
+            bCSStartDate: serverDate,
+            bCSEndDate: serverDate
+        });
+        setSuspendDialogOpen(true);
+    };
 
+    const handleSuspendDialogClose = () => {
+        setSuspendDialogOpen(false);
+        setSelectedBreak(null);
     };
 
     const handleDialogClose = () => {
@@ -124,7 +152,7 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
             open={open}
             onClose={onClose}
             title="Break Frequency Details"
-            maxWidth="lg"
+            maxWidth="xl"
             disableEscapeKeyDown={true}
             disableBackdropClick={true}
             dialogContentSx={{ maxHeight: '400px' }}
@@ -156,6 +184,11 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
             </Box>
             <CustomGrid columns={columns} data={dataWithIndex} searchTerm={searchTerm} />
         </GenericDialog>
+        <BreakSuspendDetails
+            open={suspendDialogOpen}
+            onClose={handleSuspendDialogClose}
+            breakData={selectedBreak}
+        />
     </>)
 }
 export default BreakListSearch;
