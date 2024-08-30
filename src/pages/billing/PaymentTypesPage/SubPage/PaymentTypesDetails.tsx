@@ -206,7 +206,7 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
             ControlID="payMode"
           />
           <FormField
-            type="text"
+            type="number"
             label="Bank Charges"
             value={formState.bankCharge.toString()}
             onChange={handleInputChange}
@@ -214,6 +214,8 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
             name="bankCharge"
             ControlID="BankCharges"
             placeholder="Bank Charges"
+            min={0}
+            max={100}
           />
         </Grid>
         <Grid container spacing={2}>

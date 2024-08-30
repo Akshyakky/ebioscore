@@ -1,7 +1,7 @@
 import React from "react";
 import { DepartmentDto } from "../../../../interfaces/Billing/DepartmentDto";
 import { DepartmentListService } from "../../../../services/BillingServices/DepartmentListService";
-import CommonSearchDialog from "../../../../components/Dialog/CommonSearchDialog";
+import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 
 interface DepartmentListSearchProps {
   open: boolean;
@@ -24,7 +24,7 @@ const DepartmentListSearch: React.FC<DepartmentListSearchProps> = ({
       id,
       status
     );
-    return result.success; // Extracting the boolean value from the OperationResult
+    return result.success;
   };
 
   const getItemId = (item: DepartmentDto) => item.deptID;
@@ -39,13 +39,13 @@ const DepartmentListSearch: React.FC<DepartmentListSearchProps> = ({
   ];
 
   return (
-    <CommonSearchDialog
+    <GenericAdvanceSearch
       open={open}
       onClose={onClose}
       onSelect={onSelect}
       title="DEPARTMENT LIST"
       fetchItems={fetchItems}
-      updateActiveStatus={updateActiveStatus} // This now returns a Promise<boolean>
+      updateActiveStatus={updateActiveStatus}
       columns={columns}
       getItemId={getItemId}
       getItemActiveStatus={getItemActiveStatus}

@@ -1,7 +1,7 @@
 import React from "react";
 import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
 import { PaymentTypesService } from "../../../../services/BillingServices/PaymentTypesService";
-import CommonSearchDialog from "../../../../components/Dialog/CommonSearchDialog";
+import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 
 interface PaymentTypesSearchProps {
   open: boolean;
@@ -37,7 +37,7 @@ const PaymentTypesSearch: React.FC<PaymentTypesSearchProps> = ({
   ];
 
   return (
-    <CommonSearchDialog
+    <GenericAdvanceSearch
       open={open}
       onClose={onClose}
       onSelect={onSelect}

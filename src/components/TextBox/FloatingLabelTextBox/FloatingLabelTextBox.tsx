@@ -22,6 +22,7 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   isSubmitted = false,
   errorMessage,
   max,
+  min,
   autoComplete = "on",
   inputPattern,
   name,
@@ -78,6 +79,7 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
             "aria-label": ariaLabel || title,
             maxLength: maxLength,
             max: max,
+            min: min
           },
         }}
         error={isInvalid}

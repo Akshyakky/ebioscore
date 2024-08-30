@@ -15,7 +15,8 @@ export interface TextBoxProps {
   maxLength?: number;
   isSubmitted?: boolean;
   errorMessage?: string;
-  max?: string;
+  max?: number;
+  min?: number;
   autoComplete?: string;
   inputPattern?: RegExp;
   name?: string;
