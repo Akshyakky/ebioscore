@@ -211,6 +211,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
             name="deptCode"
             ControlID="deptCode"
             placeholder="Department Code"
+            isMandatory
           />
           <FormField
             type="text"
@@ -221,7 +222,10 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
             name="deptName"
             ControlID="deptName"
             placeholder="Department Name"
+            isMandatory
           />
+        </Grid>
+        <Grid container spacing={2}>
           <FormField
             type="select"
             label="Department Type"
@@ -231,9 +235,8 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
             isSubmitted={isSubmitted}
             name="deptType"
             ControlID="deptType"
+            isMandatory
           />
-        </Grid>
-        <Grid container spacing={2}>
           <FormField
             type="text"
             label="Department Location"
@@ -244,6 +247,8 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
             ControlID="deptLocation"
             placeholder="Department Location"
           />
+        </Grid>
+        <Grid container spacing={2}>
           <FormField
             type="text"
             label="Department Unit"
