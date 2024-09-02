@@ -296,7 +296,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             name="PIC"
             value={
               formData.patRegisters.pTypeID !== undefined &&
-              formData.patRegisters.pTypeID !== 0
+                formData.patRegisters.pTypeID !== 0
                 ? formData.patRegisters.pTypeID.toString()
                 : ""
             }
@@ -546,3 +546,5 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
 };
 
 export default PersonalDetails;
+
+

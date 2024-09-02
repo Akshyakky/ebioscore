@@ -6,7 +6,7 @@ import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import CustomButton from "../../../../components/Button/CustomButton";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import TextArea from "../../../../components/TextArea/TextArea";
-import { BreakConSuspendData } from "../../../../interfaces/FrontOffice/BreakConSuspendData";
+import { BreakConSuspendData } from "../../../../interfaces/frontOffice/BreakConSuspendData";
 import { BreakConSuspendService } from "../../../../services/FrontOfficeServices/BreakConSuspendService";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";

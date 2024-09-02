@@ -19,7 +19,7 @@ type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email";
 interface BaseFormFieldProps {
   type: FieldType;
   label: string;
-  value: string;
+  value: any;
   isSubmitted?: boolean;
   options?: DropdownOption[];
   name: string;
