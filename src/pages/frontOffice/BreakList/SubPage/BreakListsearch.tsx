@@ -12,6 +12,9 @@ import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTe
 import { formatDate } from "../../../../utils/Common/dateUtils";
 import BreakSuspendDetails from "./BreakSuspendDetails";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
+import PauseCircleOutline from "@mui/icons-material/PauseCircleOutline";
+import PlayCircleOutline from "@mui/icons-material/PlayCircleOutline";
+import { BreakConSuspendService } from "../../../../services/FrontOfficeServices/BreakConSuspendService";
 
 interface BreakListSearchProps {
     open: boolean;
@@ -80,6 +83,7 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
         { key: "breakName", header: "Break Name", visible: true },
         { key: "conResName", header: "Consultant/Resource Name", visible: true },
         { key: "rNotes", header: "Remarks", visible: true },
+        { key: "hPLID", header: "hPLID", visible: false },
         {
             key: "blStartDate",
             header: "Break Start Date",
@@ -110,25 +114,54 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
             ),
         },
         {
-            key: "BreakListSuspend",
-            header: "Suspend",
+            key: "SuspendStatus",
+            header: "Action",
             visible: true,
-            render: (row: any) => (
-                <CustomButton
-                    text="Suspend"
-                    onClick={() => handleSuspend(row)}
-                    icon={Close}
-                    color="secondary"
-                />
-            )
+            render: (row: any) => {
+                const isSuspend = row.suspendStatus === "Suspend";
+                return (
+                    <CustomButton
+                        text={isSuspend ? "Suspend" : "Resume"}
+                        onClick={() => handleSuspendResume(row, isSuspend)}
+                        icon={isSuspend ? PauseCircleOutline : PlayCircleOutline}
+                        color={isSuspend ? "error" : "success"}
+                    //className="btn-block"
+                    />
+                );
+            }
         },
     ];
+
+    const handleSuspendResume = (breakData: any, isSuspend: boolean) => {
+        if (isSuspend) {
+            handleSuspend(breakData);
+        } else {
+            handleResume(breakData);
+        }
+    };
+
+    const handleResume = async (breakData: any) => {
+        try {
+            // Assuming there's a service method to update the BreakConSuspend status
+            const result = await BreakConSuspendService.updateBreakConSuspendActiveStatus(breakData.bcsID, false); // Setting rActiveYN to false (N)
+
+            if (result.success) {
+                // Refresh the BreakConDetails list to reflect the updated status
+                await getAllBreakConDetails();
+            } else {
+                // Handle any errors here, maybe show a notification
+                console.error("Failed to resume the break:", result.errorMessage);
+            }
+        } catch (error) {
+            console.error("Error resuming the break:", error);
+        }
+    };
 
     const handleSuspend = (breakData: any) => {
         setSelectedBreak({
             ...breakData,
-            bCSStartDate: serverDate,
-            bCSEndDate: serverDate
+            blStartDate: formatDate(breakData.blStartDate),
+            blEndDate: formatDate(breakData.blEndDate)
         });
         setSuspendDialogOpen(true);
     };
