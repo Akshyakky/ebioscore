@@ -182,6 +182,7 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
             name="payCode"
             ControlID="payCode"
             placeholder="Payment Type Code"
+            isMandatory
           />
           <FormField
             type="text"
@@ -192,6 +193,7 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
             name="payName"
             ControlID="PaymentTypeName"
             placeholder="Payment Type Name"
+            isMandatory
           />
         </Grid>
         <Grid container spacing={2}>
@@ -204,6 +206,7 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
             options={payTypeValues}
             name="payMode"
             ControlID="payMode"
+            isMandatory
           />
           <FormField
             type="number"
