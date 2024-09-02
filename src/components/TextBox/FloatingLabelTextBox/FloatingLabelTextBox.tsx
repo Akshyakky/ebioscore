@@ -1,8 +1,35 @@
-// FloatingLabelTextBox.tsx
 import React, { useMemo, useCallback } from "react";
-import TextField from "@mui/material/TextField";
+import TextField, { TextFieldProps } from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
-import { TextBoxProps } from "../../../interfaces/Common/TextBoxProps";
+
+export interface TextBoxProps {
+  ControlID: string;
+  title?: string;
+  value?: any;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  type?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  size?: "small" | "medium";
+  isMandatory?: boolean;
+  disabled?: boolean;
+  readOnly?: boolean;
+  ariaLabel?: string;
+  maxLength?: number;
+  isSubmitted?: boolean;
+  errorMessage?: string;
+  max?: number | string;
+  min?: number | string;
+  autoComplete?: string;
+  inputPattern?: RegExp;
+  name?: string;
+  onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  multiline?: boolean;
+  rows?: number;
+  InputProps?: TextFieldProps['InputProps'];
+  InputLabelProps?: TextFieldProps['InputLabelProps'];
+}
 
 const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   ControlID,
@@ -29,6 +56,8 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   onKeyPress,
   multiline = false,
   rows = 0,
+  InputProps = {},
+  InputLabelProps = {},
 }) => {
   const controlId = useMemo(() => `txt${ControlID}`, [ControlID]);
 
@@ -53,6 +82,17 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
     [errorMessage, isMandatory, value, title]
   );
 
+  const inputProps: React.InputHTMLAttributes<HTMLInputElement> = {
+    "aria-label": ariaLabel || title,
+    maxLength: maxLength,
+    ...InputProps.inputProps,
+  };
+
+  if (type === "number" || type === "date") {
+    inputProps.max = max;
+    inputProps.min = min;
+  }
+
   return (
     <FormControl
       variant="outlined"
@@ -75,12 +115,8 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
         required={isMandatory}
         InputProps={{
           readOnly: readOnly,
-          inputProps: {
-            "aria-label": ariaLabel || title,
-            maxLength: maxLength,
-            max: max,
-            min: min
-          },
+          ...InputProps,
+          inputProps: inputProps,
         }}
         error={isInvalid}
         helperText={isInvalid ? errorToShow : ""}
@@ -88,6 +124,10 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
         aria-describedby={isInvalid ? `${controlId}-error` : undefined}
         multiline={multiline}
         rows={rows}
+        InputLabelProps={{
+          shrink: type === "date" ? true : undefined,
+          ...InputLabelProps,
+        }}
       />
     </FormControl>
   );

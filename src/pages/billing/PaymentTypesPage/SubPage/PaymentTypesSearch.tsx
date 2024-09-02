@@ -22,7 +22,7 @@ const PaymentTypesSearch: React.FC<PaymentTypesSearchProps> = ({
       id,
       status
     );
-    return result.success; // Extracting the boolean value from the OperationResult
+    return result.success;
   };
 
   const getItemId = (item: BPayTypeDto) => item.payID;
@@ -41,9 +41,9 @@ const PaymentTypesSearch: React.FC<PaymentTypesSearchProps> = ({
       open={open}
       onClose={onClose}
       onSelect={onSelect}
-      title="Payment Type CODE LIST"
+      title="Payment Type Code List"
       fetchItems={fetchItems}
-      updateActiveStatus={updateActiveStatus} // This now returns a Promise<boolean>
+      updateActiveStatus={updateActiveStatus}
       columns={columns}
       getItemId={getItemId}
       getItemActiveStatus={getItemActiveStatus}

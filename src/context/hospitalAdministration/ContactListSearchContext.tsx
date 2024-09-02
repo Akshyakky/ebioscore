@@ -14,7 +14,7 @@ interface ContactListSearchContextProps {
 export const ContactListSearchContext =
   createContext<ContactListSearchContextProps>({
     searchResults: [],
-    performSearch: async () => {},
+    performSearch: async () => { },
   });
 
 interface ContextListSearchProviderProps {

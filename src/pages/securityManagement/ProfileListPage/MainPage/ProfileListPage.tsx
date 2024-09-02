@@ -128,8 +128,8 @@ const ProfileListPage: React.FC = () => {
         />
       )}
       <ProfileListSearch
-        show={isSearchDialogOpen}
-        handleClose={handleCloseSearchDialog}
+        open={isSearchDialogOpen}
+        onClose={handleCloseSearchDialog}
         onEditProfile={handleEditProfile}
       />
     </Container>

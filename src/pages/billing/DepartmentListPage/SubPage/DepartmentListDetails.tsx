@@ -200,182 +200,181 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
       <Typography variant="h6" id="department-list-header">
         Department List
       </Typography>
-      <section>
-        <Grid container spacing={2}>
-          <FormField
-            type="text"
-            label="Department Code"
-            value={deptCode}
-            onChange={handleInputChange}
-            isSubmitted={isSubmitted}
-            name="deptCode"
-            ControlID="deptCode"
-            placeholder="Department Code"
-          />
-          <FormField
-            type="text"
-            label="Department Name"
-            value={deptName}
-            onChange={handleInputChange}
-            isSubmitted={isSubmitted}
-            name="deptName"
-            ControlID="deptName"
-            placeholder="Department Name"
-          />
-          <FormField
-            type="select"
-            label="Department Type"
-            value={deptType}
-            onChange={(e) => setDeptType(e.target.value)}
-            options={deptTypeValues}
-            isSubmitted={isSubmitted}
-            name="deptType"
-            ControlID="deptType"
-          />
-        </Grid>
-        <Grid container spacing={2}>
-          <FormField
-            type="text"
-            label="Department Location"
-            value={deptLocation}
-            onChange={handleInputChange}
-            isSubmitted={isSubmitted}
-            name="deptLocation"
-            ControlID="deptLocation"
-            placeholder="Department Location"
-          />
-          <FormField
-            type="text"
-            label="Department Unit"
-            value={unit}
-            onChange={handleInputChange}
-            isSubmitted={isSubmitted}
-            name="unit"
-            ControlID="unit"
-            placeholder="Department Unit"
-          />
-        </Grid>
-        <Grid container spacing={2}>
-          <FormField
-            type="textarea"
-            label="Remarks"
-            value={rNotes}
-            onChange={handleInputChange}
-            name="rNotes"
-            ControlID="rNotes"
-            placeholder="Remarks"
-          />
-        </Grid>
-        <Grid container spacing={2}>
-          <FormField
-            type="switch"
-            label={rActiveYN === "Y" ? "Active" : "Hidden"}
-            value={rActiveYN}
-            checked={rActiveYN === "Y"}
-            onChange={(e) => setRActiveYN(e.target.checked ? "Y" : "N")}
-            name="rActiveYN"
-            ControlID="rActiveYN"
-          />
-          <FormField
-            type="switch"
-            label="Registration"
-            value={isUnitYN}
-            checked={isUnitYN === "Y"}
-            onChange={(e, checked) => setIsUnitYN(checked ? "Y" : "N")}
-            name="isUnitYN"
-            ControlID="isUnitYN"
-          />
-          <FormField
-            type="switch"
-            label="Auto Consumption"
-            value={autoConsumptionYN}
-            checked={autoConsumptionYN === "Y"}
-            onChange={(e, checked) => setAutoConsumptionYN(checked ? "Y" : "N")}
-            name="autoConsumptionYN"
-            ControlID="autoConsumptionYN"
-          />
-        </Grid>
-        <Grid container spacing={2}>
-          <FormField
-            type="switch"
-            label="Main Store"
-            value={isStoreYN}
-            checked={isStoreYN === "Y"}
-            onChange={(e, checked) => setIsStoreYN(checked ? "Y" : "N")}
-            name="isStoreYN"
-            ControlID="isStoreYN"
-          />
-          <FormField
-            type="switch"
-            label="Sales"
-            value={deptSalesYN}
-            checked={deptSalesYN === "Y"}
-            onChange={(e, checked) => setDeptSalesYN(checked ? "Y" : "N")}
-            name="deptSalesYN"
-            ControlID="deptSalesYN"
-          />
-          <FormField
-            type="switch"
-            label="Discharge Note"
-            value={dischargeNoteYN}
-            checked={dischargeNoteYN === "Y"}
-            onChange={(e, checked) => setDischargeNoteYN(checked ? "Y" : "N")}
-            name="dischargeNoteYN"
-            ControlID="dischargeNoteYN"
-          />
-        </Grid>
-        <Grid container spacing={2}>
-          <FormField
-            type="switch"
-            label="Super Speciality"
-            value={superSpecialityYN}
-            checked={superSpecialityYN === "Y"}
-            onChange={(e, checked) => setSuperSpecialityYN(checked ? "Y" : "N")}
-            name="superSpecialityYN"
-            ControlID="superSpecialityYN"
-          />
-          <FormField
-            type="switch"
-            label="Inventory"
-            value={deptStorePhYN}
-            checked={deptStorePhYN === "Y"}
-            onChange={(e, checked) => setDeptStorePhYN(checked ? "Y" : "N")}
-            name="deptStorePhYN"
-            ControlID="deptStorePhYN"
-          />
-        </Grid>
-        <Grid container marginTop={0} spacing={2}>
-          <FormField
-            type="switch"
-            label="Pharmacy"
-            value={deptStore}
-            checked={deptStore === "Y"}
-            onChange={(e, checked) => setDeptStore(checked ? "Y" : "N")}
-            name="deptStore"
-            ControlID="deptStore"
-          />
-          {deptStore === "Y" && (
-            <FormField
-              type="text"
-              label="DL Number"
-              value={dlNumber}
-              onChange={handleInputChange}
-              isSubmitted={isSubmitted}
-              name="dlNumber"
-              ControlID="dlNumber"
-              placeholder="DL Number"
-            />
-          )}
-        </Grid>
-        <FormSaveClearButton
-          clearText="Clear"
-          saveText="Save"
-          onClear={handleClear}
-          onSave={handleSave}
-          clearIcon={DeleteIcon}
-          saveIcon={SaveIcon}
+      <Grid container spacing={2}>
+        <FormField
+          type="text"
+          label="Department Code"
+          value={deptCode}
+          onChange={handleInputChange}
+          isSubmitted={isSubmitted}
+          name="deptCode"
+          ControlID="deptCode"
+          placeholder="Department Code"
         />
-      </section>
+        <FormField
+          type="text"
+          label="Department Name"
+          value={deptName}
+          onChange={handleInputChange}
+          isSubmitted={isSubmitted}
+          name="deptName"
+          ControlID="deptName"
+          placeholder="Department Name"
+        />
+        <FormField
+          type="select"
+          label="Department Type"
+          value={deptType}
+          onChange={(e) => setDeptType(e.target.value)}
+          options={deptTypeValues}
+          isSubmitted={isSubmitted}
+          name="deptType"
+          ControlID="deptType"
+        />
+      </Grid>
+      <Grid container spacing={2}>
+        <FormField
+          type="text"
+          label="Department Location"
+          value={deptLocation}
+          onChange={handleInputChange}
+          isSubmitted={isSubmitted}
+          name="deptLocation"
+          ControlID="deptLocation"
+          placeholder="Department Location"
+        />
+        <FormField
+          type="text"
+          label="Department Unit"
+          value={unit}
+          onChange={handleInputChange}
+          isSubmitted={isSubmitted}
+          name="unit"
+          ControlID="unit"
+          placeholder="Department Unit"
+        />
+      </Grid>
+      <Grid container spacing={2}>
+        <FormField
+          type="textarea"
+          label="Remarks"
+          value={rNotes}
+          onChange={handleInputChange}
+          name="rNotes"
+          ControlID="rNotes"
+          placeholder="Remarks"
+          maxLength={250}
+        />
+      </Grid>
+      <Grid container spacing={2}>
+        <FormField
+          type="switch"
+          label={rActiveYN === "Y" ? "Active" : "Hidden"}
+          value={rActiveYN}
+          checked={rActiveYN === "Y"}
+          onChange={(e) => setRActiveYN(e.target.checked ? "Y" : "N")}
+          name="rActiveYN"
+          ControlID="rActiveYN"
+        />
+        <FormField
+          type="switch"
+          label="Registration"
+          value={isUnitYN}
+          checked={isUnitYN === "Y"}
+          onChange={(e, checked) => setIsUnitYN(checked ? "Y" : "N")}
+          name="isUnitYN"
+          ControlID="isUnitYN"
+        />
+        <FormField
+          type="switch"
+          label="Auto Consumption"
+          value={autoConsumptionYN}
+          checked={autoConsumptionYN === "Y"}
+          onChange={(e, checked) => setAutoConsumptionYN(checked ? "Y" : "N")}
+          name="autoConsumptionYN"
+          ControlID="autoConsumptionYN"
+        />
+      </Grid>
+      <Grid container spacing={2}>
+        <FormField
+          type="switch"
+          label="Main Store"
+          value={isStoreYN}
+          checked={isStoreYN === "Y"}
+          onChange={(e, checked) => setIsStoreYN(checked ? "Y" : "N")}
+          name="isStoreYN"
+          ControlID="isStoreYN"
+        />
+        <FormField
+          type="switch"
+          label="Sales"
+          value={deptSalesYN}
+          checked={deptSalesYN === "Y"}
+          onChange={(e, checked) => setDeptSalesYN(checked ? "Y" : "N")}
+          name="deptSalesYN"
+          ControlID="deptSalesYN"
+        />
+        <FormField
+          type="switch"
+          label="Discharge Note"
+          value={dischargeNoteYN}
+          checked={dischargeNoteYN === "Y"}
+          onChange={(e, checked) => setDischargeNoteYN(checked ? "Y" : "N")}
+          name="dischargeNoteYN"
+          ControlID="dischargeNoteYN"
+        />
+      </Grid>
+      <Grid container spacing={2}>
+        <FormField
+          type="switch"
+          label="Super Speciality"
+          value={superSpecialityYN}
+          checked={superSpecialityYN === "Y"}
+          onChange={(e, checked) => setSuperSpecialityYN(checked ? "Y" : "N")}
+          name="superSpecialityYN"
+          ControlID="superSpecialityYN"
+        />
+        <FormField
+          type="switch"
+          label="Inventory"
+          value={deptStorePhYN}
+          checked={deptStorePhYN === "Y"}
+          onChange={(e, checked) => setDeptStorePhYN(checked ? "Y" : "N")}
+          name="deptStorePhYN"
+          ControlID="deptStorePhYN"
+        />
+      </Grid>
+      <Grid container marginTop={0} spacing={2}>
+        <FormField
+          type="switch"
+          label="Pharmacy"
+          value={deptStore}
+          checked={deptStore === "Y"}
+          onChange={(e, checked) => setDeptStore(checked ? "Y" : "N")}
+          name="deptStore"
+          ControlID="deptStore"
+        />
+        {deptStore === "Y" && (
+          <FormField
+            type="text"
+            label="DL Number"
+            value={dlNumber}
+            onChange={handleInputChange}
+            isSubmitted={isSubmitted}
+            name="dlNumber"
+            ControlID="dlNumber"
+            placeholder="DL Number"
+          />
+        )}
+      </Grid>
+      <FormSaveClearButton
+        clearText="Clear"
+        saveText="Save"
+        onClear={handleClear}
+        onSave={handleSave}
+        clearIcon={DeleteIcon}
+        saveIcon={SaveIcon}
+      />
     </Paper>
   );
 };
