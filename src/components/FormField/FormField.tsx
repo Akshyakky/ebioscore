@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Grid, GridProps, SelectChangeEvent } from "@mui/material";
+import { Grid, Grid2Props, SelectChangeEvent } from "@mui/material";
 import FloatingLabelTextBox from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import TextArea from "../TextArea/TextArea";
 import DropdownSelect from "../DropDown/DropdownSelect";
@@ -33,7 +33,7 @@ interface BaseFormFieldProps {
   step?: number | string;
   fullWidth?: boolean;
   isSubmitted?: boolean;
-  gridProps?: Partial<Record<'xs' | 'sm' | 'md' | 'lg' | 'xl', GridProps['xs']>>;
+  gridProps?: Grid2Props;
   InputProps?: TextFieldProps['InputProps'];
   InputLabelProps?: TextFieldProps['InputLabelProps'];
   onBlur?: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
@@ -62,7 +62,7 @@ interface SwitchFormFieldProps extends BaseFormFieldProps {
   type: "switch";
   onChange: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
   checked: boolean;
-  color?: string;
+  color?: "primary" | "secondary" | "error" | "info" | "success" | "warning" | "default";
 }
 
 interface RadioFormFieldProps extends BaseFormFieldProps {

@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { BreakListDto, BreakListData, BreakConDetailData } from "../../../../interfaces/frontOffice/BreakListData";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { useSelector } from "react-redux";
@@ -22,6 +21,7 @@ import { formatDate } from "../../../../utils/Common/dateUtils";
 import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
 import { showAlert } from "../../../../utils/Common/showAlert";
+import { BreakConDetailData, BreakListData, BreakListDto } from "../../../../interfaces/FrontOffice/BreakListData";
 
 const frequencyCodeMap = {
     none: "FO70",

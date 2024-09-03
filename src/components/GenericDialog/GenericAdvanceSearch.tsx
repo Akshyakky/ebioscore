@@ -91,6 +91,7 @@ function GenericAdvanceSearch<T>({
           text="Edit"
           onClick={() => handleEditAndClose(row)}
           icon={Edit}
+          size="small"
         />
       ),
     },
@@ -117,7 +118,7 @@ function GenericAdvanceSearch<T>({
       visible: true,
       render: (row: T & { serialNumber: number; Status: string }) => (
         <CustomSwitch
-          size="medium"
+          size="small"
           color="secondary"
           checked={switchStatus[getItemId(row)]}
           onChange={(event) => handleSwitchChange(row, event.target.checked)}

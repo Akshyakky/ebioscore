@@ -22,8 +22,6 @@ const ReasonListPage: React.FC = () => {
         setSelectedData(data);
     };
 
-
-
     return (
         <Container maxWidth={false}>
             <Box sx={{ marginBottom: 2 }}>

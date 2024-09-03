@@ -1,24 +1,22 @@
-import { useMemo } from "react";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell, { tableCellClasses } from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import { styled } from "@mui/material/styles";
-
-type GenericObject = { [key: string]: any };
+import { useMemo, useState } from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  TableSortLabel,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
 
 export interface Column<T> {
   key: string;
   header: string;
   visible: boolean;
-  render?: (
-    item: T,
-    rowIndex: number,
-    columnIndex: number
-  ) => JSX.Element | string;
+  sortable?: boolean;
+  render?: (item: T, rowIndex: number, columnIndex: number) => JSX.Element | string;
   formatter?: (value: any) => string;
 }
 
@@ -30,20 +28,52 @@ interface CustomGridProps<T> {
   searchTerm?: string;
 }
 
-const CustomGrid = <T extends GenericObject>({
+const CustomGrid = <T extends Record<string, any>>({
   columns,
   data,
-  maxHeight,
+  maxHeight = '500px',
   minHeight,
-  searchTerm = "",
+  searchTerm = '',
 }: CustomGridProps<T>) => {
+
+  const [orderBy, setOrderBy] = useState<keyof T | ''>('');
+  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+
+  const handleSort = (property: keyof T) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const sortedData = useMemo(() => {
+    if (!orderBy) return data;
+    return [...data].sort((a, b) => {
+      if (orderBy === 'siNo') {
+        return order === 'asc'
+          ? Number(a[orderBy]) - Number(b[orderBy])
+          : Number(b[orderBy]) - Number(a[orderBy]);
+      }
+      const aValue = a[orderBy];
+      const bValue = b[orderBy];
+      if (aValue < bValue) return order === 'asc' ? -1 : 1;
+      if (aValue > bValue) return order === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [data, order, orderBy]);
+
   const highlightMatch = (text: string, searchTerm: string) => {
     const parts = text.split(new RegExp(`(${searchTerm})`, "gi"));
     return (
       <>
         {parts.map((part, index) =>
           part.toLowerCase() === searchTerm.toLowerCase() ? (
-            <span key={index} style={{ backgroundColor: "yellow" }}>
+            <span key={index} style={{
+              backgroundColor: "rgba(63, 81, 181, 0.2)",
+              color: "#1a237e",
+              fontWeight: 'bold',
+              padding: '2px 0',
+              borderRadius: '2px'
+            }}>
               {part}
             </span>
           ) : (
@@ -74,63 +104,67 @@ const CustomGrid = <T extends GenericObject>({
   };
 
   const StyledTableRow = styled(TableRow)(({ theme }) => ({
-    "&:nth-of-type(odd)": {
+    '&:nth-of-type(odd)': {
       backgroundColor: theme.palette.action.hover,
     },
-    "&:last-child td, &:last-child th": {
+    '&:last-child td, &:last-child th': {
       border: 0,
     },
   }));
 
   const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    [`&.${tableCellClasses.head}`]: {
+    '&.MuiTableCell-head': {
       backgroundColor: theme.palette.primary.dark,
       color: theme.palette.common.white,
-      fontWeight: "bold",
-      textAlign: "left",
+      fontWeight: 'bold',
+      textAlign: 'left',
     },
-    [`&.${tableCellClasses.body}`]: {
+    '&.MuiTableCell-body': {
       fontSize: 14,
     },
   }));
 
-  const visibleColumns = useMemo(
-    () => columns.filter((col) => col.visible),
-    [columns]
-  );
+  const visibleColumns = useMemo(() => columns.filter((col) => col.visible), [columns]);
 
   const filteredData = useMemo(() => {
-    if (!searchTerm) return data;
-    return data.filter((item) =>
+    if (!searchTerm) return sortedData;
+    return sortedData.filter((item) =>
       visibleColumns.some((col) => {
         const cellContent = item[col.key];
         return (
-          typeof cellContent === "string" &&
+          typeof cellContent === 'string' &&
           cellContent.toLowerCase().includes(searchTerm.toLowerCase())
         );
       })
     );
-  }, [data, searchTerm, visibleColumns]);
+  }, [sortedData, searchTerm, visibleColumns]);
 
   return (
-    <TableContainer
-      component={Paper}
-      style={{ maxHeight: maxHeight, minHeight: minHeight }}
-    >
+    <TableContainer component={Paper} style={{ maxHeight, minHeight, overflow: 'auto' }}>
       <Table stickyHeader size="small" aria-label="customized table">
         <TableHead>
           <StyledTableRow>
             {visibleColumns.map((col) => (
-              <StyledTableCell key={col.key}>{col.header}</StyledTableCell>
+              <StyledTableCell key={col.key}>
+                {col.sortable ? (
+                  <TableSortLabel
+                    active={orderBy === col.key}
+                    direction={orderBy === col.key ? order : 'asc'}
+                    onClick={() => handleSort(col.key as keyof T)}
+                    style={{ color: 'white' }}
+                  >
+                    {col.header}
+                  </TableSortLabel>
+                ) : (
+                  col.header
+                )}
+              </StyledTableCell>
             ))}
           </StyledTableRow>
         </TableHead>
         <TableBody>
           {filteredData.map((item, rowIndex) => (
-            <StyledTableRow
-              sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-              key={`row-${rowIndex}`}
-            >
+            <StyledTableRow key={`row-${rowIndex}`}>
               {visibleColumns.map((col, columnIndex) => (
                 <StyledTableCell key={`${col.key}-${rowIndex}`}>
                   {renderCell(item, col, rowIndex, columnIndex, searchTerm)}
