@@ -1,3 +1,5 @@
+import { TextField } from "@mui/material";
+
 export interface TextBoxProps {
   ControlID: string;
   title?: string;
@@ -15,12 +17,13 @@ export interface TextBoxProps {
   maxLength?: number;
   isSubmitted?: boolean;
   errorMessage?: string;
-  max?: number;
-  min?: number;
+  max?: number | string;
+  min?: number | string;
   autoComplete?: string;
   inputPattern?: RegExp;
   name?: string;
   onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   multiline?: boolean;
   rows?: number;
+  InputProps?: React.ComponentProps<typeof TextField>['InputProps'];
 }

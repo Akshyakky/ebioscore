@@ -21,27 +21,37 @@ interface BreakSuspendDetailsProps {
 const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose, breakData }) => {
     const { setLoading } = useLoading();
     const serverDate = useServerDate();
-    const [suspendStartDate, setSuspendStartDate] = useState(serverDate);
-    const [suspendEndDate, setSuspendEndDate] = useState(serverDate);
-    const [notes, setNotes] = useState<string>("");
     const { compID, compCode, compName, userID, userName } = useSelector((state: any) => state.userDetails);
+
+    const [suspendData, setSuspendData] = useState<Partial<BreakConSuspendData>>({
+        bCSStartDate: serverDate,
+        bCSEndDate: serverDate,
+        rNotes: "",
+    });
 
     useEffect(() => {
         if (open && breakData) {
-            setSuspendStartDate(serverDate);
-            setSuspendEndDate(serverDate);
-            setNotes(breakData.rNotes || "");
+            setSuspendData(prevData => ({
+                ...prevData,
+                bCSStartDate: serverDate,
+                bCSEndDate: serverDate,
+                rNotes: breakData.rNotes || "",
+            }));
         }
     }, [open, breakData, serverDate]);
+
+    const handleInputChange = (field: keyof BreakConSuspendData, value: any) => {
+        setSuspendData(prevData => ({ ...prevData, [field]: value }));
+    };
 
     const handleSave = useCallback(async () => {
         if (!breakData) return;
 
-        const suspendData: BreakConSuspendData = {
+        const updatedSuspendData: BreakConSuspendData = {
             ...breakData,
-            bCSStartDate: new Date(suspendStartDate),
-            bCSEndDate: new Date(suspendEndDate),
-            rNotes: notes,
+            ...suspendData,
+            bCSStartDate: new Date(suspendData.bCSStartDate as Date),
+            bCSEndDate: new Date(suspendData.bCSEndDate as Date),
             rCreatedOn: serverDate,
             rCreatedID: userID,
             rCreatedBy: userName,
@@ -55,7 +65,7 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
 
         setLoading(true);
         try {
-            const result = await BreakConSuspendService.saveBreakConSuspend(suspendData);
+            const result = await BreakConSuspendService.saveBreakConSuspend(updatedSuspendData);
             if (result.success) {
                 onClose();
             } else {
@@ -66,17 +76,19 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
         } finally {
             setLoading(false);
         }
-    }, [breakData, suspendStartDate, suspendEndDate, notes, serverDate, userID, userName, compID, compCode, compName, setLoading]);
+    }, [breakData, suspendData, serverDate, userID, userName, compID, compCode, compName, setLoading, onClose]);
 
-    const renderDateField = (id: string, title: string, value: string | Date, onChange?: (value: Date) => void) => (
+    const renderDateField = (id: string, title: string, value: Date | string | undefined, onChange?: (value: Date) => void) => (
         <Grid item xs={12} md={6}>
             <FloatingLabelTextBox
                 ControlID={id}
                 title={title}
-                value={typeof value === 'string' ? value : formatDate(value.toString())}
+                value={value ? (typeof value === 'string' ? value : value.toISOString().split('T')[0]) : ''}
                 onChange={onChange ? (e: React.ChangeEvent<HTMLInputElement>) => {
                     const date = new Date(e.target.value);
-                    onChange(date);
+                    if (!isNaN(date.getTime())) {
+                        onChange(date);
+                    }
                 } : undefined}
                 type={onChange ? "date" : undefined}
                 readOnly={!onChange}
@@ -116,16 +128,16 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
             }>
             <Box>
                 <Grid container spacing={2}>
-                    {renderDateField("BreakStartDate", "Break Start Date", formatDate(breakData?.blStartDate || new Date()))}
-                    {renderDateField("BreakEndDate", "Break End Date", formatDate(breakData?.blEndDate || new Date()))}
-                    {renderDateField("SuspendStartDate", "Suspend Start Date", suspendStartDate, setSuspendStartDate)}
-                    {renderDateField("SuspendEndDate", "Suspend End Date", suspendEndDate, setSuspendEndDate)}
+                    {renderDateField("BreakStartDate", "Break Start Date", breakData?.blStartDate)}
+                    {renderDateField("BreakEndDate", "Break End Date", breakData?.blEndDate)}
+                    {renderDateField("SuspendStartDate", "Suspend Start Date", suspendData.bCSStartDate, (date) => handleInputChange('bCSStartDate', date))}
+                    {renderDateField("SuspendEndDate", "Suspend End Date", suspendData.bCSEndDate, (date) => handleInputChange('bCSEndDate', date))}
                     <Grid item xs={12}>
                         <TextArea
                             label="Notes"
                             name="notes"
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
+                            value={suspendData.rNotes || ""}
+                            onChange={(e) => handleInputChange('rNotes', e.target.value)}
                             rows={4}
                             placeholder="Enter any notes here"
                             maxLength={4000}

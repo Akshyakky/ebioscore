@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Grid, Typography, Box } from "@mui/material";
 import { Edit } from "@mui/icons-material";
 import CustomSwitch from "../Checkbox/ColorSwitch";
-import FloatingLabelTextBox from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomGrid from "../CustomGrid/CustomGrid";
 import CustomButton from "../Button/CustomButton";
 import GenericDialog from "./GenericDialog";
 import Close from "@mui/icons-material/Close";
+import FormField from "../FormField/FormField";
 
 interface CommonSearchDialogProps<T> {
   open: boolean;
@@ -24,6 +24,7 @@ interface CommonSearchDialogProps<T> {
   getItemId: (item: T) => number;
   getItemActiveStatus: (item: T) => boolean;
   searchPlaceholder: string;
+  onSearch?: (searchQuery: string) => void;
 }
 
 function GenericAdvanceSearch<T>({
@@ -37,6 +38,7 @@ function GenericAdvanceSearch<T>({
   getItemId,
   getItemActiveStatus,
   searchPlaceholder,
+  onSearch,
 }: CommonSearchDialogProps<T>) {
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -124,31 +126,38 @@ function GenericAdvanceSearch<T>({
     },
   ];
 
-
   const handleDialogClose = () => {
     setSearchTerm("");
     onClose();
   };
 
   const handleSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+    const newSearchTerm = event.target.value;
+    setSearchTerm(newSearchTerm);
+    if (onSearch) {
+      onSearch(newSearchTerm);
+    }
   };
 
   const dialogContent = (
     <>
-      <Box mb={2}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={6} lg={4}>
-            <FloatingLabelTextBox
-              ControlID="SearchTerm"
-              title="Search"
-              value={searchTerm}
-              onChange={handleSearchInputChange}
-              placeholder={searchPlaceholder}
-              size="small"
-              autoComplete="off"
-            />
-          </Grid>
+      <Box>
+        <Grid container>
+          <FormField
+            type="search"
+            label="Search"
+            value={searchTerm}
+            onChange={handleSearchInputChange}
+            name="search"
+            ControlID="SearchField"
+            placeholder={searchPlaceholder}
+            InputProps={{
+              type: 'search',
+            }}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
         </Grid>
       </Box>
       <CustomGrid
@@ -180,6 +189,7 @@ function GenericAdvanceSearch<T>({
       showCloseButton
       actions={dialogActions}
       disableBackdropClick
+      disableEscapeKeyDown
       dialogContentSx={{ minHeight: "600px", maxHeight: "600px", overflowY: "auto" }}
     >
       {dialogContent}

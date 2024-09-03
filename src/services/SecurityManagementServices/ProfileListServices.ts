@@ -9,6 +9,14 @@ import {
 } from "../../interfaces/SecurityManagement/ProfileListData";
 import { ModuleOperation } from "../../pages/securityManagement/CommonPage/OperationPermissionDetails";
 import { handleError } from "../CommonServices/HandlerError";
+import { CommonApiService } from "../CommonApiService";
+import { store } from "../../store/store";
+
+const apiService = new CommonApiService({
+  baseURL: APIConfig.securityManagementURL,
+});
+
+const getToken = () => store.getState().userDetails.token!;
 
 export const saveOrUpdateProfile = async (
   token: string,
@@ -117,10 +125,22 @@ export const getProfileReportOperations = async (
   }
 };
 
+export const updateProfileActiveStatus = async (
+  profileID: number,
+  rActiveYN: boolean
+): Promise<OperationResult<boolean>> => {
+  debugger;
+  return apiService.put<OperationResult<boolean>>(
+    `Profile/UpdateProfileActiveStatus/${profileID}`,
+    rActiveYN,
+    getToken()
+  );
+};
 export const ProfileService = {
   saveOrUpdateProfile,
   saveOrUpdateProfileDetail,
   getAllProfileDetails,
   getProfileModuleOperations,
   getProfileReportOperations,
+  updateProfileActiveStatus,
 };

@@ -1,10 +1,7 @@
 // service/RegistrationService/RegistrationService.ts
 import axios from "axios";
 import { APIConfig } from "../../../apiConfig";
-import {
-  PatientDemographicDetails,
-  PatientSearchResult,
-} from "../../../interfaces/PatientAdministration/registrationFormData";
+import { PatientDemographicDetails } from "../../../interfaces/PatientAdministration/registrationFormData";
 import { NextOfKinKinFormState } from "../../../interfaces/PatientAdministration/NextOfKinData";
 import { InsuranceFormState } from "../../../interfaces/PatientAdministration/InsuranceDetails";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
@@ -34,7 +31,7 @@ export const searchPatients = async (
   token: string,
   endpoint: string,
   searchTerm: string
-): Promise<{ data: PatientSearchResult[]; success: boolean }> => {
+): Promise<{ data: any[]; success: boolean }> => {
   try {
     const url = `${APIConfig.patientAdministrationURL}Registration/${endpoint}`;
     const headers = { Authorization: `Bearer ${token}` };

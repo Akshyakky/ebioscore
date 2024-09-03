@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback, useContext } from "react";
-import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import { Box, Container, Paper } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useSelector } from "react-redux";
@@ -42,7 +41,6 @@ const ContactListPage: React.FC = () => {
   );
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const { performSearch } = useContext(ContactListSearchContext);
   const { setLoading } = useLoading();
 
   const [switchStates, setSwitchStates] = useState({
@@ -157,7 +155,6 @@ const ContactListPage: React.FC = () => {
 
   const handleAdvancedSearch = async () => {
     setIsSearchOpen(true);
-    await performSearch("");
   };
 
   const handleEditContactList = async (conID: number) => {
@@ -217,8 +214,8 @@ const ContactListPage: React.FC = () => {
         </Paper>
       </Container>
       <ContactListSearch
-        show={isSearchOpen}
-        handleClose={() => setIsSearchOpen(false)}
+        open={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
         onEditContactList={handleEditContactList}
       />
     </>
