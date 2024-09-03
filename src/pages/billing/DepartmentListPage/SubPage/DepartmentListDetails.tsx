@@ -1,4 +1,4 @@
-import { Grid, Paper, Typography } from "@mui/material";
+import { ButtonProps, Grid, Paper, Typography } from "@mui/material";
 import { useState, useEffect, useMemo } from "react";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from "@mui/icons-material/Save";
@@ -15,27 +15,34 @@ import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 import FormField from "../../../../components/FormField/FormField";
+import CustomButton from "../../../../components/Button/CustomButton";
+import { DeptUsersListPage } from "./DeptUsersListPage";
+import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
+import { Box } from "devextreme-react";
 
 const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   editData,
 }) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [deptCode, setDeptCode] = useState("");
-  const [deptName, setDeptName] = useState("");
-  const [deptType, setDeptType] = useState("");
-  const [rNotes, setRNotes] = useState("");
-  const [unit, setUnit] = useState("");
-  const [deptLocation, setDeptLocation] = useState("");
-  const [dlNumber, setDlNumber] = useState("");
-  const [isUnitYN, setIsUnitYN] = useState("N");
-  const [autoConsumptionYN, setAutoConsumptionYN] = useState("N");
-  const [deptStorePhYN, setDeptStorePhYN] = useState("N");
-  const [deptStore, setDeptStore] = useState("N");
-  const [isStoreYN, setIsStoreYN] = useState("N");
-  const [deptSalesYN, setDeptSalesYN] = useState("N");
-  const [dischargeNoteYN, setDischargeNoteYN] = useState("N");
-  const [superSpecialityYN, setSuperSpecialityYN] = useState("N");
-  const [rActiveYN, setRActiveYN] = useState("Y");
+  const [deptId, setDeptId] = useState<number>(0);
+  const [deptCode, setDeptCode] = useState<string>("");
+  const [deptName, setDeptName] = useState<string>("");
+  const [deptType, setDeptType] = useState<string>("");
+  const [rNotes, setRNotes] = useState<string>("");
+  const [unit, setUnit] = useState<string>("");
+  const [deptLocation, setDeptLocation] = useState<string>("");
+  const [dlNumber, setDlNumber] = useState<string>("");
+  const [isUnitYN, setIsUnitYN] = useState<string>("N");
+  const [autoConsumptionYN, setAutoConsumptionYN] = useState<string>("N");
+  const [deptStorePhYN, setDeptStorePhYN] = useState<string>("N");
+  const [deptStore, setDeptStore] = useState<string>("N");
+  const [isStoreYN, setIsStoreYN] = useState<string>("N");
+  const [deptSalesYN, setDeptSalesYN] = useState<string>("N");
+  const [dischargeNoteYN, setDischargeNoteYN] = useState<string>("N");
+  const [superSpecialityYN, setSuperSpecialityYN] = useState<string>("N");
+  const [rActiveYN, setRActiveYN] = useState<string>("Y");
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
+
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
   const { compID, compCode, compName, userID, userName } =
@@ -44,6 +51,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
 
   useEffect(() => {
     if (editData) {
+      setDeptId(editData.deptID || 0);
       setDeptCode(editData.deptCode || "");
       setDeptName(editData.deptName || "");
       setDeptType(editData.deptType || "");
@@ -64,6 +72,14 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
       handleClear();
     }
   }, [editData]);
+
+  const handleDeptUserClick = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
 
   const transformDeptTypeValues = (data: DropdownOption[]): DropdownOption[] =>
     data.map((item) => ({
@@ -89,7 +105,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
     setLoading(true);
 
     const departmentDto: DepartmentDto = {
-      deptID: editData ? editData.deptID : 0,
+      deptID: deptId,
       deptCode: deptCode,
       deptName: deptName,
       deptType: deptType,
@@ -141,6 +157,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   };
 
   const handleClear = () => {
+    setDeptId(0);
     setDeptCode("");
     setDeptName("");
     setDeptType("");
@@ -200,7 +217,18 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
       <Typography variant="h6" id="department-list-header">
         Department List
       </Typography>
+
       <section>
+        {deptId > 0 && (
+          <CustomButton
+            text="Manage Users Access"
+            size="small"
+            onClick={handleDeptUserClick}
+            variant="contained"
+            color="info"
+            aria-label="Manage Department Users Access"
+          />
+        )}
         <Grid container spacing={2}>
           <FormField
             type="text"
@@ -277,7 +305,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
             label={rActiveYN === "Y" ? "Active" : "Hidden"}
             value={rActiveYN}
             checked={rActiveYN === "Y"}
-            onChange={(e) => setRActiveYN(e.target.checked ? "Y" : "N")}
+            onChange={handleActiveToggle}
             name="rActiveYN"
             ControlID="rActiveYN"
           />
@@ -372,6 +400,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
             />
           )}
         </Grid>
+
         <FormSaveClearButton
           clearText="Clear"
           saveText="Save"
@@ -381,6 +410,11 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
           saveIcon={SaveIcon}
         />
       </section>
+      <DeptUsersListPage
+        deptId={deptId}
+        openDialog={openDialog}
+        handleCloseDialog={handleCloseDialog}
+      />
     </Paper>
   );
 };
