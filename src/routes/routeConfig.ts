@@ -4,7 +4,10 @@ import RegistrationPage from "../pages/patientAdministration/RegistrationPage/Ma
 import RevisitPage from "../pages/patientAdministration/RevisitPage/MainPage/RevisitPage";
 import RoutineReportsPA from "../pages/patientAdministration/RoutineReportsPage/MainPage/RoutineReportsPAPage";
 import ListOfReportsPage from "../pages/routineReports/MainPage/ListOfReportsPage";
-import { PatientSearchProvider } from "../context/PatientSearchContext";
+import {
+  PatientSearchContext,
+  PatientSearchProvider,
+} from "../context/PatientSearchContext";
 import ContactListPage from "../pages/hospitalAdministration/ContactListPage/MainPage/ContactListPage";
 import { ContactListSearchProvider } from "../context/hospitalAdministration/ContactListSearchContext";
 import ProfileListPage from "../pages/securityManagement/ProfileListPage/MainPage/ProfileListPage";
@@ -64,6 +67,12 @@ const routeConfig: RouteConfig[] = [
     component: ProfileListPage,
     protected: true,
     providers: [ProfileListSearchProvider],
+  },
+  {
+    path: "/alertPage",
+    component: AlertPage,
+    protected: true,
+    providers: [PatientSearchProvider],
   },
   {
     path: "/admissionpage",

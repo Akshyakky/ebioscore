@@ -13,7 +13,7 @@ interface PatientSearchContextProps {
 
 export const PatientSearchContext = createContext<PatientSearchContextProps>({
   searchResults: [],
-  performSearch: async () => {},
+  performSearch: async () => { },
 });
 
 interface PatientSearchProviderProps {
@@ -32,6 +32,7 @@ export const PatientSearchProvider: React.FC<PatientSearchProviderProps> = ({
 
   const performSearch = useCallback(
     async (searchTerm: string): Promise<void> => {
+      debugger
       if (!token) {
         notifyError("User is not authenticated.");
         return;
@@ -39,6 +40,7 @@ export const PatientSearchProvider: React.FC<PatientSearchProviderProps> = ({
 
       setLoading(true);
       try {
+        debugger
         const result = await searchPatientDetails(token, searchTerm);
         console.log("Fetched result:", result); // Debug log
         if (result.success) {

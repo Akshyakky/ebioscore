@@ -148,6 +148,7 @@ export const searchPatientDetails = async (
   searchTerm: string
 ): Promise<OperationResult<PatientRegistrationDto[]>> => {
   try {
+    debugger;
     const url = `${APIConfig.patientAdministrationURL}Registration/SearchPatientDetails`;
     const headers = { Authorization: `Bearer ${token}` };
     const response = await axios.get<OperationResult<PatientRegistrationDto[]>>(
