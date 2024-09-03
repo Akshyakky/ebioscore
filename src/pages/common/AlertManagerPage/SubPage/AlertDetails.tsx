@@ -17,18 +17,12 @@ import EditIcon from "@mui/icons-material/Edit";
 import { AlertManagerServices } from "../../../../services/CommonServices/AlertManagerServices";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
-import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import CustomButton from "../../../../components/Button/CustomButton";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
-import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
-import { format } from "date-fns";
-import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
-
-
-
-
-
+import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
+import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 
 const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
     const [formState, setFormState] = useState({
@@ -44,22 +38,23 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
         category: "",
         oldPChartID: 0,
         oPVID: 0,
+        pChartCode: "",
     });
 
     const [alerts, setAlerts] = useState<AlertDto[]>([]);
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchTerm] = useState("");
     const { setLoading } = useLoading();
     const serverDate = useServerDate();
     const { userID, userName } = store.getState().userDetails;
     const uhidRef = useRef<HTMLInputElement>(null);
     const userInfo = useSelector((state: RootState) => state.userDetails);
     const token = userInfo.token!;
-    const { fetchLatestUHID } = useRegistrationUtils(token);
     const { fetchPatientSuggestions } = usePatientAutocomplete(token);
-    const [selectedPChartID, setSelectedPChartID] = useState<number>(0);
-
+    const [, setSelectedPChartID] = useState<number>(0);
+    const [, setAvailableAttendingPhysicians] = useState<DropdownOption[]>([]);
 
     useEffect(() => {
+        debugger
         if (editData) {
             setFormState({
                 isSubmitted: false,
@@ -74,6 +69,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                 category: editData.category || "",
                 oldPChartID: editData.oldPChartID || 0,
                 oPVID: editData.oPVID || 0,
+                pChartCode: editData.pChartCode || "",
             });
         } else {
             handleClear();
@@ -100,6 +96,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
             oldPChartID: formState.oldPChartID,
             payID: 0,
             oPVID: formState.oPVID,
+            pChartCode: formState.pChartCode || ""
         }),
         [formState, editData, userID, userName, serverDate]
     );
@@ -116,19 +113,24 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
     );
 
     const handleSave = async () => {
-        debugger
-        setFormState(prev => ({ ...prev, isSubmitted: true }));
+        debugger;
+        setFormState((prev) => ({ ...prev, isSubmitted: true }));
         setLoading(true);
 
         try {
+            debugger
             const AlertData = createAlertTypeDto();
             const result = await AlertManagerServices.saveAlert(AlertData);
             if (result.success) {
                 showAlert("Success", "Resource List saved successfully!", "success", {
-                    onConfirm: handleClear
+                    onConfirm: handleClear,
                 });
             } else {
-                showAlert("Error", result.errorMessage || "Failed to save Resource List.", "error");
+                showAlert(
+                    "Error",
+                    result.errorMessage || "Failed to save Resource List.",
+                    "error"
+                );
             }
         } catch (error) {
             console.error("Error saving Resource List:", error);
@@ -137,9 +139,8 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
             setLoading(false);
         }
     };
-
     const handleClear = useCallback(() => {
-        setFormState({
+        setFormState((prevState) => ({
             isSubmitted: false,
             oPIPAlertID: 0,
             oPIPNo: 0,
@@ -152,7 +153,8 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
             category: "",
             oldPChartID: 0,
             oPVID: 0,
-        });
+            pChartCode: prevState.pChartCode,  // Retain the UHID value
+        }));
         setSelectedPChartID(0);
     }, []);
 
@@ -169,35 +171,25 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
     const handleAdd = () => {
         const newAlert = createAlertTypeDto();
         setAlerts((prevAlerts) => [...prevAlerts, newAlert]);
-        handleClear();
+
     };
 
     const handleEdit = (item: AlertDto) => {
-        setFormState((prevState) => ({
-            ...prevState,
+        setFormState({
+            ...formState,
             ...item,
+            pChartCode: item.pChartCode,
             isSubmitted: false,
-        }));
+        });
     };
+
+
 
     const handleDelete = (item: AlertDto) => {
-        setAlerts((prevAlerts) => prevAlerts.filter((alert) => alert.oPIPAlertID !== item.oPIPAlertID));
+        setAlerts((prevAlerts) =>
+            prevAlerts.filter((alert) => alert.oPIPAlertID !== item.oPIPAlertID)
+        );
     };
-    const handleUHIDBlur = () => {
-        if (!formState.pChartID) {
-            fetchLatestUHID().then((latestUHID) => {
-                if (latestUHID) {
-                    setFormState((prevFormData) => ({
-                        ...prevFormData,
-                        patRegisters: {
-                            pChartCode: latestUHID,
-                        },
-                    }));
-                }
-            });
-        }
-    };
-
 
     const handlePatientSelect = async (selectedSuggestion: string) => {
         setLoading(true);
@@ -205,47 +197,36 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
             const numbersArray = extractNumbers(selectedSuggestion);
             const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
             if (pChartID) {
-                await fetchPatientDetailsAndUpdateForm(pChartID);
                 setSelectedPChartID(pChartID);
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
+                const availablePhysicians =
+                    await ContactMastService.fetchAvailableAttendingPhysicians(
+                        token,
+                        pChartID
+                    );
+                setAvailableAttendingPhysicians(availablePhysicians);
+                const lastVisitResult =
+                    await RevisitService.getLastVisitDetailsByPChartID(token, pChartID);
+                if (lastVisitResult && lastVisitResult.success) {
+                    const isAttendingPhysicianAvailable = availablePhysicians.some(
+                        (physician) => physician.value === lastVisitResult.data.attndPhyID
+                    );
 
-    const fetchPatientDetailsAndUpdateForm = async (pChartID: number) => {
-        setLoading(true);
-        try {
-            const patientDetails = await PatientService.getPatientDetails(
-                token,
-                pChartID
-            );
-            if (patientDetails.success && patientDetails.data) {
-                const formattedData = {
-                    ...patientDetails.data,
-                    patRegisters: {
-                        ...patientDetails.data.patRegisters,
-                        pRegDate: format(
-                            new Date(patientDetails.data.patRegisters.pRegDate),
-                            "yyyy-MM-dd"
-                        ),
-                        pDob: format(
-                            new Date(patientDetails.data.patRegisters.pDob),
-                            "yyyy-MM-dd"
-                        ),
-                        patMemSchemeExpiryDate: format(
-                            new Date(patientDetails.data.patRegisters.patMemSchemeExpiryDate),
-                            "yyyy-MM-dd"
-                        ),
-                    },
-                };
-            } else {
-                console.error(
-                    "Fetching patient details was not successful or data is undefined"
-                );
+                    setFormState((prevFormData) => ({
+                        ...prevFormData,
+                        pChartCode: selectedSuggestion.split("|")[0].trim(),
+                        pChartID: pChartID,
+                        attndPhyID: isAttendingPhysicianAvailable
+                            ? lastVisitResult.data.attndPhyID
+                            : 0,
+                    }));
+                } else {
+                    console.error(
+                        "Failed to fetch last visit details or no details available"
+                    );
+                }
             }
         } catch (error) {
-            console.error("Error fetching patient details:", error);
+            console.error("Error in handlePatientSelect:", error);
         } finally {
             setLoading(false);
         }
@@ -253,11 +234,36 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
 
     const columns: Column<AlertDto>[] = [
         { key: "oPIPAlertID", header: "Sl No.", visible: true },
-        { key: "oPIPDate", header: "Date", visible: true, formatter: (value: Date) => value.toLocaleDateString() },
+        {
+            key: "oPIPDate",
+            header: "Date",
+            visible: true,
+            formatter: (value: Date) => value.toLocaleDateString(),
+        },
         { key: "alertDescription", header: "Description", visible: true },
         { key: "rCreatedBy", header: "Created By", visible: true },
-        { key: "edit", header: "Edit", visible: true, render: (item: AlertDto) => <EditIcon onClick={() => handleEdit(item)} style={{ cursor: "pointer" }} /> },
-        { key: "delete", header: "Delete", visible: true, render: (item: AlertDto) => <DeleteIcon onClick={() => handleDelete(item)} style={{ cursor: "pointer" }} /> },
+        {
+            key: "edit",
+            header: "Edit",
+            visible: true,
+            render: (item: AlertDto) => (
+                <EditIcon
+                    onClick={() => handleEdit(item)}
+                    style={{ cursor: "pointer" }}
+                />
+            ),
+        },
+        {
+            key: "delete",
+            header: "Delete",
+            visible: true,
+            render: (item: AlertDto) => (
+                <DeleteIcon
+                    onClick={() => handleDelete(item)}
+                    style={{ cursor: "pointer" }}
+                />
+            ),
+        },
     ];
 
     return (
@@ -267,25 +273,35 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
             </Typography>
 
             <section>
-
-
                 <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-                    <AutocompleteTextBox
-                        ref={uhidRef}
-                        ControlID="UHID"
-                        title="UHID"
-                        type="text"
-                        size="small"
-                        placeholder="Search through UHID, Name, DOB, Phone No...."
-                        value={formState.pChartID}
-                        onChange={handleInputChange}
-                        onBlur={handleUHIDBlur}
-                        fetchSuggestions={fetchPatientSuggestions}
-                        inputValue={formState.pChartID}
-                        isSubmitted={formState.isSubmitted}
-                        isMandatory={true}
-                        maxLength={20}
-                    />
+                    <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+                        <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+                            <AutocompleteTextBox
+                                ref={uhidRef}
+                                ControlID="UHID"
+                                title="UHID"
+                                type="text"
+                                size="small"
+                                placeholder="Search through UHID, Name, DOB, Phone No...."
+                                value={editData ? formState.pChartCode : formState.pChartCode || ""}  // Maintain value in edit mode
+                                onChange={(e) => {
+                                    if (!editData) {
+                                        setFormState({
+                                            ...formState,
+                                            pChartCode: e.target.value,
+                                        });
+                                    }
+                                }}
+                                fetchSuggestions={fetchPatientSuggestions}
+                                isMandatory={true}
+                                onSelectSuggestion={handlePatientSelect}
+                                isSubmitted={formState.isSubmitted}
+                                disabled={!!editData}
+                            />
+
+                        </Grid>
+
+                    </Grid>
                 </Grid>
 
                 <Grid container spacing={2}>
@@ -301,7 +317,6 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                     />
                 </Grid>
 
-
                 <Grid container spacing={2}>
                     <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
                         <CustomButton
@@ -312,8 +327,6 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                         />
                     </Grid>
                 </Grid>
-
-
 
                 <Grid container spacing={2}>
                     <FormField

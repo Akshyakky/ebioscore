@@ -151,18 +151,22 @@ export const searchPatientDetails = async (
   searchTerm: string
 ): Promise<OperationResult<PatientRegistrationDto[]>> => {
   try {
+    debugger;
     const url = `${APIConfig.patientAdministrationURL}Registration/SearchPatientDetails`;
     const headers = { Authorization: `Bearer ${token}` };
-    const response = await axios.get<OperationResult<PatientRegistrationDto[]>>(url, {
-      headers,
-      params: { query: searchTerm },
-    });
-    
+    const response = await axios.get<OperationResult<PatientRegistrationDto[]>>(
+      url,
+      {
+        headers,
+        params: { query: searchTerm },
+      }
+    );
+
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response && error.response.status === 400) {
-        throw new Error(error.response.data.errorMessage || 'Bad request');
+        throw new Error(error.response.data.errorMessage || "Bad request");
       }
     }
     console.error(`Error during patient details search: ${error}`);
