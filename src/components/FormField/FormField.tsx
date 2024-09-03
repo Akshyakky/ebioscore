@@ -30,11 +30,13 @@ interface BaseFormFieldProps {
   maxLength?: number;
   min?: number | string;
   max?: number | string;
+  step?: number | string;
   fullWidth?: boolean;
   isSubmitted?: boolean;
   gridProps?: Partial<Record<'xs' | 'sm' | 'md' | 'lg' | 'xl', GridProps['xs']>>;
   InputProps?: TextFieldProps['InputProps'];
   InputLabelProps?: TextFieldProps['InputLabelProps'];
+  onBlur?: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
 interface TextFormFieldProps extends BaseFormFieldProps {
@@ -76,7 +78,6 @@ interface AutocompleteFormFieldProps extends BaseFormFieldProps {
   fetchSuggestions?: (input: string) => Promise<string[]>;
   onSelectSuggestion?: (suggestion: string) => void;
   suggestions?: string[];
-  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 type FormFieldProps = TextFormFieldProps | TextAreaFormFieldProps | SelectFormFieldProps | SwitchFormFieldProps | RadioFormFieldProps | AutocompleteFormFieldProps;
@@ -97,10 +98,12 @@ const FormField: React.FC<FormFieldProps> = React.memo((props) => {
     maxLength,
     min,
     max,
+    step,
     isSubmitted = false,
     gridProps = { xs: 12, sm: 6, md: 3, lg: 3, xl: 3 },
     InputProps,
     InputLabelProps,
+    onBlur,
   } = props;
 
   const renderField = useMemo(() => {
@@ -116,6 +119,7 @@ const FormField: React.FC<FormFieldProps> = React.memo((props) => {
             placeholder={placeholder}
             value={value}
             onChange={(props as TextFormFieldProps).onChange}
+            onBlur={onBlur}
             size={size}
             isSubmitted={isSubmitted}
             name={name}
@@ -128,6 +132,7 @@ const FormField: React.FC<FormFieldProps> = React.memo((props) => {
             maxLength={maxLength}
             max={max}
             min={min}
+            step={step}
             inputPattern={type === "number" ? /^[0-9]*$/ : undefined}
             InputProps={InputProps}
             InputLabelProps={InputLabelProps}
@@ -140,6 +145,7 @@ const FormField: React.FC<FormFieldProps> = React.memo((props) => {
             value={value}
             placeholder={placeholder}
             onChange={(props as TextAreaFormFieldProps).onChange}
+            //onBlur={onBlur}
             rows={4}
             name={name}
             maxLength={maxLength}
@@ -212,14 +218,14 @@ const FormField: React.FC<FormFieldProps> = React.memo((props) => {
             maxLength={maxLength}
             isSubmitted={isSubmitted}
             errorMessage={errorMessage}
-            onBlur={autocompleteProps.onBlur}
+            onBlur={onBlur}
             InputProps={InputProps}
           />
         );
       default:
         return null;
     }
-  }, [props, type, label, value, name, ControlID, size, placeholder, isMandatory, errorMessage, disabled, readOnly, maxLength, min, max, isSubmitted, InputProps, InputLabelProps]);
+  }, [props, type, label, value, name, ControlID, size, placeholder, isMandatory, errorMessage, disabled, readOnly, maxLength, min, max, step, isSubmitted, InputProps, InputLabelProps, onBlur]);
 
   return (
     <Grid item {...gridProps}>

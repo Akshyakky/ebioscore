@@ -136,7 +136,6 @@ const PatientInsuranceForm: React.FC<PatientInsuranceModalProps> = ({
       );
       setInsuranceOptions(InsuranceCarrierOptions);
       const responseRelation = await AppModifyListService.fetchAppModifyList(
-        token,
         endPointAppModifyList,
         "RELATION"
       );
@@ -148,7 +147,6 @@ const PatientInsuranceForm: React.FC<PatientInsuranceModalProps> = ({
       );
       setRelationValues(transformedRelationData);
       const responseCoverFor = await ConstantValues.fetchConstantValues(
-        token,
         endpointConstantValues,
         "COVR"
       );

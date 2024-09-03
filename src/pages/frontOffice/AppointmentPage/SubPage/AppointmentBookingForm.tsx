@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Grid } from '@mui/material';
 import { DropdownOption } from '../../../../interfaces/Common/DropdownOption';
 import FormField from '../../../../components/FormField/FormField';
@@ -22,9 +22,31 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
         { value: 'Registered', label: 'Registered' },
         { value: 'NonRegistered', label: 'Non Registered' }
     ];
+    const [cityOptions, setCityOptions] = useState<DropdownOption[]>([]);
+    const [titleOptions, setTitleOptions] = useState<DropdownOption[]>([]);
+
+    const handleDurationBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        if (e.target instanceof HTMLInputElement) {
+            const inputValue = e.target.value.trim();
+            if (inputValue === '') {
+                onChange('appointmentDuration', '15');
+                return;
+            }
+            let numericValue = parseInt(inputValue, 10);
+            if (isNaN(numericValue)) {
+                onChange('appointmentDuration', '15');
+                return;
+            }
+            let roundedValue = Math.round(numericValue / 15) * 15;
+            roundedValue = Math.max(15, Math.min(roundedValue, 480));
+            onChange('appointmentDuration', roundedValue.toString());
+        }
+    };
+
+    const isNonRegistered = formData.registrationStatus === 'NonRegistered';
 
     return (
-        <Box sx={{ padding: '20px', backgroundColor: '#fff', borderRadius: '8px', width: '100%' }}>
+        <Box sx={{ backgroundColor: '#fff', borderRadius: '8px', width: '100%' }}>
             <FormField
                 type="radio"
                 label="Registration Status"
@@ -38,17 +60,111 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                 inline={true}
             />
 
-            <FormField
-                type="text"
-                label="UHID No."
-                ControlID="uhid"
-                value={formData.uhid}
-                name="uhid"
-                placeholder="UHID, Name, DOB, Phone No"
-                isMandatory={true}
-                onChange={(e) => onChange('uhid', e.target.value)}
-                gridProps={{ xs: 12 }}
-            />
+            {isNonRegistered && (
+                <>
+                    <FormField
+                        type="select"
+                        label="Title"
+                        name="title"
+                        ControlID="title"
+                        value={formData.title}
+                        options={titleOptions}
+                        onChange={(e) => onChange('title', e.target.value)}
+                        isMandatory={true}
+                        gridProps={{ xs: 12 }}
+                    />
+                    <FormField
+                        type="text"
+                        label="First Name"
+                        ControlID="firstName"
+                        value={formData.firstName}
+                        name="firstName"
+                        onChange={(e) => onChange('firstName', e.target.value)}
+                        isMandatory={true}
+                        gridProps={{ xs: 6 }}
+                    />
+                    <FormField
+                        type="text"
+                        label="Last Name"
+                        ControlID="lastName"
+                        value={formData.lastName}
+                        name="lastName"
+                        onChange={(e) => onChange('lastName', e.target.value)}
+                        isMandatory={true}
+                        gridProps={{ xs: 6 }}
+                    />
+                    <FormField
+                        type="text"
+                        label="Aadhaar No."
+                        ControlID="aadhaarNo"
+                        value={formData.aadhaarNo}
+                        name="aadhaarNo"
+                        onChange={(e) => onChange('aadhaarNo', e.target.value)}
+                        gridProps={{ xs: 6 }}
+                    />
+                    <FormField
+                        type="text"
+                        label="Int. ID/Passport ID"
+                        ControlID="passportId"
+                        value={formData.passportId}
+                        name="passportId"
+                        onChange={(e) => onChange('passportId', e.target.value)}
+                        gridProps={{ xs: 6 }}
+                    />
+                    <FormField
+                        type="date"
+                        label="DOB"
+                        ControlID="dob"
+                        value={formData.dob}
+                        name="dob"
+                        onChange={(e) => onChange('dob', e.target.value)}
+                        gridProps={{ xs: 6 }}
+                    />
+                    <FormField
+                        type="text"
+                        label="Contact No."
+                        ControlID="contactNo"
+                        value={formData.contactNo}
+                        name="contactNo"
+                        onChange={(e) => onChange('contactNo', e.target.value)}
+                        isMandatory={true}
+                        gridProps={{ xs: 6 }}
+                    />
+                    <FormField
+                        type="email"
+                        label="Email"
+                        ControlID="email"
+                        value={formData.email}
+                        name="email"
+                        onChange={(e) => onChange('email', e.target.value)}
+                        gridProps={{ xs: 6 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="City"
+                        name="city"
+                        ControlID="city"
+                        value={formData.city}
+                        options={cityOptions}
+                        onChange={(e) => onChange('city', e.target.value)}
+                        gridProps={{ xs: 6 }}
+                    />
+                </>
+            )}
+
+            {!isNonRegistered && (
+                <FormField
+                    type="text"
+                    label="UHID No."
+                    ControlID="uhid"
+                    value={formData.uhid}
+                    name="uhid"
+                    placeholder="UHID, Name, DOB, Phone No"
+                    isMandatory={true}
+                    onChange={(e) => onChange('uhid', e.target.value)}
+                    gridProps={{ xs: 12 }}
+                />
+            )}
 
             {rLotYN === 'N' && (
                 <FormField
@@ -139,13 +255,17 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
             </Grid>
 
             <FormField
-                type="text"
+                type="number"
                 label="Appointment Duration (minutes)"
                 ControlID="appointmentDuration"
-                value={formData.appointmentDuration || '15'}
+                value={formData.appointmentDuration}
                 name="appointmentDuration"
                 onChange={(e) => onChange('appointmentDuration', e.target.value)}
+                onBlur={handleDurationBlur}
                 isMandatory={true}
+                min={15}
+                max={480}
+                step={15}
                 gridProps={{ xs: 12 }}
             />
 
