@@ -1,8 +1,7 @@
-import React, { useCallback, useContext } from "react";
+import React, { useCallback, useContext, useState } from "react";
 import { ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import { ProfileListSearchContext } from "../../../../context/SecurityManagement/ProfileListSearchContext";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { debounce } from "../../../../utils/Common/debounceUtils";
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 
 interface ProfileListSearchProps {
@@ -16,21 +15,20 @@ const ProfileListSearch: React.FC<ProfileListSearchProps> = ({
   onClose,
   onEditProfile,
 }) => {
-  const { performSearch, searchResults } = useContext(ProfileListSearchContext);
+  const { fetchAllProfiles } = useContext(ProfileListSearchContext);
+  const [profiles, setProfiles] = useState<ProfileListSearchResult[]>([]);
 
   const fetchItems = useCallback(async () => {
-    return searchResults;
-  }, [searchResults]);
-
-  const debouncedSearch = useCallback(
-    debounce((searchQuery: string) => {
-      performSearch(searchQuery);
-    }, 300),
-    [performSearch]
-  );
+    const fetchedProfiles = await fetchAllProfiles();
+    setProfiles(fetchedProfiles);
+    return fetchedProfiles;
+  }, [fetchAllProfiles]);
 
   const updateActiveStatus = async (id: number, status: boolean) => {
     const result = await ProfileService.updateProfileActiveStatus(id, status);
+    if (result.success) {
+      await fetchItems();
+    }
     return result.success;
   };
 
@@ -51,9 +49,8 @@ const ProfileListSearch: React.FC<ProfileListSearchProps> = ({
       updateActiveStatus={updateActiveStatus}
       columns={columns}
       getItemId={(item) => item.profileID}
-      getItemActiveStatus={() => true}//(item) => item.status !== "Hidden"
+      getItemActiveStatus={(item) => item.rActiveYN === "Y"}
       searchPlaceholder="Enter profile code or name"
-      onSearch={debouncedSearch}
     />
   );
 };

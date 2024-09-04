@@ -1,6 +1,5 @@
-//utils/Common/showAlert.tsx
 import { SweetAlertIcon } from 'sweetalert2';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import CustomAlert from '../../components/Alert/CustomAlert';
 
 export const showAlert = (
@@ -22,6 +21,7 @@ export const showAlert = (
     onClose?: () => void;
   }
 ) => {
+
   const {
     showConfirmButton = true,
     showCancelButton = false,
@@ -37,28 +37,46 @@ export const showAlert = (
     onClose,
   } = options || {};
 
-  const alertElement = document.createElement('div');
-  document.body.appendChild(alertElement);
+  try {
+    const alertElement = document.createElement('div');
+    document.body.appendChild(alertElement);
 
-  ReactDOM.render(
-    <CustomAlert
-      title={title}
-      message={message}
-      type={type}
-      show={true}
-      showConfirmButton={showConfirmButton}
-      showCancelButton={showCancelButton}
-      showPrintButton={showPrintButton}
-      showCloseButton={showCloseButton}
-      confirmButtonText={confirmButtonText}
-      cancelButtonText={cancelButtonText}
-      printButtonText={printButtonText}
-      closeButtonText={closeButtonText}
-      onConfirm={onConfirm}
-      onCancel={onCancel}
-      onPrint={onPrint}
-      onClose={onClose}
-    />,
-    alertElement
-  );
+    const root = createRoot(alertElement);
+
+    root.render(
+      <CustomAlert
+        title={title}
+        message={message}
+        type={type}
+        show={true}
+        showConfirmButton={showConfirmButton}
+        showCancelButton={showCancelButton}
+        showPrintButton={showPrintButton}
+        showCloseButton={showCloseButton}
+        confirmButtonText={confirmButtonText}
+        cancelButtonText={cancelButtonText}
+        printButtonText={printButtonText}
+        closeButtonText={closeButtonText}
+        onConfirm={() => {
+          if (onConfirm) onConfirm();
+          root.unmount();
+          alertElement.remove();
+        }}
+        onCancel={() => {
+          if (onCancel) onCancel();
+          root.unmount();
+          alertElement.remove();
+        }}
+        onPrint={() => {
+          if (onPrint) onPrint();
+        }}
+        onClose={() => {
+          if (onClose) onClose();
+          root.unmount();
+          alertElement.remove();
+        }}
+      />
+    );
+  } catch (error) {
+  }
 };

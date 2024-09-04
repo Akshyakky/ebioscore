@@ -108,7 +108,6 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
         try {
           const modulePermissionsData: OperationResult<ModuleOperation[]> =
             await ProfileService.getProfileModuleOperations(
-              token,
               parseInt(profileDetailsDropdowns.subModuleID),
               parseInt(profileDetailsDropdowns.mainModuleID),
               profileID
@@ -143,7 +142,6 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
         try {
           const reportPermissionsData: OperationResult<ReportPermission[]> =
             await ProfileService.getProfileReportOperations(
-              token,
               parseInt(selectedReportMainModule),
               compID!,
               profileID
@@ -310,7 +308,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
 
   const handleSelectAllChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked: boolean = event.target.checked;
-    
+
     // Update permissions in state first to reflect the UI changes immediately
     const updatedPermissions = permissions.map((permission) => ({
       ...permission,
@@ -352,9 +350,9 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
       console.error("Error saving all module permissions:", error);
       notifyError("Error saving all module permissions");
     }
-};
+  };
 
-const handleSelectAllReportChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSelectAllReportChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked: boolean = event.target.checked;
 
     const updatedReportPermissions = permissions.map((permission) => ({
@@ -397,7 +395,7 @@ const handleSelectAllReportChange = async (event: React.ChangeEvent<HTMLInputEle
       console.error("Error saving all report permissions:", error);
       notifyError("Error saving all report permissions");
     }
-};
+  };
 
 
   const handleClear = () => {

@@ -1,6 +1,11 @@
 // AppModifyListService.ts
-import axios from "axios";
 import { APIConfig } from "../../apiConfig";
+import { CommonApiService } from "../CommonApiService";
+import { store } from "../../store/store";
+
+const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });
+
+const getToken = () => store.getState().userDetails.token!;
 
 interface AppModifyList {
   id: number;
@@ -8,22 +13,18 @@ interface AppModifyList {
   label: string;
   defaultYn: string;
 }
-interface APIResponse {
-  amlId: number;
-  amlCode: string;
-  amlName: string;
-  defaultYn: string;
-}
+
 const fetchAppModifyList = async (
-  token: string,
   endpoint: string,
   fieldCode: string
 ): Promise<AppModifyList[]> => {
   try {
-    const url = `${APIConfig.commonURL}AppModify/${endpoint}?fieldCode=${fieldCode}`;
-    const headers = { Authorization: `Bearer ${token}` };
-    const response = await axios.get<APIResponse[]>(url, { headers });
-    return response.data.map((item) => ({
+    const token = getToken();
+    const response = await commonApiService.get<any[]>(
+      `AppModify/${endpoint}?fieldCode=${fieldCode}`,
+      token
+    );
+    return response.map((item) => ({
       value: item.amlCode,
       label: item.amlName,
       defaultYn: item.defaultYn,
@@ -31,10 +32,10 @@ const fetchAppModifyList = async (
     }));
   } catch (error) {
     console.log(`Error fetching ${fieldCode} values:`, error);
-
     throw error;
   }
 };
+
 export const AppModifyListService = {
   fetchAppModifyList,
 };

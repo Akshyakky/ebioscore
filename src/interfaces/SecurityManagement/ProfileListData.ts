@@ -23,6 +23,7 @@ export interface ProfileListSearchResult {
   profileName: string;
   status: string;
   rNotes: string;
+  rActiveYN: string;
 }
 export interface ReportPermissionDto {
   auAccessID: number;
@@ -42,7 +43,7 @@ export interface ReportPermission {
   allow: boolean;
   profDetID?: number;
   profileID: number;
-  reportYN:any;
+  reportYN: any;
 }
 
 export interface ProfileDetailsDropdowns {
@@ -53,7 +54,3 @@ export interface ProfileDetailsDropdowns {
   repMainModuleID: string;
   repMainModuleName: string;
 }
-
-
-
-

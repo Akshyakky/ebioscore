@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useContext } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Box, Container, Paper } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useSelector } from "react-redux";
@@ -14,7 +14,6 @@ import { DepartmentService } from "../../../../services/CommonServices/Departmen
 import { ContactListService } from "../../../../services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { ContactListData } from "../../../../interfaces/HospitalAdministration/ContactListData";
 import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch";
-import { ContactListSearchContext } from "../../../../context/hospitalAdministration/ContactListSearchContext";
 import ContactListForm from "../SubPage/ContactListForm";
 
 const ContactListPage: React.FC = () => {
@@ -70,24 +69,21 @@ const ContactListPage: React.FC = () => {
         employeeStatusValues,
         specialityValues,
       ] = await Promise.all([
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "ACAT"),
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "REFS"),
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "PTIT"),
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "PSEX"),
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "PBLD"),
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "PMAR"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "ACAT"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "REFS"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "PSEX"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "PBLD"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "PMAR"),
         AppModifyListService.fetchAppModifyList(
-          token!,
           "GetActiveAppModifyFieldsAsync",
           "CITY"
         ),
         AppModifyListService.fetchAppModifyList(
-          token!,
           "GetActiveAppModifyFieldsAsync",
           "STATE"
         ),
         AppModifyListService.fetchAppModifyList(
-          token!,
           "GetActiveAppModifyFieldsAsync",
           "NATIONALITY"
         ),
@@ -96,7 +92,7 @@ const ContactListPage: React.FC = () => {
           "GetActiveWardDepartments",
           compID!
         ),
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "EMPS"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "EMPS"),
         ContactListService.fetchActiveSpecialties(token!, compID!),
       ]);
 

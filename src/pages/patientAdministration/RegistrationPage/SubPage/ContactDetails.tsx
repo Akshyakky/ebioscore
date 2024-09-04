@@ -20,7 +20,6 @@ interface ContactDetailsProps {
 
 // Assuming token is a string, endpoint is a string, and fieldCode is a string
 const useDropdownFetcher = (
-  token: string,
   endpoint: string,
   fieldCode: string
 ) => {
@@ -33,7 +32,6 @@ const useDropdownFetcher = (
       try {
         setLoading(true);
         const data = await AppModifyListService.fetchAppModifyList(
-          token,
           endpoint,
           fieldCode
         );
@@ -59,7 +57,7 @@ const useDropdownFetcher = (
     return () => {
       cancel = true;
     };
-  }, [token, fieldCode]);
+  }, [fieldCode]);
 
   return { options, error };
 };
@@ -79,22 +77,18 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
 
   const endPointAppModifyList = "GetActiveAppModifyFieldsAsync";
   const { options: areaValues } = useDropdownFetcher(
-    token,
     endPointAppModifyList,
     "AREA"
   );
   const { options: cityValues } = useDropdownFetcher(
-    token,
     endPointAppModifyList,
     "CITY"
   );
   const { options: countryValues } = useDropdownFetcher(
-    token,
     endPointAppModifyList,
     "ACTUALCOUNTRY"
   );
   const { options: companyValues } = useDropdownFetcher(
-    token,
     endPointAppModifyList,
     "COMPANY"
   );

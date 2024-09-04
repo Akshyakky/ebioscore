@@ -1,8 +1,8 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { Box, Container } from "@mui/material";
 import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
-import ResourceDetails from "../SubPage/ResourceDeatails";
+import ResourceDetails from "../SubPage/ResourceDetails";
 import ResourceListSearch from "../SubPage/ResourceListSearch";
 import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 

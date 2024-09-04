@@ -28,7 +28,6 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
   const { compID, compCode, compName, userID, userName } =
     store.getState().userDetails;
 
-  // Use useEffect to update formState when editData changes
   useEffect(() => {
     if (editData) {
       setFormState({
@@ -39,7 +38,7 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
         rActiveYN: editData.rActiveYN || "Y",
       });
     } else {
-      handleClear(); // Clear the form if editData is not present
+      handleClear();
     }
   }, [editData]);
 
@@ -123,13 +122,12 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
     });
   }, []);
 
-  const handleActiveToggle = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setFormState((prev) => ({
-        ...prev,
-        rActiveYN: event.target.checked ? "Y" : "N",
-      }));
-    },
+  const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState((prev) => ({
+      ...prev,
+      rActiveYN: event.target.checked ? "Y" : "N",
+    }));
+  },
     []
   );
 

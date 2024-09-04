@@ -53,11 +53,10 @@ const AppointmentPage: React.FC = () => {
         }
     }, []);
 
-    // Update handleSearchSelection to accept rLotYN
     const handleSearchSelection = useCallback((conID?: number, rlID?: number, rLotYN?: string) => {
         setSelectedConID(conID);
         setSelectedRlID(rlID);
-        setRLotYN(rLotYN); // Set rLotYN based on the selection
+        setRLotYN(rLotYN);
         handleRefresh();
     }, [handleRefresh]);
 
@@ -156,12 +155,7 @@ const AppointmentPage: React.FC = () => {
                 }}>
                     <Box sx={{ flexShrink: 0, bgcolor: 'background.paper', p: 1 }}></Box>
                     <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-                        <SchedulerComponent
-                            ref={schedulerRef}
-                            hpID={selectedConID}
-                            rlID={selectedRlID}
-                            onAppointmentFormOpening={handleAppointmentFormOpen}
-                        />
+                        <SchedulerComponent ref={schedulerRef} hpID={selectedConID} rlID={selectedRlID} onAppointmentFormOpening={handleAppointmentFormOpen} />
                     </Box>
                 </Box>
 
@@ -183,13 +177,7 @@ const AppointmentPage: React.FC = () => {
                         <CustomButton key="save" text="Save" onClick={handleSaveBooking} color="primary" variant="contained" sx={{ ml: 2 }} />,
                     ]}
                 >
-                    <AppointmentBookingForm
-                        onChange={handleChange}
-                        formData={formData}
-                        reasonOptions={reasonOptions}
-                        resourceOptions={resourceOptions}
-                        rLotYN={rLotYN} // Pass rLotYN to the form
-                    />
+                    <AppointmentBookingForm onChange={handleChange} formData={formData} reasonOptions={reasonOptions} resourceOptions={resourceOptions} rLotYN={rLotYN} />
                 </GenericDialog>
             </Box>
         </Container>

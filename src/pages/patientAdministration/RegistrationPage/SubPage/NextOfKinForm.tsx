@@ -139,7 +139,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
       try {
         setLoading(true);
         const responseTitle = await ConstantValues.fetchConstantValues(
-          token,
           endpointConstantValues,
           "PTIT"
         );
@@ -152,7 +151,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
         setTitleValues(transformedTitleData);
 
         const responseRelation = await AppModifyListService.fetchAppModifyList(
-          token,
           endPointAppModifyList,
           "RELATION"
         );
@@ -165,7 +163,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
         setRelationValues(transformedRelationData);
 
         const responseArea = await AppModifyListService.fetchAppModifyList(
-          token,
           endPointAppModifyList,
           "AREA"
         );
@@ -178,7 +175,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
         setAreaValues(transformedAreaData);
 
         const responseCity = await AppModifyListService.fetchAppModifyList(
-          token,
           endPointAppModifyList,
           "CITY"
         );
@@ -191,7 +187,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
         setCityValues(transformedCityData);
 
         const responseCountry = await AppModifyListService.fetchAppModifyList(
-          token,
           endPointAppModifyList,
           "ACTUALCOUNTRY"
         );

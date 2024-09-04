@@ -1,23 +1,15 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useCallback } from "react";
 import { useLoading } from "../LoadingContext";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store/reducers";
 import { notifyError } from "../../utils/Common/toastManager";
-import { ProfileListSearchResult } from "../../interfaces/SecurityManagement/ProfileListData";
 import { ProfileService } from "../../services/SecurityManagementServices/ProfileListServices";
+import { ProfileListSearchResult } from "../../interfaces/SecurityManagement/ProfileListData";
 
 interface ProfileListSearchContextProps {
-  searchResults: ProfileListSearchResult[];
-  performSearch: (searchTerm: string) => Promise<void>;
-  fetchAllProfiles: () => Promise<void>;
-  updateProfileStatus: (profileID: number, status: string) => void;
+  fetchAllProfiles: () => Promise<ProfileListSearchResult[]>;
 }
 
 export const ProfileListSearchContext = createContext<ProfileListSearchContextProps>({
-  searchResults: [],
-  performSearch: async () => { },
-  fetchAllProfiles: async () => { },
-  updateProfileStatus: () => { },
+  fetchAllProfiles: async () => [],
 });
 
 interface ProfileListSearchProviderProps {
@@ -25,71 +17,30 @@ interface ProfileListSearchProviderProps {
 }
 
 export const ProfileListSearchProvider = ({ children }: ProfileListSearchProviderProps) => {
-  const [allProfiles, setAllProfiles] = useState<ProfileListSearchResult[]>([]);
-  const [searchResults, setSearchResults] = useState<ProfileListSearchResult[]>([]);
   const { setLoading } = useLoading();
-  const userInfo = useSelector((state: RootState) => state.userDetails);
-  const token = userInfo?.token;
 
-  const fetchAllProfiles = async () => {
-    if (!token) return;
+  const fetchAllProfiles = useCallback(async (): Promise<ProfileListSearchResult[]> => {
     setLoading(true);
     try {
-      const profilesResult = await ProfileService.getAllProfileDetails(token);
+      const profilesResult = await ProfileService.getAllProfileDetails();
       if (profilesResult.success && profilesResult.data) {
-        const mappedResults: ProfileListSearchResult[] = profilesResult.data.map(
-          (profile: ProfileListSearchResult) => ({
-            profileID: profile.profileID,
-            profileCode: profile.profileCode,
-            profileName: profile.profileName,
-            status: profile.status,
-            rNotes: profile.rNotes,
-          })
-        );
-        setAllProfiles(mappedResults);
-        setSearchResults(mappedResults);
+        return profilesResult.data;
       } else {
         notifyError(profilesResult.errorMessage || "Failed to fetch profiles. Please try again.");
+        return [];
       }
     } catch (error) {
       notifyError("An error occurred while fetching profiles.");
+      return [];
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchAllProfiles();
-  }, [token]);
-
-  const performSearch = async (searchTerm: string): Promise<void> => {
-    if (searchTerm.trim() === "") {
-      setSearchResults(allProfiles);
-    } else {
-      const filteredResults = allProfiles.filter(
-        (profile) =>
-          profile.profileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          profile.profileCode.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setSearchResults(filteredResults);
-    }
-  };
-
-  const updateProfileStatus = (profileID: number, status: string) => {
-    const updatedProfiles = allProfiles.map((profile) =>
-      profile.profileID === profileID ? { ...profile, status } : profile
-    );
-    setAllProfiles(updatedProfiles);
-    setSearchResults(updatedProfiles);
-  };
+  }, []);
 
   return (
     <ProfileListSearchContext.Provider
       value={{
-        searchResults,
-        performSearch,
         fetchAllProfiles,
-        updateProfileStatus,
       }}
     >
       {children}

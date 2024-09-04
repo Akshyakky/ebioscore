@@ -1,41 +1,14 @@
 import React, { useMemo, useCallback } from "react";
 import TextField, { TextFieldProps } from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
-
-export interface TextBoxProps {
-  ControlID: string;
-  title?: string;
-  value?: any;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder?: string;
-  type?: string;
-  className?: string;
-  style?: React.CSSProperties;
-  size?: "small" | "medium";
-  isMandatory?: boolean;
-  disabled?: boolean;
-  readOnly?: boolean;
-  ariaLabel?: string;
-  maxLength?: number;
-  isSubmitted?: boolean;
-  errorMessage?: string;
-  max?: number | string;
-  min?: number | string;
-  autoComplete?: string;
-  inputPattern?: RegExp;
-  name?: string;
-  onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  multiline?: boolean;
-  rows?: number;
-  InputProps?: TextFieldProps['InputProps'];
-  InputLabelProps?: TextFieldProps['InputLabelProps'];
-}
+import { TextBoxProps } from "../../../interfaces/Common/TextBoxProps";
 
 const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   ControlID,
   title,
   value = "",
   onChange = () => { },
+  onBlur,
   placeholder,
   type = "text",
   className,
@@ -50,6 +23,7 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   errorMessage,
   max,
   min,
+  step,
   autoComplete = "on",
   inputPattern,
   name,
@@ -91,6 +65,9 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   if (type === "number" || type === "date") {
     inputProps.max = max;
     inputProps.min = min;
+    if (type === "number") {
+      inputProps.step = step;
+    }
   }
 
   return (
@@ -108,6 +85,7 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
         type={type}
         value={value}
         onChange={handleChange}
+        onBlur={onBlur}
         onKeyPress={onKeyPress}
         placeholder={placeholder || title}
         size={size}

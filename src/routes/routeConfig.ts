@@ -86,14 +86,12 @@ const routeConfig: RouteConfig[] = [
     path: "/ResourceListPage",
     component: ResourceListPage,
     protected: true,
-    providers: [ResourceListProvider],
   },
 
   {
     path: "/ReasonListPage",
     component: ReasonListPage,
     protected: true,
-    providers: [ResourceListProvider],
   },
   {
     path: "/BreakListPage",

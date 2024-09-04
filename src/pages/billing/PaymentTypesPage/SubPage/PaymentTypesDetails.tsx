@@ -171,82 +171,87 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
       <Typography variant="h6" id="payment-type-header">
         Payment Type List
       </Typography>
-      <Grid container spacing={2}>
-        <FormField
-          type="text"
-          label="Payment Type Code"
-          value={formState.payCode}
-          onChange={handleInputChange}
-          isSubmitted={formState.isSubmitted}
-          name="payCode"
-          ControlID="payCode"
-          placeholder="Payment Type Code"
+      <section>
+        <Grid container spacing={2}>
+          <FormField
+            type="text"
+            label="Payment Type Code"
+            value={formState.payCode}
+            onChange={handleInputChange}
+            isSubmitted={formState.isSubmitted}
+            name="payCode"
+            ControlID="payCode"
+            placeholder="Payment Type Code"
+            isMandatory
+          />
+          <FormField
+            type="text"
+            label="Payment Type Name"
+            value={formState.payName}
+            onChange={handleInputChange}
+            isSubmitted={formState.isSubmitted}
+            name="payName"
+            ControlID="PaymentTypeName"
+            placeholder="Payment Type Name"
+            isMandatory
+          />
+        </Grid>
+        <Grid container spacing={2}>
+          <FormField
+            type="select"
+            label="Payment Type Mode"
+            value={formState.payMode}
+            onChange={handlePayModeChange}
+            isSubmitted={formState.isSubmitted}
+            options={payTypeValues}
+            name="payMode"
+            ControlID="payMode"
+            isMandatory
+          />
+          <FormField
+            type="number"
+            label="Bank Charges"
+            value={formState.bankCharge.toString()}
+            onChange={handleInputChange}
+            isSubmitted={formState.isSubmitted}
+            name="bankCharge"
+            ControlID="BankCharges"
+            placeholder="Bank Charges"
+            min={0}
+            max={100}
+          />
+        </Grid>
+        <Grid container spacing={2}>
+          <FormField
+            type="textarea"
+            label="Remarks"
+            value={formState.rNotes}
+            onChange={handleInputChange}
+            name="rNotes"
+            ControlID="rNotes"
+            placeholder="Remarks"
+          />
+        </Grid>
+        <Grid container spacing={2}>
+          <FormField
+            type="switch"
+            label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
+            value={formState.rActiveYN}
+            checked={formState.rActiveYN === "Y"}
+            onChange={handleActiveToggle}
+            name="rActiveYN"
+            ControlID="rActiveYN"
+          />
+        </Grid>
+        <FormSaveClearButton
+          clearText="Clear"
+          saveText="Save"
+          onClear={handleClear}
+          onSave={handleSave}
+          clearIcon={DeleteIcon}
+          saveIcon={SaveIcon}
         />
-        <FormField
-          type="text"
-          label="Payment Type Name"
-          value={formState.payName}
-          onChange={handleInputChange}
-          isSubmitted={formState.isSubmitted}
-          name="payName"
-          ControlID="PaymentTypeName"
-          placeholder="Payment Type Name"
-        />
-      </Grid>
-      <Grid container spacing={2}>
-        <FormField
-          type="select"
-          label="Payment Type Mode"
-          value={formState.payMode}
-          onChange={handlePayModeChange}
-          isSubmitted={formState.isSubmitted}
-          options={payTypeValues}
-          name="payMode"
-          ControlID="payMode"
-        />
-        <FormField
-          type="number"
-          label="Bank Charges"
-          value={formState.bankCharge.toString()}
-          onChange={handleInputChange}
-          isSubmitted={formState.isSubmitted}
-          name="bankCharge"
-          ControlID="BankCharges"
-          placeholder="Bank Charges"
-          min={0}
-          max={100}
-        />
-      </Grid>
-      <Grid container spacing={2}>
-        <FormField
-          type="textarea"
-          label="Remarks"
-          value={formState.rNotes}
-          onChange={handleInputChange}
-          name="rNotes"
-          ControlID="rNotes"
-          placeholder="Remarks"
-        />
-      </Grid>
-      <Grid container spacing={2}>
-        <FormField
-          type="switch"
-          label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
-          value={formState.rActiveYN}
-          checked={formState.rActiveYN === "Y"}
-          onChange={handleActiveToggle}
-          name="rActiveYN"
-          ControlID="rActiveYN"
-        />
-      </Grid>
-      <FormSaveClearButton
-        clearText="Clear"
-        saveText="Save"
-        onClear={handleClear}
-        onSave={handleSave}
-        clearIcon={DeleteIcon}
-        saveIcon={SaveIcon}
-      />
+      </section>
     </Paper>
   );
 };

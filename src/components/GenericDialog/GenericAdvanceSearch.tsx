@@ -25,6 +25,11 @@ interface CommonSearchDialogProps<T> {
   getItemActiveStatus: (item: T) => boolean;
   searchPlaceholder: string;
   onSearch?: (searchQuery: string) => void;
+  dialogProps?: {
+    maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+    fullWidth?: boolean;
+    dialogContentSx?: React.CSSProperties;
+  };
 }
 
 function GenericAdvanceSearch<T>({
@@ -39,6 +44,7 @@ function GenericAdvanceSearch<T>({
   getItemActiveStatus,
   searchPlaceholder,
   onSearch,
+  dialogProps
 }: CommonSearchDialogProps<T>) {
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,6 +97,7 @@ function GenericAdvanceSearch<T>({
           text="Edit"
           onClick={() => handleEditAndClose(row)}
           icon={Edit}
+          size="small"
         />
       ),
     },
@@ -117,7 +124,7 @@ function GenericAdvanceSearch<T>({
       visible: true,
       render: (row: T & { serialNumber: number; Status: string }) => (
         <CustomSwitch
-          size="medium"
+          size="small"
           color="secondary"
           checked={switchStatus[getItemId(row)]}
           onChange={(event) => handleSwitchChange(row, event.target.checked)}
@@ -184,7 +191,7 @@ function GenericAdvanceSearch<T>({
       open={open}
       onClose={handleDialogClose}
       title={title}
-      maxWidth="lg"
+      maxWidth={dialogProps?.maxWidth || "lg"}
       fullWidth
       showCloseButton
       actions={dialogActions}

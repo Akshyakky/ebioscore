@@ -31,7 +31,7 @@ const DepartmentListSearch: React.FC<DepartmentListSearchProps> = ({
   const getItemActiveStatus = (item: DepartmentDto) => item.rActiveYN === "Y";
 
   const columns = [
-    { key: "serialNumber", header: "Sl No", visible: true },
+    { key: "serialNumber", header: "Sl No", visible: true, sortable: true },
     { key: "deptCode", header: "Department Code", visible: true },
     { key: "deptName", header: "Department Name", visible: true },
     { key: "deptType", header: "Department Type", visible: true },

@@ -1,20 +1,21 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Grid, Paper, Typography } from "@mui/material";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import TextArea from "../../../../components/TextArea/TextArea";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
-import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 
-const ResourceDetails: React.FC<{ editData?: ResourceListData }> = ({ editData }) => {
+interface ResourceDetailsProps {
+  editData?: ResourceListData;
+}
 
+const ResourceDetails: React.FC<ResourceDetailsProps> = ({ editData }) => {
   const [formState, setFormState] = useState({
     isSubmitted: false,
     rLCode: "",
@@ -75,12 +76,16 @@ const ResourceDetails: React.FC<{ editData?: ResourceListData }> = ({ editData }
     rModifiedBy: userName || "",
     rLValidateYN: formState.rLValidateYN,
     rLOtYN: formState.rLOtYN
-
   }), [formState, editData, compID, compCode, compName, userID, userName, serverDate]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormState(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  const handleSwitchChange = useCallback((name: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { checked } = event.target;
+    setFormState(prev => ({ ...prev, [name]: checked ? "Y" : "N" }));
   }, []);
 
   const handleSave = async () => {
@@ -105,82 +110,77 @@ const ResourceDetails: React.FC<{ editData?: ResourceListData }> = ({ editData }
     }
   };
 
-  const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormState(prev => ({ ...prev, rActiveYN: event.target.checked ? "Y" : "N" }));
-  }, []);
-
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Typography variant="h6" id="resource-details-header">
         RESOURCE DETAILS
       </Typography>
-      <section>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Resource Code"
-              placeholder="Enter code"
-              value={formState.rLCode}
-              onChange={handleInputChange}
-              isSubmitted={formState.isSubmitted}
-              isMandatory
-              size="small"
-              name="rLCode"
-              ControlID="rLCode"
-              aria-label="Resource Code"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Resource Name"
-              placeholder="Enter description"
-              value={formState.rLName}
-              isSubmitted={formState.isSubmitted}
-              onChange={handleInputChange}
-              isMandatory
-              size="small"
-              name="rLName"
-              ControlID="rLCode"
-              aria-label="Resource Name"
-            />
-          </Grid>
-        </Grid>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextArea
-              label="Remarks"
-              name="rNotes"
-              value={formState.rNotes}
-              onChange={handleInputChange}
-              placeholder="Notes"
-              rows={2}
-            />
-          </Grid>
-        </Grid>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label="Is Validate"
-              checked={formState.rLValidateYN === 'Y'}
-              onChange={handleActiveToggle}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label="Is Operation Theatre"
-              checked={formState.rLOtYN === 'Y'}
-              onChange={handleActiveToggle}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <CustomSwitch
-              label={formState.rActiveYN === 'Y' ? 'Active' : 'Hidden'}
-              checked={formState.rActiveYN === 'Y'}
-              onChange={handleActiveToggle}
-            />
-          </Grid>
-        </Grid>
-      </section>
+      <Grid container spacing={2}>
+        <FormField
+          type="text"
+          label="Resource Code"
+          value={formState.rLCode}
+          onChange={handleInputChange}
+          name="rLCode"
+          ControlID="rLCode"
+          placeholder="Enter code"
+          isMandatory
+          isSubmitted={formState.isSubmitted}
+          size="small"
+        />
+        <FormField
+          type="text"
+          label="Resource Name"
+          value={formState.rLName}
+          onChange={handleInputChange}
+          name="rLName"
+          ControlID="rLName"
+          placeholder="Enter description"
+          isMandatory
+          isSubmitted={formState.isSubmitted}
+          size="small"
+        />
+      </Grid>
+      <Grid container spacing={2}>
+        <FormField
+          type="textarea"
+          label="Remarks"
+          value={formState.rNotes}
+          onChange={handleInputChange}
+          name="rNotes"
+          ControlID="rNotes"
+          placeholder="Notes"
+        />
+      </Grid>
+      <Grid container spacing={2}>
+        <FormField
+          type="switch"
+          label={formState.rActiveYN === 'Y' ? 'Active' : 'Hidden'}
+          value={formState.rActiveYN}
+          checked={formState.rActiveYN === 'Y'}
+          onChange={handleSwitchChange('rActiveYN')}
+          name="rActiveYN"
+          ControlID="rActiveYN"
+        />
+        <FormField
+          type="switch"
+          label="Is Validate"
+          checked={formState.rLValidateYN === 'Y'}
+          value={formState.rLValidateYN}
+          onChange={handleSwitchChange('rLValidateYN')}
+          name="rLValidateYN"
+          ControlID="rLValidateYN"
+        />
+        <FormField
+          type="switch"
+          label="Is Operation Theatre"
+          checked={formState.rLOtYN === 'Y'}
+          value={formState.rLOtYN}
+          onChange={handleSwitchChange('rLOtYN')}
+          name="rLOtYN"
+          ControlID="rLOtYN"
+        />
+      </Grid>
       <FormSaveClearButton
         clearText="Clear"
         saveText="Save"
