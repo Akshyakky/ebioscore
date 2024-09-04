@@ -25,6 +25,11 @@ interface CommonSearchDialogProps<T> {
   getItemActiveStatus: (item: T) => boolean;
   searchPlaceholder: string;
   onSearch?: (searchQuery: string) => void;
+  dialogProps?: {
+    maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+    fullWidth?: boolean;
+    dialogContentSx?: React.CSSProperties;
+  };
 }
 
 function GenericAdvanceSearch<T>({
@@ -39,6 +44,7 @@ function GenericAdvanceSearch<T>({
   getItemActiveStatus,
   searchPlaceholder,
   onSearch,
+  dialogProps
 }: CommonSearchDialogProps<T>) {
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -185,7 +191,7 @@ function GenericAdvanceSearch<T>({
       open={open}
       onClose={handleDialogClose}
       title={title}
-      maxWidth="lg"
+      maxWidth={dialogProps?.maxWidth || "lg"}
       fullWidth
       showCloseButton
       actions={dialogActions}

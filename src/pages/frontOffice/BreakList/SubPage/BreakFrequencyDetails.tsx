@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import CustomButton from '../../../../components/Button/CustomButton';
-import RadioGroup from '../../../../components/RadioGroup/RadioGroup';
 import { FormControlLabel, Checkbox, FormGroup, Typography } from '@mui/material';
-import FloatingLabelTextBox from '../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox';
 import GenericDialog from '../../../../components/GenericDialog/GenericDialog';
 import { useServerDate } from '../../../../hooks/Common/useServerDate';
 import RepeatIcon from '@mui/icons-material/Repeat';
 import { formatDate } from '../../../../utils/Common/dateUtils';
 import Close from '@mui/icons-material/Close';
 import Save from '@mui/icons-material/Save';
+import FormField from '../../../../components/FormField/FormField';
 
 interface BreakFrequencyDetailsProps {
     open: boolean;
@@ -81,9 +80,11 @@ const BreakFrequencyDetails: React.FC<BreakFrequencyDetailsProps> = ({
 
         const commonInputs = (
             <>
-                <FloatingLabelTextBox
-                    title="Every"
-                    value={interval.toString()}
+                <FormField
+                    type="number"
+                    label="Every"
+                    name="interval"
+                    value={interval}
                     onChange={(e) => {
                         let value = parseInt(e.target.value, 10);
                         if (isNaN(value) || value < 0) {
@@ -93,19 +94,15 @@ const BreakFrequencyDetails: React.FC<BreakFrequencyDetailsProps> = ({
                     }}
                     placeholder={`${frequency.charAt(0).toUpperCase() + frequency.slice(1)}s`}
                     isMandatory
-                    size="small"
-                    name="interval"
-                    ControlID=""
-                    type="number"
+                    ControlID="interval"
                 />
-                <FloatingLabelTextBox
-                    title="End On"
+                <FormField
+                    type="date"
+                    label="End On"
+                    name="endDate"
                     value={endDate}
                     onChange={(e) => handleChange('endDate', e.target.value)}
-                    type="date"
-                    size="small"
-                    name="endDate"
-                    ControlID=""
+                    ControlID="endDate"
                 />
             </>
         );
@@ -173,9 +170,11 @@ const BreakFrequencyDetails: React.FC<BreakFrequencyDetailsProps> = ({
                 </>
             }
         >
-            <RadioGroup
+            <FormField
+                type="radio"
+                label="Frequency"
                 name="frequency"
-                selectedValue={frequencyData.frequency}
+                value={frequencyData.frequency}
                 onChange={(e) => handleChange('frequency', e.target.value)}
                 options={[
                     { label: 'None', value: 'none' },
@@ -184,7 +183,7 @@ const BreakFrequencyDetails: React.FC<BreakFrequencyDetailsProps> = ({
                     { label: 'Monthly', value: 'monthly' },
                     { label: 'Yearly', value: 'yearly' },
                 ]}
-                label="Frequency"
+                ControlID="frequency"
             />
             {renderFrequencyDetails()}
             <Typography style={{ color: '#3f51b5', display: 'flex', alignItems: 'center', marginTop: '16px' }}>

@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { Grid, Grid2Props, SelectChangeEvent } from "@mui/material";
+import { Grid, SelectChangeEvent } from "@mui/material";
+import { GridProps } from '@mui/material/Grid';
 import FloatingLabelTextBox from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import TextArea from "../TextArea/TextArea";
 import DropdownSelect from "../DropDown/DropdownSelect";
@@ -32,8 +33,9 @@ interface BaseFormFieldProps {
   max?: number | string;
   step?: number | string;
   fullWidth?: boolean;
+  rows?: number;
   isSubmitted?: boolean;
-  gridProps?: Grid2Props;
+  gridProps?: GridProps;
   InputProps?: TextFieldProps['InputProps'];
   InputLabelProps?: TextFieldProps['InputLabelProps'];
   onBlur?: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
@@ -98,6 +100,7 @@ const FormField: React.FC<FormFieldProps> = React.memo((props) => {
     maxLength,
     min,
     max,
+    rows = 3,
     step,
     isSubmitted = false,
     gridProps = { xs: 12, sm: 6, md: 3, lg: 3, xl: 3 },
@@ -146,7 +149,7 @@ const FormField: React.FC<FormFieldProps> = React.memo((props) => {
             placeholder={placeholder}
             onChange={(props as TextAreaFormFieldProps).onChange}
             //onBlur={onBlur}
-            rows={4}
+            rows={rows}
             name={name}
             maxLength={maxLength}
           />

@@ -33,13 +33,15 @@ export class CommonApiService {
     endpoint: string,
     data?: unknown,
     token?: string,
-    additionalHeaders?: Record<string, string>
+    additionalHeaders?: Record<string, string>,
+    params?: Record<string, any>
   ): Promise<AxiosResponse<T>> {
     const config: AxiosRequestConfig = {
       method,
       url: `${this.baseURL}${endpoint}`,
       headers: this.getHeaders(token, additionalHeaders),
       data,
+      params,
     };
     return axios(config);
   }
@@ -49,7 +51,8 @@ export class CommonApiService {
     endpoint: string,
     data?: unknown,
     token?: string,
-    additionalHeaders?: Record<string, string>
+    additionalHeaders?: Record<string, string>,
+    params?: Record<string, any>
   ): Promise<T> {
     try {
       const response = await this.request<T>(
@@ -57,7 +60,8 @@ export class CommonApiService {
         endpoint,
         data,
         token,
-        additionalHeaders
+        additionalHeaders,
+        params
       );
       return response.data;
     } catch (error) {
@@ -69,6 +73,7 @@ export class CommonApiService {
   public async get<T>(
     endpoint: string,
     token?: string,
+    params?: Record<string, any>,
     additionalHeaders?: Record<string, string>
   ): Promise<T> {
     return this.makeRequest<T>(
@@ -76,7 +81,8 @@ export class CommonApiService {
       endpoint,
       undefined,
       token,
-      additionalHeaders
+      additionalHeaders,
+      params
     );
   }
 

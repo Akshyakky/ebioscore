@@ -35,7 +35,6 @@ interface UserDetailsProps {
   isEditMode: boolean;
   refreshUsers: () => void;
   onSuperUserChange: (isSuper: boolean) => void
-  updateUserStatus: (userID: number, status: boolean) => void;
 }
 
 const defaultUserListData: UserListData = {
@@ -173,7 +172,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const result = await UserListService.getActiveWorkingUsers(token!);
+        const result = await UserListService.getActiveWorkingUsers();
         if (result.success && result.data) {
           const usersOptions = result.data.map((user) => ({
             label: user.conName,
@@ -209,7 +208,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     const fetchProfiles = async () => {
       try {
         const result: OperationResult<ProfileListSearchResult[]> =
-          await ProfileService.getAllProfileDetails(token!);
+          await ProfileService.getAllProfileDetails();
         if (result.success && result.data && result.data.length > 0) {
           const profileOptions = result.data.map((profile) => ({
             label: profile.profileName,
@@ -296,7 +295,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
           profileID: userList.profileID,
         };
 
-        const result = await UserListService.saveUser(token!, userData);
+        const result = await UserListService.saveUser(userData);
 
         if (result.success) {
           notifySuccess("User saved successfully");

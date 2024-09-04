@@ -2,8 +2,6 @@ import React from "react";
 import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
 import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import EditIcon from "@mui/icons-material/Edit";
-import CustomButton from "../../../../components/Button/CustomButton";
 
 interface ReasonListSearchProps {
   open: boolean;
