@@ -16,7 +16,7 @@ import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 import FormField from "../../../../components/FormField/FormField";
 import CustomButton from "../../../../components/Button/CustomButton";
-import { DeptUsersListPage } from "./DeptUsersListPage";
+import { DeptUsersPage } from "./DeptUsers/DeptUsersPage";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import { Box } from "devextreme-react";
 
@@ -410,8 +410,9 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
           saveIcon={SaveIcon}
         />
       </section>
-      <DeptUsersListPage
+      <DeptUsersPage
         deptId={deptId}
+        deptName={deptName}
         openDialog={openDialog}
         handleCloseDialog={handleCloseDialog}
       />

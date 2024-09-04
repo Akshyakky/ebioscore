@@ -6,6 +6,8 @@ export interface DeptUserDto {
   rNotes: string;
   allowIMYN: string;
   allowPMYN: string;
+  appUserName: string;
+  appCode: string;
   transferYN: string;
   rCreatedID: number;
   rCreatedOn: Date;
