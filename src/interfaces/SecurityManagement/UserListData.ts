@@ -24,8 +24,7 @@ export interface UserListData {
   appUAccess?: string;
   profileID: number;
   conName: string;
-  repID:number;
-  
+  repID: number;
 }
 
 export interface UserListSearchResult {
@@ -34,6 +33,7 @@ export interface UserListSearchResult {
   profileName: string;
   status: string;
   rNotes: string;
+  rActiveYN: string;
 }
 
 export interface UserMastDto {
@@ -84,17 +84,3 @@ interface UserPermission {
   reportName: string;
   allow: boolean;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

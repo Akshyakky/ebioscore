@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useCallback, useContext } from "react";
-import MainLayout from "../../../../layouts/MainLayout/MainLayout";
+import React, { useEffect, useState, useCallback } from "react";
 import { Box, Container, Paper } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useSelector } from "react-redux";
@@ -15,7 +14,6 @@ import { DepartmentService } from "../../../../services/CommonServices/Departmen
 import { ContactListService } from "../../../../services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { ContactListData } from "../../../../interfaces/HospitalAdministration/ContactListData";
 import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch";
-import { ContactListSearchContext } from "../../../../context/hospitalAdministration/ContactListSearchContext";
 import ContactListForm from "../SubPage/ContactListForm";
 
 const ContactListPage: React.FC = () => {
@@ -42,7 +40,6 @@ const ContactListPage: React.FC = () => {
   );
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const { performSearch } = useContext(ContactListSearchContext);
   const { setLoading } = useLoading();
 
   const [switchStates, setSwitchStates] = useState({
@@ -72,24 +69,21 @@ const ContactListPage: React.FC = () => {
         employeeStatusValues,
         specialityValues,
       ] = await Promise.all([
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "ACAT"),
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "REFS"),
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "PTIT"),
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "PSEX"),
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "PBLD"),
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "PMAR"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "ACAT"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "REFS"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "PSEX"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "PBLD"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "PMAR"),
         AppModifyListService.fetchAppModifyList(
-          token!,
           "GetActiveAppModifyFieldsAsync",
           "CITY"
         ),
         AppModifyListService.fetchAppModifyList(
-          token!,
           "GetActiveAppModifyFieldsAsync",
           "STATE"
         ),
         AppModifyListService.fetchAppModifyList(
-          token!,
           "GetActiveAppModifyFieldsAsync",
           "NATIONALITY"
         ),
@@ -98,7 +92,7 @@ const ContactListPage: React.FC = () => {
           "GetActiveWardDepartments",
           compID!
         ),
-        ConstantValues.fetchConstantValues(token!, "GetConstantValues", "EMPS"),
+        ConstantValues.fetchConstantValues("GetConstantValues", "EMPS"),
         ContactListService.fetchActiveSpecialties(token!, compID!),
       ]);
 
@@ -157,7 +151,6 @@ const ContactListPage: React.FC = () => {
 
   const handleAdvancedSearch = async () => {
     setIsSearchOpen(true);
-    await performSearch("");
   };
 
   const handleEditContactList = async (conID: number) => {
@@ -217,8 +210,8 @@ const ContactListPage: React.FC = () => {
         </Paper>
       </Container>
       <ContactListSearch
-        show={isSearchOpen}
-        handleClose={() => setIsSearchOpen(false)}
+        open={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
         onEditContactList={handleEditContactList}
       />
     </>

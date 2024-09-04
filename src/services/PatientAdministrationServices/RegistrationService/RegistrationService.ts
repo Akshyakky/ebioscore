@@ -1,10 +1,7 @@
 // service/RegistrationService/RegistrationService.ts
 import axios from "axios";
 import { APIConfig } from "../../../apiConfig";
-import {
-  PatientDemographicDetails,
-  PatientSearchResult,
-} from "../../../interfaces/PatientAdministration/registrationFormData";
+import { PatientDemographicDetails } from "../../../interfaces/PatientAdministration/registrationFormData";
 import { NextOfKinKinFormState } from "../../../interfaces/PatientAdministration/NextOfKinData";
 import { InsuranceFormState } from "../../../interfaces/PatientAdministration/InsuranceDetails";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
@@ -34,7 +31,7 @@ export const searchPatients = async (
   token: string,
   endpoint: string,
   searchTerm: string
-): Promise<{ data: PatientSearchResult[]; success: boolean }> => {
+): Promise<{ data: any[]; success: boolean }> => {
   try {
     const url = `${APIConfig.patientAdministrationURL}Registration/${endpoint}`;
     const headers = { Authorization: `Bearer ${token}` };
@@ -151,18 +148,22 @@ export const searchPatientDetails = async (
   searchTerm: string
 ): Promise<OperationResult<PatientRegistrationDto[]>> => {
   try {
+    debugger;
     const url = `${APIConfig.patientAdministrationURL}Registration/SearchPatientDetails`;
     const headers = { Authorization: `Bearer ${token}` };
-    const response = await axios.get<OperationResult<PatientRegistrationDto[]>>(url, {
-      headers,
-      params: { query: searchTerm },
-    });
-    
+    const response = await axios.get<OperationResult<PatientRegistrationDto[]>>(
+      url,
+      {
+        headers,
+        params: { query: searchTerm },
+      }
+    );
+
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response && error.response.status === 400) {
-        throw new Error(error.response.data.errorMessage || 'Bad request');
+        throw new Error(error.response.data.errorMessage || "Bad request");
       }
     }
     console.error(`Error during patient details search: ${error}`);

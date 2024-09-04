@@ -81,7 +81,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         setPicValues(transformedData);
 
         const responseTitle = await ConstantValues.fetchConstantValues(
-          token,
           endpointConstantValues,
           "PTIT"
         );
@@ -94,7 +93,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         setTitleValues(transformedTitleData);
 
         const responseGender = await ConstantValues.fetchConstantValues(
-          token,
           endpointConstantValues,
           "PSEX"
         );
@@ -107,7 +105,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         setGenderValues(transformedGenderData);
 
         const responseAge = await ConstantValues.fetchConstantValues(
-          token,
           endpointConstantValues,
           "PAT"
         );
@@ -121,7 +118,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
 
         const responseNationality =
           await AppModifyListService.fetchAppModifyList(
-            token,
             endPointAppModifyList,
             "NATIONALITY"
           );

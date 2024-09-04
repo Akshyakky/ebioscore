@@ -5,7 +5,6 @@ import { ModuleDto, SubModuleDto } from "../../interfaces/Common/Modules";
 import {
   Drawer,
   List,
-  ListItem,
   ListItemIcon,
   ListItemText,
   IconButton,
@@ -19,6 +18,7 @@ import {
   CssBaseline,
   InputAdornment,
   useTheme,
+  ListItemButton,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Icon } from "@iconify/react";
@@ -182,7 +182,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
         open={open}
         onClose={handleDrawerClose}
         sx={{
-          "& .MuiDrawer-paper": { boxSizing: "border-box" },
+          "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
         }}
       >
         <Box sx={{ padding: 1 }}>
@@ -199,6 +199,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
               ),
             }}
             onChange={(e) => setFilterKeyword(e.target.value)}
+            type="search"
           />
         </Box>
         <Divider />
@@ -206,8 +207,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
           <List>
             {filteredModules.map((module) => (
               <React.Fragment key={"module-" + module.auGrpID}>
-                <ListItem
-                  button
+                <ListItemButton
                   onClick={() => toggleModule(module.auGrpID)}
                   className={
                     activeModuleId === module.auGrpID ? "active-menu-item" : ""
@@ -221,7 +221,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
                     />
                   </ListItemIcon>
                   <ListItemText primary={module.title} />
-                </ListItem>
+                </ListItemButton>
                 <Collapse
                   in={activeModuleId === module.auGrpID}
                   timeout="auto"
@@ -242,7 +242,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
                           handleSubModuleClick(subModule.link);
                         }}
                       >
-                        <ListItem button sx={{ pl: 2 }}>
+                        <ListItemButton sx={{ pl: 2 }}>
                           <ListItemIcon className="list-item-icon">
                             <Icon
                               icon={subModule.iCon}
@@ -251,7 +251,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
                             />
                           </ListItemIcon>
                           <ListItemText primary={subModule.title} />
-                        </ListItem>
+                        </ListItemButton>
                       </NavLink>
                     ))}
                   </List>

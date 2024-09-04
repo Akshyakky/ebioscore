@@ -17,4 +17,5 @@ export interface AlertDto {
   rModifiedBy: string;
   category: string;
   oldPChartID: number;
+  pChartCode: string;
 }

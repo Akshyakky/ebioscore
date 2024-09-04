@@ -1,28 +1,29 @@
 // ConstantValues.ts
-import axios from "axios";
 import { APIConfig } from "../../apiConfig";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
+import { CommonApiService } from "../CommonApiService";
+import { store } from "../../store/store";
 
-interface APIResponse {
-  consValue: string;
-  consDesc: string;
-}
+const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });
+
+const getToken = () => store.getState().userDetails.token!;
+
 const fetchConstantValues = async (
-  token: string,
   endpoint: string,
   consCode: string
 ): Promise<DropdownOption[]> => {
   try {
-    const url = `${APIConfig.commonURL}ConstantValues/${endpoint}?consCode=${consCode}`;
-    const headers = { Authorization: `Bearer ${token}` };
-    const response = await axios.get<APIResponse[]>(url, { headers });
-    return response.data.map((item) => ({
+    const token = getToken();
+    const response = await commonApiService.get<any[]>(
+      `ConstantValues/${endpoint}?consCode=${consCode}`,
+      token
+    );
+    return response.map((item) => ({
       value: item.consValue,
       label: item.consDesc,
     }));
   } catch (error) {
     console.log(`Error fetching ${consCode} values:`, error);
-
     throw error;
   }
 };

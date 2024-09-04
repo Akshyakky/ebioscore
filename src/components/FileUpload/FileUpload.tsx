@@ -2,9 +2,9 @@ import React, { useMemo, useCallback, useState } from "react";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import FormHelperText from "@mui/material/FormHelperText";
-import { FloatingLabelTextBoxProps } from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import { TextBoxProps } from "../../interfaces/Common/TextBoxProps";
 
-interface FloatingLabelFileUploadProps extends FloatingLabelTextBoxProps {
+interface FloatingLabelFileUploadProps extends TextBoxProps {
   accept?: string; // Optional prop for accepted file types
   multiple?: boolean; // Optional prop for multiple file selection
   preview?: boolean; // Optional prop to enable/disable preview of uploaded files

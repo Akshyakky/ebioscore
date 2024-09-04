@@ -28,7 +28,6 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
   const { compID, compCode, compName, userID, userName } =
     store.getState().userDetails;
 
-  // Use useEffect to update formState when editData changes
   useEffect(() => {
     if (editData) {
       setFormState({
@@ -39,7 +38,7 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
         rActiveYN: editData.rActiveYN || "Y",
       });
     } else {
-      handleClear(); // Clear the form if editData is not present
+      handleClear();
     }
   }, [editData]);
 
@@ -123,13 +122,12 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
     });
   }, []);
 
-  const handleActiveToggle = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setFormState((prev) => ({
-        ...prev,
-        rActiveYN: event.target.checked ? "Y" : "N",
-      }));
-    },
+  const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState((prev) => ({
+      ...prev,
+      rActiveYN: event.target.checked ? "Y" : "N",
+    }));
+  },
     []
   );
 
@@ -138,61 +136,59 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
       <Typography variant="h6" id="patient-invoice-code-header">
         Patient Invoice Code List
       </Typography>
-      <section>
-        <Grid container spacing={2}>
-          <FormField
-            type="text"
-            label="Patient Invoice Code"
-            value={formState.pTypeCode}
-            onChange={handleInputChange}
-            isSubmitted={formState.isSubmitted}
-            name="pTypeCode"
-            ControlID="pTypeCode"
-            placeholder="Patient Invoice Code"
-          />
-          <FormField
-            type="text"
-            label="Patient Invoice Name"
-            value={formState.pTypeName}
-            onChange={handleInputChange}
-            isSubmitted={formState.isSubmitted}
-            name="pTypeName"
-            ControlID="pTypeName"
-            placeholder="Patient Invoice Name"
-          />
-        </Grid>
-        <Grid container spacing={2}>
-          <FormField
-            type="textarea"
-            label="Remarks"
-            value={formState.rNotes}
-            onChange={handleInputChange}
-            name="rNotes"
-            ControlID="rNotes"
-            placeholder="Remarks"
-          />
-        </Grid>
-        <Grid container spacing={2}>
-          <FormField
-            type="switch"
-            label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
-            value={formState.rActiveYN}
-            checked={formState.rActiveYN === "Y"}
-            onChange={handleActiveToggle}
-            name="rActiveYN"
-            ControlID="rActiveYN"
-          />
-        </Grid>
-        <FormSaveClearButton
-          clearText="Clear"
-          saveText="Save"
-          onClear={handleClear}
-          onSave={handleSave}
-          clearIcon={DeleteIcon}
-          saveIcon={SaveIcon}
+      <Grid container spacing={2}>
+        <FormField
+          type="text"
+          label="Patient Invoice Code"
+          value={formState.pTypeCode}
+          onChange={handleInputChange}
+          isSubmitted={formState.isSubmitted}
+          name="pTypeCode"
+          ControlID="pTypeCode"
+          placeholder="Patient Invoice Code"
         />
-      </section>
-    </Paper>
+        <FormField
+          type="text"
+          label="Patient Invoice Name"
+          value={formState.pTypeName}
+          onChange={handleInputChange}
+          isSubmitted={formState.isSubmitted}
+          name="pTypeName"
+          ControlID="pTypeName"
+          placeholder="Patient Invoice Name"
+        />
+      </Grid>
+      <Grid container spacing={2}>
+        <FormField
+          type="textarea"
+          label="Remarks"
+          value={formState.rNotes}
+          onChange={handleInputChange}
+          name="rNotes"
+          ControlID="rNotes"
+          placeholder="Remarks"
+        />
+      </Grid>
+      <Grid container spacing={2}>
+        <FormField
+          type="switch"
+          label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
+          value={formState.rActiveYN}
+          checked={formState.rActiveYN === "Y"}
+          onChange={handleActiveToggle}
+          name="rActiveYN"
+          ControlID="rActiveYN"
+        />
+      </Grid>
+      <FormSaveClearButton
+        clearText="Clear"
+        saveText="Save"
+        onClear={handleClear}
+        onSave={handleSave}
+        clearIcon={DeleteIcon}
+        saveIcon={SaveIcon}
+      />
+    </Paper >
   );
 };
 

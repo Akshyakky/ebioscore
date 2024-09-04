@@ -21,7 +21,7 @@ interface OperationPermissionProps {
 const UserListPage: React.FC<OperationPermissionProps> = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
-  const { fetchAllUsers, updateUserStatus } = useContext(UserListSearchContext);
+  const { fetchAllUsers } = useContext(UserListSearchContext);
   const { token, compID } = useSelector((state: RootState) => state.userDetails);
 
   const [selectedUser, setSelectedUser] = useState<UserListData | null>(null);
@@ -71,7 +71,7 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
   const saveUserPermission = async (permission: OperationPermissionDetailsDto): Promise<void> => {
     if (selectedUser && token) {
       try {
-        const result = await UserListService.saveOrUpdateUserPermission(token, {
+        const result = await UserListService.saveOrUpdateUserPermission({
           auAccessID: permission.auAccessID || 0,
           appID: selectedUser.appID,
           appUName: selectedUser.appUserName,
@@ -116,7 +116,7 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
   const saveUserReportPermission = async (permission: OperationPermissionDetailsDto): Promise<void> => {
     if (selectedUser && token) {
       try {
-        const result = await UserListService.saveOrUpdateUserReportPermission(token, {
+        const result = await UserListService.saveOrUpdateUserReportPermission({
           auAccessID: permission.auAccessID,
           appID: selectedUser.appID,
           appUName: selectedUser.appUserName,
@@ -181,7 +181,6 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
         user={selectedUser}
         isEditMode={!!selectedUser}
         refreshUsers={refreshUsers}
-        updateUserStatus={updateUserStatus}
         onSuperUserChange={handleSuperUserChange}
       />
 
@@ -200,7 +199,6 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
         show={isSearchDialogOpen}
         handleClose={handleCloseSearchDialog}
         onEditProfile={handleEditUser}
-        selectedUser={selectedUser}
       />
 
     </Container>

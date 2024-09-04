@@ -4,8 +4,8 @@ import Search from "@mui/icons-material/Search";
 import { Container } from "@mui/system";
 import { Box } from "@mui/material";
 import BreakDetails from "../SubPage/BreakDetails";
-import { BreakListDto } from "../../../../interfaces/frontOffice/BreakListData";
-import BreakListSearch from "../SubPage/BreakListsearch";
+import { BreakListDto } from "../../../../interfaces/FrontOffice/BreakListData";
+import BreakListSearch from "../SubPage/BreakListSearch";
 
 const BreakListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

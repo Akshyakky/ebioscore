@@ -17,7 +17,7 @@ const ProfileListPage: React.FC = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<ProfileListSearchResult | null>(null);
-  const { fetchAllProfiles, updateProfileStatus } = useContext(ProfileListSearchContext);
+  const { fetchAllProfiles } = useContext(ProfileListSearchContext);
   const { token } = useSelector((state: RootState) => state.userDetails);
   const [permissions, setPermissions] = useState<ModuleOperation[]>([]);
 
@@ -65,7 +65,7 @@ const ProfileListPage: React.FC = () => {
           reportYN: permission.reportYN,
         };
 
-        const result = await ProfileService.saveOrUpdateProfileDetail(token, payload);
+        const result = await ProfileService.saveOrUpdateProfileDetail(payload);
         if (result.success && result.data) {
           const updatedPermission = {
             ...permission,
@@ -115,7 +115,6 @@ const ProfileListPage: React.FC = () => {
         profile={selectedProfile}
         isEditMode={!!selectedProfile}
         refreshProfiles={refreshProfiles}
-        updateProfileStatus={updateProfileStatus}
       />
       {isSaved && selectedProfile && (
         <OperationPermissionDetails
@@ -128,8 +127,8 @@ const ProfileListPage: React.FC = () => {
         />
       )}
       <ProfileListSearch
-        show={isSearchDialogOpen}
-        handleClose={handleCloseSearchDialog}
+        open={isSearchDialogOpen}
+        onClose={handleCloseSearchDialog}
         onEditProfile={handleEditProfile}
       />
     </Container>

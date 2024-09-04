@@ -1,17 +1,12 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { BreakListDto, BreakListData, BreakConDetailData } from "../../../../interfaces/frontOffice/BreakListData";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { useSelector } from "react-redux";
 import { Grid, Paper, Typography } from "@mui/material";
-import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import CustomCheckbox from "../../../../components/Checkbox/Checkbox";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import TextArea from "../../../../components/TextArea/TextArea";
 import CustomButton from "../../../../components/Button/CustomButton";
 import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
-import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import Save from "@mui/icons-material/Save";
 import Delete from "@mui/icons-material/Delete";
@@ -22,6 +17,8 @@ import { formatDate } from "../../../../utils/Common/dateUtils";
 import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
 import { showAlert } from "../../../../utils/Common/showAlert";
+import { BreakConDetailData, BreakListData, BreakListDto } from "../../../../interfaces/FrontOffice/BreakListData";
+import FormField from "../../../../components/FormField/FormField";
 
 const frequencyCodeMap = {
     none: "FO70",
@@ -146,7 +143,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
-        if (type === 'time' && name === 'bLStartTime' || name === 'bLEndTime') {
+        if (type === 'time' && (name === 'bLStartTime' || name === 'bLEndTime')) {
             const [hours, minutes] = value.split(':').map(Number);
             setFormState(prev => ({
                 ...prev,
@@ -334,90 +331,76 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                     Break Details
                 </Typography>
                 <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="Break Name"
-                            placeholder="Break name"
-                            value={formState.bLName}
-                            onChange={handleInputChange}
-                            isMandatory
-                            size="small"
-                            isSubmitted={isSubmitted}
-                            name="bLName"
-                            ControlID="Breakname"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="Start Time"
-                            size="small"
-                            type="time"
-                            isMandatory
-                            name="bLStartTime"
-                            isSubmitted={isSubmitted}
-                            value={formatTime(formState.bLStartTime)}
-                            onChange={handleInputChange}
-                            ControlID="StartTime"
-                            disabled={isOneDay}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="End Time"
-                            size="small"
-                            type="time"
-                            isMandatory
-                            name="bLEndTime"
-                            isSubmitted={isSubmitted}
-                            value={formatTime(formState.bLEndTime)}
-                            onChange={handleInputChange}
-                            ControlID="EndTime"
-                            disabled={isOneDay}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3} mt={2}>
-                        <CustomSwitch
-                            label="One Day"
-                            checked={isOneDay}
-                            onChange={handleSwitchChange}
-                            color="#4CAF50"
-                        />
-                    </Grid>
+                    <FormField
+                        type="text"
+                        label="Break Name"
+                        name="bLName"
+                        value={formState.bLName}
+                        onChange={handleInputChange}
+                        ControlID="Breakname"
+                        isMandatory
+                        isSubmitted={isSubmitted}
+                        placeholder="Break name"
+                    />
+                    <FormField
+                        type="text"
+                        label="Start Time"
+                        name="bLStartTime"
+                        value={formatTime(formState.bLStartTime)}
+                        onChange={handleInputChange}
+                        ControlID="StartTime"
+                        isMandatory
+                        isSubmitted={isSubmitted}
+                        disabled={isOneDay}
+                    />
+                    <FormField
+                        type="text"
+                        label="End Time"
+                        name="bLEndTime"
+                        value={formatTime(formState.bLEndTime)}
+                        onChange={handleInputChange}
+                        ControlID="EndTime"
+                        isMandatory
+                        isSubmitted={isSubmitted}
+                        disabled={isOneDay}
+                    />
+                    <FormField
+                        type="switch"
+                        label="One Day"
+                        name="isOneDay"
+                        checked={isOneDay}
+                        value={isOneDay}
+                        onChange={handleSwitchChange}
+                        ControlID="OneDay"
+                        gridProps={{ mt: 2 }}
+                    />
                 </Grid>
                 <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="Start Date"
-                            size="small"
-                            type="date"
-                            name="bLStartDate"
-                            value={formState.bLStartDate.toISOString().split('T')[0]}
-                            onChange={handleInputChange}
-                            ControlID="StartDate"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="End Date"
-                            size="small"
-                            type="date"
-                            name="bLEndDate"
-                            value={formState.bLEndDate.toISOString().split('T')[0]}
-                            onChange={handleInputChange}
-                            ControlID="EndDate"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <TextArea
-                            name="bLFrqDesc"
-                            label="Repeat"
-                            value={formState.bLFrqDesc}
-                            onChange={handleInputChange}
-                            placeholder="Repeat"
-                            rows={2}
-                            readOnly={true}
-                        />
-                    </Grid>
+                    <FormField
+                        type="date"
+                        label="Start Date"
+                        name="bLStartDate"
+                        value={formState.bLStartDate.toISOString().split('T')[0]}
+                        onChange={handleInputChange}
+                        ControlID="StartDate"
+                    />
+                    <FormField
+                        type="date"
+                        label="End Date"
+                        name="bLEndDate"
+                        value={formState.bLEndDate.toISOString().split('T')[0]}
+                        onChange={handleInputChange}
+                        ControlID="EndDate"
+                    />
+                    <FormField
+                        type="textarea"
+                        label="Repeat"
+                        name="bLFrqDesc"
+                        value={formState.bLFrqDesc}
+                        onChange={handleInputChange}
+                        ControlID="Repeat"
+                        readOnly={true}
+                    />
                     <Grid item xs={12} sm={6} md={3} mt={2}>
                         <CustomButton
                             variant="contained"
@@ -430,20 +413,20 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                     </Grid>
                 </Grid>
                 <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={4}>
-                        <RadioGroup
-                            name="resourceOrPhysician"
-                            options={[
-                                { value: "physician", label: "Physician" },
-                                { value: "resource", label: "Resource" }
-                            ]}
-                            selectedValue={selectedOption}
-                            onChange={handleRadioChange}
-                            isMandatory={true}
-                            inline={true}
-                            label="Choose Option"
-                        />
-                    </Grid>
+                    <FormField
+                        type="radio"
+                        label="Choose Option"
+                        name="resourceOrPhysician"
+                        value={selectedOption}
+                        onChange={(e) => handleRadioChange(e, e.target.value)}
+                        ControlID="ChooseOption"
+                        options={[
+                            { value: "physician", label: "Physician" },
+                            { value: "resource", label: "Resource" }
+                        ]}
+                        isMandatory={true}
+                        inline={true}
+                    />
                 </Grid>
                 <Grid container spacing={2}>
                     <Grid item xs={12} sm={6} md={4}>
@@ -459,26 +442,26 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                     </Grid>
                 </Grid>
                 <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={4}>
-                        <TextArea
-                            label="Description"
-                            name="rNotes"
-                            value={formState.rNotes}
-                            onChange={handleInputChange}
-                            placeholder="Enter description"
-                            rows={2}
-                        />
-                    </Grid>
+                    <FormField
+                        type="textarea"
+                        label="Description"
+                        name="rNotes"
+                        value={formState.rNotes}
+                        onChange={handleInputChange}
+                        ControlID="Description"
+                        placeholder="Enter description"
+                    />
                 </Grid>
                 <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <CustomSwitch
-                            label={formState.rActiveYN === 'Y' ? 'Active' : 'Hidden'}
-                            checked={formState.rActiveYN === 'Y'}
-                            onChange={handleActiveToggle}
-                            aria-label="Active Status"
-                        />
-                    </Grid>
+                    <FormField
+                        type="switch"
+                        label={formState.rActiveYN === 'Y' ? 'Active' : 'Hidden'}
+                        name="rActiveYN"
+                        checked={formState.rActiveYN === 'Y'}
+                        value={formState.rActiveYN}
+                        onChange={handleActiveToggle}
+                        ControlID="ActiveStatus"
+                    />
                 </Grid>
                 <FormSaveClearButton
                     onSave={handleSave}

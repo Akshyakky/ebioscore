@@ -219,8 +219,8 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }));
 
   const memoizedParams = useMemo(
-    () => [token, "GetConstantValues", "PTIT"],
-    [token]
+    () => ["GetConstantValues", "PTIT"],
+    []
   );
   const titleResult = useDropdown(
     ConstantValues.fetchConstantValues,
@@ -236,8 +236,8 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }));
 
   const memoizedParamsForGender = useMemo(
-    () => [token, "GetConstantValues", "PSEX"],
-    [token]
+    () => ["GetConstantValues", "PSEX"],
+    []
   );
   const genderResult = useDropdown(
     ConstantValues.fetchConstantValues,
@@ -253,8 +253,8 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }));
 
   const memoizedParamsForBloodGrp = useMemo(
-    () => [token, "GetConstantValues", "PBLD"],
-    [token]
+    () => ["GetConstantValues", "PBLD"],
+    []
   );
   const bloodGrpResult = useDropdown(
     ConstantValues.fetchConstantValues,
@@ -271,7 +271,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
 
   const memoizedParamsForPic = useMemo(
     () => [token, "GetPICDropDownValues"],
-    [token]
+    []
   );
   const picResult = useDropdown(
     BillingService.fetchPicValues,
@@ -287,8 +287,8 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }));
 
   const memoizedParamsForArea = useMemo(
-    () => [token, "GetActiveAppModifyFieldsAsync", "AREA"],
-    [token]
+    () => ["GetActiveAppModifyFieldsAsync", "AREA"],
+    []
   );
   const areaResult = useDropdown(
     AppModifyListService.fetchAppModifyList,
@@ -304,8 +304,8 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }));
 
   const memoizedParamsForCity = useMemo(
-    () => [token, "GetActiveAppModifyFieldsAsync", "CITY"],
-    [token]
+    () => ["GetActiveAppModifyFieldsAsync", "CITY"],
+    []
   );
   const cityResult = useDropdown(
     AppModifyListService.fetchAppModifyList,
@@ -323,8 +323,8 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }));
 
   const memoizedParamsForNationality = useMemo(
-    () => [token, "GetActiveAppModifyFieldsAsync", "ACTUALCOUNTRY"],
-    [token]
+    () => ["GetActiveAppModifyFieldsAsync", "ACTUALCOUNTRY"],
+    []
   );
   const nationalityResult = useDropdown(
     AppModifyListService.fetchAppModifyList,

@@ -5,18 +5,18 @@ import { store } from "../../store/store";
 import { CommonApiService } from "../CommonApiService";
 
 const commonApiService = new CommonApiService({
-  baseURL: APIConfig.frontOffice,
+  baseURL: APIConfig.commonURL,
 });
 
 const getToken = () => store.getState().userDetails.token!;
 
 export const saveAlert = async (
-  alertDate: AlertDto
+  alertData: AlertDto
 ): Promise<OperationResult<AlertDto>> => {
   debugger;
   return commonApiService.post<OperationResult<any>>(
     "Alert/SaveAlert",
-    alertDate,
+    alertData,
     getToken()
   );
 };
@@ -24,6 +24,7 @@ export const saveAlert = async (
 export const GetAlertBypChartID = async (
   pChartID: number
 ): Promise<OperationResult<any>> => {
+  debugger;
   return commonApiService.get<OperationResult<any>>(
     `Alert/GetAlertBypChartID/${pChartID}`,
     getToken()

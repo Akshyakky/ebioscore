@@ -18,7 +18,6 @@ interface ProfileDetailsProps {
   onClear: () => void;
   isEditMode: boolean;
   refreshProfiles: () => void;
-  updateProfileStatus: (profileID: number, status: string) => void;
 }
 
 const ProfileDetails: React.FC<ProfileDetailsProps> = ({
@@ -26,7 +25,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   onSave,
   onClear,
   refreshProfiles,
-  updateProfileStatus,
 }) => {
   const { token, compID } = useSelector((state: RootState) => state.userDetails);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -57,18 +55,18 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     setIsSubmitted(true);
     if (profileMastDto.profileCode && profileMastDto.profileName) {
       try {
-        const result: OperationResult<ProfileMastDto> = await ProfileService.saveOrUpdateProfile(token!, profileMastDto);
+        const result: OperationResult<ProfileMastDto> = await ProfileService.saveOrUpdateProfile(profileMastDto);
         if (result.success && result.data) {
           const savedProfile: ProfileListSearchResult = {
             profileID: result.data.profileID,
             profileCode: result.data.profileCode,
             profileName: result.data.profileName,
             status: result.data.rActiveYN === "N" ? "Hidden" : "Active",
+            rActiveYN: result.data.rActiveYN,
             rNotes: result.data.rNotes,
           };
           onSave(savedProfile);
           refreshProfiles();
-          updateProfileStatus(profileMastDto.profileID, profileMastDto.rActiveYN === "N" ? "Hidden" : "Active");
           notifySuccess("Profile saved successfully");
         } else {
           notifyError("Error saving profile");

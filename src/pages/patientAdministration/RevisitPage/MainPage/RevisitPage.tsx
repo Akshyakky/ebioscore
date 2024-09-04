@@ -5,7 +5,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import { Box, Container, Grid, Paper } from "@mui/material";
 import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import {
