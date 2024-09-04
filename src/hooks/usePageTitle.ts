@@ -23,7 +23,8 @@ const pageTitleMap: PageTitleMap = {
   "/PatientInvoiceCodePage": "Patient Invoice Code List",
   "/DepartmentListPage": "Department List",
   "/PaymentTypesPage": "Payments Type List",
-  "/ServiceGroupsListPage": "Service Groups List"
+  "/ServiceGroupsListPage": "Service Groups List",
+  "/AlertPage": "Alert Manager",
   // Add more mappings as needed
 };
 

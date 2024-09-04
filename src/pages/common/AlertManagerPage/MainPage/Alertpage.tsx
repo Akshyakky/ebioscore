@@ -1,190 +1,46 @@
-import React, {
-    useContext,
-    useEffect,
-    useState,
-    useCallback,
-    useRef,
-} from "react";
+import React, { useContext, useState } from "react";
 import { Container, Paper, Box } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
-import { ApiError } from "../../../../interfaces/Common/ApiError";
 import { useLoading } from "../../../../context/LoadingContext";
-import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
-import { RegistrationFormErrors } from "../../../../interfaces/PatientAdministration/registrationFormData";
-import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
-import { format } from "date-fns";
 import { AlertDto } from "../../../../interfaces/Common/AlertManager";
 import AlertDetails from "../SubPage/AlertDetails";
 import PatientSearch from "../../../patientAdministration/CommonPage/AdvanceSearch/PatientSearch";
 import { PatientSearchContext } from "../../../../context/PatientSearchContext";
 import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
-import {
-    Search as SearchIcon,
-    Delete as DeleteIcon,
-    Save as SaveIcon,
-} from "@mui/icons-material";
+import { Search as SearchIcon } from "@mui/icons-material";
 import { AlertManagerServices } from "../../../../services/CommonServices/AlertManagerServices";
+import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
 
 const AlertPage: React.FC = () => {
-    const [selectedData, setSelectedData] = useState<AlertDto | undefined>(undefined);
-    const [, setIsSubmitted] = useState(false);
-    const [, setFormErrors] = useState<RegistrationFormErrors>({});
+    const [selectedData, setSelectedData] = useState<AlertDto | undefined>(
+        undefined
+    );
     const { setLoading } = useLoading();
     const userInfo = useSelector((state: RootState) => state.userDetails);
     const token = userInfo.token!;
     const [showPatientSearch, setShowPatientSearch] = useState(false);
-    const [selectedPChartID, setSelectedPChartID] = useState<number>(0);
-    const [shouldClearInsuranceData, setShouldClearInsuranceData] =
-        useState(false);
-    const [formData, setFormData] = useState<PatientRegistrationDto>(
-        initializeFormData(userInfo)
-    );
-    const [shouldClearKinData, setShouldClearKinData] = useState(false);
-
-    const { fetchLatestUHID } = useRegistrationUtils(token);
     const { performSearch } = useContext(PatientSearchContext);
-    const [, setEditMode] = useState(false);
+    const [, setSelectedPChartID] = useState<number>(0);
 
 
-    useEffect(() => {
-        if (shouldClearInsuranceData) {
-            setShouldClearInsuranceData(false);
-        }
-        if (shouldClearKinData) {
-            setShouldClearKinData(false);
-        }
-    }, [shouldClearInsuranceData, shouldClearKinData]);
-
-    const handleClear = useCallback(() => {
-        setIsSubmitted(false);
-        setFormErrors({});
-        setFormData(initializeFormData(userInfo));
-        setShouldClearInsuranceData(true);
-        setShouldClearKinData(true);
-        fetchLatestUHID().then((latestUHID) => {
-            if (latestUHID) {
-                setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    patRegisters: {
-                        ...prevFormData.patRegisters,
-                        pChartCode: latestUHID,
-                    },
-                }));
-            }
-        });
-
-        setEditMode(false);
-        setSelectedPChartID(0);
-        window.scrollTo(0, 0);
-    }, [fetchLatestUHID, userInfo]);
-
-    const validateFormData = useCallback(() => {
-        const errors: RegistrationFormErrors = {};
-        if (!formData.patRegisters.pChartCode.trim()) {
-            errors.pChartCode = "UHID is required.";
-        } else if (!formData.patRegisters.pRegDate) {
-            errors.registrationDate = "Registration Date is required";
-        } else if (!formData.patRegisters.pFName) {
-            errors.firstName = "First Name is required.";
-        } else if (!formData.patRegisters.pLName) {
-            errors.lastName = "Last name is required";
-        } else if (
-            formData.patRegisters.pTypeID === 0 ||
-            !formData.patRegisters.pTypeName
-        ) {
-            errors.paymentSource = "Payment Source is required";
-        } else if (!formData.patAddress.pAddPhone1) {
-            errors.mobileNumber = "Mobile No is required";
-        } else if (
-            !formData.patRegisters.pTitleVal ||
-            !formData.patRegisters.pTitle
-        ) {
-            errors.title = "Title is required";
-        } else if (!formData.patRegisters.pssnID) {
-            errors.indetityNo = "Indentity Number is required";
-        } else if (
-            (formData.patRegisters.pDobOrAge === "DOB" &&
-                !formData.patRegisters.pDob) ||
-            (formData.patRegisters.pDobOrAge === "Age" &&
-                formData.patOverview.pAgeNumber === 0 &&
-                !formData.patOverview.pAgeDescriptionVal)
-        ) {
-            errors.dateOfBirth = "Date of birth or Age is required";
-        } else if (
-            formData.opvisits?.visitTypeVal === "H" &&
-            (formData.patRegisters.deptID === 0 || !formData.patRegisters.deptName)
-        ) {
-            errors.department = "Department is required";
-        } else if (
-            formData.opvisits?.visitTypeVal === "P" &&
-            (formData.patRegisters.consultantID === 0 ||
-                !formData.patRegisters.consultantName)
-        ) {
-            errors.attendingPhysician = "Attending Physician is required";
-        } else if (
-            (formData.opvisits?.visitTypeVal === "H" ||
-                formData.opvisits?.visitTypeVal === "P") &&
-            (formData.patRegisters.sourceID === 0 ||
-                !formData.patRegisters.sourceName)
-        ) {
-            errors.primaryIntroducingSource =
-                "Primary Introducing Source is required";
-        }
-        setFormErrors(errors);
-        return Object.keys(errors).length === 0;
-    }, [formData]);
-
-
-
-    const handleSave = async () => {
-        setIsSubmitted(true);
+    const handlePatientSelect = async (selectedSuggestion: string, pChartCode: string) => {
+        debugger
         setLoading(true);
         try {
-            const isFormValid = validateFormData();
-            if (!isFormValid) {
-                console.log("Validation failed. Please fill all mandatory fields.");
-                setLoading(false);
-                return;
-            }
-
-        } catch (error) {
-            handleApiError(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleApiError = (error: unknown) => {
-        if (isApiError(error)) {
-            console.error("Validation errors:", error.errors);
-            setFormErrors(error.errors);
-        } else {
-            console.error("An error occurred while saving the registration:", error);
-            alert("An error occurred while saving the registration.");
-        }
-    };
-
-    const isApiError = (error: unknown): error is ApiError => {
-        return typeof error === "object" && error !== null && "errors" in error;
-    };
-
-    const handlePatientSelect = async (selectedSuggestion: string) => {
-        setLoading(true);
-        try {
-            const numbersArray = extractNumbers(selectedSuggestion);
+            const numbersArray = extractNumbers(pChartCode);
             const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
             if (pChartID) {
                 await fetchPatientDetailsAndUpdateForm(pChartID);
                 setSelectedPChartID(pChartID);
-
-                // Fetch and set the alert details based on pChartID
                 const alertResult = await AlertManagerServices.GetAlertBypChartID(pChartID);
                 if (alertResult.success && alertResult.data) {
-                    setSelectedData(alertResult.data); // Update selectedData here
+                    setSelectedData({
+                        ...alertResult.data,
+                        pChartCode: pChartCode
+                    });
+                    console.error("The pChartCode is .", pChartCode);
                 } else {
                     console.error("Failed to fetch alert details.");
                 }
@@ -193,8 +49,6 @@ const AlertPage: React.FC = () => {
             setLoading(false);
         }
     };
-
-
     const fetchPatientDetailsAndUpdateForm = async (pChartID: number) => {
         setLoading(true);
         try {
@@ -203,26 +57,6 @@ const AlertPage: React.FC = () => {
                 pChartID
             );
             if (patientDetails.success && patientDetails.data) {
-                const formattedData = {
-                    ...patientDetails.data,
-                    patRegisters: {
-                        ...patientDetails.data.patRegisters,
-                        pRegDate: format(
-                            new Date(patientDetails.data.patRegisters.pRegDate),
-                            "yyyy-MM-dd"
-                        ),
-                        pDob: format(
-                            new Date(patientDetails.data.patRegisters.pDob),
-                            "yyyy-MM-dd"
-                        ),
-                        patMemSchemeExpiryDate: format(
-                            new Date(patientDetails.data.patRegisters.patMemSchemeExpiryDate),
-                            "yyyy-MM-dd"
-                        ),
-                    },
-                };
-                setEditMode(true);
-                setFormData(formattedData);
             } else {
                 console.error(
                     "Fetching patient details was not successful or data is undefined"
@@ -236,11 +70,9 @@ const AlertPage: React.FC = () => {
     };
 
     const handleAdvancedSearch = async () => {
-        debugger
         setShowPatientSearch(true);
         await performSearch("");
     };
-
 
     return (
         <>
@@ -267,142 +99,11 @@ const AlertPage: React.FC = () => {
                     <AlertDetails editData={selectedData} />
 
                 </Paper>
+
+
             </Container>
-            <FormSaveClearButton
-                clearText="Clear"
-                saveText="Save"
-                onClear={handleClear}
-                onSave={handleSave}
-                clearIcon={DeleteIcon}
-                saveIcon={SaveIcon}
-            />
         </>
     );
 };
 
-const initializeFormData = (userInfo: any): PatientRegistrationDto => ({
-    patRegisters: {
-        pChartID: 0,
-        pChartCode: "",
-        pRegDate: format(new Date(), "yyyy-MM-dd"),
-        pTitleVal: "",
-        pTitle: "",
-        pFName: "",
-        pMName: "",
-        pLName: "",
-        pDobOrAgeVal: "Y",
-        pDobOrAge: "",
-        pDob: format(new Date(), "yyyy-MM-dd"),
-        pAgeType: "",
-        pApproxAge: 0,
-        pGender: "",
-        pGenderVal: "",
-        pssnID: "",
-        pBldGrp: "",
-        rCreatedID: userInfo.userID !== null ? userInfo.userID : 0,
-        rCreatedBy: userInfo.userName !== null ? userInfo.userName : "",
-        rCreatedOn: new Date(),
-        rModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
-        rModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
-        rModifiedOn: new Date(),
-        rActiveYN: "Y",
-        rNotes: "",
-        compID: userInfo.compID !== null ? userInfo.compID : 0,
-        compCode: userInfo.compCode !== null ? userInfo.compCode : "",
-        compName: userInfo.compName !== null ? userInfo.compName : "",
-        pFhName: "",
-        pTypeID: 0,
-        pTypeCode: "",
-        pTypeName: "",
-        fatherBldGrp: "",
-        sapID: "",
-        patMemID: 0,
-        patMemName: "",
-        patMemDescription: "",
-        patMemSchemeExpiryDate: format(new Date(), "yyyy-MM-dd"),
-        patSchemeExpiryDateYN: "N",
-        patSchemeDescriptionYN: "N",
-        cancelReason: "",
-        cancelYN: "N",
-        consultantID: 0,
-        consultantName: "",
-        deptID: 0,
-        deptName: "",
-        facultyID: 0,
-        faculty: "",
-        langType: "",
-        pChartCompID: 0,
-        pExpiryDate: new Date(),
-        physicianRoom: "",
-        regTypeVal: "GEN",
-        regType: "",
-        sourceID: 0,
-        sourceName: "",
-        pPob: "",
-        patCompName: "",
-        patCompNameVal: "",
-        patDataFormYN: "N",
-        intIdPsprt: "",
-        transferYN: "N",
-    },
-    patAddress: {
-        pAddID: 0,
-        pChartID: 0,
-        pChartCode: "",
-        pAddType: "LOCAL",
-        pAddMailVal: "N",
-        pAddMail: "",
-        pAddSMSVal: "N",
-        pAddSMS: "",
-        pAddEmail: "",
-        pAddStreet: "",
-        pAddStreet1: "",
-        pAddCityVal: "",
-        pAddCity: "",
-        pAddState: "",
-        pAddPostcode: "",
-        pAddCountry: "",
-        pAddCountryVal: "",
-        pAddPhone1: "",
-        pAddPhone2: "",
-        pAddPhone3: "",
-        pAddWorkPhone: "",
-        compID: userInfo.compID !== null ? userInfo.compID : 0,
-        compCode: userInfo.compCode !== null ? userInfo.compCode : "",
-        compName: userInfo.compName !== null ? userInfo.compName : "",
-        pAddActualCountryVal: "",
-        pAddActualCountry: "",
-        patAreaVal: "",
-        patArea: "",
-        patDoorNo: "",
-        pChartCompID: 0,
-    },
-    patOverview: {
-        patOverID: 0,
-        pChartID: 0,
-        pChartCode: "",
-        pPhoto: "",
-        pMaritalStatus: "",
-        pReligion: "",
-        pEducation: "",
-        pOccupation: "",
-        pEmployer: "",
-        pAgeNumber: 0,
-        pAgeDescription: "",
-        pAgeDescriptionVal: "",
-        ethnicity: "",
-        pCountryOfOrigin: "",
-        compID: userInfo.compID !== null ? userInfo.compID : 0,
-        compCode: userInfo.compCode !== null ? userInfo.compCode : "",
-        compName: userInfo.compName !== null ? userInfo.compName : "",
-        pChartCompID: 0,
-        transferYN: "N",
-    },
-    opvisits: {
-        visitTypeVal: "H",
-        visitType: "Hospital",
-    },
-});
-
 export default AlertPage;
-
