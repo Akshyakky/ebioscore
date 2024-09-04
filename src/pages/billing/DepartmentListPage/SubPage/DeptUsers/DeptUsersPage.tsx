@@ -5,6 +5,7 @@ import GenericDialog from "../../../../../components/GenericDialog/GenericDialog
 import CustomButton from "../../../../../components/Button/CustomButton";
 import AddIcon from "@mui/icons-material/Add";
 import DeptUsersList from "./DeptUsersList";
+import DeptUsersListSearch from "./DeptUsersSearch";
 
 interface DeptUsersListPageProps {
   deptId: number;
@@ -20,6 +21,21 @@ export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({
   handleCloseDialog,
 }) => {
   const [deptUsers, setDeptUsers] = useState<DeptUserDto[]>([]);
+
+  //
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  const handleAdvancedSearch = () => {
+    setIsSearchOpen(true);
+  };
+
+  const handleCloseSearch = () => {
+    setIsSearchOpen(false);
+  };
+  const handleSelect = (data: DeptUserDto) => {
+    console.log(data);
+  };
+  //
 
   useEffect(() => {
     if (deptId > 0) {
@@ -68,11 +84,11 @@ export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({
       onClose={handleCloseDialog}
       title={`Manage ${deptName} Department's User Access`}
       fullWidth
-      maxWidth="md"
+      maxWidth="lg"
     >
       <CustomButton
         size="medium"
-        onClick={() => console.log("Ádd")}
+        onClick={handleAdvancedSearch}
         icon={AddIcon}
         color="secondary"
         variant="contained"
@@ -82,6 +98,11 @@ export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({
         deptUsers={deptUsers}
         handleSwitchChange={handleSwitchChange}
         handleDelete={handleDelete}
+      />
+      <DeptUsersListSearch
+        open={isSearchOpen}
+        onClose={handleCloseSearch}
+        onSelect={handleSelect}
       />
     </GenericDialog>
   );

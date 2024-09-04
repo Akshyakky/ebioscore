@@ -1,4 +1,4 @@
-import { ButtonProps, Grid, Paper, Typography } from "@mui/material";
+import { Grid, Paper, Typography } from "@mui/material";
 import { useState, useEffect, useMemo } from "react";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from "@mui/icons-material/Save";
@@ -17,8 +17,6 @@ import { useSelector } from "react-redux";
 import FormField from "../../../../components/FormField/FormField";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { DeptUsersPage } from "./DeptUsers/DeptUsersPage";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import { Box } from "devextreme-react";
 
 const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   editData,
