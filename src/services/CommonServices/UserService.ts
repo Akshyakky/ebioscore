@@ -1,20 +1,31 @@
-//services/CommonService/UserService.ts
-import axios from "axios";
+import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "../../apiConfig";
 import { OperationResult } from "../../interfaces/Common/OperationResult";
 import { UserLockData } from "../../interfaces/SecurityManagement/UserLockData.interface";
+import { store } from "../../store/store";
+
+const apiService = new CommonApiService({
+  baseURL: APIConfig.securityManagementURL,
+});
+
+// Function to get the token from the store
+const getToken = () => store.getState().userDetails.token!;
 
 export const saveAppUserLock = async (
-  token: string,
   userLockData: UserLockData
 ): Promise<OperationResult<UserLockData>> => {
-  const url = `${APIConfig.securityManagementURL}SecurityManagement/AddAppUserLockAsync`;
-  const headers = { Authorization: `Bearer ${token}` };
   try {
-    const response = await axios.post(url, userLockData, { headers });
-    return response.data;
+    return await apiService.post<OperationResult<UserLockData>>(
+      "SecurityManagement/AddAppUserLockAsync",
+      userLockData,
+      getToken()
+    );
   } catch (error) {
-    console.error(`Error saving User Lock data:${error}`);
+    console.error(`Error saving User Lock data:`, error);
     throw error;
   }
+};
+
+export const UserService = {
+  saveAppUserLock,
 };

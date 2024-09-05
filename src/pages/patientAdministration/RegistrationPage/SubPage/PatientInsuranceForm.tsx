@@ -35,7 +35,6 @@ const PatientInsuranceForm: React.FC<PatientInsuranceModalProps> = ({
   editData,
 }) => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
-  const token = userInfo.token!;
   const [isSubmitted, setIsSubmitted] = useState(false);
   const insuranceFormInitialState: OPIPInsurancesDto = {
     ID: 0,
@@ -127,7 +126,7 @@ const PatientInsuranceForm: React.FC<PatientInsuranceModalProps> = ({
   useEffect(() => {
     const loadDropdownData = async () => {
       const InsuranceCarrier =
-        await InsuranceCarrierService.fetchInsuranceOptions(token, endpoint);
+        await InsuranceCarrierService.fetchInsuranceOptions(endpoint);
       const InsuranceCarrierOptions: DropdownOption[] = InsuranceCarrier.map(
         (item) => ({
           value: item.value,
@@ -159,7 +158,7 @@ const PatientInsuranceForm: React.FC<PatientInsuranceModalProps> = ({
       setCoverForValues(transformedCoverForData);
     };
     loadDropdownData();
-  }, [token]);
+  }, []);
 
   return (
     <Dialog open={show} onClose={handleClose} maxWidth="lg" fullWidth>

@@ -145,7 +145,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       if (fieldNames.includes("conID")) {
         try {
           const contactDetails = await ContactListService.fetchContactDetails(
-            token!,
             parseInt(value)
           );
           updatedState.appUcatCode = contactDetails.contactMastDto.consValue;

@@ -1,8 +1,8 @@
-import { ResourceListData } from "../../../interfaces/frontOffice/ResourceListData";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { CommonApiService } from "../../CommonApiService";
 import { store } from "../../../store/store";
+import { ResourceListData } from "../../../interfaces/FrontOffice/ResourceListData";
 
 const commonApiService = new CommonApiService({
   baseURL: APIConfig.frontOffice,

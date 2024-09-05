@@ -1,34 +1,35 @@
-//RoutineReportService/ExportService.ts
-import axios from "axios";
-import { saveAs } from "file-saver"; // Make sure to import saveAs
+import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "../../apiConfig";
+import { store } from "../../store/store";
+import { saveAs } from "file-saver";
+import axios from "axios";
+
+const apiService = new CommonApiService({
+  baseURL: `${APIConfig.routineReportURL}RegistrationReport`,
+});
+
+// Function to get the token from the store
+const getToken = () => store.getState().userDetails.token!;
 
 interface CriteriaRequest {
   reportId: number;
   fromDate: string;
   toDate: string;
   selectedCompanies: string[];
-  token: string;
 }
-const API_BASE_URL = `${APIConfig.routineReportURL}RegistrationReport`;
-export const generatePDF = async (criteria: CriteriaRequest): Promise<void> => {
+
+const generatePDF = async (criteria: CriteriaRequest): Promise<void> => {
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/GeneratePDF`,
-      {
-        reportId: criteria.reportId,
-        fromDate: criteria.fromDate,
-        toDate: criteria.toDate,
-        selectedCompanies: criteria.selectedCompanies,
-      },
+      `${apiService["baseURL"]}/GeneratePDF`,
+      criteria,
       {
         responseType: "blob",
         headers: {
-          Authorization: `Bearer ${criteria.token}`,
+          Authorization: `Bearer ${getToken()}`,
         },
       }
     );
-
     const blob = new Blob([response.data], { type: "application/pdf" });
     saveAs(blob, `report-${criteria.reportId}.pdf`);
   } catch (error) {
@@ -37,26 +38,18 @@ export const generatePDF = async (criteria: CriteriaRequest): Promise<void> => {
   }
 };
 
-export const exportToExcel = async (
-  criteria: CriteriaRequest
-): Promise<void> => {
+const exportToExcel = async (criteria: CriteriaRequest): Promise<void> => {
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/ExportToExcel`,
-      {
-        reportId: criteria.reportId,
-        fromDate: criteria.fromDate,
-        toDate: criteria.toDate,
-        selectedCompanies: criteria.selectedCompanies,
-      },
+      `${apiService["baseURL"]}/ExportToExcel`,
+      criteria,
       {
         responseType: "blob",
         headers: {
-          Authorization: `Bearer ${criteria.token}`,
+          Authorization: `Bearer ${getToken()}`,
         },
       }
     );
-
     const blob = new Blob([response.data], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
@@ -67,29 +60,25 @@ export const exportToExcel = async (
   }
 };
 
-export const generatePDFForView = async (criteria: CriteriaRequest): Promise<string> => {
+const generatePDFForView = async (
+  criteria: CriteriaRequest
+): Promise<string> => {
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/GeneratePDF`,
-      {
-        reportId: criteria.reportId,
-        fromDate: criteria.fromDate,
-        toDate: criteria.toDate,
-        selectedCompanies: criteria.selectedCompanies,
-      },
+      `${apiService["baseURL"]}/GeneratePDF`,
+      criteria,
       {
         responseType: "blob",
         headers: {
-          Authorization: `Bearer ${criteria.token}`,
+          Authorization: `Bearer ${getToken()}`,
         },
       }
     );
-
     const blob = new Blob([response.data], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
-    return url; // Return the URL instead of saving the file
+    return url;
   } catch (error) {
-    console.error("Error during PDF generation:", error);
+    console.error("Error during PDF generation for view:", error);
     throw error;
   }
 };
@@ -97,5 +86,5 @@ export const generatePDFForView = async (criteria: CriteriaRequest): Promise<str
 export const ExportService = {
   exportToExcel,
   generatePDF,
-  generatePDFForView
+  generatePDFForView,
 };

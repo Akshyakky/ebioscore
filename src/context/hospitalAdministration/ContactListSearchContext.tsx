@@ -1,8 +1,6 @@
 import { createContext, useState } from "react";
 import { ContactListSearchResult } from "../../interfaces/HospitalAdministration/ContactListData";
 import { useLoading } from "../LoadingContext";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store/reducers";
 import { notifyError } from "../../utils/Common/toastManager";
 import { ContactListService } from "../../services/HospitalAdministrationServices/ContactListService/ContactListService";
 
@@ -28,13 +26,10 @@ export const ContactListSearchProvider = ({
     []
   );
   const { setLoading } = useLoading();
-  const userInfo = useSelector((state: RootState) => state.userDetails);
-  const token = userInfo.token!;
   const performSearch = async (searchterm: string): Promise<void> => {
     setLoading(true);
     try {
       const result = await ContactListService.searchContactListDetails(
-        token,
         searchterm
       );
       if (result.success) {

@@ -200,7 +200,6 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
 
                 const availablePhysicians =
                     await ContactMastService.fetchAvailableAttendingPhysicians(
-                        token,
                         pChartID
                     );
                 setAvailableAttendingPhysicians(availablePhysicians);

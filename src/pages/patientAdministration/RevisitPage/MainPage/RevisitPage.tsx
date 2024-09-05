@@ -129,12 +129,10 @@ const RevisitPage: React.FC = () => {
         await Promise.all([
           BillingService.fetchPicValues(token, "GetPICDropDownValues"),
           DepartmentService.fetchDepartments(
-            token,
             "GetActiveRegistrationDepartments",
             compID
           ),
           ContactMastService.fetchRefferalPhy(
-            token,
             "GetActiveReferralContacts",
             compID
           ),
@@ -207,7 +205,6 @@ const RevisitPage: React.FC = () => {
         if (value === "H") {
           // Fetch and set department values
           const departmentValues = await DepartmentService.fetchDepartments(
-            token,
             "GetActiveRegistrationDepartments",
             compID
           );
@@ -221,7 +218,6 @@ const RevisitPage: React.FC = () => {
           // Fetch and set attending physicians
           const availablePhysicians =
             await ContactMastService.fetchAvailableAttendingPhysicians(
-              token,
               selectedPChartID
             );
           setAvailableAttendingPhysicians(
@@ -242,7 +238,6 @@ const RevisitPage: React.FC = () => {
         setSelectedPChartID(pChartID);
         const availablePhysicians =
           await ContactMastService.fetchAvailableAttendingPhysicians(
-            token,
             pChartID
           );
         setAvailableAttendingPhysicians(availablePhysicians);
