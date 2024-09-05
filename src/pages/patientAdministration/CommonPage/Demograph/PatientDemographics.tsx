@@ -93,7 +93,6 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     setLoading(true);
     try {
       const response = await RegistrationService.PatientDemoGraph(
-        token,
         pChartID
       );
       if (response.success && response.data) {
@@ -123,7 +122,6 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     try {
       const response: OperationResult<PatientDemoGraph> =
         await PatientDemoGraphService.getPatientDemographicsByPChartID(
-          token,
           pChartID
         );
       if (response.success && response.data) {
@@ -195,7 +193,6 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     setLoading(true);
     try {
       const result = await PatientDemoGraphService.savePatientDemographics(
-        token,
         patientDemoGraph
       );
       if (result.success) {

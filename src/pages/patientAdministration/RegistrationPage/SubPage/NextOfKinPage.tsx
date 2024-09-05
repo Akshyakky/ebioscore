@@ -8,8 +8,6 @@ import { Grid, Typography } from "@mui/material";
 import CustomButton from "../../../../components/Button/CustomButton";
 import AddIcon from "@mui/icons-material/Add";
 import { PatNokDetailsDto } from "../../../../interfaces/PatientAdministration/PatNokDetailsDto";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import NextOfKinForm from "./NextOfKinForm";
 import NextOfKinGrid from "./NextOfKinGrid";
 import { PatNokService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatNokService";
@@ -31,7 +29,6 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
   >(undefined);
   const [gridKinData, setGridKinData] = useState<PatNokDetailsDto[]>([]);
 
-  const userInfo = useSelector((state: RootState) => state.userDetails);
 
   useImperativeHandle(ref, () => ({
     saveKinDetails,
@@ -41,7 +38,7 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
     try {
       const saveOperations = gridKinData.map((kin) => {
         const kinData = { ...kin, pChartID: pChartID };
-        return PatNokService.saveNokDetails(token, kinData);
+        return PatNokService.saveNokDetails(kinData);
       });
 
       const results = await Promise.all(saveOperations);
@@ -94,7 +91,6 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
       const fetchKinData = async () => {
         try {
           const kinDetails = await PatNokService.getNokDetailsByPChartID(
-            token,
             pChartID
           );
           if (kinDetails.success && kinDetails.data) {

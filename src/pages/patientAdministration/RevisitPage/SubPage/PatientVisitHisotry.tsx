@@ -24,7 +24,6 @@ const PatientVisitHistory: React.FC<PatientVisitHistoryProps> = ({
     if (pChartID) {
       const fetchPatientHistory = async () => {
         const historyData = await RevisitService.getPatientHistoryByPChartID(
-          token,
           pChartID
         );
         if (historyData.success && historyData.data) {

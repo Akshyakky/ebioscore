@@ -1,9 +1,8 @@
 // hooks/usePatientAutocomplete.ts
 import { formatDate } from "../../utils/Common/dateUtils";
 import { RegistrationService } from "../../services/PatientAdministrationServices/RegistrationService/RegistrationService";
-import { notifyError } from "../../utils/Common/toastManager";
 
-export const usePatientAutocomplete = (token: any) => {
+export const usePatientAutocomplete = () => {
   const fetchPatientSuggestions = async (input: string): Promise<string[]> => {
     if (!input.trim()) {
       return [];
@@ -11,7 +10,6 @@ export const usePatientAutocomplete = (token: any) => {
 
     try {
       const results = await RegistrationService.searchPatients(
-        token,
         "PatientAutocompleteSearch",
         input
       );
@@ -22,9 +20,7 @@ export const usePatientAutocomplete = (token: any) => {
           } | ${formatDate(result.pDob)} | ${result.pAddPhone1}`
       );
     } catch (error) {
-      console.error("Error fetching suggestions:", error);
-      notifyError("Error fetching patient suggestions.");
-      return []; // Return an empty array in case of an error
+      return [];
     }
   };
 

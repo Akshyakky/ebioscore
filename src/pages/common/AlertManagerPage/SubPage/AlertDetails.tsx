@@ -50,7 +50,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
     );
     const uhidRef = useRef<HTMLInputElement>(null);
     const token = useSelector((state: RootState) => state.userDetails.token!);
-    const { fetchPatientSuggestions } = usePatientAutocomplete(token);
+    const { fetchPatientSuggestions } = usePatientAutocomplete();
     const [, setAvailableAttendingPhysicians] = useState<DropdownOption[]>([]);
     const [selectedPChartID, setSelectedPChartID] = useState<number | 0>(0);
     const [editMode, setEditMode] = useState(false);
@@ -179,7 +179,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                     );
                 setAvailableAttendingPhysicians(availablePhysicians);
                 const lastVisitResult =
-                    await RevisitService.getLastVisitDetailsByPChartID(token, pChartID);
+                    await RevisitService.getLastVisitDetailsByPChartID(pChartID);
                 if (lastVisitResult && lastVisitResult.success) {
                     setFormState((prevFormData) => ({
                         ...prevFormData,

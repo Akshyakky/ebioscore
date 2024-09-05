@@ -52,8 +52,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
-  const { fetchLatestUHID } = useRegistrationUtils(token);
-  const { fetchPatientSuggestions } = usePatientAutocomplete(token);
+  const { fetchLatestUHID } = useRegistrationUtils();
+  const { fetchPatientSuggestions } = usePatientAutocomplete();
   const uhidRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {

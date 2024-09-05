@@ -7,6 +7,7 @@ import DomainIcon from '@mui/icons-material/Domain';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import AutocompleteTextBox from '../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox';
 import { AppointmentService } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface SchedulerHeaderProps {
     onRefresh: () => void;
@@ -102,6 +103,12 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
         setChecked(event.target.checked);
     };
 
+    const handleClear = () => {
+        setSearchValue('');
+        setRLotYN(undefined);
+        onSearchSelection();
+    };
+
     return (
         <Box sx={{ backgroundColor: '#f5f5f5' }}>
             <Grid container alignItems="center" justifyContent="space-between">
@@ -136,14 +143,24 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
                                     </Box>
                                 ),
                                 endAdornment: (
-                                    <>
-                                        <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        {searchValue && (
+                                            <IconButton
+                                                aria-label="clear input"
+                                                onClick={handleClear}
+                                                edge="end"
+                                                size="small"
+                                            >
+                                                <CloseIcon />
+                                            </IconButton>
+                                        )}
+                                        <Divider sx={{ height: 28, mx: 0.5 }} orientation="vertical" />
                                         <Tooltip title={`Switch to ${searchType === 'consultant' ? 'Resource' : 'Consultant'}`}>
                                             <IconButton onClick={toggleSearchType} size="small">
                                                 <SwapHorizIcon />
                                             </IconButton>
                                         </Tooltip>
-                                    </>
+                                    </Box>
                                 ),
                             }}
                             size='small'

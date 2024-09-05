@@ -53,7 +53,6 @@ const AlertPage: React.FC = () => {
         setLoading(true);
         try {
             const patientDetails = await PatientService.getPatientDetails(
-                token,
                 pChartID
             );
             if (patientDetails.success && patientDetails.data) {

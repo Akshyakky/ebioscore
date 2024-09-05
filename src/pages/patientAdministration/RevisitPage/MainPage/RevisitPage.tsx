@@ -98,7 +98,7 @@ const RevisitPage: React.FC = () => {
   const { setLoading } = useLoading();
 
   const [showPatientSearch, setShowPatientSearch] = useState(false);
-  const { fetchPatientSuggestions } = usePatientAutocomplete(token);
+  const { fetchPatientSuggestions } = usePatientAutocomplete();
   const [shouldClearInsuranceData, setShouldClearInsuranceData] =
     useState(false);
   const [successAlert, setSuccessAlert] = useState({
@@ -247,7 +247,7 @@ const RevisitPage: React.FC = () => {
           );
         setAvailableAttendingPhysicians(availablePhysicians);
         const lastVisitResult =
-          await RevisitService.getLastVisitDetailsByPChartID(token, pChartID);
+          await RevisitService.getLastVisitDetailsByPChartID(pChartID);
         if (lastVisitResult && lastVisitResult.success) {
           const isAttendingPhysicianAvailable = availablePhysicians.some(
             (physician) => physician.value === lastVisitResult.data.attndPhyID
@@ -339,7 +339,6 @@ const RevisitPage: React.FC = () => {
         return;
       }
       const response = await RevisitService.saveOPVisits(
-        token,
         revisitFormData
       );
       if (response && response.success) {
