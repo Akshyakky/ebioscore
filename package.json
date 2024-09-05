@@ -20,6 +20,7 @@
     "axios": "^1.6.2",
     "clsx": "^2.1.1",
     "date-fns": "^3.3.1",
+    "dayjs": "^1.11.13",
     "devextreme": "^24.1.4",
     "devextreme-react": "^24.1.4",
     "eslint": "^8.57.0",

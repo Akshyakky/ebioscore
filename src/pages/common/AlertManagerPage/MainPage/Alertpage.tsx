@@ -236,7 +236,6 @@ const AlertPage: React.FC = () => {
     };
 
     const handleAdvancedSearch = async () => {
-        debugger
         setShowPatientSearch(true);
         await performSearch("");
     };
