@@ -24,7 +24,10 @@ import { RevisitService } from "../../../../services/PatientAdministrationServic
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import PatientDemographics from "../../../patientAdministration/CommonPage/Demograph/PatientDemographics";
 
-const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
+const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
+    editData,
+    alerts,
+}) => {
     const [formState, setFormState] = useState({
         isSubmitted: false,
         oPIPAlertID: 0,
@@ -42,7 +45,6 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
     });
 
     const [searchTerm] = useState("");
-    const [alerts, setAlerts] = useState<AlertDto[]>([]);
     const { setLoading } = useLoading();
     const serverDate = useServerDate();
     const { userID, userName } = useSelector(
@@ -56,6 +58,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
     const [editMode, setEditMode] = useState(false);
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [isUHIDDisabled, setIsUHIDDisabled] = useState(false);
+    const [alertsState, setAlerts] = useState<AlertDto[]>(alerts || []);
 
     useEffect(() => {
         if (editData) {
@@ -69,9 +72,16 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
         }
     }, [editData]);
 
+    useEffect(() => {
+        if (alerts) {
+            setAlerts(alerts);
+        }
+    }, [alerts]);
+
     const createAlertTypeDto = useCallback(
         (): AlertDto => ({
             ...formState,
+            pChartID: formState.pChartID,
             oPIPDate: serverDate || new Date(),
             rCreatedID: userID || 0,
             rCreatedOn: serverDate || new Date(),
@@ -80,6 +90,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
             rModifiedOn: serverDate || new Date(),
             rModifiedBy: userName || "",
             payID: 0,
+            patOPIPYN: "Y",
         }),
         [formState, userID, userName, serverDate]
     );
@@ -96,29 +107,34 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
     );
 
     const handleSave = async () => {
-        setFormState((prev) => ({ ...prev, isSubmitted: true }));
+        setFormState(prev => ({ ...prev, isSubmitted: true }));
+        if (!formState.pChartCode) {
+            showAlert("Error", "UHID is required.", "error");
+            return;
+        }
         setLoading(true);
-
         try {
-            const AlertData = createAlertTypeDto();
-            const result = await AlertManagerServices.saveAlert(AlertData);
-            if (result.success) {
-                handleClear(); // Clear the form fields after successful save
-            } else {
-                showAlert(
-                    "Error",
-                    result.errorMessage || "Failed to save Resource List.",
-                    "error"
-                );
-            }
-        } catch (error) {
-            console.error("Error saving Resource List:", error);
+            for (const alert of alertsState) {
+                const result = await AlertManagerServices.saveAlert(alert);
 
+                if (!result.success) {
+                    showAlert("Error", result.errorMessage || "Failed to save Alert.", "error");
+                    return;
+                }
+            }
+            showAlert("Success", "Alerts saved successfully!", "success", {
+                onConfirm: handleClear
+            });
+        } catch (error) {
+            console.error("Error saving Alerts:", error);
             showAlert("Error", "An unexpected error occurred while saving.", "error");
         } finally {
             setLoading(false);
         }
     };
+
+
+
 
     const handleClear = useCallback(() => {
         setFormState((prevState) => ({
@@ -140,14 +156,14 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
         []
     );
 
-    const handleAdd = () => {
+
+    const handleAdd = async () => {
         const newAlert = createAlertTypeDto();
 
         if (editMode && editIndex !== null) {
-            // Update the existing alert
             setAlerts((prevAlerts) =>
                 prevAlerts.map((alert, index) =>
-                    index === editIndex ? newAlert : alert
+                    index === editIndex ? { ...newAlert, oPIPAlertID: alert.oPIPAlertID } : alert
                 )
             );
             setEditMode(false);
@@ -156,8 +172,12 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
         } else {
             setAlerts((prevAlerts) => [...prevAlerts, newAlert]);
         }
-        handleClear();
+        setFormState((prevState) => ({
+            ...prevState,
+            alertDescription: "",
+        }));
     };
+
 
     const handleDelete = (item: AlertDto) => {
         setAlerts((prevAlerts) =>
@@ -172,6 +192,12 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
             const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
             if (pChartID) {
                 setSelectedPChartID(pChartID);
+                setFormState((prevFormData) => ({
+                    ...prevFormData,
+                    pChartID,
+                    pChartCode: selectedSuggestion.split("|")[0].trim(),
+                }));
+
                 const availablePhysicians =
                     await ContactMastService.fetchAvailableAttendingPhysicians(
                         token,
@@ -183,7 +209,6 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                 if (lastVisitResult && lastVisitResult.success) {
                     setFormState((prevFormData) => ({
                         ...prevFormData,
-                        pChartCode: selectedSuggestion.split("|")[0].trim(),
                         attndPhyID: availablePhysicians.some(
                             (physician) => physician.value === lastVisitResult.data.attndPhyID
                         )
@@ -217,7 +242,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
             key: "oPIPDate",
             header: "Date",
             visible: true,
-            formatter: (value: Date) => value.toLocaleDateString(),
+            formatter: (value: Date) => new Date().toLocaleDateString(),
         },
         { key: "alertDescription", header: "Description", visible: true },
         { key: "rCreatedBy", header: "Created By", visible: true },
@@ -264,7 +289,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                                 type="text"
                                 size="small"
                                 placeholder="Search through UHID, Name, DOB, Phone No...."
-                                value={formState.pChartCode || ""} // Maintain value in edit mode
+                                value={formState.pChartCode || ""}
                                 onChange={(e) => {
                                     if (!editData) {
                                         setFormState({
@@ -274,7 +299,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                                     }
                                 }}
                                 fetchSuggestions={fetchPatientSuggestions}
-                                isMandatory={true}
+                                isMandatory
                                 onSelectSuggestion={handlePatientSelect}
                                 isSubmitted={formState.isSubmitted}
                                 disabled={isUHIDDisabled}
@@ -296,6 +321,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                         name="alertDescription"
                         ControlID="alertDescription"
                         placeholder="Alert Message"
+                        maxLength={4000}
                     />
                 </Grid>
 
@@ -303,8 +329,8 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                     <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
                         <CustomButton
                             variant="contained"
-                            color="primary"
-                            text="Add Alert"
+                            color={editMode ? "success" : "primary"}
+                            text={editMode ? "Update List" : "Add Alert"}
                             onClick={handleAdd}
                         />
                     </Grid>
@@ -336,7 +362,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                     <Grid item xs={12}>
                         <CustomGrid
                             columns={columns}
-                            data={alerts}
+                            data={alertsState}
                             maxHeight="400px"
                             minHeight="200px"
                             searchTerm={searchTerm}

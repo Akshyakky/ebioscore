@@ -264,6 +264,9 @@ const RevisitPage: React.FC = () => {
             pTypeID: lastVisitResult.data.pTypeID || prevFormData.pTypeID,
             primPhyID: lastVisitResult.data.primPhyID || prevFormData.primPhyID,
           }));
+
+
+
         } else {
           console.error(
             "Failed to fetch last visit details or no details available"

@@ -12,6 +12,7 @@ import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import { Search as SearchIcon } from "@mui/icons-material";
 import { AlertManagerServices } from "../../../../services/CommonServices/AlertManagerServices";
 import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
+import { showAlertPopUp } from "../../../../utils/Common/alertMessage";
 
 const AlertPage: React.FC = () => {
     const [selectedData, setSelectedData] = useState<AlertDto | undefined>(
@@ -23,10 +24,12 @@ const AlertPage: React.FC = () => {
     const [showPatientSearch, setShowPatientSearch] = useState(false);
     const { performSearch } = useContext(PatientSearchContext);
     const [, setSelectedPChartID] = useState<number>(0);
+    const [alerts, setAlerts] = useState<AlertDto[]>([]);
 
-
-    const handlePatientSelect = async (selectedSuggestion: string, pChartCode: string) => {
-        debugger
+    const handlePatientSelect = async (
+        selectedSuggestion: string,
+        pChartCode: string
+    ) => {
         setLoading(true);
         try {
             const numbersArray = extractNumbers(pChartCode);
@@ -34,13 +37,15 @@ const AlertPage: React.FC = () => {
             if (pChartID) {
                 await fetchPatientDetailsAndUpdateForm(pChartID);
                 setSelectedPChartID(pChartID);
-                const alertResult = await AlertManagerServices.GetAlertBypChartID(pChartID);
+                const alertResult =
+                    await AlertManagerServices.GetAlertBypChartID(pChartID);
                 if (alertResult.success && alertResult.data) {
                     setSelectedData({
                         ...alertResult.data,
-                        pChartCode: pChartCode
+                        pChartCode: pChartCode,
                     });
-                    console.error("The pChartCode is .", pChartCode);
+                    setAlerts(alertResult.data);
+                    showAlertPopUp(alertResult.data);
                 } else {
                     console.error("Failed to fetch alert details.");
                 }
@@ -49,6 +54,7 @@ const AlertPage: React.FC = () => {
             setLoading(false);
         }
     };
+
     const fetchPatientDetailsAndUpdateForm = async (pChartID: number) => {
         setLoading(true);
         try {
@@ -74,34 +80,29 @@ const AlertPage: React.FC = () => {
     };
 
     return (
-        <>
-            <Container maxWidth={false}>
-                <Box sx={{ marginBottom: 2 }}>
-                    <ActionButtonGroup
-                        buttons={[
-                            {
-                                variant: "contained",
-                                size: "medium",
-                                icon: SearchIcon,
-                                text: "Advanced Search",
-                                onClick: handleAdvancedSearch,
-                            },
-                        ]}
-                    />
-                </Box>
-                <PatientSearch
-                    show={showPatientSearch}
-                    handleClose={() => setShowPatientSearch(false)}
-                    onEditPatient={handlePatientSelect}
+        <Container maxWidth={false}>
+            <Box sx={{ marginBottom: 2 }}>
+                <ActionButtonGroup
+                    buttons={[
+                        {
+                            variant: "contained",
+                            size: "medium",
+                            icon: SearchIcon,
+                            text: "Advanced Search",
+                            onClick: handleAdvancedSearch,
+                        },
+                    ]}
                 />
-                <Paper variant="outlined" sx={{ padding: 2 }}>
-                    <AlertDetails editData={selectedData} />
-
-                </Paper>
-
-
-            </Container>
-        </>
+            </Box>
+            <PatientSearch
+                show={showPatientSearch}
+                handleClose={() => setShowPatientSearch(false)}
+                onEditPatient={handlePatientSelect}
+            />
+            <Paper variant="outlined" sx={{ padding: 2 }}>
+                <AlertDetails editData={selectedData} alerts={alerts} />
+            </Paper>
+        </Container>
     );
 };
 
