@@ -127,7 +127,7 @@ const RevisitPage: React.FC = () => {
     try {
       const [picValues, departmentValues, primaryIntroducingSource] =
         await Promise.all([
-          BillingService.fetchPicValues(token, "GetPICDropDownValues"),
+          BillingService.fetchPicValues("GetPICDropDownValues"),
           DepartmentService.fetchDepartments(
             "GetActiveRegistrationDepartments",
             compID
@@ -536,7 +536,6 @@ const RevisitPage: React.FC = () => {
           <InsurancePage
             ref={insurancePageRef}
             pChartID={selectedPChartID}
-            token={token}
             shouldClearData={shouldClearInsuranceData}
           />
           <PatientVisitHistory pChartID={selectedPChartID} token={token} />

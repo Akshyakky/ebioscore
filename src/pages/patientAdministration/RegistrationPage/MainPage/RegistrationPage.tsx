@@ -301,13 +301,11 @@ const RegistrationPage: React.FC = () => {
           <NextOfKinPage
             ref={nextOfKinPageRef}
             pChartID={selectedPChartID}
-            token={token}
             shouldClearData={shouldClearKinData}
           />
           <InsurancePage
             ref={insurancePageRef}
             pChartID={selectedPChartID}
-            token={token}
             shouldClearData={shouldClearInsuranceData}
           />
         </Paper>

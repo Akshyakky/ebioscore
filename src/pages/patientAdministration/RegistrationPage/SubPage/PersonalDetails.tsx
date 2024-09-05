@@ -71,7 +71,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       try {
         setLoading(true);
         const responsePIC = await BillingService.fetchPicValues(
-          token,
           endpointPIC
         );
         const transformedData: DropdownOption[] = responsePIC.map((item) => ({

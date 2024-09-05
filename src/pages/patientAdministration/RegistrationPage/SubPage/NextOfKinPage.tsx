@@ -15,12 +15,11 @@ import { format } from "date-fns";
 
 interface NextOfKinPageProps {
   pChartID: number;
-  token: string;
   shouldClearData: boolean;
 }
 
 const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
-  { pChartID, token, shouldClearData },
+  { pChartID, shouldClearData },
   ref
 ) => {
   const [showKinPopup, setShowKinPopup] = useState(false);
@@ -107,7 +106,7 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
 
       fetchKinData();
     }
-  }, [pChartID, token]);
+  }, [pChartID]);
 
   const handleOpenKinPopup = () => {
     setShowKinPopup(true);

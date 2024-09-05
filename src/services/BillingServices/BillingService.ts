@@ -1,7 +1,12 @@
-// BillingService.ts
-import axios from "axios";
+import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "../../apiConfig";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
+import { store } from "../../store/store";
+
+const apiService = new CommonApiService({ baseURL: APIConfig.billingURL });
+
+// Function to get the token from the store
+const getToken = () => store.getState().userDetails.token!;
 
 interface MemSchemeAPIResponse {
   patMemID: string;
@@ -13,15 +18,13 @@ interface PaymentSource {
   pTypeName: string;
 }
 
-const fetchPicValues = async (
-  token: string,
-  endpoint: string
-): Promise<DropdownOption[]> => {
+const fetchPicValues = async (endpoint: string): Promise<DropdownOption[]> => {
   try {
-    const url = `${APIConfig.billingURL}BillingDropDowns/${endpoint}`;
-    const headers = { Authorization: `Bearer ${token}` };
-    const response = await axios.get<PaymentSource[]>(url, { headers });
-    return response.data.map((item) => ({
+    const response = await apiService.get<PaymentSource[]>(
+      `BillingDropDowns/${endpoint}`,
+      getToken()
+    );
+    return response.map((item) => ({
       value: item.pTypeID,
       label: item.pTypeName,
     }));
@@ -32,17 +35,23 @@ const fetchPicValues = async (
 };
 
 const fetchMembershipScheme = async (
-  token: string,
   endpoint: string,
   compId: number
 ): Promise<DropdownOption[]> => {
-  const url = `${APIConfig.billingURL}BillingDropDowns/${endpoint}?compId=${compId}`;
-  const headers = { Authorization: `Bearer ${token}` };
-  const response = await axios.get<MemSchemeAPIResponse[]>(url, { headers });
-  return response.data.map((item) => ({
-    value: item.patMemID,
-    label: item.patMemName,
-  }));
+  try {
+    const response = await apiService.get<MemSchemeAPIResponse[]>(
+      `BillingDropDowns/${endpoint}`,
+      getToken(),
+      { compId }
+    );
+    return response.map((item) => ({
+      value: item.patMemID,
+      label: item.patMemName,
+    }));
+  } catch (error) {
+    console.error("Error fetching membership scheme:", error);
+    throw error;
+  }
 };
 
 export const BillingService = {

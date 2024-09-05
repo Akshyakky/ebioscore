@@ -267,7 +267,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }));
 
   const memoizedParamsForPic = useMemo(
-    () => [token, "GetPICDropDownValues"],
+    () => ["GetPICDropDownValues"],
     []
   );
   const picResult = useDropdown(

@@ -15,12 +15,11 @@ import { format } from "date-fns";
 
 interface InsurancePageProps {
   pChartID: number;
-  token: string;
   shouldClearData: boolean;
 }
 
 const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
-  { pChartID, token, shouldClearData },
+  { pChartID, shouldClearData },
   ref
 ) => {
   const [showInsurancePopup, setShowInsurancePopup] = useState(false);
@@ -115,7 +114,7 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
 
       fetchInsuranceData();
     }
-  }, [pChartID, token]);
+  }, [pChartID]);
 
   const handleOpenInsurancePopup = () => {
     setShowInsurancePopup(true);

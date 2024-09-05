@@ -81,7 +81,6 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
         try {
           const modulesData = await moduleService.getActiveModules(
             adminYN === "Y" ? 0 : userID ?? 0,
-            token
           );
           setDropdownValues((prevValues) => ({
             ...prevValues,
@@ -175,7 +174,6 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
         try {
           const subModulesData = await moduleService.getActiveSubModules(
             adminYN === "Y" ? 0 : userID ?? 0,
-            token
           );
           const filteredSubModules = subModulesData.filter(
             (subModule) => subModule.auGrpID.toString() === profileDetailsDropdowns.mainModuleID
