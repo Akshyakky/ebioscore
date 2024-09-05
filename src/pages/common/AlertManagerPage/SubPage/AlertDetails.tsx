@@ -5,7 +5,6 @@ import FormField from "../../../../components/FormField/FormField";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { useSelector } from "react-redux";
-import { store } from "../../../../store/store";
 import { RootState } from "../../../../store/reducers";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from "@mui/icons-material/Save";
@@ -23,6 +22,7 @@ import extractNumbers from "../../../../utils/PatientAdministration/extractNumbe
 import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import PatientDemographics from "../../../patientAdministration/CommonPage/Demograph/PatientDemographics";
 
 const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
     const [formState, setFormState] = useState({
@@ -41,36 +41,29 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
         pChartCode: "",
     });
 
-    const [alerts, setAlerts] = useState<AlertDto[]>([]);
     const [searchTerm] = useState("");
+    const [alerts, setAlerts] = useState<AlertDto[]>([]);
     const { setLoading } = useLoading();
     const serverDate = useServerDate();
-    const { userID, userName } = store.getState().userDetails;
+    const { userID, userName } = useSelector(
+        (state: RootState) => state.userDetails
+    );
     const uhidRef = useRef<HTMLInputElement>(null);
-    const userInfo = useSelector((state: RootState) => state.userDetails);
-    const token = userInfo.token!;
+    const token = useSelector((state: RootState) => state.userDetails.token!);
     const { fetchPatientSuggestions } = usePatientAutocomplete(token);
-    const [, setSelectedPChartID] = useState<number>(0);
     const [, setAvailableAttendingPhysicians] = useState<DropdownOption[]>([]);
+    const [selectedPChartID, setSelectedPChartID] = useState<number | 0>(0);
+    const [editMode, setEditMode] = useState(false);
+    const [editIndex, setEditIndex] = useState<number | null>(null);
+    const [isUHIDDisabled, setIsUHIDDisabled] = useState(false);
 
     useEffect(() => {
-        debugger
         if (editData) {
-            setFormState({
-                isSubmitted: false,
-                oPIPAlertID: editData.oPIPAlertID || 0,
-                oPIPNo: editData.oPIPNo || 0,
-                pChartID: editData.pChartID || 0,
-                oPIPCaseNo: editData.oPIPCaseNo || 0,
-                patOPIPYN: editData.patOPIPYN || "Y",
-                rActiveYN: editData.rActiveYN || "Y",
-                alertDescription: editData.alertDescription || "",
+            setFormState((prevState) => ({
+                ...prevState,
+                ...editData,
                 oPIPDate: editData.oPIPDate || serverDate,
-                category: editData.category || "",
-                oldPChartID: editData.oldPChartID || 0,
-                oPVID: editData.oPVID || 0,
-                pChartCode: editData.pChartCode || "",
-            });
+            }));
         } else {
             handleClear();
         }
@@ -78,13 +71,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
 
     const createAlertTypeDto = useCallback(
         (): AlertDto => ({
-            oPIPAlertID: editData ? editData.oPIPAlertID : 0,
-            oPIPNo: formState.oPIPNo,
-            pChartID: formState.pChartID,
-            oPIPCaseNo: formState.oPIPCaseNo,
-            patOPIPYN: formState.patOPIPYN,
-            alertDescription: formState.alertDescription,
-            rActiveYN: formState.rActiveYN,
+            ...formState,
             oPIPDate: serverDate || new Date(),
             rCreatedID: userID || 0,
             rCreatedOn: serverDate || new Date(),
@@ -92,13 +79,9 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
             rModifiedID: userID || 0,
             rModifiedOn: serverDate || new Date(),
             rModifiedBy: userName || "",
-            category: formState.category,
-            oldPChartID: formState.oldPChartID,
             payID: 0,
-            oPVID: formState.oPVID,
-            pChartCode: formState.pChartCode || ""
         }),
-        [formState, editData, userID, userName, serverDate]
+        [formState, userID, userName, serverDate]
     );
 
     const handleInputChange = useCallback(
@@ -113,18 +96,14 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
     );
 
     const handleSave = async () => {
-        debugger;
         setFormState((prev) => ({ ...prev, isSubmitted: true }));
         setLoading(true);
 
         try {
-            debugger
             const AlertData = createAlertTypeDto();
             const result = await AlertManagerServices.saveAlert(AlertData);
             if (result.success) {
-                showAlert("Success", "Resource List saved successfully!", "success", {
-                    onConfirm: handleClear,
-                });
+                handleClear(); // Clear the form fields after successful save
             } else {
                 showAlert(
                     "Error",
@@ -134,28 +113,21 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
             }
         } catch (error) {
             console.error("Error saving Resource List:", error);
+
             showAlert("Error", "An unexpected error occurred while saving.", "error");
         } finally {
             setLoading(false);
         }
     };
+
     const handleClear = useCallback(() => {
         setFormState((prevState) => ({
+            ...prevState,
             isSubmitted: false,
-            oPIPAlertID: 0,
-            oPIPNo: 0,
-            rActiveYN: "Y",
-            pChartID: 0,
-            oPIPCaseNo: 0,
-            patOPIPYN: "Y",
             alertDescription: "",
-            oPIPDate: new Date(),
-            category: "",
-            oldPChartID: 0,
-            oPVID: 0,
-            pChartCode: prevState.pChartCode,  // Retain the UHID value
         }));
         setSelectedPChartID(0);
+        setIsUHIDDisabled(false);
     }, []);
 
     const handleActiveToggle = useCallback(
@@ -170,20 +142,22 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
 
     const handleAdd = () => {
         const newAlert = createAlertTypeDto();
-        setAlerts((prevAlerts) => [...prevAlerts, newAlert]);
 
+        if (editMode && editIndex !== null) {
+            // Update the existing alert
+            setAlerts((prevAlerts) =>
+                prevAlerts.map((alert, index) =>
+                    index === editIndex ? newAlert : alert
+                )
+            );
+            setEditMode(false);
+            setEditIndex(null);
+            setIsUHIDDisabled(true);
+        } else {
+            setAlerts((prevAlerts) => [...prevAlerts, newAlert]);
+        }
+        handleClear();
     };
-
-    const handleEdit = (item: AlertDto) => {
-        setFormState({
-            ...formState,
-            ...item,
-            pChartCode: item.pChartCode,
-            isSubmitted: false,
-        });
-    };
-
-
 
     const handleDelete = (item: AlertDto) => {
         setAlerts((prevAlerts) =>
@@ -207,22 +181,15 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                 const lastVisitResult =
                     await RevisitService.getLastVisitDetailsByPChartID(token, pChartID);
                 if (lastVisitResult && lastVisitResult.success) {
-                    const isAttendingPhysicianAvailable = availablePhysicians.some(
-                        (physician) => physician.value === lastVisitResult.data.attndPhyID
-                    );
-
                     setFormState((prevFormData) => ({
                         ...prevFormData,
                         pChartCode: selectedSuggestion.split("|")[0].trim(),
-                        pChartID: pChartID,
-                        attndPhyID: isAttendingPhysicianAvailable
+                        attndPhyID: availablePhysicians.some(
+                            (physician) => physician.value === lastVisitResult.data.attndPhyID
+                        )
                             ? lastVisitResult.data.attndPhyID
                             : 0,
                     }));
-                } else {
-                    console.error(
-                        "Failed to fetch last visit details or no details available"
-                    );
                 }
             }
         } catch (error) {
@@ -230,6 +197,18 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleEdit = (item: AlertDto, index: number) => {
+        setFormState({
+            ...formState,
+            ...item,
+            pChartCode: item.pChartCode,
+            isSubmitted: false,
+        });
+        setEditMode(true);
+        setEditIndex(index);
+        setIsUHIDDisabled(true);
     };
 
     const columns: Column<AlertDto>[] = [
@@ -246,10 +225,11 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
             key: "edit",
             header: "Edit",
             visible: true,
-            render: (item: AlertDto) => (
-                <EditIcon
-                    onClick={() => handleEdit(item)}
-                    style={{ cursor: "pointer" }}
+            render: (item: AlertDto, index: number) => (
+                <CustomButton
+                    icon={EditIcon}
+                    onClick={() => handleEdit(item, index)}
+                    color="primary"
                 />
             ),
         },
@@ -258,9 +238,10 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
             header: "Delete",
             visible: true,
             render: (item: AlertDto) => (
-                <DeleteIcon
+                <CustomButton
+                    icon={DeleteIcon}
                     onClick={() => handleDelete(item)}
-                    style={{ cursor: "pointer" }}
+                    color="secondary"
                 />
             ),
         },
@@ -274,7 +255,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
 
             <section>
                 <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-                    <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+                    <Grid container spacing={2} alignItems="flex-start">
                         <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
                             <AutocompleteTextBox
                                 ref={uhidRef}
@@ -283,7 +264,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                                 type="text"
                                 size="small"
                                 placeholder="Search through UHID, Name, DOB, Phone No...."
-                                value={editData ? formState.pChartCode : formState.pChartCode || ""}  // Maintain value in edit mode
+                                value={formState.pChartCode || ""} // Maintain value in edit mode
                                 onChange={(e) => {
                                     if (!editData) {
                                         setFormState({
@@ -296,11 +277,12 @@ const AlertDetails: React.FC<{ editData?: AlertDto }> = ({ editData }) => {
                                 isMandatory={true}
                                 onSelectSuggestion={handlePatientSelect}
                                 isSubmitted={formState.isSubmitted}
-                                disabled={!!editData}
+                                disabled={isUHIDDisabled}
                             />
-
                         </Grid>
-
+                        <Grid item xs={12} sm={6} md={9} lg={9} xl={9}>
+                            <PatientDemographics pChartID={selectedPChartID} token={token} />
+                        </Grid>
                     </Grid>
                 </Grid>
 

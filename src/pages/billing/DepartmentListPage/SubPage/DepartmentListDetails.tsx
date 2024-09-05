@@ -15,27 +15,32 @@ import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 import FormField from "../../../../components/FormField/FormField";
+import CustomButton from "../../../../components/Button/CustomButton";
+import { DeptUsersPage } from "./DeptUsers/DeptUsersPage";
 
 const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   editData,
 }) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [deptCode, setDeptCode] = useState("");
-  const [deptName, setDeptName] = useState("");
-  const [deptType, setDeptType] = useState("");
-  const [rNotes, setRNotes] = useState("");
-  const [unit, setUnit] = useState("");
-  const [deptLocation, setDeptLocation] = useState("");
-  const [dlNumber, setDlNumber] = useState("");
-  const [isUnitYN, setIsUnitYN] = useState("N");
-  const [autoConsumptionYN, setAutoConsumptionYN] = useState("N");
-  const [deptStorePhYN, setDeptStorePhYN] = useState("N");
-  const [deptStore, setDeptStore] = useState("N");
-  const [isStoreYN, setIsStoreYN] = useState("N");
-  const [deptSalesYN, setDeptSalesYN] = useState("N");
-  const [dischargeNoteYN, setDischargeNoteYN] = useState("N");
-  const [superSpecialityYN, setSuperSpecialityYN] = useState("N");
-  const [rActiveYN, setRActiveYN] = useState("Y");
+  const [deptId, setDeptId] = useState<number>(0);
+  const [deptCode, setDeptCode] = useState<string>("");
+  const [deptName, setDeptName] = useState<string>("");
+  const [deptType, setDeptType] = useState<string>("");
+  const [rNotes, setRNotes] = useState<string>("");
+  const [unit, setUnit] = useState<string>("");
+  const [deptLocation, setDeptLocation] = useState<string>("");
+  const [dlNumber, setDlNumber] = useState<string>("");
+  const [isUnitYN, setIsUnitYN] = useState<string>("N");
+  const [autoConsumptionYN, setAutoConsumptionYN] = useState<string>("N");
+  const [deptStorePhYN, setDeptStorePhYN] = useState<string>("N");
+  const [deptStore, setDeptStore] = useState<string>("N");
+  const [isStoreYN, setIsStoreYN] = useState<string>("N");
+  const [deptSalesYN, setDeptSalesYN] = useState<string>("N");
+  const [dischargeNoteYN, setDischargeNoteYN] = useState<string>("N");
+  const [superSpecialityYN, setSuperSpecialityYN] = useState<string>("N");
+  const [rActiveYN, setRActiveYN] = useState<string>("Y");
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
+
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
   const { compID, compCode, compName, userID, userName } =
@@ -44,6 +49,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
 
   useEffect(() => {
     if (editData) {
+      setDeptId(editData.deptID || 0);
       setDeptCode(editData.deptCode || "");
       setDeptName(editData.deptName || "");
       setDeptType(editData.deptType || "");
@@ -64,6 +70,14 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
       handleClear();
     }
   }, [editData]);
+
+  const handleDeptUserClick = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
 
   const transformDeptTypeValues = (data: DropdownOption[]): DropdownOption[] =>
     data.map((item) => ({
@@ -89,7 +103,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
     setLoading(true);
 
     const departmentDto: DepartmentDto = {
-      deptID: editData ? editData.deptID : 0,
+      deptID: deptId,
       deptCode: deptCode,
       deptName: deptName,
       deptType: deptType,
@@ -141,6 +155,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   };
 
   const handleClear = () => {
+    setDeptId(0);
     setDeptCode("");
     setDeptName("");
     setDeptType("");
@@ -200,180 +215,204 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
       <Typography variant="h6" id="department-list-header">
         Department List
       </Typography>
-      <Grid container spacing={2}>
-        <FormField
-          type="text"
-          label="Department Code"
-          value={deptCode}
-          onChange={handleInputChange}
-          isSubmitted={isSubmitted}
-          name="deptCode"
-          ControlID="deptCode"
-          placeholder="Department Code"
-        />
-        <FormField
-          type="text"
-          label="Department Name"
-          value={deptName}
-          onChange={handleInputChange}
-          isSubmitted={isSubmitted}
-          name="deptName"
-          ControlID="deptName"
-          placeholder="Department Name"
-        />
-        <FormField
-          type="select"
-          label="Department Type"
-          value={deptType}
-          onChange={(e) => setDeptType(e.target.value)}
-          options={deptTypeValues}
-          isSubmitted={isSubmitted}
-          name="deptType"
-          ControlID="deptType"
-        />
-      </Grid>
-      <Grid container spacing={2}>
-        <FormField
-          type="text"
-          label="Department Location"
-          value={deptLocation}
-          onChange={handleInputChange}
-          isSubmitted={isSubmitted}
-          name="deptLocation"
-          ControlID="deptLocation"
-          placeholder="Department Location"
-        />
-        <FormField
-          type="text"
-          label="Department Unit"
-          value={unit}
-          onChange={handleInputChange}
-          isSubmitted={isSubmitted}
-          name="unit"
-          ControlID="unit"
-          placeholder="Department Unit"
-        />
-      </Grid>
-      <Grid container spacing={2}>
-        <FormField
-          type="textarea"
-          label="Remarks"
-          value={rNotes}
-          onChange={handleInputChange}
-          name="rNotes"
-          ControlID="rNotes"
-          placeholder="Remarks"
-          maxLength={250}
-        />
-      </Grid>
-      <Grid container spacing={2}>
-        <FormField
-          type="switch"
-          label={rActiveYN === "Y" ? "Active" : "Hidden"}
-          value={rActiveYN}
-          checked={rActiveYN === "Y"}
-          onChange={(e) => setRActiveYN(e.target.checked ? "Y" : "N")}
-          name="rActiveYN"
-          ControlID="rActiveYN"
-        />
-        <FormField
-          type="switch"
-          label="Registration"
-          value={isUnitYN}
-          checked={isUnitYN === "Y"}
-          onChange={(e, checked) => setIsUnitYN(checked ? "Y" : "N")}
-          name="isUnitYN"
-          ControlID="isUnitYN"
-        />
-        <FormField
-          type="switch"
-          label="Auto Consumption"
-          value={autoConsumptionYN}
-          checked={autoConsumptionYN === "Y"}
-          onChange={(e, checked) => setAutoConsumptionYN(checked ? "Y" : "N")}
-          name="autoConsumptionYN"
-          ControlID="autoConsumptionYN"
-        />
-      </Grid>
-      <Grid container spacing={2}>
-        <FormField
-          type="switch"
-          label="Main Store"
-          value={isStoreYN}
-          checked={isStoreYN === "Y"}
-          onChange={(e, checked) => setIsStoreYN(checked ? "Y" : "N")}
-          name="isStoreYN"
-          ControlID="isStoreYN"
-        />
-        <FormField
-          type="switch"
-          label="Sales"
-          value={deptSalesYN}
-          checked={deptSalesYN === "Y"}
-          onChange={(e, checked) => setDeptSalesYN(checked ? "Y" : "N")}
-          name="deptSalesYN"
-          ControlID="deptSalesYN"
-        />
-        <FormField
-          type="switch"
-          label="Discharge Note"
-          value={dischargeNoteYN}
-          checked={dischargeNoteYN === "Y"}
-          onChange={(e, checked) => setDischargeNoteYN(checked ? "Y" : "N")}
-          name="dischargeNoteYN"
-          ControlID="dischargeNoteYN"
-        />
-      </Grid>
-      <Grid container spacing={2}>
-        <FormField
-          type="switch"
-          label="Super Speciality"
-          value={superSpecialityYN}
-          checked={superSpecialityYN === "Y"}
-          onChange={(e, checked) => setSuperSpecialityYN(checked ? "Y" : "N")}
-          name="superSpecialityYN"
-          ControlID="superSpecialityYN"
-        />
-        <FormField
-          type="switch"
-          label="Inventory"
-          value={deptStorePhYN}
-          checked={deptStorePhYN === "Y"}
-          onChange={(e, checked) => setDeptStorePhYN(checked ? "Y" : "N")}
-          name="deptStorePhYN"
-          ControlID="deptStorePhYN"
-        />
-      </Grid>
-      <Grid container marginTop={0} spacing={2}>
-        <FormField
-          type="switch"
-          label="Pharmacy"
-          value={deptStore}
-          checked={deptStore === "Y"}
-          onChange={(e, checked) => setDeptStore(checked ? "Y" : "N")}
-          name="deptStore"
-          ControlID="deptStore"
-        />
-        {deptStore === "Y" && (
-          <FormField
-            type="text"
-            label="DL Number"
-            value={dlNumber}
-            onChange={handleInputChange}
-            isSubmitted={isSubmitted}
-            name="dlNumber"
-            ControlID="dlNumber"
-            placeholder="DL Number"
+
+      <section>
+        {deptId > 0 && (
+          <CustomButton
+            text="Manage Users Access"
+            size="small"
+            onClick={handleDeptUserClick}
+            variant="contained"
+            color="info"
+            aria-label="Manage Department Users Access"
           />
         )}
-      </Grid>
-      <FormSaveClearButton
-        clearText="Clear"
-        saveText="Save"
-        onClear={handleClear}
-        onSave={handleSave}
-        clearIcon={DeleteIcon}
-        saveIcon={SaveIcon}
+        <Grid container spacing={2}>
+          <FormField
+            type="text"
+            label="Department Code"
+            value={deptCode}
+            onChange={handleInputChange}
+            isSubmitted={isSubmitted}
+            name="deptCode"
+            ControlID="deptCode"
+            placeholder="Department Code"
+            isMandatory
+          />
+          <FormField
+            type="text"
+            label="Department Name"
+            value={deptName}
+            onChange={handleInputChange}
+            isSubmitted={isSubmitted}
+            name="deptName"
+            ControlID="deptName"
+            placeholder="Department Name"
+            isMandatory
+          />
+        </Grid>
+        <Grid container spacing={2}>
+          <FormField
+            type="select"
+            label="Department Type"
+            value={deptType}
+            onChange={(e) => setDeptType(e.target.value)}
+            options={deptTypeValues}
+            isSubmitted={isSubmitted}
+            name="deptType"
+            ControlID="deptType"
+            isMandatory
+          />
+          <FormField
+            type="text"
+            label="Department Location"
+            value={deptLocation}
+            onChange={handleInputChange}
+            isSubmitted={isSubmitted}
+            name="deptLocation"
+            ControlID="deptLocation"
+            placeholder="Department Location"
+          />
+        </Grid>
+        <Grid container spacing={2}>
+          <FormField
+            type="text"
+            label="Department Unit"
+            value={unit}
+            onChange={handleInputChange}
+            isSubmitted={isSubmitted}
+            name="unit"
+            ControlID="unit"
+            placeholder="Department Unit"
+          />
+        </Grid>
+        <Grid container spacing={2}>
+          <FormField
+            type="textarea"
+            label="Remarks"
+            value={rNotes}
+            onChange={handleInputChange}
+            name="rNotes"
+            ControlID="rNotes"
+            placeholder="Remarks"
+          />
+        </Grid>
+        <Grid container spacing={2}>
+          <FormField
+            type="switch"
+            label={rActiveYN === "Y" ? "Active" : "Hidden"}
+            value={rActiveYN}
+            checked={rActiveYN === "Y"}
+            onChange={handleActiveToggle}
+            name="rActiveYN"
+            ControlID="rActiveYN"
+          />
+          <FormField
+            type="switch"
+            label="Registration"
+            value={isUnitYN}
+            checked={isUnitYN === "Y"}
+            onChange={(e, checked) => setIsUnitYN(checked ? "Y" : "N")}
+            name="isUnitYN"
+            ControlID="isUnitYN"
+          />
+          <FormField
+            type="switch"
+            label="Auto Consumption"
+            value={autoConsumptionYN}
+            checked={autoConsumptionYN === "Y"}
+            onChange={(e, checked) => setAutoConsumptionYN(checked ? "Y" : "N")}
+            name="autoConsumptionYN"
+            ControlID="autoConsumptionYN"
+          />
+        </Grid>
+        <Grid container spacing={2}>
+          <FormField
+            type="switch"
+            label="Main Store"
+            value={isStoreYN}
+            checked={isStoreYN === "Y"}
+            onChange={(e, checked) => setIsStoreYN(checked ? "Y" : "N")}
+            name="isStoreYN"
+            ControlID="isStoreYN"
+          />
+          <FormField
+            type="switch"
+            label="Sales"
+            value={deptSalesYN}
+            checked={deptSalesYN === "Y"}
+            onChange={(e, checked) => setDeptSalesYN(checked ? "Y" : "N")}
+            name="deptSalesYN"
+            ControlID="deptSalesYN"
+          />
+          <FormField
+            type="switch"
+            label="Discharge Note"
+            value={dischargeNoteYN}
+            checked={dischargeNoteYN === "Y"}
+            onChange={(e, checked) => setDischargeNoteYN(checked ? "Y" : "N")}
+            name="dischargeNoteYN"
+            ControlID="dischargeNoteYN"
+          />
+        </Grid>
+        <Grid container spacing={2}>
+          <FormField
+            type="switch"
+            label="Super Speciality"
+            value={superSpecialityYN}
+            checked={superSpecialityYN === "Y"}
+            onChange={(e, checked) => setSuperSpecialityYN(checked ? "Y" : "N")}
+            name="superSpecialityYN"
+            ControlID="superSpecialityYN"
+          />
+          <FormField
+            type="switch"
+            label="Inventory"
+            value={deptStorePhYN}
+            checked={deptStorePhYN === "Y"}
+            onChange={(e, checked) => setDeptStorePhYN(checked ? "Y" : "N")}
+            name="deptStorePhYN"
+            ControlID="deptStorePhYN"
+          />
+        </Grid>
+        <Grid container marginTop={0} spacing={2}>
+          <FormField
+            type="switch"
+            label="Pharmacy"
+            value={deptStore}
+            checked={deptStore === "Y"}
+            onChange={(e, checked) => setDeptStore(checked ? "Y" : "N")}
+            name="deptStore"
+            ControlID="deptStore"
+          />
+          {deptStore === "Y" && (
+            <FormField
+              type="text"
+              label="DL Number"
+              value={dlNumber}
+              onChange={handleInputChange}
+              isSubmitted={isSubmitted}
+              name="dlNumber"
+              ControlID="dlNumber"
+              placeholder="DL Number"
+            />
+          )}
+        </Grid>
+
+        <FormSaveClearButton
+          clearText="Clear"
+          saveText="Save"
+          onClear={handleClear}
+          onSave={handleSave}
+          clearIcon={DeleteIcon}
+          saveIcon={SaveIcon}
+        />
+      </section>
+      <DeptUsersPage
+        deptId={deptId}
+        deptName={deptName}
+        openDialog={openDialog}
+        handleCloseDialog={handleCloseDialog}
       />
     </Paper>
   );

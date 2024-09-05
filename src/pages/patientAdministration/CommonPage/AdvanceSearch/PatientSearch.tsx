@@ -21,7 +21,7 @@ import { formatDate } from "../../../../utils/Common/dateUtils";
 interface PatientSearchProps {
   show: boolean;
   handleClose: () => void;
-  onEditPatient: (patientId: string) => void;
+  onEditPatient: (patientId: string, pChartCode: string) => void;
 }
 
 const PatientSearch: React.FC<PatientSearchProps> = ({
@@ -47,8 +47,8 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
     }
   }, [searchTerm, debouncedSearch]);
 
-  const handleEditAndClose = (patientId: string) => {
-    onEditPatient(patientId);
+  const handleEditAndClose = (patientId: string, pChartCode: string) => {
+    onEditPatient(patientId, pChartCode);
     handleClose();
   };
 
@@ -61,7 +61,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
         <CustomButton
           text="Edit"
           onClick={() =>
-            handleEditAndClose(row.patRegisters?.pChartID.toString())
+            handleEditAndClose(row.patRegisters?.pChartID.toString(), row.patRegisters?.pChartCode)
           }
           icon={EditIcon}
         />
