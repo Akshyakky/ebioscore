@@ -1,3 +1,4 @@
+// src/hooks/useServerDate.ts
 import { useState, useEffect } from "react";
 import {
   fetchServerTime,
@@ -25,14 +26,14 @@ export const useServerDate = () => {
             "Failed to parse server time, using local time:",
             error
           );
-          setCurrentDate(new Date()); // Fallback to local time
+          setCurrentDate(new Date());
         }
       } else {
         console.error(
           "Failed to fetch server time:",
           serverTimeResult.errorMessage
         );
-        setCurrentDate(new Date()); // Fallback to local time
+        setCurrentDate(new Date());
       }
     };
 

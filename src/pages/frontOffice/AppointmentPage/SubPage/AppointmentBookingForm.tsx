@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Grid } from '@mui/material';
 import { DropdownOption } from '../../../../interfaces/Common/DropdownOption';
 import FormField from '../../../../components/FormField/FormField';
+import { AppointBookingDto } from '../../../../interfaces/FrontOffice/AppointBookingDto';
+import { ConstantValues } from '../../../../services/CommonServices/ConstantValuesService';
+import { AppModifyListService } from '../../../../services/CommonServices/AppModifyListService';
+import { useServerDate } from '../../../../hooks/Common/useServerDate';
+import useDayjs from '../../../../hooks/Common/useDateTime';
 
 interface AppointmentBookingFormProps {
-    onChange: (name: string, value: any) => void;
-    formData: any;
+    onChange: (name: keyof AppointBookingDto, value: any) => void;
+    formData: AppointBookingDto;
     reasonOptions: DropdownOption[];
     resourceOptions: DropdownOption[];
     rLotYN?: string;
@@ -18,43 +23,72 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
     resourceOptions,
     rLotYN
 }) => {
+    const { date: serverDate, formatDate, formatDateTime, formatTime, add } = useDayjs(useServerDate());
     const registrationOptions = [
-        { value: 'Registered', label: 'Registered' },
-        { value: 'NonRegistered', label: 'Non Registered' }
+        { value: 'Y', label: 'Registered' },
+        { value: 'N', label: 'Non Registered' }
     ];
     const [cityOptions, setCityOptions] = useState<DropdownOption[]>([]);
     const [titleOptions, setTitleOptions] = useState<DropdownOption[]>([]);
+
+    useEffect(() => {
+        const loadDropdownValues = async () => {
+            try {
+                const [titleValues, cityValues] = await Promise.all([
+                    ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
+                    AppModifyListService.fetchAppModifyList(
+                        "GetActiveAppModifyFieldsAsync",
+                        "CITY"
+                    ),
+                ]);
+
+                setTitleOptions(titleValues.map((item) => ({
+                    value: item.value,
+                    label: item.label,
+                })));
+
+                setCityOptions(cityValues.map((item) => ({
+                    value: item.value,
+                    label: item.label,
+                })));
+            } catch (error) {
+                console.error("Error loading dropdown values:", error);
+            }
+        };
+
+        loadDropdownValues();
+    }, []);
 
     const handleDurationBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (e.target instanceof HTMLInputElement) {
             const inputValue = e.target.value.trim();
             if (inputValue === '') {
-                onChange('appointmentDuration', '15');
+                onChange('abDuration', 15);
                 return;
             }
             let numericValue = parseInt(inputValue, 10);
             if (isNaN(numericValue)) {
-                onChange('appointmentDuration', '15');
+                onChange('abDuration', 15);
                 return;
             }
             let roundedValue = Math.round(numericValue / 15) * 15;
             roundedValue = Math.max(15, Math.min(roundedValue, 480));
-            onChange('appointmentDuration', roundedValue.toString());
+            onChange('abDuration', roundedValue);
         }
     };
 
-    const isNonRegistered = formData.registrationStatus === 'NonRegistered';
+    const isNonRegistered = formData.patRegisterYN === 'N';
 
     return (
         <Box sx={{ backgroundColor: '#fff', borderRadius: '8px', width: '100%' }}>
             <FormField
                 type="radio"
                 label="Registration Status"
-                name="registrationStatus"
-                ControlID="registrationStatus"
-                value={formData.registrationStatus}
+                name="patRegisterYN"
+                ControlID="patRegisterYN"
+                value={formData.patRegisterYN}
                 options={registrationOptions}
-                onChange={(e, value) => onChange('registrationStatus', value)}
+                onChange={(e, value) => onChange('patRegisterYN', value)}
                 isMandatory={true}
                 gridProps={{ xs: 12 }}
                 inline={true}
@@ -65,50 +99,50 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                     <FormField
                         type="select"
                         label="Title"
-                        name="title"
-                        ControlID="title"
-                        value={formData.title}
+                        name="atName"
+                        ControlID="atName"
+                        value={formData.atName}
                         options={titleOptions}
-                        onChange={(e) => onChange('title', e.target.value)}
+                        onChange={(e) => onChange('atName', e.target.value)}
                         isMandatory={true}
                         gridProps={{ xs: 12 }}
                     />
                     <FormField
                         type="text"
                         label="First Name"
-                        ControlID="firstName"
-                        value={formData.firstName}
-                        name="firstName"
-                        onChange={(e) => onChange('firstName', e.target.value)}
+                        ControlID="abFName"
+                        value={formData.abFName}
+                        name="abFName"
+                        onChange={(e) => onChange('abFName', e.target.value)}
                         isMandatory={true}
                         gridProps={{ xs: 6 }}
                     />
                     <FormField
                         type="text"
                         label="Last Name"
-                        ControlID="lastName"
-                        value={formData.lastName}
-                        name="lastName"
-                        onChange={(e) => onChange('lastName', e.target.value)}
+                        ControlID="abLName"
+                        value={formData.abLName}
+                        name="abLName"
+                        onChange={(e) => onChange('abLName', e.target.value)}
                         isMandatory={true}
                         gridProps={{ xs: 6 }}
                     />
                     <FormField
                         type="text"
                         label="Aadhaar No."
-                        ControlID="aadhaarNo"
-                        value={formData.aadhaarNo}
-                        name="aadhaarNo"
-                        onChange={(e) => onChange('aadhaarNo', e.target.value)}
+                        ControlID="pssnId"
+                        value={formData.pssnId}
+                        name="pssnId"
+                        onChange={(e) => onChange('pssnId', e.target.value)}
                         gridProps={{ xs: 6 }}
                     />
                     <FormField
                         type="text"
                         label="Int. ID/Passport ID"
-                        ControlID="passportId"
-                        value={formData.passportId}
-                        name="passportId"
-                        onChange={(e) => onChange('passportId', e.target.value)}
+                        ControlID="intIdPsprt"
+                        value={formData.intIdPsprt}
+                        name="intIdPsprt"
+                        onChange={(e) => onChange('intIdPsprt', e.target.value)}
                         gridProps={{ xs: 6 }}
                     />
                     <FormField
@@ -123,10 +157,10 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                     <FormField
                         type="text"
                         label="Contact No."
-                        ControlID="contactNo"
-                        value={formData.contactNo}
-                        name="contactNo"
-                        onChange={(e) => onChange('contactNo', e.target.value)}
+                        ControlID="appPhone1"
+                        value={formData.appPhone1}
+                        name="appPhone1"
+                        onChange={(e) => onChange('appPhone1', e.target.value)}
                         isMandatory={true}
                         gridProps={{ xs: 6 }}
                     />
@@ -156,12 +190,12 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                 <FormField
                     type="text"
                     label="UHID No."
-                    ControlID="uhid"
-                    value={formData.uhid}
-                    name="uhid"
+                    ControlID="pChartCode"
+                    value={formData.pChartCode}
+                    name="pChartCode"
                     placeholder="UHID, Name, DOB, Phone No"
                     isMandatory={true}
-                    onChange={(e) => onChange('uhid', e.target.value)}
+                    onChange={(e) => onChange('pChartCode', e.target.value)}
                     gridProps={{ xs: 12 }}
                 />
             )}
@@ -170,14 +204,14 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                 <FormField
                     type="select"
                     label="Consultant"
-                    name="consultantID"
-                    ControlID="consultantID"
-                    value={formData.consultantID}
+                    name="hplID"
+                    ControlID="hplID"
+                    value={formData.hplID.toString()}
                     options={reasonOptions}
                     onChange={(e) => {
                         const selectedOption = reasonOptions.find(option => option.value === e.target.value);
-                        onChange('consultantID', selectedOption?.value);
-                        onChange('consultantName', selectedOption?.label);
+                        onChange('hplID', parseInt(selectedOption?.value || '0', 10));
+                        onChange('providerName', selectedOption?.label || '');
                     }}
                     isMandatory={true}
                     gridProps={{ xs: 12 }}
@@ -188,14 +222,14 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                 <FormField
                     type="select"
                     label="Resource"
-                    name="resourceID"
-                    ControlID="resourceID"
-                    value={formData.resourceID}
+                    name="rlID"
+                    ControlID="rlID"
+                    value={formData.rlID.toString()}
                     options={resourceOptions}
                     onChange={(e) => {
                         const selectedOption = resourceOptions.find(option => option.value === e.target.value);
-                        onChange('resourceID', selectedOption?.value);
-                        onChange('resourceName', selectedOption?.label);
+                        onChange('rlID', parseInt(selectedOption?.value || '0', 10));
+                        onChange('rlName', selectedOption?.label || '');
                     }}
                     isMandatory={true}
                     gridProps={{ xs: 12 }}
@@ -205,14 +239,14 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
             <FormField
                 type="select"
                 label="Reason"
-                name="reasonID"
-                ControlID="reasonID"
-                value={formData.reasonID}
+                name="arlID"
+                ControlID="arlID"
+                value={formData.arlID?.toString()}
                 options={reasonOptions}
                 onChange={(e) => {
                     const selectedOption = reasonOptions.find(option => option.value === e.target.value);
-                    onChange('reasonID', selectedOption?.value);
-                    onChange('reasonName', selectedOption?.label);
+                    onChange('arlID', parseInt(selectedOption?.value || '0', 10));
+                    onChange('arlName', selectedOption?.label || '');
                 }}
                 isMandatory={true}
                 gridProps={{ xs: 12 }}
@@ -221,10 +255,10 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
             <FormField
                 type="text"
                 label="Instruction"
-                ControlID="instruction"
-                value={formData.instruction}
-                name="instruction"
-                onChange={(e) => onChange('instruction', e.target.value)}
+                ControlID="arlInstructions"
+                value={formData.arlInstructions}
+                name="arlInstructions"
+                onChange={(e) => onChange('arlInstructions', e.target.value)}
                 gridProps={{ xs: 12 }}
             />
 
@@ -232,10 +266,10 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                 <FormField
                     type="date"
                     label="Appointment Date"
-                    ControlID="appointmentDate"
-                    value={formData.appointmentDate}
-                    name="appointmentDate"
-                    onChange={(e) => onChange('appointmentDate', e.target.value)}
+                    ControlID="abDate"
+                    value={formData.abDate}
+                    name="abDate"
+                    onChange={(e) => onChange('abDate', e.target.value)}
                     isMandatory={true}
                     disabled={true}
                     gridProps={{ xs: 6 }}
@@ -244,10 +278,10 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                 <FormField
                     type="text"
                     label="Appointment Time"
-                    ControlID="appointmentTime"
-                    value={formData.appointmentTime}
-                    name="appointmentTime"
-                    onChange={(e) => onChange('appointmentTime', e.target.value)}
+                    ControlID="abTime"
+                    value={formatTime(formData.abTime)}
+                    name="abTime"
+                    onChange={(e) => onChange('abTime', e.target.value)}
                     isMandatory={true}
                     disabled={true}
                     gridProps={{ xs: 6 }}
@@ -257,10 +291,10 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
             <FormField
                 type="number"
                 label="Appointment Duration (minutes)"
-                ControlID="appointmentDuration"
-                value={formData.appointmentDuration}
-                name="appointmentDuration"
-                onChange={(e) => onChange('appointmentDuration', e.target.value)}
+                ControlID="abDuration"
+                value={formData.abDuration}
+                name="abDuration"
+                onChange={(e) => onChange('abDuration', parseInt(e.target.value, 10))}
                 onBlur={handleDurationBlur}
                 isMandatory={true}
                 min={15}
@@ -272,13 +306,14 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
             <FormField
                 type="textarea"
                 label="Remarks"
-                ControlID="remarks"
-                value={formData.remarks}
-                name="remarks"
-                onChange={(e) => onChange('remarks', e.target.value)}
+                ControlID="rNotes"
+                value={formData.rNotes || ''}
+                name="rNotes"
+                onChange={(e) => onChange('rNotes', e.target.value)}
                 gridProps={{ xs: 12 }}
                 maxLength={250}
             />
+
         </Box>
     );
 };

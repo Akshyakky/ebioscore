@@ -6,11 +6,11 @@ import PersonIcon from '@mui/icons-material/Person';
 import DomainIcon from '@mui/icons-material/Domain';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import AutocompleteTextBox from '../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox';
-import { fetchAppointmentConsultants, fetchAllResources } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
+import { AppointmentService } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
 
 interface SchedulerHeaderProps {
     onRefresh: () => void;
-    onSearchSelection: (conID?: number, rlID?: number, rLotYN?: string) => void;
+    onSearchSelection: (conID?: number, rlID?: number, rLotYN?: string, providerName?: string, rlName?: string) => void;
 }
 
 const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSelection }) => {
@@ -43,9 +43,9 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
         try {
             let result;
             if (searchType === 'consultant') {
-                result = await fetchAppointmentConsultants();
+                result = await AppointmentService.fetchAppointmentConsultants();
             } else {
-                result = await fetchAllResources();
+                result = await AppointmentService.fetchAllResources();
             }
 
             if (result && result.success) {
@@ -53,8 +53,8 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
                 setSuggestions(
                     items.map(item => ({
                         label: searchType === 'consultant' ? item.conFName : item.rLName,
-                        value: searchType === 'consultant' ? item.conID : item.rlID,
-                        rLotYN: searchType === 'resource' ? item.rLotYN : undefined
+                        value: searchType === 'consultant' ? item.conID : item.rLID,
+                        rLotYN: searchType === 'resource' ? item.rLOtYN : undefined
                     }))
                 );
             } else {
@@ -83,7 +83,9 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
             onSearchSelection(
                 searchType === 'consultant' ? selectedItem.value : undefined,
                 searchType === 'resource' ? selectedItem.value : undefined,
-                selectedItem.rLotYN
+                selectedItem.rLotYN,
+                searchType === 'consultant' ? selectedItem.label : undefined,
+                searchType === 'resource' ? selectedItem.label : undefined
             );
         }
     }, [suggestions, searchType, onSearchSelection]);
