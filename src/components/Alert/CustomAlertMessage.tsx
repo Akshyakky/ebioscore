@@ -1,33 +1,30 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
-import Button from "@mui/material/Button";
 import CustomGrid from "../CustomGrid/CustomGrid";
 import { AlertDto } from "../../interfaces/Common/AlertManager";
+import CustomButton from "../Button/CustomButton";
 
 interface AlertPopUpProps {
     open: boolean;
     onClose: () => void;
-    alertData?: AlertDto;
+    alertData: AlertDto[];
 }
 
-const AlertPopUp: React.FC<AlertPopUpProps> = ({ open, onClose, alertData }) => {
+const AlertPopUp: React.FC<AlertPopUpProps> = ({
+    open,
+    onClose,
+    alertData,
+}) => {
     const defaultColumns = [
         { key: "oPIPAlertID", header: "Sl No.", visible: true },
         {
             key: "oPIPDate",
             header: "Date",
             visible: true,
-            formatter: (value: any) => {
-                if (value instanceof Date && !isNaN(value.getTime())) {
-                    return value.toLocaleDateString();
-                } else {
-                    return 'No valid date';
-                }
-            },
+            formatter: (value: Date) => new Date(value).toLocaleDateString(),
         },
         { key: "alertDescription", header: "Description", visible: true },
         { key: "rCreatedBy", header: "Created By", visible: true },
@@ -39,15 +36,18 @@ const AlertPopUp: React.FC<AlertPopUpProps> = ({ open, onClose, alertData }) => 
             <DialogContent dividers>
                 <CustomGrid
                     columns={defaultColumns}
-                    data={alertData ? [alertData] : []}
+                    data={alertData}
                     maxHeight="400px"
                     minHeight="300px"
                 />
             </DialogContent>
             <DialogActions>
-                <Button onClick={onClose} color="primary">
-                    Close
-                </Button>
+                <CustomButton
+                    onClick={onClose}
+                    color="secondary"
+                    text="Close"
+                    variant="contained"
+                />
             </DialogActions>
         </Dialog>
     );

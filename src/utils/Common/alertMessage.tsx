@@ -2,8 +2,8 @@ import ReactDOM from "react-dom";
 import { AlertDto } from "../../interfaces/Common/AlertManager";
 import AlertPopUp from "../../components/Alert/CustomAlertMessage";
 
-export const showAlertPopUp = (alertData: AlertDto) => {
-    const popupElement = document.createElement('div');
+export const showAlertPopUp = (alertData: AlertDto[] | AlertDto) => {
+    const popupElement = document.createElement("div");
     document.body.appendChild(popupElement);
 
     const handleClose = () => {
@@ -11,12 +11,10 @@ export const showAlertPopUp = (alertData: AlertDto) => {
         document.body.removeChild(popupElement);
     };
 
+    const alertArray = Array.isArray(alertData) ? alertData : [alertData];
+
     ReactDOM.render(
-        <AlertPopUp
-            open={true}
-            onClose={handleClose}
-            alertData={alertData}
-        />,
+        <AlertPopUp open={true} onClose={handleClose} alertData={alertArray} />,
         popupElement
     );
 };

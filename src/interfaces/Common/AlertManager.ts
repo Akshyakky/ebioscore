@@ -7,7 +7,7 @@ export interface AlertDto {
   oPIPCaseNo: number;
   patOPIPYN: string;
   oPIPDate: Date;
-  alertDescription?: string;
+  alertDescription: string;
   rActiveYN: string;
   rCreatedOn: Date;
   rCreatedID: number;
