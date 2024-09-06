@@ -38,7 +38,6 @@ import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics"
 import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
 import GeneralAlert from "../../../../components/GeneralAlert/GeneralAlert";
 import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientSearch";
-import { InsuranceFormState } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 
 const RevisitPage: React.FC = () => {

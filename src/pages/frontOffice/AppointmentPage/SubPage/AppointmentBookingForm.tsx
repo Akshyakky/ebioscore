@@ -7,6 +7,7 @@ import { ConstantValues } from '../../../../services/CommonServices/ConstantValu
 import { AppModifyListService } from '../../../../services/CommonServices/AppModifyListService';
 import { useServerDate } from '../../../../hooks/Common/useServerDate';
 import useDayjs from '../../../../hooks/Common/useDateTime';
+import { usePatientAutocomplete } from '../../../../hooks/PatientAdminstration/usePatientAutocomplete';
 
 interface AppointmentBookingFormProps {
     onChange: (name: keyof AppointBookingDto, value: any) => void;
@@ -30,6 +31,7 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
     ];
     const [cityOptions, setCityOptions] = useState<DropdownOption[]>([]);
     const [titleOptions, setTitleOptions] = useState<DropdownOption[]>([]);
+    const { fetchPatientSuggestions } = usePatientAutocomplete();
 
     useEffect(() => {
         const loadDropdownValues = async () => {
@@ -188,7 +190,7 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
 
             {!isNonRegistered && (
                 <FormField
-                    type="text"
+                    type="autocomplete"
                     label="UHID No."
                     ControlID="pChartCode"
                     value={formData.pChartCode}
@@ -196,6 +198,13 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                     placeholder="UHID, Name, DOB, Phone No"
                     isMandatory={true}
                     onChange={(e) => onChange('pChartCode', e.target.value)}
+                    fetchSuggestions={fetchPatientSuggestions}
+                    onSelectSuggestion={(suggestion) => {
+                        // Here you can handle the selected suggestion
+                        // For example, you might want to update multiple fields based on the selected patient
+                        onChange('pChartCode', suggestion.split('|')[0].trim());
+                        // You might also want to fetch and set other patient details here
+                    }}
                     gridProps={{ xs: 12 }}
                 />
             )}

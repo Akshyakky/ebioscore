@@ -134,7 +134,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     };
 
     loadDropdownValues();
-  }, [token]);
+  }, []);
   useEffect(() => {
     calculateAge(new Date());
   });
