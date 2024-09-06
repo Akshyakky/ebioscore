@@ -160,7 +160,7 @@ const RevisitPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, compID]);
+  }, [compID]);
 
   useEffect(() => {
     loadDropdownValues();
@@ -420,7 +420,6 @@ const RevisitPage: React.FC = () => {
               <Grid item xs={12} sm={6} md={9} lg={9} xl={9}>
                 <PatientDemographics
                   pChartID={selectedPChartID}
-                  token={token}
                 />
               </Grid>
             </Grid>

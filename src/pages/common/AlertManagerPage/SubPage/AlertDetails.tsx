@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { AlertDto } from "../../../../interfaces/Common/AlertManager";
 import { Grid, Paper, Typography } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
@@ -15,13 +15,9 @@ import CustomGrid, {
 import EditIcon from "@mui/icons-material/Edit";
 import { AlertManagerServices } from "../../../../services/CommonServices/AlertManagerServices";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import CustomButton from "../../../../components/Button/CustomButton";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
-import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
-import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import PatientDemographics from "../../../patientAdministration/CommonPage/Demograph/PatientDemographics";
 import { showAlertPopUp } from "../../../../utils/Common/alertMessage";
 
@@ -51,10 +47,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
     const { userID, userName } = useSelector(
         (state: RootState) => state.userDetails
     );
-    const uhidRef = useRef<HTMLInputElement>(null);
-    const token = useSelector((state: RootState) => state.userDetails.token!);
     const { fetchPatientSuggestions } = usePatientAutocomplete();
-    const [, setAvailableAttendingPhysicians] = useState<DropdownOption[]>([]);
     const [selectedPChartID, setSelectedPChartID] = useState<number | 0>(0);
     const [editMode, setEditMode] = useState(false);
     const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -112,7 +105,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
     const handleSave = async () => {
         setFormState((prev) => ({ ...prev, isSubmitted: true }));
         if (!formState.pChartCode) {
-            showAlert("Error", "UHID is required.", "error");
+            showAlert("Error", "Please select a patient", "error");
             return;
         }
         setLoading(true);
@@ -208,21 +201,6 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
                     pChartID,
                     pChartCode,
                 }));
-                const availablePhysicians =
-                    await ContactMastService.fetchAvailableAttendingPhysicians(pChartID);
-                setAvailableAttendingPhysicians(availablePhysicians);
-                const lastVisitResult =
-                    await RevisitService.getLastVisitDetailsByPChartID(pChartID);
-                if (lastVisitResult && lastVisitResult.success) {
-                    setFormState((prevFormData) => ({
-                        ...prevFormData,
-                        attndPhyID: availablePhysicians.some(
-                            (physician) => physician.value === lastVisitResult.data.attndPhyID
-                        )
-                            ? lastVisitResult.data.attndPhyID
-                            : 0,
-                    }));
-                }
                 const alertResult =
                     await AlertManagerServices.GetAlertBypChartID(pChartID);
                 if (alertResult && alertResult.success) {
@@ -297,12 +275,11 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
                 <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
                     <Grid container spacing={2} alignItems="flex-start">
                         <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-                            <AutocompleteTextBox
-                                ref={uhidRef}
+                            <FormField
                                 ControlID="UHID"
-                                title="UHID"
-                                type="text"
-                                size="small"
+                                label="UHID No."
+                                name="pChartCode"
+                                type="autocomplete"
                                 placeholder="Search through UHID, Name, DOB, Phone No...."
                                 value={formState.pChartCode || ""}
                                 onChange={(e) =>
@@ -316,7 +293,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md={9} lg={9} xl={9}>
-                            <PatientDemographics pChartID={selectedPChartID} token={token} />
+                            <PatientDemographics pChartID={selectedPChartID} />
                         </Grid>
                     </Grid>
                 </Grid>

@@ -43,12 +43,10 @@ import { format, parseISO } from "date-fns";
 
 interface PatientDemographicsProps {
   pChartID: number;
-  token: string;
 }
 
 const PatientDemographics: React.FC<PatientDemographicsProps> = ({
   pChartID,
-  token,
 }) => {
   const [patientDetails, setPatientDetails] =
     useState<PatientDemographicDetails | null>(null);
@@ -111,7 +109,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     if (pChartID && pChartID !== 0) {
       fetchPatientDetails();
     }
-  }, [pChartID, token]);
+  }, [pChartID]);
 
   const formatDate = (dateString: string) => {
     return format(parseISO(dateString), "yyyy-MM-dd");

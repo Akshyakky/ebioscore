@@ -1,7 +1,5 @@
 import React, { useContext, useState } from "react";
 import { Container, Paper, Box } from "@mui/material";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import { useLoading } from "../../../../context/LoadingContext";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
 import { AlertDto } from "../../../../interfaces/Common/AlertManager";
@@ -19,15 +17,12 @@ const AlertPage: React.FC = () => {
         undefined
     );
     const { setLoading } = useLoading();
-    const userInfo = useSelector((state: RootState) => state.userDetails);
-    const token = userInfo.token!;
     const [showPatientSearch, setShowPatientSearch] = useState(false);
     const { performSearch } = useContext(PatientSearchContext);
     const [, setSelectedPChartID] = useState<number>(0);
     const [alerts, setAlerts] = useState<AlertDto[]>([]);
 
     const handlePatientSelect = async (
-        selectedSuggestion: string,
         pChartCode: string
     ) => {
         setLoading(true);
