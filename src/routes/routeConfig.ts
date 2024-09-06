@@ -16,7 +16,6 @@ import AdmissionPage from "../pages/patientAdministration/AdmissionPage/MainPage
 import { UserListSearchProvider } from "../context/SecurityManagement/UserListSearchContext";
 import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
 import ResourceListPage from "../pages/frontOffice/ResourceList/MainPage/ResourceListPage";
-import { ResourceListProvider } from "../context/frontOffice/ResourceListContext";
 import ReasonListPage from "../pages/frontOffice/ReasonList/MainPage/ReasonListPage";
 import BreakListPage from "../pages/frontOffice/BreakList/MainPage/BreakListPage";
 import AppointmentPage from "../pages/frontOffice/AppointmentPage/MainPage/AppointmentPage";
