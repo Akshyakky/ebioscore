@@ -23,6 +23,7 @@ import { ContactMastService } from "../../../../services/CommonServices/ContactM
 import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import PatientDemographics from "../../../patientAdministration/CommonPage/Demograph/PatientDemographics";
+import { showAlertPopUp } from "../../../../utils/Common/alertMessage";
 
 const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
     editData,
@@ -81,6 +82,8 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
     const createAlertTypeDto = useCallback(
         (): AlertDto => ({
             ...formState,
+            oPIPAlertID:
+                editMode && editIndex !== null ? alertsState[editIndex].oPIPAlertID : 0,
             pChartID: formState.pChartID,
             oPIPDate: serverDate || new Date(),
             rCreatedID: userID || 0,
@@ -91,7 +94,6 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
             rModifiedBy: userName || "",
             payID: 0,
             patOPIPYN: "Y",
-            oPIPAlertID: formState.oPIPAlertID
         }),
         [formState, userID, userName, serverDate]
     );
@@ -108,7 +110,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
     );
 
     const handleSave = async () => {
-        setFormState(prev => ({ ...prev, isSubmitted: true }));
+        setFormState((prev) => ({ ...prev, isSubmitted: true }));
         if (!formState.pChartCode) {
             showAlert("Error", "UHID is required.", "error");
             return;
@@ -116,16 +118,22 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
         setLoading(true);
         try {
             for (const alert of alertsState) {
-                // Regardless of whether it's a new or existing alert, use saveAlert
                 const result = await AlertManagerServices.saveAlert(alert);
 
                 if (!result.success) {
-                    showAlert("Error", result.errorMessage || "Failed to save Alert.", "error");
+                    showAlert(
+                        "Error",
+                        result.errorMessage || "Failed to save Alert.",
+                        "error"
+                    );
                     return;
                 }
             }
             showAlert("Success", "Alerts saved successfully!", "success", {
-                onConfirm: handleClear
+                onConfirm: () => {
+                    handleClear();
+                    setAlerts([]);
+                },
             });
         } catch (error) {
             console.error("Error saving Alerts:", error);
@@ -140,6 +148,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
             ...prevState,
             isSubmitted: false,
             alertDescription: "",
+            pChartCode: "",
         }));
         setSelectedPChartID(0);
         setIsUHIDDisabled(false);
@@ -155,7 +164,6 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
         []
     );
 
-
     const handleAdd = async () => {
         const newAlert = createAlertTypeDto();
         if (editMode && editIndex !== null) {
@@ -166,17 +174,19 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
             );
             setEditMode(false);
             setEditIndex(null);
+            setIsUHIDDisabled(false);
         } else {
-            setAlerts((prevAlerts) => [...prevAlerts, { ...newAlert, oPIPAlertID: 0 }]);
+            setAlerts((prevAlerts) => [
+                ...prevAlerts,
+                { ...newAlert, oPIPAlertID: newAlert.oPIPAlertID || 0 },
+            ]);
         }
+
         setFormState((prevState) => ({
             ...prevState,
             alertDescription: "",
-            oPIPAlertID: 0,
         }));
-        setIsUHIDDisabled(false);
     };
-
 
     const handleDelete = (item: AlertDto) => {
         setAlerts((prevAlerts) =>
@@ -189,18 +199,17 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
         try {
             const numbersArray = extractNumbers(selectedSuggestion);
             const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
+
             if (pChartID) {
+                const pChartCode = selectedSuggestion.split("|")[0].trim();
                 setSelectedPChartID(pChartID);
                 setFormState((prevFormData) => ({
                     ...prevFormData,
                     pChartID,
-                    pChartCode: selectedSuggestion.split("|")[0].trim(),
+                    pChartCode,
                 }));
-
                 const availablePhysicians =
-                    await ContactMastService.fetchAvailableAttendingPhysicians(
-                        pChartID
-                    );
+                    await ContactMastService.fetchAvailableAttendingPhysicians(pChartID);
                 setAvailableAttendingPhysicians(availablePhysicians);
                 const lastVisitResult =
                     await RevisitService.getLastVisitDetailsByPChartID(pChartID);
@@ -214,6 +223,14 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
                             : 0,
                     }));
                 }
+                const alertResult =
+                    await AlertManagerServices.GetAlertBypChartID(pChartID);
+                if (alertResult && alertResult.success) {
+                    setAlerts(alertResult.data);
+                    showAlertPopUp(alertResult.data);
+                } else {
+                    setAlerts([]);
+                }
             }
         } catch (error) {
             console.error("Error in handlePatientSelect:", error);
@@ -222,14 +239,13 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
         }
     };
 
-
     const handleEdit = (item: AlertDto, index: number) => {
         setFormState({
             ...formState,
             ...item,
-            pChartCode: item.pChartCode,
+            pChartCode: item.pChartCode || formState.pChartCode,
             isSubmitted: false,
-            oPIPAlertID: item.oPIPAlertID, // Ensure we keep the original oPIPAlertID
+            oPIPAlertID: item.oPIPAlertID,
         });
         setEditMode(true);
         setEditIndex(index);
@@ -277,7 +293,6 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
             <Typography variant="h6" id="resource-details-header">
                 Alert Manager
             </Typography>
-
             <section>
                 <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
                     <Grid container spacing={2} alignItems="flex-start">
@@ -290,14 +305,9 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
                                 size="small"
                                 placeholder="Search through UHID, Name, DOB, Phone No...."
                                 value={formState.pChartCode || ""}
-                                onChange={(e) => {
-                                    if (!editData) {
-                                        setFormState({
-                                            ...formState,
-                                            pChartCode: e.target.value,
-                                        });
-                                    }
-                                }}
+                                onChange={(e) =>
+                                    setFormState({ ...formState, pChartCode: e.target.value })
+                                }
                                 fetchSuggestions={fetchPatientSuggestions}
                                 isMandatory
                                 onSelectSuggestion={handlePatientSelect}
