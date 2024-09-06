@@ -194,6 +194,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
             const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
 
             if (pChartID) {
+                debugger
                 const pChartCode = selectedSuggestion.split("|")[0].trim();
                 setSelectedPChartID(pChartID);
                 setFormState((prevFormData) => ({
@@ -290,6 +291,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
                                 onSelectSuggestion={handlePatientSelect}
                                 isSubmitted={formState.isSubmitted}
                                 disabled={isUHIDDisabled}
+                                gridProps={{ xs: 12 }}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md={9} lg={9} xl={9}>

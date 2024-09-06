@@ -49,7 +49,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
   pChartID,
 }) => {
   const [patientDetails, setPatientDetails] =
-    useState<PatientDemographicDetails | null>(null);
+    useState<PatientDemographicDetails>();
   const [open, setOpen] = useState(false);
   const { setLoading } = useLoading();
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -88,6 +88,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     useDropdownChange<PatientDemoGraph>(setPatientDemoGraph);
 
   const fetchPatientDetails = async () => {
+    debugger
     setLoading(true);
     try {
       const response = await RegistrationService.PatientDemoGraph(
