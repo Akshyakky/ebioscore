@@ -219,12 +219,10 @@ const DashboardPage: React.FC = () => {
         const myCountResult = await DashBoardService.fetchCount(
           `Get${category}Userwise`,
           dateRange,
-          token
         );
         const overallCountResult = await DashBoardService.fetchCount(
           `Get${category}`,
           dateRange,
-          token
         );
 
         const isMyCountAvailable =

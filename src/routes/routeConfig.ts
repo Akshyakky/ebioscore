@@ -16,7 +16,6 @@ import AdmissionPage from "../pages/patientAdministration/AdmissionPage/MainPage
 import { UserListSearchProvider } from "../context/SecurityManagement/UserListSearchContext";
 import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
 import ResourceListPage from "../pages/frontOffice/ResourceList/MainPage/ResourceListPage";
-import { ResourceListProvider } from "../context/frontOffice/ResourceListContext";
 import ReasonListPage from "../pages/frontOffice/ReasonList/MainPage/ReasonListPage";
 import BreakListPage from "../pages/frontOffice/BreakList/MainPage/BreakListPage";
 import AppointmentPage from "../pages/frontOffice/AppointmentPage/MainPage/AppointmentPage";
@@ -24,7 +23,7 @@ import PatientInvoiceCodePage from "../pages/billing/PatientInvoiceCodePage/Main
 import DepartmentListPage from "../pages/billing/DepartmentListPage/MainPage/DepartmentListPage";
 import PaymentTypesPage from "../pages/billing/PaymentTypesPage/MainPage/PaymentTypesPage";
 import ServiceGroupsListPage from "../pages/billing/ServiceGroupsListPage/MainPage/ServiceGroupsListPage";
-import AlertPage from "../pages/common/AlertManagerPage/MainPage/Alertpage";
+import AlertPage from "../pages/common/AlertManagerPage/MainPage/AlertPage";
 
 interface RouteConfig {
   path: string;
@@ -74,6 +73,7 @@ const routeConfig: RouteConfig[] = [
     protected: true,
     providers: [PatientSearchProvider],
   },
+
   {
     path: "/admissionpage",
     component: AdmissionPage,

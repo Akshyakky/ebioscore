@@ -1,98 +1,19 @@
-import React, { useEffect, useState, useMemo, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useMemo, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Scheduler, Resource } from 'devextreme-react/scheduler';
 import 'devextreme/dist/css/dx.light.css';
 import { useServerDate } from '../../../../hooks/Common/useServerDate';
-import { fetchAppointmentsByDateAndType } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
-import { OperationResult } from '../../../../interfaces/Common/OperationResult';
-import { debounce } from '../../../../utils/Common/debounceUtils';
-
+import useDayjs from '../../../../hooks/Common/useDateTime';
+import { useAppointments } from '../../../../hooks/FrontOffice/useAppointments';
 
 const views: Array<'day' | 'week' | 'workWeek' | 'month'> = ['day', 'week', 'workWeek', 'month'];
-
-interface SchedulerState {
-    appointments: any[];
-    currentView: 'day' | 'week' | 'workWeek' | 'month';
-    date: Date;
-}
 interface SchedulerComponentProps {
     hpID?: number;
     rlID?: number;
 }
-
-const useAppointments = (initialDate: Date, hpID?: number, rlID?: number) => {
-    const [state, setState] = useState<SchedulerState>({
-        appointments: [],
-        currentView: 'day',
-        date: initialDate,
-    });
-
-    const calculateDateRange = useCallback((view: 'day' | 'week' | 'workWeek' | 'month', date: Date) => {
-        const start = new Date(date);
-        const end = new Date(date);
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
-
-        switch (view) {
-            case 'week':
-                start.setDate(date.getDate() - date.getDay());
-                end.setDate(start.getDate() + 6);
-                break;
-            case 'workWeek':
-                start.setDate(date.getDate() - (date.getDay() - 1));
-                end.setDate(start.getDate() + 4);
-                break;
-            case 'month':
-                start.setDate(1);
-                end.setMonth(date.getMonth() + 1);
-                end.setDate(0);
-                break;
-        }
-
-        return { start, end };
-    }, []);
-
-    const loadAppointments = useCallback(async (view: 'day' | 'week' | 'workWeek' | 'month', date: Date) => {
-        const { start, end } = calculateDateRange(view, date);
-        const startDate = start.toISOString().split('T')[0];
-        const endDate = end.toISOString().split('T')[0];
-
-        try {
-            const result: OperationResult<any[]> = await fetchAppointmentsByDateAndType(startDate, endDate, hpID, rlID);
-            setState(prevState => ({
-                ...prevState,
-                appointments: result.success && result.data ? result.data : [],
-            }));
-        } catch (error) {
-            setState(prevState => ({ ...prevState, appointments: [] }));
-        }
-    }, [calculateDateRange, hpID, rlID]);
-
-    const debouncedLoadAppointments = useMemo(
-        () => debounce(loadAppointments, 300),
-        [loadAppointments]
-    );
-
-    useEffect(() => {
-        debouncedLoadAppointments(state.currentView, state.date);
-        return () => {
-            debouncedLoadAppointments.cancel();
-        };
-    }, [state.currentView, state.date, hpID, rlID, debouncedLoadAppointments]);
-
-    const refresh = () => {
-        loadAppointments(state.currentView, state.date);
-    };
-
-    return {
-        state,
-        setState,
-        refresh
-    };
-};
-
 const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onAppointmentFormOpening: (startDate?: Date, endDate?: Date) => void }>((props, ref) => {
-    const serverDate = useServerDate();
-    const initialDate = serverDate || new Date();
+    const srvDate = useServerDate()
+    const { date: serverDate, formatDate, formatDateTime, formatTime, add, formatISO, format, parse } = useDayjs(useServerDate());
+    const initialDate = srvDate || new Date();
     const { hpID, rlID, onAppointmentFormOpening } = props;
 
     const { state, setState, refresh } = useAppointments(initialDate, hpID, rlID);
@@ -151,8 +72,8 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onApp
     const dataSource = useMemo(() => {
         return Array.isArray(state.appointments) ? state.appointments.map(appt => ({
             text: `${appt.abFName} ${appt.abLName || ''}`,
-            startDate: new Date(appt.abDate),
-            endDate: new Date(appt.abEndTime),
+            startDate: formatDateTime(appt.abTime),
+            endDate: formatDateTime(appt.abEndTime),
             id: appt.abID,
             status: appt.abStatus,
             allDay: false,

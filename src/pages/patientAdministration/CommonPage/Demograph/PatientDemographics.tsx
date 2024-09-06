@@ -43,15 +43,13 @@ import { format, parseISO } from "date-fns";
 
 interface PatientDemographicsProps {
   pChartID: number;
-  token: string;
 }
 
 const PatientDemographics: React.FC<PatientDemographicsProps> = ({
   pChartID,
-  token,
 }) => {
   const [patientDetails, setPatientDetails] =
-    useState<PatientDemographicDetails | null>(null);
+    useState<PatientDemographicDetails>();
   const [open, setOpen] = useState(false);
   const { setLoading } = useLoading();
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -90,10 +88,10 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     useDropdownChange<PatientDemoGraph>(setPatientDemoGraph);
 
   const fetchPatientDetails = async () => {
+    debugger
     setLoading(true);
     try {
       const response = await RegistrationService.PatientDemoGraph(
-        token,
         pChartID
       );
       if (response.success && response.data) {
@@ -112,7 +110,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     if (pChartID && pChartID !== 0) {
       fetchPatientDetails();
     }
-  }, [pChartID, token]);
+  }, [pChartID]);
 
   const formatDate = (dateString: string) => {
     return format(parseISO(dateString), "yyyy-MM-dd");
@@ -123,7 +121,6 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     try {
       const response: OperationResult<PatientDemoGraph> =
         await PatientDemoGraphService.getPatientDemographicsByPChartID(
-          token,
           pChartID
         );
       if (response.success && response.data) {
@@ -195,7 +192,6 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     setLoading(true);
     try {
       const result = await PatientDemoGraphService.savePatientDemographics(
-        token,
         patientDemoGraph
       );
       if (result.success) {
@@ -270,7 +266,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }));
 
   const memoizedParamsForPic = useMemo(
-    () => [token, "GetPICDropDownValues"],
+    () => ["GetPICDropDownValues"],
     []
   );
   const picResult = useDropdown(

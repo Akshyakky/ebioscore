@@ -41,7 +41,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { fetchPatientSuggestions } = usePatientAutocomplete(token);
+  const { fetchPatientSuggestions } = usePatientAutocomplete();
 
   const nextOfKinInitialFormState: PatNokDetailsDto = {
     ID: 0,

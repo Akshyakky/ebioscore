@@ -49,7 +49,6 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
       try {
         setLoading(true);
         const departmentValues = await DepartmentService.fetchDepartments(
-          token,
           endpointDepartment,
           compID
         );
@@ -60,7 +59,6 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
         setDepartmentValues(departmentOptions);
 
         const attendingPhy = await ContactMastService.fetchAttendingPhysician(
-          token,
           endpointAttendingPhy,
           compID
         );
@@ -74,7 +72,6 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
 
         const primaryIntroducingSource =
           await ContactMastService.fetchRefferalPhy(
-            token,
             endpointPrimaryIntroducingSource,
             compID
           );

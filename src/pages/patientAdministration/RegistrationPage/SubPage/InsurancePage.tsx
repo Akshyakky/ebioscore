@@ -11,18 +11,15 @@ import { OPIPInsurancesDto } from "../../../../interfaces/PatientAdministration/
 import PatientInsuranceForm from "./PatientInsuranceForm";
 import PatientInsuranceGrid from "./PatientInsuranceGrid";
 import { InsuranceCarrierService } from "../../../../services/CommonServices/InsuranceCarrierService";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import { format } from "date-fns";
 
 interface InsurancePageProps {
   pChartID: number;
-  token: string;
   shouldClearData: boolean;
 }
 
 const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
-  { pChartID, token, shouldClearData },
+  { pChartID, shouldClearData },
   ref
 ) => {
   const [showInsurancePopup, setShowInsurancePopup] = useState(false);
@@ -33,7 +30,6 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
     OPIPInsurancesDto[]
   >([]);
 
-  const userInfo = useSelector((state: RootState) => state.userDetails);
 
   useImperativeHandle(ref, () => ({
     saveInsuranceDetails,
@@ -44,7 +40,6 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
       const saveOperations = gridInsuranceData.map((insurance) => {
         const insuranceData = { ...insurance, pChartID: pChartID };
         return InsuranceCarrierService.addOrUpdateOPIPInsurance(
-          token,
           insuranceData
         );
       });
@@ -99,7 +94,6 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
         try {
           const insuranceDetails =
             await InsuranceCarrierService.getOPIPInsuranceByPChartID(
-              token,
               pChartID
             );
           if (insuranceDetails.success && insuranceDetails.data) {
@@ -120,7 +114,7 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
 
       fetchInsuranceData();
     }
-  }, [pChartID, token]);
+  }, [pChartID]);
 
   const handleOpenInsurancePopup = () => {
     setShowInsurancePopup(true);

@@ -104,7 +104,6 @@ const ReportCriteria: React.FC<ReportCriteriaProps> = ({
         fromDate: formatDate(fromDate),
         toDate: formatDate(toDate),
         selectedCompanies: selectedCompanies,
-        token: token,
       });
       console.log("Excel exported successfully.");
     } catch (error) {
@@ -120,7 +119,6 @@ const ReportCriteria: React.FC<ReportCriteriaProps> = ({
         fromDate: formatDate(fromDate),
         toDate: formatDate(toDate),
         selectedCompanies: selectedCompanies,
-        token: token,
       });
       console.log("PDF generated successfully.");
     } catch (error) {
@@ -134,7 +132,6 @@ const ReportCriteria: React.FC<ReportCriteriaProps> = ({
         fromDate: formatDate(fromDate),
         toDate: formatDate(toDate),
         selectedCompanies: selectedCompanies,
-        token: token,
       });
       setPdfUrl(pdfUrl); // Set the state with the PDF URL
       setIsPdfViewerOpen(true); // Show the PDF viewer component

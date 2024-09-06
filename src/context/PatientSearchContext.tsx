@@ -32,7 +32,6 @@ export const PatientSearchProvider: React.FC<PatientSearchProviderProps> = ({
 
   const performSearch = useCallback(
     async (searchTerm: string): Promise<void> => {
-      debugger
       if (!token) {
         notifyError("User is not authenticated.");
         return;
@@ -40,8 +39,7 @@ export const PatientSearchProvider: React.FC<PatientSearchProviderProps> = ({
 
       setLoading(true);
       try {
-        debugger
-        const result = await searchPatientDetails(token, searchTerm);
+        const result = await searchPatientDetails(searchTerm);
         console.log("Fetched result:", result); // Debug log
         if (result.success) {
           setSearchResults(result.data || []);

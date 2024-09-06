@@ -6,11 +6,12 @@ import PersonIcon from '@mui/icons-material/Person';
 import DomainIcon from '@mui/icons-material/Domain';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import AutocompleteTextBox from '../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox';
-import { fetchAppointmentConsultants, fetchAllResources } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
+import { AppointmentService } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface SchedulerHeaderProps {
     onRefresh: () => void;
-    onSearchSelection: (conID?: number, rlID?: number, rLotYN?: string) => void;
+    onSearchSelection: (conID?: number, rlID?: number, rLotYN?: string, providerName?: string, rlName?: string) => void;
 }
 
 const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSelection }) => {
@@ -43,9 +44,9 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
         try {
             let result;
             if (searchType === 'consultant') {
-                result = await fetchAppointmentConsultants();
+                result = await AppointmentService.fetchAppointmentConsultants();
             } else {
-                result = await fetchAllResources();
+                result = await AppointmentService.fetchAllResources();
             }
 
             if (result && result.success) {
@@ -53,8 +54,8 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
                 setSuggestions(
                     items.map(item => ({
                         label: searchType === 'consultant' ? item.conFName : item.rLName,
-                        value: searchType === 'consultant' ? item.conID : item.rlID,
-                        rLotYN: searchType === 'resource' ? item.rLotYN : undefined
+                        value: searchType === 'consultant' ? item.conID : item.rLID,
+                        rLotYN: searchType === 'resource' ? item.rLOtYN : undefined
                     }))
                 );
             } else {
@@ -83,7 +84,9 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
             onSearchSelection(
                 searchType === 'consultant' ? selectedItem.value : undefined,
                 searchType === 'resource' ? selectedItem.value : undefined,
-                selectedItem.rLotYN
+                selectedItem.rLotYN,
+                searchType === 'consultant' ? selectedItem.label : undefined,
+                searchType === 'resource' ? selectedItem.label : undefined
             );
         }
     }, [suggestions, searchType, onSearchSelection]);
@@ -98,6 +101,12 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
 
     const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setChecked(event.target.checked);
+    };
+
+    const handleClear = () => {
+        setSearchValue('');
+        setRLotYN(undefined);
+        onSearchSelection();
     };
 
     return (
@@ -134,14 +143,24 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
                                     </Box>
                                 ),
                                 endAdornment: (
-                                    <>
-                                        <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        {searchValue && (
+                                            <IconButton
+                                                aria-label="clear input"
+                                                onClick={handleClear}
+                                                edge="end"
+                                                size="small"
+                                            >
+                                                <CloseIcon />
+                                            </IconButton>
+                                        )}
+                                        <Divider sx={{ height: 28, mx: 0.5 }} orientation="vertical" />
                                         <Tooltip title={`Switch to ${searchType === 'consultant' ? 'Resource' : 'Consultant'}`}>
                                             <IconButton onClick={toggleSearchType} size="small">
                                                 <SwapHorizIcon />
                                             </IconButton>
                                         </Tooltip>
-                                    </>
+                                    </Box>
                                 ),
                             }}
                             size='small'

@@ -11,8 +11,8 @@ import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
-import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 import { notifyError } from "../../../../utils/Common/toastManager";
+import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 
 const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) => {
   const [formState, setFormState] = useState({
@@ -154,6 +154,7 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
           isMandatory
           isSubmitted={formState.isSubmitted}
           size="small"
+          maxLength={20}
         />
         <FormField
           type="text"
@@ -166,6 +167,7 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
           isMandatory
           isSubmitted={formState.isSubmitted}
           size="small"
+          maxLength={100}
         />
         <FormField
           type="number"

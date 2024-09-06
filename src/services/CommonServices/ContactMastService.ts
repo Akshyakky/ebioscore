@@ -1,7 +1,14 @@
-import axios from "axios";
+import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "../../apiConfig";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 import { OperationResult } from "../../interfaces/Common/OperationResult";
+import { store } from "../../store/store";
+
+// Initialize ApiService with the base URL for the common API
+const apiService = new CommonApiService({ baseURL: APIConfig.commonURL });
+
+// Function to get the token from the store
+const getToken = () => store.getState().userDetails.token!;
 
 interface PhyAPIResponse {
   consultantID: string;
@@ -14,67 +21,64 @@ interface RefAPIResponse {
 }
 
 const fetchAttendingPhysician = async (
-  token: string,
   endpoint: string,
   compId: number
 ): Promise<DropdownOption[]> => {
-  const url = `${APIConfig.commonURL}HospitalAdministration/${endpoint}?compId=${compId}`;
-  const headers = { Authorization: `Bearer ${token}` };
-  const response = await axios.get<OperationResult<PhyAPIResponse[]>>(url, {
-    headers,
-  });
+  const response = await apiService.get<OperationResult<PhyAPIResponse[]>>(
+    `HospitalAdministration/${endpoint}`,
+    getToken(),
+    { compId }
+  );
 
-  if (response.data.success) {
-    const data = response.data.data ?? [];
+  if (response.success) {
+    const data = response.data ?? [];
     return data.map((item) => ({
       value: item.consultantID,
       label: item.consultantName,
     }));
   } else {
-    throw new Error(response.data.errorMessage || "Unknown error occurred");
+    throw new Error(response.errorMessage || "Unknown error occurred");
   }
 };
 
 const fetchRefferalPhy = async (
-  token: string,
   endpoint: string,
   compId: number
 ): Promise<DropdownOption[]> => {
-  const url = `${APIConfig.commonURL}HospitalAdministration/${endpoint}?compId=${compId}`;
-  const headers = { Authorization: `Bearer ${token}` };
-  const response = await axios.get<OperationResult<RefAPIResponse[]>>(url, {
-    headers,
-  });
+  const response = await apiService.get<OperationResult<RefAPIResponse[]>>(
+    `HospitalAdministration/${endpoint}`,
+    getToken(),
+    { compId }
+  );
 
-  if (response.data.success) {
-    const data = response.data.data ?? [];
+  if (response.success) {
+    const data = response.data ?? [];
     return data.map((item) => ({
       value: item.referralId,
       label: item.referralName,
     }));
   } else {
-    throw new Error(response.data.errorMessage || "Unknown error occurred");
+    throw new Error(response.errorMessage || "Unknown error occurred");
   }
 };
 
 const fetchAvailableAttendingPhysicians = async (
-  token: string,
   pChartID: number
 ): Promise<DropdownOption[]> => {
-  const url = `${APIConfig.commonURL}HospitalAdministration/GetAvailableConsultantsForPatientToday?pChartID=${pChartID}`;
-  const headers = { Authorization: `Bearer ${token}` };
-  const response = await axios.get<OperationResult<PhyAPIResponse[]>>(url, {
-    headers,
-  });
+  const response = await apiService.get<OperationResult<PhyAPIResponse[]>>(
+    "HospitalAdministration/GetAvailableConsultantsForPatientToday",
+    getToken(),
+    { pChartID }
+  );
 
-  if (response.data.success) {
-    const data = response.data.data ?? [];
+  if (response.success) {
+    const data = response.data ?? [];
     return data.map((item) => ({
       value: item.consultantID,
       label: item.consultantName,
     }));
   } else {
-    throw new Error(response.data.errorMessage || "Unknown error occurred");
+    throw new Error(response.errorMessage || "Unknown error occurred");
   }
 };
 
