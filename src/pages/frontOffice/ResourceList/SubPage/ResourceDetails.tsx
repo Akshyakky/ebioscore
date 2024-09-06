@@ -139,6 +139,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({ editData }) => {
           isMandatory
           isSubmitted={formState.isSubmitted}
           size="small"
+          maxLength={100}
         />
       </Grid>
       <Grid container spacing={2}>

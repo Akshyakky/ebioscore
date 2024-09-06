@@ -154,6 +154,7 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
           isMandatory
           isSubmitted={formState.isSubmitted}
           size="small"
+          maxLength={20}
         />
         <FormField
           type="text"
@@ -166,6 +167,7 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
           isMandatory
           isSubmitted={formState.isSubmitted}
           size="small"
+          maxLength={100}
         />
         <FormField
           type="number"

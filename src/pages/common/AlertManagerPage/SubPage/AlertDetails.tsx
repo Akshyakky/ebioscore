@@ -91,6 +91,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
             rModifiedBy: userName || "",
             payID: 0,
             patOPIPYN: "Y",
+            oPIPAlertID: formState.oPIPAlertID
         }),
         [formState, userID, userName, serverDate]
     );
@@ -115,6 +116,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
         setLoading(true);
         try {
             for (const alert of alertsState) {
+                // Regardless of whether it's a new or existing alert, use saveAlert
                 const result = await AlertManagerServices.saveAlert(alert);
 
                 if (!result.success) {
@@ -132,9 +134,6 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
             setLoading(false);
         }
     };
-
-
-
 
     const handleClear = useCallback(() => {
         setFormState((prevState) => ({
@@ -159,23 +158,23 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
 
     const handleAdd = async () => {
         const newAlert = createAlertTypeDto();
-
         if (editMode && editIndex !== null) {
             setAlerts((prevAlerts) =>
                 prevAlerts.map((alert, index) =>
-                    index === editIndex ? { ...newAlert, oPIPAlertID: alert.oPIPAlertID } : alert
+                    index === editIndex ? { ...alert, ...newAlert } : alert
                 )
             );
             setEditMode(false);
             setEditIndex(null);
-            setIsUHIDDisabled(true);
         } else {
-            setAlerts((prevAlerts) => [...prevAlerts, newAlert]);
+            setAlerts((prevAlerts) => [...prevAlerts, { ...newAlert, oPIPAlertID: 0 }]);
         }
         setFormState((prevState) => ({
             ...prevState,
             alertDescription: "",
+            oPIPAlertID: 0,
         }));
+        setIsUHIDDisabled(false);
     };
 
 
@@ -224,12 +223,14 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
         }
     };
 
+
     const handleEdit = (item: AlertDto, index: number) => {
         setFormState({
             ...formState,
             ...item,
             pChartCode: item.pChartCode,
             isSubmitted: false,
+            oPIPAlertID: item.oPIPAlertID, // Ensure we keep the original oPIPAlertID
         });
         setEditMode(true);
         setEditIndex(index);
