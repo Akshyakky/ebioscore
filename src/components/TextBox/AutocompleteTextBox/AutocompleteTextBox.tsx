@@ -61,7 +61,6 @@ const AutocompleteTextBox = forwardRef<
     const [inputValue, setInputValue] = useState(value);
     const [options, setOptions] = useState<string[]>([]);
 
-
     useEffect(() => {
       if (suggestions && suggestions.length > 0) {
         setOptions(suggestions);

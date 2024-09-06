@@ -83,12 +83,10 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
         try {
           const modulesData = await moduleService.getActiveModules(
             userID ?? 0,
-            token
           );
           setModules(modulesData);
           const subModulesData = await moduleService.getActiveSubModules(
             userID ?? 0,
-            token
           );
           setSubModules(subModulesData);
         } catch (error) {

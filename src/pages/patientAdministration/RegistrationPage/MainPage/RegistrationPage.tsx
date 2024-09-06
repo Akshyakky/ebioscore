@@ -50,7 +50,7 @@ const RegistrationPage: React.FC = () => {
   );
   const [shouldClearKinData, setShouldClearKinData] = useState(false);
 
-  const { fetchLatestUHID } = useRegistrationUtils(token);
+  const { fetchLatestUHID } = useRegistrationUtils();
   const { performSearch } = useContext(PatientSearchContext);
   const [editMode, setEditMode] = useState(false);
   const nextOfKinPageRef = useRef<any>(null);
@@ -154,7 +154,6 @@ const RegistrationPage: React.FC = () => {
         return;
       }
       const registrationResponse = await PatientService.savePatient(
-        token,
         formData
       );
       if (registrationResponse.success && registrationResponse.data) {
@@ -212,7 +211,6 @@ const RegistrationPage: React.FC = () => {
     setLoading(true);
     try {
       const patientDetails = await PatientService.getPatientDetails(
-        token,
         pChartID
       );
       if (patientDetails.success && patientDetails.data) {
@@ -303,13 +301,11 @@ const RegistrationPage: React.FC = () => {
           <NextOfKinPage
             ref={nextOfKinPageRef}
             pChartID={selectedPChartID}
-            token={token}
             shouldClearData={shouldClearKinData}
           />
           <InsurancePage
             ref={insurancePageRef}
             pChartID={selectedPChartID}
-            token={token}
             shouldClearData={shouldClearInsuranceData}
           />
         </Paper>

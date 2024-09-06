@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useMemo, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Scheduler, Resource } from 'devextreme-react/scheduler';
 import 'devextreme/dist/css/dx.light.css';
 import { useServerDate } from '../../../../hooks/Common/useServerDate';

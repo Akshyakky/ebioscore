@@ -1,5 +1,8 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Box, Paper, Container } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import ClearAllIcon from '@mui/icons-material/ClearAll';
+import SaveIcon from '@mui/icons-material/Save'
 import SchedulerComponent from '../SubPage/SchedulerComponent';
 import SchedulerHeader from '../SubPage/SchedulerHeader';
 import SchedulerFooter from '../SubPage/SchedulerFooter';
@@ -230,9 +233,9 @@ const AppointmentPage: React.FC = () => {
                     disableBackdropClick={true}
                     dialogContentSx={{ maxHeight: '400px' }}
                     actions={[
-                        <CustomButton key="close" text="Close" onClick={handleAppointmentFormClose} color="inherit" />,
-                        <CustomButton key="clear" text="Clear" onClick={handleClearForm} color="error" sx={{ ml: 2 }} />,
-                        <CustomButton key="save" text="Save" onClick={handleSaveBooking} color="primary" variant="contained" sx={{ ml: 2 }} />,
+                        <CustomButton key="close" text="Close" onClick={handleAppointmentFormClose} color="inherit" icon={CloseIcon} />,
+                        <CustomButton key="clear" text="Clear" onClick={handleClearForm} color="error" sx={{ ml: 2 }} icon={ClearAllIcon} />,
+                        <CustomButton key="save" text="Save" onClick={handleSaveBooking} color="primary" variant="contained" sx={{ ml: 2 }} icon={SaveIcon} />,
                     ]}
                 >
                     <AppointmentBookingForm onChange={handleChange} formData={formData} reasonOptions={reasonOptions} resourceOptions={resourceOptions} rLotYN={rLotYN} />

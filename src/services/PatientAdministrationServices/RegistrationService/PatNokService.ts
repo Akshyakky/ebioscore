@@ -1,46 +1,38 @@
-import axios, { AxiosResponse } from "axios";
+import { CommonApiService } from "../../CommonApiService";
 import { PatNokDetailsDto } from "../../../interfaces/PatientAdministration/PatNokDetailsDto";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { APIConfig } from "../../../apiConfig";
-import { handleError } from "../../CommonServices/HandlerError";
+import { store } from "../../../store/store";
+
+// Initialize ApiService with the base URL for the patient administration API
+const apiService = new CommonApiService({
+  baseURL: APIConfig.patientAdministrationURL,
+});
+
+// Function to get the token from the store
+const getToken = () => store.getState().userDetails.token!;
 
 export const getNokDetailsByPChartID = async (
-  token: string,
   pChartID: number
 ): Promise<OperationResult<PatNokDetailsDto[]>> => {
-  try {
-    const response: AxiosResponse<OperationResult<PatNokDetailsDto[]>> = await axios.get(
-      `${APIConfig.patientAdministrationURL}PatNok/GetNokDetailsByPChartID/${pChartID}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    return handleError(error);
-  }
+  return apiService.get<OperationResult<PatNokDetailsDto[]>>(
+    `PatNok/GetNokDetailsByPChartID/${pChartID}`,
+    getToken()
+  );
 };
 
 export const saveNokDetails = async (
-  token: string,
   patNokDetailsDto: PatNokDetailsDto
 ): Promise<OperationResult<PatNokDetailsDto>> => {
-  try {
-    const response: AxiosResponse<OperationResult<PatNokDetailsDto>> = await axios.post(
-      `${APIConfig.patientAdministrationURL}PatNok/SaveNokDetails`,
-      patNokDetailsDto,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    return handleError(error);
-  }
+  return apiService.post<OperationResult<PatNokDetailsDto>>(
+    "PatNok/SaveNokDetails",
+    patNokDetailsDto,
+    getToken()
+  );
 };
 
-export const PatNokService = { getNokDetailsByPChartID, saveNokDetails };
+// Exporting the service as an object
+export const PatNokService = {
+  getNokDetailsByPChartID,
+  saveNokDetails,
+};

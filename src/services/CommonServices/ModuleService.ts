@@ -1,7 +1,11 @@
-import axios from "axios";
+import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "../../apiConfig";
+import { store } from "../../store/store";
 
-const API_BASE_URL = `${APIConfig.moduleURL}`;
+const apiService = new CommonApiService({ baseURL: APIConfig.moduleURL });
+
+// Function to get the token from the store
+const getToken = () => store.getState().userDetails.token!;
 
 export interface ModuleDto {
   auGrpID: number;
@@ -25,40 +29,24 @@ export interface ReportPermissionDto {
 }
 
 const moduleService = {
-  getActiveModules: async (
-    userID: number,
-    token: string
-  ): Promise<ModuleDto[]> => {
-    const url = `${API_BASE_URL}GetModules`;
-    const headers = {
-      Authorization: `Bearer ${token}`,
-    };
+  getActiveModules: async (userID: number): Promise<ModuleDto[]> => {
     try {
-      const response = await axios.get<ModuleDto[]>(url, {
-        params: { userID },
-        headers,
+      return await apiService.get<ModuleDto[]>("GetModules", getToken(), {
+        userID,
       });
-      return response.data;
     } catch (error) {
+      console.error("Error fetching active modules:", error);
       throw new Error("Failed to load modules");
     }
   },
 
-  getActiveSubModules: async (
-    userID: number,
-    token: string
-  ): Promise<SubModuleDto[]> => {
-    const url = `${API_BASE_URL}GetSubModules`;
-    const headers = {
-      Authorization: `Bearer ${token}`,
-    };
+  getActiveSubModules: async (userID: number): Promise<SubModuleDto[]> => {
     try {
-      const response = await axios.get<SubModuleDto[]>(url, {
-        params: { userID },
-        headers,
+      return await apiService.get<SubModuleDto[]>("GetSubModules", getToken(), {
+        userID,
       });
-      return response.data;
     } catch (error) {
+      console.error("Error fetching active submodules:", error);
       throw new Error("Failed to load submodules");
     }
   },

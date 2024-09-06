@@ -50,7 +50,6 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
           ? DateFilterType[dateRange as keyof typeof DateFilterType]
           : undefined;
         const data = await RevisitService.getWaitingPatientDetails(
-          userInfo.token!,
           attendingPhy ? parseInt(attendingPhy) : undefined,
           dateFilterTypeEnum,
           fromDate,
@@ -85,7 +84,6 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
   const handleCancelVisit = async (opVID: string) => {
     try {
       const result = await RevisitService.cancelVisit(
-        userInfo.token!,
         parseInt(opVID),
         userInfo.userName!
       );

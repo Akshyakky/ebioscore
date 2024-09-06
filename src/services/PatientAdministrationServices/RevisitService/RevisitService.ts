@@ -1,111 +1,86 @@
-import axios from "axios";
+import { CommonApiService } from "../../CommonApiService";
 import { APIConfig } from "../../../apiConfig";
+import { OperationResult } from "../../../interfaces/Common/OperationResult";
+import { store } from "../../../store/store";
 import {
   DateFilterType,
   GetPatientVisitHistory,
   revisitFormData,
 } from "../../../interfaces/PatientAdministration/revisitFormData";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { handleError } from "../../CommonServices/HandlerError";
+
+// Initialize ApiService with the base URL for the patient administration API
+const apiService = new CommonApiService({
+  baseURL: APIConfig.patientAdministrationURL,
+});
+
+// Function to get the token from the store
+const getToken = () => store.getState().userDetails.token!;
 
 export const getPatientHistoryByPChartID = async (
-  token: string,
   pChartID: number
 ): Promise<{ data: GetPatientVisitHistory[]; success: boolean }> => {
-  const url = `${APIConfig.patientAdministrationURL}Revisit/GetPatientHistoryByPChartID/${pChartID}`;
-  const headers = { Authorization: `Bearer ${token}}` };
-  try {
-    const response = await axios.get(url, { headers });
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching patient visit history: ${error}`);
-    throw error;
-  }
+  return apiService.get<{ data: GetPatientVisitHistory[]; success: boolean }>(
+    `Revisit/GetPatientHistoryByPChartID/${pChartID}`,
+    getToken()
+  );
 };
 
 export const saveOPVisits = async (
-  token: string,
   opVisitsData: revisitFormData
 ): Promise<OperationResult<revisitFormData>> => {
-  const url = `${APIConfig.patientAdministrationURL}Revisit/SaveVisitDetails`;
-  const headers = { Authorization: `Bearer ${token}` };
-
-  try {
-    const response = await axios.post(url, opVisitsData, { headers });
-    return response.data;
-  } catch (error) {
-    return handleError(error);
-  }
+  return apiService.post<OperationResult<revisitFormData>>(
+    "Revisit/SaveVisitDetails",
+    opVisitsData,
+    getToken()
+  );
 };
 
 export const getLastVisitDetailsByPChartID = async (
-  token: string,
   pChartID: number
 ): Promise<OperationResult<any>> => {
-  const url = `${APIConfig.patientAdministrationURL}Revisit/GetLastVisitDetails/${pChartID}`;
-  const headers = { Authorization: `Bearer ${token}` };
-  try {
-    const response = await axios.get(url, { headers });
-    return response.data;
-  } catch (error) {
-    return handleError(error);
-  }
+  return apiService.get<OperationResult<any>>(
+    `Revisit/GetLastVisitDetails/${pChartID}`,
+    getToken()
+  );
 };
 
 export const getWaitingPatientDetails = async (
-  token: string,
   attendingPhysicianID?: number,
   dateFilterType?: DateFilterType,
   startDate?: Date,
   endDate?: Date
 ): Promise<OperationResult<any[]>> => {
-  const url = `${APIConfig.patientAdministrationURL}Revisit/GetWaitingPatientDetails`;
-
-  // Prepare query parameters
-  const params = new URLSearchParams();
-  if (attendingPhysicianID !== undefined)
-    params.append("AttendingPhysicianID", attendingPhysicianID.toString());
-  if (dateFilterType !== undefined)
-    params.append("dateFilterType", dateFilterType);
-  else params.append("dateFilterType", DateFilterType.Today);
-  if (startDate !== undefined)
-    params.append("startDate", startDate.toISOString().split("T")[0]); // Format as YYYY-MM-DD
-  if (endDate !== undefined)
-    params.append("endDate", endDate.toISOString().split("T")[0]); // Format as YYYY-MM-DD
-
-  const headers = { Authorization: `Bearer ${token}` };
-
-  try {
-    const response = await axios.get(`${url}?${params}`, { headers });
-    return response.data;
-  } catch (error) {
-    return handleError(error);
+  const params: Record<string, string> = {};
+  if (attendingPhysicianID !== undefined) {
+    params.AttendingPhysicianID = attendingPhysicianID.toString();
   }
+  params.dateFilterType = dateFilterType ?? DateFilterType.Today;
+  if (startDate) {
+    params.startDate = startDate.toISOString().split("T")[0];
+  }
+  if (endDate) {
+    params.endDate = endDate.toISOString().split("T")[0];
+  }
+
+  return apiService.get<OperationResult<any[]>>(
+    "Revisit/GetWaitingPatientDetails",
+    getToken(),
+    params
+  );
 };
 
 export const cancelVisit = async (
-  token: string,
   opVID: number,
   modifiedBy: string
 ): Promise<OperationResult<void>> => {
-  try {
-    const url = `${APIConfig.patientAdministrationURL}Revisit/CancelVisit/${opVID}`;
-    const headers = {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-    const response = await axios.post(url, { modifiedBy }, { headers });
-
-    return {
-      success: response.data.Success,
-      errorMessage: response.data.ErrorMessage,
-      affectedRows: response.data.AffectedRows,
-    };
-  } catch (error) {
-    return handleError(error);
-  }
+  return apiService.post<OperationResult<void>>(
+    `Revisit/CancelVisit/${opVID}`,
+    { modifiedBy },
+    getToken()
+  );
 };
 
+// Exporting the service as an object
 export const RevisitService = {
   getPatientHistoryByPChartID,
   saveOPVisits,

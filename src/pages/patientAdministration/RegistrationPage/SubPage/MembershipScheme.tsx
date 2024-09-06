@@ -25,7 +25,6 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
   const { handleDropdownChange } =
     useDropdownChange<PatientRegistrationDto>(setFormData);
   const userInfo = useSelector((state: RootState) => state.userDetails);
-  const token = userInfo.token!;
   const compID = userInfo.compID!;
   const endpointMembershipScheme = "GetActivePatMemberships";
 
@@ -33,7 +32,6 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
     const loadDropdownData = async () => {
       try {
         const membershipSchemes = await BillingService.fetchMembershipScheme(
-          token,
           endpointMembershipScheme,
           compID
         );
@@ -48,7 +46,7 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
     };
 
     loadDropdownData();
-  }, [token, compID]);
+  }, [compID]);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;

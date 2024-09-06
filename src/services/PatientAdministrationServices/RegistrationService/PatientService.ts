@@ -1,49 +1,38 @@
-import axios, { AxiosResponse } from "axios";
+import { CommonApiService } from "../../CommonApiService";
 import { PatientRegistrationDto } from "../../../interfaces/PatientAdministration/PatientFormData";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { APIConfig } from "../../../apiConfig";
-import { handleError } from "../../CommonServices/HandlerError";
+import { store } from "../../../store/store";
+
+// Initialize ApiService with the base URL for the patient administration API
+const apiService = new CommonApiService({
+  baseURL: APIConfig.patientAdministrationURL,
+});
+
+// Function to get the token from the store
+const getToken = () => store.getState().userDetails.token!;
 
 export const savePatient = async (
-  token: string,
   patientRegistrationDto: PatientRegistrationDto
 ): Promise<OperationResult<number>> => {
-  try {
-    const response: AxiosResponse<OperationResult<number>> = await axios.post(
-      `${APIConfig.patientAdministrationURL}Patient/SavePatientRegistration`,
-      patientRegistrationDto,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    return handleError(error);
-  }
+  return apiService.post<OperationResult<number>>(
+    "Patient/SavePatientRegistration",
+    patientRegistrationDto,
+    getToken()
+  );
 };
 
 export const getPatientDetails = async (
-  token: string,
   pChartID: number
 ): Promise<OperationResult<PatientRegistrationDto>> => {
-  try {
-    const response: AxiosResponse<OperationResult<PatientRegistrationDto>> =
-      await axios.get(
-        `${APIConfig.patientAdministrationURL}Patient/GetPatientDetails/${pChartID}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-    return response.data;
-  } catch (error) {
-    return handleError(error);
-  }
+  return apiService.get<OperationResult<PatientRegistrationDto>>(
+    `Patient/GetPatientDetails/${pChartID}`,
+    getToken()
+  );
 };
 
-
-
-export const PatientService = { savePatient, getPatientDetails };
+// Exporting the service as an object
+export const PatientService = {
+  savePatient,
+  getPatientDetails,
+};

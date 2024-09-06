@@ -80,7 +80,6 @@ const AdmissionPage: React.FC = () => {
         <InsurancePage
           ref={insurancePageRef}
           pChartID={selectedPChartID}
-          token={token}
           shouldClearData={shouldClearInsuranceData}
         />
       </Paper>

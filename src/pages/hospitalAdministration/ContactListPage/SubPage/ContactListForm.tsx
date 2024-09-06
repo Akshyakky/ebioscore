@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Grid, SelectChangeEvent, Typography } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
@@ -52,7 +52,7 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
     switchStates,
     setSwitchStates,
 }) => {
-    const { token, compID, userID, userName, compCode, compName } = useSelector(
+    const { compID, userID, userName, compCode, compName } = useSelector(
         (state: RootState) => state.userDetails
     );
     const [isSubmitted, setIsSubmitted] = useState(false);
@@ -148,7 +148,7 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
     const handleSave = async () => {
         setIsSubmitted(true);
         try {
-            const result = await ContactListService.saveContactList(token!, contactList);
+            const result = await ContactListService.saveContactList(contactList);
             if (result.success) {
                 showAlert('Notification', 'Contact list saved successfully', 'success', {
                     onConfirm: handleClear,

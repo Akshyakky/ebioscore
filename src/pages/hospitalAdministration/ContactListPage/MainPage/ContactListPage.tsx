@@ -88,12 +88,11 @@ const ContactListPage: React.FC = () => {
           "NATIONALITY"
         ),
         DepartmentService.fetchDepartments(
-          token!,
           "GetActiveWardDepartments",
           compID!
         ),
         ConstantValues.fetchConstantValues("GetConstantValues", "EMPS"),
-        ContactListService.fetchActiveSpecialties(token!, compID!),
+        ContactListService.fetchActiveSpecialties(compID!),
       ]);
 
       setDropdownValues({
@@ -156,7 +155,7 @@ const ContactListPage: React.FC = () => {
   const handleEditContactList = async (conID: number) => {
     setLoading(true);
     try {
-      const contactDetails = await ContactListService.fetchContactDetails(token!, conID);
+      const contactDetails = await ContactListService.fetchContactDetails(conID);
       if (
         contactDetails &&
         contactDetails.contactMastDto &&

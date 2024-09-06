@@ -39,7 +39,7 @@ export const PatientSearchProvider: React.FC<PatientSearchProviderProps> = ({
 
       setLoading(true);
       try {
-        const result = await searchPatientDetails(token, searchTerm);
+        const result = await searchPatientDetails(searchTerm);
         console.log("Fetched result:", result); // Debug log
         if (result.success) {
           setSearchResults(result.data || []);

@@ -1,9 +1,18 @@
-import axios, { AxiosResponse } from "axios";
+import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "../../apiConfig";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { handleError } from "./HandlerError";
 import { OPIPInsurancesDto } from "../../interfaces/PatientAdministration/InsuranceDetails";
+import { store } from "../../store/store";
+
+// Initialize ApiServices with different base URLs
+const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });
+const patientAdminApiService = new CommonApiService({
+  baseURL: APIConfig.patientAdministrationURL,
+});
+
+// Function to get the token from the store
+const getToken = () => store.getState().userDetails.token!;
 
 interface APIResponse {
   insurID: string;
@@ -11,14 +20,14 @@ interface APIResponse {
 }
 
 const fetchInsuranceOptions = async (
-  token: string,
   endpoint: string
 ): Promise<DropdownOption[]> => {
   try {
-    const url = `${APIConfig.commonURL}InsuranceCarrier/${endpoint}`;
-    const headers = { Authorization: `Bearer ${token}` };
-    const response = await axios.get<APIResponse[]>(url, { headers });
-    return response.data.map((item) => ({
+    const response = await commonApiService.get<APIResponse[]>(
+      `InsuranceCarrier/${endpoint}`,
+      getToken()
+    );
+    return response.map((item) => ({
       value: item.insurID,
       label: item.insurName,
     }));
@@ -28,63 +37,33 @@ const fetchInsuranceOptions = async (
   }
 };
 
-export const getOPIPInsuranceByPChartID = async (
-  token: string,
+const getOPIPInsuranceByPChartID = async (
   pChartID: number
 ): Promise<OperationResult<OPIPInsurancesDto[]>> => {
-  try {
-    const response: AxiosResponse<OperationResult<OPIPInsurancesDto[]>> = await axios.get(
-      `${APIConfig.patientAdministrationURL}OPIPInsurances/GetOPIPInsuranceByPChartID/${pChartID}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    return handleError(error);
-  }
+  return patientAdminApiService.get<OperationResult<OPIPInsurancesDto[]>>(
+    `OPIPInsurances/GetOPIPInsuranceByPChartID/${pChartID}`,
+    getToken()
+  );
 };
 
-export const addOrUpdateOPIPInsurance = async (
-  token: string,
+const addOrUpdateOPIPInsurance = async (
   opipInsuranceDto: OPIPInsurancesDto
 ): Promise<OperationResult<OPIPInsurancesDto>> => {
-  try {
-    const response: AxiosResponse<OperationResult<OPIPInsurancesDto>> = await axios.post(
-      `${APIConfig.patientAdministrationURL}OPIPInsurances/AddOrUpdateOPIPInsurance`,
-      opipInsuranceDto,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    return handleError(error);
-  }
+  return patientAdminApiService.post<OperationResult<OPIPInsurancesDto>>(
+    "OPIPInsurances/AddOrUpdateOPIPInsurance",
+    opipInsuranceDto,
+    getToken()
+  );
 };
 
-export const hideOPIPInsurance = async (
-  token: string,
+const hideOPIPInsurance = async (
   opipInsID: number
 ): Promise<OperationResult<OPIPInsurancesDto>> => {
-  try {
-    const response: AxiosResponse<OperationResult<OPIPInsurancesDto>> = await axios.put(
-      `${APIConfig.patientAdministrationURL}OPIPInsurances/HideOPIPInsurance/${opipInsID}`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    return handleError(error);
-  }
+  return patientAdminApiService.put<OperationResult<OPIPInsurancesDto>>(
+    `OPIPInsurances/HideOPIPInsurance/${opipInsID}`,
+    {},
+    getToken()
+  );
 };
 
 export const InsuranceCarrierService = {
