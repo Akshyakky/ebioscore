@@ -8,8 +8,6 @@ import {
   TableRow,
 } from "@mui/material";
 import FormField from "../../../../../components/FormField/FormField";
-import CustomButton from "../../../../../components/Button/CustomButton";
-import DeleteIcon from "@mui/icons-material/Delete";
 interface DeptUsersListProps {
   deptUsers: DeptUserDto[];
   handleSwitchChange: (
@@ -17,13 +15,11 @@ interface DeptUsersListProps {
     allowYN: string,
     value: boolean
   ) => void;
-  handleDelete: (deptUserID: number) => void;
 }
 
 const DeptUsersList: React.FC<DeptUsersListProps> = ({
   deptUsers,
   handleSwitchChange,
-  handleDelete,
 }) => {
   return (
     <Table>
@@ -32,7 +28,8 @@ const DeptUsersList: React.FC<DeptUsersListProps> = ({
           <TableCell>User Name</TableCell>
           <TableCell>Inventory</TableCell>
           <TableCell>Pharmacy</TableCell>
-          <TableCell>Delete</TableCell>
+          <TableCell>Status</TableCell>
+          <TableCell>Action</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -74,12 +71,23 @@ const DeptUsersList: React.FC<DeptUsersListProps> = ({
               />
             </TableCell>
             <TableCell>
-              <CustomButton
-                size="medium"
-                onClick={() => handleDelete(user.deptUserID)}
-                icon={DeleteIcon}
-                color="error"
-                variant="text"
+              {user.rActiveYN === "Y" ? "Active" : "Hidden"}
+            </TableCell>
+            <TableCell>
+              <FormField
+                type="switch"
+                label=""
+                value={user.rActiveYN === "Y"}
+                checked={user.rActiveYN === "Y"}
+                onChange={(e) =>
+                  handleSwitchChange(
+                    user.deptUserID,
+                    "rActiveYN",
+                    e.target.checked
+                  )
+                }
+                name="rActive"
+                ControlID={`rActive_${user.deptUserID}`}
               />
             </TableCell>
           </TableRow>
