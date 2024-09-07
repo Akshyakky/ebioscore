@@ -21,7 +21,6 @@ const DepartmentListPage: React.FC = () => {
     setIsSearchOpen(false);
   };
   const handleSelect = (data: DepartmentDto) => {
-    console.log(data);
     setSelectedData(data);
   };
   const actionButtons: ButtonProps[] = [

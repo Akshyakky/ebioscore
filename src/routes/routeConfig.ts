@@ -111,6 +111,7 @@ const routeConfig: RouteConfig[] = [
     path: "/DepartmentListPage",
     component: DepartmentListPage,
     protected: true,
+    providers: [UserListSearchProvider],
   },
   {
     path: "/ServiceGroupsListPage",
