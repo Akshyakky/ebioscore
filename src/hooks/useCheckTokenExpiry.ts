@@ -1,41 +1,50 @@
-// src/hooks/useCheckTokenExpiry.ts
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/reducers";
 import AuthService from "../services/AuthService/AuthService";
+import { debounce } from "../utils/Common/debounceUtils";
 
-const useCheckTokenExpiry = (retryCount = 3): boolean => {
+const useCheckTokenExpiry = (
+  retryCount = 3,
+  retryDelay = 1000,
+  debounceDelay = 300
+): boolean => {
   const [isTokenExpired, setIsTokenExpired] = useState(false);
   const token = useSelector((state: RootState) => state.userDetails.token);
 
-  useEffect(() => {
-    let isMounted = true;
+  const checkExpiry = useCallback(async () => {
     let retries = 0;
-
-    const checkExpiry = async () => {
-      if (token && isMounted) {
+    const attempt = async () => {
+      if (token) {
         try {
           const response = await AuthService.checkTokenExpiry(token);
-          if (response.data && isMounted) {
+          if (response.data) {
             setIsTokenExpired(response.data.isExpired);
           }
         } catch (error) {
-          if (isMounted && retries < retryCount) {
+          if (retries < retryCount) {
             retries++;
-            checkExpiry();
-          } else if (isMounted) {
+            setTimeout(attempt, retryDelay);
+          } else {
             setIsTokenExpired(true); // Assume expired if max retries reached
           }
         }
       }
     };
+    attempt();
+  }, [token, retryCount, retryDelay]);
 
-    checkExpiry();
+  const debouncedCheckExpiry = useCallback(
+    debounce(checkExpiry, debounceDelay),
+    [checkExpiry, debounceDelay]
+  );
 
+  useEffect(() => {
+    debouncedCheckExpiry();
     return () => {
-      isMounted = false;
+      debouncedCheckExpiry.cancel();
     };
-  }, [token, retryCount]);
+  }, [debouncedCheckExpiry]);
 
   return isTokenExpired;
 };

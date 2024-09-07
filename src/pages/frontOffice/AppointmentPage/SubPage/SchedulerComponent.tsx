@@ -88,6 +88,15 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onApp
         })) : [];
     }, [state.appointments]);
 
+    const MemoizedResource = useMemo(() => (
+        <Resource
+            fieldExpr="AppID"
+            allowMultiple={true}
+            dataSource={resourceDataSource}
+            label="Appointment"
+        />
+    ), [resourceDataSource]);
+
     return (
         <Scheduler
             dataSource={dataSource}
@@ -120,12 +129,7 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onApp
             timeCellRender={timeCellTemplate}
             onContentReady={onContentReady}
         >
-            <Resource
-                fieldExpr="AppID"
-                allowMultiple={true}
-                dataSource={resourceDataSource}
-                label="Appointment"
-            />
+            {MemoizedResource}
         </Scheduler>
     );
 });

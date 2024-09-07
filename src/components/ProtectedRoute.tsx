@@ -1,5 +1,4 @@
-// src/components/ProtectedRoute.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Navigate } from "react-router-dom";
 import { RootState } from "../store/reducers";
@@ -17,21 +16,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const token = useSelector((state: RootState) => state.userDetails.token);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    const performLogout = async () => {
-      if (isTokenExpired && token) {
-        try {
-          await AuthService.logout(token);
-        } catch (error) {
-          console.error("Error during logout:", error);
-        } finally {
-          dispatch(logout());
-        }
+  const performLogout = useCallback(async () => {
+    if (isTokenExpired && token) {
+      try {
+        await AuthService.logout(token);
+      } catch (error) {
+        console.error("Error during logout:", error);
+      } finally {
+        dispatch(logout());
       }
-    };
-
-    performLogout();
+    }
   }, [isTokenExpired, token, dispatch]);
+
+  useEffect(() => {
+    performLogout();
+  }, [performLogout]);
 
   if (!token || isTokenExpired) {
     return <Navigate to="/login" />;

@@ -14,14 +14,13 @@ interface SchedulerHeaderProps {
     onSearchSelection: (conID?: number, rlID?: number, rLotYN?: string, providerName?: string, rlName?: string) => void;
 }
 
-const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSelection }) => {
+const SchedulerHeader: React.FC<SchedulerHeaderProps> = React.memo(({ onRefresh, onSearchSelection }) => {
     const [searchType, setSearchType] = useState<'consultant' | 'resource'>('consultant');
     const [searchValue, setSearchValue] = useState('');
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [checked, setChecked] = useState<boolean>(false);
     const [suggestions, setSuggestions] = useState<{ label: string; value: number; rLotYN?: string }[]>([]);
     const [rLotYN, setRLotYN] = useState<string | undefined>(undefined);
-
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -193,6 +192,6 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = ({ onRefresh, onSearchSe
             </Grid>
         </Box>
     );
-};
+});
 
 export default SchedulerHeader;

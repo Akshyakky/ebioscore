@@ -86,8 +86,8 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
     }));
 
   const memoizedParams = useMemo(
-    () => [token, "GetConstantValues", "DTYP"],
-    [token]
+    () => ["GetConstantValues", "DTYP"],
+    []
   );
 
   const deptTypeResult = useDropdown(

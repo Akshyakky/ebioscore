@@ -1,56 +1,44 @@
 import React, { useEffect, useState } from "react";
-import CustomGrid, {
-  Column,
-} from "../../../../components/CustomGrid/CustomGrid";
+import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
 import { GetPatientVisitHistory } from "../../../../interfaces/PatientAdministration/revisitFormData";
 import { Grid, Typography } from "@mui/material";
 import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
-import { format } from "date-fns";
+import useDayjs from "../../../../hooks/Common/useDateTime";
 
 interface PatientVisitHistoryProps {
   pChartID: number;
-  token: string;
 }
 
-const PatientVisitHistory: React.FC<PatientVisitHistoryProps> = ({
-  pChartID,
-  token,
-}) => {
-  const [patientHistoryData, setPatientHistoryData] = useState<
-    GetPatientVisitHistory[]
-  >([]);
+const PatientVisitHistory: React.FC<PatientVisitHistoryProps> = ({ pChartID }) => {
+  const [patientHistoryData, setPatientHistoryData] = useState<GetPatientVisitHistory[]>([]);
+  const { formatDateTime } = useDayjs();
 
   useEffect(() => {
     if (pChartID) {
       const fetchPatientHistory = async () => {
-        const historyData = await RevisitService.getPatientHistoryByPChartID(
-          pChartID
-        );
+        const historyData = await RevisitService.getPatientHistoryByPChartID(pChartID);
         if (historyData.success && historyData.data) {
           setPatientHistoryData(historyData.data);
         }
       };
-
       fetchPatientHistory();
     } else {
       setPatientHistoryData([]);
     }
-  }, [pChartID, token]);
+  }, [pChartID]);
 
   const gridPatientHistoryColumns: Column<GetPatientVisitHistory>[] = [
     {
       key: "SlNo",
       header: "#",
       visible: true,
-      render: (_: GetPatientVisitHistory, __: number, index: number) =>
-        (index + 1).toString(),
+      render: (_row: GetPatientVisitHistory, index: number) => (index + 1).toString(),
     },
     {
       key: "visitDate",
       header: "Visit Date & Time",
       visible: true,
-      render: (row, rowIndex, columnIndex) =>
-        format(new Date(row.visitDate), "dd/MM/yyyy HH:mm"),
+      render: (row: GetPatientVisitHistory) => formatDateTime(row.visitDate),
     },
     {
       key: "departmentName",
@@ -80,10 +68,10 @@ const PatientVisitHistory: React.FC<PatientVisitHistoryProps> = ({
   ];
 
   return (
-    <section aria-labelledby="Insurance-header">
+    <section aria-labelledby="patient-history-header">
       <Grid container justifyContent="space-between" alignItems="center">
         <Grid item>
-          <Typography variant="h6" id="insurance-details-header">
+          <Typography variant="h6" id="patient-history-header">
             Patient History
           </Typography>
         </Grid>

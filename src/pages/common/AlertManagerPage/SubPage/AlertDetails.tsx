@@ -194,7 +194,6 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
             const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
 
             if (pChartID) {
-                debugger
                 const pChartCode = selectedSuggestion.split("|")[0].trim();
                 setSelectedPChartID(pChartID);
                 setFormState((prevFormData) => ({
