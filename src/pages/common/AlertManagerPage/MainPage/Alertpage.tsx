@@ -11,6 +11,7 @@ import { Search as SearchIcon } from "@mui/icons-material";
 import { AlertManagerServices } from "../../../../services/CommonServices/AlertManagerServices";
 import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
 import { showAlertPopUp } from "../../../../utils/Common/alertMessage";
+import { showAlert } from "../../../../utils/Common/showAlert";
 
 const AlertPage: React.FC = () => {
     const [selectedData, setSelectedData] = useState<AlertDto | undefined>(
@@ -23,6 +24,7 @@ const AlertPage: React.FC = () => {
     const [alerts, setAlerts] = useState<AlertDto[]>([]);
 
     const handlePatientSelect = async (
+        selectedSuggestion: string,
         pChartCode: string
     ) => {
         setLoading(true);
@@ -32,30 +34,52 @@ const AlertPage: React.FC = () => {
             if (pChartID) {
                 await fetchPatientDetailsAndUpdateForm(pChartID);
                 setSelectedPChartID(pChartID);
+
                 const alertResult =
                     await AlertManagerServices.GetAlertBypChartID(pChartID);
+
                 if (alertResult.success && alertResult.data) {
+                    const activeAlerts = alertResult.data.filter(
+                        (alert: AlertDto) => alert.rActiveYN === "Y"
+                    );
+
                     setSelectedData({
                         ...alertResult.data,
                         pChartCode: pChartCode,
                     });
-                    setAlerts(alertResult.data);
-                    showAlertPopUp(alertResult.data);
+                    setAlerts(activeAlerts);
+
+                    if (activeAlerts.length > 0) {
+                        showAlertPopUp(activeAlerts);
+                    } else {
+                        console.info("No active alerts found.");
+                    }
                 } else {
                     console.error("Failed to fetch alert details.");
+                    setAlerts([]);
                 }
+            } else {
+                showAlert(
+                    "Error",
+                    "Unable to select patient. Please try again.",
+                    "error"
+                );
             }
+        } catch (error) {
+            console.error("Error in handlePatientSelect:", error);
+            showAlert(
+                "Error",
+                "An unexpected error occurred while selecting the patient.",
+                "error"
+            );
         } finally {
             setLoading(false);
         }
     };
-
     const fetchPatientDetailsAndUpdateForm = async (pChartID: number) => {
         setLoading(true);
         try {
-            const patientDetails = await PatientService.getPatientDetails(
-                pChartID
-            );
+            const patientDetails = await PatientService.getPatientDetails(pChartID);
             if (patientDetails.success && patientDetails.data) {
             } else {
                 console.error(

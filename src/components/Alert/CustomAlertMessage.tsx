@@ -1,11 +1,9 @@
 import React from "react";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
 import CustomGrid from "../CustomGrid/CustomGrid";
 import { AlertDto } from "../../interfaces/Common/AlertManager";
 import CustomButton from "../Button/CustomButton";
+import Close from "@mui/icons-material/Close";
+import GenericDialog from "../GenericDialog/GenericDialog";
 
 interface AlertPopUpProps {
     open: boolean;
@@ -30,27 +28,36 @@ const AlertPopUp: React.FC<AlertPopUpProps> = ({
         { key: "rCreatedBy", header: "Created By", visible: true },
     ];
 
+    const activeAlerts = alertData.filter(alert => alert.rActiveYN === "Y");
+
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-            <DialogTitle>Alert Details</DialogTitle>
-            <DialogContent dividers>
-                <CustomGrid
-                    columns={defaultColumns}
-                    data={alertData}
-                    maxHeight="400px"
-                    minHeight="300px"
-                />
-            </DialogContent>
-            <DialogActions>
+        <GenericDialog
+            open={open}
+            onClose={onClose}
+            title="Alert Details"
+            maxWidth="md"
+            fullWidth
+            actions={
                 <CustomButton
                     onClick={onClose}
                     color="secondary"
                     text="Close"
                     variant="contained"
+                    icon={Close}
                 />
-            </DialogActions>
-        </Dialog>
-    );
+            }
+        >
+            <CustomGrid
+                columns={defaultColumns}
+                data={activeAlerts}
+                maxHeight="400px"
+                minHeight="300px"
+            />
+
+
+        </GenericDialog>
+    )
+
 };
 
 export default AlertPopUp;
