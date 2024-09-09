@@ -1,8 +1,12 @@
-//frontOffice/AppointmentPage/SubPage/SchedulerFooter.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Chip, Typography, useTheme } from '@mui/material';
 
-const legends = [
+interface Legend {
+    color: string;
+    label: string;
+}
+
+const legends: Legend[] = [
     { color: 'success.main', label: 'Out Patient' },
     { color: 'error.main', label: 'In Patient' },
     { color: 'warning.main', label: 'Visited Patient' },
@@ -13,8 +17,47 @@ const legends = [
     { color: 'error.light', label: 'Elapsed Slots' },
 ];
 
-const SchedulerFooter: React.FC = () => {
+interface LegendChipProps {
+    color: string;
+    label: string;
+}
+
+const LegendChip: React.FC<LegendChipProps> = React.memo(({ color, label }) => {
     const theme = useTheme();
+    return (
+        <Chip
+            icon={
+                <Box
+                    sx={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: '50%',
+                        bgcolor: color,
+                        mr: -0.5,
+                    }}
+                />
+            }
+            label={
+                <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
+                    {label}
+                </Typography>
+            }
+            sx={{
+                border: `1px solid ${theme.palette.divider}`,
+                '& .MuiChip-icon': { color: 'transparent' },
+            }}
+        />
+    );
+});
+
+const SchedulerFooter: React.FC = React.memo(() => {
+    const theme = useTheme();
+
+    const memoizedLegends = useMemo(() =>
+        legends.map((legend, index) => (
+            <LegendChip key={index} color={legend.color} label={legend.label} />
+        )),
+        []);
 
     return (
         <Box
@@ -28,33 +71,9 @@ const SchedulerFooter: React.FC = () => {
                 borderTop: `1px solid ${theme.palette.divider}`,
             }}
         >
-            {legends.map((legend, index) => (
-                <Chip
-                    key={index}
-                    icon={
-                        <Box
-                            sx={{
-                                width: 12,
-                                height: 12,
-                                borderRadius: '50%',
-                                bgcolor: legend.color,
-                                mr: -0.5,
-                            }}
-                        />
-                    }
-                    label={
-                        <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
-                            {legend.label}
-                        </Typography>
-                    }
-                    sx={{
-                        border: `1px solid ${theme.palette.divider}`,
-                        '& .MuiChip-icon': { color: 'transparent' },
-                    }}
-                />
-            ))}
+            {memoizedLegends}
         </Box>
     );
-};
+});
 
 export default SchedulerFooter;

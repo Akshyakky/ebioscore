@@ -8,6 +8,8 @@ import { AppModifyListService } from '../../../../services/CommonServices/AppMod
 import { useServerDate } from '../../../../hooks/Common/useServerDate';
 import useDayjs from '../../../../hooks/Common/useDateTime';
 import { usePatientAutocomplete } from '../../../../hooks/PatientAdminstration/usePatientAutocomplete';
+import extractNumbers from '../../../../utils/PatientAdministration/extractNumbers';
+import PatientDemographics from '../../../patientAdministration/CommonPage/Demograph/PatientDemographics';
 
 interface AppointmentBookingFormProps {
     onChange: (name: keyof AppointBookingDto, value: any) => void;
@@ -203,11 +205,14 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                         // Here you can handle the selected suggestion
                         // For example, you might want to update multiple fields based on the selected patient
                         onChange('pChartCode', suggestion.split('|')[0].trim());
+                        onChange('pChartID', extractNumbers(suggestion.split('|')[0].trim()));
                         // You might also want to fetch and set other patient details here
                     }}
                     gridProps={{ xs: 12 }}
                 />
             )}
+
+            <PatientDemographics pChartID={formData.pChartID} />
 
             {rLotYN === 'N' && (
                 <FormField

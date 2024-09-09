@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { forwardRef, useMemo } from "react";
 import { Grid, SelectChangeEvent } from "@mui/material";
 import { GridProps } from '@mui/material/Grid';
 import FloatingLabelTextBox from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
@@ -41,17 +41,17 @@ interface BaseFormFieldProps {
   onBlur?: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
-interface TextFormFieldProps extends BaseFormFieldProps {
+export interface TextFormFieldProps extends BaseFormFieldProps {
   type: "text" | "number" | "email" | "date" | "search";
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-interface TextAreaFormFieldProps extends BaseFormFieldProps {
+export interface TextAreaFormFieldProps extends BaseFormFieldProps {
   type: "textarea";
   onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
-interface SelectFormFieldProps extends BaseFormFieldProps {
+export interface SelectFormFieldProps extends BaseFormFieldProps {
   type: "select";
   options: DropdownOption[];
   onChange: (event: SelectChangeEvent<string>, child: React.ReactNode) => void;
@@ -60,21 +60,21 @@ interface SelectFormFieldProps extends BaseFormFieldProps {
   onClear?: () => void;
 }
 
-interface SwitchFormFieldProps extends BaseFormFieldProps {
+export interface SwitchFormFieldProps extends BaseFormFieldProps {
   type: "switch";
   onChange: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
   checked: boolean;
   color?: "primary" | "secondary" | "error" | "info" | "success" | "warning" | "default";
 }
 
-interface RadioFormFieldProps extends BaseFormFieldProps {
+export interface RadioFormFieldProps extends BaseFormFieldProps {
   type: "radio";
   options: DropdownOption[];
   onChange: (event: React.ChangeEvent<HTMLInputElement>, value: string) => void;
   inline?: boolean;
 }
 
-interface AutocompleteFormFieldProps extends BaseFormFieldProps {
+export interface AutocompleteFormFieldProps extends BaseFormFieldProps {
   type: "autocomplete";
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   fetchSuggestions?: (input: string) => Promise<string[]>;
@@ -82,9 +82,9 @@ interface AutocompleteFormFieldProps extends BaseFormFieldProps {
   suggestions?: string[];
 }
 
-type FormFieldProps = TextFormFieldProps | TextAreaFormFieldProps | SelectFormFieldProps | SwitchFormFieldProps | RadioFormFieldProps | AutocompleteFormFieldProps;
+export type FormFieldProps = TextFormFieldProps | TextAreaFormFieldProps | SelectFormFieldProps | SwitchFormFieldProps | RadioFormFieldProps | AutocompleteFormFieldProps;
 
-const FormField: React.FC<FormFieldProps> = React.memo((props) => {
+const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
   const {
     type,
     label,
@@ -223,12 +223,13 @@ const FormField: React.FC<FormFieldProps> = React.memo((props) => {
             errorMessage={errorMessage}
             onBlur={onBlur}
             InputProps={InputProps}
+            ref={ref}
           />
         );
       default:
         return null;
     }
-  }, [props, type, label, value, name, ControlID, size, placeholder, isMandatory, errorMessage, disabled, readOnly, maxLength, min, max, step, isSubmitted, InputProps, InputLabelProps, onBlur]);
+  }, [props, type, label, value, name, ControlID, size, placeholder, isMandatory, errorMessage, disabled, readOnly, maxLength, min, max, step, isSubmitted, InputProps, InputLabelProps, onBlur, ref]);
 
   return (
     <Grid item {...gridProps}>

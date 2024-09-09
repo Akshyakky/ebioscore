@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, ChangeEvent } from "react";
 import { RegistrationService } from "../../../../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { PatientDemographicDetails } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import { useLoading } from "../../../../context/LoadingContext";
@@ -18,13 +18,12 @@ import {
   DialogTitle,
   Grid,
   IconButton,
+  SelectChangeEvent,
   Tooltip,
   Typography,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import EditIcon from "@mui/icons-material/Edit";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdown from "../../../../hooks/useDropdown";
@@ -40,6 +39,7 @@ import { BillingService } from "../../../../services/BillingServices/BillingServ
 import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
 import { PatientDemoGraphService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientDemoGraphService";
 import { format, parseISO } from "date-fns";
+import FormField, { AutocompleteFormFieldProps, SelectFormFieldProps, TextFormFieldProps } from "../../../../components/FormField/FormField";
 
 interface PatientDemographicsProps {
   pChartID: number;
@@ -333,6 +333,84 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     return null;
   }
 
+  const renderFormField = (
+    type: "text" | "date" | "email" | "select" | "autocomplete",
+    name: keyof PatientDemoGraph,
+    label: string,
+    options: DropdownOption[] = [],
+    isMandatory: boolean = false,
+    disabled: boolean = false,
+    gridProps: { xs: number; sm?: number; md?: number } = { xs: 12, sm: 6 }
+  ) => {
+    const commonProps = {
+      label,
+      name,
+      ControlID: name,
+      isMandatory,
+      isSubmitted,
+      errorMessage: formErrors[name as keyof PatientDemoGraphError],
+      disabled,
+      gridProps,
+    };
+
+    switch (type) {
+      case 'select':
+        const selectProps: SelectFormFieldProps = {
+          ...commonProps,
+          type: 'select',
+          value: patientDemoGraph[name]?.toString() || "",
+          onChange: (e: SelectChangeEvent<string>) =>
+            setPatientDemoGraph({
+              ...patientDemoGraph,
+              [name]: e.target.value,
+            }),
+          options,
+        };
+        return <FormField {...selectProps} />;
+
+      case 'date':
+        const dateProps: TextFormFieldProps = {
+          ...commonProps,
+          type: 'date',
+          value: patientDemoGraph[name]?.toString() || "",
+          onChange: (e: ChangeEvent<HTMLInputElement>) =>
+            setPatientDemoGraph({
+              ...patientDemoGraph,
+              [name]: e.target.value,
+            }),
+        };
+        return <FormField {...dateProps} />;
+
+      case 'autocomplete':
+        const autocompleteProps: AutocompleteFormFieldProps = {
+          ...commonProps,
+          type: 'autocomplete',
+          value: patientDemoGraph[name]?.toString() || "",
+          onChange: (e: ChangeEvent<HTMLInputElement>) =>
+            setPatientDemoGraph({
+              ...patientDemoGraph,
+              [name]: e.target.value,
+            }),
+          fetchSuggestions: async () => [],
+          onSelectSuggestion: () => { },
+        };
+        return <FormField {...autocompleteProps} />;
+
+      default:
+        const textProps: TextFormFieldProps = {
+          ...commonProps,
+          type: type as "text" | "email",
+          value: patientDemoGraph[name]?.toString() || "",
+          onChange: (e: ChangeEvent<HTMLInputElement>) =>
+            setPatientDemoGraph({
+              ...patientDemoGraph,
+              [name]: e.target.value,
+            }),
+        };
+        return <FormField {...textProps} />;
+    }
+  };
+
   return (
     <>
       <Card
@@ -394,267 +472,24 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
           <Box>
             <Grid container spacing={2}>
               <Grid item xs={12} md={12} lg={12}>
-                <FloatingLabelTextBox
-                  ControlID="UHID"
-                  title="UHID"
-                  placeholder="UHID"
-                  type="text"
-                  size="small"
-                  value={patientDemoGraph.pChartCode}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pChartCode: e.target.value,
-                    })
-                  }
-                  isSubmitted={isSubmitted}
-                  isMandatory={true}
-                  disabled={true}
-                />
-                <DropdownSelect
-                  label="Title"
-                  name="Title"
-                  value={patientDemoGraph.pTitleVal}
-                  options={titleValues}
-                  size="small"
-                  isMandatory={true}
-                  isSubmitted={isSubmitted}
-                  onChange={handleDropdownChange(
-                    ["pTitleVal"],
-                    ["pTitle"],
-                    titleValues
-                  )}
-                />
-                <FloatingLabelTextBox
-                  ControlID="PFName"
-                  title="First Name"
-                  placeholder="First Name"
-                  type="text"
-                  size="small"
-                  value={patientDemoGraph.pfName}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pfName: e.target.value,
-                    })
-                  }
-                  isSubmitted={isSubmitted}
-                  isMandatory={true}
-                />
-                <FloatingLabelTextBox
-                  ControlID="PLName"
-                  title="Last Name"
-                  placeholder="Last Name"
-                  type="text"
-                  size="small"
-                  value={patientDemoGraph.plName}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      plName: e.target.value,
-                    })
-                  }
-                  isSubmitted={isSubmitted}
-                  isMandatory={true}
-                />
-                <FloatingLabelTextBox
-                  ControlID="DOB"
-                  title="Date of Birth"
-                  placeholder="Date of Birth"
-                  type="date"
-                  size="small"
-                  value={patientDemoGraph.dob}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      dob: e.target.value,
-                    })
-                  }
-                  isSubmitted={isSubmitted}
-                  isMandatory={true}
-                />
-                <DropdownSelect
-                  label="Gender"
-                  name="Gender"
-                  value={patientDemoGraph.pGenderVal}
-                  options={genderValues}
-                  onChange={handleDropdownChange(
-                    ["pGenderVal"],
-                    ["pGender"],
-                    genderValues
-                  )}
-                  size="small"
-                  isMandatory={true}
-                  isSubmitted={isSubmitted}
-                />
-                <DropdownSelect
-                  label="Blood Group"
-                  name="BloodGrp"
-                  value={patientDemoGraph.pBldGrp}
-                  options={bloodGrpValues}
-                  onChange={handleDropdownChange(
-                    ["pBldGrp"],
-                    ["pBldGrp"],
-                    bloodGrpValues
-                  )}
-                  size="small"
-                />
-                <DropdownSelect
-                  label="Payment Source [PIC]"
-                  name="PIC"
-                  value={String(patientDemoGraph.pTypeID)}
-                  options={picValues}
-                  onChange={handleDropdownChange(
-                    ["pTypeID"],
-                    ["pTypeName"],
-                    picValues
-                  )}
-                  size="small"
-                  isMandatory={true}
-                  isSubmitted={isSubmitted}
-                />
-                <FloatingLabelTextBox
-                  ControlID="PRegDate"
-                  title="Registration Date"
-                  placeholder="Registration Date"
-                  type="date"
-                  size="small"
-                  value={patientDemoGraph.pRegDate}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pRegDate: e.target.value,
-                    })
-                  }
-                  isSubmitted={isSubmitted}
-                  isMandatory={true}
-                  disabled={true}
-                />
-                <FloatingLabelTextBox
-                  ControlID="IdentityNo"
-                  title="Aadhaar No"
-                  placeholder="Aadhaar No"
-                  type="text"
-                  size="small"
-                  value={patientDemoGraph.pssnID}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pssnID: e.target.value,
-                    })
-                  }
-                  isSubmitted={isSubmitted}
-                  isMandatory={true}
-                />
-                <FloatingLabelTextBox
-                  ControlID="PassportID"
-                  title="Int. ID/Passport ID"
-                  placeholder="Int. ID/Passport ID"
-                  type="text"
-                  size="small"
-                  value={patientDemoGraph.intIdPsprt}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      intIdPsprt: e.target.value,
-                    })
-                  }
-                />
-                <FloatingLabelTextBox
-                  ControlID="Address"
-                  title="Address"
-                  placeholder="Address"
-                  type="text"
-                  size="small"
-                  value={patientDemoGraph.pAddStreet}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pAddStreet: e.target.value,
-                    })
-                  }
-                />
-                <DropdownSelect
-                  label="Area"
-                  name="Area"
-                  value={patientDemoGraph.patAreaVal}
-                  options={areaValues}
-                  onChange={handleDropdownChange(
-                    ["patAreaVal"],
-                    ["patArea"],
-                    areaValues
-                  )}
-                  size="small"
-                />
-                <DropdownSelect
-                  label="City"
-                  name="City"
-                  value={patientDemoGraph.pAddCityVal}
-                  options={cityValues}
-                  onChange={handleDropdownChange(
-                    ["pAddCityVal"],
-                    ["pAddCity"],
-                    cityValues
-                  )}
-                  size="small"
-                />
-                <DropdownSelect
-                  label="Nationality"
-                  name="Nationality"
-                  value={patientDemoGraph.pAddActualCountryVal}
-                  options={nationalityValues}
-                  onChange={handleDropdownChange(
-                    ["pAddActualCountryVal"],
-                    ["pAddActualCountry"],
-                    nationalityValues
-                  )}
-                  size="small"
-                />
-                <FloatingLabelTextBox
-                  ControlID="MobileNo"
-                  title="Mobile No"
-                  placeholder="Mobile No"
-                  type="text"
-                  size="small"
-                  value={patientDemoGraph.pAddPhone1}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pAddPhone1: e.target.value,
-                    })
-                  }
-                  isMandatory={true}
-                  isSubmitted={isSubmitted}
-                />
-                <FloatingLabelTextBox
-                  ControlID="Email"
-                  title="Email"
-                  type="email"
-                  size="small"
-                  placeholder="Email"
-                  value={patientDemoGraph.pAddEmail}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      pAddEmail: e.target.value,
-                    })
-                  }
-                />
-                <FloatingLabelTextBox
-                  ControlID="RefferalSource"
-                  title="Refferal Source"
-                  type="text"
-                  size="small"
-                  placeholder="Refferal Source"
-                  value={patientDemoGraph.refSource}
-                  disabled={true}
-                  onChange={(e) =>
-                    setPatientDemoGraph({
-                      ...patientDemoGraph,
-                      refSource: e.target.value,
-                    })
-                  }
-                />
+                {renderFormField("text", "pChartCode", "UHID", [], true, true, { xs: 12 })}
+                {renderFormField("select", "pTitleVal", "Title", titleValues, true, false, { xs: 12 })}
+                {renderFormField("select", "pGenderVal", "Gender", genderValues, true, false, { xs: 12 })}
+                {renderFormField("text", "pfName", "First Name", [], true, false, { xs: 12 })}
+                {renderFormField("text", "plName", "Last Name", [], true, false, { xs: 12 })}
+                {renderFormField("date", "dob", "Date of Birth", [], true, false, { xs: 12 })}
+                {renderFormField("select", "pBldGrp", "Blood Group", bloodGrpValues, false, false, { xs: 12 })}
+                {renderFormField("select", "pTypeID", "Payment Source [PIC]", picValues, true, false, { xs: 12 })}
+                {renderFormField("date", "pRegDate", "Registration Date", [], true, true, { xs: 12 })}
+                {renderFormField("text", "pssnID", "Aadhaar No", [], true, false, { xs: 12 })}
+                {renderFormField("text", "intIdPsprt", "Int. ID/Passport ID", [], false, false, { xs: 12 })}
+                {renderFormField("text", "pAddStreet", "Address", [], false, false, { xs: 12 })}
+                {renderFormField("select", "patAreaVal", "Area", areaValues, false, false, { xs: 12 })}
+                {renderFormField("select", "pAddCityVal", "City", cityValues, false, false, { xs: 12 })}
+                {renderFormField("select", "pAddActualCountryVal", "Nationality", nationalityValues, false, false, { xs: 12 })}
+                {renderFormField("text", "pAddPhone1", "Mobile No", [], true, false, { xs: 12 })}
+                {renderFormField("email", "pAddEmail", "Email", [], false, false, { xs: 12 })}
+                {renderFormField("text", "refSource", "Referral Source", [], false, true, { xs: 12 })}
               </Grid>
             </Grid>
           </Box>

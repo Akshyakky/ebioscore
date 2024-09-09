@@ -1,54 +1,85 @@
-import React from "react";
-import { DeptUserDto } from "../../../../../interfaces/Billing/DeptUserDto";
-import { DeptUserListService } from "../../../../../services/BillingServices/DeptUserListService";
-import { DepartmentListService } from "../../../../../services/BillingServices/DepartmentListService";
+import React, { useEffect, useState, useContext, useCallback } from "react";
+import { UserListData } from "../../../../../interfaces/SecurityManagement/UserListData";
+import { UserListSearchContext } from "../../../../../context/SecurityManagement/UserListSearchContext";
 import GenericAdvanceSearch from "../../../../../components/GenericDialog/GenericAdvanceSearch";
+import { UserListService } from "../../../../../services/SecurityManagementServices/UserListService";
+import CustomButton from "../../../../../components/Button/CustomButton";
+import Add from "@mui/icons-material/Add";
 
-interface DeptUsersListSearchProps {
+interface DeptUsersSearchProps {
   open: boolean;
-  onClose: () => void;
-  onSelect: (deptUserDto: DeptUserDto) => void;
+  handleClose: () => void;
+  onSelectUser: (user: UserListData) => void; // Pass selected user to parent
 }
 
-const DeptUsersListSearch: React.FC<DeptUsersListSearchProps> = ({
+const DeptUsersListSearch: React.FC<DeptUsersSearchProps> = ({
   open,
-  onClose,
-  onSelect,
+  handleClose,
+  onSelectUser,
 }) => {
-  const fetchItems = () =>
-    DeptUserListService.getDeptUsersByDeptId(1).then(
-      (result) => result.data || []
-    );
+  const { fetchAllUsers } = useContext(UserListSearchContext);
+  const [users, setUsers] = useState<UserListData[]>([]);
 
-  const updateActiveStatus = async (id: number, status: boolean) => {
-    const result = await DepartmentListService.updateDepartmentActiveStatus(
-      id,
-      status
-    );
-    return result.success;
-  };
+  // Fetch users when the search dialog is opened
+  useEffect(() => {
+    if (open) {
+      fetchAllUsers()
+        .then((fetchedUsers) => {
+          setUsers(fetchedUsers);
+        })
+        .catch((error) => {
+          console.error("Error fetching users:", error);
+        });
+    }
+  }, [open, fetchAllUsers]);
 
-  const getItemId = (item: DeptUserDto) => item.deptUserID;
-  const getItemActiveStatus = (item: DeptUserDto) => item.rActiveYN === "Y";
+  const handleSelect = useCallback(
+    async (user: UserListData) => {
+      try {
+        const userDetails = await UserListService.getUserDetails(user.appID);
+        if (userDetails.success && userDetails.data) {
+          onSelectUser(userDetails.data);
+          handleClose();
+        }
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+      }
+    },
+    [onSelectUser]
+  );
 
   const columns = [
-    { key: "serialNumber", header: "Sl No", visible: true },
-    { key: "deptCode", header: "User Name", visible: true },
-    { key: "deptName", header: "Category", visible: true },
+    { key: "fullName", header: "User Name", visible: true },
+    { key: "loginName", header: "Login Name", visible: true },
+    { key: "appID", header: "App ID", visible: false },
+    {
+      key: "addDeptUser",
+      header: "Department Access",
+      visible: true,
+      render: (row: any & { serialNumber: number; Status: string }) => (
+        <CustomButton
+          text="Add User"
+          onClick={() => handleSelect(row)}
+          icon={Add}
+          size="small"
+          color="secondary"
+        />
+      ),
+    },
   ];
 
   return (
-    <GenericAdvanceSearch
+    <GenericAdvanceSearch<UserListData>
       open={open}
-      onClose={onClose}
-      onSelect={onSelect}
-      title="Users List"
-      fetchItems={fetchItems}
-      updateActiveStatus={updateActiveStatus}
+      onClose={handleClose}
+      onSelect={handleSelect}
+      title="Users Search List"
+      fetchItems={() => Promise.resolve(users)} // Use the fetched users
+      updateActiveStatus={() => Promise.resolve(true)} // Can be implemented as needed
       columns={columns}
-      getItemId={getItemId}
-      getItemActiveStatus={getItemActiveStatus}
-      searchPlaceholder="Enter users names"
+      getItemId={(user) => user.appID}
+      getItemActiveStatus={(user) => user.rActiveYN === "Y"}
+      searchPlaceholder="Enter user name or login name"
     />
   );
 };
