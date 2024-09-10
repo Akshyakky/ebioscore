@@ -22,6 +22,7 @@ import PatientDemographics from "../../../patientAdministration/CommonPage/Demog
 import { showAlertPopUp } from "../../../../utils/Common/alertMessage";
 import AddIcon from "@mui/icons-material/Add";
 import useDayjs from "../../../../hooks/Common/useDateTime";
+import { ErrorMessage } from 'formik';
 
 const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
     editData,
@@ -146,28 +147,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
                 },
             });
         } catch (error) {
-            console.error("Error saving Alerts:", error);
-            let errorMessage = "An unexpected error occurred while saving.";
-
-            if (error && typeof error === "object" && "response" in error) {
-                const responseError = error as {
-                    response?: { data?: { errors?: any } };
-                };
-                if (responseError.response?.data?.errors) {
-                    const errors = responseError.response.data.errors;
-                    if (Array.isArray(errors)) {
-                        errorMessage = errors.join(", ");
-                    } else if (typeof errors === "object") {
-                        errorMessage = Object.values(errors).flat().join(", ");
-                    } else if (typeof errors === "string") {
-                        errorMessage = errors;
-                    }
-                }
-            } else if (error instanceof Error) {
-                errorMessage = error.message;
-            }
-
-            showAlert("Error", errorMessage, "error");
+            console.log(error)
         } finally {
             setLoading(false);
         }

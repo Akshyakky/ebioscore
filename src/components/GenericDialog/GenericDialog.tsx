@@ -41,17 +41,17 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
 }));
 
 const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
-    padding: theme.spacing(2, 3),
+    padding: theme.spacing(1, 3),
     borderBottom: `1px solid ${theme.palette.divider}`,
 }));
 
 const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
-    padding: theme.spacing(3),
+    padding: theme.spacing(1, 3),
     overflowX: 'hidden',
 }));
 
 const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
-    padding: theme.spacing(2, 3),
+    padding: theme.spacing(1, 3),
     borderTop: `1px solid ${theme.palette.divider}`,
 }));
 

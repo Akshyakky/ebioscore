@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { OPIPInsurancesDto } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { format } from "date-fns";
+import useDayjs from "../../../../hooks/Common/useDateTime";
 
 interface InsuranceGridProps {
   insuranceData: OPIPInsurancesDto[];
@@ -17,7 +17,15 @@ const PatientInsuranceGrid: React.FC<InsuranceGridProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const gridPatientInsuranceColumns = [
+  const { formatDate, parse, formatDateYMD } = useDayjs();
+  const handleEdit = useCallback((row: OPIPInsurancesDto) => {
+    onEdit(row);
+  }, [onEdit]);
+
+  const handleDelete = useCallback((id: number) => {
+    onDelete(id);
+  }, [onDelete]);
+  const gridPatientInsuranceColumns = useMemo(() => [
     {
       key: "PInsuredit",
       header: "Edit",
@@ -25,7 +33,7 @@ const PatientInsuranceGrid: React.FC<InsuranceGridProps> = ({
       render: (row: OPIPInsurancesDto) => (
         <CustomButton
           size="small"
-          onClick={() => onEdit(row)}
+          onClick={() => handleEdit(row)}
           icon={EditIcon}
           color="primary"
         />
@@ -40,15 +48,13 @@ const PatientInsuranceGrid: React.FC<InsuranceGridProps> = ({
       key: "policyStartDt",
       header: "Start Date",
       visible: true,
-      render: (row: OPIPInsurancesDto) =>
-        format(new Date(row.policyStartDt), "dd/MM/yyyy"),
+      render: (row: OPIPInsurancesDto) => formatDate(row.policyStartDt),
     },
     {
       key: "policyEndDt",
       header: "End Date",
       visible: true,
-      render: (row: OPIPInsurancesDto) =>
-        format(new Date(row.policyEndDt), "dd/MM/yyyy"),
+      render: (row: OPIPInsurancesDto) => formatDate(row.policyEndDt),
     },
     { key: "guarantor", header: "Guarantor", visible: true },
     { key: "relation", header: "Relation", visible: true },
@@ -59,17 +65,17 @@ const PatientInsuranceGrid: React.FC<InsuranceGridProps> = ({
       render: (row: OPIPInsurancesDto) => (
         <CustomButton
           size="small"
-          onClick={() => onDelete(row.oPIPInsID)}
+          onClick={() => handleDelete(row.oPIPInsID)}
           icon={DeleteIcon}
           color="error"
         />
       ),
     },
-  ];
+  ], [handleEdit, handleDelete]);
 
   return (
     <CustomGrid columns={gridPatientInsuranceColumns} data={insuranceData} />
   );
 };
 
-export default PatientInsuranceGrid;
+export default React.memo(PatientInsuranceGrid);

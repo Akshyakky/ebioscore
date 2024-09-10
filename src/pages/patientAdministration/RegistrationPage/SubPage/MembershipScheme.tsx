@@ -1,14 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback } from "react";
 import { Grid, Typography, Box } from "@mui/material";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
-import { BillingService } from "../../../../services/BillingServices/BillingService";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import FormField from "../../../../components/FormField/FormField";
 import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
-import { format } from "date-fns";
+import useDropdownChange from "../../../../hooks/useDropdownChange";
+import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
+import useDayjs from "../../../../hooks/Common/useDateTime";
 
 interface MembershipSchemeProps {
   formData: PatientRegistrationDto;
@@ -19,36 +15,11 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
   formData,
   setFormData,
 }) => {
-  const [membershipSchemes, setMembershipScheme] = useState<DropdownOption[]>(
-    []
-  );
-  const { handleDropdownChange } =
-    useDropdownChange<PatientRegistrationDto>(setFormData);
-  const userInfo = useSelector((state: RootState) => state.userDetails);
-  const compID = userInfo.compID!;
-  const endpointMembershipScheme = "GetActivePatMemberships";
+  const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
+  const { membershipSchemeValues } = useDropdownValues();
+  const { format, formatDateYMD } = useDayjs();
 
-  useEffect(() => {
-    const loadDropdownData = async () => {
-      try {
-        const membershipSchemes = await BillingService.fetchMembershipScheme(
-          endpointMembershipScheme,
-          compID
-        );
-        const membershipSchemeOptions = membershipSchemes.map((item) => ({
-          value: item.value,
-          label: item.label,
-        }));
-        setMembershipScheme(membershipSchemeOptions);
-      } catch (error) {
-        console.error("Failed to fetch membership scheme:", error);
-      }
-    };
-
-    loadDropdownData();
-  }, [compID]);
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;
     setFormData((prevFormData) => ({
       ...prevFormData,
@@ -57,53 +28,42 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
         patMemSchemeExpiryDate: newDate,
       },
     }));
-  };
+  }, [setFormData]);
 
   return (
     <section aria-labelledby="membership-scheme-header">
       <Box>
-        <Typography variant="h6" sx={{ borderBottom: "1px solid #000" }}>
+        <Typography variant="h6" sx={{ borderBottom: "1px solid #000", marginBottom: 2 }}>
           Membership Scheme
         </Typography>
       </Box>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={3}>
-          <DropdownSelect
-            name="MembershipScheme"
-            label="Membership Scheme"
-            value={
-              formData.patRegisters.patMemID === 0
-                ? ""
-                : String(formData.patRegisters.patMemID)
-            }
-            options={membershipSchemes}
-            onChange={handleDropdownChange(
-              ["patRegisters", "patMemID"],
-              ["patRegisters", "patMemName"],
-              membershipSchemes
-            )}
-            size="small"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <FloatingLabelTextBox
-            ControlID="MembeshipExpDate"
-            title="Membership Expiry Date"
-            type="date"
-            size="small"
-            placeholder="Membership Expiry Date"
-            onChange={handleDateChange}
-            value={format(
-              new Date(formData.patRegisters.patMemSchemeExpiryDate),
-              "yyyy-MM-dd"
-            )}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}></Grid>
-        <Grid item xs={12} sm={6} md={3}></Grid>
+        <FormField
+          type="select"
+          label="Membership Scheme"
+          name="MembershipScheme"
+          ControlID="MembershipScheme"
+          value={formData.patRegisters.patMemID === 0 ? "" : String(formData.patRegisters.patMemID)}
+          options={membershipSchemeValues}
+          onChange={handleDropdownChange(
+            ["patRegisters", "patMemID"],
+            ["patRegisters", "patMemName"],
+            membershipSchemeValues
+          )}
+          gridProps={{ xs: 12, sm: 6, md: 3 }}
+        />
+        <FormField
+          type="date"
+          label="Membership Expiry Date"
+          name="MembeshipExpDate"
+          ControlID="MembeshipExpDate"
+          value={formData.patRegisters.patMemSchemeExpiryDate}
+          onChange={handleDateChange}
+          gridProps={{ xs: 12, sm: 6, md: 3 }}
+        />
       </Grid>
     </section>
   );
 };
 
-export default MembershipScheme;
+export default React.memo(MembershipScheme);

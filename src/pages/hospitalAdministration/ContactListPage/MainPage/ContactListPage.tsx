@@ -1,43 +1,99 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { Box, Container, Paper } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useSelector } from "react-redux";
-import ActionButtonGroup, {
-  ButtonProps,
-} from "../../../../components/Button/ActionButtonGroup";
+import ActionButtonGroup, { ButtonProps, } from "../../../../components/Button/ActionButtonGroup";
 import { useLoading } from "../../../../context/LoadingContext";
-import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { RootState } from "../../../../store/reducers";
-import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
-import { DepartmentService } from "../../../../services/CommonServices/DepartmentService";
 import { ContactListService } from "../../../../services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { ContactListData } from "../../../../interfaces/HospitalAdministration/ContactListData";
 import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch";
 import ContactListForm from "../SubPage/ContactListForm";
+import { showAlert } from "../../../../utils/Common/showAlert";
+import useDayjs from "../../../../hooks/Common/useDateTime";
+import { useServerDate } from "../../../../hooks/Common/useServerDate";
 
 const ContactListPage: React.FC = () => {
-  const { token, compID, userID, userName, compCode, compName } = useSelector(
-    (state: RootState) => state.userDetails
-  );
+  const { compID, compCode, compName } = useSelector((state: RootState) => state.userDetails);
+  const { formatDateYMD, formatDateTime } = useDayjs(useServerDate());
 
-  const [dropdownValues, setDropdownValues] = useState({
-    titleOptions: [] as DropdownOption[],
-    genderOptions: [] as DropdownOption[],
-    bloodGroupOptions: [] as DropdownOption[],
-    maritalStatusOptions: [] as DropdownOption[],
-    cityOptions: [] as DropdownOption[],
-    stateOptions: [] as DropdownOption[],
-    nationalityOptions: [] as DropdownOption[],
-    categoryOptions: [] as DropdownOption[],
-    departmentOptions: [] as DropdownOption[],
-    employeeStatusOptions: [] as DropdownOption[],
-    specialityOptions: [] as DropdownOption[],
-  });
+  const getInitialContactListState = useMemo(() => {
+    const today = formatDateYMD();
+    return {
+      contactMastDto: {
+        conID: 0,
+        conCode: "",
+        conTitle: "",
+        conFName: "",
+        conLName: "",
+        conMName: "",
+        conDob: today,
+        conGender: "",
+        conSSNID: "",
+        conBldGrp: "",
+        conCat: "",
+        consValue: "",
+        conEmpYN: "N",
+        rActiveYN: "Y",
+        compID: compID!,
+        compCode: compCode!,
+        compName: compName!,
+        notes: "",
+        conEmpStatus: "",
+        allergicToAllergence: "",
+        allergicToMedicine: "",
+        aPHYRMID: 0,
+        aPhyRoomName: "",
+        deptID: 0,
+        deptName: "",
+        designation: "",
+        emergenContactName: "",
+        iPP: 0,
+        oPP: 0,
+        isAuthorizedUserYN: "N",
+        isContractYN: "N",
+        isSuperSpecialtyYN: "N",
+        isEmployeeYN: "N",
+        isRefferalYN: "N",
+        isAppointmentYN: "N",
+        isUserRequiredYN: "N",
+        maritalStatus: "",
+        tINNo: "",
+        accCode: "",
+        accPayCode: "",
+        gESYCode: "",
+        digSignPath: "",
+        stampPath: "",
+        payPolicy: 0,
+        transferYN: "N",
+      },
+      contactAddressDto: {
+        cAddID: 0,
+        conID: 0,
+        conCode: "",
+        cAddType: "",
+        cAddMail: "N",
+        cAddPostCode: "",
+        cAddPSSID: "",
+        compID: compID!,
+        compCode: compCode!,
+        compName: compName!,
+        cAddCity: "",
+        cAddCountry: "",
+        cAddEmail: "",
+        cAddPhone1: "",
+        cAddPhone2: "",
+        cAddPhone3: "",
+        cAddState: "",
+        cAddStreet: "",
+        cAddStreet1: "",
+        transferYN: "N",
+      },
+      contactDetailsDto: []
+    };
+  }, [formatDateYMD, formatDateTime, compID, compCode, compName]);
 
-  const [contactList, setContactList] = useState<ContactListData>(
-    getInitialContactListState(userID!, userName!, compID!, compCode!, compName!)
-  );
+  const [contactList, setContactList] = useState<ContactListData>(getInitialContactListState);
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { setLoading } = useLoading();
@@ -51,102 +107,6 @@ const ContactListPage: React.FC = () => {
     isAuthorisedUser: false,
     isContract: false,
   });
-
-  const loadDropdownValues = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [
-        categoryValues,
-        refCategoryValues,
-        titleValues,
-        genderValues,
-        bloodGroupValues,
-        maritalStatusValues,
-        cityValues,
-        stateValues,
-        nationalityValues,
-        departmentValues,
-        employeeStatusValues,
-        specialityValues,
-      ] = await Promise.all([
-        ConstantValues.fetchConstantValues("GetConstantValues", "ACAT"),
-        ConstantValues.fetchConstantValues("GetConstantValues", "REFS"),
-        ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
-        ConstantValues.fetchConstantValues("GetConstantValues", "PSEX"),
-        ConstantValues.fetchConstantValues("GetConstantValues", "PBLD"),
-        ConstantValues.fetchConstantValues("GetConstantValues", "PMAR"),
-        AppModifyListService.fetchAppModifyList(
-          "GetActiveAppModifyFieldsAsync",
-          "CITY"
-        ),
-        AppModifyListService.fetchAppModifyList(
-          "GetActiveAppModifyFieldsAsync",
-          "STATE"
-        ),
-        AppModifyListService.fetchAppModifyList(
-          "GetActiveAppModifyFieldsAsync",
-          "NATIONALITY"
-        ),
-        DepartmentService.fetchDepartments(
-          "GetActiveWardDepartments",
-          compID!
-        ),
-        ConstantValues.fetchConstantValues("GetConstantValues", "EMPS"),
-        ContactListService.fetchActiveSpecialties(compID!),
-      ]);
-
-      setDropdownValues({
-        titleOptions: titleValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        genderOptions: genderValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        bloodGroupOptions: bloodGroupValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        maritalStatusOptions: maritalStatusValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        cityOptions: cityValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        stateOptions: stateValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        nationalityOptions: nationalityValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        categoryOptions: [...categoryValues, ...refCategoryValues].map(
-          (item) => ({ value: item.value, label: item.label })
-        ),
-        departmentOptions: departmentValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        employeeStatusOptions: employeeStatusValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        specialityOptions: specialityValues,
-      });
-    } catch (error) {
-      console.error("Error loading dropdown values:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [token, compID]);
-
-  useEffect(() => {
-    loadDropdownValues();
-  }, [loadDropdownValues]);
 
   const handleAdvancedSearch = async () => {
     setIsSearchOpen(true);
@@ -182,6 +142,46 @@ const ContactListPage: React.FC = () => {
     }
   };
 
+  const handleClear = useCallback(() => {
+    setContactList(getInitialContactListState);
+    setSwitchStates({
+      isEmployee: false,
+      isReferral: false,
+      isAppointment: false,
+      isSuperSpeciality: false,
+      isUserRequired: false,
+      isAuthorisedUser: false,
+      isContract: false,
+    });
+
+  }, [getInitialContactListState]);
+
+  const handleSave = useCallback(async () => {
+    setLoading(true);
+    debugger
+    try {
+      const result = await ContactListService.saveContactList(contactList);
+      if (result.success) {
+        showAlert('Notification', 'Contact list saved successfully', 'success', {
+          onConfirm: () => {
+            handleClear();
+            if (formRef.current) {
+              formRef.current.resetForm();
+            }
+          }
+        });
+      } else {
+        showAlert('Error', result.errorMessage || 'Failed to save contact list.', 'error');
+      }
+    } catch (error) {
+      showAlert('Error', 'An unexpected error occurred while saving the contact list.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [contactList, setLoading, handleClear]);
+
+
+
   const actionButtons: ButtonProps[] = [
     {
       variant: "contained",
@@ -192,6 +192,8 @@ const ContactListPage: React.FC = () => {
     },
   ];
 
+  const formRef = React.useRef<{ resetForm: () => void } | null>(null);
+
   return (
     <>
       <Container maxWidth={false}>
@@ -200,11 +202,13 @@ const ContactListPage: React.FC = () => {
         </Box>
         <Paper variant="elevation" sx={{ padding: 2 }}>
           <ContactListForm
-            dropdownValues={dropdownValues}
+            ref={formRef}
             contactList={contactList}
             setContactList={setContactList}
             switchStates={switchStates}
             setSwitchStates={setSwitchStates}
+            onSave={handleSave}
+            onClear={handleClear}
           />
         </Paper>
       </Container>
@@ -218,91 +222,3 @@ const ContactListPage: React.FC = () => {
 };
 
 export default ContactListPage;
-
-function getInitialContactListState(
-  userID: number,
-  userName: string,
-  compID: number,
-  compCode: string,
-  compName: string
-): ContactListData {
-  const today = new Date().toISOString().split("T")[0];
-  return {
-    contactMastDto: {
-      conID: 0,
-      conCode: "",
-      conTitle: "",
-      conFName: "",
-      conLName: "",
-      conMName: "",
-      conDob: today,
-      conGender: "",
-      conSSNID: "",
-      conBldGrp: "",
-      conCat: "",
-      consValue: "",
-      conEmpYN: "N",
-      rActiveYN: "Y",
-      rCreatedOn: today,
-      rCreatedID: userID,
-      rCreatedBy: userName,
-      rModifiedOn: today,
-      rModifiedID: userID,
-      rModifiedBy: userName,
-      compID: compID,
-      compCode: compCode,
-      compName: compName,
-      notes: "",
-      conEmpStatus: "",
-      allergicToAllergence: "",
-      allergicToMedicine: "",
-      aPHYRMID: 0,
-      aPhyRoomName: "",
-      deptID: 0,
-      deptName: "",
-      designation: "",
-      emergenContactName: "",
-      iPP: 0,
-      oPP: 0,
-      isAuthorizedUserYN: "N",
-      isContractYN: "N",
-      isSuperSpecialtyYN: "N",
-      isEmployeeYN: "N",
-      isRefferalYN: "N",
-      isAppointmentYN: "N",
-      isUserRequiredYN: "N",
-      maritalStatus: "",
-      tINNo: "",
-      accCode: "",
-      accPayCode: "",
-      gESYCode: "",
-      digSignPath: "",
-      stampPath: "",
-      payPolicy: 0,
-      transferYN: "N",
-    },
-    contactAddressDto: {
-      cAddID: 0,
-      conID: 0,
-      conCode: "",
-      cAddType: "",
-      cAddMail: "N",
-      cAddPostCode: "",
-      cAddPSSID: "",
-      compID: compID,
-      compCode: compCode,
-      compName: compName,
-      cAddCity: "",
-      cAddCountry: "",
-      cAddEmail: "",
-      cAddPhone1: "",
-      cAddPhone2: "",
-      cAddPhone3: "",
-      cAddState: "",
-      cAddStreet: "",
-      cAddStreet1: "",
-      transferYN: "N",
-    },
-    contactDetailsDto: []
-  };
-}
