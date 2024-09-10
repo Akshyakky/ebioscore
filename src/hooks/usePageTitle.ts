@@ -25,6 +25,8 @@ const pageTitleMap: PageTitleMap = {
   "/PaymentTypesPage": "Payments Type List",
   "/ServiceGroupsListPage": "Service Groups List",
   "/AlertPage": "Alert Manager",
+  "/WardCategoryPage": "Room-Bed Category List",
+
   // Add more mappings as needed
 };
 
