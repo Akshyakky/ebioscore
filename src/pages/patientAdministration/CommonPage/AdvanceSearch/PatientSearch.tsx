@@ -17,6 +17,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
 import { formatDate } from "../../../../utils/Common/dateUtils";
+import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 
 interface PatientSearchProps {
   show: boolean;
@@ -64,6 +65,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
             handleEditAndClose(row.patRegisters?.pChartID.toString(), row.patRegisters?.pChartCode)
           }
           icon={EditIcon}
+          size="small"
         />
       ),
     },
@@ -123,61 +125,63 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
     },
   ];
 
+  const dialogContent = (
+    <>
+      <Box>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6} lg={4}>
+            <FloatingLabelTextBox
+              ControlID="SearchTerm"
+              title="Search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Enter UHID, name, or mobile number"
+              size="small"
+              autoComplete="off"
+            />
+          </Grid>
+        </Grid>
+      </Box>
+      <CustomGrid
+        columns={columns}
+        data={searchResults}
+        minHeight="400px"
+        maxHeight="400px"
+      />
+    </>
+  );
+
+  const dialogActions = (
+    <CustomButton
+      variant="contained"
+      text="Close"
+      icon={CloseIcon}
+      size="medium"
+      onClick={handleClose}
+      color="secondary"
+    />
+  );
+
   return (
-    <Dialog
+    <GenericDialog
       open={show}
-      onClose={(event, reason) => {
-        if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
-          handleClose();
-        }
-      }}
+      onClose={handleClose}
+      title="Patient Search"
       maxWidth="lg"
       fullWidth
+      disableBackdropClick
+      dialogContentSx={{
+        minHeight: "400px",
+        maxHeight: "400px",
+      }}
+      actions={[
+        dialogActions
+      ]}
     >
-      <DialogTitle>
-        <Typography variant="h6">Patient Search</Typography>
-      </DialogTitle>
-      <DialogContent
-        sx={{
-          minHeight: "600px",
-          maxHeight: "600px",
-          overflowY: "auto",
-        }}
-      >
-        <Box>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6} lg={4}>
-              <FloatingLabelTextBox
-                ControlID="SearchTerm"
-                title="Search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Enter UHID, name, or mobile number"
-                size="small"
-                autoComplete="off"
-              />
-            </Grid>
-          </Grid>
-        </Box>
-        <CustomGrid
-          columns={columns}
-          data={searchResults}
-          minHeight="500px"
-          maxHeight="500px"
-        />
-      </DialogContent>
-      <DialogActions>
-        <CustomButton
-          variant="contained"
-          text="Close"
-          icon={CloseIcon}
-          size="medium"
-          onClick={handleClose}
-          color="secondary"
-        />
-      </DialogActions>
-    </Dialog>
+      {dialogContent}
+    </GenericDialog>
   );
 };
+
 
 export default PatientSearch;

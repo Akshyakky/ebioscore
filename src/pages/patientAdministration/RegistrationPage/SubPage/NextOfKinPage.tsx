@@ -3,6 +3,8 @@ import React, {
   useEffect,
   forwardRef,
   useImperativeHandle,
+  useCallback,
+  useMemo
 } from "react";
 import { Grid, Typography } from "@mui/material";
 import CustomButton from "../../../../components/Button/CustomButton";
@@ -11,7 +13,7 @@ import { PatNokDetailsDto } from "../../../../interfaces/PatientAdministration/P
 import NextOfKinForm from "./NextOfKinForm";
 import NextOfKinGrid from "./NextOfKinGrid";
 import { PatNokService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatNokService";
-import { format } from "date-fns";
+import useDayjs from "../../../../hooks/Common/useDateTime";
 
 interface NextOfKinPageProps {
   pChartID: number;
@@ -23,17 +25,15 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
   ref
 ) => {
   const [showKinPopup, setShowKinPopup] = useState(false);
-  const [editingKinData, setEditingKinData] = useState<
-    PatNokDetailsDto | undefined
-  >(undefined);
+  const [editingKinData, setEditingKinData] = useState<PatNokDetailsDto | undefined>(undefined);
   const [gridKinData, setGridKinData] = useState<PatNokDetailsDto[]>([]);
-
+  const { formatDate, parse, formatDateYMD } = useDayjs();
 
   useImperativeHandle(ref, () => ({
     saveKinDetails,
   }));
 
-  const saveKinDetails = async (pChartID: number) => {
+  const saveKinDetails = useCallback(async (pChartID: number) => {
     try {
       const saveOperations = gridKinData.map((kin) => {
         const kinData = { ...kin, pChartID: pChartID };
@@ -43,24 +43,25 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
       const results = await Promise.all(saveOperations);
       console.log("Next Of Kin details saved successfully:", results);
     } catch (error) {
-      console.error(
-        "An error occurred while saving Next Of Kin details:",
-        error
-      );
+      console.error("An error occurred while saving Next Of Kin details:", error);
     }
-  };
+  }, [gridKinData]);
 
-  const handleEditKin = (kin: PatNokDetailsDto) => {
+  const handleEditKin = useCallback((kin: PatNokDetailsDto) => {
     setEditingKinData(kin);
     setShowKinPopup(true);
-  };
+  }, []);
 
-  const handleDeleteKin = (id: number) => {
-    const updatedGridData = gridKinData.filter((kin) => kin.pNokID !== id);
-    setGridKinData(updatedGridData);
-  };
+  const handleDeleteKin = useCallback((id: number) => {
+    setGridKinData((prevData) => prevData.filter((kin) => kin.pNokID !== id));
+  }, []);
 
-  const handleSaveKin = (kinDetails: PatNokDetailsDto) => {
+  const generateNewId = useCallback(<T extends { ID: number }>(data: T[]): number => {
+    const maxId = data.reduce((max, item) => (item.ID > max ? item.ID : max), 0);
+    return maxId + 1;
+  }, []);
+
+  const handleSaveKin = useCallback((kinDetails: PatNokDetailsDto) => {
     setGridKinData((prevData) => {
       if (!kinDetails.pNokID && !kinDetails.ID) {
         return [...prevData, { ...kinDetails, ID: generateNewId(prevData) }];
@@ -74,53 +75,60 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
         item.pNokID === kinDetails.pNokID ? kinDetails : item
       );
     });
-    handleCloseKinPopup();
-  };
+    setShowKinPopup(false);
+  }, [generateNewId]);
 
-  const generateNewId = <T extends { ID: number }>(data: T[]): number => {
-    const maxId = data.reduce(
-      (max, item) => (item.ID > max ? item.ID : max),
-      0
-    );
-    return maxId + 1;
-  };
-
-  useEffect(() => {
-    if (pChartID) {
-      const fetchKinData = async () => {
-        try {
-          const kinDetails = await PatNokService.getNokDetailsByPChartID(
-            pChartID
-          );
-          if (kinDetails.success && kinDetails.data) {
-            const formattedData = kinDetails.data.map((kin) => ({
-              ...kin,
-              pNokDob: format(new Date(kin.pNokDob), "yyyy-MM-dd"),
-            }));
-            setGridKinData(formattedData);
-          }
-        } catch (error) {
-          console.error("Error fetching Next Of Kin data:", error);
-        }
-      };
-
-      fetchKinData();
+  const fetchKinData = useCallback(async () => {
+    if (!pChartID) return;
+    try {
+      const kinDetails = await PatNokService.getNokDetailsByPChartID(pChartID);
+      if (kinDetails.success && kinDetails.data) {
+        const formattedData = kinDetails.data.map((kin) => ({
+          ...kin,
+          pNokDob: formatDateYMD(parse(kin.pNokDob, 'DD/MM/YYYY')),
+        }));
+        setGridKinData(formattedData);
+      }
+    } catch (error) {
+      console.error("Error fetching Next Of Kin data:", error);
     }
   }, [pChartID]);
 
-  const handleOpenKinPopup = () => {
-    setShowKinPopup(true);
-  };
-
-  const handleCloseKinPopup = () => {
-    setShowKinPopup(false);
-  };
+  useEffect(() => {
+    fetchKinData();
+  }, [fetchKinData]);
 
   useEffect(() => {
     if (shouldClearData) {
       setGridKinData([]);
     }
   }, [shouldClearData]);
+
+  const handleOpenKinPopup = useCallback(() => {
+    setShowKinPopup(true);
+  }, []);
+
+  const handleCloseKinPopup = useCallback(() => {
+    setShowKinPopup(false);
+    setEditingKinData(undefined);
+  }, []);
+
+  const memoizedNextOfKinForm = useMemo(() => (
+    <NextOfKinForm
+      show={showKinPopup}
+      handleClose={handleCloseKinPopup}
+      handleSave={handleSaveKin}
+      editData={editingKinData}
+    />
+  ), [showKinPopup, handleCloseKinPopup, handleSaveKin, editingKinData]);
+
+  const memoizedNextOfKinGrid = useMemo(() => (
+    <NextOfKinGrid
+      kinData={gridKinData}
+      onEdit={handleEditKin}
+      onDelete={handleDeleteKin}
+    />
+  ), [gridKinData, handleEditKin, handleDeleteKin]);
 
   return (
     <>
@@ -140,17 +148,8 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
           />
         </Grid>
       </Grid>
-      <NextOfKinForm
-        show={showKinPopup}
-        handleClose={handleCloseKinPopup}
-        handleSave={handleSaveKin}
-        editData={editingKinData}
-      />
-      <NextOfKinGrid
-        kinData={gridKinData}
-        onEdit={handleEditKin}
-        onDelete={handleDeleteKin}
-      />
+      {memoizedNextOfKinForm}
+      {memoizedNextOfKinGrid}
     </>
   );
 };

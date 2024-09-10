@@ -32,6 +32,7 @@ interface UseDayjsReturn {
   setDate: (date: DateInput) => void;
   format: (template?: string, date?: DateInput) => string;
   formatDate: (date?: DateInput) => string;
+  formatDateYMD: (date?: DateInput) => string;
   formatDateTime: (date?: DateInput) => string;
   formatTime: (date?: DateInput) => string;
   formatISO: (date?: DateInput) => string;
@@ -93,6 +94,13 @@ const useDayjs = (initialDate: DateInput = new Date()): UseDayjsReturn => {
   const formatDate = useCallback(
     (inputDate?: DateInput): string => {
       return dayjs(inputDate || date).format("DD/MM/YYYY");
+    },
+    [date]
+  );
+
+  const formatDateYMD = useCallback(
+    (inputDate?: DateInput): string => {
+      return dayjs(inputDate || date).format("YYYY-MM-DD");
     },
     [date]
   );
@@ -258,6 +266,7 @@ const useDayjs = (initialDate: DateInput = new Date()): UseDayjsReturn => {
     setDate,
     format,
     formatDate,
+    formatDateYMD,
     formatDateTime,
     formatTime,
     formatISO,

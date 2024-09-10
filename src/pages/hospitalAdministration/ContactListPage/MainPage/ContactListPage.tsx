@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState } from "react";
 import { Box, Container, Paper } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useSelector } from "react-redux";
@@ -6,34 +6,16 @@ import ActionButtonGroup, {
   ButtonProps,
 } from "../../../../components/Button/ActionButtonGroup";
 import { useLoading } from "../../../../context/LoadingContext";
-import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { RootState } from "../../../../store/reducers";
-import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
-import { DepartmentService } from "../../../../services/CommonServices/DepartmentService";
 import { ContactListService } from "../../../../services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { ContactListData } from "../../../../interfaces/HospitalAdministration/ContactListData";
 import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch";
 import ContactListForm from "../SubPage/ContactListForm";
 
 const ContactListPage: React.FC = () => {
-  const { token, compID, userID, userName, compCode, compName } = useSelector(
+  const { compID, userID, userName, compCode, compName } = useSelector(
     (state: RootState) => state.userDetails
   );
-
-  const [dropdownValues, setDropdownValues] = useState({
-    titleOptions: [] as DropdownOption[],
-    genderOptions: [] as DropdownOption[],
-    bloodGroupOptions: [] as DropdownOption[],
-    maritalStatusOptions: [] as DropdownOption[],
-    cityOptions: [] as DropdownOption[],
-    stateOptions: [] as DropdownOption[],
-    nationalityOptions: [] as DropdownOption[],
-    categoryOptions: [] as DropdownOption[],
-    departmentOptions: [] as DropdownOption[],
-    employeeStatusOptions: [] as DropdownOption[],
-    specialityOptions: [] as DropdownOption[],
-  });
 
   const [contactList, setContactList] = useState<ContactListData>(
     getInitialContactListState(userID!, userName!, compID!, compCode!, compName!)
@@ -51,102 +33,6 @@ const ContactListPage: React.FC = () => {
     isAuthorisedUser: false,
     isContract: false,
   });
-
-  const loadDropdownValues = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [
-        categoryValues,
-        refCategoryValues,
-        titleValues,
-        genderValues,
-        bloodGroupValues,
-        maritalStatusValues,
-        cityValues,
-        stateValues,
-        nationalityValues,
-        departmentValues,
-        employeeStatusValues,
-        specialityValues,
-      ] = await Promise.all([
-        ConstantValues.fetchConstantValues("GetConstantValues", "ACAT"),
-        ConstantValues.fetchConstantValues("GetConstantValues", "REFS"),
-        ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
-        ConstantValues.fetchConstantValues("GetConstantValues", "PSEX"),
-        ConstantValues.fetchConstantValues("GetConstantValues", "PBLD"),
-        ConstantValues.fetchConstantValues("GetConstantValues", "PMAR"),
-        AppModifyListService.fetchAppModifyList(
-          "GetActiveAppModifyFieldsAsync",
-          "CITY"
-        ),
-        AppModifyListService.fetchAppModifyList(
-          "GetActiveAppModifyFieldsAsync",
-          "STATE"
-        ),
-        AppModifyListService.fetchAppModifyList(
-          "GetActiveAppModifyFieldsAsync",
-          "NATIONALITY"
-        ),
-        DepartmentService.fetchDepartments(
-          "GetActiveWardDepartments",
-          compID!
-        ),
-        ConstantValues.fetchConstantValues("GetConstantValues", "EMPS"),
-        ContactListService.fetchActiveSpecialties(compID!),
-      ]);
-
-      setDropdownValues({
-        titleOptions: titleValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        genderOptions: genderValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        bloodGroupOptions: bloodGroupValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        maritalStatusOptions: maritalStatusValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        cityOptions: cityValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        stateOptions: stateValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        nationalityOptions: nationalityValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        categoryOptions: [...categoryValues, ...refCategoryValues].map(
-          (item) => ({ value: item.value, label: item.label })
-        ),
-        departmentOptions: departmentValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        employeeStatusOptions: employeeStatusValues.map((item) => ({
-          value: item.value,
-          label: item.label,
-        })),
-        specialityOptions: specialityValues,
-      });
-    } catch (error) {
-      console.error("Error loading dropdown values:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [token, compID]);
-
-  useEffect(() => {
-    loadDropdownValues();
-  }, [loadDropdownValues]);
 
   const handleAdvancedSearch = async () => {
     setIsSearchOpen(true);
@@ -200,7 +86,6 @@ const ContactListPage: React.FC = () => {
         </Box>
         <Paper variant="elevation" sx={{ padding: 2 }}>
           <ContactListForm
-            dropdownValues={dropdownValues}
             contactList={contactList}
             setContactList={setContactList}
             switchStates={switchStates}

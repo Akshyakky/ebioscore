@@ -1,11 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Grid, SelectChangeEvent, Typography } from "@mui/material";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import MultiSelectDropdown from "../../../../components/DropDown/MultiSelectDropdown";
-import TextArea from "../../../../components/TextArea/TextArea";
+import FormField from "../../../../components/FormField/FormField";
 import { ContactListData } from "../../../../interfaces/HospitalAdministration/ContactListData";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import ContactListActions from "./ContactListActions";
 import ContactListSwitches from "./ContactListSwitches";
@@ -13,6 +9,8 @@ import { ContactListService } from "../../../../services/HospitalAdministrationS
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { showAlert } from "../../../../utils/Common/showAlert";
+import useDayjs from "../../../../hooks/Common/useDateTime";
+import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 
 type SwitchStates = {
     isEmployee: boolean;
@@ -24,21 +22,7 @@ type SwitchStates = {
     isContract: boolean;
 };
 
-
 interface ContactListFormProps {
-    dropdownValues: {
-        titleOptions: DropdownOption[];
-        genderOptions: DropdownOption[];
-        bloodGroupOptions: DropdownOption[];
-        maritalStatusOptions: DropdownOption[];
-        cityOptions: DropdownOption[];
-        stateOptions: DropdownOption[];
-        nationalityOptions: DropdownOption[];
-        categoryOptions: DropdownOption[];
-        departmentOptions: DropdownOption[];
-        employeeStatusOptions: DropdownOption[];
-        specialityOptions: DropdownOption[];
-    };
     contactList: ContactListData;
     setContactList: React.Dispatch<React.SetStateAction<ContactListData>>;
     switchStates: SwitchStates;
@@ -46,7 +30,6 @@ interface ContactListFormProps {
 }
 
 const ContactListForm: React.FC<ContactListFormProps> = ({
-    dropdownValues,
     contactList,
     setContactList,
     switchStates,
@@ -56,24 +39,31 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
         (state: RootState) => state.userDetails
     );
     const [isSubmitted, setIsSubmitted] = useState(false);
-
     const { handleDropdownChange } = useDropdownChange<ContactListData>(setContactList);
     const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
 
-    const handleSpecialityChange = (event: SelectChangeEvent<unknown>) => {
-        const target = event.target as HTMLInputElement;
-        const value = target.value;
-        const updatedSpecialities = typeof value === "string" ? value.split(",") : (value as string[]);
+    const {
+        titleValues,
+        genderValues,
+        bloodGroupValues,
+        maritalStatusValues,
+        cityValues,
+        stateValues,
+        nationalityValues,
+        categoryValues,
+        departmentValues,
+        employeeStatusValues,
+        specialityValues,
+    } = useDropdownValues();
 
-        // Update selected specialities state
-        setSelectedSpecialities(updatedSpecialities);
-
-        // Update contact list state
+    const handleSpecialityChange = useCallback((event: SelectChangeEvent<unknown>) => {
+        const value = event.target.value as string[];
+        setSelectedSpecialities(value);
         setContactList((prev) => ({
             ...prev,
-            contactDetailsDto: updatedSpecialities.map((val) => ({
+            contactDetailsDto: value.map((val) => ({
                 facID: parseInt(val),
-                facName: dropdownValues.specialityOptions.find((opt) => opt.value === val)?.label || "",
+                facName: specialityValues.find((opt) => opt.value === val)?.label || "",
                 compID: compID!,
                 compCode: compCode!,
                 compName: compName!,
@@ -83,88 +73,59 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
                 conType: ""
             })),
         }));
-    };
+    }, [compID, compCode, compName, specialityValues, setContactList]);
 
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setContactList((prev) => {
             if (name === "conCode") {
                 return {
                     ...prev,
-                    contactMastDto: {
-                        ...prev.contactMastDto,
-                        conCode: value,
-                    },
-                    contactAddressDto: {
-                        ...prev.contactAddressDto,
-                        conCode: value,
-                    },
+                    contactMastDto: { ...prev.contactMastDto, conCode: value },
+                    contactAddressDto: { ...prev.contactAddressDto, conCode: value },
                 };
             }
-            // Check if the field belongs to contactAddressDto
             if (name in prev.contactAddressDto) {
                 return {
                     ...prev,
-                    contactAddressDto: {
-                        ...prev.contactAddressDto,
-                        [name]: value,
-                    },
+                    contactAddressDto: { ...prev.contactAddressDto, [name]: value },
                 };
             }
-            // Otherwise, update contactMastDto
             return {
                 ...prev,
-                contactMastDto: {
-                    ...prev.contactMastDto,
-                    [name]: value,
-                },
+                contactMastDto: { ...prev.contactMastDto, [name]: value },
             };
         });
-    };
+    }, []);
 
-    const handleSwitchChange = (name: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSwitchChange = useCallback((name: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
         const checkedValue = event.target.checked ? "Y" : "N";
-        setSwitchStates((prev) => ({
-            ...prev,
-            [name]: event.target.checked,
-        }));
+        setSwitchStates((prev) => ({ ...prev, [name]: event.target.checked }));
         setContactList((prev) => ({
             ...prev,
-            contactMastDto: {
-                ...prev.contactMastDto,
-                [`${name}YN`]: checkedValue,
-            },
-            contactAddressDto:
-                name === "isEmployee" || name === "isAuthorisedUser"
-                    ? {
-                        ...prev.contactAddressDto,
-                        [`${name}YN`]: checkedValue,
-                    }
-                    : prev.contactAddressDto,
+            contactMastDto: { ...prev.contactMastDto, [`${name}YN`]: checkedValue },
+            contactAddressDto: name === "isEmployee" || name === "isAuthorisedUser"
+                ? { ...prev.contactAddressDto, [`${name}YN`]: checkedValue }
+                : prev.contactAddressDto,
         }));
-    };
+    }, [setSwitchStates, setContactList]);
 
-    const handleSave = async () => {
+    const handleSave = useCallback(async () => {
         setIsSubmitted(true);
         try {
             const result = await ContactListService.saveContactList(contactList);
             if (result.success) {
-                showAlert('Notification', 'Contact list saved successfully', 'success', {
-                    onConfirm: handleClear,
-                });
+                showAlert('Notification', 'Contact list saved successfully', 'success', { onConfirm: handleClear });
             } else {
                 showAlert('Error', result.errorMessage || 'Failed to save contact list.', 'error');
             }
         } catch (error) {
             showAlert('Error', 'An unexpected error occurred while saving the contact list.', 'error');
         }
-    };
+    }, [contactList]);
 
-    const handleClear = () => {
-        setContactList(
-            getInitialContactListState(userID!, userName!, compID!, compCode!, compName!)
-        );
+    const handleClear = useCallback(() => {
+        setContactList(getInitialContactListState(userID!, userName!, compID!, compCode!, compName!));
         setSwitchStates({
             isEmployee: false,
             isReferral: false,
@@ -174,84 +135,71 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
             isAuthorisedUser: false,
             isContract: false,
         });
-        //setSelectedSpecialities([]);
+        setSelectedSpecialities([]);
         setIsSubmitted(false);
-    };
+    }, [userID, userName, compID, compCode, compName, setContactList, setSwitchStates]);
 
-    return (
+    const renderFormFields = useMemo(() => (
         <>
             <section>
                 <Grid container spacing={2} alignItems="flex-start">
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="Code"
-                            ControlID="txtCode"
-                            placeholder="Code"
-                            type="text"
-                            size="small"
-                            name="conCode"
-                            value={contactList.contactMastDto.conCode}
-                            isSubmitted={isSubmitted}
-                            onChange={handleInputChange}
-                            isMandatory
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <DropdownSelect
-                            name="conCat"
-                            label="Category"
-                            value={contactList.contactMastDto.consValue}
-                            options={dropdownValues.categoryOptions}
-                            onChange={handleDropdownChange(
-                                ["contactMastDto", "consValue"],
-                                ["contactMastDto", "conCat"],
-                                dropdownValues.categoryOptions
-                            )}
-                            isMandatory
-                            size="small"
-                            isSubmitted={isSubmitted}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <DropdownSelect
-                            name="deptID"
-                            label="Department"
-                            value={
-                                contactList.contactMastDto.deptID === 0
-                                    ? ""
-                                    : String(contactList.contactMastDto.deptID)
-                            }
-                            options={dropdownValues.departmentOptions}
-                            onChange={handleDropdownChange(
-                                ["contactMastDto", "deptID"],
-                                ["contactMastDto", "deptName"],
-                                dropdownValues.departmentOptions
-                            )}
-                            isMandatory
-                            size="small"
-                            isSubmitted={isSubmitted}
-                        />
-                    </Grid>
+                    <FormField
+                        type="text"
+                        label="Code"
+                        name="conCode"
+                        ControlID="txtCode"
+                        value={contactList.contactMastDto.conCode}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        isMandatory={true}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="Category"
+                        name="conCat"
+                        ControlID="Category"
+                        value={contactList.contactMastDto.consValue}
+                        options={categoryValues}
+                        onChange={handleDropdownChange(
+                            ["contactMastDto", "consValue"],
+                            ["contactMastDto", "conCat"],
+                            categoryValues
+                        )}
+                        isMandatory={true}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="Department"
+                        name="deptID"
+                        ControlID="Department"
+                        value={contactList.contactMastDto.deptID === 0 ? "" : String(contactList.contactMastDto.deptID)}
+                        options={departmentValues}
+                        onChange={handleDropdownChange(
+                            ["contactMastDto", "deptID"],
+                            ["contactMastDto", "deptName"],
+                            departmentValues
+                        )}
+                        isMandatory={true}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
                     {contactList.contactMastDto.consValue === "PHY" && (
-                        <Grid item xs={12} sm={6} md={3}>
-                            <MultiSelectDropdown
-                                label="Speciality"
-                                name="selectedSpecialities"
-                                value={selectedSpecialities}
-                                options={dropdownValues.specialityOptions.map(option => ({
-                                    value: option.value,
-                                    label: option.label
-                                }))}
-                                onChange={handleSpecialityChange}
-                                defaultText="Select Specialities"
-                                size="small"
-                                multiple={true}
-                                isMandatory
-                                isSubmitted={isSubmitted}
-                            />
-
-
-                        </Grid>
+                        <FormField
+                            //type="multiSelect"
+                            type="select"
+                            label="Speciality"
+                            name="selectedSpecialities"
+                            ControlID="Speciality"
+                            value={selectedSpecialities}
+                            options={specialityValues}
+                            onChange={handleSpecialityChange}
+                            isMandatory={true}
+                            isSubmitted={isSubmitted}
+                            gridProps={{ xs: 12, sm: 6, md: 3 }}
+                        />
                     )}
                 </Grid>
             </section>
@@ -260,267 +208,229 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
                     Personal Details
                 </Typography>
                 <Grid container spacing={2} alignItems="flex-start">
-                    <Grid item xs={12} sm={6} md={3}>
-                        <DropdownSelect
-                            name="conTitle"
-                            label="Title"
-                            value={contactList.contactMastDto.conTitle}
-                            options={dropdownValues.titleOptions}
-                            onChange={handleDropdownChange(
-                                [""],
-                                ["contactMastDto", "conTitle"],
-                                dropdownValues.titleOptions
-                            )}
-                            isMandatory
-                            size="small"
-                            isSubmitted={isSubmitted}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="First Name"
-                            ControlID="txtFName"
-                            placeholder="First Name"
-                            type="text"
-                            name="conFName"
-                            size="small"
-                            value={contactList.contactMastDto.conFName}
-                            isSubmitted={isSubmitted}
-                            onChange={handleInputChange}
-                            isMandatory
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="Last Name"
-                            ControlID="txtLName"
-                            placeholder="Last Name"
-                            type="text"
-                            name="conLName"
-                            size="small"
-                            value={contactList.contactMastDto.conLName}
-                            isSubmitted={isSubmitted}
-                            onChange={handleInputChange}
-                            isMandatory
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <DropdownSelect
-                            name="conGender"
-                            label="Gender"
-                            value={contactList.contactMastDto.conGender || ""}
-                            options={dropdownValues.genderOptions}
-                            onChange={handleDropdownChange(
-                                [""],
-                                ["contactMastDto", "conGender"],
-                                dropdownValues.genderOptions
-                            )}
-                            isMandatory
-                            size="small"
-                            isSubmitted={isSubmitted}
-                        />
-                    </Grid>
+                    <FormField
+                        type="select"
+                        label="Title"
+                        name="conTitle"
+                        ControlID="Title"
+                        value={contactList.contactMastDto.conTitle}
+                        options={titleValues}
+                        onChange={handleDropdownChange(
+                            [""],
+                            ["contactMastDto", "conTitle"],
+                            titleValues
+                        )}
+                        isMandatory={true}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="text"
+                        label="First Name"
+                        name="conFName"
+                        ControlID="txtFName"
+                        value={contactList.contactMastDto.conFName}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        isMandatory={true}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="text"
+                        label="Last Name"
+                        name="conLName"
+                        ControlID="txtLName"
+                        value={contactList.contactMastDto.conLName}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        isMandatory={true}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="Gender"
+                        name="conGender"
+                        ControlID="Gender"
+                        value={contactList.contactMastDto.conGender || ""}
+                        options={genderValues}
+                        onChange={handleDropdownChange(
+                            [""],
+                            ["contactMastDto", "conGender"],
+                            genderValues
+                        )}
+                        isMandatory={true}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="date"
+                        label="Birth Date"
+                        name="conDob"
+                        ControlID="BirthDate"
+                        value={contactList.contactMastDto.conDob}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="Blood Group"
+                        name="conBldGrp"
+                        ControlID="BloodGroup"
+                        value={contactList.contactMastDto.conBldGrp || ""}
+                        options={bloodGroupValues}
+                        onChange={handleDropdownChange(
+                            [""],
+                            ["contactMastDto", "conBldGrp"],
+                            bloodGroupValues
+                        )}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="Marital Status"
+                        name="maritalStatus"
+                        ControlID="MaritalStatus"
+                        value={contactList.contactMastDto.maritalStatus || ""}
+                        options={maritalStatusValues}
+                        onChange={handleDropdownChange(
+                            [""],
+                            ["contactMastDto", "maritalStatus"],
+                            maritalStatusValues
+                        )}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="text"
+                        label="ID/Passport No"
+                        name="conSSNID"
+                        ControlID="PassportNo"
+                        value={contactList.contactMastDto.conSSNID}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
                 </Grid>
-                <Grid container spacing={2} alignItems="flex-start">
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="Birth Date"
-                            ControlID="BirthDate"
-                            placeholder="dd/mm/yyyy"
-                            type="date"
-                            name="conDob"
-                            size="small"
-                            value={
-                                contactList.contactMastDto.conDob
-                                    ? contactList.contactMastDto.conDob.toString().split("T")[0]
-                                    : ""
-                            }
-                            isSubmitted={isSubmitted}
-                            onChange={handleInputChange}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <DropdownSelect
-                            name="conBldGrp"
-                            label="Blood Group"
-                            value={contactList.contactMastDto.conBldGrp || ""}
-                            options={dropdownValues.bloodGroupOptions}
-                            onChange={handleDropdownChange(
-                                [""],
-                                ["contactMastDto", "conBldGrp"],
-                                dropdownValues.bloodGroupOptions
-                            )}
-                            size="small"
-                            isSubmitted={isSubmitted}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <DropdownSelect
-                            name="maritalStatus"
-                            label="Marital Status"
-                            value={contactList.contactMastDto.maritalStatus || ""}
-                            options={dropdownValues.maritalStatusOptions}
-                            onChange={handleDropdownChange(
-                                [""],
-                                ["contactMastDto", "maritalStatus"],
-                                dropdownValues.maritalStatusOptions
-                            )}
-                            size="small"
-                            isSubmitted={isSubmitted}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="ID/Passport No"
-                            ControlID="PassportNo"
-                            placeholder="ID/Passport No"
-                            type="text"
-                            name="conSSNID"
-                            size="small"
-                            value={contactList.contactMastDto.conSSNID}
-                            isSubmitted={isSubmitted}
-                            onChange={handleInputChange}
-                        />
-                    </Grid>
-                </Grid>
+
             </section>
             <section>
                 <Typography variant="h6" sx={{ borderBottom: "1px solid #000" }}>
                     Contact Details
                 </Typography>
                 <Grid container spacing={2} alignItems="flex-start">
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="Mobile No"
-                            ControlID="txtMobileNo"
-                            placeholder="Mobile No"
-                            type="text"
-                            name="cAddPhone1"
-                            size="small"
-                            value={contactList.contactAddressDto.cAddPhone1}
-                            isSubmitted={isSubmitted}
-                            onChange={handleInputChange}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <DropdownSelect
-                            name="cAddCity"
-                            label="City"
-                            value={contactList.contactAddressDto.cAddCity || ""}
-                            options={dropdownValues.cityOptions}
-                            onChange={handleDropdownChange(
-                                [""],
-                                ["contactAddressDto", "cAddCity"],
-                                dropdownValues.cityOptions
-                            )}
-                            size="small"
-                            isSubmitted={isSubmitted}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <DropdownSelect
-                            name="cAddState"
-                            label="State"
-                            value={contactList.contactAddressDto.cAddState || ""}
-                            options={dropdownValues.stateOptions}
-                            onChange={handleDropdownChange(
-                                [""],
-                                ["contactAddressDto", "cAddState"],
-                                dropdownValues.stateOptions
-                            )}
-                            size="small"
-                            isSubmitted={isSubmitted}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <DropdownSelect
-                            name="cAddCountry"
-                            label="Nationality"
-                            value={contactList.contactAddressDto.cAddCountry || ""}
-                            options={dropdownValues.nationalityOptions}
-                            onChange={handleDropdownChange(
-                                [""],
-                                ["contactAddressDto", "cAddCountry"],
-                                dropdownValues.nationalityOptions
-                            )}
-                            size="small"
-                            isSubmitted={isSubmitted}
-                        />
-                    </Grid>
-                </Grid>
-                <Grid container spacing={2} alignItems="flex-start">
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="E-Mail ID"
-                            ControlID="MailID"
-                            placeholder="E-Mail ID"
-                            type="email"
-                            name="cAddEmail"
-                            size="small"
-                            value={contactList.contactAddressDto.cAddEmail}
-                            isSubmitted={isSubmitted}
-                            onChange={handleInputChange}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="Post Code"
-                            ControlID="PostCode"
-                            placeholder="Post Code"
-                            type="text"
-                            name="cAddPostCode"
-                            size="small"
-                            value={contactList.contactAddressDto.cAddPostCode}
-                            isSubmitted={isSubmitted}
-                            onChange={handleInputChange}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="Emergency Contact Name"
-                            ControlID="EmergencyContactName"
-                            placeholder="Emergency Contact Name"
-                            type="text"
-                            name="emergenContactName"
-                            size="small"
-                            value={contactList.contactMastDto.emergenContactName}
-                            isSubmitted={isSubmitted}
-                            onChange={handleInputChange}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="Emergency Contact No"
-                            ControlID="EmergencyContactNo"
-                            placeholder="Emergency Contact No"
-                            type="text"
-                            name="cAddPhone2"
-                            size="small"
-                            value={contactList.contactAddressDto.cAddPhone2}
-                            isSubmitted={isSubmitted}
-                            onChange={handleInputChange}
-                        />
-                    </Grid>
-                </Grid>
-                <Grid container spacing={2} alignItems="flex-start">
-                    <Grid item xs={12} sm={6} md={3}>
-                        <TextArea
-                            label="Address"
-                            name="cAddStreet"
-                            value={contactList.contactAddressDto.cAddStreet || ""}
-                            onChange={(e) =>
-                                setContactList((prev) => ({
-                                    ...prev,
-                                    contactAddressDto: {
-                                        ...prev.contactAddressDto,
-                                        cAddStreet: e.target.value,
-                                    },
-                                }))
-                            }
-                            placeholder="Address"
-                            rows={1}
-                        />
-                    </Grid>
+                    <FormField
+                        type="text"
+                        label="Mobile No"
+                        name="cAddPhone1"
+                        ControlID="txtMobileNo"
+                        value={contactList.contactAddressDto.cAddPhone1}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="City"
+                        name="cAddCity"
+                        ControlID="City"
+                        value={contactList.contactAddressDto.cAddCity || ""}
+                        options={cityValues}
+                        onChange={handleDropdownChange(
+                            [""],
+                            ["contactAddressDto", "cAddCity"],
+                            cityValues
+                        )}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="State"
+                        name="cAddState"
+                        ControlID="State"
+                        value={contactList.contactAddressDto.cAddState || ""}
+                        options={stateValues}
+                        onChange={handleDropdownChange(
+                            [""],
+                            ["contactAddressDto", "cAddState"],
+                            stateValues
+                        )}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="Nationality"
+                        name="cAddCountry"
+                        ControlID="Nationality"
+                        value={contactList.contactAddressDto.cAddCountry || ""}
+                        options={nationalityValues}
+                        onChange={handleDropdownChange(
+                            [""],
+                            ["contactAddressDto", "cAddCountry"],
+                            nationalityValues
+                        )}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="email"
+                        label="E-Mail ID"
+                        name="cAddEmail"
+                        ControlID="MailID"
+                        value={contactList.contactAddressDto.cAddEmail}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="text"
+                        label="Post Code"
+                        name="cAddPostCode"
+                        ControlID="PostCode"
+                        value={contactList.contactAddressDto.cAddPostCode}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="text"
+                        label="Emergency Contact Name"
+                        name="emergenContactName"
+                        ControlID="EmergencyContactName"
+                        value={contactList.contactMastDto.emergenContactName}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="text"
+                        label="Emergency Contact No"
+                        name="cAddPhone2"
+                        ControlID="EmergencyContactNo"
+                        value={contactList.contactAddressDto.cAddPhone2}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="textarea"
+                        label="Address"
+                        name="cAddStreet"
+                        ControlID="Address"
+                        value={contactList.contactAddressDto.cAddStreet || ""}
+                        onChange={(e) => setContactList((prev) => ({
+                            ...prev,
+                            contactAddressDto: {
+                                ...prev.contactAddressDto,
+                                cAddStreet: e.target.value,
+                            },
+                        }))}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 12, md: 6 }}
+                    />
                 </Grid>
             </section>
             <section>
@@ -528,61 +438,61 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
                     Account Details
                 </Typography>
                 <Grid container spacing={2} alignItems="flex-start">
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="Account Code"
-                            ControlID="AccountCode"
-                            placeholder="Account Code"
-                            type="text"
-                            name="accCode"
-                            size="small"
-                            value={contactList.contactMastDto.accCode}
-                            isSubmitted={isSubmitted}
-                            onChange={handleInputChange}
-                            isMandatory={contactList.contactMastDto.consValue === "PHY"} // Make Account Code mandatory if Category is PHY
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <FloatingLabelTextBox
-                            title="Account Pay Code"
-                            ControlID="AccountPayCode"
-                            placeholder="Account Pay Code"
-                            type="text"
-                            name="accPayCode"
-                            size="small"
-                            value={contactList.contactMastDto.accPayCode}
-                            isSubmitted={isSubmitted}
-                            onChange={handleInputChange}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <DropdownSelect
-                            name="conEmpStatus"
-                            label="Employee Status"
-                            value={contactList.contactMastDto.conEmpStatus || ""}
-                            options={dropdownValues.employeeStatusOptions}
-                            onChange={handleDropdownChange(
-                                [""],
-                                ["contactMastDto", "conEmpStatus"],
-                                dropdownValues.employeeStatusOptions
-                            )}
-                            size="small"
-                            isSubmitted={isSubmitted}
-                        />
-                    </Grid>
+                    <FormField
+                        type="text"
+                        label="Account Code"
+                        name="accCode"
+                        ControlID="AccountCode"
+                        value={contactList.contactMastDto.accCode}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        isMandatory={contactList.contactMastDto.consValue === "PHY"}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="text"
+                        label="Account Pay Code"
+                        name="accPayCode"
+                        ControlID="AccountPayCode"
+                        value={contactList.contactMastDto.accPayCode}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="Employee Status"
+                        name="conEmpStatus"
+                        ControlID="EmployeeStatus"
+                        value={contactList.contactMastDto.conEmpStatus || ""}
+                        options={employeeStatusValues}
+                        onChange={handleDropdownChange(
+                            [""],
+                            ["contactMastDto", "conEmpStatus"],
+                            employeeStatusValues
+                        )}
+                        isSubmitted={isSubmitted}
+                        gridProps={{ xs: 12, sm: 6, md: 3 }}
+                    />
                 </Grid>
-                <ContactListSwitches
-                    switchStates={switchStates}
-                    handleSwitchChange={handleSwitchChange}
-                    contactList={contactList}
-                />
             </section>
+        </>
+    ), [contactList, handleDropdownChange, handleInputChange, handleSpecialityChange, isSubmitted, selectedSpecialities]);
+
+    return (
+        <>
+            {renderFormFields}
+            <ContactListSwitches
+                switchStates={switchStates}
+                handleSwitchChange={handleSwitchChange}
+                contactList={contactList}
+            />
             <ContactListActions handleSave={handleSave} handleClear={handleClear} />
         </>
     );
 };
 
-export default ContactListForm;
+export default React.memo(ContactListForm);
 
 function getInitialContactListState(
     userID: number,
@@ -591,7 +501,8 @@ function getInitialContactListState(
     compCode: string,
     compName: string
 ): ContactListData {
-    const today = new Date().toISOString().split("T")[0];
+    const { formatDateYMD } = useDayjs();
+    const today = formatDateYMD();
     return {
         contactMastDto: {
             conID: 0,
