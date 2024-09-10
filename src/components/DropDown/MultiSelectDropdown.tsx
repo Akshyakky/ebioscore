@@ -11,20 +11,20 @@ import {
 } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
 import { styled } from "@mui/material/styles";
+import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 
-interface DropdownSelectProps {
+interface MultiSelectDropdownProps {
   label: string;
   name: string;
-  value: string | string[];
-  options: Array<{ value: string; label: string }>;
-  onChange: (event: SelectChangeEvent<string | string[]>) => void;
+  value: string[];
+  options: DropdownOption[];
+  onChange: (event: SelectChangeEvent<string[]>, child: React.ReactNode) => void;
   size?: "small" | "medium";
   disabled?: boolean;
   isMandatory?: boolean;
   defaultText?: string;
   className?: string;
   isSubmitted?: boolean;
-  multiple?: boolean;
 }
 
 const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
@@ -46,7 +46,7 @@ const StyledListItemText = styled(ListItemText)(({ theme }) => ({
   color: "#000",
 }));
 
-const MultiSelectDropdown: React.FC<DropdownSelectProps> = ({
+const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   label,
   name,
   value,
@@ -58,7 +58,6 @@ const MultiSelectDropdown: React.FC<DropdownSelectProps> = ({
   defaultText,
   className,
   isSubmitted = false,
-  multiple = false,
 }) => {
   const isEmptyValue = useMemo(() => {
     return Array.isArray(value) ? value.length === 0 : value === "" || value === "0";
@@ -90,7 +89,7 @@ const MultiSelectDropdown: React.FC<DropdownSelectProps> = ({
         {label}
       </InputLabel>
       <Select
-        multiple={multiple}
+        multiple={true}
         labelId={`ddl-label-${name}`}
         id={`ddl${name}`}
         name={name}
@@ -98,33 +97,25 @@ const MultiSelectDropdown: React.FC<DropdownSelectProps> = ({
         onChange={onChange}
         label={label}
         disabled={disabled}
-        input={multiple ? <OutlinedInput label={label} /> : undefined}
+        input={<OutlinedInput label={label} />}
         renderValue={renderValue}
       >
-        {multiple && (
-          <MenuItem disabled value="">
-            <em>{defaultText || `Select ${label}`}</em>
-          </MenuItem>
-        )}
+        <MenuItem disabled value="">
+          <em>{defaultText || `Select ${label}`}</em>
+        </MenuItem>
         {options.map((option) => (
           <StyledMenuItem key={option.value} value={option.value}>
-            {multiple ? (
-              <>
-                <StyledCheckbox
-                  checked={
-                    Array.isArray(value) && value.indexOf(option.value) > -1
-                  }
-                />
-                <StyledListItemText primary={option.label} />
-              </>
-            ) : (
-              option.label
-            )}
+            <StyledCheckbox
+              checked={
+                Array.isArray(value) && value.indexOf(option.value) > -1
+              }
+            />
+            <StyledListItemText primary={option.label} />
           </StyledMenuItem>
         ))}
       </Select>
       {hasError && <FormHelperText>{label} is required.</FormHelperText>}
-    </FormControl>
+    </FormControl >
   );
 };
 

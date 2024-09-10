@@ -1,15 +1,12 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, forwardRef, useImperativeHandle } from "react";
 import { Grid, SelectChangeEvent, Typography } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
 import { ContactListData } from "../../../../interfaces/HospitalAdministration/ContactListData";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import ContactListActions from "./ContactListActions";
 import ContactListSwitches from "./ContactListSwitches";
-import { ContactListService } from "../../../../services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import useDayjs from "../../../../hooks/Common/useDateTime";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 
 type SwitchStates = {
@@ -27,14 +24,18 @@ interface ContactListFormProps {
     setContactList: React.Dispatch<React.SetStateAction<ContactListData>>;
     switchStates: SwitchStates;
     setSwitchStates: React.Dispatch<React.SetStateAction<SwitchStates>>;
+    onSave: () => Promise<void>;
+    onClear: () => void;
 }
 
-const ContactListForm: React.FC<ContactListFormProps> = ({
+const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormProps>(({
     contactList,
     setContactList,
     switchStates,
     setSwitchStates,
-}) => {
+    onSave,
+    onClear,
+}, ref) => {
     const { compID, userID, userName, compCode, compName } = useSelector(
         (state: RootState) => state.userDetails
     );
@@ -112,32 +113,21 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
 
     const handleSave = useCallback(async () => {
         setIsSubmitted(true);
-        try {
-            const result = await ContactListService.saveContactList(contactList);
-            if (result.success) {
-                showAlert('Notification', 'Contact list saved successfully', 'success', { onConfirm: handleClear });
-            } else {
-                showAlert('Error', result.errorMessage || 'Failed to save contact list.', 'error');
-            }
-        } catch (error) {
-            showAlert('Error', 'An unexpected error occurred while saving the contact list.', 'error');
-        }
-    }, [contactList]);
+        await onSave();
+    }, [onSave]);
 
     const handleClear = useCallback(() => {
-        setContactList(getInitialContactListState(userID!, userName!, compID!, compCode!, compName!));
-        setSwitchStates({
-            isEmployee: false,
-            isReferral: false,
-            isAppointment: false,
-            isSuperSpeciality: false,
-            isUserRequired: false,
-            isAuthorisedUser: false,
-            isContract: false,
-        });
+        onClear();
         setSelectedSpecialities([]);
         setIsSubmitted(false);
-    }, [userID, userName, compID, compCode, compName, setContactList, setSwitchStates]);
+    }, [onClear]);
+
+    useImperativeHandle(ref, () => ({
+        resetForm: () => {
+            setSelectedSpecialities([]);
+            setIsSubmitted(false);
+        }
+    }));
 
     const renderFormFields = useMemo(() => (
         <>
@@ -188,8 +178,7 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
                     />
                     {contactList.contactMastDto.consValue === "PHY" && (
                         <FormField
-                            //type="multiSelect"
-                            type="select"
+                            type="multiselect"
                             label="Speciality"
                             name="selectedSpecialities"
                             ControlID="Speciality"
@@ -313,7 +302,6 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
                     />
                 </Grid>
-
             </section>
             <section>
                 <Typography variant="h6" sx={{ borderBottom: "1px solid #000" }}>
@@ -429,7 +417,8 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
                             },
                         }))}
                         isSubmitted={isSubmitted}
-                        gridProps={{ xs: 12, sm: 12, md: 6 }}
+                        gridProps={{ xs: 12, sm: 12, md: 3 }}
+                        maxLength={300}
                     />
                 </Grid>
             </section>
@@ -490,95 +479,6 @@ const ContactListForm: React.FC<ContactListFormProps> = ({
             <ContactListActions handleSave={handleSave} handleClear={handleClear} />
         </>
     );
-};
+});
 
 export default React.memo(ContactListForm);
-
-function getInitialContactListState(
-    userID: number,
-    userName: string,
-    compID: number,
-    compCode: string,
-    compName: string
-): ContactListData {
-    const { formatDateYMD } = useDayjs();
-    const today = formatDateYMD();
-    return {
-        contactMastDto: {
-            conID: 0,
-            conCode: "",
-            conTitle: "",
-            conFName: "",
-            conLName: "",
-            conMName: "",
-            conDob: today,
-            conGender: "",
-            conSSNID: "",
-            conBldGrp: "",
-            conCat: "",
-            consValue: "",
-            conEmpYN: "N",
-            rActiveYN: "Y",
-            rCreatedOn: today,
-            rCreatedID: userID,
-            rCreatedBy: userName,
-            rModifiedOn: today,
-            rModifiedID: userID,
-            rModifiedBy: userName,
-            compID: compID,
-            compCode: compCode,
-            compName: compName,
-            notes: "",
-            conEmpStatus: "",
-            allergicToAllergence: "",
-            allergicToMedicine: "",
-            aPHYRMID: 0,
-            aPhyRoomName: "",
-            deptID: 0,
-            deptName: "",
-            designation: "",
-            emergenContactName: "",
-            iPP: 0,
-            oPP: 0,
-            isAuthorizedUserYN: "N",
-            isContractYN: "N",
-            isSuperSpecialtyYN: "N",
-            isEmployeeYN: "N",
-            isRefferalYN: "N",
-            isAppointmentYN: "N",
-            isUserRequiredYN: "N",
-            maritalStatus: "",
-            tINNo: "",
-            accCode: "",
-            accPayCode: "",
-            gESYCode: "",
-            digSignPath: "",
-            stampPath: "",
-            payPolicy: 0,
-            transferYN: "N",
-        },
-        contactAddressDto: {
-            cAddID: 0,
-            conID: 0,
-            conCode: "",
-            cAddType: "",
-            cAddMail: "N",
-            cAddPostCode: "",
-            cAddPSSID: "",
-            compID: compID,
-            compCode: compCode,
-            compName: compName,
-            cAddCity: "",
-            cAddCountry: "",
-            cAddEmail: "",
-            cAddPhone1: "",
-            cAddPhone2: "",
-            cAddPhone3: "",
-            cAddState: "",
-            cAddStreet: "",
-            cAddStreet1: "",
-            transferYN: "N",
-        },
-        contactDetailsDto: []
-    };
-}

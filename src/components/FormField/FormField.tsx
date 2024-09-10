@@ -8,8 +8,9 @@ import CustomSwitch from "../Checkbox/ColorSwitch";
 import RadioGroup from "../RadioGroup/RadioGroup";
 import AutocompleteTextBox from "../TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import { TextFieldProps } from "@mui/material/TextField";
+import MultiSelectDropdown from "../DropDown/MultiSelectDropdown";
 
-type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email" | "radio" | "autocomplete" | "date" | "search";
+type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email" | "radio" | "autocomplete" | "date" | "search" | "multiselect";
 
 interface DropdownOption {
   value: string;
@@ -60,6 +61,13 @@ export interface SelectFormFieldProps extends BaseFormFieldProps {
   onClear?: () => void;
 }
 
+export interface MultiSelectFormFieldProps extends BaseFormFieldProps {
+  type: "multiselect";
+  options: DropdownOption[];
+  onChange: (event: SelectChangeEvent<string[]>, child: React.ReactNode) => void;
+  defaultText?: string;
+}
+
 export interface SwitchFormFieldProps extends BaseFormFieldProps {
   type: "switch";
   onChange: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
@@ -82,7 +90,7 @@ export interface AutocompleteFormFieldProps extends BaseFormFieldProps {
   suggestions?: string[];
 }
 
-export type FormFieldProps = TextFormFieldProps | TextAreaFormFieldProps | SelectFormFieldProps | SwitchFormFieldProps | RadioFormFieldProps | AutocompleteFormFieldProps;
+export type FormFieldProps = TextFormFieldProps | TextAreaFormFieldProps | SelectFormFieldProps | SwitchFormFieldProps | RadioFormFieldProps | AutocompleteFormFieldProps | MultiSelectFormFieldProps;
 
 const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
   const {
@@ -172,6 +180,24 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
             onClear={selectProps.onClear}
           />
         );
+
+      case "multiselect":
+        const multiSelectProps = props as MultiSelectFormFieldProps;
+        return (
+          <MultiSelectDropdown
+            label={label}
+            name={name}
+            value={Array.isArray(value) ? value : [value]}
+            options={multiSelectProps.options}
+            onChange={multiSelectProps.onChange}
+            size={size}
+            disabled={disabled}
+            isMandatory={isMandatory}
+            defaultText={multiSelectProps.defaultText}
+            isSubmitted={isSubmitted}
+          />
+        );
+
       case "switch":
         const switchProps = props as SwitchFormFieldProps;
         return (
