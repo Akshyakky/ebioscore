@@ -5,7 +5,7 @@ import { store } from "../../../../store/store";
 import { CommonApiService } from "../../../CommonApiService";
 
 const apiService = new CommonApiService({
-  baseURL: APIConfig.patientAdministrationURL,
+  baseURL: APIConfig.hospitalAdministrations,
 });
 
 const getToken = () => store.getState().userDetails.token!;

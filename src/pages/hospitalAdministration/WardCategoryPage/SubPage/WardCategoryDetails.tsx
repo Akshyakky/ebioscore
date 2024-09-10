@@ -18,7 +18,7 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
     wCatName: "",
     rNotes: "",
     rActiveYN: "Y",
-    transferYN: "N",
+    transferYN: "Y",
     compID: 1,
   });
 
@@ -33,7 +33,7 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
         wCatName: editData.wCatName || "",
         rNotes: editData.rNotes || "",
         rActiveYN: editData.rActiveYN || "Y",
-        transferYN: editData.transferYN || "N",
+        transferYN: "Y",
         compID: 1,
         wCatID: editData.wCatID,
       });
@@ -50,7 +50,7 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
       rNotes: formState.rNotes,
       rActiveYN: formState.rActiveYN,
       compID: compID || 1,
-      transferYN: formState.transferYN,
+      transferYN: "Y",
     }),
     [formState, editData, compID]
   );
@@ -98,7 +98,7 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
       wCatName: "",
       rNotes: "",
       rActiveYN: "Y",
-      transferYN: "N",
+      transferYN: "Y",
       compID: 0,
       wCatID: 0,
     });
