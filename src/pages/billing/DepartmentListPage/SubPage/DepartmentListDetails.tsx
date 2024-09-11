@@ -2,6 +2,7 @@ import { Grid, Paper, Typography } from "@mui/material";
 import { useState, useEffect, useMemo } from "react";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from "@mui/icons-material/Save";
+import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useLoading } from "../../../../context/LoadingContext";
 import { store } from "../../../../store/store";
@@ -136,9 +137,14 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
       const result =
         await DepartmentListService.saveDepartmentList(departmentDto);
       if (result.success) {
-        showAlert("Success", "Department saved successfully!", "success", {
-          onConfirm: handleClear,
-        });
+        showAlert(
+          `${deptId > 0 ? "Updated" : "Saved"}`,
+          `${deptName} ${deptId > 0 ? "updated" : "saved"} successfully!`,
+          "success",
+          {
+            onConfirm: handleClear,
+          }
+        );
       } else {
         showAlert(
           "Error",
@@ -298,15 +304,17 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
           />
         </Grid>
         <Grid container spacing={2}>
-          <FormField
-            type="switch"
-            label={rActiveYN === "Y" ? "Active" : "Hidden"}
-            value={rActiveYN}
-            checked={rActiveYN === "Y"}
-            onChange={handleActiveToggle}
-            name="rActiveYN"
-            ControlID="rActiveYN"
-          />
+          {deptId > 0 && (
+            <FormField
+              type="switch"
+              label={rActiveYN === "Y" ? "Active" : "Hidden"}
+              value={rActiveYN}
+              checked={rActiveYN === "Y"}
+              onChange={handleActiveToggle}
+              name="rActiveYN"
+              ControlID="rActiveYN"
+            />
+          )}
           <FormField
             type="switch"
             label="Registration"
@@ -401,11 +409,11 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
 
         <FormSaveClearButton
           clearText="Clear"
-          saveText="Save"
+          saveText={deptId > 0 ? "Update" : "Save"}
           onClear={handleClear}
           onSave={handleSave}
           clearIcon={DeleteIcon}
-          saveIcon={SaveIcon}
+          saveIcon={deptId > 0 ? EditIcon : SaveIcon}
         />
       </section>
       <DeptUsersPage
