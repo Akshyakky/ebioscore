@@ -6,13 +6,13 @@ export interface AlertDto {
   pChartID: number;
   oPIPCaseNo: number;
   patOPIPYN: string;
-  oPIPDate: Date;
+  oPIPDate: string;
   alertDescription: string;
   rActiveYN: string;
-  rCreatedOn: Date;
+  rCreatedOn: string;
   rCreatedID: number;
   rCreatedBy: string;
-  rModifiedOn: Date;
+  rModifiedOn: string;
   rModifiedID: number;
   rModifiedBy: string;
   category: string;

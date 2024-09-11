@@ -3,6 +3,7 @@ import React, {
   useEffect,
   forwardRef,
   useImperativeHandle,
+  useCallback,
 } from "react";
 import { Grid, Typography } from "@mui/material";
 import CustomButton from "../../../../components/Button/CustomButton";
@@ -11,7 +12,7 @@ import { OPIPInsurancesDto } from "../../../../interfaces/PatientAdministration/
 import PatientInsuranceForm from "./PatientInsuranceForm";
 import PatientInsuranceGrid from "./PatientInsuranceGrid";
 import { InsuranceCarrierService } from "../../../../services/CommonServices/InsuranceCarrierService";
-import { format } from "date-fns";
+import useDayjs from "../../../../hooks/Common/useDateTime";
 
 interface InsurancePageProps {
   pChartID: number;
@@ -29,6 +30,7 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
   const [gridInsuranceData, setGridInsuranceData] = useState<
     OPIPInsurancesDto[]
   >([]);
+  const { formatDate, parse, formatDateYMD } = useDayjs();
 
 
   useImperativeHandle(ref, () => ({
@@ -88,33 +90,26 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
     return maxId + 1;
   };
 
-  useEffect(() => {
-    if (pChartID) {
-      const fetchInsuranceData = async () => {
-        try {
-          const insuranceDetails =
-            await InsuranceCarrierService.getOPIPInsuranceByPChartID(
-              pChartID
-            );
-          if (insuranceDetails.success && insuranceDetails.data) {
-            const formattedData = insuranceDetails.data.map((insur) => ({
-              ...insur,
-              policyStartDt: format(
-                new Date(insur.policyStartDt),
-                "yyyy-MM-dd"
-              ),
-              policyEndDt: format(new Date(insur.policyEndDt), "yyyy-MM-dd"),
-            }));
-            setGridInsuranceData(formattedData);
-          }
-        } catch (error) {
-          console.error("Error fetching insurance data:", error);
-        }
-      };
-
-      fetchInsuranceData();
+  const fetchInsuranceData = useCallback(async () => {
+    if (!pChartID) return;
+    try {
+      const insuranceDetails = await InsuranceCarrierService.getOPIPInsuranceByPChartID(pChartID);
+      if (insuranceDetails.success && insuranceDetails.data) {
+        const formattedData = insuranceDetails.data.map((insur) => ({
+          ...insur,
+          policyStartDt: formatDateYMD(parse(insur.policyStartDt, 'DD/MM/YYYY')),
+          policyEndDt: formatDateYMD(parse(insur.policyEndDt, 'DD/MM/YYYY')),
+        }));
+        setGridInsuranceData(formattedData);
+      }
+    } catch (error) {
+      console.error("Error fetching insurance data:", error);
     }
   }, [pChartID]);
+
+  useEffect(() => {
+    fetchInsuranceData();
+  }, [fetchInsuranceData]);
 
   const handleOpenInsurancePopup = () => {
     setShowInsurancePopup(true);

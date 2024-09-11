@@ -13,7 +13,7 @@ export interface AppointBookingDto {
   abDurDesc: string;
   abDate: string; // Use string for dates in TS, convert to Date when needed
   abTime: string; // Use string for times in TS, convert to Date when needed
-  pChartID?: number;
+  pChartID: number;
   pChartCode?: string;
   abPType: string;
   abStatus: string;

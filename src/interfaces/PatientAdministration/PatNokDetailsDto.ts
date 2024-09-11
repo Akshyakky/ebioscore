@@ -14,7 +14,7 @@ export interface PatNokDetailsDto {
   pNokTitle: string;
   pNokFName: string;
   pNokMName?: string;
-  pNokLName?: string;
+  pNokLName: string;
   pNokActualCountryVal: string;
   pNokActualCountry?: string;
   pNokAreaVal: string;
@@ -24,7 +24,7 @@ export interface PatNokDetailsDto {
   pNokCountryVal: string;
   pNokCountry?: string;
   pNokDoorNo?: string;
-  pAddPhone1?: string;
+  pAddPhone1: string;
   pAddPhone2?: string;
   pAddPhone3?: string;
   pNokPostcode?: string;

@@ -10,14 +10,12 @@ import { showAlert } from "../../../../utils/Common/showAlert";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { DepartmentDto } from "./../../../../interfaces/Billing/DepartmentDto";
 import { DepartmentListService } from "../../../../services/BillingServices/DepartmentListService";
-import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
-import useDropdown from "../../../../hooks/useDropdown";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 import FormField from "../../../../components/FormField/FormField";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { DeptUsersPage } from "./DeptUsers/DeptUsersPage";
+import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 
 const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   editData,
@@ -47,6 +45,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   const { compID, compCode, compName, userID, userName } =
     store.getState().userDetails;
   const { token } = useSelector((state: RootState) => state.userDetails);
+  const { departmentTypesValues } = useDropdownValues();
 
   useEffect(() => {
     if (editData) {
@@ -79,25 +78,6 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   const handleCloseDialog = () => {
     setOpenDialog(false);
   };
-
-  const transformDeptTypeValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
-  const memoizedParams = useMemo(
-    () => [token, "GetConstantValues", "DTYP"],
-    [token]
-  );
-
-  const deptTypeResult = useDropdown(
-    ConstantValues.fetchConstantValues,
-    transformDeptTypeValues,
-    memoizedParams
-  );
-
-  const deptTypeValues = deptTypeResult.options as DropdownOption[];
 
   const handleSave = async () => {
     setIsSubmitted(true);
@@ -263,7 +243,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
             label="Department Type"
             value={deptType}
             onChange={(e) => setDeptType(e.target.value)}
-            options={deptTypeValues}
+            options={departmentTypesValues}
             isSubmitted={isSubmitted}
             name="deptType"
             ControlID="deptType"

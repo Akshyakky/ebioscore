@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useMemo } from "react";
 import "./App.css";
 import {
   BrowserRouter as Router,
@@ -18,7 +18,6 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import routeConfig from "./routes/routeConfig";
 
-
 interface RouteConfig {
   path: string;
   component: React.ComponentType<any>;
@@ -26,39 +25,41 @@ interface RouteConfig {
   providers?: React.ComponentType<any>[];
 }
 
-const renderRoutes = (routes: RouteConfig[]) => {
-  return routes.map(
-    ({
-      path,
-      component: Component,
-      protected: isProtected,
-      providers,
-    }: RouteConfig) => (
-      <Route
-        key={path}
-        path={path}
-        element={
-          isProtected ? (
-            <ProtectedRoute>
-              {providers ? (
-                providers.reduceRight<ReactNode>(
-                  (children, Provider) => <Provider>{children}</Provider>,
-                  <Component />
-                )
-              ) : (
-                <Component />
-              )}
-            </ProtectedRoute>
-          ) : (
-            <Component />
-          )
-        }
-      />
-    )
-  );
-};
-
 const App: React.FC = () => {
+  const renderRoutes = useMemo(() => {
+    return (routes: RouteConfig[]) => routes.map(
+      ({
+        path,
+        component: Component,
+        protected: isProtected,
+        providers,
+      }: RouteConfig) => (
+        <Route
+          key={path}
+          path={path}
+          element={
+            isProtected ? (
+              <ProtectedRoute>
+                {providers ? (
+                  providers.reduceRight<ReactNode>(
+                    (children, Provider) => <Provider>{children}</Provider>,
+                    <Component />
+                  )
+                ) : (
+                  <Component />
+                )}
+              </ProtectedRoute>
+            ) : (
+              <Component />
+            )
+          }
+        />
+      )
+    );
+  }, []);
+
+  const memoizedRoutes = useMemo(() => renderRoutes(routeConfig), [renderRoutes]);
+
   return (
     <ThemeProvider theme={theme}>
       <ReduxProvider store={store}>
@@ -78,7 +79,7 @@ const App: React.FC = () => {
                 pauseOnHover
               />
               <Routes>
-                {renderRoutes(routeConfig)}
+                {memoizedRoutes}
                 <Route path="/" element={<Navigate replace to="/login" />} />
               </Routes>
             </Router>

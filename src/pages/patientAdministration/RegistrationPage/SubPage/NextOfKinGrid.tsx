@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { PatNokDetailsDto } from "../../../../interfaces/PatientAdministration/PatNokDetailsDto";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { format } from "date-fns";
+import useDayjs from "../../../../hooks/Common/useDateTime";
 
 interface NextOfKinGridProps {
   kinData: PatNokDetailsDto[];
@@ -17,7 +17,17 @@ const NextOfKinGrid: React.FC<NextOfKinGridProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const gridKinColumns = [
+  const { formatDate, parse, formatDateYMD } = useDayjs();
+  const handleEdit = useCallback((row: PatNokDetailsDto) => {
+    debugger
+    onEdit(row);
+  }, [onEdit]);
+
+  const handleDelete = useCallback((id: number) => {
+    onDelete(id);
+  }, [onDelete]);
+
+  const gridKinColumns = useMemo(() => [
     {
       key: "edit",
       header: "Edit",
@@ -25,7 +35,7 @@ const NextOfKinGrid: React.FC<NextOfKinGridProps> = ({
       render: (row: PatNokDetailsDto) => (
         <CustomButton
           size="small"
-          onClick={() => onEdit(row)}
+          onClick={() => handleEdit(row)}
           icon={EditIcon}
           color="primary"
         />
@@ -43,8 +53,7 @@ const NextOfKinGrid: React.FC<NextOfKinGridProps> = ({
       key: "pNokDob",
       header: "DOB",
       visible: true,
-      render: (row: PatNokDetailsDto) =>
-        format(new Date(row.pNokDob), "dd/MM/yyyy"),
+      render: (row: PatNokDetailsDto) => formatDate(row.pNokDob),
     },
     { key: "pNokPostcode", header: "Post Code", visible: true },
     {
@@ -67,15 +76,15 @@ const NextOfKinGrid: React.FC<NextOfKinGridProps> = ({
       render: (row: PatNokDetailsDto) => (
         <CustomButton
           size="small"
-          onClick={() => onDelete(row.pNokID)}
+          onClick={() => handleDelete(row.pNokID)}
           icon={DeleteIcon}
           color="error"
         />
       ),
     },
-  ];
+  ], [handleEdit, handleDelete]);
 
   return <CustomGrid columns={gridKinColumns} data={kinData} />;
 };
 
-export default NextOfKinGrid;
+export default React.memo(NextOfKinGrid);

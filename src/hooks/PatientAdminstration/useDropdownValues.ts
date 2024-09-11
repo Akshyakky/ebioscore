@@ -1,0 +1,316 @@
+import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/reducers";
+import { useLoading } from "../../context/LoadingContext";
+import { DropdownOption } from "../../interfaces/Common/DropdownOption";
+import { BillingService } from "../../services/BillingServices/BillingService";
+import { ConstantValues } from "../../services/CommonServices/ConstantValuesService";
+import { AppModifyListService } from "../../services/CommonServices/AppModifyListService";
+import { DepartmentService } from "../../services/CommonServices/DepartmentService";
+import { ContactMastService } from "../../services/CommonServices/ContactMastService";
+import { InsuranceCarrierService } from "../../services/CommonServices/InsuranceCarrierService";
+import { ContactListService } from "../../services/HospitalAdministrationServices/ContactListService/ContactListService";
+
+const useDropdownValues = () => {
+  const [picValues, setPicValues] = useState<DropdownOption[]>([]);
+  const [titleValues, setTitleValues] = useState<DropdownOption[]>([]);
+  const [genderValues, setGenderValues] = useState<DropdownOption[]>([]);
+  const [ageUnitOptions, setAgeValues] = useState<DropdownOption[]>([]);
+  const [nationalityValues, setNationalityValues] = useState<DropdownOption[]>(
+    []
+  );
+  const [areaValues, setAreaValues] = useState<DropdownOption[]>([]);
+  const [cityValues, setCityValues] = useState<DropdownOption[]>([]);
+  const [countryValues, setCountryValues] = useState<DropdownOption[]>([]);
+  const [companyValues, setCompanyValues] = useState<DropdownOption[]>([]);
+  const [departmentValues, setDepartmentValues] = useState<DropdownOption[]>(
+    []
+  );
+  const [attendingPhyValues, setAttendingPhyValues] = useState<
+    DropdownOption[]
+  >([]);
+  const [primaryIntroducingSourceValues, setPrimaryIntroducingSourceValues] =
+    useState<DropdownOption[]>([]);
+  const [membershipSchemeValues, setMembershipSchemeValues] = useState<
+    DropdownOption[]
+  >([]);
+  const [relationValues, setRelationValues] = useState<DropdownOption[]>([]);
+  const [insuranceOptions, setInsuranceOptions] = useState<DropdownOption[]>(
+    []
+  );
+  const [coverForValues, setCoverForValues] = useState<DropdownOption[]>([]);
+  const [departmentTypesValues, setDepartmentTypesValues] = useState<
+    DropdownOption[]
+  >([]);
+  const [bloodGroupValues, setBloodGroupValues] = useState<DropdownOption[]>(
+    []
+  );
+  const [maritalStatusValues, setmaritalStatusValues] = useState<
+    DropdownOption[]
+  >([]);
+  const [stateValues, setstateValues] = useState<DropdownOption[]>([]);
+  const [categoryValues, setcategoryValues] = useState<DropdownOption[]>([]);
+  const [employeeStatusValues, setemployeeStatusValues] = useState<
+    DropdownOption[]
+  >([]);
+  const [specialityValues, setspecialityValues] = useState<DropdownOption[]>(
+    []
+  );
+
+  const { setLoading } = useLoading();
+  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const compID = userInfo.compID!;
+
+  useEffect(() => {
+    const loadDropdownValues = async () => {
+      try {
+        setLoading(true);
+        const [
+          picResponse,
+          titleResponse,
+          genderResponse,
+          ageResponse,
+          nationalityResponse,
+          areaResponse,
+          cityResponse,
+          countryResponse,
+          companyResponse,
+          departmentResponse,
+          attendingPhyResponse,
+          primaryIntroducingSourceResponse,
+          membershipSchemeResponse,
+          relationResponse,
+          insuranceResponse,
+          coverForResponse,
+          departmentTypesResponse,
+          bloodGroupResponse,
+          maritalStatusResponse,
+          stateResponse,
+          categoryResponse,
+          employeeStatusResponse,
+          specialityResponse,
+        ] = await Promise.all([
+          BillingService.fetchPicValues("GetPICDropDownValues"),
+          ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
+          ConstantValues.fetchConstantValues("GetConstantValues", "PSEX"),
+          ConstantValues.fetchConstantValues("GetConstantValues", "PAT"),
+          AppModifyListService.fetchAppModifyList(
+            "GetActiveAppModifyFieldsAsync",
+            "NATIONALITY"
+          ),
+          AppModifyListService.fetchAppModifyList(
+            "GetActiveAppModifyFieldsAsync",
+            "AREA"
+          ),
+          AppModifyListService.fetchAppModifyList(
+            "GetActiveAppModifyFieldsAsync",
+            "CITY"
+          ),
+          AppModifyListService.fetchAppModifyList(
+            "GetActiveAppModifyFieldsAsync",
+            "ACTUALCOUNTRY"
+          ),
+          AppModifyListService.fetchAppModifyList(
+            "GetActiveAppModifyFieldsAsync",
+            "COMPANY"
+          ),
+          DepartmentService.fetchDepartments(
+            "GetActiveRegistrationDepartments",
+            compID
+          ),
+          ContactMastService.fetchAttendingPhysician(
+            "GetActiveConsultants",
+            compID
+          ),
+          ContactMastService.fetchRefferalPhy(
+            "GetActiveReferralContacts",
+            compID
+          ),
+          BillingService.fetchMembershipScheme(
+            "GetActivePatMemberships",
+            compID
+          ),
+          AppModifyListService.fetchAppModifyList(
+            "GetActiveAppModifyFieldsAsync",
+            "RELATION"
+          ),
+          InsuranceCarrierService.fetchInsuranceOptions(
+            "GetAllActiveForDropDown"
+          ),
+          ConstantValues.fetchConstantValues("GetConstantValues", "COVR"),
+          ConstantValues.fetchConstantValues("GetConstantValues", "DTYP"),
+          ConstantValues.fetchConstantValues("GetConstantValues", "PBLD"),
+          ConstantValues.fetchConstantValues("GetConstantValues", "PMAR"),
+          AppModifyListService.fetchAppModifyList(
+            "GetActiveAppModifyFieldsAsync",
+            "STATE"
+          ),
+          ConstantValues.fetchConstantValues("GetConstantValues", "ACAT"),
+          ConstantValues.fetchConstantValues("GetConstantValues", "EMPS"),
+          ContactListService.fetchActiveSpecialties(compID!),
+        ]);
+
+        setPicValues(
+          picResponse.map((item) => ({ value: item.value, label: item.label }))
+        );
+        setTitleValues(
+          titleResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setGenderValues(
+          genderResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setAgeValues(
+          ageResponse.map((item) => ({ value: item.value, label: item.label }))
+        );
+        setNationalityValues(
+          nationalityResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setAreaValues(
+          areaResponse.map((item) => ({ value: item.value, label: item.label }))
+        );
+        setCityValues(
+          cityResponse.map((item) => ({ value: item.value, label: item.label }))
+        );
+        setCountryValues(
+          countryResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setCompanyValues(
+          companyResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setDepartmentValues(
+          departmentResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setAttendingPhyValues(
+          attendingPhyResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setPrimaryIntroducingSourceValues(
+          primaryIntroducingSourceResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setMembershipSchemeValues(
+          membershipSchemeResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setRelationValues(
+          relationResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setInsuranceOptions(
+          insuranceResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setCoverForValues(
+          coverForResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setDepartmentTypesValues(
+          departmentTypesResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setBloodGroupValues(
+          bloodGroupResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setmaritalStatusValues(
+          maritalStatusResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setstateValues(
+          stateResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setcategoryValues(
+          categoryResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setemployeeStatusValues(
+          employeeStatusResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setspecialityValues(
+          specialityResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching dropdown values:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDropdownValues();
+  }, [compID]);
+
+  return {
+    picValues,
+    titleValues,
+    genderValues,
+    ageUnitOptions,
+    nationalityValues,
+    areaValues,
+    cityValues,
+    countryValues,
+    companyValues,
+    departmentValues,
+    attendingPhyValues,
+    primaryIntroducingSourceValues,
+    membershipSchemeValues,
+    relationValues,
+    insuranceOptions,
+    coverForValues,
+    departmentTypesValues,
+    bloodGroupValues,
+    maritalStatusValues,
+    stateValues,
+    categoryValues,
+    employeeStatusValues,
+    specialityValues,
+  };
+};
+
+export default useDropdownValues;

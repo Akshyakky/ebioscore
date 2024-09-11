@@ -1,32 +1,17 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { Box, Container, Grid, Paper } from "@mui/material";
-import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
-import {
-  RevisitFormErrors,
-  revisitFormData,
-} from "../../../../interfaces/PatientAdministration/revisitFormData";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { Box, Container, Grid, Paper, SelectChangeEvent } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import { useLoading } from "../../../../context/LoadingContext";
 import SearchIcon from "@mui/icons-material/Search";
 import PrintIcon from "@mui/icons-material/Print";
-import ActionButtonGroup, {
-  ButtonProps,
-} from "../../../../components/Button/ActionButtonGroup";
+import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import { PatientSearchContext } from "../../../../context/PatientSearchContext";
 import PatientSearch from "../../CommonPage/AdvanceSearch/PatientSearch";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
-import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { BillingService } from "../../../../services/BillingServices/BillingService";
-import RadioGroup from "../../../../components/RadioGroup/RadioGroup";
 import { DepartmentService } from "../../../../services/CommonServices/DepartmentService";
 import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -38,12 +23,15 @@ import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics"
 import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
 import GeneralAlert from "../../../../components/GeneralAlert/GeneralAlert";
 import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientSearch";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
+import FormField from "../../../../components/FormField/FormField";
+import { revisitFormData, RevisitFormErrors } from "../../../../interfaces/PatientAdministration/revisitFormData";
 
 const RevisitPage: React.FC = () => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
-  const token = userInfo.token!;
   const compID = userInfo.compID!;
+  const { setLoading } = useLoading();
+  const { performSearch } = useContext(PatientSearchContext);
+  const { fetchPatientSuggestions } = usePatientAutocomplete();
 
   const revisitInitialState = (): revisitFormData => ({
     opVID: 0,
@@ -89,72 +77,34 @@ const RevisitPage: React.FC = () => {
     transferYN: "N",
   });
 
-  const [revisitFormData, setRevisitFormData] = useState<revisitFormData>(
-    revisitInitialState()
-  );
-  const uhidRef = useRef<HTMLInputElement>(null);
-  const [selectedPChartID, setSelectedPChartID] = useState<number | 0>(0);
-  const { setLoading } = useLoading();
-
+  const [revisitFormData, setRevisitFormData] = useState<revisitFormData>(revisitInitialState);
+  const [selectedPChartID, setSelectedPChartID] = useState<number>(0);
   const [showPatientSearch, setShowPatientSearch] = useState(false);
-  const { fetchPatientSuggestions } = usePatientAutocomplete();
-  const [shouldClearInsuranceData, setShouldClearInsuranceData] =
-    useState(false);
-  const [successAlert, setSuccessAlert] = useState({
-    open: false,
-    message: "",
-  });
+  const [showWaitingPatientSearch, setShowWaitingPatientSearch] = useState(false);
+  const [shouldClearInsuranceData, setShouldClearInsuranceData] = useState(false);
+  const [successAlert, setSuccessAlert] = useState({ open: false, message: "" });
   const [formErrors, setFormErrors] = useState<RevisitFormErrors>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [availableAttendingPhysicians, setAvailableAttendingPhysicians] =
-    useState<DropdownOption[]>([]);
-  const [showWaitingPatientSearch, setShowWaitingPatientSearch] =
-    useState(false);
+  const [availableAttendingPhysicians, setAvailableAttendingPhysicians] = useState<DropdownOption[]>([]);
   const [picValues, setPicValues] = useState<DropdownOption[]>([]);
-  const [departmentValues, setDepartmentValues] = useState<DropdownOption[]>(
-    []
-  );
-  const [primaryIntroducingSource, setPrimaryIntroducingSource] = useState<
-    DropdownOption[]
-  >([]);
+  const [departmentValues, setDepartmentValues] = useState<DropdownOption[]>([]);
+  const [primaryIntroducingSource, setPrimaryIntroducingSource] = useState<DropdownOption[]>([]);
+
+  const uhidRef = useRef<HTMLInputElement>(null);
   const insurancePageRef = useRef<any>(null);
-  const { handleDropdownChange } =
-    useDropdownChange<revisitFormData>(setRevisitFormData);
 
   const loadDropdownValues = useCallback(async () => {
     setLoading(true);
     try {
-      const [picValues, departmentValues, primaryIntroducingSource] =
-        await Promise.all([
-          BillingService.fetchPicValues("GetPICDropDownValues"),
-          DepartmentService.fetchDepartments(
-            "GetActiveRegistrationDepartments",
-            compID
-          ),
-          ContactMastService.fetchRefferalPhy(
-            "GetActiveReferralContacts",
-            compID
-          ),
-        ]);
+      const [picValues, departmentValues, primaryIntroducingSource] = await Promise.all([
+        BillingService.fetchPicValues("GetPICDropDownValues"),
+        DepartmentService.fetchDepartments("GetActiveRegistrationDepartments", compID),
+        ContactMastService.fetchRefferalPhy("GetActiveReferralContacts", compID),
+      ]);
 
-      setPicValues(
-        picValues.map((item) => ({
-          value: item.value.toString(),
-          label: item.label,
-        }))
-      );
-      setDepartmentValues(
-        departmentValues.map((item) => ({
-          value: item.value.toString(),
-          label: item.label,
-        }))
-      );
-      setPrimaryIntroducingSource(
-        primaryIntroducingSource.map((item) => ({
-          value: item.value.toString(),
-          label: item.label,
-        }))
-      );
+      setPicValues(picValues.map(item => ({ value: item.value.toString(), label: item.label })));
+      setDepartmentValues(departmentValues.map(item => ({ value: item.value.toString(), label: item.label })));
+      setPrimaryIntroducingSource(primaryIntroducingSource.map(item => ({ value: item.value.toString(), label: item.label })));
     } catch (error) {
       console.error("Error loading dropdown values:", error);
     } finally {
@@ -164,107 +114,71 @@ const RevisitPage: React.FC = () => {
 
   useEffect(() => {
     loadDropdownValues();
+    if (uhidRef.current) uhidRef.current.focus();
   }, [loadDropdownValues]);
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const errors: RevisitFormErrors = {};
-    if (!revisitFormData.pChartCode) {
-      errors.pChartCode = "UHID is required.";
-    }
-    if (revisitFormData.pTypeID === 0) {
-      errors.pTypeID = "Payment Source is required.";
-    }
-    if (isHospitalVisit() && revisitFormData.deptID === 0) {
-      errors.deptID = "Department is required for hospital visits.";
-    }
-    if (isPhysicianVisit() && revisitFormData.attndPhyID === 0) {
-      errors.attndPhyID =
-        "Attending Physician is required for physician visits.";
-    }
-    if (revisitFormData.primPhyID === 0) {
-      errors.primPhyID = "Primary Introducing Source is required.";
-    }
+    if (!revisitFormData.pChartCode) errors.pChartCode = "UHID is required.";
+    if (revisitFormData.pTypeID === 0) errors.pTypeID = "Payment Source is required.";
+    if (isHospitalVisit() && revisitFormData.deptID === 0) errors.deptID = "Department is required for hospital visits.";
+    if (isPhysicianVisit() && revisitFormData.attndPhyID === 0) errors.attndPhyID = "Attending Physician is required for physician visits.";
+    if (revisitFormData.primPhyID === 0) errors.primPhyID = "Primary Introducing Source is required.";
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [revisitFormData]);
 
-  const handleRadioButtonChange =
-    (field: string[], textField: string[]) =>
-      async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const { value } = event.target;
-        setRevisitFormData((prevState) => ({
-          ...prevState,
-          [field[0]]: value,
-          [textField[0]]: event.target.labels
-            ? event.target.labels[0].textContent
-            : "",
-        }));
+  const handleDropdownChange = useCallback((field: string) => (event: SelectChangeEvent<string>) => {
+    const { value } = event.target;
+    setRevisitFormData(prev => ({ ...prev, [field]: parseInt(value, 10) }));
+  }, []);
 
-        if (value === "H") {
-          // Fetch and set department values
-          const departmentValues = await DepartmentService.fetchDepartments(
-            "GetActiveRegistrationDepartments",
-            compID
-          );
-          setDepartmentValues(
-            departmentValues.map((item) => ({
-              value: item.value.toString(),
-              label: item.label,
-            }))
-          );
-        } else if (value === "P") {
-          // Fetch and set attending physicians
-          const availablePhysicians =
-            await ContactMastService.fetchAvailableAttendingPhysicians(
-              selectedPChartID
-            );
-          setAvailableAttendingPhysicians(
-            availablePhysicians.map((item) => ({
-              value: item.value.toString(),
-              label: item.label,
-            }))
-          );
-        }
-      };
+  const handleRadioButtonChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setRevisitFormData(prev => ({
+      ...prev,
+      [name]: value,
+      pVisitTypeText: event.target.labels ? event.target.labels[0].textContent || "" : "",
+    }));
 
-  const handlePatientSelect = async (selectedSuggestion: string) => {
+    if (value === "H") {
+      DepartmentService.fetchDepartments("GetActiveRegistrationDepartments", compID)
+        .then(departmentValues => {
+          setDepartmentValues(departmentValues.map(item => ({ value: item.value.toString(), label: item.label })));
+        });
+    } else if (value === "P") {
+      ContactMastService.fetchAvailableAttendingPhysicians(selectedPChartID)
+        .then(availablePhysicians => {
+          setAvailableAttendingPhysicians(availablePhysicians.map(item => ({ value: item.value.toString(), label: item.label })));
+        });
+    }
+  }, [compID, selectedPChartID]);
+
+  const handlePatientSelect = useCallback(async (selectedSuggestion: string) => {
     setLoading(true);
     try {
-      const numbersArray = extractNumbers(selectedSuggestion);
-      const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
+      const pChartID = extractNumbers(selectedSuggestion)[0] || null;
       if (pChartID) {
         setSelectedPChartID(pChartID);
-        const availablePhysicians =
-          await ContactMastService.fetchAvailableAttendingPhysicians(
-            pChartID
-          );
-        setAvailableAttendingPhysicians(availablePhysicians);
-        const lastVisitResult =
-          await RevisitService.getLastVisitDetailsByPChartID(pChartID);
-        if (lastVisitResult && lastVisitResult.success) {
-          const isAttendingPhysicianAvailable = availablePhysicians.some(
-            (physician) => physician.value === lastVisitResult.data.attndPhyID
-          );
+        const [availablePhysicians, lastVisitResult] = await Promise.all([
+          ContactMastService.fetchAvailableAttendingPhysicians(pChartID),
+          RevisitService.getLastVisitDetailsByPChartID(pChartID)
+        ]);
 
-          setRevisitFormData((prevFormData) => ({
-            ...prevFormData,
+        setAvailableAttendingPhysicians(availablePhysicians);
+
+        if (lastVisitResult && lastVisitResult.success) {
+          const isAttendingPhysicianAvailable = availablePhysicians.some(physician => physician.value === lastVisitResult.data.attndPhyID);
+          setRevisitFormData(prev => ({
+            ...prev,
             pChartCode: selectedSuggestion.split("|")[0].trim(),
             pChartID: pChartID,
-            attndPhyID: isAttendingPhysicianAvailable
-              ? lastVisitResult.data.attndPhyID
-              : 0,
-            deptID: lastVisitResult.data.deptID || prevFormData.deptID,
-            pTypeID: lastVisitResult.data.pTypeID || prevFormData.pTypeID,
-            primPhyID: lastVisitResult.data.primPhyID || prevFormData.primPhyID,
+            attndPhyID: isAttendingPhysicianAvailable ? lastVisitResult.data.attndPhyID : 0,
+            deptID: lastVisitResult.data.deptID || prev.deptID,
+            pTypeID: lastVisitResult.data.pTypeID || prev.pTypeID,
+            primPhyID: lastVisitResult.data.primPhyID || prev.primPhyID,
           }));
-
-
-
-        } else {
-          console.error(
-            "Failed to fetch last visit details or no details available"
-          );
         }
       }
     } catch (error) {
@@ -272,78 +186,41 @@ const RevisitPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAdvancedSearch = async () => {
-    setShowPatientSearch(true);
-    await performSearch("");
-  };
-
-  const handleWaitingSearch = async () => {
-    setShowWaitingPatientSearch(true);
-  };
-
-  const actionButtons: ButtonProps[] = [
-    {
-      variant: "contained",
-      size: "medium",
-      icon: SearchIcon,
-      text: "Advanced Search",
-      onClick: handleAdvancedSearch,
-    },
-    {
-      variant: "contained",
-      size: "medium",
-      icon: SearchIcon,
-      text: "Waiting Search",
-      onClick: handleWaitingSearch,
-    },
-    {
-      variant: "contained",
-      icon: PrintIcon,
-      text: "Print Form",
-      size: "medium",
-    },
-  ];
-  const { performSearch } = useContext(PatientSearchContext);
-
-  const isHospitalVisit = () => revisitFormData.pVisitType === "H";
-  const isPhysicianVisit = () => revisitFormData.pVisitType === "P";
-
-  useEffect(() => {
-    if (uhidRef.current) {
-      uhidRef.current.focus();
-    }
   }, []);
 
-  const handleClear = () => {
+  const handleAdvancedSearch = useCallback(async () => {
+    setShowPatientSearch(true);
+    await performSearch("");
+  }, [performSearch]);
+
+  const handleWaitingSearch = useCallback(() => setShowWaitingPatientSearch(true), []);
+
+  const actionButtons: ButtonProps[] = [
+    { variant: "contained", size: "medium", icon: SearchIcon, text: "Advanced Search", onClick: handleAdvancedSearch },
+    { variant: "contained", size: "medium", icon: SearchIcon, text: "Waiting Search", onClick: handleWaitingSearch },
+    { variant: "contained", icon: PrintIcon, text: "Print Form", size: "medium" },
+  ];
+  const isHospitalVisit = useCallback(() => revisitFormData.pVisitType === "H", [revisitFormData.pVisitType]);
+  const isPhysicianVisit = useCallback(() => revisitFormData.pVisitType === "P", [revisitFormData.pVisitType]);
+
+  const handleClear = useCallback(() => {
     setRevisitFormData(revisitInitialState);
     setSelectedPChartID(0);
     setShouldClearInsuranceData(true);
     setIsSubmitted(false);
     setFormErrors({});
+    if (uhidRef.current) uhidRef.current.focus();
+  }, [revisitInitialState]);
 
-    if (uhidRef.current) {
-      uhidRef.current.focus();
-    }
-  };
-
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setIsSubmitted(true);
+    if (!validateForm()) return;
+
     setLoading(true);
     try {
-      if (!validateForm()) {
-        return;
-      }
-      const response = await RevisitService.saveOPVisits(
-        revisitFormData
-      );
+      const response = await RevisitService.saveOPVisits(revisitFormData);
       if (response && response.success) {
-        setSuccessAlert({
-          open: true,
-          message: "Save successful",
-        });
-        setRevisitFormData(revisitInitialState);
+        setSuccessAlert({ open: true, message: "Save successful" });
         handleClear();
       } else {
         console.error("Save failed", response);
@@ -353,13 +230,9 @@ const RevisitPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [revisitFormData, validateForm, setLoading, handleClear]);
 
-  const handleCloseSuccessAlert = () => {
-    setSuccessAlert({ ...successAlert, open: false });
-  };
-
-  const successActions = [{ label: "OK", onClick: handleCloseSuccessAlert }];
+  const handleCloseSuccessAlert = useCallback(() => setSuccessAlert(prev => ({ ...prev, open: false })), []);
 
   useEffect(() => {
     if (shouldClearInsuranceData) {
@@ -376,7 +249,7 @@ const RevisitPage: React.FC = () => {
             onClose={handleCloseSuccessAlert}
             message={successAlert.message}
             severity="success"
-            actions={successActions}
+            actions={[{ label: "OK", onClick: handleCloseSuccessAlert }]}
           />
         )}
         <Box sx={{ marginBottom: 2 }}>
@@ -396,139 +269,101 @@ const RevisitPage: React.FC = () => {
         <Paper variant="elevation" sx={{ padding: 2 }}>
           <section aria-labelledby="personal-details-header">
             <Grid container spacing={2} alignItems="flex-start">
-              <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-                <AutocompleteTextBox
-                  ref={uhidRef}
-                  ControlID="UHID"
-                  title="UHID"
-                  type="text"
-                  size="small"
-                  placeholder="Search through UHID, Name, DOB, Phone No...."
-                  value={revisitFormData.pChartCode}
-                  onChange={(e) =>
-                    setRevisitFormData({
-                      ...revisitFormData,
-                      pChartCode: e.target.value,
-                    })
-                  }
-                  fetchSuggestions={fetchPatientSuggestions}
-                  isMandatory={true}
-                  onSelectSuggestion={handlePatientSelect}
-                  isSubmitted={isSubmitted}
-                />
-              </Grid>
+              <FormField
+                type="autocomplete"
+                label="UHID"
+                value={revisitFormData.pChartCode}
+                name="pChartCode"
+                ControlID="UHID"
+                onChange={(e) =>
+                  setRevisitFormData({ ...revisitFormData, pChartCode: e.target.value })
+                }
+                fetchSuggestions={fetchPatientSuggestions}
+                onSelectSuggestion={handlePatientSelect}
+                placeholder="Search through UHID, Name, DOB, Phone No...."
+                isMandatory={true}
+                isSubmitted={isSubmitted}
+                errorMessage={formErrors.pChartCode}
+                gridProps={{ xs: 12, sm: 6, md: 3, lg: 3, xl: 3 }}
+                ref={uhidRef}
+              />
               <Grid item xs={12} sm={6} md={9} lg={9} xl={9}>
-                <PatientDemographics
-                  pChartID={selectedPChartID}
-                />
+                <PatientDemographics pChartID={selectedPChartID} />
               </Grid>
             </Grid>
 
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-                <DropdownSelect
-                  label="Payment Source [PIC]"
-                  name="PIC"
-                  value={
-                    revisitFormData.pTypeID === 0
-                      ? ""
-                      : revisitFormData.pTypeID.toString()
-                  }
-                  options={picValues}
-                  onChange={handleDropdownChange(
-                    ["pTypeID"],
-                    ["pTypeName"],
-                    picValues
-                  )}
-                  size="small"
+              <FormField
+                type="select"
+                label="Payment Source [PIC]"
+                value={revisitFormData.pTypeID === 0 ? "" : revisitFormData.pTypeID.toString()}
+                name="pTypeID"
+                ControlID="PIC"
+                options={picValues}
+                onChange={handleDropdownChange("pTypeID")}
+                isMandatory={true}
+                isSubmitted={isSubmitted}
+                errorMessage={formErrors.pTypeID}
+              />
+            </Grid>
+            <Grid container spacing={2}>
+              <FormField
+                type="radio"
+                label="Visit To"
+                value={revisitFormData.pVisitType}
+                name="pVisitType"
+                ControlID="visitDetails"
+                options={[
+                  { value: "H", label: "Hospital" },
+                  { value: "P", label: "Physician" },
+                ]}
+                onChange={handleRadioButtonChange}
+                inline={true}
+              />
+            </Grid>
+            <Grid container spacing={2}>
+              {isHospitalVisit() && (
+                <FormField
+                  type="select"
+                  label="Department"
+                  value={revisitFormData.deptID === 0 ? "" : revisitFormData.deptID.toString()}
+                  name="deptID"
+                  ControlID="Department"
+                  options={departmentValues}
+                  onChange={handleDropdownChange("deptID")}
                   isMandatory={true}
                   isSubmitted={isSubmitted}
+                  errorMessage={formErrors.deptID}
                 />
-              </Grid>
-            </Grid>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-                <RadioGroup
-                  name="visitDetails"
-                  label="Visit To"
-                  options={[
-                    { value: "H", label: "Hospital" },
-                    { value: "P", label: "Physician" },
-                  ]}
-                  selectedValue={revisitFormData.pVisitType}
-                  onChange={handleRadioButtonChange(
-                    ["pVisitType"],
-                    ["pVisitTypeText"]
-                  )}
-                  inline={true}
-                />
-              </Grid>
-            </Grid>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-                {isHospitalVisit() && (
-                  <DropdownSelect
-                    label="Department"
-                    name="Department"
-                    value={
-                      revisitFormData.deptID === 0
-                        ? ""
-                        : String(revisitFormData.deptID)
-                    }
-                    options={departmentValues}
-                    onChange={handleDropdownChange(
-                      ["deptID"],
-                      ["deptName"],
-                      departmentValues
-                    )}
-                    isMandatory={isHospitalVisit()}
-                    size="small"
-                    isSubmitted={isSubmitted}
-                  />
-                )}
-                {isPhysicianVisit() && (
-                  <DropdownSelect
-                    name="AttendingPhysician"
-                    label="Attending Physician"
-                    value={
-                      revisitFormData.attndPhyID === 0
-                        ? ""
-                        : String(revisitFormData.attndPhyID)
-                    }
-                    options={availableAttendingPhysicians}
-                    onChange={handleDropdownChange(
-                      ["attndPhyID"],
-                      ["attendingPhysicianName"],
-                      availableAttendingPhysicians
-                    )}
-                    isMandatory={isPhysicianVisit()}
-                    size="small"
-                    isSubmitted={isSubmitted}
-                  />
-                )}
-              </Grid>
-            </Grid>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
-                <DropdownSelect
-                  name="PrimaryIntroducingSource"
-                  label="Primary Introducing Source"
-                  value={
-                    revisitFormData.primPhyID === 0
-                      ? ""
-                      : String(revisitFormData.primPhyID)
-                  }
-                  options={primaryIntroducingSource}
-                  onChange={handleDropdownChange(
-                    ["primPhyID"],
-                    ["primaryPhysicianName"],
-                    primaryIntroducingSource
-                  )}
-                  isMandatory={isPhysicianVisit() || isHospitalVisit()}
-                  size="small"
+              )}
+              {isPhysicianVisit() && (
+                <FormField
+                  type="select"
+                  label="Attending Physician"
+                  value={revisitFormData.attndPhyID === 0 ? "" : revisitFormData.attndPhyID.toString()}
+                  name="attndPhyID"
+                  ControlID="AttendingPhysician"
+                  options={availableAttendingPhysicians}
+                  onChange={handleDropdownChange("attndPhyID")}
+                  isMandatory={true}
                   isSubmitted={isSubmitted}
+                  errorMessage={formErrors.attndPhyID}
                 />
-              </Grid>
+              )}
+            </Grid>
+            <Grid container spacing={2}>
+              <FormField
+                type="select"
+                label="Primary Introducing Source"
+                value={revisitFormData.primPhyID === 0 ? "" : revisitFormData.primPhyID.toString()}
+                name="primPhyID"
+                ControlID="PrimaryIntroducingSource"
+                options={primaryIntroducingSource}
+                onChange={handleDropdownChange("primPhyID")}
+                isMandatory={true}
+                isSubmitted={isSubmitted}
+                errorMessage={formErrors.primPhyID}
+              />
             </Grid>
           </section>
           <InsurancePage
@@ -536,7 +371,7 @@ const RevisitPage: React.FC = () => {
             pChartID={selectedPChartID}
             shouldClearData={shouldClearInsuranceData}
           />
-          <PatientVisitHistory pChartID={selectedPChartID} token={token} />
+          <PatientVisitHistory pChartID={selectedPChartID} />
         </Paper>
       </Container>
       <FormSaveClearButton

@@ -24,7 +24,6 @@ export const saveAlert = async (
 export const GetAlertBypChartID = async (
   pChartID: number
 ): Promise<OperationResult<any>> => {
-  debugger;
   return commonApiService.get<OperationResult<any>>(
     `Alert/GetAlertBypChartID/${pChartID}`,
     getToken()

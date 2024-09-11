@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { forwardRef, useMemo } from "react";
 import { Grid, SelectChangeEvent } from "@mui/material";
 import { GridProps } from '@mui/material/Grid';
 import FloatingLabelTextBox from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
@@ -8,8 +8,9 @@ import CustomSwitch from "../Checkbox/ColorSwitch";
 import RadioGroup from "../RadioGroup/RadioGroup";
 import AutocompleteTextBox from "../TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import { TextFieldProps } from "@mui/material/TextField";
+import MultiSelectDropdown from "../DropDown/MultiSelectDropdown";
 
-type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email" | "radio" | "autocomplete" | "date" | "search";
+type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email" | "radio" | "autocomplete" | "date" | "search" | "multiselect";
 
 interface DropdownOption {
   value: string;
@@ -41,17 +42,17 @@ interface BaseFormFieldProps {
   onBlur?: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
-interface TextFormFieldProps extends BaseFormFieldProps {
+export interface TextFormFieldProps extends BaseFormFieldProps {
   type: "text" | "number" | "email" | "date" | "search";
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-interface TextAreaFormFieldProps extends BaseFormFieldProps {
+export interface TextAreaFormFieldProps extends BaseFormFieldProps {
   type: "textarea";
   onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
-interface SelectFormFieldProps extends BaseFormFieldProps {
+export interface SelectFormFieldProps extends BaseFormFieldProps {
   type: "select";
   options: DropdownOption[];
   onChange: (event: SelectChangeEvent<string>, child: React.ReactNode) => void;
@@ -60,21 +61,28 @@ interface SelectFormFieldProps extends BaseFormFieldProps {
   onClear?: () => void;
 }
 
-interface SwitchFormFieldProps extends BaseFormFieldProps {
+export interface MultiSelectFormFieldProps extends BaseFormFieldProps {
+  type: "multiselect";
+  options: DropdownOption[];
+  onChange: (event: SelectChangeEvent<string[]>, child: React.ReactNode) => void;
+  defaultText?: string;
+}
+
+export interface SwitchFormFieldProps extends BaseFormFieldProps {
   type: "switch";
   onChange: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
   checked: boolean;
   color?: "primary" | "secondary" | "error" | "info" | "success" | "warning" | "default";
 }
 
-interface RadioFormFieldProps extends BaseFormFieldProps {
+export interface RadioFormFieldProps extends BaseFormFieldProps {
   type: "radio";
   options: DropdownOption[];
   onChange: (event: React.ChangeEvent<HTMLInputElement>, value: string) => void;
   inline?: boolean;
 }
 
-interface AutocompleteFormFieldProps extends BaseFormFieldProps {
+export interface AutocompleteFormFieldProps extends BaseFormFieldProps {
   type: "autocomplete";
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   fetchSuggestions?: (input: string) => Promise<string[]>;
@@ -82,9 +90,9 @@ interface AutocompleteFormFieldProps extends BaseFormFieldProps {
   suggestions?: string[];
 }
 
-type FormFieldProps = TextFormFieldProps | TextAreaFormFieldProps | SelectFormFieldProps | SwitchFormFieldProps | RadioFormFieldProps | AutocompleteFormFieldProps;
+export type FormFieldProps = TextFormFieldProps | TextAreaFormFieldProps | SelectFormFieldProps | SwitchFormFieldProps | RadioFormFieldProps | AutocompleteFormFieldProps | MultiSelectFormFieldProps;
 
-const FormField: React.FC<FormFieldProps> = React.memo((props) => {
+const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
   const {
     type,
     label,
@@ -172,6 +180,24 @@ const FormField: React.FC<FormFieldProps> = React.memo((props) => {
             onClear={selectProps.onClear}
           />
         );
+
+      case "multiselect":
+        const multiSelectProps = props as MultiSelectFormFieldProps;
+        return (
+          <MultiSelectDropdown
+            label={label}
+            name={name}
+            value={Array.isArray(value) ? value : [value]}
+            options={multiSelectProps.options}
+            onChange={multiSelectProps.onChange}
+            size={size}
+            disabled={disabled}
+            isMandatory={isMandatory}
+            defaultText={multiSelectProps.defaultText}
+            isSubmitted={isSubmitted}
+          />
+        );
+
       case "switch":
         const switchProps = props as SwitchFormFieldProps;
         return (
@@ -223,12 +249,13 @@ const FormField: React.FC<FormFieldProps> = React.memo((props) => {
             errorMessage={errorMessage}
             onBlur={onBlur}
             InputProps={InputProps}
+            ref={ref}
           />
         );
       default:
         return null;
     }
-  }, [props, type, label, value, name, ControlID, size, placeholder, isMandatory, errorMessage, disabled, readOnly, maxLength, min, max, step, isSubmitted, InputProps, InputLabelProps, onBlur]);
+  }, [props, type, label, value, name, ControlID, size, placeholder, isMandatory, errorMessage, disabled, readOnly, maxLength, min, max, step, isSubmitted, InputProps, InputLabelProps, onBlur, ref]);
 
   return (
     <Grid item {...gridProps}>

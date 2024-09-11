@@ -12,12 +12,6 @@ export interface ContactMastData {
   conCat: string;
   conEmpYN: string;
   rActiveYN: string;
-  rCreatedOn: string;
-  rCreatedID: number;
-  rCreatedBy: string;
-  rModifiedOn: string;
-  rModifiedID: number;
-  rModifiedBy: string;
   notes?: string;
   conEmpStatus?: string;
   consValue: string;
