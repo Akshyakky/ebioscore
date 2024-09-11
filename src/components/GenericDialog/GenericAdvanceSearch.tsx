@@ -30,6 +30,9 @@ interface CommonSearchDialogProps<T> {
     fullWidth?: boolean;
     dialogContentSx?: React.CSSProperties;
   };
+isEditButtonVisible?: boolean;
+  isStatusVisible?: boolean;
+  isActionVisible?: boolean;
 }
 
 function GenericAdvanceSearch<T>({
@@ -44,7 +47,10 @@ function GenericAdvanceSearch<T>({
   getItemActiveStatus,
   searchPlaceholder,
   onSearch,
-  dialogProps
+  dialogProps,
+  isEditButtonVisible = true,
+  isStatusVisible = true,
+  isActionVisible = true,
 }: CommonSearchDialogProps<T>) {
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -91,7 +97,7 @@ function GenericAdvanceSearch<T>({
     {
       key: "edit",
       header: "Edit",
-      visible: true,
+      visible: isEditButtonVisible,
       render: (row: T & { serialNumber: number; Status: string }) => (
         <CustomButton
           text="Edit"
@@ -111,7 +117,7 @@ function GenericAdvanceSearch<T>({
     {
       key: "status",
       header: "Status",
-      visible: true,
+      visible: isStatusVisible,
       render: (row: T & { serialNumber: number; Status: string }) => (
         <Typography variant="body2">
           {switchStatus[getItemId(row)] ? "Active" : "Hidden"}
@@ -121,7 +127,7 @@ function GenericAdvanceSearch<T>({
     {
       key: "action",
       header: "Action",
-      visible: true,
+      visible: isActionVisible,
       render: (row: T & { serialNumber: number; Status: string }) => (
         <CustomSwitch
           size="small"

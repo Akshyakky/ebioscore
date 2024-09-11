@@ -49,9 +49,6 @@ const DeptUsersListSearch: React.FC<DeptUsersSearchProps> = ({
   );
 
   const columns = [
-    { key: "fullName", header: "User Name", visible: true },
-    { key: "loginName", header: "Login Name", visible: true },
-    { key: "appID", header: "App ID", visible: false },
     {
       key: "addDeptUser",
       header: "Department Access",
@@ -66,6 +63,9 @@ const DeptUsersListSearch: React.FC<DeptUsersSearchProps> = ({
         />
       ),
     },
+    { key: "fullName", header: "User Name", visible: true },
+    { key: "loginName", header: "Login Name", visible: true },
+    { key: "appID", header: "App ID", visible: false },
   ];
 
   return (
@@ -80,6 +80,9 @@ const DeptUsersListSearch: React.FC<DeptUsersSearchProps> = ({
       getItemId={(user) => user.appID}
       getItemActiveStatus={(user) => user.rActiveYN === "Y"}
       searchPlaceholder="Enter user name or login name"
+      isEditButtonVisible={false}
+      isStatusVisible={false}
+      isActionVisible={false}
     />
   );
 };
