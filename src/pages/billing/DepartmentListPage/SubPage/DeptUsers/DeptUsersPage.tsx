@@ -84,8 +84,8 @@ export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({
       const result = await DeptUserListService.saveDeptUser(newDeptUserDto);
       if (result.success) {
         showAlert(
-          "Success",
-          `${newDeptUserDto.appUserName} is now accessible to the ${deptName}`,
+          "User Added",
+          `${newDeptUserDto.appUserName} is accessible to ${deptName}`,
           "success"
         );
       } else {
@@ -96,7 +96,6 @@ export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({
         );
       }
     } catch (error) {
-      console.error("Error saving DeptUser:", error);
       showAlert("Error", "An unexpected error occurred while saving.", "error");
     } finally {
     }
