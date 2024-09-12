@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Paper, Typography, Grid } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import SaveIcon from "@mui/icons-material/Add";
+import SaveIcon from "@mui/icons-material/Save";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
 import { useLoading } from "../../../../../context/LoadingContext";
 import { showAlert } from "../../../../../utils/Common/showAlert";
 import { RoomGroupService } from "../../../../../services/HospitalAdministrationServices/Room-BedSetUpService/RoomGroupService";
@@ -13,7 +14,6 @@ import { RoomGroupDto } from "../../../../../interfaces/HospitalAdministration/R
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import FormField from "../../../../../components/FormField/FormField";
-import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
 
@@ -22,9 +22,12 @@ interface DropdownOption {
     label: string;
 }
 
-const RoomGroupDetails: React.FC<{ editData?: RoomGroupDto }> = ({
-    editData,
-}) => {
+interface RoomGroupDetailsProps {
+    editData?: RoomGroupDto;
+    handleAddRoom: (roomGroup: RoomGroupDto) => void;
+}
+
+const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) => {
     const [roomGroups, setRoomGroups] = useState<RoomGroupDto[]>([]);
     const { setLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -54,7 +57,6 @@ const RoomGroupDetails: React.FC<{ editData?: RoomGroupDto }> = ({
     ];
 
     const { handleDropdownChange } = useDropdownChange<RoomGroupDto>(setFormData);
-
     const { departmentValues, genderValues } = useDropdownValues();
 
     const fetchRoomGroups = async () => {
@@ -89,10 +91,7 @@ const RoomGroupDetails: React.FC<{ editData?: RoomGroupDto }> = ({
         fetchRoomGroups();
     }, []);
 
-    const handleAdd = (
-        isSubGroup: boolean = false,
-        parentGroup?: RoomGroupDto
-    ) => {
+    const handleAdd = (isSubGroup: boolean = false, parentGroup?: RoomGroupDto) => {
         setFormData({
             rGrpID: 0,
             rGrpCode: "",
@@ -206,7 +205,6 @@ const RoomGroupDetails: React.FC<{ editData?: RoomGroupDto }> = ({
         } finally {
             setLoading(false);
         }
-
     };
 
     const handleChange = (
@@ -216,9 +214,12 @@ const RoomGroupDetails: React.FC<{ editData?: RoomGroupDto }> = ({
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    const handleAddRoomClick = (roomGroup: RoomGroupDto) => {
+        handleAddRoom(roomGroup); // Call the handleAddRoom prop with selected room group
+    };
+
     const columns = [
         { key: "rGrpName", header: "Name", visible: true },
-
         {
             key: "actions",
             header: "Edit",
@@ -257,18 +258,31 @@ const RoomGroupDetails: React.FC<{ editData?: RoomGroupDto }> = ({
             header: "Add Sub Group",
             visible: true,
             render: (row: RoomGroupDto) => (
-                <>
-                    <CustomButton
-                        onClick={() => handleAdd(true, row)}
-                        icon={SubdirectoryArrowRightIcon}
-                        text="Add Sub Group"
-                        variant="contained"
-                        size="small"
-                    />
-                </>
+                <CustomButton
+                    onClick={() => handleAdd(true, row)}
+                    icon={SubdirectoryArrowRightIcon}
+                    text="Sub GRP"
+                    variant="contained"
+                    size="small"
+                />
+            ),
+        },
+        {
+            key: "actions",
+            header: "Add Room",
+            visible: true,
+            render: (row: RoomGroupDto) => (
+                <CustomButton
+                    onClick={() => handleAddRoomClick(row)} // Pass selected room group here
+                    icon={AddIcon}
+                    text="Room"
+                    variant="contained"
+                    size="small"
+                />
             ),
         },
     ];
+
 
     return (
         <Paper variant="elevation" sx={{ padding: 2 }}>

@@ -57,6 +57,8 @@ const useDropdownValues = () => {
     []
   );
 
+  const [floorValues, setFloorValues] = useState<DropdownOption[]>([]);
+
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const compID = userInfo.compID!;
@@ -89,6 +91,7 @@ const useDropdownValues = () => {
           categoryResponse,
           employeeStatusResponse,
           specialityResponse,
+          floorResponse,
         ] = await Promise.all([
           BillingService.fetchPicValues("GetPICDropDownValues"),
           ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
@@ -114,6 +117,7 @@ const useDropdownValues = () => {
             "GetActiveAppModifyFieldsAsync",
             "COMPANY"
           ),
+
           DepartmentService.fetchDepartments(
             "GetActiveRegistrationDepartments",
             compID
@@ -148,6 +152,10 @@ const useDropdownValues = () => {
           ConstantValues.fetchConstantValues("GetConstantValues", "ACAT"),
           ConstantValues.fetchConstantValues("GetConstantValues", "EMPS"),
           ContactListService.fetchActiveSpecialties(compID!),
+          AppModifyListService.fetchAppModifyList(
+            "GetActiveAppModifyFieldsAsync",
+            "FLOOR"
+          ),
         ]);
 
         setPicValues(
@@ -192,6 +200,7 @@ const useDropdownValues = () => {
             label: item.label,
           }))
         );
+
         setDepartmentValues(
           departmentResponse.map((item) => ({
             value: item.value,
@@ -276,6 +285,12 @@ const useDropdownValues = () => {
             label: item.label,
           }))
         );
+        setFloorValues(
+          floorResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
       } finally {
@@ -310,6 +325,7 @@ const useDropdownValues = () => {
     categoryValues,
     employeeStatusValues,
     specialityValues,
+    floorValues,
   };
 };
 

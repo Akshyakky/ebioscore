@@ -8,19 +8,21 @@ import { useLoading } from "../../../../../context/LoadingContext";
 import { showAlert } from "../../../../../utils/Common/showAlert";
 import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../../components/Button/CustomButton";
-import { RoomListDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { RoomGroupDto, RoomListDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
 import { RoomListService } from "../../../../../services/HospitalAdministrationServices/Room-BedSetUpService/RoomListService";
+import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 
-interface DropdownOption {
-    value: string;
-    label: string;
+
+interface RoomListDetailsProps {
+    roomGroup: RoomGroupDto | null;
+    onClose: () => void;
 }
 
-const RoomListDetails: React.FC = () => {
+const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onClose }) => {
     const [rooms, setRooms] = useState<RoomListDto[]>([]);
     const { setLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -32,17 +34,15 @@ const RoomListDetails: React.FC = () => {
         rName: "",
         noOfBeds: 0,
         rActiveYN: "Y",
-        rgrpID: 0,
+        rgrpID: roomGroup?.rGrpID || 0,
         compID: store.getState().userDetails.compID || 0,
-        transferYN: "Y"
+        transferYN: "Y",
+        deptName: roomGroup?.deptName || "",
+        deptID: roomGroup?.deptID || 0,
     });
 
     const { handleDropdownChange } = useDropdownChange<RoomListDto>(setFormData);
-
-    const locationOptions: DropdownOption[] = [
-        { value: "Floor1", label: "Floor1" },
-        { value: "Floor2", label: "Floor2" }
-    ];
+    const { floorValues } = useDropdownValues();
 
     const fetchRooms = async () => {
         setLoading(true);
@@ -50,7 +50,7 @@ const RoomListDetails: React.FC = () => {
             const response = await RoomListService.getAllRoomList();
             if (response.success) {
                 const activeRooms = (response.data || []).filter(
-                    (room) => room.rActiveYN === "Y"
+                    (room) => room.rActiveYN === "Y" && room.rgrpID === (roomGroup?.rGrpID || 0)
                 );
                 setRooms(activeRooms);
             } else {
@@ -73,8 +73,10 @@ const RoomListDetails: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchRooms();
-    }, []);
+        if (roomGroup?.rGrpID) {
+            fetchRooms();
+        }
+    }, [roomGroup?.rGrpID]);
 
     const handleAdd = () => {
         setFormData({
@@ -82,11 +84,13 @@ const RoomListDetails: React.FC = () => {
             rName: "",
             noOfBeds: 0,
             rActiveYN: "Y",
-            rgrpID: 0,
+            rgrpID: roomGroup?.rGrpID || 0,
             compID: store.getState().userDetails.compID || 0,
             transferYN: "Y",
             rlCode: '',
             rNotes: '',
+            deptName: roomGroup?.deptName || "",
+            deptID: roomGroup?.deptID || 0,
         });
         setDialogTitle("Add Room");
         setIsDialogOpen(true);
@@ -185,7 +189,6 @@ const RoomListDetails: React.FC = () => {
         } finally {
             setLoading(false);
         }
-
     };
 
     const handleChange = (
@@ -197,8 +200,8 @@ const RoomListDetails: React.FC = () => {
 
     const columns = [
         { key: "rName", header: "Room Name", visible: true },
-        { key: "rLocation", header: "Room Location ", visible: true },
-        { key: "deptName", header: "Department ", visible: true },
+        { key: "rLocation", header: "Room Location", visible: true },
+        { key: "deptName", header: "Department", visible: true },
 
         {
             key: "actions",
@@ -234,6 +237,7 @@ const RoomListDetails: React.FC = () => {
             ),
         },
     ];
+
 
     return (
         <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -290,15 +294,15 @@ const RoomListDetails: React.FC = () => {
                     <FormField
                         type="select"
                         label="Location"
-                        name="rLocation"
-                        value={formData.rLocation || ""}
+                        name="rLocationID"
+                        value={formData.rLocationID || ""}
                         onChange={handleDropdownChange(
+                            ["rLocationID"],
                             ["rLocation"],
-                            ["rLocation"],
-                            locationOptions
+                            floorValues
                         )}
-                        options={locationOptions}
-                        ControlID="rLocation"
+                        options={floorValues}
+                        ControlID="rLocationID"
                         gridProps={{ xs: 12 }}
                     />
 
@@ -310,9 +314,9 @@ const RoomListDetails: React.FC = () => {
                         onChange={handleDropdownChange(
                             ["rl"],
                             ["rl"],
-                            locationOptions
+                            floorValues
                         )}
-                        options={locationOptions}
+                        options={floorValues}
                         ControlID="v"
                         gridProps={{ xs: 12 }}
                     />
