@@ -1,60 +1,39 @@
-import React, { useState, useEffect, useMemo, ChangeEvent } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import { RegistrationService } from "../../../../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { PatientDemographicDetails } from "../../../../interfaces/PatientAdministration/registrationFormData";
 import { useLoading } from "../../../../context/LoadingContext";
 import { OperationResult } from "../../../../interfaces/Common/OperationResult";
+import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
 import {
-  notifyError,
-  notifySuccess,
-} from "../../../../utils/Common/toastManager";
-import {
-  Avatar,
-  Box,
-  Card,
-  CardContent,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  IconButton,
-  SelectChangeEvent,
-  Tooltip,
-  Typography,
+  Avatar, Box, Card, CardContent, Chip, Dialog, DialogActions,
+  DialogContent, DialogTitle, Grid, IconButton, SelectChangeEvent,
+  Tooltip, Typography
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import EditIcon from "@mui/icons-material/Edit";
-import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import useDropdown from "../../../../hooks/useDropdown";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import {
-  PatientDemoGraph,
-  PatientDemoGraphError,
-} from "../../../../interfaces/PatientAdministration/patientDemoGraph";
+import { PatientDemoGraph, PatientDemoGraphError } from "../../../../interfaces/PatientAdministration/patientDemoGraph";
 import CustomButton from "../../../../components/Button/CustomButton";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
-import { BillingService } from "../../../../services/BillingServices/BillingService";
-import { AppModifyListService } from "../../../../services/CommonServices/AppModifyListService";
 import { PatientDemoGraphService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientDemoGraphService";
 import { format, parseISO } from "date-fns";
 import FormField, { AutocompleteFormFieldProps, SelectFormFieldProps, TextFormFieldProps } from "../../../../components/FormField/FormField";
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import WcIcon from '@mui/icons-material/Wc';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 
 interface PatientDemographicsProps {
   pChartID: number;
 }
 
-const PatientDemographics: React.FC<PatientDemographicsProps> = ({
-  pChartID,
-}) => {
-  const [patientDetails, setPatientDetails] =
-    useState<PatientDemographicDetails>();
+const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) => {
+  const [patientDetails, setPatientDetails] = useState<PatientDemographicDetails>();
   const [open, setOpen] = useState(false);
   const { setLoading } = useLoading();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formErrors, setFormErrors] = useState<PatientDemoGraphError>({});
-  const patientDemoGraphInitialState: PatientDemoGraph = {
+  const [patientDemoGraph, setPatientDemoGraph] = useState<PatientDemoGraph>({
     pChartID: 0,
     pChartCode: "",
     pTitleVal: "",
@@ -80,20 +59,29 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     pAddPhone1: "",
     pAddEmail: "",
     refSource: "",
-  };
-  const [patientDemoGraph, setPatientDemoGraph] = useState<PatientDemoGraph>(
-    patientDemoGraphInitialState
-  );
-  const { handleDropdownChange } =
-    useDropdownChange<PatientDemoGraph>(setPatientDemoGraph);
+  });
+
+  // Use the useDropdownValues hook
+  const {
+    titleValues,
+    genderValues,
+    bloodGroupValues,
+    picValues,
+    areaValues,
+    cityValues,
+    nationalityValues,
+  } = useDropdownValues();
+
+  useEffect(() => {
+    if (pChartID && pChartID !== 0) {
+      fetchPatientDetails();
+    }
+  }, [pChartID]);
 
   const fetchPatientDetails = async () => {
-    debugger
     setLoading(true);
     try {
-      const response = await RegistrationService.PatientDemoGraph(
-        pChartID
-      );
+      const response = await RegistrationService.PatientDemoGraph(pChartID);
       if (response.success && response.data) {
         setPatientDetails(response.data);
       } else {
@@ -106,37 +94,23 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (pChartID && pChartID !== 0) {
-      fetchPatientDetails();
-    }
-  }, [pChartID]);
-
-  const formatDate = (dateString: string) => {
-    return format(parseISO(dateString), "yyyy-MM-dd");
-  };
-
   const fetchPatientDemographics = async () => {
     setLoading(true);
     try {
       const response: OperationResult<PatientDemoGraph> =
-        await PatientDemoGraphService.getPatientDemographicsByPChartID(
-          pChartID
-        );
+        await PatientDemoGraphService.getPatientDemographicsByPChartID(pChartID);
       if (response.success && response.data) {
         const formattedData = {
           ...response.data,
-          dob: formatDate(response.data.dob),
-          pRegDate: formatDate(response.data.pRegDate),
+          dob: format(parseISO(response.data.dob), "yyyy-MM-dd"),
+          pRegDate: format(parseISO(response.data.pRegDate), "yyyy-MM-dd"),
         };
         setPatientDemoGraph(formattedData);
       } else {
         notifyError("Patient demographic details not found.");
       }
     } catch (error) {
-      notifyError(
-        "An error occurred while fetching patient demographic details."
-      );
+      notifyError("An error occurred while fetching patient demographic details.");
     } finally {
       setLoading(false);
     }
@@ -154,46 +128,27 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
 
   const validateForm = () => {
     const error: PatientDemoGraphError = {};
-    if (!patientDemoGraph.pChartCode) {
-      error.pChartCode = "UHID is required.";
-    }
-    if (!patientDemoGraph.pTitleVal) {
-      error.pTitleVal = "Title is required";
-    }
-    if (!patientDemoGraph.pfName) {
-      error.pfName = "First Name is required";
-    }
-    if (!patientDemoGraph.plName) {
-      error.plName = "Last Name is required";
-    }
-    if (!patientDemoGraph.dob) {
-      error.dob = "Date of Birth is required";
-    }
-    if (!patientDemoGraph.pGenderVal) {
-      error.pGenderVal = "Gender is required";
-    }
-    if (!patientDemoGraph.pssnID) {
-      error.pssnID = "Indentity No is required";
-    }
-    if (!patientDemoGraph.pAddPhone1) {
-      error.pAddPhone1 = "Mobile No is required";
-    }
+    if (!patientDemoGraph.pChartCode) error.pChartCode = "UHID is required.";
+    if (!patientDemoGraph.pTitleVal) error.pTitleVal = "Title is required";
+    if (!patientDemoGraph.pfName) error.pfName = "First Name is required";
+    if (!patientDemoGraph.plName) error.plName = "Last Name is required";
+    if (!patientDemoGraph.dob) error.dob = "Date of Birth is required";
+    if (!patientDemoGraph.pGenderVal) error.pGenderVal = "Gender is required";
+    if (!patientDemoGraph.pssnID) error.pssnID = "Identity No is required";
+    if (!patientDemoGraph.pAddPhone1) error.pAddPhone1 = "Mobile No is required";
     setFormErrors(error);
     return Object.keys(error).length === 0;
   };
 
   const handlePatientSave = async () => {
     setIsSubmitted(true);
-    const isValid = validateForm();
-    if (!isValid) {
+    if (!validateForm()) {
       notifyError("Please fill in all required fields.");
       return;
     }
     setLoading(true);
     try {
-      const result = await PatientDemoGraphService.savePatientDemographics(
-        patientDemoGraph
-      );
+      const result = await PatientDemoGraphService.savePatientDemographics(patientDemoGraph);
       if (result.success) {
         notifySuccess("Patient details saved successfully.");
         handleClose();
@@ -208,136 +163,11 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }
   };
 
-  const transformTitleValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
-  const memoizedParams = useMemo(
-    () => ["GetConstantValues", "PTIT"],
-    []
-  );
-  const titleResult = useDropdown(
-    ConstantValues.fetchConstantValues,
-    transformTitleValues,
-    memoizedParams
-  );
-  const titleValues = titleResult.options as DropdownOption[];
-
-  const transformGenderValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
-  const memoizedParamsForGender = useMemo(
-    () => ["GetConstantValues", "PSEX"],
-    []
-  );
-  const genderResult = useDropdown(
-    ConstantValues.fetchConstantValues,
-    transformGenderValues,
-    memoizedParamsForGender
-  );
-  const genderValues = genderResult.options as DropdownOption[];
-
-  const transformBloodGrpValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
-  const memoizedParamsForBloodGrp = useMemo(
-    () => ["GetConstantValues", "PBLD"],
-    []
-  );
-  const bloodGrpResult = useDropdown(
-    ConstantValues.fetchConstantValues,
-    transformBloodGrpValues,
-    memoizedParamsForBloodGrp
-  );
-  const bloodGrpValues = bloodGrpResult.options as DropdownOption[];
-
-  const transformPicValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
-  const memoizedParamsForPic = useMemo(
-    () => ["GetPICDropDownValues"],
-    []
-  );
-  const picResult = useDropdown(
-    BillingService.fetchPicValues,
-    transformPicValues,
-    memoizedParamsForPic
-  );
-  const picValues = picResult.options as DropdownOption[];
-
-  const transformAreaValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
-  const memoizedParamsForArea = useMemo(
-    () => ["GetActiveAppModifyFieldsAsync", "AREA"],
-    []
-  );
-  const areaResult = useDropdown(
-    AppModifyListService.fetchAppModifyList,
-    transformAreaValues,
-    memoizedParamsForArea
-  );
-  const areaValues = areaResult.options as DropdownOption[];
-
-  const transformCityValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
-  const memoizedParamsForCity = useMemo(
-    () => ["GetActiveAppModifyFieldsAsync", "CITY"],
-    []
-  );
-  const cityResult = useDropdown(
-    AppModifyListService.fetchAppModifyList,
-    transformCityValues,
-    memoizedParamsForCity
-  );
-  const cityValues = cityResult.options as DropdownOption[];
-
-  const transformNationalityValues = (
-    data: DropdownOption[]
-  ): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
-  const memoizedParamsForNationality = useMemo(
-    () => ["GetActiveAppModifyFieldsAsync", "ACTUALCOUNTRY"],
-    []
-  );
-  const nationalityResult = useDropdown(
-    AppModifyListService.fetchAppModifyList,
-    transformNationalityValues,
-    memoizedParamsForNationality
-  );
-  const nationalityValues = nationalityResult.options as DropdownOption[];
-
-  if (!pChartID || pChartID === 0) {
-    return null;
-  }
-
   const renderFormField = (
     type: "text" | "date" | "email" | "select" | "autocomplete",
     name: keyof PatientDemoGraph,
     label: string,
-    options: DropdownOption[] = [],
+    options: { value: string; label: string }[] = [],
     isMandatory: boolean = false,
     disabled: boolean = false,
     gridProps: { xs: number; sm?: number; md?: number } = { xs: 12, sm: 6 }
@@ -360,26 +190,22 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
           type: 'select',
           value: patientDemoGraph[name]?.toString() || "",
           onChange: (e: SelectChangeEvent<string>) =>
-            setPatientDemoGraph({
-              ...patientDemoGraph,
-              [name]: e.target.value,
-            }),
+            setPatientDemoGraph({ ...patientDemoGraph, [name]: e.target.value }),
           options,
         };
         return <FormField {...selectProps} />;
 
       case 'date':
-        const dateProps: TextFormFieldProps = {
+      case 'text':
+      case 'email':
+        const textProps: TextFormFieldProps = {
           ...commonProps,
-          type: 'date',
+          type: type,
           value: patientDemoGraph[name]?.toString() || "",
           onChange: (e: ChangeEvent<HTMLInputElement>) =>
-            setPatientDemoGraph({
-              ...patientDemoGraph,
-              [name]: e.target.value,
-            }),
+            setPatientDemoGraph({ ...patientDemoGraph, [name]: e.target.value }),
         };
-        return <FormField {...dateProps} />;
+        return <FormField {...textProps} />;
 
       case 'autocomplete':
         const autocompleteProps: AutocompleteFormFieldProps = {
@@ -387,70 +213,91 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
           type: 'autocomplete',
           value: patientDemoGraph[name]?.toString() || "",
           onChange: (e: ChangeEvent<HTMLInputElement>) =>
-            setPatientDemoGraph({
-              ...patientDemoGraph,
-              [name]: e.target.value,
-            }),
+            setPatientDemoGraph({ ...patientDemoGraph, [name]: e.target.value }),
           fetchSuggestions: async () => [],
           onSelectSuggestion: () => { },
         };
         return <FormField {...autocompleteProps} />;
 
       default:
-        const textProps: TextFormFieldProps = {
-          ...commonProps,
-          type: type as "text" | "email",
-          value: patientDemoGraph[name]?.toString() || "",
-          onChange: (e: ChangeEvent<HTMLInputElement>) =>
-            setPatientDemoGraph({
-              ...patientDemoGraph,
-              [name]: e.target.value,
-            }),
-        };
-        return <FormField {...textProps} />;
+        return null;
     }
   };
 
+  if (!pChartID || pChartID === 0) {
+    return null;
+  }
+
   return (
     <>
-      <Card
-        sx={{
-          minWidth: 275,
-          boxShadow: 1,
-          "&:hover": { boxShadow: 4 },
-          marginTop: "10px",
-        }}
-      >
-        <CardContent
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-start",
-            padding: "8px",
-            "&:last-child": { paddingBottom: "8px" },
-          }}
-        >
-          <Tooltip title="Edit Patient Details" placement="top" arrow>
-            <IconButton
-              onClick={handleClickOpen}
-              color="primary"
-              size="small"
-              sx={{ mr: 1 }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Grid container alignItems="center" spacing={1}>
+      <Card sx={{
+        boxShadow: 1,
+        '&:hover': { boxShadow: 2 },
+        borderRadius: '4px',
+        marginBottom: '16px',
+        background: 'linear-gradient(145deg, #f0f0f0 0%, #ffffff 100%)'
+      }}>
+        <CardContent sx={{ padding: '8px !important' }}>
+          <Grid container spacing={1} alignItems="center">
             <Grid item>
-              <Avatar sx={{ width: 24, height: 24, mr: 1 }}>
-                <PersonIcon fontSize="small" />
+              <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>
+                <PersonIcon />
               </Avatar>
             </Grid>
-            <Grid item>
-              <Typography variant="body2" component="div" noWrap>
-                {patientDetails?.patientName} | Gender: {patientDetails?.gender}{" "}
-                | DOB/Age: {patientDetails?.dateOfBirthOrAge}
+            <Grid item xs>
+              <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
+                {patientDetails?.patientName}
               </Typography>
+              <Grid container spacing={1} alignItems="center">
+                <Grid item>
+                  <Chip
+                    icon={<WcIcon fontSize="small" />}
+                    label={patientDetails?.gender}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    sx={{ height: '24px', '& .MuiChip-label': { fontSize: '0.75rem' } }}
+                  />
+                </Grid>
+                <Grid item>
+                  <Chip
+                    icon={<CalendarTodayIcon fontSize="small" />}
+                    label={patientDetails?.dateOfBirthOrAge}
+                    size="small"
+                    color="secondary"
+                    variant="outlined"
+                    sx={{ height: '24px', '& .MuiChip-label': { fontSize: '0.75rem' } }}
+                  />
+                </Grid>
+                {patientDetails?.pBldGrp && (
+                  <Grid item>
+                    <Chip
+                      icon={<LocalHospitalIcon fontSize="small" />}
+                      label={`Blood: ${patientDetails.pBldGrp}`}
+                      size="small"
+                      color="error"
+                      variant="outlined"
+                    />
+                  </Grid>
+                )}
+              </Grid>
+            </Grid>
+            <Grid item>
+              <Tooltip title="Edit Patient Details" placement="top" arrow>
+                <IconButton
+                  onClick={handleClickOpen}
+                  color="primary"
+                  size="medium"
+                  sx={{
+                    bgcolor: 'rgba(25, 118, 210, 0.08)',
+                    '&:hover': {
+                      bgcolor: 'rgba(25, 118, 210, 0.16)'
+                    }
+                  }}
+                >
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
             </Grid>
           </Grid>
         </CardContent>
@@ -478,7 +325,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({
                 {renderFormField("text", "pfName", "First Name", [], true, false, { xs: 12 })}
                 {renderFormField("text", "plName", "Last Name", [], true, false, { xs: 12 })}
                 {renderFormField("date", "dob", "Date of Birth", [], true, false, { xs: 12 })}
-                {renderFormField("select", "pBldGrp", "Blood Group", bloodGrpValues, false, false, { xs: 12 })}
+                {renderFormField("select", "pBldGrp", "Blood Group", bloodGroupValues, false, false, { xs: 12 })}
                 {renderFormField("select", "pTypeID", "Payment Source [PIC]", picValues, true, false, { xs: 12 })}
                 {renderFormField("date", "pRegDate", "Registration Date", [], true, true, { xs: 12 })}
                 {renderFormField("text", "pssnID", "Aadhaar No", [], true, false, { xs: 12 })}

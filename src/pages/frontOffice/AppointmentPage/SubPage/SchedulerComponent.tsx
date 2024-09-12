@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useMemo, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { Scheduler, Resource } from 'devextreme-react/scheduler';
 import 'devextreme/dist/css/dx.light.css';
 import { useServerDate } from '../../../../hooks/Common/useServerDate';
@@ -9,18 +9,32 @@ const views: Array<'day' | 'week' | 'workWeek' | 'month'> = ['day', 'week', 'wor
 interface SchedulerComponentProps {
     hpID?: number;
     rlID?: number;
+    onAppointmentFormOpening: (startDate?: Date, endDate?: Date) => void;
+    onAppointmentClick: (abID: number) => void;
 }
-const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onAppointmentFormOpening: (startDate?: Date, endDate?: Date) => void }>((props, ref) => {
+const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, ref) => {
     const srvDate = useServerDate()
-    const { date: serverDate, formatDate, formatDateTime, formatTime, add, formatISO, format, parse } = useDayjs(useServerDate());
+    const dayjs = useDayjs(srvDate || new Date());
     const initialDate = srvDate || new Date();
-    const { hpID, rlID, onAppointmentFormOpening } = props;
+    const { hpID, rlID, onAppointmentFormOpening, onAppointmentClick } = props;
 
     const { state, setState, refresh } = useAppointments(initialDate, hpID, rlID);
 
     useImperativeHandle(ref, () => ({
         refresh,
     }));
+
+
+    const parseAppointmentDate = useCallback((dateString: string) => {
+        const [datePart, timePart] = dateString.split(' ');
+        const [day, month, year] = datePart.split('/');
+
+        const reformattedDateString = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timePart}`;
+
+        const parsedDate = new Date(reformattedDateString);
+
+        return parsedDate;
+    }, []);
 
     const onViewChange = useCallback((view: string) => {
         if (['day', 'week', 'workWeek', 'month'].includes(view)) {
@@ -31,9 +45,9 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onApp
     }, [setState]);
 
     const onCurrentDateChange = useCallback((value: string | number | Date) => {
-        const newDate = typeof value === 'string' || typeof value === 'number' ? new Date(value) : value;
+        const newDate = dayjs.parse(value.toString()).toDate();
         setState(prevState => ({ ...prevState, date: newDate }));
-    }, [setState]);
+    }, [setState, dayjs]);
 
     const onAppointmentFormOpeningHandler = useCallback((e: any) => {
         e.cancel = true;
@@ -44,10 +58,17 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onApp
         }
     }, [onAppointmentFormOpening]);
 
-    const onAppointmentClick = useCallback((e: any) => {
-        e.cancel = true;
-        onAppointmentFormOpeningHandler(e);
-    }, [onAppointmentFormOpeningHandler]);
+    const onAppointmentClickHandler = useCallback((e: any) => {
+        e.cancel = true; // Prevent the default appointment window from opening
+        if (e.appointmentData && e.appointmentData.id) {
+            onAppointmentClick(e.appointmentData.id);
+        }
+    }, [onAppointmentClick]);
+
+    // const onAppointmentClick = useCallback((e: any) => {
+    //     e.cancel = true;
+    //     onAppointmentFormOpeningHandler(e);
+    // }, [onAppointmentFormOpeningHandler]);
 
     const onAppointmentDblClick = useCallback((e: any) => {
         e.cancel = true;
@@ -57,11 +78,10 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onApp
     const timeCellTemplate = useCallback((cellData: any) => {
         return (
             <div>
-                {cellData.date.getHours().toString().padStart(2, '0')}:
-                {cellData.date.getMinutes().toString().padStart(2, '0')}
+                {dayjs.formatTime(cellData.date)}
             </div>
         );
-    }, []);
+    }, [dayjs]);
 
     const onContentReady = useCallback((e: any) => {
         if (initialDate && !isNaN(initialDate.getTime())) {
@@ -70,27 +90,46 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onApp
     }, [initialDate]);
 
     const dataSource = useMemo(() => {
-        return Array.isArray(state.appointments) ? state.appointments.map(appt => ({
-            text: `${appt.abFName} ${appt.abLName || ''}`,
-            startDate: formatDateTime(appt.abTime),
-            endDate: formatDateTime(appt.abEndTime),
-            id: appt.abID,
-            status: appt.abStatus,
-            allDay: false,
-        })) : [];
+        console.log('Appointments:', state.appointments);
+        return Array.isArray(state.appointments) ? state.appointments.map(appt => {
+            const startDate = parseAppointmentDate(appt.abTime);
+            const endDate = parseAppointmentDate(appt.abEndTime);
+            return {
+                text: `${appt.abFName} ${appt.abLName || ''}`,
+                startDate,
+                endDate,
+                id: appt.abID,
+                status: appt.abStatus,
+                allDay: false,
+                resourceId: appt.hplID || appt.rlID,
+            };
+        }) : [];
+    }, [state.appointments, parseAppointmentDate]);
+    const resourceDataSource = useMemo(() => {
+        const resources = new Map();
+        if (Array.isArray(state.appointments)) {
+            state.appointments.forEach(appt => {
+                const resourceId = appt.hplID || appt.rlID;
+                if (!resources.has(resourceId)) {
+                    resources.set(resourceId, {
+                        id: resourceId, // Change this to match the resourceId in appointments
+                        text: appt.providerName || appt.rlName,
+                        color: appt.abStatus === 'Confirmed' ? '#1e90ff' : '#ff9747',
+                    });
+                }
+            });
+        }
+        return Array.from(resources.values());
     }, [state.appointments]);
 
-    const resourceDataSource = useMemo(() => {
-        return Array.isArray(state.appointments) ? state.appointments.map(appt => ({
-            text: appt.providerName,
-            id: appt.abID,
-            color: appt.abStatus === 'Confirmed' ? '#1e90ff' : '#ff9747',
-        })) : [];
-    }, [state.appointments]);
+    // useEffect(() => {
+    //     console.log('DataSource:', dataSource);
+    //     console.log('ResourceDataSource:', resourceDataSource);
+    // }, [dataSource, resourceDataSource]);
 
     const MemoizedResource = useMemo(() => (
         <Resource
-            fieldExpr="AppID"
+            fieldExpr="resourceId"
             allowMultiple={true}
             dataSource={resourceDataSource}
             label="Appointment"
@@ -124,7 +163,7 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps & { onApp
             height="100%"
             width="100%"
             onAppointmentDblClick={onAppointmentDblClick}
-            onAppointmentClick={onAppointmentClick}
+            onAppointmentClick={onAppointmentClickHandler}
             onAppointmentFormOpening={onAppointmentFormOpeningHandler}
             timeCellRender={timeCellTemplate}
             onContentReady={onContentReady}

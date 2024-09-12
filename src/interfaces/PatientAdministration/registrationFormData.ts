@@ -34,4 +34,5 @@ export interface PatientDemographicDetails {
   dateOfBirthOrAge: string;
   patientType: string;
   patientPaymentSource: string;
+  pBldGrp: string;
 }
