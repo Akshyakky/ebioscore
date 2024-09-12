@@ -25,6 +25,7 @@ import PaymentTypesPage from "../pages/billing/PaymentTypesPage/MainPage/Payment
 import ServiceGroupsListPage from "../pages/billing/ServiceGroupsListPage/MainPage/ServiceGroupsListPage";
 import AlertPage from "../pages/common/AlertManagerPage/MainPage/AlertPage";
 import WardCategoryPage from "../pages/hospitalAdministration/WardCategoryPage/MainPage/WardCategoryPage";
+import BedSetUpPage from "../pages/hospitalAdministration/Room-BedSetUp/MainPage/BedSetUpPage";
 
 interface RouteConfig {
   path: string;
@@ -133,6 +134,11 @@ const routeConfig: RouteConfig[] = [
   {
     path: "/WardCategoryPage",
     component: WardCategoryPage,
+    protected: true,
+  },
+  {
+    path: "/BedSetUpPage",
+    component: BedSetUpPage,
     protected: true,
   },
 ];
