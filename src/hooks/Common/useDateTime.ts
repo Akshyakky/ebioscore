@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -33,6 +33,7 @@ interface UseDayjsReturn {
   format: (template?: string, date?: DateInput) => string;
   formatDate: (date?: DateInput) => string;
   formatDateYMD: (date?: DateInput) => string;
+  formatDateYMDHHmm: (date?: DateInput) => string;
   formatDateTime: (date?: DateInput) => string;
   formatTime: (date?: DateInput) => string;
   formatISO: (date?: DateInput) => string;
@@ -101,6 +102,13 @@ const useDayjs = (initialDate: DateInput = new Date()): UseDayjsReturn => {
   const formatDateYMD = useCallback(
     (inputDate?: DateInput): string => {
       return dayjs(inputDate || date).format("YYYY-MM-DD");
+    },
+    [date]
+  );
+
+  const formatDateYMDHHmm = useCallback(
+    (inputDate?: DateInput): string => {
+      return dayjs(inputDate || date).format("YYYY-MM-DD HH:mm");
     },
     [date]
   );
@@ -267,6 +275,7 @@ const useDayjs = (initialDate: DateInput = new Date()): UseDayjsReturn => {
     format,
     formatDate,
     formatDateYMD,
+    formatDateYMDHHmm,
     formatDateTime,
     formatTime,
     formatISO,
