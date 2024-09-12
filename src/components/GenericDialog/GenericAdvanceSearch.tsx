@@ -26,11 +26,11 @@ interface CommonSearchDialogProps<T> {
   searchPlaceholder: string;
   onSearch?: (searchQuery: string) => void;
   dialogProps?: {
-    maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+    maxWidth?: "xs" | "sm" | "md" | "lg" | "xl";
     fullWidth?: boolean;
     dialogContentSx?: React.CSSProperties;
   };
-isEditButtonVisible?: boolean;
+  isEditButtonVisible?: boolean;
   isStatusVisible?: boolean;
   isActionVisible?: boolean;
 }
@@ -48,11 +48,13 @@ function GenericAdvanceSearch<T>({
   searchPlaceholder,
   onSearch,
   dialogProps,
-  isEditButtonVisible = true,
-  isStatusVisible = true,
-  isActionVisible = true,
+  isEditButtonVisible = false,
+  isStatusVisible = false,
+  isActionVisible = false,
 }: CommonSearchDialogProps<T>) {
-  const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
+  const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>(
+    {}
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<T[]>([]);
 
@@ -111,7 +113,7 @@ function GenericAdvanceSearch<T>({
       ...column,
       render: column.render
         ? (row: T & { serialNumber: number; Status: string }) =>
-          column.render!(row) as React.ReactElement<any>
+            column.render!(row) as React.ReactElement<any>
         : undefined,
     })),
     {
@@ -144,7 +146,9 @@ function GenericAdvanceSearch<T>({
     onClose();
   };
 
-  const handleSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const newSearchTerm = event.target.value;
     setSearchTerm(newSearchTerm);
     if (onSearch) {
@@ -165,7 +169,7 @@ function GenericAdvanceSearch<T>({
             ControlID="SearchField"
             placeholder={searchPlaceholder}
             InputProps={{
-              type: 'search',
+              type: "search",
             }}
             InputLabelProps={{
               shrink: true,
@@ -203,7 +207,11 @@ function GenericAdvanceSearch<T>({
       actions={dialogActions}
       disableBackdropClick
       disableEscapeKeyDown
-      dialogContentSx={{ minHeight: "600px", maxHeight: "600px", overflowY: "auto" }}
+      dialogContentSx={{
+        minHeight: "600px",
+        maxHeight: "600px",
+        overflowY: "auto",
+      }}
     >
       {dialogContent}
     </GenericDialog>
