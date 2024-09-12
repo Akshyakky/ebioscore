@@ -26,7 +26,6 @@ const DeptUsersList: React.FC<DeptUsersListProps> = ({
       <TableHead>
         <TableRow>
           <TableCell>User Name</TableCell>
-          <TableCell>Inventory</TableCell>
           <TableCell>Pharmacy</TableCell>
           <TableCell>Status</TableCell>
           <TableCell>Action</TableCell>
@@ -36,23 +35,6 @@ const DeptUsersList: React.FC<DeptUsersListProps> = ({
         {deptUsers.map((user) => (
           <TableRow key={user.deptUserID}>
             <TableCell>{user.appUserName}</TableCell>
-            <TableCell>
-              <FormField
-                type="switch"
-                label=""
-                value={user.allowIMYN === "Y"}
-                checked={user.allowIMYN === "Y"}
-                onChange={(e) =>
-                  handleSwitchChange(
-                    user.deptUserID,
-                    "allowIMYN",
-                    e.target.checked
-                  )
-                }
-                name="allowIM"
-                ControlID={`allowIM_${user.deptUserID}`}
-              />
-            </TableCell>
             <TableCell>
               <FormField
                 type="switch"

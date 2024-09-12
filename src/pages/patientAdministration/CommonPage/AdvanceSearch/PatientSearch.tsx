@@ -1,12 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Grid,
   Box,
-  Typography,
 } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
@@ -16,8 +11,8 @@ import { debounce } from "../../../../utils/Common/debounceUtils";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
-import { formatDate } from "../../../../utils/Common/dateUtils";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
+import useDayjs from "../../../../hooks/Common/useDateTime";
 
 interface PatientSearchProps {
   show: boolean;
@@ -32,7 +27,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const { performSearch, searchResults } = useContext(PatientSearchContext);
-
+  const dayjs = useDayjs();
   const debouncedSearch = useCallback(
     debounce((searchQuery: string) => {
       if (searchQuery) {
@@ -89,7 +84,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       header: "Registration Date",
       visible: true,
       render: (row: PatientRegistrationDto) =>
-        formatDate(row.patRegisters?.pRegDate) || "",
+        dayjs.formatDate(row.patRegisters?.pRegDate) || "",
     },
     {
       key: "patRegisters.pGender",
@@ -108,7 +103,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       header: "DOB",
       visible: true,
       render: (row: PatientRegistrationDto) =>
-        formatDate(row.patRegisters?.pDob) || "",
+        dayjs.formatDate(row.patRegisters?.pDob) || "",
     },
     {
       key: "patRegisters.pssnID",

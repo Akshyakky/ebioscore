@@ -1,7 +1,8 @@
 import { Grid, Paper, Typography } from "@mui/material";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from "@mui/icons-material/Save";
+import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useLoading } from "../../../../context/LoadingContext";
 import { store } from "../../../../store/store";
@@ -9,8 +10,6 @@ import { showAlert } from "../../../../utils/Common/showAlert";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { DepartmentDto } from "./../../../../interfaces/Billing/DepartmentDto";
 import { DepartmentListService } from "../../../../services/BillingServices/DepartmentListService";
-import { RootState } from "../../../../store/reducers";
-import { useSelector } from "react-redux";
 import FormField from "../../../../components/FormField/FormField";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { DeptUsersPage } from "./DeptUsers/DeptUsersPage";
@@ -43,9 +42,8 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   const serverDate = useServerDate();
   const { compID, compCode, compName, userID, userName } =
     store.getState().userDetails;
-  const { token } = useSelector((state: RootState) => state.userDetails);
   const { departmentTypesValues } = useDropdownValues();
-
+  const isEditMode = deptId > 0;
   useEffect(() => {
     if (editData) {
       setDeptId(editData.deptID || 0);
@@ -80,8 +78,6 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
 
   const handleSave = async () => {
     setIsSubmitted(true);
-    setLoading(true);
-
     const departmentDto: DepartmentDto = {
       deptID: deptId,
       deptCode: deptCode,
@@ -111,14 +107,24 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
       rModifiedOn: serverDate || new Date(),
       rModifiedBy: userName || "",
     };
-
+    if (!deptCode || !deptName || !deptType) {
+      return;
+    }
+    setLoading(true);
     try {
       const result =
         await DepartmentListService.saveDepartmentList(departmentDto);
       if (result.success) {
-        showAlert("Success", "Department saved successfully!", "success", {
-          onConfirm: handleClear,
-        });
+        showAlert(
+          `Department ${isEditMode ? "Updated" : "Saved"}`,
+          `${deptName} ${isEditMode ? "updated" : "saved"} successfully!`,
+          "success",
+          {
+            onConfirm: isEditMode
+              ? handleClear
+              : () => console.log("Hello", deptId),
+          }
+        );
       } else {
         showAlert(
           "Error",
@@ -193,11 +199,11 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Typography variant="h6" id="department-list-header">
-        Department List
+        Department List - {isEditMode ? "Edit Mode" : "Add New"}
       </Typography>
 
       <section>
-        {deptId > 0 && (
+        {isEditMode && (
           <CustomButton
             text="Manage Users Access"
             size="small"
@@ -278,15 +284,17 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
           />
         </Grid>
         <Grid container spacing={2}>
-          <FormField
-            type="switch"
-            label={rActiveYN === "Y" ? "Active" : "Hidden"}
-            value={rActiveYN}
-            checked={rActiveYN === "Y"}
-            onChange={handleActiveToggle}
-            name="rActiveYN"
-            ControlID="rActiveYN"
-          />
+          {isEditMode && (
+            <FormField
+              type="switch"
+              label={rActiveYN === "Y" ? "Active" : "Hidden"}
+              value={rActiveYN}
+              checked={rActiveYN === "Y"}
+              onChange={handleActiveToggle}
+              name="rActiveYN"
+              ControlID="rActiveYN"
+            />
+          )}
           <FormField
             type="switch"
             label="Registration"
@@ -345,15 +353,6 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
             name="superSpecialityYN"
             ControlID="superSpecialityYN"
           />
-          <FormField
-            type="switch"
-            label="Inventory"
-            value={deptStorePhYN}
-            checked={deptStorePhYN === "Y"}
-            onChange={(e, checked) => setDeptStorePhYN(checked ? "Y" : "N")}
-            name="deptStorePhYN"
-            ControlID="deptStorePhYN"
-          />
         </Grid>
         <Grid container marginTop={0} spacing={2}>
           <FormField
@@ -378,14 +377,13 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
             />
           )}
         </Grid>
-
         <FormSaveClearButton
           clearText="Clear"
-          saveText="Save"
+          saveText={isEditMode ? "Update" : "Save"}
           onClear={handleClear}
           onSave={handleSave}
           clearIcon={DeleteIcon}
-          saveIcon={SaveIcon}
+          saveIcon={isEditMode ? EditIcon : SaveIcon}
         />
       </section>
       <DeptUsersPage

@@ -18,8 +18,42 @@ import { showAlert } from '../../../../utils/Common/showAlert';
 import { useServerDate } from '../../../../hooks/Common/useServerDate';
 import useDayjs from '../../../../hooks/Common/useDateTime';
 
+const getDefaultAppointBookingDto = (formatDate: () => string, formatDateTime: () => string, formateDateYMD: () => string, formateDateYMDHHmm: () => string): AppointBookingDto => ({
+    abID: 0,
+    abFName: 'Akshay',
+    abLName: '',
+    hplID: 0,
+    providerName: '',
+    rlID: 0,
+    rlName: '',
+    arlID: 0,
+    arlName: '',
+    abDuration: 15,
+    abDurDesc: '15 minutes',
+    abDate: formateDateYMD(),
+    abTime: formateDateYMDHHmm(),
+    pChartID: 0,
+    abPType: 'R',
+    abStatus: 'Booked',
+    patRegisterYN: 'Y',
+    dob: formateDateYMD(),
+    oTBookNo: 0,
+    patOPIP: 'O',
+    rActiveYN: 'Y',
+    abEndTime: formateDateYMDHHmm(),
+    transferYN: 'N',
+    pChartCode: '',
+    appPhone1: '',
+    arlInstructions: '',
+    city: '',
+    email: '',
+    pssnId: '',
+    intIdPsprt: '',
+    rNotes: '',
+});
+
 const AppointmentPage: React.FC = () => {
-    const { date: serverDate, formatDate, formatDateTime, formatTime, add, formatISO, format } = useDayjs(useServerDate());
+    const { date: serverDate, formatDate, formatDateTime, formatTime, add, formatISO, format, formatDateYMD, formatDateYMDHHmm } = useDayjs(useServerDate());
     const schedulerRef = useRef<{ refresh: () => void } | null>(null);
     const [selectedConID, setSelectedConID] = useState<number | undefined>(undefined);
     const [selectedRlID, setSelectedRlID] = useState<number | undefined>(undefined);
@@ -29,38 +63,9 @@ const AppointmentPage: React.FC = () => {
     const [resourceOptions, setResourceOptions] = useState<DropdownOption[]>([]);
     const [selectedProviderName, setSelectedProviderName] = useState<string>('');
     const [selectedRlName, setSelectedRlName] = useState<string>('');
+    const [isUpdating, setIsUpdating] = useState(false);
 
-    const [formData, setFormData] = useState<AppointBookingDto>({
-        abID: 0,
-        abFName: 'Akshay',
-        abLName: '',
-        hplID: 0,
-        providerName: '',
-        rlID: 0,
-        rlName: '',
-        arlID: 0,
-        arlName: '',
-        abDuration: 15,
-        abDurDesc: '15 minutes',
-        abDate: formatDate(),
-        abTime: formatDateTime(),
-        abPType: 'R',
-        abStatus: 'Booked',
-        patRegisterYN: 'Y',
-        dob: formatDate(),
-        oTBookNo: 0,
-        patOPIP: 'O',
-        rActiveYN: 'Y',
-        rCreatedID: 0,
-        rCreatedBy: '',
-        rCreatedOn: formatDateTime(),
-        rModifiedID: 0,
-        rModifiedBy: '',
-        rModifiedOn: formatDateTime(),
-        abEndTime: formatDateTime(),
-        transferYN: 'N',
-        status: 'Active'
-    });
+    const [formData, setFormData] = useState<AppointBookingDto>(() => getDefaultAppointBookingDto(formatDate, formatDateTime, formatDateYMD, formatDateYMDHHmm));
 
     const handleRefresh = useCallback(() => {
         if (schedulerRef.current) {
@@ -77,18 +82,40 @@ const AppointmentPage: React.FC = () => {
         handleRefresh();
     }, [handleRefresh]);
 
+    const handleAppointmentClick = useCallback(async (abID: number) => {
+        try {
+            const result = await AppointmentService.getAppointBookingById(abID);
+            if (result.success && result.data) {
+                setFormData({
+                    ...result.data,
+                    abDate: formatDateYMD(result.data.abDate),
+                    abTime: formatDateYMDHHmm(result.data.abTime),
+                    abEndTime: formatDateYMDHHmm(result.data.abEndTime),
+                });
+                setIsUpdating(true);
+                setIsBookingFormOpen(true);
+            } else {
+                showAlert('Error', 'Failed to fetch appointment details', 'error');
+            }
+        } catch (error) {
+            console.error('Error fetching appointment details:', error);
+            showAlert('Error', 'An error occurred while fetching appointment details', 'error');
+        }
+    }, [formatDateYMD, formatDateYMDHHmm]);
+
     const handleAppointmentFormOpen = useCallback((date?: Date, time?: Date) => {
         if (!selectedConID && !selectedRlID) {
             showAlert('Warning', 'Please select a consultant or resource before booking an appointment.', 'warning');
             return;
         }
 
+        setIsUpdating(false); // Reset updating state for new appointments
         if (date && time) {
             setFormData(prevData => ({
-                ...prevData,
-                abDate: format('YYYY-MM-DD', date),
-                abTime: formatDateTime(date),
-                abEndTime: formatDateTime(calculateEndTime(date, prevData.abDuration)),
+                ...getDefaultAppointBookingDto(formatDate, formatDateTime, formatDateYMD, formatDateYMDHHmm),
+                abDate: formatDateYMD(date),
+                abTime: formatDateYMDHHmm(date),
+                abEndTime: formatDateYMDHHmm(calculateEndTime(date, prevData.abDuration)),
                 hplID: selectedConID || 0,
                 providerName: selectedProviderName,
                 rlID: selectedRlID || 0,
@@ -96,7 +123,7 @@ const AppointmentPage: React.FC = () => {
             }));
         }
         setIsBookingFormOpen(true);
-    }, [selectedConID, selectedRlID, selectedProviderName, selectedRlName]);
+    }, [selectedConID, selectedRlID, selectedProviderName, selectedRlName, formatDateYMDHHmm, formatDateYMD, formatDate, formatDateTime]);
 
     const handleAppointmentFormClose = useCallback(() => {
         setIsBookingFormOpen(false);
@@ -106,20 +133,20 @@ const AppointmentPage: React.FC = () => {
         try {
             const result = await AppointmentService.saveAppointBooking(formData);
             if (result.success) {
-                showAlert('Notification', 'Appointment booked successfully', 'success', {
+                showAlert('Notification', `Appointment ${isUpdating ? 'updated' : 'booked'} successfully`, 'success', {
                     onConfirm: () => {
                         handleRefresh();
                         handleAppointmentFormClose();
                     }
                 });
             } else {
-                showAlert('Error', result.errorMessage || 'Failed to book appointment', 'error');
+                showAlert('Error', result.errorMessage || `Failed to ${isUpdating ? 'update' : 'book'} appointment`, 'error');
             }
         } catch (error) {
             console.error('Error saving appointment:', error);
-            showAlert('Error', 'An error occurred while booking the appointment', 'error');
+            showAlert('Error', `An error occurred while ${isUpdating ? 'updating' : 'booking'} the appointment`, 'error');
         }
-    }, [formData, handleAppointmentFormClose, handleRefresh]);
+    }, [formData, handleAppointmentFormClose, handleRefresh, isUpdating]);
 
     const handleChange = useCallback((name: keyof AppointBookingDto, value: any) => {
         setFormData(prevData => {
@@ -127,43 +154,44 @@ const AppointmentPage: React.FC = () => {
 
             if (name === 'abDuration') {
                 newData.abDurDesc = `${value} minutes`;
-                newData.abEndTime = calculateEndTime(new Date(newData.abTime), value);
+                newData.abEndTime = calculateEndTime(newData.abTime, value);
             } else if (name === 'abTime') {
-                newData.abEndTime = calculateEndTime(new Date(value), newData.abDuration);
+                newData.abEndTime = calculateEndTime(value, newData.abDuration);
             }
 
             return newData;
         });
     }, []);
 
+    const calculateEndTime = (startTime: Date | string, durationMinutes: number): string => {
+        return formatDateYMDHHmm(add(durationMinutes, 'minute', startTime));
+    };
+
     const handleClearForm = useCallback(() => {
-        setFormData(prevData => ({
-            ...prevData,
-            abFName: 'Akshay',
-            abLName: '',
-            hplID: 0,
-            providerName: '',
-            rlID: 0,
-            rlName: '',
-            arlID: 0,
-            arlName: '',
-            abDuration: 15,
-            abDurDesc: '15 minutes',
-            abPType: 'R',
-            patRegisterYN: 'Y',
-            pChartID: undefined,
-            pChartCode: undefined,
-            appPhone1: undefined,
-            arlInstructions: undefined,
-            city: undefined,
-            dob: undefined,
-            email: undefined,
-            pssnId: undefined,
-            intIdPsprt: undefined,
-            rNotes: undefined,
-            oTBookNo: 0
-        }));
-    }, []);
+        if (isUpdating) {
+            // If updating, reset to the original appointment data
+            handleAppointmentClick(formData.abID);
+        } else {
+            // If creating new, reset to default values
+            setFormData(prevData => {
+                const defaultData = getDefaultAppointBookingDto(formatDate, formatDateTime, formatDateYMD, formatDateYMDHHmm);
+                return {
+                    ...defaultData,
+                    // Preserve the appointment slot details
+                    abDate: prevData.abDate,
+                    abTime: prevData.abTime,
+                    abEndTime: prevData.abEndTime,
+                    abDuration: prevData.abDuration,
+                    abDurDesc: prevData.abDurDesc,
+                    // Preserve the selected consultant/resource
+                    hplID: prevData.hplID,
+                    providerName: prevData.providerName,
+                    rlID: prevData.rlID,
+                    rlName: prevData.rlName
+                };
+            });
+        }
+    }, [isUpdating, formData.abID, handleAppointmentClick, formatDate, formatDateTime, formatDateYMD, formatDateYMDHHmm]);
 
     useEffect(() => {
         const fetchReasonOptions = async () => {
@@ -192,10 +220,6 @@ const AppointmentPage: React.FC = () => {
         fetchResourceOptions();
     }, []);
 
-    const calculateEndTime = (startTime: Date | string, durationMinutes: number): string => {
-        return add(durationMinutes, 'minute', startTime).toISOString();
-    };
-
     return (
         <Container maxWidth={false}>
             <Box sx={{
@@ -216,7 +240,7 @@ const AppointmentPage: React.FC = () => {
                 }}>
                     <Box sx={{ flexShrink: 0, bgcolor: 'background.paper', p: 1 }}></Box>
                     <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-                        <SchedulerComponent ref={schedulerRef} hpID={selectedConID} rlID={selectedRlID} onAppointmentFormOpening={handleAppointmentFormOpen} />
+                        <SchedulerComponent ref={schedulerRef} hpID={selectedConID} rlID={selectedRlID} onAppointmentFormOpening={handleAppointmentFormOpen} onAppointmentClick={handleAppointmentClick} />
                     </Box>
                 </Box>
 
@@ -234,8 +258,8 @@ const AppointmentPage: React.FC = () => {
                     dialogContentSx={{ maxHeight: '400px' }}
                     actions={[
                         <CustomButton key="close" text="Close" onClick={handleAppointmentFormClose} color="inherit" icon={CloseIcon} />,
-                        <CustomButton key="clear" text="Clear" onClick={handleClearForm} color="error" sx={{ ml: 2 }} icon={ClearAllIcon} />,
-                        <CustomButton key="save" text="Save" onClick={handleSaveBooking} color="primary" variant="contained" sx={{ ml: 2 }} icon={SaveIcon} />,
+                        <CustomButton key="clear" text="Reset" onClick={handleClearForm} color="error" sx={{ ml: 2 }} icon={ClearAllIcon} />,
+                        <CustomButton key="save" text={isUpdating ? "Update" : "Save"} onClick={handleSaveBooking} color="primary" variant="contained" sx={{ ml: 2 }} icon={SaveIcon} />,
                     ]}
                 >
                     <AppointmentBookingForm onChange={handleChange} formData={formData} reasonOptions={reasonOptions} resourceOptions={resourceOptions} rLotYN={rLotYN} />

@@ -11,21 +11,21 @@ export interface AppointBookingDto {
   arlName?: string;
   abDuration: number;
   abDurDesc: string;
-  abDate: string; // Use string for dates in TS, convert to Date when needed
-  abTime: string; // Use string for times in TS, convert to Date when needed
+  abDate: string;
+  abTime: string;
   pChartID: number;
   pChartCode?: string;
   abPType: string;
   abStatus: string;
   appPhone1?: string;
   appPhone2?: string;
-  patRegisterYN: "Y" | "N"; // Use string union for char
+  patRegisterYN: "Y" | "N";
   oTBookNo: number;
   atID?: number;
   atName?: string;
   pNatID?: number;
   pNatName?: string;
-  patOPIP: "O" | "I"; // Assuming 'O' for outpatient, 'I' for inpatient
+  patOPIP: "O" | "I";
   admitID?: number;
   wNameID?: number;
   wName?: string;
@@ -38,12 +38,6 @@ export interface AppointBookingDto {
   crID?: number;
   crName?: string;
   rActiveYN: "Y" | "N";
-  rCreatedID: number;
-  rCreatedBy: string;
-  rCreatedOn: string;
-  rModifiedID: number;
-  rModifiedBy: string;
-  rModifiedOn: string;
   rNotes?: string;
   abEndTime: string;
   procNotes?: string;
@@ -63,5 +57,4 @@ export interface AppointBookingDto {
   intIdPsprt?: string;
   transferYN: "Y" | "N";
   oldPChartID?: number;
-  status: string; // Computed property in C#, include as regular property in TS
 }

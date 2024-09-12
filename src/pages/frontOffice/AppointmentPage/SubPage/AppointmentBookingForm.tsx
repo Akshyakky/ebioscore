@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Grid } from '@mui/material';
 import { DropdownOption } from '../../../../interfaces/Common/DropdownOption';
 import FormField from '../../../../components/FormField/FormField';
@@ -10,6 +10,9 @@ import useDayjs from '../../../../hooks/Common/useDateTime';
 import { usePatientAutocomplete } from '../../../../hooks/PatientAdminstration/usePatientAutocomplete';
 import extractNumbers from '../../../../utils/PatientAdministration/extractNumbers';
 import PatientDemographics from '../../../patientAdministration/CommonPage/Demograph/PatientDemographics';
+import { useLoading } from '../../../../context/LoadingContext';
+import { PatientService } from '../../../../services/PatientAdministrationServices/RegistrationService/PatientService';
+import { PatientRegistrationDto } from '../../../../interfaces/PatientAdministration/PatientFormData';
 
 interface AppointmentBookingFormProps {
     onChange: (name: keyof AppointBookingDto, value: any) => void;
@@ -34,6 +37,7 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
     const [cityOptions, setCityOptions] = useState<DropdownOption[]>([]);
     const [titleOptions, setTitleOptions] = useState<DropdownOption[]>([]);
     const { fetchPatientSuggestions } = usePatientAutocomplete();
+    const { setLoading } = useLoading();
 
     useEffect(() => {
         const loadDropdownValues = async () => {
@@ -82,6 +86,36 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
     };
 
     const isNonRegistered = formData.patRegisterYN === 'N';
+
+    const handlePatientSelect = useCallback(async (pChartID: number | null) => {
+        if (pChartID === null) {
+            console.error('Invalid pChartID: null');
+            return; // Exit the function if pChartID is null
+        }
+        setLoading(true);
+        try {
+            const patientDetails = await PatientService.getPatientDetails(pChartID);
+            if (patientDetails.success && patientDetails.data) {
+                const patientData: PatientRegistrationDto = patientDetails.data;
+                onChange('pChartID', patientData.patRegisters.pChartID);
+                onChange('pChartCode', patientData.patRegisters.pChartCode);
+                onChange('abFName', patientData.patRegisters.pFName || '');
+                onChange('abLName', patientData.patRegisters.pLName || '');
+                onChange('atName', patientData.patRegisters.pTitle || '');
+                onChange('dob', patientData.patRegisters.pDob || '');
+                onChange('pssnId', patientData.patRegisters.pssnID || '');
+                onChange('intIdPsprt', patientData.patRegisters.intIdPsprt || '');
+                onChange('appPhone1', patientData.patAddress.pAddPhone1 || '');
+                onChange('email', patientData.patAddress.pAddEmail || '');
+                onChange('city', patientData.patAddress.pAddCity || '');
+            }
+        } catch (error) {
+            console.error('Error fetching patient details:', error);
+            // You might want to show an error message to the user here
+        } finally {
+            setLoading(false);
+        }
+    }, [onChange, setLoading]);
 
     return (
         <Box sx={{ backgroundColor: '#fff', borderRadius: '8px', width: '100%' }}>
@@ -202,11 +236,13 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                     onChange={(e) => onChange('pChartCode', e.target.value)}
                     fetchSuggestions={fetchPatientSuggestions}
                     onSelectSuggestion={(suggestion) => {
-                        // Here you can handle the selected suggestion
-                        // For example, you might want to update multiple fields based on the selected patient
-                        onChange('pChartCode', suggestion.split('|')[0].trim());
-                        onChange('pChartID', extractNumbers(suggestion.split('|')[0].trim()));
-                        // You might also want to fetch and set other patient details here
+                        const pChartCode = suggestion.split('|')[0].trim();
+                        onChange('pChartCode', pChartCode);
+
+                        const numbersArray = extractNumbers(pChartCode);
+                        const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
+                        onChange('pChartID', pChartID);
+                        handlePatientSelect(pChartID);
                     }}
                     gridProps={{ xs: 12 }}
                 />
