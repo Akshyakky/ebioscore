@@ -8,67 +8,58 @@ import { useLoading } from "../../../../../context/LoadingContext";
 import { showAlert } from "../../../../../utils/Common/showAlert";
 import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../../components/Button/CustomButton";
-import { RoomGroupDto, RoomListDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { WrBedDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
-import { RoomListService } from "../../../../../services/HospitalAdministrationServices/Room-BedSetUpService/RoomListService";
+import { WrBedService } from "../../../../../services/HospitalAdministrationServices/Room-BedSetUpService/WrBedService";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
-import { ViewAgenda, ViewArray } from "@mui/icons-material";
 
-interface RoomListDetailsProps {
-    roomGroup: RoomGroupDto | null;
+interface WrBedDetailsProps {
+    roomId: number;
     onClose: () => void;
-    onRoomSelect: (roomId: number) => void;  // Add this prop
 }
 
-const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onClose, onRoomSelect }) => {
-    const [rooms, setRooms] = useState<RoomListDto[]>([]);
+const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
+    const [beds, setBeds] = useState<WrBedDto[]>([]);
     const { setLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
-    const [formData, setFormData] = useState<RoomListDto>({
-        rlID: 0,
-        rlCode: '',
-        rNotes: '',
-        rName: "",
-        noOfBeds: 0,
+    const [formData, setFormData] = useState<WrBedDto>({
+        bedID: 0,
+        bedName: "",
+        rlID: roomId,
         rActiveYN: "Y",
-        rgrpID: roomGroup?.rGrpID || 0,
         compID: store.getState().userDetails.compID || 0,
         transferYN: "Y",
-        rLocation: "",
-        rLocationID: 0,
-        deptName: roomGroup?.deptName || "",
-        deptID: roomGroup?.deptID || 0,
-        dulID: 0,
-        unitDesc: ''
+        blockBedYN: "N",
+        wbCatID: 0,
     });
-    const { handleDropdownChange } = useDropdownChange<RoomListDto>(setFormData);
-    const { floorValues, unitValues } = useDropdownValues();
+    const { handleDropdownChange } = useDropdownChange<WrBedDto>(setFormData);
+    const { categoryValues, serviceValues } = useDropdownValues();
 
-    const fetchRooms = async () => {
+    const fetchBeds = async () => {
         setLoading(true);
         try {
-            const response = await RoomListService.getAllRoomList();
+            const response = await WrBedService.getAllWrBeds();
             if (response.success) {
-                const activeRooms = (response.data || []).filter(
-                    (room) => room.rActiveYN === "Y" && room.rgrpID === (roomGroup?.rGrpID || 0)
+                const activeBeds = (response.data || []).filter(
+                    (bed) => bed.rActiveYN === "Y" && bed.rlID === roomId
                 );
-                setRooms(activeRooms);
+                setBeds(activeBeds);
             } else {
                 showAlert(
                     "Error",
-                    response.errorMessage || "Failed to fetch room lists",
+                    response.errorMessage || "Failed to fetch beds",
                     "error"
                 );
             }
         } catch (error) {
-            console.error("Error fetching room lists:", error);
+            console.error("Error fetching beds:", error);
             showAlert(
                 "Error",
-                "An error occurred while fetching room lists.",
+                "An error occurred while fetching beds.",
                 "error"
             );
         } finally {
@@ -77,56 +68,55 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onClose, o
     };
 
     useEffect(() => {
-        if (roomGroup?.rGrpID) {
-            fetchRooms();
+        if (roomId) {
+            fetchBeds();
         }
-    }, [roomGroup?.rGrpID]);
+    }, [roomId]);
 
     const handleAdd = () => {
         setFormData({
-            rlID: 0,
-            rName: "",
-            noOfBeds: 0,
+            bedID: 0,
+            bedName: "",
+            rlID: roomId,
             rActiveYN: "Y",
-            rgrpID: roomGroup?.rGrpID || 0,
             compID: store.getState().userDetails.compID || 0,
             transferYN: "Y",
-            rlCode: '',
-            rNotes: '',
-            deptName: roomGroup?.deptName || "",
-            deptID: roomGroup?.deptID || 0,
-            dulID: 0,
-            unitDesc: '',
-            rLocation: "",
-            rLocationID: 0,
+            blockBedYN: "N",
+            wbCatID: 0,
         });
-        setDialogTitle("Add Room");
+        setDialogTitle("Add Bed");
         setIsDialogOpen(true);
     };
 
     const handleAddDialogSubmit = async () => {
         setLoading(true);
         try {
-            const response = await RoomListService.saveRoomList(formData);
+            const preparedData = {
+                ...formData,
+                wbCatID: formData.wbCatID ? parseInt(formData.wbCatID.toString(), 10) : undefined,
+                bedStatusValue: formData.bedStatusValue || undefined,
+            };
+
+            const response = await WrBedService.saveWrBed(preparedData);
             if (response.success) {
                 showAlert(
                     "Success",
-                    formData.rlID
-                        ? "Room updated successfully"
-                        : "Room added successfully",
+                    formData.bedID
+                        ? "Bed updated successfully"
+                        : "Bed added successfully",
                     "success"
                 );
-                fetchRooms();
+                fetchBeds();
                 setIsDialogOpen(false);
             } else {
                 showAlert(
                     "Error",
-                    response.errorMessage || "Failed to save room",
+                    response.errorMessage || "Failed to save bed",
                     "error"
                 );
             }
         } catch (error) {
-            console.error("Error submitting room:", error);
+            console.error("Error submitting bed:", error);
             showAlert("Error", "An error occurred during submission.", "error");
         } finally {
             setLoading(false);
@@ -137,61 +127,60 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onClose, o
         setIsDialogOpen(false);
     };
 
-    const handleEdit = async (row: RoomListDto) => {
+    const handleEdit = async (row: WrBedDto) => {
         try {
-            const response = await RoomListService.getRoomListById(row.rlID);
+            const response = await WrBedService.getWrBedById(row.bedID);
             if (response.success) {
-                const room = response.data;
-                if (room) {
-                    setFormData({ ...room });
-                    setDialogTitle("Edit Room");
+                const bed = response.data;
+                if (bed) {
+                    setFormData({ ...bed, wbCatID: bed.wbCatID || 0 });
+                    setDialogTitle("Edit Bed");
                     setIsDialogOpen(true);
                 } else {
-                    showAlert("Error", "Room data is missing", "error");
+                    showAlert("Error", "Bed data is missing", "error");
                 }
             } else {
                 showAlert(
                     "Error",
-                    response.errorMessage || "Failed to load room details",
+                    response.errorMessage || "Failed to load bed details",
                     "error"
                 );
             }
         } catch (error) {
-            console.error("Error fetching room details:", error);
+            console.error("Error fetching bed details:", error);
             showAlert(
                 "Error",
-                "An error occurred while fetching room details.",
+                "An error occurred while fetching bed details.",
                 "error"
             );
         }
     };
 
-    const handleDelete = async (row: RoomListDto) => {
+    const handleDelete = async (row: WrBedDto) => {
         setLoading(true);
         try {
-            const updatedRoom = { ...row, rActiveYN: "N" };
-            const result = await RoomListService.saveRoomList(updatedRoom);
+            const result = await WrBedService.updateWrBedActiveStatus(row.bedID, false);
             if (result.success) {
                 showAlert(
                     "Success",
-                    "Room deactivated successfully",
+                    "Bed deactivated successfully",
                     "success"
                 );
-                setRooms((prevRooms) =>
-                    prevRooms.filter((room) => room.rlID !== row.rlID)
+                setBeds((prevBeds) =>
+                    prevBeds.filter((bed) => bed.bedID !== row.bedID)
                 );
             } else {
                 showAlert(
                     "Error",
-                    result.errorMessage || "Failed to delete room",
+                    result.errorMessage || "Failed to delete bed",
                     "error"
                 );
             }
         } catch (error) {
-            console.error("Error deleting room:", error);
+            console.error("Error deleting bed:", error);
             showAlert(
                 "Error",
-                "An error occurred while deleting the room.",
+                "An error occurred while deleting the bed.",
                 "error"
             );
         } finally {
@@ -207,16 +196,14 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onClose, o
     };
 
     const columns = [
-        { key: "rName", header: "Room Name", visible: true },
-        { key: "rLocation", header: "Room Location", visible: true },
-        { key: "deptName", header: "Department", visible: true },
-
-
+        { key: "bedName", header: "Bed Name", visible: true },
+        { key: "wbCatName", header: "Bed Category", visible: true },
+        { key: "bedStatus", header: "Bed Status", visible: true },
         {
             key: "actions",
             header: "Edit",
             visible: true,
-            render: (row: RoomListDto) => (
+            render: (row: WrBedDto) => (
                 <CustomButton
                     onClick={() => handleEdit(row)}
                     icon={EditIcon}
@@ -230,7 +217,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onClose, o
             key: "actions",
             header: "Delete",
             visible: true,
-            render: (row: RoomListDto) => (
+            render: (row: WrBedDto) => (
                 <CustomButton
                     onClick={() => handleDelete(row)}
                     icon={DeleteIcon}
@@ -241,37 +228,22 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onClose, o
                 />
             ),
         },
-        {
-            key: "actions",
-            header: "View/Add",
-            visible: true,
-            render: (row: RoomListDto) => (
-                <CustomButton
-                    onClick={() => onRoomSelect(row.rlID)}
-                    text="View"
-                    variant="contained"
-                    size="small"
-                    color="success"
-                    icon={ViewArray}
-                />
-            ),
-        },
-
     ];
+
     return (
         <Paper variant="elevation" sx={{ padding: 2 }}>
-            <Typography variant="h6" id="room-list-header">
-                Room List Details
+            <Typography variant="h6" id="wr-bed-header">
+                Bed Details
             </Typography>
             <Grid container justifyContent="flex-end" sx={{ marginBottom: 2 }}>
                 <CustomButton
                     icon={AddIcon}
-                    text="Add Room"
+                    text="Add Bed"
                     onClick={handleAdd}
                     variant="contained"
                 />
             </Grid>
-            <CustomGrid columns={columns} data={rooms} />
+            <CustomGrid columns={columns} data={beds} />
             <GenericDialog
                 open={isDialogOpen}
                 onClose={handleAddDialogClose}
@@ -300,49 +272,48 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onClose, o
                 <Grid container spacing={2}>
                     <FormField
                         type="text"
-                        label="RoomName"
-                        name="rName"
-                        value={formData.rName}
+                        label="Bed Name"
+                        name="bedName"
+                        value={formData.bedName}
                         onChange={handleChange}
-                        ControlID="rName"
+                        ControlID="bedName"
                         isMandatory={true}
                         gridProps={{ xs: 12 }}
                         fullWidth
                     />
-
                     <FormField
                         type="select"
-                        label="Location"
-                        name="rLocation"
-                        value={formData.rLocation || ""}
+                        label="Bed Category"
+                        name="wbCatID"
+                        value={formData.wbCatID || ""}
                         onChange={handleDropdownChange(
-                            ["rLocationID"],
-                            ["rLocation"],
-                            floorValues
+                            ["wbCatID"],
+                            ["wbCatName"],
+                            categoryValues
                         )}
-                        options={floorValues}
-                        ControlID="rLocation"
+                        options={categoryValues}
+                        ControlID="wbCatID"
+                        gridProps={{ xs: 12 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="Bed Status"
+                        name="bchID"
+                        value={formData.bchID || ""}
+                        onChange={handleDropdownChange(
+                            ["bchID"],
+                            ["bchName"],
+                            serviceValues
+                        )}
+                        options={serviceValues}
+                        ControlID="bchID"
                         gridProps={{ xs: 12 }}
                     />
 
-                    <FormField
-                        type="select"
-                        label="Unit "
-                        name="dulID"
-                        value={formData.dulID || ""}
-                        onChange={handleDropdownChange(
-                            ["dulID"],
-                            ["unitDesc"],
-                            unitValues
-                        )}
-                        options={unitValues}
-                        ControlID="dulID"
-                        gridProps={{ xs: 12 }}
-                    />
                 </Grid>
             </GenericDialog>
         </Paper>
     );
 };
 
-export default RoomListDetails;
+export default WrBedDetails;

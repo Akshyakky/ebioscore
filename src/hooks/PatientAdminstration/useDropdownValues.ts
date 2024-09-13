@@ -10,6 +10,8 @@ import { DepartmentService } from "../../services/CommonServices/DepartmentServi
 import { ContactMastService } from "../../services/CommonServices/ContactMastService";
 import { InsuranceCarrierService } from "../../services/CommonServices/InsuranceCarrierService";
 import { ContactListService } from "../../services/HospitalAdministrationServices/ContactListService/ContactListService";
+import { DeptUnitListService } from "../../services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
+import { ServiceTypeService } from "../../services/BillingServices/ServiceTypeServices";
 
 const useDropdownValues = () => {
   const [picValues, setPicValues] = useState<DropdownOption[]>([]);
@@ -58,6 +60,8 @@ const useDropdownValues = () => {
   );
 
   const [floorValues, setFloorValues] = useState<DropdownOption[]>([]);
+  const [unitValues, setUnitValues] = useState<any[]>([]);
+  const [serviceValues, setServiceValues] = useState<any[]>([]);
 
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
@@ -92,6 +96,8 @@ const useDropdownValues = () => {
           employeeStatusResponse,
           specialityResponse,
           floorResponse,
+          unitResponse,
+          serviceTypeResponse,
         ] = await Promise.all([
           BillingService.fetchPicValues("GetPICDropDownValues"),
           ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
@@ -156,6 +162,8 @@ const useDropdownValues = () => {
             "GetActiveAppModifyFieldsAsync",
             "FLOOR"
           ),
+          DeptUnitListService.getAllDeptUnitList(),
+          ServiceTypeService.getAllServiceType(),
         ]);
 
         setPicValues(
@@ -291,6 +299,19 @@ const useDropdownValues = () => {
             label: item.label,
           }))
         );
+        setUnitValues(
+          (unitResponse.data || []).map((item) => ({
+            value: item.dulID || 0,
+            label: item.unitDesc || "",
+          }))
+        );
+
+        setServiceValues(
+          (serviceTypeResponse.data || []).map((item) => ({
+            value: item.bchID || 0,
+            label: item.bchName || "",
+          }))
+        );
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
       } finally {
@@ -326,6 +347,8 @@ const useDropdownValues = () => {
     employeeStatusValues,
     specialityValues,
     floorValues,
+    unitValues,
+    serviceValues,
   };
 };
 
