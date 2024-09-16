@@ -10,7 +10,9 @@ const BedSetUpPage: React.FC = () => {
     const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
     const [isRoomComponentOpen, setIsRoomComponentOpen] = useState(false);
 
+
     const handleAddRoom = (roomGroup: RoomGroupDto) => {
+        debugger
         setSelectedRoomGroup(roomGroup);
         setIsRoomComponentOpen(true);
     };
@@ -19,11 +21,13 @@ const BedSetUpPage: React.FC = () => {
         setSelectedRoomId(roomId);
     };
 
+
     const closeRoomComponent = () => {
         setIsRoomComponentOpen(false);
         setSelectedRoomGroup(null);
         setSelectedRoomId(null);
     };
+
 
     return (
         <>
@@ -38,7 +42,7 @@ const BedSetUpPage: React.FC = () => {
                             <Grid item xs={12} sm={12} md={4} lg={4}>
                                 <RoomListDetails
                                     roomGroup={selectedRoomGroup}
-                                    onRoomSelect={handleRoomSelect}  // Pass room selection handler
+                                    onRoomSelect={handleRoomSelect}
                                     onClose={closeRoomComponent}
                                 />
                             </Grid>
@@ -46,13 +50,14 @@ const BedSetUpPage: React.FC = () => {
                             {selectedRoomId && (
                                 <Grid item xs={12} sm={12} md={4} lg={4}>
                                     <WrBedDetails
-                                        roomId={selectedRoomId}  // Pass the selected room ID to WrBedDetails
+                                        roomId={selectedRoomId}
                                         onClose={closeRoomComponent}
                                     />
                                 </Grid>
                             )}
                         </>
                     )}
+
                 </Grid>
             </Container>
         </>

@@ -15,7 +15,7 @@ import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
 import { WrBedService } from "../../../../../services/HospitalAdministrationServices/Room-BedSetUpService/WrBedService";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
-
+import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
 interface WrBedDetailsProps {
     roomId: number;
     onClose: () => void;
@@ -27,6 +27,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
     const [formData, setFormData] = useState<WrBedDto>({
+        bchID: 0,
         bedID: 0,
         bedName: "",
         rlID: roomId,
@@ -35,9 +36,11 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
         transferYN: "Y",
         blockBedYN: "N",
         wbCatID: 0,
+        key: 0,
     });
     const { handleDropdownChange } = useDropdownChange<WrBedDto>(setFormData);
-    const { categoryValues, serviceValues } = useDropdownValues();
+    const { bedCategoryValues, serviceValues } = useDropdownValues();
+    const [, setIsSubGroup] = useState(false);
 
     const fetchBeds = async () => {
         setLoading(true);
@@ -73,8 +76,9 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
         }
     }, [roomId]);
 
-    const handleAdd = () => {
+    const handleAdd = (isSubGroup: boolean = false, parentGroup?: WrBedDto) => {
         setFormData({
+            bchID: 0,
             bedID: 0,
             bedName: "",
             rlID: roomId,
@@ -83,8 +87,10 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
             transferYN: "Y",
             blockBedYN: "N",
             wbCatID: 0,
+            key: isSubGroup ? parentGroup?.bedID || 0 : 0,
         });
-        setDialogTitle("Add Bed");
+        setDialogTitle(isSubGroup ? "Add Bed" : "Add Cradle");
+        setIsSubGroup(isSubGroup);
         setIsDialogOpen(true);
     };
 
@@ -94,7 +100,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
             const preparedData = {
                 ...formData,
                 wbCatID: formData.wbCatID ? parseInt(formData.wbCatID.toString(), 10) : undefined,
-                bedStatusValue: formData.bedStatusValue || undefined,
+                bchID: formData.bchID ? parseInt(formData.bchID.toString(), 10) : undefined,
             };
 
             const response = await WrBedService.saveWrBed(preparedData);
@@ -108,6 +114,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                 );
                 fetchBeds();
                 setIsDialogOpen(false);
+
             } else {
                 showAlert(
                     "Error",
@@ -133,7 +140,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
             if (response.success) {
                 const bed = response.data;
                 if (bed) {
-                    setFormData({ ...bed, wbCatID: bed.wbCatID || 0 });
+                    setFormData({ ...bed, wbCatID: bed.wbCatID || 0, bchID: bed.bchID || 0 });
                     setDialogTitle("Edit Bed");
                     setIsDialogOpen(true);
                 } else {
@@ -159,7 +166,8 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
     const handleDelete = async (row: WrBedDto) => {
         setLoading(true);
         try {
-            const result = await WrBedService.updateWrBedActiveStatus(row.bedID, false);
+            const updateWrBed = { ...row, rActiveYN: "N" };
+            const result = await WrBedService.saveWrBed(updateWrBed);
             if (result.success) {
                 showAlert(
                     "Success",
@@ -197,8 +205,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
 
     const columns = [
         { key: "bedName", header: "Bed Name", visible: true },
-        { key: "wbCatName", header: "Bed Category", visible: true },
-        { key: "bedStatus", header: "Bed Status", visible: true },
+        { key: "bchName", header: "Bed Status", visible: true },
         {
             key: "actions",
             header: "Edit",
@@ -228,10 +235,32 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                 />
             ),
         },
+
+        {
+            key: "actions",
+            header: "Add Cradle",
+            visible: true,
+            render: (row: WrBedDto) => (
+                row.key === 0 ? (
+                    <CustomButton
+                        onClick={() => handleAdd(true, row)}
+                        icon={SubdirectoryArrowRightIcon}
+                        text="Cradle"
+                        variant="contained"
+                        size="small"
+                    />
+                ) : (
+                    <></>
+                )
+            ),
+        },
     ];
 
     return (
-        <Paper variant="elevation" sx={{ padding: 2 }}>
+        <Paper variant="elevation" sx={{
+            padding: 2, height: "600px",
+            overflowY: "auto",
+        }}>
             <Typography variant="h6" id="wr-bed-header">
                 Bed Details
             </Typography>
@@ -239,7 +268,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                 <CustomButton
                     icon={AddIcon}
                     text="Add Bed"
-                    onClick={handleAdd}
+                    onClick={() => handleAdd()}
                     variant="contained"
                 />
             </Grid>
@@ -284,15 +313,15 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                     <FormField
                         type="select"
                         label="Bed Category"
-                        name="wbCatID"
-                        value={formData.wbCatID || ""}
+                        name="wCatID"
+                        value={formData.wbCatName || ""}
                         onChange={handleDropdownChange(
                             ["wbCatID"],
                             ["wbCatName"],
-                            categoryValues
+                            bedCategoryValues
                         )}
-                        options={categoryValues}
-                        ControlID="wbCatID"
+                        options={bedCategoryValues}
+                        ControlID="wCatID"
                         gridProps={{ xs: 12 }}
                     />
                     <FormField

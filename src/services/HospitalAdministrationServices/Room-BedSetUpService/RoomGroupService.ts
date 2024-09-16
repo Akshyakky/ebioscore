@@ -13,6 +13,7 @@ const getToken = () => store.getState().userDetails.token!;
 export const saveRoomGroup = async (
   roomGroupDto: RoomGroupDto
 ): Promise<OperationResult<RoomGroupDto>> => {
+  debugger;
   return apiService.post<OperationResult<RoomGroupDto>>(
     "RoomGroup/SaveRoomGroup",
     roomGroupDto,

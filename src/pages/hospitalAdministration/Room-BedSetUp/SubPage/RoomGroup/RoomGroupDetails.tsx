@@ -40,7 +40,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
         rGrpCode: "",
         rGrpName: "",
         deptName: "",
-        Key: 0,
+        key: 0,
         groupYN: "N",
         rActiveYN: "Y",
         showinboYN: "Y",
@@ -60,6 +60,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
     const { departmentValues, genderValues } = useDropdownValues();
 
     const fetchRoomGroups = async () => {
+        debugger
         setLoading(true);
         try {
             const response = await RoomGroupService.getAllRoomGroup();
@@ -96,7 +97,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
             rGrpID: 0,
             rGrpCode: "",
             rGrpName: "",
-            Key: isSubGroup ? parentGroup?.rGrpID || 0 : 0,
+            key: isSubGroup ? parentGroup?.rGrpID || 0 : 0,
             groupYN: "N",
             rActiveYN: "Y",
             showinboYN: "Y",
@@ -215,7 +216,8 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
     };
 
     const handleAddRoomClick = (roomGroup: RoomGroupDto) => {
-        handleAddRoom(roomGroup); // Call the handleAddRoom prop with selected room group
+        debugger
+        handleAddRoom(roomGroup);
     };
 
     const columns = [
@@ -258,13 +260,15 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
             header: "Add Sub Group",
             visible: true,
             render: (row: RoomGroupDto) => (
-                <CustomButton
-                    onClick={() => handleAdd(true, row)}
-                    icon={SubdirectoryArrowRightIcon}
-                    text="Sub GRP"
-                    variant="contained"
-                    size="small"
-                />
+                row.key === 0 ? (
+                    <CustomButton
+                        onClick={() => handleAdd(true, row)}
+                        icon={SubdirectoryArrowRightIcon}
+                        text="Sub GRP"
+                        variant="contained"
+                        size="small"
+                    />
+                ) : <></>
             ),
         },
         {
@@ -273,7 +277,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
             visible: true,
             render: (row: RoomGroupDto) => (
                 <CustomButton
-                    onClick={() => handleAddRoomClick(row)} // Pass selected room group here
+                    onClick={() => handleAddRoomClick(row)}
                     icon={AddIcon}
                     text="Room"
                     variant="contained"
@@ -285,7 +289,10 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
 
 
     return (
-        <Paper variant="elevation" sx={{ padding: 2 }}>
+        <Paper variant="elevation" sx={{
+            padding: 2, height: "600px",
+            overflowY: "auto",
+        }}>
             <Typography variant="h6" id="room-group-header">
                 Room Group Details
             </Typography>
