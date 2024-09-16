@@ -4,10 +4,7 @@ import RegistrationPage from "../pages/patientAdministration/RegistrationPage/Ma
 import RevisitPage from "../pages/patientAdministration/RevisitPage/MainPage/RevisitPage";
 import RoutineReportsPA from "../pages/patientAdministration/RoutineReportsPage/MainPage/RoutineReportsPAPage";
 import ListOfReportsPage from "../pages/routineReports/MainPage/ListOfReportsPage";
-import {
-  PatientSearchContext,
-  PatientSearchProvider,
-} from "../context/PatientSearchContext";
+import { PatientSearchProvider } from "../context/PatientSearchContext";
 import ContactListPage from "../pages/hospitalAdministration/ContactListPage/MainPage/ContactListPage";
 import { ContactListSearchProvider } from "../context/hospitalAdministration/ContactListSearchContext";
 import ProfileListPage from "../pages/securityManagement/ProfileListPage/MainPage/ProfileListPage";
@@ -23,7 +20,7 @@ import PatientInvoiceCodePage from "../pages/billing/PatientInvoiceCodePage/Main
 import DepartmentListPage from "../pages/billing/DepartmentListPage/MainPage/DepartmentListPage";
 import PaymentTypesPage from "../pages/billing/PaymentTypesPage/MainPage/PaymentTypesPage";
 import ServiceGroupsListPage from "../pages/billing/ServiceGroupsListPage/MainPage/ServiceGroupsListPage";
-import AlertPage from "../pages/common/AlertManagerPage/MainPage/AlertPage";
+import AlertPage from "../pages/common/AlertManagerPage/MainPage/Alertpage";
 import WardCategoryPage from "../pages/hospitalAdministration/WardCategoryPage/MainPage/WardCategoryPage";
 import BedSetUpPage from "../pages/hospitalAdministration/Room-BedSetUp/MainPage/BedSetUpPage";
 import DeptUnitListPage from "../pages/hospitalAdministration/DeptUnitList/MainPage/DeptUnitListPage";
@@ -83,28 +80,10 @@ const routeConfig: RouteConfig[] = [
     protected: true,
     providers: [PatientSearchProvider],
   },
-
-  {
-    path: "/ResourceListPage",
-    component: ResourceListPage,
-    protected: true,
-  },
-
-  {
-    path: "/ReasonListPage",
-    component: ReasonListPage,
-    protected: true,
-  },
-  {
-    path: "/BreakListPage",
-    component: BreakListPage,
-    protected: true,
-  },
-  {
-    path: "/Appointmentpage",
-    component: AppointmentPage,
-    protected: true,
-  },
+  { path: "/ResourceListPage", component: ResourceListPage, protected: true },
+  { path: "/ReasonListPage", component: ReasonListPage, protected: true },
+  { path: "/BreakListPage", component: BreakListPage, protected: true },
+  { path: "/Appointmentpage", component: AppointmentPage, protected: true },
   {
     path: "/PatientInvoiceCodePage",
     component: PatientInvoiceCodePage,
@@ -121,22 +100,9 @@ const routeConfig: RouteConfig[] = [
     component: ServiceGroupsListPage,
     protected: true,
   },
-  {
-    path: "/PaymentTypesPage",
-    component: PaymentTypesPage,
-    protected: true,
-  },
-
-  {
-    path: "/AlertPage",
-    component: AlertPage,
-    protected: true,
-  },
-  {
-    path: "/WardCategoryPage",
-    component: WardCategoryPage,
-    protected: true,
-  },
+  { path: "/PaymentTypesPage", component: PaymentTypesPage, protected: true },
+  { path: "/AlertPage", component: AlertPage, protected: true },
+  { path: "/WardCategoryPage", component: WardCategoryPage, protected: true },
   {
     path: "/BedSetUpPage",
     component: BedSetUpPage,
