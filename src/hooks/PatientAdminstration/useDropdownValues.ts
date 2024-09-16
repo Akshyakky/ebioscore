@@ -10,6 +10,8 @@ import { DepartmentService } from "../../services/CommonServices/DepartmentServi
 import { ContactMastService } from "../../services/CommonServices/ContactMastService";
 import { InsuranceCarrierService } from "../../services/CommonServices/InsuranceCarrierService";
 import { ContactListService } from "../../services/HospitalAdministrationServices/ContactListService/ContactListService";
+import { DeptUnitListService } from "../../services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
+import { ServiceTypeService } from "../../services/BillingServices/ServiceTypeServices";
 
 const useDropdownValues = () => {
   const [picValues, setPicValues] = useState<DropdownOption[]>([]);
@@ -57,6 +59,10 @@ const useDropdownValues = () => {
     []
   );
 
+  const [floorValues, setFloorValues] = useState<DropdownOption[]>([]);
+  const [unitValues, setUnitValues] = useState<any[]>([]);
+  const [serviceValues, setServiceValues] = useState<any[]>([]);
+
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const compID = userInfo.compID!;
@@ -89,6 +95,9 @@ const useDropdownValues = () => {
           categoryResponse,
           employeeStatusResponse,
           specialityResponse,
+          floorResponse,
+          unitResponse,
+          serviceTypeResponse,
         ] = await Promise.all([
           BillingService.fetchPicValues("GetPICDropDownValues"),
           ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
@@ -114,6 +123,7 @@ const useDropdownValues = () => {
             "GetActiveAppModifyFieldsAsync",
             "COMPANY"
           ),
+
           DepartmentService.fetchDepartments(
             "GetActiveRegistrationDepartments",
             compID
@@ -148,6 +158,12 @@ const useDropdownValues = () => {
           ConstantValues.fetchConstantValues("GetConstantValues", "ACAT"),
           ConstantValues.fetchConstantValues("GetConstantValues", "EMPS"),
           ContactListService.fetchActiveSpecialties(compID!),
+          AppModifyListService.fetchAppModifyList(
+            "GetActiveAppModifyFieldsAsync",
+            "FLOOR"
+          ),
+          DeptUnitListService.getAllDeptUnitList(),
+          ServiceTypeService.getAllServiceType(),
         ]);
 
         setPicValues(
@@ -192,6 +208,7 @@ const useDropdownValues = () => {
             label: item.label,
           }))
         );
+
         setDepartmentValues(
           departmentResponse.map((item) => ({
             value: item.value,
@@ -276,6 +293,25 @@ const useDropdownValues = () => {
             label: item.label,
           }))
         );
+        setFloorValues(
+          floorResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
+        setUnitValues(
+          (unitResponse.data || []).map((item) => ({
+            value: item.dulID || 0,
+            label: item.unitDesc || "",
+          }))
+        );
+
+        setServiceValues(
+          (serviceTypeResponse.data || []).map((item) => ({
+            value: item.bchID || 0,
+            label: item.bchName || "",
+          }))
+        );
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
       } finally {
@@ -310,6 +346,9 @@ const useDropdownValues = () => {
     categoryValues,
     employeeStatusValues,
     specialityValues,
+    floorValues,
+    unitValues,
+    serviceValues,
   };
 };
 
