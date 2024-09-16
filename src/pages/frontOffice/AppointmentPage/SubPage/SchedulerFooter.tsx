@@ -12,9 +12,10 @@ const legends: Legend[] = [
     { color: 'warning.main', label: 'Visited Patient' },
     { color: 'primary.main', label: 'Seen Patient' },
     { color: 'orange', label: 'Breaks' },
-    { color: 'text.disabled', label: 'Non Working Hour' },
+    { color: 'rgba(0, 0, 0, 0.1)', label: 'Non Working Hour' },
     { color: 'secondary.main', label: 'Non Registered Patients' },
-    { color: 'error.light', label: 'Elapsed Slots' },
+    { color: 'rgba(255, 0, 0, 0.1)', label: 'Elapsed Slots' },
+    { color: 'rgba(0, 255, 0, 0.1)', label: 'Working Hour' },
 ];
 
 interface LegendChipProps {
@@ -52,7 +53,6 @@ const LegendChip: React.FC<LegendChipProps> = React.memo(({ color, label }) => {
 
 const SchedulerFooter: React.FC = React.memo(() => {
     const theme = useTheme();
-
     const memoizedLegends = useMemo(() =>
         legends.map((legend, index) => (
             <LegendChip key={index} color={legend.color} label={legend.label} />

@@ -247,9 +247,9 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                     gridProps={{ xs: 12 }}
                 />
             )}
-
-            <PatientDemographics pChartID={formData.pChartID} />
-
+            {formData.pChartID !== 0 &&
+                <PatientDemographics pChartID={formData.pChartID} />
+            }
             {rLotYN === 'N' && (
                 <FormField
                     type="select"
