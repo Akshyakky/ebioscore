@@ -16,12 +16,6 @@ export interface PatRegistersDto {
   pGender: string;
   pssnID?: string;
   pBldGrp?: string;
-  rCreatedID: number;
-  rCreatedBy: string;
-  rCreatedOn: Date;
-  rModifiedID: number;
-  rModifiedBy: string;
-  rModifiedOn: Date;
   compID?: number;
   compCode?: string;
   compName?: string;

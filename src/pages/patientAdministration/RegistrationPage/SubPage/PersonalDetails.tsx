@@ -9,6 +9,7 @@ import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/u
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import useDayjs from "../../../../hooks/Common/useDateTime";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
+import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 
 interface PersonalDetailsProps {
   formData: PatientRegistrationDto;
@@ -119,274 +120,266 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   ], []);
 
   return (
-    <section aria-labelledby="personal-details-header">
-      <Box>
-        <Typography variant="h6" sx={{ borderBottom: "1px solid #000" }}>
-          Personal Details
-        </Typography>
-      </Box>
+    <FormSectionWrapper title="Personal Details" spacing={1}>
+      <FormField
+        type="autocomplete"
+        label="UHID"
+        name="pChartCode"
+        ControlID="UHID"
+        value={formData.patRegisters.pChartCode}
+        onChange={(e) =>
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            patRegisters: {
+              ...prevFormData.patRegisters,
+              pChartCode: e.target.value,
+            },
+          }))
+        }
+        onBlur={handleUHIDBlur}
+        fetchSuggestions={fetchPatientSuggestions}
+        onSelectSuggestion={onPatientSelect}
+        isSubmitted={isSubmitted}
+        isMandatory={true}
+        placeholder="Search through UHID, Name, DOB, Phone No...."
+        maxLength={20}
+      />
+      <FormField
+        type="date"
+        label="Registration Date"
+        name="pRegDate"
+        ControlID="RegDate"
+        value={formData.patRegisters.pRegDate}
+        onChange={(e) =>
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            patRegisters: {
+              ...prevFormData.patRegisters,
+              pRegDate: e.target.value,
+            },
+          }))
+        }
+        isSubmitted={isSubmitted}
+        isMandatory={true}
+        max={getTodayDate}
+      />
+      <FormField
+        type="select"
+        label="Payment Source [PIC]"
+        name="PIC"
+        ControlID="PIC"
+        value={formData.patRegisters.pTypeID !== undefined && formData.patRegisters.pTypeID !== 0
+          ? formData.patRegisters.pTypeID.toString()
+          : ""}
+        options={picValues}
+        onChange={handleDropdownChange(
+          ["patRegisters", "pTypeID"],
+          ["patRegisters", "pTypeName"],
+          picValues
+        )}
+        isMandatory={true}
+        isSubmitted={isSubmitted}
+      />
+      <FormField
+        type="text"
+        label="Mobile No"
+        name="pAddPhone1"
+        ControlID="MobileNo"
+        value={formData.patAddress.pAddPhone1}
+        onChange={(e) =>
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            patAddress: {
+              ...prevFormData.patAddress,
+              pAddPhone1: e.target.value,
+            },
+          }))
+        }
+        maxLength={20}
+        isSubmitted={isSubmitted}
+        isMandatory={true}
+      />
 
-      <Grid container spacing={2}>
-        <FormField
-          type="autocomplete"
-          label="UHID"
-          name="pChartCode"
-          ControlID="UHID"
-          value={formData.patRegisters.pChartCode}
-          onChange={(e) =>
-            setFormData((prevFormData) => ({
-              ...prevFormData,
-              patRegisters: {
-                ...prevFormData.patRegisters,
-                pChartCode: e.target.value,
-              },
-            }))
-          }
-          onBlur={handleUHIDBlur}
-          fetchSuggestions={fetchPatientSuggestions}
-          onSelectSuggestion={onPatientSelect}
-          isSubmitted={isSubmitted}
-          isMandatory={true}
-          placeholder="Search through UHID, Name, DOB, Phone No...."
-          maxLength={20}
-        />
-        <FormField
-          type="date"
-          label="Registration Date"
-          name="pRegDate"
-          ControlID="RegDate"
-          value={formData.patRegisters.pRegDate}
-          onChange={(e) =>
-            setFormData((prevFormData) => ({
-              ...prevFormData,
-              patRegisters: {
-                ...prevFormData.patRegisters,
-                pRegDate: e.target.value,
-              },
-            }))
-          }
-          isSubmitted={isSubmitted}
-          isMandatory={true}
-          max={getTodayDate}
-        />
-        <FormField
-          type="select"
-          label="Payment Source [PIC]"
-          name="PIC"
-          ControlID="PIC"
-          value={formData.patRegisters.pTypeID !== undefined && formData.patRegisters.pTypeID !== 0
-            ? formData.patRegisters.pTypeID.toString()
-            : ""}
-          options={picValues}
-          onChange={handleDropdownChange(
-            ["patRegisters", "pTypeID"],
-            ["patRegisters", "pTypeName"],
-            picValues
-          )}
-          isMandatory={true}
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="text"
-          label="Mobile No"
-          name="pAddPhone1"
-          ControlID="MobileNo"
-          value={formData.patAddress.pAddPhone1}
-          onChange={(e) =>
-            setFormData((prevFormData) => ({
-              ...prevFormData,
-              patAddress: {
-                ...prevFormData.patAddress,
-                pAddPhone1: e.target.value,
-              },
-            }))
-          }
-          maxLength={20}
-          isSubmitted={isSubmitted}
-          isMandatory={true}
-        />
+      <FormField
+        type="select"
+        label="Title"
+        name="pTitleVal"
+        ControlID="Title"
+        value={formData.patRegisters.pTitleVal || ""}
+        options={titleValues}
+        onChange={handleDropdownChange(
+          ["patRegisters", "pTitleVal"],
+          ["patRegisters", "pTitle"],
+          titleValues
+        )}
+        isMandatory={true}
+        isSubmitted={isSubmitted}
+      />
+      <FormField
+        type="text"
+        label="First Name"
+        name="pFName"
+        ControlID="FirstName"
+        value={formData.patRegisters.pFName || ""}
+        onChange={(e) => handleNameChange(e, "pFName")}
+        isSubmitted={isSubmitted}
+        isMandatory={true}
+        maxLength={100}
+      />
+      <FormField
+        type="text"
+        label="Last Name"
+        name="pLName"
+        ControlID="LastName"
+        value={formData.patRegisters.pLName || ""}
+        onChange={(e) => handleNameChange(e, "pLName")}
+        isSubmitted={isSubmitted}
+        isMandatory={true}
+        maxLength={100}
+      />
+      <FormField
+        type="text"
+        label="Aadhaar No"
+        name="pssnID"
+        ControlID="AadhaarNo"
+        value={formData.patRegisters.pssnID || ""}
+        onChange={(e) =>
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            patRegisters: {
+              ...prevFormData.patRegisters,
+              pssnID: e.target.value,
+            },
+          }))
+        }
+        isSubmitted={isSubmitted}
+        isMandatory={true}
+        maxLength={30}
+      />
 
-        <FormField
-          type="select"
-          label="Title"
-          name="pTitleVal"
-          ControlID="Title"
-          value={formData.patRegisters.pTitleVal || ""}
-          options={titleValues}
-          onChange={handleDropdownChange(
-            ["patRegisters", "pTitleVal"],
-            ["patRegisters", "pTitle"],
-            titleValues
-          )}
-          isMandatory={true}
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="text"
-          label="First Name"
-          name="pFName"
-          ControlID="FirstName"
-          value={formData.patRegisters.pFName || ""}
-          onChange={(e) => handleNameChange(e, "pFName")}
-          isSubmitted={isSubmitted}
-          isMandatory={true}
-          maxLength={100}
-        />
-        <FormField
-          type="text"
-          label="Last Name"
-          name="pLName"
-          ControlID="LastName"
-          value={formData.patRegisters.pLName || ""}
-          onChange={(e) => handleNameChange(e, "pLName")}
-          isSubmitted={isSubmitted}
-          isMandatory={true}
-          maxLength={100}
-        />
-        <FormField
-          type="text"
-          label="Aadhaar No"
-          name="pssnID"
-          ControlID="AadhaarNo"
-          value={formData.patRegisters.pssnID || ""}
-          onChange={(e) =>
-            setFormData((prevFormData) => ({
-              ...prevFormData,
-              patRegisters: {
-                ...prevFormData.patRegisters,
-                pssnID: e.target.value,
-              },
-            }))
-          }
-          isSubmitted={isSubmitted}
-          isMandatory={true}
-          maxLength={30}
-        />
-
-        <FormField
-          type="select"
-          label="Gender"
-          name="pGenderVal"
-          ControlID="Gender"
-          value={formData.patRegisters.pGenderVal || ""}
-          options={genderValues}
-          onChange={handleDropdownChange(
-            ["patRegisters", "pGenderVal"],
-            ["patRegisters", "pGender"],
-            genderValues
-          )}
-          isMandatory={true}
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="radio"
-          label=""
-          name="ageOrDob"
-          ControlID="ageOrDob"
-          value={formData.patRegisters.pDobOrAgeVal}
-          options={radioOptions}
-          onChange={handleRadioButtonChange(
-            ["patRegisters", "pDobOrAgeVal"],
-            ["patRegisters", "pDobOrAge"],
-            radioOptions
-          )}
-          inline={true}
-          gridProps={{ xs: 12, md: 1 }}
-        />
-        {formData.patRegisters.pDobOrAgeVal === "N" ? (
-          <>
-            <FormField
-              type="number"
-              label="Age"
-              name="pAgeNumber"
-              ControlID="Age"
-              value={formData.patOverview.pAgeNumber.toString()}
-              onChange={(e) =>
-                setFormData((prevFormData) => ({
-                  ...prevFormData,
-                  patOverview: {
-                    ...prevFormData.patOverview,
-                    pAgeNumber: parseInt(e.target.value),
-                  },
-                }))
-              }
-              isSubmitted={isSubmitted}
-              isMandatory={true}
-              maxLength={3}
-              gridProps={{ xs: 12, md: 1 }}
-            />
-            <FormField
-              type="select"
-              label="Age Unit"
-              name="pAgeDescriptionVal"
-              ControlID="AgeUnit"
-              value={formData.patOverview.pAgeDescriptionVal || ""}
-              options={ageUnitOptions}
-              onChange={handleDropdownChange(
-                ["patOverview", "pAgeDescriptionVal"],
-                ["patOverview", "pAgeDescription"],
-                ageUnitOptions
-              )}
-              isSubmitted={isSubmitted}
-              isMandatory={true}
-              gridProps={{ xs: 12, md: 1 }}
-            />
-          </>
-        ) : (
+      <FormField
+        type="select"
+        label="Gender"
+        name="pGenderVal"
+        ControlID="Gender"
+        value={formData.patRegisters.pGenderVal || ""}
+        options={genderValues}
+        onChange={handleDropdownChange(
+          ["patRegisters", "pGenderVal"],
+          ["patRegisters", "pGender"],
+          genderValues
+        )}
+        isMandatory={true}
+        isSubmitted={isSubmitted}
+      />
+      <FormField
+        type="radio"
+        label=""
+        name="ageOrDob"
+        ControlID="ageOrDob"
+        value={formData.patRegisters.pDobOrAgeVal}
+        options={radioOptions}
+        onChange={handleRadioButtonChange(
+          ["patRegisters", "pDobOrAgeVal"],
+          ["patRegisters", "pDobOrAge"],
+          radioOptions
+        )}
+        inline={true}
+        gridProps={{ xs: 12, md: 1 }}
+      />
+      {formData.patRegisters.pDobOrAgeVal === "N" ? (
+        <>
           <FormField
-            type="date"
-            label="Date of Birth"
-            name="pDob"
-            ControlID="DOB"
-            value={formData.patRegisters.pDob}
-            onChange={(e) => {
+            type="number"
+            label="Age"
+            name="pAgeNumber"
+            ControlID="Age"
+            value={formData.patOverview.pAgeNumber.toString()}
+            onChange={(e) =>
               setFormData((prevFormData) => ({
                 ...prevFormData,
-                patRegisters: {
-                  ...prevFormData.patRegisters,
-                  pDob: e.target.value,
+                patOverview: {
+                  ...prevFormData.patOverview,
+                  pAgeNumber: parseInt(e.target.value),
                 },
-              }));
-              handleDOBChange(e);
-            }}
-            max={getTodayDate}
+              }))
+            }
             isSubmitted={isSubmitted}
             isMandatory={true}
-            gridProps={{ xs: 12, md: 2 }}
+            maxLength={3}
+            gridProps={{ xs: 12, md: 1 }}
           />
-        )}
+          <FormField
+            type="select"
+            label="Age Unit"
+            name="pAgeDescriptionVal"
+            ControlID="AgeUnit"
+            value={formData.patOverview.pAgeDescriptionVal || ""}
+            options={ageUnitOptions}
+            onChange={handleDropdownChange(
+              ["patOverview", "pAgeDescriptionVal"],
+              ["patOverview", "pAgeDescription"],
+              ageUnitOptions
+            )}
+            isSubmitted={isSubmitted}
+            isMandatory={true}
+            gridProps={{ xs: 12, md: 1 }}
+          />
+        </>
+      ) : (
         <FormField
-          type="text"
-          label="Int. ID/Passport ID"
-          name="intIdPsprt"
-          ControlID="PssnID"
-          value={formData.patRegisters.intIdPsprt || ""}
-          onChange={(e) =>
+          type="date"
+          label="Date of Birth"
+          name="pDob"
+          ControlID="DOB"
+          value={formData.patRegisters.pDob}
+          onChange={(e) => {
             setFormData((prevFormData) => ({
               ...prevFormData,
               patRegisters: {
                 ...prevFormData.patRegisters,
-                intIdPsprt: e.target.value,
+                pDob: e.target.value,
               },
-            }))
-          }
-          maxLength={30}
+            }));
+            handleDOBChange(e);
+          }}
+          max={getTodayDate}
+          isSubmitted={isSubmitted}
+          isMandatory={true}
+          gridProps={{ xs: 12, md: 2 }}
         />
-        <FormField
-          type="select"
-          label="Nationality"
-          name="pAddCountryVal"
-          ControlID="Nationality"
-          value={formData.patAddress.pAddCountryVal || ""}
-          options={nationalityValues}
-          onChange={handleDropdownChange(
-            ["patAddress", "pAddCountryVal"],
-            ["patAddress", "pAddCountry"],
-            nationalityValues
-          )}
-        />
-      </Grid>
-    </section >
+      )}
+      <FormField
+        type="text"
+        label="Int. ID/Passport ID"
+        name="intIdPsprt"
+        ControlID="PssnID"
+        value={formData.patRegisters.intIdPsprt || ""}
+        onChange={(e) =>
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            patRegisters: {
+              ...prevFormData.patRegisters,
+              intIdPsprt: e.target.value,
+            },
+          }))
+        }
+        maxLength={30}
+      />
+      <FormField
+        type="select"
+        label="Nationality"
+        name="pAddCountryVal"
+        ControlID="Nationality"
+        value={formData.patAddress.pAddCountryVal || ""}
+        options={nationalityValues}
+        onChange={handleDropdownChange(
+          ["patAddress", "pAddCountryVal"],
+          ["patAddress", "pAddCountry"],
+          nationalityValues
+        )}
+      />
+    </FormSectionWrapper>
   );
 };
 

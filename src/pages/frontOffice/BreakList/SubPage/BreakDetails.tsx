@@ -143,6 +143,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
+        debugger
         if (type === 'time' && (name === 'bLStartTime' || name === 'bLEndTime')) {
             const [hours, minutes] = value.split(':').map(Number);
             setFormState(prev => ({
@@ -224,6 +225,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
     const handleSave = useCallback(async () => {
         setLoading(true);
         try {
+            debugger
             const frequencyKey = frequencyData.frequency as keyof typeof frequencyCodeMap;
             formState.bLFrqDesc = frequencyCodeMap[frequencyKey] || "FO70";
             formState.bLFrqNo = frequencyData.interval || 0;
@@ -343,7 +345,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         placeholder="Break name"
                     />
                     <FormField
-                        type="text"
+                        type="time"
                         label="Start Time"
                         name="bLStartTime"
                         value={formatTime(formState.bLStartTime)}
@@ -354,7 +356,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         disabled={isOneDay}
                     />
                     <FormField
-                        type="text"
+                        type="time"
                         label="End Time"
                         name="bLEndTime"
                         value={formatTime(formState.bLEndTime)}

@@ -5,6 +5,7 @@ import { useServerDate } from '../../../../hooks/Common/useServerDate';
 import useDayjs from '../../../../hooks/Common/useDateTime';
 import { useAppointments } from '../../../../hooks/FrontOffice/useAppointments';
 import { CommonService } from '../../../../services/CommonServices/CommonService';
+import { BreakListService } from '../../../../services/FrontOfficeServices/BreakListServices/BreakListService';
 
 const views: Array<'day' | 'week' | 'workWeek' | 'month'> = ['day', 'week', 'workWeek', 'month'];
 
@@ -19,15 +20,50 @@ interface WorkingHours {
     [key: string]: { start: number; end: number };
 }
 
+
+interface BreakItem {
+    bLID: number;
+    bLName: string;
+    bLStartDate: string;
+    bLEndDate: string;
+    bLStartTime: string;
+    bLEndTime: string;
+    bLFrqNo: number;
+    bLFrqDesc: string;
+    bLFrqWkDesc: string;
+    hplId: number;
+    hplName?: string;
+}
+
+const frequencyCodeMap: { [key: number]: string } = {
+    0: "FO70", // none
+    1: "FO71", // daily
+    2: "FO72", // weekly
+    3: "FO73", // monthly
+    5: "FO74"  // yearly
+};
+
+const weekDayCodeMap: { [key: string]: string } = {
+    "FO75": "Sunday",
+    "FO76": "Monday",
+    "FO77": "Tuesday",
+    "FO78": "Wednesday",
+    "FO79": "Thursday",
+    "FO80": "Friday",
+    "FO81": "Saturday"
+};
+
+
 const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, ref) => {
     const srvDate = useServerDate();
     const dayjs = useDayjs(srvDate || new Date());
-    const { parse, format, formatTime } = useDayjs(srvDate || new Date());
+    const { parse, format, formatTime, add, date: dayjsDate } = useDayjs(srvDate || new Date());
     const initialDate = useRef(srvDate || new Date());
     const { hpID, rlID, onAppointmentFormOpening, onAppointmentClick } = props;
 
     const { state, setState, refresh } = useAppointments(initialDate.current, hpID, rlID);
     const [workingHours, setWorkingHours] = useState<WorkingHours>({});
+    const [breaks, setBreaks] = useState<BreakItem[]>([]);
 
     useImperativeHandle(ref, () => ({
         refresh,
@@ -59,6 +95,33 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
             isMounted = false;
         };
     }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        const fetchBreaks = async () => {
+            try {
+                const result = await BreakListService.getActiveBreaks(state.date, add(1, 'month', state.date).toDate(), hpID);
+                if (result.success && result.data && isMounted) {
+                    const mappedBreaks = result.data.map((breakItem: BreakItem) => ({
+                        ...breakItem,
+                        bLFrqDesc: frequencyCodeMap[breakItem.bLFrqNo] || breakItem.bLFrqDesc,
+                        bLFrqWkDesc: breakItem.bLFrqWkDesc.split('-')
+                            .map(code => weekDayCodeMap[code] || code)
+                            .join('-')
+                    }));
+                    setBreaks(mappedBreaks);
+                }
+            } catch (error) {
+                console.error('Error fetching breaks:', error);
+            }
+        };
+
+        fetchBreaks();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [state.date, hpID, add]);
 
     const parseAppointmentDate = useCallback((dateString: string) => {
         const [datePart, timePart] = dateString.split(' ');
@@ -143,7 +206,7 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
     }, []);
 
     const dataSource = useMemo(() => {
-        return Array.isArray(state.appointments) ? state.appointments.map(appt => ({
+        const appointments = Array.isArray(state.appointments) ? state.appointments.map(appt => ({
             text: `${appt.abFName} ${appt.abLName || ''}`,
             startDate: parseAppointmentDate(appt.abTime),
             endDate: parseAppointmentDate(appt.abEndTime),
@@ -151,8 +214,39 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
             status: appt.abStatus,
             allDay: false,
             resourceId: appt.hplID || appt.rlID,
+            type: 'appointment'
         })) : [];
-    }, [state.appointments, parseAppointmentDate]);
+
+        const breakAppointments = breaks.flatMap(breakItem => {
+            const startDate = new Date(breakItem.bLStartDate);
+            const endDate = new Date(breakItem.bLEndDate);
+            const breakAppointments = [];
+
+            while (startDate <= endDate) {
+                if (breakItem.bLFrqDesc === 'FO71' || // daily
+                    (breakItem.bLFrqDesc === 'FO72' && breakItem.bLFrqWkDesc.includes(format('dddd', startDate))) || // weekly
+                    (breakItem.bLFrqDesc === 'FO73' && startDate.getDate() === new Date(breakItem.bLStartDate).getDate()) || // monthly
+                    (breakItem.bLFrqDesc === 'FO74' && startDate.getMonth() === new Date(breakItem.bLStartDate).getMonth() && startDate.getDate() === new Date(breakItem.bLStartDate).getDate())) { // yearly
+
+                    breakAppointments.push({
+                        text: breakItem.bLName,
+                        startDate: new Date(startDate.setHours(new Date(breakItem.bLStartTime).getHours(), new Date(breakItem.bLStartTime).getMinutes())),
+                        endDate: new Date(startDate.setHours(new Date(breakItem.bLEndTime).getHours(), new Date(breakItem.bLEndTime).getMinutes())),
+                        id: `break_${breakItem.bLID}_${startDate.toISOString()}`,
+                        status: 'Break',
+                        allDay: false,
+                        resourceId: breakItem.hplId,
+                        type: 'break'
+                    });
+                }
+                startDate.setDate(startDate.getDate() + 1);
+            }
+
+            return breakAppointments;
+        });
+
+        return [...appointments, ...breakAppointments];
+    }, [state.appointments, breaks, parseAppointmentDate, format]);
 
     const resourceDataSource = useMemo(() => {
         const resources = new Map();
@@ -168,8 +262,18 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
                 }
             });
         }
+        // Add resources for breaks if they're not already included
+        breaks.forEach(breakItem => {
+            if (!resources.has(breakItem.hplId)) {
+                resources.set(breakItem.hplId, {
+                    id: breakItem.hplId,
+                    text: breakItem.hplName || `Break Resource ${breakItem.hplId}`, // Use a fallback if hplName is not present
+                    color: '#ff0000', // You can choose a specific color for breaks
+                });
+            }
+        });
         return Array.from(resources.values());
-    }, [state.appointments]);
+    }, [state.appointments, breaks]);
 
     const MemoizedResource = useMemo(() => (
         <Resource

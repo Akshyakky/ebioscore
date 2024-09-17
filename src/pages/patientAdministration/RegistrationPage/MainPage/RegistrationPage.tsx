@@ -57,12 +57,6 @@ const RegistrationPage: React.FC = () => {
       pGenderVal: "",
       pssnID: "",
       pBldGrp: "",
-      rCreatedID: userInfo.userID ?? 0,
-      rCreatedBy: userInfo.userName ?? "",
-      rCreatedOn: parse(formatDateTime()).toDate(),
-      rModifiedID: userInfo.userID ?? 0,
-      rModifiedBy: userInfo.userName ?? "",
-      rModifiedOn: parse(formatDateTime()).toDate(),
       rActiveYN: "Y",
       rNotes: "",
       compID: userInfo.compID ?? 0,
@@ -307,9 +301,9 @@ const RegistrationPage: React.FC = () => {
           ...patientDetails.data,
           patRegisters: {
             ...patientDetails.data.patRegisters,
-            pRegDate: formatDateYMD(parse(patientDetails.data.patRegisters.pRegDate, 'DD/MM/YYYY')),
-            pDob: formatDateYMD(parse(patientDetails.data.patRegisters.pDob, 'DD/MM/YYYY')),
-            patMemSchemeExpiryDate: formatDateYMD(parse(patientDetails.data.patRegisters.patMemSchemeExpiryDate, 'DD/MM/YYYY')),
+            pRegDate: formatDateYMD(patientDetails.data.patRegisters.pRegDate),
+            pDob: formatDateYMD(patientDetails.data.patRegisters.pDob),
+            patMemSchemeExpiryDate: formatDateYMD(patientDetails.data.patRegisters.patMemSchemeExpiryDate),
           },
         };
         setEditMode(true);

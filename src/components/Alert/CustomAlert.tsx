@@ -62,6 +62,10 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
               });
             }
           }
+          const container = document.querySelector('.swal2-container') as HTMLElement;
+          if (container) {
+            container.style.zIndex = '1400';
+          }
         },
         buttonsStyling: true,
       }).then((result: SweetAlertResult) => {
