@@ -28,6 +28,7 @@ const pageTitleMap: PageTitleMap = {
   "/WardCategoryPage": "Room-Bed Category List",
   "/BedSetUpPage": "Room-Bed Set-Up",
   "/DeptUnitListPage": "Department Unit List",
+  "/InsuranceListPage": "Insurance List",
 
   // Add more mappings as needed
 };

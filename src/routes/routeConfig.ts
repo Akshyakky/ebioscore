@@ -20,10 +20,11 @@ import PatientInvoiceCodePage from "../pages/billing/PatientInvoiceCodePage/Main
 import DepartmentListPage from "../pages/billing/DepartmentListPage/MainPage/DepartmentListPage";
 import PaymentTypesPage from "../pages/billing/PaymentTypesPage/MainPage/PaymentTypesPage";
 import ServiceGroupsListPage from "../pages/billing/ServiceGroupsListPage/MainPage/ServiceGroupsListPage";
-import AlertPage from "../pages/common/AlertManagerPage/MainPage/Alertpage";
 import WardCategoryPage from "../pages/hospitalAdministration/WardCategoryPage/MainPage/WardCategoryPage";
 import BedSetUpPage from "../pages/hospitalAdministration/Room-BedSetUp/MainPage/BedSetUpPage";
 import DeptUnitListPage from "../pages/hospitalAdministration/DeptUnitList/MainPage/DeptUnitListPage";
+import AlertPage from "../pages/common/AlertManagerPage/MainPage/AlertPage";
+import InsuranceListPage from "../pages/hospitalAdministration/InsuranceList/MainPage/InsuranceListPage";
 
 interface RouteConfig {
   path: string;
@@ -113,6 +114,7 @@ const routeConfig: RouteConfig[] = [
     component: DeptUnitListPage,
     protected: true,
   },
+  { path: "/InsuranceListPage", component: InsuranceListPage, protected: true },
 ];
 
 export default routeConfig;

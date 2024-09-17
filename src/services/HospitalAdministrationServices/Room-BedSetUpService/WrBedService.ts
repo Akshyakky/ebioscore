@@ -15,7 +15,7 @@ export const saveWrBed = async (
 ): Promise<OperationResult<WrBedDto>> => {
   debugger;
   return apiService.post<OperationResult<WrBedDto>>(
-    "WrBed/SaveWrBed", // Replace with the actual endpoint if different
+    "WrBed/SaveWrBed",
     wrBedDto,
     getToken()
   );
@@ -23,7 +23,7 @@ export const saveWrBed = async (
 
 export const getAllWrBeds = async (): Promise<OperationResult<WrBedDto[]>> => {
   return apiService.get<OperationResult<WrBedDto[]>>(
-    "WrBed/GetAllWrBed", // Replace with the actual endpoint if different
+    "WrBed/GetAllWrBed",
     getToken()
   );
 };
@@ -32,7 +32,7 @@ export const getWrBedById = async (
   bedID: number
 ): Promise<OperationResult<WrBedDto>> => {
   return apiService.get<OperationResult<WrBedDto>>(
-    `WrBed/GetWrBedById/${bedID}`, // Replace with the actual endpoint if different
+    `WrBed/GetWrBedById/${bedID}`,
     getToken()
   );
 };
@@ -42,7 +42,7 @@ export const updateWrBedActiveStatus = async (
   rActive: boolean
 ): Promise<OperationResult<boolean>> => {
   return apiService.put<OperationResult<boolean>>(
-    `WrBed/UpdateWrBedActiveStatus/${bedID}`, // Replace with the actual endpoint if different
+    `WrBed/UpdateWrBedActiveStatus/${bedID}`,
     { rActive },
     getToken()
   );
