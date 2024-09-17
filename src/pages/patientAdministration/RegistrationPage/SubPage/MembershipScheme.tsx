@@ -5,6 +5,7 @@ import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministra
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import useDayjs from "../../../../hooks/Common/useDateTime";
+import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 
 interface MembershipSchemeProps {
   formData: PatientRegistrationDto;
@@ -31,38 +32,32 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
   }, [setFormData]);
 
   return (
-    <section aria-labelledby="membership-scheme-header">
-      <Box>
-        <Typography variant="h6" sx={{ borderBottom: "1px solid #000", marginBottom: 2 }}>
-          Membership Scheme
-        </Typography>
-      </Box>
-      <Grid container spacing={2}>
-        <FormField
-          type="select"
-          label="Membership Scheme"
-          name="MembershipScheme"
-          ControlID="MembershipScheme"
-          value={formData.patRegisters.patMemID === 0 ? "" : String(formData.patRegisters.patMemID)}
-          options={membershipSchemeValues}
-          onChange={handleDropdownChange(
-            ["patRegisters", "patMemID"],
-            ["patRegisters", "patMemName"],
-            membershipSchemeValues
-          )}
-          gridProps={{ xs: 12, sm: 6, md: 3 }}
-        />
-        <FormField
-          type="date"
-          label="Membership Expiry Date"
-          name="MembeshipExpDate"
-          ControlID="MembeshipExpDate"
-          value={formData.patRegisters.patMemSchemeExpiryDate}
-          onChange={handleDateChange}
-          gridProps={{ xs: 12, sm: 6, md: 3 }}
-        />
-      </Grid>
-    </section>
+
+    <FormSectionWrapper title="Membership Scheme" spacing={1}>
+      <FormField
+        type="select"
+        label="Membership Scheme"
+        name="MembershipScheme"
+        ControlID="MembershipScheme"
+        value={formData.patRegisters.patMemID === 0 ? "" : String(formData.patRegisters.patMemID)}
+        options={membershipSchemeValues}
+        onChange={handleDropdownChange(
+          ["patRegisters", "patMemID"],
+          ["patRegisters", "patMemName"],
+          membershipSchemeValues
+        )}
+        gridProps={{ xs: 12, sm: 6, md: 3 }}
+      />
+      <FormField
+        type="date"
+        label="Membership Expiry Date"
+        name="MembeshipExpDate"
+        ControlID="MembeshipExpDate"
+        value={formData.patRegisters.patMemSchemeExpiryDate}
+        onChange={handleDateChange}
+        gridProps={{ xs: 12, sm: 6, md: 3 }}
+      />
+    </FormSectionWrapper>
   );
 };
 

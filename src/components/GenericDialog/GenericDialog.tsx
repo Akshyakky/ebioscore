@@ -38,6 +38,7 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
     '& .MuiDialog-paper': {
         borderRadius: theme.shape.borderRadius,
     },
+    zIndex: 1300,
 }));
 
 const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
@@ -92,6 +93,7 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
             disableEscapeKeyDown={disableEscapeKeyDown}
             aria-labelledby="dialog-title"
             fullScreen={fullScreen || isMobile}
+            sx={{ zIndex: 1300 }}
         >
             <StyledDialogTitle sx={titleSx}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">

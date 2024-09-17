@@ -20,7 +20,8 @@ export class CommonApiService {
   ): Record<string, string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "Time-Zone": Intl.DateTimeFormat().resolvedOptions().timeZone,
+      // "Time-Zone": Intl.DateTimeFormat().resolvedOptions().timeZone,
+      "Time-Zone": "Asia/Kolkata",
     };
     if (token) {
       headers.Authorization = `Bearer ${token}`;

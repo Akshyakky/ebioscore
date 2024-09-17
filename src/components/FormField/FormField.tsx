@@ -10,7 +10,7 @@ import AutocompleteTextBox from "../TextBox/AutocompleteTextBox/AutocompleteText
 import { TextFieldProps } from "@mui/material/TextField";
 import MultiSelectDropdown from "../DropDown/MultiSelectDropdown";
 
-type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email" | "radio" | "autocomplete" | "date" | "search" | "multiselect";
+type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email" | "radio" | "autocomplete" | "date" | "search" | "multiselect" | "time";
 
 interface DropdownOption {
   value: string;
@@ -43,7 +43,7 @@ interface BaseFormFieldProps {
 }
 
 export interface TextFormFieldProps extends BaseFormFieldProps {
-  type: "text" | "number" | "email" | "date" | "search";
+  type: "text" | "number" | "email" | "date" | "search" | "time";
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -124,6 +124,7 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
       case "email":
       case "date":
       case "search":
+      case "time":
         return (
           <FloatingLabelTextBox
             title={label}

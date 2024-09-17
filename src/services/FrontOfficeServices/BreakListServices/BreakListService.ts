@@ -47,9 +47,30 @@ export const updateBreakListActiveStatus = async (
   );
 };
 
+export const getActiveBreaks = async (
+  startDate: Date,
+  endDate: Date,
+  hplId?: number
+): Promise<OperationResult<any[]>> => {
+  const params = new URLSearchParams({
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+  });
+
+  if (hplId !== undefined) {
+    params.append("hplId", hplId.toString());
+  }
+
+  return commonApiService.get<OperationResult<any[]>>(
+    `BreakList/GetActiveBreaks?${params.toString()}`,
+    getToken()
+  );
+};
+
 export const BreakListService = {
   saveBreakList,
   getBreakListById,
   getAllBreakLists,
   updateBreakListActiveStatus,
+  getActiveBreaks,
 };

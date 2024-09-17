@@ -39,6 +39,8 @@ export const showAlert = (
 
   try {
     const alertElement = document.createElement('div');
+    // alertElement.style.position = 'relative';
+    // alertElement.style.zIndex = '1400';
     document.body.appendChild(alertElement);
 
     const root = createRoot(alertElement);
