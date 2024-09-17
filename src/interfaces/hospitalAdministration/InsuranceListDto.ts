@@ -14,10 +14,10 @@ export interface InsuranceListDto {
   insurPh2?: string;
   insurEmail?: string;
   inCategory?: string;
-  rActiveYN: string; // Using string for a single character
+  rActiveYN: string;
   rNotes?: string;
   compID: number;
   compCode: string;
   compName: string;
-  transferYN: string; // Using string for a single character
+  transferYN: string;
 }

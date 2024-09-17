@@ -12,7 +12,9 @@ import { InsuranceListService } from "../../../../services/HospitalAdministratio
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 
-const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData }) => {
+const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({
+    editData,
+}) => {
     const [formState, setFormState] = useState<InsuranceListDto>({
         insurID: 0,
         insurCode: "",
@@ -38,8 +40,10 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
     });
 
     const [isSubmitted, setIsSubmitted] = useState(false);
-    const { handleDropdownChange } = useDropdownChange<InsuranceListDto>(setFormState);
-    const { categoryValues, cityValues, stateValues, nationalityValues } = useDropdownValues();
+    const { handleDropdownChange } =
+        useDropdownChange<InsuranceListDto>(setFormState);
+    const { categoryValues, cityValues, stateValues, nationalityValues } =
+        useDropdownValues();
     const { setLoading } = useLoading();
     const { compID, compCode, compName } = store.getState().userDetails;
 
@@ -55,8 +59,12 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
         (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
             const { name, value } = e.target;
 
-            if (name === "insurPh1" || name === "insurContact1" || name === "insurContact2") {
-                const validatedValue = value.replace(/[^0-9+]/g, '');
+            if (
+                name === "insurPh1" ||
+                name === "insurContact1" ||
+                name === "insurContact2"
+            ) {
+                const validatedValue = value.replace(/[^0-9+]/g, "");
                 setFormState((prev) => ({ ...prev, [name]: validatedValue }));
             } else {
                 setFormState((prev) => ({ ...prev, [name]: value }));
@@ -64,8 +72,6 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
         },
         []
     );
-
-
 
     const handleSave = async () => {
         setIsSubmitted(true);
@@ -79,16 +85,28 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
             const result = await InsuranceListService.saveInsuranceList(formState);
 
             if (result.success) {
-                showAlert("Success", "Insurance details saved successfully!", "success", {
-                    onConfirm: handleClear,
-
-                });
+                showAlert(
+                    "Success",
+                    "Insurance details saved successfully!",
+                    "success",
+                    {
+                        onConfirm: handleClear,
+                    }
+                );
             } else {
-                showAlert("Error", result.errorMessage || "Failed to save Insurance details.", "error");
+                showAlert(
+                    "Error",
+                    result.errorMessage || "Failed to save Insurance details.",
+                    "error"
+                );
             }
         } catch (error) {
             console.error("Error saving Insurance details:", error);
-            showAlert("Error", "An unexpected error occurred while saving. Please check the console for more details.", "error");
+            showAlert(
+                "Error",
+                "An unexpected error occurred while saving Insurance List",
+                "error"
+            );
         } finally {
             setLoading(false);
         }
@@ -121,12 +139,15 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
         setIsSubmitted(false);
     }, [compID, compCode, compName]);
 
-    const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        setFormState((prev) => ({
-            ...prev,
-            rActiveYN: event.target.checked ? "Y" : "N",
-        }));
-    }, []);
+    const handleActiveToggle = useCallback(
+        (event: React.ChangeEvent<HTMLInputElement>) => {
+            setFormState((prev) => ({
+                ...prev,
+                rActiveYN: event.target.checked ? "Y" : "N",
+            }));
+        },
+        []
+    );
 
     return (
         <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -145,7 +166,6 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
                     maxLength={25}
                     isMandatory={true}
                     isSubmitted={isSubmitted}
-
                 />
                 <FormField
                     type="text"
@@ -165,17 +185,12 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
                     label="Category"
                     name="inCategory"
                     value={formState.inCategory || ""}
-                    onChange={handleDropdownChange(
-                        [""],
-                        ["inCategory"],
-                        categoryValues
-                    )}
+                    onChange={handleDropdownChange([""], ["inCategory"], categoryValues)}
                     options={categoryValues}
                     ControlID="inCategory"
                     placeholder="Category"
                     maxLength={50}
                 />
-
 
                 <FormField
                     type="text"
@@ -208,7 +223,6 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
                     maxLength={100}
                 />
 
-
                 <FormField
                     type="text"
                     label="Contact 1"
@@ -230,7 +244,6 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
                     maxLength={50}
                 />
 
-
                 <FormField
                     type="textarea"
                     label="Street"
@@ -245,11 +258,7 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
                     type="select"
                     label="City"
                     value={formState.insurCity}
-                    onChange={handleDropdownChange(
-                        [""],
-                        ["insurCity"],
-                        cityValues
-                    )}
+                    onChange={handleDropdownChange([""], ["insurCity"], cityValues)}
                     options={cityValues}
                     name="insurCity"
                     ControlID="insurCity"
@@ -260,11 +269,7 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
                     type="select"
                     label="State"
                     value={formState.insurState}
-                    onChange={handleDropdownChange(
-                        [""],
-                        ["insurState"],
-                        stateValues
-                    )}
+                    onChange={handleDropdownChange([""], ["insurState"], stateValues)}
                     options={stateValues}
                     name="insurState"
                     ControlID="insurState"
@@ -298,7 +303,6 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
                     maxLength={20}
                 />
             </Grid>
-
 
             <Grid container spacing={2}>
                 <FormField
