@@ -15,15 +15,15 @@ import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
 import { RoomListService } from "../../../../../services/HospitalAdministrationServices/Room-BedSetUpService/RoomListService";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
-import { ViewAgenda, ViewArray } from "@mui/icons-material";
+import { ViewArray } from "@mui/icons-material";
 
 interface RoomListDetailsProps {
     roomGroup: RoomGroupDto | null;
     onClose: () => void;
-    onRoomSelect: (roomId: number) => void;  // Add this prop
+    onRoomSelect: (roomId: number) => void;
 }
 
-const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onClose, onRoomSelect }) => {
+const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSelect }) => {
     const [rooms, setRooms] = useState<RoomListDto[]>([]);
     const { setLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -49,6 +49,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onClose, o
     const { floorValues, unitValues } = useDropdownValues();
 
     const fetchRooms = async () => {
+        debugger
         setLoading(true);
         try {
             const response = await RoomListService.getAllRoomList();
@@ -259,7 +260,10 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onClose, o
 
     ];
     return (
-        <Paper variant="elevation" sx={{ padding: 2 }}>
+        <Paper variant="elevation" sx={{
+            padding: 2, height: "600px",
+            overflowY: "auto",
+        }}>
             <Typography variant="h6" id="room-list-header">
                 Room List Details
             </Typography>

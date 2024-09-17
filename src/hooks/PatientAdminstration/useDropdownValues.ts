@@ -12,6 +12,7 @@ import { InsuranceCarrierService } from "../../services/CommonServices/Insurance
 import { ContactListService } from "../../services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { DeptUnitListService } from "../../services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
 import { ServiceTypeService } from "../../services/BillingServices/ServiceTypeServices";
+import { WardCategoryService } from "../../services/HospitalAdministrationServices/ContactListService/WardCategoryService/WardCategoryService";
 
 const useDropdownValues = () => {
   const [picValues, setPicValues] = useState<DropdownOption[]>([]);
@@ -62,6 +63,7 @@ const useDropdownValues = () => {
   const [floorValues, setFloorValues] = useState<DropdownOption[]>([]);
   const [unitValues, setUnitValues] = useState<any[]>([]);
   const [serviceValues, setServiceValues] = useState<any[]>([]);
+  const [bedCategoryValues, setBedCategoryValues] = useState<any[]>([]);
 
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
@@ -98,6 +100,7 @@ const useDropdownValues = () => {
           floorResponse,
           unitResponse,
           serviceTypeResponse,
+          categoryTypeResponse,
         ] = await Promise.all([
           BillingService.fetchPicValues("GetPICDropDownValues"),
           ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
@@ -164,6 +167,7 @@ const useDropdownValues = () => {
           ),
           DeptUnitListService.getAllDeptUnitList(),
           ServiceTypeService.getAllServiceType(),
+          WardCategoryService.getAllWardCategory(),
         ]);
 
         setPicValues(
@@ -312,6 +316,13 @@ const useDropdownValues = () => {
             label: item.bchName || "",
           }))
         );
+
+        setBedCategoryValues(
+          (categoryTypeResponse.data || []).map((item) => ({
+            value: item.wCatID || 0,
+            label: item.wCatName || "",
+          }))
+        );
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
       } finally {
@@ -349,6 +360,7 @@ const useDropdownValues = () => {
     floorValues,
     unitValues,
     serviceValues,
+    bedCategoryValues,
   };
 };
 

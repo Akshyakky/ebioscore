@@ -2,7 +2,7 @@ export interface RoomGroupDto {
   rGrpID: number;
   rGrpCode?: string;
   rGrpName: string;
-  Key: number;
+  key: number;
   groupYN: string;
   rActiveYN: string;
   compID?: number;
@@ -47,7 +47,7 @@ export interface WrBedDto {
   bedRemarks?: string;
   blockBedYN?: string; // Default value 'N' can be handled in the application logic
   compID?: number;
-  keyNr?: number;
+  key: number;
   transferYN?: string;
   wbCatID?: number;
   wbCatName?: string;
