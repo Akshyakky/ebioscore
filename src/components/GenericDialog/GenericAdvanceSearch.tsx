@@ -113,7 +113,7 @@ function GenericAdvanceSearch<T>({
       ...column,
       render: column.render
         ? (row: T & { serialNumber: number; Status: string }) =>
-            column.render!(row) as React.ReactElement<any>
+          column.render!(row) as React.ReactElement<any>
         : undefined,
     })),
     {

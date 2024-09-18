@@ -50,6 +50,8 @@ const DepartmentListSearch: React.FC<DepartmentListSearchProps> = ({
       getItemId={getItemId}
       getItemActiveStatus={getItemActiveStatus}
       searchPlaceholder="Enter department name or code"
+      isActionVisible={true}
+      isStatusVisible={true}
     />
   );
 };

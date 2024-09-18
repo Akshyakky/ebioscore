@@ -62,6 +62,8 @@ const UserListSearch: React.FC<UserListSearchProps> = ({
         fullWidth: true,
         dialogContentSx: { minHeight: "600px", maxHeight: "600px", overflowY: "auto" },
       }}
+      isActionVisible={true}
+      isStatusVisible={true}
     />
   );
 };
