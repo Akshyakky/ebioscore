@@ -59,6 +59,12 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
+        if (name === "pTaxAmt") {
+            const numValue = parseFloat(value);
+            if (isNaN(numValue) || numValue > 100) {
+                return;
+            }
+        }
         setFormState(prev => ({ ...prev, [name]: value }));
     }, []);
 
@@ -142,6 +148,7 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
                     isMandatory
                     size="small"
                 />
+
                 <FormField
                     type="text"
                     label="Tax Description"
@@ -160,6 +167,7 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
                     name="rNotes"
                     ControlID="rNotes"
                     placeholder="Notes"
+                    maxLength={4000}
                 />
 
             </Grid>

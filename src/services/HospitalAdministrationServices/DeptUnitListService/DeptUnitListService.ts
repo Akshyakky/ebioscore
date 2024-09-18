@@ -45,7 +45,7 @@ export const updateDeptUnitListActiveStatus = async (
   debugger;
   return apiService.put<OperationResult<boolean>>(
     `DeptUnitList/UpdateDeptUnitListActiveStatus/${dulID}`,
-    { rActive }, // Make sure the payload matches the API expectation
+    rActive, // Make sure the payload matches the API expectation
     getToken()
   );
 };
