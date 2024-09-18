@@ -51,12 +51,6 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
             ...suspendData,
             bCSStartDate: new Date(suspendData.bCSStartDate as Date),
             bCSEndDate: new Date(suspendData.bCSEndDate as Date),
-            rCreatedOn: serverDate,
-            rCreatedID: userID,
-            rCreatedBy: userName,
-            rModifiedOn: serverDate,
-            rModifiedID: userID,
-            rModifiedBy: userName,
             compID,
             compCode,
             compName

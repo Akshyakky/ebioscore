@@ -124,6 +124,26 @@ const CustomGrid = <T extends Record<string, any>>({
     },
   }));
 
+  const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
+    maxHeight,
+    minHeight,
+    overflow: 'auto',
+    '&::-webkit-scrollbar': {
+      height: '6px',
+      width: '6px',
+    },
+    '&::-webkit-scrollbar-track': {
+      background: theme.palette.grey[200],
+    },
+    '&::-webkit-scrollbar-thumb': {
+      background: theme.palette.primary.main,
+      borderRadius: '3px',
+    },
+    '&::-webkit-scrollbar-thumb:hover': {
+      background: theme.palette.primary.dark,
+    },
+  }));
+
   const visibleColumns = useMemo(() => columns.filter((col) => col.visible), [columns]);
 
   const filteredData = useMemo(() => {
@@ -140,7 +160,7 @@ const CustomGrid = <T extends Record<string, any>>({
   }, [sortedData, searchTerm, visibleColumns]);
 
   return (
-    <TableContainer component={Paper} style={{ maxHeight, minHeight, overflow: 'auto' }}>
+    <StyledTableContainer as={Paper}>
       <Table stickyHeader size="small" aria-label="customized table">
         <TableHead>
           <StyledTableRow>
@@ -174,7 +194,7 @@ const CustomGrid = <T extends Record<string, any>>({
           ))}
         </TableBody>
       </Table>
-    </TableContainer>
+    </StyledTableContainer>
   );
 };
 

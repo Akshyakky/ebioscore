@@ -1,7 +1,7 @@
 import React from "react";
 import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
-import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
+import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
 
 interface ResourceListSearchProps {
   open: boolean;
@@ -40,6 +40,8 @@ const ResourceListSearch: React.FC<ResourceListSearchProps> = ({ open, onClose, 
       getItemId={(item) => item.rLID}
       getItemActiveStatus={(item) => item.rActiveYN === "Y"}
       searchPlaceholder="Enter resource name or code"
+      isEditButtonVisible={true}
+      isActionVisible={true}
     />
   );
 };

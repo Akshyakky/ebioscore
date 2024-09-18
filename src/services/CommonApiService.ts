@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { format, toZonedTime } from "date-fns-tz";
 import { handleError } from "./CommonServices/HandlerError";
 
 export interface ApiConfig {
@@ -9,9 +10,11 @@ type HttpMethod = "get" | "post" | "put" | "delete";
 
 export class CommonApiService {
   private baseURL: string;
+  private timeZone: string;
 
   constructor(config: ApiConfig) {
     this.baseURL = config.baseURL;
+    this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
 
   private getHeaders(
@@ -20,13 +23,34 @@ export class CommonApiService {
   ): Record<string, string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      // "Time-Zone": Intl.DateTimeFormat().resolvedOptions().timeZone,
-      "Time-Zone": "Asia/Kolkata",
+      "Time-Zone": this.timeZone,
     };
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
     return { ...headers, ...additionalHeaders };
+  }
+
+  private formatDateWithTimeZone(date: Date): string {
+    const zonedDate = toZonedTime(date, this.timeZone);
+    return format(zonedDate, "yyyy-MM-dd'T'HH:mm:ssXXX", {
+      timeZone: this.timeZone,
+    });
+  }
+
+  private processData(data: any): any {
+    if (data instanceof Date) {
+      return this.formatDateWithTimeZone(data);
+    } else if (Array.isArray(data)) {
+      return data.map((item) => this.processData(item));
+    } else if (typeof data === "object" && data !== null) {
+      const processedData: Record<string, any> = {};
+      for (const [key, value] of Object.entries(data)) {
+        processedData[key] = this.processData(value);
+      }
+      return processedData;
+    }
+    return data;
   }
 
   private async request<T>(
@@ -41,8 +65,8 @@ export class CommonApiService {
       method,
       url: `${this.baseURL}${endpoint}`,
       headers: this.getHeaders(token, additionalHeaders),
-      data,
-      params,
+      data: this.processData(data),
+      params: this.processData(params),
     };
     return axios(config);
   }

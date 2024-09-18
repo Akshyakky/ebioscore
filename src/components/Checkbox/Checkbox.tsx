@@ -12,6 +12,7 @@ interface CheckboxProps {
   isMandatory?: boolean;
   disabled?: boolean;
   className?: string;
+  size?: 'small' | 'medium';
 }
 
 const CustomCheckbox: React.FC<CheckboxProps> = ({
@@ -22,6 +23,7 @@ const CustomCheckbox: React.FC<CheckboxProps> = ({
   isMandatory = false,
   disabled = false,
   className,
+  size = 'medium',
   ...props
 }) => {
   return (
@@ -34,7 +36,8 @@ const CustomCheckbox: React.FC<CheckboxProps> = ({
             name={name}
             disabled={disabled}
             color="primary"
-            inputProps={{ "aria-required": isMandatory }} // Improve accessibility
+            size={size}
+            inputProps={{ "aria-required": isMandatory }}
           />
         }
         label={

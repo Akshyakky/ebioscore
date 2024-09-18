@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Container, Grid } from "@mui/material";
+import { Grid, Paper, Typography, Box, Divider } from "@mui/material";
 import { RoomGroupDto } from "../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
 import RoomGroupDetails from "../SubPage/RoomGroup/RoomGroupDetails";
 import RoomListDetails from "../SubPage/RoomList/RoomListDetails";
@@ -10,9 +10,7 @@ const BedSetUpPage: React.FC = () => {
     const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
     const [isRoomComponentOpen, setIsRoomComponentOpen] = useState(false);
 
-
     const handleAddRoom = (roomGroup: RoomGroupDto) => {
-        debugger
         setSelectedRoomGroup(roomGroup);
         setIsRoomComponentOpen(true);
     };
@@ -21,46 +19,55 @@ const BedSetUpPage: React.FC = () => {
         setSelectedRoomId(roomId);
     };
 
-
     const closeRoomComponent = () => {
         setIsRoomComponentOpen(false);
         setSelectedRoomGroup(null);
         setSelectedRoomId(null);
     };
 
-
     return (
-        <>
-            <Container maxWidth={false}>
-                <Grid container spacing={2}>
-                    <Grid item xs={12} sm={12} md={4} lg={4}>
+        <Box sx={{ backgroundColor: '#f5f5f5', py: 1 }}>
+            <Grid container spacing={1}>
+                <Grid item xs={12} md={4} lg={4}>
+                    <Paper elevation={3} sx={{ height: '100%', p: 1 }}>
+                        <Typography variant="h6" gutterBottom>
+                            Room Group Details
+                        </Typography>
+                        <Divider sx={{ mb: 2 }} />
                         <RoomGroupDetails handleAddRoom={handleAddRoom} />
-                    </Grid>
-
-                    {isRoomComponentOpen && (
-                        <>
-                            <Grid item xs={12} sm={12} md={4} lg={4}>
-                                <RoomListDetails
-                                    roomGroup={selectedRoomGroup}
-                                    onRoomSelect={handleRoomSelect}
-                                    onClose={closeRoomComponent}
-                                />
-                            </Grid>
-
-                            {selectedRoomId && (
-                                <Grid item xs={12} sm={12} md={4} lg={4}>
-                                    <WrBedDetails
-                                        roomId={selectedRoomId}
-                                        onClose={closeRoomComponent}
-                                    />
-                                </Grid>
-                            )}
-                        </>
-                    )}
-
+                    </Paper>
                 </Grid>
-            </Container>
-        </>
+                {isRoomComponentOpen && (
+                    <Grid item xs={12} md={4} lg={4}>
+                        <Paper elevation={3} sx={{ height: '100%', p: 1 }}>
+                            <Typography variant="h6" gutterBottom>
+                                Room List Details
+                            </Typography>
+                            <Divider sx={{ mb: 2 }} />
+                            <RoomListDetails
+                                roomGroup={selectedRoomGroup}
+                                onRoomSelect={handleRoomSelect}
+                                onClose={closeRoomComponent}
+                            />
+                        </Paper>
+                    </Grid>
+                )}
+                {selectedRoomId && (
+                    <Grid item xs={12} md={4} lg={4}>
+                        <Paper elevation={3} sx={{ height: '100%', p: 1 }}>
+                            <Typography variant="h6" gutterBottom>
+                                Bed Details
+                            </Typography>
+                            <Divider sx={{ mb: 2 }} />
+                            <WrBedDetails
+                                roomId={selectedRoomId}
+                                onClose={closeRoomComponent}
+                            />
+                        </Paper>
+                    </Grid>
+                )}
+            </Grid>
+        </Box>
     );
 };
 
