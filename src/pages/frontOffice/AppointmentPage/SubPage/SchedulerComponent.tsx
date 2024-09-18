@@ -6,6 +6,8 @@ import useDayjs from '../../../../hooks/Common/useDateTime';
 import { useAppointments } from '../../../../hooks/FrontOffice/useAppointments';
 import { CommonService } from '../../../../services/CommonServices/CommonService';
 import { BreakListService } from '../../../../services/FrontOfficeServices/BreakListServices/BreakListService';
+import { useLoading } from '../../../../context/LoadingContext';
+import { dxSchedulerAppointment } from 'devextreme/ui/scheduler';
 
 const views: Array<'day' | 'week' | 'workWeek' | 'month'> = ['day', 'week', 'workWeek', 'month'];
 
@@ -63,54 +65,51 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
     const { state, setState, refresh } = useAppointments(initialDate.current, hpID, rlID);
     const [workingHours, setWorkingHours] = useState<WorkingHours>({});
     const [breaks, setBreaks] = useState<BreakItem[]>([]);
+    const { setLoading } = useLoading();
 
     useImperativeHandle(ref, () => ({ refresh }), [refresh]);
 
     useEffect(() => {
         let isMounted = true;
-        const fetchWorkingHours = async () => {
+        const fetchData = async () => {
+            setLoading(true);
             try {
-                const result = await CommonService.fetchAllHospWorkingHours();
-                if (result.success && result.data && isMounted) {
-                    const hours: WorkingHours = {};
-                    result.data.forEach(item => {
-                        const day = item.daysDesc.toLowerCase();
-                        const startHour = parseInt(item.startTime.split(' ')[1].split(':')[0], 10);
-                        const endHour = parseInt(item.endTime.split(' ')[1].split(':')[0], 10);
-                        hours[day] = { start: startHour, end: endHour };
-                    });
-                    setWorkingHours(hours);
+                const [workingHoursResult, breaksResult] = await Promise.all([
+                    CommonService.fetchAllHospWorkingHours(),
+                    BreakListService.getActiveBreaks(state.date, add(1, 'month', state.date).toDate(), hpID)
+                ]);
+
+                if (isMounted) {
+                    if (workingHoursResult.success && workingHoursResult.data) {
+                        const hours: WorkingHours = {};
+                        workingHoursResult.data.forEach(item => {
+                            const day = item.daysDesc.toLowerCase();
+                            const startHour = parseInt(item.startTime.split(' ')[1].split(':')[0], 10);
+                            const endHour = parseInt(item.endTime.split(' ')[1].split(':')[0], 10);
+                            hours[day] = { start: startHour, end: endHour };
+                        });
+                        setWorkingHours(hours);
+                    }
+
+                    if (breaksResult.success && breaksResult.data) {
+                        const mappedBreaks = breaksResult.data.map((breakItem: BreakItem) => ({
+                            ...breakItem,
+                            bLFrqDesc: frequencyCodeMap[breakItem.bLFrqNo] || breakItem.bLFrqDesc,
+                            bLFrqWkDesc: breakItem.bLFrqWkDesc.split('-')
+                                .map(code => weekDayCodeMap[code] || code)
+                                .join('-')
+                        }));
+                        setBreaks(mappedBreaks);
+                    }
                 }
             } catch (error) {
-                console.error('Error fetching working hours:', error);
+                console.error('Error fetching data:', error);
+            } finally {
+                if (isMounted) setLoading(false);
             }
         };
 
-        fetchWorkingHours();
-        return () => { isMounted = false; };
-    }, []);
-
-    useEffect(() => {
-        let isMounted = true;
-        const fetchBreaks = async () => {
-            try {
-                const result = await BreakListService.getActiveBreaks(state.date, add(1, 'month', state.date).toDate(), hpID);
-                if (result.success && result.data && isMounted) {
-                    const mappedBreaks = result.data.map((breakItem: BreakItem) => ({
-                        ...breakItem,
-                        bLFrqDesc: frequencyCodeMap[breakItem.bLFrqNo] || breakItem.bLFrqDesc,
-                        bLFrqWkDesc: breakItem.bLFrqWkDesc.split('-')
-                            .map(code => weekDayCodeMap[code] || code)
-                            .join('-')
-                    }));
-                    setBreaks(mappedBreaks);
-                }
-            } catch (error) {
-                console.error('Error fetching breaks:', error);
-            }
-        };
-
-        fetchBreaks();
+        fetchData();
         return () => { isMounted = false; };
     }, [state.date, hpID, add]);
 
@@ -276,49 +275,60 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
         );
     }, [format]);
 
-    const dataSource = useMemo(() => {
-        const appointments = Array.isArray(state.appointments) ? state.appointments.map(appt => ({
-            text: `${appt.abFName} ${appt.abLName || ''}`,
-            startDate: parseAppointmentDate(appt.abTime),
-            endDate: parseAppointmentDate(appt.abEndTime),
-            id: appt.abID,
-            status: appt.abStatus,
-            allDay: false,
-            resourceId: appt.hplID || appt.rlID,
-            type: 'appointment'
-        })) : [];
+    const dataSource = useMemo((): dxSchedulerAppointment[] => {
+        const appointments = Array.isArray(state.appointments)
+            ? state.appointments.map(appt => ({
+                text: `${appt.abFName} ${appt.abLName || ''}`,
+                startDate: parseAppointmentDate(appt.abTime),
+                endDate: parseAppointmentDate(appt.abEndTime),
+                id: appt.abID,
+                status: appt.abStatus,
+                allDay: false,
+                resourceId: appt.hplID || appt.rlID,
+                type: 'appointment'
+            }))
+            : [];
 
-        const breakAppointments = breaks.flatMap(breakItem => {
-            const startDate = new Date(breakItem.bLStartDate);
-            const endDate = new Date(breakItem.bLEndDate);
-            const breakAppointments = [];
+        const currentDate = new Date(state.date);
+        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
-            while (startDate.getDate() <= endDate.getDate()) {
-                if (breakItem.bLFrqDesc === 'FO71' || // daily
-                    (breakItem.bLFrqDesc === 'FO72' && breakItem.bLFrqWkDesc.includes(format('dddd', startDate))) || // weekly
-                    (breakItem.bLFrqDesc === 'FO73' && startDate.getDate() === new Date(breakItem.bLStartDate).getDate()) || // monthly
-                    (breakItem.bLFrqDesc === 'FO74' && startDate.getMonth() === new Date(breakItem.bLStartDate).getMonth() && startDate.getDate() === new Date(breakItem.bLStartDate).getDate())) { // yearly
+        const breakAppointments = breaks
+            .filter(breakItem => {
+                const breakStart = new Date(breakItem.bLStartDate);
+                const breakEnd = new Date(breakItem.bLEndDate);
+                return breakStart <= monthEnd && breakEnd >= monthStart;
+            })
+            .flatMap(breakItem => {
+                const startDate = new Date(breakItem.bLStartDate);
+                const endDate = new Date(breakItem.bLEndDate);
+                const breakAppointments = [];
 
-                    breakAppointments.push({
-                        text: breakItem.bLName,
-                        startDate: new Date(startDate.setHours(new Date(breakItem.bLStartTime).getHours(), new Date(breakItem.bLStartTime).getMinutes())),
-                        endDate: new Date(startDate.setHours(new Date(breakItem.bLEndTime).getHours(), new Date(breakItem.bLEndTime).getMinutes())),
-                        id: `break_${breakItem.bLID}_${startDate.toISOString()}`,
-                        status: 'Break',
-                        allDay: false,
-                        resourceId: breakItem.hplId,
-                        type: 'break',
-                        frequency: breakItem.bLFrqDesc
-                    });
+                while (startDate.getDate() <= endDate.getDate()) {
+                    if (breakItem.bLFrqDesc === 'FO71' || // daily
+                        (breakItem.bLFrqDesc === 'FO72' && breakItem.bLFrqWkDesc.includes(format('dddd', startDate))) || // weekly
+                        (breakItem.bLFrqDesc === 'FO73' && startDate.getDate() === new Date(breakItem.bLStartDate).getDate()) || // monthly
+                        (breakItem.bLFrqDesc === 'FO74' && startDate.getMonth() === new Date(breakItem.bLStartDate).getMonth() && startDate.getDate() === new Date(breakItem.bLStartDate).getDate())) { // yearly
+
+                        breakAppointments.push({
+                            text: breakItem.bLName,
+                            startDate: new Date(startDate.setHours(new Date(breakItem.bLStartTime).getHours(), new Date(breakItem.bLStartTime).getMinutes())),
+                            endDate: new Date(startDate.setHours(new Date(breakItem.bLEndTime).getHours(), new Date(breakItem.bLEndTime).getMinutes())),
+                            id: `break_${breakItem.bLID}_${startDate.toISOString()}`,
+                            status: 'Break',
+                            allDay: false,
+                            resourceId: breakItem.hplId,
+                            type: 'break',
+                            frequency: breakItem.bLFrqDesc
+                        });
+                    }
+                    startDate.setDate(startDate.getDate() + 1);
                 }
-                startDate.setDate(startDate.getDate() + 1);
-            }
-
-            return breakAppointments;
-        });
+                return breakAppointments;
+            });
 
         return [...appointments, ...breakAppointments];
-    }, [state.appointments, breaks, parseAppointmentDate, format]);
+    }, [state.appointments, breaks, state.date, parseAppointmentDate, format]);
 
     const resourceDataSource = useMemo(() => {
         const resources = new Map();
