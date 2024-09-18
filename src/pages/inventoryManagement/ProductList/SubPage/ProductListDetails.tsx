@@ -35,7 +35,7 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData 
 
 
     const { handleDropdownChange } = useDropdownChange<ProductListDto>(setFormState);
-    const { categoryValues } = useDropdownValues();
+    const { productCategoryValues } = useDropdownValues();
 
     const [isSubmitted, setIsSubmitted] = useState(false);
     const { setLoading } = useLoading();
@@ -127,9 +127,9 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData 
                     onChange={handleDropdownChange(
                         [""],
                         ["catValue"],
-                        categoryValues
+                        productCategoryValues
                     )}
-                    options={categoryValues}
+                    options={productCategoryValues}
                     isSubmitted={isSubmitted}
                     name="catValue"
                     ControlID="catValue"

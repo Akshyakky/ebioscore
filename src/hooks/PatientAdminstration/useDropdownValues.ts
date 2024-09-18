@@ -64,6 +64,9 @@ const useDropdownValues = () => {
   const [unitValues, setUnitValues] = useState<any[]>([]);
   const [serviceValues, setServiceValues] = useState<any[]>([]);
   const [bedCategoryValues, setBedCategoryValues] = useState<any[]>([]);
+  const [productCategoryValues, setProductBedCategoryValues] = useState<any[]>(
+    []
+  );
 
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
@@ -101,11 +104,13 @@ const useDropdownValues = () => {
           unitResponse,
           serviceTypeResponse,
           categoryTypeResponse,
+          productCategoryTypeResponse,
         ] = await Promise.all([
           BillingService.fetchPicValues("GetPICDropDownValues"),
           ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
           ConstantValues.fetchConstantValues("GetConstantValues", "PSEX"),
           ConstantValues.fetchConstantValues("GetConstantValues", "PAT"),
+
           AppModifyListService.fetchAppModifyList(
             "GetActiveAppModifyFieldsAsync",
             "NATIONALITY"
@@ -168,6 +173,7 @@ const useDropdownValues = () => {
           DeptUnitListService.getAllDeptUnitList(),
           ServiceTypeService.getAllServiceType(),
           WardCategoryService.getAllWardCategory(),
+          ConstantValues.fetchConstantValues("GetConstantValues", "PMED"),
         ]);
 
         setPicValues(
@@ -323,6 +329,13 @@ const useDropdownValues = () => {
             label: item.wCatName || "",
           }))
         );
+
+        setProductBedCategoryValues(
+          productCategoryTypeResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
       } finally {
@@ -361,6 +374,7 @@ const useDropdownValues = () => {
     unitValues,
     serviceValues,
     bedCategoryValues,
+    productCategoryValues,
   };
 };
 
