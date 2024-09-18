@@ -25,6 +25,8 @@ import BedSetUpPage from "../pages/hospitalAdministration/Room-BedSetUp/MainPage
 import DeptUnitListPage from "../pages/hospitalAdministration/DeptUnitList/MainPage/DeptUnitListPage";
 import AlertPage from "../pages/common/AlertManagerPage/MainPage/AlertPage";
 import InsuranceListPage from "../pages/hospitalAdministration/InsuranceList/MainPage/InsuranceListPage";
+import ProductListPage from "../pages/inventoryManagement/ProductList/MainPage/ProductListPage";
+import ProductTaxListPage from "../pages/inventoryManagement/ProductTaxList/MainPage/ProductTaxListPage";
 
 interface RouteConfig {
   path: string;
@@ -115,6 +117,12 @@ const routeConfig: RouteConfig[] = [
     protected: true,
   },
   { path: "/InsuranceListPage", component: InsuranceListPage, protected: true },
+  { path: "/ProductListPage", component: ProductListPage, protected: true },
+  {
+    path: "/ProductTaxListPage",
+    component: ProductTaxListPage,
+    protected: true,
+  },
 ];
 
 export default routeConfig;
