@@ -74,7 +74,6 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
         setLoading(true);
 
         try {
-            debugger
             const result = await ProductTaxListService.saveProductTaxList(formState);
             if (result.success) {
                 showAlert("Success", "Product Tax List saved successfully!", "success", {
@@ -84,7 +83,6 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
                 showAlert("Error", "Failed to save Product Tax List.", "error");
             }
         } catch (error) {
-            console.error("Error saving Product Tax List:", error);
             showAlert("Error", "An unexpected error occurred while saving.", "error");
         } finally {
             setLoading(false);
