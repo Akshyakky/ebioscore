@@ -10,12 +10,6 @@ export interface BreakListData {
   bLFrqWkDesc: string;
   bColor: string;
   rActiveYN: string;
-  rCreatedID: number;
-  rCreatedBy: string;
-  rCreatedOn: Date;
-  rModifiedID: number;
-  rModifiedBy: string;
-  rModifiedOn: Date;
   rNotes: string;
   isPhyResYN: string;
   compID: number;
@@ -29,12 +23,6 @@ export interface BreakConDetailData {
   blID: number;
   hPLID: number;
   rActiveYN: string;
-  rCreatedID: number;
-  rCreatedBy: string;
-  rCreatedOn: Date;
-  rModifiedID: number;
-  rModifiedBy: string;
-  rModifiedOn: Date;
   rNotes: string;
   compID: number;
   compCode: string;

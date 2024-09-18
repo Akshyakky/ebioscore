@@ -40,12 +40,12 @@ const weekDayCodeMap = {
 const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
     const { setLoading } = useLoading();
     const serverDate = useServerDate();
-    const { compID, compCode, compName, userID, userName } = useSelector((state: any) => state.userDetails);
+    const { compID, compCode, compName } = useSelector((state: any) => state.userDetails);
 
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isOneDay, setIsOneDay] = useState(false);
     const [openFrequencyDialog, setOpenFrequencyDialog] = useState(false);
-    const [formState, setFormState] = useState<BreakListData>(() => initializeFormState(serverDate, userID, userName, compID, compCode, compName));
+    const [formState, setFormState] = useState<BreakListData>(() => initializeFormState(serverDate, compID, compCode, compName));
     const [breakConDetails, setBreakConDetails] = useState<BreakConDetailData[]>([]);
     const [selectedOption, setSelectedOption] = useState("physician");
     const [resourceData, setResourceData] = useState<any[]>([]);
@@ -73,7 +73,6 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
     const loadEditData = async (data: any) => {
         setLoading(true);
         try {
-            debugger
             const { blID } = data;
 
             // Fetch BreakList data by blID
@@ -92,8 +91,6 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                     bLEndDate: new Date(breakListData.bLEndDate),
                     bLStartTime: new Date(breakListData.bLStartTime),
                     bLEndTime: new Date(breakListData.bLEndTime),
-                    rCreatedOn: new Date(breakListData.rCreatedOn || serverDate),
-                    rModifiedOn: new Date(breakListData.rModifiedOn || serverDate),
                 }));
                 setSelectedOption(breakListData.isPhyResYN === "Y" ? "physician" : "resource");
             }
@@ -107,7 +104,6 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                 setSelectedItems(breakConDetailsData.map((detail: BreakConDetailData) => detail.hPLID));
             }
         } catch (error) {
-            console.error("Error loading edit data", error);
             showAlert('Error', 'An error occurred while loading data. Please try again.', 'error');
         } finally {
             setLoading(false);
@@ -143,31 +139,39 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
-        debugger
+        let updatedState = { ...formState };
+
         if (type === 'time' && (name === 'bLStartTime' || name === 'bLEndTime')) {
             const [hours, minutes] = value.split(':').map(Number);
-            setFormState(prev => ({
-                ...prev,
-                [name]: new Date(
-                    prev.bLStartDate.getFullYear(),
-                    prev.bLStartDate.getMonth(),
-                    prev.bLStartDate.getDate(),
-                    hours,
-                    minutes
-                ),
-            }));
-        } else if (type === 'date') {
-            setFormState(prev => ({
-                ...prev,
-                [name]: new Date(value),
-            }));
+            const newTime = new Date(
+                updatedState.bLStartDate.getFullYear(),
+                updatedState.bLStartDate.getMonth(),
+                updatedState.bLStartDate.getDate(),
+                hours,
+                minutes
+            );
+
+            if (name === 'bLStartTime' && newTime >= updatedState.bLEndTime) {
+                updatedState.bLEndTime = new Date(newTime.getTime() + 15 * 60000);
+            } else if (name === 'bLEndTime' && newTime <= updatedState.bLStartTime) {
+                updatedState.bLStartTime = new Date(newTime.getTime() - 15 * 60000);
+            }
+
+            updatedState[name as keyof Pick<BreakListData, 'bLStartTime' | 'bLEndTime'>] = newTime;
+        } else if (type === 'date' && (name === 'bLStartDate' || name === 'bLEndDate')) {
+            const newDate = new Date(value);
+            if (name === 'bLStartDate' && newDate > updatedState.bLEndDate) {
+                updatedState.bLEndDate = newDate;
+            } else if (name === 'bLEndDate' && newDate < updatedState.bLStartDate) {
+                updatedState.bLStartDate = newDate;
+            }
+            updatedState[name as keyof Pick<BreakListData, 'bLStartDate' | 'bLEndDate'>] = newDate;
         } else {
-            setFormState(prev => ({
-                ...prev,
-                [name]: value,
-            }));
+            (updatedState as any)[name] = value;
         }
-    }, []);
+
+        setFormState(updatedState);
+    }, [formState]);
 
 
     const handleCheckboxChange = useCallback((id: number, isChecked: boolean) => {
@@ -182,6 +186,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                 name={`select-${id}`}
                 checked={selectedItems.includes(id)}
                 onChange={(e: any) => handleCheckboxChange(id, e.target.checked)}
+                size='small'
             />
         );
     }, [selectedOption, selectedItems, handleCheckboxChange]);
@@ -225,7 +230,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
     const handleSave = useCallback(async () => {
         setLoading(true);
         try {
-            debugger
+
             const frequencyKey = frequencyData.frequency as keyof typeof frequencyCodeMap;
             formState.bLFrqDesc = frequencyCodeMap[frequencyKey] || "FO70";
             formState.bLFrqNo = frequencyData.interval || 0;
@@ -240,7 +245,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
             } else {
                 formState.bLFrqWkDesc = "";
             }
-
+            debugger
             const saveBreakListResult = await BreakListService.saveBreakList(formState);
 
             if (saveBreakListResult.success && saveBreakListResult.data) {
@@ -253,12 +258,6 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         blID,
                         hPLID: itemID,
                         rActiveYN: "Y",
-                        rCreatedID: formState.rCreatedID,
-                        rCreatedBy: formState.rCreatedBy,
-                        rCreatedOn: formState.rCreatedOn,
-                        rModifiedID: formState.rModifiedID,
-                        rModifiedBy: formState.rModifiedBy,
-                        rModifiedOn: formState.rModifiedOn,
                         rNotes: "",
                         compID: compID,
                         compCode: compCode,
@@ -285,7 +284,6 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                 showAlert('Error', 'Failed to save BreakList.', 'error');
             }
         } catch (error) {
-            console.error("Error saving BreakList and BreakConDetails", error);
             showAlert('Error', 'An error occurred while saving. Please try again.', 'error');
         } finally {
             setLoading(false);
@@ -293,11 +291,11 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
     }, [formState, selectedItems, frequencyData, selectedOption]);
 
     const handleClear = useCallback(() => {
-        setFormState(initializeFormState(serverDate, userID, userName, compID, compCode, compName));
+        setFormState(initializeFormState(serverDate, compID, compCode, compName));
         setBreakConDetails([]);
         setSelectedItems([]);
         setIsOneDay(false);
-    }, [serverDate, userID, userName, compID, compCode, compName]);
+    }, [serverDate, compID, compCode, compName]);
 
     const handleSaveFrequency = useCallback((data: FrequencyData) => {
         setFrequencyData(data);
@@ -354,6 +352,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         isMandatory
                         isSubmitted={isSubmitted}
                         disabled={isOneDay}
+                        max={formState.bLStartDate.getTime() === formState.bLEndDate.getTime() ? formatTime(formState.bLEndTime) : undefined}
                     />
                     <FormField
                         type="time"
@@ -365,6 +364,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         isMandatory
                         isSubmitted={isSubmitted}
                         disabled={isOneDay}
+                        min={formState.bLStartDate.getTime() === formState.bLEndDate.getTime() ? formatTime(formState.bLStartTime) : undefined}
                     />
                     <FormField
                         type="switch"
@@ -385,6 +385,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         value={formState.bLStartDate.toISOString().split('T')[0]}
                         onChange={handleInputChange}
                         ControlID="StartDate"
+                        min={formState.bLEndDate.toISOString().split('T')[0]}
                     />
                     <FormField
                         type="date"
@@ -393,6 +394,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         value={formState.bLEndDate.toISOString().split('T')[0]}
                         onChange={handleInputChange}
                         ControlID="EndDate"
+                        min={formState.bLStartDate.toISOString().split('T')[0]}
                     />
                     <FormField
                         type="textarea"
@@ -452,6 +454,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         onChange={handleInputChange}
                         ControlID="Description"
                         placeholder="Enter description"
+                        maxLength={4000}
                     />
                 </Grid>
                 <Grid container spacing={2}>
@@ -488,7 +491,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
     );
 };
 
-const initializeFormState = (serverDate: Date, userID: number, userName: string, compID: number, compCode: string, compName: string): BreakListData => ({
+const initializeFormState = (serverDate: Date, compID: number, compCode: string, compName: string): BreakListData => ({
     bLID: 0,
     bLName: "",
     bLStartTime: serverDate || new Date(),
@@ -500,12 +503,6 @@ const initializeFormState = (serverDate: Date, userID: number, userName: string,
     bLFrqWkDesc: "",
     bColor: "",
     rActiveYN: "Y",
-    rCreatedID: userID || 0,
-    rCreatedBy: userName || "",
-    rCreatedOn: serverDate || new Date(),
-    rModifiedID: userID || 0,
-    rModifiedBy: userName || "",
-    rModifiedOn: serverDate || new Date(),
     rNotes: "",
     isPhyResYN: "Y",
     compID: compID || 0,

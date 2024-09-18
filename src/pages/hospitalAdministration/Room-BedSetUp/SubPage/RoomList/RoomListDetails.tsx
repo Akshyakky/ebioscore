@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Paper, Typography, Grid } from "@mui/material";
+import { Grid } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
 import EditIcon from "@mui/icons-material/Edit";
@@ -211,8 +211,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
         { key: "rName", header: "Room Name", visible: true },
         { key: "rLocation", header: "Room Location", visible: true },
         { key: "deptName", header: "Department", visible: true },
-
-
         {
             key: "actions",
             header: "Edit",
@@ -260,13 +258,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
 
     ];
     return (
-        <Paper variant="elevation" sx={{
-            padding: 2, height: "600px",
-            overflowY: "auto",
-        }}>
-            <Typography variant="h6" id="room-list-header">
-                Room List Details
-            </Typography>
+        <>
             <Grid container justifyContent="flex-end" sx={{ marginBottom: 2 }}>
                 <CustomButton
                     icon={AddIcon}
@@ -288,7 +280,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                             text="Cancel"
                             variant="contained"
                             color="error"
-                            sx={{ margin: 2 }}
+                            sx={{ marginRight: 2 }}
                         />
                         <CustomButton
                             icon={SaveIcon}
@@ -296,7 +288,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                             onClick={handleAddDialogSubmit}
                             variant="contained"
                             color="success"
-                            sx={{ margin: 2 }}
                         />
                     </>
                 }
@@ -345,7 +336,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                     />
                 </Grid>
             </GenericDialog>
-        </Paper>
+        </>
     );
 };
 

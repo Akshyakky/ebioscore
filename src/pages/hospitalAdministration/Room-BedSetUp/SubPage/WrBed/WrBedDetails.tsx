@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Paper, Typography, Grid } from "@mui/material";
+import { Grid } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
 import EditIcon from "@mui/icons-material/Edit";
@@ -257,13 +257,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
     ];
 
     return (
-        <Paper variant="elevation" sx={{
-            padding: 2, height: "600px",
-            overflowY: "auto",
-        }}>
-            <Typography variant="h6" id="wr-bed-header">
-                Bed Details
-            </Typography>
+        <>
             <Grid container justifyContent="flex-end" sx={{ marginBottom: 2 }}>
                 <CustomButton
                     icon={AddIcon}
@@ -285,7 +279,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                             text="Cancel"
                             variant="contained"
                             color="error"
-                            sx={{ margin: 2 }}
+                            sx={{ marginRight: 2 }}
                         />
                         <CustomButton
                             icon={SaveIcon}
@@ -293,7 +287,6 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                             onClick={handleAddDialogSubmit}
                             variant="contained"
                             color="success"
-                            sx={{ margin: 2 }}
                         />
                     </>
                 }
@@ -341,7 +334,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
 
                 </Grid>
             </GenericDialog>
-        </Paper>
+        </>
     );
 };
 

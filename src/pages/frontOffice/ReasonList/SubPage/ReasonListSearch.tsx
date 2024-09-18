@@ -40,6 +40,8 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({ open, onClose, onSe
       getItemId={(item) => item.arlID}
       getItemActiveStatus={(item) => item.rActiveYN === "Y"}
       searchPlaceholder="Enter reason name or code"
+      isEditButtonVisible={true}
+      isActionVisible={true}
     />
   );
 };

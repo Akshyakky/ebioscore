@@ -158,6 +158,7 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
             placeholder={placeholder}
             onChange={(props as TextAreaFormFieldProps).onChange}
             //onBlur={onBlur}
+            readOnly={readOnly}
             rows={rows}
             name={name}
             maxLength={maxLength}

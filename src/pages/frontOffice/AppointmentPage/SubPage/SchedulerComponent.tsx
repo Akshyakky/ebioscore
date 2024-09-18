@@ -20,7 +20,6 @@ interface WorkingHours {
     [key: string]: { start: number; end: number };
 }
 
-
 interface BreakItem {
     bLID: number;
     bLName: string;
@@ -55,19 +54,17 @@ const weekDayCodeMap: { [key: string]: string } = {
 
 
 const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, ref) => {
+    const { hpID, rlID, onAppointmentFormOpening, onAppointmentClick } = props;
     const srvDate = useServerDate();
     const dayjs = useDayjs(srvDate || new Date());
-    const { parse, format, formatTime, add, date: dayjsDate } = useDayjs(srvDate || new Date());
+    const { parse, format, formatTime, add, date: dayjsDate } = dayjs;
     const initialDate = useRef(srvDate || new Date());
-    const { hpID, rlID, onAppointmentFormOpening, onAppointmentClick } = props;
 
     const { state, setState, refresh } = useAppointments(initialDate.current, hpID, rlID);
     const [workingHours, setWorkingHours] = useState<WorkingHours>({});
     const [breaks, setBreaks] = useState<BreakItem[]>([]);
 
-    useImperativeHandle(ref, () => ({
-        refresh,
-    }));
+    useImperativeHandle(ref, () => ({ refresh }), [refresh]);
 
     useEffect(() => {
         let isMounted = true;
@@ -85,15 +82,12 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
                     setWorkingHours(hours);
                 }
             } catch (error) {
-                // Handle error
+                console.error('Error fetching working hours:', error);
             }
         };
 
         fetchWorkingHours();
-
-        return () => {
-            isMounted = false;
-        };
+        return () => { isMounted = false; };
     }, []);
 
     useEffect(() => {
@@ -117,17 +111,13 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
         };
 
         fetchBreaks();
-
-        return () => {
-            isMounted = false;
-        };
+        return () => { isMounted = false; };
     }, [state.date, hpID, add]);
 
     const parseAppointmentDate = useCallback((dateString: string) => {
         const [datePart, timePart] = dateString.split(' ');
         const [day, month, year] = datePart.split('/');
-        const reformattedDateString = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timePart}`;
-        return new Date(reformattedDateString);
+        return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timePart}`);
     }, []);
 
     const onViewChange = useCallback((view: string) => {
@@ -137,66 +127,99 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
     }, [setState]);
 
     const onCurrentDateChange = useCallback((value: string | number | Date) => {
-        const newDate = dayjs.parse(value.toString()).toDate();
+        const newDate = parse(value.toString()).toDate();
         setState(prevState => ({ ...prevState, date: newDate }));
-    }, [setState, dayjs]);
+    }, [setState, parse]);
+
+    const handleBreakAppointment = useCallback((e: any) => {
+        e.cancel = true;
+    }, []);
 
     const onAppointmentFormOpeningHandler = useCallback((e: any) => {
-        e.cancel = true;
-        const startDate = e.appointmentData.startDate;
-        const endDate = e.appointmentData.endDate;
-        if (onAppointmentFormOpening) {
-            onAppointmentFormOpening(startDate, endDate);
+        if (e.appointmentData.type === 'break') {
+            handleBreakAppointment(e);
+            return;
         }
-    }, [onAppointmentFormOpening]);
+        e.cancel = true;
+        const { startDate, endDate } = e.appointmentData;
+        onAppointmentFormOpening?.(startDate, endDate);
+    }, [onAppointmentFormOpening, handleBreakAppointment]);
 
     const onAppointmentClickHandler = useCallback((e: any) => {
+        if (e.appointmentData.type === 'break') {
+            handleBreakAppointment(e);
+            return;
+        }
         e.cancel = true;
-        if (e.appointmentData && e.appointmentData.id) {
+        if (e.appointmentData?.id) {
             onAppointmentClick(e.appointmentData.id);
         }
-    }, [onAppointmentClick]);
+    }, [onAppointmentClick, handleBreakAppointment]);
 
     const onAppointmentDblClick = useCallback((e: any) => {
+        if (e.appointmentData.type === 'break') {
+            handleBreakAppointment(e);
+            return;
+        }
         e.cancel = true;
         onAppointmentFormOpeningHandler(e);
-    }, [onAppointmentFormOpeningHandler]);
+    }, [onAppointmentFormOpeningHandler, handleBreakAppointment]);
 
-    const timeCellTemplate = useCallback((cellData: any) => {
-        return (
-            <div>
-                {dayjs.formatTime(cellData.date)}
-            </div>
-        );
-    }, [dayjs]);
-
-    const cellTemplate = useCallback((itemData: any) => {
-        const date = new Date(itemData.startDate);
-        const dayOfWeek = format("dddd", date).toLowerCase();
-        const hour = date.getHours();
-        const currentTime = new Date();
-
-        const dayWorkingHours = workingHours[dayOfWeek];
-
-        let cellColor = 'transparent';
-        if (dayWorkingHours) {
-            if (hour < dayWorkingHours.start || hour >= dayWorkingHours.end) {
-                cellColor = 'rgba(0, 0, 0, 0.1)'; // Non-working hours
-            } else if (date < currentTime) {
-                cellColor = 'rgba(255, 0, 0, 0.1)'; // Elapsed slots
-            } else {
-                cellColor = 'rgba(0, 255, 0, 0.1)'; // Working hours
-            }
+    const onAppointmentUpdating = useCallback((e: any) => {
+        if (e.oldData.type === 'break') {
+            handleBreakAppointment(e);
         }
+    }, [handleBreakAppointment]);
 
-        return (
-            <div style={{
-                height: '100%',
-                backgroundColor: cellColor
-            }}>
-                {itemData.text}
-            </div>
-        );
+    const onAppointmentDeleting = useCallback((e: any) => {
+        if (e.appointmentData.type === 'break') {
+            handleBreakAppointment(e);
+        }
+    }, [handleBreakAppointment]);
+
+    const timeCellTemplate = useCallback((cellData: any) => (
+        <div>{formatTime(cellData.date)}</div>
+    ), [formatTime]);
+
+    const onAppointmentDragHandler = useCallback((e: any) => {
+        if (e.appointmentData.type === 'break') {
+            e.cancel = true; // Prevent dragging for breaks
+        }
+    }, []);
+
+    const onAppointmentAdding = useCallback((e: any) => {
+        // You can add any logic here for new appointments if needed
+    }, []);
+
+    const cellTemplate = useMemo(() => {
+        return (itemData: any) => {
+            const date = new Date(itemData.startDate);
+            const dayOfWeek = format("dddd", date).toLowerCase();
+            const hour = date.getHours();
+            const currentTime = new Date();
+
+            const dayWorkingHours = workingHours[dayOfWeek];
+
+            let cellColor = 'transparent';
+            if (dayWorkingHours) {
+                if (hour < dayWorkingHours.start || hour >= dayWorkingHours.end) {
+                    cellColor = 'rgba(0, 0, 0, 0.1)'; // Non-working hours
+                } else if (date < currentTime) {
+                    cellColor = 'rgba(255, 0, 0, 0.1)'; // Elapsed slots
+                } else {
+                    cellColor = 'rgba(0, 255, 0, 0.1)'; // Working hours
+                }
+            }
+
+            return (
+                <div style={{
+                    height: '100%',
+                    backgroundColor: cellColor
+                }}>
+                    {itemData.text}
+                </div>
+            );
+        };
     }, [workingHours, format]);
 
     const onContentReady = useCallback((e: any) => {
@@ -204,6 +227,54 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
             e.component.scrollTo(initialDate.current);
         }
     }, []);
+
+    const appointmentTemplate = useCallback((model: any) => {
+        const { appointmentData } = model;
+        let emoji, textColor = 'white';
+
+        if (appointmentData.type === 'break') {
+            emoji = '⏸️';
+        } else {
+            switch (appointmentData.status) {
+                case 'Confirmed': emoji = '✅'; break;
+                case 'Pending': emoji = '⏳'; break;
+                case 'Cancelled': emoji = '❌'; break;
+                default: emoji = '❓';
+            }
+        }
+
+        return (
+            <div style={{
+                color: textColor,
+                padding: '2px 5px',
+                borderRadius: '3px',
+                fontSize: '0.9em',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                height: '100%',
+                cursor: appointmentData.type === 'break' ? 'default' : 'pointer'
+            }}>
+                <span role="img" aria-label={appointmentData.type || appointmentData.status} style={{ marginRight: '5px' }}>{emoji}</span>
+                {appointmentData.text}
+            </div>
+        );
+    }, []);
+
+    const appointmentTooltipTemplate = useCallback((model: any) => {
+        const { appointmentData } = model;
+        return (
+            <div style={{ padding: '10px' }}>
+                <h3>{appointmentData.type === 'break' ? 'Break' : 'Appointment'}</h3>
+                <p><strong>{appointmentData.text}</strong></p>
+                <p>Start: {format('HH:mm', appointmentData.startDate)}</p>
+                <p>End: {format('HH:mm', appointmentData.endDate)}</p>
+                {appointmentData.type === 'break' && (
+                    <p>Frequency: {appointmentData.frequency}</p>
+                )}
+            </div>
+        );
+    }, [format]);
 
     const dataSource = useMemo(() => {
         const appointments = Array.isArray(state.appointments) ? state.appointments.map(appt => ({
@@ -222,7 +293,7 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
             const endDate = new Date(breakItem.bLEndDate);
             const breakAppointments = [];
 
-            while (startDate <= endDate) {
+            while (startDate.getDate() <= endDate.getDate()) {
                 if (breakItem.bLFrqDesc === 'FO71' || // daily
                     (breakItem.bLFrqDesc === 'FO72' && breakItem.bLFrqWkDesc.includes(format('dddd', startDate))) || // weekly
                     (breakItem.bLFrqDesc === 'FO73' && startDate.getDate() === new Date(breakItem.bLStartDate).getDate()) || // monthly
@@ -236,7 +307,8 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
                         status: 'Break',
                         allDay: false,
                         resourceId: breakItem.hplId,
-                        type: 'break'
+                        type: 'break',
+                        frequency: breakItem.bLFrqDesc
                     });
                 }
                 startDate.setDate(startDate.getDate() + 1);
@@ -262,13 +334,12 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
                 }
             });
         }
-        // Add resources for breaks if they're not already included
         breaks.forEach(breakItem => {
             if (!resources.has(breakItem.hplId)) {
                 resources.set(breakItem.hplId, {
                     id: breakItem.hplId,
-                    text: breakItem.hplName || `Break Resource ${breakItem.hplId}`, // Use a fallback if hplName is not present
-                    color: '#ff0000', // You can choose a specific color for breaks
+                    text: breakItem.hplName || `Break Resource ${breakItem.hplId}`,
+                    color: '#ff0000',
                 });
             }
         });
@@ -305,6 +376,9 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
                 allowResizing: true,
                 allowDragging: true,
             }}
+            onAppointmentUpdating={onAppointmentUpdating}
+            onAppointmentDeleting={onAppointmentDeleting}
+            onAppointmentAdding={onAppointmentAdding}
             adaptivityEnabled={true}
             showCurrentTimeIndicator={true}
             shadeUntilCurrentTime={true}
@@ -313,9 +387,12 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
             onAppointmentDblClick={onAppointmentDblClick}
             onAppointmentClick={onAppointmentClickHandler}
             onAppointmentFormOpening={onAppointmentFormOpeningHandler}
+            // onAppointmentDrag={onAppointmentDragHandler}
             timeCellRender={timeCellTemplate}
             dataCellRender={cellTemplate}
             onContentReady={onContentReady}
+            appointmentRender={appointmentTemplate}
+            appointmentTooltipRender={appointmentTooltipTemplate}
         >
             {MemoizedResource}
         </Scheduler>

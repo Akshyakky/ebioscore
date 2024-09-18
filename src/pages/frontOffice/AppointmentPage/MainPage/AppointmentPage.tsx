@@ -17,6 +17,7 @@ import { AppointBookingDto } from '../../../../interfaces/FrontOffice/AppointBoo
 import { showAlert } from '../../../../utils/Common/showAlert';
 import { useServerDate } from '../../../../hooks/Common/useServerDate';
 import useDayjs from '../../../../hooks/Common/useDateTime';
+import { store } from '../../../../store/store';
 
 const getDefaultAppointBookingDto = (formatDate: () => string, formatDateTime: () => string, formateDateYMD: () => string, formateDateYMDHHmm: () => string): AppointBookingDto => ({
     abID: 0,
@@ -50,6 +51,9 @@ const getDefaultAppointBookingDto = (formatDate: () => string, formatDateTime: (
     pssnId: '',
     intIdPsprt: '',
     rNotes: '',
+    compID: store.getState().userDetails.compID ?? 0,
+    compCode: store.getState().userDetails.compCode ?? "",
+    compName: store.getState().userDetails.compName ?? ""
 });
 
 const AppointmentPage: React.FC = () => {

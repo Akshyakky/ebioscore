@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Paper, Typography, Grid } from "@mui/material";
+import { Grid } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
 import EditIcon from "@mui/icons-material/Edit";
@@ -216,7 +216,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
     };
 
     const handleAddRoomClick = (roomGroup: RoomGroupDto) => {
-        debugger
         handleAddRoom(roomGroup);
     };
 
@@ -289,13 +288,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
 
 
     return (
-        <Paper variant="elevation" sx={{
-            padding: 2, height: "600px",
-            overflowY: "auto",
-        }}>
-            <Typography variant="h6" id="room-group-header">
-                Room Group Details
-            </Typography>
+        <>
             <Grid container justifyContent="flex-end" sx={{ marginBottom: 2 }}>
                 <CustomButton
                     icon={AddIcon}
@@ -317,7 +310,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
                             text="Cancel"
                             variant="contained"
                             color="error"
-                            sx={{ margin: 2 }}
+                            sx={{ marginRight: 2 }}
                         />
                         <CustomButton
                             icon={SaveIcon}
@@ -325,7 +318,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
                             onClick={handleAddDialogSubmit}
                             variant="contained"
                             color="success"
-                            sx={{ margin: 2 }}
                         />
                     </>
                 }
@@ -425,7 +417,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
                     />
                 </Grid>
             </GenericDialog>
-        </Paper>
+        </>
     );
 };
 
