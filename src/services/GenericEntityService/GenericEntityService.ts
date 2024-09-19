@@ -26,6 +26,7 @@ const apiConfig: ApiConfig = {
   BILLING_URL: import.meta.env.VITE_BILLING_URL,
   ROUTINE_REPORT_URL: import.meta.env.VITE_ROUTINEREPORTURL,
   INVENTORY_MANAGEMENT_URL: import.meta.env.VITE_INVENTORY_MANAGEMENT_URL,
+  CLINICAL_MANAGEMENT_URL: import.meta.env.VITE_CLINICAL_MANAGEMENT_URL,
 };
 
 // Generic service class
@@ -115,6 +116,11 @@ export const productGroupService = createEntityService<ProductGroupDto>(
 export const productTaxService = createEntityService<ProductTaxListDto>(
   "ProductTaxList",
   "INVENTORY_MANAGEMENT_URL"
+);
+
+export const medicationRouteService = createEntityService<ProductTaxListDto>(
+  "MedicationRoute",
+  "CLINICAL_MANAGEMENT_URL"
 );
 
 // Example of how to extend the generic service for entity-specific methods if needed

@@ -49,7 +49,8 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = React.memo(({ onRefresh,
             }
 
             if (result && result.success) {
-                const items = result.data || [];
+                let items = result.data || [];
+                items = items.filter(item => item.rActiveYN === 'Y');
                 setSuggestions(
                     items.map(item => ({
                         label: searchType === 'consultant' ? item.conFName : item.rLName,
