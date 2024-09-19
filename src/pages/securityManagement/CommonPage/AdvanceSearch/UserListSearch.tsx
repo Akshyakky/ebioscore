@@ -64,6 +64,7 @@ const UserListSearch: React.FC<UserListSearchProps> = ({
       }}
       isActionVisible={true}
       isStatusVisible={true}
+      isEditButtonVisible={true}
     />
   );
 };

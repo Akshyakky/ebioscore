@@ -51,6 +51,9 @@ const ProfileListSearch: React.FC<ProfileListSearchProps> = ({
       getItemId={(item) => item.profileID}
       getItemActiveStatus={(item) => item.rActiveYN === "Y"}
       searchPlaceholder="Enter profile code or name"
+      isEditButtonVisible={true}
+      isActionVisible={true}
+      isStatusVisible={true}
     />
   );
 };
