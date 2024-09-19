@@ -1,10 +1,12 @@
 import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
 
-export interface ProductSubGroupDto extends BaseDto {
-  psGrpCode: string;
-  psGrpName: string;
+export interface MedicationGenericDto extends BaseDto {
+  mGenID: number;
+  mGenCode?: string;
+  MGenName: string;
   modifyYN: string;
   defaultYN: string;
+  rActiveYN: string;
   compID: number;
   compCode: string;
   compName: string;

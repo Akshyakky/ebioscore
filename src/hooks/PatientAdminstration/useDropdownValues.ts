@@ -13,6 +13,14 @@ import { ContactListService } from "../../services/HospitalAdministrationService
 import { DeptUnitListService } from "../../services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
 import { ServiceTypeService } from "../../services/BillingServices/ServiceTypeServices";
 import { WardCategoryService } from "../../services/HospitalAdministrationServices/ContactListService/WardCategoryService/WardCategoryService";
+import {
+  medicationFormService,
+  medicationGenericService,
+  productGroupService,
+  productSubGroupService,
+  productTaxService,
+  productUnitService,
+} from "../../services/GenericEntityService/GenericEntityService";
 
 const useDropdownValues = () => {
   const [picValues, setPicValues] = useState<DropdownOption[]>([]);
@@ -67,6 +75,14 @@ const useDropdownValues = () => {
   const [productCategoryValues, setProductBedCategoryValues] = useState<any[]>(
     []
   );
+  const [productSubGroupValues, setProductSubGroupValues] = useState<any[]>([]);
+  const [productGroupValues, setProductGroupValues] = useState<any[]>([]);
+  const [productUnitValues, setProductUnitValues] = useState<any[]>([]);
+  const [medicationFormValues, setMedicationFormValues] = useState<any[]>([]);
+  const [medicationGenericValues, setMedicationGenericValues] = useState<any[]>(
+    []
+  );
+  const [taxTypeValue, setTaxTypeValue] = useState<any[]>([]);
 
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
@@ -105,6 +121,12 @@ const useDropdownValues = () => {
           serviceTypeResponse,
           categoryTypeResponse,
           productCategoryTypeResponse,
+          productSubGroupTypeResponse,
+          productGroupTypeResponse,
+          productUnitTypeResponse,
+          medicationFormTypeResponse,
+          medicationGenericTypeResponse,
+          taxTypeResponse,
         ] = await Promise.all([
           BillingService.fetchPicValues("GetPICDropDownValues"),
           ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
@@ -174,6 +196,12 @@ const useDropdownValues = () => {
           ServiceTypeService.getAllServiceType(),
           WardCategoryService.getAllWardCategory(),
           ConstantValues.fetchConstantValues("GetConstantValues", "PMED"),
+          productSubGroupService.getAll(),
+          productGroupService.getAll(),
+          productUnitService.getAll(),
+          medicationFormService.getAll(),
+          medicationGenericService.getAll(),
+          productTaxService.getAll(),
         ]);
 
         setPicValues(
@@ -336,6 +364,42 @@ const useDropdownValues = () => {
             label: item.label,
           }))
         );
+        setProductSubGroupValues(
+          (productSubGroupTypeResponse.data || []).map((item: any) => ({
+            value: item.psGrpID || 0,
+            label: item.psGrpName || "",
+          }))
+        );
+        setProductGroupValues(
+          (productGroupTypeResponse.data || []).map((item: any) => ({
+            value: item.pgrpID || 0,
+            label: item.pgrpName || "",
+          }))
+        );
+        setProductUnitValues(
+          (productUnitTypeResponse.data || []).map((item: any) => ({
+            value: item.punitID || 0,
+            label: item.punitName || "",
+          }))
+        );
+        setMedicationFormValues(
+          (medicationFormTypeResponse.data || []).map((item: any) => ({
+            value: item.mFID || 0,
+            label: item.mFName || "",
+          }))
+        );
+        setMedicationGenericValues(
+          (medicationGenericTypeResponse.data || []).map((item: any) => ({
+            value: item.mGenID || 0,
+            label: item.MGenName || "",
+          }))
+        );
+        setTaxTypeValue(
+          (taxTypeResponse.data || []).map((item: any) => ({
+            value: item.pTaxAmt || 0,
+            label: item.pTaxAmt || "",
+          }))
+        );
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
       } finally {
@@ -375,6 +439,12 @@ const useDropdownValues = () => {
     serviceValues,
     bedCategoryValues,
     productCategoryValues,
+    productSubGroupValues,
+    productGroupValues,
+    productUnitValues,
+    medicationFormValues,
+    medicationGenericValues,
+    taxTypeValue,
   };
 };
 

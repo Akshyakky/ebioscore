@@ -1,8 +1,14 @@
 import { CommonApiService } from "../CommonApiService";
 import { store } from "../../store/store";
-import { ProductSubGroupDto } from "../../interfaces/InventoryManagement/ProductSubGroupDto";
-import { ProductGroupDto } from "../../interfaces/InventoryManagement/ProductGroupDto";
 import { ProductTaxListDto } from "../../interfaces/InventoryManagement/ProductTaxListDto";
+import {
+  ProductGroupDto,
+  ProductSubGroupDto,
+  ProductUnitDto,
+} from "../../interfaces/InventoryManagement/ProductGroup-Unit-SubGroup";
+import { MedicationRouteDto } from "../../interfaces/ClinicalManagement/MedicationRouteDto";
+import { MedicationFormDto } from "../../interfaces/ClinicalManagement/MedicationFormDto";
+import { MedicationGenericDto } from "../../interfaces/ClinicalManagement/MedicationGenericDto";
 
 // Generic DTO interface with common properties
 export interface BaseDto {
@@ -113,15 +119,32 @@ export const productGroupService = createEntityService<ProductGroupDto>(
   "ProductGroup",
   "INVENTORY_MANAGEMENT_URL"
 );
+
+export const productUnitService = createEntityService<ProductUnitDto>(
+  "ProductUnit",
+  "INVENTORY_MANAGEMENT_URL"
+);
+
 export const productTaxService = createEntityService<ProductTaxListDto>(
   "ProductTaxList",
   "INVENTORY_MANAGEMENT_URL"
 );
 
-export const medicationRouteService = createEntityService<ProductTaxListDto>(
+export const medicationRouteService = createEntityService<MedicationRouteDto>(
   "MedicationRoute",
   "CLINICAL_MANAGEMENT_URL"
 );
+
+export const medicationFormService = createEntityService<MedicationFormDto>(
+  "MedicationForm",
+  "CLINICAL_MANAGEMENT_URL"
+);
+
+export const medicationGenericService =
+  createEntityService<MedicationGenericDto>(
+    "MedicationGeneric",
+    "CLINICAL_MANAGEMENT_URL"
+  );
 
 // Example of how to extend the generic service for entity-specific methods if needed
 // class ExtendedProductSubGroupService extends GenericEntityService<ProductSubGroupDto> {

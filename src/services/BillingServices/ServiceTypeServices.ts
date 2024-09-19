@@ -19,7 +19,6 @@ export const saveServiceType = async (
 };
 
 export const getAllServiceType = async (): Promise<OperationResult<any[]>> => {
-  debugger;
   return apiService.get<OperationResult<any[]>>(
     "ServiceType/GetAllServiceType",
     getToken()
