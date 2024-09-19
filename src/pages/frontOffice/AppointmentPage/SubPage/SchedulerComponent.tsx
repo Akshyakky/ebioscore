@@ -8,6 +8,8 @@ import { CommonService } from '../../../../services/CommonServices/CommonService
 import { BreakListService } from '../../../../services/FrontOfficeServices/BreakListServices/BreakListService';
 import { useLoading } from '../../../../context/LoadingContext';
 import { dxSchedulerAppointment } from 'devextreme/ui/scheduler';
+import SkeletonLoader from '../../../../components/Loader/SkeletonLoader';
+import Loader from '../../../../components/Loader/SkeletonLoader';
 
 const views: Array<'day' | 'week' | 'workWeek' | 'month'> = ['day', 'week', 'workWeek', 'month'];
 
@@ -65,7 +67,9 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
     const { state, setState, refresh } = useAppointments(initialDate.current, hpID, rlID);
     const [workingHours, setWorkingHours] = useState<WorkingHours>({});
     const [breaks, setBreaks] = useState<BreakItem[]>([]);
-    const { setLoading } = useLoading();
+    const { isLoading, setLoading } = useLoading();
+
+
 
     useImperativeHandle(ref, () => ({ refresh }), [refresh]);
 
@@ -366,46 +370,49 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
     ), [resourceDataSource]);
 
     return (
-        <Scheduler
-            dataSource={dataSource}
-            views={views}
-            firstDayOfWeek={0}
-            defaultCurrentView={state.currentView}
-            currentDate={state.date}
-            onCurrentViewChange={onViewChange}
-            onCurrentDateChange={onCurrentDateChange}
-            startDayHour={0}
-            endDayHour={24}
-            cellDuration={15}
-            showAllDayPanel={false}
-            useDropDownViewSwitcher={false}
-            editing={{
-                allowAdding: true,
-                allowDeleting: true,
-                allowUpdating: true,
-                allowResizing: true,
-                allowDragging: true,
-            }}
-            onAppointmentUpdating={onAppointmentUpdating}
-            onAppointmentDeleting={onAppointmentDeleting}
-            onAppointmentAdding={onAppointmentAdding}
-            adaptivityEnabled={true}
-            showCurrentTimeIndicator={true}
-            shadeUntilCurrentTime={true}
-            height="100%"
-            width="100%"
-            onAppointmentDblClick={onAppointmentDblClick}
-            onAppointmentClick={onAppointmentClickHandler}
-            onAppointmentFormOpening={onAppointmentFormOpeningHandler}
-            // onAppointmentDrag={onAppointmentDragHandler}
-            timeCellRender={timeCellTemplate}
-            dataCellRender={cellTemplate}
-            onContentReady={onContentReady}
-            appointmentRender={appointmentTemplate}
-            appointmentTooltipRender={appointmentTooltipTemplate}
-        >
-            {MemoizedResource}
-        </Scheduler>
+        <>
+            <Loader type="skeleton" skeletonType="calendar" height="600px" width="100%" />
+            <Scheduler
+                dataSource={dataSource}
+                views={views}
+                firstDayOfWeek={0}
+                defaultCurrentView={state.currentView}
+                currentDate={state.date}
+                onCurrentViewChange={onViewChange}
+                onCurrentDateChange={onCurrentDateChange}
+                startDayHour={0}
+                endDayHour={24}
+                cellDuration={15}
+                showAllDayPanel={false}
+                useDropDownViewSwitcher={false}
+                editing={{
+                    allowAdding: true,
+                    allowDeleting: true,
+                    allowUpdating: true,
+                    allowResizing: true,
+                    allowDragging: true,
+                }}
+                onAppointmentUpdating={onAppointmentUpdating}
+                onAppointmentDeleting={onAppointmentDeleting}
+                onAppointmentAdding={onAppointmentAdding}
+                adaptivityEnabled={true}
+                showCurrentTimeIndicator={true}
+                shadeUntilCurrentTime={true}
+                height="100%"
+                width="100%"
+                onAppointmentDblClick={onAppointmentDblClick}
+                onAppointmentClick={onAppointmentClickHandler}
+                onAppointmentFormOpening={onAppointmentFormOpeningHandler}
+                // onAppointmentDrag={onAppointmentDragHandler}
+                timeCellRender={timeCellTemplate}
+                dataCellRender={cellTemplate}
+                onContentReady={onContentReady}
+                appointmentRender={appointmentTemplate}
+                appointmentTooltipRender={appointmentTooltipTemplate}
+            >
+                {MemoizedResource}
+            </Scheduler>
+        </>
     );
 });
 

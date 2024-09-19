@@ -45,7 +45,7 @@ export const updateProductTaxListActiveStatus = async (
 ): Promise<OperationResult<boolean>> => {
   return apiService.put<OperationResult<boolean>>(
     `ProductTaxList/UpdateProductTaxListActiveStatus/${pTaxID}`,
-    { rActive },
+    rActive,
     getToken()
   );
 };

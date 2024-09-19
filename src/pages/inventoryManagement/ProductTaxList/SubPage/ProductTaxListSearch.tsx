@@ -17,6 +17,7 @@ const ProductTaxListSearch: React.FC<ProductTaxListSearchProps> = ({ open, onClo
 
 
     const updateActiveStatus = async (id: number, status: boolean) => {
+        debugger
         const result = await ProductTaxListService.updateProductTaxListActiveStatus(
             id,
             status
