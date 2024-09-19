@@ -159,6 +159,7 @@ const DeptUnitListDetails: React.FC<DeptUnitListDetailsProps> = ({ editData }) =
                     name="rNotes"
                     ControlID="rNotes"
                     placeholder="Notes"
+                    maxLength={4000}
                 />
             </Grid>
 

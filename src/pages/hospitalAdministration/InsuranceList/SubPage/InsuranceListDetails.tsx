@@ -213,7 +213,7 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({
                     maxLength={20}
                 />
                 <FormField
-                    type="text"
+                    type="email"
                     label="Email"
                     value={formState.insurEmail}
                     onChange={handleInputChange}
@@ -245,15 +245,17 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({
                 />
 
                 <FormField
-                    type="textarea"
-                    label="Street"
-                    value={formState.insurStreet}
+                    type="text"
+                    label="Postal Code"
+                    value={formState.insurPostCode}
                     onChange={handleInputChange}
-                    name="insurStreet"
-                    ControlID="insurStreet"
-                    placeholder="Street"
-                    maxLength={100}
+                    name="insurPostCode"
+                    ControlID="insurPostCode"
+                    placeholder="Postal Code"
+                    maxLength={20}
                 />
+
+
                 <FormField
                     type="select"
                     label="City"
@@ -292,19 +294,20 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({
                     placeholder="Country"
                     maxLength={50}
                 />
-                <FormField
-                    type="text"
-                    label="Postal Code"
-                    value={formState.insurPostCode}
-                    onChange={handleInputChange}
-                    name="insurPostCode"
-                    ControlID="insurPostCode"
-                    placeholder="Postal Code"
-                    maxLength={20}
-                />
+
             </Grid>
 
             <Grid container spacing={2}>
+                <FormField
+                    type="textarea"
+                    label="Street"
+                    value={formState.insurStreet}
+                    onChange={handleInputChange}
+                    name="insurStreet"
+                    ControlID="insurStreet"
+                    placeholder="Street"
+                    maxLength={100}
+                />
                 <FormField
                     type="textarea"
                     label="Remarks"

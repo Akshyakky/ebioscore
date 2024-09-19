@@ -266,6 +266,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
                         text="Sub GRP"
                         variant="contained"
                         size="small"
+                        color="secondary"
                     />
                 ) : <></>
             ),
@@ -281,6 +282,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
                     text="Room"
                     variant="contained"
                     size="small"
+                    color="success"
                 />
             ),
         },

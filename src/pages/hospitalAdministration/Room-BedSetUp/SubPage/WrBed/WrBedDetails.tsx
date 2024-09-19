@@ -248,6 +248,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                         text="Cradle"
                         variant="contained"
                         size="small"
+                        color="secondary"
                     />
                 ) : (
                     <></>
