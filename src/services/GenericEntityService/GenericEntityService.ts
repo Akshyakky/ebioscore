@@ -1,15 +1,32 @@
 import { CommonApiService } from "../CommonApiService";
 import { store } from "../../store/store";
-import { APIConfig } from "../../apiConfig";
 import { ProductSubGroupDto } from "../../interfaces/InventoryManagement/ProductSubGroupDto";
 import { ProductGroupDto } from "../../interfaces/InventoryManagement/ProductGroupDto";
+import { ProductTaxListDto } from "../../interfaces/InventoryManagement/ProductTaxListDto";
 
 // Generic DTO interface with common properties
 export interface BaseDto {
-  id: number;
-  rActiveYN: string;
+  // id: number;
+  // rActiveYN: string;
   [key: string]: any; // Allow for additional properties
 }
+
+interface ApiConfig {
+  [key: string]: string;
+}
+
+// Load environment variables
+const apiConfig: ApiConfig = {
+  AUTH_URL: import.meta.env.VITE_AUTH_URL,
+  COMMON_URL: import.meta.env.VITE_COMMONURL,
+  PATIENT_ADMINISTRATION_URL: import.meta.env.VITE_PATIENT_ADMINISTRATION_URL,
+  HOSPITAL_ADMINISTRATION_URL: import.meta.env.VITE_HOSPITAL_ADMINISTRATION_URL,
+  FRONT_OFFICE_URL: import.meta.env.VITE_FRONT_OFFICE_URL,
+  SECURITY_MANAGEMENT_URL: import.meta.env.VITE_SECURITY_MANAGEMENT_URL,
+  BILLING_URL: import.meta.env.VITE_BILLING_URL,
+  ROUTINE_REPORT_URL: import.meta.env.VITE_ROUTINEREPORTURL,
+  INVENTORY_MANAGEMENT_URL: import.meta.env.VITE_INVENTORY_MANAGEMENT_URL,
+};
 
 // Generic service class
 class GenericEntityService<T extends BaseDto> {
@@ -18,15 +35,15 @@ class GenericEntityService<T extends BaseDto> {
 
   constructor(apiService: CommonApiService, entityName: string) {
     this.apiService = apiService;
-    this.baseEndpoint = `/${entityName}`;
+    this.baseEndpoint = `${entityName}`;
   }
 
   private getToken(): string {
     return store.getState().userDetails.token!;
   }
 
-  async getAll(): Promise<T[]> {
-    return this.apiService.get<T[]>(
+  async getAll(): Promise<T> {
+    return this.apiService.get<T>(
       `${this.baseEndpoint}/GetAll`,
       this.getToken()
     );
@@ -55,9 +72,18 @@ class GenericEntityService<T extends BaseDto> {
     );
   }
 
-  async getNextCode(): Promise<string> {
-    return this.apiService.get<string>(
-      `${this.baseEndpoint}/GetNextCode`,
+  async getNextCode(
+    prefix: string,
+    codeProperty: string,
+    padLength: number = 5
+  ): Promise<T> {
+    const params = new URLSearchParams({
+      prefix,
+      codeProperty,
+      padLength: padLength.toString(),
+    });
+    return this.apiService.get<T>(
+      `${this.baseEndpoint}/GetNextCode?${params.toString()}`,
       this.getToken()
     );
   }
@@ -67,21 +93,29 @@ class GenericEntityService<T extends BaseDto> {
 
 // Factory function to create entity-specific services
 function createEntityService<T extends BaseDto>(
-  entityName: string
+  entityName: string,
+  apiKey: keyof typeof apiConfig
 ): GenericEntityService<T> {
   return new GenericEntityService<T>(
     new CommonApiService({
-      baseURL: APIConfig.commonURL,
+      baseURL: apiConfig[apiKey],
     }),
     entityName
   );
 }
 
-export const productSubGroupService =
-  createEntityService<ProductSubGroupDto>("ProductSubGroup");
-
-export const productGroupService =
-  createEntityService<ProductGroupDto>("ProductGroup");
+export const productSubGroupService = createEntityService<ProductSubGroupDto>(
+  "ProductSubGroup",
+  "INVENTORY_MANAGEMENT_URL"
+);
+export const productGroupService = createEntityService<ProductGroupDto>(
+  "ProductGroup",
+  "INVENTORY_MANAGEMENT_URL"
+);
+export const productTaxService = createEntityService<ProductTaxListDto>(
+  "ProductTaxList",
+  "INVENTORY_MANAGEMENT_URL"
+);
 
 // Example of how to extend the generic service for entity-specific methods if needed
 // class ExtendedProductSubGroupService extends GenericEntityService<ProductSubGroupDto> {

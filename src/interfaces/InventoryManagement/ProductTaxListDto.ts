@@ -1,4 +1,6 @@
-export interface ProductTaxListDto {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface ProductTaxListDto extends BaseDto {
   pTaxID: number;
   pTaxCode: string;
   pTaxName?: string;

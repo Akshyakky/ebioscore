@@ -1,7 +1,7 @@
 import React from 'react';
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { ProductTaxListDto } from "../../../../interfaces/InventoryManagement/ProductTaxListDto";
-import { ProductTaxListService } from '../../../../services/InventoryManagementService/ProductListService/ProductTaxListService';
+import { productTaxService } from "../../../../services/GenericEntityService/GenericEntityService";
 
 interface ProductTaxListSearchProps {
     open: boolean;
@@ -10,19 +10,22 @@ interface ProductTaxListSearchProps {
 }
 
 const ProductTaxListSearch: React.FC<ProductTaxListSearchProps> = ({ open, onClose, onSelect }) => {
-    const fetchItems = () =>
-        ProductTaxListService.getAllProductTaxList().then(
-            (result) => result.data || []
-        );
-
+    const fetchItems = async () => {
+        try {
+            const items = await productTaxService.getAll();
+            return items.data || [];
+        } catch (error) {
+            return [];
+        }
+    };
 
     const updateActiveStatus = async (id: number, status: boolean) => {
-        debugger
-        const result = await ProductTaxListService.updateProductTaxListActiveStatus(
-            id,
-            status
-        );
-        return result.success;
+        try {
+            return await productTaxService.updateActiveStatus(id, status);
+        } catch (error) {
+            console.error("Error updating product tax active status:", error);
+            return false;
+        }
     };
 
     const getItemId = (item: ProductTaxListDto) => item.pTaxID;

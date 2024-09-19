@@ -8,13 +8,13 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { ProductTaxListDto } from "../../../../interfaces/InventoryManagement/ProductTaxListDto";
 import { store } from "../../../../store/store";
-import { ProductTaxListService } from "../../../../services/InventoryManagementService/ProductListService/ProductTaxListService";
+import { productTaxService } from "../../../../services/GenericEntityService/GenericEntityService";
 
 interface ProductTaxListDetailsProps {
-    editData?: ProductTaxListDto;
+    selectedData?: ProductTaxListDto;
 }
 
-const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData }) => {
+const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ selectedData }) => {
     const [formState, setFormState] = useState<ProductTaxListDto>({
         pTaxID: 0,
         pTaxCode: "",
@@ -33,29 +33,44 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
     const { setLoading } = useLoading();
 
     useEffect(() => {
-        if (editData) {
-            setFormState(editData);
+        if (selectedData) {
+            setFormState(selectedData);
         } else {
             handleClear();
         }
-    }, [editData]);
+    }, [selectedData]);
 
-    const handleClear = useCallback(() => {
-        setFormState({
-            pTaxID: 0,
-            pTaxCode: "",
-            pTaxName: "",
-            pTaxAmt: 0,
-            pTaxDescription: "",
-            rActiveYN: "Y",
-            compID: compID || 0,
-            compCode: compCode || "",
-            compName: compName || "",
-            transferYN: "N",
-            rNotes: "",
-        });
-        setIsSubmitted(false);
+    const handleClear = useCallback(async () => {
+        setLoading(true);
+        try {
+            debugger
+            const nextCode = await productTaxService.getNextCode("TAX", "pTaxCode", 3);
+            setFormState({
+                pTaxID: 0,
+                pTaxCode: nextCode.data,
+                pTaxName: "",
+                pTaxAmt: 0,
+                pTaxDescription: "",
+                rActiveYN: "Y",
+                compID: compID || 0,
+                compCode: compCode || "",
+                compName: compName || "",
+                transferYN: "N",
+                rNotes: "",
+            });
+            setIsSubmitted(false);
+        } catch (error) {
+            showAlert("Error", "Failed to fetch the next Tax Code.", "error");
+        } finally {
+            setLoading(false);
+        }
     }, [compID, compCode, compName]);
+
+    useEffect(() => {
+        if (!selectedData) {
+            handleClear();
+        }
+    }, [handleClear, selectedData]);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -68,8 +83,6 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
         setFormState(prev => ({ ...prev, [name]: value }));
     }, []);
 
-
-
     const handleSave = async () => {
         setIsSubmitted(true);
         if (!formState.pTaxCode.trim() || !formState.pTaxName) {
@@ -80,14 +93,10 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
         setLoading(true);
 
         try {
-            const result = await ProductTaxListService.saveProductTaxList(formState);
-            if (result.success) {
-                showAlert("Success", "Product Tax List saved successfully!", "success", {
-                    onConfirm: handleClear
-                });
-            } else {
-                showAlert("Error", "Failed to save Product Tax List.", "error");
-            }
+            await productTaxService.save(formState);
+            showAlert("Success", "Product Tax List saved successfully!", "success", {
+                onConfirm: handleClear
+            });
         } catch (error) {
             showAlert("Error", "An unexpected error occurred while saving.", "error");
         } finally {
@@ -104,7 +113,6 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
         },
         []
     );
-
 
     return (
         <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -123,7 +131,6 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
                     isMandatory={true}
                     size="small"
                     isSubmitted={isSubmitted}
-
                 />
                 <FormField
                     type="text"
@@ -148,7 +155,6 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
                     isMandatory
                     size="small"
                 />
-
                 <FormField
                     type="text"
                     label="Tax Description"
@@ -169,7 +175,6 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
                     placeholder="Notes"
                     maxLength={4000}
                 />
-
             </Grid>
 
             <Grid container spacing={2}>
@@ -182,7 +187,6 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ editData 
                     name="rActiveYN"
                     ControlID="rActiveYN"
                     size="medium"
-
                 />
             </Grid>
 
