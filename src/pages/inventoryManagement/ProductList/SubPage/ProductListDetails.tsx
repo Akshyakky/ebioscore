@@ -164,7 +164,7 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                         productCategoryValues
                     )}
                     options={productCategoryValues}
-                    isSubmitted={isSubmitted}
+                    // isSubmitted={isSubmitted}
                     name="catValue"
                     ControlID="catValue"
                     placeholder="Category Value"
@@ -189,7 +189,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     label="Product Name"
                     value={formState.productName || ""}
                     onChange={handleInputChange}
-                    isSubmitted={isSubmitted}
                     name="productName"
                     ControlID="productName"
                     placeholder="Product Name"
@@ -206,7 +205,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                         productGroupValues
                     )}
                     options={productGroupValues}
-                    isSubmitted={isSubmitted}
                     name="pGrpID"
                     ControlID="pGrpID"
                     placeholder="Product Group"
@@ -223,7 +221,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                         productSubGroupValues
                     )}
                     options={productSubGroupValues}
-                    isSubmitted={isSubmitted}
                     name="psGrpID"
                     ControlID="psGrpID"
                     placeholder="Product Sub Group"
@@ -236,7 +233,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                         label="Base Unit"
                         value={formState.baseUnit}
                         onChange={handleInputChange}
-                        isSubmitted={isSubmitted}
                         name="baseUnit"
                         ControlID="baseUnit"
                         placeholder="BaseUnit"
@@ -254,7 +250,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                             productUnitValues
                         )}
                         options={productUnitValues}
-                        isSubmitted={isSubmitted}
                         name="pUnitID"
                         ControlID="pUnitID"
                         placeholder="Product Unit"
@@ -270,7 +265,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                         label="Issue Unit"
                         value={formState.issueUnit}
                         onChange={handleInputChange}
-                        isSubmitted={isSubmitted}
                         name="issueUnit"
                         ControlID="issueUnit"
                         placeholder="Issue Unit"
@@ -288,7 +282,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                             productUnitValues
                         )}
                         options={productUnitValues}
-                        isSubmitted={isSubmitted}
                         name="pPackageID"
                         ControlID="pPackageID"
                         placeholder="Issue Unit"
@@ -307,7 +300,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                         medicationFormValues
                     )}
                     options={medicationFormValues}
-                    isSubmitted={isSubmitted}
                     name="mFID"
                     ControlID="mFID"
                     placeholder="Form Name"
@@ -325,7 +317,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                         medicationGenericValues
                     )}
                     options={medicationGenericValues}
-                    isSubmitted={isSubmitted}
                     name="mGenID"
                     ControlID="mGenID"
                     placeholder="Generic Name"
@@ -338,7 +329,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     label="Bar Code"
                     value={formState.barcode}
                     onChange={handleInputChange}
-                    isSubmitted={isSubmitted}
                     name="barcode"
                     ControlID="barcode"
                     placeholder="Bar Code"
@@ -351,7 +341,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     label="Universal Code(PC)"
                     value={formState.universalCode}
                     onChange={handleInputChange}
-                    isSubmitted={isSubmitted}
                     name="universalCode"
                     ControlID="UniversalCode(PC)"
                     placeholder="Universal Code(PC)"
@@ -407,7 +396,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                         medicationGenericValues
                     )}
                     options={productUnitValues}
-                    isSubmitted={isSubmitted}
                     name="manufacturerID"
                     ControlID="manufacturerID"
                     placeholder="Manufacturer Name"
@@ -424,8 +412,8 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                         handleDropdownChange(["taxID"], ["taxName"], taxTypeValue)(e);
                         handleGSTChange(value, taxTypeValue);
                     }}
+
                     options={taxTypeValue}
-                    isSubmitted={isSubmitted}
                     name="taxID"
                     ControlID="taxID"
                     placeholder="GST"
@@ -438,7 +426,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     label="CGST"
                     value={formState.cgstPerValue}
                     onChange={handleInputChange}
-                    isSubmitted={isSubmitted}
                     name="cgstPerValue"
                     ControlID="cgstPerValue"
                     placeholder="CGST"
@@ -452,7 +439,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     label="SGST"
                     value={formState.sgstPerValue}
                     onChange={handleInputChange}
-                    isSubmitted={isSubmitted}
                     name="sgstPerValue"
                     ControlID="sgstPerValue"
                     placeholder="SGST"
@@ -466,7 +452,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     label="HSN Code"
                     value={formState.hsnCODE}
                     onChange={handleInputChange}
-                    isSubmitted={isSubmitted}
                     name="hsnCODE"
                     ControlID="hsnCODE"
                     placeholder="HSN Code"
