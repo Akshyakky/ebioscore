@@ -3,7 +3,7 @@ import { BaseDto } from "../../services/GenericEntityService/GenericEntityServic
 export interface MedicationGenericDto extends BaseDto {
   mGenID: number;
   mGenCode?: string;
-  MGenName: string;
+  mGenName: string;
   modifyYN: string;
   defaultYN: string;
   rActiveYN: string;
