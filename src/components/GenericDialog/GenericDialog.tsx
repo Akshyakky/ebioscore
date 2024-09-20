@@ -37,6 +37,7 @@ interface GenericDialogProps {
 const StyledDialog = styled(Dialog)(({ theme }) => ({
     '& .MuiDialog-paper': {
         borderRadius: theme.shape.borderRadius,
+        backgroundColor: theme.palette.background.paper,
     },
     zIndex: 1300,
 }));
@@ -44,16 +45,24 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
 const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
     padding: theme.spacing(1, 3),
     borderBottom: `1px solid ${theme.palette.divider}`,
+    backgroundColor: theme.palette.mode === 'dark'
+        ? theme.palette.background.paper
+        : theme.palette.primary.main, // Blue color in light mode
+    color: theme.palette.mode === 'dark'
+        ? theme.palette.text.primary
+        : theme.palette.primary.contrastText, // Contrasting text color for light mode
 }));
 
 const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
     padding: theme.spacing(1, 3),
     overflowX: 'hidden',
+    backgroundColor: theme.palette.background.paper,
 }));
 
 const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
     padding: theme.spacing(1, 3),
     borderTop: `1px solid ${theme.palette.divider}`,
+    backgroundColor: theme.palette.background.paper,
 }));
 
 const GenericDialog: React.FC<GenericDialogProps> = ({
@@ -93,20 +102,29 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
             disableEscapeKeyDown={disableEscapeKeyDown}
             aria-labelledby="dialog-title"
             fullScreen={fullScreen || isMobile}
-            sx={{ zIndex: 1300 }}
         >
             <StyledDialogTitle sx={titleSx}>
                 <Box display="flex" alignItems="center" justifyContent="space-between">
-                    <Typography variant={titleVariant} component="h2" id="dialog-title">
+                    <Typography variant={titleVariant} component="h2" id="dialog-title"
+                        color={theme.palette.mode === 'dark' ? 'text.primary' : 'inherit'}>
                         {title}
                     </Typography>
                     {showCloseButton && (
                         <IconButton
                             edge="end"
-                            color="inherit"
                             onClick={onClose}
                             aria-label="close dialog"
-                            sx={closeButtonSx}
+                            sx={{
+                                color: theme.palette.mode === 'dark'
+                                    ? theme.palette.text.secondary
+                                    : theme.palette.primary.contrastText,
+                                '&:hover': {
+                                    color: theme.palette.mode === 'dark'
+                                        ? theme.palette.text.primary
+                                        : theme.palette.primary.light,
+                                },
+                                ...closeButtonSx
+                            }}
                         >
                             <CloseIcon />
                         </IconButton>

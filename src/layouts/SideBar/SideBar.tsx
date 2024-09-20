@@ -17,17 +17,20 @@ import {
   Toolbar,
   CssBaseline,
   InputAdornment,
-  useTheme,
   ListItemButton,
+  useTheme,
+  styled,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Icon } from "@iconify/react";
-import "./SideBar.css";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import ProfileMenu from "./ProfileMenu";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import { notifyError } from "../../utils/Common/toastManager";
+import { MaterialUISwitch } from "../../components/Switch/MaterialUISwitch";
+import { useTheme as useCustomTheme } from "../../context/Common/ThemeContext";
+import "./SideBar.css";
 
 interface SideBarProps {
   userID: number | null;
@@ -36,16 +39,33 @@ interface SideBarProps {
 
 const drawerWidth = 340;
 
+const StyledDrawer = styled(Drawer)(({ theme }) => ({
+  '& .MuiDrawer-paper': {
+    width: drawerWidth,
+    boxSizing: 'border-box',
+    backgroundColor: theme.palette.background.default,
+    color: theme.palette.text.primary,
+  },
+}));
+
+const StyledNavLink = styled(NavLink)(({ theme }) => ({
+  textDecoration: 'none',
+  color: theme.palette.text.primary,
+  '&.active-submenu-item': {
+    backgroundColor: theme.palette.action.selected,
+  },
+}));
+
 const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
-  usePageTitle();
+  const { pageTitle } = usePageTitle();
   const [modules, setModules] = useState<ModuleDto[]>([]);
   const [subModules, setSubModules] = useState<SubModuleDto[]>([]);
   const [activeModuleId, setActiveModuleId] = useState<number | null>(null);
   const [filterKeyword, setFilterKeyword] = useState<string>("");
-  const { pageTitle } = usePageTitle();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
+  const { isDarkMode, toggleTheme } = useCustomTheme();
 
   const handleSubModuleClick = (path: string) => {
     handleDrawerClose();
@@ -130,31 +150,18 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
     }
   };
 
-  const openDrawerStyle = {
-    width: `calc(100% - ${drawerWidth}px)`,
-    marginLeft: `${drawerWidth}px`,
-    transition: theme.transitions.create(["margin", "width"], {
-      easing: theme.transitions.easing.easeInOut,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-  };
-
-  const closedDrawerStyle = {
-    width: `100%`,
-    transition: theme.transitions.create(["margin", "width"], {
-      easing: theme.transitions.easing.easeInOut,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  };
-
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
       <AppBar
         position="fixed"
         sx={{
-          ...(open ? openDrawerStyle : closedDrawerStyle),
-          zIndex: (theme) => theme.zIndex.drawer + 1,
+          width: open ? `calc(100% - ${drawerWidth}px)` : '100%',
+          ml: open ? `${drawerWidth}px` : 0,
+          transition: theme.transitions.create(['margin', 'width'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+          }),
         }}
       >
         <Toolbar>
@@ -171,17 +178,15 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
             {pageTitle}
           </Typography>
           <Box flexGrow={1} />
+          <MaterialUISwitch checked={isDarkMode} onChange={toggleTheme} />
           <ProfileMenu />
         </Toolbar>
       </AppBar>
-      <Drawer
+      <StyledDrawer
         variant="persistent"
         anchor="left"
         open={open}
         onClose={handleDrawerClose}
-        sx={{
-          "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth },
-        }}
       >
         <Box sx={{ padding: 1 }}>
           <TextField
@@ -201,64 +206,53 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
           />
         </Box>
         <Divider />
-        <div className="drawer-content">
-          <List>
-            {filteredModules.map((module) => (
-              <React.Fragment key={"module-" + module.auGrpID}>
-                <ListItemButton
-                  onClick={() => toggleModule(module.auGrpID)}
-                  className={
-                    activeModuleId === module.auGrpID ? "active-menu-item" : ""
-                  }
-                >
-                  <ListItemIcon className="list-item-icon">
-                    <Icon
-                      icon={module.iCon}
-                      style={{ fontSize: "24px" }}
-                      className="icon"
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary={module.title} />
-                </ListItemButton>
-                <Collapse
-                  in={activeModuleId === module.auGrpID}
-                  timeout="auto"
-                  unmountOnExit
-                >
-                  <List component="div" disablePadding>
-                    {getFilteredSubModules(module).map((subModule, index) => (
-                      <NavLink
-                        to={subModule.link}
-                        key={`subModule-${subModule.auGrpID}-${index}`}
-                        className={({ isActive }) =>
-                          isActive
-                            ? "active-submenu-item NavLink-submenu"
-                            : "NavLink-submenu"
-                        }
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleSubModuleClick(subModule.link);
-                        }}
-                      >
-                        <ListItemButton sx={{ pl: 2 }}>
-                          <ListItemIcon className="list-item-icon">
-                            <Icon
-                              icon={subModule.iCon}
-                              style={{ fontSize: "20px" }}
-                              className="icon"
-                            />
-                          </ListItemIcon>
-                          <ListItemText primary={subModule.title} />
-                        </ListItemButton>
-                      </NavLink>
-                    ))}
-                  </List>
-                </Collapse>
-              </React.Fragment>
-            ))}
-          </List>
-        </div>
-      </Drawer>
+        <List>
+          {filteredModules.map((module) => (
+            <React.Fragment key={`module-${module.auGrpID}`}>
+              <ListItemButton
+                onClick={() => toggleModule(module.auGrpID)}
+                selected={activeModuleId === module.auGrpID}
+              >
+                <ListItemIcon>
+                  <Icon icon={module.iCon} style={{ fontSize: "24px" }} />
+                </ListItemIcon>
+                <ListItemText primary={module.title} />
+              </ListItemButton>
+              <Collapse
+                in={activeModuleId === module.auGrpID}
+                timeout="auto"
+                unmountOnExit
+              >
+                <List component="div" disablePadding>
+                  {getFilteredSubModules(module).map((subModule, index) => (
+                    <StyledNavLink
+                      to={subModule.link}
+                      key={`subModule-${subModule.auGrpID}-${index}`}
+                      className={({ isActive }) =>
+                        isActive ? "active-submenu-item" : ""
+                      }
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSubModuleClick(subModule.link);
+                      }}
+                    >
+                      <ListItemButton sx={{ pl: 4 }}>
+                        <ListItemIcon>
+                          <Icon
+                            icon={subModule.iCon}
+                            style={{ fontSize: "20px" }}
+                          />
+                        </ListItemIcon>
+                        <ListItemText primary={subModule.title} />
+                      </ListItemButton>
+                    </StyledNavLink>
+                  ))}
+                </List>
+              </Collapse>
+            </React.Fragment>
+          ))}
+        </List>
+      </StyledDrawer>
     </Box>
   );
 };
