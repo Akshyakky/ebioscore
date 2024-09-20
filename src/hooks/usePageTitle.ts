@@ -31,7 +31,7 @@ const pageTitleMap: PageTitleMap = {
   "/InsuranceListPage": "Insurance List",
   "/ProductListPage": "Product List",
   "/ProductTaxListPage": "Product Tax List",
-
+  "/ProductOverviewPage": "Product Overview ",
   // Add more mappings as needed
 };
 

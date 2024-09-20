@@ -27,6 +27,7 @@ import AlertPage from "../pages/common/AlertManagerPage/MainPage/AlertPage";
 import InsuranceListPage from "../pages/hospitalAdministration/InsuranceList/MainPage/InsuranceListPage";
 import ProductListPage from "../pages/inventoryManagement/ProductList/MainPage/ProductListPage";
 import ProductTaxListPage from "../pages/inventoryManagement/ProductTaxList/MainPage/ProductTaxListPage";
+import ProductOverviewPage from "../pages/inventoryManagement/ProductOverview/MainPage/ProductOverviewPage";
 
 interface RouteConfig {
   path: string;
@@ -121,6 +122,11 @@ const routeConfig: RouteConfig[] = [
   {
     path: "/ProductTaxListPage",
     component: ProductTaxListPage,
+    protected: true,
+  },
+  {
+    path: "/ProductOverviewPage",
+    component: ProductOverviewPage,
     protected: true,
   },
 ];

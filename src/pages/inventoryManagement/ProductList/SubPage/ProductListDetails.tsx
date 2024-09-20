@@ -16,7 +16,6 @@ import { ProductTaxListDto } from "../../../../interfaces/InventoryManagement/Pr
 const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
     editData,
 }) => {
-
     const [formState, setFormState] = useState<ProductListDto>({
         expiry: "Y",
         prescription: "Y",

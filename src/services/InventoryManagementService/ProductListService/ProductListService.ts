@@ -7,9 +7,7 @@ import { CommonApiService } from "../../CommonApiService";
 const apiService = new CommonApiService({
   baseURL: APIConfig.inventoryManagementURL,
 });
-
 const getToken = () => store.getState().userDetails.token!;
-
 export const saveProductList = async (
   productListDto: ProductListDto
 ): Promise<OperationResult<ProductListDto>> => {

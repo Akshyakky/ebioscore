@@ -9,6 +9,7 @@ import {
 import { MedicationRouteDto } from "../../interfaces/ClinicalManagement/MedicationRouteDto";
 import { MedicationFormDto } from "../../interfaces/ClinicalManagement/MedicationFormDto";
 import { MedicationGenericDto } from "../../interfaces/ClinicalManagement/MedicationGenericDto";
+import { ProductOverviewDto } from "../../interfaces/InventoryManagement/ProductOverviewDto";
 
 // Generic DTO interface with common properties
 export interface BaseDto {
@@ -127,6 +128,11 @@ export const productUnitService = createEntityService<ProductUnitDto>(
 
 export const productTaxService = createEntityService<ProductTaxListDto>(
   "ProductTaxList",
+  "INVENTORY_MANAGEMENT_URL"
+);
+
+export const productOverviewService = createEntityService<ProductOverviewDto>(
+  "ProductOverview",
   "INVENTORY_MANAGEMENT_URL"
 );
 
