@@ -10,6 +10,8 @@ import { useLoading } from '../../../../context/LoadingContext';
 import { dxSchedulerAppointment } from 'devextreme/ui/scheduler';
 import SkeletonLoader from '../../../../components/Loader/SkeletonLoader';
 import Loader from '../../../../components/Loader/SkeletonLoader';
+import { useTheme } from '@mui/material/styles';
+import { Box } from '@mui/material';
 
 const views: Array<'day' | 'week' | 'workWeek' | 'month'> = ['day', 'week', 'workWeek', 'month'];
 
@@ -68,8 +70,45 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
     const [workingHours, setWorkingHours] = useState<WorkingHours>({});
     const [breaks, setBreaks] = useState<BreakItem[]>([]);
     const { isLoading, setLoading } = useLoading();
+    const theme = useTheme();
 
-
+    const schedulerStyles = useMemo(() => ({
+        '.dx-scheduler': {
+            backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : theme.palette.background.default,
+            color: theme.palette.text.primary,
+        },
+        '.dx-scheduler-header': {
+            backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : theme.palette.primary.main,
+            color: theme.palette.mode === 'dark' ? theme.palette.text.primary : theme.palette.primary.contrastText,
+        },
+        '.dx-scheduler-date-table-cell': {
+            borderColor: theme.palette.divider,
+        },
+        '.dx-scheduler-time-panel-cell': {
+            color: theme.palette.text.secondary,
+        },
+        '.dx-scheduler-appointment': {
+            backgroundColor: theme.palette.mode === 'dark' ? theme.palette.primary.dark : theme.palette.primary.main,
+            color: theme.palette.primary.contrastText,
+        },
+        '.dx-scheduler-all-day-appointment': {
+            backgroundColor: theme.palette.mode === 'dark' ? theme.palette.secondary.dark : theme.palette.secondary.main,
+            color: theme.palette.secondary.contrastText,
+        },
+        '.dx-scheduler-appointment-tooltip': {
+            backgroundColor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+        },
+        '.dx-scheduler-date-time-indicator': {
+            backgroundColor: `${theme.palette.error.main} !important`,
+            '&::before': {
+                backgroundColor: `${theme.palette.error.main} !important`,
+            },
+        },
+        '.dx-scheduler-date-time-indicator-cell': {
+            borderTopColor: `${theme.palette.error.main} !important`,
+        },
+    }), [theme]);
 
     useImperativeHandle(ref, () => ({ refresh }), [refresh]);
 
@@ -203,27 +242,39 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
 
             const dayWorkingHours = workingHours[dayOfWeek];
 
-            let cellColor = 'transparent';
+            let cellColor = theme.palette.background.default; // Default background color
+            let textColor = theme.palette.text.primary; // Default text color
+
             if (dayWorkingHours) {
                 if (hour < dayWorkingHours.start || hour >= dayWorkingHours.end) {
-                    cellColor = 'rgba(0, 0, 0, 0.1)'; // Non-working hours
+                    cellColor = theme.palette.action.disabledBackground;
                 } else if (date < currentTime) {
-                    cellColor = 'rgba(255, 0, 0, 0.1)'; // Elapsed slots
+                    cellColor = theme.palette.mode === 'dark'
+                        ? theme.palette.error.dark
+                        : theme.palette.error.light;
                 } else {
-                    cellColor = 'rgba(0, 255, 0, 0.1)'; // Working hours
+                    cellColor = theme.palette.mode === 'dark'
+                        ? theme.palette.success.dark
+                        : theme.palette.success.light;
                 }
+                textColor = theme.palette.getContrastText(cellColor);
             }
 
             return (
                 <div style={{
                     height: '100%',
-                    backgroundColor: cellColor
+                    backgroundColor: cellColor,
+                    color: textColor,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative', // Add this to ensure the time indicator shows above the cell content
                 }}>
                     {itemData.text}
                 </div>
             );
         };
-    }, [workingHours, format]);
+    }, [workingHours, format, theme]);
 
     const onContentReady = useCallback((e: any) => {
         if (initialDate.current && !isNaN(initialDate.current.getTime())) {
@@ -233,21 +284,33 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
 
     const appointmentTemplate = useCallback((model: any) => {
         const { appointmentData } = model;
-        let emoji, textColor = 'white';
+        let backgroundColor, textColor, statusIndicator;
 
         if (appointmentData.type === 'break') {
-            emoji = '⏸️';
+            backgroundColor = theme.palette.warning.main;
+            textColor = theme.palette.warning.contrastText;
         } else {
+            backgroundColor = theme.palette.primary.main;
+            textColor = theme.palette.primary.contrastText;
+
             switch (appointmentData.status) {
-                case 'Confirmed': emoji = '✅'; break;
-                case 'Pending': emoji = '⏳'; break;
-                case 'Cancelled': emoji = '❌'; break;
-                default: emoji = '❓';
+                case 'Confirmed':
+                    statusIndicator = '✓';
+                    break;
+                case 'Pending':
+                    statusIndicator = '⏳';
+                    break;
+                case 'Cancelled':
+                    statusIndicator = '✗';
+                    break;
+                default:
+                    statusIndicator = '';
             }
         }
 
         return (
             <div style={{
+                backgroundColor,
                 color: textColor,
                 padding: '2px 5px',
                 borderRadius: '3px',
@@ -258,11 +321,11 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
                 height: '100%',
                 cursor: appointmentData.type === 'break' ? 'default' : 'pointer'
             }}>
-                <span role="img" aria-label={appointmentData.type || appointmentData.status} style={{ marginRight: '5px' }}>{emoji}</span>
+                {statusIndicator && <span style={{ marginRight: '5px' }}>{statusIndicator}</span>}
                 {appointmentData.text}
             </div>
         );
-    }, []);
+    }, [theme]);
 
     const appointmentTooltipTemplate = useCallback((model: any) => {
         const { appointmentData } = model;
@@ -343,7 +406,7 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
                     resources.set(resourceId, {
                         id: resourceId,
                         text: appt.providerName || appt.rlName,
-                        color: appt.abStatus === 'Confirmed' ? '#1e90ff' : '#ff9747',
+                        color: theme.palette.primary.main, // Use primary color for all appointments
                     });
                 }
             });
@@ -353,12 +416,12 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
                 resources.set(breakItem.hplId, {
                     id: breakItem.hplId,
                     text: breakItem.hplName || `Break Resource ${breakItem.hplId}`,
-                    color: '#ff0000',
+                    color: theme.palette.warning.main, // Use warning color for breaks
                 });
             }
         });
         return Array.from(resources.values());
-    }, [state.appointments, breaks]);
+    }, [state.appointments, breaks, theme]);
 
     const MemoizedResource = useMemo(() => (
         <Resource
@@ -370,8 +433,8 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
     ), [resourceDataSource]);
 
     return (
-        <>
-            <Loader type="skeleton" skeletonType="calendar" height="600px" width="100%" />
+        <Box sx={{ height: '100%', width: '100%', ...schedulerStyles }}>
+            {/* <Loader type="skeleton" skeletonType="calendar" height="600px" width="100%" /> */}
             <Scheduler
                 dataSource={dataSource}
                 views={views}
@@ -412,7 +475,7 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
             >
                 {MemoizedResource}
             </Scheduler>
-        </>
+        </Box>
     );
 });
 

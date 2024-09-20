@@ -266,7 +266,7 @@ const AppointmentPage: React.FC = () => {
                         <CustomButton key="save" text={isUpdating ? "Update" : "Save"} onClick={handleSaveBooking} color="primary" variant="contained" sx={{ ml: 2 }} icon={SaveIcon} />,
                     ]}
                 >
-                    <AppointmentBookingForm onChange={handleChange} formData={formData} reasonOptions={reasonOptions} resourceOptions={resourceOptions} rLotYN={rLotYN} />
+                    <AppointmentBookingForm onChange={handleChange} formData={formData} reasonOptions={reasonOptions} resourceOptions={resourceOptions} rLotYN={rLotYN} hpID={selectedConID} rlID={selectedRlID} />
                 </GenericDialog>
             </Box>
         </Container>
