@@ -12,12 +12,14 @@ import { ProductListService } from "../../../../services/InventoryManagementServ
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 
-const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData }) => {
+const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
+    editData,
+}) => {
     const [formState, setFormState] = useState<ProductListDto>({
         productID: 0,
         catValue: "",
+        expiry: "Y",
         prescription: "",
-        expiry: "",
         sellable: "",
         taxable: "",
         pLocationID: 0,
@@ -33,9 +35,17 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData 
         isAssetYN: "",
     });
 
-
-    const { handleDropdownChange } = useDropdownChange<ProductListDto>(setFormState);
-    const { productCategoryValues } = useDropdownValues();
+    const { handleDropdownChange } =
+        useDropdownChange<ProductListDto>(setFormState);
+    const {
+        productCategoryValues,
+        productGroupValues,
+        productSubGroupValues,
+        productUnitValues,
+        medicationFormValues,
+        medicationGenericValues,
+        taxTypeValue
+    } = useDropdownValues();
 
     const [isSubmitted, setIsSubmitted] = useState(false);
     const { setLoading } = useLoading();
@@ -73,11 +83,19 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData 
                     onConfirm: handleClear,
                 });
             } else {
-                showAlert("Error", result.errorMessage || "Failed to save Product.", "error");
+                showAlert(
+                    "Error",
+                    result.errorMessage || "Failed to save Product.",
+                    "error"
+                );
             }
         } catch (error) {
             console.error("Error saving Product:", error);
-            showAlert("Error", "An unexpected error occurred while saving. Please check the console for more details.", "error");
+            showAlert(
+                "Error",
+                "An unexpected error occurred while saving. Please check the console for more details.",
+                "error"
+            );
         } finally {
             setLoading(false);
         }
@@ -88,7 +106,7 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData 
             productID: 0,
             catValue: "",
             prescription: "",
-            expiry: "",
+            expiry: "Y",
             sellable: "",
             taxable: "",
             pLocationID: 0,
@@ -106,11 +124,28 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData 
         setIsSubmitted(false);
     }, [compID]);
 
-    const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        setFormState((prev) => ({
-            ...prev,
-            rActiveYN: event.target.checked ? "Y" : "N",
-        }));
+    const handleSwitchToggle = useCallback(
+        (name: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+            setFormState((prev) => ({
+                ...prev,
+                [name]: event.target.checked ? "Y" : "N",
+            }));
+        },
+        []
+    );
+
+    const handleGSTChange = useCallback((selectedTaxID: number, taxTypeValue: any[]) => {
+        const selectedTax = taxTypeValue.find(tax => tax.taxID === selectedTaxID);
+        if (selectedTax) {
+            const gstValue = parseFloat(selectedTax.taxName);
+            const halfGST = gstValue / 2;
+            setFormState(prev => ({
+                ...prev,
+                taxID: selectedTaxID,
+                cgstPerValue: halfGST,
+                sgstPerValue: halfGST
+            }));
+        }
     }, []);
 
     return (
@@ -119,7 +154,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData 
                 Product Details
             </Typography>
             <Grid container spacing={2}>
-
                 <FormField
                     type="select"
                     label="Category Value"
@@ -163,65 +197,282 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData 
                 />
 
                 <FormField
-                    type="text"
-                    label="Prescription"
-                    value={formState.prescription}
-                    onChange={handleInputChange}
+                    type="select"
+                    label="Product Group"
+                    value={formState.pGrpID}
+                    onChange={handleDropdownChange(
+                        ["pGrpID"],
+                        ["productGroupName"],
+                        productGroupValues
+                    )}
+                    options={productGroupValues}
                     isSubmitted={isSubmitted}
-                    name="prescription"
-                    ControlID="prescription"
-                    placeholder="Prescription"
-                    maxLength={1}
+                    name="pGrpID"
+                    ControlID="pGrpID"
+                    placeholder="Product Group"
+                    maxLength={50}
                     isMandatory
                 />
                 <FormField
-                    type="text"
-                    label="Expiry"
-                    value={formState.expiry}
-                    onChange={handleInputChange}
+                    type="select"
+                    label="Product Sub Group"
+                    value={formState.psGrpID}
+                    onChange={handleDropdownChange(
+                        ["psGrpID"],
+                        ["psGroupName"],
+                        productSubGroupValues
+                    )}
+                    options={productSubGroupValues}
                     isSubmitted={isSubmitted}
-                    name="expiry"
-                    ControlID="expiry"
-                    placeholder="Expiry"
-                    maxLength={1}
+                    name="psGrpID"
+                    ControlID="psGrpID"
+                    placeholder="Product Sub Group"
+                    maxLength={50}
                     isMandatory
                 />
+                <>
+                    <FormField
+                        type="number"
+                        label="Base Unit"
+                        value={formState.baseUnit}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        name="baseUnit"
+                        ControlID="baseUnit"
+                        placeholder="BaseUnit"
+                        maxLength={1}
+                        isMandatory
+                        gridProps={{ xs: 12, md: 1 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="Product Unit"
+                        value={formState.pUnitID}
+                        onChange={handleDropdownChange(
+                            ["pUnitID"],
+                            ["pUnitName"],
+                            productUnitValues
+                        )}
+                        options={productUnitValues}
+                        isSubmitted={isSubmitted}
+                        name="pUnitID"
+                        ControlID="pUnitID"
+                        placeholder="Product Unit"
+                        maxLength={50}
+                        isMandatory
+                        gridProps={{ xs: 12, md: 2 }}
+                    />
+                </>
+
+                <>
+                    <FormField
+                        type="number"
+                        label="Issue Unit"
+                        value={formState.issueUnit}
+                        onChange={handleInputChange}
+                        isSubmitted={isSubmitted}
+                        name="issueUnit"
+                        ControlID="issueUnit"
+                        placeholder="Issue Unit"
+                        maxLength={1}
+                        isMandatory
+                        gridProps={{ xs: 12, md: 1 }}
+                    />
+                    <FormField
+                        type="select"
+                        label="Issue Unit"
+                        value={formState.pPackageID}
+                        onChange={handleDropdownChange(
+                            ["pPackageID"],
+                            ["pUnitName"],
+                            productUnitValues
+                        )}
+                        options={productUnitValues}
+                        isSubmitted={isSubmitted}
+                        name="pPackageID"
+                        ControlID="pPackageID"
+                        placeholder="Issue Unit"
+                        maxLength={50}
+                        isMandatory
+                        gridProps={{ xs: 12, md: 2 }}
+                    />
+                </>
                 <FormField
-                    type="text"
-                    label="Sellable"
-                    value={formState.sellable}
-                    onChange={handleInputChange}
+                    type="select"
+                    label="Form Name "
+                    value={formState.mFID}
+                    onChange={handleDropdownChange(
+                        ["mFID"],
+                        ["MFName"],
+                        medicationFormValues
+                    )}
+                    options={medicationFormValues}
                     isSubmitted={isSubmitted}
-                    name="sellable"
-                    ControlID="sellable"
-                    placeholder="Sellable"
-                    maxLength={1}
-                    isMandatory
-                />
-                <FormField
-                    type="text"
-                    label="Taxable"
-                    value={formState.taxable}
-                    onChange={handleInputChange}
-                    isSubmitted={isSubmitted}
-                    name="taxable"
-                    ControlID="taxable"
-                    placeholder="Taxable"
-                    maxLength={1}
-                    isMandatory
-                />
-                <FormField
-                    type="number"
-                    label="Location ID"
-                    value={formState.pLocationID.toString()}
-                    onChange={handleInputChange}
-                    isSubmitted={isSubmitted}
-                    name="pLocationID"
-                    ControlID="pLocationID"
-                    placeholder="Location ID"
+                    name="mFID"
+                    ControlID="mFID"
+                    placeholder="Form Name"
+                    maxLength={50}
                     isMandatory
                 />
 
+                <FormField
+                    type="select"
+                    label="Generic Name"
+                    value={formState.mGenID}
+                    onChange={handleDropdownChange(
+                        ["mGenID"],
+                        ["manufacturerGenericName"],
+                        medicationGenericValues
+                    )}
+                    options={medicationGenericValues}
+                    isSubmitted={isSubmitted}
+                    name="mGenID"
+                    ControlID="mGenID"
+                    placeholder="Generic Name"
+                    maxLength={50}
+                    isMandatory
+                />
+
+                <FormField
+                    type="number"
+                    label="Bar Code"
+                    value={formState.barcode}
+                    onChange={handleInputChange}
+                    isSubmitted={isSubmitted}
+                    name="barcode"
+                    ControlID="barcode"
+                    placeholder="Bar Code"
+                    maxLength={1}
+                    isMandatory
+                />
+
+                <FormField
+                    type="number"
+                    label="Universal Code(PC)"
+                    value={formState.universalCode}
+                    onChange={handleInputChange}
+                    isSubmitted={isSubmitted}
+                    name="universalCode"
+                    ControlID="UniversalCode(PC)"
+                    placeholder="Universal Code(PC)"
+                    maxLength={1}
+                    isMandatory
+                />
+
+                <FormField
+                    type="radio"
+                    label="ABC Code"
+                    name="abcCode"
+                    value={formState.abcCode}
+                    onChange={(e) =>
+                        handleInputChange({
+                            target: { name: "abcCode", value: e.target.value },
+                        } as React.ChangeEvent<HTMLInputElement>)
+                    }
+                    options={[
+                        { value: "Y", label: "A" },
+                        { value: "N", label: "B" },
+                        { value: "N", label: "C" },
+                    ]}
+                    ControlID="abcCode"
+                    gridProps={{ xs: 12, md: 1.5 }}
+                    inline={true}
+                />
+                <FormField
+                    type="radio"
+                    label="VED Code"
+                    name="vedCode"
+                    value={formState.vedCode}
+                    onChange={(e) =>
+                        handleInputChange({
+                            target: { name: "vedCode", value: e.target.value },
+                        } as React.ChangeEvent<HTMLInputElement>)
+                    }
+                    options={[
+                        { value: "Y", label: "V" },
+                        { value: "N", label: "E" },
+                        { value: "N", label: "D" },
+                    ]}
+                    ControlID="vedCode"
+                    gridProps={{ xs: 12, md: 1.5 }}
+                    inline={true}
+                />
+                <FormField
+                    type="select"
+                    label="Manufacturer Name"
+                    value={formState.manufacturerID}
+                    onChange={handleDropdownChange(
+                        ["manufacturerID"],
+                        ["manufacturerName"],
+                        medicationGenericValues
+                    )}
+                    options={productUnitValues}
+                    isSubmitted={isSubmitted}
+                    name="manufacturerID"
+                    ControlID="manufacturerID"
+                    placeholder="Manufacturer Name"
+                    maxLength={50}
+                    isMandatory
+                />
+
+                <FormField
+                    type="select"
+                    label="GST"
+                    value={formState.taxID}
+                    onChange={(e) => {
+                        const value = parseInt(e.target.value, 10);
+                        handleDropdownChange(["taxID"], ["taxName"], taxTypeValue)(e);
+                        handleGSTChange(value, taxTypeValue);
+                    }}
+                    options={taxTypeValue}
+                    isSubmitted={isSubmitted}
+                    name="taxID"
+                    ControlID="taxID"
+                    placeholder="GST"
+                    maxLength={50}
+                    isMandatory
+                />
+
+                <FormField
+                    type="number"
+                    label="CGST"
+                    value={formState.cgstPerValue}
+                    onChange={handleInputChange}
+                    isSubmitted={isSubmitted}
+                    name="cgstPerValue"
+                    ControlID="cgstPerValue"
+                    placeholder="CGST"
+                    maxLength={1}
+                    isMandatory
+                    disabled={true}
+                />
+
+                <FormField
+                    type="number"
+                    label="SGST"
+                    value={formState.sgstPerValue}
+                    onChange={handleInputChange}
+                    isSubmitted={isSubmitted}
+                    name="sgstPerValue"
+                    ControlID="sgstPerValue"
+                    placeholder="SGST"
+                    maxLength={1}
+                    isMandatory
+                    disabled={true}
+                />
+
+                <FormField
+                    type="text"
+                    label="HSN Code"
+                    value={formState.hsnCODE}
+                    onChange={handleInputChange}
+                    isSubmitted={isSubmitted}
+                    name="hsnCODE"
+                    ControlID="hsnCODE"
+                    placeholder="HSN Code"
+                    maxLength={1}
+                    isMandatory
+                />
             </Grid>
             <Grid container spacing={2}>
                 <FormField
@@ -241,9 +492,52 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData 
                     label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
                     value={formState.rActiveYN}
                     checked={formState.rActiveYN === "Y"}
-                    onChange={handleActiveToggle}
+                    onChange={handleSwitchToggle("rActiveYN")}
                     name="rActiveYN"
                     ControlID="rActiveYN"
+                    size="medium"
+                />
+                <FormField
+                    type="switch"
+                    label={
+                        formState.expiry === "Y" ? "Activate Expiry" : "Deactivate Expiry"
+                    }
+                    value={formState.expiry}
+                    checked={formState.expiry === "Y"}
+                    onChange={handleSwitchToggle("expiry")}
+                    name="Expiry"
+                    ControlID="expiry"
+                    size="medium"
+                    color="secondary"
+                />
+                <FormField
+                    type="switch"
+                    label={
+                        formState.taxable === "Y"
+                            ? "Activate Taxable"
+                            : "Deactivate Taxable"
+                    }
+                    value={formState.taxable}
+                    checked={formState.taxable === "Y"}
+                    onChange={handleSwitchToggle("taxable")}
+                    name="Taxable"
+                    ControlID="taxable"
+                    color="info"
+                    size="medium"
+                />
+                <FormField
+                    type="switch"
+                    label={
+                        formState.prescription === "Y"
+                            ? "Activate Prescription"
+                            : "Deactivate Prescription"
+                    }
+                    value={formState.prescription}
+                    checked={formState.prescription === "Y"}
+                    onChange={handleSwitchToggle("prescription")}
+                    name="Prescription"
+                    ControlID="prescription"
+                    color="info"
                     size="medium"
                 />
             </Grid>
