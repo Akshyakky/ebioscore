@@ -4,6 +4,7 @@ import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/Ac
 import ProductListDetails from "../SubPage/ProductListDetails"
 import { useState } from "react";
 import { ProductListDto } from "../../../../interfaces/InventoryManagement/ProductListDto";
+import ProductListSearch from "../SubPage/ProductListSearch";
 
 const ProductListPage: React.FC = () => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -11,6 +12,13 @@ const ProductListPage: React.FC = () => {
 
     const handleAdvancedSearch = () => {
         setIsSearchOpen(true);
+    };
+    const handleCloseSearch = () => {
+        setIsSearchOpen(false);
+    };
+
+    const handleSelect = (data: ProductListDto) => {
+        setSelectedData(data);
     };
 
 
@@ -28,8 +36,8 @@ const ProductListPage: React.FC = () => {
             <Box sx={{ marginBottom: 2 }}>
                 <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
             </Box>
-            <ProductListDetails />
-
+            <ProductListDetails editData={selectedData} />
+            <ProductListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
 
         </Container>
     )

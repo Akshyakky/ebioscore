@@ -391,12 +391,12 @@ const useDropdownValues = () => {
         setMedicationGenericValues(
           (medicationGenericTypeResponse.data || []).map((item: any) => ({
             value: item.mGenID || 0,
-            label: item.MGenName || "",
+            label: item.mGenName || "",
           }))
         );
         setTaxTypeValue(
           (taxTypeResponse.data || []).map((item: any) => ({
-            value: item.pTaxAmt || 0,
+            value: item.pTaxID || 0,
             label: item.pTaxAmt || "",
           }))
         );

@@ -11,20 +11,22 @@ import { ProductListDto } from "../../../../interfaces/InventoryManagement/Produ
 import { ProductListService } from "../../../../services/InventoryManagementService/ProductListService/ProductListService";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
+import { ProductTaxListDto } from "../../../../interfaces/InventoryManagement/ProductTaxListDto";
 
 const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
     editData,
 }) => {
+
     const [formState, setFormState] = useState<ProductListDto>({
+        expiry: "Y",
+        prescription: "Y",
+        sellable: "Y",
+        taxable: "Y",
         productID: 0,
         catValue: "",
-        expiry: "Y",
-        prescription: "",
-        sellable: "",
-        taxable: "",
         pLocationID: 0,
-        chargableYN: "",
-        supplierStatus: "",
+        chargableYN: "N",
+        supplierStatus: "N",
         vedCode: "",
         abcCode: "",
         rActiveYN: "Y",
@@ -32,7 +34,7 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
         compCode: "",
         compName: "",
         transferYN: "Y",
-        isAssetYN: "",
+        isAssetYN: "N",
     });
 
     const { handleDropdownChange } =
@@ -49,7 +51,8 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
 
     const [isSubmitted, setIsSubmitted] = useState(false);
     const { setLoading } = useLoading();
-    const { compID } = store.getState().userDetails;
+    const { compID, compCode, compName, userID, userName } =
+        store.getState().userDetails;
 
     useEffect(() => {
         if (editData) {
@@ -62,7 +65,10 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
     const handleInputChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
             const { name, value } = e.target;
-            setFormState((prev) => ({ ...prev, [name]: value }));
+            setFormState((prev) => ({
+                ...prev,
+                [name]: value,
+            }));
         },
         []
     );
@@ -103,26 +109,27 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
 
     const handleClear = useCallback(() => {
         setFormState({
+            expiry: "Y",
+            prescription: "Y",
+            sellable: "Y",
+            taxable: "Y",
             productID: 0,
             catValue: "",
-            prescription: "",
-            expiry: "Y",
-            sellable: "",
-            taxable: "",
-            pLocationID: 0,
-            chargableYN: "",
-            supplierStatus: "",
-            vedCode: "",
-            abcCode: "",
+            pLocationID: 1,
+            chargableYN: "N",
+            supplierStatus: "N",
+            vedCode: "Y",
+            abcCode: "Y",
             rActiveYN: "Y",
-            compID: 0,
-            compCode: "",
-            compName: "",
+            compID: compID || 0,
+            compCode: compCode || "",
+            compName: compName || "",
             transferYN: "Y",
-            isAssetYN: "",
+            isAssetYN: "N",
+
         });
         setIsSubmitted(false);
-    }, [compID]);
+    }, [compID, compCode, compName]);
 
     const handleSwitchToggle = useCallback(
         (name: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,20 +141,28 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
         []
     );
 
-    const handleGSTChange = useCallback((selectedTaxID: number, taxTypeValue: any[]) => {
-        const selectedTax = taxTypeValue.find(tax => tax.taxID === selectedTaxID);
+    const handleGSTChange = (value: number, taxTypeOptions: ProductTaxListDto[]) => {
+        console.log("handleGSTChange called with value:", value);
+        const selectedTax = taxTypeOptions.find(option => option.value === value);
         if (selectedTax) {
-            const gstValue = parseFloat(selectedTax.taxName);
-            const halfGST = gstValue / 2;
-            setFormState(prev => ({
-                ...prev,
-                taxID: selectedTaxID,
-                cgstPerValue: halfGST,
-                sgstPerValue: halfGST
-            }));
-        }
-    }, []);
+            const gstValue = parseFloat(selectedTax.label);
+            const halfGstValue = gstValue / 2;
 
+            console.log("Selected GST value:", gstValue);
+            console.log("Half GST value:", halfGstValue);
+
+            setFormState(prevState => {
+                const newState = {
+                    ...prevState,
+                    taxID: value,
+                    cgstPerValue: halfGstValue,
+                    sgstPerValue: halfGstValue
+                };
+                console.log("New form state:", newState);
+                return newState;
+            });
+        }
+    };
     return (
         <Paper variant="elevation" sx={{ padding: 2 }}>
             <Typography variant="h6" id="product-list-header">
@@ -159,8 +174,8 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     label="Category Value"
                     value={formState.catValue}
                     onChange={handleDropdownChange(
-                        [""],
                         ["catValue"],
+                        ["catDescription"],
                         productCategoryValues
                     )}
                     options={productCategoryValues}
@@ -177,7 +192,7 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     label="Product Code"
                     value={formState.productCode || ""}
                     onChange={handleInputChange}
-                    isSubmitted={isSubmitted}
+                    // isSubmitted={isSubmitted}
                     name="productCode"
                     ControlID="productCode"
                     placeholder="Product Code"
@@ -309,7 +324,7 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
 
                 <FormField
                     type="select"
-                    label="Generic Name"
+                    label="Generic Name "
                     value={formState.mGenID}
                     onChange={handleDropdownChange(
                         ["mGenID"],
@@ -406,13 +421,11 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                 <FormField
                     type="select"
                     label="GST"
-                    value={formState.taxID}
+                    value={formState.taxID || ''}
                     onChange={(e) => {
                         const value = parseInt(e.target.value, 10);
-                        handleDropdownChange(["taxID"], ["taxName"], taxTypeValue)(e);
                         handleGSTChange(value, taxTypeValue);
                     }}
-
                     options={taxTypeValue}
                     name="taxID"
                     ControlID="taxID"
@@ -424,7 +437,7 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                 <FormField
                     type="number"
                     label="CGST"
-                    value={formState.cgstPerValue}
+                    value={formState.cgstPerValue !== undefined ? formState.cgstPerValue.toString() : ''}
                     onChange={handleInputChange}
                     name="cgstPerValue"
                     ControlID="cgstPerValue"
@@ -437,7 +450,7 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                 <FormField
                     type="number"
                     label="SGST"
-                    value={formState.sgstPerValue}
+                    value={formState.sgstPerValue !== undefined ? formState.sgstPerValue.toString() : ''}
                     onChange={handleInputChange}
                     name="sgstPerValue"
                     ControlID="sgstPerValue"
