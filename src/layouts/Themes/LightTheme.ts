@@ -2,8 +2,9 @@
 import { createTheme } from "@mui/material/styles";
 
 const drawerWidth = 340;
-const theme = createTheme({
+const LightTheme = createTheme({
   palette: {
+    mode: "light",
     primary: {
       main: "#2979ff",
     },
@@ -197,4 +198,4 @@ const theme = createTheme({
   },
 });
 
-export default theme;
+export default LightTheme;

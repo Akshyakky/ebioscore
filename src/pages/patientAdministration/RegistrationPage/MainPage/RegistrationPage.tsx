@@ -296,7 +296,6 @@ const RegistrationPage: React.FC = () => {
     try {
       const patientDetails = await PatientService.getPatientDetails(pChartID);
       if (patientDetails.success && patientDetails.data) {
-        debugger
         const formattedData = {
           ...patientDetails.data,
           patRegisters: {

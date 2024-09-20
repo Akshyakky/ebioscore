@@ -12,8 +12,9 @@ import { store, persistor } from "./store/store";
 import { LoadingProvider } from "./context/LoadingContext";
 import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { ThemeProvider } from "@mui/material/styles";
-import theme from "./layouts/Themes/Theme";
+// import { ThemeProvider } from "@mui/material/styles";
+import theme from "./layouts/Themes/LightTheme";
+import { ThemeProvider } from "./context/Common/ThemeContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import routeConfig from "./routes/routeConfig";
@@ -61,7 +62,8 @@ const App: React.FC = () => {
   const memoizedRoutes = useMemo(() => renderRoutes(routeConfig), [renderRoutes]);
 
   return (
-    <ThemeProvider theme={theme}>
+    //
+    <ThemeProvider > {/* theme={theme} Replace MUI's ThemeProvider with our custom ThemeProvider */}
       <ReduxProvider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <LoadingProvider>
