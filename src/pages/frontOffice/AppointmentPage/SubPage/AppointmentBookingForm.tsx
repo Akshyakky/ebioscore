@@ -13,13 +13,27 @@ import PatientDemographics from '../../../patientAdministration/CommonPage/Demog
 import { useLoading } from '../../../../context/LoadingContext';
 import { PatientService } from '../../../../services/PatientAdministrationServices/RegistrationService/PatientService';
 import { PatientRegistrationDto } from '../../../../interfaces/PatientAdministration/PatientFormData';
+import CustomGrid, { Column } from '../../../../components/CustomGrid/CustomGrid';
+import CustomButton from '../../../../components/Button/CustomButton';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import useDropdownValues from '../../../../hooks/PatientAdminstration/useDropdownValues';
+import { AppointmentService } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
 
 interface AppointmentBookingFormProps {
     onChange: (name: keyof AppointBookingDto, value: any) => void;
     formData: AppointBookingDto;
     reasonOptions: DropdownOption[];
     resourceOptions: DropdownOption[];
+    hpID?: number;
+    rlID?: number;
     rLotYN?: string;
+}
+
+interface ConsultantRole {
+    siNo: number;
+    consultantName: string;
+    role: string;
 }
 
 const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
@@ -27,7 +41,9 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
     formData,
     reasonOptions,
     resourceOptions,
-    rLotYN
+    rLotYN,
+    hpID,
+    rlID
 }) => {
     const { date: serverDate, formatDate, formatDateTime, formatTime, add } = useDayjs(useServerDate());
     const registrationOptions = [
@@ -38,6 +54,11 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
     const [titleOptions, setTitleOptions] = useState<DropdownOption[]>([]);
     const { fetchPatientSuggestions } = usePatientAutocomplete();
     const { setLoading } = useLoading();
+    const [consultants, setConsultants] = useState<ConsultantRole[]>([]);
+    const [selectedConsultant, setSelectedConsultant] = useState('');
+    const [selectedRole, setSelectedRole] = useState<DropdownOption | null>(null);
+    const { consultantRoleValues } = useDropdownValues();
+    const [consultantSuggestions, setConsultantSuggestions] = useState<{ label: string; value: number }[]>([]);
 
     useEffect(() => {
         const loadDropdownValues = async () => {
@@ -85,6 +106,47 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
         }
     };
 
+    const handleAddConsultant = useCallback(() => {
+        if (selectedConsultant && selectedRole) {
+            setConsultants(prev => [
+                ...prev,
+                {
+                    siNo: prev.length + 1,
+                    consultantName: selectedConsultant,
+                    role: selectedRole.label,
+                    roleId: selectedRole.value
+                }
+            ]);
+            setSelectedConsultant('');
+            setSelectedRole(null);
+        }
+    }, [selectedConsultant, selectedRole]);
+
+    const handleRemoveConsultant = useCallback((siNo: number) => {
+        setConsultants(prev => prev.filter(c => c.siNo !== siNo));
+    }, []);
+
+    const columns: Column<ConsultantRole>[] = [
+        { key: 'siNo', header: 'SI No.', visible: true, sortable: true },
+        { key: 'consultantName', header: 'Consultant Name', visible: true, sortable: true },
+        { key: 'role', header: 'Role', visible: true, sortable: true },
+        {
+            key: 'delete',
+            header: 'Delete',
+            visible: true,
+            render: (item) => (
+                <CustomButton
+                    variant="outlined"
+                    size="small"
+                    icon={DeleteIcon}
+                    onClick={() => handleRemoveConsultant(item.siNo)}
+                    color="error"
+                    ariaLabel={`Delete consultant ${item.consultantName}`}
+                />
+            )
+        }
+    ];
+
     const isNonRegistered = formData.patRegisterYN === 'N';
 
     const handlePatientSelect = useCallback(async (pChartID: number | null) => {
@@ -116,6 +178,28 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
             setLoading(false);
         }
     }, [onChange, setLoading]);
+
+    const handleFetchConsultantSuggestions = useCallback(async (input: string) => {
+        try {
+            const result = await AppointmentService.fetchAppointmentConsultants();
+            if (result && result.success) {
+                let items = result.data || [];
+                items = items.filter(item => item.rActiveYN === 'Y');
+                const suggestions = items.map(item => ({
+                    label: item.conFName,
+                    value: item.conID
+                }));
+                setConsultantSuggestions(suggestions);
+                return suggestions.map(s => s.label).filter(label =>
+                    label.toLowerCase().includes(input.toLowerCase())
+                );
+            }
+            return [];
+        } catch (error) {
+            console.error("Failed to fetch consultant suggestions", error);
+            return [];
+        }
+    }, []);
 
     return (
         <Box sx={{ backgroundColor: '#fff', borderRadius: '8px', width: '100%' }}>
@@ -268,7 +352,7 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                 />
             )}
 
-            {rLotYN !== 'Y' && (
+            {rLotYN !== 'Y' && hpID !== undefined && hpID > 0 && (
                 <FormField
                     type="select"
                     label="Resource"
@@ -363,7 +447,56 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                 gridProps={{ xs: 12 }}
                 maxLength={250}
             />
+            {rLotYN === 'Y' && (
+                <>
+                    <Grid container spacing={2}>
+                        <FormField
+                            type="autocomplete"
+                            label="Search Consultant"
+                            ControlID="searchConsultant"
+                            value={selectedConsultant}
+                            name="searchConsultant"
+                            onChange={(e) => setSelectedConsultant(e.target.value)}
+                            fetchSuggestions={handleFetchConsultantSuggestions}
+                            onSelectSuggestion={(suggestion) => setSelectedConsultant(suggestion)}
+                            gridProps={{ xs: 6 }}
+                        />
 
+                        <FormField
+                            type="select"
+                            label="Role"
+                            name="consultantRole"
+                            ControlID="consultantRole"
+                            value={selectedRole?.value || ''}
+                            options={consultantRoleValues}
+                            onChange={(e) => {
+                                const selected = consultantRoleValues.find(role => role.value === e.target.value);
+                                setSelectedRole(selected || null);
+                            }}
+                            gridProps={{ xs: 6 }}
+                        />
+                    </Grid>
+
+                    <Box sx={{ mt: 2, mb: 2 }}>
+                        <CustomButton
+                            variant="contained"
+                            size="medium"
+                            icon={AddIcon}
+                            text="Add Consultant"
+                            onClick={handleAddConsultant}
+                            disabled={!selectedConsultant || !selectedRole}
+                            color="primary"
+                            ariaLabel="Add consultant to the list"
+                        />
+                    </Box>
+
+                    <CustomGrid
+                        columns={columns}
+                        data={consultants}
+                        maxHeight="300px"
+                    />
+                </>
+            )}
         </Box>
     );
 };

@@ -14,6 +14,7 @@ import { DeptUnitListService } from "../../services/HospitalAdministrationServic
 import { ServiceTypeService } from "../../services/BillingServices/ServiceTypeServices";
 import { WardCategoryService } from "../../services/HospitalAdministrationServices/ContactListService/WardCategoryService/WardCategoryService";
 import {
+  consultantRoleService,
   medicationFormService,
   medicationGenericService,
   productGroupService,
@@ -83,6 +84,7 @@ const useDropdownValues = () => {
     []
   );
   const [taxTypeValue, setTaxTypeValue] = useState<any[]>([]);
+  const [consultantRoleValues, setConsultantRoleValues] = useState<any[]>([]);
 
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
@@ -127,6 +129,7 @@ const useDropdownValues = () => {
           medicationFormTypeResponse,
           medicationGenericTypeResponse,
           taxTypeResponse,
+          consultantRoleResponse,
         ] = await Promise.all([
           BillingService.fetchPicValues("GetPICDropDownValues"),
           ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
@@ -202,6 +205,7 @@ const useDropdownValues = () => {
           medicationFormService.getAll(),
           medicationGenericService.getAll(),
           productTaxService.getAll(),
+          consultantRoleService.getAll(),
         ]);
 
         setPicValues(
@@ -400,6 +404,12 @@ const useDropdownValues = () => {
             label: item.pTaxAmt || "",
           }))
         );
+        setConsultantRoleValues(
+          (consultantRoleResponse.data || []).map((item: any) => ({
+            value: item.crID || 0,
+            label: item.crName || "",
+          }))
+        );
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
       } finally {
@@ -445,6 +455,7 @@ const useDropdownValues = () => {
     medicationFormValues,
     medicationGenericValues,
     taxTypeValue,
+    consultantRoleValues,
   };
 };
 
