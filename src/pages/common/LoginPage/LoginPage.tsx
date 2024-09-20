@@ -10,8 +10,8 @@ import {
   Link,
   Typography,
   Grid,
-  useTheme,
   useMediaQuery,
+  alpha,
 } from "@mui/material";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useNavigate } from "react-router-dom";
@@ -21,9 +21,10 @@ import DropdownSelect from "../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import { notifySuccess } from "../../../utils/Common/toastManager";
 import { Company } from "../../../types/Common/Company.type";
-import { CompanyService, } from "../../../services/CommonServices/CompanyService";
+import { CompanyService } from "../../../services/CommonServices/CompanyService";
 import { ClientParameterService } from "../../../services/CommonServices/ClientParameterService";
 import AuthService from "../../../services/AuthService/AuthService";
+import { useTheme } from "../../../context/Common/ThemeContext";
 
 // Import images
 import logo from "../../../assets/images/eBios.png";
@@ -102,7 +103,7 @@ const LoginPage: React.FC = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const navigate = useNavigate();
   const reduxDispatch = useDispatch();
-  const theme = useTheme();
+  const { theme, isDarkMode } = useTheme();
 
   // Responsive breakpoints
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -241,6 +242,7 @@ const LoginPage: React.FC = () => {
     minHeight: '100vh',
     display: 'flex',
     padding: isSmallScreen ? '10px' : isMediumScreen ? '20px' : '0',
+    backgroundColor: theme.palette.background.default,
   };
 
   const backgroundStyle = {
@@ -257,9 +259,13 @@ const LoginPage: React.FC = () => {
       left: 0,
       width: '100%',
       height: '100%',
-      backgroundColor: isSmallScreen ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 255, 255, 0.20)',
+      backgroundColor: isSmallScreen
+        ? alpha(theme.palette.background.paper, 0.5)
+        : alpha(theme.palette.background.paper, 0.2),
       clipPath: isSmallScreen ? 'none' : 'inherit',
-      background: isSmallScreen ? 'none' : "linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 100%)"
+      background: isSmallScreen
+        ? 'none'
+        : `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.8)} 0%, ${alpha(theme.palette.background.paper, 0)} 100%)`,
     },
     '&::after': {
       content: '""',
@@ -268,7 +274,7 @@ const LoginPage: React.FC = () => {
       right: 0,
       width: '20%',
       height: '40%',
-      backgroundColor: 'rgba(255, 255, 255, 0.20)',
+      backgroundColor: alpha(theme.palette.background.paper, 0.2),
       borderRadius: '50%',
       display: isSmallScreen ? 'none' : 'block',
     },
@@ -284,9 +290,9 @@ const LoginPage: React.FC = () => {
   const cardStyle = {
     width: '100%',
     maxWidth: isSmallScreen ? 'none' : '400px',
-    boxShadow: 6,
+    boxShadow: theme.shadows[6],
     borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: alpha(theme.palette.background.paper, 0.9),
     padding: isSmallScreen ? '1rem' : '2rem',
   };
 
@@ -299,7 +305,7 @@ const LoginPage: React.FC = () => {
             <CardContent>
               <Box textAlign="center" mb={3} mt={1}>
                 <img src={logo} alt="Company Logo" style={{ maxWidth: "120px" }} />
-                <Typography variant={isSmallScreen ? "h6" : "h5"} component="h1" sx={{ mt: 2, mb: 2, fontWeight: 'bold', color: '#1976d2' }}>
+                <Typography variant={isSmallScreen ? "h6" : "h5"} component="h1" sx={{ mt: 2, mb: 2, fontWeight: 'bold', color: theme.palette.primary.main }}>
                   Welcome to e-Bios
                 </Typography>
               </Box>
@@ -362,7 +368,7 @@ const LoginPage: React.FC = () => {
                 />
 
                 <Box textAlign="right" sx={{ mb: 2 }}>
-                  <Link href="/ForgotPasswordPage" variant="body2">
+                  <Link href="/ForgotPasswordPage" variant="body2" color="primary">
                     Forgot password?
                   </Link>
                 </Box>
