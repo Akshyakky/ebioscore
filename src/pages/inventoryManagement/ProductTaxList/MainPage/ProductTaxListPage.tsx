@@ -29,7 +29,7 @@ const ProductTaxListPage: React.FC = () => {
             icon: Search,
             text: "Advanced Search",
             onClick: handleAdvancedSearch,
-        }
+        },
     ];
 
     return (

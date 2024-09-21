@@ -11,4 +11,5 @@ export const APIConfig = {
   hospitalAdministrations: import.meta.env.VITE_HOSPITAL_ADMINISTRATION_URL,
   frontOffice: import.meta.env.VITE_FRONT_OFFICE_URL,
   inventoryManagementURL: import.meta.env.VITE_INVENTORY_MANAGEMENT_URL,
+  clinicalManagementURL: import.meta.env.VITE_CLINICAL_MANAGEMENT_URL,
 };

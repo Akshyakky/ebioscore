@@ -45,7 +45,7 @@ export const updateProductListActiveStatus = async (
 ): Promise<OperationResult<boolean>> => {
   return apiService.put<OperationResult<boolean>>(
     `ProductList/UpdateProductListActiveStatus/${productID}`,
-    { rActive },
+    rActive,
     getToken()
   );
 };

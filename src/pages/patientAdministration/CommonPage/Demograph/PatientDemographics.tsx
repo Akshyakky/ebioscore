@@ -7,7 +7,7 @@ import { notifyError, notifySuccess } from "../../../../utils/Common/toastManage
 import {
   Avatar, Box, Card, CardContent, Chip, Dialog, DialogActions,
   DialogContent, DialogTitle, Grid, IconButton, SelectChangeEvent,
-  Tooltip, Typography
+  Tooltip, Typography, useTheme
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import EditIcon from "@mui/icons-material/Edit";
@@ -28,6 +28,7 @@ interface PatientDemographicsProps {
 }
 
 const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) => {
+  const theme = useTheme();
   const [patientDetails, setPatientDetails] = useState<PatientDemographicDetails>();
   const [open, setOpen] = useState(false);
   const { setLoading } = useLoading();
@@ -231,21 +232,23 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
   return (
     <>
       <Card sx={{
-        boxShadow: 1,
-        '&:hover': { boxShadow: 2 },
+        boxShadow: theme.shadows[1],
+        '&:hover': { boxShadow: theme.shadows[2] },
         borderRadius: '4px',
         marginBottom: '16px',
-        background: 'linear-gradient(145deg, #f0f0f0 0%, #ffffff 100%)'
+        background: theme.palette.mode === 'dark'
+          ? `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`
+          : 'linear-gradient(145deg, #f0f0f0 0%, #ffffff 100%)',
       }}>
         <CardContent sx={{ padding: '8px !important' }}>
           <Grid container spacing={1} alignItems="center">
             <Grid item>
-              <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>
+              <Avatar sx={{ width: 40, height: 40, bgcolor: theme.palette.primary.main }}>
                 <PersonIcon />
               </Avatar>
             </Grid>
             <Grid item xs>
-              <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold' }}>
+              <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>
                 {patientDetails?.patientName}
               </Typography>
               <Grid container spacing={1} alignItems="center">
@@ -256,7 +259,12 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
                     size="small"
                     color="primary"
                     variant="outlined"
-                    sx={{ height: '24px', '& .MuiChip-label': { fontSize: '0.75rem' } }}
+                    sx={{
+                      height: '24px',
+                      '& .MuiChip-label': { fontSize: '0.75rem' },
+                      color: theme.palette.primary.main,
+                      borderColor: theme.palette.primary.main,
+                    }}
                   />
                 </Grid>
                 <Grid item>
@@ -266,7 +274,12 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
                     size="small"
                     color="secondary"
                     variant="outlined"
-                    sx={{ height: '24px', '& .MuiChip-label': { fontSize: '0.75rem' } }}
+                    sx={{
+                      height: '24px',
+                      '& .MuiChip-label': { fontSize: '0.75rem' },
+                      color: theme.palette.secondary.main,
+                      borderColor: theme.palette.secondary.main,
+                    }}
                   />
                 </Grid>
                 {patientDetails?.pBldGrp && (
@@ -277,6 +290,12 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
                       size="small"
                       color="error"
                       variant="outlined"
+                      sx={{
+                        height: '24px',
+                        '& .MuiChip-label': { fontSize: '0.75rem' },
+                        color: theme.palette.error.main,
+                        borderColor: theme.palette.error.main,
+                      }}
                     />
                   </Grid>
                 )}
@@ -289,9 +308,13 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
                   color="primary"
                   size="medium"
                   sx={{
-                    bgcolor: 'rgba(25, 118, 210, 0.08)',
+                    bgcolor: theme.palette.mode === 'dark'
+                      ? 'rgba(144, 202, 249, 0.08)'
+                      : 'rgba(25, 118, 210, 0.08)',
                     '&:hover': {
-                      bgcolor: 'rgba(25, 118, 210, 0.16)'
+                      bgcolor: theme.palette.mode === 'dark'
+                        ? 'rgba(144, 202, 249, 0.16)'
+                        : 'rgba(25, 118, 210, 0.16)'
                     }
                   }}
                 >
@@ -311,6 +334,12 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
         }}
         fullWidth
         maxWidth="sm"
+        PaperProps={{
+          sx: {
+            bgcolor: theme.palette.background.paper,
+            color: theme.palette.text.primary,
+          }
+        }}
       >
         <DialogTitle>
           <Typography variant="h6">Edit Patient Details</Typography>

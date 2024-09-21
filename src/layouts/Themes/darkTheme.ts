@@ -6,7 +6,7 @@ const darkTheme = createTheme({
   palette: {
     mode: "dark",
     primary: {
-      main: "#2979ff", // Keep the primary color vibrant
+      main: "#90caf9", // Keep the primary color vibrant
     },
     background: {
       default: "#121212", // Very dark background for the app
