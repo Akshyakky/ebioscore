@@ -35,16 +35,24 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           sx={{
             flexGrow: 1,
             width: '100%',
-            p: 2,
+            p: 3,
             pt: 10,
             pb: 3,
+            backgroundColor: theme.palette.background.default,
             transition: theme.transitions.create('margin', {
               easing: theme.transitions.easing.sharp,
               duration: theme.transitions.duration.leavingScreen,
             }),
           }}
         >
-          {children}
+          <Box sx={{
+            backgroundColor: theme.palette.background.paper,
+            borderRadius: 2,
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.12)',
+            p: 3,
+          }}>
+            {children}
+          </Box>
         </Box>
       </Box>
       <Footer />

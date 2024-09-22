@@ -246,7 +246,6 @@ const RegistrationPage: React.FC = () => {
   }, [formData]);
 
   const handleSave = useCallback(async () => {
-    debugger
     setIsSubmitted(true);
     setLoading(true);
     try {
@@ -347,7 +346,7 @@ const RegistrationPage: React.FC = () => {
           handleClose={() => setShowPatientSearch(false)}
           onEditPatient={handlePatientSelect}
         />
-        <Paper variant="outlined" sx={{ padding: 2 }}>
+        <Paper variant="elevation" sx={{ padding: 2 }}>
           <PersonalDetails
             formData={formData}
             setFormData={setFormData}
