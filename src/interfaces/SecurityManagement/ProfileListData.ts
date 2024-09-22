@@ -1,10 +1,15 @@
-export interface ProfileMastDto {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface ProfileMastDto extends BaseDto {
   profileID: number;
   profileCode: string;
   profileName: string;
   rActiveYN: string;
-  compID: number;
   rNotes: string;
+  compID: number;
+  compCode: string;
+  compName: string;
+  transferYN: string;
 }
 
 export interface ProfileDetailDto {

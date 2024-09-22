@@ -10,6 +10,7 @@ import { MedicationRouteDto } from "../../interfaces/ClinicalManagement/Medicati
 import { MedicationFormDto } from "../../interfaces/ClinicalManagement/MedicationFormDto";
 import { MedicationGenericDto } from "../../interfaces/ClinicalManagement/MedicationGenericDto";
 import { ConsultantRoleDto } from "../../interfaces/ClinicalManagement/ConsultantRoleDto";
+import { ProfileMastDto } from "../../interfaces/SecurityManagement/ProfileListData";
 
 // Generic DTO interface with common properties
 export interface BaseDto {
@@ -152,6 +153,10 @@ export const consultantRoleService = createEntityService<ConsultantRoleDto>(
   "CLINICAL_MANAGEMENT_URL"
 );
 
+export const profileMastService = createEntityService<ProfileMastDto>(
+  "ProfileMast",
+  "SECURITY_MANAGEMENT_URL"
+);
 // Example of how to extend the generic service for entity-specific methods if needed
 // class ExtendedProductSubGroupService extends GenericEntityService<ProductSubGroupDto> {
 //   async getByCompanyId(companyId: number): Promise<ProductSubGroupDto[]> {
