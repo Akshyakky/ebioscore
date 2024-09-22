@@ -10,6 +10,7 @@ import { MedicationRouteDto } from "../../interfaces/ClinicalManagement/Medicati
 import { MedicationFormDto } from "../../interfaces/ClinicalManagement/MedicationFormDto";
 import { MedicationGenericDto } from "../../interfaces/ClinicalManagement/MedicationGenericDto";
 import { ConsultantRoleDto } from "../../interfaces/ClinicalManagement/ConsultantRoleDto";
+import { AdmissionDto } from "../../interfaces/PatientAdministration/AdmissionDto";
 
 // Generic DTO interface with common properties
 export interface BaseDto {
@@ -38,15 +39,15 @@ const apiConfig: ApiConfig = {
 
 // Generic service class
 class GenericEntityService<T extends BaseDto> {
-  private apiService: CommonApiService;
-  private baseEndpoint: string;
+  protected apiService: CommonApiService;
+  protected baseEndpoint: string;
 
   constructor(apiService: CommonApiService, entityName: string) {
     this.apiService = apiService;
     this.baseEndpoint = `${entityName}`;
   }
 
-  private getToken(): string {
+  protected getToken(): string {
     return store.getState().userDetails.token!;
   }
 
@@ -152,20 +153,26 @@ export const consultantRoleService = createEntityService<ConsultantRoleDto>(
   "CLINICAL_MANAGEMENT_URL"
 );
 
-// Example of how to extend the generic service for entity-specific methods if needed
-// class ExtendedProductSubGroupService extends GenericEntityService<ProductSubGroupDto> {
-//   async getByCompanyId(companyId: number): Promise<ProductSubGroupDto[]> {
-//     return this.apiService.get<ProductSubGroupDto[]>(
-//       `${this.baseEndpoint}/GetByCompanyId/${companyId}`,
-//       this.getToken()
-//     );
-//   }
-// }
+// Add the new admission service
+export const admissionService = createEntityService<AdmissionDto>(
+  "Admission",
+  "PATIENT_ADMINISTRATION_URL"
+);
 
-// export const extendedProductSubGroupService =
-//   new ExtendedProductSubGroupService(
-//     new CommonApiService({
-//       baseURL: APIConfig.commonURL,
-//     }),
-//     "ProductSubGroup"
-//   );
+// If you need to extend the generic service for admissions with specific methods:
+class ExtendedAdmissionService extends GenericEntityService<AdmissionDto> {
+  async admit(admissionData: AdmissionDto): Promise<AdmissionDto> {
+    return this.apiService.post<AdmissionDto>(
+      `${this.baseEndpoint}/Admit`,
+      admissionData,
+      this.getToken()
+    );
+  }
+}
+
+export const extendedAdmissionService = new ExtendedAdmissionService(
+  new CommonApiService({
+    baseURL: apiConfig.PATIENT_ADMINISTRATION_URL,
+  }),
+  "Admission"
+);
