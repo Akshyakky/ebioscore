@@ -22,6 +22,7 @@ export const saveProductList = async (
 export const getAllProductList = async (): Promise<
   OperationResult<ProductListDto[]>
 > => {
+  debugger;
   return apiService.get<OperationResult<ProductListDto[]>>(
     "ProductList/GetAllProductList",
     getToken()

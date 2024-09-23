@@ -22,15 +22,15 @@ import {
   productTaxService,
   productUnitService,
 } from "../../services/GenericEntityService/GenericEntityService";
+import { ProductListService } from "../../services/InventoryManagementService/ProductListService/ProductListService";
 
 const useDropdownValues = () => {
   const [picValues, setPicValues] = useState<DropdownOption[]>([]);
   const [titleValues, setTitleValues] = useState<DropdownOption[]>([]);
   const [genderValues, setGenderValues] = useState<DropdownOption[]>([]);
   const [ageUnitOptions, setAgeValues] = useState<DropdownOption[]>([]);
-  const [nationalityValues, setNationalityValues] = useState<DropdownOption[]>(
-    []
-  );
+  const [nationalityValues, setNationalityValues] =
+    useState<DropdownOption[]>();
   const [areaValues, setAreaValues] = useState<DropdownOption[]>([]);
   const [cityValues, setCityValues] = useState<DropdownOption[]>([]);
   const [countryValues, setCountryValues] = useState<DropdownOption[]>([]);
@@ -85,6 +85,7 @@ const useDropdownValues = () => {
   );
   const [taxTypeValue, setTaxTypeValue] = useState<any[]>([]);
   const [consultantRoleValues, setConsultantRoleValues] = useState<any[]>([]);
+  const [productListValue, setProductListValue] = useState<any[]>([]);
 
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
@@ -130,6 +131,7 @@ const useDropdownValues = () => {
           medicationGenericTypeResponse,
           taxTypeResponse,
           consultantRoleResponse,
+          productListResponse,
         ] = await Promise.all([
           BillingService.fetchPicValues("GetPICDropDownValues"),
           ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
@@ -206,6 +208,7 @@ const useDropdownValues = () => {
           medicationGenericService.getAll(),
           productTaxService.getAll(),
           consultantRoleService.getAll(),
+          ProductListService.getAllProductList(),
         ]);
 
         setPicValues(
@@ -410,6 +413,12 @@ const useDropdownValues = () => {
             label: item.crName || "",
           }))
         );
+        setProductListValue(
+          (productListResponse.data || []).map((item: any) => ({
+            value: item.productID || 0,
+            label: item.productCode || "",
+          }))
+        );
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
       } finally {
@@ -456,6 +465,7 @@ const useDropdownValues = () => {
     medicationGenericValues,
     taxTypeValue,
     consultantRoleValues,
+    productListValue,
   };
 };
 
