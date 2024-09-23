@@ -20,6 +20,7 @@ import {
   ListItemButton,
   useTheme,
   styled,
+  alpha,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Icon } from "@iconify/react";
@@ -43,8 +44,10 @@ const StyledDrawer = styled(Drawer)(({ theme }) => ({
   '& .MuiDrawer-paper': {
     width: drawerWidth,
     boxSizing: 'border-box',
-    backgroundColor: theme.palette.background.default,
+    backgroundColor: theme.palette.mode === 'light' ? '#ffffff' : theme.palette.background.default,
     color: theme.palette.text.primary,
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    borderRight: `1px solid ${theme.palette.divider}`,
   },
 }));
 
@@ -52,7 +55,35 @@ const StyledNavLink = styled(NavLink)(({ theme }) => ({
   textDecoration: 'none',
   color: theme.palette.text.primary,
   '&.active-submenu-item': {
-    backgroundColor: theme.palette.action.selected,
+    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+    borderLeft: `4px solid ${theme.palette.primary.main}`,
+  },
+}));
+
+const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
+  borderRadius: '8px',
+  margin: '2px 8px',
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.primary.main, 0.04),
+  },
+  '&.Mui-selected': {
+    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+    '&:hover': {
+      backgroundColor: alpha(theme.palette.primary.main, 0.12),
+    },
+  },
+}));
+
+const SearchBox = styled(TextField)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '20px',
+    backgroundColor: theme.palette.mode === 'light' ? alpha(theme.palette.common.black, 0.04) : alpha(theme.palette.common.white, 0.15),
+    '&:hover': {
+      backgroundColor: theme.palette.mode === 'light' ? alpha(theme.palette.common.black, 0.07) : alpha(theme.palette.common.white, 0.25),
+    },
+    '&.Mui-focused': {
+      backgroundColor: theme.palette.mode === 'light' ? alpha(theme.palette.common.black, 0.07) : alpha(theme.palette.common.white, 0.25),
+    },
   },
 }));
 
@@ -162,6 +193,8 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
           }),
+          boxShadow: 'none',
+          borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
         <Toolbar>
@@ -174,7 +207,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
           >
             {open ? <CloseIcon /> : <MenuIcon />}
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Typography variant="h6" noWrap component="div" fontWeight="bold">
             {pageTitle}
           </Typography>
           <Box flexGrow={1} />
@@ -188,8 +221,8 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
         open={open}
         onClose={handleDrawerClose}
       >
-        <Box sx={{ padding: 1 }}>
-          <TextField
+        <Box sx={{ padding: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
+          <SearchBox
             variant="outlined"
             size="small"
             fullWidth
@@ -197,7 +230,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon />
+                  <SearchIcon color="action" />
                 </InputAdornment>
               ),
             }}
@@ -206,18 +239,23 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
           />
         </Box>
         <Divider />
-        <List>
+        <List sx={{ pt: 1 }}>
           {filteredModules.map((module) => (
             <React.Fragment key={`module-${module.auGrpID}`}>
-              <ListItemButton
+              <StyledListItemButton
                 onClick={() => toggleModule(module.auGrpID)}
                 selected={activeModuleId === module.auGrpID}
               >
                 <ListItemIcon>
-                  <Icon icon={module.iCon} style={{ fontSize: "24px" }} />
+                  <Icon icon={module.iCon} style={{ fontSize: "24px", color: theme.palette.primary.main }} />
                 </ListItemIcon>
-                <ListItemText primary={module.title} />
-              </ListItemButton>
+                <ListItemText
+                  primary={module.title}
+                  primaryTypographyProps={{
+                    fontWeight: activeModuleId === module.auGrpID ? 'bold' : 'normal',
+                  }}
+                />
+              </StyledListItemButton>
               <Collapse
                 in={activeModuleId === module.auGrpID}
                 timeout="auto"
@@ -236,15 +274,19 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
                         handleSubModuleClick(subModule.link);
                       }}
                     >
-                      <ListItemButton sx={{ pl: 4 }}>
+                      <StyledListItemButton sx={{ pl: 4 }}>
                         <ListItemIcon>
                           <Icon
                             icon={subModule.iCon}
-                            style={{ fontSize: "20px" }}
+                            style={{ color: theme.palette.text.secondary }}
                           />
                         </ListItemIcon>
-                        <ListItemText primary={subModule.title} />
-                      </ListItemButton>
+                        <ListItemText
+                          primary={subModule.title}
+                          primaryTypographyProps={{
+                          }}
+                        />
+                      </StyledListItemButton>
                     </StyledNavLink>
                   ))}
                 </List>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/reducers";
 import { useLoading } from "../../context/LoadingContext";
@@ -24,401 +24,351 @@ import {
 } from "../../services/GenericEntityService/GenericEntityService";
 import { ProductListService } from "../../services/InventoryManagementService/ProductListService/ProductListService";
 
-const useDropdownValues = () => {
-  const [picValues, setPicValues] = useState<DropdownOption[]>([]);
-  const [titleValues, setTitleValues] = useState<DropdownOption[]>([]);
-  const [genderValues, setGenderValues] = useState<DropdownOption[]>([]);
-  const [ageUnitOptions, setAgeValues] = useState<DropdownOption[]>([]);
-  const [nationalityValues, setNationalityValues] =
-    useState<DropdownOption[]>();
-  const [areaValues, setAreaValues] = useState<DropdownOption[]>([]);
-  const [cityValues, setCityValues] = useState<DropdownOption[]>([]);
-  const [countryValues, setCountryValues] = useState<DropdownOption[]>([]);
-  const [companyValues, setCompanyValues] = useState<DropdownOption[]>([]);
-  const [departmentValues, setDepartmentValues] = useState<DropdownOption[]>(
-    []
-  );
-  const [attendingPhyValues, setAttendingPhyValues] = useState<
-    DropdownOption[]
-  >([]);
-  const [primaryIntroducingSourceValues, setPrimaryIntroducingSourceValues] =
-    useState<DropdownOption[]>([]);
-  const [membershipSchemeValues, setMembershipSchemeValues] = useState<
-    DropdownOption[]
-  >([]);
-  const [relationValues, setRelationValues] = useState<DropdownOption[]>([]);
-  const [insuranceOptions, setInsuranceOptions] = useState<DropdownOption[]>(
-    []
-  );
-  const [coverForValues, setCoverForValues] = useState<DropdownOption[]>([]);
-  const [departmentTypesValues, setDepartmentTypesValues] = useState<
-    DropdownOption[]
-  >([]);
-  const [bloodGroupValues, setBloodGroupValues] = useState<DropdownOption[]>(
-    []
-  );
-  const [maritalStatusValues, setmaritalStatusValues] = useState<
-    DropdownOption[]
-  >([]);
-  const [stateValues, setstateValues] = useState<DropdownOption[]>([]);
-  const [categoryValues, setcategoryValues] = useState<DropdownOption[]>([]);
-  const [employeeStatusValues, setemployeeStatusValues] = useState<
-    DropdownOption[]
-  >([]);
-  const [specialityValues, setspecialityValues] = useState<DropdownOption[]>(
-    []
-  );
+// Cache object to store API responses
+const apiCache: { [key: string]: DropdownOption[] } = {};
 
-  const [floorValues, setFloorValues] = useState<DropdownOption[]>([]);
-  const [unitValues, setUnitValues] = useState<any[]>([]);
-  const [serviceValues, setServiceValues] = useState<any[]>([]);
-  const [bedCategoryValues, setBedCategoryValues] = useState<any[]>([]);
-  const [productCategoryValues, setProductBedCategoryValues] = useState<any[]>(
-    []
-  );
-  const [productSubGroupValues, setProductSubGroupValues] = useState<any[]>([]);
-  const [productGroupValues, setProductGroupValues] = useState<any[]>([]);
-  const [productUnitValues, setProductUnitValues] = useState<any[]>([]);
-  const [medicationFormValues, setMedicationFormValues] = useState<any[]>([]);
-  const [medicationGenericValues, setMedicationGenericValues] = useState<any[]>(
-    []
-  );
-  const [taxTypeValue, setTaxTypeValue] = useState<any[]>([]);
-  const [consultantRoleValues, setConsultantRoleValues] = useState<any[]>([]);
-  const [productListValue, setProductListValue] = useState<any[]>([]);
+// Type for the state object
+type DropdownState = {
+  [key: string]: DropdownOption[];
+};
+
+const useDropdownValues = () => {
+  const [dropdownState, setDropdownState] = useState<DropdownState>({
+    picValues: [],
+    titleValues: [],
+    genderValues: [],
+    ageUnitOptions: [],
+    nationalityValues: [],
+    areaValues: [],
+    cityValues: [],
+    countryValues: [],
+    companyValues: [],
+    departmentValues: [],
+    attendingPhyValues: [],
+    primaryIntroducingSourceValues: [],
+    membershipSchemeValues: [],
+    relationValues: [],
+    insuranceOptions: [],
+    coverForValues: [],
+    departmentTypesValues: [],
+    bloodGroupValues: [],
+    maritalStatusValues: [],
+    stateValues: [],
+    categoryValues: [],
+    employeeStatusValues: [],
+    specialityValues: [],
+    floorValues: [],
+    unitValues: [],
+    serviceValues: [],
+    bedCategoryValues: [],
+    productCategoryValues: [],
+    productSubGroupValues: [],
+    productGroupValues: [],
+    productUnitValues: [],
+    medicationFormValues: [],
+    medicationGenericValues: [],
+    taxTypeValue: [],
+    consultantRoleValues: [],
+  });
 
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const compID = userInfo.compID!;
 
+  const fetchData = async (
+    key: string,
+    fetchFunction: () => Promise<any>,
+    dataMapper: (data: any) => DropdownOption[] = (data) => data
+  ) => {
+    if (apiCache[key]) {
+      return apiCache[key];
+    }
+
+    const data = await fetchFunction();
+    const formattedData = dataMapper(data);
+    apiCache[key] = formattedData;
+    return formattedData;
+  };
+
   useEffect(() => {
     const loadDropdownValues = async () => {
       try {
         setLoading(true);
-        const [
-          picResponse,
-          titleResponse,
-          genderResponse,
-          ageResponse,
-          nationalityResponse,
-          areaResponse,
-          cityResponse,
-          countryResponse,
-          companyResponse,
-          departmentResponse,
-          attendingPhyResponse,
-          primaryIntroducingSourceResponse,
-          membershipSchemeResponse,
-          relationResponse,
-          insuranceResponse,
-          coverForResponse,
-          departmentTypesResponse,
-          bloodGroupResponse,
-          maritalStatusResponse,
-          stateResponse,
-          categoryResponse,
-          employeeStatusResponse,
-          specialityResponse,
-          floorResponse,
-          unitResponse,
-          serviceTypeResponse,
-          categoryTypeResponse,
-          productCategoryTypeResponse,
-          productSubGroupTypeResponse,
-          productGroupTypeResponse,
-          productUnitTypeResponse,
-          medicationFormTypeResponse,
-          medicationGenericTypeResponse,
-          taxTypeResponse,
-          consultantRoleResponse,
-          productListResponse,
-        ] = await Promise.all([
-          BillingService.fetchPicValues("GetPICDropDownValues"),
-          ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
-          ConstantValues.fetchConstantValues("GetConstantValues", "PSEX"),
-          ConstantValues.fetchConstantValues("GetConstantValues", "PAT"),
 
-          AppModifyListService.fetchAppModifyList(
-            "GetActiveAppModifyFieldsAsync",
-            "NATIONALITY"
-          ),
-          AppModifyListService.fetchAppModifyList(
-            "GetActiveAppModifyFieldsAsync",
-            "AREA"
-          ),
-          AppModifyListService.fetchAppModifyList(
-            "GetActiveAppModifyFieldsAsync",
-            "CITY"
-          ),
-          AppModifyListService.fetchAppModifyList(
-            "GetActiveAppModifyFieldsAsync",
-            "ACTUALCOUNTRY"
-          ),
-          AppModifyListService.fetchAppModifyList(
-            "GetActiveAppModifyFieldsAsync",
-            "COMPANY"
-          ),
+        const fetchConfigs = [
+          {
+            key: "picValues",
+            fetch: () => BillingService.fetchPicValues("GetPICDropDownValues"),
+          },
+          {
+            key: "titleValues",
+            fetch: () =>
+              ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
+          },
+          {
+            key: "genderValues",
+            fetch: () =>
+              ConstantValues.fetchConstantValues("GetConstantValues", "PSEX"),
+          },
+          {
+            key: "ageUnitOptions",
+            fetch: () =>
+              ConstantValues.fetchConstantValues("GetConstantValues", "PAT"),
+          },
+          {
+            key: "nationalityValues",
+            fetch: () =>
+              AppModifyListService.fetchAppModifyList(
+                "GetActiveAppModifyFieldsAsync",
+                "NATIONALITY"
+              ),
+          },
+          {
+            key: "areaValues",
+            fetch: () =>
+              AppModifyListService.fetchAppModifyList(
+                "GetActiveAppModifyFieldsAsync",
+                "AREA"
+              ),
+          },
+          {
+            key: "cityValues",
+            fetch: () =>
+              AppModifyListService.fetchAppModifyList(
+                "GetActiveAppModifyFieldsAsync",
+                "CITY"
+              ),
+          },
+          {
+            key: "countryValues",
+            fetch: () =>
+              AppModifyListService.fetchAppModifyList(
+                "GetActiveAppModifyFieldsAsync",
+                "ACTUALCOUNTRY"
+              ),
+          },
+          {
+            key: "companyValues",
+            fetch: () =>
+              AppModifyListService.fetchAppModifyList(
+                "GetActiveAppModifyFieldsAsync",
+                "COMPANY"
+              ),
+          },
+          {
+            key: "departmentValues",
+            fetch: () =>
+              DepartmentService.fetchDepartments(
+                "GetActiveRegistrationDepartments",
+                compID
+              ),
+          },
+          {
+            key: "attendingPhyValues",
+            fetch: () =>
+              ContactMastService.fetchAttendingPhysician(
+                "GetActiveConsultants",
+                compID
+              ),
+          },
+          {
+            key: "primaryIntroducingSourceValues",
+            fetch: () =>
+              ContactMastService.fetchRefferalPhy(
+                "GetActiveReferralContacts",
+                compID
+              ),
+          },
+          {
+            key: "membershipSchemeValues",
+            fetch: () =>
+              BillingService.fetchMembershipScheme(
+                "GetActivePatMemberships",
+                compID
+              ),
+          },
+          {
+            key: "relationValues",
+            fetch: () =>
+              AppModifyListService.fetchAppModifyList(
+                "GetActiveAppModifyFieldsAsync",
+                "RELATION"
+              ),
+          },
+          {
+            key: "insuranceOptions",
+            fetch: () =>
+              InsuranceCarrierService.fetchInsuranceOptions(
+                "GetAllActiveForDropDown"
+              ),
+          },
+          {
+            key: "coverForValues",
+            fetch: () =>
+              ConstantValues.fetchConstantValues("GetConstantValues", "COVR"),
+          },
+          {
+            key: "departmentTypesValues",
+            fetch: () =>
+              ConstantValues.fetchConstantValues("GetConstantValues", "DTYP"),
+          },
+          {
+            key: "bloodGroupValues",
+            fetch: () =>
+              ConstantValues.fetchConstantValues("GetConstantValues", "PBLD"),
+          },
+          {
+            key: "maritalStatusValues",
+            fetch: () =>
+              ConstantValues.fetchConstantValues("GetConstantValues", "PMAR"),
+          },
+          {
+            key: "stateValues",
+            fetch: () =>
+              AppModifyListService.fetchAppModifyList(
+                "GetActiveAppModifyFieldsAsync",
+                "STATE"
+              ),
+          },
+          {
+            key: "categoryValues",
+            fetch: () =>
+              ConstantValues.fetchConstantValues("GetConstantValues", "ACAT"),
+          },
+          {
+            key: "employeeStatusValues",
+            fetch: () =>
+              ConstantValues.fetchConstantValues("GetConstantValues", "EMPS"),
+          },
+          {
+            key: "specialityValues",
+            fetch: () => ContactListService.fetchActiveSpecialties(compID),
+          },
+          {
+            key: "floorValues",
+            fetch: () =>
+              AppModifyListService.fetchAppModifyList(
+                "GetActiveAppModifyFieldsAsync",
+                "FLOOR"
+              ),
+          },
+          {
+            key: "unitValues",
+            fetch: () => DeptUnitListService.getAllDeptUnitList(),
+            dataMapper: (data: any) =>
+              (data.data || []).map((item: any) => ({
+                value: item.dulID || 0,
+                label: item.unitDesc || "",
+              })),
+          },
+          {
+            key: "serviceValues",
+            fetch: () => ServiceTypeService.getAllServiceType(),
+            dataMapper: (data: any) =>
+              (data.data || []).map((item: any) => ({
+                value: item.bchID || 0,
+                label: item.bchName || "",
+              })),
+          },
+          {
+            key: "bedCategoryValues",
+            fetch: () => WardCategoryService.getAllWardCategory(),
+            dataMapper: (data: any) =>
+              (data.data || []).map((item: any) => ({
+                value: item.wCatID || 0,
+                label: item.wCatName || "",
+              })),
+          },
+          {
+            key: "productCategoryValues",
+            fetch: () =>
+              ConstantValues.fetchConstantValues("GetConstantValues", "PMED"),
+          },
+          {
+            key: "productSubGroupValues",
+            fetch: () => productSubGroupService.getAll(),
+            dataMapper: (data: any) =>
+              (data.data || []).map((item: any) => ({
+                value: item.psGrpID || 0,
+                label: item.psGrpName || "",
+              })),
+          },
+          {
+            key: "productGroupValues",
+            fetch: () => productGroupService.getAll(),
+            dataMapper: (data: any) =>
+              (data.data || []).map((item: any) => ({
+                value: item.pgrpID || 0,
+                label: item.pgrpName || "",
+              })),
+          },
+          {
+            key: "productUnitValues",
+            fetch: () => productUnitService.getAll(),
+            dataMapper: (data: any) =>
+              (data.data || []).map((item: any) => ({
+                value: item.punitID || 0,
+                label: item.punitName || "",
+              })),
+          },
+          {
+            key: "medicationFormValues",
+            fetch: () => medicationFormService.getAll(),
+            dataMapper: (data: any) =>
+              (data.data || []).map((item: any) => ({
+                value: item.mFID || 0,
+                label: item.mFName || "",
+              })),
+          },
+          {
+            key: "medicationGenericValues",
+            fetch: () => medicationGenericService.getAll(),
+            dataMapper: (data: any) =>
+              (data.data || []).map((item: any) => ({
+                value: item.mGenID || 0,
+                label: item.mGenName || "",
+              })),
+          },
+          {
+            key: "taxTypeValue",
+            fetch: () => productTaxService.getAll(),
+            dataMapper: (data: any) =>
+              (data.data || []).map((item: any) => ({
+                value: item.pTaxID || 0,
+                label: item.pTaxAmt || "",
+              })),
+          },
+          {
+            key: "consultantRoleValues",
+            fetch: () => consultantRoleService.getAll(),
+            dataMapper: (data: any) =>
+              (data.data || []).map((item: any) => ({
+                value: item.crID || 0,
+                label: item.crName || "",
+              })),
+          },
+        ];
 
-          DepartmentService.fetchDepartments(
-            "GetActiveRegistrationDepartments",
-            compID
-          ),
-          ContactMastService.fetchAttendingPhysician(
-            "GetActiveConsultants",
-            compID
-          ),
-          ContactMastService.fetchRefferalPhy(
-            "GetActiveReferralContacts",
-            compID
-          ),
-          BillingService.fetchMembershipScheme(
-            "GetActivePatMemberships",
-            compID
-          ),
-          AppModifyListService.fetchAppModifyList(
-            "GetActiveAppModifyFieldsAsync",
-            "RELATION"
-          ),
-          InsuranceCarrierService.fetchInsuranceOptions(
-            "GetAllActiveForDropDown"
-          ),
-          ConstantValues.fetchConstantValues("GetConstantValues", "COVR"),
-          ConstantValues.fetchConstantValues("GetConstantValues", "DTYP"),
-          ConstantValues.fetchConstantValues("GetConstantValues", "PBLD"),
-          ConstantValues.fetchConstantValues("GetConstantValues", "PMAR"),
-          AppModifyListService.fetchAppModifyList(
-            "GetActiveAppModifyFieldsAsync",
-            "STATE"
-          ),
-          ConstantValues.fetchConstantValues("GetConstantValues", "ACAT"),
-          ConstantValues.fetchConstantValues("GetConstantValues", "EMPS"),
-          ContactListService.fetchActiveSpecialties(compID!),
-          AppModifyListService.fetchAppModifyList(
-            "GetActiveAppModifyFieldsAsync",
-            "FLOOR"
-          ),
-          DeptUnitListService.getAllDeptUnitList(),
-          ServiceTypeService.getAllServiceType(),
-          WardCategoryService.getAllWardCategory(),
-          ConstantValues.fetchConstantValues("GetConstantValues", "PMED"),
-          productSubGroupService.getAll(),
-          productGroupService.getAll(),
-          productUnitService.getAll(),
-          medicationFormService.getAll(),
-          medicationGenericService.getAll(),
-          productTaxService.getAll(),
-          consultantRoleService.getAll(),
-          ProductListService.getAllProductList(),
-        ]);
-
-        setPicValues(
-          picResponse.map((item) => ({ value: item.value, label: item.label }))
-        );
-        setTitleValues(
-          titleResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setGenderValues(
-          genderResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setAgeValues(
-          ageResponse.map((item) => ({ value: item.value, label: item.label }))
-        );
-        setNationalityValues(
-          nationalityResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setAreaValues(
-          areaResponse.map((item) => ({ value: item.value, label: item.label }))
-        );
-        setCityValues(
-          cityResponse.map((item) => ({ value: item.value, label: item.label }))
-        );
-        setCountryValues(
-          countryResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setCompanyValues(
-          companyResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
+        const results = await Promise.all(
+          fetchConfigs.map(
+            ({
+              key,
+              fetch,
+              dataMapper = (data: any) =>
+                data.map((item: any) => ({
+                  value: item.value,
+                  label: item.label,
+                })),
+            }) => fetchData(key, fetch, dataMapper)
+          )
         );
 
-        setDepartmentValues(
-          departmentResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setAttendingPhyValues(
-          attendingPhyResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setPrimaryIntroducingSourceValues(
-          primaryIntroducingSourceResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setMembershipSchemeValues(
-          membershipSchemeResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setRelationValues(
-          relationResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setInsuranceOptions(
-          insuranceResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setCoverForValues(
-          coverForResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setDepartmentTypesValues(
-          departmentTypesResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setBloodGroupValues(
-          bloodGroupResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setmaritalStatusValues(
-          maritalStatusResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setstateValues(
-          stateResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setcategoryValues(
-          categoryResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setemployeeStatusValues(
-          employeeStatusResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setspecialityValues(
-          specialityResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setFloorValues(
-          floorResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setUnitValues(
-          (unitResponse.data || []).map((item) => ({
-            value: item.dulID || 0,
-            label: item.unitDesc || "",
-          }))
-        );
+        const newState = fetchConfigs.reduce((acc, { key }, index) => {
+          acc[key] = results[index];
+          return acc;
+        }, {} as DropdownState);
 
-        setServiceValues(
-          (serviceTypeResponse.data || []).map((item) => ({
-            value: item.bchID || 0,
-            label: item.bchName || "",
-          }))
-        );
-
-        setBedCategoryValues(
-          (categoryTypeResponse.data || []).map((item) => ({
-            value: item.wCatID || 0,
-            label: item.wCatName || "",
-          }))
-        );
-
-        setProductBedCategoryValues(
-          productCategoryTypeResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
-          }))
-        );
-        setProductSubGroupValues(
-          (productSubGroupTypeResponse.data || []).map((item: any) => ({
-            value: item.psGrpID || 0,
-            label: item.psGrpName || "",
-          }))
-        );
-        setProductGroupValues(
-          (productGroupTypeResponse.data || []).map((item: any) => ({
-            value: item.pgrpID || 0,
-            label: item.pgrpName || "",
-          }))
-        );
-        setProductUnitValues(
-          (productUnitTypeResponse.data || []).map((item: any) => ({
-            value: item.punitID || 0,
-            label: item.punitName || "",
-          }))
-        );
-        setMedicationFormValues(
-          (medicationFormTypeResponse.data || []).map((item: any) => ({
-            value: item.mFID || 0,
-            label: item.mFName || "",
-          }))
-        );
-        setMedicationGenericValues(
-          (medicationGenericTypeResponse.data || []).map((item: any) => ({
-            value: item.mGenID || 0,
-            label: item.mGenName || "",
-          }))
-        );
-        setTaxTypeValue(
-          (taxTypeResponse.data || []).map((item: any) => ({
-            value: item.pTaxID || 0,
-            label: item.pTaxAmt || "",
-          }))
-        );
-        setConsultantRoleValues(
-          (consultantRoleResponse.data || []).map((item: any) => ({
-            value: item.crID || 0,
-            label: item.crName || "",
-          }))
-        );
-        setProductListValue(
-          (productListResponse.data || []).map((item: any) => ({
-            value: item.productID || 0,
-            label: item.productCode || "",
-          }))
-        );
+        setDropdownState(newState);
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
       } finally {
@@ -427,46 +377,9 @@ const useDropdownValues = () => {
     };
 
     loadDropdownValues();
-  }, [compID]);
+  }, [compID, setLoading]);
 
-  return {
-    picValues,
-    titleValues,
-    genderValues,
-    ageUnitOptions,
-    nationalityValues,
-    areaValues,
-    cityValues,
-    countryValues,
-    companyValues,
-    departmentValues,
-    attendingPhyValues,
-    primaryIntroducingSourceValues,
-    membershipSchemeValues,
-    relationValues,
-    insuranceOptions,
-    coverForValues,
-    departmentTypesValues,
-    bloodGroupValues,
-    maritalStatusValues,
-    stateValues,
-    categoryValues,
-    employeeStatusValues,
-    specialityValues,
-    floorValues,
-    unitValues,
-    serviceValues,
-    bedCategoryValues,
-    productCategoryValues,
-    productSubGroupValues,
-    productGroupValues,
-    productUnitValues,
-    medicationFormValues,
-    medicationGenericValues,
-    taxTypeValue,
-    consultantRoleValues,
-    productListValue,
-  };
+  return useMemo(() => dropdownState, [dropdownState]);
 };
 
 export default useDropdownValues;

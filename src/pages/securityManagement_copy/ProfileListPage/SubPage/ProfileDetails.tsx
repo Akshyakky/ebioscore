@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { Grid, Paper, Typography } from "@mui/material";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { ProfileMastDto, ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
+import {
+  ProfileMastDto,
+  ProfileListSearchResult,
+} from "../../../../interfaces/SecurityManagement/ProfileListData";
 import { OperationResult } from "../../../../interfaces/Common/OperationResult";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
-import TextArea from "../../../../components/TextArea/TextArea";
-import { notifySuccess, notifyError } from "../../../../utils/Common/toastManager";
+import {
+  notifySuccess,
+  notifyError,
+} from "../../../../utils/Common/toastManager";
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
+import FormField from "../../../../components/FormField/FormField";
 
 interface ProfileDetailsProps {
   profile: ProfileListSearchResult | null;
@@ -26,7 +31,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   onClear,
   refreshProfiles,
 }) => {
-  const { token, compID } = useSelector((state: RootState) => state.userDetails);
+  const { compID } = useSelector((state: RootState) => state.userDetails);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const [profileMastDto, setProfileMastDto] = useState<ProfileMastDto>({
@@ -49,13 +54,14 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         rNotes: profile.rNotes,
       });
     }
-  }, [profile, compID]);//Remove
+  }, [profile, compID]);
 
   const handleSave = async () => {
     setIsSubmitted(true);
     if (profileMastDto.profileCode && profileMastDto.profileName) {
       try {
-        const result: OperationResult<ProfileMastDto> = await ProfileService.saveOrUpdateProfile(profileMastDto);
+        const result: OperationResult<ProfileMastDto> =
+          await ProfileService.saveOrUpdateProfile(profileMastDto);
         if (result.success && result.data) {
           const savedProfile: ProfileListSearchResult = {
             profileID: result.data.profileID,
@@ -110,50 +116,43 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       </Typography>
       <section>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Profile Code"
-              ControlID="ProfileCode"
-              placeholder="Profile Code"
-              type="text"
-              name="profileCode"
-              size="small"
-              value={profileMastDto.profileCode}
-              onChange={handleInputChange}
-              isMandatory
-              isSubmitted={isSubmitted}
-              inputPattern={/^[a-zA-Z0-9 ]*$/}
-              maxLength={10}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <FloatingLabelTextBox
-              title="Profile Name"
-              ControlID="ProfileName"
-              placeholder="Profile Name"
-              type="text"
-              name="profileName"
-              size="small"
-              value={profileMastDto.profileName}
-              onChange={handleInputChange}
-              isMandatory
-              isSubmitted={isSubmitted}
-              inputPattern={/^[a-zA-Z0-9 ]*$/}
-              maxLength={60}
-            />
-          </Grid>
+          <FormField
+            type="text"
+            label="Profile Code"
+            value={profileMastDto.profileCode}
+            onChange={handleInputChange}
+            name="profileCode"
+            ControlID="ProfileCode"
+            isMandatory
+            size="small"
+            isSubmitted={isSubmitted}
+            // inputPattern={/^[a-zA-Z0-9 ]*$/}
+            maxLength={10}
+          />
+          <FormField
+            type="text"
+            label="Profile Name"
+            value={profileMastDto.profileName}
+            onChange={handleInputChange}
+            name="profileName"
+            ControlID="ProfileName"
+            isMandatory
+            size="small"
+            isSubmitted={isSubmitted}
+            // inputPattern={/^[a-zA-Z0-9 ]*$/}
+            maxLength={10}
+          />
         </Grid>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextArea
-              label="Notes"
-              name="rNotes"
-              value={profileMastDto.rNotes}
-              onChange={handleTextAreaChange}
-              placeholder="Notes"
-              rows={2}
-            />
-          </Grid>
+          <FormField
+            type="textarea"
+            label="Notes"
+            value={profileMastDto.rNotes}
+            onChange={handleTextAreaChange}
+            name="rNotes"
+            ControlID="rNotes"
+            maxLength={4000}
+          />
         </Grid>
       </section>
       <FormSaveClearButton
