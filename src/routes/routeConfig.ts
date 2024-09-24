@@ -23,11 +23,12 @@ import ServiceGroupsListPage from "../pages/billing/ServiceGroupsListPage/MainPa
 import WardCategoryPage from "../pages/hospitalAdministration/WardCategoryPage/MainPage/WardCategoryPage";
 import BedSetUpPage from "../pages/hospitalAdministration/Room-BedSetUp/MainPage/BedSetUpPage";
 import DeptUnitListPage from "../pages/hospitalAdministration/DeptUnitList/MainPage/DeptUnitListPage";
-import AlertPage from "../pages/common/AlertManagerPage/MainPage/Alertpage";
 import InsuranceListPage from "../pages/hospitalAdministration/InsuranceList/MainPage/InsuranceListPage";
 import ProductListPage from "../pages/inventoryManagement/ProductList/MainPage/ProductListPage";
 import ProductTaxListPage from "../pages/inventoryManagement/ProductTaxList/MainPage/ProductTaxListPage";
 import ProductOverviewPage from "../pages/inventoryManagement/ProductOverview/MainPage/ProductOverviewPage";
+import AlertPage from "../pages/common/AlertManagerPage/MainPage/AlertPage";
+import ManageBedPage from "../pages/patientAdministration/ManageBed/MainPage/ManageBedPage";
 
 interface RouteConfig {
   path: string;
@@ -127,6 +128,11 @@ const routeConfig: RouteConfig[] = [
   {
     path: "/ProductOverviewPage",
     component: ProductOverviewPage,
+    protected: true,
+  },
+  {
+    path: "/ManageBedPage",
+    component: ManageBedPage,
     protected: true,
   },
 ];
