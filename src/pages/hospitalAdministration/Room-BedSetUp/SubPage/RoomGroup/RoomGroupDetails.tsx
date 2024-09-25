@@ -287,8 +287,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
             ),
         },
     ];
-
-
     return (
         <>
             <Grid container justifyContent="flex-end" sx={{ marginBottom: 2 }}>
