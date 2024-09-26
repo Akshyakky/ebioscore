@@ -1,4 +1,6 @@
-export interface RoomGroupDto {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface RoomGroupDto extends BaseDto {
   rGrpID: number;
   rGrpCode?: string;
   rGrpName: string;
@@ -17,7 +19,7 @@ export interface RoomGroupDto {
   teachingYN: string;
 }
 
-export interface RoomListDto {
+export interface RoomListDto extends BaseDto {
   rlID: number;
   rlCode?: string;
   rName: string;
@@ -36,7 +38,7 @@ export interface RoomListDto {
   unitDesc: string;
 }
 
-export interface WrBedDto {
+export interface WrBedDto extends BaseDto {
   bedID: number;
   bedName: string;
   rlID: number;
@@ -45,7 +47,7 @@ export interface WrBedDto {
   bchID?: number;
   bchName?: string;
   bedRemarks?: string;
-  blockBedYN?: string; // Default value 'N' can be handled in the application logic
+  blockBedYN?: string;
   compID?: number;
   key: number;
   transferYN?: string;

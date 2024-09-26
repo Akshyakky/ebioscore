@@ -7,7 +7,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
 import { useLoading } from "../../../../../context/LoadingContext";
 import { showAlert } from "../../../../../utils/Common/showAlert";
-import { RoomGroupService } from "../../../../../services/HospitalAdministrationServices/Room-BedSetUpService/RoomGroupService";
 import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../../components/Button/CustomButton";
 import { RoomGroupDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
@@ -16,6 +15,7 @@ import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDrop
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
+import { roomGroupService } from "../../../../../services/GenericEntityService/GenericEntityService";
 
 interface DropdownOption {
     value: string;
@@ -60,13 +60,13 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
     const { departmentValues, genderValues } = useDropdownValues();
 
     const fetchRoomGroups = async () => {
-        debugger
         setLoading(true);
         try {
-            const response = await RoomGroupService.getAllRoomGroup();
+            const response = await roomGroupService.getAll();
             if (response.success) {
                 const activeRoomGroups = (response.data || []).filter(
-                    (group) => group.rActiveYN === "Y"
+                    (group: RoomGroupDto) => group.rActiveYN === "Y"
+
                 );
                 setRoomGroups(activeRoomGroups);
             } else {
@@ -116,8 +116,9 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
     const handleAddDialogSubmit = async () => {
         setLoading(true);
         try {
-            const response = await RoomGroupService.saveRoomGroup(formData);
-            if (response.success) {
+            debugger
+            const response = await roomGroupService.save(formData);
+            if (response) {
                 showAlert(
                     "Success",
                     formData.rGrpID
@@ -130,7 +131,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
             } else {
                 showAlert(
                     "Error",
-                    response.errorMessage || "Failed to save room group",
+                    "Failed to save room group",
                     "error"
                 );
             }
@@ -142,13 +143,15 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
         }
     };
 
+
     const handleAddDialogClose = () => {
         setIsDialogOpen(false);
     };
 
     const handleEdit = async (row: RoomGroupDto) => {
         try {
-            const response = await RoomGroupService.getRoomGroupById(row.rGrpID);
+            const response = await roomGroupService.getById(row.rGrpID);
+
             if (response.success) {
                 const roomGroup = response.data;
                 if (roomGroup) {
@@ -179,8 +182,8 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
         setLoading(true);
         try {
             const updatedRoomGroup = { ...row, rActiveYN: "N" };
-            const result = await RoomGroupService.saveRoomGroup(updatedRoomGroup);
-            if (result.success) {
+            const result = await roomGroupService.save(updatedRoomGroup);
+            if (result) {
                 showAlert(
                     "Success",
                     "Room group deactivated successfully",
@@ -192,7 +195,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
             } else {
                 showAlert(
                     "Error",
-                    result.errorMessage || "Failed to delete room group",
+                    "Failed to delete room group",
                     "error"
                 );
             }
@@ -207,6 +210,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
             setLoading(false);
         }
     };
+
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

@@ -13,9 +13,9 @@ import GenericDialog from "../../../../../components/GenericDialog/GenericDialog
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
-import { WrBedService } from "../../../../../services/HospitalAdministrationServices/Room-BedSetUpService/WrBedService";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
+import { wrBedService } from "../../../../../services/GenericEntityService/GenericEntityService";
 interface WrBedDetailsProps {
     roomId: number;
     onClose: () => void;
@@ -45,10 +45,10 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
     const fetchBeds = async () => {
         setLoading(true);
         try {
-            const response = await WrBedService.getAllWrBeds();
+            const response = await wrBedService.getAll();
             if (response.success) {
                 const activeBeds = (response.data || []).filter(
-                    (bed) => bed.rActiveYN === "Y" && bed.rlID === roomId
+                    (bed: WrBedDto) => bed.rActiveYN === "Y" && bed.rlID === roomId
                 );
                 setBeds(activeBeds);
             } else {
@@ -97,13 +97,23 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
     const handleAddDialogSubmit = async () => {
         setLoading(true);
         try {
-            const preparedData = {
-                ...formData,
+            const preparedData: WrBedDto = {
                 wbCatID: formData.wbCatID ? parseInt(formData.wbCatID.toString(), 10) : undefined,
                 bchID: formData.bchID ? parseInt(formData.bchID.toString(), 10) : undefined,
+                bedID: formData.bedID,
+                bedName: formData.bedName ?? "",
+                bedStatus: formData.bchID ? formData.bchName : undefined,
+                rlID: formData.rlID,
+                rActiveYN: "Y",
+                compID: store.getState().userDetails.compID || 0,
+                compCode: store.getState().userDetails.compCode || "",
+                compName: store.getState().userDetails.compName || "",
+                transferYN: "N",
+                blockBedYN: "N",
+                key: parseInt(formData.key.toString(), 10),
             };
 
-            const response = await WrBedService.saveWrBed(preparedData);
+            const response = await wrBedService.save(preparedData);
             if (response.success) {
                 showAlert(
                     "Success",
@@ -114,7 +124,6 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                 );
                 fetchBeds();
                 setIsDialogOpen(false);
-
             } else {
                 showAlert(
                     "Error",
@@ -136,7 +145,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
 
     const handleEdit = async (row: WrBedDto) => {
         try {
-            const response = await WrBedService.getWrBedById(row.bedID);
+            const response = await wrBedService.getById(row.bedID);
             if (response.success) {
                 const bed = response.data;
                 if (bed) {
@@ -167,7 +176,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
         setLoading(true);
         try {
             const updateWrBed = { ...row, rActiveYN: "N" };
-            const result = await WrBedService.saveWrBed(updateWrBed);
+            const result = await wrBedService.save(updateWrBed);
             if (result.success) {
                 showAlert(
                     "Success",
