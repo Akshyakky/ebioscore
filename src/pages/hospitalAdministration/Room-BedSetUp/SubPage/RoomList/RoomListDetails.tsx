@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Grid } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
@@ -8,23 +8,19 @@ import { useLoading } from "../../../../../context/LoadingContext";
 import { showAlert } from "../../../../../utils/Common/showAlert";
 import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../../components/Button/CustomButton";
-import { RoomGroupDto, RoomListDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { RoomListDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
-import { ViewArray } from "@mui/icons-material";
-import { roomListService } from "../../../../../services/GenericEntityService/GenericEntityService";
+import { roomListService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 
 interface RoomListDetailsProps {
-    roomGroup: RoomGroupDto | null;
-    onClose: () => void;
-    onRoomSelect: (roomId: number) => void;
+    roomLists: RoomListDto[];
 }
 
-const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSelect }) => {
-    const [rooms, setRooms] = useState<RoomListDto[]>([]);
+const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
     const { setLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
@@ -35,51 +31,18 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
         rName: "",
         noOfBeds: 0,
         rActiveYN: "Y",
-        rgrpID: roomGroup?.rGrpID || 0,
+        rgrpID: 0,//roomGroup?.rGrpID ||
         compID: store.getState().userDetails.compID || 0,
         transferYN: "Y",
         rLocation: "",
         rLocationID: 0,
-        deptName: roomGroup?.deptName || "",
-        deptID: roomGroup?.deptID || 0,
+        deptName: "",//roomGroup?.deptName 
+        deptID: 0,//roomGroup?.deptID ||
         dulID: 0,
         unitDesc: ''
     });
     const { handleDropdownChange } = useDropdownChange<RoomListDto>(setFormData);
     const { floorValues, unitValues } = useDropdownValues();
-
-    const fetchRooms = async () => {
-        setLoading(true);
-        try {
-            const response = await await roomListService.getAll();
-            if (response.success) {
-                const activeRooms = (response.data || []).filter(
-                    (room: RoomListDto) => room.rActiveYN === "Y" && room.rgrpID === (roomGroup?.rGrpID || 0)
-                );
-                setRooms(activeRooms);
-            } else {
-                showAlert(
-                    "Error",
-                    response.errorMessage || "Failed to fetch room lists",
-                    "error"
-                );
-            }
-        } catch (error) {
-            showAlert(
-                "Error",
-                "An error occurred while fetching room lists.",
-                "error"
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (roomGroup?.rGrpID) {
-            fetchRooms();
-        }
-    }, [roomGroup?.rGrpID]);
 
     const handleAdd = () => {
         setFormData({
@@ -87,13 +50,13 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
             rName: "",
             noOfBeds: 0,
             rActiveYN: "Y",
-            rgrpID: roomGroup?.rGrpID || 0,
+            rgrpID: 0,//roomGroup?.rGrpID ||
             compID: store.getState().userDetails.compID || 0,
             transferYN: "Y",
             rlCode: '',
             rNotes: '',
-            deptName: roomGroup?.deptName || "",
-            deptID: roomGroup?.deptID || 0,
+            deptName: "",//roomGroup?.deptName || 
+            deptID: 0,//roomGroup?.deptID || 
             dulID: 0,
             unitDesc: '',
             rLocation: "",
@@ -115,7 +78,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                         : "Room added successfully",
                     "success"
                 );
-                fetchRooms();
                 setIsDialogOpen(false);
             } else {
                 showAlert(
@@ -174,9 +136,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                     "Room deactivated successfully",
                     "success"
                 );
-                setRooms((prevRooms) =>
-                    prevRooms.filter((room) => room.rlID !== row.rlID)
-                );
             } else {
                 showAlert(
                     "Error",
@@ -204,6 +163,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
 
     const columns = [
         { key: "rName", header: "Room Name", visible: true },
+        { key: "rGrpName", header: "Name", visible: true },
         { key: "rLocation", header: "Room Location", visible: true },
         { key: "deptName", header: "Department", visible: true },
         {
@@ -235,23 +195,8 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                 />
             ),
         },
-        {
-            key: "actions",
-            header: "View/Add",
-            visible: true,
-            render: (row: RoomListDto) => (
-                <CustomButton
-                    onClick={() => onRoomSelect(row.rlID)}
-                    text="View"
-                    variant="contained"
-                    size="small"
-                    color="success"
-                    icon={ViewArray}
-                />
-            ),
-        },
-
     ];
+
     return (
         <>
             <Grid container justifyContent="flex-end" sx={{ marginBottom: 2 }}>
@@ -262,7 +207,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                     variant="contained"
                 />
             </Grid>
-            <CustomGrid columns={columns} data={rooms} />
+            <CustomGrid columns={columns} data={roomLists} />
             <GenericDialog
                 open={isDialogOpen}
                 onClose={handleAddDialogClose}

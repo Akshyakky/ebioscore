@@ -8,7 +8,7 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { ProductTaxListDto } from "../../../../interfaces/InventoryManagement/ProductTaxListDto";
 import { store } from "../../../../store/store";
-import { productTaxService } from "../../../../services/GenericEntityService/GenericEntityService";
+import { productTaxService } from "../../../../services/InventoryManagementService/inventoryManagementService";
 
 interface ProductTaxListDetailsProps {
     selectedData?: ProductTaxListDto;

@@ -1,7 +1,7 @@
 import React from "react";
 import { ProfileMastDto } from "../../../../interfaces/SecurityManagement/ProfileListData";
-import { profileMastService } from "../../../../services/GenericEntityService/GenericEntityService";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
+import { profileMastService } from "../../../../services/SecurityManagementServices/securityManagementService";
 
 interface ProfileListSearchProps {
   open: boolean;

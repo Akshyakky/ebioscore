@@ -1,5 +1,4 @@
 import React, { useCallback } from "react";
-import { Grid, Typography, Box } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
 import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
 import useDropdownChange from "../../../../hooks/useDropdownChange";

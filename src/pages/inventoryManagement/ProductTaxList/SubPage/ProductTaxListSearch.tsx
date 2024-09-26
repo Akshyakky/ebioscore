@@ -1,7 +1,7 @@
 import React from 'react';
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { ProductTaxListDto } from "../../../../interfaces/InventoryManagement/ProductTaxListDto";
-import { productTaxService } from "../../../../services/GenericEntityService/GenericEntityService";
+import { productTaxService } from '../../../../services/InventoryManagementService/inventoryManagementService';
 
 interface ProductTaxListSearchProps {
     open: boolean;

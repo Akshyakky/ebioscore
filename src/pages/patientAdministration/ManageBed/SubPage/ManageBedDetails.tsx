@@ -4,13 +4,11 @@ import {
     CircularProgress, Tooltip, IconButton, TextField, useTheme, useMediaQuery
 } from "@mui/material";
 import { RoomGroupDto, RoomListDto, WrBedDto } from '../../../../interfaces/HospitalAdministration/Room-BedSetUpDto';
-import { RoomGroupService } from '../../../../services/HospitalAdministrationServices/Room-BedSetUpService/RoomGroupService';
-import { getAllRoomList } from '../../../../services/HospitalAdministrationServices/Room-BedSetUpService/RoomListService';
-import { getAllWrBeds } from '../../../../services/HospitalAdministrationServices/Room-BedSetUpService/WrBedService';
 import CustomGrid, { Column } from '../../../../components/CustomGrid/CustomGrid';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
 import BedIcon from '@mui/icons-material/Hotel';
+import { roomGroupService, roomListService, wrBedService } from '../../../../services/HospitalAdministrationServices/hospitalAdministrationService';
 
 const ManageBedDetails: React.FC = () => {
     const [roomGroups, setRoomGroups] = useState<RoomGroupDto[]>([]);
@@ -35,24 +33,27 @@ const ManageBedDetails: React.FC = () => {
         setLoading(true);
         try {
             const [roomGroupsResult, roomListResult, bedsResult] = await Promise.all([
-                RoomGroupService.getAllRoomGroup(),
-                getAllRoomList(),
-                getAllWrBeds()
+                roomGroupService.getAll(),
+                roomListService.getAll(),
+                wrBedService.getAll(),
             ]);
 
             if (roomGroupsResult.success) setRoomGroups(roomGroupsResult.data || []);
             if (roomListResult.success) {
                 setRoomList(roomListResult.data || []);
                 if (bedsResult.success) {
-                    const bedsByRoomMap = bedsResult.data?.reduce((acc, bed) => {
-                        acc[bed.rlID] = [...(acc[bed.rlID] || []), bed];
-                        return acc;
-                    }, {} as { [key: number]: WrBedDto[] });
+                    const bedsByRoomMap = bedsResult.data?.reduce(
+                        (acc: { [key: number]: WrBedDto[] }, bed: WrBedDto) => {
+                            acc[bed.rlID] = [...(acc[bed.rlID] || []), bed];
+                            return acc;
+                        },
+                        {} as { [key: number]: WrBedDto[] }
+                    );
                     setBedsByRoom(bedsByRoomMap || {});
                 }
             }
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error("Error fetching data:", error);
         } finally {
             setLoading(false);
         }

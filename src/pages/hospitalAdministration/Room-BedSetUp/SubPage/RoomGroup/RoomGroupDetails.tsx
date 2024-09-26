@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Grid } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
@@ -15,20 +15,14 @@ import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDrop
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
-import { roomGroupService } from "../../../../../services/GenericEntityService/GenericEntityService";
-
-interface DropdownOption {
-    value: string;
-    label: string;
-}
+import { DropdownOption } from "../../../../../interfaces/Common/DropdownOption";
+import { roomGroupService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 
 interface RoomGroupDetailsProps {
-    editData?: RoomGroupDto;
-    handleAddRoom: (roomGroup: RoomGroupDto) => void;
+    roomGroups: RoomGroupDto[];
 }
 
-const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) => {
-    const [roomGroups, setRoomGroups] = useState<RoomGroupDto[]>([]);
+const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
     const { setLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
@@ -58,38 +52,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
 
     const { handleDropdownChange } = useDropdownChange<RoomGroupDto>(setFormData);
     const { departmentValues, genderValues } = useDropdownValues();
-
-    const fetchRoomGroups = async () => {
-        setLoading(true);
-        try {
-            const response = await roomGroupService.getAll();
-            if (response.success) {
-                const activeRoomGroups = (response.data || []).filter(
-                    (group: RoomGroupDto) => group.rActiveYN === "Y"
-
-                );
-                setRoomGroups(activeRoomGroups);
-            } else {
-                showAlert(
-                    "Error",
-                    response.errorMessage || "Failed to fetch room groups",
-                    "error"
-                );
-            }
-        } catch (error) {
-            showAlert(
-                "Error",
-                "An error occurred while fetching room groups.",
-                "error"
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchRoomGroups();
-    }, []);
 
     const handleAdd = (isSubGroup: boolean = false, parentGroup?: RoomGroupDto) => {
         setFormData({
@@ -124,7 +86,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
                         : "Room group added successfully",
                     "success"
                 );
-                fetchRoomGroups();
                 setIsDialogOpen(false);
             } else {
                 showAlert(
@@ -185,9 +146,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
                     "Room group deactivated successfully",
                     "success"
                 );
-                setRoomGroups((prevGroups) =>
-                    prevGroups.filter((group) => group.rGrpID !== row.rGrpID)
-                );
             } else {
                 showAlert(
                     "Error",
@@ -212,10 +170,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
     ) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleAddRoomClick = (roomGroup: RoomGroupDto) => {
-        handleAddRoom(roomGroup);
     };
 
     const columns = [
@@ -268,21 +222,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
                         color="secondary"
                     />
                 ) : <></>
-            ),
-        },
-        {
-            key: "actions",
-            header: "Add Room",
-            visible: true,
-            render: (row: RoomGroupDto) => (
-                <CustomButton
-                    onClick={() => handleAddRoomClick(row)}
-                    icon={AddIcon}
-                    text="Room"
-                    variant="contained"
-                    size="small"
-                    color="success"
-                />
             ),
         },
     ];

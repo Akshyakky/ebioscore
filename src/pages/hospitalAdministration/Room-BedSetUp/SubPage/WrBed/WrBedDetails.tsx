@@ -15,14 +15,12 @@ import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
-import { wrBedService } from "../../../../../services/GenericEntityService/GenericEntityService";
+import { wrBedService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 interface WrBedDetailsProps {
-    roomId: number;
-    onClose: () => void;
+    beds: WrBedDto[];
 }
 
-const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
-    const [beds, setBeds] = useState<WrBedDto[]>([]);
+const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
     const { setLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
@@ -30,7 +28,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
         bchID: 0,
         bedID: 0,
         bedName: "",
-        rlID: roomId,
+        rlID: 0,//roomId
         rActiveYN: "Y",
         compID: store.getState().userDetails.compID || 0,
         transferYN: "Y",
@@ -42,45 +40,12 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
     const { bedCategoryValues, serviceValues } = useDropdownValues();
     const [, setIsSubGroup] = useState(false);
 
-    const fetchBeds = async () => {
-        setLoading(true);
-        try {
-            const response = await wrBedService.getAll();
-            if (response.success) {
-                const activeBeds = (response.data || []).filter(
-                    (bed: WrBedDto) => bed.rActiveYN === "Y" && bed.rlID === roomId
-                );
-                setBeds(activeBeds);
-            } else {
-                showAlert(
-                    "Error",
-                    response.errorMessage || "Failed to fetch beds",
-                    "error"
-                );
-            }
-        } catch (error) {
-            showAlert(
-                "Error",
-                "An error occurred while fetching beds.",
-                "error"
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (roomId) {
-            fetchBeds();
-        }
-    }, [roomId]);
-
     const handleAdd = (isSubGroup: boolean = false, parentGroup?: WrBedDto) => {
         setFormData({
             bchID: 0,
             bedID: 0,
             bedName: "",
-            rlID: roomId,
+            rlID: 0,//roomId
             rActiveYN: "Y",
             compID: store.getState().userDetails.compID || 0,
             transferYN: "Y",
@@ -121,7 +86,6 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                         : "Bed added successfully",
                     "success"
                 );
-                fetchBeds();
                 setIsDialogOpen(false);
             } else {
                 showAlert(
@@ -180,9 +144,6 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                     "Bed deactivated successfully",
                     "success"
                 );
-                setBeds((prevBeds) =>
-                    prevBeds.filter((bed) => bed.bedID !== row.bedID)
-                );
             } else {
                 showAlert(
                     "Error",
@@ -211,6 +172,8 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
 
     const columns = [
         { key: "bedName", header: "Bed Name", visible: true },
+        { key: "rGrpName", header: "RG Name", visible: true },
+        { key: "rName", header: "Room Name", visible: true },
         { key: "bchName", header: "Bed Status", visible: true },
         {
             key: "actions",

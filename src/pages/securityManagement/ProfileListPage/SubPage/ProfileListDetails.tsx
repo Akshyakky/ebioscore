@@ -11,7 +11,7 @@ import { ProfileMastDto } from "../../../../interfaces/SecurityManagement/Profil
 import { useLoading } from "../../../../context/LoadingContext";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { profileMastService } from "../../../../services/GenericEntityService/GenericEntityService";
+import { profileMastService } from "../../../../services/SecurityManagementServices/securityManagementService";
 
 const ProfileDetails = () => {
   const { setLoading } = useLoading();

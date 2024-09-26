@@ -14,15 +14,16 @@ import { DeptUnitListService } from "../../services/HospitalAdministrationServic
 import { ServiceTypeService } from "../../services/BillingServices/ServiceTypeServices";
 import { WardCategoryService } from "../../services/HospitalAdministrationServices/ContactListService/WardCategoryService/WardCategoryService";
 import {
-  consultantRoleService,
-  medicationFormService,
-  medicationGenericService,
   productGroupService,
   productSubGroupService,
   productTaxService,
   productUnitService,
-} from "../../services/GenericEntityService/GenericEntityService";
-import { ProductListService } from "../../services/InventoryManagementService/ProductListService/ProductListService";
+} from "../../services/InventoryManagementService/inventoryManagementService";
+import {
+  consultantRoleService,
+  medicationFormService,
+  medicationGenericService,
+} from "../../services/ClinicalManagementServices/clinicalManagementService";
 
 // Cache object to store API responses
 const apiCache: { [key: string]: DropdownOption[] } = {};

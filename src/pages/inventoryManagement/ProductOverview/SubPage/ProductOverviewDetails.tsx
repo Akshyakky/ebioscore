@@ -16,9 +16,9 @@ import CustomButton from "../../../../components/Button/CustomButton";
 import AddIcon from "@mui/icons-material/Add";
 import Close from "@mui/icons-material/Close";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import { productOverviewService } from "../../../../services/GenericEntityService/GenericEntityService";
 import { store } from "../../../../store/store";
 import { ChangeCircleRounded } from "@mui/icons-material";
+import { productOverviewService } from "../../../../services/InventoryManagementService/inventoryManagementService";
 
 interface ProductOverviewDetailProps {
     selectedData?: ProductOverviewDto; // Data for editing
