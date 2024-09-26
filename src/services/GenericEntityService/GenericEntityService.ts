@@ -30,6 +30,20 @@ interface ApiConfig {
   [key: string]: string;
 }
 
+interface JoinConfig {
+  joinType: "inner" | "left";
+  joinEntityName: string;
+  leftKeySelector: string;
+  rightKeySelector: string;
+  resultSelector: string;
+}
+
+interface MultiJoinDataRequest<T> {
+  mainFilter: string;
+  joinConfigs: JoinConfig[];
+  selector: string;
+}
+
 // Load environment variables
 const apiConfig: ApiConfig = {
   AUTH_URL: import.meta.env.VITE_AUTH_URL,
@@ -104,6 +118,15 @@ class GenericEntityService<T extends BaseDto> {
     );
   }
 
+  async getMultiJoinData<TResult>(
+    request: MultiJoinDataRequest<T>
+  ): Promise<TResult[]> {
+    return this.apiService.post<TResult[]>(
+      `${this.baseEndpoint}/GetMultiJoinData`,
+      request,
+      this.getToken()
+    );
+  }
   // Add any additional common methods here
 }
 
