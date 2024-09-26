@@ -65,7 +65,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                 );
             }
         } catch (error) {
-            console.error("Error fetching room lists:", error);
             showAlert(
                 "Error",
                 "An error occurred while fetching room lists.",
@@ -126,7 +125,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                 );
             }
         } catch (error) {
-            console.error("Error submitting room:", error);
             showAlert("Error", "An error occurred during submission.", "error");
         } finally {
             setLoading(false);
@@ -157,7 +155,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                 );
             }
         } catch (error) {
-            console.error("Error fetching room details:", error);
             showAlert(
                 "Error",
                 "An error occurred while fetching room details.",
@@ -188,7 +185,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                 );
             }
         } catch (error) {
-            console.error("Error deleting room:", error);
             showAlert(
                 "Error",
                 "An error occurred while deleting the room.",

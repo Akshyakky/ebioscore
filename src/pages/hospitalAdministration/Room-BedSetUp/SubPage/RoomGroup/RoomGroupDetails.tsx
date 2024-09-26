@@ -77,7 +77,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
                 );
             }
         } catch (error) {
-            console.error("Error fetching room groups:", error);
             showAlert(
                 "Error",
                 "An error occurred while fetching room groups.",
@@ -116,7 +115,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
     const handleAddDialogSubmit = async () => {
         setLoading(true);
         try {
-            debugger
             const response = await roomGroupService.save(formData);
             if (response) {
                 showAlert(
@@ -136,7 +134,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
                 );
             }
         } catch (error) {
-            console.error("Error submitting room group:", error);
             showAlert("Error", "An error occurred during submission.", "error");
         } finally {
             setLoading(false);
@@ -169,7 +166,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
                 );
             }
         } catch (error) {
-            console.error("Error fetching room group details:", error);
             showAlert(
                 "Error",
                 "An error occurred while fetching room group details.",
@@ -200,7 +196,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ handleAddRoom }) =>
                 );
             }
         } catch (error) {
-            console.error("Error deleting room group:", error);
             showAlert(
                 "Error",
                 "An error occurred while deleting the room group.",

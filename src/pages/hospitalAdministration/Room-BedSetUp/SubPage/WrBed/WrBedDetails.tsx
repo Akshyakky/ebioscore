@@ -59,7 +59,6 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                 );
             }
         } catch (error) {
-            console.error("Error fetching beds:", error);
             showAlert(
                 "Error",
                 "An error occurred while fetching beds.",
@@ -132,7 +131,6 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                 );
             }
         } catch (error) {
-            console.error("Error submitting bed:", error);
             showAlert("Error", "An error occurred during submission.", "error");
         } finally {
             setLoading(false);
@@ -163,7 +161,6 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ roomId, onClose }) => {
                 );
             }
         } catch (error) {
-            console.error("Error fetching bed details:", error);
             showAlert(
                 "Error",
                 "An error occurred while fetching bed details.",
