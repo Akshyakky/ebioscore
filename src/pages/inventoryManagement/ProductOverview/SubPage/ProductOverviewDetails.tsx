@@ -18,13 +18,18 @@ import Close from "@mui/icons-material/Close";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import { productOverviewService } from "../../../../services/GenericEntityService/GenericEntityService";
 import { store } from "../../../../store/store";
+import { ChangeCircleRounded } from "@mui/icons-material";
 
 interface ProductOverviewDetailProps {
-    selectedData?: ProductOverviewDto;
+    selectedData?: ProductOverviewDto; // Data for editing
+    onChangeDepartment?: () => void;
+    editData?: ProductOverviewDto; // For editing existing data
 }
 
 const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
     selectedData,
+    onChangeDepartment,
+    editData, // Pass edit data as prop
 }) => {
     const [formState, setFormState] = useState<ProductOverviewDto>({
         pvID: 0,
@@ -56,6 +61,8 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
         rNotes: "",
     });
 
+
+
     const [productOptions, setProductOptions] = useState<ProductListDto[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedProductData, setSelectedProductData] = useState<
@@ -63,9 +70,108 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
     >([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [fieldsDisabled, setFieldsDisabled] = useState(false);
-    const [convertedLeadTime, setConvertedLeadTime] = useState<number | null>(
+    const [, setConvertedLeadTime] = useState<number | null>(
         null
     );
+
+
+    useEffect(() => {
+        if (selectedData?.pvID) {
+
+            setFormState({
+                ...selectedData, // Populate form with edit data
+                compID: store.getState().userDetails.compID || 0,
+            });
+            setDialogOpen(true);
+        } else {
+            handleClear();
+        }
+    }, [selectedData]);
+    const [isHovered, setIsHovered] = useState(false);
+
+    const handleMouseEnter = () => {
+        setIsHovered(true);
+    };
+
+    const handleMouseLeave = () => {
+        setIsHovered(false);
+    };
+
+    const handleInputChange = useCallback(
+        (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+            const { name, value } = e.target;
+            setFormState((prevState) => ({
+                ...prevState,
+                [name]: value,
+            }));
+        },
+        []
+    );
+
+    const handleDropdownChange = (e: SelectChangeEvent<string>) => {
+        const { name, value } = e.target;
+        setFormState((prevState) => ({
+            ...prevState,
+            [name]: value,
+        }));
+    };
+
+    const handleClear = () => {
+        setFormState({
+            pvID: 0,
+            productID: 0,
+            productCode: "",
+            fsbCode: "N",
+            rackNo: "",
+            shelfNo: "",
+            minLevelUnits: 0,
+            maxLevelUnits: 0,
+            dangerLevelUnits: 0,
+            reOrderLevel: 0,
+            avgDemand: 0,
+            stockLevel: 0,
+            supplierAllocation: "N",
+            poStatus: "N",
+            deptID: 0,
+            department: "",
+            defaultYN: "N",
+            isAutoIndentYN: "N",
+            productLocation: "",
+            rActiveYN: "Y",
+            compID: store.getState().userDetails.compID || 0,
+            compCode: "",
+            compName: "",
+            transferYN: "N",
+            rNotes: "",
+        });
+    };
+
+    const handleSave = async () => {
+        try {
+            debugger
+            const productOverview: ProductOverviewDto = {
+                ...formState,
+                fsbCode: formState.fsbCode || "N",
+                supplierAllocation: formState.supplierAllocation || "N",
+                poStatus: formState.poStatus || "N",
+                defaultYN: formState.defaultYN || "N",
+                isAutoIndentYN: formState.isAutoIndentYN || "N",
+                deptID: formState.deptID || 1,
+                minLevelUnits: formState.minLevelUnits || 0,
+                maxLevelUnits: formState.maxLevelUnits || 0,
+                dangerLevelUnits: formState.dangerLevelUnits || 0,
+                reOrderLevel: formState.reOrderLevel || 0,
+                avgDemand: formState.avgDemand || 0,
+                stockLevel: formState.stockLevel || 0,
+                compID: store.getState().userDetails.compID || 0,
+            };
+
+            await productOverviewService.save(productOverview);
+            showAlert("success", "Product saved successfully!", "success");
+        } catch (error) {
+            showAlert("Error", "Failed to save product.", "error");
+        }
+    };
 
     const options = [
         { value: "days", label: "Days" },
@@ -74,7 +180,6 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
         { value: "years", label: "Years" },
     ];
 
-    // Function to convert lead time to days
     const convertToDays = useCallback(() => {
         const { leadTime, leadTimeUnit } = formState;
 
@@ -98,25 +203,6 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
     useEffect(() => {
         convertToDays();
     }, [formState.leadTime, formState.leadTimeUnit, convertToDays]);
-
-    const handleInputChange = useCallback(
-        (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
-            const { name, value } = e.target;
-            setFormState((prevState) => ({
-                ...prevState,
-                [name]: value,
-            }));
-        },
-        []
-    );
-
-    const handleDropdownChange = (e: SelectChangeEvent<string>) => {
-        const { name, value } = e.target;
-        setFormState((prevState) => ({
-            ...prevState,
-            [name]: value,
-        }));
-    };
 
     const fetchProductSuggestions = useCallback(
         async (inputValue: string): Promise<void> => {
@@ -168,7 +254,6 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
                 ...prevState,
                 productCode: selectedProductCode,
             }));
-
             try {
                 const response = await ProductListService.getAllProductList();
                 if (response.success && response.data) {
@@ -194,65 +279,64 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
         []
     );
 
-    const handleClear = () => {
-        setFormState({
-            pvID: 0,
-            productID: 0,
-            productCode: "",
-            fsbCode: "N",
-            rackNo: "",
-            shelfNo: "",
-            minLevelUnits: 0,
-            maxLevelUnits: 0,
-            dangerLevelUnits: 0,
-            reOrderLevel: 0,
-            avgDemand: 0,
-            stockLevel: 0,
-            supplierAllocation: "N",
-            poStatus: "N",
-            deptID: 0,
-            department: "",
-            defaultYN: "N",
-            isAutoIndentYN: "N",
-            productLocation: "",
-            rActiveYN: "Y",
-            compID: store.getState().userDetails.compID || 0,
-            compCode: "",
-            compName: "",
-            transferYN: "N",
-            rNotes: "",
-        });
-        setSelectedProductData([]);
-        setFieldsDisabled(false);
-    };
-    const handleSave = async () => {
-        try {
-            const productOverview: ProductOverviewDto = {
-                ...formState,
-                fsbCode: formState.fsbCode || "N",
-                supplierAllocation: formState.supplierAllocation || "N",
-                poStatus: formState.poStatus || "N",
-                defaultYN: formState.defaultYN || "N",
-                isAutoIndentYN: formState.isAutoIndentYN || "N",
-                deptID: formState.deptID || 1,
-                minLevelUnits: formState.minLevelUnits || 0,
-                maxLevelUnits: formState.maxLevelUnits || 0,
-                dangerLevelUnits: formState.dangerLevelUnits || 0,
-                reOrderLevel: formState.reOrderLevel || 0,
-                avgDemand: formState.avgDemand || 0,
-                stockLevel: formState.stockLevel || 0,
-                compID: store.getState().userDetails.compID || 0,
-            };
+    //     setFormState({
+    //         pvID: 0,
+    //         productID: 0,
+    //         productCode: "",
+    //         fsbCode: "N",
+    //         rackNo: "",
+    //         shelfNo: "",
+    //         minLevelUnits: 0,
+    //         maxLevelUnits: 0,
+    //         dangerLevelUnits: 0,
+    //         reOrderLevel: 0,
+    //         avgDemand: 0,
+    //         stockLevel: 0,
+    //         supplierAllocation: "N",
+    //         poStatus: "N",
+    //         deptID: 0,
+    //         department: "",
+    //         defaultYN: "N",
+    //         isAutoIndentYN: "N",
+    //         productLocation: "",
+    //         rActiveYN: "Y",
+    //         compID: store.getState().userDetails.compID || 0,
+    //         compCode: "",
+    //         compName: "",
+    //         transferYN: "N",
+    //         rNotes: "",
+    //     });
+    //     setSelectedProductData([]);
+    //     setFieldsDisabled(false);
+    // };
+    // const handleSave = async () => {
+    //     try {
+    //         const productOverview: ProductOverviewDto = {
+    //             ...formState,
+    //             fsbCode: formState.fsbCode || "N",
+    //             supplierAllocation: formState.supplierAllocation || "N",
+    //             poStatus: formState.poStatus || "N",
+    //             defaultYN: formState.defaultYN || "N",
+    //             isAutoIndentYN: formState.isAutoIndentYN || "N",
+    //             deptID: formState.deptID || 1,
+    //             minLevelUnits: formState.minLevelUnits || 0,
+    //             maxLevelUnits: formState.maxLevelUnits || 0,
+    //             dangerLevelUnits: formState.dangerLevelUnits || 0,
+    //             reOrderLevel: formState.reOrderLevel || 0,
+    //             avgDemand: formState.avgDemand || 0,
+    //             stockLevel: formState.stockLevel || 0,
+    //             compID: store.getState().userDetails.compID || 0,
+    //         };
 
-            const service = productOverviewService;
-            await service.save(productOverview);
-            showAlert("success", "Product saved successfully!", "success");
-            setDialogOpen(false);
-        } catch (error) {
-            showAlert("Error", "Failed to save product.", "error");
-            console.error(error);
-        }
-    };
+    //         const service = productOverviewService;
+    //         await service.save(productOverview);
+    //         showAlert("success", "Product saved successfully!", "success");
+    //         setDialogOpen(false);
+    //     } catch (error) {
+    //         showAlert("Error", "Failed to save product.", "error");
+    //         console.error(error);
+    //     }
+    // };
 
     const handleEdit = (productID: number) => {
         setDialogOpen(true);
@@ -297,8 +381,15 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
             <Typography variant="h6" id="product-overview-details-header">
                 PRODUCT OVERVIEW DETAILS
             </Typography>
-            <Grid container spacing={2} alignItems="flex-start">
-                <Grid item xs={12} sm={6} md={3} lg={3} xl={3}>
+
+            <Grid
+                item
+                container
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ width: "100%" }}
+            >
+                <Grid item xs={12} md={3}>
                     <FormField
                         ControlID="productCode"
                         label="Product Code"
@@ -315,6 +406,25 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
                         gridProps={{ xs: 12 }}
                     />
                 </Grid>
+                <Grid
+                    item
+
+                >
+                    <CustomButton
+                        onClick={onChangeDepartment}
+                        text={selectedData?.department || "Not Selected"}
+                        variant="contained"
+                        icon={ChangeCircleRounded}
+                        size="small"
+                        sx={{
+                            backgroundColor: "#ff5722",
+                            color: "white",
+                            "&:hover": {
+                                backgroundColor: "#e64a19",
+                            },
+                        }}
+                    />
+                </Grid>
             </Grid>
 
             <Grid container spacing={2}>
@@ -325,7 +435,6 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
                         </Grid>
                     )}
             </Grid>
-
             <FormSaveClearButton
                 clearText="Clear"
                 saveText="Save"
@@ -344,18 +453,18 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
                 actions={
                     <>
                         <CustomButton
-                            onClick={handleSave}
-                            color="success"
-                            text="Save"
-                            variant="contained"
-                            icon={SaveIcon}
-                        />
-                        <CustomButton
                             onClick={() => setDialogOpen(false)}
                             color="error"
                             text="Close"
                             variant="contained"
                             icon={Close}
+                        />
+                        <CustomButton
+                            onClick={handleSave}
+                            color="success"
+                            text="Save"
+                            variant="contained"
+                            icon={SaveIcon}
                         />
                     </>
                 }
@@ -429,7 +538,6 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
                         ControlID="dialogLeadTime"
                         name="leadTime"
                         placeholder="Enter Lead Time"
-                        gridProps={{ xs: 12, md: 2 }}
                     />
                     <FormField
                         type="select"
@@ -439,14 +547,13 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
                         ControlID="leadTimeUnit"
                         name="leadTimeUnit"
                         options={options}
-                        gridProps={{ xs: 12, md: 3.1 }}
                     />
 
-                    <Grid spacing={2}>
+                    {/* <Grid spacing={2}>
                         <Typography variant="body1" mt={5} ml={2}>
                             {convertedLeadTime ? `${convertedLeadTime} Days` : "N/A"}
                         </Typography>
-                    </Grid>
+                    </Grid> */}
                     <FormField
                         type="number"
                         label="Danger Level"
@@ -473,7 +580,7 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
                         ControlID="dialogAverageDemand"
                         name="avgDemand"
                         placeholder="Average Demand"
-                        gridProps={{ xs: 12, md: 2 }}
+                    // gridProps={{ xs: 12, md: 2 }}
                     />
 
                     <FormField
@@ -484,7 +591,7 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
                         ControlID="avgDemandUnit"
                         name="avgDemandUnit"
                         options={options}
-                        gridProps={{ xs: 12, md: 3.1 }}
+                    // gridProps={{ xs: 12, md: 3.1 }}
                     />
                     {/* <Grid container spacing={2}>
                         <Typography variant="body1" mt={5} >
@@ -521,7 +628,7 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
                             { value: "N", label: "Manual" },
                         ]}
                         ControlID="poStatus"
-                        gridProps={{ xs: 12, md: 4 }}
+                        gridProps={{ xs: 12, md: 4, mt: 2 }}
                         inline={true}
                     />
                 </Grid>

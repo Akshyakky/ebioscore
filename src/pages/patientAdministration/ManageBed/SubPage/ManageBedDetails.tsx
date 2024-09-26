@@ -67,13 +67,22 @@ const ManageBedDetails: React.FC = () => {
                 <Typography
                     variant="body1"
                     onClick={() => handleRoomNameClick(item)}
-                    sx={{ cursor: 'pointer', fontWeight: 600, '&:hover': { textDecoration: 'underline' } }}
+                    sx={{
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        '&:hover': { textDecoration: 'underline' },
+                        color: selectedRoomGroup && selectedRoomGroup.rGrpID === item.rGrpID ? 'primary.main' : 'inherit', // Highlight selected room group
+                        backgroundColor: selectedRoomGroup && selectedRoomGroup.rGrpID === item.rGrpID ? '#f0f0f0' : 'transparent', // Optional background highlight
+                        padding: '4px 8px',
+                        borderRadius: '4px'
+                    }}
                 >
                     {item.rGrpName}
                 </Typography>
             ),
         },
     ];
+
 
     const getBedStyles = (bedStatus: string | undefined) => {
         const colors = {
@@ -136,8 +145,8 @@ const ManageBedDetails: React.FC = () => {
 
     return (
         <Box sx={{ minHeight: '80vh', minWidth: '100%' }}>
-            <Grid container spacing={3}>
-                <Grid item xs={12} md={selectedRoomGroup ? 3 : 12}>
+            <Grid container spacing={3} >
+                <Grid item xs={12} md={selectedRoomGroup ? 3 : 12} >
                     <Paper>
                         <Typography variant="h6" gutterBottom sx={{ p: 2 }}>Room Group Details</Typography>
                         <Divider />

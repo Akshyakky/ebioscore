@@ -1,7 +1,6 @@
-import { ProductOverviewDto } from "../../../../interfaces/InventoryManagement/ProductOverviewDto";
+import React, { useCallback, useState } from 'react';
 import { Box, Container, Typography } from "@mui/material";
 import ProductOverviewDetail from "../SubPage/ProductOverviewDetails";
-import { useState } from "react";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import FormField from "../../../../components/FormField/FormField";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
@@ -9,6 +8,10 @@ import useDropdownChange from "../../../../hooks/useDropdownChange";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { ThumbUp } from "@mui/icons-material";
 import Close from "@mui/icons-material/Close";
+import { ProductOverviewDto } from "../../../../interfaces/InventoryManagement/ProductOverviewDto";
+import ActionButtonGroup, { ButtonProps } from '../../../../components/Button/ActionButtonGroup';
+import ProductOverviewSearch from '../SubPage/ProductOverviewSearch';
+import Search from "@mui/icons-material/Search";
 
 const ProductOverviewPage: React.FC = () => {
     const [selectedData, setSelectedData] = useState<ProductOverviewDto>({
@@ -18,6 +21,7 @@ const ProductOverviewPage: React.FC = () => {
         supplierAllocation: '',
         poStatus: '',
         deptID: 0,
+        department: '',
         defaultYN: 'N',
         isAutoIndentYN: 'N',
         rActiveYN: 'Y',
@@ -29,8 +33,9 @@ const ProductOverviewPage: React.FC = () => {
 
     const [dialogOpen, setDialogOpen] = useState(true);
     const [isDepartmentSelected, setIsDepartmentSelected] = useState(false);
-
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const { handleDropdownChange } = useDropdownChange<ProductOverviewDto>(setSelectedData);
+
     const handleCloseDialog = () => {
         setDialogOpen(false);
     };
@@ -44,18 +49,46 @@ const ProductOverviewPage: React.FC = () => {
         }
     };
 
+    const handleDepartmentChange = () => {
+        setDialogOpen(true);
+    };
+    const handleAdvancedSearch = useCallback(() => {
+        setIsSearchOpen(true);
+    }, []);
+
+    const handleCloseSearch = useCallback(() => {
+        setIsSearchOpen(false);
+    }, []);
+
+    const handleSelect = useCallback((data: ProductOverviewDto) => {
+        setSelectedData(data);
+    }, []);
+    const actionButtons: ButtonProps[] = [
+        {
+            variant: "contained",
+            icon: Search,
+            text: "Advanced Search",
+            onClick: handleAdvancedSearch,
+        },
+    ];
     const { departmentValues } = useDropdownValues();
     const isSubmitted = false;
-
     return (
         <Container maxWidth={false}>
+            <Box sx={{ marginBottom: 2 }}>
+                <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
+            </Box>
             <Box sx={{ marginBottom: 2 }} />
 
-            {isDepartmentSelected && <ProductOverviewDetail selectedData={selectedData} />}
-
+            {isDepartmentSelected && (
+                <ProductOverviewDetail
+                    selectedData={selectedData}
+                    onChangeDepartment={handleDepartmentChange}
+                />
+            )}
             <GenericDialog
                 open={dialogOpen}
-                onClose={() => { handleCloseDialog }}
+                onClose={handleCloseDialog}
                 title="Select Department"
                 maxWidth="sm"
             >
@@ -71,7 +104,7 @@ const ProductOverviewPage: React.FC = () => {
                     options={departmentValues}
                     onChange={handleDropdownChange(
                         ["deptID"],
-                        ["deptName"],
+                        ["department"],
                         departmentValues
                     )}
                     isMandatory={true}
@@ -97,6 +130,12 @@ const ProductOverviewPage: React.FC = () => {
                     />
                 </Box>
             </GenericDialog>
+            <ProductOverviewSearch
+                open={isSearchOpen}
+                onClose={handleCloseSearch}
+                onSelect={handleSelect}
+                selectedDeptID={selectedData.deptID}  // Pass the selected department ID here
+            />
         </Container>
     );
 };
