@@ -13,7 +13,6 @@ const getToken = () => store.getState().userDetails.token!;
 export const saveRoomList = async (
   roomListDto: RoomListDto
 ): Promise<OperationResult<RoomListDto>> => {
-  debugger;
   return apiService.post<OperationResult<RoomListDto>>(
     "RoomList/SaveRoomList",
     roomListDto,
@@ -24,7 +23,6 @@ export const saveRoomList = async (
 export const getAllRoomList = async (): Promise<
   OperationResult<RoomListDto[]>
 > => {
-  debugger;
   return apiService.get<OperationResult<RoomListDto[]>>(
     "RoomList/GetAllRoomList",
     getToken()

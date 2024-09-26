@@ -5,9 +5,14 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PersonIcon from '@mui/icons-material/Person';
 import DomainIcon from '@mui/icons-material/Domain';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import CloseIcon from '@mui/icons-material/Close';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import PeopleIcon from '@mui/icons-material/People';
+import PrintIcon from '@mui/icons-material/Print';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import AutocompleteTextBox from '../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox';
 import { AppointmentService } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
-import CloseIcon from '@mui/icons-material/Close';
+import AppointmentSearch from './AppointmentList';
 
 interface SchedulerHeaderProps {
     onRefresh: () => void;
@@ -23,6 +28,10 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = React.memo(({ onRefresh,
     const [suggestions, setSuggestions] = useState<{ label: string; value: number; rLotYN?: string }[]>([]);
     const [rLotYN, setRLotYN] = useState<string | undefined>(undefined);
     const inputRef = useRef<HTMLInputElement>(null);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+    const handleOpenSearch = () => setIsSearchOpen(true);
+    const handleCloseSearch = () => setIsSearchOpen(false);
 
     useEffect(() => {
         if (!searchValue) {
@@ -110,11 +119,20 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = React.memo(({ onRefresh,
         onSearchSelection();
     };
 
+    const handleMenuItemClick = (action: string) => {
+        switch (action) {
+            case 'appointmentList':
+                handleOpenSearch();
+                break;
+            // Add cases for other menu items as needed
+            default:
+                break;
+        }
+        handleMenuClose();
+    };
+
     return (
-        <Box sx={{
-            backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#f5f5f5',
-            color: theme.palette.text.primary,
-        }}>
+        <Box>
             <Grid container alignItems="center" justifyContent="space-between">
                 <Grid item xs={12} sm={8} md={6}>
                     <Box display="flex" alignItems="center">
@@ -131,7 +149,7 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = React.memo(({ onRefresh,
                             ref={inputRef}
                             InputProps={{
                                 startAdornment: (
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', }}>
                                         <Tooltip title="Set Default">
                                             <Checkbox
                                                 checked={checked}
@@ -141,10 +159,10 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = React.memo(({ onRefresh,
                                             />
                                         </Tooltip>
                                         {searchType === 'consultant' ?
-                                            <PersonIcon sx={{ mr: 1, color: theme.palette.text.secondary }} /> :
-                                            <DomainIcon sx={{ mr: 1, color: theme.palette.text.secondary }} />
+                                            <PersonIcon sx={{ mr: 1, }} /> :
+                                            <DomainIcon sx={{ mr: 1, }} />
                                         }
-                                        <Typography variant="body2" sx={{ mr: 1, color: theme.palette.text.secondary }}>
+                                        <Typography variant="body2" sx={{ mr: 1, }}>
                                             {searchType === 'consultant' ? 'Consultant' : 'Resource'}
                                         </Typography>
                                     </Box>
@@ -169,10 +187,6 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = React.memo(({ onRefresh,
                                         </Tooltip>
                                     </Box>
                                 ),
-                                style: {
-                                    backgroundColor: theme.palette.background.default,
-                                    color: theme.palette.text.primary,
-                                }
                             }}
                             size='small'
                         />
@@ -182,14 +196,14 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = React.memo(({ onRefresh,
                 <Grid item xs={12} sm={4} md={6}>
                     <Box display="flex" justifyContent="flex-end" alignItems="center">
                         <Tooltip title="Refresh">
-                            <IconButton onClick={onRefresh} sx={{ ml: 1, color: theme.palette.text.primary }}>
+                            <IconButton onClick={onRefresh} sx={{ ml: 1 }}>
                                 <RefreshIcon />
                                 <Typography variant="body2" sx={{ ml: 0.5 }}>Refresh</Typography>
                             </IconButton>
                         </Tooltip>
 
                         <Tooltip title="Options">
-                            <IconButton onClick={handleMenuClick} sx={{ color: theme.palette.text.primary }}>
+                            <IconButton onClick={handleMenuClick} >
                                 <MoreVertIcon />
                                 <Typography variant="body2" sx={{ ml: 0.5 }}>Options</Typography>
                             </IconButton>
@@ -198,20 +212,24 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = React.memo(({ onRefresh,
                             anchorEl={anchorEl}
                             open={Boolean(anchorEl)}
                             onClose={handleMenuClose}
-                            PaperProps={{
-                                sx: {
-                                    backgroundColor: theme.palette.background.paper,
-                                    color: theme.palette.text.primary,
-                                }
-                            }}
                         >
-                            <MenuItem onClick={handleMenuClose}>Advanced Search</MenuItem>
-                            <MenuItem onClick={handleMenuClose}>Available Slots</MenuItem>
-                            <MenuItem onClick={handleMenuClose}>List of Appointments</MenuItem>
+                            <MenuItem onClick={() => handleMenuItemClick('appointmentList')}>
+                                <ListAltIcon sx={{ mr: 1 }} />Appointment List
+                            </MenuItem>
+                            <MenuItem onClick={() => handleMenuItemClick('waitingList')}>
+                                <PeopleIcon sx={{ mr: 1 }} />Waiting Patient List
+                            </MenuItem>
+                            <MenuItem onClick={() => handleMenuItemClick('availableSlots')}>
+                                <EventAvailableIcon sx={{ mr: 1 }} />Available Slots
+                            </MenuItem>
+                            <MenuItem onClick={() => handleMenuItemClick('appointmentPrint')}>
+                                <PrintIcon sx={{ mr: 1 }} />Appointment Print
+                            </MenuItem>
                         </Menu>
                     </Box>
                 </Grid>
             </Grid>
+            <AppointmentSearch open={isSearchOpen} onClose={handleCloseSearch} />
         </Box>
     );
 });

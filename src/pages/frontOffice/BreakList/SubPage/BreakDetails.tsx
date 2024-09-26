@@ -515,6 +515,7 @@ const formatTime = (time: string | Date) => {
     if (typeof time === 'string') {
         return time;
     }
+    debugger
     const hours = time.getHours().toString().padStart(2, '0');
     const minutes = time.getMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
