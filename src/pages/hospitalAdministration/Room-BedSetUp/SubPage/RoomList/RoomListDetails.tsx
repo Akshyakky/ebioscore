@@ -13,9 +13,9 @@ import GenericDialog from "../../../../../components/GenericDialog/GenericDialog
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
-import { RoomListService } from "../../../../../services/HospitalAdministrationServices/Room-BedSetUpService/RoomListService";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import { ViewArray } from "@mui/icons-material";
+import { roomListService } from "../../../../../services/GenericEntityService/GenericEntityService";
 
 interface RoomListDetailsProps {
     roomGroup: RoomGroupDto | null;
@@ -49,13 +49,12 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
     const { floorValues, unitValues } = useDropdownValues();
 
     const fetchRooms = async () => {
-        debugger
         setLoading(true);
         try {
-            const response = await RoomListService.getAllRoomList();
+            const response = await await roomListService.getAll();
             if (response.success) {
                 const activeRooms = (response.data || []).filter(
-                    (room) => room.rActiveYN === "Y" && room.rgrpID === (roomGroup?.rGrpID || 0)
+                    (room: RoomListDto) => room.rActiveYN === "Y" && room.rgrpID === (roomGroup?.rGrpID || 0)
                 );
                 setRooms(activeRooms);
             } else {
@@ -66,7 +65,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                 );
             }
         } catch (error) {
-            console.error("Error fetching room lists:", error);
             showAlert(
                 "Error",
                 "An error occurred while fetching room lists.",
@@ -108,7 +106,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
     const handleAddDialogSubmit = async () => {
         setLoading(true);
         try {
-            const response = await RoomListService.saveRoomList(formData);
+            const response = await roomListService.save(formData);
             if (response.success) {
                 showAlert(
                     "Success",
@@ -127,7 +125,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                 );
             }
         } catch (error) {
-            console.error("Error submitting room:", error);
             showAlert("Error", "An error occurred during submission.", "error");
         } finally {
             setLoading(false);
@@ -140,7 +137,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
 
     const handleEdit = async (row: RoomListDto) => {
         try {
-            const response = await RoomListService.getRoomListById(row.rlID);
+            const response = await roomListService.getById(row.rlID);
             if (response.success) {
                 const room = response.data;
                 if (room) {
@@ -158,7 +155,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                 );
             }
         } catch (error) {
-            console.error("Error fetching room details:", error);
             showAlert(
                 "Error",
                 "An error occurred while fetching room details.",
@@ -171,7 +167,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
         setLoading(true);
         try {
             const updatedRoom = { ...row, rActiveYN: "N" };
-            const result = await RoomListService.saveRoomList(updatedRoom);
+            const result = await roomListService.save(updatedRoom);
             if (result.success) {
                 showAlert(
                     "Success",
@@ -189,7 +185,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomGroup, onRoomSele
                 );
             }
         } catch (error) {
-            console.error("Error deleting room:", error);
             showAlert(
                 "Error",
                 "An error occurred while deleting the room.",

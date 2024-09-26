@@ -13,6 +13,11 @@ import { ProductOverviewDto } from "../../interfaces/InventoryManagement/Product
 import { ConsultantRoleDto } from "../../interfaces/ClinicalManagement/ConsultantRoleDto";
 import { AdmissionDto } from "../../interfaces/PatientAdministration/AdmissionDto";
 import { ProfileMastDto } from "../../interfaces/SecurityManagement/ProfileListData";
+import {
+  RoomGroupDto,
+  RoomListDto,
+  WrBedDto,
+} from "../../interfaces/HospitalAdministration/Room-BedSetUpDto";
 
 // Generic DTO interface with common properties
 export interface BaseDto {
@@ -138,6 +143,7 @@ function createEntityService<T extends BaseDto>(
   );
 }
 
+// Inventory Management Services
 export const productSubGroupService = createEntityService<ProductSubGroupDto>(
   "ProductSubGroup",
   "INVENTORY_MANAGEMENT_URL"
@@ -162,6 +168,7 @@ export const productOverviewService = createEntityService<ProductOverviewDto>(
   "INVENTORY_MANAGEMENT_URL"
 );
 
+// Clinical Management Api Services
 export const medicationRouteService = createEntityService<MedicationRouteDto>(
   "MedicationRoute",
   "CLINICAL_MANAGEMENT_URL"
@@ -183,10 +190,26 @@ export const consultantRoleService = createEntityService<ConsultantRoleDto>(
   "CLINICAL_MANAGEMENT_URL"
 );
 
-// Add the new admission service
+// Patient Administration Api Services
 export const admissionService = createEntityService<AdmissionDto>(
   "Admission",
   "PATIENT_ADMINISTRATION_URL"
+);
+
+//Hospital Administration Api Services
+export const roomGroupService = createEntityService<RoomGroupDto>(
+  "RoomGroup",
+  "HOSPITAL_ADMINISTRATION_URL"
+);
+
+export const roomListService = createEntityService<RoomListDto>(
+  "RoomList",
+  "HOSPITAL_ADMINISTRATION_URL"
+);
+
+export const wrBedService = createEntityService<WrBedDto>(
+  "WrBed",
+  "HOSPITAL_ADMINISTRATION_URL"
 );
 
 // If you need to extend the generic service for admissions with specific methods:

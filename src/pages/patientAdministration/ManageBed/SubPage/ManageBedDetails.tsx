@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Paper, Typography, Grid, Box, Divider, List, ListItem, Button,
-    CircularProgress, Tooltip, IconButton, TextField
+    CircularProgress, Tooltip, IconButton, TextField, useTheme, useMediaQuery
 } from "@mui/material";
 import { RoomGroupDto, RoomListDto, WrBedDto } from '../../../../interfaces/HospitalAdministration/Room-BedSetUpDto';
 import { RoomGroupService } from '../../../../services/HospitalAdministrationServices/Room-BedSetUpService/RoomGroupService';
@@ -20,6 +20,10 @@ const ManageBedDetails: React.FC = () => {
     const [bedFilter, setBedFilter] = useState<string>('Show All');
     const [loading, setLoading] = useState<boolean>(true);
     const [searchTerm, setSearchTerm] = useState<string>('');
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
     type BedStatus = 'Occupied' | 'Blocked' | 'Available' | 'Show All';
 
@@ -71,8 +75,8 @@ const ManageBedDetails: React.FC = () => {
                         cursor: 'pointer',
                         fontWeight: 600,
                         '&:hover': { textDecoration: 'underline' },
-                        color: selectedRoomGroup && selectedRoomGroup.rGrpID === item.rGrpID ? 'primary.main' : 'inherit', // Highlight selected room group
-                        backgroundColor: selectedRoomGroup && selectedRoomGroup.rGrpID === item.rGrpID ? '#f0f0f0' : 'transparent', // Optional background highlight
+                        color: selectedRoomGroup && selectedRoomGroup.rGrpID === item.rGrpID ? 'primary.main' : 'inherit',
+                        backgroundColor: selectedRoomGroup && selectedRoomGroup.rGrpID === item.rGrpID ? '#f0f0f0' : 'transparent',
                         padding: '4px 8px',
                         borderRadius: '4px'
                     }}
@@ -82,7 +86,6 @@ const ManageBedDetails: React.FC = () => {
             ),
         },
     ];
-
 
     const getBedStyles = (bedStatus: string | undefined) => {
         const colors = {
@@ -144,10 +147,10 @@ const ManageBedDetails: React.FC = () => {
     }, [calculateTotalBedsForGroup]);
 
     return (
-        <Box sx={{ minHeight: '80vh', minWidth: '100%' }}>
-            <Grid container spacing={3} >
-                <Grid item xs={12} md={selectedRoomGroup ? 3 : 12} >
-                    <Paper>
+        <Box sx={{ minHeight: '80vh', width: '100%' }}>
+            <Grid container spacing={3}>
+                <Grid item xs={12} md={selectedRoomGroup ? 3 : 12} lg={selectedRoomGroup ? 2 : 12}>
+                    <Paper sx={{ height: '100%' }}>
                         <Typography variant="h6" gutterBottom sx={{ p: 2 }}>Room Group Details</Typography>
                         <Divider />
                         <CustomGrid columns={roomGroupColumns} data={roomGroups} />
@@ -155,8 +158,8 @@ const ManageBedDetails: React.FC = () => {
                 </Grid>
 
                 {selectedRoomGroup && (
-                    <Grid item xs={12} md={6}>
-                        <Paper elevation={0} sx={{ p: 3, backgroundColor: 'background.paper' }}>
+                    <Grid item xs={12} md={6} lg={7}>
+                        <Paper elevation={0} sx={{ p: 3, backgroundColor: 'background.paper', height: '100%' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                 <Typography variant="h6" gutterBottom>
                                     Manage Bed for {selectedRoomGroup.rGrpName}
@@ -167,18 +170,18 @@ const ManageBedDetails: React.FC = () => {
                             </Box>
                             <Divider sx={{ mb: 2 }} />
 
-                            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                                <Box sx={{ mb: 1 }}>
+                            <Box sx={{ mb: 2, display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 2 }}>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                     {['Show All', 'Occupied', 'Available', 'Blocked'].map(status => (
                                         <Button
                                             key={status}
                                             variant="contained"
+                                            size={isMobile ? 'small' : 'medium'}
                                             sx={{
                                                 backgroundColor: bedFilter === status ? filterButtonColors[status as BedStatus] : 'transparent',
                                                 color: bedFilter === status ? '#fff' : '#000',
                                                 border: `1px solid ${filterButtonColors[status as BedStatus]}`,
-                                                mr: 1,
-                                                mb: 1
+                                                flexGrow: isMobile ? 1 : 0
                                             }}
                                             onClick={() => setBedFilter(status)}
                                         >
@@ -194,6 +197,7 @@ const ManageBedDetails: React.FC = () => {
                                     InputProps={{
                                         startAdornment: <SearchIcon />,
                                     }}
+                                    fullWidth={isMobile}
                                 />
                             </Box>
 
@@ -202,22 +206,22 @@ const ManageBedDetails: React.FC = () => {
                                     <CircularProgress />
                                 </Box>
                             ) : (
-                                <Box sx={{ maxHeight: '500px', overflowY: 'auto', p: 2, minWidth: '100%', border: '1px solid #ccc' }}>
+                                <Box sx={{ height: 'calc(100vh - 300px)', overflowY: 'auto', p: 2, border: '1px solid #ccc' }}>
                                     {roomList
                                         .filter(room => room.rgrpID === selectedRoomGroup.rGrpID)
                                         .map((room) => (
-                                            <Box key={room.rlID} sx={{ padding: 2 }}>
+                                            <Box key={room.rlID} sx={{ mb: 4 }}>
                                                 <Typography variant="body1" gutterBottom fontWeight="bold">
                                                     {room.rLocation} - {room.rName}
                                                 </Typography>
 
-                                                <List sx={{ display: 'flex', flexWrap: 'wrap' }}>
+                                                <List sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                                                     {filteredBeds(room).map((bed) => (
                                                         <ListItem key={bed.bedID} sx={{ width: 'auto', mr: 2, mb: 2 }}>
                                                             <Tooltip title={`Status: ${bed.bedStatus}`}>
                                                                 <Box sx={{
                                                                     ...getBedStyles(bed.bedStatus),
-                                                                    padding: '20px 20px',
+
                                                                     textAlign: 'center',
                                                                     minWidth: '100px',
                                                                     minHeight: '80px',
@@ -248,8 +252,8 @@ const ManageBedDetails: React.FC = () => {
                 )}
 
                 {selectedRoomGroup && (
-                    <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', maxWidth: '300px', }}>
-                        <Paper elevation={0} sx={{ p: 2, backgroundColor: 'background.paper', overflowY: 'auto' }}>
+                    <Grid item xs={12} md={3} lg={3}>
+                        <Paper elevation={0} sx={{ p: 2, backgroundColor: 'background.paper', height: '100%' }}>
                             <Typography variant="h6" gutterBottom>
                                 Overall Bed Summary for {selectedRoomGroup.rGrpName}
                             </Typography>
@@ -272,7 +276,7 @@ const ManageBedDetails: React.FC = () => {
                                 ))}
                             </Box>
 
-                            <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', mt: 2, flexWrap: 'wrap', }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', mt: 2, flexWrap: 'wrap', gap: 2 }}>
                                 {Object.entries(calculateTotalBedsForGroup).map(([key, value]) => (
                                     <Box key={key} sx={{
                                         display: 'flex',
@@ -280,11 +284,9 @@ const ManageBedDetails: React.FC = () => {
                                         justifyContent: 'center',
                                         flexDirection: 'column',
                                         backgroundColor: getBedStyles(key).backgroundColor,
-                                        padding: '8px 16px',
-                                        width: '80px',
-                                        height: '70px',
-                                        margin: '4px',
-
+                                        padding: '8px',
+                                        width: isMobile ? '70px' : '80px',
+                                        height: isMobile ? '60px' : '70px',
                                     }}>
                                         <Typography variant="h6" fontWeight="bold" color="#FFF">{value}</Typography>
                                         <Typography variant="caption" fontWeight="500" color="inherit">{key}</Typography>
@@ -293,6 +295,7 @@ const ManageBedDetails: React.FC = () => {
                             </Box>
                         </Paper>
                     </Grid>
+
                 )}
             </Grid>
         </Box>
