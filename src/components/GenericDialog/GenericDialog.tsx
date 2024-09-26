@@ -20,7 +20,7 @@ interface GenericDialogProps {
     onClose: () => void;
     title: string;
     children: React.ReactNode;
-    maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
+    maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | false;
     fullWidth?: boolean;
     showCloseButton?: boolean;
     actions?: React.ReactNode;
@@ -97,7 +97,7 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
         <StyledDialog
             open={open}
             onClose={handleClose}
-            maxWidth={maxWidth}
+            maxWidth={maxWidth === 'xxl' ? false : maxWidth}
             fullWidth={fullWidth}
             disableEscapeKeyDown={disableEscapeKeyDown}
             aria-labelledby="dialog-title"

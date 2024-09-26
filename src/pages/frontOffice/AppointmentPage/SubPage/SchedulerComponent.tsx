@@ -12,6 +12,7 @@ import SkeletonLoader from '../../../../components/Loader/SkeletonLoader';
 import Loader from '../../../../components/Loader/SkeletonLoader';
 import { useTheme } from '@mui/material/styles';
 import { Box } from '@mui/material';
+import { AppointmentService } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
 
 const views: Array<'day' | 'week' | 'workWeek' | 'month'> = ['day', 'week', 'workWeek', 'month'];
 
@@ -158,8 +159,20 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
 
     const parseAppointmentDate = useCallback((dateString: string) => {
         const [datePart, timePart] = dateString.split(' ');
-        const [day, month, year] = datePart.split('/');
-        return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${timePart}`);
+        let [day, month, year] = datePart.includes('-')
+            ? datePart.split('-')
+            : datePart.split('/');
+
+        day = day.padStart(2, '0');
+        month = month.padStart(2, '0');
+
+        if (year.length === 2) {
+            const currentYear = new Date().getFullYear();
+            const century = Math.floor(currentYear / 100) * 100;
+            year = (century + parseInt(year)).toString();
+        }
+
+        return new Date(`${year}-${month}-${day}T${timePart}`);
     }, []);
 
     const onViewChange = useCallback((view: string) => {
@@ -207,9 +220,42 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
         onAppointmentFormOpeningHandler(e);
     }, [onAppointmentFormOpeningHandler, handleBreakAppointment]);
 
-    const onAppointmentUpdating = useCallback((e: any) => {
+    const onAppointmentUpdating = useCallback(async (e: any) => {
         if (e.oldData.type === 'break') {
             handleBreakAppointment(e);
+        }
+        e.cancel = true;
+        const newStartDate = new Date(e.newData.startDate);
+        const newEndDate = new Date(e.newData.endDate);
+        try {
+            setLoading(true);
+            const result = await AppointmentService.updateAppointmentTimes(
+                e.oldData.id,
+                format('DD-MM-YYYY', newStartDate),
+                format('DD-MM-YYYY HH:mm:ss', newStartDate),
+                format('DD-MM-YYYY HH:mm:ss', newEndDate)
+            );
+            if (result.success) {
+                // Update the appointment in the local state
+                setState(prevState => ({
+                    ...prevState,
+                    appointments: prevState.appointments.map(appt =>
+                        appt.abID === e.oldData.id
+                            ? {
+                                ...appt,
+                                abTime: format('DD-MM-YYYY HH:mm:ss', newStartDate),
+                                abEndTime: format('DD-MM-YYYY HH:mm:ss', newEndDate)
+                            }
+                            : appt
+                    )
+                }));
+            } else {
+                console.error('Failed to update appointment:', result.errorMessage);
+            }
+        } catch (error) {
+            console.error('Error updating appointment:', error);
+        } finally {
+            setLoading(false);
         }
     }, [handleBreakAppointment]);
 
@@ -227,6 +273,16 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
         if (e.appointmentData.type === 'break') {
             e.cancel = true; // Prevent dragging for breaks
         }
+    }, []);
+
+    const onAppointmentDrag = useCallback((e: any) => {
+        if (e.appointmentData.type === 'break') {
+            e.cancel = true; // Prevent dragging for breaks
+            return;
+        }
+
+        // Allow dragging for regular appointments
+        e.cancel = false;
     }, []);
 
     const onAppointmentAdding = useCallback((e: any) => {
