@@ -34,7 +34,7 @@ const BedSetUpPage: React.FC = () => {
     const fetchRoomLists = async () => {
         try {
             const response = await roomListService.getAllWithIncludes(['RoomGroup']);
-            if (response.success && Array.isArray(response.data)) {
+            if (response.success && response.data) {
                 setRoomLists(response.data);
             } else {
                 console.error("Invalid response format for room lists:", response);
@@ -49,7 +49,7 @@ const BedSetUpPage: React.FC = () => {
     const fetchBeds = async () => {
         try {
             const response = await wrBedService.getAllWithIncludes(['RoomList', 'RoomList.RoomGroup']);
-            if (response.success && Array.isArray(response.data)) {
+            if (response.success && response.data) {
                 setBeds(response.data);
             } else {
                 console.error("Invalid response format for beds:", response);
