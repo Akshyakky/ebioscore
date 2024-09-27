@@ -21,7 +21,6 @@ export const UserListSearchProvider = ({ children }: UserListSearchProviderProps
     const fetchAllUsers = useCallback(async (): Promise<UserListData[]> => {
         setLoading(true);
         try {
-            debugger
             const result = await UserListService.getAllUsers();
             console.log("The users is ", result)
             if (result.success && result.data) {

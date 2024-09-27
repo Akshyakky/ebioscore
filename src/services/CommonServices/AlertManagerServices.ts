@@ -13,7 +13,6 @@ const getToken = () => store.getState().userDetails.token!;
 export const saveAlert = async (
   alertData: AlertDto
 ): Promise<OperationResult<AlertDto>> => {
-  debugger;
   return commonApiService.post<OperationResult<any>>(
     "Alert/SaveAlert",
     alertData,

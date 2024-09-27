@@ -9,14 +9,14 @@ import { useLoading } from "../../../../../context/LoadingContext";
 import { showAlert } from "../../../../../utils/Common/showAlert";
 import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../../components/Button/CustomButton";
-import { RoomGroupDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { RoomGroupDto, RoomListDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
 import { DropdownOption } from "../../../../../interfaces/Common/DropdownOption";
-import { roomGroupService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import { roomGroupService, roomListService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 
 interface RoomGroupDetailsProps {
     roomGroups: RoomGroupDto[];
@@ -138,31 +138,60 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
     const handleDelete = async (row: RoomGroupDto) => {
         setLoading(true);
         try {
-            const updatedRoomGroup = { ...row, rActiveYN: "N" };
-            const result = await roomGroupService.save(updatedRoomGroup);
-            if (result) {
-                showAlert(
-                    "Success",
-                    "Room group deactivated successfully",
-                    "success"
+            // Fetch all rooms and filter by the selected Room Group ID
+            const response = await roomListService.getAll();
+
+            if (response.success && response.data) {
+                // Filter rooms that belong to the selected Room Group and are active
+                const associatedRooms = response.data.filter(
+                    (room: RoomListDto) => room.rgrpID === row.rGrpID && room.rActiveYN === "Y"
                 );
+
+                if (associatedRooms.length > 0) {
+                    // Prevent deletion if there are associated rooms that are still active
+                    showAlert(
+                        "Error",
+                        `Room Group ${row.rGrpName} cannot be deleted as it has active associated rooms. Please deactivate or delete the rooms first.`,
+                        "error"
+                    );
+                } else {
+                    // Proceed with the deletion if no active associated rooms
+                    const updatedRoomGroup = { ...row, rActiveYN: "N" };
+                    const result = await roomGroupService.save(updatedRoomGroup);
+
+                    if (result) {
+                        showAlert(
+                            "Success",
+                            `Room Group ${row.rGrpName} deactivated successfully`,
+                            "success"
+                        );
+                    } else {
+                        showAlert(
+                            "Error",
+                            "Failed to deactivate Room Group",
+                            "error"
+                        );
+                    }
+                }
             } else {
                 showAlert(
                     "Error",
-                    "Failed to delete room group",
+                    "Failed to load room list",
                     "error"
                 );
             }
         } catch (error) {
             showAlert(
                 "Error",
-                "An error occurred while deleting the room group.",
+                "An error occurred while deleting the Room Group.",
                 "error"
             );
         } finally {
             setLoading(false);
         }
     };
+
+
 
 
     const handleChange = (

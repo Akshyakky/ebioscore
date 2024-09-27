@@ -15,7 +15,7 @@ import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
-import { wrBedService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import { roomGroupService, wrBedService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 interface WrBedDetailsProps {
     beds: WrBedDto[];
 }
@@ -37,7 +37,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
         key: 0,
     });
     const { handleDropdownChange } = useDropdownChange<WrBedDto>(setFormData);
-    const { bedCategoryValues, serviceValues } = useDropdownValues();
+    const { bedCategoryValues, serviceValues, roomGroupValues, roomListValues } = useDropdownValues();
     const [, setIsSubGroup] = useState(false);
 
     const handleAdd = (isSubGroup: boolean = false, parentGroup?: WrBedDto) => {
@@ -98,6 +98,35 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
             showAlert("Error", "An error occurred during submission.", "error");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchDepartmentDetails = async (rgrpID: number) => {
+        setLoading(true);
+        try {
+            const response = await roomGroupService.getById(rgrpID);
+            if (response.success && response.data) {
+                const roomGroup = response.data;
+                setFormData((prev) => ({
+                    ...prev,
+                    deptID: roomGroup.deptID || 0,
+                    deptName: roomGroup.deptName || "",
+                }));
+            } else {
+                showAlert("Error", "Failed to load department details", "error");
+            }
+        } catch (error) {
+            showAlert("Error", "An error occurred while fetching department details.", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handle the rgrpID change to fetch deptID and deptName
+    const handleRoomGroupChange = (name: string, value: any) => {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        if (name === "rgrpID") {
+            fetchDepartmentDetails(value);
         }
     };
 
@@ -275,9 +304,32 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
                     />
                     <FormField
                         type="select"
+                        label="RGR Name"
+                        name="rgrpID"
+                        value={formData.rgrpID || ""}
+                        onChange={(e) => handleRoomGroupChange("rgrpID", e.target.value)}
+                        options={roomGroupValues}
+                        ControlID="rgrpID"
+                        gridProps={{ xs: 12 }}
+                    />
+
+                    <FormField
+                        type="select"
+                        label="Room Name"
+                        name="rlID"
+                        value={formData.rlID || 0}
+                        onChange={(e) => handleRoomGroupChange("rlID", e.target.value)}
+                        options={roomListValues}
+                        ControlID="rlID"
+                        gridProps={{ xs: 12 }}
+                    />
+
+
+                    <FormField
+                        type="select"
                         label="Bed Category"
                         name="wCatID"
-                        value={formData.wbCatName || ""}
+                        value={formData.wbCatID || 0}
                         onChange={handleDropdownChange(
                             ["wbCatID"],
                             ["wbCatName"],

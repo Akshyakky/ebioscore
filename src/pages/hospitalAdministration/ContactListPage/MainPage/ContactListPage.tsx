@@ -158,7 +158,7 @@ const ContactListPage: React.FC = () => {
 
   const handleSave = useCallback(async () => {
     setLoading(true);
-    debugger
+
     try {
       const result = await ContactListService.saveContactList(contactList);
       if (result.success) {

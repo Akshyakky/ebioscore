@@ -8,13 +8,15 @@ import { useLoading } from "../../../../../context/LoadingContext";
 import { showAlert } from "../../../../../utils/Common/showAlert";
 import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../../components/Button/CustomButton";
-import { RoomListDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { RoomListDto, WrBedDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
-import { roomListService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import { roomGroupService, roomListService, wrBedService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+
+
 
 interface RoomListDetailsProps {
     roomLists: RoomListDto[];
@@ -31,13 +33,13 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
         rName: "",
         noOfBeds: 0,
         rActiveYN: "Y",
-        rgrpID: 0,//roomGroup?.rGrpID ||
+        rgrpID: 0,
         compID: store.getState().userDetails.compID || 0,
         transferYN: "Y",
         rLocation: "",
         rLocationID: 0,
-        deptName: "",//roomGroup?.deptName 
-        deptID: 0,//roomGroup?.deptID ||
+        deptName: "",
+        deptID: 0,
         dulID: 0,
         unitDesc: ''
     });
@@ -50,12 +52,12 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
             rName: "",
             noOfBeds: 0,
             rActiveYN: "Y",
-            rgrpID: 0,//roomGroup?.rGrpID ||
+            rgrpID: 0,
             compID: store.getState().userDetails.compID || 0,
             transferYN: "Y",
             rlCode: '',
             rNotes: '',
-            deptName: "",//roomGroup?.deptName || 
+            deptName: "",
             deptID: 0,//roomGroup?.deptID || 
             dulID: 0,
             unitDesc: '',
@@ -66,10 +68,40 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
         setIsDialogOpen(true);
     };
 
+    const fetchDepartmentDetails = async (rgrpID: number) => {
+        setLoading(true);
+        try {
+            const response = await roomGroupService.getById(rgrpID);
+            if (response.success && response.data) {
+                const roomGroup = response.data;
+                setFormData((prev) => ({
+                    ...prev,
+                    deptID: roomGroup.deptID || 0,
+                    deptName: roomGroup.deptName || "",
+                }));
+            } else {
+                showAlert("Error", "Failed to load department details", "error");
+            }
+        } catch (error) {
+            showAlert("Error", "An error occurred while fetching department details.", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handle the rgrpID change to fetch deptID and deptName
+    const handleRoomGroupChange = (name: string, value: any) => {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        if (name === "rgrpID") {
+            fetchDepartmentDetails(value);
+        }
+    };
+
+
     const handleAddDialogSubmit = async () => {
         setLoading(true);
         try {
-            debugger
+
             const response = await roomListService.save(formData);
             if (response.success) {
                 showAlert(
@@ -129,31 +161,55 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
     const handleDelete = async (row: RoomListDto) => {
         setLoading(true);
         try {
-            const updatedRoom = { ...row, rActiveYN: "N" };
-            const result = await roomListService.save(updatedRoom);
-            if (result.success) {
-                showAlert(
-                    "Success",
-                    "Room deactivated successfully",
-                    "success"
+            const response = await wrBedService.getAll();
+
+            if (response.success && response.data) {
+                const associatedBeds = response.data.filter(
+                    (bed: WrBedDto) => bed.rlID === row.rlID && bed.rActiveYN === "Y"
                 );
+
+                if (associatedBeds.length > 0) {
+                    showAlert(
+                        "Error",
+                        `Room List ${row.rName} cannot be deleted as it has active beds. Please deactivate or delete the beds first.`,
+                        "error"
+                    );
+                } else {
+                    const updatedRoomList = { ...row, rActiveYN: "N" };
+                    const result = await roomListService.save(updatedRoomList);
+
+                    if (result.success) {
+                        showAlert(
+                            "Success",
+                            `Room List ${row.rName} deactivated successfully`,
+                            "success"
+                        );
+                    } else {
+                        showAlert(
+                            "Error",
+                            "Failed to deactivate Room List",
+                            "error"
+                        );
+                    }
+                }
             } else {
                 showAlert(
                     "Error",
-                    result.errorMessage || "Failed to delete room",
+                    "Failed to load bed list",
                     "error"
                 );
             }
         } catch (error) {
             showAlert(
                 "Error",
-                "An error occurred while deleting the room.",
+                "An error occurred while deleting the Room List.",
                 "error"
             );
         } finally {
             setLoading(false);
         }
     };
+
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -251,16 +307,11 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
                         label="RGR Name"
                         name="rgrpID"
                         value={formData.rgrpID || ""}
-                        onChange={handleDropdownChange(
-                            ["rgrpID"],
-                            [""],
-                            roomGroupValues
-                        )}
+                        onChange={(e) => handleRoomGroupChange("rgrpID", e.target.value)}
                         options={roomGroupValues}
                         ControlID="rgrpID"
                         gridProps={{ xs: 12 }}
                     />
-
 
                     <FormField
                         type="select"

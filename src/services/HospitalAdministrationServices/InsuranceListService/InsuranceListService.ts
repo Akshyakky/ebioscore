@@ -13,7 +13,6 @@ const getToken = () => store.getState().userDetails.token!;
 export const saveInsuranceList = async (
   insuranceListDto: InsuranceListDto
 ): Promise<OperationResult<InsuranceListDto>> => {
-  debugger;
   return apiService.post<OperationResult<any>>(
     "InsuranceList/SaveInsuranceList",
     insuranceListDto,

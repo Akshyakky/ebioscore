@@ -15,7 +15,7 @@ const DeptUnitListSearch: React.FC<DeptUnitListSearchProps> = ({ open, onClose, 
         );
 
     const updateActiveStatus = async (id: number, status: boolean) => {
-        debugger
+
         const result = await DeptUnitListService.updateDeptUnitListActiveStatus(
             id,
             status

@@ -19,7 +19,7 @@ const ContactListSearch: React.FC<ContactListSearchProps> = ({
   const [isInitialSearchDone, setIsInitialSearchDone] = useState(false);
 
   useEffect(() => {
-    debugger
+
     if (!isInitialSearchDone) {
       performSearch("");
       setIsInitialSearchDone(true);

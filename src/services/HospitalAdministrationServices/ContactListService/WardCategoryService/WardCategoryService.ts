@@ -13,7 +13,6 @@ const getToken = () => store.getState().userDetails.token!;
 export const saveWardCategory = async (
   wardCategoryDto: WardCategoryDto
 ): Promise<OperationResult<WardCategoryDto>> => {
-  debugger;
   return apiService.post<OperationResult<any>>(
     "WardCategory/SaveWardCategory",
     wardCategoryDto,

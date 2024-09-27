@@ -19,7 +19,7 @@ const NextOfKinGrid: React.FC<NextOfKinGridProps> = ({
 }) => {
   const { formatDate, parse, formatDateYMD } = useDayjs();
   const handleEdit = useCallback((row: PatNokDetailsDto) => {
-    debugger
+
     onEdit(row);
   }, [onEdit]);
 

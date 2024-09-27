@@ -13,7 +13,6 @@ const getToken = () => store.getState().userDetails.token!;
 export const saveProductTaxList = async (
   productTaxListDto: ProductTaxListDto
 ): Promise<OperationResult<ProductTaxListDto>> => {
-  debugger;
   return apiService.post<OperationResult<ProductTaxListDto>>(
     "ProductTaxList/SaveProductTaxList",
     productTaxListDto,

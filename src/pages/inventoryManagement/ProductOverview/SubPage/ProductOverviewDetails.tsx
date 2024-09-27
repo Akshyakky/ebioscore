@@ -148,7 +148,7 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
 
     const handleSave = async () => {
         try {
-            debugger
+
             const productOverview: ProductOverviewDto = {
                 ...formState,
                 fsbCode: formState.fsbCode || "N",
