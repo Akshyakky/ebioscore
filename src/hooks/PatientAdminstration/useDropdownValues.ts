@@ -24,6 +24,10 @@ import {
   medicationFormService,
   medicationGenericService,
 } from "../../services/ClinicalManagementServices/clinicalManagementService";
+import {
+  roomGroupService,
+  roomListService,
+} from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
 
 // Cache object to store API responses
 const apiCache: { [key: string]: DropdownOption[] } = {};
@@ -70,6 +74,8 @@ const useDropdownValues = () => {
     medicationGenericValues: [],
     taxTypeValue: [],
     consultantRoleValues: [],
+    roomGroupValues: [],
+    roomListValue: [],
   });
 
   const { setLoading } = useLoading();
@@ -346,6 +352,26 @@ const useDropdownValues = () => {
               (data.data || []).map((item: any) => ({
                 value: item.crID || 0,
                 label: item.crName || "",
+              })),
+          },
+
+          {
+            key: "roomGroupValues",
+            fetch: () => roomGroupService.getAll(),
+            dataMapper: (data: any) =>
+              (data.data || []).map((item: any) => ({
+                value: item.rGrpID || 0,
+                label: item.rGrpName || "",
+              })),
+          },
+
+          {
+            key: "roomListValues",
+            fetch: () => roomListService.getAll(),
+            dataMapper: (data: any) =>
+              (data.data || []).map((item: any) => ({
+                value: item.rlID || 0,
+                label: item.rName || "",
               })),
           },
         ];

@@ -42,7 +42,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
         unitDesc: ''
     });
     const { handleDropdownChange } = useDropdownChange<RoomListDto>(setFormData);
-    const { floorValues, unitValues } = useDropdownValues();
+    const { floorValues, unitValues, roomGroupValues } = useDropdownValues();
 
     const handleAdd = () => {
         setFormData({
@@ -69,6 +69,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
     const handleAddDialogSubmit = async () => {
         setLoading(true);
         try {
+            debugger
             const response = await roomListService.save(formData);
             if (response.success) {
                 showAlert(
@@ -163,7 +164,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
 
     const columns = [
         { key: "rName", header: "Room Name", visible: true },
-        { key: "rGrpName", header: "Name", visible: true },
+        { key: "rGrpName", header: "RGP Name", visible: true },
         { key: "rLocation", header: "Room Location", visible: true },
         { key: "deptName", header: "Department", visible: true },
         {
@@ -244,6 +245,22 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
                         gridProps={{ xs: 12 }}
                         fullWidth
                     />
+
+                    <FormField
+                        type="select"
+                        label="RGR Name"
+                        name="rgrpID"
+                        value={formData.rgrpID || ""}
+                        onChange={handleDropdownChange(
+                            ["rgrpID"],
+                            [""],
+                            roomGroupValues
+                        )}
+                        options={roomGroupValues}
+                        ControlID="rgrpID"
+                        gridProps={{ xs: 12 }}
+                    />
+
 
                     <FormField
                         type="select"
