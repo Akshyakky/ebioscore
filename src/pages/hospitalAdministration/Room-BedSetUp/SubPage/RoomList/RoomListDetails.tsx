@@ -163,7 +163,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
 
     const columns = [
         { key: "rName", header: "Room Name", visible: true },
-        { key: "rGrpName", header: "Name", visible: true },
+        { key: "rGrpName", header: "RG Name", visible: true, render: (row: RoomListDto) => row.roomGroup?.rGrpName || '' },
         { key: "rLocation", header: "Room Location", visible: true },
         { key: "deptName", header: "Department", visible: true },
         {
