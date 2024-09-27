@@ -68,16 +68,6 @@ export class GenericEntityService<T extends BaseDto> {
     );
   }
 
-  async getAllWithIncludes(includeProperties: string[]): Promise<T[]> {
-    const params = new URLSearchParams();
-    includeProperties.forEach((prop) =>
-      params.append("includeProperties", prop)
-    );
-    return this.apiService.get<T[]>(
-      `${this.baseEndpoint}/GetAllWithIncludes?${params.toString()}`,
-      this.getToken()
-    );
-  }
   async find(predicate: string): Promise<T[]> {
     return this.apiService.get<T[]>(
       `${this.baseEndpoint}/Find?predicate=${encodeURIComponent(predicate)}`,
@@ -134,6 +124,17 @@ export class GenericEntityService<T extends BaseDto> {
   async any(predicate: string): Promise<boolean> {
     return this.apiService.get<boolean>(
       `${this.baseEndpoint}/Any?predicate=${encodeURIComponent(predicate)}`,
+      this.getToken()
+    );
+  }
+
+  async getAllWithIncludes(includeProperties: string[]): Promise<T> {
+    const params = new URLSearchParams();
+    includeProperties.forEach((prop) =>
+      params.append("includeProperties", prop)
+    );
+    return this.apiService.get<T>(
+      `${this.baseEndpoint}/GetAllWithIncludes?${params.toString()}`,
       this.getToken()
     );
   }

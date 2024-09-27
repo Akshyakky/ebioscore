@@ -172,8 +172,8 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
 
     const columns = [
         { key: "bedName", header: "Bed Name", visible: true },
-        { key: "rGrpName", header: "RG Name", visible: true },
-        { key: "rName", header: "Room Name", visible: true },
+        { key: "rGrpName", header: "RG Name", visible: true, render: (row: WrBedDto) => row.roomList?.roomGroup?.rGrpName || '' },
+        { key: "rName", header: "Room Name", visible: true, render: (row: WrBedDto) => row.roomList?.rName || '' },
         { key: "bchName", header: "Bed Status", visible: true },
         {
             key: "actions",

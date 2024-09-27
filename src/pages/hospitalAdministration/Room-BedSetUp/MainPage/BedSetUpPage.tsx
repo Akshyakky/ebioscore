@@ -3,6 +3,7 @@ import { Grid, Paper, Typography, Divider } from "@mui/material";
 import { RoomGroupDto, RoomListDto, WrBedDto } from "../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
 import Loader from "../../../../components/Loader/SkeletonLoader";
 import { roomGroupService, roomListService, wrBedService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import { useLoading } from "../../../../context/LoadingContext";
 
 const RoomGroupDetails = lazy(() => import("../SubPage/RoomGroup/RoomGroupDetails"));
 const RoomListDetails = lazy(() => import("../SubPage/RoomList/RoomListDetails"));
@@ -12,11 +13,15 @@ const BedSetUpPage: React.FC = () => {
     const [roomGroups, setRoomGroups] = useState<RoomGroupDto[]>([]);
     const [roomLists, setRoomLists] = useState<RoomListDto[]>([]);
     const [beds, setBeds] = useState<WrBedDto[]>([]);
+    const { setLoading } = useLoading();
 
     useEffect(() => {
-        fetchRoomGroups();
-        fetchRoomLists();
-        fetchBeds();
+        const fetchData = async () => {
+            setLoading(true);
+            await Promise.all([fetchRoomGroups(), fetchRoomLists(), fetchBeds()]);
+            setLoading(false);
+        };
+        fetchData();
     }, []);
 
     const fetchRoomGroups = async () => {
@@ -27,20 +32,35 @@ const BedSetUpPage: React.FC = () => {
     };
 
     const fetchRoomLists = async () => {
-
-        const response = await roomListService.getAll();
-        if (response.success && response.data) {
-            setRoomLists(response.data);
+        try {
+            const response = await roomListService.getAllWithIncludes(['RoomGroup']);
+            if (response.success && response.data) {
+                setRoomLists(response.data);
+            } else {
+                console.error("Invalid response format for room lists:", response);
+                setRoomLists([]);
+            }
+        } catch (error) {
+            console.error("Error fetching room lists:", error);
+            setRoomLists([]);
         }
     };
 
     const fetchBeds = async () => {
-
-        const response = await wrBedService.getAll();
-        if (response.success && response.data) {
-            setBeds(response.data);
+        try {
+            const response = await wrBedService.getAllWithIncludes(['RoomList', 'RoomList.RoomGroup']);
+            if (response.success && response.data) {
+                setBeds(response.data);
+            } else {
+                console.error("Invalid response format for beds:", response);
+                setBeds([]);
+            }
+        } catch (error) {
+            console.error("Error fetching beds:", error);
+            setBeds([]);
         }
     };
+
 
     return (
         <Grid container spacing={1}>

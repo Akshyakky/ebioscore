@@ -36,6 +36,9 @@ export interface RoomListDto extends BaseDto {
   transferYN?: string;
   dulID: number;
   unitDesc: string;
+  roomGroup?: {
+    rGrpName: string;
+  };
 }
 
 export interface WrBedDto extends BaseDto {
@@ -55,4 +58,10 @@ export interface WrBedDto extends BaseDto {
   wbCatName?: string;
   bedStatusValue?: string;
   bedStatus?: string;
+  roomList?: {
+    rName: string;
+    roomGroup?: {
+      rGrpName: string;
+    };
+  };
 }
