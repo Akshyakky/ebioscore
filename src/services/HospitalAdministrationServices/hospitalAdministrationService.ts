@@ -3,6 +3,7 @@ import {
   RoomListDto,
   WrBedDto,
 } from "../../interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { WardCategoryDto } from "../../interfaces/HospitalAdministration/WardCategoryDto";
 import { createEntityService } from "../../utils/Common/serviceFactory";
 
 export const roomGroupService = createEntityService<RoomGroupDto>(
@@ -15,6 +16,10 @@ export const roomListService = createEntityService<RoomListDto>(
 );
 export const wrBedService = createEntityService<WrBedDto>(
   "WrBed",
+  "hospitalAdministrations"
+);
+export const wardCategoryService = createEntityService<WardCategoryDto>(
+  "WardCategory",
   "hospitalAdministrations"
 );
 

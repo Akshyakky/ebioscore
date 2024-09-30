@@ -7,11 +7,11 @@ import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { WardCategoryService } from "../../../../services/HospitalAdministrationServices/ContactListService/WardCategoryService/WardCategoryService";
 import { WardCategoryDto } from "../../../../interfaces/HospitalAdministration/WardCategoryDto";
+import { wardCategoryService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 
 const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editData }) => {
-  const [formState, setFormState] = useState({
+  const [formState, setFormState] = useState<WardCategoryDto>({
     isSubmitted: false,
     wCatID: 0,
     wCatCode: "",
@@ -19,7 +19,9 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
     rNotes: "",
     rActiveYN: "Y",
     transferYN: "Y",
-    compID: 1,
+    compID: store.getState().userDetails.compID || 0,
+    compCode: "",
+    compName: "",
   });
 
   const { setLoading } = useLoading();
@@ -49,7 +51,9 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
       wCatName: formState.wCatName,
       rNotes: formState.rNotes,
       rActiveYN: formState.rActiveYN,
-      compID: compID || 1,
+      compID: store.getState().userDetails.compID || 0,
+      compCode: store.getState().userDetails.compCode || "",
+      compName: store.getState().userDetails.compName || "",
       transferYN: "Y",
     }),
     [formState, editData, compID]
@@ -65,15 +69,15 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
 
   const handleSave = async () => {
     setFormState((prev) => ({ ...prev, isSubmitted: true }));
-
     if (!formState.wCatCode.trim()) {
       showAlert("Error", "Ward Category Code is mandatory.", "error");
       return;
     }
     setLoading(true);
     try {
+      debugger
       const wardCategoryDto = createWardCategoryDto();
-      const result = await WardCategoryService.saveWardCategory(wardCategoryDto);
+      const result = await wardCategoryService.save(wardCategoryDto);
 
       if (result.success) {
         showAlert("Success", "Ward Category saved successfully!", "success", {
@@ -83,7 +87,6 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
         showAlert("Error", result.errorMessage || "Failed to save Ward Category.", "error");
       }
     } catch (error) {
-      console.error("Error saving Ward Category:", error);
       showAlert("Error", "An unexpected error occurred while saving. Please check the console for more details.", "error");
     } finally {
       setLoading(false);

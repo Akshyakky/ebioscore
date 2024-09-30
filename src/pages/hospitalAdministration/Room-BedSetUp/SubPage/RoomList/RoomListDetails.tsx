@@ -22,11 +22,9 @@ import {
     roomListService,
     wrBedService,
 } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
-
 interface RoomListDetailsProps {
     roomLists: RoomListDto[];
 }
-
 const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
     const { setLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
