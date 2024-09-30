@@ -205,7 +205,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
         { key: "rName", header: "Room Name", visible: true, render: (row: WrBedDto) => row.roomList?.rName || '' },
         { key: "bchName", header: "Bed Status", visible: true },
         {
-            key: "actions",
+            key: "edit",
             header: "Edit",
             visible: true,
             render: (row: WrBedDto) => (
@@ -219,7 +219,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
             ),
         },
         {
-            key: "actions",
+            key: "delete",
             header: "Delete",
             visible: true,
             render: (row: WrBedDto) => (
@@ -235,7 +235,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
         },
 
         {
-            key: "actions",
+            key: "addCradle",
             header: "Add Cradle",
             visible: true,
             render: (row: WrBedDto) => (

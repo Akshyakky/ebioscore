@@ -11,8 +11,8 @@ export interface AppointBookingDto {
   arlName?: string;
   abDuration: number;
   abDurDesc: string;
-  abDate: string;
-  abTime: string;
+  abDate: Date;
+  abTime: Date;
   pChartID: number;
   pChartCode?: string;
   abPType: string;
@@ -39,7 +39,7 @@ export interface AppointBookingDto {
   crName?: string;
   rActiveYN: "Y" | "N";
   rNotes?: string;
-  abEndTime: string;
+  abEndTime: Date;
   procNotes?: string;
   arlInstructions?: string;
   abTitle?: string;
@@ -48,7 +48,7 @@ export interface AppointBookingDto {
   compID?: number;
   compCode?: string;
   compName?: string;
-  dob?: string;
+  dob?: Date;
   email?: string;
   pChartCompID?: number;
   rSchdleID?: number;

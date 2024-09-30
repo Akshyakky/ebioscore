@@ -224,7 +224,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
         { key: "rLocation", header: "Room Location", visible: true },
         { key: "deptName", header: "Department", visible: true },
         {
-            key: "actions",
+            key: "edit",
             header: "Edit",
             visible: true,
             render: (row: RoomListDto) => (
@@ -238,7 +238,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
             ),
         },
         {
-            key: "actions",
+            key: "delete",
             header: "Delete",
             visible: true,
             render: (row: RoomListDto) => (

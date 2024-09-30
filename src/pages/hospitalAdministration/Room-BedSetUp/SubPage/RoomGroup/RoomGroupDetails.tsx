@@ -204,7 +204,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
     const columns = [
         { key: "rGrpName", header: "Name", visible: true },
         {
-            key: "actions",
+            key: "edit",
             header: "Edit",
             visible: true,
             render: (row: RoomGroupDto) => (
@@ -220,7 +220,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
             ),
         },
         {
-            key: "actions",
+            key: "delete",
             header: "Delete",
             visible: true,
             render: (row: RoomGroupDto) => (
@@ -237,7 +237,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
             ),
         },
         {
-            key: "actions",
+            key: "addSubGrp",
             header: "Add Sub Group",
             visible: true,
             render: (row: RoomGroupDto) => (
