@@ -1,5 +1,6 @@
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { InsuranceListDto } from "../../../../interfaces/HospitalAdministration/InsuranceListDto";
+import { insuranceListService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { InsuranceListService } from "../../../../services/HospitalAdministrationServices/InsuranceListService/InsuranceListService";
 
 interface InsuranceListSearchProps {
@@ -16,15 +17,15 @@ const InsuranceListSearch: React.FC<InsuranceListSearchProps> = ({
 
 
     const fetchItems = () =>
-        InsuranceListService.getAllInsuranceList().then(
+        insuranceListService.getAll().then(
             (result) => result.data || []
         );
     const updateActiveStatus = async (id: number, status: boolean) => {
-        const result = await InsuranceListService.updateInsuranceListActiveStatus(
+        const result = await insuranceListService.updateActiveStatus(
             id,
             status
         );
-        return result.success;
+        return result;
     };
 
     const getItemId = (item: InsuranceListDto) => item.insurID;

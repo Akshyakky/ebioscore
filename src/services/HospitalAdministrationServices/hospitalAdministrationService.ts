@@ -1,3 +1,4 @@
+import { InsuranceListDto } from "../../interfaces/HospitalAdministration/InsuranceListDto";
 import {
   RoomGroupDto,
   RoomListDto,
@@ -20,6 +21,11 @@ export const wrBedService = createEntityService<WrBedDto>(
 );
 export const wardCategoryService = createEntityService<WardCategoryDto>(
   "WardCategory",
+  "hospitalAdministrations"
+);
+
+export const insuranceListService = createEntityService<InsuranceListDto>(
+  "InsuranceList",
   "hospitalAdministrations"
 );
 

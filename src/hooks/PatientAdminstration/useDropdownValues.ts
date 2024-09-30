@@ -27,7 +27,9 @@ import {
 import {
   roomGroupService,
   roomListService,
+  wardCategoryService,
 } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import { WardCategoryDto } from "../../interfaces/HospitalAdministration/WardCategoryDto";
 
 const useDropdownValues = () => {
   const [picValues, setPicValues] = useState<DropdownOption[]>([]);
@@ -207,7 +209,7 @@ const useDropdownValues = () => {
           ),
           DeptUnitListService.getAllDeptUnitList(),
           ServiceTypeService.getAllServiceType(),
-          WardCategoryService.getAllWardCategory(),
+          wardCategoryService.getAll(),
           ConstantValues.fetchConstantValues("GetConstantValues", "PMED"),
           productSubGroupService.getAll(),
           productGroupService.getAll(),
@@ -368,7 +370,7 @@ const useDropdownValues = () => {
         );
 
         setBedCategoryValues(
-          (categoryTypeResponse.data || []).map((item) => ({
+          (categoryTypeResponse.data || []).map((item: WardCategoryDto) => ({
             value: item.wCatID || 0,
             label: item.wCatName || "",
           }))

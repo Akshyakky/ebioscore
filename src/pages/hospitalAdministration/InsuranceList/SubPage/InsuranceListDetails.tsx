@@ -8,9 +8,9 @@ import { showAlert } from "../../../../utils/Common/showAlert";
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import { InsuranceListDto } from "../../../../interfaces/HospitalAdministration/InsuranceListDto";
-import { InsuranceListService } from "../../../../services/HospitalAdministrationServices/InsuranceListService/InsuranceListService";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
+import { insuranceListService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 
 const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({
     editData,
@@ -82,7 +82,7 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({
         setLoading(true);
 
         try {
-            const result = await InsuranceListService.saveInsuranceList(formState);
+            const result = await insuranceListService.save(formState);
 
             if (result.success) {
                 showAlert(
