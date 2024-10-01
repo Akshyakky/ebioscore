@@ -12,15 +12,8 @@ const commonApiService = new CommonApiService({
 const getToken = () => store.getState().userDetails.token!;
 
 export const AppointmentService = {
-  fetchAppointmentsByDateAndType: async (
-    startDate: string,
-    endDate: string,
-    hpID?: number,
-    rlID?: number
-  ): Promise<OperationResult<any[]>> => {
-    const url = `AppointBooking/GetAppointBookingsByDateAndType?startDate=${startDate}&endDate=${endDate}${
-      hpID ? `&hpID=${hpID}` : rlID ? `&rlID=${rlID}` : ""
-    }`;
+  fetchAppointmentsByDateAndType: async (startDate: string, endDate: string, hpID?: number, rlID?: number): Promise<OperationResult<any[]>> => {
+    const url = `AppointBooking/GetAppointBookingsByDateAndType?startDate=${startDate}&endDate=${endDate}${hpID ? `&hpID=${hpID}` : rlID ? `&rlID=${rlID}` : ""}`;
     return commonApiService.get<OperationResult<any[]>>(url, getToken());
   },
 
@@ -34,64 +27,31 @@ export const AppointmentService = {
     return commonApiService.get<OperationResult<any[]>>(url, getToken());
   },
 
-  saveAppointBooking: async (
-    appointBookingDto: AppointBookingDto
-  ): Promise<OperationResult<AppointBookingDto>> => {
+  saveAppointBooking: async (appointBookingDto: AppointBookingDto): Promise<OperationResult<AppointBookingDto>> => {
     const url = `AppointBooking/SaveAppointBooking`;
-    return commonApiService.post<OperationResult<AppointBookingDto>>(
-      url,
-      appointBookingDto,
-      getToken()
-    );
+    return commonApiService.post<OperationResult<AppointBookingDto>>(url, appointBookingDto, getToken());
   },
 
-  getAppointBookingById: async (
-    abID: number
-  ): Promise<OperationResult<AppointBookingDto>> => {
+  getAppointBookingById: async (abID: number): Promise<OperationResult<AppointBookingDto>> => {
     const url = `AppointBooking/GetAppointBookingById/${abID}`;
-    return commonApiService.get<OperationResult<AppointBookingDto>>(
-      url,
-      getToken()
-    );
+    return commonApiService.get<OperationResult<AppointBookingDto>>(url, getToken());
   },
 
-  updateAppointBookingActiveStatus: async (
-    abID: number,
-    isActive: boolean
-  ): Promise<OperationResult<boolean>> => {
+  updateAppointBookingActiveStatus: async (abID: number, isActive: boolean): Promise<OperationResult<boolean>> => {
     const url = `AppointBooking/UpdateAppointBookingActiveStatus/${abID}`;
-    return commonApiService.put<OperationResult<boolean>>(
-      url,
-      isActive,
-      getToken()
-    );
+    return commonApiService.put<OperationResult<boolean>>(url, isActive, getToken());
   },
 
-  updateAppointmentTimes: async (
-    abID: number,
-    abDate: string,
-    abTime: string,
-    abEndTime: string
-  ): Promise<OperationResult<AppointBookingDto>> => {
+  updateAppointmentTimes: async (abID: number, abDate: string, abTime: string, abEndTime: string): Promise<OperationResult<AppointBookingDto>> => {
     const url = `AppointBooking/UpdateAppointmentTimes`;
-    return commonApiService.put<OperationResult<AppointBookingDto>>(
-      url,
-      { abID, abDate, abTime, abEndTime },
-      getToken()
-    );
+    return commonApiService.put<OperationResult<AppointBookingDto>>(url, { abID, abDate, abTime, abEndTime }, getToken());
   },
 
-  searchAppointments: async (
-    searchTerm: string | null = null,
-    page: number = 1,
-    pageSize: number = 10
-  ): Promise<OperationResult<PaginatedList<AppointBookingDto>>> => {
+  searchAppointments: async (searchTerm: string | null = null, page: number = 1, pageSize: number = 10): Promise<OperationResult<PaginatedList<AppointBookingDto>>> => {
     let url = `AppointBooking/SearchAppointments?page=${page}&pageSize=${pageSize}`;
     if (searchTerm !== null) {
       url += `&searchTerm=${encodeURIComponent(searchTerm)}`;
     }
-    return commonApiService.get<
-      OperationResult<PaginatedList<AppointBookingDto>>
-    >(url, getToken());
+    return commonApiService.get<OperationResult<PaginatedList<AppointBookingDto>>>(url, getToken());
   },
 };

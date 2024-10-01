@@ -19,6 +19,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import useDropdownValues from '../../../../hooks/PatientAdminstration/useDropdownValues';
 import { AppointmentService } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
+import dayjs from 'dayjs';
 
 interface AppointmentBookingFormProps {
     onChange: (name: keyof AppointBookingDto, value: any) => void;
@@ -45,7 +46,7 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
     hpID,
     rlID
 }) => {
-    const { date: serverDate, formatDate, formatDateTime, formatTime, add } = useDayjs(useServerDate());
+    const { date: serverDate, formatTime, formatDateYMD, formatISO } = useDayjs(useServerDate());
     const registrationOptions = [
         { value: 'Y', label: 'Registered' },
         { value: 'N', label: 'Non Registered' }
@@ -201,6 +202,10 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
         }
     }, []);
 
+    const handleDateChange = (name: keyof AppointBookingDto) => (date: Date | null) => {
+        onChange(name, date);
+    };
+
     return (
         <Box sx={{ backgroundColor: '#fff', borderRadius: '8px', width: '100%' }}>
             <FormField
@@ -268,12 +273,14 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                         gridProps={{ xs: 6 }}
                     />
                     <FormField
-                        type="date"
+                        type="datepicker"
                         label="DOB"
                         ControlID="dob"
                         value={formData.dob}
                         name="dob"
-                        onChange={(e) => onChange('dob', e.target.value)}
+                        onChange={handleDateChange('dob')}
+                        minDate={new Date(1900, 0, 1)}
+                        maxDate={new Date()}
                         gridProps={{ xs: 6 }}
                     />
                     <FormField
@@ -398,12 +405,12 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
 
             <Grid container spacing={2}>
                 <FormField
-                    type="date"
+                    type="datepicker"
                     label="Appointment Date"
                     ControlID="abDate"
                     value={formData.abDate}
                     name="abDate"
-                    onChange={(e) => onChange('abDate', e.target.value)}
+                    onChange={handleDateChange('abDate')}
                     isMandatory={true}
                     disabled={true}
                     gridProps={{ xs: 6 }}

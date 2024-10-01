@@ -48,7 +48,7 @@ export interface AppointBookingDto {
   compID?: number;
   compCode?: string;
   compName?: string;
-  dob?: Date;
+  dob: Date;
   email?: string;
   pChartCompID?: number;
   rSchdleID?: number;

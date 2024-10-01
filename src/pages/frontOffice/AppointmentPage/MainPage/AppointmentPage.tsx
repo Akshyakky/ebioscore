@@ -19,45 +19,49 @@ import { useServerDate } from '../../../../hooks/Common/useServerDate';
 import useDayjs from '../../../../hooks/Common/useDateTime';
 import { store } from '../../../../store/store';
 
-const getDefaultAppointBookingDto = (formatDate: () => string, formatDateTime: () => string, formateDateYMD: () => string, formateDateYMDHHmm: () => string): AppointBookingDto => ({
-    abID: 0,
-    abFName: 'Akshay',
-    abLName: '',
-    hplID: 0,
-    providerName: '',
-    rlID: 0,
-    rlName: '',
-    arlID: 0,
-    arlName: '',
-    abDuration: 15,
-    abDurDesc: '15 minutes',
-    abDate: formateDateYMD(),
-    abTime: formateDateYMDHHmm(),
-    pChartID: 0,
-    abPType: 'R',
-    abStatus: 'Booked',
-    patRegisterYN: 'Y',
-    dob: formateDateYMD(),
-    oTBookNo: 0,
-    patOPIP: 'O',
-    rActiveYN: 'Y',
-    abEndTime: formateDateYMDHHmm(),
-    transferYN: 'N',
-    pChartCode: '',
-    appPhone1: '',
-    arlInstructions: '',
-    city: '',
-    email: '',
-    pssnId: '',
-    intIdPsprt: '',
-    rNotes: '',
-    compID: store.getState().userDetails.compID ?? 0,
-    compCode: store.getState().userDetails.compCode ?? "",
-    compName: store.getState().userDetails.compName ?? ""
-});
+
 
 const AppointmentPage: React.FC = () => {
-    const { date: serverDate, formatDate, formatDateTime, formatTime, add, formatISO, format, formatDateYMD, formatDateYMDHHmm } = useDayjs(useServerDate());
+    const serverDate = useServerDate();
+    const { formatDateYMD, formatDateYMDHHmm, add } = useDayjs(serverDate);
+    const endTime = add(15, 'minute', serverDate).toDate(); // Convert Dayjs to Date
+    const getDefaultAppointBookingDto = useCallback((): AppointBookingDto => ({
+        abID: 0,
+        abFName: '',
+        abLName: '',
+        hplID: 0,
+        providerName: '',
+        rlID: 0,
+        rlName: '',
+        arlID: 0,
+        arlName: '',
+        abDuration: 15,
+        abDurDesc: '15 minutes',
+        abDate: serverDate,
+        abTime: serverDate,
+        pChartID: 0,
+        abPType: 'R',
+        abStatus: 'Booked',
+        patRegisterYN: 'Y',
+        dob: serverDate,
+        oTBookNo: 0,
+        patOPIP: 'O',
+        rActiveYN: 'Y',
+        abEndTime: endTime,
+        transferYN: 'N',
+        pChartCode: '',
+        appPhone1: '',
+        arlInstructions: '',
+        city: '',
+        email: '',
+        pssnId: '',
+        intIdPsprt: '',
+        rNotes: '',
+        compID: store.getState().userDetails.compID ?? 0,
+        compCode: store.getState().userDetails.compCode ?? "",
+        compName: store.getState().userDetails.compName ?? ""
+    }), [serverDate, add]);
+
     const schedulerRef = useRef<{ refresh: () => void } | null>(null);
     const [selectedConID, setSelectedConID] = useState<number | undefined>(undefined);
     const [selectedRlID, setSelectedRlID] = useState<number | undefined>(undefined);
@@ -69,7 +73,7 @@ const AppointmentPage: React.FC = () => {
     const [selectedRlName, setSelectedRlName] = useState<string>('');
     const [isUpdating, setIsUpdating] = useState(false);
 
-    const [formData, setFormData] = useState<AppointBookingDto>(() => getDefaultAppointBookingDto(formatDate, formatDateTime, formatDateYMD, formatDateYMDHHmm));
+    const [formData, setFormData] = useState<AppointBookingDto>(getDefaultAppointBookingDto());
 
     const handleRefresh = useCallback(() => {
         if (schedulerRef.current) {
@@ -92,9 +96,9 @@ const AppointmentPage: React.FC = () => {
             if (result.success && result.data) {
                 setFormData({
                     ...result.data,
-                    abDate: formatDateYMD(result.data.abDate),
-                    abTime: formatDateYMDHHmm(result.data.abTime),
-                    abEndTime: formatDateYMDHHmm(result.data.abEndTime),
+                    abDate: result.data.abDate,
+                    abTime: result.data.abTime,
+                    abEndTime: result.data.abEndTime,
                 });
                 setIsUpdating(true);
                 setIsBookingFormOpen(true);
@@ -105,7 +109,7 @@ const AppointmentPage: React.FC = () => {
             console.error('Error fetching appointment details:', error);
             showAlert('Error', 'An error occurred while fetching appointment details', 'error');
         }
-    }, [formatDateYMD, formatDateYMDHHmm]);
+    }, []);
 
     const handleAppointmentFormOpen = useCallback((date?: Date, time?: Date) => {
         if (!selectedConID && !selectedRlID) {
@@ -113,13 +117,13 @@ const AppointmentPage: React.FC = () => {
             return;
         }
 
-        setIsUpdating(false); // Reset updating state for new appointments
+        setIsUpdating(false);
         if (date && time) {
             setFormData(prevData => ({
-                ...getDefaultAppointBookingDto(formatDate, formatDateTime, formatDateYMD, formatDateYMDHHmm),
-                abDate: formatDateYMD(date),
-                abTime: formatDateYMDHHmm(date),
-                abEndTime: formatDateYMDHHmm(calculateEndTime(date, prevData.abDuration)),
+                ...getDefaultAppointBookingDto(),
+                abDate: date,
+                abTime: date,
+                abEndTime: calculateEndTime(date, prevData.abDuration),
                 hplID: selectedConID || 0,
                 providerName: selectedProviderName,
                 rlID: selectedRlID || 0,
@@ -127,7 +131,7 @@ const AppointmentPage: React.FC = () => {
             }));
         }
         setIsBookingFormOpen(true);
-    }, [selectedConID, selectedRlID, selectedProviderName, selectedRlName, formatDateYMDHHmm, formatDateYMD, formatDate, formatDateTime]);
+    }, [selectedConID, selectedRlID, selectedProviderName, selectedRlName, getDefaultAppointBookingDto]);
 
     const handleAppointmentFormClose = useCallback(() => {
         setIsBookingFormOpen(false);
@@ -154,40 +158,45 @@ const AppointmentPage: React.FC = () => {
 
     const handleChange = useCallback((name: keyof AppointBookingDto, value: any) => {
         setFormData(prevData => {
-            const newData = { ...prevData, [name]: value };
+            let newValue = value;
+
+            // Convert string inputs to Date objects for date fields
+            if (['abDate', 'abTime', 'abEndTime', 'dob'].includes(name)) {
+                if (typeof value === 'string') {
+                    newValue = new Date(value);
+                }
+            }
+
+            const newData = { ...prevData, [name]: newValue };
 
             if (name === 'abDuration') {
                 newData.abDurDesc = `${value} minutes`;
                 newData.abEndTime = calculateEndTime(newData.abTime, value);
             } else if (name === 'abTime') {
-                newData.abEndTime = calculateEndTime(value, newData.abDuration);
+                newData.abEndTime = calculateEndTime(newValue, newData.abDuration);
             }
 
             return newData;
         });
     }, []);
 
-    const calculateEndTime = (startTime: Date | string, durationMinutes: number): string => {
-        return formatDateYMDHHmm(add(durationMinutes, 'minute', startTime));
+    const calculateEndTime = (startTime: Date, durationMinutes: number): Date => {
+        return new Date(startTime.getTime() + durationMinutes * 60000);
     };
 
     const handleClearForm = useCallback(() => {
         if (isUpdating) {
-            // If updating, reset to the original appointment data
             handleAppointmentClick(formData.abID);
         } else {
-            // If creating new, reset to default values
             setFormData(prevData => {
-                const defaultData = getDefaultAppointBookingDto(formatDate, formatDateTime, formatDateYMD, formatDateYMDHHmm);
+                const defaultData = getDefaultAppointBookingDto();
                 return {
                     ...defaultData,
-                    // Preserve the appointment slot details
                     abDate: prevData.abDate,
                     abTime: prevData.abTime,
                     abEndTime: prevData.abEndTime,
                     abDuration: prevData.abDuration,
                     abDurDesc: prevData.abDurDesc,
-                    // Preserve the selected consultant/resource
                     hplID: prevData.hplID,
                     providerName: prevData.providerName,
                     rlID: prevData.rlID,
@@ -195,7 +204,7 @@ const AppointmentPage: React.FC = () => {
                 };
             });
         }
-    }, [isUpdating, formData.abID, handleAppointmentClick, formatDate, formatDateTime, formatDateYMD, formatDateYMDHHmm]);
+    }, [isUpdating, formData.abID, handleAppointmentClick, getDefaultAppointBookingDto]);
 
     useEffect(() => {
         const fetchReasonOptions = async () => {
