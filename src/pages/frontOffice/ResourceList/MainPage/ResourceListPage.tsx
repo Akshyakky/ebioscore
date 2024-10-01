@@ -5,7 +5,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import ResourceDetails from "../SubPage/ResourceDetails";
 import ResourceListSearch from "../SubPage/ResourceListSearch";
 import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
-import AadharOtpForm from "../SubPage/Mobile";
 
 const ResourceListPage: React.FC = () => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -40,7 +39,6 @@ const ResourceListPage: React.FC = () => {
             </Box>
             <ResourceDetails editData={selectedData} />
 
-            <AadharOtpForm />
             <ResourceListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
         </Container>
     );
