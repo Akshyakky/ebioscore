@@ -8,8 +8,6 @@ import { CommonService } from '../../../../services/CommonServices/CommonService
 import { BreakListService } from '../../../../services/FrontOfficeServices/BreakListServices/BreakListService';
 import { useLoading } from '../../../../context/LoadingContext';
 import { dxSchedulerAppointment } from 'devextreme/ui/scheduler';
-import SkeletonLoader from '../../../../components/Loader/SkeletonLoader';
-import Loader from '../../../../components/Loader/SkeletonLoader';
 import { useTheme } from '@mui/material/styles';
 import { Box } from '@mui/material';
 import { AppointmentService } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
@@ -70,7 +68,7 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
     const { state, setState, refresh } = useAppointments(initialDate.current, hpID, rlID);
     const [workingHours, setWorkingHours] = useState<WorkingHours>({});
     const [breaks, setBreaks] = useState<BreakItem[]>([]);
-    const { isLoading, setLoading } = useLoading();
+    const { setLoading } = useLoading();
     const theme = useTheme();
 
     const schedulerStyles = useMemo(() => ({
@@ -158,7 +156,7 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
     }, [state.date, hpID, add]);
 
     const parseAppointmentDate = useCallback((dateString: string) => {
-        const [datePart, timePart] = dateString.split(' ');
+        const [datePart, timePart] = dateString.split('T');
         let [day, month, year] = datePart.includes('-')
             ? datePart.split('-')
             : datePart.split('/');
@@ -402,8 +400,8 @@ const SchedulerComponent = forwardRef<unknown, SchedulerComponentProps>((props, 
         const appointments = Array.isArray(state.appointments)
             ? state.appointments.map(appt => ({
                 text: `${appt.abFName} ${appt.abLName || ''}`,
-                startDate: parseAppointmentDate(appt.abTime),
-                endDate: parseAppointmentDate(appt.abEndTime),
+                startDate: appt.abTime,
+                endDate: appt.abEndTime,
                 id: appt.abID,
                 status: appt.abStatus,
                 allDay: false,

@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo } from "react";
-import { Grid, SelectChangeEvent } from "@mui/material";
+import { FormControl, Grid, SelectChangeEvent } from "@mui/material";
 import { GridProps } from '@mui/material/Grid';
 import FloatingLabelTextBox from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import TextArea from "../TextArea/TextArea";
@@ -9,8 +9,13 @@ import RadioGroup from "../RadioGroup/RadioGroup";
 import AutocompleteTextBox from "../TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import { TextFieldProps } from "@mui/material/TextField";
 import MultiSelectDropdown from "../DropDown/MultiSelectDropdown";
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
+import CustomDatePicker from "../DatePicker/CustomDatePicker";
 
-type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email" | "radio" | "autocomplete" | "date" | "search" | "multiselect" | "time";
+type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email" | "radio" | "autocomplete" | "date" | "search" | "multiselect" | "time" | "datepicker";
 
 interface DropdownOption {
   value: string;
@@ -90,7 +95,14 @@ export interface AutocompleteFormFieldProps extends BaseFormFieldProps {
   suggestions?: string[];
 }
 
-export type FormFieldProps = TextFormFieldProps | TextAreaFormFieldProps | SelectFormFieldProps | SwitchFormFieldProps | RadioFormFieldProps | AutocompleteFormFieldProps | MultiSelectFormFieldProps;
+export interface DatePickerFormFieldProps extends BaseFormFieldProps {
+  type: "datepicker";
+  onChange: (date: Date | null) => void;
+  minDate?: Date;
+  maxDate?: Date;
+}
+
+export type FormFieldProps = TextFormFieldProps | TextAreaFormFieldProps | SelectFormFieldProps | SwitchFormFieldProps | RadioFormFieldProps | AutocompleteFormFieldProps | MultiSelectFormFieldProps | DatePickerFormFieldProps;
 
 const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
   const {
@@ -252,6 +264,26 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
             onBlur={onBlur}
             InputProps={InputProps}
             ref={ref}
+          />
+        );
+      case "datepicker":
+        const datePickerProps = props as DatePickerFormFieldProps;
+        return (
+          <CustomDatePicker
+            ControlID={ControlID}
+            title={label}
+            value={value}
+            onChange={datePickerProps.onChange}
+            placeholder={placeholder}
+            size={size}
+            isMandatory={isMandatory}
+            disabled={disabled}
+            readOnly={readOnly}
+            errorMessage={errorMessage}
+            minDate={datePickerProps.minDate}
+            maxDate={datePickerProps.maxDate}
+            InputProps={InputProps}
+            InputLabelProps={InputLabelProps}
           />
         );
       default:

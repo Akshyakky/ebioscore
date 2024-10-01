@@ -18,14 +18,7 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 
 type DateInput = string | number | Date | Dayjs;
-type Unit =
-  | "year"
-  | "month"
-  | "day"
-  | "hour"
-  | "minute"
-  | "second"
-  | "millisecond";
+type Unit = "year" | "month" | "day" | "hour" | "minute" | "second" | "millisecond";
 
 interface UseDayjsReturn {
   date: Dayjs;
@@ -46,19 +39,8 @@ interface UseDayjsReturn {
   isBefore: (compareDate: DateInput, date?: DateInput) => boolean;
   isAfter: (compareDate: DateInput, date?: DateInput) => boolean;
   isSame: (compareDate: DateInput, unit?: Unit, date?: DateInput) => boolean;
-  isBetween: (
-    start: DateInput,
-    end: DateInput,
-    unit?: Unit,
-    inclusivity?: "()" | "[]" | "[)" | "(]",
-    date?: DateInput
-  ) => boolean;
-  diff: (
-    compareDate: DateInput,
-    unit?: Unit,
-    float?: boolean,
-    date?: DateInput
-  ) => number;
+  isBetween: (start: DateInput, end: DateInput, unit?: Unit, inclusivity?: "()" | "[]" | "[)" | "(]", date?: DateInput) => boolean;
+  diff: (compareDate: DateInput, unit?: Unit, float?: boolean, date?: DateInput) => number;
   toUTC: (date?: DateInput) => Dayjs;
   toLocal: (date?: DateInput) => Dayjs;
   setTimezone: (tz: string, date?: DateInput) => Dayjs;
@@ -83,10 +65,7 @@ const useDayjs = (initialDate: DateInput = new Date()): UseDayjsReturn => {
   }, []);
 
   const format = useCallback(
-    (
-      template: string = "YYYY-MM-DD HH:mm:ss",
-      inputDate?: DateInput
-    ): string => {
+    (template: string = "YYYY-MM-DD HH:mm:ss", inputDate?: DateInput): string => {
       return dayjs(inputDate || date).format(template);
     },
     [date]
@@ -195,30 +174,14 @@ const useDayjs = (initialDate: DateInput = new Date()): UseDayjsReturn => {
   );
 
   const isBetween = useCallback(
-    (
-      start: DateInput,
-      end: DateInput,
-      unit?: Unit,
-      inclusivity?: "()" | "[]" | "[)" | "(]",
-      inputDate?: DateInput
-    ): boolean => {
-      return dayjs(inputDate || date).isBetween(
-        dayjs(start),
-        dayjs(end),
-        unit,
-        inclusivity
-      );
+    (start: DateInput, end: DateInput, unit?: Unit, inclusivity?: "()" | "[]" | "[)" | "(]", inputDate?: DateInput): boolean => {
+      return dayjs(inputDate || date).isBetween(dayjs(start), dayjs(end), unit, inclusivity);
     },
     [date]
   );
 
   const diff = useCallback(
-    (
-      compareDate: DateInput,
-      unit?: Unit,
-      float?: boolean,
-      inputDate?: DateInput
-    ): number => {
+    (compareDate: DateInput, unit?: Unit, float?: boolean, inputDate?: DateInput): number => {
       return dayjs(inputDate || date).diff(dayjs(compareDate), unit, float);
     },
     [date]
