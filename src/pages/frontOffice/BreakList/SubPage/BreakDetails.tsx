@@ -15,7 +15,7 @@ import BreakFrequencyDetails, { FrequencyData } from './BreakFrequencyDetails';
 import { formatDate } from "../../../../utils/Common/dateUtils";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { BreakConDetailData, BreakListData, BreakListDto } from "../../../../interfaces/FrontOffice/BreakListData";
+import { BreakConDetailData, BreakListData, BreakListDto } from "../../../../interfaces/frontOffice/BreakListData";
 import FormField from "../../../../components/FormField/FormField";
 import { breakListService, resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
 
@@ -331,12 +331,9 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
 
             if (fieldName === 'bLStartDate') {
                 updatedState.bLStartDate = newDate;
-
-                // Ensure end date is not before start date
                 if (newDate > updatedState.bLEndDate) {
                     updatedState.bLEndDate = newDate;
                 }
-
                 if (isOneDay) {
                     updatedState.bLStartTime = new Date(newDate.setHours(0, 0, 0, 0));
                     updatedState.bLEndTime = new Date(newDate.setHours(23, 59, 0, 0));
@@ -344,12 +341,10 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
             } else if (fieldName === 'bLEndDate') {
                 updatedState.bLEndDate = newDate;
 
-                // Ensure the end date is not earlier than the start date
                 if (newDate < updatedState.bLStartDate) {
                     updatedState.bLStartDate = newDate;
                 }
             }
-
             return updatedState;
         });
     };
@@ -418,7 +413,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         onChange={handleDateChange('bLStartDate')}
                         ControlID="StartDate"
                         minDate={new Date(1900, 0, 1)}
-                        maxDate={new Date()}
+
                     />
                     <FormField
                         type="datepicker"
@@ -428,7 +423,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         onChange={handleDateChange('bLEndDate')}
                         ControlID="EndDate"
                         minDate={formState.bLStartDate}
-                        maxDate={new Date()}
+
                     />
                     <FormField
                         type="textarea"

@@ -2,7 +2,7 @@ import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { CommonApiService } from "../../CommonApiService";
 import { store } from "../../../store/store";
-import { ReasonListData } from "../../../interfaces/FrontOffice/ReasonListData";
+import { ReasonListData } from "../../../interfaces/frontOffice/ReasonListData";
 
 const commonApiService = new CommonApiService({
   baseURL: APIConfig.frontOffice,

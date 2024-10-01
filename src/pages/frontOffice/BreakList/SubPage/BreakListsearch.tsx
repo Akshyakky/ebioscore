@@ -1,15 +1,13 @@
 import React, { useState } from "react";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
-import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
 import { formatDate } from "../../../../utils/Common/dateUtils";
 import BreakSuspendDetails from "./BreakSuspendDetails";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import PauseCircleOutline from "@mui/icons-material/PauseCircleOutline";
 import PlayCircleOutline from "@mui/icons-material/PlayCircleOutline";
-import { BreakConSuspendService } from "../../../../services/FrontOfficeServices/BreakConSuspendService";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import CustomButton from "../../../../components/Button/CustomButton";
-import { breakListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
+import { breakConSuspendService, breakListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
 
 interface BreakListSearchProps {
     open: boolean;
@@ -42,10 +40,10 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
 
     const handleResume = async (breakData: any) => {
         try {
-            const result = await BreakConSuspendService.updateBreakConSuspendActiveStatus(breakData.bcsID, false);
-            if (result.success) {
+            const result = await breakConSuspendService.updateActiveStatus(breakData.bcsID, false);
+            if (result) {
             } else {
-                console.error("Failed to resume the break:", result.errorMessage);
+                console.error("Failed to resume the break:", result);
             }
         } catch (error) {
             console.error("Error resuming the break:", error);
