@@ -1,4 +1,6 @@
-export interface ProductListDto {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface ProductListDto extends BaseDto {
   productID: number;
   productCode?: string;
   catValue: string;

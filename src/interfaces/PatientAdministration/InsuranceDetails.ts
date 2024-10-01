@@ -69,7 +69,7 @@ export interface OPIPInsurancesDto {
   address2?: string;
   phone1?: string;
   phone2?: string;
-  rActiveYN: string; // Using string to represent char
+  rActiveYN: string;
   rCreatedID: number;
   rCreatedOn: Date;
   rCreatedBy: string;
@@ -85,7 +85,7 @@ export interface OPIPInsurancesDto {
   pChartCode?: string;
   pChartCompID?: number;
   referenceNo?: string;
-  transferYN?: string; // Using string to represent char
+  transferYN?: string;
   coveredVal?: string;
   coveredFor?: string;
 }

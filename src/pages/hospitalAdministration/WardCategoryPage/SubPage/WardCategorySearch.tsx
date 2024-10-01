@@ -1,7 +1,7 @@
 import React from "react";
 import { WardCategoryDto } from "../../../../interfaces/HospitalAdministration/WardCategoryDto";
-import { WardCategoryService } from "../../../../services/HospitalAdministrationServices/ContactListService/WardCategoryService/WardCategoryService";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
+import { wardCategoryService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 
 interface WardCategorySearchProps {
     open: boolean;
@@ -15,16 +15,16 @@ const WardCategorySearch: React.FC<WardCategorySearchProps> = ({
     onSelect,
 }) => {
     const fetchItems = () =>
-        WardCategoryService.getAllWardCategory().then(
+        wardCategoryService.getAll().then(
             (result) => result.data || []
         );
 
     const updateActiveStatus = async (id: number, status: boolean) => {
-        const result = await WardCategoryService.updateWardCategoryActiveStatus(
+        const result = await wardCategoryService.updateActiveStatus(
             id,
             status
         );
-        return result.success;
+        return result;
     };
 
     const getItemId = (item: WardCategoryDto) => item.wCatID;
@@ -49,6 +49,9 @@ const WardCategorySearch: React.FC<WardCategorySearchProps> = ({
             getItemId={getItemId}
             getItemActiveStatus={getItemActiveStatus}
             searchPlaceholder="Enter Ward Category name or code"
+            isStatusVisible={true}
+            isActionVisible={true}
+            isEditButtonVisible={true}
         />
     );
 };

@@ -1,4 +1,6 @@
-export interface InsuranceListDto {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface InsuranceListDto extends BaseDto {
   insurID: number;
   insurCode: string;
   insurName: string;

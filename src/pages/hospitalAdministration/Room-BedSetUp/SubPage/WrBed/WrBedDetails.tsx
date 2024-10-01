@@ -15,7 +15,10 @@ import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
-import { roomGroupService, wrBedService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import {
+    roomGroupService,
+    wrBedService,
+} from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 interface WrBedDetailsProps {
     beds: WrBedDto[];
 }
@@ -24,11 +27,12 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
     const { setLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
+    const [updatedBeds, setUpdatedBeds] = useState<WrBedDto[]>(beds);
     const [formData, setFormData] = useState<WrBedDto>({
         bchID: 0,
         bedID: 0,
         bedName: "",
-        rlID: 0,//roomId
+        rlID: 0,
         rActiveYN: "Y",
         compID: store.getState().userDetails.compID || 0,
         transferYN: "Y",
@@ -37,7 +41,8 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
         key: 0,
     });
     const { handleDropdownChange } = useDropdownChange<WrBedDto>(setFormData);
-    const { bedCategoryValues, serviceValues, roomGroupValues, roomListValues } = useDropdownValues();
+    const { bedCategoryValues, serviceValues, roomGroupValues, roomListValues } =
+        useDropdownValues();
     const [, setIsSubGroup] = useState(false);
 
     const handleAdd = (isSubGroup: boolean = false, parentGroup?: WrBedDto) => {
@@ -45,7 +50,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
             bchID: 0,
             bedID: 0,
             bedName: "",
-            rlID: 0,//roomId
+            rlID: 0,
             rActiveYN: "Y",
             compID: store.getState().userDetails.compID || 0,
             transferYN: "Y",
@@ -62,8 +67,12 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
         setLoading(true);
         try {
             const preparedData: WrBedDto = {
-                wbCatID: formData.wbCatID ? parseInt(formData.wbCatID.toString(), 10) : undefined,
-                bchID: formData.bchID ? parseInt(formData.bchID.toString(), 10) : undefined,
+                wbCatID: formData.wbCatID
+                    ? parseInt(formData.wbCatID.toString(), 10)
+                    : undefined,
+                bchID: formData.bchID
+                    ? parseInt(formData.bchID.toString(), 10)
+                    : undefined,
                 bedID: formData.bedID,
                 bedName: formData.bedName ?? "",
                 bedStatus: formData.bchID ? formData.bchName : undefined,
@@ -87,6 +96,19 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
                     "success"
                 );
                 setIsDialogOpen(false);
+
+                const savedBed = await wrBedService.getById(response.data.bedID);
+                if (savedBed.success) {
+                    const updatedBed = savedBed.data;
+
+                    setUpdatedBeds((prevBeds) =>
+                        formData.bedID
+                            ? prevBeds.map((bed) =>
+                                bed.bedID === updatedBed.bedID ? updatedBed : bed
+                            )
+                            : [...prevBeds, updatedBed]
+                    );
+                }
             } else {
                 showAlert(
                     "Error",
@@ -116,13 +138,16 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
                 showAlert("Error", "Failed to load department details", "error");
             }
         } catch (error) {
-            showAlert("Error", "An error occurred while fetching department details.", "error");
+            showAlert(
+                "Error",
+                "An error occurred while fetching department details.",
+                "error"
+            );
         } finally {
             setLoading(false);
         }
     };
 
-    // Handle the rgrpID change to fetch deptID and deptName
     const handleRoomGroupChange = (name: string, value: any) => {
         setFormData((prev) => ({ ...prev, [name]: value }));
         if (name === "rgrpID") {
@@ -140,7 +165,12 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
             if (response.success) {
                 const bed = response.data;
                 if (bed) {
-                    setFormData({ ...bed, wbCatID: bed.wbCatID || 0, bchID: bed.bchID || 0 });
+                    setFormData({
+                        ...bed,
+                        wbCatID: bed.wbCatID || 0,
+                        bchID: bed.bchID || 0,
+                        rlID: bed.rlID || 0,
+                    });
                     setDialogTitle("Edit Bed");
                     setIsDialogOpen(true);
                 } else {
@@ -168,11 +198,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
             const updateWrBed = { ...row, rActiveYN: "N" };
             const result = await wrBedService.save(updateWrBed);
             if (result.success) {
-                showAlert(
-                    "Success",
-                    "Bed deactivated successfully",
-                    "success"
-                );
+                showAlert("Success", "Bed deactivated successfully", "success");
             } else {
                 showAlert(
                     "Error",
@@ -181,12 +207,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
                 );
             }
         } catch (error) {
-            console.error("Error deleting bed:", error);
-            showAlert(
-                "Error",
-                "An error occurred while deleting the bed.",
-                "error"
-            );
+            showAlert("Error", "An error occurred while deleting the bed.", "error");
         } finally {
             setLoading(false);
         }
@@ -201,8 +222,18 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
 
     const columns = [
         { key: "bedName", header: "Bed Name", visible: true },
-        { key: "rGrpName", header: "RG Name", visible: true, render: (row: WrBedDto) => row.roomList?.roomGroup?.rGrpName || '' },
-        { key: "rName", header: "Room Name", visible: true, render: (row: WrBedDto) => row.roomList?.rName || '' },
+        {
+            key: "rGrpName",
+            header: "RG Name",
+            visible: true,
+            render: (row: WrBedDto) => row.roomList?.roomGroup?.rGrpName || "",
+        },
+        {
+            key: "rName",
+            header: "Room Name",
+            visible: true,
+            render: (row: WrBedDto) => row.roomList?.rName || "",
+        },
         { key: "bchName", header: "Bed Status", visible: true },
         {
             key: "edit",
@@ -238,7 +269,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
             key: "addCradle",
             header: "Add Cradle",
             visible: true,
-            render: (row: WrBedDto) => (
+            render: (row: WrBedDto) =>
                 row.key === 0 ? (
                     <CustomButton
                         onClick={() => handleAdd(true, row)}
@@ -250,8 +281,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
                     />
                 ) : (
                     <></>
-                )
-            ),
+                ),
         },
     ];
 
@@ -265,7 +295,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
                     variant="contained"
                 />
             </Grid>
-            <CustomGrid columns={columns} data={beds} />
+            <CustomGrid columns={columns} data={updatedBeds} />
             <GenericDialog
                 open={isDialogOpen}
                 onClose={handleAddDialogClose}
@@ -324,7 +354,6 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
                         gridProps={{ xs: 12 }}
                     />
 
-
                     <FormField
                         type="select"
                         label="Bed Category"
@@ -353,7 +382,6 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
                         ControlID="bchID"
                         gridProps={{ xs: 12 }}
                     />
-
                 </Grid>
             </GenericDialog>
         </>

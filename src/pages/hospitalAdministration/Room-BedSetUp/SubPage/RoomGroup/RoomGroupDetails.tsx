@@ -9,14 +9,20 @@ import { useLoading } from "../../../../../context/LoadingContext";
 import { showAlert } from "../../../../../utils/Common/showAlert";
 import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../../components/Button/CustomButton";
-import { RoomGroupDto, RoomListDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
+import {
+    RoomGroupDto,
+    RoomListDto,
+} from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
 import { DropdownOption } from "../../../../../interfaces/Common/DropdownOption";
-import { roomGroupService, roomListService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import {
+    roomGroupService,
+    roomListService,
+} from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 
 interface RoomGroupDetailsProps {
     roomGroups: RoomGroupDto[];
@@ -28,7 +34,8 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
     const [dialogTitle, setDialogTitle] = useState("");
     const [, setIsSubGroup] = useState(false);
     const compID = store.getState().userDetails.compID;
-
+    const [updatedRoomGroups, setUpdatedRoomGroups] =
+        useState<RoomGroupDto[]>(roomGroups);
     const [formData, setFormData] = useState<RoomGroupDto>({
         rGrpID: 0,
         rGrpCode: "",
@@ -53,7 +60,10 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
     const { handleDropdownChange } = useDropdownChange<RoomGroupDto>(setFormData);
     const { departmentValues, genderValues } = useDropdownValues();
 
-    const handleAdd = (isSubGroup: boolean = false, parentGroup?: RoomGroupDto) => {
+    const handleAdd = (
+        isSubGroup: boolean = false,
+        parentGroup?: RoomGroupDto
+    ) => {
         setFormData({
             rGrpID: 0,
             rGrpCode: "",
@@ -87,12 +97,26 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
                     "success"
                 );
                 setIsDialogOpen(false);
-            } else {
-                showAlert(
-                    "Error",
-                    "Failed to save room group",
-                    "error"
+
+                const savedRoomGroup = await roomGroupService.getById(
+                    response.data.rGrpID
                 );
+
+                if (savedRoomGroup.success) {
+                    const updatedRoomGroup = savedRoomGroup.data;
+
+                    setUpdatedRoomGroups((prevRoomGroups) =>
+                        formData.rGrpID
+                            ? prevRoomGroups.map((group) =>
+                                group.rGrpID === updatedRoomGroup.rGrpID
+                                    ? updatedRoomGroup
+                                    : group
+                            )
+                            : [...prevRoomGroups, updatedRoomGroup]
+                    );
+                }
+            } else {
+                showAlert("Error", "Failed to save room group", "error");
             }
         } catch (error) {
             showAlert("Error", "An error occurred during submission.", "error");
@@ -100,7 +124,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
             setLoading(false);
         }
     };
-
 
     const handleAddDialogClose = () => {
         setIsDialogOpen(false);
@@ -138,24 +161,21 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
     const handleDelete = async (row: RoomGroupDto) => {
         setLoading(true);
         try {
-            // Fetch all rooms and filter by the selected Room Group ID
             const response = await roomListService.getAll();
 
             if (response.success && response.data) {
-                // Filter rooms that belong to the selected Room Group and are active
                 const associatedRooms = response.data.filter(
-                    (room: RoomListDto) => room.rgrpID === row.rGrpID && room.rActiveYN === "Y"
+                    (room: RoomListDto) =>
+                        room.rgrpID === row.rGrpID && room.rActiveYN === "Y"
                 );
 
                 if (associatedRooms.length > 0) {
-                    // Prevent deletion if there are associated rooms that are still active
                     showAlert(
                         "Error",
                         `Room Group ${row.rGrpName} cannot be deleted as it has active associated rooms. Please deactivate or delete the rooms first.`,
                         "error"
                     );
                 } else {
-                    // Proceed with the deletion if no active associated rooms
                     const updatedRoomGroup = { ...row, rActiveYN: "N" };
                     const result = await roomGroupService.save(updatedRoomGroup);
 
@@ -166,19 +186,11 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
                             "success"
                         );
                     } else {
-                        showAlert(
-                            "Error",
-                            "Failed to deactivate Room Group",
-                            "error"
-                        );
+                        showAlert("Error", "Failed to deactivate Room Group", "error");
                     }
                 }
             } else {
-                showAlert(
-                    "Error",
-                    "Failed to load room list",
-                    "error"
-                );
+                showAlert("Error", "Failed to load room list", "error");
             }
         } catch (error) {
             showAlert(
@@ -190,9 +202,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
             setLoading(false);
         }
     };
-
-
-
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -240,7 +249,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
             key: "addSubGrp",
             header: "Add Sub Group",
             visible: true,
-            render: (row: RoomGroupDto) => (
+            render: (row: RoomGroupDto) =>
                 row.key === 0 ? (
                     <CustomButton
                         onClick={() => handleAdd(true, row)}
@@ -250,8 +259,9 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
                         size="small"
                         color="secondary"
                     />
-                ) : <></>
-            ),
+                ) : (
+                    <></>
+                ),
         },
     ];
     return (
@@ -264,7 +274,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
                     variant="contained"
                 />
             </Grid>
-            <CustomGrid columns={columns} data={roomGroups} />
+            <CustomGrid columns={columns} data={updatedRoomGroups} />
             <GenericDialog
                 open={isDialogOpen}
                 onClose={handleAddDialogClose}

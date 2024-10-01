@@ -8,10 +8,10 @@ import { showAlert } from "../../../../utils/Common/showAlert";
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import { ProductListDto } from "../../../../interfaces/InventoryManagement/ProductListDto";
-import { ProductListService } from "../../../../services/InventoryManagementService/ProductListService/ProductListService";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { ProductTaxListDto } from "../../../../interfaces/InventoryManagement/ProductTaxListDto";
+import { productListService } from "../../../../services/InventoryManagementService/inventoryManagementService";
 
 const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
     editData,
@@ -81,7 +81,7 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
         }
         setLoading(true);
         try {
-            const result = await ProductListService.saveProductList(formState);
+            const result = await productListService.save(formState);
 
             if (result.success) {
                 showAlert("Success", "Product saved successfully!", "success", {

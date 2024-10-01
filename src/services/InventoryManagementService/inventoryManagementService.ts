@@ -3,9 +3,15 @@ import {
   ProductSubGroupDto,
   ProductUnitDto,
 } from "../../interfaces/InventoryManagement/ProductGroup-Unit-SubGroup";
+import { ProductListDto } from "../../interfaces/InventoryManagement/ProductListDto";
 import { ProductOverviewDto } from "../../interfaces/InventoryManagement/ProductOverviewDto";
 import { ProductTaxListDto } from "../../interfaces/InventoryManagement/ProductTaxListDto";
 import { createEntityService } from "../../utils/Common/serviceFactory";
+
+export const productListService = createEntityService<ProductListDto>(
+  "ProductList",
+  "inventoryManagementURL"
+);
 
 export const productSubGroupService = createEntityService<ProductSubGroupDto>(
   "ProductSubGroup",

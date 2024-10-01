@@ -1,7 +1,7 @@
 import React from "react";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { ProductListDto } from "../../../../interfaces/InventoryManagement/ProductListDto";
-import { ProductListService } from "../../../../services/InventoryManagementService/ProductListService/ProductListService";
+import { productListService } from "../../../../services/InventoryManagementService/inventoryManagementService";
 
 interface ProductListSearchProps {
     open: boolean;
@@ -15,13 +15,13 @@ const ProductListSearch: React.FC<ProductListSearchProps> = ({
     onSelect,
 }) => {
     const fetchItems = () =>
-        ProductListService.getAllProductList().then(
+        productListService.getAll().then(
             (result) => result.data || []
         );
 
     const updateActiveStatus = async (id: number, status: boolean) => {
-        const result = await ProductListService.updateProductListActiveStatus(id, status);
-        return result.success;
+        const result = await productListService.updateActiveStatus(id, status);
+        return result;
     };
 
     const getItemId = (item: ProductListDto) => item.productID;
