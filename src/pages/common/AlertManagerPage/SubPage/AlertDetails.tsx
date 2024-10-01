@@ -13,7 +13,6 @@ import CustomGrid, {
     Column,
 } from "../../../../components/CustomGrid/CustomGrid";
 import EditIcon from "@mui/icons-material/Edit";
-import { AlertManagerServices } from "../../../../services/CommonServices/AlertManagerServices";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import CustomButton from "../../../../components/Button/CustomButton";
@@ -23,6 +22,7 @@ import { showAlertPopUp } from "../../../../utils/Common/alertMessage";
 import AddIcon from "@mui/icons-material/Add";
 import useDayjs from "../../../../hooks/Common/useDateTime";
 import { ErrorMessage } from 'formik';
+import { alertService } from "../../../../services/CommonServices/CommonModelServices";
 
 const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
     editData,
@@ -95,6 +95,8 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
             payID: 0,
             patOPIPYN: "Y",
             rActiveYN: "Y",
+
+
         }),
         [formState, userID, userName, alertsState, editMode, editIndex]
     );
@@ -134,7 +136,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
         setLoading(true);
         try {
             for (const alert of alertsState) {
-                const result = await AlertManagerServices.saveAlert(alert);
+                const result = await alertService.save(alert);
 
                 if (!result.success) {
                     throw new Error(result.errorMessage || "Failed to save Alert.");
@@ -199,12 +201,12 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
 
         try {
             setLoading(true);
-            const result = await AlertManagerServices.UpdateAlertActiveStatus(
+            const isSuccess = await alertService.updateActiveStatus(
                 item.oPIPAlertID,
                 false
             );
 
-            if (result.success) {
+            if (isSuccess) {
                 setAlerts((prevAlerts) =>
                     prevAlerts.filter((alert) => alert.oPIPAlertID !== item.oPIPAlertID)
                 );
@@ -212,15 +214,15 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
             } else {
                 showAlert(
                     "Error",
-                    result.errorMessage || "Failed to delete Alert.",
+                    "Failed to delete the alert. Please try again.",
                     "error"
                 );
             }
         } catch (error) {
-            console.error("Error deleting Alert:", error);
+            console.error("Error deleting alert:", error);
             showAlert(
                 "Error",
-                "An unexpected error occurred while deleting.",
+                "An unexpected error occurred while deleting the alert.",
                 "error"
             );
         } finally {
@@ -228,11 +230,14 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
         }
     };
 
+
     const filteredAlerts = alertsState.filter((alert) => alert.rActiveYN === "Y");
 
     const handlePatientSelect = async (selectedSuggestion: string) => {
         setLoading(true);
         try {
+            debugger
+            debugger
             const numbersArray = extractNumbers(selectedSuggestion);
             const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
 
@@ -245,7 +250,7 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
                     pChartCode,
                 }));
                 const alertResult =
-                    await AlertManagerServices.GetAlertBypChartID(pChartID);
+                    await alertService.getById(pChartID);
 
                 if (alertResult.success && alertResult.data) {
                     const activeAlerts = alertResult.data.filter(

@@ -8,10 +8,10 @@ import PatientSearch from "../../../patientAdministration/CommonPage/AdvanceSear
 import { PatientSearchContext } from "../../../../context/PatientSearchContext";
 import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import { Search as SearchIcon } from "@mui/icons-material";
-import { AlertManagerServices } from "../../../../services/CommonServices/AlertManagerServices";
 import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
 import { showAlertPopUp } from "../../../../utils/Common/alertMessage";
 import { showAlert } from "../../../../utils/Common/showAlert";
+import { alertService } from "../../../../services/CommonServices/CommonModelServices";
 
 const AlertPage: React.FC = () => {
     const [selectedData, setSelectedData] = useState<AlertDto | undefined>(
@@ -36,7 +36,7 @@ const AlertPage: React.FC = () => {
                 setSelectedPChartID(pChartID);
 
                 const alertResult =
-                    await AlertManagerServices.GetAlertBypChartID(pChartID);
+                    await alertService.getById(pChartID);
 
                 if (alertResult.success && alertResult.data) {
                     const activeAlerts = alertResult.data.filter(
