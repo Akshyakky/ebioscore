@@ -1,4 +1,6 @@
-export interface ReasonListData {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface ReasonListData extends BaseDto {
   arlID: number;
   arlCode: string;
   arlName: string;

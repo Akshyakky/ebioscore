@@ -1,4 +1,6 @@
-export interface AppointBookingDto {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface AppointBookingDto extends BaseDto {
   abID: number;
   abFName: string;
   abLName?: string;

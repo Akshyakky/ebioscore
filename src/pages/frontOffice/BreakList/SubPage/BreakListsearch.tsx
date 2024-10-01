@@ -9,6 +9,7 @@ import PlayCircleOutline from "@mui/icons-material/PlayCircleOutline";
 import { BreakConSuspendService } from "../../../../services/FrontOfficeServices/BreakConSuspendService";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import CustomButton from "../../../../components/Button/CustomButton";
+import { breakListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
 
 interface BreakListSearchProps {
     open: boolean;
@@ -27,8 +28,8 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
     };
 
     const updateActiveStatus = async (blID: number, status: boolean) => {
-        const result = await BreakListService.updateBreakListActiveStatus(blID, status);
-        return result.success;
+        const result = await breakListService.updateActiveStatus(blID, status);
+        return result;
     };
 
     const handleSuspendResume = (breakData: any, isSuspend: boolean) => {

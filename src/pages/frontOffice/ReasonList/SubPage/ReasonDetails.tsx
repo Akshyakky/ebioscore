@@ -4,15 +4,14 @@ import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
-import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
+import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import { notifyError } from "../../../../utils/Common/toastManager";
-import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
+import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { reasonListService, resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
 
 const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) => {
   const [formState, setFormState] = useState({
@@ -84,7 +83,7 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
   useEffect(() => {
     const fetchResourceList = async () => {
       try {
-        const result = await ResourceListService.getAllResourceLists();
+        const result = await resourceListService.getAll();
         if (result.success) {
           setResourceList(result.data ?? []);
         } else {
@@ -108,7 +107,7 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
 
     try {
       const ReasonListData = createReasonListData();
-      const result = await ReasonListService.saveReasonList(ReasonListData);
+      const result = await reasonListService.save(ReasonListData);
       if (result.success) {
         showAlert("Success", "Reason List saved successfully!", "success", {
           onConfirm: handleClear

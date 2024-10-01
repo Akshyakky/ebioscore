@@ -1,7 +1,7 @@
 import React from "react";
-import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
+import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
 
 interface ResourceListSearchProps {
   open: boolean;
@@ -11,13 +11,13 @@ interface ResourceListSearchProps {
 
 const ResourceListSearch: React.FC<ResourceListSearchProps> = ({ open, onClose, onSelect }) => {
   const fetchItems = async () => {
-    const result = await ResourceListService.getAllResourceLists();
+    const result = await resourceListService.getAll();
     return result.success && result.data ? result.data : [];
   };
 
   const updateActiveStatus = async (id: number, status: boolean) => {
-    const result = await ResourceListService.updateResourceActiveStatus(id, status);
-    return result.success;
+    const result = await resourceListService.updateActiveStatus(id, status);
+    return result;
   };
 
   const columns = [

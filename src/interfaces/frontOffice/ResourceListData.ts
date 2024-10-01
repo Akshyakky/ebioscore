@@ -1,4 +1,6 @@
-export interface ResourceListData {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface ResourceListData extends BaseDto {
   rLID: number;
   rLCode: string;
   rLName: string;
