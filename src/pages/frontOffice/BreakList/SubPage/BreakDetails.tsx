@@ -10,15 +10,14 @@ import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import Save from "@mui/icons-material/Save";
 import Delete from "@mui/icons-material/Delete";
-import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import { AppointmentService } from "../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService";
 import BreakFrequencyDetails, { FrequencyData } from './BreakFrequencyDetails';
 import { formatDate } from "../../../../utils/Common/dateUtils";
-import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
 import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { BreakConDetailData, BreakListData, BreakListDto } from "../../../../interfaces/FrontOffice/BreakListData";
+import { BreakConDetailData, BreakListData, BreakListDto } from "../../../../interfaces/frontOffice/BreakListData";
 import FormField from "../../../../components/FormField/FormField";
+import { breakListService, resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
 
 const frequencyCodeMap = {
     none: "FO70",
@@ -76,7 +75,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
             const { blID } = data;
 
             // Fetch BreakList data by blID
-            const breakListResult = await BreakListService.getBreakListById(blID);
+            const breakListResult = await breakListService.getById(blID);
 
             // Fetch BreakConDetail data by blID
             const breakConDetailResult = await BreakListConDetailsService.getBreakConDetailById(blID);
@@ -115,7 +114,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
         setLoading(true);
         try {
             if (selectedOption === "resource") {
-                const result = await ResourceListService.getAllResourceLists();
+                const result = await resourceListService.getAll();
                 if (result.success && result.data) setResourceData(result.data);
             } else {
                 const result = await AppointmentService.fetchAppointmentConsultants();
@@ -246,7 +245,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                 formState.bLFrqWkDesc = "";
             }
 
-            const saveBreakListResult = await BreakListService.saveBreakList(formState);
+            const saveBreakListResult = await breakListService.save(formState);
 
             if (saveBreakListResult.success && saveBreakListResult.data) {
                 const savedBreakListData = saveBreakListResult.data;
@@ -324,6 +323,34 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
         }
     };
 
+    const handleDateChange = (fieldName: keyof BreakListData) => (newDate: Date | null) => {
+        if (!newDate) return;
+
+        setFormState((prevState) => {
+            const updatedState = { ...prevState };
+
+            if (fieldName === 'bLStartDate') {
+                updatedState.bLStartDate = newDate;
+                if (newDate > updatedState.bLEndDate) {
+                    updatedState.bLEndDate = newDate;
+                }
+                if (isOneDay) {
+                    updatedState.bLStartTime = new Date(newDate.setHours(0, 0, 0, 0));
+                    updatedState.bLEndTime = new Date(newDate.setHours(23, 59, 0, 0));
+                }
+            } else if (fieldName === 'bLEndDate') {
+                updatedState.bLEndDate = newDate;
+
+                if (newDate < updatedState.bLStartDate) {
+                    updatedState.bLStartDate = newDate;
+                }
+            }
+            return updatedState;
+        });
+    };
+
+
+
     return (
         <>
             <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -379,22 +406,24 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                 </Grid>
                 <Grid container spacing={2}>
                     <FormField
-                        type="date"
+                        type="datepicker"
                         label="Start Date"
                         name="bLStartDate"
-                        value={formState.bLStartDate.toISOString().split('T')[0]}
-                        onChange={handleInputChange}
+                        value={formState.bLStartDate ? formState.bLStartDate.toISOString().split('T')[0] : ''} // Date in string format
+                        onChange={handleDateChange('bLStartDate')}
                         ControlID="StartDate"
-                        min={formState.bLEndDate.toISOString().split('T')[0]}
+                        minDate={new Date(1900, 0, 1)}
+
                     />
                     <FormField
-                        type="date"
+                        type="datepicker"
                         label="End Date"
                         name="bLEndDate"
-                        value={formState.bLEndDate.toISOString().split('T')[0]}
-                        onChange={handleInputChange}
+                        value={formState.bLEndDate ? formState.bLEndDate.toISOString().split('T')[0] : ''} // Date in string format
+                        onChange={handleDateChange('bLEndDate')}
                         ControlID="EndDate"
-                        min={formState.bLStartDate.toISOString().split('T')[0]}
+                        minDate={formState.bLStartDate}
+
                     />
                     <FormField
                         type="textarea"

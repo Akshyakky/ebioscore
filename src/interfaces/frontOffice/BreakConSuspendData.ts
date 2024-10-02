@@ -1,4 +1,6 @@
-export interface BreakConSuspendData {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface BreakConSuspendData extends BaseDto {
   bCSID: number;
   bLID: number;
   hPLID: number;

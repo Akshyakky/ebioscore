@@ -4,7 +4,7 @@ import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
 import ResourceDetails from "../SubPage/ResourceDetails";
 import ResourceListSearch from "../SubPage/ResourceListSearch";
-import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
+import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 
 const ResourceListPage: React.FC = () => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -38,6 +38,7 @@ const ResourceListPage: React.FC = () => {
                 />
             </Box>
             <ResourceDetails editData={selectedData} />
+
             <ResourceListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
         </Container>
     );

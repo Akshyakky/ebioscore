@@ -3,6 +3,7 @@ import { formatDate } from "../../utils/Common/dateUtils";
 import { RegistrationService } from "../../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 
 export const usePatientAutocomplete = () => {
+  debugger;
   const fetchPatientSuggestions = async (input: string): Promise<string[]> => {
     if (!input.trim()) {
       return [];

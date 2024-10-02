@@ -1,4 +1,6 @@
-export interface BreakListData {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface BreakListData extends BaseDto {
   bLID: number;
   bLName: string;
   bLStartTime: Date;
@@ -30,7 +32,7 @@ export interface BreakConDetailData {
   transferYN: string;
 }
 
-export interface BreakListDto {
+export interface BreakListDto extends BaseDto {
   breakListData: BreakListData;
   breakListConDetailsData: BreakConDetailData[];
 }

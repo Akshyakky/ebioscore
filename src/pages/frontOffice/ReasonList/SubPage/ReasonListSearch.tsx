@@ -1,7 +1,7 @@
 import React from "react";
-import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
-import { ReasonListData } from "../../../../interfaces/FrontOffice/ReasonListData";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
+import { reasonListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
+import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
 
 interface ReasonListSearchProps {
   open: boolean;
@@ -11,13 +11,14 @@ interface ReasonListSearchProps {
 
 const ReasonListSearch: React.FC<ReasonListSearchProps> = ({ open, onClose, onSelect }) => {
   const fetchItems = async () => {
-    const result = await ReasonListService.getAllReasonLists();
+    const result = await reasonListService.getAll();
+
     return result.success && result.data ? result.data : [];
   };
 
   const updateActiveStatus = async (id: number, status: boolean) => {
-    const result = await ReasonListService.updateReasonActiveStatus(id, status);
-    return result.success;
+    const result = await reasonListService.updateActiveStatus(id, status);
+    return result;
   };
 
   const columns = [

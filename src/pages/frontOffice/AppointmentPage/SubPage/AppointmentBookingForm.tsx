@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Grid } from '@mui/material';
 import { DropdownOption } from '../../../../interfaces/Common/DropdownOption';
 import FormField from '../../../../components/FormField/FormField';
-import { AppointBookingDto } from '../../../../interfaces/FrontOffice/AppointBookingDto';
+import { AppointBookingDto } from '../../../../interfaces/frontOffice/AppointBookingDto';
 import { ConstantValues } from '../../../../services/CommonServices/ConstantValuesService';
 import { AppModifyListService } from '../../../../services/CommonServices/AppModifyListService';
 import { useServerDate } from '../../../../hooks/Common/useServerDate';

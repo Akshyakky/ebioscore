@@ -4,12 +4,12 @@ import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { ResourceListData } from "../../../../interfaces/FrontOffice/ResourceListData";
+import { resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
+import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 
 interface ResourceDetailsProps {
   editData?: ResourceListData;
@@ -94,7 +94,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({ editData }) => {
 
     try {
       const ResourceListData = createResourceListData();
-      const result = await ResourceListService.saveResourceList(ResourceListData);
+      const result = await resourceListService.save(ResourceListData);
       if (result.success) {
         showAlert("Success", "Resource List saved successfully!", "success", {
           onConfirm: handleClear
