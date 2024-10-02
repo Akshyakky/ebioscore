@@ -5,6 +5,7 @@ import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import useDayjs from "../../../../hooks/Common/useDateTime";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
+import { useServerDate } from "../../../../hooks/Common/useServerDate";
 
 interface MembershipSchemeProps {
   formData: PatientRegistrationDto;
@@ -17,21 +18,19 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
 }) => {
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
   const { membershipSchemeValues } = useDropdownValues();
-  const { format, formatDateYMD } = useDayjs();
+  const serverDate = useServerDate();
 
-  const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = e.target.value;
+  const handleDateChange = useCallback((date: Date | null) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
       patRegisters: {
         ...prevFormData.patRegisters,
-        patMemSchemeExpiryDate: newDate,
+        patMemSchemeExpiryDate: date ? date : serverDate,
       },
     }));
   }, [setFormData]);
 
   return (
-
     <FormSectionWrapper title="Membership Scheme" spacing={1}>
       <FormField
         type="select"
@@ -48,7 +47,7 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
         gridProps={{ xs: 12, sm: 6, md: 3 }}
       />
       <FormField
-        type="date"
+        type="datepicker"
         label="Membership Expiry Date"
         name="MembeshipExpDate"
         ControlID="MembeshipExpDate"

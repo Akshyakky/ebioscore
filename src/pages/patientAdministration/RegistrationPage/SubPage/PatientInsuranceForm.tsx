@@ -27,7 +27,8 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
 }) => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { formatDate, formatDateTime, parse, format, formatDateYMD } = useDayjs(useServerDate());
+  const serverDate = useServerDate();
+  const { formatDate, formatDateTime, parse, format, formatDateYMD } = useDayjs();
   const { insuranceOptions, relationValues, coverForValues } = useDropdownValues();
 
   const insuranceFormInitialState: OPIPInsurancesDto = useMemo(() => ({
@@ -40,8 +41,8 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
     policyNumber: "",
     policyHolder: "",
     groupNumber: "",
-    policyStartDt: formatDateYMD(),
-    policyEndDt: formatDateYMD(),
+    policyStartDt: serverDate,
+    policyEndDt: serverDate,
     guarantor: "",
     relationVal: "",
     relation: "",
@@ -50,12 +51,6 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
     phone1: "",
     phone2: "",
     rActiveYN: "Y",
-    rCreatedID: userInfo.userID ?? 0,
-    rCreatedBy: userInfo.userName ?? "",
-    rCreatedOn: parse(formatDateTime()).toDate(),
-    rModifiedID: userInfo.userID ?? 0,
-    rModifiedBy: userInfo.userName ?? "",
-    rModifiedOn: parse(formatDateTime()).toDate(),
     rNotes: "",
     compID: userInfo.compID ?? 0,
     compCode: userInfo.compCode ?? "",
@@ -81,11 +76,11 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
     if (editData) {
       setInsuranceForm({
         ...editData,
-        policyStartDt: formatDateYMD(editData.policyStartDt),
-        policyEndDt: formatDateYMD(editData.policyEndDt),
+        policyStartDt: editData.policyStartDt,
+        policyEndDt: editData.policyEndDt,
       });
     }
-  }, [editData, formatDateYMD]);
+  }, [editData]);
 
   const handleSubmit = useCallback(() => {
     setIsSubmitted(true);
@@ -109,6 +104,13 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
       [field]: e.target.value,
     }));
   }, []);
+
+  const handleDateChange = useCallback((field: string) => (date: Date | null) => {
+    setInsuranceForm(prev => ({
+      ...prev,
+      [field]: date ? formatDateYMD(date) : '',
+    }));
+  }, [formatDateYMD]);
 
   return (
     <Dialog open={show} onClose={handleClose} maxWidth="lg" fullWidth>
@@ -161,21 +163,21 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
             gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
           />
           <FormField
-            type="date"
+            type="datepicker"
             label="Policy Start Date"
             name="policyStartDt"
             ControlID="PolicyStartDate"
-            value={insuranceForm.policyStartDt}
-            onChange={handleTextChange("policyStartDt")}
+            value={insuranceForm.policyStartDt ? new Date(insuranceForm.policyStartDt) : null}
+            onChange={handleDateChange("policyStartDt")}
             gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
           />
           <FormField
-            type="date"
+            type="datepicker"
             label="Policy End Date"
             name="policyEndDt"
             ControlID="PolicyEndDate"
-            value={insuranceForm.policyEndDt}
-            onChange={handleTextChange("policyEndDt")}
+            value={insuranceForm.policyEndDt ? new Date(insuranceForm.policyEndDt) : null}
+            onChange={handleDateChange("policyEndDt")}
             gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
           />
           <FormField

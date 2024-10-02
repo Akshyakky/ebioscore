@@ -75,7 +75,6 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
     }
     setLoading(true);
     try {
-      debugger
       const wardCategoryDto = createWardCategoryDto();
       const result = await wardCategoryService.save(wardCategoryDto);
 

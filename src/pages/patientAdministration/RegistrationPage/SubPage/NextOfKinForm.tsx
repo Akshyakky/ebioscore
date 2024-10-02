@@ -32,7 +32,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
-  const { date: serverDate, formatDate, formatDateTime, parse, format, formatDateYMD } = useDayjs(useServerDate());
+  const serverDate = useServerDate();
 
   const { titleValues, relationValues, areaValues, cityValues, countryValues } = useDropdownValues();
 
@@ -41,10 +41,11 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
     pNokID: 0,
     pChartID: 0,
     pNokPChartID: 0,
+    pNokPChartCode: "",
     pNokRegStatusVal: "Y",
     pNokRegStatus: "Registered",
     pNokPssnID: "",
-    pNokDob: formatDateYMD(),
+    pNokDob: serverDate,
     pNokRelNameVal: "",
     pNokRelName: "",
     pNokTitleVal: "",
@@ -68,14 +69,12 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
     pNokState: "",
     pNokStreet: "",
     rActiveYN: "Y",
-    rCreatedID: userInfo.userID ?? 0,
-    rCreatedBy: userInfo.userName ?? "",
-    rCreatedOn: parse(formatDateTime()).toDate(),
-    rModifiedID: userInfo.userID ?? 0,
-    rModifiedBy: userInfo.userName ?? "",
-    rModifiedOn: parse(formatDateTime()).toDate(),
-  }), [userInfo]);
-
+    compID: userInfo.compID ?? 0,
+    compCode: userInfo.compCode ?? "",
+    compName: userInfo.compName ?? "",
+    rNotes: "",
+    transferYN: 'N'
+  }), [userInfo, serverDate]);
   const [nextOfkinData, setNextOfKinData] = useState<PatNokDetailsDto>(nextOfKinInitialFormState);
   const { handleDropdownChange } = useDropdownChange<PatNokDetailsDto>(setNextOfKinData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatNokDetailsDto>(setNextOfKinData);
@@ -85,7 +84,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
     if (editData) {
       setNextOfKinData({
         ...editData,
-        pNokDob: formatDateYMD(editData.pNokDob),
+        pNokDob: editData.pNokDob,
       });
     }
   }, [editData]);
@@ -144,6 +143,13 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
     finally {
       setLoading(false);
     }
+  }, []);
+
+  const handleDateChange = useCallback((date: Date | null) => {
+    setNextOfKinData(prev => ({
+      ...prev,
+      pNokDob: date ? date : serverDate,
+    }));
   }, []);
 
   return (
@@ -239,12 +245,12 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
             gridProps={{ xs: 12, sm: 6, md: 4 }}
           />
           <FormField
-            type="date"
+            type="datepicker"
             label="Birth Date"
             name="pNokDob"
             ControlID="BirthDate"
             value={nextOfkinData.pNokDob}
-            onChange={handleTextChange("pNokDob")}
+            onChange={handleDateChange}
             gridProps={{ xs: 12, sm: 6, md: 4 }}
           />
           <FormField
