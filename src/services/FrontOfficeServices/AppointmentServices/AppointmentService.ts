@@ -54,4 +54,9 @@ export const AppointmentService = {
     }
     return commonApiService.get<OperationResult<PaginatedList<AppointBookingDto>>>(url, getToken());
   },
+
+  generateAppointmentSlip: async (abID: number): Promise<Blob> => {
+    const url = `AppointBooking/GenerateAppointmentSlip/${abID}`;
+    return commonApiService.getBlob(url, getToken());
+  },
 };

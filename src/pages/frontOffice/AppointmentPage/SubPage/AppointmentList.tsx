@@ -29,6 +29,8 @@ const AppointmentSearch: React.FC<AppointmentSearchProps> = ({
     const [pageSize] = useState(10);
     const { isLoading, setLoading } = useLoading();
     const { formatDate, formatTime, formatDateTime } = useDayjs();
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [showPdfDialog, setShowPdfDialog] = useState(false);
 
     const fetchInitialAppointments = async () => {
         setLoading(true);
@@ -105,9 +107,27 @@ const AppointmentSearch: React.FC<AppointmentSearchProps> = ({
         setPage(value);
     };
 
-    const onPrint = (row: AppointBookingDto) => {
-        // Implement print functionality
-        console.log("Printing appointment:", row);
+    const onPrint = async (row: AppointBookingDto) => {
+        try {
+            setLoading(true);
+            const pdfBlob = await AppointmentService.generateAppointmentSlip(row.abID);
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            setPdfUrl(pdfUrl);
+            setShowPdfDialog(true);
+        } catch (error) {
+            console.error("Error generating appointment slip:", error);
+            // Handle error (e.g., show an error message)
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const closePdfDialog = () => {
+        setShowPdfDialog(false);
+        if (pdfUrl) {
+            URL.revokeObjectURL(pdfUrl);
+            setPdfUrl(null);
+        }
     };
 
     const getFullName = (row: AppointBookingDto): string => {
@@ -228,24 +248,53 @@ const AppointmentSearch: React.FC<AppointmentSearchProps> = ({
     );
 
     return (
-        <GenericDialog
-            open={open}
-            onClose={onClose}
-            title="Appointment Search"
-            maxWidth="xxl"
-            fullWidth
-            showCloseButton
-            actions={dialogActions}
-            disableBackdropClick
-            disableEscapeKeyDown
-            dialogContentSx={{
-                minHeight: "600px",
-                maxHeight: "600px",
-                overflowY: "auto",
-            }}
-        >
-            {dialogContent}
-        </GenericDialog>
+        <>
+            <GenericDialog
+                open={open}
+                onClose={onClose}
+                title="Appointment Search"
+                maxWidth="xxl"
+                fullWidth
+                showCloseButton
+                actions={dialogActions}
+                disableBackdropClick
+                disableEscapeKeyDown
+                dialogContentSx={{
+                    minHeight: "600px",
+                    maxHeight: "600px",
+                    overflowY: "auto",
+                }}
+            >
+                {dialogContent}
+            </GenericDialog>
+            <GenericDialog
+                open={showPdfDialog}
+                onClose={closePdfDialog}
+                title="Appointment Slip"
+                maxWidth="xl"
+                fullWidth
+                showCloseButton
+                actions={
+                    <CustomButton
+                        variant="contained"
+                        text="Close"
+                        icon={Close}
+                        size="medium"
+                        onClick={closePdfDialog}
+                        color="secondary"
+                    />
+                }
+            >
+                {pdfUrl && (
+                    <iframe
+                        src={pdfUrl}
+                        width="100%"
+                        height="1000vh"
+                        style={{ border: "none" }}
+                    />
+                )}
+            </GenericDialog>
+        </>
     );
 };
 
