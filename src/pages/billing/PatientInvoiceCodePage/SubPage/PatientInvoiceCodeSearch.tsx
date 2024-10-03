@@ -1,7 +1,7 @@
 import React from "react";
 import { BPatTypeDto } from "../../../../interfaces/Billing/BPatTypeDto";
-import { PatientInvoiceCodeService } from "../../../../services/BillingServices/PatientInvoiceService";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
+import { patientInvioceService } from "../../../../services/BillingServices/BillingGenericService";
 
 interface PatientInvoiceCodeSearchProps {
   open: boolean;
@@ -15,16 +15,16 @@ const PatientInvoiceCodeSearch: React.FC<PatientInvoiceCodeSearchProps> = ({
   onSelect,
 }) => {
   const fetchItems = () =>
-    PatientInvoiceCodeService.getAllBPatTypes().then(
+    patientInvioceService.getAll().then(
       (result) => result.data || []
     );
 
   const updateActiveStatus = async (id: number, status: boolean) => {
-    const result = await PatientInvoiceCodeService.updateBPatTypeActiveStatus(
+    const result = await patientInvioceService.updateActiveStatus(
       id,
       status
     );
-    return result.success;
+    return result;
   };
 
   const getItemId = (item: BPatTypeDto) => item.pTypeID;
@@ -49,6 +49,9 @@ const PatientInvoiceCodeSearch: React.FC<PatientInvoiceCodeSearchProps> = ({
       getItemId={getItemId}
       getItemActiveStatus={getItemActiveStatus}
       searchPlaceholder="Enter Payment name or code"
+      isActionVisible={true}
+      isEditButtonVisible={true}
+      isStatusVisible={true}
     />
   );
 };

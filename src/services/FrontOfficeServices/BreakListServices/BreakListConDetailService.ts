@@ -2,7 +2,7 @@ import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { CommonApiService } from "../../CommonApiService";
 import { store } from "../../../store/store";
-import { BreakConDetailData } from "../../../interfaces/FrontOffice/BreakListData";
+import { BreakConDetailData } from "../../../interfaces/frontOffice/BreakListData";
 
 const commonApiService = new CommonApiService({
   baseURL: APIConfig.frontOffice,

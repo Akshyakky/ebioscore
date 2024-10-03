@@ -9,11 +9,11 @@ import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { DepartmentDto } from "./../../../../interfaces/Billing/DepartmentDto";
-import { DepartmentListService } from "../../../../services/BillingServices/DepartmentListService";
 import FormField from "../../../../components/FormField/FormField";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { DeptUsersPage } from "./DeptUsers/DeptUsersPage";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
+import { departmentService } from "../../../../services/CommonServices/CommonModelServices";
 
 const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   editData,
@@ -40,7 +40,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const { compID, compCode, compName, userID, userName } =
+  const { userID, userName } =
     store.getState().userDetails;
   const { departmentTypesValues } = useDropdownValues();
   const isEditMode = deptId > 0;
@@ -63,6 +63,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
       setDischargeNoteYN(editData.dischargeNoteYN || "N");
       setSuperSpecialityYN(editData.superSpecialityYN || "N");
       setRActiveYN(editData.rActiveYN || "Y");
+
     } else {
       handleClear();
     }
@@ -96,9 +97,9 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
       isStoreYN: isStoreYN,
       autoConsumptionYN: autoConsumptionYN,
       dischargeNoteYN: dischargeNoteYN,
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
+      compID: store.getState().userDetails.compID || 0,
+      compCode: store.getState().userDetails.compCode || "",
+      compName: store.getState().userDetails.compName || "",
       transferYN: "N",
       rCreatedID: userID || 0,
       rCreatedOn: serverDate || new Date(),
@@ -113,7 +114,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
     setLoading(true);
     try {
       const result =
-        await DepartmentListService.saveDepartmentList(departmentDto);
+        await departmentService.save(departmentDto);
       if (result.success) {
         showAlert(
           `Department ${isEditMode ? "Updated" : "Saved"}`,

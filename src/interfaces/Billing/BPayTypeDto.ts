@@ -1,4 +1,6 @@
-export interface BPayTypeDto {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface BPayTypeDto extends BaseDto {
   payID: number;
   payCode: string;
   payName: string;
