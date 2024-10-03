@@ -12,15 +12,9 @@ const apiService = new CommonApiService({
 // Function to get the token from the store
 const getToken = () => store.getState().userDetails.token!;
 
-const fetchActiveSpecialties = async (
-  compId: number
-): Promise<DropdownOption[]> => {
+const fetchActiveSpecialties = async (compId: number): Promise<DropdownOption[]> => {
   try {
-    const response = await apiService.get<any[]>(
-      `ContactList/GetActiveSpecialities`,
-      getToken(),
-      { compId }
-    );
+    const response = await apiService.get<any[]>(`ContactList/GetActiveSpecialities`, getToken(), { compId });
     return response.map((item: any) => ({
       value: item.facId,
       label: item.facName,
@@ -31,31 +25,16 @@ const fetchActiveSpecialties = async (
   }
 };
 
-const saveContactList = async (
-  contactListDto: ContactListData
-): Promise<OperationResult<ContactListData>> => {
-  return apiService.post<OperationResult<ContactListData>>(
-    "ContactList/SaveContactList",
-    contactListDto,
-    getToken()
-  );
+const saveContactList = async (contactListDto: ContactListData): Promise<OperationResult<ContactListData>> => {
+  return apiService.post<OperationResult<ContactListData>>("ContactList/SaveContactList", contactListDto, getToken());
 };
 
-const searchContactListDetails = async (
-  searchTerm: string
-): Promise<{ data: any[]; success: boolean }> => {
-  return apiService.get<{ data: any[]; success: boolean }>(
-    "ContactList/SearchContactList",
-    getToken(),
-    { searchTerm }
-  );
+const searchContactListDetails = async (searchTerm: string): Promise<{ data: any[]; success: boolean }> => {
+  return apiService.get<{ data: any[]; success: boolean }>("ContactList/SearchContactList", getToken(), { searchTerm });
 };
 
 const fetchContactDetails = async (conID: number): Promise<ContactListData> => {
-  const response = await apiService.get<OperationResult<ContactListData>>(
-    `ContactList/GetContactDetails/${conID}`,
-    getToken()
-  );
+  const response = await apiService.get<OperationResult<ContactListData>>(`ContactList/GetContactDetails/${conID}`, getToken());
   if (response.success && response.data) {
     return response.data;
   } else {

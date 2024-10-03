@@ -15,10 +15,10 @@ import { useServerDate } from "../../../../hooks/Common/useServerDate";
 
 const ContactListPage: React.FC = () => {
   const { compID, compCode, compName } = useSelector((state: RootState) => state.userDetails);
-  const { formatDateYMD, formatDateTime } = useDayjs(useServerDate());
+  const serverDate = useServerDate();
+  const { formatDateYMD, formatDateTime } = useDayjs();
 
   const getInitialContactListState = useMemo(() => {
-    const today = formatDateYMD();
     return {
       contactMastDto: {
         conID: 0,
@@ -27,7 +27,7 @@ const ContactListPage: React.FC = () => {
         conFName: "",
         conLName: "",
         conMName: "",
-        conDob: today,
+        conDob: serverDate,
         conGender: "",
         conSSNID: "",
         conBldGrp: "",
@@ -38,7 +38,7 @@ const ContactListPage: React.FC = () => {
         compID: compID!,
         compCode: compCode!,
         compName: compName!,
-        notes: "",
+        rNotes: "",
         conEmpStatus: "",
         allergicToAllergence: "",
         allergicToMedicine: "",
@@ -66,6 +66,7 @@ const ContactListPage: React.FC = () => {
         stampPath: "",
         payPolicy: 0,
         transferYN: "N",
+
       },
       contactAddressDto: {
         cAddID: 0,
@@ -88,10 +89,12 @@ const ContactListPage: React.FC = () => {
         cAddStreet: "",
         cAddStreet1: "",
         transferYN: "N",
+        rActiveYN: "Y",
+        rNotes: ""
       },
       contactDetailsDto: []
     };
-  }, [formatDateYMD, formatDateTime, compID, compCode, compName]);
+  }, [compID, compCode, compName]);
 
   const [contactList, setContactList] = useState<ContactListData>(getInitialContactListState);
 

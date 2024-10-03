@@ -5,14 +5,14 @@ export interface ContactMastData {
   conFName: string;
   conLName?: string;
   conMName?: string;
-  conDob?: string;
+  conDob: Date;
   conGender?: string;
   conSSNID?: string;
   conBldGrp?: string;
   conCat: string;
   conEmpYN: string;
   rActiveYN: string;
-  notes?: string;
+  rNotes?: string;
   conEmpStatus?: string;
   consValue: string;
   allergicToAllergence?: string;
@@ -54,6 +54,8 @@ export interface ContactAddressData {
   cAddMail?: string;
   cAddPostCode?: string;
   cAddPSSID?: string;
+  rNotes: string;
+  rActiveYN: string;
   compID: number;
   compCode?: string;
   compName?: string;
@@ -74,6 +76,8 @@ export interface ContactDetailsData {
   facID: number;
   facName: string;
   conType: string;
+  rNotes: string;
+  rActiveYN: string;
   compID: number;
   compCode: string;
   compName: string;

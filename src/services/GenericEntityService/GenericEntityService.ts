@@ -1,21 +1,16 @@
 import { CommonApiService } from "../CommonApiService";
 import { store } from "../../store/store";
-
-// Generic DTO interface with common properties
 export interface BaseDto {
-  // id: number;
-  // rActiveYN: string;
-  [key: string]: any; // Allow for additional properties
+  [key: string]: any;
 }
 
-// Generic service class
 export class GenericEntityService<T extends BaseDto> {
-  protected apiService: CommonApiService;
-  protected baseEndpoint: string;
+  protected readonly apiService: CommonApiService;
+  protected readonly baseEndpoint: string;
 
   constructor(apiService: CommonApiService, entityName: string) {
     this.apiService = apiService;
-    this.baseEndpoint = `${entityName}`;
+    this.baseEndpoint = entityName;
   }
 
   protected getToken(): string {
@@ -39,10 +34,7 @@ export class GenericEntityService<T extends BaseDto> {
   }
 
   async getNextCode(prefix: string, padLength: number = 5): Promise<T> {
-    const params = new URLSearchParams({
-      prefix,
-      padLength: padLength.toString(),
-    });
+    const params = new URLSearchParams({ prefix, padLength: padLength.toString() });
     return this.apiService.get<T>(`${this.baseEndpoint}/GetNextCode?${params.toString()}`, this.getToken());
   }
 
@@ -65,10 +57,8 @@ export class GenericEntityService<T extends BaseDto> {
     const params = new URLSearchParams({
       pageIndex: pageIndex.toString(),
       pageSize: pageSize.toString(),
+      ...(filter && { filter }),
     });
-    if (filter) {
-      params.append("filter", filter);
-    }
     return this.apiService.get<{
       items: T[];
       pageIndex: number;
@@ -93,8 +83,7 @@ export class GenericEntityService<T extends BaseDto> {
   }
 
   async getAllWithIncludes(includeProperties: string[]): Promise<T> {
-    const params = new URLSearchParams();
-    includeProperties.forEach((prop) => params.append("includeProperties", prop));
+    const params = new URLSearchParams(includeProperties.map((prop) => ["includeProperties", prop]));
     return this.apiService.get<T>(`${this.baseEndpoint}/GetAllWithIncludes?${params.toString()}`, this.getToken());
   }
 

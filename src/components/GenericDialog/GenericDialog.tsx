@@ -143,11 +143,11 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
             </StyledDialogContent>
             {actions && (
                 <StyledDialogActions sx={actionsSx}>
-                    {Array.isArray(actions) ? actions : [actions]}
+                    {React.Children.toArray(actions)}
                 </StyledDialogActions>
             )}
         </StyledDialog>
     );
 };
 
-export default GenericDialog;
+export default React.memo(GenericDialog);

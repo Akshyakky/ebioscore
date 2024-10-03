@@ -8,6 +8,7 @@ import ContactListSwitches from "./ContactListSwitches";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
+import { useServerDate } from "../../../../hooks/Common/useServerDate";
 
 type SwitchStates = {
     isEmployee: boolean;
@@ -36,12 +37,11 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
     onSave,
     onClear,
 }, ref) => {
-    const { compID, userID, userName, compCode, compName } = useSelector(
-        (state: RootState) => state.userDetails
-    );
+    const { compID, compCode, compName } = useSelector((state: RootState) => state.userDetails);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const { handleDropdownChange } = useDropdownChange<ContactListData>(setContactList);
     const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
+    const serverDate = useServerDate();
 
     const {
         titleValues,
@@ -71,7 +71,9 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                 transferYN: "N",
                 cdID: 0,
                 conID: prev.contactMastDto.conID,
-                conType: ""
+                conType: "",
+                rActiveYN: "Y",
+                rNotes: ""
             })),
         }));
     }, [compID, compCode, compName, specialityValues, setContactList]);
@@ -128,6 +130,13 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
             setIsSubmitted(false);
         }
     }));
+
+    const handleDateChange = useCallback((date: Date | null) => {
+        setContactList((prev) => ({
+            ...prev,
+            contactMastDto: { ...prev.contactMastDto, conDob: date ? date : serverDate },
+        }));
+    }, [setContactList]);
 
     const renderFormFields = useMemo(() => (
         <>
@@ -252,12 +261,12 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
                     />
                     <FormField
-                        type="date"
+                        type="datepicker"
                         label="Birth Date"
                         name="conDob"
                         ControlID="BirthDate"
                         value={contactList.contactMastDto.conDob}
-                        onChange={handleInputChange}
+                        onChange={handleDateChange}
                         isSubmitted={isSubmitted}
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
                     />

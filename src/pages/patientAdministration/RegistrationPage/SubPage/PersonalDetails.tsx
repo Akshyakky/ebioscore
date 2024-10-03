@@ -241,7 +241,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       <FormField
         type="text"
         label="Aadhaar No"
-        name="pssnID"
+        name="indentityValue"
         ControlID="AadhaarNo"
         value={formData.patRegisters.indentityValue || ""}
         onChange={(e) =>
@@ -249,7 +249,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             ...prevFormData,
             patRegisters: {
               ...prevFormData.patRegisters,
-              pssnID: e.target.value,
+              indentityValue: e.target.value,
             },
           }))
         }
@@ -333,7 +333,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
           label="Date of Birth"
           name="pDob"
           ControlID="DOB"
-          value={formData.patRegisters.pDob ? new Date(formData.patRegisters.pDob) : null}
+          value={formData.patRegisters.pDob}
           onChange={handleDOBChange}
           maxDate={new Date()} // Set to current date
           isSubmitted={isSubmitted}

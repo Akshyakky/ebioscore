@@ -64,6 +64,8 @@ const ContactListSearch: React.FC<ContactListSearchProps> = ({
       getItemActiveStatus={() => true}
       searchPlaceholder="Enter name or mobile number"
       onSearch={debouncedSearch}
+      isEditButtonVisible={true}
+      isActionVisible={true}
     />
   );
 };

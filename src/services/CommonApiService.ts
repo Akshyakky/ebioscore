@@ -9,8 +9,8 @@ export interface ApiConfig {
 type HttpMethod = "get" | "post" | "put" | "delete";
 
 export class CommonApiService {
-  private baseURL: string;
-  private timeZone: string;
+  private readonly baseURL: string;
+  private readonly timeZone: string;
 
   constructor(config: ApiConfig) {
     this.baseURL = config.baseURL;
@@ -30,22 +30,22 @@ export class CommonApiService {
 
   private formatDateWithTimeZone(date: Date): string {
     const zonedDate = toZonedTime(date, this.timeZone);
-    return format(zonedDate, "yyyy-MM-dd'T'HH:mm:ssXXX", {
-      timeZone: this.timeZone,
-    });
+    return format(zonedDate, "yyyy-MM-dd'T'HH:mm:ssXXX", { timeZone: this.timeZone });
   }
 
-  private processData(data: any): any {
+  private processData(data: unknown): unknown {
     if (data instanceof Date) {
       return this.formatDateWithTimeZone(data);
     } else if (Array.isArray(data)) {
       return data.map((item) => this.processData(item));
     } else if (typeof data === "object" && data !== null) {
-      const processedData: Record<string, any> = {};
-      for (const [key, value] of Object.entries(data)) {
-        processedData[key] = this.processData(value);
-      }
-      return processedData;
+      return Object.entries(data).reduce(
+        (acc, [key, value]) => {
+          acc[key] = this.processData(value);
+          return acc;
+        },
+        {} as Record<string, unknown>
+      );
     }
     return data;
   }
@@ -56,7 +56,7 @@ export class CommonApiService {
     data?: unknown,
     token?: string,
     additionalHeaders?: Record<string, string>,
-    params?: Record<string, any>
+    params?: Record<string, unknown>
   ): Promise<AxiosResponse<T>> {
     const config: AxiosRequestConfig = {
       method,
@@ -74,7 +74,7 @@ export class CommonApiService {
     data?: unknown,
     token?: string,
     additionalHeaders?: Record<string, string>,
-    params?: Record<string, any>
+    params?: Record<string, unknown>
   ): Promise<T> {
     try {
       const response = await this.request<T>(method, endpoint, data, token, additionalHeaders, params);
@@ -85,7 +85,7 @@ export class CommonApiService {
     }
   }
 
-  public async get<T>(endpoint: string, token?: string, params?: Record<string, any>, additionalHeaders?: Record<string, string>): Promise<T> {
+  public async get<T>(endpoint: string, token?: string, params?: Record<string, unknown>, additionalHeaders?: Record<string, string>): Promise<T> {
     return this.makeRequest<T>("get", endpoint, undefined, token, additionalHeaders, params);
   }
 
@@ -101,7 +101,7 @@ export class CommonApiService {
     return this.makeRequest<T>("delete", endpoint, undefined, token, additionalHeaders);
   }
 
-  public async getBlob(endpoint: string, token?: string, params?: Record<string, any>, additionalHeaders?: Record<string, string>): Promise<Blob> {
+  public async getBlob(endpoint: string, token?: string, params?: Record<string, unknown>, additionalHeaders?: Record<string, string>): Promise<Blob> {
     try {
       const config: AxiosRequestConfig = {
         method: "get",
@@ -110,7 +110,6 @@ export class CommonApiService {
         params: this.processData(params),
         responseType: "blob",
       };
-
       const response = await axios(config);
       return response.data;
     } catch (error) {

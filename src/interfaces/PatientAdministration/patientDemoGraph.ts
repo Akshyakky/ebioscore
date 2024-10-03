@@ -5,14 +5,15 @@ export interface PatientDemoGraph {
   pTitle: string;
   pfName: string;
   plName: string;
-  dob: string;
+  dob: Date;
   pGender: string;
   pGenderVal: string;
   pBldGrp: string;
   pTypeID: number;
   pTypeName: string;
-  pRegDate: string;
-  pssnID: string;
+  pRegDate: Date;
+  indentityType: string;
+  indentityValue: string;
   intIdPsprt: string;
   pAddStreet: string;
   patArea: string;
@@ -34,6 +35,6 @@ export interface PatientDemoGraphError {
   dob?: string;
   pGenderVal?: string;
   pTypeID?: string;
-  pssnID?: string;
+  indentityValue?: string;
   pAddPhone1?: string;
 }
