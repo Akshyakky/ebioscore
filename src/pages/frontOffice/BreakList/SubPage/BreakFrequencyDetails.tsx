@@ -8,6 +8,7 @@ import { formatDate } from '../../../../utils/Common/dateUtils';
 import Close from '@mui/icons-material/Close';
 import Save from '@mui/icons-material/Save';
 import FormField from '../../../../components/FormField/FormField';
+import { showAlert } from '../../../../utils/Common/showAlert';
 
 interface BreakFrequencyDetailsProps {
     open: boolean;
@@ -56,6 +57,47 @@ const BreakFrequencyDetails: React.FC<BreakFrequencyDetailsProps> = ({
         }));
     };
 
+    const validateFrequency = (): boolean => {
+        const { frequency, interval, endDate } = frequencyData;
+        const startDate = new Date(initialFrequencyData.endDate);
+        const endDateObj = new Date(endDate);
+
+        let validEndDate: Date;
+
+        switch (frequency) {
+            case 'daily':
+                validEndDate = new Date(startDate.setDate(startDate.getDate() + interval));
+                if (endDateObj < validEndDate) {
+                    showAlert('Error', 'Invalid date range, End Date does not match with the Start Date for daily frequency', 'error');
+                    return false;
+                }
+                break;
+            case 'weekly':
+                validEndDate = new Date(startDate.setDate(startDate.getDate() + (interval * 7)));
+                if (endDateObj < validEndDate) {
+                    showAlert('Error', 'Invalid date range, End Date does not match with the Start Date for weekly frequency', 'error');
+                    return false;
+                }
+                break;
+            case 'monthly':
+                validEndDate = new Date(startDate.setMonth(startDate.getMonth() + interval));
+                if (endDateObj < validEndDate) {
+                    showAlert('Error', 'Invalid date range, End Date does not match with the Start Date for monthly frequency', 'error');
+                    return false;
+                }
+                break;
+            case 'yearly':
+                validEndDate = new Date(startDate.setFullYear(startDate.getFullYear() + interval));
+                if (endDateObj < validEndDate) {
+                    showAlert('Error', 'Invalid date range, End Date does not match with the Start Date for yearly frequency', 'error');
+                    return false;
+                }
+                break;
+        }
+
+        return true;
+    };
+
     const renderSummaryText = () => {
         const { frequency, interval, weekDays, endDate } = frequencyData;
         const formattedEndDate = formatDate(endDate);
@@ -86,24 +128,32 @@ const BreakFrequencyDetails: React.FC<BreakFrequencyDetailsProps> = ({
                     name="interval"
                     value={interval}
                     onChange={(e) => {
-                        let value = parseInt(e.target.value, 10);
-                        if (isNaN(value) || value < 0) {
-                            value = 0;
+                        let value = e.target.value;
+                        if (value === '') {
+                            handleChange('interval', '');
+                        } else {
+                            const parsedValue = parseInt(value, 10);
+                            if (!isNaN(parsedValue) && parsedValue >= 0) {
+                                handleChange('interval', parsedValue);
+                            }
                         }
-                        handleChange('interval', value);
                     }}
                     placeholder={`${frequency.charAt(0).toUpperCase() + frequency.slice(1)}s`}
                     isMandatory
                     ControlID="interval"
                 />
+
                 <FormField
-                    type="date"
-                    label="End On"
+                    type="datepicker"
+                    label="End on"
                     name="endDate"
                     value={endDate}
-                    onChange={(e) => handleChange('endDate', e.target.value)}
-                    ControlID="endDate"
+                    onChange={(newDate) => handleChange('endDate', newDate?.toISOString().split('T')[0] || '')}
+                    ControlID="EndDate"
+                    minDate={serverDate}
                 />
+
+
             </>
         );
 
@@ -140,8 +190,10 @@ const BreakFrequencyDetails: React.FC<BreakFrequencyDetailsProps> = ({
     };
 
     const handleSave = () => {
-        onSave(frequencyData);
-        onClose();
+        if (validateFrequency()) {
+            onSave(frequencyData);
+            onClose();
+        }
     };
 
     return (

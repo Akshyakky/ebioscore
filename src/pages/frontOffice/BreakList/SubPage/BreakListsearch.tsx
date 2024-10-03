@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
 import { formatDate } from "../../../../utils/Common/dateUtils";
 import BreakSuspendDetails from "./BreakSuspendDetails";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
@@ -7,7 +6,8 @@ import PauseCircleOutline from "@mui/icons-material/PauseCircleOutline";
 import PlayCircleOutline from "@mui/icons-material/PlayCircleOutline";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import CustomButton from "../../../../components/Button/CustomButton";
-import { breakConSuspendService, breakListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
+import { breakConDetailsService, breakConSuspendService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
+import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
 
 interface BreakListSearchProps {
     open: boolean;
@@ -21,13 +21,13 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
     const [selectedBreak, setSelectedBreak] = useState<any>(null);
 
     const fetchItems = async () => {
-        const result = await BreakListConDetailsService.getAllBreakConDetails();
+        const result = await breakConDetailsService.getAll();
         return result.success && result.data ? result.data : [];
     };
 
     const updateActiveStatus = async (blID: number, status: boolean) => {
-        const result = await breakListService.updateActiveStatus(blID, status);
-        return result;
+        const result = await BreakListService.updateBreakListActiveStatus(blID, status);
+        return result.success;
     };
 
     const handleSuspendResume = (breakData: any, isSuspend: boolean) => {

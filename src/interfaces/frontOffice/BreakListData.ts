@@ -20,7 +20,7 @@ export interface BreakListData extends BaseDto {
   transferYN?: string;
 }
 
-export interface BreakConDetailData {
+export interface BreakConDetailData extends BaseDto {
   bCDID: number;
   blID: number;
   hPLID: number;
