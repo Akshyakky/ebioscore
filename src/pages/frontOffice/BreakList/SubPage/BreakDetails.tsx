@@ -13,11 +13,11 @@ import Delete from "@mui/icons-material/Delete";
 import { AppointmentService } from "../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService";
 import BreakFrequencyDetails, { FrequencyData } from './BreakFrequencyDetails';
 import { formatDate } from "../../../../utils/Common/dateUtils";
-import { BreakListConDetailsService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListConDetailService";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { BreakConDetailData, BreakListData, BreakListDto } from "../../../../interfaces/frontOffice/BreakListData";
 import FormField from "../../../../components/FormField/FormField";
-import { breakListService, resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
+import { breakConDetailsService, resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
+import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
 
 const frequencyCodeMap = {
     none: "FO70",
@@ -75,10 +75,10 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
             const { blID } = data;
 
             // Fetch BreakList data by blID
-            const breakListResult = await breakListService.getById(blID);
+            const breakListResult = await BreakListService.getBreakListById(blID);
 
             // Fetch BreakConDetail data by blID
-            const breakConDetailResult = await BreakListConDetailsService.getBreakConDetailById(blID);
+            const breakConDetailResult = await breakConDetailsService.getById(blID);
 
             if (breakListResult.success && breakListResult.data) {
                 const breakListData = breakListResult.data;
@@ -229,7 +229,6 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
     const handleSave = useCallback(async () => {
         setLoading(true);
         try {
-
             const frequencyKey = frequencyData.frequency as keyof typeof frequencyCodeMap;
             formState.bLFrqDesc = frequencyCodeMap[frequencyKey] || "FO70";
             formState.bLFrqNo = frequencyData.interval || 0;
@@ -245,7 +244,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                 formState.bLFrqWkDesc = "";
             }
 
-            const saveBreakListResult = await breakListService.save(formState);
+            const saveBreakListResult = await BreakListService.saveBreakList(formState);
 
             if (saveBreakListResult.success && saveBreakListResult.data) {
                 const savedBreakListData = saveBreakListResult.data;
@@ -264,7 +263,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         transferYN: "N"
                     };
 
-                    return BreakListConDetailsService.saveBreakConDetail(breakConDetailData);
+                    return breakConDetailsService.save(breakConDetailData);
                 });
 
                 const breakConDetailResults = await Promise.all(breakConDetailPromises);

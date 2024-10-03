@@ -1,5 +1,8 @@
 import { BreakConSuspendData } from "../../interfaces/frontOffice/BreakConSuspendData";
-import { BreakListData } from "../../interfaces/frontOffice/BreakListData";
+import {
+  BreakConDetailData,
+  BreakListData,
+} from "../../interfaces/frontOffice/BreakListData";
 import { ReasonListData } from "../../interfaces/frontOffice/ReasonListData";
 import { ResourceListData } from "../../interfaces/frontOffice/ResourceListData";
 import { createEntityService } from "../../utils/Common/serviceFactory";
@@ -18,5 +21,9 @@ export const resourceListService = createEntityService<ResourceListData>(
 );
 export const breakConSuspendService = createEntityService<BreakConSuspendData>(
   "BreakConSuspend",
+  "frontOffice"
+);
+export const breakConDetailsService = createEntityService<BreakConDetailData>(
+  "BreakConDetail",
   "frontOffice"
 );

@@ -1,7 +1,7 @@
 import React from "react";
 import { BServiceGrpDto } from "../../../../interfaces/Billing/BServiceGrpDto";
-import { ServiceGroupListCodeService } from "../../../../services/BillingServices/ServiceGroupsListService";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
+import { serviceGroupService } from "../../../../services/BillingServices/BillingGenericService";
 
 interface ServiceGroupsListSearchProps {
     open: boolean;
@@ -11,13 +11,13 @@ interface ServiceGroupsListSearchProps {
 
 const ServiceGroupsListSearch: React.FC<ServiceGroupsListSearchProps> = ({ open, onClose, onSelect }) => {
     const fetchItems = async () => {
-        const result = await ServiceGroupListCodeService.getAllBServiceGrps();
+        const result = await serviceGroupService.getAll();
         return result.success && result.data ? result.data : [];
     };
 
     const updateActiveStatus = async (id: number, status: boolean) => {
-        const result = await ServiceGroupListCodeService.updateBServiceGrpActiveStatus(id, status);
-        return result.success;
+        const result = await serviceGroupService.updateActiveStatus(id, status);
+        return result;
     };
 
     const columns = [
@@ -39,6 +39,9 @@ const ServiceGroupsListSearch: React.FC<ServiceGroupsListSearchProps> = ({ open,
             getItemId={(item) => item.sGrpID}
             getItemActiveStatus={(item) => item.rActiveYN === "Y"}
             searchPlaceholder="Enter resource name or code"
+            isEditButtonVisible={true}
+            isActionVisible={true}
+            isStatusVisible={true}
         />
     );
 };

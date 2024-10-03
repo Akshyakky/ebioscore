@@ -3,13 +3,13 @@ import { useState, useCallback, useEffect } from "react";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { PatientInvoiceCodeService } from "../../../../services/BillingServices/PatientInvoiceService";
 import { BPatTypeDto } from "../../../../interfaces/Billing/BPatTypeDto";
 import { useLoading } from "../../../../context/LoadingContext";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import FormField from "../../../../components/FormField/FormField";
+import { patientInvioceService } from "../../../../services/BillingServices/BillingGenericService";
 
 const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
   editData,
@@ -87,7 +87,7 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
 
     try {
       const bPatTypeDto = createBPatTypeDto();
-      const result = await PatientInvoiceCodeService.saveBPatType(bPatTypeDto);
+      const result = await patientInvioceService.save(bPatTypeDto);
       if (result.success) {
         showAlert(
           "Success",

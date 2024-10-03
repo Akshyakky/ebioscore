@@ -6,7 +6,6 @@ import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 import { BillingService } from "../../services/BillingServices/BillingService";
 import { ConstantValues } from "../../services/CommonServices/ConstantValuesService";
 import { AppModifyListService } from "../../services/CommonServices/AppModifyListService";
-import { DepartmentService } from "../../services/CommonServices/DepartmentService";
 import { ContactMastService } from "../../services/CommonServices/ContactMastService";
 import { InsuranceCarrierService } from "../../services/CommonServices/InsuranceCarrierService";
 import { ContactListService } from "../../services/HospitalAdministrationServices/ContactListService/ContactListService";
@@ -30,6 +29,8 @@ import {
   wardCategoryService,
 } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { WardCategoryDto } from "../../interfaces/HospitalAdministration/WardCategoryDto";
+import { departmentService } from "../../services/CommonServices/CommonModelServices";
+import { DepartmentDto } from "../../interfaces/Billing/DepartmentDto";
 
 const useDropdownValues = () => {
   const [picValues, setPicValues] = useState<DropdownOption[]>([]);
@@ -95,6 +96,7 @@ const useDropdownValues = () => {
   const [consultantRoleValues, setConsultantRoleValues] = useState<any[]>([]);
   const [roomGroupValues, setroomGroupValues] = useState<any[]>([]);
   const [roomListValues, setroomListValues] = useState<any[]>([]);
+  const [paymentValues, setPaymentValues] = useState<any[]>([]);
 
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
@@ -142,6 +144,7 @@ const useDropdownValues = () => {
           consultantRoleResponse,
           roomGroupResponse,
           roomListResponse,
+          paymentValueResponse,
         ] = await Promise.all([
           BillingService.fetchPicValues("GetPICDropDownValues"),
           ConstantValues.fetchConstantValues("GetConstantValues", "PTIT"),
@@ -169,10 +172,7 @@ const useDropdownValues = () => {
             "COMPANY"
           ),
 
-          DepartmentService.fetchDepartments(
-            "GetActiveRegistrationDepartments",
-            compID
-          ),
+          departmentService.getAll(),
           ContactMastService.fetchAttendingPhysician(
             "GetActiveConsultants",
             compID
@@ -220,6 +220,7 @@ const useDropdownValues = () => {
           consultantRoleService.getAll(),
           roomGroupService.getAll(),
           roomListService.getAll(),
+          ConstantValues.fetchConstantValues("GetConstantValues", "PAYT"),
         ]);
 
         setPicValues(
@@ -266,11 +267,18 @@ const useDropdownValues = () => {
         );
 
         setDepartmentValues(
-          departmentResponse.map((item) => ({
-            value: item.value,
-            label: item.label,
+          (departmentResponse.data || []).map((item: DepartmentDto) => ({
+            value: item.deptID || 0,
+            label: item.deptName || "",
           }))
         );
+
+        // setDepartmentValues(
+        //   departmentResponse.map((item: DepartmentDto) => ({
+        //     value: item.deptID,
+        //     label: item.deptName,
+        //   }))
+        // );
         setAttendingPhyValues(
           attendingPhyResponse.map((item) => ({
             value: item.value,
@@ -436,6 +444,13 @@ const useDropdownValues = () => {
             label: item.rName || "",
           }))
         );
+
+        setPaymentValues(
+          paymentValueResponse.map((item) => ({
+            value: item.value,
+            label: item.label,
+          }))
+        );
       } catch (error) {
         console.error("Error fetching dropdown values:", error);
       } finally {
@@ -484,6 +499,7 @@ const useDropdownValues = () => {
     consultantRoleValues,
     roomGroupValues,
     roomListValues,
+    paymentValues,
   };
 };
 

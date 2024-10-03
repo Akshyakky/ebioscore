@@ -3,18 +3,17 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { PaymentTypesService } from "../../../../services/BillingServices/PaymentTypesService";
 import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
 import { useLoading } from "../../../../context/LoadingContext";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import useDropdown from "../../../../hooks/useDropdown";
-import { ConstantValues } from "../../../../services/CommonServices/ConstantValuesService";
+import { useServerDate } from "../../../../hooks/Common/useServerDate"
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 import FormField from "../../../../components/FormField/FormField";
+import { paymentTypeService } from "../../../../services/BillingServices/BillingGenericService";
+import useDropdownChange from "../../../../hooks/useDropdownChange";
+import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 
 const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
   editData,
@@ -27,7 +26,16 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
     bankCharge: 0,
     rNotes: "",
     rActiveYN: "Y",
+    compID: store.getState().userDetails.compID || 0,
+    compCode: store.getState().userDetails.compCode || "",
+    compName: store.getState().userDetails.compName || "",
   });
+
+  const { handleDropdownChange } =
+    useDropdownChange(setFormState);
+  const {
+    paymentValues
+  } = useDropdownValues();
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
@@ -45,30 +53,16 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
         bankCharge: editData.bankCharge || 0,
         rNotes: editData.rNotes || "",
         rActiveYN: editData.rActiveYN || "Y",
+        compID: store.getState().userDetails.compID || 0,
+        compCode: store.getState().userDetails.compCode || "",
+        compName: store.getState().userDetails.compName || "",
+
       });
     } else {
       handleClear();
     }
   }, [editData]);
 
-  const transformPayTypeValues = (data: DropdownOption[]): DropdownOption[] =>
-    data.map((item) => ({
-      value: item.value.toString(),
-      label: item.label,
-    }));
-
-  const memoizedParams = useMemo(
-    () => [token, "GetConstantValues", "PAYT"],
-    [token]
-  );
-
-  const payTypeResult = useDropdown(
-    ConstantValues.fetchConstantValues,
-    transformPayTypeValues,
-    memoizedParams
-  );
-
-  const payTypeValues = payTypeResult.options as DropdownOption[];
 
   const createBPayTypeDto = useCallback(
     (): BPayTypeDto => ({
@@ -79,9 +73,9 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
       bankCharge: formState.bankCharge,
       rNotes: formState.rNotes,
       rActiveYN: formState.rActiveYN,
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
+      compID: store.getState().userDetails.compID || 0,
+      compCode: store.getState().userDetails.compCode || "",
+      compName: store.getState().userDetails.compName || "",
       transferYN: "N",
       rCreatedID: userID || 0,
       rCreatedOn: serverDate || new Date(),
@@ -124,7 +118,7 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
 
     try {
       const BPayTypeDto = createBPayTypeDto();
-      const result = await PaymentTypesService.saveBPayType(BPayTypeDto);
+      const result = await paymentTypeService.save(BPayTypeDto);
       if (result.success) {
         showAlert("Success", "Payment type saved successfully!", "success", {
           onConfirm: handleClear,
@@ -153,6 +147,9 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
       bankCharge: 0,
       rNotes: "",
       rActiveYN: "Y",
+      compID: store.getState().userDetails.compID || 0,
+      compCode: store.getState().userDetails.compCode || "",
+      compName: store.getState().userDetails.compName || "",
     });
   }, []);
 
@@ -197,17 +194,25 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
           />
         </Grid>
         <Grid container spacing={2}>
+
           <FormField
             type="select"
             label="Payment Type Mode"
             value={formState.payMode}
-            onChange={handlePayModeChange}
-            isSubmitted={formState.isSubmitted}
-            options={payTypeValues}
+            onChange={handleDropdownChange(
+              ["payMode"],
+              ["PAYT"],
+              paymentValues
+            )}
+            options={paymentValues}
+            // isSubmitted={isSubmitted}
             name="payMode"
             ControlID="payMode"
+            placeholder="Payment Type Mode"
+            maxLength={50}
             isMandatory
           />
+
           <FormField
             type="number"
             label="Bank Charges"

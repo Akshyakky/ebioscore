@@ -1,7 +1,7 @@
 import React from "react";
 import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
-import { PaymentTypesService } from "../../../../services/BillingServices/PaymentTypesService";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
+import { paymentTypeService } from "../../../../services/BillingServices/BillingGenericService";
 
 interface PaymentTypesSearchProps {
   open: boolean;
@@ -15,14 +15,14 @@ const PaymentTypesSearch: React.FC<PaymentTypesSearchProps> = ({
   onSelect,
 }) => {
   const fetchItems = () =>
-    PaymentTypesService.getAllBPayTypes().then((result) => result.data || []);
+    paymentTypeService.getAll().then((result) => result.data || []);
 
   const updateActiveStatus = async (id: number, status: boolean) => {
-    const result = await PaymentTypesService.updateBPayTypeActiveStatus(
+    const result = await paymentTypeService.updateActiveStatus(
       id,
       status
     );
-    return result.success;
+    return result;
   };
 
   const getItemId = (item: BPayTypeDto) => item.payID;
@@ -48,6 +48,9 @@ const PaymentTypesSearch: React.FC<PaymentTypesSearchProps> = ({
       getItemId={getItemId}
       getItemActiveStatus={getItemActiveStatus}
       searchPlaceholder="Enter Payment name or code"
+      isActionVisible={true}
+      isEditButtonVisible={true}
+      isStatusVisible={true}
     />
   );
 };

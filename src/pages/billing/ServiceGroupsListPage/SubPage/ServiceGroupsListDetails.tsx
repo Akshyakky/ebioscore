@@ -5,11 +5,11 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { ServiceGroupListCodeService } from "../../../../services/BillingServices/ServiceGroupsListService";
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import FormField from "../../../../components/FormField/FormField";
+import { serviceGroupService } from "../../../../services/BillingServices/BillingGenericService";
 
 const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ editData }) => {
     const [formState, setFormState] = useState({
@@ -19,8 +19,13 @@ const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ edi
         rNotes: "",
         rActiveYN: "Y",
         labServiceYN: "N",
-        isTherapyYN: "N"
+        isTherapyYN: "N",
+        prnSGrpOrder: 1,
+        compID: store.getState().userDetails.compID || 0,
+        compCode: store.getState().userDetails.compCode || "",
+        compName: store.getState().userDetails.compName || "",
     });
+
 
     const { setLoading } = useLoading();
     const serverDate = useServerDate();
@@ -54,8 +59,12 @@ const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ edi
         rNotes: formState.rNotes,
         prnSGrpOrder: 1,
         labServiceYN: formState.labServiceYN,
-        isTherapyYN: formState.isTherapyYN
+        isTherapyYN: formState.isTherapyYN,
+        compID: store.getState().userDetails.compID || 0,
+        compCode: store.getState().userDetails.compCode || "",
+        compName: store.getState().userDetails.compName || "",
     }), [formState, editData, userID, userName, serverDate]);
+
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -72,7 +81,7 @@ const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ edi
 
         try {
             const bPatTypeDto = CreateBServiceGrpDto();
-            const result = await ServiceGroupListCodeService.saveBServiceGrp(bPatTypeDto);
+            const result = await serviceGroupService.save(bPatTypeDto);
             if (result.success) {
                 showAlert("Success", "Service Group Code saved successfully!", "success", {
                     onConfirm: handleClear
@@ -96,7 +105,11 @@ const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ edi
             rNotes: "",
             rActiveYN: "Y",
             labServiceYN: "N",
-            isTherapyYN: "N"
+            isTherapyYN: "N",
+            prnSGrpOrder: 1,
+            compID: store.getState().userDetails.compID || 0,
+            compCode: store.getState().userDetails.compCode || "",
+            compName: store.getState().userDetails.compName || "",
         });
     }, []);
 
