@@ -1,55 +1,14 @@
-export interface InsuranceFormState {
-  ID: number;
-  OPIPInsID: number;
-  PChartID: number;
-  InsurID: number;
-  InsurCode: string;
-  InsurName: string;
-  PolicyNumber: string;
-  PolicyHolder: string;
-  GroupNumber: string;
-  PolicyStartDt: string;
-  PolicyEndDt: string;
-  Guarantor: string;
-  RelationVal: string;
-  Relation: string;
-  Address1: string;
-  Address2: string;
-  Phone1: string;
-  Phone2: string;
-  RActiveYN: string;
-  RCreatedID: number;
-  RCreatedOn: string;
-  RCreatedBy: string;
-  RModifiedID: number;
-  RModifiedOn: string;
-  RModifiedBy: string;
-  RNotes: string;
-  CompID: number;
-  CompCode: string;
-  CompName: string;
-  InsurStatusCode: string;
-  InsurStatusName: string;
-  PChartCode: string;
-  PChartCompID: string;
-  ReferenceNo: string;
-  TransferYN: string;
-  CoveredVal: string;
-  CoveredFor: string;
-}
-
 export interface InsuranceGridProps {
-  data: InsuranceFormState[];
-  onEdit: (insurance: InsuranceFormState) => void;
+  data: OPIPInsurancesDto[];
+  onEdit: (insurance: OPIPInsurancesDto) => void;
   onDelete: (id: number) => void;
 }
 
 export interface InsuranceFormProps {
-  onSave: (insurance: InsuranceFormState) => void;
+  onSave: (insurance: OPIPInsurancesDto) => void;
   onCancel: () => void;
-  initialData?: InsuranceFormState;
+  initialData?: OPIPInsurancesDto;
 }
-
 export interface OPIPInsurancesDto {
   ID: number;
   oPIPInsID: number;
@@ -60,8 +19,8 @@ export interface OPIPInsurancesDto {
   policyNumber?: string;
   policyHolder?: string;
   groupNumber?: string;
-  policyStartDt: string;
-  policyEndDt: string;
+  policyStartDt: Date;
+  policyEndDt: Date;
   guarantor?: string;
   relationVal: string;
   relation?: string;
@@ -70,12 +29,6 @@ export interface OPIPInsurancesDto {
   phone1?: string;
   phone2?: string;
   rActiveYN: string;
-  rCreatedID: number;
-  rCreatedOn: Date;
-  rCreatedBy: string;
-  rModifiedID: number;
-  rModifiedOn: Date;
-  rModifiedBy: string;
   rNotes?: string;
   compID?: number;
   compCode?: string;

@@ -85,7 +85,7 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
       if (kinDetails.success && kinDetails.data) {
         const formattedData = kinDetails.data.map((kin) => ({
           ...kin,
-          pNokDob: formatDateYMD(parse(kin.pNokDob, 'DD/MM/YYYY')),
+          pNokDob: kin.pNokDob,
         }));
         setGridKinData(formattedData);
       }

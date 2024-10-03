@@ -34,7 +34,8 @@ const RegistrationPage: React.FC = () => {
   const [editMode, setEditMode] = useState(false);
   const nextOfKinPageRef = useRef<any>(null);
   const insurancePageRef = useRef<any>(null);
-  const { date: serverDate, formatDate, formatDateTime, parse, formatDateYMD } = useDayjs(useServerDate());
+  const serverDate = useServerDate();
+  const { formatDate, formatDateTime, parse, formatDateYMD } = useDayjs();
   const { fetchLatestUHID } = useRegistrationUtils();
   const { performSearch } = useContext(PatientSearchContext);
 
@@ -42,7 +43,7 @@ const RegistrationPage: React.FC = () => {
     patRegisters: {
       pChartID: 0,
       pChartCode: "",
-      pRegDate: formatDateYMD(),
+      pRegDate: serverDate,
       pTitleVal: "",
       pTitle: "",
       pFName: "",
@@ -50,12 +51,9 @@ const RegistrationPage: React.FC = () => {
       pLName: "",
       pDobOrAgeVal: "Y",
       pDobOrAge: "",
-      pDob: formatDateYMD(),
-      pAgeType: "",
-      pApproxAge: 0,
+      pDob: serverDate,
       pGender: "",
       pGenderVal: "",
-      pssnID: "",
       pBldGrp: "",
       rActiveYN: "Y",
       rNotes: "",
@@ -67,11 +65,10 @@ const RegistrationPage: React.FC = () => {
       pTypeCode: "",
       pTypeName: "",
       fatherBldGrp: "",
-      sapID: "",
       patMemID: 0,
       patMemName: "",
       patMemDescription: "",
-      patMemSchemeExpiryDate: formatDateYMD(),
+      patMemSchemeExpiryDate: serverDate,
       patSchemeExpiryDateYN: "N",
       patSchemeDescriptionYN: "N",
       cancelReason: "",
@@ -84,7 +81,7 @@ const RegistrationPage: React.FC = () => {
       faculty: "",
       langType: "",
       pChartCompID: 0,
-      pExpiryDate: parse(formatDateTime()).toDate(),
+      pExpiryDate: serverDate,
       physicianRoom: "",
       regTypeVal: "GEN",
       regType: "",
@@ -96,6 +93,9 @@ const RegistrationPage: React.FC = () => {
       patDataFormYN: "N",
       intIdPsprt: "",
       transferYN: "N",
+      indentityType: "",
+      indentityValue: "",
+      patientType: ""
     },
     patAddress: {
       pAddID: 0,
@@ -127,7 +127,6 @@ const RegistrationPage: React.FC = () => {
       patAreaVal: "",
       patArea: "",
       patDoorNo: "",
-      pChartCompID: 0,
     },
     patOverview: {
       patOverID: 0,
@@ -139,16 +138,10 @@ const RegistrationPage: React.FC = () => {
       pEducation: "",
       pOccupation: "",
       pEmployer: "",
-      pAgeNumber: 0,
-      pAgeDescription: "",
-      pAgeDescriptionVal: "",
       ethnicity: "",
       pCountryOfOrigin: "",
-      compID: userInfo.compID ?? 0,
-      compCode: userInfo.compCode ?? "",
-      compName: userInfo.compName ?? "",
-      pChartCompID: 0,
-      transferYN: "N",
+      pAgeNumber: 0,
+      pAgeDescriptionVal: ""
     },
     opvisits: {
       visitTypeVal: "H",
@@ -211,15 +204,11 @@ const RegistrationPage: React.FC = () => {
       !formData.patRegisters.pTitle
     ) {
       errors.title = "Title is required";
-    } else if (!formData.patRegisters.pssnID) {
+    } else if (!formData.patRegisters.indentityValue) {
       errors.indetityNo = "Indentity Number is required";
     } else if (
-      (formData.patRegisters.pDobOrAge === "DOB" &&
-        !formData.patRegisters.pDob) ||
-      (formData.patRegisters.pDobOrAge === "Age" &&
-        formData.patOverview.pAgeNumber === 0 &&
-        !formData.patOverview.pAgeDescriptionVal)
-    ) {
+      (formData.patRegisters.pDobOrAge === "DOB" && !formData.patRegisters.pDob) ||
+      (formData.patRegisters.pDobOrAge === "Age")) {
       errors.dateOfBirth = "Date of birth or Age is required";
     } else if (
       formData.opvisits?.visitTypeVal === "H" &&
@@ -295,17 +284,9 @@ const RegistrationPage: React.FC = () => {
     try {
       const patientDetails = await PatientService.getPatientDetails(pChartID);
       if (patientDetails.success && patientDetails.data) {
-        const formattedData = {
-          ...patientDetails.data,
-          patRegisters: {
-            ...patientDetails.data.patRegisters,
-            pRegDate: formatDateYMD(patientDetails.data.patRegisters.pRegDate),
-            pDob: formatDateYMD(patientDetails.data.patRegisters.pDob),
-            patMemSchemeExpiryDate: formatDateYMD(patientDetails.data.patRegisters.patMemSchemeExpiryDate),
-          },
-        };
+
         setEditMode(true);
-        setFormData(formattedData);
+        setFormData(patientDetails.data);
       } else {
         console.error("Fetching patient details was not successful or data is undefined");
       }

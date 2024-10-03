@@ -43,7 +43,7 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ selectedD
     const handleClear = useCallback(async () => {
         setLoading(true);
         try {
-            const nextCode = await productTaxService.getNextCode("TAX", "pTaxCode", 3);
+            const nextCode = await productTaxService.getNextCode("TAX", 3);
             setFormState({
                 pTaxID: 0,
                 pTaxCode: nextCode.data,

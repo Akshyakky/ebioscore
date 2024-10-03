@@ -236,8 +236,6 @@ const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({
     const handlePatientSelect = async (selectedSuggestion: string) => {
         setLoading(true);
         try {
-            debugger
-            debugger
             const numbersArray = extractNumbers(selectedSuggestion);
             const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
 

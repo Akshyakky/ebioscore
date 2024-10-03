@@ -1,7 +1,7 @@
 export interface PatRegistersDto {
   pChartID: number;
   pChartCode: string;
-  pRegDate: string;
+  pRegDate: Date;
   pTitleVal?: string;
   pTitle: string;
   pFName?: string;
@@ -9,12 +9,9 @@ export interface PatRegistersDto {
   pLName?: string;
   pDobOrAgeVal: string;
   pDobOrAge: string;
-  pDob: string;
-  pAgeType?: string;
-  pApproxAge?: number;
+  pDob: Date;
   pGenderVal?: string;
   pGender: string;
-  pssnID?: string;
   pBldGrp?: string;
   compID?: number;
   compCode?: string;
@@ -26,11 +23,10 @@ export interface PatRegistersDto {
   pTypeName?: string;
   pFhName?: string;
   fatherBldGrp?: string;
-  sapID?: string;
   patMemID?: number;
   patMemName?: string;
   patMemDescription?: string;
-  patMemSchemeExpiryDate: string;
+  patMemSchemeExpiryDate: Date;
   patSchemeExpiryDateYN?: string;
   patSchemeDescriptionYN?: string;
   cancelReason?: string;
@@ -55,6 +51,9 @@ export interface PatRegistersDto {
   patDataFormYN?: string;
   intIdPsprt?: string;
   transferYN?: string;
+  indentityType: string;
+  indentityValue: string;
+  patientType: string;
 }
 
 export interface PatAddressDto {
@@ -87,7 +86,6 @@ export interface PatAddressDto {
   patAreaVal?: string;
   patArea?: string;
   patDoorNo?: string;
-  pChartCompID?: number;
 }
 
 export interface PatOverviewDto {
@@ -100,16 +98,10 @@ export interface PatOverviewDto {
   pEducation?: string;
   pOccupation?: string;
   pEmployer?: string;
-  pAgeNumber: number;
-  pAgeDescription?: string;
-  pAgeDescriptionVal?: string;
   ethnicity?: string;
   pCountryOfOrigin?: string;
-  compID?: number;
-  compCode?: string;
-  compName?: string;
-  pChartCompID?: number;
-  transferYN: string;
+  pAgeNumber: number;
+  pAgeDescriptionVal: string;
 }
 
 export interface OpvisitDto {

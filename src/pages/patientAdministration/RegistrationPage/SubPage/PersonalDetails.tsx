@@ -29,7 +29,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   const { fetchLatestUHID } = useRegistrationUtils();
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const uhidRef = useRef<HTMLInputElement>(null);
-  const { diff, formatDate, date: currentDate, format, parse, formatDateYMD } = useDayjs(useServerDate());
+  const serverDate = useServerDate();
+  const { diff, formatDate, date: currentDate, format, parse, formatDateYMD } = useDayjs();
 
   useEffect(() => {
     uhidRef.current?.focus();
@@ -62,12 +63,15 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
     }
   }, [diff]);
 
-  const handleDOBChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDOB = e.target.value;
-    if (newDOB) {
-      const { age, ageType, ageUnit } = calculateAge(newDOB);
+  const handleDOBChange = useCallback((newDate: Date | null) => {
+    if (newDate) {
+      const { age, ageType, ageUnit } = calculateAge(newDate);
       setFormData((prevFormData) => ({
         ...prevFormData,
+        patRegisters: {
+          ...prevFormData.patRegisters,
+          pDob: newDate ? newDate : serverDate,
+        },
         PApproxAge: age,
         PAgeType: ageType,
         patOverview: {
@@ -78,7 +82,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         },
       }));
     }
-  }, [calculateAge, setFormData]);
+  }, [calculateAge, formatDateYMD, setFormData]);
 
   const handleUHIDBlur = useCallback(() => {
     if (!formData.patRegisters.pChartCode) {
@@ -95,8 +99,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
       });
     }
   }, [formData.patRegisters.pChartCode, fetchLatestUHID, setFormData]);
-
-  const getTodayDate = useMemo(() => formatDate(currentDate), [formatDate, currentDate]);
 
   const handleNameChange = useCallback((
     e: React.ChangeEvent<HTMLInputElement>,
@@ -144,23 +146,23 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         maxLength={20}
       />
       <FormField
-        type="date"
+        type="datepicker"
         label="Registration Date"
         name="pRegDate"
         ControlID="RegDate"
-        value={formData.patRegisters.pRegDate}
-        onChange={(e) =>
+        value={formData.patRegisters.pRegDate ? new Date(formData.patRegisters.pRegDate) : null}
+        onChange={(date: Date | null) =>
           setFormData((prevFormData) => ({
             ...prevFormData,
             patRegisters: {
               ...prevFormData.patRegisters,
-              pRegDate: e.target.value,
+              pRegDate: date ? date : serverDate,
             },
           }))
         }
         isSubmitted={isSubmitted}
         isMandatory={true}
-        max={getTodayDate}
+        maxDate={new Date()} // Set to current date
       />
       <FormField
         type="select"
@@ -241,7 +243,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         label="Aadhaar No"
         name="pssnID"
         ControlID="AadhaarNo"
-        value={formData.patRegisters.pssnID || ""}
+        value={formData.patRegisters.indentityValue || ""}
         onChange={(e) =>
           setFormData((prevFormData) => ({
             ...prevFormData,
@@ -293,7 +295,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             label="Age"
             name="pAgeNumber"
             ControlID="Age"
-            value={formData.patOverview.pAgeNumber.toString()}
+            value={formData.patOverview.pAgeNumber}
             onChange={(e) =>
               setFormData((prevFormData) => ({
                 ...prevFormData,
@@ -313,7 +315,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             label="Age Unit"
             name="pAgeDescriptionVal"
             ControlID="AgeUnit"
-            value={formData.patOverview.pAgeDescriptionVal || ""}
+            value={formData.patOverview.pAgeDescriptionVal}
             options={ageUnitOptions}
             onChange={handleDropdownChange(
               ["patOverview", "pAgeDescriptionVal"],
@@ -327,22 +329,13 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         </>
       ) : (
         <FormField
-          type="date"
+          type="datepicker"
           label="Date of Birth"
           name="pDob"
           ControlID="DOB"
-          value={formData.patRegisters.pDob}
-          onChange={(e) => {
-            setFormData((prevFormData) => ({
-              ...prevFormData,
-              patRegisters: {
-                ...prevFormData.patRegisters,
-                pDob: e.target.value,
-              },
-            }));
-            handleDOBChange(e);
-          }}
-          max={getTodayDate}
+          value={formData.patRegisters.pDob ? new Date(formData.patRegisters.pDob) : null}
+          onChange={handleDOBChange}
+          maxDate={new Date()} // Set to current date
           isSubmitted={isSubmitted}
           isMandatory={true}
           gridProps={{ xs: 12, md: 2 }}

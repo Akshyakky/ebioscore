@@ -97,8 +97,8 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
       if (insuranceDetails.success && insuranceDetails.data) {
         const formattedData = insuranceDetails.data.map((insur) => ({
           ...insur,
-          policyStartDt: formatDateYMD(parse(insur.policyStartDt, 'DD/MM/YYYY')),
-          policyEndDt: formatDateYMD(parse(insur.policyEndDt, 'DD/MM/YYYY')),
+          policyStartDt: insur.policyStartDt,
+          policyEndDt: insur.policyEndDt,
         }));
         setGridInsuranceData(formattedData);
       }

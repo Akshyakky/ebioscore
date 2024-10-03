@@ -17,10 +17,7 @@ export class CommonApiService {
     this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   }
 
-  private getHeaders(
-    token?: string,
-    additionalHeaders?: Record<string, string>
-  ): Record<string, string> {
+  private getHeaders(token?: string, additionalHeaders?: Record<string, string>): Record<string, string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       "Time-Zone": this.timeZone,
@@ -80,14 +77,7 @@ export class CommonApiService {
     params?: Record<string, any>
   ): Promise<T> {
     try {
-      const response = await this.request<T>(
-        method,
-        endpoint,
-        data,
-        token,
-        additionalHeaders,
-        params
-      );
+      const response = await this.request<T>(method, endpoint, data, token, additionalHeaders, params);
       return response.data;
     } catch (error) {
       handleError(error);
@@ -95,57 +85,37 @@ export class CommonApiService {
     }
   }
 
-  public async get<T>(
-    endpoint: string,
-    token?: string,
-    params?: Record<string, any>,
-    additionalHeaders?: Record<string, string>
-  ): Promise<T> {
-    return this.makeRequest<T>(
-      "get",
-      endpoint,
-      undefined,
-      token,
-      additionalHeaders,
-      params
-    );
+  public async get<T>(endpoint: string, token?: string, params?: Record<string, any>, additionalHeaders?: Record<string, string>): Promise<T> {
+    return this.makeRequest<T>("get", endpoint, undefined, token, additionalHeaders, params);
   }
 
-  public async post<T>(
-    endpoint: string,
-    data: unknown,
-    token?: string,
-    additionalHeaders?: Record<string, string>
-  ): Promise<T> {
-    return this.makeRequest<T>(
-      "post",
-      endpoint,
-      data,
-      token,
-      additionalHeaders
-    );
+  public async post<T>(endpoint: string, data: unknown, token?: string, additionalHeaders?: Record<string, string>): Promise<T> {
+    return this.makeRequest<T>("post", endpoint, data, token, additionalHeaders);
   }
 
-  public async put<T>(
-    endpoint: string,
-    data: unknown,
-    token?: string,
-    additionalHeaders?: Record<string, string>
-  ): Promise<T> {
+  public async put<T>(endpoint: string, data: unknown, token?: string, additionalHeaders?: Record<string, string>): Promise<T> {
     return this.makeRequest<T>("put", endpoint, data, token, additionalHeaders);
   }
 
-  public async delete<T>(
-    endpoint: string,
-    token?: string,
-    additionalHeaders?: Record<string, string>
-  ): Promise<T> {
-    return this.makeRequest<T>(
-      "delete",
-      endpoint,
-      undefined,
-      token,
-      additionalHeaders
-    );
+  public async delete<T>(endpoint: string, token?: string, additionalHeaders?: Record<string, string>): Promise<T> {
+    return this.makeRequest<T>("delete", endpoint, undefined, token, additionalHeaders);
+  }
+
+  public async getBlob(endpoint: string, token?: string, params?: Record<string, any>, additionalHeaders?: Record<string, string>): Promise<Blob> {
+    try {
+      const config: AxiosRequestConfig = {
+        method: "get",
+        url: `${this.baseURL}${endpoint}`,
+        headers: this.getHeaders(token, additionalHeaders),
+        params: this.processData(params),
+        responseType: "blob",
+      };
+
+      const response = await axios(config);
+      return response.data;
+    } catch (error) {
+      handleError(error);
+      throw error;
+    }
   }
 }
