@@ -243,7 +243,6 @@ const RegistrationPage: React.FC = () => {
         console.log("Validation failed. Please fill all mandatory fields.");
         return;
       }
-      debugger
       const registrationResponse = await PatientService.savePatient(formData);
       if (registrationResponse.success && registrationResponse.data) {
         const pChartID = registrationResponse.data;

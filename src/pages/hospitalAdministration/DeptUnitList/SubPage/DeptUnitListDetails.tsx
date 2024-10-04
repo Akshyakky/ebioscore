@@ -33,7 +33,7 @@ const DeptUnitListDetails: React.FC<DeptUnitListDetailsProps> = ({ editData }) =
     const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
     const { setLoading } = useLoading();
     const { handleDropdownChange } = useDropdownChange(setFormState);
-    const { departmentValues } = useDropdownValues();
+    const dropdownValues = useDropdownValues(['department']);
 
     useEffect(() => {
         if (editData) {
@@ -128,12 +128,8 @@ const DeptUnitListDetails: React.FC<DeptUnitListDetailsProps> = ({ editData }) =
                     label="Department"
                     name="deptID"
                     value={formState.deptID.toString()}
-                    onChange={handleDropdownChange(
-                        ["deptID"],
-                        ["deptName"],
-                        departmentValues
-                    )}
-                    options={departmentValues}
+                    onChange={handleDropdownChange(["deptID"], ["deptName"], dropdownValues.department)}
+                    options={dropdownValues.department}
                     ControlID="deptID"
                     isMandatory={true}
                 />

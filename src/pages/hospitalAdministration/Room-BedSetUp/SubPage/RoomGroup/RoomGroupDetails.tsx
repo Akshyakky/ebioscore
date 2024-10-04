@@ -58,7 +58,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
     ];
 
     const { handleDropdownChange } = useDropdownChange<RoomGroupDto>(setFormData);
-    const { departmentValues, genderValues } = useDropdownValues();
+    const dropdownValues = useDropdownValues(['department', 'gender']);
 
     const handleAdd = (
         isSubGroup: boolean = false,
@@ -320,9 +320,9 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
                         onChange={handleDropdownChange(
                             ["deptID"],
                             ["deptName"],
-                            departmentValues
+                            dropdownValues.department
                         )}
-                        options={departmentValues}
+                        options={dropdownValues.department}
                         ControlID="deptID"
                         isMandatory={true}
                         gridProps={{ xs: 12 }}
@@ -335,9 +335,9 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
                         onChange={handleDropdownChange(
                             ["gender"],
                             ["genderValue"],
-                            genderValues
+                            dropdownValues.gender
                         )}
-                        options={genderValues}
+                        options={dropdownValues.gender}
                         ControlID="gender"
                         gridProps={{ xs: 12 }}
                     />

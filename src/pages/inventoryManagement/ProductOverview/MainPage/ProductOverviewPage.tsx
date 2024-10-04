@@ -71,7 +71,7 @@ const ProductOverviewPage: React.FC = () => {
             onClick: handleAdvancedSearch,
         },
     ];
-    const { departmentValues } = useDropdownValues();
+    const dropdownValues = useDropdownValues(['department']);
     const isSubmitted = false;
     return (
         <Container maxWidth={false}>
@@ -101,11 +101,11 @@ const ProductOverviewPage: React.FC = () => {
                     name="deptID"
                     ControlID="Department"
                     value={selectedData.deptID === 0 ? "" : String(selectedData.deptID)}
-                    options={departmentValues}
+                    options={dropdownValues.department}
                     onChange={handleDropdownChange(
                         ["deptID"],
                         ["department"],
-                        departmentValues
+                        dropdownValues.department
                     )}
                     isMandatory={true}
                     isSubmitted={isSubmitted}

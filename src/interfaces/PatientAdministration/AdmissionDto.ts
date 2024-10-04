@@ -41,6 +41,7 @@ export interface AdmissionDto {
   visitGesy?: string;
   dulId: number;
   advisedVisitNo: number;
+  admissionType: string;
 
   // WrBedDetails properties
   bedDetID?: number;

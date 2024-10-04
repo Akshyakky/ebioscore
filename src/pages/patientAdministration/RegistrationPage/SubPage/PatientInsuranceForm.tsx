@@ -29,7 +29,7 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const serverDate = useServerDate();
   const { formatDate, formatDateTime, parse, format, formatDateYMD } = useDayjs();
-  const { insuranceOptions, relationValues, coverForValues } = useDropdownValues();
+  const dropdownValues = useDropdownValues(['insurance', 'relation', 'coverFor']);
 
   const insuranceFormInitialState: OPIPInsurancesDto = useMemo(() => ({
     ID: 0,
@@ -123,11 +123,11 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
             name="insurID"
             ControlID="Insurance"
             value={insuranceForm.insurID === 0 ? "" : insuranceForm.insurID.toString()}
-            options={insuranceOptions}
+            options={dropdownValues.insurance}
             onChange={handleDropdownChange(
               ["insurID"],
               ["insurName"],
-              insuranceOptions
+              dropdownValues.insurance
             )}
             isMandatory={true}
             isSubmitted={isSubmitted}
@@ -195,11 +195,11 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
             name="relationVal"
             ControlID="Relationship"
             value={insuranceForm.relationVal}
-            options={relationValues}
+            options={dropdownValues.relation}
             onChange={handleDropdownChange(
               ["relationVal"],
               ["relation"],
-              relationValues
+              dropdownValues.relation
             )}
             gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
           />
@@ -209,11 +209,11 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
             name="coveredVal"
             ControlID="CoveredFor"
             value={String(insuranceForm.coveredVal)}
-            options={coverForValues}
+            options={dropdownValues.coverFor}
             onChange={handleDropdownChange(
               ["coveredVal"],
               ["coveredFor"],
-              coverForValues
+              dropdownValues.coverFor
             )}
             gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
           />

@@ -11,7 +11,6 @@ import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import CustomButton from "../../../../components/Button/CustomButton";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import useDayjs from "../../../../hooks/Common/useDateTime";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { useLoading } from "../../../../context/LoadingContext";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
@@ -34,7 +33,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const serverDate = useServerDate();
 
-  const { titleValues, relationValues, areaValues, cityValues, countryValues } = useDropdownValues();
+  const dropdownValues = useDropdownValues(['title', 'relation', 'area', 'city', 'country']);
 
   const nextOfKinInitialFormState: PatNokDetailsDto = useMemo(() => ({
     ID: 0,
@@ -196,11 +195,11 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
             name="pNokTitleVal"
             ControlID="Title"
             value={String(nextOfkinData.pNokTitleVal)}
-            options={titleValues}
+            options={dropdownValues.title}
             onChange={handleDropdownChange(
               ["pNokTitleVal"],
               ["pNokTitle"],
-              titleValues
+              dropdownValues.title
             )}
             isMandatory={true}
             isSubmitted={isSubmitted}
@@ -234,12 +233,8 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
             name="pNokRelNameVal"
             ControlID="Relationship"
             value={nextOfkinData.pNokRelNameVal}
-            options={relationValues}
-            onChange={handleDropdownChange(
-              ["pNokRelNameVal"],
-              ["pNokRelName"],
-              relationValues
-            )}
+            options={dropdownValues.relation}
+            onChange={handleDropdownChange(["pNokRelNameVal"], ["pNokRelName"], dropdownValues.relation)}
             isMandatory={true}
             isSubmitted={isSubmitted}
             gridProps={{ xs: 12, sm: 6, md: 4 }}
@@ -280,12 +275,8 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
             name="pNokAreaVal"
             ControlID="Area"
             value={nextOfkinData.pNokAreaVal}
-            options={areaValues}
-            onChange={handleDropdownChange(
-              ["pNokAreaVal"],
-              ["pNokArea"],
-              areaValues
-            )}
+            options={dropdownValues.area}
+            onChange={handleDropdownChange(["pNokAreaVal"], ["pNokArea"], dropdownValues.area)}
             gridProps={{ xs: 12, sm: 6, md: 4 }}
           />
           <FormField
@@ -294,12 +285,8 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
             name="pNokCityVal"
             ControlID="City"
             value={nextOfkinData.pNokCityVal}
-            options={cityValues}
-            onChange={handleDropdownChange(
-              ["pNokCityVal"],
-              ["pNokCity"],
-              cityValues
-            )}
+            options={dropdownValues.city}
+            onChange={handleDropdownChange(["pNokCityVal"], ["pNokCity"], dropdownValues.city)}
             gridProps={{ xs: 12, sm: 6, md: 4 }}
           />
           <FormField
@@ -308,12 +295,8 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
             name="pNokActualCountryVal"
             ControlID="Country"
             value={nextOfkinData.pNokActualCountryVal}
-            options={countryValues}
-            onChange={handleDropdownChange(
-              ["pNokActualCountryVal"],
-              ["pNokActualCountry"],
-              countryValues
-            )}
+            options={dropdownValues.country}
+            onChange={handleDropdownChange(["pNokActualCountryVal"], ["pNokActualCountry"], dropdownValues.country)}
             gridProps={{ xs: 12, sm: 6, md: 4 }}
           />
           <FormField
@@ -340,12 +323,8 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
             name="pNokCountryVal"
             ControlID="Nationality"
             value={nextOfkinData.pNokCountryVal}
-            options={countryValues}
-            onChange={handleDropdownChange(
-              ["pNokCountryVal"],
-              ["pNokCountry"],
-              countryValues
-            )}
+            options={dropdownValues.country}
+            onChange={handleDropdownChange(["pNokCountryVal"], ["pNokCountry"], dropdownValues.country)}
             gridProps={{ xs: 12, sm: 6, md: 4 }}
           />
           <FormField

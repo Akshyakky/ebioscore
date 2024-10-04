@@ -21,7 +21,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
 }) => {
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
-  const { departmentValues, attendingPhyValues, primaryIntroducingSourceValues } = useDropdownValues();
+  const dropdownValues = useDropdownValues(['department', 'attendingPhy', 'primaryIntroducingSource']);
 
   const visitOptions = useMemo(() => [
     { value: "H", label: "Hospital" },
@@ -62,12 +62,8 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
           name="Department"
           ControlID="Department"
           value={formData.patRegisters.deptID === 0 ? "" : String(formData.patRegisters.deptID)}
-          options={departmentValues}
-          onChange={handleDropdownChange(
-            ["patRegisters", "deptID"],
-            ["patRegisters", "deptName"],
-            departmentValues
-          )}
+          options={dropdownValues.department}
+          onChange={handleDropdownChange(["patRegisters", "deptID"], ["patRegisters", "deptName"], dropdownValues.department)}
           isSubmitted={isSubmitted}
           isMandatory={isHospitalVisit}
           gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -80,12 +76,8 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
           name="AttendingPhysician"
           ControlID="AttendingPhysician"
           value={formData.patRegisters.consultantID === 0 ? "" : String(formData.patRegisters.consultantID)}
-          options={attendingPhyValues}
-          onChange={handleDropdownChange(
-            ["patRegisters", "consultantID"],
-            ["patRegisters", "consultantName"],
-            attendingPhyValues
-          )}
+          options={dropdownValues.attendingPhy}
+          onChange={handleDropdownChange(["patRegisters", "consultantID"], ["patRegisters", "consultantName"], dropdownValues.attendingPhy)}
           isSubmitted={isSubmitted}
           isMandatory={isPhysicianVisit}
           gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -98,12 +90,8 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
           name="PrimaryIntroducingSource"
           ControlID="PrimaryIntroducingSource"
           value={formData.patRegisters.sourceID === 0 ? "" : String(formData.patRegisters.sourceID)}
-          options={primaryIntroducingSourceValues}
-          onChange={handleDropdownChange(
-            ["patRegisters", "sourceID"],
-            ["patRegisters", "sourceName"],
-            primaryIntroducingSourceValues
-          )}
+          options={dropdownValues.primaryIntroducingSource}
+          onChange={handleDropdownChange(["patRegisters", "sourceID"], ["patRegisters", "sourceName"], dropdownValues.primaryIntroducingSource)}
           isSubmitted={isSubmitted}
           isMandatory={isPhysicianVisit || isHospitalVisit}
           gridProps={{ xs: 12, sm: 6, md: 3 }}

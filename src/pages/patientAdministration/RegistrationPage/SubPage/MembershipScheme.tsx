@@ -17,7 +17,7 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
   setFormData,
 }) => {
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
-  const { membershipSchemeValues } = useDropdownValues();
+  const dropdownValues = useDropdownValues(['membershipScheme']);
   const serverDate = useServerDate();
 
   const handleDateChange = useCallback((date: Date | null) => {
@@ -38,12 +38,8 @@ const MembershipScheme: React.FC<MembershipSchemeProps> = ({
         name="MembershipScheme"
         ControlID="MembershipScheme"
         value={formData.patRegisters.patMemID === 0 ? "" : String(formData.patRegisters.patMemID)}
-        options={membershipSchemeValues}
-        onChange={handleDropdownChange(
-          ["patRegisters", "patMemID"],
-          ["patRegisters", "patMemName"],
-          membershipSchemeValues
-        )}
+        options={dropdownValues.membershipScheme}
+        onChange={handleDropdownChange(["patRegisters", "patMemID"], ["patRegisters", "patMemName"], dropdownValues.membershipScheme)}
         gridProps={{ xs: 12, sm: 6, md: 3 }}
       />
       <FormField

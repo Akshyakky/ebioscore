@@ -33,9 +33,7 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
 
   const { handleDropdownChange } =
     useDropdownChange(setFormState);
-  const {
-    paymentValues
-  } = useDropdownValues();
+  const dropdownValues = useDropdownValues(['payment']);
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
@@ -202,10 +200,9 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
             onChange={handleDropdownChange(
               ["payMode"],
               ["PAYT"],
-              paymentValues
+              dropdownValues.payment
             )}
-            options={paymentValues}
-            // isSubmitted={isSubmitted}
+            options={dropdownValues.payment}
             name="payMode"
             ControlID="payMode"
             placeholder="Payment Type Mode"

@@ -30,8 +30,6 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
   const [gridInsuranceData, setGridInsuranceData] = useState<
     OPIPInsurancesDto[]
   >([]);
-  const { formatDate, parse, formatDateYMD } = useDayjs();
-
 
   useImperativeHandle(ref, () => ({
     saveInsuranceDetails,

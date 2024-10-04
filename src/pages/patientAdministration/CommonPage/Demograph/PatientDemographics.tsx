@@ -57,15 +57,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
     refSource: '',
   });
 
-  const {
-    titleValues,
-    genderValues,
-    bloodGroupValues,
-    picValues,
-    areaValues,
-    cityValues,
-    nationalityValues,
-  } = useDropdownValues();
+  const dropdownValues = useDropdownValues(['title', 'gender', 'bloodGroup', 'pic', 'area', 'city', 'nationality']);
 
   const fetchPatientDetails = useCallback(async () => {
     if (!pChartID) return;
@@ -222,20 +214,20 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
       <Grid container spacing={2}>
         <Grid item xs={12} md={12} lg={12}>
           {renderFormField("text", "pChartCode", "UHID", [], true, true, { xs: 12 })}
-          {renderFormField("select", "pTitleVal", "Title", titleValues, true, false, { xs: 12 })}
-          {renderFormField("select", "pGenderVal", "Gender", genderValues, true, false, { xs: 12 })}
+          {renderFormField("select", "pTitleVal", "Title", dropdownValues.title, true, false, { xs: 12 })}
+          {renderFormField("select", "pGenderVal", "Gender", dropdownValues.gender, true, false, { xs: 12 })}
           {renderFormField("text", "pfName", "First Name", [], true, false, { xs: 12 })}
           {renderFormField("text", "plName", "Last Name", [], true, false, { xs: 12 })}
           {renderFormField("datepicker", "dob", "Date of Birth", [], true, false, { xs: 12 })}
-          {renderFormField("select", "pBldGrp", "Blood Group", bloodGroupValues, false, false, { xs: 12 })}
-          {renderFormField("select", "pTypeID", "Payment Source [PIC]", picValues, true, false, { xs: 12 })}
+          {renderFormField("select", "pBldGrp", "Blood Group", dropdownValues.bloodGroup, false, false, { xs: 12 })}
+          {renderFormField("select", "pTypeID", "Payment Source [PIC]", dropdownValues.pic, true, false, { xs: 12 })}
           {renderFormField("datepicker", "pRegDate", "Registration Date", [], true, true, { xs: 12 })}
           {renderFormField("text", "indentityValue", "Aadhaar No", [], true, false, { xs: 12 })}
           {renderFormField("text", "intIdPsprt", "Int. ID/Passport ID", [], false, false, { xs: 12 })}
           {renderFormField("text", "pAddStreet", "Address", [], false, false, { xs: 12 })}
-          {renderFormField("select", "patAreaVal", "Area", areaValues, false, false, { xs: 12 })}
-          {renderFormField("select", "pAddCityVal", "City", cityValues, false, false, { xs: 12 })}
-          {renderFormField("select", "pAddActualCountryVal", "Nationality", nationalityValues, false, false, { xs: 12 })}
+          {renderFormField("select", "patAreaVal", "Area", dropdownValues.area, false, false, { xs: 12 })}
+          {renderFormField("select", "pAddCityVal", "City", dropdownValues.city, false, false, { xs: 12 })}
+          {renderFormField("select", "pAddActualCountryVal", "Nationality", dropdownValues.nationality, false, false, { xs: 12 })}
           {renderFormField("text", "pAddPhone1", "Mobile No", [], true, false, { xs: 12 })}
           {renderFormField("text", "pAddEmail", "Email", [], false, false, { xs: 12 })}
           {renderFormField("text", "refSource", "Referral Source", [], false, true, { xs: 12 })}

@@ -19,7 +19,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
 }) => {
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
-  const { areaValues, cityValues, countryValues, companyValues } = useDropdownValues();
+  const dropdownValues = useDropdownValues(['area', 'city', 'country', 'company']);
 
   const smsOptions = useMemo(() => [
     { value: "Y", label: "Yes" },
@@ -58,12 +58,8 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
         name="patAreaVal"
         ControlID="Area"
         value={formData.patAddress.patAreaVal || ""}
-        options={areaValues}
-        onChange={handleDropdownChange(
-          ["patAddress", "patAreaVal"],
-          ["patAddress", "patArea"],
-          areaValues
-        )}
+        options={dropdownValues.area}
+        onChange={handleDropdownChange(["patAddress", "patAreaVal"], ["patAddress", "patArea"], dropdownValues.area)}
         isSubmitted={isSubmitted}
       />
       <FormField
@@ -72,12 +68,8 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
         name="pAddCityVal"
         ControlID="City"
         value={formData.patAddress.pAddCityVal || ""}
-        options={cityValues}
-        onChange={handleDropdownChange(
-          ["patAddress", "pAddCityVal"],
-          ["patAddress", "pAddCity"],
-          cityValues
-        )}
+        options={dropdownValues.city}
+        onChange={handleDropdownChange(["patAddress", "pAddCityVal"], ["patAddress", "pAddCity"], dropdownValues.city)}
         isSubmitted={isSubmitted}
       />
       <FormField
@@ -86,12 +78,8 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
         name="pAddActualCountryVal"
         ControlID="Country"
         value={formData.patAddress.pAddActualCountryVal || ""}
-        options={countryValues}
-        onChange={handleDropdownChange(
-          ["patAddress", "pAddActualCountryVal"],
-          ["patAddress", "pAddActualCountry"],
-          countryValues
-        )}
+        options={dropdownValues.country}
+        onChange={handleDropdownChange(["patAddress", "pAddActualCountryVal"], ["patAddress", "pAddActualCountry"], dropdownValues.country)}
         isSubmitted={isSubmitted}
       />
       <FormField
@@ -118,12 +106,8 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
         name="patCompNameVal"
         ControlID="Company"
         value={formData.patRegisters.patCompNameVal || ""}
-        options={companyValues}
-        onChange={handleDropdownChange(
-          ["patRegisters", "patCompNameVal"],
-          ["patRegisters", "patCompName"],
-          companyValues
-        )}
+        options={dropdownValues.company}
+        onChange={handleDropdownChange(["patRegisters", "patCompNameVal"], ["patRegisters", "patCompName"], dropdownValues.company)}
         isSubmitted={isSubmitted}
       />
       <FormField

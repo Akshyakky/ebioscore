@@ -58,7 +58,7 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
     const [consultants, setConsultants] = useState<ConsultantRole[]>([]);
     const [selectedConsultant, setSelectedConsultant] = useState('');
     const [selectedRole, setSelectedRole] = useState<DropdownOption | null>(null);
-    const { consultantRoleValues } = useDropdownValues();
+    const dropdownValues = useDropdownValues(['consultantRole']);
     const [consultantSuggestions, setConsultantSuggestions] = useState<{ label: string; value: number }[]>([]);
 
     useEffect(() => {
@@ -166,7 +166,7 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                 onChange('abLName', patientData.patRegisters.pLName || '');
                 onChange('atName', patientData.patRegisters.pTitle || '');
                 onChange('dob', patientData.patRegisters.pDob || '');
-                onChange('pssnId', patientData.patRegisters.pssnID || '');
+                onChange('indentityValue', patientData.patRegisters.indentityValue || '');
                 onChange('intIdPsprt', patientData.patRegisters.intIdPsprt || '');
                 onChange('appPhone1', patientData.patAddress.pAddPhone1 || '');
                 onChange('email', patientData.patAddress.pAddEmail || '');
@@ -475,9 +475,9 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({
                             name="consultantRole"
                             ControlID="consultantRole"
                             value={selectedRole?.value || ''}
-                            options={consultantRoleValues}
+                            options={dropdownValues.consultantRole}
                             onChange={(e) => {
-                                const selected = consultantRoleValues.find(role => role.value === e.target.value);
+                                const selected = dropdownValues.consultantRole.find(role => role.value === e.target.value);
                                 setSelectedRole(selected || null);
                             }}
                             gridProps={{ xs: 6 }}

@@ -9,8 +9,8 @@ import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import { AppointmentService } from "../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService";
 import { useLoading } from "../../../../context/LoadingContext";
 import { debounce } from "../../../../utils/Common/debounceUtils";
-import { AppointBookingDto } from "../../../../interfaces/FrontOffice/AppointBookingDto";
 import useDayjs from "../../../../hooks/Common/useDateTime";
+import { AppointBookingDto } from "../../../../interfaces/frontOffice/AppointBookingDto";
 
 interface AppointmentSearchProps {
     open: boolean;

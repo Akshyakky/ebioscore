@@ -13,7 +13,7 @@ import { ReasonListService } from '../../../../services/FrontOfficeServices/Reas
 import { ResourceListService } from '../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices';
 import { AppointmentService } from '../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService';
 import { DropdownOption } from '../../../../interfaces/Common/DropdownOption';
-import { AppointBookingDto } from '../../../../interfaces/FrontOffice/AppointBookingDto';
+import { AppointBookingDto } from '../../../../interfaces/frontOffice/AppointBookingDto';
 import { showAlert } from '../../../../utils/Common/showAlert';
 import { useServerDate } from '../../../../hooks/Common/useServerDate';
 import useDayjs from '../../../../hooks/Common/useDateTime';

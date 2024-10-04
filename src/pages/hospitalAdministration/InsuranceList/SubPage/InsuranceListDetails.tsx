@@ -42,8 +42,7 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({
     const [isSubmitted, setIsSubmitted] = useState(false);
     const { handleDropdownChange } =
         useDropdownChange<InsuranceListDto>(setFormState);
-    const { categoryValues, cityValues, stateValues, nationalityValues } =
-        useDropdownValues();
+    const dropdownValues = useDropdownValues(['category', 'city', 'state', 'nationality']);
     const { setLoading } = useLoading();
     const { compID, compCode, compName } = store.getState().userDetails;
 
@@ -185,8 +184,8 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({
                     label="Category"
                     name="inCategory"
                     value={formState.inCategory || ""}
-                    onChange={handleDropdownChange([""], ["inCategory"], categoryValues)}
-                    options={categoryValues}
+                    onChange={handleDropdownChange([""], ["inCategory"], dropdownValues.category)}
+                    options={dropdownValues.category}
                     ControlID="inCategory"
                     placeholder="Category"
                     maxLength={50}
@@ -260,8 +259,8 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({
                     type="select"
                     label="City"
                     value={formState.insurCity}
-                    onChange={handleDropdownChange([""], ["insurCity"], cityValues)}
-                    options={cityValues}
+                    onChange={handleDropdownChange([""], ["insurCity"], dropdownValues.city)}
+                    options={dropdownValues.city}
                     name="insurCity"
                     ControlID="insurCity"
                     placeholder="City"
@@ -271,8 +270,8 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({
                     type="select"
                     label="State"
                     value={formState.insurState}
-                    onChange={handleDropdownChange([""], ["insurState"], stateValues)}
-                    options={stateValues}
+                    onChange={handleDropdownChange([""], ["insurState"], dropdownValues.state)}
+                    options={dropdownValues.state}
                     name="insurState"
                     ControlID="insurState"
                     placeholder="State"
@@ -283,12 +282,8 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({
                     type="select"
                     label="Country"
                     value={formState.insurCountry}
-                    onChange={handleDropdownChange(
-                        [""],
-                        ["insurCountry"],
-                        nationalityValues
-                    )}
-                    options={nationalityValues}
+                    onChange={handleDropdownChange([""], ["insurCountry"], dropdownValues.nationality)}
+                    options={dropdownValues.nationality}
                     name="insurCountry"
                     ControlID="insurCountry"
                     placeholder="Country"

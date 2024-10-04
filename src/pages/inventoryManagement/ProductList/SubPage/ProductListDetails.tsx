@@ -38,15 +38,7 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
 
     const { handleDropdownChange } =
         useDropdownChange<ProductListDto>(setFormState);
-    const {
-        productCategoryValues,
-        productGroupValues,
-        productSubGroupValues,
-        productUnitValues,
-        medicationFormValues,
-        medicationGenericValues,
-        taxTypeValue
-    } = useDropdownValues();
+    const dropdownValues = useDropdownValues(['productCategory', 'productGroup', 'productSubGroup', 'productUnit', 'medicationForm', 'medicationGeneric', 'taxType']);
 
     const [isSubmitted, setIsSubmitted] = useState(false);
     const { setLoading } = useLoading();
@@ -140,7 +132,7 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
         []
     );
 
-    const handleGSTChange = (value: number, taxTypeOptions: ProductTaxListDto[]) => {
+    const handleGSTChange = (value: number, taxTypeOptions: any[]) => {
         console.log("handleGSTChange called with value:", value);
         const selectedTax = taxTypeOptions.find(option => option.value === value);
         if (selectedTax) {
@@ -172,13 +164,8 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     type="select"
                     label="Category Value"
                     value={formState.catValue}
-                    onChange={handleDropdownChange(
-                        ["catValue"],
-                        ["catDescription"],
-                        productCategoryValues
-                    )}
-                    options={productCategoryValues}
-                    // isSubmitted={isSubmitted}
+                    onChange={handleDropdownChange(["catValue"], ["catDescription"], dropdownValues.productCategory)}
+                    options={dropdownValues.productCategory}
                     name="catValue"
                     ControlID="catValue"
                     placeholder="Category Value"
@@ -191,7 +178,6 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     label="Product Code"
                     value={formState.productCode || ""}
                     onChange={handleInputChange}
-                    // isSubmitted={isSubmitted}
                     name="productCode"
                     ControlID="productCode"
                     placeholder="Product Code"
@@ -213,12 +199,8 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     type="select"
                     label="Product Group"
                     value={formState.pGrpID}
-                    onChange={handleDropdownChange(
-                        ["pGrpID"],
-                        ["productGroupName"],
-                        productGroupValues
-                    )}
-                    options={productGroupValues}
+                    onChange={handleDropdownChange(["pGrpID"], ["productGroupName"], dropdownValues.productGroup)}
+                    options={dropdownValues.productGroup}
                     name="pGrpID"
                     ControlID="pGrpID"
                     placeholder="Product Group"
@@ -229,12 +211,8 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     type="select"
                     label="Product Sub Group"
                     value={formState.psGrpID}
-                    onChange={handleDropdownChange(
-                        ["psGrpID"],
-                        ["psGroupName"],
-                        productSubGroupValues
-                    )}
-                    options={productSubGroupValues}
+                    onChange={handleDropdownChange(["psGrpID"], ["psGroupName"], dropdownValues.productSubGroup)}
+                    options={dropdownValues.productSubGroup}
                     name="psGrpID"
                     ControlID="psGrpID"
                     placeholder="Product Sub Group"
@@ -258,12 +236,8 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                         type="select"
                         label="Product Unit"
                         value={formState.pUnitID}
-                        onChange={handleDropdownChange(
-                            ["pUnitID"],
-                            ["pUnitName"],
-                            productUnitValues
-                        )}
-                        options={productUnitValues}
+                        onChange={handleDropdownChange(["pUnitID"], ["pUnitName"], dropdownValues.productUnit)}
+                        options={dropdownValues.productUnit}
                         name="pUnitID"
                         ControlID="pUnitID"
                         placeholder="Product Unit"
@@ -290,12 +264,8 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                         type="select"
                         label="Issue Unit"
                         value={formState.pPackageID}
-                        onChange={handleDropdownChange(
-                            ["pPackageID"],
-                            ["pUnitName"],
-                            productUnitValues
-                        )}
-                        options={productUnitValues}
+                        onChange={handleDropdownChange(["pPackageID"], ["pUnitName"], dropdownValues.productUnit)}
+                        options={dropdownValues.productUnit}
                         name="pPackageID"
                         ControlID="pPackageID"
                         placeholder="Issue Unit"
@@ -308,12 +278,8 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     type="select"
                     label="Form Name "
                     value={formState.mFID}
-                    onChange={handleDropdownChange(
-                        ["mFID"],
-                        ["MFName"],
-                        medicationFormValues
-                    )}
-                    options={medicationFormValues}
+                    onChange={handleDropdownChange(["mFID"], ["MFName"], dropdownValues.medicationForm)}
+                    options={dropdownValues.medicationForm}
                     name="mFID"
                     ControlID="mFID"
                     placeholder="Form Name"
@@ -325,12 +291,8 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     type="select"
                     label="Generic Name "
                     value={formState.mGenID}
-                    onChange={handleDropdownChange(
-                        ["mGenID"],
-                        ["manufacturerGenericName"],
-                        medicationGenericValues
-                    )}
-                    options={medicationGenericValues}
+                    onChange={handleDropdownChange(["mGenID"], ["manufacturerGenericName"], dropdownValues.medicationGeneric)}
+                    options={dropdownValues.medicationGeneric}
                     name="mGenID"
                     ControlID="mGenID"
                     placeholder="Generic Name"
@@ -404,12 +366,8 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     type="select"
                     label="Manufacturer Name"
                     value={formState.manufacturerID}
-                    onChange={handleDropdownChange(
-                        ["manufacturerID"],
-                        ["manufacturerName"],
-                        medicationGenericValues
-                    )}
-                    options={productUnitValues}
+                    onChange={handleDropdownChange(["manufacturerID"], ["manufacturerName"], dropdownValues.medicationGeneric)}
+                    options={dropdownValues.medicationGeneric}
                     name="manufacturerID"
                     ControlID="manufacturerID"
                     placeholder="Manufacturer Name"
@@ -423,9 +381,9 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({
                     value={formState.taxID || ''}
                     onChange={(e) => {
                         const value = parseInt(e.target.value, 10);
-                        handleGSTChange(value, taxTypeValue);
+                        handleGSTChange(value, dropdownValues.taxType);
                     }}
-                    options={taxTypeValue}
+                    options={dropdownValues.taxType}
                     name="taxID"
                     ControlID="taxID"
                     placeholder="GST"

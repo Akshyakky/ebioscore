@@ -23,7 +23,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
   isSubmitted,
   onPatientSelect,
 }) => {
-  const { picValues, titleValues, genderValues, ageUnitOptions, nationalityValues } = useDropdownValues();
+  const dropdownValues = useDropdownValues(['pic', 'title', 'gender', 'ageUnit', 'nationality']);
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
   const { fetchLatestUHID } = useRegistrationUtils();
@@ -172,12 +172,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         value={formData.patRegisters.pTypeID !== undefined && formData.patRegisters.pTypeID !== 0
           ? formData.patRegisters.pTypeID.toString()
           : ""}
-        options={picValues}
-        onChange={handleDropdownChange(
-          ["patRegisters", "pTypeID"],
-          ["patRegisters", "pTypeName"],
-          picValues
-        )}
+        options={dropdownValues.pic}
+        onChange={handleDropdownChange(["patRegisters", "pTypeID"], ["patRegisters", "pTypeName"], dropdownValues.pic)}
         isMandatory={true}
         isSubmitted={isSubmitted}
       />
@@ -207,12 +203,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         name="pTitleVal"
         ControlID="Title"
         value={formData.patRegisters.pTitleVal || ""}
-        options={titleValues}
-        onChange={handleDropdownChange(
-          ["patRegisters", "pTitleVal"],
-          ["patRegisters", "pTitle"],
-          titleValues
-        )}
+        options={dropdownValues.title}
+        onChange={handleDropdownChange(["patRegisters", "pTitleVal"], ["patRegisters", "pTitle"], dropdownValues.title)}
         isMandatory={true}
         isSubmitted={isSubmitted}
       />
@@ -264,12 +256,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         name="pGenderVal"
         ControlID="Gender"
         value={formData.patRegisters.pGenderVal || ""}
-        options={genderValues}
-        onChange={handleDropdownChange(
-          ["patRegisters", "pGenderVal"],
-          ["patRegisters", "pGender"],
-          genderValues
-        )}
+        options={dropdownValues.gender}
+        onChange={handleDropdownChange(["patRegisters", "pGenderVal"], ["patRegisters", "pGender"], dropdownValues.gender)}
         isMandatory={true}
         isSubmitted={isSubmitted}
       />
@@ -316,12 +304,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
             name="pAgeDescriptionVal"
             ControlID="AgeUnit"
             value={formData.patOverview.pAgeDescriptionVal}
-            options={ageUnitOptions}
-            onChange={handleDropdownChange(
-              ["patOverview", "pAgeDescriptionVal"],
-              ["patOverview", "pAgeDescription"],
-              ageUnitOptions
-            )}
+            options={dropdownValues.ageUnit}
+            onChange={handleDropdownChange(["patOverview", "pAgeDescriptionVal"], ["patOverview", "pAgeDescription"], dropdownValues.ageUnit)}
             isSubmitted={isSubmitted}
             isMandatory={true}
             gridProps={{ xs: 12, md: 1 }}
@@ -364,12 +348,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({
         name="pAddCountryVal"
         ControlID="Nationality"
         value={formData.patAddress.pAddCountryVal || ""}
-        options={nationalityValues}
-        onChange={handleDropdownChange(
-          ["patAddress", "pAddCountryVal"],
-          ["patAddress", "pAddCountry"],
-          nationalityValues
-        )}
+        options={dropdownValues.nationality}
+        onChange={handleDropdownChange(["patAddress", "pAddCountryVal"], ["patAddress", "pAddCountry"], dropdownValues.nationality)}
       />
     </FormSectionWrapper>
   );

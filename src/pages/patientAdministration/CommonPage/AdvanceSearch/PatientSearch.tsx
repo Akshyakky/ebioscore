@@ -106,10 +106,10 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
         dayjs.formatDate(row.patRegisters?.pDob) || "",
     },
     {
-      key: "patRegisters.pssnID",
+      key: "patRegisters.indentityValue",
       header: "Identity No",
       visible: true,
-      render: (row: PatientRegistrationDto) => row.patRegisters?.pssnID || "",
+      render: (row: PatientRegistrationDto) => row.patRegisters?.indentityValue || "",
     },
     {
       key: "patRegisters.pTypeName",

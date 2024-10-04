@@ -8,6 +8,7 @@ import {
   IconButton,
   InputAdornment,
   useTheme,
+  CircularProgress,
 } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -16,7 +17,7 @@ interface DropdownSelectProps {
   label: string;
   name: string;
   value: string;
-  options: Array<{ value: string; label: string }>;
+  options?: Array<{ value: string; label: string }>;
   onChange: (event: SelectChangeEvent<string>, child: React.ReactNode) => void;
   size?: "small" | "medium";
   disabled?: boolean;
@@ -44,18 +45,21 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   onClear,
 }) => {
   const theme = useTheme();
-
   const isEmptyValue = useMemo(() => value === "" || value === "0", [value]);
-
   const hasError = isMandatory && isSubmitted && isEmptyValue;
 
   const displayValue = useMemo(() => {
+    if (!options) return "";
     const selectedOption = options.find(
       (option) =>
         String(option.value) === String(value) || option.label === value
     );
     return selectedOption ? selectedOption.value : "";
   }, [value, options]);
+
+  if (!options) {
+    return <CircularProgress size={24} />;
+  }
 
   return (
     <FormControl

@@ -43,19 +43,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
     const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
     const serverDate = useServerDate();
 
-    const {
-        titleValues,
-        genderValues,
-        bloodGroupValues,
-        maritalStatusValues,
-        cityValues,
-        stateValues,
-        nationalityValues,
-        categoryValues,
-        departmentValues,
-        employeeStatusValues,
-        specialityValues,
-    } = useDropdownValues();
+    const dropdownValues = useDropdownValues(['title', 'gender', 'bloodGroup', 'maritalStatus', 'city', 'state', 'nationality', 'category', 'department', 'employeeStatus', 'speciality']);
 
     const handleSpecialityChange = useCallback((event: SelectChangeEvent<unknown>) => {
         const value = event.target.value as string[];
@@ -64,7 +52,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
             ...prev,
             contactDetailsDto: value.map((val) => ({
                 facID: parseInt(val),
-                facName: specialityValues.find((opt) => opt.value === val)?.label || "",
+                facName: dropdownValues.speciality.find((opt) => opt.value === val)?.label || "",
                 compID: compID!,
                 compCode: compCode!,
                 compName: compName!,
@@ -76,7 +64,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                 rNotes: ""
             })),
         }));
-    }, [compID, compCode, compName, specialityValues, setContactList]);
+    }, [compID, compCode, compName, dropdownValues.speciality, setContactList]);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -159,12 +147,8 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                         name="conCat"
                         ControlID="Category"
                         value={contactList.contactMastDto.consValue}
-                        options={categoryValues}
-                        onChange={handleDropdownChange(
-                            ["contactMastDto", "consValue"],
-                            ["contactMastDto", "conCat"],
-                            categoryValues
-                        )}
+                        options={dropdownValues.category}
+                        onChange={handleDropdownChange(["contactMastDto", "consValue"], ["contactMastDto", "conCat"], dropdownValues.category)}
                         isMandatory={true}
                         isSubmitted={isSubmitted}
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -175,12 +159,8 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                         name="deptID"
                         ControlID="Department"
                         value={contactList.contactMastDto.deptID === 0 ? "" : String(contactList.contactMastDto.deptID)}
-                        options={departmentValues}
-                        onChange={handleDropdownChange(
-                            ["contactMastDto", "deptID"],
-                            ["contactMastDto", "deptName"],
-                            departmentValues
-                        )}
+                        options={dropdownValues.department}
+                        onChange={handleDropdownChange(["contactMastDto", "deptID"], ["contactMastDto", "deptName"], dropdownValues.department)}
                         isMandatory={true}
                         isSubmitted={isSubmitted}
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -192,7 +172,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                             name="selectedSpecialities"
                             ControlID="Speciality"
                             value={selectedSpecialities}
-                            options={specialityValues}
+                            options={dropdownValues.speciality}
                             onChange={handleSpecialityChange}
                             isMandatory={true}
                             isSubmitted={isSubmitted}
@@ -212,12 +192,8 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                         name="conTitle"
                         ControlID="Title"
                         value={contactList.contactMastDto.conTitle}
-                        options={titleValues}
-                        onChange={handleDropdownChange(
-                            [""],
-                            ["contactMastDto", "conTitle"],
-                            titleValues
-                        )}
+                        options={dropdownValues.title}
+                        onChange={handleDropdownChange([""], ["contactMastDto", "conTitle"], dropdownValues.title)}
                         isMandatory={true}
                         isSubmitted={isSubmitted}
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -250,12 +226,8 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                         name="conGender"
                         ControlID="Gender"
                         value={contactList.contactMastDto.conGender || ""}
-                        options={genderValues}
-                        onChange={handleDropdownChange(
-                            [""],
-                            ["contactMastDto", "conGender"],
-                            genderValues
-                        )}
+                        options={dropdownValues.gender}
+                        onChange={handleDropdownChange([""], ["contactMastDto", "conGender"], dropdownValues.gender)}
                         isMandatory={true}
                         isSubmitted={isSubmitted}
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -276,12 +248,8 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                         name="conBldGrp"
                         ControlID="BloodGroup"
                         value={contactList.contactMastDto.conBldGrp || ""}
-                        options={bloodGroupValues}
-                        onChange={handleDropdownChange(
-                            [""],
-                            ["contactMastDto", "conBldGrp"],
-                            bloodGroupValues
-                        )}
+                        options={dropdownValues.bloodGroup}
+                        onChange={handleDropdownChange([""], ["contactMastDto", "conBldGrp"], dropdownValues.bloodGroup)}
                         isSubmitted={isSubmitted}
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
                     />
@@ -291,12 +259,8 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                         name="maritalStatus"
                         ControlID="MaritalStatus"
                         value={contactList.contactMastDto.maritalStatus || ""}
-                        options={maritalStatusValues}
-                        onChange={handleDropdownChange(
-                            [""],
-                            ["contactMastDto", "maritalStatus"],
-                            maritalStatusValues
-                        )}
+                        options={dropdownValues.maritalStatus}
+                        onChange={handleDropdownChange([""], ["contactMastDto", "maritalStatus"], dropdownValues.maritalStatus)}
                         isSubmitted={isSubmitted}
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
                     />
@@ -333,12 +297,8 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                         name="cAddCity"
                         ControlID="City"
                         value={contactList.contactAddressDto.cAddCity || ""}
-                        options={cityValues}
-                        onChange={handleDropdownChange(
-                            [""],
-                            ["contactAddressDto", "cAddCity"],
-                            cityValues
-                        )}
+                        options={dropdownValues.city}
+                        onChange={handleDropdownChange([""], ["contactAddressDto", "cAddCity"], dropdownValues.city)}
                         isSubmitted={isSubmitted}
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
                     />
@@ -348,12 +308,8 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                         name="cAddState"
                         ControlID="State"
                         value={contactList.contactAddressDto.cAddState || ""}
-                        options={stateValues}
-                        onChange={handleDropdownChange(
-                            [""],
-                            ["contactAddressDto", "cAddState"],
-                            stateValues
-                        )}
+                        options={dropdownValues.state}
+                        onChange={handleDropdownChange([""], ["contactAddressDto", "cAddState"], dropdownValues.state)}
                         isSubmitted={isSubmitted}
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
                     />
@@ -363,12 +319,8 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                         name="cAddCountry"
                         ControlID="Nationality"
                         value={contactList.contactAddressDto.cAddCountry || ""}
-                        options={nationalityValues}
-                        onChange={handleDropdownChange(
-                            [""],
-                            ["contactAddressDto", "cAddCountry"],
-                            nationalityValues
-                        )}
+                        options={dropdownValues.nationality}
+                        onChange={handleDropdownChange([""], ["contactAddressDto", "cAddCountry"], dropdownValues.nationality)}
                         isSubmitted={isSubmitted}
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
                     />
@@ -463,12 +415,8 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                         name="conEmpStatus"
                         ControlID="EmployeeStatus"
                         value={contactList.contactMastDto.conEmpStatus || ""}
-                        options={employeeStatusValues}
-                        onChange={handleDropdownChange(
-                            [""],
-                            ["contactMastDto", "conEmpStatus"],
-                            employeeStatusValues
-                        )}
+                        options={dropdownValues.employeeStatus}
+                        onChange={handleDropdownChange([""], ["contactMastDto", "conEmpStatus"], dropdownValues.employeeStatus)}
                         isSubmitted={isSubmitted}
                         gridProps={{ xs: 12, sm: 6, md: 3 }}
                     />

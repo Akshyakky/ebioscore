@@ -49,7 +49,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
         unitDesc: "",
     });
     const { handleDropdownChange } = useDropdownChange<RoomListDto>(setFormData);
-    const { floorValues, unitValues, roomGroupValues } = useDropdownValues();
+    const dropdownValues = useDropdownValues(['floor', 'unit', 'roomGroup']);
 
     const handleAdd = () => {
         setFormData({
@@ -324,7 +324,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
                         name="rgrpID"
                         value={formData.rgrpID || ""}
                         onChange={(e) => handleRoomGroupChange("rgrpID", e.target.value)}
-                        options={roomGroupValues}
+                        options={dropdownValues.roomGroup}
                         ControlID="rgrpID"
                         gridProps={{ xs: 12 }}
                     />
@@ -334,12 +334,8 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
                         label="Location"
                         name="rLocation"
                         value={formData.rLocation || ""}
-                        onChange={handleDropdownChange(
-                            ["rLocationID"],
-                            ["rLocation"],
-                            floorValues
-                        )}
-                        options={floorValues}
+                        onChange={handleDropdownChange(["rLocationID"], ["rLocation"], dropdownValues.floor)}
+                        options={dropdownValues.floor}
                         ControlID="rLocation"
                         gridProps={{ xs: 12 }}
                     />
@@ -349,8 +345,8 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
                         label="Unit "
                         name="dulID"
                         value={formData.dulID || ""}
-                        onChange={handleDropdownChange(["dulID"], ["unitDesc"], unitValues)}
-                        options={unitValues}
+                        onChange={handleDropdownChange(["dulID"], ["unitDesc"], dropdownValues.unit)}
+                        options={dropdownValues.unit}
                         ControlID="dulID"
                         gridProps={{ xs: 12 }}
                     />

@@ -42,7 +42,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
   const serverDate = useServerDate();
   const { userID, userName } =
     store.getState().userDetails;
-  const { departmentTypesValues } = useDropdownValues();
+  const dropdownValues = useDropdownValues(["departmentTypes"]);
   const isEditMode = deptId > 0;
   useEffect(() => {
     if (editData) {
@@ -244,7 +244,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
             label="Department Type"
             value={deptType}
             onChange={(e) => setDeptType(e.target.value)}
-            options={departmentTypesValues}
+            options={dropdownValues.departmentTypes}
             isSubmitted={isSubmitted}
             name="deptType"
             ControlID="deptType"

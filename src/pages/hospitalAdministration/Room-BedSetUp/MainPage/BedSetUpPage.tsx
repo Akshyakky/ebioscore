@@ -33,7 +33,7 @@ const BedSetUpPage: React.FC = () => {
 
     const fetchRoomLists = async () => {
         try {
-            const response = await roomListService.getAll();   //.getAllWithIncludes(['RoomGroup']);
+            const response = await roomListService.getAllWithIncludes(['RoomGroup']);
             if (response.success && response.data) {
                 setRoomLists(response.data);
             } else {
@@ -48,7 +48,7 @@ const BedSetUpPage: React.FC = () => {
 
     const fetchBeds = async () => {
         try {
-            const response = await wrBedService.getAll();  //.getAllWithIncludes(['RoomList', 'RoomList.RoomGroup']);
+            const response = await wrBedService.getAllWithIncludes(['RoomList', 'RoomList.RoomGroup']);
             if (response.success && response.data) {
                 setBeds(response.data);
             } else {

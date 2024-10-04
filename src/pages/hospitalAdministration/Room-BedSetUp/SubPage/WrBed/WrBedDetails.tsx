@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Grid } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
@@ -41,8 +41,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
         key: 0,
     });
     const { handleDropdownChange } = useDropdownChange<WrBedDto>(setFormData);
-    const { bedCategoryValues, serviceValues, roomGroupValues, roomListValues } =
-        useDropdownValues();
+    const dropdownValues = useDropdownValues(['bedCategory', 'service', 'roomGroup', 'roomList']);
     const [, setIsSubGroup] = useState(false);
 
     const handleAdd = (isSubGroup: boolean = false, parentGroup?: WrBedDto) => {
@@ -338,7 +337,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
                         name="rgrpID"
                         value={formData.rgrpID || ""}
                         onChange={(e) => handleRoomGroupChange("rgrpID", e.target.value)}
-                        options={roomGroupValues}
+                        options={dropdownValues.roomGroup}
                         ControlID="rgrpID"
                         gridProps={{ xs: 12 }}
                     />
@@ -349,7 +348,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
                         name="rlID"
                         value={formData.rlID || 0}
                         onChange={(e) => handleRoomGroupChange("rlID", e.target.value)}
-                        options={roomListValues}
+                        options={dropdownValues.roomList}
                         ControlID="rlID"
                         gridProps={{ xs: 12 }}
                     />
@@ -359,12 +358,8 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
                         label="Bed Category"
                         name="wCatID"
                         value={formData.wbCatID || 0}
-                        onChange={handleDropdownChange(
-                            ["wbCatID"],
-                            ["wbCatName"],
-                            bedCategoryValues
-                        )}
-                        options={bedCategoryValues}
+                        onChange={handleDropdownChange(["wbCatID"], ["wbCatName"], dropdownValues.bedCategory)}
+                        options={dropdownValues.bedCategory}
                         ControlID="wCatID"
                         gridProps={{ xs: 12 }}
                     />
@@ -373,12 +368,8 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds }) => {
                         label="Bed Status"
                         name="bchID"
                         value={formData.bchID || ""}
-                        onChange={handleDropdownChange(
-                            ["bchID"],
-                            ["bchName"],
-                            serviceValues
-                        )}
-                        options={serviceValues}
+                        onChange={handleDropdownChange(["bchID"], ["bchName"], dropdownValues.service)}
+                        options={dropdownValues.service}
                         ControlID="bchID"
                         gridProps={{ xs: 12 }}
                     />
