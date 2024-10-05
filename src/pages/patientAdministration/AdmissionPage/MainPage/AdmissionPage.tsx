@@ -1,5 +1,5 @@
 //src/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage.tsx
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Container, Box, styled } from "@mui/material";
 import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
 import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
@@ -56,21 +56,22 @@ const AdmissionPage: React.FC = () => {
     // Implement patient selection logic
   };
 
-  const actionButtons: ButtonProps[] = [
+  const actionButtons: ButtonProps[] = useMemo(() => [
     {
-      variant: "contained",
-      size: "medium",
+      variant: 'contained',
+      size: 'medium',
       icon: SearchIcon,
-      text: "Advanced Search",
+      text: 'Advanced Search',
       onClick: handleAdvancedSearch,
     },
     {
-      variant: "contained",
+      variant: 'contained',
       icon: PrintIcon,
-      text: "Print Admission Form",
-      size: "medium",
+      text: 'Print Admission Form',
+      size: 'medium',
+      onClick: () => {/* Implement print logic */ },
     },
-  ];
+  ], [handleAdvancedSearch]);
 
   return (
     <Container maxWidth={false}>

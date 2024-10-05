@@ -142,6 +142,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
         data={searchResults}
         minHeight="400px"
         maxHeight="400px"
+        pagination={true}
       />
     </>
   );
