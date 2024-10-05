@@ -18,9 +18,6 @@ interface FormSectionWrapperProps {
 const FormSectionWrapper: React.FC<FormSectionWrapperProps> = ({ title, children, spacing = 1, actionButton }) => {
     return (
         <Box mb={1}>
-            <Typography variant="h6" sx={{ borderBottom: '1px solid #000', mb: 1 }}>
-                {title}
-            </Typography>
             <StyledGrid container spacing={spacing}>
                 {children}
             </StyledGrid>

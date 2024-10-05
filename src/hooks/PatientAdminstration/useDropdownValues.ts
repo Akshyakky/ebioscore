@@ -13,7 +13,7 @@ import { DeptUnitListService } from "../../services/HospitalAdministrationServic
 import { ServiceTypeService } from "../../services/BillingServices/ServiceTypeServices";
 import { productGroupService, productSubGroupService, productTaxService, productUnitService } from "../../services/InventoryManagementService/inventoryManagementService";
 import { consultantRoleService, medicationFormService, medicationGenericService } from "../../services/ClinicalManagementServices/clinicalManagementService";
-import { roomGroupService, roomListService, wardCategoryService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import { roomGroupService, roomListService, wardCategoryService, wrBedService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { departmentService } from "../../services/CommonServices/CommonModelServices";
 import { DepartmentDto } from "../../interfaces/Billing/DepartmentDto";
 import { WardCategoryDto } from "../../interfaces/HospitalAdministration/WardCategoryDto";
@@ -57,7 +57,9 @@ type DropdownType =
   | "roomGroup"
   | "roomList"
   | "payment"
-  | "admissionType";
+  | "admissionType"
+  | "caseType"
+  | "beds";
 
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
   const [dropdownValues, setDropdownValues] = useState<Record<DropdownType, DropdownOption[]>>({} as Record<DropdownType, DropdownOption[]>);
@@ -238,8 +240,17 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             response = await ConstantValues.fetchConstantValues("GetConstantValues", "PAYT");
             break;
           case "admissionType":
-            debugger;
             response = await ConstantValues.fetchConstantValues("GetConstantValues", "REGT");
+            break;
+          case "caseType":
+            response = await ConstantValues.fetchConstantValues("GetConstantValues", "CTYP");
+            break;
+          case "beds":
+            response = await wrBedService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.bedID || 0,
+              label: item.bedName || "",
+            }));
             break;
           default:
             throw new Error(`Unsupported dropdown type: ${type}`);

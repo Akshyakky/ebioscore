@@ -21,6 +21,7 @@ import { PatientService } from "../../../../services/PatientAdministrationServic
 import NextOfKinPage from "../SubPage/NextOfKinPage";
 import useDayjs from "../../../../hooks/Common/useDateTime";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
+import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
 
 const RegistrationPage: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -327,39 +328,48 @@ const RegistrationPage: React.FC = () => {
           handleClose={() => setShowPatientSearch(false)}
           onEditPatient={handlePatientSelect}
         />
-        <Paper variant="elevation" sx={{ padding: 2 }}>
+        <CustomAccordion title="Personal Details" defaultExpanded>
           <PersonalDetails
             formData={formData}
             setFormData={setFormData}
             isSubmitted={isSubmitted}
             onPatientSelect={handlePatientSelect}
-          />
+          /></CustomAccordion>
+        <CustomAccordion title="Contact Details" defaultExpanded>
           <ContactDetails
             formData={formData}
             setFormData={setFormData}
             isSubmitted={isSubmitted}
           />
-          {!editMode && formData.opvisits && (
+        </CustomAccordion>
+        {!editMode && formData.opvisits && (
+          <CustomAccordion title="Visit Details" defaultExpanded>
             <VisitDetails
               formData={formData}
               setFormData={setFormData}
               isSubmitted={isSubmitted}
               isEditMode={editMode}
             />
-          )}
+          </CustomAccordion>
+        )}
+        <CustomAccordion title="Membership Scheme" defaultExpanded>
           <MembershipScheme formData={formData} setFormData={setFormData} />
+        </CustomAccordion>
+        <CustomAccordion title="Next of Kin" defaultExpanded>
           <NextOfKinPage
             ref={nextOfKinPageRef}
             pChartID={selectedPChartID}
             shouldClearData={shouldClearKinData}
           />
+        </CustomAccordion>
+        <CustomAccordion title="Insurance Details" defaultExpanded>
           <InsurancePage
             ref={insurancePageRef}
             pChartID={selectedPChartID}
             shouldClearData={shouldClearInsuranceData}
           />
-        </Paper>
-      </Container>
+        </CustomAccordion>
+      </Container >
       <FormSaveClearButton
         clearText="Clear"
         saveText="Save"

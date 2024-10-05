@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo } from "react";
-import { FormControl, Grid, SelectChangeEvent } from "@mui/material";
+import { Grid, SelectChangeEvent } from "@mui/material";
 import { GridProps } from '@mui/material/Grid';
 import FloatingLabelTextBox from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import TextArea from "../TextArea/TextArea";
@@ -9,13 +9,10 @@ import RadioGroup from "../RadioGroup/RadioGroup";
 import AutocompleteTextBox from "../TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import { TextFieldProps } from "@mui/material/TextField";
 import MultiSelectDropdown from "../DropDown/MultiSelectDropdown";
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from "@mui/x-date-pickers";
-import dayjs from "dayjs";
 import CustomDatePicker from "../DatePicker/CustomDatePicker";
+import CustomDateTimePicker from "../DateTimePicker/CustomDateTimePicker";
 
-type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email" | "radio" | "autocomplete" | "date" | "search" | "multiselect" | "time" | "datepicker";
+type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email" | "radio" | "autocomplete" | "date" | "search" | "multiselect" | "time" | "datepicker" | "datetimepicker";
 
 interface DropdownOption {
   value: string;
@@ -102,7 +99,14 @@ export interface DatePickerFormFieldProps extends BaseFormFieldProps {
   maxDate?: Date;
 }
 
-export type FormFieldProps = TextFormFieldProps | TextAreaFormFieldProps | SelectFormFieldProps | SwitchFormFieldProps | RadioFormFieldProps | AutocompleteFormFieldProps | MultiSelectFormFieldProps | DatePickerFormFieldProps;
+export interface DateTimePickerFormFieldProps extends BaseFormFieldProps {
+  type: "datetimepicker";
+  onChange: (date: Date | null) => void;
+  minDateTime?: Date;
+  maxDateTime?: Date;
+}
+
+export type FormFieldProps = TextFormFieldProps | TextAreaFormFieldProps | SelectFormFieldProps | SwitchFormFieldProps | RadioFormFieldProps | AutocompleteFormFieldProps | MultiSelectFormFieldProps | DatePickerFormFieldProps | DateTimePickerFormFieldProps;
 
 const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
   const {
@@ -282,6 +286,26 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
             errorMessage={errorMessage}
             minDate={datePickerProps.minDate}
             maxDate={datePickerProps.maxDate}
+            InputProps={InputProps}
+            InputLabelProps={InputLabelProps}
+          />
+        );
+      case "datetimepicker":
+        const dateTimePickerProps = props as DateTimePickerFormFieldProps;
+        return (
+          <CustomDateTimePicker
+            ControlID={ControlID}
+            title={label}
+            value={value}
+            onChange={dateTimePickerProps.onChange}
+            placeholder={placeholder}
+            size={size}
+            isMandatory={isMandatory}
+            disabled={disabled}
+            readOnly={readOnly}
+            errorMessage={errorMessage}
+            minDateTime={dateTimePickerProps.minDateTime}
+            maxDateTime={dateTimePickerProps.maxDateTime}
             InputProps={InputProps}
             InputLabelProps={InputLabelProps}
           />

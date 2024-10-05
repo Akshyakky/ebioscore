@@ -1,41 +1,51 @@
 //src/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage.tsx
 import React, { useRef, useState } from "react";
-import { Container, Paper, Box, Accordion, AccordionSummary, Typography, AccordionDetails } from "@mui/material";
+import { Container, Box, styled } from "@mui/material";
 import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
-import ActionButtonGroup, { ButtonProps, } from "../../../../components/Button/ActionButtonGroup";
-import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon, } from "@mui/icons-material";
+import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
+import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import AdmissionDetails from "../SubPage/AdmissionDetails";
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
+import { AdmissionDto, IPAdmissionDto, IPAdmissionDetailsDto, WrBedDetailsDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
 import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/patientAdministrationService";
+import useDropdownChange from "../../../../hooks/useDropdownChange";
+import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
 
 const AdmissionPage: React.FC = () => {
-  const [formData, setFormData] = useState<Partial<AdmissionDto>>({});
+  const [formData, setFormData] = useState<AdmissionDto>({
+    IPAdmissionDto: {} as IPAdmissionDto,
+    IPAdmissionDetailsDto: {} as IPAdmissionDetailsDto,
+    WrBedDetailsDto: {} as WrBedDetailsDto
+  });
   const insurancePageRef = useRef<any>(null);
   const [shouldClearInsuranceData, setShouldClearInsuranceData] = useState(false);
+  const { handleDropdownChange } = useDropdownChange<AdmissionDto>(setFormData);
 
   const handleChange = (field: keyof AdmissionDto, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleClear = () => {
-    setFormData({});
+    setFormData({
+      IPAdmissionDto: {} as IPAdmissionDto,
+      IPAdmissionDetailsDto: {} as IPAdmissionDetailsDto,
+      WrBedDetailsDto: {} as WrBedDetailsDto
+    });
     setShouldClearInsuranceData(true);
   };
 
   const handleSave = async () => {
     try {
-      const result = await extendedAdmissionService.admitPatient(formData as AdmissionDto);
-      // Handle successful save
+      const result = await extendedAdmissionService.admitPatient(formData);
       console.log("Admission saved:", result);
     } catch (error) {
-      // Handle error
       console.error("Error saving admission:", error);
     }
   };
 
-  const handleAdvancedSearch = async () => { };
+  const handleAdvancedSearch = async () => {
+    // Implement advanced search logic
+  };
 
   const fetchPatientSuggestions = async (input: string): Promise<string[]> => {
     // Implement patient suggestion fetching logic
@@ -67,51 +77,33 @@ const AdmissionPage: React.FC = () => {
       <Box sx={{ marginBottom: 2 }}>
         <ActionButtonGroup buttons={actionButtons} />
       </Box>
-      <Paper variant="elevation" sx={{ padding: 2 }}>
+      <CustomAccordion title="Admission Details" defaultExpanded>
         <AdmissionDetails
           formData={formData}
           onChange={handleChange}
+          onDropdownChange={handleDropdownChange}
           fetchPatientSuggestions={fetchPatientSuggestions}
           handlePatientSelect={handlePatientSelect}
         />
-      </Paper>
-
-      <Box sx={{ marginTop: 2 }}>
-        <Accordion>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography>Payer Details</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <InsurancePage
-              ref={insurancePageRef}
-              pChartID={formData.pChartID || 0}
-              shouldClearData={shouldClearInsuranceData}
-            />
-          </AccordionDetails>
-        </Accordion>
-      </Box>
-
-      <Box sx={{ marginTop: 2 }}>
-        <Accordion>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography>Principal Diagnosis</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            {/* Add Principal Diagnosis component here */}
-          </AccordionDetails>
-        </Accordion>
-      </Box>
-
-      <Box sx={{ marginTop: 2 }}>
-        <FormSaveClearButton
-          clearText="Clear"
-          saveText="Save"
-          onClear={handleClear}
-          onSave={handleSave}
-          clearIcon={DeleteIcon}
-          saveIcon={SaveIcon}
+      </CustomAccordion>
+      <CustomAccordion title="Payer Details">
+        <InsurancePage
+          ref={insurancePageRef}
+          pChartID={formData.IPAdmissionDto.pChartID || 0}
+          shouldClearData={shouldClearInsuranceData}
         />
-      </Box>
+      </CustomAccordion>
+      <CustomAccordion title="Principal Diagnosis">
+        <></>
+      </CustomAccordion>
+      <FormSaveClearButton
+        clearText="Clear"
+        saveText="Save"
+        onClear={handleClear}
+        onSave={handleSave}
+        clearIcon={DeleteIcon}
+        saveIcon={SaveIcon}
+      />
     </Container>
   );
 };

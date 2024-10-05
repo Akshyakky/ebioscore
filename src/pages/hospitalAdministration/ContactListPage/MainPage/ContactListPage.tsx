@@ -181,7 +181,7 @@ const ContactListPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [contactList, setLoading, handleClear]);
+  }, [contactList, handleClear]);
 
 
 
