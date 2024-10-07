@@ -1,187 +1,135 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
-    Paper,
     Typography,
-    Grid,
     Box,
-    Divider,
-    List,
-    ListItem,
-    Button,
-    CircularProgress,
     Tooltip,
-    IconButton,
     TextField,
     useTheme,
     useMediaQuery,
 } from "@mui/material";
 import { RoomGroupDto, RoomListDto, WrBedDto } from '../../../../interfaces/HospitalAdministration/Room-BedSetUpDto';
-import CustomGrid, { Column } from '../../../../components/CustomGrid/CustomGrid';
+import CustomTreeView, { TreeNodeType } from "../../../../components/TreeView/CustomTreeView";
 import {
     Refresh as RefreshIcon,
     Search as SearchIcon,
     Hotel as BedIcon,
-    Folder as FolderIcon,
-    FolderOpen as FolderOpenIcon,
-    ExpandMore as ExpandMoreIcon,
-    ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
 import { roomGroupService, roomListService, wrBedService } from '../../../../services/HospitalAdministrationServices/hospitalAdministrationService';
+import { useLoading } from "../../../../context/LoadingContext";
+import CustomButton from "../../../../components/Button/CustomButton";
+import useDebounce from "../../../../hooks/Common/useDebounce";
 
-const ManageBedDetails: React.FC = () => {
+interface ManageBedDetailsProps {
+    onBedSelect?: (bed: WrBedDto) => void;
+    isSelectionMode?: boolean;
+}
+
+const ManageBedDetails: React.FC<ManageBedDetailsProps> = ({ onBedSelect, isSelectionMode = false }) => {
     const [roomGroups, setRoomGroups] = useState<RoomGroupDto[]>([]);
     const [roomList, setRoomList] = useState<RoomListDto[]>([]);
     const [selectedRoomGroup, setSelectedRoomGroup] = useState<RoomGroupDto | null>(null);
     const [bedsByRoom, setBedsByRoom] = useState<{ [key: number]: WrBedDto[] }>({});
     const [bedFilter, setBedFilter] = useState<string>("Show All");
-    const [loading, setLoading] = useState<boolean>(true);
     const [searchTerm, setSearchTerm] = useState<string>("");
-    const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
-    const [roomGroupHierarchy, setRoomGroupHierarchy] = useState<RoomGroupDto[]>([]);
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+    const { isLoading, setLoading } = useLoading();
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-    const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
 
     useEffect(() => {
-        fetchData();
+        fetchRoomGroups();
     }, []);
 
-    const fetchData = async () => {
+    useEffect(() => {
+        if (selectedRoomGroup) {
+            fetchRoomsAndBeds(selectedRoomGroup.rGrpID);
+        }
+    }, [selectedRoomGroup]);
+
+    const fetchRoomGroups = async () => {
         setLoading(true);
         try {
-            const [roomGroupsResult, roomListResult, bedsResult] = await Promise.all([
-                roomGroupService.getAll(),
-                roomListService.getAll(),
-                wrBedService.getAll(),
-            ]);
-
-            if (roomGroupsResult.success) {
-                setRoomGroups(roomGroupsResult.data || []);
-                setRoomGroupHierarchy(buildRoomGroupHierarchy(roomGroupsResult.data || []));
-            }
-            if (roomListResult.success) {
-                setRoomList(roomListResult.data || []);
-                if (bedsResult.success) {
-                    const bedsByRoomMap = bedsResult.data?.reduce(
-                        (acc: { [key: number]: WrBedDto[] }, bed: WrBedDto) => {
-                            acc[bed.rlID] = [...(acc[bed.rlID] || []), bed];
-                            return acc;
-                        },
-                        {} as { [key: number]: WrBedDto[] }
-                    );
-                    setBedsByRoom(bedsByRoomMap || {});
-                }
+            const result = await roomGroupService.getAll();
+            if (result.success) {
+                setRoomGroups(result.data || []);
             }
         } catch (error) {
-            console.error("Error fetching data:", error);
+            console.error("Error fetching room groups:", error);
         } finally {
             setLoading(false);
         }
     };
 
-    const buildRoomGroupHierarchy = (groups: RoomGroupDto[]): RoomGroupDto[] => {
-        const groupMap = new Map<number, RoomGroupDto & { children: RoomGroupDto[] }>();
+    const fetchRoomsAndBeds = async (roomGroupId: number) => {
+        setLoading(true);
+        try {
+            const [roomListResult, bedsResult] = await Promise.all([
+                roomListService.find(`rgrpID == ${roomGroupId}`),
+                wrBedService.find(`RoomList.rgrpID == ${roomGroupId}`)
+            ]);
 
-        groups.forEach(group => {
-            groupMap.set(group.rGrpID, { ...group, children: [] });
-        });
+            if (roomListResult.success) {
+                setRoomList(roomListResult.data || []);
+            }
+            if (bedsResult.success) {
+                const bedsByRoomMap = bedsResult.data?.reduce(
+                    (acc: { [key: number]: WrBedDto[] }, bed: WrBedDto) => {
+                        acc[bed.rlID] = [...(acc[bed.rlID] || []), bed];
+                        return acc;
+                    },
+                    {} as { [key: number]: WrBedDto[] }
+                );
+                setBedsByRoom(bedsByRoomMap || {});
+            }
+        } catch (error) {
+            console.error("Error fetching rooms and beds:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        const rootGroups: RoomGroupDto[] = [];
+    const roomGroupHierarchy = useMemo(() => {
+        const buildHierarchy = (groups: RoomGroupDto[]): TreeNodeType[] => {
+            const groupMap = new Map<number, TreeNodeType>();
 
-        groups.forEach(group => {
-            if (group.key === 0) {
-                rootGroups.push(groupMap.get(group.rGrpID)!);
-            } else {
-                const parentGroup = groupMap.get(group.key);
-                if (parentGroup) {
-                    parentGroup.children.push(groupMap.get(group.rGrpID)!);
+            groups.forEach(group => {
+                groupMap.set(group.rGrpID, {
+                    id: group.rGrpID.toString(),
+                    name: group.rGrpName,
+                    children: [],
+                    originalData: group
+                });
+            });
+
+            const rootGroups: TreeNodeType[] = [];
+
+            groups.forEach(group => {
+                const treeNode = groupMap.get(group.rGrpID);
+                if (treeNode) {
+                    if (group.key === 0) {
+                        rootGroups.push(treeNode);
+                    } else {
+                        const parentNode = groupMap.get(group.key);
+                        if (parentNode && Array.isArray(parentNode.children)) {
+                            parentNode.children.push(treeNode);
+                        }
+                    }
                 }
-            }
-        });
+            });
 
-        return rootGroups;
-    };
+            return rootGroups;
+        };
 
-    const handleRoomNameClick = (roomGroup: RoomGroupDto) => {
-        setSelectedRoomGroup(roomGroup);
-    };
+        return buildHierarchy(roomGroups);
+    }, [roomGroups]);
 
-    const toggleExpand = (groupId: number) => {
-        setExpandedGroups(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(groupId)) {
-                newSet.delete(groupId);
-            } else {
-                newSet.add(groupId);
-            }
-            return newSet;
-        });
-    };
+    const handleRoomGroupSelect = useCallback((node: TreeNodeType) => {
+        setSelectedRoomGroup(node.originalData as RoomGroupDto);
+    }, []);
 
-    const renderRoomGroup = (item: RoomGroupDto & { children?: RoomGroupDto[] }, depth: number = 0) => {
-        const hasChildren = item.children && item.children.length > 0;
-        const isExpanded = expandedGroups.has(item.rGrpID);
-
-        return (
-            <React.Fragment key={item.rGrpID}>
-                <Box
-                    sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        pl: depth * 2 + 1,
-                        py: 1,
-                        "&:hover": { backgroundColor: "action.hover" },
-                        ...(selectedRoomGroup && selectedRoomGroup.rGrpID === item.rGrpID
-                            ? { backgroundColor: "action.selected", fontWeight: 'bold' }
-                            : {}),
-                    }}
-                >
-                    {hasChildren && (
-                        <IconButton size="small" onClick={() => toggleExpand(item.rGrpID)}>
-                            {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                        </IconButton>
-                    )}
-                    <Box
-                        onClick={() => handleRoomNameClick(item)}
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            cursor: "pointer",
-                            flexGrow: 1,
-                        }}
-                    >
-                        {item.key !== 0 ? (
-                            <FolderOpenIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
-                        ) : (
-                            <FolderIcon fontSize="small" sx={{ mr: 1, color: 'secondary.main' }} />
-                        )}
-                        <Typography
-                            variant="body2"
-                            sx={{
-                                fontWeight: item.key !== 0 ? 400 : 600,
-                                color: item.key !== 0 ? 'text.secondary' : 'text.primary',
-                            }}
-                        >
-                            {item.rGrpName}
-                        </Typography>
-                    </Box>
-                </Box>
-                {isExpanded && item.children && item.children.map(childGroup => renderRoomGroup(childGroup, depth + 1))}
-            </React.Fragment>
-        );
-    };
-
-    const roomGroupColumns: Column<RoomGroupDto>[] = [
-        {
-            key: "rGrpName",
-            header: "Room Name",
-            visible: true,
-            render: (item) => renderRoomGroup(item as RoomGroupDto & { children?: RoomGroupDto[] }),
-        },
-    ];
-
-    const getBedStyles = (bedStatus: string | undefined) => {
+    const getBedStyles = useCallback((bedStatus: string | undefined) => {
         const colors = {
             Occupied: theme.palette.error.main,
             Blocked: theme.palette.warning.main,
@@ -193,9 +141,9 @@ const ManageBedDetails: React.FC = () => {
             borderRadius: "8px",
             boxShadow: theme.shadows[2],
         };
-    };
+    }, [theme]);
 
-    const countBeds = (beds: WrBedDto[]) => {
+    const countBeds = useCallback((beds: WrBedDto[]) => {
         return beds.reduce(
             (acc, bed) => {
                 acc[bed.bedStatus as keyof typeof acc] = (acc[bed.bedStatus as keyof typeof acc] || 0) + 1;
@@ -204,7 +152,7 @@ const ManageBedDetails: React.FC = () => {
             },
             { Available: 0, Occupied: 0, Blocked: 0, total: 0 }
         );
-    };
+    }, []);
 
     const calculateTotalBedsForGroup = useMemo(() => {
         if (!selectedRoomGroup)
@@ -223,76 +171,91 @@ const ManageBedDetails: React.FC = () => {
             },
             { Available: 0, Occupied: 0, Blocked: 0, total: 0 }
         );
-    }, [selectedRoomGroup, roomList, bedsByRoom]);
+    }, [selectedRoomGroup, roomList, bedsByRoom, countBeds]);
 
-    const filteredBeds = (room: RoomListDto) => {
+    const filteredBeds = useCallback((room: RoomListDto) => {
         const beds = bedsByRoom[room.rlID] || [];
         return beds.filter(
             (bed) =>
                 (bedFilter === "Show All" || bed.bedStatus === bedFilter) &&
-                (bed.bedName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    room.rName.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-    };
+                (bed.bedName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                    room.rName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
+        ).map(bed => ({
+            ...bed,
+            roomList: {
+                rName: room.rName,
+                roomGroup: {
+                    rGrpID: room.rgrpID,
+                    rGrpName: room.roomGroup?.rGrpName || ""
+                }
+            }
+        }));
+    }, [bedsByRoom, bedFilter, debouncedSearchTerm]);
 
-    const filterButtonColors: Record<string, string> = {
+    const filterButtonColors = useMemo(() => ({
         Occupied: theme.palette.error.main,
         Blocked: theme.palette.warning.main,
         Available: theme.palette.success.main,
         "Show All": theme.palette.primary.main,
+    }), [theme]);
+
+    const handleBedClick = (bed: WrBedDto) => {
+        if (isSelectionMode && onBedSelect && bed.bedStatus === 'Available') {
+            onBedSelect(bed);
+        }
     };
 
     return (
-        <Box sx={{ minHeight: "80vh", width: "100%" }}>
-            <Grid container spacing={3}>
-                <Grid item xs={12} md={selectedRoomGroup ? 3 : 12} lg={selectedRoomGroup ? 2 : 12}>
-                    <Paper sx={{ height: "100%", p: 2 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Room Group Details
-                        </Typography>
-                        <Divider sx={{ my: 2 }} />
-                        <CustomGrid
-                            columns={roomGroupColumns}
-                            data={roomGroupHierarchy}
-                            maxHeight="calc(100vh - 200px)"
-                        />
-                    </Paper>
-                </Grid>
+        <Box sx={{ height: "calc(100vh - 64px)", display: "flex" }}>
+            {/* Left Sidebar */}
+            <Box sx={{ width: 250, borderRight: `1px solid ${theme.palette.divider}`, display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                    Room Group Details
+                </Typography>
+                <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+                    <CustomTreeView
+                        data={roomGroupHierarchy}
+                        onNodeSelect={handleRoomGroupSelect}
+                    />
+                </Box>
+            </Box>
 
+            {/* Main Content */}
+            <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
                 {selectedRoomGroup && (
-                    <Grid item xs={12} md={6} lg={7}>
-                        <Paper elevation={0} sx={{ p: 3, height: "100%" }}>
+                    <>
+                        {/* Fixed Header */}
+                        <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                                 <Typography variant="h6">
                                     Manage Bed for {selectedRoomGroup.rGrpName}
                                 </Typography>
-                                <IconButton onClick={fetchData} color="primary">
-                                    <RefreshIcon />
-                                </IconButton>
+                                <CustomButton
+                                    variant="outlined"
+                                    text="Refresh"
+                                    onClick={() => fetchRoomsAndBeds(selectedRoomGroup.rGrpID)}
+                                    icon={RefreshIcon}
+                                />
                             </Box>
-                            <Divider sx={{ mb: 2 }} />
-
-                            <Box sx={{ mb: 2, display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "stretch" : "center", gap: 2 }}>
-                                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
+                                <Box sx={{ display: "flex", gap: 1 }}>
                                     {["Show All", "Occupied", "Available", "Blocked"].map((status) => (
-                                        <Button
+                                        <CustomButton
                                             key={status}
                                             variant={bedFilter === status ? "contained" : "outlined"}
-                                            size={isMobile ? "small" : "medium"}
+                                            size="small"
+                                            text={status}
+                                            onClick={() => setBedFilter(status)}
                                             sx={{
-                                                backgroundColor: bedFilter === status ? filterButtonColors[status] : "transparent",
-                                                color: bedFilter === status ? "#fff" : filterButtonColors[status],
-                                                borderColor: filterButtonColors[status],
-                                                flexGrow: isMobile ? 1 : 0,
+                                                backgroundColor: bedFilter === status ? filterButtonColors[status as keyof typeof filterButtonColors] : "transparent",
+                                                color: bedFilter === status ? "#fff" : filterButtonColors[status as keyof typeof filterButtonColors],
+                                                borderColor: filterButtonColors[status as keyof typeof filterButtonColors],
                                                 '&:hover': {
-                                                    backgroundColor: filterButtonColors[status],
+                                                    backgroundColor: filterButtonColors[status as keyof typeof filterButtonColors],
                                                     color: '#fff',
                                                 },
                                             }}
-                                            onClick={() => setBedFilter(status)}
-                                        >
-                                            {status}
-                                        </Button>
+                                        />
                                     ))}
                                 </Box>
                                 <TextField
@@ -303,95 +266,89 @@ const ManageBedDetails: React.FC = () => {
                                     InputProps={{
                                         startAdornment: <SearchIcon />,
                                     }}
-                                    fullWidth={isMobile}
                                 />
                             </Box>
+                        </Box>
 
-                            {loading ? (
-                                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "300px" }}>
-                                    <CircularProgress />
-                                </Box>
-                            ) : (
-                                <Box sx={{ height: "calc(100vh - 300px)", overflowY: "auto", p: 2, border: `1px solid ${theme.palette.divider}` }}>
-                                    {roomList
-                                        .filter((room) => room.rgrpID === selectedRoomGroup.rGrpID)
-                                        .map((room) => (
-                                            <Box key={room.rlID} sx={{ mb: 4 }}>
-                                                <Typography variant="body1" gutterBottom fontWeight="bold">
-                                                    {room.rLocation} - {room.rName}
-                                                </Typography>
-
-                                                <List sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-                                                    {filteredBeds(room).map((bed) => (
-                                                        <ListItem key={bed.bedID} sx={{ width: "auto", p: 0 }}>
-                                                            <Tooltip title={`Status: ${bed.bedStatus}`}>
-                                                                <Box
-                                                                    sx={{
-                                                                        ...getBedStyles(bed.bedStatus),
-                                                                        textAlign: "center",
-                                                                        width: { xs: 80, sm: 100 },
-                                                                        height: { xs: 60, sm: 80 },
-                                                                        display: "flex",
-                                                                        flexDirection: "column",
-                                                                        justifyContent: "center",
-                                                                        alignItems: "center",
-                                                                    }}
-                                                                >
-                                                                    <BedIcon />
-                                                                    <Typography variant="body2" fontWeight={600}>
-                                                                        {bed.bedName}
-                                                                    </Typography>
-                                                                </Box>
-                                                            </Tooltip>
-                                                        </ListItem>
-                                                    ))}
-                                                </List>
-
-                                                <Box sx={{ mt: 2 }}>
-                                                    <Typography variant="body2" fontWeight={500}>
-                                                        {Object.entries(countBeds(filteredBeds(room)))
-                                                            .map(([key, value]) => `${key}: ${value}`)
-                                                            .join(" | ")}
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                        ))}
-                                </Box>
-                            )}
-                        </Paper>
-                    </Grid>
-                )}
-
-                {selectedRoomGroup && (
-                    <Grid item xs={12} md={3} lg={3}>
-                        <Paper elevation={0} sx={{ p: 2, height: "100%" }}>
-                            <Typography variant="h6" gutterBottom>
-                                Overall Bed Summary for {selectedRoomGroup.rGrpName}
-                            </Typography>
-
-                            <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-                                {Object.entries(calculateTotalBedsForGroup).map(([key, value]) => (
-                                    <Box
-                                        key={key}
-                                        sx={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "space-between",
-                                            backgroundColor: filterButtonColors[key],
-                                            color: "#fff",
-                                            p: 2,
-                                            borderRadius: 1,
-                                        }}
-                                    >
-                                        <Typography variant="body1">{key}</Typography>
-                                        <Typography variant="h6">{value}</Typography>
+                        {/* Scrollable Content */}
+                        <Box sx={{ flexGrow: 1, overflowY: "auto", p: 2 }}>
+                            {!isLoading && roomList
+                                .filter((room) => room.rgrpID === selectedRoomGroup.rGrpID)
+                                .map((room) => (
+                                    <Box key={room.rlID} sx={{ mb: 4 }}>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                            {room.rLocation} - {room.rName}
+                                        </Typography>
+                                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+                                            {filteredBeds(room).map((bed) => (
+                                                <Tooltip key={bed.bedID} title={`Status: ${bed.bedStatus}`}>
+                                                    <Box
+                                                        onClick={() => handleBedClick(bed)}
+                                                        sx={{
+                                                            ...getBedStyles(bed.bedStatus),
+                                                            width: 100,
+                                                            height: 80,
+                                                            display: "flex",
+                                                            flexDirection: "column",
+                                                            justifyContent: "center",
+                                                            alignItems: "center",
+                                                            borderRadius: 1,
+                                                            cursor: isSelectionMode && bed.bedStatus === 'Available' ? 'pointer' : 'default',
+                                                            '&:hover': isSelectionMode && bed.bedStatus === 'Available' ? {
+                                                                opacity: 0.8,
+                                                                boxShadow: theme.shadows[4],
+                                                            } : {},
+                                                        }}
+                                                    >
+                                                        <BedIcon />
+                                                        <Typography variant="body2" fontWeight={600}>
+                                                            {bed.bedName}
+                                                        </Typography>
+                                                    </Box>
+                                                </Tooltip>
+                                            ))}
+                                        </Box>
+                                        <Typography variant="body2" sx={{ mt: 1 }}>
+                                            {Object.entries(countBeds(filteredBeds(room)))
+                                                .map(([key, value]) => `${key}: ${value}`)
+                                                .join(" | ")}
+                                        </Typography>
                                     </Box>
                                 ))}
-                            </Box>
-                        </Paper>
-                    </Grid>
+                        </Box>
+                    </>
                 )}
-            </Grid>
+            </Box>
+
+            {/* Right Sidebar */}
+            {selectedRoomGroup && (
+                <Box sx={{ width: 250, borderLeft: `1px solid ${theme.palette.divider}`, display: 'flex', flexDirection: 'column' }}>
+                    <Typography variant="h6" sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                        Overall Bed Summary
+                    </Typography>
+                    <Box sx={{ flexGrow: 1, overflowY: "auto", p: 2 }}>
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            {Object.entries(calculateTotalBedsForGroup).map(([key, value]) => (
+                                <Box
+                                    key={key}
+                                    sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        backgroundColor: filterButtonColors[key as keyof typeof filterButtonColors],
+                                        color: "#fff",
+                                        p: 2,
+                                        borderRadius: 1,
+                                    }}
+                                >
+                                    <Typography variant="body1">{key}</Typography>
+                                    <Typography variant="h6">{value}</Typography>
+                                </Box>
+                            ))}
+                        </Box>
+                    </Box>
+                </Box>
+            )}
         </Box>
     );
 };
