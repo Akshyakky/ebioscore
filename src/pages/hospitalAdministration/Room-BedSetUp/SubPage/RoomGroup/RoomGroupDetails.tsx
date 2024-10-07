@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Grid } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
@@ -32,63 +32,52 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
     const { setLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
-    const [, setIsSubGroup] = useState(false);
+    const [isSubGroup, setIsSubGroup] = useState(false);
     const compID = store.getState().userDetails.compID;
-    const [updatedRoomGroups, setUpdatedRoomGroups] =
-        useState<RoomGroupDto[]>(roomGroups);
-    const [formData, setFormData] = useState<RoomGroupDto>({
-        rGrpID: 0,
-        rGrpCode: "",
-        rGrpName: "",
-        deptName: "",
-        key: 0,
-        groupYN: "N",
-        rActiveYN: "Y",
-        showinboYN: "Y",
-        teachingYN: "Y",
-        deptID: 0,
-        transferYN: "Y",
-        rGrpTypeValue: "",
-        compID: compID || 0,
-    });
-
-    const roomGroupOptions: DropdownOption[] = [
-        { value: "Ward", label: "Ward" },
-        { value: "ICU", label: "ICU" },
-    ];
-
+    const [updatedRoomGroups, setUpdatedRoomGroups] = useState<RoomGroupDto[]>([]);
+    const [formData, setFormData] = useState<RoomGroupDto>(getInitialFormData());
     const { handleDropdownChange } = useDropdownChange<RoomGroupDto>(setFormData);
     const dropdownValues = useDropdownValues(['department', 'gender']);
 
-    const handleAdd = (
-        isSubGroup: boolean = false,
-        parentGroup?: RoomGroupDto
-    ) => {
-        setFormData({
+    useEffect(() => {
+        setUpdatedRoomGroups(roomGroups);
+    }, [roomGroups]);
+
+    function getInitialFormData(): RoomGroupDto {
+        return {
             rGrpID: 0,
             rGrpCode: "",
             rGrpName: "",
-            key: isSubGroup ? parentGroup?.rGrpID || 0 : 0,
+            deptName: "",
+            key: 0,
             groupYN: "N",
             rActiveYN: "Y",
             showinboYN: "Y",
             teachingYN: "Y",
             deptID: 0,
             transferYN: "Y",
-            deptName: "",
-            compID: compID || 0,
             rGrpTypeValue: "",
-        });
+            compID: compID || 0,
+        };
+    }
+
+    const roomGroupOptions: DropdownOption[] = [
+        { value: "Ward", label: "Ward" },
+        { value: "ICU", label: "ICU" },
+    ];
+
+    const handleAdd = useCallback((isSubGroup: boolean = false, parentGroup?: RoomGroupDto) => {
+        setFormData(getInitialFormData());
         setDialogTitle(isSubGroup ? "Add Sub Group" : "Add Room Group");
         setIsSubGroup(isSubGroup);
         setIsDialogOpen(true);
-    };
+    }, []);
 
-    const handleAddDialogSubmit = async () => {
+    const handleAddDialogSubmit = useCallback(async () => {
         setLoading(true);
         try {
             const response = await roomGroupService.save(formData);
-            if (response) {
+            if (response && response.success) {
                 showAlert(
                     "Success",
                     formData.rGrpID
@@ -98,13 +87,10 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
                 );
                 setIsDialogOpen(false);
 
-                const savedRoomGroup = await roomGroupService.getById(
-                    response.data.rGrpID
-                );
+                const savedRoomGroup = await roomGroupService.getById(response.data.rGrpID);
 
                 if (savedRoomGroup.success) {
                     const updatedRoomGroup = savedRoomGroup.data;
-
                     setUpdatedRoomGroups((prevRoomGroups) =>
                         formData.rGrpID
                             ? prevRoomGroups.map((group) =>
@@ -123,13 +109,9 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [formData]);
 
-    const handleAddDialogClose = () => {
-        setIsDialogOpen(false);
-    };
-
-    const handleEdit = async (row: RoomGroupDto) => {
+    const handleEdit = useCallback(async (row: RoomGroupDto) => {
         try {
             const response = await roomGroupService.getById(row.rGrpID);
 
@@ -156,9 +138,9 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
                 "error"
             );
         }
-    };
+    }, []);
 
-    const handleDelete = async (row: RoomGroupDto) => {
+    const handleDelete = useCallback(async (row: RoomGroupDto) => {
         setLoading(true);
         try {
             const response = await roomListService.getAll();
@@ -185,6 +167,9 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
                             `Room Group ${row.rGrpName} deactivated successfully`,
                             "success"
                         );
+                        setUpdatedRoomGroups((prevGroups) =>
+                            prevGroups.filter((group) => group.rGrpID !== row.rGrpID)
+                        );
                     } else {
                         showAlert("Error", "Failed to deactivate Room Group", "error");
                     }
@@ -201,14 +186,14 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const handleChange = (
+    const handleChange = useCallback((
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+    }, []);
 
     const columns = [
         { key: "rGrpName", header: "Name", visible: true },
@@ -217,15 +202,13 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
             header: "Edit",
             visible: true,
             render: (row: RoomGroupDto) => (
-                <>
-                    <CustomButton
-                        onClick={() => handleEdit(row)}
-                        icon={EditIcon}
-                        text="Edit"
-                        variant="contained"
-                        size="small"
-                    />
-                </>
+                <CustomButton
+                    onClick={() => handleEdit(row)}
+                    icon={EditIcon}
+                    text="Edit"
+                    variant="contained"
+                    size="small"
+                />
             ),
         },
         {
@@ -233,16 +216,14 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
             header: "Delete",
             visible: true,
             render: (row: RoomGroupDto) => (
-                <>
-                    <CustomButton
-                        onClick={() => handleDelete(row)}
-                        icon={DeleteIcon}
-                        text="Delete"
-                        variant="contained"
-                        color="error"
-                        size="small"
-                    />
-                </>
+                <CustomButton
+                    onClick={() => handleDelete(row)}
+                    icon={DeleteIcon}
+                    text="Delete"
+                    variant="contained"
+                    color="error"
+                    size="small"
+                />
             ),
         },
         {
@@ -259,11 +240,10 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
                         size="small"
                         color="secondary"
                     />
-                ) : (
-                    <></>
-                ),
+                ) : null,
         },
     ];
+
     return (
         <>
             <Grid container justifyContent="flex-end" sx={{ marginBottom: 2 }}>
@@ -277,12 +257,12 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
             <CustomGrid columns={columns} data={updatedRoomGroups} />
             <GenericDialog
                 open={isDialogOpen}
-                onClose={handleAddDialogClose}
+                onClose={() => setIsDialogOpen(false)}
                 title={dialogTitle}
                 actions={
                     <>
                         <CustomButton
-                            onClick={handleAddDialogClose}
+                            onClick={() => setIsDialogOpen(false)}
                             icon={DeleteIcon}
                             text="Cancel"
                             variant="contained"
@@ -311,7 +291,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
                         gridProps={{ xs: 12 }}
                         fullWidth
                     />
-
                     <FormField
                         type="select"
                         label="Department"
@@ -355,7 +334,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups }) => {
                         ControlID="roomGroupType"
                         gridProps={{ xs: 12 }}
                     />
-
                     <FormField
                         type="radio"
                         label="Teaching Ward"

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Grid } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
@@ -22,58 +22,51 @@ import {
     roomListService,
     wrBedService,
 } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+
 interface RoomListDetailsProps {
     roomLists: RoomListDto[];
 }
+
 const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
     const { setLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
-    const [updatedRoomLists, setUpdatedRoomLists] =
-        useState<RoomListDto[]>(roomLists);
-    const [formData, setFormData] = useState<RoomListDto>({
-        rlID: 0,
-        rlCode: "",
-        rNotes: "",
-        rName: "",
-        noOfBeds: 0,
-        rActiveYN: "Y",
-        rgrpID: 0,
-        compID: store.getState().userDetails.compID || 0,
-        transferYN: "Y",
-        rLocation: "",
-        rLocationID: 0,
-        deptName: "",
-        deptID: 0,
-        dulID: 0,
-        unitDesc: "",
-    });
+    const [updatedRoomLists, setUpdatedRoomLists] = useState<RoomListDto[]>([]);
+    const [formData, setFormData] = useState<RoomListDto>(getInitialFormData());
     const { handleDropdownChange } = useDropdownChange<RoomListDto>(setFormData);
     const dropdownValues = useDropdownValues(['floor', 'unit', 'roomGroup']);
 
-    const handleAdd = () => {
-        setFormData({
+    useEffect(() => {
+        setUpdatedRoomLists(roomLists);
+    }, [roomLists]);
+
+    function getInitialFormData(): RoomListDto {
+        return {
             rlID: 0,
+            rlCode: "",
+            rNotes: "",
             rName: "",
             noOfBeds: 0,
             rActiveYN: "Y",
             rgrpID: 0,
             compID: store.getState().userDetails.compID || 0,
             transferYN: "Y",
-            rlCode: "",
-            rNotes: "",
+            rLocation: "",
+            rLocationID: 0,
             deptName: "",
             deptID: 0,
             dulID: 0,
             unitDesc: "",
-            rLocation: "",
-            rLocationID: 0,
-        });
+        };
+    }
+
+    const handleAdd = useCallback(() => {
+        setFormData(getInitialFormData());
         setDialogTitle("Add Room");
         setIsDialogOpen(true);
-    };
+    }, []);
 
-    const fetchDepartmentDetails = async (rgrpID: number) => {
+    const fetchDepartmentDetails = useCallback(async (rgrpID: number) => {
         setLoading(true);
         try {
             const response = await roomGroupService.getById(rgrpID);
@@ -96,16 +89,16 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const handleRoomGroupChange = (name: string, value: any) => {
+    const handleRoomGroupChange = useCallback((name: string, value: any) => {
         setFormData((prev) => ({ ...prev, [name]: value }));
         if (name === "rgrpID") {
             fetchDepartmentDetails(value);
         }
-    };
+    }, [fetchDepartmentDetails]);
 
-    const handleAddDialogSubmit = async () => {
+    const handleAddDialogSubmit = useCallback(async () => {
         setLoading(true);
         try {
             const response = await roomListService.save(formData);
@@ -123,7 +116,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
 
                 if (savedRoom.success) {
                     const updatedRoom = savedRoom.data;
-
                     setUpdatedRoomLists((prevRoomLists) =>
                         formData.rlID
                             ? prevRoomLists.map((room) =>
@@ -144,13 +136,9 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [formData]);
 
-    const handleAddDialogClose = () => {
-        setIsDialogOpen(false);
-    };
-
-    const handleEdit = async (row: RoomListDto) => {
+    const handleEdit = useCallback(async (row: RoomListDto) => {
         try {
             const response = await roomListService.getById(row.rlID);
             if (response.success) {
@@ -176,9 +164,9 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
                 "error"
             );
         }
-    };
+    }, []);
 
-    const handleDelete = async (row: RoomListDto) => {
+    const handleDelete = useCallback(async (row: RoomListDto) => {
         setLoading(true);
         try {
             const response = await wrBedService.getAll();
@@ -204,6 +192,9 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
                             `Room List ${row.rName} deactivated successfully`,
                             "success"
                         );
+                        setUpdatedRoomLists((prevLists) =>
+                            prevLists.filter((list) => list.rlID !== row.rlID)
+                        );
                     } else {
                         showAlert("Error", "Failed to deactivate Room List", "error");
                     }
@@ -220,14 +211,14 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const handleChange = (
+    const handleChange = useCallback((
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+    }, []);
 
     const columns = [
         { key: "rName", header: "Room Name", visible: true },
@@ -283,12 +274,12 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
             <CustomGrid columns={columns} data={updatedRoomLists} />
             <GenericDialog
                 open={isDialogOpen}
-                onClose={handleAddDialogClose}
+                onClose={() => setIsDialogOpen(false)}
                 title={dialogTitle}
                 actions={
                     <>
                         <CustomButton
-                            onClick={handleAddDialogClose}
+                            onClick={() => setIsDialogOpen(false)}
                             icon={DeleteIcon}
                             text="Cancel"
                             variant="contained"
@@ -317,7 +308,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
                         gridProps={{ xs: 12 }}
                         fullWidth
                     />
-
                     <FormField
                         type="select"
                         label="RGR Name"
@@ -328,7 +318,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
                         ControlID="rgrpID"
                         gridProps={{ xs: 12 }}
                     />
-
                     <FormField
                         type="select"
                         label="Location"
@@ -339,7 +328,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
                         ControlID="rLocation"
                         gridProps={{ xs: 12 }}
                     />
-
                     <FormField
                         type="select"
                         label="Unit "
