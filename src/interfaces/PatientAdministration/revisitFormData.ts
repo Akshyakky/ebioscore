@@ -13,12 +13,6 @@ export interface revisitFormData {
   pVisitType: string;
   pVisitTypeText: string;
   rActiveYN: string;
-  rCreatedID: number;
-  rCreatedBy: string;
-  rCreatedOn: string;
-  rModifiedID: number;
-  rModifiedBy: string;
-  rModifiedOn: string;
   rNotes: string;
   pTypeID: number;
   pTypeCode: string;
@@ -67,8 +61,6 @@ export enum DateFilterType {
   LastThreeMonths = "LastThreeMonths",
   Custom = "Custom",
 }
-
-
 
 export interface RevisitListData {
   contactMastDto: revisitFormData;

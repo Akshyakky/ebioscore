@@ -21,7 +21,6 @@ import PatientDemographics from "../../../patientAdministration/CommonPage/Demog
 import { showAlertPopUp } from "../../../../utils/Common/alertMessage";
 import AddIcon from "@mui/icons-material/Add";
 import useDayjs from "../../../../hooks/Common/useDateTime";
-import { ErrorMessage } from 'formik';
 import { alertService } from "../../../../services/CommonServices/CommonModelServices";
 
 const AlertDetails: React.FC<{ editData?: AlertDto; alerts?: AlertDto[] }> = ({

@@ -25,8 +25,7 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
 
-  const { compID, compCode, compName, userID, userName } =
-    store.getState().userDetails;
+  const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
 
   useEffect(() => {
     if (editData) {

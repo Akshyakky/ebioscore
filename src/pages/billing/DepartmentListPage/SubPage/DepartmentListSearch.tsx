@@ -52,6 +52,9 @@ const DepartmentListSearch: React.FC<DepartmentListSearchProps> = ({
       searchPlaceholder="Enter department name or code"
       isActionVisible={true}
       isStatusVisible={true}
+      pagination={true}
+      showExportCSV={true}
+      showExportPDF={true}
     />
   );
 };

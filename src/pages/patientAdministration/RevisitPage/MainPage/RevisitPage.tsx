@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Container, Grid, Paper, SelectChangeEvent } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
@@ -11,8 +11,6 @@ import PatientSearch from "../../CommonPage/AdvanceSearch/PatientSearch";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import { BillingService } from "../../../../services/BillingServices/BillingService";
-import { DepartmentService } from "../../../../services/CommonServices/DepartmentService";
 import { ContactMastService } from "../../../../services/CommonServices/ContactMastService";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
@@ -25,6 +23,7 @@ import GeneralAlert from "../../../../components/GeneralAlert/GeneralAlert";
 import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientSearch";
 import FormField from "../../../../components/FormField/FormField";
 import { revisitFormData, RevisitFormErrors } from "../../../../interfaces/PatientAdministration/revisitFormData";
+import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 
 const RevisitPage: React.FC = () => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
@@ -32,6 +31,18 @@ const RevisitPage: React.FC = () => {
   const { setLoading } = useLoading();
   const { performSearch } = useContext(PatientSearchContext);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
+
+  const dropdownValues = useDropdownValues([
+    "pic",
+    "department",
+  ]);
+
+  const DepartmentDropdownValues = useMemo(() => {
+    if (!dropdownValues.department) return [];
+    return dropdownValues.department.filter((item: any) =>
+      item.rActiveYN === 'Y' && item.isUnitYN === 'Y'
+    );
+  }, [dropdownValues.department]);
 
   const revisitInitialState = (): revisitFormData => ({
     opVID: 0,
@@ -48,12 +59,6 @@ const RevisitPage: React.FC = () => {
     pVisitType: "P",
     pVisitTypeText: "",
     rActiveYN: "Y",
-    rCreatedID: userInfo.userID !== null ? userInfo.userID : 0,
-    rCreatedBy: userInfo.userName !== null ? userInfo.userName : "",
-    rCreatedOn: new Date().toISOString().split("T")[0],
-    rModifiedID: userInfo.userID !== null ? userInfo.userID : 0,
-    rModifiedBy: userInfo.userName !== null ? userInfo.userName : "",
-    rModifiedOn: new Date().toISOString().split("T")[0],
     rNotes: "",
     pTypeID: 0,
     pTypeCode: "",
@@ -86,8 +91,6 @@ const RevisitPage: React.FC = () => {
   const [formErrors, setFormErrors] = useState<RevisitFormErrors>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [availableAttendingPhysicians, setAvailableAttendingPhysicians] = useState<DropdownOption[]>([]);
-  const [picValues, setPicValues] = useState<DropdownOption[]>([]);
-  const [departmentValues, setDepartmentValues] = useState<DropdownOption[]>([]);
   const [primaryIntroducingSource, setPrimaryIntroducingSource] = useState<DropdownOption[]>([]);
 
   const uhidRef = useRef<HTMLInputElement>(null);
@@ -96,14 +99,10 @@ const RevisitPage: React.FC = () => {
   const loadDropdownValues = useCallback(async () => {
     setLoading(true);
     try {
-      const [picValues, departmentValues, primaryIntroducingSource] = await Promise.all([
-        BillingService.fetchPicValues("GetPICDropDownValues"),
-        DepartmentService.fetchDepartments("GetActiveRegistrationDepartments", compID),
+      const [primaryIntroducingSource] = await Promise.all([
         ContactMastService.fetchRefferalPhy("GetActiveReferralContacts", compID),
       ]);
 
-      setPicValues(picValues.map(item => ({ value: item.value.toString(), label: item.label })));
-      setDepartmentValues(departmentValues.map(item => ({ value: item.value.toString(), label: item.label })));
       setPrimaryIntroducingSource(primaryIntroducingSource.map(item => ({ value: item.value.toString(), label: item.label })));
     } catch (error) {
       console.error("Error loading dropdown values:", error);
@@ -143,10 +142,7 @@ const RevisitPage: React.FC = () => {
     }));
 
     if (value === "H") {
-      DepartmentService.fetchDepartments("GetActiveRegistrationDepartments", compID)
-        .then(departmentValues => {
-          setDepartmentValues(departmentValues.map(item => ({ value: item.value.toString(), label: item.label })));
-        });
+
     } else if (value === "P") {
       ContactMastService.fetchAvailableAttendingPhysicians(selectedPChartID)
         .then(availablePhysicians => {
@@ -299,7 +295,7 @@ const RevisitPage: React.FC = () => {
                 value={revisitFormData.pTypeID === 0 ? "" : revisitFormData.pTypeID.toString()}
                 name="pTypeID"
                 ControlID="PIC"
-                options={picValues}
+                options={dropdownValues.pic}
                 onChange={handleDropdownChange("pTypeID")}
                 isMandatory={true}
                 isSubmitted={isSubmitted}
@@ -329,7 +325,7 @@ const RevisitPage: React.FC = () => {
                   value={revisitFormData.deptID === 0 ? "" : revisitFormData.deptID.toString()}
                   name="deptID"
                   ControlID="Department"
-                  options={departmentValues}
+                  options={DepartmentDropdownValues}
                   onChange={handleDropdownChange("deptID")}
                   isMandatory={true}
                   isSubmitted={isSubmitted}

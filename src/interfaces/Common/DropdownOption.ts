@@ -1,6 +1,7 @@
 export interface DropdownOption {
   value: string;
   label: string;
+  [key: string]: any;
 }
 
 export interface PicValue {

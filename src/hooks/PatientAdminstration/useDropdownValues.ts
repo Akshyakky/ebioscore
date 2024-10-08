@@ -105,6 +105,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             response = (response.data || []).map((item: DepartmentDto) => ({
               value: item.deptID || 0,
               label: item.deptName || "",
+              ...item,
             }));
             break;
           case "attendingPhy":
@@ -257,7 +258,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
         }
         setDropdownValues((prev) => ({
           ...prev,
-          [type]: response.map((item: any) => ({ value: item.value, label: item.label })),
+          [type]: response.map((item: any) => ({ value: item.value, label: item.label, ...item })),
         }));
       } catch (error) {
         console.error(`Error fetching ${type} dropdown values:`, error);

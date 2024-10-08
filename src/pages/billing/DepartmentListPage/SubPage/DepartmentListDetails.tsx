@@ -1,137 +1,96 @@
-import { Grid, Paper, Typography } from "@mui/material";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Grid, Paper, SelectChangeEvent, Typography } from "@mui/material";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import SaveIcon from "@mui/icons-material/Save";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useLoading } from "../../../../context/LoadingContext";
-import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { DepartmentDto } from "./../../../../interfaces/Billing/DepartmentDto";
+import { DepartmentDto } from "../../../../interfaces/Billing/DepartmentDto";
 import FormField from "../../../../components/FormField/FormField";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { DeptUsersPage } from "./DeptUsers/DeptUsersPage";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { departmentService } from "../../../../services/CommonServices/CommonModelServices";
+import { store } from "../../../../store/store";
 
-const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
-  editData,
-}) => {
+interface DepartmentListDetailsProps {
+  editData?: DepartmentDto;
+}
+
+const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData }) => {
+  const { compID, compCode, compName } = store.getState().userDetails;
+  const [formData, setFormData] = useState<DepartmentDto>({
+    deptID: 0,
+    deptCode: "",
+    deptName: "",
+    deptType: "",
+    rNotes: "",
+    unit: "",
+    deptLocation: "",
+    dlNumber: "",
+    isUnitYN: "N",
+    autoConsumptionYN: "N",
+    deptStorePhYN: "N",
+    deptStore: "N",
+    isStoreYN: "N",
+    deptSalesYN: "N",
+    dischargeNoteYN: "N",
+    superSpecialityYN: "N",
+    rActiveYN: "Y",
+    transferYN: 'N',
+    compID: compID ?? 0,
+    compCode: compCode ?? "",
+    compName: compName ?? ""
+  });
+
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [deptId, setDeptId] = useState<number>(0);
-  const [deptCode, setDeptCode] = useState<string>("");
-  const [deptName, setDeptName] = useState<string>("");
-  const [deptType, setDeptType] = useState<string>("");
-  const [rNotes, setRNotes] = useState<string>("");
-  const [unit, setUnit] = useState<string>("");
-  const [deptLocation, setDeptLocation] = useState<string>("");
-  const [dlNumber, setDlNumber] = useState<string>("");
-  const [isUnitYN, setIsUnitYN] = useState<string>("N");
-  const [autoConsumptionYN, setAutoConsumptionYN] = useState<string>("N");
-  const [deptStorePhYN, setDeptStorePhYN] = useState<string>("N");
-  const [deptStore, setDeptStore] = useState<string>("N");
-  const [isStoreYN, setIsStoreYN] = useState<string>("N");
-  const [deptSalesYN, setDeptSalesYN] = useState<string>("N");
-  const [dischargeNoteYN, setDischargeNoteYN] = useState<string>("N");
-  const [superSpecialityYN, setSuperSpecialityYN] = useState<string>("N");
-  const [rActiveYN, setRActiveYN] = useState<string>("Y");
-  const [openDialog, setOpenDialog] = useState<boolean>(false);
+  const [openDialog, setOpenDialog] = useState(false);
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const { userID, userName } =
-    store.getState().userDetails;
   const dropdownValues = useDropdownValues(["departmentTypes"]);
-  const isEditMode = deptId > 0;
+
+  const isEditMode = formData.deptID > 0;
+
   useEffect(() => {
     if (editData) {
-      setDeptId(editData.deptID || 0);
-      setDeptCode(editData.deptCode || "");
-      setDeptName(editData.deptName || "");
-      setDeptType(editData.deptType || "");
-      setRNotes(editData.rNotes || "");
-      setUnit(editData.unit || "");
-      setDeptLocation(editData.deptLocation || "");
-      setDlNumber(editData.dlNumber || "");
-      setIsUnitYN(editData.isUnitYN || "N");
-      setAutoConsumptionYN(editData.autoConsumptionYN || "N");
-      setDeptStorePhYN(editData.deptStorePhYN || "N");
-      setDeptStore(editData.deptStore || "N");
-      setIsStoreYN(editData.isStoreYN || "N");
-      setDeptSalesYN(editData.deptSalesYN || "N");
-      setDischargeNoteYN(editData.dischargeNoteYN || "N");
-      setSuperSpecialityYN(editData.superSpecialityYN || "N");
-      setRActiveYN(editData.rActiveYN || "Y");
-
+      setFormData(prevState => ({ ...prevState, ...editData }));
     } else {
       handleClear();
     }
   }, [editData]);
 
-  const handleDeptUserClick = () => {
-    setOpenDialog(true);
-  };
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prevState => ({ ...prevState, [name]: value }));
+  }, []);
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
+  const handleSwitchChange = useCallback((name: string) => (e: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+    setFormData(prevState => ({ ...prevState, [name]: checked ? "Y" : "N" }));
+  }, []);
 
   const handleSave = async () => {
     setIsSubmitted(true);
-    const departmentDto: DepartmentDto = {
-      deptID: deptId,
-      deptCode: deptCode,
-      deptName: deptName,
-      deptType: deptType,
-      deptStore: deptStore,
-      rActiveYN: rActiveYN,
-      rNotes: rNotes,
-      deptLocation: deptLocation,
-      deptSalesYN: deptSalesYN,
-      deptStorePhYN: deptStorePhYN,
-      dlNumber: dlNumber,
-      isUnitYN: isUnitYN,
-      superSpecialityYN: superSpecialityYN,
-      unit: unit,
-      isStoreYN: isStoreYN,
-      autoConsumptionYN: autoConsumptionYN,
-      dischargeNoteYN: dischargeNoteYN,
-      compID: store.getState().userDetails.compID || 0,
-      compCode: store.getState().userDetails.compCode || "",
-      compName: store.getState().userDetails.compName || "",
-      transferYN: "N",
-      rCreatedID: userID || 0,
-      rCreatedOn: serverDate || new Date(),
-      rCreatedBy: userName || "",
-      rModifiedID: userID || 0,
-      rModifiedOn: serverDate || new Date(),
-      rModifiedBy: userName || "",
-    };
-    if (!deptCode || !deptName || !deptType) {
+    if (!formData.deptCode || !formData.deptName || !formData.deptType) {
       return;
     }
+
     setLoading(true);
     try {
-      const result =
-        await departmentService.save(departmentDto);
+      const result = await departmentService.save(formData);
       if (result.success) {
         showAlert(
           `Department ${isEditMode ? "Updated" : "Saved"}`,
-          `${deptName} ${isEditMode ? "updated" : "saved"} successfully!`,
+          `${formData.deptName} ${isEditMode ? "updated" : "saved"} successfully!`,
           "success",
           {
-            onConfirm: isEditMode
-              ? handleClear
-              : () => console.log("Hello", deptId),
+            onConfirm: isEditMode ? handleClear : () => console.log("Hello", formData.deptID),
           }
         );
       } else {
-        showAlert(
-          "Error",
-          result.errorMessage || "Failed to save Department.",
-          "error"
-        );
+        showAlert("Error", result.errorMessage || "Failed to save Department.", "error");
       }
     } catch (error) {
       console.error("Error saving Department:", error);
@@ -141,61 +100,37 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
     }
   };
 
-  const handleClear = () => {
-    setDeptId(0);
-    setDeptCode("");
-    setDeptName("");
-    setDeptType("");
-    setRNotes("");
-    setDeptStore("");
-    setDeptLocation("");
-    setUnit("");
-    setDlNumber("");
-    setRActiveYN("Y");
-    setIsUnitYN("N");
-    setIsStoreYN("N");
-    setDeptStorePhYN("N");
-    setDeptSalesYN("N");
-    setDischargeNoteYN("N");
-    setSuperSpecialityYN("N");
-    setAutoConsumptionYN("N");
+  const handleClear = useCallback(() => {
+    setFormData({
+      deptID: 0,
+      deptCode: "",
+      deptName: "",
+      deptType: "",
+      rNotes: "",
+      unit: "",
+      deptLocation: "",
+      dlNumber: "",
+      isUnitYN: "N",
+      autoConsumptionYN: "N",
+      deptStorePhYN: "N",
+      deptStore: "N",
+      isStoreYN: "N",
+      deptSalesYN: "N",
+      dischargeNoteYN: "N",
+      superSpecialityYN: "N",
+      rActiveYN: "Y",
+      transferYN: 'N',
+      compID: compID ?? 0,
+      compCode: compCode ?? "",
+      compName: compName ?? ""
+    });
     setIsSubmitted(false);
-  };
+  }, []);
 
-  const handleActiveToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRActiveYN(event.target.checked ? "Y" : "N");
-  };
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    switch (name) {
-      case "deptCode":
-        setDeptCode(value);
-        break;
-      case "deptName":
-        setDeptName(value);
-        break;
-      case "deptType":
-        setDeptType(value);
-        break;
-      case "rNotes":
-        setRNotes(value);
-        break;
-      case "unit":
-        setUnit(value);
-        break;
-      case "deptLocation":
-        setDeptLocation(value);
-        break;
-      case "dlNumber":
-        setDlNumber(value);
-        break;
-      default:
-        break;
-    }
-  };
+  const handleSelectChange = useCallback((event: SelectChangeEvent<string>) => {
+    const { name, value } = event.target;
+    setFormData(prevState => ({ ...prevState, [name]: value }));
+  }, []);
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -208,7 +143,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
           <CustomButton
             text="Manage Users Access"
             size="small"
-            onClick={handleDeptUserClick}
+            onClick={() => setOpenDialog(true)}
             variant="contained"
             color="info"
             aria-label="Manage Department Users Access"
@@ -218,7 +153,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
           <FormField
             type="text"
             label="Department Code"
-            value={deptCode}
+            value={formData.deptCode}
             onChange={handleInputChange}
             isSubmitted={isSubmitted}
             name="deptCode"
@@ -229,7 +164,7 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
           <FormField
             type="text"
             label="Department Name"
-            value={deptName}
+            value={formData.deptName}
             onChange={handleInputChange}
             isSubmitted={isSubmitted}
             name="deptName"
@@ -237,13 +172,11 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
             placeholder="Department Name"
             isMandatory
           />
-        </Grid>
-        <Grid container spacing={2}>
           <FormField
             type="select"
             label="Department Type"
-            value={deptType}
-            onChange={(e) => setDeptType(e.target.value)}
+            value={formData.deptType}
+            onChange={handleSelectChange}
             options={dropdownValues.departmentTypes}
             isSubmitted={isSubmitted}
             name="deptType"
@@ -253,31 +186,27 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
           <FormField
             type="text"
             label="Department Location"
-            value={deptLocation}
+            value={formData.deptLocation}
             onChange={handleInputChange}
             isSubmitted={isSubmitted}
             name="deptLocation"
             ControlID="deptLocation"
             placeholder="Department Location"
           />
-        </Grid>
-        <Grid container spacing={2}>
           <FormField
             type="text"
             label="Department Unit"
-            value={unit}
+            value={formData.unit}
             onChange={handleInputChange}
             isSubmitted={isSubmitted}
             name="unit"
             ControlID="unit"
             placeholder="Department Unit"
           />
-        </Grid>
-        <Grid container spacing={2}>
           <FormField
             type="textarea"
             label="Remarks"
-            value={rNotes}
+            value={formData.rNotes}
             onChange={handleInputChange}
             name="rNotes"
             ControlID="rNotes"
@@ -288,10 +217,10 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
           {isEditMode && (
             <FormField
               type="switch"
-              label={rActiveYN === "Y" ? "Active" : "Hidden"}
-              value={rActiveYN}
-              checked={rActiveYN === "Y"}
-              onChange={handleActiveToggle}
+              label={formData.rActiveYN === "Y" ? "Active" : "Hidden"}
+              value={formData.rActiveYN}
+              checked={formData.rActiveYN === "Y"}
+              onChange={handleSwitchChange("rActiveYN")}
               name="rActiveYN"
               ControlID="rActiveYN"
             />
@@ -299,85 +228,81 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
           <FormField
             type="switch"
             label="Registration"
-            value={isUnitYN}
-            checked={isUnitYN === "Y"}
-            onChange={(e, checked) => setIsUnitYN(checked ? "Y" : "N")}
+            value={formData.isUnitYN}
+            checked={formData.isUnitYN === "Y"}
+            onChange={handleSwitchChange("isUnitYN")}
             name="isUnitYN"
             ControlID="isUnitYN"
           />
           <FormField
             type="switch"
             label="Auto Consumption"
-            value={autoConsumptionYN}
-            checked={autoConsumptionYN === "Y"}
-            onChange={(e, checked) => setAutoConsumptionYN(checked ? "Y" : "N")}
+            value={formData.autoConsumptionYN}
+            checked={formData.autoConsumptionYN === "Y"}
+            onChange={handleSwitchChange("autoConsumptionYN")}
             name="autoConsumptionYN"
             ControlID="autoConsumptionYN"
           />
-        </Grid>
-        <Grid container spacing={2}>
           <FormField
             type="switch"
             label="Main Store"
-            value={isStoreYN}
-            checked={isStoreYN === "Y"}
-            onChange={(e, checked) => setIsStoreYN(checked ? "Y" : "N")}
+            value={formData.isStoreYN}
+            checked={formData.isStoreYN === "Y"}
+            onChange={handleSwitchChange("isStoreYN")}
             name="isStoreYN"
             ControlID="isStoreYN"
           />
           <FormField
             type="switch"
             label="Sales"
-            value={deptSalesYN}
-            checked={deptSalesYN === "Y"}
-            onChange={(e, checked) => setDeptSalesYN(checked ? "Y" : "N")}
+            value={formData.deptSalesYN}
+            checked={formData.deptSalesYN === "Y"}
+            onChange={handleSwitchChange("deptSalesYN")}
             name="deptSalesYN"
             ControlID="deptSalesYN"
           />
           <FormField
             type="switch"
             label="Discharge Note"
-            value={dischargeNoteYN}
-            checked={dischargeNoteYN === "Y"}
-            onChange={(e, checked) => setDischargeNoteYN(checked ? "Y" : "N")}
+            value={formData.dischargeNoteYN}
+            checked={formData.dischargeNoteYN === "Y"}
+            onChange={handleSwitchChange("dischargeNoteYN")}
             name="dischargeNoteYN"
             ControlID="dischargeNoteYN"
           />
-        </Grid>
-        <Grid container spacing={2}>
           <FormField
             type="switch"
             label="Super Speciality"
-            value={superSpecialityYN}
-            checked={superSpecialityYN === "Y"}
-            onChange={(e, checked) => setSuperSpecialityYN(checked ? "Y" : "N")}
+            value={formData.superSpecialityYN}
+            checked={formData.superSpecialityYN === "Y"}
+            onChange={handleSwitchChange("superSpecialityYN")}
             name="superSpecialityYN"
             ControlID="superSpecialityYN"
           />
-        </Grid>
-        <Grid container marginTop={0} spacing={2}>
           <FormField
             type="switch"
             label="Pharmacy"
-            value={deptStore}
-            checked={deptStore === "Y"}
-            onChange={(e, checked) => setDeptStore(checked ? "Y" : "N")}
+            value={formData.deptStore}
+            checked={formData.deptStore === "Y"}
+            onChange={handleSwitchChange("deptStore")}
             name="deptStore"
             ControlID="deptStore"
           />
-          {deptStore === "Y" && (
+        </Grid>
+        {formData.deptStore === "Y" && (
+          <Grid container spacing={2}>
             <FormField
               type="text"
               label="DL Number"
-              value={dlNumber}
+              value={formData.dlNumber}
               onChange={handleInputChange}
               isSubmitted={isSubmitted}
               name="dlNumber"
               ControlID="dlNumber"
               placeholder="DL Number"
             />
-          )}
-        </Grid>
+          </Grid>
+        )}
         <FormSaveClearButton
           clearText="Clear"
           saveText={isEditMode ? "Update" : "Save"}
@@ -388,10 +313,10 @@ const DepartmentListDetails: React.FC<{ editData?: DepartmentDto }> = ({
         />
       </section>
       <DeptUsersPage
-        deptId={deptId}
-        deptName={deptName}
+        deptId={formData.deptID}
+        deptName={formData.deptName}
         openDialog={openDialog}
-        handleCloseDialog={handleCloseDialog}
+        handleCloseDialog={() => setOpenDialog(false)}
       />
     </Paper>
   );

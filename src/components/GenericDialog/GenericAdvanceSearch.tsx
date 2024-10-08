@@ -33,6 +33,9 @@ interface CommonSearchDialogProps<T> {
   isEditButtonVisible?: boolean;
   isStatusVisible?: boolean;
   isActionVisible?: boolean;
+  showExportCSV?: boolean;
+  showExportPDF?: boolean;
+  pagination?: boolean;
 }
 
 function GenericAdvanceSearch<T>({
@@ -51,6 +54,9 @@ function GenericAdvanceSearch<T>({
   isEditButtonVisible = false,
   isStatusVisible = false,
   isActionVisible = false,
+  showExportCSV = false,
+  showExportPDF = false,
+  pagination = false,
 }: CommonSearchDialogProps<T>) {
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>(
     {}
@@ -181,6 +187,9 @@ function GenericAdvanceSearch<T>({
         columns={enhancedColumns}
         data={dataWithIndex}
         searchTerm={searchTerm}
+        showExportCSV={showExportCSV}
+        showExportPDF={showExportPDF}
+        pagination={pagination}
       />
     </>
   );

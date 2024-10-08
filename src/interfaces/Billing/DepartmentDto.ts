@@ -22,10 +22,4 @@ export interface DepartmentDto extends BaseDto {
   compCode: string;
   compName: string;
   transferYN: string;
-  rCreatedID: number;
-  rCreatedOn: Date;
-  rCreatedBy: string;
-  rModifiedID: number;
-  rModifiedOn: Date;
-  rModifiedBy: string;
 }

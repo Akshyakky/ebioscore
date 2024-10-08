@@ -14,6 +14,7 @@ import { WrBedDto } from "../../../../interfaces/HospitalAdministration/Room-Bed
 import CustomButton from "../../../../components/Button/CustomButton";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
+import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 
 const AdmissionPage: React.FC = () => {
   const [formData, setFormData] = useState<AdmissionDto>({
@@ -60,18 +61,15 @@ const AdmissionPage: React.FC = () => {
     // Implement advanced search logic
   };
 
-  const fetchPatientSuggestions = async (input: string): Promise<string[]> => {
-    // Implement patient suggestion fetching logic
-    return [];
-  };
+  const { fetchPatientSuggestions } = usePatientAutocomplete();
 
   const handlePatientSelect = (pChartID: number | null) => {
-    // Implement patient selection logic
+    if (pChartID) {
+
+    }
   };
 
   const handleBedSelect = (bed: WrBedDto) => {
-    debugger
-    console.log("Selected bed:", bed);
     setFormData(prev => {
       const newFormData = {
         ...prev,
@@ -90,7 +88,6 @@ const AdmissionPage: React.FC = () => {
           wCatName: bed.wbCatName || ""
         },
       };
-      console.log("Updated form data:", newFormData);
       return newFormData;
     });
     handleCloseBedSelection();

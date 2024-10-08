@@ -9,6 +9,7 @@ import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdow
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 import { roomListService, wrBedService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/patientAdministrationService";
 
 interface AdmissionDetailsProps {
     formData: AdmissionDto;
@@ -32,7 +33,6 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
 
     const fetchRooms = useCallback(async (wardId: number) => {
         try {
-            debugger
             const response = await roomListService.getAll();
             const filteredRooms = response.data.filter((room: any) => room.rgrpID === wardId);
             const roomOptions = filteredRooms.map((room: any) => ({
@@ -47,7 +47,6 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
 
     const fetchBeds = useCallback(async (roomId: number) => {
         try {
-            debugger
             const response = await wrBedService.getAll();
             const filteredBeds = response.data.filter((bed: any) => bed.rlID === roomId);
             const bedOptions = filteredBeds.map((bed: any) => ({
@@ -61,14 +60,12 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
     }, []);
 
     useEffect(() => {
-        debugger
         if (formData.WrBedDetailsDto.rGrpID) {
             fetchRooms(formData.WrBedDetailsDto.rGrpID);
         }
     }, [formData.WrBedDetailsDto.rGrpID, fetchRooms]);
 
     useEffect(() => {
-        debugger
         if (formData.IPAdmissionDetailsDto.rlID) {
             fetchBeds(formData.IPAdmissionDetailsDto.rlID);
         }
@@ -90,6 +87,24 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
         setBedOptions([]);
     };
 
+    useEffect(() => {
+        const fetchAdmitCode = async () => {
+            try {
+                const admitCodeResponse = await extendedAdmissionService.generateAdmitCode();
+                if (admitCodeResponse.success && admitCodeResponse.data) {
+                    onChange('IPAdmissionDto', { ...formData.IPAdmissionDto, admitCode: admitCodeResponse.data });
+                } else {
+                    console.error("Failed to generate admit code:", admitCodeResponse.errorMessage);
+                }
+            } catch (error) {
+                console.error("Error fetching admit code:", error);
+            }
+        };
+
+        if (!formData.IPAdmissionDto.admitCode) {
+            fetchAdmitCode();
+        }
+    }, []);
 
     return (
         <FormSectionWrapper title="Admission Details" spacing={1}>
@@ -264,6 +279,7 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
                 value={formData.WrBedDetailsDto.rGrpID?.toString() || ''}
                 onChange={(e: SelectChangeEvent<string>) => {
                     handleWardChange(e);
+                    onChange('WrBedDetailsDto', { ...formData.WrBedDetailsDto, rGrpID: Number(e.target.value) });
                 }}
                 options={dropdownValues.roomGroup}
                 ControlID="rGrpID"
