@@ -1,5 +1,6 @@
 //src/pages/patientAdministration/AdmissionPage/SubPage/AdmissionDetails.tsx
-import { Grid, SelectChangeEvent, Typography } from "@mui/material";
+import React, { useState, useEffect, useCallback } from "react";
+import { Grid, SelectChangeEvent } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
 import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
@@ -7,6 +8,7 @@ import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics"
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
+import { roomListService, wrBedService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 
 interface AdmissionDetailsProps {
     formData: AdmissionDto;
@@ -23,7 +25,71 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
     fetchPatientSuggestions,
     handlePatientSelect
 }) => {
-    const dropdownValues = useDropdownValues(['admissionType', 'primaryIntroducingSource', 'department', 'unit', 'attendingPhy', 'roomGroup', 'roomList', 'beds', 'caseType', 'pic']);
+    const dropdownValues = useDropdownValues(['admissionType', 'primaryIntroducingSource', 'department', 'unit', 'attendingPhy', 'roomGroup', 'caseType', 'pic']);
+
+    const [roomOptions, setRoomOptions] = useState<DropdownOption[]>([]);
+    const [bedOptions, setBedOptions] = useState<DropdownOption[]>([]);
+
+    const fetchRooms = useCallback(async (wardId: number) => {
+        try {
+            debugger
+            const response = await roomListService.getAll();
+            const filteredRooms = response.data.filter((room: any) => room.rgrpID === wardId);
+            const roomOptions = filteredRooms.map((room: any) => ({
+                value: room.rlID.toString(),
+                label: room.rName
+            }));
+            setRoomOptions(roomOptions);
+        } catch (error) {
+            console.error("Error fetching rooms:", error);
+        }
+    }, []);
+
+    const fetchBeds = useCallback(async (roomId: number) => {
+        try {
+            debugger
+            const response = await wrBedService.getAll();
+            const filteredBeds = response.data.filter((bed: any) => bed.rlID === roomId);
+            const bedOptions = filteredBeds.map((bed: any) => ({
+                value: bed.bedID.toString(),
+                label: bed.bedName
+            }));
+            setBedOptions(bedOptions);
+        } catch (error) {
+            console.error("Error fetching beds:", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        debugger
+        if (formData.WrBedDetailsDto.rGrpID) {
+            fetchRooms(formData.WrBedDetailsDto.rGrpID);
+        }
+    }, [formData.WrBedDetailsDto.rGrpID, fetchRooms]);
+
+    useEffect(() => {
+        debugger
+        if (formData.IPAdmissionDetailsDto.rlID) {
+            fetchBeds(formData.IPAdmissionDetailsDto.rlID);
+        }
+    }, [formData.IPAdmissionDetailsDto.rlID, fetchBeds]);
+
+    const handleWardChange = (e: SelectChangeEvent<string>) => {
+        const wardId = Number(e.target.value);
+        onChange('WrBedDetailsDto', { ...formData.WrBedDetailsDto, rGrpID: wardId });
+        onChange('IPAdmissionDetailsDto', { ...formData.IPAdmissionDetailsDto, rlID: '' });
+        onChange('WrBedDetailsDto', { ...formData.WrBedDetailsDto, bedID: '' });
+        setRoomOptions([]);
+        setBedOptions([]);
+    };
+
+    const handleRoomChange = (e: SelectChangeEvent<string>) => {
+        const roomId = Number(e.target.value);
+        onChange('IPAdmissionDetailsDto', { ...formData.IPAdmissionDetailsDto, rlID: roomId });
+        onChange('WrBedDetailsDto', { ...formData.WrBedDetailsDto, bedID: '' });
+        setBedOptions([]);
+    };
+
 
     return (
         <FormSectionWrapper title="Admission Details" spacing={1}>
@@ -195,8 +261,10 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
                 type="select"
                 label="Ward Name"
                 name="rGrpID"
-                value={formData.WrBedDetailsDto.rGrpID || ''}
-                onChange={onDropdownChange(['WrBedDetailsDto', 'rGrpID'], ['WrBedDetailsDto', 'rGrpName'], dropdownValues.roomGroup)}
+                value={formData.WrBedDetailsDto.rGrpID?.toString() || ''}
+                onChange={(e: SelectChangeEvent<string>) => {
+                    handleWardChange(e);
+                }}
                 options={dropdownValues.roomGroup}
                 ControlID="rGrpID"
                 gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -206,22 +274,24 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
                 type="select"
                 label="Room Name"
                 name="rlID"
-                value={formData.IPAdmissionDetailsDto.rlID || ''}
-                onChange={onDropdownChange(['IPAdmissionDetailsDto', 'rlID'], ['IPAdmissionDetailsDto', 'rName'], dropdownValues.roomList)}
-                options={dropdownValues.roomList}
+                value={formData.IPAdmissionDetailsDto.rlID?.toString() || ''}
+                onChange={handleRoomChange}
+                options={roomOptions}
                 ControlID="rlID"
                 gridProps={{ xs: 12, sm: 6, md: 3 }}
+                disabled={!formData.WrBedDetailsDto.rGrpID}
             />
 
             <FormField
                 type="select"
                 label="Bed Name"
                 name="bedID"
-                value={formData.WrBedDetailsDto.bedID || ''}
-                onChange={onDropdownChange(['WrBedDetailsDto', 'bedID'], ['WrBedDetailsDto', 'bedName'], dropdownValues.beds)}
-                options={dropdownValues.beds}
+                value={formData.WrBedDetailsDto.bedID?.toString() || ''}
+                onChange={(e) => onChange('WrBedDetailsDto', { ...formData.WrBedDetailsDto, bedID: Number(e.target.value) })}
+                options={bedOptions}
                 ControlID="bedID"
                 gridProps={{ xs: 12, sm: 6, md: 3 }}
+                disabled={!formData.IPAdmissionDetailsDto.rlID}
             />
 
         </FormSectionWrapper>

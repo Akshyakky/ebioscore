@@ -38,8 +38,8 @@ export class GenericEntityService<T extends BaseDto> {
     return this.apiService.get<T>(`${this.baseEndpoint}/GetNextCode?${params.toString()}`, this.getToken());
   }
 
-  async find(predicate: string): Promise<T[]> {
-    return this.apiService.get<T[]>(`${this.baseEndpoint}/Find?predicate=${encodeURIComponent(predicate)}`, this.getToken());
+  async find(predicate: string): Promise<T> {
+    return this.apiService.get<T>(`${this.baseEndpoint}/Find?predicate=${encodeURIComponent(predicate)}`, this.getToken());
   }
 
   async getPaged(

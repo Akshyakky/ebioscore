@@ -1,6 +1,6 @@
 //src/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage.tsx
 import React, { useMemo, useRef, useState } from "react";
-import { Container, Box, styled } from "@mui/material";
+import { Container, Box } from "@mui/material";
 import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
 import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
@@ -10,6 +10,10 @@ import { AdmissionDto, IPAdmissionDto, IPAdmissionDetailsDto, WrBedDetailsDto } 
 import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/patientAdministrationService";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
+import { WrBedDto } from "../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
+import CustomButton from "../../../../components/Button/CustomButton";
+import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
+import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
 
 const AdmissionPage: React.FC = () => {
   const [formData, setFormData] = useState<AdmissionDto>({
@@ -20,6 +24,15 @@ const AdmissionPage: React.FC = () => {
   const insurancePageRef = useRef<any>(null);
   const [shouldClearInsuranceData, setShouldClearInsuranceData] = useState(false);
   const { handleDropdownChange } = useDropdownChange<AdmissionDto>(setFormData);
+  const [isBedSelectionOpen, setIsBedSelectionOpen] = useState(false);
+
+  const handleOpenBedSelection = () => {
+    setIsBedSelectionOpen(true);
+  };
+
+  const handleCloseBedSelection = () => {
+    setIsBedSelectionOpen(false);
+  };
 
   const handleChange = (field: keyof AdmissionDto, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -56,6 +69,33 @@ const AdmissionPage: React.FC = () => {
     // Implement patient selection logic
   };
 
+  const handleBedSelect = (bed: WrBedDto) => {
+    debugger
+    console.log("Selected bed:", bed);
+    setFormData(prev => {
+      const newFormData = {
+        ...prev,
+        WrBedDetailsDto: {
+          ...prev.WrBedDetailsDto,
+          bedID: bed.bedID,
+          bedName: bed.bedName,
+          rGrpID: bed.roomList?.roomGroup?.rGrpID || 0,
+          rGrpName: bed.roomList?.roomGroup?.rGrpName || ""
+        },
+        IPAdmissionDetailsDto: {
+          ...prev.IPAdmissionDetailsDto,
+          rlID: bed.rlID,
+          rName: bed.roomList?.rName || "",
+          wCatID: bed.wbCatID || 0,
+          wCatName: bed.wbCatName || ""
+        },
+      };
+      console.log("Updated form data:", newFormData);
+      return newFormData;
+    });
+    handleCloseBedSelection();
+  };
+
   const actionButtons: ButtonProps[] = useMemo(() => [
     {
       variant: 'contained',
@@ -86,7 +126,24 @@ const AdmissionPage: React.FC = () => {
           fetchPatientSuggestions={fetchPatientSuggestions}
           handlePatientSelect={handlePatientSelect}
         />
+        <CustomButton
+          variant="outlined"
+          text="Select Bed from Ward View"
+          onClick={handleOpenBedSelection}
+        />
       </CustomAccordion>
+      <GenericDialog
+        open={isBedSelectionOpen}
+        onClose={handleCloseBedSelection}
+        title="Select a Bed"
+        maxWidth="xl"
+        fullWidth
+      >
+        <ManageBedDetails
+          onBedSelect={handleBedSelect}
+          isSelectionMode={true}
+        />
+      </GenericDialog>
       <CustomAccordion title="Payer Details">
         <InsurancePage
           ref={insurancePageRef}

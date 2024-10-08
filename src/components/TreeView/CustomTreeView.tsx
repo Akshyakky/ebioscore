@@ -1,26 +1,21 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import {
-    TreeView,
-    TreeItem,
-    TreeItemProps,
-} from '@mui/lab';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
+import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import {
     Typography,
     Box,
     IconButton,
-    Checkbox,
     TextField,
 } from '@mui/material';
 import {
-    ExpandMore,
-    ChevronRight,
     Edit as EditIcon,
     Delete as DeleteIcon,
     Add as AddIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
+import { useLoading } from '../../context/LoadingContext';
 
-interface TreeNodeType {
+export interface TreeNodeType {
     id: string;
     name: string;
     children?: TreeNodeType[];
@@ -34,17 +29,14 @@ interface CustomTreeViewProps {
     onNodeEdit?: (node: TreeNodeType) => void;
     onNodeDelete?: (node: TreeNodeType) => void;
     onNodeAdd?: (parentNode: TreeNodeType | null) => void;
-    selectable?: boolean;
     editable?: boolean;
     deletable?: boolean;
     addable?: boolean;
     searchable?: boolean;
 }
 
-const StyledTreeItem = styled((props: TreeItemProps) => (
-    <TreeItem {...props} />
-))(({ theme }) => ({
-    [`& .MuiTreeItem-content`]: {
+const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
+    [`&.MuiTreeItem-content`]: {
         borderRadius: theme.spacing(0.5),
         paddingRight: theme.spacing(1),
         fontWeight: theme.typography.fontWeightMedium,
@@ -59,9 +51,9 @@ const StyledTreeItem = styled((props: TreeItemProps) => (
             color: 'var(--tree-view-color)',
         },
     },
-    [`& .MuiTreeItem-group`]: {
+    [`&.MuiTreeItem-group`]: {
         marginLeft: 0,
-        [`& .MuiTreeItem-content`]: {
+        [`&.MuiTreeItem-content`]: {
             paddingLeft: theme.spacing(2),
         },
     },
@@ -74,34 +66,44 @@ const CustomTreeView: React.FC<CustomTreeViewProps> = ({
     onNodeEdit,
     onNodeDelete,
     onNodeAdd,
-    selectable = false,
     editable = false,
     deletable = false,
     addable = false,
     searchable = false,
 }) => {
     const [expanded, setExpanded] = useState<string[]>([]);
-    const [selected, setSelected] = useState<string[]>([]);
+    const [selected, setSelected] = useState<string>('');
     const [searchTerm, setSearchTerm] = useState('');
+    const { setLoading } = useLoading();
 
-    const handleToggle = (event: React.SyntheticEvent, nodeIds: string[]) => {
-        setExpanded(nodeIds);
+
+    useEffect(() => {
+        // Simulate asynchronous data fetching
+        const fetchData = async () => {
+            setLoading(true);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            setLoading(false);
+        };
+        fetchData();
+    }, []);
+
+    const handleToggle = useCallback((nodeId: string) => {
+        setExpanded(prev =>
+            prev.includes(nodeId) ? prev.filter(id => id !== nodeId) : [...prev, nodeId]
+        );
         if (onNodeToggle) {
-            onNodeToggle(nodeIds);
+            onNodeToggle(expanded);
         }
-    };
+    }, [expanded, onNodeToggle]);
 
-    const handleSelect = (event: React.SyntheticEvent, nodeIds: string[]) => {
-        setSelected(nodeIds);
-        if (onNodeSelect && nodeIds.length > 0) {
-            const selectedNode = findNodeById(data, nodeIds[0]);
-            if (selectedNode) {
-                onNodeSelect(selectedNode);
-            }
+    const handleSelect = useCallback((node: TreeNodeType) => {
+        setSelected(node.id);
+        if (onNodeSelect) {
+            onNodeSelect(node);
         }
-    };
+    }, [onNodeSelect]);
 
-    const findNodeById = (nodes: TreeNodeType[], id: string): TreeNodeType | null => {
+    const findNodeById = useCallback((nodes: TreeNodeType[], id: string): TreeNodeType | null => {
         for (const node of nodes) {
             if (node.id === id) {
                 return node;
@@ -114,16 +116,25 @@ const CustomTreeView: React.FC<CustomTreeViewProps> = ({
             }
         }
         return null;
-    };
+    }, []);
 
     const renderTree = useCallback((nodes: TreeNodeType[]) => (
         nodes.map((node) => (
             <StyledTreeItem
                 key={node.id}
-                nodeId={node.id}
+                itemId={node.id}
                 label={
                     <Box sx={{ display: 'flex', alignItems: 'center', p: 0.5, pr: 0 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }}>
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                fontWeight: 'inherit',
+                                flexGrow: 1,
+                                padding: '4px',
+                                borderRadius: '4px',
+                            }}
+                            onClick={() => handleSelect(node)}
+                        >
                             {node.name}
                         </Typography>
                         <Box sx={{ display: 'flex' }}>
@@ -160,21 +171,15 @@ const CustomTreeView: React.FC<CustomTreeViewProps> = ({
                                     <DeleteIcon fontSize="inherit" />
                                 </IconButton>
                             )}
-                            {selectable && (
-                                <Checkbox
-                                    checked={selected.indexOf(node.id) !== -1}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onChange={(e) => handleSelect(e, [node.id])}
-                                />
-                            )}
                         </Box>
                     </Box>
                 }
+                onClick={() => handleToggle(node.id)}
             >
                 {Array.isArray(node.children) ? renderTree(node.children) : null}
             </StyledTreeItem>
         ))
-    ), [selected, addable, editable, deletable, selectable, onNodeAdd, onNodeEdit, onNodeDelete]);
+    ), [selected, addable, editable, deletable, onNodeAdd, onNodeEdit, onNodeDelete]);
 
     const filteredData = useMemo(() => {
         if (!searchTerm) return data;
@@ -197,7 +202,7 @@ const CustomTreeView: React.FC<CustomTreeViewProps> = ({
     }, [data, searchTerm]);
 
     return (
-        <Box>
+        <Box sx={{ position: 'relative' }}>
             {searchable && (
                 <TextField
                     fullWidth
@@ -209,17 +214,9 @@ const CustomTreeView: React.FC<CustomTreeViewProps> = ({
                     sx={{ mb: 2 }}
                 />
             )}
-            <TreeView
-                aria-label="custom tree"
-                defaultCollapseIcon={<ExpandMore />}
-                defaultExpandIcon={<ChevronRight />}
-                expanded={expanded}
-                selected={selected}
-                onNodeToggle={handleToggle}
-                onNodeSelect={handleSelect}
-            >
+            <SimpleTreeView aria-label="custom tree">
                 {renderTree(filteredData)}
-            </TreeView>
+            </SimpleTreeView>
         </Box>
     );
 };
