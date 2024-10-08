@@ -31,35 +31,46 @@ const BedSetUpPage: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            await Promise.all([fetchRoomGroups(), fetchRoomLists(), fetchBeds()]);
+            setLoading(false);
+        };
+        fetchData();
+    }, []);
+
     const fetchRoomLists = async () => {
         try {
             const response = await roomListService.getAllWithIncludes(['RoomGroup']);
             if (response.success && response.data) {
                 setRoomLists(response.data);
             } else {
-                console.error("Invalid response format for room lists:", response);
                 setRoomLists([]);
             }
         } catch (error) {
-            console.error("Error fetching room lists:", error);
             setRoomLists([]);
         }
     };
-
     const fetchBeds = async () => {
+        setLoading(true);
         try {
+            // Fetch beds with their associated RoomList and RoomGroup
             const response = await wrBedService.getAllWithIncludes(['RoomList', 'RoomList.RoomGroup']);
             if (response.success && response.data) {
+                // Set the fetched beds with the RoomList and RoomGroup relationship to the state
                 setBeds(response.data);
             } else {
-                console.error("Invalid response format for beds:", response);
+                // Log or handle errors related to invalid responses
                 setBeds([]);
             }
         } catch (error) {
-            console.error("Error fetching beds:", error);
             setBeds([]);
+        } finally {
+            setLoading(false);
         }
     };
+
 
 
     return (
@@ -71,8 +82,9 @@ const BedSetUpPage: React.FC = () => {
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
                     <Suspense fallback={<Loader type="skeleton" count={3} />}>
-                        <RoomGroupDetails roomGroups={roomGroups} />
+                        <RoomGroupDetails roomGroups={roomGroups} fetchRoomGroups={fetchRoomGroups} />
                     </Suspense>
+
                 </Paper>
             </Grid>
             <Grid item xs={12} md={4} lg={4}>
@@ -82,7 +94,11 @@ const BedSetUpPage: React.FC = () => {
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
                     <Suspense fallback={<Loader type="skeleton" count={3} />}>
-                        <RoomListDetails roomLists={roomLists} />
+                        <RoomListDetails
+                            roomLists={roomLists}
+                            fetchRoomLists={fetchRoomLists}
+                            updatedRoomGroups={roomGroups}
+                        />
                     </Suspense>
                 </Paper>
             </Grid>
@@ -93,7 +109,7 @@ const BedSetUpPage: React.FC = () => {
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
                     <Suspense fallback={<Loader type="skeleton" count={3} />}>
-                        <WrBedDetails beds={beds} />
+                        <WrBedDetails beds={beds} roomGroups={roomGroups} roomLists={roomLists} fetchBeds={fetchBeds} />
                     </Suspense>
                 </Paper>
             </Grid>

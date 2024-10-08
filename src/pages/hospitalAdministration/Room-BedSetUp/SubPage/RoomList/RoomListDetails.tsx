@@ -9,6 +9,7 @@ import { showAlert } from "../../../../../utils/Common/showAlert";
 import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../../components/Button/CustomButton";
 import {
+    RoomGroupDto,
     RoomListDto,
     WrBedDto,
 } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
@@ -25,9 +26,11 @@ import {
 
 interface RoomListDetailsProps {
     roomLists: RoomListDto[];
+    updatedRoomGroups?: RoomGroupDto[];
+    fetchRoomLists: () => Promise<void>;
 }
 
-const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
+const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoomGroups, fetchRoomLists }) => {
     const { setLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogTitle, setDialogTitle] = useState("");
@@ -39,6 +42,16 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
     useEffect(() => {
         setUpdatedRoomLists(roomLists);
     }, [roomLists]);
+
+    useEffect(() => {
+        dropdownValues.roomGroup = updatedRoomGroups
+            ? updatedRoomGroups.map(group => ({
+                label: group.rGrpName,
+                value: group.rGrpID.toString(),
+            }))
+            : [];
+    }, [updatedRoomGroups]);
+
 
     function getInitialFormData(): RoomListDto {
         return {
@@ -66,6 +79,16 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
         setIsDialogOpen(true);
     }, []);
 
+    useEffect(() => {
+        dropdownValues.roomGroup = updatedRoomGroups
+            ? updatedRoomGroups.map(group => ({
+                label: group.rGrpName,
+                value: group.rGrpID.toString(),
+            }))
+            : [];
+    }, [updatedRoomGroups]);
+
+
     const fetchDepartmentDetails = useCallback(async (rgrpID: number) => {
         setLoading(true);
         try {
@@ -91,12 +114,21 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
         }
     }, []);
 
-    const handleRoomGroupChange = useCallback((name: string, value: any) => {
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        if (name === "rgrpID") {
-            fetchDepartmentDetails(value);
-        }
-    }, [fetchDepartmentDetails]);
+
+    const handleRoomGroupChange = useCallback(
+        (name: string, value: any) => {
+            console.log('Selected Room Group ID:', value);
+            setFormData((prev) => ({
+                ...prev,
+                [name]: value,
+            }));
+            if (name === "rgrpID") {
+                fetchDepartmentDetails(value);
+            }
+        },
+        [fetchDepartmentDetails]
+    );
+
 
     const handleAddDialogSubmit = useCallback(async () => {
         setLoading(true);
@@ -105,17 +137,16 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
             if (response.success) {
                 showAlert(
                     "Success",
-                    formData.rlID
-                        ? "Room updated successfully"
-                        : "Room added successfully",
+                    formData.rlID ? "Room updated successfully" : "Room added successfully",
                     "success"
                 );
                 setIsDialogOpen(false);
-
                 const savedRoom = await roomListService.getById(response.data.rlID);
 
                 if (savedRoom.success) {
                     const updatedRoom = savedRoom.data;
+                    await fetchDepartmentDetails(updatedRoom.rgrpID);
+
                     setUpdatedRoomLists((prevRoomLists) =>
                         formData.rlID
                             ? prevRoomLists.map((room) =>
@@ -123,20 +154,17 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
                             )
                             : [...prevRoomLists, updatedRoom]
                     );
+                    await fetchRoomLists();
                 }
             } else {
-                showAlert(
-                    "Error",
-                    response.errorMessage || "Failed to save room",
-                    "error"
-                );
+                showAlert("Error", response.errorMessage || "Failed to save room", "error");
             }
         } catch (error) {
             showAlert("Error", "An error occurred during submission.", "error");
         } finally {
             setLoading(false);
         }
-    }, [formData]);
+    }, [formData, fetchRoomLists, fetchDepartmentDetails]);
 
     const handleEdit = useCallback(async (row: RoomListDto) => {
         try {
@@ -229,7 +257,12 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
             render: (row: RoomListDto) => row.roomGroup?.rGrpName || "",
         },
         { key: "rLocation", header: "Room Location", visible: true },
-        { key: "deptName", header: "Department", visible: true },
+        {
+            key: "deptName",
+            header: "Department",
+            visible: true,
+            render: (row: RoomListDto) => row.deptName || "No Department",
+        },
         {
             key: "edit",
             header: "Edit",
@@ -312,12 +345,13 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists }) => {
                         type="select"
                         label="RGR Name"
                         name="rgrpID"
-                        value={formData.rgrpID || ""}
+                        value={formData.rgrpID?.toString() || ""}
                         onChange={(e) => handleRoomGroupChange("rgrpID", e.target.value)}
                         options={dropdownValues.roomGroup}
                         ControlID="rgrpID"
                         gridProps={{ xs: 12 }}
                     />
+
                     <FormField
                         type="select"
                         label="Location"
