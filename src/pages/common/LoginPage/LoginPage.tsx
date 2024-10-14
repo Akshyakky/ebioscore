@@ -1,17 +1,6 @@
 import React, { useReducer, useEffect, useMemo, useCallback } from "react";
 import {
-  Container,
-  Box,
-  Card,
-  CardContent,
-  Button,
-  Alert,
-  CircularProgress,
-  Link,
-  Typography,
-  Grid,
-  useMediaQuery,
-  alpha,
+  Container, Box, Card, CardContent, Button, Alert, CircularProgress, Link, Typography, Grid, useMediaQuery, alpha
 } from "@mui/material";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useNavigate } from "react-router-dom";
@@ -172,6 +161,7 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    debugger
     if (state.licenseExpiryMessage === "Cannot log in. Your License has expired") {
       dispatch({ type: 'SET_ERROR_MESSAGE', payload: state.licenseExpiryMessage });
       return;

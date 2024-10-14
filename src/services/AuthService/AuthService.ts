@@ -1,5 +1,5 @@
 import { OperationResult } from "./../../interfaces/Common/OperationResult";
-import { post } from "../apiService";
+import { post, postWithoutToken } from "../apiService";
 import { APIConfig } from "../../apiConfig";
 
 const API_URL = `${APIConfig.authURL}`;
@@ -41,15 +41,9 @@ interface TokenRevocationModel {
 }
 
 export const AuthService = {
-  generateToken: async (
-    credentials: LoginCredentials
-  ): Promise<OperationResult<TokenResponse>> => {
+  generateToken: async (credentials: LoginCredentials): Promise<OperationResult<TokenResponse>> => {
     const url = `${API_URL}Generate`;
-    return await post<TokenResponse, LoginCredentials>(
-      url,
-      credentials,
-      API_URL
-    );
+    return await postWithoutToken<TokenResponse, LoginCredentials>(url, credentials, API_URL);
   },
 
   logout: async (token: string): Promise<OperationResult<any>> => {
@@ -58,27 +52,16 @@ export const AuthService = {
     return await post<any, LogoutRequestModel>(url, data, API_URL);
   },
 
-  checkTokenExpiry: async (
-    token: string
-  ): Promise<OperationResult<TokenExpiryCheckResponse>> => {
+  checkTokenExpiry: async (token: string): Promise<OperationResult<TokenExpiryCheckResponse>> => {
     const url = `${API_URL}CheckTokenExpiry`;
     const data: TokenValidationModel = { Token: token };
-    return await post<TokenExpiryCheckResponse, TokenValidationModel>(
-      url,
-      data,
-      API_URL
-    );
+    return await post<TokenExpiryCheckResponse, TokenValidationModel>(url, data, API_URL);
   },
 
-  validateToken: async (
-    token: string
-  ): Promise<OperationResult<{ isValid: boolean; userDetails?: any }>> => {
+  validateToken: async (token: string): Promise<OperationResult<{ isValid: boolean; userDetails?: any }>> => {
     const url = `${API_URL}Validate`;
     const data: TokenValidationModel = { Token: token };
-    return await post<
-      { isValid: boolean; userDetails?: any },
-      TokenValidationModel
-    >(url, data, API_URL);
+    return await post<{ isValid: boolean; userDetails?: any }, TokenValidationModel>(url, data, API_URL);
   },
 
   revokeToken: async (token: string): Promise<OperationResult<any>> => {

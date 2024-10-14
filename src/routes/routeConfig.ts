@@ -29,6 +29,7 @@ import ProductTaxListPage from "../pages/inventoryManagement/ProductTaxList/Main
 import ProductOverviewPage from "../pages/inventoryManagement/ProductOverview/MainPage/ProductOverviewPage";
 import AlertPage from "../pages/common/AlertManagerPage/MainPage/Alertpage";
 import ManageBedPage from "../pages/patientAdministration/ManageBed/MainPage/ManageBedPage";
+import DiagnosisListPage from "../pages/clinicalManagement/Diagnosis/MainPage/DiagnosisListPage";
 
 interface RouteConfig {
   path: string;
@@ -40,101 +41,33 @@ interface RouteConfig {
 const routeConfig: RouteConfig[] = [
   { path: "/login", component: LoginPage, protected: false },
   { path: "/dashboard", component: DashboardPage, protected: true },
-  {
-    path: "/registrationpage",
-    component: RegistrationPage,
-    protected: true,
-    providers: [PatientSearchProvider],
-  },
-  {
-    path: "/revisitpage",
-    component: RevisitPage,
-    protected: true,
-    providers: [PatientSearchProvider],
-  },
+  { path: "/registrationpage", component: RegistrationPage, protected: true, providers: [PatientSearchProvider] },
+  { path: "/revisitpage", component: RevisitPage, protected: true, providers: [PatientSearchProvider] },
   { path: "/routinereportspa", component: RoutineReportsPA, protected: true },
   { path: "/listofreportspage", component: ListOfReportsPage, protected: true },
-  {
-    path: "/contactlistpage",
-    component: ContactListPage,
-    protected: true,
-    providers: [ContactListSearchProvider],
-  },
-  {
-    path: "/userlistpage",
-    component: UserListPage,
-    protected: true,
-    providers: [UserListSearchProvider],
-  },
-  {
-    path: "/profilelistpage",
-    component: ProfileListPage,
-    protected: true,
-    providers: [ProfileListSearchProvider],
-  },
-  {
-    path: "/alertPage",
-    component: AlertPage,
-    protected: true,
-    providers: [PatientSearchProvider],
-  },
-
-  {
-    path: "/admissionpage",
-    component: AdmissionPage,
-    protected: true,
-    providers: [PatientSearchProvider],
-  },
+  { path: "/contactlistpage", component: ContactListPage, protected: true, providers: [ContactListSearchProvider] },
+  { path: "/userlistpage", component: UserListPage, protected: true, providers: [UserListSearchProvider] },
+  { path: "/profilelistpage", component: ProfileListPage, protected: true, providers: [ProfileListSearchProvider] },
+  { path: "/alertPage", component: AlertPage, protected: true, providers: [PatientSearchProvider] },
+  { path: "/admissionpage", component: AdmissionPage, protected: true, providers: [PatientSearchProvider] },
   { path: "/ResourceListPage", component: ResourceListPage, protected: true },
   { path: "/ReasonListPage", component: ReasonListPage, protected: true },
   { path: "/BreakListPage", component: BreakListPage, protected: true },
   { path: "/Appointmentpage", component: AppointmentPage, protected: true },
-  {
-    path: "/PatientInvoiceCodePage",
-    component: PatientInvoiceCodePage,
-    protected: true,
-  },
-  {
-    path: "/DepartmentListPage",
-    component: DepartmentListPage,
-    protected: true,
-    providers: [UserListSearchProvider],
-  },
-  {
-    path: "/ServiceGroupsListPage",
-    component: ServiceGroupsListPage,
-    protected: true,
-  },
+  { path: "/PatientInvoiceCodePage", component: PatientInvoiceCodePage, protected: true },
+  { path: "/DepartmentListPage", component: DepartmentListPage, protected: true, providers: [UserListSearchProvider] },
+  { path: "/ServiceGroupsListPage", component: ServiceGroupsListPage, protected: true },
   { path: "/PaymentTypesPage", component: PaymentTypesPage, protected: true },
   { path: "/AlertPage", component: AlertPage, protected: true },
   { path: "/WardCategoryPage", component: WardCategoryPage, protected: true },
-  {
-    path: "/BedSetUpPage",
-    component: BedSetUpPage,
-    protected: true,
-  },
-  {
-    path: "/DeptUnitListPage",
-    component: DeptUnitListPage,
-    protected: true,
-  },
+  { path: "/BedSetUpPage", component: BedSetUpPage, protected: true },
+  { path: "/DeptUnitListPage", component: DeptUnitListPage, protected: true },
   { path: "/InsuranceListPage", component: InsuranceListPage, protected: true },
   { path: "/ProductListPage", component: ProductListPage, protected: true },
-  {
-    path: "/ProductTaxListPage",
-    component: ProductTaxListPage,
-    protected: true,
-  },
-  {
-    path: "/ProductOverviewPage",
-    component: ProductOverviewPage,
-    protected: true,
-  },
-  {
-    path: "/ManageBedPage",
-    component: ManageBedPage,
-    protected: true,
-  },
+  { path: "/ProductTaxListPage", component: ProductTaxListPage, protected: true },
+  { path: "/ProductOverviewPage", component: ProductOverviewPage, protected: true },
+  { path: "/ManageBedPage", component: ManageBedPage, protected: true },
+  { path: "/DiagnosisListPage", component: DiagnosisListPage, protected: true },
 ];
 
 export default routeConfig;

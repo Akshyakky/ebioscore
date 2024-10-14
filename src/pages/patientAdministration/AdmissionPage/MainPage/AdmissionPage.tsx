@@ -15,6 +15,8 @@ import CustomButton from "../../../../components/Button/CustomButton";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
+import { IcdDetailDto } from "../../../../interfaces/ClinicalManagement/IcdDetailDto";
+import DiagnosisSection from "../../../clinicalManagement/Common/Diagnosis";
 
 const AdmissionPage: React.FC = () => {
   const [formData, setFormData] = useState<AdmissionDto>({
@@ -22,6 +24,8 @@ const AdmissionPage: React.FC = () => {
     IPAdmissionDetailsDto: {} as IPAdmissionDetailsDto,
     WrBedDetailsDto: {} as WrBedDetailsDto
   });
+  const [primaryDiagnoses, setPrimaryDiagnoses] = useState<IcdDetailDto[]>([]);
+  const [associatedDiagnoses, setAssociatedDiagnoses] = useState<IcdDetailDto[]>([]);
   const insurancePageRef = useRef<any>(null);
   const [shouldClearInsuranceData, setShouldClearInsuranceData] = useState(false);
   const { handleDropdownChange } = useDropdownChange<AdmissionDto>(setFormData);
@@ -45,12 +49,19 @@ const AdmissionPage: React.FC = () => {
       IPAdmissionDetailsDto: {} as IPAdmissionDetailsDto,
       WrBedDetailsDto: {} as WrBedDetailsDto
     });
+    setPrimaryDiagnoses([]);
+    setAssociatedDiagnoses([]);
     setShouldClearInsuranceData(true);
   };
 
   const handleSave = async () => {
     try {
-      const result = await extendedAdmissionService.admitPatient(formData);
+      const admissionData = {
+        ...formData,
+        PrimaryDiagnoses: primaryDiagnoses,
+        AssociatedDiagnoses: associatedDiagnoses,
+      };
+      const result = await extendedAdmissionService.admitPatient(admissionData);
       console.log("Admission saved:", result);
     } catch (error) {
       console.error("Error saving admission:", error);
@@ -149,7 +160,12 @@ const AdmissionPage: React.FC = () => {
         />
       </CustomAccordion>
       <CustomAccordion title="Principal Diagnosis">
-        <></>
+        <DiagnosisSection
+          primaryDiagnoses={primaryDiagnoses}
+          associatedDiagnoses={associatedDiagnoses}
+          onPrimaryDiagnosesChange={setPrimaryDiagnoses}
+          onAssociatedDiagnosesChange={setAssociatedDiagnoses}
+        />
       </CustomAccordion>
       <FormSaveClearButton
         clearText="Clear"
