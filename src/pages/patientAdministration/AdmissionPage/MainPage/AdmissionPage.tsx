@@ -17,6 +17,7 @@ import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import { IcdDetailDto } from "../../../../interfaces/ClinicalManagement/IcdDetailDto";
 import DiagnosisSection from "../../../clinicalManagement/Common/Diagnosis";
+import AddAllergiesHistory from "../../../clinicalManagement/PatientHistory/Allergies/AddAllergiesPage";
 
 const AdmissionPage: React.FC = () => {
   const [formData, setFormData] = useState<AdmissionDto>({
@@ -165,6 +166,13 @@ const AdmissionPage: React.FC = () => {
           associatedDiagnoses={associatedDiagnoses}
           onPrimaryDiagnosesChange={setPrimaryDiagnoses}
           onAssociatedDiagnosesChange={setAssociatedDiagnoses}
+        />
+      </CustomAccordion>
+      <CustomAccordion title="Patient History">
+        <AddAllergiesHistory
+          pChartId={formData.IPAdmissionDto.pChartID || 0}
+          opipNo={formData.IPAdmissionDto.pChartID || 0}
+          opipCaseNo={formData.IPAdmissionDto.pChartID || 0}
         />
       </CustomAccordion>
       <FormSaveClearButton
