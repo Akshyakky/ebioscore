@@ -11,6 +11,8 @@ import { RevisitService } from "../../../../services/PatientAdministrationServic
 import { UserState } from "../../../../store/userTypes";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import { formatDate } from "../../../../utils/Common/dateUtils";
+import FormField from "../../../../components/FormField/FormField";
+import { showAlert } from "../../../../utils/Common/showAlert";
 
 interface WaitingPatientSearchProps {
   userInfo: UserState;
@@ -162,48 +164,49 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
         </Grid>
         {dateRange === "Custom" && (
           <>
-            <Grid item xs={12} sm={6} md={4}>
-              <FloatingLabelTextBox
-                ControlID="FromDate"
-                title="From Date"
-                type="date"
-                value={fromDate ? fromDate.toISOString().split("T")[0] : ""}
-                onChange={(e) => {
-                  const selectedDate = e.target.value
-                    ? new Date(e.target.value)
-                    : undefined;
-                  if (selectedDate && toDate && selectedDate <= toDate) {
-                    setFromDate(selectedDate);
-                  } else {
-                    alert("From Date cannot be greater than To Date");
-                  }
-                }}
-                placeholder="From Date"
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <FloatingLabelTextBox
-                ControlID="ToDate"
-                title="To Date"
-                type="date"
-                value={toDate ? toDate.toISOString().split("T")[0] : ""}
-                onChange={(e) => {
-                  const selectedDate = e.target.value
-                    ? new Date(e.target.value)
-                    : undefined;
-                  if (selectedDate && fromDate && selectedDate >= fromDate) {
-                    setToDate(selectedDate);
-                  } else {
-                    alert("To Date cannot be less than From Date");
-                  }
-                }}
-                placeholder="To Date"
-                size="small"
-              />
-            </Grid>
+            <FormField
+              type="datepicker"
+              label="From Date"
+              name="FromDate"
+              ControlID="FromDate"
+              value={fromDate}
+              onChange={(selectedDate: Date | null) => {
+                if (selectedDate && toDate && selectedDate <= toDate) {
+                  setFromDate(selectedDate);
+                } else {
+                  showAlert("Error", "From Date cannot be greater than To Date", "error");
+                }
+              }}
+              placeholder="From Date"
+              size="small"
+              isMandatory={true}
+              disabled={false}
+              gridProps={{ xs: 12, sm: 6, md: 4 }}
+
+            />
+            <FormField
+              type="datepicker"
+              label="To Date"
+              name="ToDate"
+              ControlID="ToDate"
+              value={toDate}
+              onChange={(selectedDate: Date | null) => {
+                if (selectedDate && fromDate && selectedDate >= fromDate) {
+                  setToDate(selectedDate);
+                } else {
+                  showAlert("Error", "To Date cannot be less than From Date", "error");
+                }
+              }}
+              placeholder="To Date"
+              size="small"
+              isMandatory={true}
+              disabled={false}
+              gridProps={{ xs: 12, sm: 6, md: 4 }}
+
+            />
           </>
         )}
+
       </Grid>
       <CustomGrid
         columns={columns}
