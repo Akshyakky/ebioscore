@@ -14,6 +14,7 @@ import NextOfKinForm from "./NextOfKinForm";
 import NextOfKinGrid from "./NextOfKinGrid";
 import { PatNokService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatNokService";
 import useDayjs from "../../../../hooks/Common/useDateTime";
+import { showAlert } from "../../../../utils/Common/showAlert";
 
 interface NextOfKinPageProps {
   pChartID: number;
@@ -61,22 +62,28 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
     return maxId + 1;
   }, []);
 
-  const handleSaveKin = useCallback((kinDetails: PatNokDetailsDto) => {
-    setGridKinData((prevData) => {
-      if (!kinDetails.pNokID && !kinDetails.ID) {
-        return [...prevData, { ...kinDetails, ID: generateNewId(prevData) }];
-      }
-      if (!kinDetails.pNokID) {
+  const handleSaveKin = useCallback(
+    (kinDetails: PatNokDetailsDto) => {
+      debugger
+      setGridKinData((prevData) => {
+        if (!kinDetails.pNokID && !kinDetails.ID) {
+          return [...prevData, { ...kinDetails, ID: generateNewId(prevData) }];
+        }
+        if (!kinDetails.pNokID) {
+          return prevData.map((item) =>
+            item.ID === kinDetails.ID ? kinDetails : item
+          );
+        }
         return prevData.map((item) =>
-          item.ID === kinDetails.ID ? kinDetails : item
+          item.pNokID === kinDetails.pNokID ? kinDetails : item
         );
-      }
-      return prevData.map((item) =>
-        item.pNokID === kinDetails.pNokID ? kinDetails : item
-      );
-    });
-    setShowKinPopup(false);
-  }, [generateNewId]);
+      });
+      setShowKinPopup(false); // Close the form after saving
+      showAlert("Success", "The Kin Details Saved succesfully", "success")
+    },
+    [generateNewId]
+  );
+
 
   const fetchKinData = useCallback(async () => {
     if (!pChartID) return;
