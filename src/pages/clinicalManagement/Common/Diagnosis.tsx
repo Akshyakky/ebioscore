@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Grid, Typography, Button, Box, Paper } from '@mui/material';
+import { Grid, Typography, Paper } from '@mui/material';
 import FormField from '../../../components/FormField/FormField';
 import CustomGrid from '../../../components/CustomGrid/CustomGrid';
 import { Column } from '../../../components/CustomGrid/CustomGrid';
 import { IcdDetailDto } from '../../../interfaces/ClinicalManagement/IcdDetailDto';
 import { createEntityService } from '../../../utils/Common/serviceFactory';
-
+import CustomButton from '../../../components/Button/CustomButton';
+import { showAlert } from '../../../utils/Common/showAlert';
 interface DiagnosisSectionProps {
     primaryDiagnoses: IcdDetailDto[];
     associatedDiagnoses: IcdDetailDto[];
@@ -38,37 +39,44 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({
             const response = await icdDetailService.find(`iCDDCode == "${code}"`);
             if (response.data && response.data.length > 0) {
                 const newDiagnosis = response.data[0];
-                if (type === 'primary') {
-                    if (!primaryDiagnoses.some(d => d.icddCode === newDiagnosis.icddCode)) {
-                        onPrimaryDiagnosesChange([...primaryDiagnoses, newDiagnosis]);
-                    } else {
-                        alert('This primary diagnosis has already been added.');
-                    }
+                const isDuplicate = (type === 'primary' ? primaryDiagnoses : associatedDiagnoses)
+                    .some(d => d.icddCode === newDiagnosis.icddCode);
+
+                if (!isDuplicate) {
+                    const updateFunction = type === 'primary' ? onPrimaryDiagnosesChange : onAssociatedDiagnosesChange;
+                    updateFunction([...(type === 'primary' ? primaryDiagnoses : associatedDiagnoses), newDiagnosis]);
+                    setSearchTerm('');
                 } else {
-                    if (!associatedDiagnoses.some(d => d.icddCode === newDiagnosis.icddCode)) {
-                        onAssociatedDiagnosesChange([...associatedDiagnoses, newDiagnosis]);
-                    } else {
-                        alert('This associated diagnosis has already been added.');
-                    }
+                    showAlert('Duplicate Diagnosis', `This ${type} diagnosis has already been added.`, 'warning');
                 }
-                setSearchTerm('');
             }
         } catch (error) {
             console.error('Error adding diagnosis:', error);
+            showAlert('Error', 'Failed to add diagnosis. Please try again.', 'error');
         }
     }, [searchTerm, primaryDiagnoses, associatedDiagnoses, onPrimaryDiagnosesChange, onAssociatedDiagnosesChange, icdDetailService]);
 
     const handleRemoveDiagnosis = useCallback((type: 'primary' | 'associated', icddCode: string) => {
-        if (type === 'primary') {
-            const newDiagnoses = primaryDiagnoses.filter(d => d.icddCode !== icddCode);
-            onPrimaryDiagnosesChange(newDiagnoses);
-        } else {
-            const newDiagnoses = associatedDiagnoses.filter(d => d.icddCode !== icddCode);
-            onAssociatedDiagnosesChange(newDiagnoses);
-        }
-    }, [primaryDiagnoses, associatedDiagnoses, onPrimaryDiagnosesChange, onAssociatedDiagnosesChange]);
+        showAlert(
+            'Confirm Removal',
+            `Are you sure you want to remove this ${type} diagnosis?`,
+            'warning',
+            {
+                showConfirmButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Yes, remove it',
+                cancelButtonText: 'Cancel',
+                onConfirm: () => {
+                    const updateFunction = type === 'primary' ? onPrimaryDiagnosesChange : onAssociatedDiagnosesChange;
+                    const currentDiagnoses = type === 'primary' ? primaryDiagnoses : associatedDiagnoses;
+                    updateFunction(currentDiagnoses.filter(d => d.icddCode !== icddCode));
+                    showAlert('Diagnosis Removed', `The ${type} diagnosis has been removed successfully.`, 'success');
+                }
+            }
+        );
+    }, [onPrimaryDiagnosesChange, onAssociatedDiagnosesChange, primaryDiagnoses, associatedDiagnoses]);
 
-    const columns: Column<IcdDetailDto & { type: 'primary' | 'associated' }>[] = [
+    const columns: Column<IcdDetailDto & { type: 'primary' | 'associated' }>[] = useMemo(() => [
         { key: 'icddCode', header: 'ICD Code', visible: true },
         { key: 'icddName', header: 'Description', visible: true },
         {
@@ -76,17 +84,16 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({
             header: 'Actions',
             visible: true,
             render: (item) => (
-                <Button
+                <CustomButton
                     variant="outlined"
                     color="secondary"
                     size="small"
+                    text="Remove"
                     onClick={() => handleRemoveDiagnosis(item.type, item.icddCode)}
-                >
-                    Remove
-                </Button>
+                />
             ),
         },
-    ];
+    ], [handleRemoveDiagnosis]);
 
     return (
         <Paper elevation={0} sx={{ p: 2, bgcolor: '#F8F8F8' }}>
@@ -106,26 +113,24 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({
                     />
                 </Grid>
                 <Grid item xs={6}>
-                    <Button
+                    <CustomButton
                         variant="contained"
                         color="primary"
-                        fullWidth
+                        text="Add Primary Diagnosis"
                         onClick={() => handleAddDiagnosis('primary')}
                         disabled={!searchTerm}
-                    >
-                        Add Primary Diagnosis
-                    </Button>
+                        sx={{ width: '100%' }}
+                    />
                 </Grid>
                 <Grid item xs={6}>
-                    <Button
+                    <CustomButton
                         variant="contained"
                         color="primary"
-                        fullWidth
+                        text="Add Associated Diagnosis"
                         onClick={() => handleAddDiagnosis('associated')}
                         disabled={!searchTerm}
-                    >
-                        Add Associated Diagnosis
-                    </Button>
+                        sx={{ width: '100%' }}
+                    />
                 </Grid>
                 <Grid item xs={6}>
                     <Typography variant="subtitle1">Primary Diagnoses</Typography>
@@ -150,4 +155,4 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({
     );
 };
 
-export default DiagnosisSection;
+export default React.memo(DiagnosisSection);

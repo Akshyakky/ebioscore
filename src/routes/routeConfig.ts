@@ -29,7 +29,8 @@ import ProductTaxListPage from "../pages/inventoryManagement/ProductTaxList/Main
 import ProductOverviewPage from "../pages/inventoryManagement/ProductOverview/MainPage/ProductOverviewPage";
 import AlertPage from "../pages/common/AlertManagerPage/MainPage/Alertpage";
 import ManageBedPage from "../pages/patientAdministration/ManageBed/MainPage/ManageBedPage";
-import DiagnosisListPage from "../pages/clinicalManagement/Diagnosis/MainPage/DiagnosisListPage";
+import DiagnosisListPage from "../pages/clinicalManagement/DiagnosisList/MainPage/DiagnosisListPage";
+import MedicationListPage from "../pages/clinicalManagement/MedicationList/MainPage/MedicationListPage";
 
 interface RouteConfig {
   path: string;
@@ -68,6 +69,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/ProductOverviewPage", component: ProductOverviewPage, protected: true },
   { path: "/ManageBedPage", component: ManageBedPage, protected: true },
   { path: "/DiagnosisListPage", component: DiagnosisListPage, protected: true },
+  { path: "/MedicationListPage", component: MedicationListPage, protected: true },
 ];
 
 export default routeConfig;
