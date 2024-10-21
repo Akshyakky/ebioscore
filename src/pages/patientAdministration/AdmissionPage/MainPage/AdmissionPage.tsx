@@ -1,6 +1,6 @@
 //src/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage.tsx
 import React, { useMemo, useRef, useState } from "react";
-import { Container, Box } from "@mui/material";
+import { Container, Box, Paper, Tabs, Tab, useTheme } from "@mui/material";
 import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
 import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
@@ -18,6 +18,12 @@ import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/u
 import { IcdDetailDto } from "../../../../interfaces/ClinicalManagement/IcdDetailDto";
 import DiagnosisSection from "../../../clinicalManagement/Common/Diagnosis";
 import AddAllergiesHistory from "../../../clinicalManagement/PatientHistory/Allergies/AddAllergiesPage";
+import AddPastMedicalHistory from "../../../clinicalManagement/PatientHistory/PastMedicalHistory/AddPastMedicalHistory";
+import AddPastSurgicalHistory from "../../../clinicalManagement/PatientHistory/PastSurgicalHistory/AddPastSurgicalHistory";
+import AddPastReviewOfSystem from "../../../clinicalManagement/PatientHistory/PastReviewOfSystem/AddPastReviewOfSystem";
+import AddSocialHistory from "../../../clinicalManagement/PatientHistory/PastSocialHistory/AddSocialHistory";
+import AddFamilyHistory from "../../../clinicalManagement/PatientHistory/FamilyHistory/AddFamilyHistory";
+import AddPastMedicationHistory from "../../../clinicalManagement/PatientHistory/PastMedicationHistory/AddPastMedicationHistory";
 
 const AdmissionPage: React.FC = () => {
   const [formData, setFormData] = useState<AdmissionDto>({
@@ -31,6 +37,13 @@ const AdmissionPage: React.FC = () => {
   const [shouldClearInsuranceData, setShouldClearInsuranceData] = useState(false);
   const { handleDropdownChange } = useDropdownChange<AdmissionDto>(setFormData);
   const [isBedSelectionOpen, setIsBedSelectionOpen] = useState(false);
+  const [activeHistoryTab, setActiveHistoryTab] = useState(0);
+
+  const theme = useTheme();
+
+  const handleHistoryTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveHistoryTab(newValue);
+  };
 
   const handleOpenBedSelection = () => {
     setIsBedSelectionOpen(true);
@@ -169,11 +182,81 @@ const AdmissionPage: React.FC = () => {
         />
       </CustomAccordion>
       <CustomAccordion title="Patient History">
-        <AddAllergiesHistory
-          pChartId={formData.IPAdmissionDto.pChartID || 0}
-          opipNo={formData.IPAdmissionDto.pChartID || 0}
-          opipCaseNo={formData.IPAdmissionDto.pChartID || 0}
-        />
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            bgcolor: theme.palette.background.paper,
+            color: theme.palette.text.primary
+          }}
+        >
+          <Tabs
+            value={activeHistoryTab}
+            onChange={handleHistoryTabChange}
+            aria-label="patient history tabs"
+            textColor="primary"
+            indicatorColor="primary"
+          >
+            <Tab label="Allergies" />
+            <Tab label="Past Medical History" />
+            <Tab label="Past Surgical History" />
+            <Tab label="Past Medication History" />
+            <Tab label="Review of System" />
+            <Tab label="Social History" />
+            <Tab label="Family History" />
+          </Tabs>
+          <Box sx={{ mt: 2 }}>
+            {activeHistoryTab === 0 && (
+              <AddAllergiesHistory
+                pChartId={formData.IPAdmissionDto.pChartID || 0}
+                opipNo={formData.IPAdmissionDto.pChartID || 0}
+                opipCaseNo={formData.IPAdmissionDto.pChartID || 0}
+              />
+            )}
+            {activeHistoryTab === 1 && (
+              <AddPastMedicalHistory
+                pchartId={formData.IPAdmissionDto.pChartID || 0}
+                opipNo={formData.IPAdmissionDto.pChartID || 0}
+                opipCaseNo={formData.IPAdmissionDto.pChartID || 0}
+              />
+            )}
+            {activeHistoryTab === 2 && (
+              <AddPastSurgicalHistory
+                pchartId={formData.IPAdmissionDto.pChartID || 0}
+                opipNo={formData.IPAdmissionDto.pChartID || 0}
+                opipCaseNo={formData.IPAdmissionDto.pChartID || 0}
+              />
+            )}
+            {activeHistoryTab === 3 && (
+              <AddPastMedicationHistory
+                pchartId={formData.IPAdmissionDto.pChartID || 0}
+                opipNo={formData.IPAdmissionDto.pChartID || 0}
+                opipCaseNo={formData.IPAdmissionDto.pChartID || 0}
+              />
+            )}
+            {activeHistoryTab === 4 && (
+              <AddPastReviewOfSystem
+                pchartId={formData.IPAdmissionDto.pChartID || 0}
+                opipNo={formData.IPAdmissionDto.pChartID || 0}
+                opipCaseNo={formData.IPAdmissionDto.pChartID || 0}
+              />
+            )}
+            {activeHistoryTab === 5 && (
+              <AddSocialHistory
+                pchartId={formData.IPAdmissionDto.pChartID || 0}
+                opipNo={formData.IPAdmissionDto.pChartID || 0}
+                opipCaseNo={formData.IPAdmissionDto.pChartID || 0}
+              />
+            )}
+            {activeHistoryTab === 6 && (
+              <AddFamilyHistory
+                pchartId={formData.IPAdmissionDto.pChartID || 0}
+                opipNo={formData.IPAdmissionDto.pChartID || 0}
+                opipCaseNo={formData.IPAdmissionDto.pChartID || 0}
+              />
+            )}
+          </Box>
+        </Paper>
       </CustomAccordion>
       <FormSaveClearButton
         clearText="Clear"

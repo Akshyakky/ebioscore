@@ -19,8 +19,11 @@ import {
 } from "../../services/InventoryManagementService/inventoryManagementService";
 import {
   consultantRoleService,
+  medicationDosageService,
   medicationFormService,
+  medicationFrequencyService,
   medicationGenericService,
+  medicationInstructionService,
 } from "../../services/ClinicalManagementServices/clinicalManagementService";
 import {
   roomGroupService,
@@ -73,7 +76,10 @@ type DropdownType =
   | "payment"
   | "admissionType"
   | "caseType"
-  | "beds";
+  | "beds"
+  | "medicationDosage"
+  | "medicationFrequency"
+  | "medicationInstruction";
 
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
   const [dropdownValues, setDropdownValues] = useState<
@@ -343,6 +349,27 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             response = (response.data || []).map((item: any) => ({
               value: item.bedID || 0,
               label: item.bedName || "",
+            }));
+            break;
+          case "medicationDosage":
+            response = await medicationDosageService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.mdId || 0,
+              label: item.mdName || "",
+            }));
+            break;
+          case "medicationFrequency":
+            response = await medicationFrequencyService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.mfrqId || 0,
+              label: item.mfrqName || "",
+            }));
+            break;
+          case "medicationInstruction":
+            response = await medicationInstructionService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.minsId || 0,
+              label: item.minsName || "",
             }));
             break;
           default:

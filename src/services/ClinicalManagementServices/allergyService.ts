@@ -1,5 +1,4 @@
 // src/services/ClinicalManagementServices/allergyService.ts
-
 import { CommonApiService } from "../CommonApiService";
 import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
 import { OPIPHistAllergyMastDto } from "../../interfaces/ClinicalManagement/AllergyDto";
@@ -13,6 +12,10 @@ class AllergyService extends GenericEntityService<OPIPHistAllergyMastDto> {
       }),
       "Allergy"
     );
+  }
+
+  async getAllergyWithDetails(id: number): Promise<OPIPHistAllergyMastDto> {
+    return this.apiService.get<OPIPHistAllergyMastDto>(`${this.baseEndpoint}/${id}/details`, this.getToken());
   }
 
   async createOrUpdateAllergy(allergyDto: OPIPHistAllergyMastDto): Promise<OPIPHistAllergyMastDto> {
