@@ -26,7 +26,6 @@ const frequencyCodeMap = {
     monthly: "FO73",
     yearly: "FO74",
 };
-
 const weekDayCodeMap = {
     Sunday: "FO75",
     Monday: "FO76",
@@ -36,16 +35,16 @@ const weekDayCodeMap = {
     Friday: "FO80",
     Saturday: "FO81",
 };
-const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
+
+const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
     const { setLoading } = useLoading();
     const serverDate = useServerDate();
     const { compID, compCode, compName } = useSelector((state: any) => state.userDetails);
-
-    const [isSubmitted, setIsSubmitted] = useState(false);
+    const [isSubmitted,] = useState(false);
     const [isOneDay, setIsOneDay] = useState(false);
     const [openFrequencyDialog, setOpenFrequencyDialog] = useState(false);
     const [formState, setFormState] = useState<BreakListData>(() => initializeFormState(serverDate, compID, compCode, compName));
-    const [breakConDetails, setBreakConDetails] = useState<BreakConDetailData[]>([]);
+    const [, setBreakConDetails] = useState<BreakConDetailData[]>([]);
     const [selectedOption, setSelectedOption] = useState("physician");
     const [resourceData, setResourceData] = useState<any[]>([]);
     const [consultantData, setConsultantData] = useState<any[]>([]);
@@ -63,7 +62,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
         } else {
             handleClear();
         }
-    }, [editData, serverDate]);
+    }, [editData]);
 
     useEffect(() => {
         fetchData();
@@ -72,45 +71,73 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
     const loadEditData = async (data: any) => {
         setLoading(true);
         try {
-            const { blID } = data;
-
-            // Fetch BreakList data by blID
-            const breakListResult = await BreakListService.getBreakListById(blID);
-
-            // Fetch BreakConDetail data by blID
-            const breakConDetailResult = await breakConDetailsService.getById(blID);
-
-            if (breakListResult.success && breakListResult.data) {
-                const breakListData = breakListResult.data;
-
-                setFormState(prev => ({
-                    ...prev,
-                    ...breakListData,
-                    bLStartDate: new Date(breakListData.bLStartDate),
-                    bLEndDate: new Date(breakListData.bLEndDate),
-                    bLStartTime: new Date(breakListData.bLStartTime),
-                    bLEndTime: new Date(breakListData.bLEndTime),
-                }));
-                setSelectedOption(breakListData.isPhyResYN === "Y" ? "physician" : "resource");
+            let breakListData: BreakListData;
+            if (typeof data === 'number') {
+                if (isNaN(data)) throw new Error("Invalid ID provided");
+                const result = await BreakListService.getBreakListById(data);
+                if (!result.success || !result.data) throw new Error(result.errorMessage || "Failed to fetch break list data by ID");
+                breakListData = result.data;
+            } else if (data && typeof data.bLID === 'number') {
+                if (isNaN(data.bLID)) throw new Error("Invalid bLID provided");
+                breakListData = data;
+            } else {
+                throw new Error("Invalid Break List Data: Missing or incorrect bLID");
             }
+            const frequencyKey = Object.keys(frequencyCodeMap).find(
+                key => frequencyCodeMap[key as keyof typeof frequencyCodeMap] === breakListData.bLFrqDesc
+            );
+            const frequencyData: FrequencyData = {
+                frequency: frequencyKey || "none",
+                endDate: new Date(breakListData.bLEndDate).toISOString().split('T')[0],
+                interval: breakListData.bLFrqNo || 1,
+                weekDays: breakListData.bLFrqWkDesc ? breakListData.bLFrqWkDesc.split(",") : [],
+            };
+            const frequencyDescription = generateFrequencyDescription(frequencyData);
+            setFormState({
+                ...breakListData,
+                bLStartDate: new Date(breakListData.bLStartDate),
+                bLEndDate: new Date(breakListData.bLEndDate),
+                bLStartTime: new Date(breakListData.bLStartTime),
+                bLEndTime: new Date(breakListData.bLEndTime),
+                bLFrqDesc: frequencyDescription || "",
+            });
+            if (typeof breakListData.bLID === 'number' && breakListData.bLID > 0) {
+                const conDetailsResult = await breakConDetailsService.getAll();
+                const filteredConDetails = conDetailsResult.data.filter((bcd: any) => bcd.bLID === breakListData.bLID);
 
-            if (breakConDetailResult.success && breakConDetailResult.data) {
-                const breakConDetailsData = breakConDetailResult.data;
-                setBreakConDetails(breakConDetailsData);
-
-                // Set the selected option based on the fetched data
-
-                setSelectedItems(breakConDetailsData.map((detail: BreakConDetailData) => detail.hPLID));
+                if (filteredConDetails.length > 0) {
+                    setBreakConDetails(filteredConDetails);
+                    const selectedHPLIDs = filteredConDetails.map((detail: BreakConDetailData) => detail.hPLID);
+                    setSelectedItems(selectedHPLIDs);
+                    const isPhysician = breakListData.isPhyResYN === 'Y';
+                    setSelectedOption(isPhysician ? 'physician' : 'resource');
+                    if (isPhysician) {
+                        const result = await AppointmentService.fetchAppointmentConsultants();
+                        if (result.success && result.data) {
+                            setConsultantData(result.data);
+                        }
+                    } else {
+                        const result = await resourceListService.getAll();
+                        if (result.success && result.data) {
+                            setResourceData(result.data);
+                        }
+                    }
+                } else {
+                    setBreakConDetails([]);
+                    setSelectedItems([]);
+                }
+            } else {
+                throw new Error("Invalid Break List ID");
             }
         } catch (error) {
-            showAlert('Error', 'An error occurred while loading data. Please try again.', 'error');
+            showAlert('Error', 'Failed to load edit data', 'error');
         } finally {
             setLoading(false);
         }
     };
 
-
     const fetchData = useCallback(async () => {
+
         setLoading(true);
         try {
             if (selectedOption === "resource") {
@@ -121,7 +148,6 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                 if (result.success && result.data) setConsultantData(result.data);
             }
         } catch (error) {
-            console.error(`Failed to fetch ${selectedOption} data`, error);
         } finally {
             setLoading(false);
         }
@@ -324,7 +350,6 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
 
     const handleDateChange = (fieldName: keyof BreakListData) => (newDate: Date | null) => {
         if (!newDate) return;
-
         setFormState((prevState) => {
             const updatedState = { ...prevState };
 
@@ -408,7 +433,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         type="datepicker"
                         label="Start Date"
                         name="bLStartDate"
-                        value={formState.bLStartDate ? formState.bLStartDate.toISOString().split('T')[0] : ''} // Date in string format
+                        value={formState.bLStartDate ? formState.bLStartDate.toISOString().split('T')[0] : ''}
                         onChange={handleDateChange('bLStartDate')}
                         ControlID="StartDate"
                         minDate={new Date(1900, 0, 1)}
@@ -418,7 +443,7 @@ const BreakDetails: React.FC<{ editData?: BreakListDto }> = ({ editData }) => {
                         type="datepicker"
                         label="End Date"
                         name="bLEndDate"
-                        value={formState.bLEndDate ? formState.bLEndDate.toISOString().split('T')[0] : ''} // Date in string format
+                        value={formState.bLEndDate ? formState.bLEndDate.toISOString().split('T')[0] : ''}
                         onChange={handleDateChange('bLEndDate')}
                         ControlID="EndDate"
                         minDate={formState.bLStartDate}

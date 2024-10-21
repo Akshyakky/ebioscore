@@ -1,8 +1,8 @@
-import { BreakListData } from "../../../interfaces/FrontOffice/BreakListData";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { CommonApiService } from "../../CommonApiService";
 import { store } from "../../../store/store";
+import { BreakListData } from "../../../interfaces/frontOffice/BreakListData";
 
 const commonApiService = new CommonApiService({
   baseURL: APIConfig.frontOffice,

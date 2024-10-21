@@ -6,6 +6,7 @@ import { Box } from "@mui/material";
 import BreakDetails from "../SubPage/BreakDetails";
 import { BreakListDto } from "../../../../interfaces/frontOffice/BreakListData";
 import BreakListSearch from "../SubPage/BreakListsearch";
+import { showAlert } from "../../../../utils/Common/showAlert";
 
 const BreakListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -28,9 +29,21 @@ const BreakListPage: React.FC = () => {
     setIsSearchOpen(false);
   };
 
-  const handleSelect = (data: BreakListDto) => {
-    setSelectedData(data);
+
+
+  const handleSelect = (data: any) => {
+    if (data && typeof data.bLID === 'number') {
+      console.log("Selected Break List Data:", data);
+      setSelectedData(data);
+    } else {
+      console.error("Invalid Break List Data: Missing bLID", data);
+      showAlert("Error", "Invalid Break List Data: Missing bLID", "error");
+    }
   };
+
+
+
+
 
 
   return (<>

@@ -10,11 +10,15 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { BreakConSuspendData } from "../../../../interfaces/frontOffice/BreakConSuspendData";
 import { breakConSuspendService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
+import { showAlert } from "../../../../utils/Common/showAlert";
+const formatToDDMMYYYY = (date: Date) => {
+    return date ? date.toLocaleDateString('en-GB').split('/').reverse().join('-') : 'Invalid Date';
+};
 
 interface BreakSuspendDetailsProps {
     open: boolean;
-    onClose: () => void;
-    breakData: any;
+    onClose: (isSaved: boolean, updatedData?: BreakConSuspendData) => void;
+    breakData: BreakConSuspendData;
 }
 
 const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose, breakData }) => {
@@ -53,30 +57,34 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
             bCSEndDate: new Date(suspendData.bCSEndDate as Date),
             compID,
             compCode,
-            compName
+            compName,
+            rActiveYN: "N"
         };
 
         setLoading(true);
         try {
             const result = await breakConSuspendService.save(updatedSuspendData);
             if (result.success) {
-                onClose();
+                showAlert("Success", "The break has been suspended", "success");
+                onClose(true, updatedSuspendData);
             } else {
                 console.error("Failed to save suspend data:", result.errorMessage);
+                onClose(false);
             }
         } catch (error) {
             console.error("Error saving suspend data:", error);
+            onClose(false);
         } finally {
             setLoading(false);
         }
-    }, [breakData, suspendData, serverDate, userID, userName, compID, compCode, compName, setLoading, onClose]);
+    }, [breakData, suspendData, compID, compCode, compName, setLoading, onClose]);
 
     const renderDateField = (id: string, title: string, value: Date | string | undefined, onChange?: (value: Date) => void) => (
         <Grid item xs={12} md={6}>
             <FloatingLabelTextBox
                 ControlID={id}
                 title={title}
-                value={value ? (typeof value === 'string' ? value : value.toISOString().split('T')[0]) : ''}
+                value={value ? (typeof value === 'string' ? value : formatToDDMMYYYY(value)) : 'Invalid Date'}
                 onChange={onChange ? (e: React.ChangeEvent<HTMLInputElement>) => {
                     const date = new Date(e.target.value);
                     if (!isNaN(date.getTime())) {
@@ -93,7 +101,7 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
     return (
         <GenericDialog
             open={open}
-            onClose={onClose}
+            onClose={() => onClose(false)}
             title="Suspend Break"
             maxWidth="sm"
             disableEscapeKeyDown={true}
@@ -112,7 +120,7 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
                     <CustomButton
                         variant="outlined"
                         text="Close"
-                        onClick={onClose}
+                        onClick={() => onClose(false)}
                         icon={Close}
                         size="small"
                         color="secondary"

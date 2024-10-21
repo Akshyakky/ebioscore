@@ -23,7 +23,7 @@ export interface BreakListData extends BaseDto {
 export interface BreakConDetailData extends BaseDto {
   bCDID: number;
   blID: number;
-  hPLID: number;
+  hPLID: number | null;
   rActiveYN: string;
   rNotes: string;
   compID: number;
