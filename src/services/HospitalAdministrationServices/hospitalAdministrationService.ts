@@ -1,3 +1,7 @@
+import {
+  AppModifiedMast,
+  AppModifyFieldDto,
+} from "../../interfaces/HospitalAdministration/AppModifiedlistDto";
 import { InsuranceListDto } from "../../interfaces/HospitalAdministration/InsuranceListDto";
 import {
   RoomGroupDto,
@@ -26,6 +30,16 @@ export const wardCategoryService = createEntityService<WardCategoryDto>(
 
 export const insuranceListService = createEntityService<InsuranceListDto>(
   "InsuranceList",
+  "hospitalAdministrations"
+);
+
+export const appModifiedListService = createEntityService<AppModifyFieldDto>(
+  "AppModifiedList",
+  "hospitalAdministrations"
+);
+
+export const appModifiedMastService = createEntityService<AppModifiedMast>(
+  "AppModifiedMast",
   "hospitalAdministrations"
 );
 

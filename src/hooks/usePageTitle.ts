@@ -35,6 +35,7 @@ const pageTitleMap: PageTitleMap = {
   "/ManageBedPage": "Manage BedPage ",
   "/DiagnosisListPage": "Diagnosis List ",
   "/MedicationListPage": "Medication List ",
+  "/AppModifiedListPage": "App Modified List ",
   // Add more mappings as needed
 };
 
@@ -43,7 +44,8 @@ export const usePageTitle = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const titleSuffix = pageTitleMap[location.pathname] || "eBios Healthcare Solution";
+    const titleSuffix =
+      pageTitleMap[location.pathname] || "eBios Healthcare Solution";
     const title = `eBios - ${titleSuffix}`;
     document.title = title;
     setPageTitle(titleSuffix);
