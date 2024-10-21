@@ -12,7 +12,14 @@ import { ContactListService } from "../../services/HospitalAdministrationService
 import { DeptUnitListService } from "../../services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
 import { ServiceTypeService } from "../../services/BillingServices/ServiceTypeServices";
 import { productGroupService, productSubGroupService, productTaxService, productUnitService } from "../../services/InventoryManagementService/inventoryManagementService";
-import { consultantRoleService, medicationFormService, medicationGenericService } from "../../services/ClinicalManagementServices/clinicalManagementService";
+import {
+  consultantRoleService,
+  medicationDosageService,
+  medicationFormService,
+  medicationFrequencyService,
+  medicationGenericService,
+  medicationInstructionService,
+} from "../../services/ClinicalManagementServices/clinicalManagementService";
 import { roomGroupService, roomListService, wardCategoryService, wrBedService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { departmentService } from "../../services/CommonServices/CommonModelServices";
 import { DepartmentDto } from "../../interfaces/Billing/DepartmentDto";
@@ -59,7 +66,10 @@ type DropdownType =
   | "payment"
   | "admissionType"
   | "caseType"
-  | "beds";
+  | "beds"
+  | "medicationDosage"
+  | "medicationFrequency"
+  | "medicationInstruction";
 
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
   const [dropdownValues, setDropdownValues] = useState<Record<DropdownType, DropdownOption[]>>({} as Record<DropdownType, DropdownOption[]>);
@@ -251,6 +261,27 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             response = (response.data || []).map((item: any) => ({
               value: item.bedID || 0,
               label: item.bedName || "",
+            }));
+            break;
+          case "medicationDosage":
+            response = await medicationDosageService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.mdId || 0,
+              label: item.mdName || "",
+            }));
+            break;
+          case "medicationFrequency":
+            response = await medicationFrequencyService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.mfrqId || 0,
+              label: item.mfrqName || "",
+            }));
+            break;
+          case "medicationInstruction":
+            response = await medicationInstructionService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.minsId || 0,
+              label: item.minsName || "",
             }));
             break;
           default:

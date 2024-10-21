@@ -272,7 +272,11 @@ const CustomGrid = <T extends Record<string, any>>({
     if (searchTerm && typeof cellContent === "string") {
       return highlightMatch(cellContent, searchTerm);
     } else if (column.render) {
-      return column.render(item, rowIndex, columnIndex);
+      return (
+        <Box sx={{ minWidth: column.width || 'auto' }}>
+          {column.render(item, rowIndex, columnIndex)}
+        </Box>
+      );
     } else if (column.formatter) {
       return column.formatter(cellContent);
     }
@@ -497,6 +501,7 @@ const CustomGrid = <T extends Record<string, any>>({
               return (
                 <React.Fragment key={`row-${rowIndex}`}>
                   <StyledTableRow
+                    key={`row-${rowIndex}`}
                     hover
                     onClick={(event) => handleClick(event, item)}
                     role="checkbox"
@@ -526,7 +531,7 @@ const CustomGrid = <T extends Record<string, any>>({
                       const col = columns.find(c => c.key === columnKey);
                       if (!col || !col.visible) return null;
                       return (
-                        <StyledTableCell key={`${col.key}-${rowIndex}`}>
+                        <StyledTableCell key={`${col.key}-${rowIndex}`} style={{ width: col.width || 'auto' }}>
                           {renderCell(item, col, rowIndex, columnIndex)}
                         </StyledTableCell>
                       );

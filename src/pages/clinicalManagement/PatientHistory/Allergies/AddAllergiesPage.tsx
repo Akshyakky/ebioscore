@@ -1,7 +1,6 @@
 // src/pages/clinicalManagement/PatientHistory/Allergies/AddAllergiesHistory.tsx
-
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Grid, Typography, Paper } from '@mui/material';
+import React, { useState, useCallback, useMemo } from 'react';
+import { Grid, Typography, Box } from '@mui/material';
 import FormField from "../../../../components/FormField/FormField";
 import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
@@ -10,6 +9,9 @@ import { allergyService } from '../../../../services/ClinicalManagementServices/
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { OPIPHistAllergyDetailDto, OPIPHistAllergyMastDto } from '../../../../interfaces/ClinicalManagement/AllergyDto';
 import { createEntityService } from '../../../../utils/Common/serviceFactory';
+import AddIcon from '@mui/icons-material/Add';
+import SaveIcon from '@mui/icons-material/Save';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 interface AddAllergiesHistoryProps {
     pChartId: number;
@@ -110,6 +112,7 @@ const AddAllergiesHistory: React.FC<AddAllergiesHistoryProps> = ({ pChartId, opi
                     color="secondary"
                     size="small"
                     text="Remove"
+                    icon={DeleteIcon}
                     onClick={() => handleRemoveAllergy(item.medicationName)}
                 />
             ),
@@ -117,8 +120,8 @@ const AddAllergiesHistory: React.FC<AddAllergiesHistoryProps> = ({ pChartId, opi
     ];
 
     return (
-        <Paper elevation={0} sx={{ p: 2, bgcolor: '#F8F8F8' }}>
-            <Typography variant="h6" gutterBottom>Allergies</Typography>
+        <Box>
+            <Typography variant="h6" gutterBottom color="textPrimary">Allergies</Typography>
             <Grid container spacing={2}>
                 <Grid item xs={12}>
                     <FormField
@@ -133,13 +136,14 @@ const AddAllergiesHistory: React.FC<AddAllergiesHistoryProps> = ({ pChartId, opi
                         placeholder="Search by medication name or generic name"
                     />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item xs={3}>
                     <CustomButton
                         variant="contained"
                         color="primary"
                         text="Add Allergy"
                         onClick={handleAddAllergy}
                         disabled={!searchTerm}
+                        icon={AddIcon}
                         sx={{ width: '100%' }}
                     />
                 </Grid>
@@ -151,18 +155,19 @@ const AddAllergiesHistory: React.FC<AddAllergiesHistoryProps> = ({ pChartId, opi
                         maxHeight="300px"
                     />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item xs={3}>
                     <CustomButton
                         variant="contained"
-                        color="primary"
+                        color="success"
                         text="Save Allergies"
                         onClick={handleSaveAllergies}
                         disabled={allergies.length === 0}
+                        icon={SaveIcon}
                         sx={{ width: '100%' }}
                     />
                 </Grid>
             </Grid>
-        </Paper>
+        </Box>
     );
 };
 

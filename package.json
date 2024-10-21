@@ -58,7 +58,7 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "set NODE_ENV=development && vite",
     "build": "set NODE_ENV=production && vite build",
     "serve": "vite preview"
   },

@@ -1,79 +1,79 @@
-// src/pages/clinicalManagement/PatientHistory/PastMedicalHistory/AddPastMedicalHistory.tsx
+// src/pages/clinicalManagement/PatientHistory/SocialHistory/AddSocialHistory.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Grid, Typography, useTheme } from '@mui/material';
 import FormField from '../../../../components/FormField/FormField';
 import CustomButton from '../../../../components/Button/CustomButton';
-import { OPIPHistPMHDto } from '../../../../interfaces/ClinicalManagement/OPIPHistPMHDto';
+import { OPIPHistSHDto } from '../../../../interfaces/ClinicalManagement/OPIPHistSHDto';
 import { createEntityService } from '../../../../utils/Common/serviceFactory';
 import { showAlert } from '../../../../utils/Common/showAlert';
 import { useLoading } from '../../../../context/LoadingContext';
 import SaveIcon from '@mui/icons-material/Save';
 import EditIcon from '@mui/icons-material/Edit';
 
-interface AddPastMedicalHistoryProps {
+interface AddSocialHistoryProps {
     pchartId: number;
     opipNo: number;
     opipCaseNo: number;
 }
 
-const AddPastMedicalHistory: React.FC<AddPastMedicalHistoryProps> = ({ pchartId, opipNo, opipCaseNo }) => {
-    const [pmhData, setPmhData] = useState<OPIPHistPMHDto>({
-        opippmhId: 0,
+const AddSocialHistory: React.FC<AddSocialHistoryProps> = ({ pchartId, opipNo, opipCaseNo }) => {
+    const [shData, setSHData] = useState<OPIPHistSHDto>({
+        opipSHID: 0,
         opipNo,
-        opvId: 0,
-        pchartId,
+        opvID: 0,
+        pChartID: pchartId,
         opipCaseNo,
-        patOpipYn: 'I',
-        opippmhDate: new Date(),
-        opippmhDesc: '',
-        opippmhNotes: '',
-        oldPchartId: 0,
+        patOpip: 'I',
+        opipSHDate: new Date(),
+        opipSHDesc: '',
+        opipSHNotes: '',
+        oldPChartID: 0,
     });
 
     const { setLoading } = useLoading();
-    const pmhService = createEntityService<OPIPHistPMHDto>('OPIPHistPMH', 'clinicalManagementURL');
+    const shService = createEntityService<OPIPHistSHDto>('OPIPHistSH', 'clinicalManagementURL');
     const theme = useTheme();
 
-    const loadPastMedicalHistory = useCallback(async () => {
+    const loadSocialHistory = useCallback(async () => {
         if (pchartId) {
             setLoading(true);
             try {
-                const response = await pmhService.find(`pchartId=${pchartId}`);
+                const response = await shService.find(`pChartID=${pchartId}`);
                 if (response.data && response.data.length > 0) {
-                    setPmhData(response.data[0]);
+                    setSHData(response.data[0]);
                 }
             } catch (error) {
-                console.error('Error loading past medical history:', error);
-                showAlert('Error', 'Failed to load past medical history.', 'error');
+                console.error('Error loading social history:', error);
+                showAlert('Error', 'Failed to load social history.', 'error');
             } finally {
                 setLoading(false);
             }
         }
-    }, [pchartId, pmhService]);
+    }, [pchartId, shService]);
 
     useEffect(() => {
-        loadPastMedicalHistory();
-    }, [loadPastMedicalHistory]);
+        loadSocialHistory();
+    }, [loadSocialHistory]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setPmhData(prev => ({ ...prev, [name]: value }));
+        setSHData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleDateChange = (date: Date | null) => {
         if (date) {
-            setPmhData(prev => ({ ...prev, opippmhDate: date }));
+            setSHData(prev => ({ ...prev, opipSHDate: date }));
         }
     };
 
     const handleSave = async () => {
         setLoading(true);
         try {
-            await pmhService.save(pmhData);
-            showAlert('Success', 'Past Medical History saved successfully!', 'success');
+            await shService.save(shData);
+            showAlert('Success', 'Social History saved successfully!', 'success');
         } catch (error) {
-            console.error('Error saving past medical history:', error);
-            showAlert('Error', 'Failed to save past medical history.', 'error');
+            console.error('Error saving social history:', error);
+            showAlert('Error', 'Failed to save social history.', 'error');
         } finally {
             setLoading(false);
         }
@@ -81,34 +81,34 @@ const AddPastMedicalHistory: React.FC<AddPastMedicalHistoryProps> = ({ pchartId,
 
     return (
         <Box sx={{ color: theme.palette.text.primary }}>
-            <Typography variant="h6" gutterBottom>Past Medical History</Typography>
+            <Typography variant="h6" gutterBottom>Social History</Typography>
             <Grid container spacing={2}>
                 <FormField
                     type="datepicker"
                     label="Date"
-                    value={pmhData.opippmhDate}
+                    value={shData.opipSHDate}
                     onChange={handleDateChange}
-                    name="opippmhDate"
-                    ControlID="opippmhDate"
+                    name="opipSHDate"
+                    ControlID="opipSHDate"
                     size="small"
                 />
                 <FormField
                     type="textarea"
                     label="Description"
-                    value={pmhData.opippmhDesc}
+                    value={shData.opipSHDesc}
                     onChange={handleInputChange}
-                    name="opippmhDesc"
-                    ControlID="opippmhDesc"
+                    name="opipSHDesc"
+                    ControlID="opipSHDesc"
                     size="small"
                     rows={4}
                 />
                 <FormField
                     type="textarea"
                     label="Notes"
-                    value={pmhData.opippmhNotes || ''}
+                    value={shData.opipSHNotes || ''}
                     onChange={handleInputChange}
-                    name="opippmhNotes"
-                    ControlID="opippmhNotes"
+                    name="opipSHNotes"
+                    ControlID="opipSHNotes"
                     size="small"
                     rows={4}
                 />
@@ -117,8 +117,8 @@ const AddPastMedicalHistory: React.FC<AddPastMedicalHistoryProps> = ({ pchartId,
                         variant="contained"
                         color="success"
                         onClick={handleSave}
-                        text="Save Past Medical History"
-                        icon={pmhData.opippmhId === 0 ? SaveIcon : EditIcon}
+                        text="Save Social History"
+                        icon={shData.opipSHID === 0 ? SaveIcon : EditIcon}
                     />
                 </Grid>
             </Grid>
@@ -126,4 +126,4 @@ const AddPastMedicalHistory: React.FC<AddPastMedicalHistoryProps> = ({ pchartId,
     );
 };
 
-export default AddPastMedicalHistory;
+export default AddSocialHistory;
