@@ -161,7 +161,6 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    debugger
     if (state.licenseExpiryMessage === "Cannot log in. Your License has expired") {
       dispatch({ type: 'SET_ERROR_MESSAGE', payload: state.licenseExpiryMessage });
       return;

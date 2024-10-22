@@ -9,7 +9,6 @@ import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdow
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 import { roomListService, wrBedService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
-import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/patientAdministrationService";
 
 interface AdmissionDetailsProps {
     formData: AdmissionDto;
@@ -87,25 +86,6 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
         setBedOptions([]);
     };
 
-    useEffect(() => {
-        const fetchAdmitCode = async () => {
-            try {
-                const admitCodeResponse = await extendedAdmissionService.generateAdmitCode();
-                if (admitCodeResponse.success && admitCodeResponse.data) {
-                    onChange('IPAdmissionDto', { ...formData.IPAdmissionDto, admitCode: admitCodeResponse.data });
-                } else {
-                    console.error("Failed to generate admit code:", admitCodeResponse.errorMessage);
-                }
-            } catch (error) {
-                console.error("Error fetching admit code:", error);
-            }
-        };
-
-        if (!formData.IPAdmissionDto.admitCode) {
-            fetchAdmitCode();
-        }
-    }, []);
-
     return (
         <FormSectionWrapper title="Admission Details" spacing={1}>
             <FormField
@@ -136,7 +116,7 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
                 label="Admission Type"
                 name="admissionType"
                 value={formData.IPAdmissionDetailsDto.admissionType || ''}
-                onChange={onDropdownChange(['IPAdmissionDetailsDto', 'admissionType'], ['IPAdmissionDetailsDto', 'admissionType'], dropdownValues.admissionType)}
+                onChange={(e) => onChange('IPAdmissionDetailsDto', { ...formData.IPAdmissionDetailsDto, admissionType: e.target.value })}
                 options={dropdownValues.admissionType}
                 ControlID="admissionType"
                 gridProps={{ xs: 12, sm: 6, md: 3 }}

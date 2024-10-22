@@ -7,6 +7,7 @@ import { OPIPHistPMHDto } from '../../../../interfaces/ClinicalManagement/OPIPHi
 import { createEntityService } from '../../../../utils/Common/serviceFactory';
 import { showAlert } from '../../../../utils/Common/showAlert';
 import { useLoading } from '../../../../context/LoadingContext';
+import { getDefaultFormDate } from '../../../../utils/Common/dateUtils';
 import SaveIcon from '@mui/icons-material/Save';
 import EditIcon from '@mui/icons-material/Edit';
 
@@ -14,22 +15,33 @@ interface AddPastMedicalHistoryProps {
     pchartId: number;
     opipNo: number;
     opipCaseNo: number;
+    onHistoryChange: (historyData: any) => void;
+    showImmediateSave: boolean;
+    pastMedicalData: OPIPHistPMHDto;
 }
 
-const AddPastMedicalHistory: React.FC<AddPastMedicalHistoryProps> = ({ pchartId, opipNo, opipCaseNo }) => {
-    const [pmhData, setPmhData] = useState<OPIPHistPMHDto>({
+const AddPastMedicalHistory: React.FC<AddPastMedicalHistoryProps> = ({
+    pchartId,
+    opipNo,
+    opipCaseNo,
+    onHistoryChange,
+    showImmediateSave,
+    pastMedicalData
+}) => {
+    const getInitialState = useCallback((): OPIPHistPMHDto => ({
         opippmhId: 0,
         opipNo,
         opvId: 0,
         pchartId,
         opipCaseNo,
         patOpipYn: 'I',
-        opippmhDate: new Date(),
+        opippmhDate: getDefaultFormDate(),
         opippmhDesc: '',
         opippmhNotes: '',
         oldPchartId: 0,
-    });
+    }), [pchartId, opipNo, opipCaseNo]);
 
+    const [pmhData, setPmhData] = useState<OPIPHistPMHDto>(pastMedicalData || getInitialState());
     const { setLoading } = useLoading();
     const pmhService = createEntityService<OPIPHistPMHDto>('OPIPHistPMH', 'clinicalManagementURL');
     const theme = useTheme();
@@ -41,36 +53,55 @@ const AddPastMedicalHistory: React.FC<AddPastMedicalHistoryProps> = ({ pchartId,
                 const response = await pmhService.find(`pchartId=${pchartId}`);
                 if (response.data && response.data.length > 0) {
                     setPmhData(response.data[0]);
+                } else {
+                    setPmhData(getInitialState());
                 }
             } catch (error) {
                 console.error('Error loading past medical history:', error);
                 showAlert('Error', 'Failed to load past medical history.', 'error');
+                setPmhData(getInitialState());
             } finally {
                 setLoading(false);
             }
         }
-    }, [pchartId, pmhService]);
+    }, [pchartId, pmhService, getInitialState]);
 
     useEffect(() => {
         loadPastMedicalHistory();
     }, [loadPastMedicalHistory]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    useEffect(() => {
+        onHistoryChange(pmhData);
+    }, [pmhData, onHistoryChange]);
+
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setPmhData(prev => ({ ...prev, [name]: value }));
-    };
+    }, []);
 
-    const handleDateChange = (date: Date | null) => {
+    const handleDateChange = useCallback((date: Date | null) => {
         if (date) {
             setPmhData(prev => ({ ...prev, opippmhDate: date }));
         }
-    };
+    }, []);
 
     const handleSave = async () => {
+        if (!pmhData.opippmhDesc.trim()) {
+            showAlert('Warning', 'Please enter a description before saving.', 'warning');
+            return;
+        }
+
         setLoading(true);
         try {
-            await pmhService.save(pmhData);
-            showAlert('Success', 'Past Medical History saved successfully!', 'success');
+            const response = await pmhService.save(pmhData);
+            if (response.success) {
+                showAlert('Success', 'Past Medical History saved successfully!', 'success');
+                if (pmhData.opippmhId === 0) {
+                    setPmhData(getInitialState());
+                }
+            } else {
+                showAlert('Error', response.errorMessage || 'Failed to save past medical history.', 'error');
+            }
         } catch (error) {
             console.error('Error saving past medical history:', error);
             showAlert('Error', 'Failed to save past medical history.', 'error');
@@ -91,6 +122,7 @@ const AddPastMedicalHistory: React.FC<AddPastMedicalHistoryProps> = ({ pchartId,
                     name="opippmhDate"
                     ControlID="opippmhDate"
                     size="small"
+                    maxDate={new Date()}
                 />
                 <FormField
                     type="textarea"
@@ -101,6 +133,7 @@ const AddPastMedicalHistory: React.FC<AddPastMedicalHistoryProps> = ({ pchartId,
                     ControlID="opippmhDesc"
                     size="small"
                     rows={4}
+                    isMandatory
                 />
                 <FormField
                     type="textarea"
@@ -112,15 +145,17 @@ const AddPastMedicalHistory: React.FC<AddPastMedicalHistoryProps> = ({ pchartId,
                     size="small"
                     rows={4}
                 />
-                <Grid item xs={12}>
-                    <CustomButton
-                        variant="contained"
-                        color="success"
-                        onClick={handleSave}
-                        text="Save Past Medical History"
-                        icon={pmhData.opippmhId === 0 ? SaveIcon : EditIcon}
-                    />
-                </Grid>
+                {showImmediateSave && (
+                    <Grid item xs={12}>
+                        <CustomButton
+                            variant="contained"
+                            color="success"
+                            onClick={handleSave}
+                            text={`${pmhData.opippmhId === 0 ? 'Save' : 'Update'} Past Medical History`}
+                            icon={pmhData.opippmhId === 0 ? SaveIcon : EditIcon}
+                        />
+                    </Grid>
+                )}
             </Grid>
         </Box>
     );

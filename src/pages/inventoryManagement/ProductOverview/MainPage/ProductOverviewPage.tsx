@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Box, Container, Typography } from "@mui/material";
 import ProductOverviewDetail from "../SubPage/ProductOverviewDetails";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
@@ -12,6 +12,7 @@ import { ProductOverviewDto } from "../../../../interfaces/InventoryManagement/P
 import ActionButtonGroup, { ButtonProps } from '../../../../components/Button/ActionButtonGroup';
 import ProductOverviewSearch from '../SubPage/ProductOverviewSearch';
 import Search from "@mui/icons-material/Search";
+import { showAlert } from "../../../../utils/Common/showAlert";
 
 const ProductOverviewPage: React.FC = () => {
     const [selectedData, setSelectedData] = useState<ProductOverviewDto>({
@@ -35,48 +36,90 @@ const ProductOverviewPage: React.FC = () => {
     const [isDepartmentSelected, setIsDepartmentSelected] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const { handleDropdownChange } = useDropdownChange<ProductOverviewDto>(setSelectedData);
+    const dropdownValues = useDropdownValues(['department']);
+    const isSubmitted = false;
 
-    const handleCloseDialog = () => {
-        setDialogOpen(false);
-    };
-
-    const handleOkClick = () => {
-        setIsDepartmentSelected(selectedData.deptID !== 0);
-        if (selectedData.deptID === 0) {
-            alert("Please select a department.");
-        } else {
+    const handleCloseDialog = useCallback(() => {
+        if (isDepartmentSelected) {
             setDialogOpen(false);
+        } else {
+            showAlert(
+                "Warning",
+                "Please select a department before closing.",
+                "warning"
+            );
         }
-    };
+    }, [isDepartmentSelected]);
 
-    const handleDepartmentChange = () => {
+    const handleOkClick = useCallback(() => {
+        if (selectedData.deptID === 0) {
+            showAlert(
+                "Warning",
+                "Please select a department to continue.",
+                "warning"
+            );
+        } else {
+            setIsDepartmentSelected(true);
+            setDialogOpen(false);
+            showAlert(
+                "Success",
+                "Department selected successfully!",
+                "success"
+            );
+        }
+    }, [selectedData.deptID]);
+
+    const handleDepartmentChange = useCallback(() => {
         setDialogOpen(true);
-    };
-    const handleAdvancedSearch = useCallback(() => {
-        setIsSearchOpen(true);
     }, []);
+
+    const handleAdvancedSearch = useCallback(() => {
+        if (!isDepartmentSelected) {
+            showAlert(
+                "Warning",
+                "Please select a department first before searching.",
+                "warning"
+            );
+            return;
+        }
+        setIsSearchOpen(true);
+    }, [isDepartmentSelected]);
 
     const handleCloseSearch = useCallback(() => {
         setIsSearchOpen(false);
     }, []);
 
     const handleSelect = useCallback((data: ProductOverviewDto) => {
-        setSelectedData(data);
+        setSelectedData(prev => ({
+            ...prev,
+            ...data
+        }));
+        showAlert(
+            "Success",
+            "Product overview details loaded successfully!",
+            "success"
+        );
     }, []);
-    const actionButtons: ButtonProps[] = [
+
+    const actionButtons: ButtonProps[] = useMemo(() => [
         {
             variant: "contained",
             icon: Search,
             text: "Advanced Search",
             onClick: handleAdvancedSearch,
         },
-    ];
-    const dropdownValues = useDropdownValues(['department']);
-    const isSubmitted = false;
+    ], [handleAdvancedSearch]);
+
     return (
         <Container maxWidth={false}>
             <Box sx={{ marginBottom: 2 }}>
-                <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
+                <ActionButtonGroup
+                    buttons={actionButtons}
+                    groupVariant="contained"
+                    groupSize="medium"
+                    orientation="horizontal"
+                    color="primary"
+                />
             </Box>
             <Box sx={{ marginBottom: 2 }} />
 
@@ -86,6 +129,7 @@ const ProductOverviewPage: React.FC = () => {
                     onChangeDepartment={handleDepartmentChange}
                 />
             )}
+
             <GenericDialog
                 open={dialogOpen}
                 onClose={handleCloseDialog}
@@ -130,14 +174,15 @@ const ProductOverviewPage: React.FC = () => {
                     />
                 </Box>
             </GenericDialog>
+
             <ProductOverviewSearch
                 open={isSearchOpen}
                 onClose={handleCloseSearch}
                 onSelect={handleSelect}
-                selectedDeptID={selectedData.deptID}  // Pass the selected department ID here
+                selectedDeptID={selectedData.deptID}
             />
         </Container>
     );
 };
 
-export default ProductOverviewPage;
+export default React.memo(ProductOverviewPage);

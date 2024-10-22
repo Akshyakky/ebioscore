@@ -14,7 +14,6 @@ const MedicationListSearch: React.FC<MedicationListSearchProps> = ({ open, onClo
     const medicationListService = useMemo(() => createEntityService<MedicationListDto>('MedicationList', 'clinicalManagementURL'), []);
     const fetchItems = async () => {
         try {
-            debugger
             const items = await medicationListService.getAll();
             return items.data || [];
         } catch (error) {

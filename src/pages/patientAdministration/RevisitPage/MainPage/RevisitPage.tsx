@@ -24,6 +24,7 @@ import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientS
 import FormField from "../../../../components/FormField/FormField";
 import { revisitFormData, RevisitFormErrors } from "../../../../interfaces/PatientAdministration/revisitFormData";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
+import useDropdownChange from "../../../../hooks/useDropdownChange";
 
 const RevisitPage: React.FC = () => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
@@ -92,7 +93,7 @@ const RevisitPage: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [availableAttendingPhysicians, setAvailableAttendingPhysicians] = useState<DropdownOption[]>([]);
   const [primaryIntroducingSource, setPrimaryIntroducingSource] = useState<DropdownOption[]>([]);
-
+  const { handleDropdownChange } = useDropdownChange<revisitFormData>(setRevisitFormData);
   const uhidRef = useRef<HTMLInputElement>(null);
   const insurancePageRef = useRef<any>(null);
 
@@ -127,11 +128,6 @@ const RevisitPage: React.FC = () => {
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   }, [revisitFormData]);
-
-  const handleDropdownChange = useCallback((field: string) => (event: SelectChangeEvent<string>) => {
-    const { value } = event.target;
-    setRevisitFormData(prev => ({ ...prev, [field]: parseInt(value, 10) }));
-  }, []);
 
   const handleRadioButtonChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -296,7 +292,7 @@ const RevisitPage: React.FC = () => {
                 name="pTypeID"
                 ControlID="PIC"
                 options={dropdownValues.pic}
-                onChange={handleDropdownChange("pTypeID")}
+                onChange={handleDropdownChange(["pTypeID"], ["pTypeName"], dropdownValues.pic)}
                 isMandatory={true}
                 isSubmitted={isSubmitted}
                 errorMessage={formErrors.pTypeID}
@@ -326,7 +322,7 @@ const RevisitPage: React.FC = () => {
                   name="deptID"
                   ControlID="Department"
                   options={DepartmentDropdownValues}
-                  onChange={handleDropdownChange("deptID")}
+                  onChange={handleDropdownChange(["deptID"], ["deptName"], dropdownValues.department)}
                   isMandatory={true}
                   isSubmitted={isSubmitted}
                   errorMessage={formErrors.deptID}
@@ -340,7 +336,7 @@ const RevisitPage: React.FC = () => {
                   name="attndPhyID"
                   ControlID="AttendingPhysician"
                   options={availableAttendingPhysicians}
-                  onChange={handleDropdownChange("attndPhyID")}
+                  onChange={handleDropdownChange(["attndPhyID"], ["attendingPhysicianName"], availableAttendingPhysicians)}
                   isMandatory={true}
                   isSubmitted={isSubmitted}
                   errorMessage={formErrors.attndPhyID}
@@ -355,7 +351,7 @@ const RevisitPage: React.FC = () => {
                 name="primPhyID"
                 ControlID="PrimaryIntroducingSource"
                 options={primaryIntroducingSource}
-                onChange={handleDropdownChange("primPhyID")}
+                onChange={handleDropdownChange(["primPhyID"], ["primaryPhysicianName"], primaryIntroducingSource)}
                 isMandatory={true}
                 isSubmitted={isSubmitted}
                 errorMessage={formErrors.primPhyID}

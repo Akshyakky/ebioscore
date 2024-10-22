@@ -1,5 +1,5 @@
 // src/pages/clinicalManagement/PatientHistory/Allergies/AddAllergiesHistory.tsx
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Grid, Typography, Box } from '@mui/material';
 import FormField from "../../../../components/FormField/FormField";
 import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
@@ -17,10 +17,20 @@ interface AddAllergiesHistoryProps {
     pChartId: number;
     opipNo: number;
     opipCaseNo: number;
+    onHistoryChange: (historyData: any) => void;
+    showImmediateSave: boolean;
+    allergiesData: OPIPHistAllergyDetailDto[];
 }
 
-const AddAllergiesHistory: React.FC<AddAllergiesHistoryProps> = ({ pChartId, opipNo, opipCaseNo }) => {
-    const [allergies, setAllergies] = useState<OPIPHistAllergyDetailDto[]>([]);
+const AddAllergiesHistory: React.FC<AddAllergiesHistoryProps> = ({
+    pChartId,
+    opipNo,
+    opipCaseNo,
+    onHistoryChange,
+    showImmediateSave,
+    allergiesData
+}) => {
+    const [allergies, setAllergies] = useState<OPIPHistAllergyDetailDto[]>(allergiesData || []);
     const [searchTerm, setSearchTerm] = useState('');
 
     const medicationListService = useMemo(() => createEntityService<MedicationListDto>('MedicationList', 'clinicalManagementURL'), []);
@@ -98,6 +108,10 @@ const AddAllergiesHistory: React.FC<AddAllergiesHistoryProps> = ({ pChartId, opi
         }
     }, [allergies, pChartId, opipNo, opipCaseNo]);
 
+    useEffect(() => {
+        onHistoryChange(allergies);
+    }, [allergies, onHistoryChange]);
+
     const columns: Column<OPIPHistAllergyDetailDto>[] = [
         { key: 'medicationName', header: 'Medication Name', visible: true },
         { key: 'formName', header: 'Form Name', visible: true },
@@ -155,17 +169,19 @@ const AddAllergiesHistory: React.FC<AddAllergiesHistoryProps> = ({ pChartId, opi
                         maxHeight="300px"
                     />
                 </Grid>
-                <Grid item xs={3}>
-                    <CustomButton
-                        variant="contained"
-                        color="success"
-                        text="Save Allergies"
-                        onClick={handleSaveAllergies}
-                        disabled={allergies.length === 0}
-                        icon={SaveIcon}
-                        sx={{ width: '100%' }}
-                    />
-                </Grid>
+                {showImmediateSave && (
+                    <Grid item xs={3}>
+                        <CustomButton
+                            variant="contained"
+                            color="success"
+                            text="Save Allergies"
+                            onClick={handleSaveAllergies}
+                            disabled={allergies.length === 0}
+                            icon={SaveIcon}
+                            sx={{ width: '100%' }}
+                        />
+                    </Grid>
+                )}
             </Grid>
         </Box>
     );

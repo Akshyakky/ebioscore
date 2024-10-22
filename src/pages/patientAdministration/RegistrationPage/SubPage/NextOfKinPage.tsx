@@ -64,7 +64,6 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
 
   const handleSaveKin = useCallback(
     (kinDetails: PatNokDetailsDto) => {
-      debugger
       setGridKinData((prevData) => {
         if (!kinDetails.pNokID && !kinDetails.ID) {
           return [...prevData, { ...kinDetails, ID: generateNewId(prevData) }];

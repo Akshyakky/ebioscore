@@ -105,7 +105,6 @@ const MedicationListDetails: React.FC<MedicationListDetailsProps> = ({ selectedD
         setLoading(true);
 
         try {
-            debugger
             await medicationListService.save(formState);
             showAlert("Success", "Medication List saved successfully!", "success", {
                 onConfirm: handleClear

@@ -10,7 +10,7 @@ import { SxProps } from "@mui/system";
 import { Theme } from "@mui/material/styles";
 
 interface TextAreaProps {
-  label: string;
+  label?: string;
   name: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -25,12 +25,14 @@ interface TextAreaProps {
   helperText?: string;
   error?: boolean;
   sx?: SxProps<Theme>;
+  isSubmitted?: boolean;
+  errorMessage?: string;
 }
 
 const TextArea: React.FC<TextAreaProps> = ({
-  label,
+  label = '',
   name,
-  value,
+  value = '',
   onChange,
   rows = 3,
   isMandatory = false,
@@ -43,10 +45,24 @@ const TextArea: React.FC<TextAreaProps> = ({
   helperText = "",
   error = false,
   sx = {},
+  isSubmitted = false,
+  errorMessage,
 }) => {
+
   const remainingChars = useMemo(() => {
-    return maxLength ? maxLength - value.length : undefined;
-  }, [value.length, maxLength]);
+    if (!maxLength || !value) return undefined;
+    return maxLength - value.toString().length;
+  }, [value, maxLength]);
+
+  const showError = useMemo(() => {
+    return error || (isSubmitted && isMandatory && !value);
+  }, [error, isSubmitted, isMandatory, value]);
+
+  const displayHelperText = useMemo(() => {
+    if (errorMessage) return errorMessage;
+    if (showError && isMandatory) return `${label || 'Field'} is required`;
+    return helperText;
+  }, [errorMessage, showError, isMandatory, label, helperText]);
 
   return (
     <FormControl
@@ -56,43 +72,57 @@ const TextArea: React.FC<TextAreaProps> = ({
       style={style}
       required={isMandatory}
       disabled={disabled}
-      error={error}
+      error={showError}
       sx={sx}
     >
       <TextField
         label={label}
         name={name}
-        value={value}
+        value={value || ''}
         onChange={onChange}
         multiline
         rows={rows}
         disabled={disabled}
         InputProps={{
-          readOnly: readOnly,
+          readOnly,
         }}
         placeholder={placeholder}
         variant="outlined"
         aria-required={isMandatory}
-        aria-invalid={error}
+        aria-invalid={showError}
+        error={showError}
         inputProps={{
           maxLength,
-          "aria-describedby": helperText ? `${name}-helper-text` : undefined,
+          'aria-describedby': `${name}-helper-text`,
         }}
       />
-      {(helperText || isMandatory || maxLength) && (
-        <Box display="flex" justifyContent="space-between" mt={1}>
-          <FormHelperText id={`${name}-helper-text`} error={error}>
-            {helperText || (isMandatory && !value ? `${label} is required` : "")}
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="flex-start"
+        mt={0.5}
+      >
+        {displayHelperText && (
+          <FormHelperText
+            id={`${name}-helper-text`}
+            error={showError}
+            sx={{ margin: 0 }}
+          >
+            {displayHelperText}
           </FormHelperText>
-          {maxLength && (
-            <Typography variant="caption" color="textSecondary">
-              {remainingChars} characters remaining
-            </Typography>
-          )}
-        </Box>
-      )}
+        )}
+        {maxLength && (
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            sx={{ marginLeft: 'auto' }}
+          >
+            {remainingChars} characters remaining
+          </Typography>
+        )}
+      </Box>
     </FormControl>
   );
 };
 
-export default TextArea;
+export default React.memo(TextArea);

@@ -78,9 +78,6 @@ export interface PatAddressDto {
   pAddPhone2?: string;
   pAddPhone3?: string;
   pAddWorkPhone?: string;
-  compCode?: string;
-  compID?: number;
-  compName?: string;
   pAddActualCountryVal?: string;
   pAddActualCountry?: string;
   patAreaVal?: string;

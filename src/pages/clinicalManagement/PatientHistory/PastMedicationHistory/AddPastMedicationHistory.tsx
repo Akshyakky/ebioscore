@@ -1,6 +1,6 @@
 // src/pages/clinicalManagement/PatientHistory/PastMedication/AddPastMedicationHistory.tsx
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Grid, Typography, Box } from '@mui/material';
 import FormField from "../../../../components/FormField/FormField";
 import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
@@ -14,16 +14,28 @@ import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import useDropdownValues from '../../../../hooks/PatientAdminstration/useDropdownValues';
+import { useLoading } from '../../../../context/LoadingContext';
 
 interface AddPastMedicationHistoryProps {
     pchartId: number;
     opipNo: number;
     opipCaseNo: number;
+    onHistoryChange: (historyData: any) => void;
+    showImmediateSave: boolean;
+    pastMedicationData: PastMedicationDetailDto[];
 }
 
-const AddPastMedicationHistory: React.FC<AddPastMedicationHistoryProps> = ({ pchartId, opipNo, opipCaseNo }) => {
-    const [pastMedications, setPastMedications] = useState<PastMedicationDetailDto[]>([]);
+const AddPastMedicationHistory: React.FC<AddPastMedicationHistoryProps> = ({
+    pchartId,
+    opipNo,
+    opipCaseNo,
+    onHistoryChange,
+    showImmediateSave,
+    pastMedicationData
+}) => {
+    const [pastMedications, setPastMedications] = useState<PastMedicationDetailDto[]>(pastMedicationData || []);
     const [searchTerm, setSearchTerm] = useState('');
+    const { setLoading } = useLoading();
 
     const medicationListService = useMemo(() => createEntityService<MedicationListDto>('MedicationList', 'clinicalManagementURL'), []);
     const dropdownValues = useDropdownValues(['medicationForm', 'medicationDosage', 'medicationFrequency', 'medicationInstruction']);
@@ -83,6 +95,7 @@ const AddPastMedicationHistory: React.FC<AddPastMedicationHistoryProps> = ({ pch
     }, []);
 
     const handleSaveMedications = useCallback(async () => {
+        setLoading(true);
         const pastMedicationMast: PastMedicationDto = {
             opipPastMedID: 0,
             opipNo,
@@ -107,6 +120,8 @@ const AddPastMedicationHistory: React.FC<AddPastMedicationHistoryProps> = ({ pch
         } catch (error) {
             console.error("Error saving past medications:", error);
             showAlert("Error", "Failed to save past medications.", "error");
+        } finally {
+            setLoading(false);
         }
     }, [pastMedications, pchartId, opipNo, opipCaseNo]);
 
@@ -115,6 +130,10 @@ const AddPastMedicationHistory: React.FC<AddPastMedicationHistoryProps> = ({ pch
             i === index ? { ...med, [field]: value } : med
         ));
     }, []);
+
+    useEffect(() => {
+        onHistoryChange(pastMedications);
+    }, [pastMedications, onHistoryChange]);
 
     const columns: Column<PastMedicationDetailDto>[] = [
         { key: 'medText', header: 'Medication Name', visible: true },
@@ -271,17 +290,19 @@ const AddPastMedicationHistory: React.FC<AddPastMedicationHistoryProps> = ({ pch
                         maxHeight="300px"
                     />
                 </Grid>
-                <Grid item xs={3}>
-                    <CustomButton
-                        variant="contained"
-                        color="success"
-                        text="Save Medications"
-                        onClick={handleSaveMedications}
-                        disabled={pastMedications.length === 0}
-                        icon={SaveIcon}
-                        sx={{ width: '100%' }}
-                    />
-                </Grid>
+                {showImmediateSave && (
+                    <Grid item xs={3}>
+                        <CustomButton
+                            variant="contained"
+                            color="success"
+                            text="Save Medications"
+                            onClick={handleSaveMedications}
+                            disabled={pastMedications.length === 0}
+                            icon={SaveIcon}
+                            sx={{ width: '100%' }}
+                        />
+                    </Grid>
+                )}
             </Grid>
         </Box>
     );

@@ -7,6 +7,7 @@ import { OPIPHistFHDto } from '../../../../interfaces/ClinicalManagement/OPIPHis
 import { createEntityService } from '../../../../utils/Common/serviceFactory';
 import { showAlert } from '../../../../utils/Common/showAlert';
 import { useLoading } from '../../../../context/LoadingContext';
+import { getCurrentDateTime, getDefaultFormDate } from '../../../../utils/Common/dateUtils';
 import SaveIcon from '@mui/icons-material/Save';
 import EditIcon from '@mui/icons-material/Edit';
 
@@ -14,22 +15,33 @@ interface AddFamilyHistoryProps {
     pchartId: number;
     opipNo: number;
     opipCaseNo: number;
+    onHistoryChange: (historyData: any) => void;
+    showImmediateSave: boolean;
+    familyHistoryData: OPIPHistFHDto;
 }
 
-const AddFamilyHistory: React.FC<AddFamilyHistoryProps> = ({ pchartId, opipNo, opipCaseNo }) => {
-    const [fhData, setFHData] = useState<OPIPHistFHDto>({
+const AddFamilyHistory: React.FC<AddFamilyHistoryProps> = ({
+    pchartId,
+    opipNo,
+    opipCaseNo,
+    onHistoryChange,
+    showImmediateSave,
+    familyHistoryData
+}) => {
+    const getInitialState = useCallback((): OPIPHistFHDto => ({
         opipFHID: 0,
         opipNo,
         opvID: 0,
         pChartID: pchartId,
         opipCaseNo,
         patOpip: 'I',
-        opipFHDate: new Date(),
+        opipFHDate: getCurrentDateTime(),
         opipFHDesc: '',
         opipFHNotes: '',
         oldPChartID: 0,
-    });
+    }), [pchartId, opipNo, opipCaseNo]);
 
+    const [fhData, setFHData] = useState<OPIPHistFHDto>(familyHistoryData || getInitialState());
     const { setLoading } = useLoading();
     const fhService = createEntityService<OPIPHistFHDto>('OPIPHistFH', 'clinicalManagementURL');
     const theme = useTheme();
@@ -41,36 +53,55 @@ const AddFamilyHistory: React.FC<AddFamilyHistoryProps> = ({ pchartId, opipNo, o
                 const response = await fhService.find(`pChartID=${pchartId}`);
                 if (response.data && response.data.length > 0) {
                     setFHData(response.data[0]);
+                } else {
+                    setFHData(getInitialState());
                 }
             } catch (error) {
                 console.error('Error loading family history:', error);
                 showAlert('Error', 'Failed to load family history.', 'error');
+                setFHData(getInitialState());
             } finally {
                 setLoading(false);
             }
         }
-    }, [pchartId, fhService]);
+    }, [pchartId, fhService, getInitialState]);
 
     useEffect(() => {
         loadFamilyHistory();
     }, [loadFamilyHistory]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    useEffect(() => {
+        onHistoryChange(fhData);
+    }, [fhData, onHistoryChange]);
+
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFHData(prev => ({ ...prev, [name]: value }));
-    };
+    }, []);
 
-    const handleDateChange = (date: Date | null) => {
+    const handleDateChange = useCallback((date: Date | null) => {
         if (date) {
             setFHData(prev => ({ ...prev, opipFHDate: date }));
         }
-    };
+    }, []);
 
     const handleSave = async () => {
+        if (!fhData.opipFHDesc) {
+            showAlert('Warning', 'Please enter a description before saving.', 'warning');
+            return;
+        }
+
         setLoading(true);
         try {
-            await fhService.save(fhData);
-            showAlert('Success', 'Family History saved successfully!', 'success');
+            const response = await fhService.save(fhData);
+            if (response.success) {
+                showAlert('Success', 'Family History saved successfully!', 'success');
+                if (fhData.opipFHID === 0) {
+                    setFHData(getInitialState());
+                }
+            } else {
+                showAlert('Error', response.errorMessage || 'Failed to save family history.', 'error');
+            }
         } catch (error) {
             console.error('Error saving family history:', error);
             showAlert('Error', 'Failed to save family history.', 'error');
@@ -91,16 +122,18 @@ const AddFamilyHistory: React.FC<AddFamilyHistoryProps> = ({ pchartId, opipNo, o
                     name="opipFHDate"
                     ControlID="opipFHDate"
                     size="small"
+                    maxDate={new Date()}
                 />
                 <FormField
                     type="textarea"
                     label="Description"
-                    value={fhData.opipFHDesc || ''}
+                    value={fhData.opipFHDesc}
                     onChange={handleInputChange}
                     name="opipFHDesc"
                     ControlID="opipFHDesc"
                     size="small"
                     rows={4}
+                    isMandatory
                 />
                 <FormField
                     type="textarea"
@@ -112,15 +145,17 @@ const AddFamilyHistory: React.FC<AddFamilyHistoryProps> = ({ pchartId, opipNo, o
                     size="small"
                     rows={4}
                 />
-                <Grid item xs={12}>
-                    <CustomButton
-                        variant="contained"
-                        color="success"
-                        onClick={handleSave}
-                        text="Save Family History"
-                        icon={fhData.opipFHID === 0 ? SaveIcon : EditIcon}
-                    />
-                </Grid>
+                {showImmediateSave && (
+                    <Grid item xs={12}>
+                        <CustomButton
+                            variant="contained"
+                            color="success"
+                            onClick={handleSave}
+                            text={`${fhData.opipFHID === 0 ? 'Save' : 'Update'} Family History`}
+                            icon={fhData.opipFHID === 0 ? SaveIcon : EditIcon}
+                        />
+                    </Grid>
+                )}
             </Grid>
         </Box>
     );

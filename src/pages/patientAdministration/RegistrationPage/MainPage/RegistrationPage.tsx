@@ -22,6 +22,8 @@ import NextOfKinPage from "../SubPage/NextOfKinPage";
 import useDayjs from "../../../../hooks/Common/useDateTime";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
+import { showAlert } from "../../../../utils/Common/showAlert";
+import { notifyError, notifySuccess, notifyWarning } from "../../../../utils/Common/toastManager";
 
 const RegistrationPage: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -32,7 +34,7 @@ const RegistrationPage: React.FC = () => {
   const [selectedPChartID, setSelectedPChartID] = useState<number>(0);
   const [shouldClearInsuranceData, setShouldClearInsuranceData] = useState(false);
   const [shouldClearKinData, setShouldClearKinData] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const nextOfKinPageRef = useRef<any>(null);
   const insurancePageRef = useRef<any>(null);
   const serverDate = useServerDate();
@@ -120,9 +122,6 @@ const RegistrationPage: React.FC = () => {
       pAddPhone2: "",
       pAddPhone3: "",
       pAddWorkPhone: "",
-      compID: userInfo.compID ?? 0,
-      compCode: userInfo.compCode ?? "",
-      compName: userInfo.compName ?? "",
       pAddActualCountryVal: "",
       pAddActualCountry: "",
       patAreaVal: "",
@@ -142,7 +141,7 @@ const RegistrationPage: React.FC = () => {
       ethnicity: "",
       pCountryOfOrigin: "",
       pAgeNumber: 0,
-      pAgeDescriptionVal: ""
+      pAgeDescriptionVal: "Years"
     },
     opvisits: {
       visitTypeVal: "H",
@@ -167,21 +166,22 @@ const RegistrationPage: React.FC = () => {
     setFormData(initializeFormData(userInfo));
     setShouldClearInsuranceData(true);
     setShouldClearKinData(true);
+    setIsEditMode(false);
+    setSelectedPChartID(0);
     fetchLatestUHID().then((latestUHID) => {
       if (latestUHID) {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
+        setFormData((prev) => ({
+          ...prev,
           patRegisters: {
-            ...prevFormData.patRegisters,
+            ...prev.patRegisters,
             pChartCode: latestUHID,
           },
         }));
       }
     });
-    setEditMode(false);
-    setSelectedPChartID(0);
     window.scrollTo(0, 0);
-  }, [fetchLatestUHID, userInfo, initializeFormData]);
+    notifySuccess("Form cleared successfully!");
+  }, [userInfo, initializeFormData, fetchLatestUHID]);
 
   const validateFormData = useCallback(() => {
     const errors: RegistrationFormErrors = {};
@@ -237,34 +237,65 @@ const RegistrationPage: React.FC = () => {
 
   const handleSave = useCallback(async () => {
     setIsSubmitted(true);
+    if (!validateFormData()) {
+      notifyWarning("Please fill all mandatory fields.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const isFormValid = validateFormData();
-      if (!isFormValid) {
-        console.log("Validation failed. Please fill all mandatory fields.");
-        return;
-      }
-      const registrationResponse = await PatientService.savePatient(formData);
-      if (registrationResponse.success && registrationResponse.data) {
-        const pChartID = registrationResponse.data;
+      const response = await PatientService.savePatient(formData);
+      if (response.success && response.data) {
+        const pChartID = response.data;
+        let hasErrors = false;
+        const actionText = isEditMode ? "updated" : "saved";
 
+        // Save Next of Kin Details
         if (nextOfKinPageRef.current) {
-          await nextOfKinPageRef.current.saveKinDetails(pChartID);
+          try {
+            await nextOfKinPageRef.current.saveKinDetails(pChartID);
+          } catch (error) {
+            console.error('Error saving kin details:', error);
+            hasErrors = true;
+          }
         }
 
+        // Save Insurance Details
         if (insurancePageRef.current) {
-          await insurancePageRef.current.saveInsuranceDetails(pChartID);
+          try {
+            await insurancePageRef.current.saveInsuranceDetails(pChartID);
+          } catch (error) {
+            console.error('Error saving insurance details:', error);
+            hasErrors = true;
+          }
         }
 
-        alert("Registration saved successfully!");
-        handleClear();
+        if (hasErrors) {
+          showAlert(
+            "Warning",
+            `Patient registration ${actionText}, but there were issues saving additional details. Please check and try saving them again.`,
+            "warning",
+            { onConfirm: handleClear }
+          );
+        } else {
+          showAlert(
+            "Success",
+            `Registration ${actionText} successfully!`,
+            "success",
+            { onConfirm: handleClear }
+          );
+          notifySuccess(`Patient registration ${actionText} successfully!`);
+        }
+      } else {
+        throw new Error(response.errorMessage || "Failed to save registration.");
       }
     } catch (error) {
-      setLoading(false);
+      console.error('Registration error:', error);
+      notifyError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
-  }, [validateFormData, formData, handleClear, setLoading]);
+  }, [formData, isEditMode, validateFormData, handleClear]);
 
   const handlePatientSelect = useCallback(async (selectedSuggestion: string) => {
     setLoading(true);
@@ -286,7 +317,7 @@ const RegistrationPage: React.FC = () => {
       const patientDetails = await PatientService.getPatientDetails(pChartID);
       if (patientDetails.success && patientDetails.data) {
 
-        setEditMode(true);
+        setIsEditMode(true);
         setFormData(patientDetails.data);
       } else {
         console.error("Fetching patient details was not successful or data is undefined");
@@ -342,13 +373,13 @@ const RegistrationPage: React.FC = () => {
             isSubmitted={isSubmitted}
           />
         </CustomAccordion>
-        {!editMode && formData.opvisits && (
+        {!isEditMode && formData.opvisits && (
           <CustomAccordion title="Visit Details" defaultExpanded>
             <VisitDetails
               formData={formData}
               setFormData={setFormData}
               isSubmitted={isSubmitted}
-              isEditMode={editMode}
+              isEditMode={isEditMode}
             />
           </CustomAccordion>
         )}
@@ -372,7 +403,7 @@ const RegistrationPage: React.FC = () => {
       </Container >
       <FormSaveClearButton
         clearText="Clear"
-        saveText="Save"
+        saveText={isEditMode ? "Update" : "Save"}
         onClear={handleClear}
         onSave={handleSave}
         clearIcon={DeleteIcon}
