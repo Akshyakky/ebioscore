@@ -21,6 +21,8 @@ import FormField from "../../../../components/FormField/FormField";
 import { store } from "../../../../store/store";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../store/reducers";
+import moduleService from "../../../../services/CommonServices/ModuleService";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 
 const AppModifiedDetails: React.FC = () => {
     const { setLoading } = useLoading();
@@ -39,6 +41,16 @@ const AppModifiedDetails: React.FC = () => {
             ? 0
             : userInfo.userID
         : -1;
+    const [dropdownValues, setDropdownValues] = useState({
+        mainModulesOptions: [] as DropdownOption[],
+        authGroupOptions: [] as DropdownOption[],
+    });
+
+    const { token, adminYN, userID } = useSelector(
+        (state: RootState) => state.userDetails
+    );
+    const [, setCurrentCounter] = useState<number>(0);
+    const [isDropdownLoading, setIsDropdownLoading] = useState(true);
     const [categoryFormData, setCategoryFormData] = useState<AppModifiedMast>({
         fieldID: 0,
         fieldCode: "",
@@ -70,6 +82,21 @@ const AppModifiedDetails: React.FC = () => {
     useEffect(() => {
         fetchMasterList();
     }, []);
+
+    const initialFormData: AppModifyFieldDto = {
+        amlID: 0,
+        amlName: "",
+        amlCode: "",
+        amlField: "",
+        defaultYN: "N",
+        modifyYN: "N",
+        rNotes: "",
+        compID: compID || 0,
+        compCode: "",
+        compName: "",
+        transferYN: "Y",
+        rActiveYN: "Y",
+    };
 
     const fetchMasterList = async () => {
         setLoading(true);
@@ -126,7 +153,39 @@ const AppModifiedDetails: React.FC = () => {
         [setLoading, masterList]
     );
 
-    const handleMasterChange = (event: SelectChangeEvent<string>) => {
+    useEffect(() => {
+        console.log("authGroupOptions:", dropdownValues.authGroupOptions);
+    }, [dropdownValues.authGroupOptions]);
+
+    useEffect(() => {
+        const fetchMainModules = async () => {
+            if (token) {
+                setIsDropdownLoading(true);
+                try {
+                    const modulesData = await moduleService.getActiveModules(
+                        adminYN === "Y" ? 0 : (userID ?? 0)
+                    );
+                    const options = modulesData.map((module) => ({
+                        label: module.title,
+                        value: module.auGrpID.toString(),
+                    }));
+
+                    setDropdownValues((prevValues) => ({
+                        ...prevValues,
+                        authGroupOptions: options,
+                    }));
+                    setIsDropdownLoading(false);
+                } catch (error) {
+                    showAlert("Error", "Error fetching main modules", "error");
+                    setIsDropdownLoading(false);
+                }
+            }
+        };
+
+        fetchMainModules();
+    }, [token, adminYN, userID]);
+
+    const handleMasterChange = async (event: SelectChangeEvent<string>) => {
         const selectedId = parseInt(event.target.value);
         setSelectedMasterId(selectedId);
         const selectedCategory = masterList.find(
@@ -134,44 +193,90 @@ const AppModifiedDetails: React.FC = () => {
         );
         if (selectedCategory) {
             setSelectedCategoryName(selectedCategory.fieldName);
-            setFormData((prev) => ({
-                ...prev,
-                amlField: selectedCategory.fieldName,
-            }));
-            setCategoryFormData((prev) => ({
-                ...prev,
-                fieldCode: selectedCategory.fieldName,
-            }));
+            setCurrentCounter(0);
             fetchFields(selectedId);
-            generateFieldCode(selectedCategory.fieldName);
+            await generateFieldCode(selectedCategory.fieldName);
         }
+    };
+
+
+    const getHighestExistingCode = (categoryName: string, fields: AppModifyFieldDto[]): number => {
+        const categoryFields = fields.filter(field => field.amlField === categoryName);
+        let highestNumber = 0;
+
+        categoryFields.forEach(field => {
+            const codeMatch = field.amlCode.match(/\d+$/);
+            if (codeMatch) {
+                const number = parseInt(codeMatch[0]);
+                highestNumber = Math.max(highestNumber, number);
+            }
+        });
+
+        return highestNumber;
     };
 
     const generateFieldCode = async (prefix: string) => {
         try {
-            const response: any = await appModifiedMastService.getNextCode(prefix, 3);
-            if (response && response.success) {
-                setFormData((prev) => ({
-                    ...prev,
-                    amlCode: response.data,
-                }));
-                setCategoryFormData((prev) => ({
-                    ...prev,
-                    fieldCode: response.data,
-                }));
-            } else {
-                showAlert("Error", "Failed to generate field code", "error");
-            }
+            const response: any = await appModifiedListService.getAll();
+            const fieldsData = response.data || response;
+            const highestNumber = getHighestExistingCode(prefix, fieldsData);
+            const nextNumber = highestNumber + 1;
+            setCurrentCounter(nextNumber);
+            const formattedCounter = nextNumber.toString().padStart(2, '0');
+            const newCode = `${prefix}${formattedCounter}`;
+            setFormData(prev => ({
+                ...prev,
+                amlCode: newCode,
+            }));
+
+            return newCode;
         } catch (error) {
             showAlert(
                 "Error",
                 "An error occurred while generating the field code",
                 "error"
             );
+            return null;
         }
     };
 
+    const resetFormAndGenerateCode = async () => {
+        setFormData({
+            ...initialFormData,
+            amlField: selectedCategoryName,
+        });
+
+        if (selectedCategoryName) {
+            await generateFieldCode(selectedCategoryName);
+        }
+    };
+
+    const handleCategoryDialogClose = () => {
+        setCategoryFormData({
+            fieldID: 0,
+            fieldCode: "",
+            fieldName: "",
+            auGrpID: 0,
+            rActiveYN: "Y",
+            compID: store.getState().userDetails.compID || 0,
+            compCode: store.getState().userDetails.compCode || "",
+            compName: store.getState().userDetails.compName || "",
+            transferYN: "Y",
+            rNotes: null,
+        });
+        setIsCategoryDialogOpen(false);
+    };
+
+    const handleFieldDialogClose = () => {
+        setFormData(initialFormData);
+        setIsFieldDialogOpen(false);
+    };
+
     const handleCategoryDialogSubmit = async () => {
+        if (!categoryFormData.fieldCode || !categoryFormData.fieldName) {
+            showAlert("Error", "Field Code and Field Name cannot be empty", "error");
+            return;
+        }
         try {
             const response = await appModifiedMastService.save(categoryFormData);
             if (response) {
@@ -187,35 +292,80 @@ const AppModifiedDetails: React.FC = () => {
     };
 
     const handleFieldDialogSubmit = async () => {
+        if (!formData.amlName) {
+            showAlert("Error", "Field Code and Field Name cannot be empty", "error");
+            return;
+        }
         try {
             if (!selectedMasterId) {
                 showAlert("Error", "Please select a category first", "error");
                 return;
             }
-            const newFieldData = {
-                ...formData,
-                amlField: selectedCategoryName,
-                compID: compID ?? 0,
-                compCode: compCode ?? "",
-                compName: compName ?? "",
-            };
-            const response = await appModifiedListService.save(newFieldData);
-            if (response) {
-                showAlert(
-                    "Success",
-                    formData.amlID
-                        ? "Field updated successfully"
-                        : "Field added successfully",
-                    "success"
+            if (formData.defaultYN === "Y") {
+                const existingDefault = fieldsList.find(
+                    (field) => field.defaultYN === "Y" && field.amlField === selectedCategoryName
                 );
-                setIsFieldDialogOpen(false);
-                fetchFields(selectedMasterId);
-            } else {
-                showAlert("Error", "Failed to save field", "error");
+                if (existingDefault) {
+                    showAlert(
+                        "Confirmation",
+                        `There is already a default entry '${existingDefault.amlName}'. ` +
+                        `Are you sure you want to set '${formData.amlName}' as the new default? ` +
+                        `The previous default will be set to 'No'.`,
+                        "warning",
+                        {
+                            showConfirmButton: true,
+                            showCancelButton: true,
+                            confirmButtonText: "Yes",
+                            cancelButtonText: "No",
+                            onConfirm: async () => {
+                                const updatedField = {
+                                    ...existingDefault,
+                                    defaultYN: "N",
+                                };
+                                await appModifiedListService.save(updatedField);
+                                showAlert(
+                                    "Notification",
+                                    `Previous default entry '${existingDefault.amlName}' has been updated to 'No'`,
+                                    "info"
+                                );
+                                await saveNewField();
+                            }
+                        }
+                    );
+                    return;
+                }
             }
+            await saveNewField();
+
         } catch (error) {
             console.error("Error submitting field:", error);
             showAlert("Error", "An error occurred during submission.", "error");
+        }
+    };
+
+    const saveNewField = async () => {
+        const newFieldData = {
+            ...formData,
+            amlField: selectedCategoryName,
+            compID: compID ?? 0,
+            compCode: compCode ?? "",
+            compName: compName ?? "",
+        };
+
+        const response = await appModifiedListService.save(newFieldData);
+        if (response) {
+            showAlert(
+                "Success",
+                formData.amlID
+                    ? "Field updated successfully"
+                    : "Field added successfully",
+                "success"
+            );
+            await resetFormAndGenerateCode();
+            setIsFieldDialogOpen(false);
+            fetchFields(selectedMasterId);
+        } else {
+            showAlert("Error", "Failed to save field", "error");
         }
     };
 
@@ -378,7 +528,7 @@ const AppModifiedDetails: React.FC = () => {
             <CustomGrid columns={columns} data={fieldsList} />
             <GenericDialog
                 open={isCategoryDialogOpen}
-                onClose={() => setIsCategoryDialogOpen(false)}
+                onClose={handleCategoryDialogClose}
                 title="Add New Category"
                 actions={
                     <>
@@ -434,10 +584,15 @@ const AppModifiedDetails: React.FC = () => {
                         fullWidth
                     />
                     <FormField
-                        type="number"
-                        label="Authorization Group ID"
+                        type="select"
+                        label="Authorization Group"
                         name="auGrpID"
                         value={categoryFormData.auGrpID.toString()}
+                        options={
+                            isDropdownLoading
+                                ? [{ label: "Loading...", value: "" }]
+                                : dropdownValues.authGroupOptions
+                        }
                         onChange={(e) =>
                             setCategoryFormData((prev) => ({
                                 ...prev,
@@ -453,12 +608,12 @@ const AppModifiedDetails: React.FC = () => {
             </GenericDialog>
             <GenericDialog
                 open={isFieldDialogOpen}
-                onClose={() => setIsFieldDialogOpen(false)}
+                onClose={handleFieldDialogClose}
                 title={formData.amlID ? "Edit Field" : "Add New Field"}
                 actions={
                     <>
                         <CustomButton
-                            onClick={() => setIsFieldDialogOpen(false)}
+                            onClick={handleFieldDialogClose}
                             icon={DeleteIcon}
                             text="Cancel"
                             variant="contained"
