@@ -76,8 +76,8 @@ const RegistrationPage: React.FC = () => {
       patSchemeDescriptionYN: "N",
       cancelReason: "",
       cancelYN: "N",
-      consultantID: 0,
-      consultantName: "",
+      attendingPhysicianId: 0,
+      attendingPhysicianName: "",
       deptID: 0,
       deptName: "",
       facultyID: 0,
@@ -88,8 +88,8 @@ const RegistrationPage: React.FC = () => {
       physicianRoom: "",
       regTypeVal: "GEN",
       regType: "",
-      sourceID: 0,
-      sourceName: "",
+      primaryReferralSourceId: 0,
+      primaryReferralSourceName: "",
       pPob: "",
       patCompName: "",
       patCompNameVal: "",
@@ -218,15 +218,15 @@ const RegistrationPage: React.FC = () => {
       errors.department = "Department is required";
     } else if (
       formData.opvisits?.visitTypeVal === "P" &&
-      (formData.patRegisters.consultantID === 0 ||
-        !formData.patRegisters.consultantName)
+      (formData.patRegisters.attendingPhysicianId === 0 ||
+        !formData.patRegisters.attendingPhysicianName)
     ) {
       errors.attendingPhysician = "Attending Physician is required";
     } else if (
       (formData.opvisits?.visitTypeVal === "H" ||
         formData.opvisits?.visitTypeVal === "P") &&
-      (formData.patRegisters.sourceID === 0 ||
-        !formData.patRegisters.sourceName)
+      (formData.patRegisters.primaryReferralSourceId === 0 ||
+        !formData.patRegisters.primaryReferralSourceName)
     ) {
       errors.primaryIntroducingSource =
         "Primary Introducing Source is required";

@@ -168,21 +168,10 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
                 type="select"
                 label="Primary Introducing Source"
                 name="PrimaryIntroducingSource"
-                value={formData.IPAdmissionDto.primaryRefferalSourceID || ''}
-                onChange={onDropdownChange(['IPAdmissionDto', 'primaryRefferalSourceID'], ['IPAdmissionDto', 'primaryRefferalSourceName'], dropdownValues.primaryIntroducingSource)}
+                value={formData.IPAdmissionDto.primaryReferralSourceId || ''}
+                onChange={onDropdownChange(['IPAdmissionDto', 'primaryReferralSourceId'], ['IPAdmissionDto', 'primaryReferralSourceName'], dropdownValues.primaryIntroducingSource)}
                 options={dropdownValues.primaryIntroducingSource}
                 ControlID="primaryIntroducingSource"
-                gridProps={{ xs: 12, sm: 6, md: 3 }}
-            />
-
-            <FormField
-                type="select"
-                label="Secondary Introducing Source"
-                name="SecondaryIntroducingSource"
-                value={formData.IPAdmissionDto.secondaryRefferalSourceID || ''}
-                onChange={onDropdownChange(['IPAdmissionDto', 'secondaryRefferalSourceID'], ['IPAdmissionDto', 'secondaryRefferalSourceName'], dropdownValues.primaryIntroducingSource)}
-                options={dropdownValues.primaryIntroducingSource}
-                ControlID="secondaryIntroducingSource"
                 gridProps={{ xs: 12, sm: 6, md: 3 }}
             />
 
@@ -212,8 +201,8 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
                 type="select"
                 label="Attending Physician"
                 name="Attending Physician"
-                value={formData.IPAdmissionDto.attendingPhyID || ''}
-                onChange={onDropdownChange(['IPAdmissionDto', 'attendingPhyID'], ['IPAdmissionDto', 'attendingPhyName'], dropdownValues.attendingPhy)}
+                value={formData.IPAdmissionDto.attendingPhysicianId || ''}
+                onChange={onDropdownChange(['IPAdmissionDto', 'attendingPhysicianId'], ['IPAdmissionDto', 'attendingPhysicianName'], dropdownValues.attendingPhy)}
                 options={dropdownValues.attendingPhy}
                 ControlID="attendingPhysician"
                 gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -231,17 +220,6 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
             />
 
             <FormField
-                type="textarea"
-                label="Reason for Admission"
-                name="rNotes"
-                value={formData.IPAdmissionDetailsDto.plannedProc || ''}
-                onChange={(e) => onChange('IPAdmissionDetailsDto', { ...formData.IPAdmissionDetailsDto, plannedProc: e.target.value })}
-                ControlID="rNotes"
-                gridProps={{ xs: 12, sm: 6, md: 3 }}
-                maxLength={4000}
-            />
-
-            <FormField
                 type="select"
                 label="Patient Attendant"
                 name="patNokID"
@@ -250,6 +228,17 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({
                 options={dropdownValues.attendingPhy}
                 ControlID="patNokID"
                 gridProps={{ xs: 12, sm: 6, md: 3 }}
+            />
+
+            <FormField
+                type="textarea"
+                label="Reason for Admission"
+                name="rNotes"
+                value={formData.IPAdmissionDetailsDto.plannedProc || ''}
+                onChange={(e) => onChange('IPAdmissionDetailsDto', { ...formData.IPAdmissionDetailsDto, plannedProc: e.target.value })}
+                ControlID="rNotes"
+                gridProps={{ xs: 12, sm: 6, md: 3 }}
+                maxLength={4000}
             />
 
             <FormField

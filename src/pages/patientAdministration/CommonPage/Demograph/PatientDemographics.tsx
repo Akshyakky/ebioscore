@@ -54,7 +54,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
     pAddActualCountryVal: '',
     pAddPhone1: '',
     pAddEmail: '',
-    refSource: '',
+    PrimaryReferralSourceName: '',
   });
 
   const dropdownValues = useDropdownValues(['title', 'gender', 'bloodGroup', 'pic', 'area', 'city', 'nationality']);
@@ -230,7 +230,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
           {renderFormField("select", "pAddActualCountryVal", "Nationality", dropdownValues.nationality, false, false, { xs: 12 })}
           {renderFormField("text", "pAddPhone1", "Mobile No", [], true, false, { xs: 12 })}
           {renderFormField("text", "pAddEmail", "Email", [], false, false, { xs: 12 })}
-          {renderFormField("text", "refSource", "Referral Source", [], false, true, { xs: 12 })}
+          {renderFormField("text", "PrimaryReferralSourceName", "Referral Source", [], false, true, { xs: 12 })}
         </Grid>
       </Grid>
     </Box>

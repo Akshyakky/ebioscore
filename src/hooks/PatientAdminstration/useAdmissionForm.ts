@@ -88,7 +88,7 @@ const useAdmissionForm = () => {
       return false;
     }
 
-    if (!IPAdmissionDto.attendingPhyID) {
+    if (!IPAdmissionDto.attendingPhysicianId) {
       showAlert("Error", "Please select attending physician", "error");
       return false;
     }
@@ -134,18 +134,70 @@ const useAdmissionForm = () => {
       }
 
       const { data } = response;
-      if (data?.isAdmitted) {
-        setFormData((prev) => ({
-          ...prev,
-          ...data.admissionData,
-        }));
-      } else if (data?.patientData) {
+
+      if (data?.isAdmitted && data.admissionData) {
         setFormData((prev) => ({
           ...prev,
           IPAdmissionDto: {
             ...prev.IPAdmissionDto,
-            pChartID,
-            // Add other relevant patient data mappings
+            ...(data.admissionData?.IPAdmissionDto || {}),
+          },
+          IPAdmissionDetailsDto: {
+            ...prev.IPAdmissionDetailsDto,
+            ...(data.admissionData?.IPAdmissionDetailsDto || {}),
+          },
+          WrBedDetailsDto: {
+            ...prev.WrBedDetailsDto,
+            ...(data.admissionData?.WrBedDetailsDto || {}),
+          },
+        }));
+      } else if (data?.patientData && data?.patientData.patRegisters) {
+        const { patRegisters, LastVisit } = data.patientData;
+
+        setFormData((prev) => ({
+          ...prev,
+          IPAdmissionDto: {
+            ...prev.IPAdmissionDto,
+            // Basic patient identification
+            pChartID: patRegisters.pChartID ?? 0,
+            pChartCode: patRegisters.pChartCode ?? "",
+            pTypeID: patRegisters.pTypeID ?? 0,
+            pTypeName: patRegisters.pTypeName ?? "",
+            admitID: 0,
+            admitCode: prev.IPAdmissionDto.admitCode,
+            patOPIP: "I",
+
+            // Physician information - try LastVisit first, fallback to PatRegisters
+            attendingPhyID: LastVisit?.attendingPhysicianId ?? patRegisters.attendingPhysicianId ?? 0,
+            attendingPhyName: LastVisit?.attendingPhysicianName ?? patRegisters.attendingPhysicianName ?? "",
+            primaryPhysicianId: LastVisit?.primaryPhysicianId ?? patRegisters.primaryPhysicianId ?? 0,
+            primaryPhysicianName: LastVisit?.primaryPhysicianName ?? patRegisters.primaryPhysicianName ?? "",
+            primaryReferralSourceId: LastVisit?.primaryReferralSourceId ?? patRegisters.primaryReferralSourceId ?? 0,
+            primaryReferralSourceName: LastVisit?.primaryReferralSourceName ?? patRegisters.primaryReferralSourceName ?? "",
+            primaryPhysicianSpecialtyId: LastVisit?.primaryPhysicianSpecialtyId ?? patRegisters.primaryPhysicianSpecialtyId ?? 0,
+            primaryPhysicianSpecialty: LastVisit?.primaryPhysicianSpecialty ?? patRegisters.primaryPhysicianSpecialty ?? "",
+
+            // Department information
+            deptID: LastVisit?.deptID ?? patRegisters.deptID ?? 0,
+            deptName: LastVisit?.deptName ?? patRegisters.deptName ?? "",
+
+            // Patient personal information
+            pTitle: patRegisters.pTitle ?? "",
+            pfName: patRegisters.pFName ?? "",
+            plName: patRegisters.pLName ?? "",
+            pmName: patRegisters.pMName ?? "",
+
+            // Default values for new admission
+            ipStatus: "",
+            insuranceYN: "N",
+            dischargeAdviceYN: "N",
+            deliveryCaseYN: "N",
+            caseTypeName: "",
+            oldPChartID: 0,
+            visitGesy: "",
+            dulId: 0,
+            advisedVisitNo: 0,
+            patNokID: 0,
           },
         }));
       }

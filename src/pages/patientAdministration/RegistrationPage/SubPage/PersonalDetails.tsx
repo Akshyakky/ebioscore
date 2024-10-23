@@ -6,7 +6,6 @@ import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import useDayjs from "../../../../hooks/Common/useDateTime";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 import { addDays, addMonths, addYears, differenceInDays, differenceInMonths, differenceInYears } from "date-fns";
