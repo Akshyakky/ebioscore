@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
@@ -33,72 +33,130 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
   const [attendingPhy, setAttendingPhy] = useState("");
   const [fromDate, setFromDate] = useState<Date | undefined>(new Date());
   const [toDate, setToDate] = useState<Date | undefined>(new Date());
+  const [physicians, setPhysicians] = useState<Array<{ value: string; label: string }>>([]);
 
-  const [physicians, setPhysicians] = useState<
-    Array<{ value: string; label: string }>
-  >([]);
+  const fetchWaitingPatients = useCallback(async () => {
+    try {
+      const dateFilterTypeEnum = dateRange
+        ? DateFilterType[dateRange as keyof typeof DateFilterType]
+        : undefined;
+      const data = await RevisitService.getWaitingPatientDetails(
+        attendingPhy ? parseInt(attendingPhy) : undefined,
+        dateFilterTypeEnum,
+        fromDate,
+        toDate
+      );
+      setSearchResults(data.data || []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const dateFilterTypeEnum = dateRange
-          ? DateFilterType[dateRange as keyof typeof DateFilterType]
-          : undefined;
-        const data = await RevisitService.getWaitingPatientDetails(
-          attendingPhy ? parseInt(attendingPhy) : undefined,
-          dateFilterTypeEnum,
-          fromDate,
-          toDate
-        );
-        setSearchResults(data.data || []);
-      } catch (error) {
-        console.error("Failed to fetch waiting patient details", error);
+      if (data.data?.length === 0) {
+        showAlert("Info", "No waiting patients found for the selected criteria.", "info");
       }
-    };
-
-    fetchData();
+    } catch (error) {
+      console.error("Failed to fetch waiting patient details", error);
+      showAlert(
+        "Error",
+        "Failed to fetch waiting patient details. Please try again.",
+        "error"
+      );
+    }
   }, [userInfo.token, attendingPhy, dateRange, fromDate, toDate]);
 
-  const handleDateRangeChange = (
+  useEffect(() => {
+    fetchWaitingPatients();
+  }, [fetchWaitingPatients]);
+
+  const handleDateRangeChange = useCallback((
     event: SelectChangeEvent<unknown>,
     child: React.ReactNode
   ) => {
     setDateRange(event.target.value as string);
-  };
+  }, []);
 
-  const handleAttendingPhyChange = (
+  const handleAttendingPhyChange = useCallback((
     event: SelectChangeEvent<unknown>,
     child: React.ReactNode
   ) => {
     setAttendingPhy(event.target.value as string);
-  };
+  }, []);
 
-  const handlePatientSelect = (patientId: string) => {
+  const handlePatientSelect = useCallback((patientId: string) => {
     onPatientSelect(patientId);
     handleClose();
-  };
+    showAlert("Success", "Patient selected successfully!", "success");
+  }, [onPatientSelect, handleClose]);
 
-  const handleCancelVisit = async (opVID: string) => {
+  const handleCancelVisit = useCallback(async (opVID: string) => {
     try {
-      const result = await RevisitService.cancelVisit(
-        parseInt(opVID),
-        userInfo.userName!
+      showAlert(
+        "Confirm",
+        "Are you sure you want to cancel this visit?",
+        "warning",
+        {
+          showCancelButton: true,
+          confirmButtonText: "Yes, cancel it",
+          cancelButtonText: "No, keep it",
+          onConfirm: async () => {
+            const result = await RevisitService.cancelVisit(
+              parseInt(opVID),
+              userInfo.userName!
+            );
+            if (result.success) {
+              showAlert("Success", "Visit cancelled successfully!", "success");
+              fetchWaitingPatients(); // Refresh the list
+            } else {
+              showAlert(
+                "Error",
+                `Failed to cancel the visit: ${result.errorMessage}`,
+                "error"
+              );
+            }
+          }
+        }
       );
-      if (result.success) {
-        alert("Visit cancellation was successful.");
-      } else {
-        alert("Failed to cancel the visit: " + result.errorMessage);
-      }
     } catch (error) {
       console.error("An error occurred while canceling the visit:", error);
-      alert("An error occurred while canceling the visit.");
+      showAlert(
+        "Error",
+        "An unexpected error occurred while canceling the visit.",
+        "error"
+      );
     }
-  };
+  }, [userInfo.userName, fetchWaitingPatients]);
+
+  const handleFromDateChange = useCallback((selectedDate: Date | null) => {
+    if (!selectedDate) return;
+
+    if (toDate && selectedDate > toDate) {
+      showAlert(
+        "Warning",
+        "From Date cannot be greater than To Date",
+        "warning"
+      );
+      return;
+    }
+    setFromDate(selectedDate);
+  }, [toDate]);
+
+  const handleToDateChange = useCallback((selectedDate: Date | null) => {
+    if (!selectedDate) return;
+
+    if (fromDate && selectedDate < fromDate) {
+      showAlert(
+        "Warning",
+        "To Date cannot be less than From Date",
+        "warning"
+      );
+      return;
+    }
+    setToDate(selectedDate);
+  }, [fromDate]);
 
   const columns = [
     {
-      key: "pVisitDate", header: "Visited Date", visible: true, render: (row: any) =>
-        formatDate(row.pVisitDate),
+      key: "pVisitDate",
+      header: "Visited Date",
+      visible: true,
+      render: (row: any) => formatDate(row.pVisitDate),
     },
     { key: "opNumber", header: "Visit Code", visible: true },
     { key: "pChartCode", header: "UHID", visible: true },
@@ -170,19 +228,12 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
               name="FromDate"
               ControlID="FromDate"
               value={fromDate}
-              onChange={(selectedDate: Date | null) => {
-                if (selectedDate && toDate && selectedDate <= toDate) {
-                  setFromDate(selectedDate);
-                } else {
-                  showAlert("Error", "From Date cannot be greater than To Date", "error");
-                }
-              }}
+              onChange={handleFromDateChange}
               placeholder="From Date"
               size="small"
               isMandatory={true}
               disabled={false}
               gridProps={{ xs: 12, sm: 6, md: 4 }}
-
             />
             <FormField
               type="datepicker"
@@ -190,23 +241,15 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
               name="ToDate"
               ControlID="ToDate"
               value={toDate}
-              onChange={(selectedDate: Date | null) => {
-                if (selectedDate && fromDate && selectedDate >= fromDate) {
-                  setToDate(selectedDate);
-                } else {
-                  showAlert("Error", "To Date cannot be less than From Date", "error");
-                }
-              }}
+              onChange={handleToDateChange}
               placeholder="To Date"
               size="small"
               isMandatory={true}
               disabled={false}
               gridProps={{ xs: 12, sm: 6, md: 4 }}
-
             />
           </>
         )}
-
       </Grid>
       <CustomGrid
         columns={columns}
@@ -246,4 +289,4 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
   );
 };
 
-export default WaitingPatientSearch;
+export default React.memo(WaitingPatientSearch);

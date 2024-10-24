@@ -1,4 +1,8 @@
-export interface PatRegistersDto {
+import { RecordFieldsWithPhysician } from "../Common/PhysicianReferralFields";
+import { OPVisitDto } from "./revisitFormData";
+
+type YesNo = "Y" | "N";
+export interface PatRegistersDto extends RecordFieldsWithPhysician {
   pChartID: number;
   pChartCode: string;
   pRegDate: Date;
@@ -13,11 +17,6 @@ export interface PatRegistersDto {
   pGenderVal?: string;
   pGender: string;
   pBldGrp?: string;
-  compID?: number;
-  compCode?: string;
-  compName?: string;
-  rActiveYN: string;
-  rNotes?: string;
   pTypeID?: number;
   pTypeCode?: string;
   pTypeName?: string;
@@ -27,12 +26,10 @@ export interface PatRegistersDto {
   patMemName?: string;
   patMemDescription?: string;
   patMemSchemeExpiryDate: Date;
-  patSchemeExpiryDateYN?: string;
-  patSchemeDescriptionYN?: string;
+  patSchemeExpiryDateYN?: YesNo;
+  patSchemeDescriptionYN?: YesNo;
   cancelReason?: string;
-  cancelYN?: string;
-  consultantID: number;
-  consultantName?: string;
+  cancelYN?: YesNo;
   deptID?: number;
   deptName?: string;
   facultyID?: number;
@@ -43,14 +40,11 @@ export interface PatRegistersDto {
   regTypeVal?: string;
   physicianRoom?: string;
   regType?: string;
-  sourceID: number;
-  sourceName?: string;
   pPob?: string;
   patCompNameVal?: string;
   patCompName?: string;
-  patDataFormYN?: string;
+  patDataFormYN?: YesNo;
   intIdPsprt?: string;
-  transferYN?: string;
   indentityType: string;
   indentityValue: string;
   patientType: string;
@@ -78,9 +72,6 @@ export interface PatAddressDto {
   pAddPhone2?: string;
   pAddPhone3?: string;
   pAddWorkPhone?: string;
-  compCode?: string;
-  compID?: number;
-  compName?: string;
   pAddActualCountryVal?: string;
   pAddActualCountry?: string;
   patAreaVal?: string;
@@ -114,4 +105,5 @@ export interface PatientRegistrationDto {
   patAddress: PatAddressDto;
   patOverview: PatOverviewDto;
   opvisits: OpvisitDto;
+  LastVisit?: OPVisitDto;
 }

@@ -9,21 +9,11 @@ interface DepartmentListSearchProps {
   onSelect: (departmentDto: DepartmentDto) => void;
 }
 
-const DepartmentListSearch: React.FC<DepartmentListSearchProps> = ({
-  open,
-  onClose,
-  onSelect,
-}) => {
-  const fetchItems = () =>
-    departmentService.getAll().then(
-      (result) => result.data || []
-    );
+const DepartmentListSearch: React.FC<DepartmentListSearchProps> = ({ open, onClose, onSelect }) => {
+  const fetchItems = () => departmentService.getAll().then((result) => result.data || []);
 
   const updateActiveStatus = async (id: number, status: boolean) => {
-    const result = await departmentService.updateActiveStatus(
-      id,
-      status
-    );
+    const result = await departmentService.updateActiveStatus(id, status);
     return result;
   };
 

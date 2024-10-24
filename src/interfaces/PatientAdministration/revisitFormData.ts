@@ -1,39 +1,26 @@
-export interface revisitFormData {
+import { RecordFieldsWithPhysician } from "../Common/PhysicianReferralFields";
+
+type YesNo = "Y" | "N";
+export interface OPVisitDto extends RecordFieldsWithPhysician {
   opVID: number;
   pChartID: number;
-  pVisitDate: string;
+  pChartCode: string;
+  pVisitDate: Date;
   patOPIP: string;
-  attndPhyID: number;
-  attendingPhysicianName: string;
-  refSourceID: number;
-  refSource: string;
-  primPhyID: number;
-  primaryPhysicianName: string;
   pVisitStatus: string;
   pVisitType: string;
-  pVisitTypeText: string;
-  rActiveYN: string;
-  rNotes: string;
-  pTypeID: number;
-  pTypeCode: string;
-  pTypeName: string;
-  compID: number;
-  compCode: string;
-  compName: string;
-  crossConsultation: string;
-  deptID: number;
-  deptName: string;
-  opNumber: string;
-  pChartCode: string;
-  pChartCompID: number;
-  refFacultyID: number;
-  refFaculty: string;
-  sourceID: number;
-  source: string;
-  refSourceID2: number;
-  refSource2: string;
+  pVisitTypeText?: string;
+  pTypeID?: number;
+  pTypeCode?: string;
+  pTypeName?: string;
+  crossConsultation?: YesNo;
+  deptID?: number;
+  deptName?: string;
+  opNumber?: string;
+  pChartCompID?: number;
+  refFacultyID?: number;
+  refFaculty?: string;
   oldPChartID: number;
-  transferYN: string;
 }
 
 export interface GetPatientVisitHistory {
@@ -60,9 +47,4 @@ export enum DateFilterType {
   LastOneMonth = "LastOneMonth",
   LastThreeMonths = "LastThreeMonths",
   Custom = "Custom",
-}
-
-export interface RevisitListData {
-  contactMastDto: revisitFormData;
-  // contactAddressDto: ContactAddressData;
 }

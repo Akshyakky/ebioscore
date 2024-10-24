@@ -19,17 +19,11 @@ interface DeptUsersListPageProps {
   handleCloseDialog: () => void;
 }
 
-export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({
-  deptId,
-  deptName,
-  openDialog,
-  handleCloseDialog,
-}) => {
+export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({ deptId, deptName, openDialog, handleCloseDialog }) => {
   const [deptUsers, setDeptUsers] = useState<DeptUserDto[]>([]);
   const { fetchAllUsers } = useContext(UserListSearchContext);
   const serverDate = useServerDate();
-  const { compID, compCode, compName, userID, userName } =
-    store.getState().userDetails;
+  const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
   //
   const [isDUSearchOpen, setIsDUSearchOpen] = useState(false);
 
@@ -64,36 +58,20 @@ export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({
       compName: compName || "",
     };
 
-    if (
-      deptUsers.filter(
-        (deptUser) => deptUser.deptID == deptId && newDeptUser.appID === 50
-      ).length === 0
-    ) {
+    if (deptUsers.filter((deptUser) => deptUser.deptID == deptId && newDeptUser.appID === 50).length === 0) {
       setDeptUsers((prevUsers) => [...prevUsers, newDeptUser]);
       handleDeptUserSave(newDeptUser);
     } else {
-      showAlert(
-        "User already exist",
-        `${newDeptUser.appUserName} is already added`,
-        "warning"
-      );
+      showAlert("User already exist", `${newDeptUser.appUserName} is already added`, "warning");
     }
   };
   const handleDeptUserSave = async (newDeptUserDto: DeptUserDto) => {
     try {
       const result = await DeptUserListService.saveDeptUser(newDeptUserDto);
       if (result.success) {
-        showAlert(
-          "User Added",
-          `${newDeptUserDto.appUserName} is accessible to ${deptName}`,
-          "success"
-        );
+        showAlert("User Added", `${newDeptUserDto.appUserName} is accessible to ${deptName}`, "success");
       } else {
-        showAlert(
-          "Error",
-          result.errorMessage || "Failed to add user.",
-          "error"
-        );
+        showAlert("Error", result.errorMessage || "Failed to add user.", "error");
       }
     } catch (error) {
       showAlert("Error", "An unexpected error occurred while saving.", "error");
@@ -101,16 +79,8 @@ export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({
     }
   };
   //
-  const updateDeptUserToggleStatus = async (
-    deptUserID: number,
-    activeStatus: boolean,
-    fieldName: string
-  ) => {
-    const result = await DeptUserListService.updateDeptUserToggleStatus(
-      deptUserID,
-      activeStatus,
-      fieldName
-    );
+  const updateDeptUserToggleStatus = async (deptUserID: number, activeStatus: boolean, fieldName: string) => {
+    const result = await DeptUserListService.updateDeptUserToggleStatus(deptUserID, activeStatus, fieldName);
     return result.success;
   };
   useEffect(() => {
@@ -133,18 +103,8 @@ export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({
     }
   }, [deptId]);
 
-  const handleSwitchChange = async (
-    userId: number,
-    field: string,
-    value: boolean
-  ) => {
-    setDeptUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.deptUserID === userId
-          ? { ...user, [field]: value ? "Y" : "N" }
-          : user
-      )
-    );
+  const handleSwitchChange = async (userId: number, field: string, value: boolean) => {
+    setDeptUsers((prevUsers) => prevUsers.map((user) => (user.deptUserID === userId ? { ...user, [field]: value ? "Y" : "N" } : user)));
     try {
       const isActive = await updateDeptUserToggleStatus(userId, value, field);
       const fieldText =
@@ -155,45 +115,20 @@ export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({
         }[field] || "Unknown field";
 
       if (isActive) {
-        showAlert(
-          value ? "Enabled" : "Disabled",
-          fieldText,
-          value ? "success" : "warning"
-        );
+        showAlert(value ? "Enabled" : "Disabled", fieldText, value ? "success" : "warning");
       } else {
         showAlert("Error", "Failed to change the status", "error");
       }
     } catch (error) {
-      showAlert(
-        "Error",
-        "An error occurred while changing the status",
-        "error"
-      );
+      showAlert("Error", "An error occurred while changing the status", "error");
       console.error("Error toggling status:", error);
     }
   };
 
   return (
-    <GenericDialog
-      open={openDialog}
-      onClose={handleCloseDialog}
-      title={`Manage ${deptName} Department's User Access`}
-      fullWidth
-      maxWidth="lg"
-    >
-      <CustomButton
-        size="medium"
-        onClick={handleDeptUsersSearch}
-        icon={AddIcon}
-        color="secondary"
-        variant="contained"
-        text="Add User"
-        ariaLabel="Add User"
-      />
-      <DeptUsersList
-        deptUsers={deptUsers}
-        handleSwitchChange={handleSwitchChange}
-      />
+    <GenericDialog open={openDialog} onClose={handleCloseDialog} title={`Manage ${deptName} Department's User Access`} fullWidth maxWidth="lg">
+      <CustomButton size="medium" onClick={handleDeptUsersSearch} icon={AddIcon} color="secondary" variant="contained" text="Add User" ariaLabel="Add User" />
+      <DeptUsersList deptUsers={deptUsers} handleSwitchChange={handleSwitchChange} />
       <DeptUsersListSearch
         open={isDUSearchOpen}
         handleClose={handleDeptUsersSearchClose}

@@ -24,7 +24,7 @@ export interface PatientDemoGraph {
   pAddActualCountryVal: string;
   pAddPhone1: string;
   pAddEmail: string;
-  refSource: string;
+  PrimaryReferralSourceName: string;
 }
 
 export interface PatientDemoGraphError {

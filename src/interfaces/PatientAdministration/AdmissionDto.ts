@@ -1,26 +1,20 @@
+import { RecordFieldsWithPhysician } from "../Common/PhysicianReferralFields";
 import { RecordFields } from "../Common/RecordFields";
-
-export interface IPAdmissionDto extends RecordFields {
+type YesNo = "Y" | "N";
+export interface IPAdmissionDto extends RecordFieldsWithPhysician {
   admitID: number;
   admitCode: string;
   pChartID: number;
   pChartCode: string;
-  oPIPCaseNo?: number;
+  oPIPCaseNo: number;
+  opipNo: number;
   patOPIP: string;
-  attendingPhyID?: number;
-  attendingPhyName: string;
-  primaryPhyID?: number;
-  primaryPhyName: string;
-  primaryRefferalSourceID?: number;
-  primaryRefferalSourceName: string;
-  secondaryRefferalSourceID?: number;
-  secondaryRefferalSourceName: string;
   admitDate: Date;
   admitStatus: string;
-  provDiagnosisYN?: "Y" | "N";
-  insuranceYN: "Y" | "N";
+  provDiagnosisYN?: YesNo;
+  insuranceYN: YesNo;
   ipStatus: string;
-  dischargeAdviceYN: "Y" | "N";
+  dischargeAdviceYN: YesNo;
   nurseIns?: string;
   clerkIns?: string;
   pTitle: string;
@@ -28,16 +22,12 @@ export interface IPAdmissionDto extends RecordFields {
   acApprovedBy?: string;
   acApprovedId?: number;
   acReason?: string;
-  caseTypeID?: number;
+  caseTypeCode: string;
   caseTypeName: string;
-  deliveryCaseYN: "Y" | "N";
+  deliveryCaseYN: YesNo;
   deptID?: number;
   deptName: string;
   pChartCompId?: number;
-  attndPhySpecialtyId?: number;
-  attndPhySpecialty?: string;
-  primPhySpecialtyId?: number;
-  primPhySpecialty?: string;
   pfName: string;
   plName: string;
   pmName: string;
@@ -46,7 +36,7 @@ export interface IPAdmissionDto extends RecordFields {
   dulId: number;
   advisedVisitNo: number;
   pTypeID: number;
-  pTypeName: number;
+  pTypeName: string;
   patNokID: number;
 }
 
@@ -117,7 +107,7 @@ export interface WrBedDetailsDto extends RecordFields {
 }
 
 export interface AdmissionDto {
-  IPAdmissionDto: IPAdmissionDto;
-  IPAdmissionDetailsDto: IPAdmissionDetailsDto;
-  WrBedDetailsDto: WrBedDetailsDto;
+  ipAdmissionDto: IPAdmissionDto;
+  ipAdmissionDetailsDto: IPAdmissionDetailsDto;
+  wrBedDetailsDto: WrBedDetailsDto;
 }

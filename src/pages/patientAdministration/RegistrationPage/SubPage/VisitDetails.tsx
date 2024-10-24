@@ -73,11 +73,11 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
         <FormField
           type="select"
           label="Attending Physician"
-          name="AttendingPhysician"
+          name="attendingPhysicianId"
           ControlID="AttendingPhysician"
-          value={formData.patRegisters.consultantID === 0 ? "" : String(formData.patRegisters.consultantID)}
+          value={formData.patRegisters.attendingPhysicianName}
           options={dropdownValues.attendingPhy}
-          onChange={handleDropdownChange(["patRegisters", "consultantID"], ["patRegisters", "consultantName"], dropdownValues.attendingPhy)}
+          onChange={handleDropdownChange(["patRegisters", "attendingPhysicianId"], ["patRegisters", "attendingPhysicianName"], dropdownValues.attendingPhy)}
           isSubmitted={isSubmitted}
           isMandatory={isPhysicianVisit}
           gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -87,11 +87,11 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
         <FormField
           type="select"
           label="Primary Introducing Source"
-          name="PrimaryIntroducingSource"
+          name="primaryReferralSourceId"
           ControlID="PrimaryIntroducingSource"
-          value={formData.patRegisters.sourceID === 0 ? "" : String(formData.patRegisters.sourceID)}
+          value={formData.patRegisters.primaryReferralSourceId}
           options={dropdownValues.primaryIntroducingSource}
-          onChange={handleDropdownChange(["patRegisters", "sourceID"], ["patRegisters", "sourceName"], dropdownValues.primaryIntroducingSource)}
+          onChange={handleDropdownChange(["patRegisters", "primaryReferralSourceId"], ["patRegisters", "primaryReferralSourceName"], dropdownValues.primaryIntroducingSource)}
           isSubmitted={isSubmitted}
           isMandatory={isPhysicianVisit || isHospitalVisit}
           gridProps={{ xs: 12, sm: 6, md: 3 }}

@@ -22,8 +22,9 @@ import { RevisitService } from "../../../../services/PatientAdministrationServic
 import GeneralAlert from "../../../../components/GeneralAlert/GeneralAlert";
 import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientSearch";
 import FormField from "../../../../components/FormField/FormField";
-import { revisitFormData, RevisitFormErrors } from "../../../../interfaces/PatientAdministration/revisitFormData";
+import { OPVisitDto, RevisitFormErrors } from "../../../../interfaces/PatientAdministration/revisitFormData";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
+import useDropdownChange from "../../../../hooks/useDropdownChange";
 
 const RevisitPage: React.FC = () => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
@@ -44,16 +45,16 @@ const RevisitPage: React.FC = () => {
     );
   }, [dropdownValues.department]);
 
-  const revisitInitialState = (): revisitFormData => ({
+  const revisitInitialState = (): OPVisitDto => ({
     opVID: 0,
     pChartID: 0,
-    pVisitDate: new Date().toISOString().split("T")[0],
+    pVisitDate: new Date(),
     patOPIP: "O",
-    attndPhyID: 0,
+    attendingPhysicianId: 0,
     attendingPhysicianName: "",
-    refSourceID: 0,
-    refSource: "",
-    primPhyID: 0,
+    primaryReferralSourceId: 0,
+    primaryReferralSourceName: "",
+    primaryPhysicianId: 0,
     primaryPhysicianName: "",
     pVisitStatus: "W",
     pVisitType: "P",
@@ -74,15 +75,13 @@ const RevisitPage: React.FC = () => {
     pChartCompID: 0,
     refFacultyID: 0,
     refFaculty: "",
-    sourceID: 0,
-    source: "",
-    refSourceID2: 0,
-    refSource2: "",
+    secondaryReferralSourceId: 0,
+    secondaryReferralSourceName: "",
     oldPChartID: 0,
     transferYN: "N",
   });
 
-  const [revisitFormData, setRevisitFormData] = useState<revisitFormData>(revisitInitialState);
+  const [revisitFormData, setRevisitFormData] = useState<OPVisitDto>(revisitInitialState);
   const [selectedPChartID, setSelectedPChartID] = useState<number>(0);
   const [showPatientSearch, setShowPatientSearch] = useState(false);
   const [showWaitingPatientSearch, setShowWaitingPatientSearch] = useState(false);
@@ -92,7 +91,7 @@ const RevisitPage: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [availableAttendingPhysicians, setAvailableAttendingPhysicians] = useState<DropdownOption[]>([]);
   const [primaryIntroducingSource, setPrimaryIntroducingSource] = useState<DropdownOption[]>([]);
-
+  const { handleDropdownChange } = useDropdownChange<OPVisitDto>(setRevisitFormData);
   const uhidRef = useRef<HTMLInputElement>(null);
   const insurancePageRef = useRef<any>(null);
 
@@ -121,17 +120,12 @@ const RevisitPage: React.FC = () => {
     if (!revisitFormData.pChartCode) errors.pChartCode = "UHID is required.";
     if (revisitFormData.pTypeID === 0) errors.pTypeID = "Payment Source is required.";
     if (isHospitalVisit() && revisitFormData.deptID === 0) errors.deptID = "Department is required for hospital visits.";
-    if (isPhysicianVisit() && revisitFormData.attndPhyID === 0) errors.attndPhyID = "Attending Physician is required for physician visits.";
-    if (revisitFormData.primPhyID === 0) errors.primPhyID = "Primary Introducing Source is required.";
+    if (isPhysicianVisit() && revisitFormData.attendingPhysicianId === 0) errors.attndPhyID = "Attending Physician is required for physician visits.";
+    if (revisitFormData.primaryReferralSourceId === 0) errors.primPhyID = "Primary Introducing Source is required.";
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   }, [revisitFormData]);
-
-  const handleDropdownChange = useCallback((field: string) => (event: SelectChangeEvent<string>) => {
-    const { value } = event.target;
-    setRevisitFormData(prev => ({ ...prev, [field]: parseInt(value, 10) }));
-  }, []);
 
   const handleRadioButtonChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -173,7 +167,7 @@ const RevisitPage: React.FC = () => {
             attndPhyID: isAttendingPhysicianAvailable ? lastVisitResult.data.attndPhyID : 0,
             deptID: lastVisitResult.data.deptID || prev.deptID,
             pTypeID: lastVisitResult.data.pTypeID || prev.pTypeID,
-            primPhyID: lastVisitResult.data.primPhyID || prev.primPhyID,
+            primPhyID: lastVisitResult.data.primPhyID || prev.primaryReferralSourceId,
           }));
         }
       }
@@ -292,11 +286,11 @@ const RevisitPage: React.FC = () => {
               <FormField
                 type="select"
                 label="Payment Source [PIC]"
-                value={revisitFormData.pTypeID === 0 ? "" : revisitFormData.pTypeID.toString()}
+                value={revisitFormData.pTypeID}
                 name="pTypeID"
                 ControlID="PIC"
                 options={dropdownValues.pic}
-                onChange={handleDropdownChange("pTypeID")}
+                onChange={handleDropdownChange(["pTypeID"], ["pTypeName"], dropdownValues.pic)}
                 isMandatory={true}
                 isSubmitted={isSubmitted}
                 errorMessage={formErrors.pTypeID}
@@ -322,11 +316,11 @@ const RevisitPage: React.FC = () => {
                 <FormField
                   type="select"
                   label="Department"
-                  value={revisitFormData.deptID === 0 ? "" : revisitFormData.deptID.toString()}
+                  value={revisitFormData.deptID}
                   name="deptID"
                   ControlID="Department"
                   options={DepartmentDropdownValues}
-                  onChange={handleDropdownChange("deptID")}
+                  onChange={handleDropdownChange(["deptID"], ["deptName"], dropdownValues.department)}
                   isMandatory={true}
                   isSubmitted={isSubmitted}
                   errorMessage={formErrors.deptID}
@@ -336,11 +330,11 @@ const RevisitPage: React.FC = () => {
                 <FormField
                   type="select"
                   label="Attending Physician"
-                  value={revisitFormData.attndPhyID === 0 ? "" : revisitFormData.attndPhyID.toString()}
-                  name="attndPhyID"
+                  value={revisitFormData.attendingPhysicianId}
+                  name="attendingPhysicianId"
                   ControlID="AttendingPhysician"
                   options={availableAttendingPhysicians}
-                  onChange={handleDropdownChange("attndPhyID")}
+                  onChange={handleDropdownChange(["attendingPhysicianId"], ["attendingPhysicianName"], availableAttendingPhysicians)}
                   isMandatory={true}
                   isSubmitted={isSubmitted}
                   errorMessage={formErrors.attndPhyID}
@@ -351,11 +345,11 @@ const RevisitPage: React.FC = () => {
               <FormField
                 type="select"
                 label="Primary Introducing Source"
-                value={revisitFormData.primPhyID === 0 ? "" : revisitFormData.primPhyID.toString()}
-                name="primPhyID"
+                value={revisitFormData.primaryReferralSourceId}
+                name="primaryReferralSourceId"
                 ControlID="PrimaryIntroducingSource"
                 options={primaryIntroducingSource}
-                onChange={handleDropdownChange("primPhyID")}
+                onChange={handleDropdownChange(["primaryReferralSourceId"], ["primaryReferralSourceName"], primaryIntroducingSource)}
                 isMandatory={true}
                 isSubmitted={isSubmitted}
                 errorMessage={formErrors.primPhyID}

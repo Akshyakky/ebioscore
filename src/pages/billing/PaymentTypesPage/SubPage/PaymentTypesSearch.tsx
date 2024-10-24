@@ -9,19 +9,11 @@ interface PaymentTypesSearchProps {
   onSelect: (pay: BPayTypeDto) => void;
 }
 
-const PaymentTypesSearch: React.FC<PaymentTypesSearchProps> = ({
-  open,
-  onClose,
-  onSelect,
-}) => {
-  const fetchItems = () =>
-    paymentTypeService.getAll().then((result) => result.data || []);
+const PaymentTypesSearch: React.FC<PaymentTypesSearchProps> = ({ open, onClose, onSelect }) => {
+  const fetchItems = () => paymentTypeService.getAll().then((result) => result.data || []);
 
   const updateActiveStatus = async (id: number, status: boolean) => {
-    const result = await paymentTypeService.updateActiveStatus(
-      id,
-      status
-    );
+    const result = await paymentTypeService.updateActiveStatus(id, status);
     return result;
   };
 

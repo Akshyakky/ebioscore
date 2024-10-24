@@ -1,33 +1,151 @@
-import React from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
+import { Box, Button, Paper, Typography, Container } from '@mui/material';
+import { RefreshRounded, BugReport } from '@mui/icons-material';
+import { toast } from 'react-toastify';
 
-interface ErrorBoundaryState {
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+}
+
+interface State {
   hasError: boolean;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-}
-
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
+class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null
+    };
   }
 
-  static getDerivedStateFromError(_: Error): ErrorBoundaryState {
-    // Update state so the next render will show the fallback UI.
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): State {
+    return {
+      hasError: true,
+      error,
+      errorInfo: null
+    };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // You can log the error to an error reporting service here
-    console.error("Uncaught error:", error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Log the error to an error reporting service
+    console.error('Error caught by ErrorBoundary:', error, errorInfo);
+
+    this.setState({
+      error,
+      errorInfo
+    });
+
+    // Call custom error handler if provided
+    this.props.onError?.(error, errorInfo);
+
+    // Show toast notification
+    toast.error('An error occurred. The application will try to recover.', {
+      position: 'top-right',
+      autoClose: 5000,
+    });
   }
 
-  render() {
+  handleRefresh = (): void => {
+    window.location.reload();
+  };
+
+  handleReportError = (): void => {
+    // Implement error reporting logic here
+    const errorReport = {
+      error: this.state.error?.toString(),
+      errorInfo: this.state.errorInfo?.componentStack,
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+      userAgent: navigator.userAgent
+    };
+
+    // You can send this to your error tracking service
+    console.log('Error Report:', errorReport);
+    toast.info('Error has been reported to the development team.');
+  };
+
+  render(): ReactNode {
     if (this.state.hasError) {
-      // You can render any custom fallback UI
-      return <h1>Something went wrong.</h1>;
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      return (
+        <Container maxWidth="md">
+          <Paper
+            elevation={3}
+            sx={{
+              p: 4,
+              mt: 4,
+              textAlign: 'center',
+              backgroundColor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? theme.palette.background.paper
+                  : theme.palette.grey[50]
+            }}
+          >
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h4" color="error" gutterBottom>
+                Oops! Something went wrong
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                The application has encountered an unexpected error.
+                Our team has been notified and is working to fix the issue.
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 4 }}>
+              {process.env.NODE_ENV === 'development' && (
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    mt: 2,
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? theme.palette.grey[900]
+                        : theme.palette.grey[100],
+                    textAlign: 'left',
+                    overflow: 'auto',
+                    maxHeight: '200px'
+                  }}
+                >
+                  <Typography variant="caption" component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
+                    {this.state.error?.toString()}
+                    {this.state.errorInfo?.componentStack}
+                  </Typography>
+                </Paper>
+              )}
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<RefreshRounded />}
+                onClick={this.handleRefresh}
+              >
+                Refresh Page
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<BugReport />}
+                onClick={this.handleReportError}
+              >
+                Report Error
+              </Button>
+            </Box>
+          </Paper>
+        </Container>
+      );
     }
 
     return this.props.children;

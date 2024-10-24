@@ -6,10 +6,39 @@ import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import useDayjs from "../../../../hooks/Common/useDateTime";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
-import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
+import { addDays, addMonths, addYears, differenceInDays, differenceInMonths, differenceInYears } from "date-fns";
+// Age calculation utilities
+const calculateAgeFromDOB = (dob: Date) => {
+  const today = new Date();
+  const years = differenceInYears(today, dob);
+  const months = differenceInMonths(today, dob);
+  const days = differenceInDays(today, dob);
+
+  if (years > 0) {
+    return { age: years, unit: "LBN4", description: "Years" };
+  } else if (months > 0) {
+    return { age: months, unit: "LBN3", description: "Months" };
+  } else {
+    return { age: days, unit: "LBN2", description: "Days" };
+  }
+};
+
+const calculateDOBFromAge = (age: number, unit: string): Date => {
+  const today = new Date();
+
+  switch (unit) {
+    case "LBN4": // Years
+      return addYears(today, -age);
+    case "LBN3": // Months
+      return addMonths(today, -age);
+    case "LBN2": // Days
+      return addDays(today, -age);
+    default:
+      return today;
+  }
+};
 
 interface PersonalDetailsProps {
   formData: PatientRegistrationDto;
@@ -26,8 +55,28 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const uhidRef = useRef<HTMLInputElement>(null);
   const serverDate = useServerDate();
-  const { diff, formatDate, date: currentDate, format, parse, formatDateYMD } = useDayjs();
-  const { fieldsList, defaultFields } = useFieldsList(["Nationality"]);
+
+  const updateFormWithAgeData = useCallback((age: number, unit: string, description: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      patOverview: {
+        ...prev.patOverview,
+        pAgeNumber: age,
+        pAgeDescriptionVal: unit,
+        pAgeDescription: description,
+      },
+    }));
+  }, []);
+
+  const updateFormWithDOBData = useCallback((dob: Date) => {
+    setFormData((prev) => ({
+      ...prev,
+      patRegisters: {
+        ...prev.patRegisters,
+        pDob: dob,
+      },
+    }));
+  }, []);
 
   useEffect(() => {
     uhidRef.current?.focus();
@@ -44,48 +93,36 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
     });
   }, []);
 
-  const calculateAge = useCallback(
-    (dob: string | number | Date) => {
-      const ageInYears = diff(dob, "year");
-      const ageInMonths = diff(dob, "month");
-      const ageInDays = diff(dob, "day");
-
-      if (ageInYears === 0) {
-        if (ageInMonths === 0) {
-          return { age: ageInDays, ageType: "Days", ageUnit: "LBN2" };
-        } else {
-          return { age: ageInMonths, ageType: "Months", ageUnit: "LBN3" };
-        }
-      } else {
-        return { age: ageInYears, ageType: "Years", ageUnit: "LBN4" };
-      }
-    },
-    [diff]
-  );
-
   const handleDOBChange = useCallback(
     (newDate: Date | null) => {
       if (newDate) {
-        const { age, ageType, ageUnit } = calculateAge(newDate);
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          patRegisters: {
-            ...prevFormData.patRegisters,
-            pDob: newDate ? newDate : serverDate,
-          },
-          PApproxAge: age,
-          PAgeType: ageType,
-          patOverview: {
-            ...prevFormData.patOverview,
-            pAgeDescription: ageType,
-            pAgeDescriptionVal: ageUnit,
-            pAgeNumber: age,
-          },
-        }));
+        const { age, unit, description } = calculateAgeFromDOB(newDate);
+        updateFormWithDOBData(newDate);
+        updateFormWithAgeData(age, unit, description);
       }
     },
-    [calculateAge, formatDateYMD, setFormData]
+    [updateFormWithAgeData, updateFormWithDOBData]
   );
+
+  const handleAgeChange = useCallback(
+    (age: number, unit: string) => {
+      if (age && unit) {
+        const calculatedDOB = calculateDOBFromAge(age, unit);
+        const unitDescription = dropdownValues.ageUnit.find((x) => x.value === unit)?.label || "";
+
+        updateFormWithDOBData(calculatedDOB);
+        updateFormWithAgeData(age, unit, unitDescription);
+      }
+    },
+    [dropdownValues.ageUnit, updateFormWithAgeData, updateFormWithDOBData]
+  );
+
+  useEffect(() => {
+    if (formData.patRegisters.pDob) {
+      const { age, unit, description } = calculateAgeFromDOB(new Date(formData.patRegisters.pDob));
+      updateFormWithAgeData(age, unit, description);
+    }
+  }, [formData.patRegisters.pDob, updateFormWithAgeData]);
 
   const handleUHIDBlur = useCallback(() => {
     if (!formData.patRegisters.pChartCode) {
@@ -284,15 +321,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
             name="pAgeNumber"
             ControlID="Age"
             value={formData.patOverview.pAgeNumber}
-            onChange={(e) =>
-              setFormData((prevFormData) => ({
-                ...prevFormData,
-                patOverview: {
-                  ...prevFormData.patOverview,
-                  pAgeNumber: parseInt(e.target.value),
-                },
-              }))
-            }
+            onChange={(e) => {
+              const newAge = parseInt(e.target.value);
+              handleAgeChange(newAge, formData.patOverview.pAgeDescriptionVal);
+            }}
             isSubmitted={isSubmitted}
             isMandatory={true}
             maxLength={3}
@@ -305,7 +337,11 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
             ControlID="AgeUnit"
             value={formData.patOverview.pAgeDescriptionVal}
             options={dropdownValues.ageUnit}
-            onChange={handleDropdownChange(["patOverview", "pAgeDescriptionVal"], ["patOverview", "pAgeDescription"], dropdownValues.ageUnit)}
+            onChange={(e) => {
+              const newUnit = e.target.value;
+              handleAgeChange(formData.patOverview.pAgeNumber, newUnit);
+              handleDropdownChange(["patOverview", "pAgeDescriptionVal"], ["patOverview", "pAgeDescription"], dropdownValues.ageUnit)(e);
+            }}
             isSubmitted={isSubmitted}
             isMandatory={true}
             gridProps={{ xs: 12, md: 1 }}
@@ -319,7 +355,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
           ControlID="DOB"
           value={formData.patRegisters.pDob}
           onChange={handleDOBChange}
-          maxDate={new Date()} // Set to current date
+          maxDate={new Date()}
           isSubmitted={isSubmitted}
           isMandatory={true}
           gridProps={{ xs: 12, md: 2 }}

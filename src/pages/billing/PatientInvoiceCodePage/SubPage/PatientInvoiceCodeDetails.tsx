@@ -11,9 +11,7 @@ import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import FormField from "../../../../components/FormField/FormField";
 import { patientInvioceService } from "../../../../services/BillingServices/BillingGenericService";
 
-const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
-  editData,
-}) => {
+const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({ editData }) => {
   const [formState, setFormState] = useState({
     isSubmitted: false,
     pTypeCode: "",
@@ -60,25 +58,13 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
       rModifiedOn: serverDate || new Date(),
       rModifiedBy: userName || "",
     }),
-    [
-      formState,
-      editData,
-      compID,
-      compCode,
-      compName,
-      userID,
-      userName,
-      serverDate,
-    ]
+    [formState, editData, compID, compCode, compName, userID, userName, serverDate]
   );
 
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const { name, value } = e.target;
-      setFormState((prev) => ({ ...prev, [name]: value }));
-    },
-    []
-  );
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormState((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
   const handleSave = async () => {
     setFormState((prev) => ({ ...prev, isSubmitted: true }));
@@ -88,20 +74,11 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
       const bPatTypeDto = createBPatTypeDto();
       const result = await patientInvioceService.save(bPatTypeDto);
       if (result.success) {
-        showAlert(
-          "Success",
-          "Patient Invoice Code saved successfully!",
-          "success",
-          {
-            onConfirm: handleClear,
-          }
-        );
+        showAlert("Success", "Patient Invoice Code saved successfully!", "success", {
+          onConfirm: handleClear,
+        });
       } else {
-        showAlert(
-          "Error",
-          result.errorMessage || "Failed to save Patient Invoice Code.",
-          "error"
-        );
+        showAlert("Error", result.errorMessage || "Failed to save Patient Invoice Code.", "error");
       }
     } catch (error) {
       console.error("Error saving Patient Invoice Code:", error);
@@ -126,9 +103,7 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
       ...prev,
       rActiveYN: event.target.checked ? "Y" : "N",
     }));
-  },
-    []
-  );
+  }, []);
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -158,15 +133,7 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
         />
       </Grid>
       <Grid container spacing={2}>
-        <FormField
-          type="textarea"
-          label="Remarks"
-          value={formState.rNotes}
-          onChange={handleInputChange}
-          name="rNotes"
-          ControlID="rNotes"
-          placeholder="Remarks"
-        />
+        <FormField type="textarea" label="Remarks" value={formState.rNotes} onChange={handleInputChange} name="rNotes" ControlID="rNotes" placeholder="Remarks" />
       </Grid>
       <Grid container spacing={2}>
         <FormField
@@ -179,15 +146,8 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({
           ControlID="rActiveYN"
         />
       </Grid>
-      <FormSaveClearButton
-        clearText="Clear"
-        saveText="Save"
-        onClear={handleClear}
-        onSave={handleSave}
-        clearIcon={DeleteIcon}
-        saveIcon={SaveIcon}
-      />
-    </Paper >
+      <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
+    </Paper>
   );
 };
 
