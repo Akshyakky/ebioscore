@@ -10,8 +10,8 @@ class ExtendedAdmissionService extends GenericEntityService<AdmissionDto> {
     super(apiService, entityName);
   }
 
-  async admitPatient(admissionData: AdmissionDto): Promise<AdmissionDto> {
-    return this.apiService.post<AdmissionDto>(`${this.baseEndpoint}/Admit`, admissionData, this.getToken());
+  async admitPatient(admissionData: AdmissionDto): Promise<OperationResult<AdmissionDto>> {
+    return this.apiService.post<OperationResult<AdmissionDto>>(`${this.baseEndpoint}/Admit`, admissionData, this.getToken());
   }
 
   async generateAdmitCode(): Promise<OperationResult<any>> {

@@ -17,8 +17,9 @@ import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/u
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
 import { showAlert } from "../../../../utils/Common/showAlert";
+import { useLoading } from "../../../../context/LoadingContext";
 
-interface PatientHistory {
+export interface PatientHistory {
   [key: string]: any;
 }
 
@@ -40,9 +41,10 @@ const AdmissionPage: React.FC = () => {
     shouldClearPatientHistory,
     setShouldClearPatientHistory,
     insurancePageRef,
+    updatePatientHistory,
+    patientHistory,
   } = useAdmissionForm();
-
-  const [patientHistory, setPatientHistory] = useState<PatientHistory>({});
+  const { setLoading } = useLoading();
   const { handleDropdownChange } = useDropdownChange<AdmissionDto>(setFormData);
 
   const { fetchPatientSuggestions } = usePatientAutocomplete();
@@ -55,22 +57,27 @@ const AdmissionPage: React.FC = () => {
     // Implement advanced search logic
   }, []);
 
-  const actionButtons: ButtonProps[] = useMemo(() => [
-    {
-      variant: 'contained',
-      size: 'medium',
-      icon: SearchIcon,
-      text: 'Advanced Search',
-      onClick: handleAdvancedSearch,
-    },
-    {
-      variant: 'contained',
-      icon: PrintIcon,
-      text: 'Print Admission Form',
-      size: 'medium',
-      onClick: () => {/* Implement print logic */ },
-    },
-  ], [handleAdvancedSearch]);
+  const actionButtons: ButtonProps[] = useMemo(
+    () => [
+      {
+        variant: "contained",
+        size: "medium",
+        icon: SearchIcon,
+        text: "Advanced Search",
+        onClick: handleAdvancedSearch,
+      },
+      {
+        variant: "contained",
+        icon: PrintIcon,
+        text: "Print Admission Form",
+        size: "medium",
+        onClick: () => {
+          /* Implement print logic */
+        },
+      },
+    ],
+    [handleAdvancedSearch]
+  );
 
   const handleClearAll = useCallback(() => {
     handleClear();
@@ -78,41 +85,36 @@ const AdmissionPage: React.FC = () => {
     setShouldClearPatientHistory(true);
   }, [handleClear, setShouldClearInsuranceData, setShouldClearPatientHistory]);
 
-
   useEffect(() => {
     if (shouldClearPatientHistory) {
       setShouldClearPatientHistory(false);
     }
   }, [shouldClearPatientHistory, setShouldClearPatientHistory]);
 
-  const handleHistoryChange = useCallback((historyData: any) => {
-    setPatientHistory((prevHistory: PatientHistory) => ({
-      ...prevHistory,
-      [historyData.type]: historyData
-    }));
-  }, []);
+  const handleHistoryChange = useCallback(
+    (historyData: any) => {
+      updatePatientHistory(historyData);
+    },
+    [updatePatientHistory]
+  );
 
-  // Modify the handleSave function to include saving patient history
   const handleSaveAll = async () => {
     try {
-      // Save admission data
-      await handleSave();
+      setLoading(true);
+      const success = await handleSave();
 
-      // Save patient history data
-      for (const historyType in patientHistory) {
-        const historyData = patientHistory[historyType];
-        // Call the appropriate service to save each type of history
-        // For example:
-        // if (historyType === 'allergies') {
-        //   await allergyService.createOrUpdateAllergy(historyData);
-        // }
-        // Add similar logic for other history types
+      if (success) {
+        showAlert("Success", "Admission and patient history saved successfully!", "success", {
+          onConfirm: () => {
+            handleClear();
+          },
+        });
       }
-
-      showAlert("Success", "Admission and patient history saved successfully!", "success");
     } catch (error) {
-      console.error("Error saving admission and history:", error);
-      showAlert("Error", "Failed to save admission and history.", "error");
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      showAlert("Error", `Failed to save admission: ${errorMessage}`, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -129,30 +131,13 @@ const AdmissionPage: React.FC = () => {
           fetchPatientSuggestions={fetchPatientSuggestions}
           handlePatientSelect={handlePatientSelect}
         />
-        <CustomButton
-          variant="outlined"
-          text="Select Bed from Ward View"
-          onClick={handleOpenBedSelection}
-        />
+        <CustomButton variant="outlined" text="Select Bed from Ward View" onClick={handleOpenBedSelection} />
       </CustomAccordion>
-      <GenericDialog
-        open={isBedSelectionOpen}
-        onClose={handleCloseBedSelection}
-        title="Select a Bed"
-        maxWidth="xl"
-        fullWidth
-      >
-        <ManageBedDetails
-          onBedSelect={handleBedSelect}
-          isSelectionMode={true}
-        />
+      <GenericDialog open={isBedSelectionOpen} onClose={handleCloseBedSelection} title="Select a Bed" maxWidth="xl" fullWidth>
+        <ManageBedDetails onBedSelect={handleBedSelect} isSelectionMode={true} />
       </GenericDialog>
       <CustomAccordion title="Payer Details">
-        <InsurancePage
-          ref={insurancePageRef}
-          pChartID={formData.IPAdmissionDto.pChartID || 0}
-          shouldClearData={shouldClearInsuranceData}
-        />
+        <InsurancePage ref={insurancePageRef} pChartID={formData.ipAdmissionDto.pChartID || 0} shouldClearData={shouldClearInsuranceData} />
       </CustomAccordion>
       <CustomAccordion title="Principal Diagnosis">
         <DiagnosisSection
@@ -164,22 +149,16 @@ const AdmissionPage: React.FC = () => {
       </CustomAccordion>
       <CustomAccordion title="Patient History">
         <PatientHistorySection
-          pChartID={formData.IPAdmissionDto.pChartID || 0}
-          opipNo={formData.IPAdmissionDto.pChartID || 0}
-          opipCaseNo={formData.IPAdmissionDto.oPIPCaseNo || 0}
+          pChartID={formData.ipAdmissionDto.pChartID || 0}
+          opipNo={formData.ipAdmissionDto.opipNo || 0}
+          opipCaseNo={formData.ipAdmissionDto.oPIPCaseNo || 0}
           shouldClear={shouldClearPatientHistory}
           onHistoryChange={handleHistoryChange}
           showImmediateSave={false}
+          initialHistoryData={patientHistory}
         />
       </CustomAccordion>
-      <FormSaveClearButton
-        clearText="Clear"
-        saveText="Save"
-        onClear={handleClearAll}
-        onSave={handleSaveAll}
-        clearIcon={DeleteIcon}
-        saveIcon={SaveIcon}
-      />
+      <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClearAll} onSave={handleSaveAll} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </Container>
   );
 };

@@ -39,10 +39,10 @@ const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData 
     dischargeNoteYN: "N",
     superSpecialityYN: "N",
     rActiveYN: "Y",
-    transferYN: 'N',
+    transferYN: "N",
     compID: compID ?? 0,
     compCode: compCode ?? "",
-    compName: compName ?? ""
+    compName: compName ?? "",
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -56,7 +56,7 @@ const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData 
 
   useEffect(() => {
     if (editData) {
-      setFormData(prevState => ({ ...prevState, ...editData }));
+      setFormData((prevState) => ({ ...prevState, ...editData }));
     } else {
       handleClear();
     }
@@ -64,12 +64,15 @@ const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData 
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prevState => ({ ...prevState, [name]: value }));
+    setFormData((prevState) => ({ ...prevState, [name]: value }));
   }, []);
 
-  const handleSwitchChange = useCallback((name: string) => (e: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-    setFormData(prevState => ({ ...prevState, [name]: checked ? "Y" : "N" }));
-  }, []);
+  const handleSwitchChange = useCallback(
+    (name: string) => (e: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+      setFormData((prevState) => ({ ...prevState, [name]: checked ? "Y" : "N" }));
+    },
+    []
+  );
 
   const handleSave = async () => {
     setIsSubmitted(true);
@@ -81,14 +84,9 @@ const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData 
     try {
       const result = await departmentService.save(formData);
       if (result.success) {
-        showAlert(
-          `Department ${isEditMode ? "Updated" : "Saved"}`,
-          `${formData.deptName} ${isEditMode ? "updated" : "saved"} successfully!`,
-          "success",
-          {
-            onConfirm: isEditMode ? handleClear : () => console.log("Hello", formData.deptID),
-          }
-        );
+        showAlert(`Department ${isEditMode ? "Updated" : "Saved"}`, `${formData.deptName} ${isEditMode ? "updated" : "saved"} successfully!`, "success", {
+          onConfirm: isEditMode ? handleClear : () => console.log("Hello", formData.deptID),
+        });
       } else {
         showAlert("Error", result.errorMessage || "Failed to save Department.", "error");
       }
@@ -119,17 +117,17 @@ const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData 
       dischargeNoteYN: "N",
       superSpecialityYN: "N",
       rActiveYN: "Y",
-      transferYN: 'N',
+      transferYN: "N",
       compID: compID ?? 0,
       compCode: compCode ?? "",
-      compName: compName ?? ""
+      compName: compName ?? "",
     });
     setIsSubmitted(false);
   }, []);
 
   const handleSelectChange = useCallback((event: SelectChangeEvent<string>) => {
     const { name, value } = event.target;
-    setFormData(prevState => ({ ...prevState, [name]: value }));
+    setFormData((prevState) => ({ ...prevState, [name]: value }));
   }, []);
 
   return (
@@ -140,14 +138,7 @@ const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData 
 
       <section>
         {isEditMode && (
-          <CustomButton
-            text="Manage Users Access"
-            size="small"
-            onClick={() => setOpenDialog(true)}
-            variant="contained"
-            color="info"
-            aria-label="Manage Department Users Access"
-          />
+          <CustomButton text="Manage Users Access" size="small" onClick={() => setOpenDialog(true)} variant="contained" color="info" aria-label="Manage Department Users Access" />
         )}
         <Grid container spacing={2}>
           <FormField
@@ -203,15 +194,7 @@ const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData 
             ControlID="unit"
             placeholder="Department Unit"
           />
-          <FormField
-            type="textarea"
-            label="Remarks"
-            value={formData.rNotes}
-            onChange={handleInputChange}
-            name="rNotes"
-            ControlID="rNotes"
-            placeholder="Remarks"
-          />
+          <FormField type="textarea" label="Remarks" value={formData.rNotes} onChange={handleInputChange} name="rNotes" ControlID="rNotes" placeholder="Remarks" />
         </Grid>
         <Grid container spacing={2}>
           {isEditMode && (
@@ -312,12 +295,7 @@ const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData 
           saveIcon={isEditMode ? EditIcon : SaveIcon}
         />
       </section>
-      <DeptUsersPage
-        deptId={formData.deptID}
-        deptName={formData.deptName}
-        openDialog={openDialog}
-        handleCloseDialog={() => setOpenDialog(false)}
-      />
+      <DeptUsersPage deptId={formData.deptID} deptName={formData.deptName} openDialog={openDialog} handleCloseDialog={() => setOpenDialog(false)} />
     </Paper>
   );
 };

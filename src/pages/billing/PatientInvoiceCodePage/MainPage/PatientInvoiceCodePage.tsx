@@ -7,41 +7,41 @@ import { useState } from "react";
 import { BPatTypeDto } from "../../../../interfaces/Billing/BPatTypeDto";
 
 const PatientInvoiceCodePage: React.FC = () => {
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const [selectedData, setSelectedData] = useState<BPatTypeDto | undefined>(undefined);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [selectedData, setSelectedData] = useState<BPatTypeDto | undefined>(undefined);
 
-    const handleAdvancedSearch = () => {
-        setIsSearchOpen(true);
-    };
+  const handleAdvancedSearch = () => {
+    setIsSearchOpen(true);
+  };
 
-    const handleCloseSearch = () => {
-        setIsSearchOpen(false);
-    };
+  const handleCloseSearch = () => {
+    setIsSearchOpen(false);
+  };
 
-    const handleSelect = (data: BPatTypeDto) => {
-        setSelectedData(data);
-    };
+  const handleSelect = (data: BPatTypeDto) => {
+    setSelectedData(data);
+  };
 
-    const actionButtons: ButtonProps[] = [
-        {
-            variant: "contained",
-            icon: Search,
-            text: "Advanced Search",
-            onClick: handleAdvancedSearch,
-        }
-    ];
+  const actionButtons: ButtonProps[] = [
+    {
+      variant: "contained",
+      icon: Search,
+      text: "Advanced Search",
+      onClick: handleAdvancedSearch,
+    },
+  ];
 
-    return (
-        <>
-            <Container maxWidth={false}>
-                <Box sx={{ marginBottom: 2 }}>
-                    <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
-                </Box>
-                <PatientInvoiceCodeDetails editData={selectedData} />
-                <PatientInvoiceCodeSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
-            </Container>
-        </>
-    );
-}
+  return (
+    <>
+      <Container maxWidth={false}>
+        <Box sx={{ marginBottom: 2 }}>
+          <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
+        </Box>
+        <PatientInvoiceCodeDetails editData={selectedData} />
+        <PatientInvoiceCodeSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
+      </Container>
+    </>
+  );
+};
 
 export default PatientInvoiceCodePage;

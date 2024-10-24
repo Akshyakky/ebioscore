@@ -6,7 +6,8 @@ export interface IPAdmissionDto extends RecordFieldsWithPhysician {
   admitCode: string;
   pChartID: number;
   pChartCode: string;
-  oPIPCaseNo?: number;
+  oPIPCaseNo: number;
+  opipNo: number;
   patOPIP: string;
   admitDate: Date;
   admitStatus: string;
@@ -21,7 +22,7 @@ export interface IPAdmissionDto extends RecordFieldsWithPhysician {
   acApprovedBy?: string;
   acApprovedId?: number;
   acReason?: string;
-  caseTypeID?: number;
+  caseTypeCode: string;
   caseTypeName: string;
   deliveryCaseYN: YesNo;
   deptID?: number;
@@ -106,7 +107,7 @@ export interface WrBedDetailsDto extends RecordFields {
 }
 
 export interface AdmissionDto {
-  IPAdmissionDto: IPAdmissionDto;
-  IPAdmissionDetailsDto: IPAdmissionDetailsDto;
-  WrBedDetailsDto: WrBedDetailsDto;
+  ipAdmissionDto: IPAdmissionDto;
+  ipAdmissionDetailsDto: IPAdmissionDetailsDto;
+  wrBedDetailsDto: WrBedDetailsDto;
 }

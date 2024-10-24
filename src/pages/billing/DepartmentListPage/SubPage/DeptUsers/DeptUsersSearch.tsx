@@ -12,11 +12,7 @@ interface DeptUsersSearchProps {
   onSelectUser: (user: UserListData) => void; // Pass selected user to parent
 }
 
-const DeptUsersListSearch: React.FC<DeptUsersSearchProps> = ({
-  open,
-  handleClose,
-  onSelectUser,
-}) => {
+const DeptUsersListSearch: React.FC<DeptUsersSearchProps> = ({ open, handleClose, onSelectUser }) => {
   const { fetchAllUsers } = useContext(UserListSearchContext);
   const [users, setUsers] = useState<UserListData[]>([]);
 
@@ -53,15 +49,7 @@ const DeptUsersListSearch: React.FC<DeptUsersSearchProps> = ({
       key: "addDeptUser",
       header: "Department Access",
       visible: true,
-      render: (row: any & { serialNumber: number; Status: string }) => (
-        <CustomButton
-          text="Add User"
-          onClick={() => handleSelect(row)}
-          icon={Add}
-          size="small"
-          color="secondary"
-        />
-      ),
+      render: (row: any & { serialNumber: number; Status: string }) => <CustomButton text="Add User" onClick={() => handleSelect(row)} icon={Add} size="small" color="secondary" />,
     },
     { key: "fullName", header: "User Name", visible: true },
     { key: "loginName", header: "Login Name", visible: true },

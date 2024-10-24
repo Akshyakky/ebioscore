@@ -7,7 +7,7 @@ import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
 import { useLoading } from "../../../../context/LoadingContext";
 import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { useServerDate } from "../../../../hooks/Common/useServerDate"
+import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 import FormField from "../../../../components/FormField/FormField";
@@ -15,9 +15,7 @@ import { paymentTypeService } from "../../../../services/BillingServices/Billing
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 
-const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
-  editData,
-}) => {
+const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({ editData }) => {
   const [formState, setFormState] = useState({
     isSubmitted: false,
     payCode: "",
@@ -31,15 +29,13 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
     compName: store.getState().userDetails.compName || "",
   });
 
-  const { handleDropdownChange } =
-    useDropdownChange(setFormState);
-  const dropdownValues = useDropdownValues(['payment']);
+  const { handleDropdownChange } = useDropdownChange(setFormState);
+  const dropdownValues = useDropdownValues(["payment"]);
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
   const { token } = useSelector((state: RootState) => state.userDetails);
-  const { compID, compCode, compName, userID, userName } =
-    store.getState().userDetails;
+  const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
 
   useEffect(() => {
     if (editData) {
@@ -54,13 +50,11 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
         compID: store.getState().userDetails.compID || 0,
         compCode: store.getState().userDetails.compCode || "",
         compName: store.getState().userDetails.compName || "",
-
       });
     } else {
       handleClear();
     }
   }, [editData]);
-
 
   const createBPayTypeDto = useCallback(
     (): BPayTypeDto => ({
@@ -82,33 +76,18 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
       rModifiedOn: serverDate || new Date(),
       rModifiedBy: userName || "",
     }),
-    [
-      formState,
-      editData,
-      compID,
-      compCode,
-      compName,
-      userID,
-      userName,
-      serverDate,
-    ]
+    [formState, editData, compID, compCode, compName, userID, userName, serverDate]
   );
 
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const { name, value } = e.target;
-      setFormState((prev) => ({ ...prev, [name]: value }));
-    },
-    []
-  );
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormState((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
-  const handlePayModeChange = useCallback(
-    (event: SelectChangeEvent<string>) => {
-      const { value } = event.target;
-      setFormState((prev) => ({ ...prev, payMode: value }));
-    },
-    []
-  );
+  const handlePayModeChange = useCallback((event: SelectChangeEvent<string>) => {
+    const { value } = event.target;
+    setFormState((prev) => ({ ...prev, payMode: value }));
+  }, []);
 
   const handleSave = async () => {
     setFormState((prev) => ({ ...prev, isSubmitted: true }));
@@ -122,11 +101,7 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
           onConfirm: handleClear,
         });
       } else {
-        showAlert(
-          "Error",
-          result.errorMessage || "Failed to save Payment type.",
-          "error"
-        );
+        showAlert("Error", result.errorMessage || "Failed to save Payment type.", "error");
       }
     } catch (error) {
       console.error("Error saving Payment type:", error);
@@ -151,15 +126,12 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
     });
   }, []);
 
-  const handleActiveToggle = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setFormState((prev) => ({
-        ...prev,
-        rActiveYN: event.target.checked ? "Y" : "N",
-      }));
-    },
-    []
-  );
+  const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState((prev) => ({
+      ...prev,
+      rActiveYN: event.target.checked ? "Y" : "N",
+    }));
+  }, []);
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -192,16 +164,11 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
           />
         </Grid>
         <Grid container spacing={2}>
-
           <FormField
             type="select"
             label="Payment Type Mode"
             value={formState.payMode}
-            onChange={handleDropdownChange(
-              ["payMode"],
-              ["PAYT"],
-              dropdownValues.payment
-            )}
+            onChange={handleDropdownChange(["payMode"], ["PAYT"], dropdownValues.payment)}
             options={dropdownValues.payment}
             name="payMode"
             ControlID="payMode"
@@ -224,15 +191,7 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
           />
         </Grid>
         <Grid container spacing={2}>
-          <FormField
-            type="textarea"
-            label="Remarks"
-            value={formState.rNotes}
-            onChange={handleInputChange}
-            name="rNotes"
-            ControlID="rNotes"
-            placeholder="Remarks"
-          />
+          <FormField type="textarea" label="Remarks" value={formState.rNotes} onChange={handleInputChange} name="rNotes" ControlID="rNotes" placeholder="Remarks" />
         </Grid>
         <Grid container spacing={2}>
           <FormField
@@ -245,14 +204,7 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({
             ControlID="rActiveYN"
           />
         </Grid>
-        <FormSaveClearButton
-          clearText="Clear"
-          saveText="Save"
-          onClear={handleClear}
-          onSave={handleSave}
-          clearIcon={DeleteIcon}
-          saveIcon={SaveIcon}
-        />
+        <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
       </section>
     </Paper>
   );

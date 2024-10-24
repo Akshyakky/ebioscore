@@ -9,21 +9,11 @@ interface PatientInvoiceCodeSearchProps {
   onSelect: (PIC: BPatTypeDto) => void;
 }
 
-const PatientInvoiceCodeSearch: React.FC<PatientInvoiceCodeSearchProps> = ({
-  open,
-  onClose,
-  onSelect,
-}) => {
-  const fetchItems = () =>
-    patientInvioceService.getAll().then(
-      (result) => result.data || []
-    );
+const PatientInvoiceCodeSearch: React.FC<PatientInvoiceCodeSearchProps> = ({ open, onClose, onSelect }) => {
+  const fetchItems = () => patientInvioceService.getAll().then((result) => result.data || []);
 
   const updateActiveStatus = async (id: number, status: boolean) => {
-    const result = await patientInvioceService.updateActiveStatus(
-      id,
-      status
-    );
+    const result = await patientInvioceService.updateActiveStatus(id, status);
     return result;
   };
 

@@ -8,9 +8,7 @@ import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
 
 const PaymentTypesPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<BPayTypeDto | undefined>(
-    undefined
-  );
+  const [selectedData, setSelectedData] = useState<BPayTypeDto | undefined>(undefined);
 
   const handleAdvancedSearch = () => {
     setIsSearchOpen(true);
