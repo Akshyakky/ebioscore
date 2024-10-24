@@ -1,10 +1,14 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import FormField from "../../../../components/FormField/FormField";
 import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
+import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
+import CustomButton from "../../../../components/Button/CustomButton";
+import AddIcon from "@mui/icons-material/Add";
+import AppModifiedDetails from "../../../hospitalAdministration/AppModifiedList/SubPage/AppModifiedListDetails";
 
 interface ContactDetailsProps {
   formData: PatientRegistrationDto;
@@ -19,7 +23,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
 }) => {
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
+
   const dropdownValues = useDropdownValues(['area', 'city', 'country', 'company']);
+  const { fieldsList, defaultFields } = useFieldsList(['area', 'city', 'country', 'company']);
+
+  const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
+  const [dialogCategory, setDialogCategory] = useState<string>("");
 
   const smsOptions = useMemo(() => [
     { value: "Y", label: "Yes" },
@@ -30,6 +39,15 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
     { value: "Y", label: "Yes" },
     { value: "N", label: "No" },
   ], []);
+
+
+  const handleAddField = (category: string) => {
+    setDialogCategory(category);  
+    setIsFieldDialogOpen(true);
+  };
+  const handleFieldDialogClose = () => {
+    setIsFieldDialogOpen(false);
+  };
 
   const handleTextChange = useCallback((field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prevFormData) => ({
@@ -42,107 +60,123 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
   }, [setFormData]);
 
   return (
-    <FormSectionWrapper title="Contact Details" spacing={1}>
-      <FormField
-        type="text"
-        label="Address"
-        name="pAddStreet"
-        ControlID="Address"
-        value={formData.patAddress.pAddStreet || ""}
-        onChange={handleTextChange("pAddStreet")}
-        isSubmitted={isSubmitted}
-      />
-      <FormField
-        type="select"
-        label="Area"
-        name="patAreaVal"
-        ControlID="Area"
-        value={formData.patAddress.patAreaVal || ""}
-        options={dropdownValues.area}
-        onChange={handleDropdownChange(["patAddress", "patAreaVal"], ["patAddress", "patArea"], dropdownValues.area)}
-        isSubmitted={isSubmitted}
-      />
-      <FormField
-        type="select"
-        label="City"
-        name="pAddCityVal"
-        ControlID="City"
-        value={formData.patAddress.pAddCityVal || ""}
-        options={dropdownValues.city}
-        onChange={handleDropdownChange(["patAddress", "pAddCityVal"], ["patAddress", "pAddCity"], dropdownValues.city)}
-        isSubmitted={isSubmitted}
-      />
-      <FormField
-        type="select"
-        label="Country"
-        name="pAddActualCountryVal"
-        ControlID="Country"
-        value={formData.patAddress.pAddActualCountryVal || ""}
-        options={dropdownValues.country}
-        onChange={handleDropdownChange(["patAddress", "pAddActualCountryVal"], ["patAddress", "pAddActualCountry"], dropdownValues.country)}
-        isSubmitted={isSubmitted}
-      />
-      <FormField
-        type="text"
-        label="Post Code"
-        name="pAddPostcode"
-        ControlID="PostCode"
-        value={formData.patAddress.pAddPostcode || ""}
-        onChange={handleTextChange("pAddPostcode")}
-        isSubmitted={isSubmitted}
-      />
-      <FormField
-        type="email"
-        label="Email"
-        name="pAddEmail"
-        ControlID="Email"
-        value={formData.patAddress.pAddEmail || ""}
-        onChange={handleTextChange("pAddEmail")}
-        isSubmitted={isSubmitted}
-      />
-      <FormField
-        type="select"
-        label="Company"
-        name="patCompNameVal"
-        ControlID="Company"
-        value={formData.patRegisters.patCompNameVal || ""}
-        options={dropdownValues.company}
-        onChange={handleDropdownChange(["patRegisters", "patCompNameVal"], ["patRegisters", "patCompName"], dropdownValues.company)}
-        isSubmitted={isSubmitted}
-      />
-      <FormField
-        type="radio"
-        label="Receive SMS"
-        name="pAddSMSVal"
-        ControlID="receiveSMS"
-        value={formData.patAddress.pAddSMSVal || ""}
-        options={smsOptions}
-        onChange={handleRadioButtonChange(
-          ["patAddress", "pAddSMSVal"],
-          ["patAddress", "pAddSMS"],
-          smsOptions
-        )}
-        inline={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ xs: 12, md: 1.5 }}
-      />
-      <FormField
-        type="radio"
-        label="Receive Email"
-        name="pAddMailVal"
-        ControlID="receiveEmail"
-        value={formData.patAddress.pAddMailVal || ""}
-        options={emailOptions}
-        onChange={handleRadioButtonChange(
-          ["patAddress", "pAddMailVal"],
-          ["patAddress", "pAddMail"],
-          emailOptions
-        )}
-        inline={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ xs: 12, md: 1.5 }}
-      />
-    </FormSectionWrapper>
+    <>
+      <FormSectionWrapper title="Contact Details" spacing={1}>
+        <FormField
+          type="text"
+          label="Address"
+          name="pAddStreet"
+          ControlID="Address"
+          value={formData.patAddress.pAddStreet || ""}
+          onChange={handleTextChange("pAddStreet")}
+          isSubmitted={isSubmitted}
+        />
+        <FormField
+          type="select"
+          label="Area"
+          name="patAreaVal"
+          ControlID="Area"
+          value={formData.patAddress.patAreaVal || defaultFields.area || ""}
+          options={fieldsList.area || dropdownValues.area || []}
+          onChange={handleDropdownChange(["patAddress", "patAreaVal"], ["patAddress", "patArea"], fieldsList.area || [])}
+          isSubmitted={isSubmitted}
+        />
+        <CustomButton
+          icon={AddIcon}
+          text="Add"
+          onClick={() => handleAddField("Area")}
+          variant="contained"
+        />
+        <FormField
+          type="select"
+          label="City"
+          name="pAddCityVal"
+          ControlID="City"
+          value={formData.patAddress.pAddCityVal || defaultFields.city || ""}
+          options={fieldsList.city || []}
+          onChange={handleDropdownChange(["patAddress", "pAddCityVal"], ["patAddress", "pAddCity"], fieldsList.city || [])}
+          isSubmitted={isSubmitted}
+        />
+        <CustomButton
+          icon={AddIcon}
+          text="Add"
+          onClick={() => handleAddField("City")}
+          variant="contained"
+        />
+        <FormField
+          type="select"
+          label="Country"
+          name="pAddActualCountryVal"
+          ControlID="Country"
+          value={formData.patAddress.pAddActualCountryVal || defaultFields.country || ""}
+          options={fieldsList.country || dropdownValues.country || []}
+          onChange={handleDropdownChange(["patAddress", "pAddActualCountryVal"], ["patAddress", "pAddActualCountry"], fieldsList.country || [])}
+          isSubmitted={isSubmitted}
+        />
+        <FormField
+          type="text"
+          label="Post Code"
+          name="pAddPostcode"
+          ControlID="PostCode"
+          value={formData.patAddress.pAddPostcode || ""}
+          onChange={handleTextChange("pAddPostcode")}
+          isSubmitted={isSubmitted}
+        />
+        <FormField
+          type="email"
+          label="Email"
+          name="pAddEmail"
+          ControlID="Email"
+          value={formData.patAddress.pAddEmail || ""}
+          onChange={handleTextChange("pAddEmail")}
+          isSubmitted={isSubmitted}
+        />
+        <FormField
+          type="select"
+          label="Company"
+          name="patCompNameVal"
+          ControlID="Company"
+          value={formData.patRegisters.patCompNameVal || defaultFields.company || ""}
+          options={fieldsList.company || dropdownValues.company || []}
+          onChange={handleDropdownChange(["patRegisters", "patCompNameVal"], ["patRegisters", "patCompName"], dropdownValues.company)}
+          isSubmitted={isSubmitted}
+        />
+        <FormField
+          type="radio"
+          label="Receive SMS"
+          name="pAddSMSVal"
+          ControlID="receiveSMS"
+          value={formData.patAddress.pAddSMSVal || ""}
+          options={smsOptions}
+          onChange={handleRadioButtonChange(
+            ["patAddress", "pAddSMSVal"],
+            ["patAddress", "pAddSMS"],
+            smsOptions
+          )}
+          inline={true}
+          isSubmitted={isSubmitted}
+          gridProps={{ xs: 12, md: 1.5 }}
+        />
+        <FormField
+          type="radio"
+          label="Receive Email"
+          name="pAddMailVal"
+          ControlID="receiveEmail"
+          value={formData.patAddress.pAddMailVal || ""}
+          options={emailOptions}
+          onChange={handleRadioButtonChange(
+            ["patAddress", "pAddMailVal"],
+            ["patAddress", "pAddMail"],
+            emailOptions
+          )}
+          inline={true}
+          isSubmitted={isSubmitted}
+          gridProps={{ xs: 12, md: 1.5 }}
+        />
+      </FormSectionWrapper>
+
+    
+    </>
   );
 };
 
