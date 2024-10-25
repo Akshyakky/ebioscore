@@ -1,41 +1,40 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
+import { useLoading } from "../../../../context/LoadingContext";
+import { AppModifiedMast, AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
+import { store } from "../../../../store/store";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../../store/reducers";
+import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import { appModifiedListService, appModifiedMastService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import { showAlert } from "../../../../utils/Common/showAlert";
 import { Grid, SelectChangeEvent } from "@mui/material";
+import CustomButton from "../../../../components/Button/CustomButton";
+import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
+import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
+import FormField from "../../../../components/FormField/FormField";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { useLoading } from "../../../../context/LoadingContext";
-import { AppModifiedMast, AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
-import { appModifiedMastService, appModifiedListService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../components/Button/CustomButton";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import FormField from "../../../../components/FormField/FormField";
-import { store } from "../../../../store/store";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import moduleService from "../../../../services/CommonServices/ModuleService";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 
 const AppModifiedDetails: React.FC = () => {
   const { setLoading } = useLoading();
   const [masterList, setMasterList] = useState<AppModifiedMast[]>([]);
   const [fieldsList, setFieldsList] = useState<AppModifyFieldDto[]>([]);
-  const { compID, compCode, compName } = store.getState().userDetails;
   const [selectedMasterId, setSelectedMasterId] = useState<number>(0);
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>("");
   const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([]);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const userInfo = useSelector((state: RootState) => state.userDetails);
-  const effectiveUserID = userInfo ? (userInfo.adminYN === "Y" ? 0 : userInfo.userID) : -1;
+  const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
+  const [formData, setFormData] = useState<AppModifyFieldDto | null>(null);
   const [dropdownValues, setDropdownValues] = useState({
     mainModulesOptions: [] as DropdownOption[],
     authGroupOptions: [] as DropdownOption[],
   });
-
   const { token, adminYN, userID } = useSelector((state: RootState) => state.userDetails);
-  const [, setCurrentCounter] = useState<number>(0);
   const [isDropdownLoading, setIsDropdownLoading] = useState(true);
   const [categoryFormData, setCategoryFormData] = useState<AppModifiedMast>({
     fieldID: 0,
@@ -49,40 +48,10 @@ const AppModifiedDetails: React.FC = () => {
     transferYN: "Y",
     rNotes: null,
   });
-  const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<AppModifyFieldDto>({
-    amlID: 0,
-    amlName: "",
-    amlCode: "",
-    amlField: "",
-    defaultYN: "N",
-    modifyYN: "N",
-    rNotes: "",
-    compID: compID || 0,
-    compCode: "",
-    compName: "",
-    transferYN: "Y",
-    rActiveYN: "Y",
-  });
 
   useEffect(() => {
     fetchMasterList();
   }, []);
-
-  const initialFormData: AppModifyFieldDto = {
-    amlID: 0,
-    amlName: "",
-    amlCode: "",
-    amlField: "",
-    defaultYN: "N",
-    modifyYN: "N",
-    rNotes: "",
-    compID: compID || 0,
-    compCode: "",
-    compName: "",
-    transferYN: "Y",
-    rActiveYN: "Y",
-  };
 
   const fetchMasterList = async () => {
     setLoading(true);
@@ -105,7 +74,7 @@ const AppModifiedDetails: React.FC = () => {
   };
 
   const fetchFields = useCallback(
-    async (amlID: number) => {
+    async (amlID: number, callback?: () => void) => {
       if (!amlID) return;
       setLoading(true);
       try {
@@ -114,11 +83,11 @@ const AppModifiedDetails: React.FC = () => {
         if (Array.isArray(fieldsData)) {
           const selectedCategory = masterList.find((master) => master.fieldID === amlID);
           if (selectedCategory) {
-            const filteredFields = fieldsData.filter((field: AppModifyFieldDto) => {
-              const matches = field.amlField === selectedCategory.fieldName && field.rActiveYN === "Y";
-              return matches;
+            const filteredFields = fieldsData.filter((field) => {
+              return field.amlField === selectedCategory.fieldName && field.rActiveYN === "Y";
             });
             setFieldsList(filteredFields);
+            if (callback) callback();
           }
         }
       } catch (error) {
@@ -130,115 +99,20 @@ const AppModifiedDetails: React.FC = () => {
     [setLoading, masterList]
   );
 
-  useEffect(() => {
-    const fetchMainModules = async () => {
-      if (token) {
-        setIsDropdownLoading(true);
-        try {
-          const modulesData = await moduleService.getActiveModules(adminYN === "Y" ? 0 : (userID ?? 0));
-          const options = modulesData.map((module) => ({
-            label: module.title,
-            value: module.auGrpID.toString(),
-          }));
-
-          setDropdownValues((prevValues) => ({
-            ...prevValues,
-            authGroupOptions: options,
-          }));
-          setIsDropdownLoading(false);
-        } catch (error) {
-          showAlert("Error", "Error fetching main modules", "error");
-          setIsDropdownLoading(false);
-        }
-      }
-    };
-
-    fetchMainModules();
-  }, [token, adminYN, userID]);
-
   const handleMasterChange = async (event: SelectChangeEvent<string>) => {
     const selectedId = parseInt(event.target.value);
     setSelectedMasterId(selectedId);
     const selectedCategory = masterList.find((master) => master.fieldID === selectedId);
     if (selectedCategory) {
       setSelectedCategoryName(selectedCategory.fieldName);
-      setCurrentCounter(0);
       fetchFields(selectedId);
-      await generateFieldCode(selectedCategory.fieldName);
     }
-  };
-
-  const getHighestExistingCode = (categoryName: string, fields: AppModifyFieldDto[]): number => {
-    const categoryFields = fields.filter((field) => field.amlField === categoryName);
-    let highestNumber = 0;
-
-    categoryFields.forEach((field) => {
-      const codeMatch = field.amlCode.match(/\d+$/);
-      if (codeMatch) {
-        const number = parseInt(codeMatch[0]);
-        highestNumber = Math.max(highestNumber, number);
-      }
-    });
-
-    return highestNumber;
-  };
-
-  const generateFieldCode = async (prefix: string) => {
-    try {
-      const response: any = await appModifiedListService.getAll();
-      const fieldsData = response.data || response;
-      const highestNumber = getHighestExistingCode(prefix, fieldsData);
-      const nextNumber = highestNumber + 1;
-      setCurrentCounter(nextNumber);
-      const formattedCounter = nextNumber.toString().padStart(2, "0");
-      const newCode = `${prefix}${formattedCounter}`;
-      setFormData((prev) => ({
-        ...prev,
-        amlCode: newCode,
-      }));
-
-      return newCode;
-    } catch (error) {
-      showAlert("Error", "An error occurred while generating the field code", "error");
-      return null;
-    }
-  };
-
-  const resetFormAndGenerateCode = async () => {
-    setFormData({
-      ...initialFormData,
-      amlField: selectedCategoryName,
-    });
-
-    if (selectedCategoryName) {
-      await generateFieldCode(selectedCategoryName);
-    }
-  };
-
-  const handleCategoryDialogClose = () => {
-    setCategoryFormData({
-      fieldID: 0,
-      fieldCode: "",
-      fieldName: "",
-      auGrpID: 0,
-      rActiveYN: "Y",
-      compID: store.getState().userDetails.compID || 0,
-      compCode: store.getState().userDetails.compCode || "",
-      compName: store.getState().userDetails.compName || "",
-      transferYN: "Y",
-      rNotes: null,
-    });
-    setIsCategoryDialogOpen(false);
-  };
-
-  const handleFieldDialogClose = () => {
-    setFormData(initialFormData);
-    setIsFieldDialogOpen(false);
   };
 
   const handleCategoryDialogSubmit = async () => {
-    if (!categoryFormData.fieldCode || !categoryFormData.fieldName) {
-      showAlert("Error", "Field Code and Field Name cannot be empty", "error");
+    const { fieldCode, fieldName, auGrpID } = categoryFormData;
+    if (!fieldCode || !fieldName || !auGrpID) {
+      showAlert("Error", "All fields are required. Please fill out Field Code, Field Name, and Main Modules.", "error");
       return;
     }
     try {
@@ -255,69 +129,32 @@ const AppModifiedDetails: React.FC = () => {
     }
   };
 
-  const handleFieldDialogSubmit = async () => {
-    if (!formData.amlName) {
-      showAlert("Error", "Field Code and Field Name cannot be empty", "error");
-      return;
-    }
-    try {
-      if (!selectedMasterId) {
-        showAlert("Error", "Please select a category first", "error");
-        return;
-      }
-      if (formData.defaultYN === "Y") {
-        const existingDefault = fieldsList.find((field) => field.defaultYN === "Y" && field.amlField === selectedCategoryName);
-        if (existingDefault) {
-          showAlert(
-            "Confirmation",
-            `There is already a default entry '${existingDefault.amlName}'. ` +
-              `Are you sure you want to set '${formData.amlName}' as the new default? ` +
-              `The previous default will be set to 'No'.`,
-            "warning",
-            {
-              showConfirmButton: true,
-              showCancelButton: true,
-              confirmButtonText: "Yes",
-              cancelButtonText: "No",
-              onConfirm: async () => {
-                const updatedField = {
-                  ...existingDefault,
-                  defaultYN: "N",
-                };
-                await appModifiedListService.save(updatedField);
-                showAlert("Notification", `Previous default entry '${existingDefault.amlName}' has been updated to 'No'`, "info");
-                await saveNewField();
-              },
-            }
-          );
-          return;
+  useEffect(() => {
+    const fetchMainModules = async () => {
+      debugger;
+      if (token) {
+        setIsDropdownLoading(true);
+        try {
+          const modulesData = await moduleService.getActiveModules(adminYN === "Y" ? 0 : (userID ?? 0));
+          const mainModuleOptions = modulesData.map((module) => ({
+            label: module.title,
+            value: module.auGrpID.toString(),
+          }));
+
+          setDropdownValues((prevValues) => ({
+            ...prevValues,
+            mainModulesOptions: mainModuleOptions,
+          }));
+          setIsDropdownLoading(false);
+        } catch (error) {
+          showAlert("Error", "Error fetching main modules", "error");
+          setIsDropdownLoading(false);
         }
       }
-      await saveNewField();
-    } catch (error) {
-      showAlert("Error", "An error occurred during submission.", "error");
-    }
-  };
-
-  const saveNewField = async () => {
-    const newFieldData = {
-      ...formData,
-      amlField: selectedCategoryName,
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
     };
 
-    const response = await appModifiedListService.save(newFieldData);
-    if (response) {
-      showAlert("Success", formData.amlID ? "Field updated successfully" : "Field added successfully", "success");
-      await resetFormAndGenerateCode();
-      setIsFieldDialogOpen(false);
-      fetchFields(selectedMasterId);
-    } else {
-      showAlert("Error", "Failed to save field", "error");
-    }
-  };
+    fetchMainModules();
+  }, [token, adminYN, userID]);
 
   const handleEdit = useCallback(async (row: AppModifyFieldDto) => {
     try {
@@ -328,6 +165,10 @@ const AppModifiedDetails: React.FC = () => {
     }
   }, []);
 
+  const handleFieldAddedOrUpdated = () => {
+    fetchFields(selectedMasterId);
+  };
+
   const handleDelete = useCallback(
     async (row: AppModifyFieldDto) => {
       setLoading(true);
@@ -335,7 +176,7 @@ const AppModifiedDetails: React.FC = () => {
         const updatedField = { ...row, rActiveYN: "N" };
         const result = await appModifiedListService.save(updatedField);
         if (result) {
-          showAlert("Success", `Field ${row.amlName} deactivated successfully`, "success");
+          showAlert("Success", `${row.amlName} deactivated successfully`, "success");
           fetchFields(selectedMasterId);
         } else {
           showAlert("Error", "Failed to deactivate field", "error");
@@ -348,11 +189,6 @@ const AppModifiedDetails: React.FC = () => {
     },
     [setLoading, fetchFields, selectedMasterId]
   );
-
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  }, []);
 
   const columns = [
     { key: "amlCode", header: "Field Code", visible: true },
@@ -413,13 +249,13 @@ const AppModifiedDetails: React.FC = () => {
         </Grid>
         <Grid item xs={12} sm={12} md={12} container justifyContent="space-between" alignItems="center">
           <CustomButton icon={AddIcon} text="Add Category" onClick={() => setIsCategoryDialogOpen(true)} variant="contained" sx={{ float: "left" }} />
-          <CustomButton icon={AddIcon} text="Add Field" onClick={() => setIsFieldDialogOpen(true)} variant="contained" sx={{ float: "right" }} />
+          <CustomButton icon={AddIcon} text="Add Field" onClick={() => setIsFieldDialogOpen(true)} variant="contained" sx={{ float: "right" }} disabled={selectedMasterId === 0} />
         </Grid>
       </Grid>
       <CustomGrid columns={columns} data={fieldsList} />
       <GenericDialog
         open={isCategoryDialogOpen}
-        onClose={handleCategoryDialogClose}
+        onClose={() => setIsCategoryDialogOpen(false)}
         title="Add New Category"
         actions={
           <>
@@ -463,102 +299,32 @@ const AppModifiedDetails: React.FC = () => {
           />
           <FormField
             type="select"
-            label="Authorization Group"
-            name="auGrpID"
+            label="Main Modules"
+            name="mainModule"
             value={categoryFormData.auGrpID.toString()}
-            options={isDropdownLoading ? [{ label: "Loading...", value: "" }] : dropdownValues.authGroupOptions}
+            options={isDropdownLoading ? [{ label: "Loading...", value: "" }] : dropdownValues.mainModulesOptions}
             onChange={(e) =>
               setCategoryFormData((prev) => ({
                 ...prev,
                 auGrpID: parseInt(e.target.value),
               }))
             }
-            ControlID="auGrpID"
+            ControlID="mainModule"
             isMandatory={true}
             gridProps={{ xs: 12 }}
             fullWidth
           />
         </Grid>
       </GenericDialog>
-      <GenericDialog
+
+      <ModifiedFieldDialog
         open={isFieldDialogOpen}
-        onClose={handleFieldDialogClose}
-        title={formData.amlID ? "Edit Field" : "Add New Field"}
-        actions={
-          <>
-            <CustomButton onClick={handleFieldDialogClose} icon={DeleteIcon} text="Cancel" variant="contained" color="error" sx={{ marginRight: 2 }} />
-            <CustomButton icon={SaveIcon} text="Save" onClick={handleFieldDialogSubmit} variant="contained" color="success" />
-          </>
-        }
-      >
-        <Grid container spacing={2}>
-          <FormField
-            type="text"
-            label="Field Code"
-            name="amlCode"
-            value={formData.amlCode}
-            onChange={(e) => setFormData((prev) => ({ ...prev, amlCode: e.target.value }))}
-            ControlID="amlCode"
-            isMandatory={true}
-            gridProps={{ xs: 12 }}
-            fullWidth
-            disabled={true}
-          />
-          <FormField
-            type="text"
-            label="Field Name"
-            name="amlName"
-            value={formData.amlName}
-            onChange={(e) => setFormData((prev) => ({ ...prev, amlName: e.target.value }))}
-            ControlID="amlName"
-            isMandatory={true}
-            gridProps={{ xs: 12 }}
-            fullWidth
-          />
-          <FormField
-            type="text"
-            label="Field"
-            name="amlField"
-            value={selectedCategoryName}
-            onChange={(e) => {}}
-            disabled={true}
-            ControlID="amlField"
-            isMandatory={true}
-            gridProps={{ xs: 12 }}
-            fullWidth
-          />
-        </Grid>
-        <Grid>
-          <FormField
-            type="radio"
-            label="Default"
-            name="defaultYN"
-            value={formData.defaultYN}
-            onChange={handleChange}
-            options={[
-              { value: "Y", label: "Yes" },
-              { value: "N", label: "No" },
-            ]}
-            ControlID="defaultYN"
-            gridProps={{ xs: 12 }}
-            inline={true}
-          />
-          <FormField
-            type="radio"
-            label="Modifiable"
-            name="modifyYN"
-            value={formData.modifyYN}
-            onChange={handleChange}
-            options={[
-              { value: "Y", label: "Yes" },
-              { value: "N", label: "No" },
-            ]}
-            ControlID="modifyYN"
-            gridProps={{ xs: 12 }}
-            inline={true}
-          />
-        </Grid>
-      </GenericDialog>
+        onClose={() => setIsFieldDialogOpen(false)}
+        selectedCategoryName={selectedCategoryName}
+        isFieldCodeDisabled={true}
+        initialFormData={formData || {}}
+        onFieldAddedOrUpdated={handleFieldAddedOrUpdated}
+      />
     </>
   );
 };

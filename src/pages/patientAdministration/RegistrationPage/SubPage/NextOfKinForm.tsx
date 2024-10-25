@@ -1,12 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 
-import {
-  Dialog,
-  Grid,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from "@mui/material";
+import { Dialog, Grid, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
 import { PatNokDetailsDto } from "../../../../interfaces/PatientAdministration/PatNokDetailsDto";
@@ -24,6 +18,9 @@ import extractNumbers from "../../../../utils/PatientAdministration/extractNumbe
 import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
+import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
+import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
+import { AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
 
 interface NextOfKinFormProps {
   show: boolean;
@@ -32,26 +29,16 @@ interface NextOfKinFormProps {
   editData?: PatNokDetailsDto | null;
 }
 
-const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
-  show,
-  handleClose,
-  handleSave,
-  editData,
-}) => {
+const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handleSave, editData }) => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const serverDate = useServerDate();
 
-  const dropdownValues = useDropdownValues([
-    "title",
-    "relation",
-    "area",
-    "city",
-    "country",
-    "nationality",
-  ]);
-
+  const dropdownValues = useDropdownValues(["title", "relation", "area", "city", "country", "nationality"]);
+  const { fieldsList, defaultFields } = useFieldsList(["nationality", "relation", "area", "city", "country"]);
+  const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
+  const [dialogCategory, setDialogCategory] = useState<string>("");
   const nextOfKinInitialFormState: PatNokDetailsDto = useMemo(
     () => ({
       ID: 0,
@@ -94,13 +81,9 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
     }),
     [userInfo, serverDate]
   );
-  const [nextOfkinData, setNextOfKinData] = useState<PatNokDetailsDto>(
-    nextOfKinInitialFormState
-  );
-  const { handleDropdownChange } =
-    useDropdownChange<PatNokDetailsDto>(setNextOfKinData);
-  const { handleRadioButtonChange } =
-    useRadioButtonChange<PatNokDetailsDto>(setNextOfKinData);
+  const [nextOfkinData, setNextOfKinData] = useState<PatNokDetailsDto>(nextOfKinInitialFormState);
+  const { handleDropdownChange } = useDropdownChange<PatNokDetailsDto>(setNextOfKinData);
+  const { handleRadioButtonChange } = useRadioButtonChange<PatNokDetailsDto>(setNextOfKinData);
   const { setLoading } = useLoading();
 
   useEffect(() => {
@@ -118,11 +101,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
 
   const handleSubmit = useCallback(async () => {
     setIsSubmitted(true);
-    if (
-      nextOfkinData.pNokFName.trim() &&
-      nextOfkinData.pNokLName.trim() &&
-      nextOfkinData.pAddPhone1.trim()
-    ) {
+    if (nextOfkinData.pNokFName.trim() && nextOfkinData.pNokLName.trim() && nextOfkinData.pAddPhone1.trim()) {
       setLoading(true);
       try {
         await handleSave(nextOfkinData);
@@ -130,11 +109,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
         resetNextOfKinFormData();
         handleClose();
       } catch (error) {
-        showAlert(
-          "Error",
-          "Failed to save Kin details. Please try again.",
-          "error"
-        );
+        showAlert("Error", "Failed to save Kin details. Please try again.", "error");
       } finally {
         setLoading(false);
         setIsSubmitted(false);
@@ -143,13 +118,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
       showAlert("Warning", "Please fill in all required fields", "warning");
       setIsSubmitted(false);
     }
-  }, [
-    nextOfkinData,
-    handleSave,
-    handleClose,
-    resetNextOfKinFormData,
-    setLoading,
-  ]);
+  }, [nextOfkinData, handleSave, handleClose, resetNextOfKinFormData, setLoading]);
 
   const handleCloseWithClear = useCallback(() => {
     setIsSubmitted(false);
@@ -195,20 +164,17 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
               pNokMName: patientDetails.patRegisters.pMName ?? "",
               pNokLName: patientDetails.patRegisters.pLName ?? "",
               pNokTitleVal: patientDetails.patRegisters.pTitle ?? "",
-              pNokDob: patientDetails.patRegisters.pDob
-                ? new Date(patientDetails.patRegisters.pDob)
-                : serverDate,
+              pNokDob: patientDetails.patRegisters.pDob ? new Date(patientDetails.patRegisters.pDob) : serverDate,
               pNokRelNameVal: patientDetails.patRegisters.pTypeName ?? "",
               pNokStreet: patientDetails.patAddress.pAddStreet ?? "",
               pNokAreaVal: patientDetails.patAddress.patAreaVal ?? "",
               pNokCityVal: patientDetails.patAddress.pAddCityVal ?? "",
-              pNokActualCountryVal:
-                patientDetails.patAddress.pAddActualCountryVal ?? "",
+              pNokActualCountryVal: patientDetails.patAddress.pAddActualCountryVal ?? "",
               pNokPostcode: patientDetails.patAddress.pAddPostcode ?? "",
+              pAddPhone1: patientDetails.patAddress.pAddPhone1 ?? "", // Make sure this is correctly mapped
               pAddPhone2: patientDetails.patAddress.pAddPhone2 ?? "",
               pAddPhone3: patientDetails.patAddress.pAddPhone3 ?? "",
-              pNokCountryVal:
-                patientDetails.patAddress.pAddActualCountryVal ?? "",
+              pNokCountryVal: patientDetails.patAddress.pAddActualCountryVal ?? "",
               pNokPssnID: patientDetails.patRegisters.intIdPsprt ?? "",
             }));
           }
@@ -227,10 +193,46 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
       pNokDob: date ? date : serverDate,
     }));
   }, []);
+  const [, setFormDataDialog] = useState<AppModifyFieldDto>({
+    amlID: 0,
+    amlName: "",
+    amlCode: "",
+    amlField: "",
+    defaultYN: "N",
+    modifyYN: "N",
+    rNotes: "",
+    rActiveYN: "Y",
+    compID: 0,
+    compCode: "",
+    compName: "",
+    transferYN: "Y",
+  });
+
+  const handleAddField = (category: string) => {
+    setDialogCategory(category);
+    setFormDataDialog({
+      amlID: 0,
+      amlName: "",
+      amlCode: "",
+      amlField: category,
+      defaultYN: "N",
+      modifyYN: "N",
+      rNotes: "",
+      rActiveYN: "Y",
+      compID: 0,
+      compCode: "",
+      compName: "",
+      transferYN: "Y",
+    });
+    setIsFieldDialogOpen(true);
+  };
+
+  const handleFieldDialogClose = () => {
+    setIsFieldDialogOpen(false);
+  };
 
   const dialogContent = (
     <Grid container spacing={2}>
-
       <FormField
         type="radio"
         label="NOK Type"
@@ -238,11 +240,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
         ControlID="RegOrNonReg"
         value={nextOfkinData.pNokRegStatusVal}
         options={regOptions}
-        onChange={handleRadioButtonChange(
-          ["pNokRegStatusVal"],
-          ["pNokRegStatus"],
-          regOptions
-        )}
+        onChange={handleRadioButtonChange(["pNokRegStatusVal"], ["pNokRegStatus"], regOptions)}
         inline={true}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
       />
@@ -275,11 +273,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
         ControlID="Title"
         value={String(nextOfkinData.pNokTitleVal)}
         options={dropdownValues.title}
-        onChange={handleDropdownChange(
-          ["pNokTitleVal"],
-          ["pNokTitle"],
-          dropdownValues.title
-        )}
+        onChange={handleDropdownChange(["pNokTitleVal"], ["pNokTitle"], dropdownValues.title)}
         isMandatory={true}
         isSubmitted={isSubmitted}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
@@ -314,16 +308,14 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
         label="Relationship"
         name="pNokRelNameVal"
         ControlID="Relationship"
-        value={nextOfkinData.pNokRelNameVal}
-        options={dropdownValues.relation}
-        onChange={handleDropdownChange(
-          ["pNokRelNameVal"],
-          ["pNokRelName"],
-          dropdownValues.relation
-        )}
+        value={nextOfkinData.pNokRelNameVal || defaultFields.relation}
+        options={fieldsList.relation}
+        onChange={handleDropdownChange(["pNokRelNameVal"], ["pNokRelName"], fieldsList.relation)}
         isMandatory={true}
         isSubmitted={isSubmitted}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
+        showAddButton={true}
+        onAddClick={() => handleAddField("relation")}
       />
 
       <FormField
@@ -363,43 +355,38 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
         label="Area"
         name="pNokAreaVal"
         ControlID="Area"
-        value={nextOfkinData.pNokAreaVal}
-        options={dropdownValues.area}
-        onChange={handleDropdownChange(
-          ["pNokAreaVal"],
-          ["pNokArea"],
-          dropdownValues.area
-        )}
+        value={nextOfkinData.pNokAreaVal || defaultFields.area}
+        options={fieldsList.area}
+        onChange={handleDropdownChange(["pNokAreaVal"], ["pNokArea"], fieldsList.area)}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
+        showAddButton={true}
+        onAddClick={() => handleAddField("area")}
       />
       <FormField
         type="select"
         label="City"
         name="pNokCityVal"
         ControlID="City"
-        value={nextOfkinData.pNokCityVal}
-        options={dropdownValues.city}
-        onChange={handleDropdownChange(
-          ["pNokCityVal"],
-          ["pNokCity"],
-          dropdownValues.city
-        )}
+        value={nextOfkinData.pNokCityVal || defaultFields.city}
+        options={fieldsList.city}
+        onChange={handleDropdownChange(["pNokCityVal"], ["pNokCity"], fieldsList.city)}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
+        showAddButton={true}
+        onAddClick={() => handleAddField("city")}
       />
       <FormField
         type="select"
         label="Country"
         name="pNokActualCountryVal"
         ControlID="Country"
-        value={nextOfkinData.pNokActualCountryVal}
+        value={nextOfkinData.pNokActualCountry}
         options={dropdownValues.country}
-        onChange={handleDropdownChange(
-          ["pNokActualCountryVal"],
-          ["pNokActualCountry"],
-          dropdownValues.country
-        )}
+        onChange={handleDropdownChange(["pNokActualCountryVal"], ["pNokActualCountry"], dropdownValues.country)}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
+        showAddButton={true}
+        onAddClick={() => handleAddField("country")}
       />
+
       <FormField
         type="text"
         label="Post Code"
@@ -423,14 +410,12 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
         label="Nationality"
         name="pNokCountryVal"
         ControlID="Nationality"
-        value={nextOfkinData.pNokCountryVal}
-        options={dropdownValues.country}
-        onChange={handleDropdownChange(
-          ["pNokCountryVal"],
-          ["pNokCountry"],
-          dropdownValues.country
-        )}
+        value={nextOfkinData.pNokCountryVal || defaultFields.nationality}
+        options={fieldsList.nationality}
+        onChange={handleDropdownChange(["pNokCountryVal"], ["pNokCountry"], fieldsList.country)}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
+        showAddButton={true}
+        onAddClick={() => handleAddField("nationality")}
       />
       <FormField
         type="text"
@@ -450,30 +435,15 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({
         onChange={handleTextChange("pAddPhone2")}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
       />
+
+      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
     </Grid>
   );
 
-
   const dialogActions = (
     <>
-      <CustomButton
-        variant="contained"
-        size="medium"
-        onClick={handleCloseWithClear}
-        text="Close"
-        color="secondary"
-        icon={CloseIcon}
-        ariaLabel="Close"
-      />
-      <CustomButton
-        icon={SaveIcon}
-        variant="contained"
-        size="medium"
-        text="Save"
-        color="success"
-        onClick={handleSubmit}
-        ariaLabel="Save Nok"
-      />
+      <CustomButton variant="contained" size="medium" onClick={handleCloseWithClear} text="Close" color="secondary" icon={CloseIcon} ariaLabel="Close" />
+      <CustomButton icon={SaveIcon} variant="contained" size="medium" text="Save" color="success" onClick={handleSubmit} ariaLabel="Save Nok" />
     </>
   );
 

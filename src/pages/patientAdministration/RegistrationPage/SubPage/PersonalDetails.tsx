@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useEffect, useRef, useMemo, useCallback, useState } from "react";
 import FormField from "../../../../components/FormField/FormField";
 import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
@@ -10,6 +10,8 @@ import useDayjs from "../../../../hooks/Common/useDateTime";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
+import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
+import { AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
 
 interface PersonalDetailsProps {
   formData: PatientRegistrationDto;
@@ -28,6 +30,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
   const serverDate = useServerDate();
   const { diff, formatDate, date: currentDate, format, parse, formatDateYMD } = useDayjs();
   const { fieldsList, defaultFields } = useFieldsList(["Nationality"]);
+  const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
+  const [dialogCategory, setDialogCategory] = useState<string>("");
 
   useEffect(() => {
     uhidRef.current?.focus();
@@ -125,6 +129,43 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
     ],
     []
   );
+  const [, setFormDataDialog] = useState<AppModifyFieldDto>({
+    amlID: 0,
+    amlName: "",
+    amlCode: "",
+    amlField: "",
+    defaultYN: "N",
+    modifyYN: "N",
+    rNotes: "",
+    rActiveYN: "Y",
+    compID: 0,
+    compCode: "",
+    compName: "",
+    transferYN: "Y",
+  });
+
+  const handleAddField = (category: string) => {
+    setDialogCategory(category);
+    setFormDataDialog({
+      amlID: 0,
+      amlName: "",
+      amlCode: "",
+      amlField: category,
+      defaultYN: "N",
+      modifyYN: "N",
+      rNotes: "",
+      rActiveYN: "Y",
+      compID: 0,
+      compCode: "",
+      compName: "",
+      transferYN: "Y",
+    });
+    setIsFieldDialogOpen(true);
+  };
+
+  const handleFieldDialogClose = () => {
+    setIsFieldDialogOpen(false);
+  };
 
   return (
     <FormSectionWrapper title="Personal Details" spacing={1}>
@@ -319,7 +360,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
           ControlID="DOB"
           value={formData.patRegisters.pDob}
           onChange={handleDOBChange}
-          maxDate={new Date()} // Set to current date
+          maxDate={new Date()}
           isSubmitted={isSubmitted}
           isMandatory={true}
           gridProps={{ xs: 12, md: 2 }}
@@ -351,7 +392,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         options={fieldsList.nationality}
         onChange={handleDropdownChange(["patAddress", "pAddCountryVal"], ["patAddress", "pAddCountry"], fieldsList.nationality)}
         isMandatory={true}
+        showAddButton={true}
+        onAddClick={() => handleAddField("Nationality")}
       />
+      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
     </FormSectionWrapper>
   );
 };

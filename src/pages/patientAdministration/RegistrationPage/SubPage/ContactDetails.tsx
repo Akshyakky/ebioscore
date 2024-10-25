@@ -6,58 +6,90 @@ import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
-import CustomButton from "../../../../components/Button/CustomButton";
-import AddIcon from "@mui/icons-material/Add";
-import AppModifiedDetails from "../../../hospitalAdministration/AppModifiedList/SubPage/AppModifiedListDetails";
-
+import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
+import { AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
 interface ContactDetailsProps {
   formData: PatientRegistrationDto;
   setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
   isSubmitted: boolean;
 }
 
-const ContactDetails: React.FC<ContactDetailsProps> = ({
-  formData,
-  setFormData,
-  isSubmitted,
-}) => {
+const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, isSubmitted }) => {
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
 
-  const dropdownValues = useDropdownValues(['area', 'city', 'country', 'company']);
-  const { fieldsList, defaultFields } = useFieldsList(['area', 'city', 'country', 'company']);
+  const dropdownValues = useDropdownValues(["area", "city", "country", "company"]);
+  const { fieldsList, defaultFields } = useFieldsList(["area", "city", "country", "company"]);
 
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
 
-  const smsOptions = useMemo(() => [
-    { value: "Y", label: "Yes" },
-    { value: "N", label: "No" },
-  ], []);
+  const [, setFormDataDialog] = useState<AppModifyFieldDto>({
+    amlID: 0,
+    amlName: "",
+    amlCode: "",
+    amlField: "",
+    defaultYN: "N",
+    modifyYN: "N",
+    rNotes: "",
+    rActiveYN: "Y",
+    compID: 0,
+    compCode: "",
+    compName: "",
+    transferYN: "Y",
+  });
 
-  const emailOptions = useMemo(() => [
-    { value: "Y", label: "Yes" },
-    { value: "N", label: "No" },
-  ], []);
+  const smsOptions = useMemo(
+    () => [
+      { value: "Y", label: "Yes" },
+      { value: "N", label: "No" },
+    ],
+    []
+  );
 
+  const emailOptions = useMemo(
+    () => [
+      { value: "Y", label: "Yes" },
+      { value: "N", label: "No" },
+    ],
+    []
+  );
 
   const handleAddField = (category: string) => {
-    setDialogCategory(category);  
+    setDialogCategory(category);
+    setFormDataDialog({
+      amlID: 0,
+      amlName: "",
+      amlCode: "",
+      amlField: category,
+      defaultYN: "N",
+      modifyYN: "N",
+      rNotes: "",
+      rActiveYN: "Y",
+      compID: 0,
+      compCode: "",
+      compName: "",
+      transferYN: "Y",
+    });
     setIsFieldDialogOpen(true);
   };
+
   const handleFieldDialogClose = () => {
     setIsFieldDialogOpen(false);
   };
 
-  const handleTextChange = useCallback((field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      patAddress: {
-        ...prevFormData.patAddress,
-        [field]: e.target.value,
-      },
-    }));
-  }, [setFormData]);
+  const handleTextChange = useCallback(
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        patAddress: {
+          ...prevFormData.patAddress,
+          [field]: e.target.value,
+        },
+      }));
+    },
+    [setFormData]
+  );
 
   return (
     <>
@@ -80,13 +112,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           options={fieldsList.area || dropdownValues.area || []}
           onChange={handleDropdownChange(["patAddress", "patAreaVal"], ["patAddress", "patArea"], fieldsList.area || [])}
           isSubmitted={isSubmitted}
+          showAddButton={true}
+          onAddClick={() => handleAddField("Area")}
         />
-        <CustomButton
-          icon={AddIcon}
-          text="Add"
-          onClick={() => handleAddField("Area")}
-          variant="contained"
-        />
+
         <FormField
           type="select"
           label="City"
@@ -96,13 +125,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           options={fieldsList.city || []}
           onChange={handleDropdownChange(["patAddress", "pAddCityVal"], ["patAddress", "pAddCity"], fieldsList.city || [])}
           isSubmitted={isSubmitted}
+          showAddButton={true}
+          onAddClick={() => handleAddField("City")}
         />
-        <CustomButton
-          icon={AddIcon}
-          text="Add"
-          onClick={() => handleAddField("City")}
-          variant="contained"
-        />
+
         <FormField
           type="select"
           label="Country"
@@ -112,7 +138,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           options={fieldsList.country || dropdownValues.country || []}
           onChange={handleDropdownChange(["patAddress", "pAddActualCountryVal"], ["patAddress", "pAddActualCountry"], fieldsList.country || [])}
           isSubmitted={isSubmitted}
+          showAddButton={true}
+          onAddClick={() => handleAddField("Country")}
         />
+
         <FormField
           type="text"
           label="Post Code"
@@ -140,7 +169,10 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           options={fieldsList.company || dropdownValues.company || []}
           onChange={handleDropdownChange(["patRegisters", "patCompNameVal"], ["patRegisters", "patCompName"], dropdownValues.company)}
           isSubmitted={isSubmitted}
+          showAddButton={true}
+          onAddClick={() => handleAddField("Company")}
         />
+
         <FormField
           type="radio"
           label="Receive SMS"
@@ -148,11 +180,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           ControlID="receiveSMS"
           value={formData.patAddress.pAddSMSVal || ""}
           options={smsOptions}
-          onChange={handleRadioButtonChange(
-            ["patAddress", "pAddSMSVal"],
-            ["patAddress", "pAddSMS"],
-            smsOptions
-          )}
+          onChange={handleRadioButtonChange(["patAddress", "pAddSMSVal"], ["patAddress", "pAddSMS"], smsOptions)}
           inline={true}
           isSubmitted={isSubmitted}
           gridProps={{ xs: 12, md: 1.5 }}
@@ -164,18 +192,14 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({
           ControlID="receiveEmail"
           value={formData.patAddress.pAddMailVal || ""}
           options={emailOptions}
-          onChange={handleRadioButtonChange(
-            ["patAddress", "pAddMailVal"],
-            ["patAddress", "pAddMail"],
-            emailOptions
-          )}
+          onChange={handleRadioButtonChange(["patAddress", "pAddMailVal"], ["patAddress", "pAddMail"], emailOptions)}
           inline={true}
           isSubmitted={isSubmitted}
           gridProps={{ xs: 12, md: 1.5 }}
         />
       </FormSectionWrapper>
 
-    
+      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
     </>
   );
 };

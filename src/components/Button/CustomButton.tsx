@@ -13,14 +13,7 @@ export interface CustomButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   className?: string;
   disabled?: boolean;
-  color?:
-  | "inherit"
-  | "primary"
-  | "secondary"
-  | "error"
-  | "info"
-  | "success"
-  | "warning";
+  color?: "inherit" | "primary" | "secondary" | "error" | "info" | "success" | "warning";
   ariaLabel?: string;
   sx?: SxProps<Theme>;
 }
