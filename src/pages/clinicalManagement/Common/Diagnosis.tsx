@@ -3,26 +3,26 @@ import { Grid, Typography, Paper } from "@mui/material";
 import FormField from "../../../components/FormField/FormField";
 import CustomGrid from "../../../components/CustomGrid/CustomGrid";
 import { Column } from "../../../components/CustomGrid/CustomGrid";
-import { IcdDetailDto } from "../../../interfaces/ClinicalManagement/IcdDetailDto";
 import { createEntityService } from "../../../utils/Common/serviceFactory";
 import CustomButton from "../../../components/Button/CustomButton";
 import { showAlert } from "../../../utils/Common/showAlert";
+import { AssocDiagnosisDetailDto, DiagnosisDetailDto } from "../../../interfaces/ClinicalManagement/DiagnosisDto";
 interface DiagnosisSectionProps {
-  primaryDiagnoses: IcdDetailDto[];
-  associatedDiagnoses: IcdDetailDto[];
-  onPrimaryDiagnosesChange: (diagnoses: IcdDetailDto[]) => void;
-  onAssociatedDiagnosesChange: (diagnoses: IcdDetailDto[]) => void;
+  primaryDiagnoses: DiagnosisDetailDto[];
+  associatedDiagnoses: AssocDiagnosisDetailDto[];
+  onPrimaryDiagnosesChange: (diagnoses: DiagnosisDetailDto[]) => void;
+  onAssociatedDiagnosesChange: (diagnoses: AssocDiagnosisDetailDto[]) => void;
 }
 
 const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, associatedDiagnoses, onPrimaryDiagnosesChange, onAssociatedDiagnosesChange }) => {
-  const icdDetailService = useMemo(() => createEntityService<IcdDetailDto>("IcdDetail", "clinicalManagementURL"), []);
+  const icdDetailService = useMemo(() => createEntityService<DiagnosisDetailDto>("IcdDetail", "clinicalManagementURL"), []);
   const [searchTerm, setSearchTerm] = useState("");
 
   const fetchIcdSuggestions = useCallback(
     async (input: string) => {
       try {
         const response = await icdDetailService.find(`iCDDCode.contains("${input}") or iCDDName.contains("${input}")`);
-        return response.data.map((icd: IcdDetailDto) => `${icd.icddCode} - ${icd.icddName}`);
+        return response.data.map((icd: DiagnosisDetailDto) => `${icd.icddCode} - ${icd.icddName}`);
       } catch (error) {
         console.error("Error fetching ICD suggestions:", error);
         return [];
@@ -31,22 +31,39 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, a
     [icdDetailService]
   );
 
+  const convertToAssocDiagnosis = (diagnosis: DiagnosisDetailDto): AssocDiagnosisDetailDto => ({
+    ...diagnosis,
+    opipAssocDiagDtlId: 0, // Set default value for new associated diagnoses
+    opipAdmDtlId: 0, // Set appropriate default value
+    primaryYN: "N", // Associated diagnoses are not primary
+  });
+
   const handleAddDiagnosis = useCallback(
     async (type: "primary" | "associated") => {
       try {
         const [code] = searchTerm.split(" - ");
         const response = await icdDetailService.find(`iCDDCode == "${code}"`);
-        if (response.data && response.data.length > 0) {
-          const newDiagnosis = response.data[0];
-          const isDuplicate = (type === "primary" ? primaryDiagnoses : associatedDiagnoses).some((d) => d.icddCode === newDiagnosis.icddCode);
 
-          if (!isDuplicate) {
-            const updateFunction = type === "primary" ? onPrimaryDiagnosesChange : onAssociatedDiagnosesChange;
-            updateFunction([...(type === "primary" ? primaryDiagnoses : associatedDiagnoses), newDiagnosis]);
-            setSearchTerm("");
+        if (response.data && response.data.length > 0) {
+          const icdDetail = response.data[0];
+
+          if (type === "primary") {
+            const isDuplicate = primaryDiagnoses.some((d) => d.icddCode === icdDetail.icddCode);
+            if (!isDuplicate) {
+              onPrimaryDiagnosesChange([...primaryDiagnoses, icdDetail]);
+            } else {
+              showAlert("Duplicate Diagnosis", "This primary diagnosis has already been added.", "warning");
+            }
           } else {
-            showAlert("Duplicate Diagnosis", `This ${type} diagnosis has already been added.`, "warning");
+            const associatedDiagnosis = convertToAssocDiagnosis(icdDetail);
+            const isDuplicate = associatedDiagnoses.some((d) => d.icddCode === associatedDiagnosis.icddCode);
+            if (!isDuplicate) {
+              onAssociatedDiagnosesChange([...associatedDiagnoses, associatedDiagnosis]);
+            } else {
+              showAlert("Duplicate Diagnosis", "This associated diagnosis has already been added.", "warning");
+            }
           }
+          setSearchTerm("");
         }
       } catch (error) {
         console.error("Error adding diagnosis:", error);
@@ -64,9 +81,11 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, a
         confirmButtonText: "Yes, remove it",
         cancelButtonText: "Cancel",
         onConfirm: () => {
-          const updateFunction = type === "primary" ? onPrimaryDiagnosesChange : onAssociatedDiagnosesChange;
-          const currentDiagnoses = type === "primary" ? primaryDiagnoses : associatedDiagnoses;
-          updateFunction(currentDiagnoses.filter((d) => d.icddCode !== icddCode));
+          if (type === "primary") {
+            onPrimaryDiagnosesChange(primaryDiagnoses.filter((d) => d.icddCode !== icddCode));
+          } else {
+            onAssociatedDiagnosesChange(associatedDiagnoses.filter((d) => d.icddCode !== icddCode));
+          }
           showAlert("Diagnosis Removed", `The ${type} diagnosis has been removed successfully.`, "success");
         },
       });
@@ -74,7 +93,7 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, a
     [onPrimaryDiagnosesChange, onAssociatedDiagnosesChange, primaryDiagnoses, associatedDiagnoses]
   );
 
-  const columns: Column<IcdDetailDto & { type: "primary" | "associated" }>[] = useMemo(
+  const primaryColumns: Column<DiagnosisDetailDto>[] = useMemo(
     () => [
       { key: "icddCode", header: "ICD Code", visible: true },
       { key: "icddName", header: "Description", visible: true },
@@ -82,7 +101,21 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, a
         key: "actions",
         header: "Actions",
         visible: true,
-        render: (item) => <CustomButton variant="outlined" color="secondary" size="small" text="Remove" onClick={() => handleRemoveDiagnosis(item.type, item.icddCode)} />,
+        render: (item) => <CustomButton variant="outlined" color="secondary" size="small" text="Remove" onClick={() => handleRemoveDiagnosis("primary", item.icddCode)} />,
+      },
+    ],
+    [handleRemoveDiagnosis]
+  );
+
+  const associatedColumns: Column<AssocDiagnosisDetailDto>[] = useMemo(
+    () => [
+      { key: "icddCode", header: "ICD Code", visible: true },
+      { key: "icddName", header: "Description", visible: true },
+      {
+        key: "actions",
+        header: "Actions",
+        visible: true,
+        render: (item) => <CustomButton variant="outlined" color="secondary" size="small" text="Remove" onClick={() => handleRemoveDiagnosis("associated", item.icddCode)} />,
       },
     ],
     [handleRemoveDiagnosis]
@@ -129,11 +162,11 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, a
         </Grid>
         <Grid item xs={6}>
           <Typography variant="subtitle1">Primary Diagnoses</Typography>
-          <CustomGrid columns={columns} data={primaryDiagnoses.map((d) => ({ ...d, type: "primary" as const }))} pagination={false} maxHeight="300px" />
+          <CustomGrid columns={primaryColumns} data={primaryDiagnoses} pagination={false} maxHeight="300px" />
         </Grid>
         <Grid item xs={6}>
           <Typography variant="subtitle1">Associated Diagnoses</Typography>
-          <CustomGrid columns={columns} data={associatedDiagnoses.map((d) => ({ ...d, type: "associated" as const }))} pagination={false} maxHeight="300px" />
+          <CustomGrid columns={associatedColumns} data={associatedDiagnoses} pagination={false} maxHeight="300px" />
         </Grid>
       </Grid>
     </Paper>

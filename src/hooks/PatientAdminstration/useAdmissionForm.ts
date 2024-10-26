@@ -15,6 +15,8 @@ import { OPIPHistPSHDto } from "../../interfaces/ClinicalManagement/OPIPHistPSHD
 import { OPIPHistROSDto } from "../../interfaces/ClinicalManagement/OPIPHistROSDto";
 import { OPIPHistSHDto } from "../../interfaces/ClinicalManagement/OPIPHistSHDto";
 import { PastMedicationDetailDto, PastMedicationDto } from "../../interfaces/ClinicalManagement/PastMedicationDto";
+import { AssocDiagnosisDetailDto, DiagnosisDetailDto, DiagnosisDto } from "../../interfaces/ClinicalManagement/DiagnosisDto";
+import { diagnosisService } from "../../services/ClinicalManagementServices/diagnosisService";
 
 const getCompanyDetails = () => {
   const { compID, compCode, compName } = store.getState().userDetails;
@@ -51,8 +53,8 @@ const initialFormState: AdmissionDto = {
 
 const useAdmissionForm = () => {
   const [formData, setFormData] = useState<AdmissionDto>(initialFormState);
-  const [primaryDiagnoses, setPrimaryDiagnoses] = useState<IcdDetailDto[]>([]);
-  const [associatedDiagnoses, setAssociatedDiagnoses] = useState<IcdDetailDto[]>([]);
+  const [primaryDiagnoses, setPrimaryDiagnoses] = useState<DiagnosisDetailDto[]>([]);
+  const [associatedDiagnoses, setAssociatedDiagnoses] = useState<AssocDiagnosisDetailDto[]>([]);
   const [shouldClearInsuranceData, setShouldClearInsuranceData] = useState(false);
   const [shouldClearPatientHistory, setShouldClearPatientHistory] = useState(false);
   const [isValidated, setIsValidated] = useState(false);
@@ -72,7 +74,7 @@ const useAdmissionForm = () => {
       if (admitCodeResponse.success && admitCodeResponse.data) {
         setFormData((prev) => ({
           ...prev,
-          IPAdmissionDto: {
+          ipAdmissionDto: {
             ...prev.ipAdmissionDto,
             admitCode: admitCodeResponse.data,
           },
@@ -298,6 +300,85 @@ const useAdmissionForm = () => {
         throw new Error(admissionResult.errorMessage || "Failed to admit patient");
       }
 
+      const admissionData = admissionResult.data;
+
+      // Then save diagnosis if there are any diagnoses
+      if (primaryDiagnoses.length > 0 || associatedDiagnoses.length > 0) {
+        // Check if diagnosis already exists
+        // const existingDiagnosis = await diagnosisService.checkExistingDiagnosis(
+        //   admissionData.ipAdmissionDto.pChartID,
+        //   admissionData.ipAdmissionDto.opipNo,
+        //   admissionData.ipAdmissionDto.oPIPCaseNo
+        // );
+
+        const diagnosisDto: DiagnosisDto = {
+          opipDiagId: 0, // existingDiagnosis.data?.opipDiagId || 0,
+          opipNo: admissionData?.ipAdmissionDto.opipNo ?? 0,
+          opvId: 0,
+          pChartId: admissionData?.ipAdmissionDto.pChartID ?? 0,
+          opipCaseNo: admissionData?.ipAdmissionDto.oPIPCaseNo ?? 0,
+          patOpipYN: "I",
+          diaDate: new Date(),
+          primaryDiagnoses: primaryDiagnoses.map((diag) => ({
+            opipDiagDtlId: 0,
+            opipDiagId: 0, //existingDiagnosis.data?.opipDiagId || 0,
+            icddId: diag.icddId,
+            icddCode: diag.icddCode,
+            icddName: diag.icddName,
+            diagRemarks: diag.diagRemarks,
+            lcddmgId: diag.lcddmgId,
+            lcddmgName: diag.lcddmgName,
+            lcddsgId: diag.lcddsgId,
+            lcddsgName: diag.lcddsgName,
+            rActiveYN: "Y",
+            compID: formData.ipAdmissionDto.compID,
+            compCode: formData.ipAdmissionDto.compCode,
+            compName: formData.ipAdmissionDto.compName,
+            transferYN: "N",
+            rNotes: "",
+          })),
+          associatedDiagnoses: associatedDiagnoses.map((diag) => ({
+            opipAssocDiagDtlId: 0,
+            opipDiagDtlId: 0,
+            opipDiagId: 0, //existingDiagnosis.data?.opipDiagId || 0,
+            icddId: diag.icddId,
+            icddCode: diag.icddCode,
+            icddName: diag.icddName,
+            diagRemarks: diag.diagRemarks,
+            lcddmgId: diag.lcddmgId,
+            lcddmgName: diag.lcddmgName,
+            lcddsgId: diag.lcddsgId,
+            lcddsgName: diag.lcddsgName,
+            rActiveYN: "Y",
+            compID: formData.ipAdmissionDto.compID,
+            compCode: formData.ipAdmissionDto.compCode,
+            compName: formData.ipAdmissionDto.compName,
+            transferYN: "N",
+            rNotes: "",
+          })),
+          rActiveYN: "Y",
+          compID: formData.ipAdmissionDto.compID,
+          compCode: formData.ipAdmissionDto.compCode,
+          compName: formData.ipAdmissionDto.compName,
+          transferYN: "N",
+          rNotes: "",
+        };
+
+        const diagnosisResult = await diagnosisService.saveWithDetails(diagnosisDto);
+        if (!diagnosisResult.success) {
+          throw new Error(diagnosisResult.errorMessage || "Failed to save diagnosis");
+        }
+      }
+
+      // Save insurance details using ref pattern
+      if (insurancePageRef.current) {
+        try {
+          await insurancePageRef.current.saveInsuranceDetails(admissionData?.ipAdmissionDto.pChartID);
+        } catch (error) {
+          console.error("Error saving insurance details:", error);
+        }
+      }
+
       // After successful admission, save patient history using the returned OPIP numbers
       await savePatientHistory({
         pChartID: admissionResult.data?.ipAdmissionDto.pChartID,
@@ -322,119 +403,133 @@ const useAdmissionForm = () => {
     }));
   }, []);
 
-  const handlePatientSelect = useCallback(async (pChartID: number | null) => {
-    if (!pChartID) {
-      setFormData((prev) => ({
-        ...prev,
-        IPAdmissionDto: {
-          ...prev.ipAdmissionDto,
-          pChartID: 0,
-          pChartCode: "",
-        },
-      }));
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await extendedAdmissionService.getPatientAdmissionStatus(pChartID);
-
-      if (!response.success) {
-        throw new Error(response.errorMessage || "Failed to get patient status");
-      }
-
-      const { data } = response;
-
-      if (data?.isAdmitted && data.admissionData) {
+  const handlePatientSelect = useCallback(
+    async (pChartID: number | null) => {
+      if (!pChartID) {
         setFormData((prev) => ({
           ...prev,
           ipAdmissionDto: {
             ...prev.ipAdmissionDto,
-            ...(data.admissionData?.ipAdmissionDto || {}),
-          },
-          ipAdmissionDetailsDto: {
-            ...prev.ipAdmissionDetailsDto,
-            ...(data.admissionData?.ipAdmissionDetailsDto || {}),
-          },
-          wrBedDetailsDto: {
-            ...prev.wrBedDetailsDto,
-            ...(data.admissionData?.wrBedDetailsDto || {}),
+            pChartID: 0,
+            pChartCode: "",
           },
         }));
-      } else if (data?.patientData && data?.patientData.patRegisters) {
-        const { patRegisters, LastVisit } = data.patientData;
-
-        setFormData((prev) => ({
-          ...prev,
-          IPAdmissionDto: {
-            ...prev.ipAdmissionDto,
-            // Basic patient identification
-            pChartID: patRegisters.pChartID ?? 0,
-            pChartCode: patRegisters.pChartCode ?? "",
-            pTypeID: patRegisters.pTypeID ?? 0,
-            pTypeName: patRegisters.pTypeName ?? "",
-            admitID: 0,
-            admitCode: prev.ipAdmissionDto.admitCode,
-            patOPIP: "I",
-
-            // Physician information - try LastVisit first, fallback to PatRegisters
-            attendingPhysicianId: LastVisit?.attendingPhysicianId ?? patRegisters.attendingPhysicianId ?? 0,
-            attendingPhysicianName: LastVisit?.attendingPhysicianName ?? patRegisters.attendingPhysicianName ?? "",
-            primaryPhysicianId: LastVisit?.primaryPhysicianId ?? patRegisters.primaryPhysicianId ?? 0,
-            primaryPhysicianName: LastVisit?.primaryPhysicianName ?? patRegisters.primaryPhysicianName ?? "",
-            primaryReferralSourceId: LastVisit?.primaryReferralSourceId ?? patRegisters.primaryReferralSourceId ?? 0,
-            primaryReferralSourceName: LastVisit?.primaryReferralSourceName ?? patRegisters.primaryReferralSourceName ?? "",
-            primaryPhysicianSpecialtyId: LastVisit?.primaryPhysicianSpecialtyId ?? patRegisters.primaryPhysicianSpecialtyId ?? 0,
-            primaryPhysicianSpecialty: LastVisit?.primaryPhysicianSpecialty ?? patRegisters.primaryPhysicianSpecialty ?? "",
-
-            // Department information
-            deptID: LastVisit?.deptID ?? patRegisters.deptID ?? 0,
-            deptName: LastVisit?.deptName ?? patRegisters.deptName ?? "",
-
-            // Patient personal information
-            pTitle: patRegisters.pTitle ?? "",
-            pfName: patRegisters.pFName ?? "",
-            plName: patRegisters.pLName ?? "",
-            pmName: patRegisters.pMName ?? "",
-
-            // Default values for new admission
-            ipStatus: "",
-            insuranceYN: "N",
-            dischargeAdviceYN: "N",
-            deliveryCaseYN: "N",
-            caseTypeName: "",
-            oldPChartID: 0,
-            visitGesy: "",
-            dulId: 0,
-            advisedVisitNo: 0,
-            patNokID: 0,
-          },
-          IPAdmissionDetailsDto: {
-            ...prev.ipAdmissionDetailsDto,
-            pChartID: patRegisters.pChartID ?? 0,
-            pChartCode: patRegisters.pChartCode ?? "",
-          },
-          WrBedDetailsDto: {
-            ...prev.wrBedDetailsDto,
-            pChartID: patRegisters.pChartID ?? 0,
-            pChartCode: patRegisters.pChartCode ?? "",
-            pTitle: patRegisters.pTitle ?? "",
-            pfName: patRegisters.pFName ?? "",
-          },
-        }));
+        setPrimaryDiagnoses([]);
+        setAssociatedDiagnoses([]);
+        return;
       }
-    } catch (error) {
-      console.error("Error fetching patient status:", error);
-      showAlert("Error", "Failed to fetch patient status", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+
+      try {
+        setLoading(true);
+        const response = await extendedAdmissionService.getPatientAdmissionStatus(pChartID);
+
+        if (!response.success) {
+          throw new Error(response.errorMessage || "Failed to get patient status");
+        }
+
+        const { data } = response;
+
+        if (data?.isAdmitted && data.admissionData) {
+          const { ipAdmissionDto } = data.admissionData;
+          const diagnosisResponse = await diagnosisService.getDiagnosisByPatient(ipAdmissionDto.pChartID, ipAdmissionDto.opipNo, ipAdmissionDto.oPIPCaseNo);
+
+          if (diagnosisResponse.success && diagnosisResponse.data) {
+            setPrimaryDiagnoses(diagnosisResponse.data.primaryDiagnoses || []);
+            setAssociatedDiagnoses(diagnosisResponse.data.associatedDiagnoses || []);
+          }
+
+          setFormData((prev) => ({
+            ...prev,
+            ipAdmissionDto: {
+              ...prev.ipAdmissionDto,
+              ...(data.admissionData?.ipAdmissionDto || {}),
+            },
+            ipAdmissionDetailsDto: {
+              ...prev.ipAdmissionDetailsDto,
+              ...(data.admissionData?.ipAdmissionDetailsDto || {}),
+            },
+            wrBedDetailsDto: {
+              ...prev.wrBedDetailsDto,
+              ...(data.admissionData?.wrBedDetailsDto || {}),
+            },
+          }));
+        } else if (data?.patientData && data?.patientData.patRegisters) {
+          const { patRegisters, lastVisit } = data.patientData;
+
+          setFormData((prev) => ({
+            ...prev,
+            ipAdmissionDto: {
+              ...prev.ipAdmissionDto,
+              // Basic patient identification
+              pChartID: patRegisters.pChartID ?? 0,
+              pChartCode: patRegisters.pChartCode ?? "",
+              pTypeID: patRegisters.pTypeID ?? 0,
+              pTypeName: patRegisters.pTypeName ?? "",
+              admitID: 0,
+              admitCode: prev.ipAdmissionDto.admitCode,
+              patOPIP: "I",
+
+              // Physician information - try LastVisit first, fallback to PatRegisters
+              attendingPhysicianId: lastVisit?.attendingPhysicianId ?? patRegisters.attendingPhysicianId ?? 0,
+              attendingPhysicianName: lastVisit?.attendingPhysicianName ?? patRegisters.attendingPhysicianName ?? "",
+              primaryPhysicianId: lastVisit?.primaryPhysicianId ?? patRegisters.primaryPhysicianId ?? 0,
+              primaryPhysicianName: lastVisit?.primaryPhysicianName ?? patRegisters.primaryPhysicianName ?? "",
+              primaryReferralSourceId: lastVisit?.primaryReferralSourceId ?? patRegisters.primaryReferralSourceId ?? 0,
+              primaryReferralSourceName: lastVisit?.primaryReferralSourceName ?? patRegisters.primaryReferralSourceName ?? "",
+              primaryPhysicianSpecialtyId: lastVisit?.primaryPhysicianSpecialtyId ?? patRegisters.primaryPhysicianSpecialtyId ?? 0,
+              primaryPhysicianSpecialty: lastVisit?.primaryPhysicianSpecialty ?? patRegisters.primaryPhysicianSpecialty ?? "",
+
+              // Department information
+              deptID: lastVisit?.deptID ?? patRegisters.deptID ?? 0,
+              deptName: lastVisit?.deptName ?? patRegisters.deptName ?? "",
+
+              // Patient personal information
+              pTitle: patRegisters.pTitle ?? "",
+              pfName: patRegisters.pFName ?? "",
+              plName: patRegisters.pLName ?? "",
+              pmName: patRegisters.pMName ?? "",
+
+              // Default values for new admission
+              ipStatus: "",
+              insuranceYN: "N",
+              dischargeAdviceYN: "N",
+              deliveryCaseYN: "N",
+              caseTypeName: "",
+              oldPChartID: 0,
+              visitGesy: "",
+              dulId: 0,
+              advisedVisitNo: 0,
+              patNokID: 0,
+            },
+            ipAdmissionDetailsDto: {
+              ...prev.ipAdmissionDetailsDto,
+              pChartID: patRegisters.pChartID ?? 0,
+              pChartCode: patRegisters.pChartCode ?? "",
+            },
+            wrBedDetailsDto: {
+              ...prev.wrBedDetailsDto,
+              pChartID: patRegisters.pChartID ?? 0,
+              pChartCode: patRegisters.pChartCode ?? "",
+              pTitle: patRegisters.pTitle ?? "",
+              pfName: patRegisters.pFName ?? "",
+            },
+          }));
+          console.log(formData);
+        }
+      } catch (error) {
+        console.error("Error fetching patient status:", error);
+        showAlert("Error", "Failed to fetch patient status", "error");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setPrimaryDiagnoses, setAssociatedDiagnoses]
+  );
 
   const handleBedSelect = useCallback((bed: any) => {
     setFormData((prev) => ({
       ...prev,
-      WrBedDetailsDto: {
+      wrBedDetailsDto: {
         ...prev.wrBedDetailsDto,
         bedID: bed.bedID,
         bedName: bed.bedName,
@@ -446,7 +541,7 @@ const useAdmissionForm = () => {
         isChildYN: bed.isChildYN || "N",
         isBoApplicableYN: bed.isBoApplicableYN || "N",
       },
-      IPAdmissionDetailsDto: {
+      ipAdmissionDetailsDto: {
         ...prev.ipAdmissionDetailsDto,
         bedID: bed.bedID || 0,
         bedName: bed.bedName || "",

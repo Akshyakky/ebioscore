@@ -105,5 +105,5 @@ export interface PatientRegistrationDto {
   patAddress: PatAddressDto;
   patOverview: PatOverviewDto;
   opvisits: OpvisitDto;
-  LastVisit?: OPVisitDto;
+  lastVisit?: OPVisitDto;
 }

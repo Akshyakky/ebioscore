@@ -42,112 +42,115 @@ const RegistrationPage: React.FC = () => {
   const { fetchLatestUHID } = useRegistrationUtils();
   const { performSearch } = useContext(PatientSearchContext);
 
-  const initializeFormData = useCallback((userInfo: any): PatientRegistrationDto => ({
-    patRegisters: {
-      pChartID: 0,
-      pChartCode: "",
-      pRegDate: serverDate,
-      pTitleVal: "",
-      pTitle: "",
-      pFName: "",
-      pMName: "",
-      pLName: "",
-      pDobOrAgeVal: "Y",
-      pDobOrAge: "",
-      pDob: serverDate,
-      pGender: "",
-      pGenderVal: "",
-      pBldGrp: "",
-      rActiveYN: "Y",
-      rNotes: "",
-      compID: userInfo.compID ?? 0,
-      compCode: userInfo.compCode ?? "",
-      compName: userInfo.compName ?? "",
-      pFhName: "",
-      pTypeID: 0,
-      pTypeCode: "",
-      pTypeName: "",
-      fatherBldGrp: "",
-      patMemID: 0,
-      patMemName: "",
-      patMemDescription: "",
-      patMemSchemeExpiryDate: serverDate,
-      patSchemeExpiryDateYN: "N",
-      patSchemeDescriptionYN: "N",
-      cancelReason: "",
-      cancelYN: "N",
-      attendingPhysicianId: 0,
-      attendingPhysicianName: "",
-      deptID: 0,
-      deptName: "",
-      facultyID: 0,
-      faculty: "",
-      langType: "",
-      pChartCompID: 0,
-      pExpiryDate: serverDate,
-      physicianRoom: "",
-      regTypeVal: "GEN",
-      regType: "",
-      primaryReferralSourceId: 0,
-      primaryReferralSourceName: "",
-      pPob: "",
-      patCompName: "",
-      patCompNameVal: "",
-      patDataFormYN: "N",
-      intIdPsprt: "",
-      transferYN: "N",
-      indentityType: "",
-      indentityValue: "",
-      patientType: ""
-    },
-    patAddress: {
-      pAddID: 0,
-      pChartID: 0,
-      pChartCode: "",
-      pAddType: "LOCAL",
-      pAddMailVal: "N",
-      pAddMail: "",
-      pAddSMSVal: "N",
-      pAddSMS: "",
-      pAddEmail: "",
-      pAddStreet: "",
-      pAddStreet1: "",
-      pAddCityVal: "",
-      pAddCity: "",
-      pAddState: "",
-      pAddPostcode: "",
-      pAddCountry: "",
-      pAddCountryVal: "",
-      pAddPhone1: "",
-      pAddPhone2: "",
-      pAddPhone3: "",
-      pAddWorkPhone: "",
-      pAddActualCountryVal: "",
-      pAddActualCountry: "",
-      patAreaVal: "",
-      patArea: "",
-      patDoorNo: "",
-    },
-    patOverview: {
-      patOverID: 0,
-      pChartID: 0,
-      pChartCode: "",
-      pPhoto: "",
-      pMaritalStatus: "",
-      pReligion: "",
-      pEducation: "",
-      pOccupation: "",
-      pEmployer: "",
-      ethnicity: "",
-      pCountryOfOrigin: "",
-      pAgeNumber: 0,
-      pAgeDescriptionVal: "Years"
-    },
-    opvisits: {
-      visitTypeVal: "H",
-      visitType: "Hospital",
-    },
-  }), [formatDate]);
+  const initializeFormData = useCallback(
+    (userInfo: any): PatientRegistrationDto => ({
+      patRegisters: {
+        pChartID: 0,
+        pChartCode: "",
+        pRegDate: serverDate,
+        pTitleVal: "",
+        pTitle: "",
+        pFName: "",
+        pMName: "",
+        pLName: "",
+        pDobOrAgeVal: "Y",
+        pDobOrAge: "",
+        pDob: serverDate,
+        pGender: "",
+        pGenderVal: "",
+        pBldGrp: "",
+        rActiveYN: "Y",
+        rNotes: "",
+        compID: userInfo.compID ?? 0,
+        compCode: userInfo.compCode ?? "",
+        compName: userInfo.compName ?? "",
+        pFhName: "",
+        pTypeID: 0,
+        pTypeCode: "",
+        pTypeName: "",
+        fatherBldGrp: "",
+        patMemID: 0,
+        patMemName: "",
+        patMemDescription: "",
+        patMemSchemeExpiryDate: serverDate,
+        patSchemeExpiryDateYN: "N",
+        patSchemeDescriptionYN: "N",
+        cancelReason: "",
+        cancelYN: "N",
+        attendingPhysicianId: 0,
+        attendingPhysicianName: "",
+        deptID: 0,
+        deptName: "",
+        facultyID: 0,
+        faculty: "",
+        langType: "",
+        pChartCompID: 0,
+        pExpiryDate: serverDate,
+        physicianRoom: "",
+        regTypeVal: "GEN",
+        regType: "",
+        primaryReferralSourceId: 0,
+        primaryReferralSourceName: "",
+        pPob: "",
+        patCompName: "",
+        patCompNameVal: "",
+        patDataFormYN: "N",
+        intIdPsprt: "",
+        transferYN: "N",
+        indentityType: "",
+        indentityValue: "",
+        patientType: "",
+      },
+      patAddress: {
+        pAddID: 0,
+        pChartID: 0,
+        pChartCode: "",
+        pAddType: "LOCAL",
+        pAddMailVal: "N",
+        pAddMail: "",
+        pAddSMSVal: "N",
+        pAddSMS: "",
+        pAddEmail: "",
+        pAddStreet: "",
+        pAddStreet1: "",
+        pAddCityVal: "",
+        pAddCity: "",
+        pAddState: "",
+        pAddPostcode: "",
+        pAddCountry: "",
+        pAddCountryVal: "",
+        pAddPhone1: "",
+        pAddPhone2: "",
+        pAddPhone3: "",
+        pAddWorkPhone: "",
+        pAddActualCountryVal: "",
+        pAddActualCountry: "",
+        patAreaVal: "",
+        patArea: "",
+        patDoorNo: "",
+      },
+      patOverview: {
+        patOverID: 0,
+        pChartID: 0,
+        pChartCode: "",
+        pPhoto: "",
+        pMaritalStatus: "",
+        pReligion: "",
+        pEducation: "",
+        pOccupation: "",
+        pEmployer: "",
+        ethnicity: "",
+        pCountryOfOrigin: "",
+        pAgeNumber: 0,
+        pAgeDescriptionVal: "Years",
+      },
+      opvisits: {
+        visitTypeVal: "H",
+        visitType: "Hospital",
+      },
+    }),
+    [formatDate]
+  );
 
   const [formData, setFormData] = useState<PatientRegistrationDto>(() => initializeFormData(userInfo));
 
@@ -193,43 +196,25 @@ const RegistrationPage: React.FC = () => {
       errors.firstName = "First Name is required.";
     } else if (!formData.patRegisters.pLName) {
       errors.lastName = "Last name is required";
-    } else if (
-      formData.patRegisters.pTypeID === 0 ||
-      !formData.patRegisters.pTypeName
-    ) {
+    } else if (formData.patRegisters.pTypeID === 0 || !formData.patRegisters.pTypeName) {
       errors.paymentSource = "Payment Source is required";
     } else if (!formData.patAddress.pAddPhone1) {
       errors.mobileNumber = "Mobile No is required";
-    } else if (
-      !formData.patRegisters.pTitleVal ||
-      !formData.patRegisters.pTitle
-    ) {
+    } else if (!formData.patRegisters.pTitleVal || !formData.patRegisters.pTitle) {
       errors.title = "Title is required";
     } else if (!formData.patRegisters.indentityValue) {
       errors.indetityNo = "Indentity Number is required";
-    } else if (
-      (formData.patRegisters.pDobOrAge === "DOB" && !formData.patRegisters.pDob) ||
-      (formData.patRegisters.pDobOrAge === "Age")) {
+    } else if ((formData.patRegisters.pDobOrAge === "DOB" && !formData.patRegisters.pDob) || formData.patRegisters.pDobOrAge === "Age") {
       errors.dateOfBirth = "Date of birth or Age is required";
-    } else if (
-      formData.opvisits?.visitTypeVal === "H" &&
-      (formData.patRegisters.deptID === 0 || !formData.patRegisters.deptName)
-    ) {
+    } else if (formData.opvisits?.visitTypeVal === "H" && (formData.patRegisters.deptID === 0 || !formData.patRegisters.deptName)) {
       errors.department = "Department is required";
-    } else if (
-      formData.opvisits?.visitTypeVal === "P" &&
-      (formData.patRegisters.attendingPhysicianId === 0 ||
-        !formData.patRegisters.attendingPhysicianName)
-    ) {
+    } else if (formData.opvisits?.visitTypeVal === "P" && (formData.patRegisters.attendingPhysicianId === 0 || !formData.patRegisters.attendingPhysicianName)) {
       errors.attendingPhysician = "Attending Physician is required";
     } else if (
-      (formData.opvisits?.visitTypeVal === "H" ||
-        formData.opvisits?.visitTypeVal === "P") &&
-      (formData.patRegisters.primaryReferralSourceId === 0 ||
-        !formData.patRegisters.primaryReferralSourceName)
+      (formData.opvisits?.visitTypeVal === "H" || formData.opvisits?.visitTypeVal === "P") &&
+      (formData.patRegisters.primaryReferralSourceId === 0 || !formData.patRegisters.primaryReferralSourceName)
     ) {
-      errors.primaryIntroducingSource =
-        "Primary Introducing Source is required";
+      errors.primaryIntroducingSource = "Primary Introducing Source is required";
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -255,7 +240,7 @@ const RegistrationPage: React.FC = () => {
           try {
             await nextOfKinPageRef.current.saveKinDetails(pChartID);
           } catch (error) {
-            console.error('Error saving kin details:', error);
+            console.error("Error saving kin details:", error);
             hasErrors = true;
           }
         }
@@ -265,33 +250,25 @@ const RegistrationPage: React.FC = () => {
           try {
             await insurancePageRef.current.saveInsuranceDetails(pChartID);
           } catch (error) {
-            console.error('Error saving insurance details:', error);
+            console.error("Error saving insurance details:", error);
             hasErrors = true;
           }
         }
 
         if (hasErrors) {
-          showAlert(
-            "Warning",
-            `Patient registration ${actionText}, but there were issues saving additional details. Please check and try saving them again.`,
-            "warning",
-            { onConfirm: handleClear }
-          );
+          showAlert("Warning", `Patient registration ${actionText}, but there were issues saving additional details. Please check and try saving them again.`, "warning", {
+            onConfirm: handleClear,
+          });
         } else {
-          showAlert(
-            "Success",
-            `Registration ${actionText} successfully!`,
-            "success",
-            { onConfirm: handleClear }
-          );
+          showAlert("Success", `Registration ${actionText} successfully!`, "success", { onConfirm: handleClear });
           notifySuccess(`Patient registration ${actionText} successfully!`);
         }
       } else {
         throw new Error(response.errorMessage || "Failed to save registration.");
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      notifyError(error instanceof Error ? error.message : 'An unexpected error occurred');
+      console.error("Registration error:", error);
+      notifyError(error instanceof Error ? error.message : "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -311,42 +288,47 @@ const RegistrationPage: React.FC = () => {
     }
   }, []);
 
-  const fetchPatientDetailsAndUpdateForm = useCallback(async (pChartID: number) => {
-    setLoading(true);
-    try {
-      const patientDetails = await PatientService.getPatientDetails(pChartID);
-      if (patientDetails.success && patientDetails.data) {
-
-        setIsEditMode(true);
-        setFormData(patientDetails.data);
-      } else {
-        console.error("Fetching patient details was not successful or data is undefined");
+  const fetchPatientDetailsAndUpdateForm = useCallback(
+    async (pChartID: number) => {
+      setLoading(true);
+      try {
+        const patientDetails = await PatientService.getPatientDetails(pChartID);
+        if (patientDetails.success && patientDetails.data) {
+          setIsEditMode(true);
+          setFormData(patientDetails.data);
+        } else {
+          console.error("Fetching patient details was not successful or data is undefined");
+        }
+      } catch (error) {
+        console.error("Error fetching patient details:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching patient details:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [formatDate]);
+    },
+    [formatDate]
+  );
 
   const handleAdvancedSearch = useCallback(async () => {
     setShowPatientSearch(true);
     await performSearch("");
   }, [performSearch]);
 
-  const actionButtons: ButtonProps[] = useMemo(() => [
-    {
-      variant: "contained",
-      icon: SearchIcon,
-      text: "Advanced Search",
-      onClick: handleAdvancedSearch,
-    },
-    {
-      variant: "contained",
-      icon: PrintIcon,
-      text: "Print Form",
-    },
-  ], [handleAdvancedSearch]);
+  const actionButtons: ButtonProps[] = useMemo(
+    () => [
+      {
+        variant: "contained",
+        icon: SearchIcon,
+        text: "Advanced Search",
+        onClick: handleAdvancedSearch,
+      },
+      {
+        variant: "contained",
+        icon: PrintIcon,
+        text: "Print Form",
+      },
+    ],
+    [handleAdvancedSearch]
+  );
 
   return (
     <>
@@ -354,61 +336,29 @@ const RegistrationPage: React.FC = () => {
         <Box sx={{ marginBottom: 2 }}>
           <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
         </Box>
-        <PatientSearch
-          show={showPatientSearch}
-          handleClose={() => setShowPatientSearch(false)}
-          onEditPatient={handlePatientSelect}
-        />
+        <PatientSearch show={showPatientSearch} handleClose={() => setShowPatientSearch(false)} onEditPatient={handlePatientSelect} />
         <CustomAccordion title="Personal Details" defaultExpanded>
-          <PersonalDetails
-            formData={formData}
-            setFormData={setFormData}
-            isSubmitted={isSubmitted}
-            onPatientSelect={handlePatientSelect}
-          /></CustomAccordion>
+          <PersonalDetails formData={formData} setFormData={setFormData} isSubmitted={isSubmitted} onPatientSelect={handlePatientSelect} />
+        </CustomAccordion>
         <CustomAccordion title="Contact Details" defaultExpanded>
-          <ContactDetails
-            formData={formData}
-            setFormData={setFormData}
-            isSubmitted={isSubmitted}
-          />
+          <ContactDetails formData={formData} setFormData={setFormData} isSubmitted={isSubmitted} />
         </CustomAccordion>
         {!isEditMode && formData.opvisits && (
           <CustomAccordion title="Visit Details" defaultExpanded>
-            <VisitDetails
-              formData={formData}
-              setFormData={setFormData}
-              isSubmitted={isSubmitted}
-              isEditMode={isEditMode}
-            />
+            <VisitDetails formData={formData} setFormData={setFormData} isSubmitted={isSubmitted} isEditMode={isEditMode} />
           </CustomAccordion>
         )}
         <CustomAccordion title="Membership Scheme" defaultExpanded>
           <MembershipScheme formData={formData} setFormData={setFormData} />
         </CustomAccordion>
         <CustomAccordion title="Next of Kin" defaultExpanded>
-          <NextOfKinPage
-            ref={nextOfKinPageRef}
-            pChartID={selectedPChartID}
-            shouldClearData={shouldClearKinData}
-          />
+          <NextOfKinPage ref={nextOfKinPageRef} pChartID={selectedPChartID} shouldClearData={shouldClearKinData} />
         </CustomAccordion>
         <CustomAccordion title="Insurance Details" defaultExpanded>
-          <InsurancePage
-            ref={insurancePageRef}
-            pChartID={selectedPChartID}
-            shouldClearData={shouldClearInsuranceData}
-          />
+          <InsurancePage ref={insurancePageRef} pChartID={selectedPChartID} shouldClearData={shouldClearInsuranceData} />
         </CustomAccordion>
-      </Container >
-      <FormSaveClearButton
-        clearText="Clear"
-        saveText={isEditMode ? "Update" : "Save"}
-        onClear={handleClear}
-        onSave={handleSave}
-        clearIcon={DeleteIcon}
-        saveIcon={SaveIcon}
-      />
+      </Container>
+      <FormSaveClearButton clearText="Clear" saveText={isEditMode ? "Update" : "Save"} onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </>
   );
 };

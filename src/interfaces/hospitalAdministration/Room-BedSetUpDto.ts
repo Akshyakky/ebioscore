@@ -8,6 +8,8 @@ export interface RoomGroupDto extends BaseDto {
   groupYN: string;
   rActiveYN: string;
   compID?: number;
+  compCode: string;
+  compName: string;
   rNotes?: string;
   transferYN?: string;
   deptID: number;
@@ -30,6 +32,8 @@ export interface RoomListDto extends BaseDto {
   rNotes?: string;
   rgrpID: number;
   compID?: number;
+  compCode: string;
+  compName: string;
   deptID?: number;
   deptName?: string;
   rOrder?: number;
@@ -51,7 +55,9 @@ export interface WrBedDto extends BaseDto {
   bchName?: string;
   bedRemarks?: string;
   blockBedYN?: string;
-  compID?: number;
+  compID: number;
+  compCode: string;
+  compName: string;
   key: number;
   transferYN?: string;
   wbCatID?: number;
