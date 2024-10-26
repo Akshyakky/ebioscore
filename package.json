@@ -35,6 +35,7 @@
     "eslint-plugin-jsx-a11y": "^6.10.0",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.36.1",
+    "eventemitter": "^0.3.3",
     "file-saver": "^2.0.5",
     "formik": "^2.4.6",
     "jspdf": "^2.5.2",

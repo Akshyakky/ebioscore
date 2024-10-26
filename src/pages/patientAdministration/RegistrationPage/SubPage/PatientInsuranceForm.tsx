@@ -11,6 +11,9 @@ import CustomButton from "../../../../components/Button/CustomButton";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import useDayjs from "../../../../hooks/Common/useDateTime";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
+import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
+import { AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
+import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 
 interface PatientInsuranceFormProps {
   show: boolean;
@@ -19,51 +22,51 @@ interface PatientInsuranceFormProps {
   editData?: OPIPInsurancesDto | null;
 }
 
-const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
-  show,
-  handleClose,
-  handleSave,
-  editData,
-}) => {
+const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handleClose, handleSave, editData }) => {
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const serverDate = useServerDate();
   const { formatDate, formatDateTime, parse, format, formatDateYMD } = useDayjs();
-  const dropdownValues = useDropdownValues(['insurance', 'relation', 'coverFor']);
-
-  const insuranceFormInitialState: OPIPInsurancesDto = useMemo(() => ({
-    ID: 0,
-    oPIPInsID: 0,
-    pChartID: 0,
-    insurID: 0,
-    insurCode: "",
-    insurName: "",
-    policyNumber: "",
-    policyHolder: "",
-    groupNumber: "",
-    policyStartDt: serverDate,
-    policyEndDt: serverDate,
-    guarantor: "",
-    relationVal: "",
-    relation: "",
-    address1: "",
-    address2: "",
-    phone1: "",
-    phone2: "",
-    rActiveYN: "Y",
-    rNotes: "",
-    compID: userInfo.compID ?? 0,
-    compCode: userInfo.compCode ?? "",
-    compName: userInfo.compName ?? "",
-    insurStatusCode: "",
-    insurStatusName: "",
-    pChartCode: "",
-    pChartCompID: 0,
-    referenceNo: "",
-    transferYN: "N",
-    coveredVal: "",
-    coveredFor: "",
-  }), [userInfo, formatDate]);
+  const dropdownValues = useDropdownValues(["insurance", "relation", "coverFor"]);
+  const { fieldsList, defaultFields } = useFieldsList(["relation"]);
+  const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
+  const [dialogCategory, setDialogCategory] = useState<string>("");
+  const insuranceFormInitialState: OPIPInsurancesDto = useMemo(
+    () => ({
+      ID: 0,
+      oPIPInsID: 0,
+      pChartID: 0,
+      insurID: 0,
+      insurCode: "",
+      insurName: "",
+      policyNumber: "",
+      policyHolder: "",
+      groupNumber: "",
+      policyStartDt: serverDate,
+      policyEndDt: serverDate,
+      guarantor: "",
+      relationVal: "",
+      relation: "",
+      address1: "",
+      address2: "",
+      phone1: "",
+      phone2: "",
+      rActiveYN: "Y",
+      rNotes: "",
+      compID: userInfo.compID ?? 0,
+      compCode: userInfo.compCode ?? "",
+      compName: userInfo.compName ?? "",
+      insurStatusCode: "",
+      insurStatusName: "",
+      pChartCode: "",
+      pChartCompID: 0,
+      referenceNo: "",
+      transferYN: "N",
+      coveredVal: "",
+      coveredFor: "",
+    }),
+    [userInfo, formatDate]
+  );
 
   const [insuranceForm, setInsuranceForm] = useState<OPIPInsurancesDto>(insuranceFormInitialState);
   const { handleDropdownChange } = useDropdownChange<OPIPInsurancesDto>(setInsuranceForm);
@@ -98,19 +101,63 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
     setIsSubmitted(false);
   }, [resetInsuranceFormData, handleClose]);
 
-  const handleTextChange = useCallback((field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInsuranceForm(prev => ({
-      ...prev,
-      [field]: e.target.value,
-    }));
-  }, []);
+  const handleTextChange = useCallback(
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setInsuranceForm((prev) => ({
+        ...prev,
+        [field]: e.target.value,
+      }));
+    },
+    []
+  );
 
-  const handleDateChange = useCallback((field: string) => (date: Date | null) => {
-    setInsuranceForm(prev => ({
-      ...prev,
-      [field]: date ? formatDateYMD(date) : '',
-    }));
-  }, [formatDateYMD]);
+  const handleDateChange = useCallback(
+    (field: string) => (date: Date | null) => {
+      setInsuranceForm((prev) => ({
+        ...prev,
+        [field]: date ? formatDateYMD(date) : "",
+      }));
+    },
+    [formatDateYMD]
+  );
+
+  const [, setFormDataDialog] = useState<AppModifyFieldDto>({
+    amlID: 0,
+    amlName: "",
+    amlCode: "",
+    amlField: "",
+    defaultYN: "N",
+    modifyYN: "N",
+    rNotes: "",
+    rActiveYN: "Y",
+    compID: 0,
+    compCode: "",
+    compName: "",
+    transferYN: "Y",
+  });
+
+  const handleAddField = (category: string) => {
+    setDialogCategory(category);
+    setFormDataDialog({
+      amlID: 0,
+      amlName: "",
+      amlCode: "",
+      amlField: category,
+      defaultYN: "N",
+      modifyYN: "N",
+      rNotes: "",
+      rActiveYN: "Y",
+      compID: 0,
+      compCode: "",
+      compName: "",
+      transferYN: "Y",
+    });
+    setIsFieldDialogOpen(true);
+  };
+
+  const handleFieldDialogClose = () => {
+    setIsFieldDialogOpen(false);
+  };
 
   return (
     <Dialog open={show} onClose={handleClose} maxWidth="lg" fullWidth>
@@ -124,11 +171,7 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
             ControlID="Insurance"
             value={insuranceForm.insurID === 0 ? "" : insuranceForm.insurID.toString()}
             options={dropdownValues.insurance}
-            onChange={handleDropdownChange(
-              ["insurID"],
-              ["insurName"],
-              dropdownValues.insurance
-            )}
+            onChange={handleDropdownChange(["insurID"], ["insurName"], dropdownValues.insurance)}
             isMandatory={true}
             isSubmitted={isSubmitted}
             gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
@@ -194,14 +237,12 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
             label="Relationship"
             name="relationVal"
             ControlID="Relationship"
-            value={insuranceForm.relationVal}
-            options={dropdownValues.relation}
-            onChange={handleDropdownChange(
-              ["relationVal"],
-              ["relation"],
-              dropdownValues.relation
-            )}
+            value={insuranceForm.relationVal || defaultFields.relation}
+            options={fieldsList.relation}
+            onChange={handleDropdownChange(["relationVal"], ["relation"], fieldsList.relation)}
             gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+            showAddButton={true}
+            onAddClick={() => handleAddField("relation")}
           />
           <FormField
             type="select"
@@ -210,11 +251,7 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
             ControlID="CoveredFor"
             value={String(insuranceForm.coveredVal)}
             options={dropdownValues.coverFor}
-            onChange={handleDropdownChange(
-              ["coveredVal"],
-              ["coveredFor"],
-              dropdownValues.coverFor
-            )}
+            onChange={handleDropdownChange(["coveredVal"], ["coveredFor"], dropdownValues.coverFor)}
             gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
           />
           <FormField
@@ -262,25 +299,13 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({
             onChange={handleTextChange("rNotes")}
             gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
           />
+
+          <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
         </Grid>
       </DialogContent>
       <DialogActions>
-        <CustomButton
-          text="Close"
-          icon={CloseIcon}
-          variant="contained"
-          size="medium"
-          color="secondary"
-          onClick={handleCloseWithClear}
-        />
-        <CustomButton
-          text="Save"
-          icon={SaveIcon}
-          variant="contained"
-          size="medium"
-          color="success"
-          onClick={handleSubmit}
-        />
+        <CustomButton text="Close" icon={CloseIcon} variant="contained" size="medium" color="secondary" onClick={handleCloseWithClear} />
+        <CustomButton text="Save" icon={SaveIcon} variant="contained" size="medium" color="success" onClick={handleSubmit} />
       </DialogActions>
     </Dialog>
   );

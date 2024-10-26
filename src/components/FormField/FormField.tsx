@@ -1,6 +1,6 @@
 import React, { forwardRef, useMemo } from "react";
-import { Grid, SelectChangeEvent } from "@mui/material";
-import { GridProps } from '@mui/material/Grid';
+import { Box, Grid, IconButton, SelectChangeEvent } from "@mui/material";
+import { GridProps } from "@mui/material/Grid";
 import FloatingLabelTextBox from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import TextArea from "../TextArea/TextArea";
 import DropdownSelect from "../DropDown/DropdownSelect";
@@ -11,8 +11,24 @@ import { TextFieldProps } from "@mui/material/TextField";
 import MultiSelectDropdown from "../DropDown/MultiSelectDropdown";
 import CustomDatePicker from "../DatePicker/CustomDatePicker";
 import CustomDateTimePicker from "../DateTimePicker/CustomDateTimePicker";
+import AddIcon from "@mui/icons-material/Add";
+import CustomButton from "../Button/CustomButton";
 
-type FieldType = "text" | "textarea" | "select" | "switch" | "number" | "email" | "radio" | "autocomplete" | "date" | "search" | "multiselect" | "time" | "datepicker" | "datetimepicker";
+type FieldType =
+  | "text"
+  | "textarea"
+  | "select"
+  | "switch"
+  | "number"
+  | "email"
+  | "radio"
+  | "autocomplete"
+  | "date"
+  | "search"
+  | "multiselect"
+  | "time"
+  | "datepicker"
+  | "datetimepicker";
 
 interface DropdownOption {
   value: string;
@@ -39,9 +55,11 @@ interface BaseFormFieldProps {
   rows?: number;
   isSubmitted?: boolean;
   gridProps?: GridProps;
-  InputProps?: TextFieldProps['InputProps'];
-  InputLabelProps?: TextFieldProps['InputLabelProps'];
+  InputProps?: TextFieldProps["InputProps"];
+  InputLabelProps?: TextFieldProps["InputLabelProps"];
   onBlur?: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  showAddButton?: boolean; // Controls visibility of the Add button
+  onAddClick?: () => void; // Callback function for Add button click
 }
 
 export interface TextFormFieldProps extends BaseFormFieldProps {
@@ -106,7 +124,16 @@ export interface DateTimePickerFormFieldProps extends BaseFormFieldProps {
   maxDateTime?: Date;
 }
 
-export type FormFieldProps = TextFormFieldProps | TextAreaFormFieldProps | SelectFormFieldProps | SwitchFormFieldProps | RadioFormFieldProps | AutocompleteFormFieldProps | MultiSelectFormFieldProps | DatePickerFormFieldProps | DateTimePickerFormFieldProps;
+export type FormFieldProps =
+  | TextFormFieldProps
+  | TextAreaFormFieldProps
+  | SelectFormFieldProps
+  | SwitchFormFieldProps
+  | RadioFormFieldProps
+  | AutocompleteFormFieldProps
+  | MultiSelectFormFieldProps
+  | DatePickerFormFieldProps
+  | DateTimePickerFormFieldProps;
 
 const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
   const {
@@ -131,6 +158,8 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
     InputProps,
     InputLabelProps,
     onBlur,
+    showAddButton = false,
+    onAddClick,
   } = props;
 
   const renderField = useMemo(() => {
@@ -313,15 +342,64 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
       default:
         return null;
     }
-  }, [props, type, label, value, name, ControlID, size, placeholder, isMandatory, errorMessage, disabled, readOnly, maxLength, min, max, step, isSubmitted, InputProps, InputLabelProps, onBlur, ref]);
+  }, [
+    props,
+    type,
+    label,
+    value,
+    name,
+    ControlID,
+    size,
+    placeholder,
+    isMandatory,
+    errorMessage,
+    disabled,
+    readOnly,
+    maxLength,
+    min,
+    max,
+    step,
+    isSubmitted,
+    InputProps,
+    InputLabelProps,
+    onBlur,
+    ref,
+  ]);
 
   return (
     <Grid item {...gridProps}>
-      {renderField}
+      <Box display="flex" alignItems="center">
+        {renderField}
+        {showAddButton && onAddClick && (
+          <CustomButton
+            variant="contained"
+            size="small"
+            icon={AddIcon}
+            onClick={onAddClick}
+            ariaLabel="add"
+            color="primary"
+            sx={{
+              marginTop: "4px",
+              marginRight: "4px",
+              transition: "background-color 0.3s ease, transform 0.3s ease",
+              "&:hover": {
+                backgroundColor: "blue.700",
+                transform: "scale(1.05)",
+              },
+              "&:active": {
+                backgroundColor: "blue.300",
+                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+              },
+              marginLeft: 0.5,
+              padding: "8px 12px",
+            }}
+          />
+        )}
+      </Box>
     </Grid>
   );
 });
 
-FormField.displayName = 'FormField';
+FormField.displayName = "FormField";
 
 export default FormField;
