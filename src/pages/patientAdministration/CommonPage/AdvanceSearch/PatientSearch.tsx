@@ -1,8 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import {
-  Grid,
-  Box,
-} from "@mui/material";
+import { Grid, Box } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
@@ -20,11 +17,7 @@ interface PatientSearchProps {
   onEditPatient: (patientId: string, pChartCode: string) => void;
 }
 
-const PatientSearch: React.FC<PatientSearchProps> = ({
-  show,
-  handleClose,
-  onEditPatient,
-}) => {
+const PatientSearch: React.FC<PatientSearchProps> = ({ show, handleClose, onEditPatient }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const { performSearch, searchResults } = useContext(PatientSearchContext);
   const dayjs = useDayjs();
@@ -54,37 +47,26 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       header: "Edit",
       visible: true,
       render: (row: PatientRegistrationDto) => (
-        <CustomButton
-          text="Edit"
-          onClick={() =>
-            handleEditAndClose(row.patRegisters?.pChartID.toString(), row.patRegisters?.pChartCode)
-          }
-          icon={EditIcon}
-          size="small"
-        />
+        <CustomButton text="Edit" onClick={() => handleEditAndClose(row.patRegisters?.pChartID.toString(), row.patRegisters?.pChartCode)} icon={EditIcon} size="small" />
       ),
     },
     {
       key: "patRegisters.pChartCode",
       header: "UHID",
       visible: true,
-      render: (row: PatientRegistrationDto) =>
-        row.patRegisters?.pChartCode || "",
+      render: (row: PatientRegistrationDto) => row.patRegisters?.pChartCode || "",
     },
     {
       key: "patRegisters.pTitle",
       header: "Patient Name",
       visible: true,
-      render: (row: PatientRegistrationDto) =>
-        `${row.patRegisters?.pTitle || ""} ${row.patRegisters?.pFName || ""} ${row.patRegisters?.pLName || ""
-        }`,
+      render: (row: PatientRegistrationDto) => `${row.patRegisters?.pTitle || ""} ${row.patRegisters?.pFName || ""} ${row.patRegisters?.pLName || ""}`,
     },
     {
       key: "patRegisters.pRegDate",
       header: "Registration Date",
       visible: true,
-      render: (row: PatientRegistrationDto) =>
-        dayjs.formatDate(row.patRegisters?.pRegDate) || "",
+      render: (row: PatientRegistrationDto) => dayjs.formatDate(row.patRegisters?.pRegDate) || "",
     },
     {
       key: "patRegisters.pGender",
@@ -102,8 +84,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       key: "patRegisters.pDob",
       header: "DOB",
       visible: true,
-      render: (row: PatientRegistrationDto) =>
-        dayjs.formatDate(row.patRegisters?.pDob) || "",
+      render: (row: PatientRegistrationDto) => dayjs.formatDate(row.patRegisters?.pDob) || "",
     },
     {
       key: "patRegisters.indentityValue",
@@ -115,8 +96,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
       key: "patRegisters.pTypeName",
       header: "Payment Source",
       visible: true,
-      render: (row: PatientRegistrationDto) =>
-        row.patRegisters?.pTypeName || "",
+      render: (row: PatientRegistrationDto) => row.patRegisters?.pTypeName || "",
     },
   ];
 
@@ -137,26 +117,11 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
           </Grid>
         </Grid>
       </Box>
-      <CustomGrid
-        columns={columns}
-        data={searchResults}
-        minHeight="400px"
-        maxHeight="400px"
-        pagination={true}
-      />
+      <CustomGrid columns={columns} data={searchResults} minHeight="400px" maxHeight="400px" pagination={true} />
     </>
   );
 
-  const dialogActions = (
-    <CustomButton
-      variant="contained"
-      text="Close"
-      icon={CloseIcon}
-      size="medium"
-      onClick={handleClose}
-      color="secondary"
-    />
-  );
+  const dialogActions = <CustomButton variant="contained" text="Close" icon={CloseIcon} size="medium" onClick={handleClose} color="secondary" />;
 
   return (
     <GenericDialog
@@ -170,14 +135,11 @@ const PatientSearch: React.FC<PatientSearchProps> = ({
         minHeight: "400px",
         maxHeight: "400px",
       }}
-      actions={[
-        dialogActions
-      ]}
+      actions={[dialogActions]}
     >
       {dialogContent}
     </GenericDialog>
   );
 };
-
 
 export default PatientSearch;

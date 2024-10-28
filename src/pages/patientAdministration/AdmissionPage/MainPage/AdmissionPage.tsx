@@ -12,12 +12,13 @@ import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
 import DiagnosisSection from "../../../clinicalManagement/Common/Diagnosis";
 import useAdmissionForm from "../../../../hooks/PatientAdminstration/useAdmissionForm";
-import PatientHistorySection from "../../../clinicalManagement/PatientHistory/PatientHistorySection";
+
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { useLoading } from "../../../../context/LoadingContext";
+import PatientHistory from "../../../clinicalManagement/PatientHistory/PatientHistory";
 
 export interface PatientHistory {
   [key: string]: any;
@@ -148,15 +149,7 @@ const AdmissionPage: React.FC = () => {
         />
       </CustomAccordion>
       <CustomAccordion title="Patient History">
-        <PatientHistorySection
-          pChartID={formData.ipAdmissionDto.pChartID || 0}
-          opipNo={formData.ipAdmissionDto.opipNo || 0}
-          opipCaseNo={formData.ipAdmissionDto.oPIPCaseNo || 0}
-          shouldClear={shouldClearPatientHistory}
-          onHistoryChange={handleHistoryChange}
-          showImmediateSave={false}
-          initialHistoryData={patientHistory}
-        />
+        <PatientHistory pChartID={formData.ipAdmissionDto.pChartID || 0} opipNo={formData.ipAdmissionDto.opipNo || 0} opipCaseNo={formData.ipAdmissionDto.oPIPCaseNo || 0} />
       </CustomAccordion>
       <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClearAll} onSave={handleSaveAll} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </Container>

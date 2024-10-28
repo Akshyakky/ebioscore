@@ -1,4 +1,6 @@
-export interface RecordFields {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface RecordFields extends BaseDto {
   compID: number;
   compCode: string;
   compName: string;
