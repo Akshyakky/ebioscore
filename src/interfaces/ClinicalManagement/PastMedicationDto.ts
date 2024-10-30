@@ -1,22 +1,12 @@
 // src/interfaces/ClinicalManagement/PastMedicationDto.ts
 
 import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseHistoryDto } from "./BaseHistoryDto";
 
-export interface PastMedicationDto extends BaseDto {
+export interface PastMedicationDto extends BaseHistoryDto {
   opipPastMedID: number;
-  opipNo: number;
-  pChartID: number;
-  opvID: number;
-  opipCaseNo: number;
-  patOpip: string;
   opipDate: Date;
   details: PastMedicationDetailDto[];
-  rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
-  transferYN: string;
-  rNotes: string;
 }
 
 export interface PastMedicationDetailDto extends BaseDto {
@@ -29,18 +19,12 @@ export interface PastMedicationDetailDto extends BaseDto {
   mGenName: string;
   mlID: number;
   medText: string;
-  mdID: number | null;
+  mdID: number;
   mdName: string;
-  mFrqID: number | null;
+  mFrqID: number;
   mFrqName: string;
-  mInsID: number | null;
+  mInsID: number;
   mInsName: string;
-  fromDate: Date | null;
-  toDate: Date | null;
-  rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
-  transferYN: string;
-  rNotes: string;
+  fromDate: Date;
+  toDate: Date;
 }

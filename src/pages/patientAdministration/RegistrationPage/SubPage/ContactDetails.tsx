@@ -19,7 +19,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, 
   const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
 
   const dropdownValues = useDropdownValues(["area", "city", "country", "company"]);
-  const { fieldsList, defaultFields } = useFieldsList(["area", "city", "country", "company"]);
+  const { fieldsList, defaultFields, isLoading, error, refreshFields } = useFieldsList(["area", "city", "country", "company"]);
 
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");

@@ -1,6 +1,5 @@
 // src/hooks/useAdmissionForm.ts
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { IcdDetailDto } from "../../interfaces/ClinicalManagement/IcdDetailDto";
 import { extendedAdmissionService } from "../../services/PatientAdministrationServices/patientAdministrationService";
 import { showAlert } from "../../utils/Common/showAlert";
 import { AdmissionDto, IPAdmissionDetailsDto, IPAdmissionDto, WrBedDetailsDto } from "../../interfaces/PatientAdministration/AdmissionDto";
@@ -17,6 +16,30 @@ import { OPIPHistSHDto } from "../../interfaces/ClinicalManagement/OPIPHistSHDto
 import { PastMedicationDetailDto, PastMedicationDto } from "../../interfaces/ClinicalManagement/PastMedicationDto";
 import { AssocDiagnosisDetailDto, DiagnosisDetailDto, DiagnosisDto } from "../../interfaces/ClinicalManagement/DiagnosisDto";
 import { diagnosisService } from "../../services/ClinicalManagementServices/diagnosisService";
+import { HistoryState } from "../../pages/clinicalManagement/PatientHistory/PatientHistory";
+import { pastMedicationService } from "../../services/ClinicalManagementServices/pastMedicationService";
+
+interface UseAdmissionFormReturn {
+  formData: AdmissionDto;
+  setFormData: React.Dispatch<React.SetStateAction<AdmissionDto>>;
+  primaryDiagnoses: DiagnosisDetailDto[];
+  setPrimaryDiagnoses: React.Dispatch<React.SetStateAction<DiagnosisDetailDto[]>>;
+  associatedDiagnoses: AssocDiagnosisDetailDto[];
+  setAssociatedDiagnoses: React.Dispatch<React.SetStateAction<AssocDiagnosisDetailDto[]>>;
+  handleChange: (field: keyof AdmissionDto, value: any) => void;
+  handleClear: () => void;
+  handleSave: () => Promise<boolean>;
+  handlePatientSelect: (pChartID: number | null) => Promise<void>;
+  handleBedSelect: (bed: any) => void;
+  shouldClearInsuranceData: boolean;
+  setShouldClearInsuranceData: React.Dispatch<React.SetStateAction<boolean>>;
+  shouldClearPatientHistory: boolean;
+  setShouldClearPatientHistory: React.Dispatch<React.SetStateAction<boolean>>;
+  insurancePageRef: React.RefObject<any>;
+  isValidated: boolean;
+  // patientHistory: PatientHistory;
+  updatePatientHistory: (historyData: any) => void;
+}
 
 const getCompanyDetails = () => {
   const { compID, compCode, compName } = store.getState().userDetails;
@@ -51,22 +74,64 @@ const initialFormState: AdmissionDto = {
   } as WrBedDetailsDto,
 };
 
-const useAdmissionForm = () => {
+const useAdmissionForm = (): UseAdmissionFormReturn => {
+  const { compID, compCode, compName } = store.getState().userDetails;
   const [formData, setFormData] = useState<AdmissionDto>(initialFormState);
   const [primaryDiagnoses, setPrimaryDiagnoses] = useState<DiagnosisDetailDto[]>([]);
   const [associatedDiagnoses, setAssociatedDiagnoses] = useState<AssocDiagnosisDetailDto[]>([]);
   const [shouldClearInsuranceData, setShouldClearInsuranceData] = useState(false);
   const [shouldClearPatientHistory, setShouldClearPatientHistory] = useState(false);
   const [isValidated, setIsValidated] = useState(false);
+  const [patientHistory, setPatientHistory] = useState<PatientHistory>({
+    familyHistory: [],
+    socialHistory: [],
+    medicalHistory: [],
+    reviewOfSystem: [],
+    surgicalHistory: [],
+    pastMedications: {
+      opipPastMedID: 0,
+      opipNo: formData.ipAdmissionDto.opipNo || 0,
+      opvID: 0,
+      pChartID: formData.ipAdmissionDto.pChartID || 0,
+      opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
+      patOpip: "I",
+      opipDate: new Date(),
+      details: [],
+      rActiveYN: "Y",
+      compID: compID ?? 0,
+      compCode: compCode ?? "",
+      compName: compName ?? "",
+      transferYN: "N",
+      rNotes: "",
+      oldPChartID: 0,
+    },
+    allergies: {
+      opipAlgId: 0,
+      opipNo: formData.ipAdmissionDto.opipNo || 0,
+      opvID: 0,
+      pChartID: formData.ipAdmissionDto.pChartID || 0,
+      opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
+      patOpip: "I",
+      opipDate: new Date(),
+      allergyDetails: [],
+      rActiveYN: "Y",
+      compID: compID ?? 0,
+      compCode: compCode ?? "",
+      compName: compName ?? "",
+      transferYN: "N",
+      rNotes: "",
+      oldPChartID: 0,
+    },
+  });
   const insurancePageRef = useRef<any>(null);
   const { setLoading } = useLoading();
-  const [patientHistory, setPatientHistory] = useState<PatientHistory>({});
+
   const fhService = useMemo(() => createEntityService<OPIPHistFHDto>("OPIPHistFH", "clinicalManagementURL"), []);
   const pmhService = useMemo(() => createEntityService<OPIPHistPMHDto>("OPIPHistPMH", "clinicalManagementURL"), []);
-  const pshService = useMemo(() => createEntityService<OPIPHistPSHDto>("OPIPHistPSH", "clinicalManagementURL"), []);
-  const rosService = useMemo(() => createEntityService<OPIPHistROSDto>("OPIPHistROS", "clinicalManagementURL"), []);
   const shService = useMemo(() => createEntityService<OPIPHistSHDto>("OPIPHistSH", "clinicalManagementURL"), []);
-  const pastMedicationService = useMemo(() => createEntityService<PastMedicationDto>("OPIPHistMedication", "clinicalManagementURL"), []);
+  const rosService = useMemo(() => createEntityService<OPIPHistROSDto>("OPIPHistROS", "clinicalManagementURL"), []);
+  const pshService = useMemo(() => createEntityService<OPIPHistPSHDto>("OPIPHistPSH", "clinicalManagementURL"), []);
+  const pastMedService = useMemo(() => pastMedicationService, []);
 
   const fetchAdmitCode = useCallback(async () => {
     try {
@@ -145,155 +210,60 @@ const useAdmissionForm = () => {
     setAssociatedDiagnoses([]);
     setShouldClearInsuranceData(true);
     setShouldClearPatientHistory(true);
-    setPatientHistory({});
+    setPatientHistory({
+      familyHistory: [],
+      socialHistory: [],
+      medicalHistory: [],
+      reviewOfSystem: [],
+      surgicalHistory: [],
+      pastMedications: {
+        opipPastMedID: 0,
+        opipNo: 0,
+        opvID: 0,
+        pChartID: 0,
+        opipCaseNo: 0,
+        patOpip: "I",
+        opipDate: new Date(),
+        details: [],
+        rActiveYN: "Y",
+        compID: compID ?? 0,
+        compCode: compCode ?? "",
+        compName: compName ?? "",
+        transferYN: "N",
+        rNotes: "",
+        oldPChartID: 0,
+      },
+      allergies: {
+        opipAlgId: 0,
+        opipNo: 0,
+        opvID: 0,
+        pChartID: 0,
+        opipCaseNo: 0,
+        patOpip: "I",
+        opipDate: new Date(),
+        allergyDetails: [],
+        rActiveYN: "Y",
+        compID: compID ?? 0,
+        compCode: compCode ?? "",
+        compName: compName ?? "",
+        transferYN: "N",
+        rNotes: "",
+        oldPChartID: 0,
+      },
+    });
+
     setIsValidated(false);
     if (insurancePageRef.current && insurancePageRef.current.handleClear) {
       insurancePageRef.current.handleClear();
     }
     fetchAdmitCode();
-  }, [fetchAdmitCode]);
-
-  const savePatientHistory = async (admissionData: any) => {
-    try {
-      const { pChartID, opipNo, opipCaseNo } = admissionData;
-      const historyPromises = [];
-
-      if (patientHistory.familyHistory) {
-        const fhData = {
-          ...patientHistory.familyHistory,
-          pChartID,
-          opipNo,
-          opipCaseNo,
-          patOpip: "I",
-          rActiveYN: "Y",
-          opvID: 0,
-        };
-        historyPromises.push(fhService.save(fhData));
-      }
-
-      if (patientHistory.pastMedicalHistory) {
-        const pmhData = {
-          ...patientHistory.pastMedicalHistory,
-          pChartID,
-          opipNo,
-          opipCaseNo,
-          patOpip: "I",
-          rActiveYN: "Y",
-          opvID: 0,
-        };
-        historyPromises.push(pmhService.save(pmhData));
-      }
-
-      if (patientHistory.pastSurgicalHistory) {
-        const pshData = {
-          ...patientHistory.pastSurgicalHistory,
-          pChartID,
-          opipNo,
-          opipCaseNo,
-          patOpip: "I",
-          rActiveYN: "Y",
-          opvID: 0,
-        };
-        historyPromises.push(pshService.save(pshData));
-      }
-
-      if (patientHistory.reviewOfSystem) {
-        const rosData = {
-          ...patientHistory.reviewOfSystem,
-          pChartID,
-          opipNo,
-          opipCaseNo,
-          patOpip: "I",
-          rActiveYN: "Y",
-          opvID: 0,
-        };
-        historyPromises.push(rosService.save(rosData));
-      }
-
-      if (patientHistory.socialHistory) {
-        const shData = {
-          ...patientHistory.socialHistory,
-          pChartID,
-          opipNo,
-          opipCaseNo,
-          patOpip: "I",
-          rActiveYN: "Y",
-          opvID: 0,
-        };
-        historyPromises.push(shService.save(shData));
-      }
-
-      if (patientHistory.allergies?.length) {
-        const allergyData = {
-          pchartId: pChartID,
-          opipNo,
-          opipCaseNo,
-          allergyDetails: patientHistory.allergies,
-          rActiveYN: "Y",
-        };
-        historyPromises.push(allergyService.save(allergyData));
-      }
-
-      if (patientHistory.pastMedication?.length) {
-        const medicationData: PastMedicationDto = {
-          opipPastMedID: 0,
-          opipNo: opipNo,
-          pChartID: pChartID,
-          opvID: 0,
-          opipCaseNo: opipCaseNo,
-          patOpip: "I",
-          opipDate: new Date(),
-          details: patientHistory.pastMedication.map(
-            (med: any): PastMedicationDetailDto => ({
-              opipPastMedDtlID: 0,
-              opipPastMedID: 0,
-              mfID: med.mfID || 0,
-              mfName: med.mfName || "",
-              mGenID: med.mGenID || 0,
-              mGenCode: med.mGenCode || "",
-              mGenName: med.mGenName || "",
-              mlID: med.mlID || 0,
-              medText: med.medText || "",
-              mdID: med.mdID || 0,
-              mdName: med.mdName || "",
-              mFrqID: med.mFrqID || 0,
-              mFrqName: med.mFrqName || "",
-              mInsID: med.mInsID || 0,
-              mInsName: med.mInsName || "",
-              fromDate: med.fromDate || new Date(),
-              toDate: med.toDate || new Date(),
-              rActiveYN: "Y",
-              compID: formData.ipAdmissionDto.compID,
-              compCode: formData.ipAdmissionDto.compCode,
-              compName: formData.ipAdmissionDto.compName,
-              transferYN: "N",
-              rNotes: med.rNotes || "",
-            })
-          ),
-          rActiveYN: "Y",
-          compID: formData.ipAdmissionDto.compID,
-          compCode: formData.ipAdmissionDto.compCode,
-          compName: formData.ipAdmissionDto.compName,
-          transferYN: "N",
-          rNotes: "",
-        };
-        historyPromises.push(pastMedicationService.save(medicationData));
-      }
-
-      await Promise.all(historyPromises);
-      return true;
-    } catch (error) {
-      console.error("Error saving patient history:", error);
-      throw error;
-    }
-  };
+  }, [compID, compCode, compName, fetchAdmitCode]);
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     if (!validateForm()) return false;
 
     try {
       setLoading(true);
-
       // Save admission first
       const admissionResult = await extendedAdmissionService.admitPatient(formData);
       if (!admissionResult.success) {
@@ -380,11 +350,87 @@ const useAdmissionForm = () => {
       }
 
       // After successful admission, save patient history using the returned OPIP numbers
-      await savePatientHistory({
-        pChartID: admissionResult.data?.ipAdmissionDto.pChartID,
-        opipNo: admissionResult.data?.ipAdmissionDto.opipNo,
-        opipCaseNo: admissionResult.data?.ipAdmissionDto.oPIPCaseNo,
-      });
+      if (patientHistory) {
+        const opipNo = admissionData?.ipAdmissionDto.opipNo ?? 0;
+        const opipCaseNo = admissionData?.ipAdmissionDto.oPIPCaseNo ?? 0;
+        const pChartID = admissionData?.ipAdmissionDto.pChartID ?? 0;
+
+        if (patientHistory.familyHistory?.length > 0) {
+          const familyHistoryData = patientHistory.familyHistory.map((item: any) => ({
+            ...item,
+            opipNo,
+            opipCaseNo,
+            pChartID,
+          }));
+          await fhService.bulkSave(familyHistoryData);
+        }
+
+        if (patientHistory.socialHistory?.length > 0) {
+          const socialHistoryData = patientHistory.socialHistory.map((item: any) => ({
+            ...item,
+            opipNo,
+            opipCaseNo,
+            pChartID,
+            patOpip: "I",
+            rActiveYN: "Y",
+          }));
+          await shService.bulkSave(socialHistoryData);
+        }
+
+        if (patientHistory.medicalHistory?.length > 0) {
+          const medicalHistoryData = patientHistory.medicalHistory.map((item: any) => ({
+            ...item,
+            opipNo,
+            opipCaseNo,
+            pChartID,
+            patOpip: "I",
+            rActiveYN: "Y",
+          }));
+          await pmhService.bulkSave(medicalHistoryData);
+        }
+        if (patientHistory.reviewOfSystem?.length > 0) {
+          const rosData = patientHistory.reviewOfSystem.map((item: any) => ({
+            ...item,
+            opipNo,
+            opipCaseNo,
+            pChartID,
+            patOpip: "I",
+            rActiveYN: "Y",
+          }));
+          await rosService.bulkSave(rosData);
+        }
+        if (patientHistory.surgicalHistory?.length > 0) {
+          const surgicalData = patientHistory.surgicalHistory.map((item: any) => ({
+            ...item,
+            opipNo,
+            opipCaseNo,
+            pChartID,
+            patOpip: "I",
+            rActiveYN: "Y",
+          }));
+          await pshService.bulkSave(surgicalData);
+        }
+        if (patientHistory.pastMedications?.details.length > 0) {
+          const medicationData = {
+            ...patientHistory.pastMedications,
+            opipNo,
+            opipCaseNo,
+            pChartID,
+            patOpip: "I",
+            rActiveYN: "Y",
+          };
+          await pastMedService.createOrUpdatePastMedication(medicationData);
+        }
+        if (patientHistory.allergies?.allergyDetails.length > 0) {
+          const allergyData = {
+            ...patientHistory.allergies,
+            opipNo,
+            opipCaseNo,
+            pChartID,
+          };
+          await allergyService.createOrUpdateAllergy(allergyData);
+        }
+      }
 
       return true;
     } catch (error) {
@@ -394,14 +440,71 @@ const useAdmissionForm = () => {
     } finally {
       setLoading(false);
     }
-  }, [formData, primaryDiagnoses, associatedDiagnoses, validateForm, handleClear]);
+  }, [formData, primaryDiagnoses, associatedDiagnoses, patientHistory, validateForm, fhService, shService, pmhService, rosService, pshService, pastMedService, allergyService]);
 
-  const updatePatientHistory = useCallback((historyData: any) => {
-    setPatientHistory((prev) => ({
-      ...prev,
-      [historyData.type]: historyData.data,
-    }));
-  }, []);
+  const updatePatientHistory = useCallback(
+    (historyData: HistoryState) => {
+      if (!historyData) return;
+
+      // Create a new object with validated arrays
+      const validatedHistory: HistoryState = {
+        familyHistory: historyData.familyHistory.map((item) => ({
+          ...item,
+          pChartID: formData.ipAdmissionDto.pChartID,
+          opipNo: formData.ipAdmissionDto.opipNo || 0,
+          opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
+        })),
+        socialHistory: historyData.socialHistory.map((item) => ({
+          ...item,
+          pChartID: formData.ipAdmissionDto.pChartID,
+          opipNo: formData.ipAdmissionDto.opipNo || 0,
+          opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
+        })),
+        medicalHistory: historyData.medicalHistory.map((item) => ({
+          ...item,
+          pChartID: formData.ipAdmissionDto.pChartID,
+          opipNo: formData.ipAdmissionDto.opipNo || 0,
+          opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
+        })),
+        reviewOfSystem:
+          historyData.reviewOfSystem?.map((item) => ({
+            ...item,
+            pChartID: formData.ipAdmissionDto.pChartID,
+            opipNo: formData.ipAdmissionDto.opipNo || 0,
+            opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
+          })) || [],
+        surgicalHistory:
+          historyData.surgicalHistory?.map((item) => ({
+            ...item,
+            pChartID: formData.ipAdmissionDto.pChartID,
+            opipNo: formData.ipAdmissionDto.opipNo || 0,
+            opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
+          })) || [],
+        pastMedications: {
+          ...historyData.pastMedications,
+          pChartID: formData.ipAdmissionDto.pChartID,
+          opipNo: formData.ipAdmissionDto.opipNo || 0,
+          opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
+          patOpip: "I",
+          rActiveYN: "Y",
+        },
+        allergies: {
+          ...historyData.allergies,
+          pChartID: formData.ipAdmissionDto.pChartID,
+          opipNo: formData.ipAdmissionDto.opipNo || 0,
+          opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
+          patOpip: "I",
+          rActiveYN: "Y",
+        },
+      };
+      // Update state with the validated data
+      setPatientHistory((prevHistory) => ({
+        ...prevHistory,
+        ...validatedHistory,
+      }));
+    },
+    [formData.ipAdmissionDto, setPatientHistory]
+  );
 
   const handlePatientSelect = useCallback(
     async (pChartID: number | null) => {
@@ -416,6 +519,47 @@ const useAdmissionForm = () => {
         }));
         setPrimaryDiagnoses([]);
         setAssociatedDiagnoses([]);
+        setPatientHistory({
+          familyHistory: [],
+          socialHistory: [],
+          medicalHistory: [],
+          reviewOfSystem: [],
+          surgicalHistory: [],
+          pastMedications: {
+            opipPastMedID: 0,
+            opipNo: 0,
+            opvID: 0,
+            pChartID: 0,
+            opipCaseNo: 0,
+            patOpip: "I",
+            opipDate: new Date(),
+            details: [],
+            rActiveYN: "Y",
+            compID: compID ?? 0,
+            compCode: compCode ?? "",
+            compName: compName ?? "",
+            transferYN: "N",
+            rNotes: "",
+            oldPChartID: 0,
+          },
+          allergies: {
+            opipAlgId: 0,
+            opipNo: 0,
+            opvID: 0,
+            pChartID: 0,
+            opipCaseNo: 0,
+            patOpip: "I",
+            opipDate: new Date(),
+            allergyDetails: [],
+            rActiveYN: "Y",
+            compID: compID ?? 0,
+            compCode: compCode ?? "",
+            compName: compName ?? "",
+            transferYN: "N",
+            rNotes: "",
+            oldPChartID: 0,
+          },
+        });
         return;
       }
 
@@ -453,6 +597,62 @@ const useAdmissionForm = () => {
               ...(data.admissionData?.wrBedDetailsDto || {}),
             },
           }));
+
+          // Fetch patient history data
+          const [familyHistoryResponse, socialHistoryResponse, medicalHistoryResponse, rosHistoryResponse, surgicalHistoryResponse, pastMedicationResponse] = await Promise.all([
+            fhService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
+            shService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
+            pmhService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
+            rosService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
+            pshService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
+            pastMedService.getByKeyFields(ipAdmissionDto.pChartID, ipAdmissionDto.opipNo, ipAdmissionDto.oPIPCaseNo),
+            allergyService.getByKeyFields(ipAdmissionDto.pChartID, ipAdmissionDto.opipNo, ipAdmissionDto.oPIPCaseNo),
+          ]);
+
+          // Update patient history state
+          const newHistoryState = {
+            familyHistory: familyHistoryResponse.success ? familyHistoryResponse.data : [],
+            socialHistory: socialHistoryResponse.success ? socialHistoryResponse.data : [],
+            medicalHistory: medicalHistoryResponse.success ? medicalHistoryResponse.data : [],
+            reviewOfSystem: rosHistoryResponse.success ? rosHistoryResponse.data : [],
+            surgicalHistory: surgicalHistoryResponse.success ? surgicalHistoryResponse.data : [],
+            pastMedications: pastMedicationResponse || {
+              opipPastMedID: 0,
+              opipNo: ipAdmissionDto.opipNo,
+              opvID: 0,
+              pChartID: ipAdmissionDto.pChartID,
+              opipCaseNo: ipAdmissionDto.oPIPCaseNo,
+              patOpip: "I",
+              opipDate: new Date(),
+              details: [],
+              rActiveYN: "Y",
+              compID: compID ?? 0,
+              compCode: compCode ?? "",
+              compName: compName ?? "",
+              transferYN: "N",
+              rNotes: "",
+              oldPChartID: 0,
+            },
+            allergies: {
+              opipAlgId: 0,
+              opipNo: ipAdmissionDto.opipNo,
+              opvID: 0,
+              pChartID: ipAdmissionDto.pChartID,
+              opipCaseNo: ipAdmissionDto.oPIPCaseNo,
+              patOpip: "I",
+              opipDate: new Date(),
+              allergyDetails: [],
+              rActiveYN: "Y",
+              compID: compID ?? 0,
+              compCode: compCode ?? "",
+              compName: compName ?? "",
+              transferYN: "N",
+              rNotes: "",
+              oldPChartID: 0,
+            },
+          };
+
+          setPatientHistory(newHistoryState);
         } else if (data?.patientData && data?.patientData.patRegisters) {
           const { patRegisters, lastVisit } = data.patientData;
 
@@ -514,6 +714,13 @@ const useAdmissionForm = () => {
               pfName: patRegisters.pFName ?? "",
             },
           }));
+          setPatientHistory({
+            familyHistory: [],
+            socialHistory: [],
+            medicalHistory: [],
+            reviewOfSystem: [],
+            surgicalHistory: [],
+          });
           console.log(formData);
         }
       } catch (error) {
@@ -523,7 +730,7 @@ const useAdmissionForm = () => {
         setLoading(false);
       }
     },
-    [setPrimaryDiagnoses, setAssociatedDiagnoses]
+    [setPrimaryDiagnoses, setAssociatedDiagnoses, fhService, shService, pmhService, rosService, pshService, pastMedService, compID, compCode, compName]
   );
 
   const handleBedSelect = useCallback((bed: any) => {
@@ -564,7 +771,6 @@ const useAdmissionForm = () => {
     associatedDiagnoses,
     setAssociatedDiagnoses,
     handleChange,
-    handleDropdownChange,
     handleClear,
     handleSave,
     handlePatientSelect,
@@ -575,7 +781,6 @@ const useAdmissionForm = () => {
     setShouldClearPatientHistory,
     insurancePageRef,
     isValidated,
-    patientHistory,
     updatePatientHistory,
   };
 };

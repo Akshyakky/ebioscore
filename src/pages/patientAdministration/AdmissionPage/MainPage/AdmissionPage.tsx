@@ -43,7 +43,7 @@ const AdmissionPage: React.FC = () => {
     setShouldClearPatientHistory,
     insurancePageRef,
     updatePatientHistory,
-    patientHistory,
+    // patientHistory,
   } = useAdmissionForm();
   const { setLoading } = useLoading();
   const { handleDropdownChange } = useDropdownChange<AdmissionDto>(setFormData);
@@ -149,7 +149,13 @@ const AdmissionPage: React.FC = () => {
         />
       </CustomAccordion>
       <CustomAccordion title="Patient History">
-        <PatientHistory pChartID={formData.ipAdmissionDto.pChartID || 0} opipNo={formData.ipAdmissionDto.opipNo || 0} opipCaseNo={formData.ipAdmissionDto.oPIPCaseNo || 0} />
+        <PatientHistory
+          pChartID={formData.ipAdmissionDto.pChartID}
+          opipNo={formData.ipAdmissionDto.opipNo}
+          opipCaseNo={formData.ipAdmissionDto.oPIPCaseNo}
+          shouldClear={shouldClearPatientHistory}
+          onHistoryChange={updatePatientHistory}
+        />
       </CustomAccordion>
       <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClearAll} onSave={handleSaveAll} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </Container>

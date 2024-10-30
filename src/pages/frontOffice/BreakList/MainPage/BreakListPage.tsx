@@ -22,18 +22,15 @@ const BreakListPage: React.FC = () => {
       icon: Search,
       text: "Advanced Search",
       onClick: handleAdvancedSearch,
-    }
+    },
   ];
 
   const handleCloseSearch = () => {
     setIsSearchOpen(false);
   };
 
-
-
   const handleSelect = (data: any) => {
-    if (data && typeof data.bLID === 'number') {
-      console.log("Selected Break List Data:", data);
+    if (data && typeof data.bLID === "number") {
       setSelectedData(data);
     } else {
       console.error("Invalid Break List Data: Missing bLID", data);
@@ -41,20 +38,17 @@ const BreakListPage: React.FC = () => {
     }
   };
 
-
-
-
-
-
-  return (<>
-    <Container maxWidth={false}>
-      <Box sx={{ marginBottom: 2 }}>
-        <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
-      </Box>
-      <BreakDetails editData={selectedData} />
-      <BreakListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
-    </Container>
-  </>);
+  return (
+    <>
+      <Container maxWidth={false}>
+        <Box sx={{ marginBottom: 2 }}>
+          <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
+        </Box>
+        <BreakDetails editData={selectedData} />
+        <BreakListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
+      </Container>
+    </>
+  );
 };
 
 export default BreakListPage;

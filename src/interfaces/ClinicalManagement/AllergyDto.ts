@@ -1,14 +1,19 @@
-export interface OPIPHistAllergyMastDto {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseHistoryDto } from "./BaseHistoryDto";
+
+export interface OPIPHistAllergyMastDto extends BaseHistoryDto {
   opipAlgId?: number;
-  pchartId: number;
-  opipNo: number;
-  opipCaseNo: number;
+  opipDate: Date;
   allergyDetails: OPIPHistAllergyDetailDto[];
 }
 
-export interface OPIPHistAllergyDetailDto {
+export interface OPIPHistAllergyDetailDto extends BaseDto {
+  opipAlgDetailId: number;
   opipAlgId: number;
-  medicationName: string;
-  formName: string;
-  genericName: string;
+  mfId: number;
+  mfName: string;
+  mlId: Number;
+  medText: string;
+  mGenId: number;
+  mGenName: string;
 }

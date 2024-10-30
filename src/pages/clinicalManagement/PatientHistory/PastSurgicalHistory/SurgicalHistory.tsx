@@ -1,116 +1,112 @@
-// src/pages/clinicalManagement/patientHistory/FamilyHistory.tsx
+//src/pages/clinicalManagement/patientHistory/SurgicalHistory.tsx
 import React, { useState, useCallback, useMemo } from "react";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
 import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
-import { OPIPHistFHDto } from "../../../../interfaces/ClinicalManagement/OPIPHistFHDto";
+import { OPIPHistPSHDto } from "../../../../interfaces/ClinicalManagement/OPIPHistPSHDto";
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { store } from "../../../../store/store";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
-import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
-import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
-import HistoryIcon from "@mui/icons-material/History";
+import SurgeryIcon from "@mui/icons-material/LocalHospital";
+import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import HealingIcon from "@mui/icons-material/Healing";
 import ClearIcon from "@mui/icons-material/Clear";
 
-interface FamilyHistoryProps {
+interface SurgicalHistoryProps {
   pChartID: number;
   opipNo: number;
   opipCaseNo: number;
-  historyList: OPIPHistFHDto[];
-  onHistoryChange: (history: OPIPHistFHDto[]) => void;
+  historyList: OPIPHistPSHDto[];
+  onHistoryChange: (history: OPIPHistPSHDto[]) => void;
 }
 
-export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
+export const SurgicalHistory: React.FC<SurgicalHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
   const { compID, compCode, compName } = store.getState().userDetails;
+  const initialFormState: OPIPHistPSHDto = {
+    opipPshID: 0,
+    opipNo: opipNo,
+    opvID: 0,
+    pChartID: pChartID,
+    opipCaseNo: opipCaseNo,
+    patOpip: "I",
+    opipPshDate: new Date(),
+    opipPshDesc: "",
+    opipPshNotes: "",
+    oldPChartID: 0,
+    rActiveYN: "Y",
+    compID: compID ?? 0,
+    compCode: compCode ?? "",
+    compName: compName ?? "",
+    transferYN: "N",
+    rNotes: "",
+  };
 
-  const initialFormState: OPIPHistFHDto = useMemo(
-    () => ({
-      opipFHID: 0,
-      opipNo,
-      opvID: 0,
-      pChartID,
-      opipCaseNo,
-      patOpip: "I",
-      opipFHDate: new Date(),
-      opipFHDesc: "",
-      opipFHNotes: "",
-      oldPChartID: 0,
-      rActiveYN: "Y",
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
-      transferYN: "N",
-      rNotes: "",
-    }),
-    [pChartID, opipNo, opipCaseNo, compID, compCode, compName]
-  );
-
-  const [formState, setFormState] = useState<OPIPHistFHDto>(initialFormState);
+  const [formState, setFormState] = useState<OPIPHistPSHDto>(initialFormState);
   const { setLoading } = useLoading();
 
-  const familyHistoryService = useMemo(() => createEntityService<OPIPHistFHDto>("OPIPHistFH", "clinicalManagementURL"), []);
+  const surgicalHistoryService = useMemo(() => createEntityService<OPIPHistPSHDto>("OPIPHistPSH", "clinicalManagementURL"), []);
 
   const resetForm = useCallback(() => {
     setFormState({
       ...initialFormState,
-      opipFHDate: new Date(),
+      opipPshDate: new Date(),
     });
   }, [initialFormState]);
 
   const handleDelete = useCallback(
-    async (item: OPIPHistFHDto) => {
+    async (item: OPIPHistPSHDto) => {
       if (!item) return;
 
       // Handle unsaved records
-      if (item.opipFHID === 0) {
-        const updatedList = historyList.filter((history) => history.opipFHDate !== item.opipFHDate || history.opipFHDesc !== item.opipFHDesc);
+      if (item.opipPshID === 0) {
+        const updatedList = historyList.filter((history) => history.opipPshDate !== item.opipPshDate || history.opipPshDesc !== item.opipPshDesc);
         onHistoryChange(updatedList);
         return;
       }
 
       // Handle saved records
-      const confirmed = await showAlert("Confirm Delete", "Are you sure you want to delete this family history record?", "warning", true);
+      const confirmed = await showAlert("Confirm Delete", "Are you sure you want to delete this surgical history record?", "warning", true);
 
       if (confirmed) {
         setLoading(true);
         try {
-          await familyHistoryService.updateActiveStatus(item.opipFHID, false);
-          const updatedList = historyList.filter((history) => history.opipFHID !== item.opipFHID);
+          await surgicalHistoryService.updateActiveStatus(item.opipPshID, false);
+          const updatedList = historyList.filter((history) => history.opipPshID !== item.opipPshID);
           onHistoryChange(updatedList);
-          showAlert("Success", "Family history record deleted successfully", "success");
+          showAlert("Success", "Surgical history record deleted successfully", "success");
         } catch (error) {
           console.error("Delete error:", error);
-          showAlert("Error", "Failed to delete family history record", "error");
+          showAlert("Error", "Failed to delete surgical history record", "error");
         } finally {
           setLoading(false);
         }
       }
     },
-    [historyList, onHistoryChange, familyHistoryService, setLoading]
+    [historyList, onHistoryChange, surgicalHistoryService, setLoading]
   );
 
-  const columns: Column<OPIPHistFHDto>[] = useMemo(
+  const columns: Column<OPIPHistPSHDto>[] = useMemo(
     () => [
       {
-        key: "opipFHDate",
-        header: "Record Date",
+        key: "opipPshDate",
+        header: "Surgery Date",
         visible: true,
         type: "date",
         width: 120,
         formatter: (value: Date) => new Date(value).toLocaleDateString(),
       },
       {
-        key: "opipFHDesc",
-        header: "Medical Condition",
+        key: "opipPshDesc",
+        header: "Surgery Details",
         visible: true,
         width: 300,
       },
       {
-        key: "opipFHNotes",
+        key: "opipPshNotes",
         header: "Additional Notes",
         visible: true,
         width: 250,
@@ -120,7 +116,7 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
         header: "Actions",
         visible: true,
         width: 100,
-        render: (item: OPIPHistFHDto) => (
+        render: (item: OPIPHistPSHDto) => (
           <Tooltip title="Delete Record">
             <IconButton
               onClick={(e) => {
@@ -129,7 +125,7 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
               }}
               size="small"
               color="error"
-              aria-label="delete family history"
+              aria-label="delete surgical history"
             >
               <Delete />
             </IconButton>
@@ -146,16 +142,16 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
   }, []);
 
   const handleDateChange = useCallback((date: Date | null) => {
-    setFormState((prev) => ({ ...prev, opipFHDate: date || new Date() }));
+    setFormState((prev) => ({ ...prev, opipPshDate: date || new Date() }));
   }, []);
 
   const validateForm = useCallback(() => {
-    if (!formState.opipFHDesc.trim()) {
-      showAlert("Warning", "Please enter the medical condition", "warning");
+    if (!formState.opipPshDesc.trim()) {
+      showAlert("Warning", "Please enter the surgery details", "warning");
       return false;
     }
     return true;
-  }, [formState.opipFHDesc]);
+  }, [formState.opipPshDesc]);
 
   const handleAdd = useCallback(() => {
     if (!validateForm()) return;
@@ -176,45 +172,44 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
         }}
       >
         <Box display="flex" alignItems="center" mb={2}>
-          <FamilyRestroomIcon color="primary" sx={{ mr: 1 }} />
-          <MedicalInformationIcon color="primary" sx={{ mr: 1 }} />
-          <HistoryIcon color="primary" sx={{ mr: 1 }} />
+          <SurgeryIcon color="primary" sx={{ mr: 1 }} />
+          <MedicalServicesIcon color="primary" sx={{ mr: 1 }} />
+          <HealingIcon color="primary" sx={{ mr: 1 }} />
           <Typography variant="h6" component="h2">
-            Family Medical History
+            Past Surgical History
           </Typography>
         </Box>
 
         <Grid container spacing={2}>
           <FormField
             type="datepicker"
-            label="Record Date"
-            value={formState.opipFHDate}
+            label="Surgery Date"
+            value={formState.opipPshDate}
             onChange={handleDateChange}
-            name="opipFHDate"
-            ControlID="opipFHDate"
+            name="opipPshDate"
+            ControlID="opipPshDate"
             size="small"
             isMandatory
           />
           <FormField
             type="textarea"
-            label="Medical Condition"
-            value={formState.opipFHDesc}
+            label="Surgery Details"
+            value={formState.opipPshDesc}
             onChange={handleInputChange}
-            name="opipFHDesc"
-            ControlID="opipFHDesc"
-            placeholder="Enter family member's medical condition"
+            name="opipPshDesc"
+            ControlID="opipPshDesc"
+            placeholder="Enter surgery details"
             rows={3}
             isMandatory
           />
           <FormField
             type="textarea"
             label="Additional Notes"
-            value={formState.opipFHNotes || ""}
+            value={formState.opipPshNotes || ""}
             onChange={handleInputChange}
-            name="opipFHNotes"
-            ControlID="opipFHNotes"
-            placeholder="Enter any additional notes or relevant information"
-            rows={3}
+            name="opipPshNotes"
+            ControlID="opipPshNotes"
+            placeholder="Enter any additional notes or observations"
           />
           <Grid item md={9}>
             <Box
@@ -238,7 +233,7 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
                   },
                 }}
               />
-              <CustomButton variant="contained" icon={Add} text="Add Family History" onClick={handleAdd} color="primary" sx={{ minWidth: 160, ml: 2 }} />
+              <CustomButton variant="contained" icon={Add} text="Add Surgical History" onClick={handleAdd} color="primary" sx={{ minWidth: 160, ml: 2 }} />
             </Box>
           </Grid>
         </Grid>
@@ -253,4 +248,4 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
   );
 };
 
-export default React.memo(FamilyHistory);
+export default React.memo(SurgicalHistory);

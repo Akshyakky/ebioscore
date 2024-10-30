@@ -20,6 +20,7 @@ export class CommonApiService {
   private getHeaders(token?: string, additionalHeaders?: Record<string, string>): Record<string, string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      Accept: "application/json",
       "Time-Zone": this.timeZone,
     };
     if (token) {
@@ -64,6 +65,7 @@ export class CommonApiService {
       headers: this.getHeaders(token, additionalHeaders),
       data: this.processData(data),
       params: this.processData(params),
+      withCredentials: true,
     };
     return axios(config);
   }
@@ -109,6 +111,7 @@ export class CommonApiService {
         headers: this.getHeaders(token, additionalHeaders),
         params: this.processData(params),
         responseType: "blob",
+        withCredentials: true,
       };
       const response = await axios(config);
       return response.data;

@@ -1,43 +1,43 @@
-// src/pages/clinicalManagement/patientHistory/FamilyHistory.tsx
+// src/pages/clinicalManagement/patientHistory/SocialHistory.tsx
 import React, { useState, useCallback, useMemo } from "react";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
 import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
-import { OPIPHistFHDto } from "../../../../interfaces/ClinicalManagement/OPIPHistFHDto";
+import { OPIPHistSHDto } from "../../../../interfaces/ClinicalManagement/OPIPHistSHDto";
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { store } from "../../../../store/store";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
-import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
-import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
-import HistoryIcon from "@mui/icons-material/History";
+import GroupIcon from "@mui/icons-material/Group";
+import LifestyleIcon from "@mui/icons-material/Accessibility";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import ClearIcon from "@mui/icons-material/Clear";
 
-interface FamilyHistoryProps {
+interface SocialHistoryProps {
   pChartID: number;
   opipNo: number;
   opipCaseNo: number;
-  historyList: OPIPHistFHDto[];
-  onHistoryChange: (history: OPIPHistFHDto[]) => void;
+  historyList: OPIPHistSHDto[];
+  onHistoryChange: (history: OPIPHistSHDto[]) => void;
 }
 
-export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
+export const SocialHistory: React.FC<SocialHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
   const { compID, compCode, compName } = store.getState().userDetails;
 
-  const initialFormState: OPIPHistFHDto = useMemo(
+  const initialFormState: OPIPHistSHDto = useMemo(
     () => ({
-      opipFHID: 0,
+      opipSHID: 0,
       opipNo,
       opvID: 0,
       pChartID,
       opipCaseNo,
       patOpip: "I",
-      opipFHDate: new Date(),
-      opipFHDesc: "",
-      opipFHNotes: "",
+      opipSHDate: new Date(),
+      opipSHDesc: "",
+      opipSHNotes: "",
       oldPChartID: 0,
       rActiveYN: "Y",
       compID: compID ?? 0,
@@ -49,54 +49,54 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
     [pChartID, opipNo, opipCaseNo, compID, compCode, compName]
   );
 
-  const [formState, setFormState] = useState<OPIPHistFHDto>(initialFormState);
+  const [formState, setFormState] = useState<OPIPHistSHDto>(initialFormState);
   const { setLoading } = useLoading();
 
-  const familyHistoryService = useMemo(() => createEntityService<OPIPHistFHDto>("OPIPHistFH", "clinicalManagementURL"), []);
+  const socialHistoryService = useMemo(() => createEntityService<OPIPHistSHDto>("OPIPHistSH", "clinicalManagementURL"), []);
 
   const resetForm = useCallback(() => {
     setFormState({
       ...initialFormState,
-      opipFHDate: new Date(),
+      opipSHDate: new Date(),
     });
   }, [initialFormState]);
 
   const handleDelete = useCallback(
-    async (item: OPIPHistFHDto) => {
+    async (item: OPIPHistSHDto) => {
       if (!item) return;
 
       // Handle unsaved records
-      if (item.opipFHID === 0) {
-        const updatedList = historyList.filter((history) => history.opipFHDate !== item.opipFHDate || history.opipFHDesc !== item.opipFHDesc);
+      if (item.opipSHID === 0) {
+        const updatedList = historyList.filter((history) => history.opipSHDate !== item.opipSHDate || history.opipSHDesc !== item.opipSHDesc);
         onHistoryChange(updatedList);
         return;
       }
 
       // Handle saved records
-      const confirmed = await showAlert("Confirm Delete", "Are you sure you want to delete this family history record?", "warning", true);
+      const confirmed = await showAlert("Confirm Delete", "Are you sure you want to delete this social history record?", "warning", true);
 
       if (confirmed) {
         setLoading(true);
         try {
-          await familyHistoryService.updateActiveStatus(item.opipFHID, false);
-          const updatedList = historyList.filter((history) => history.opipFHID !== item.opipFHID);
+          await socialHistoryService.updateActiveStatus(item.opipSHID, false);
+          const updatedList = historyList.filter((history) => history.opipSHID !== item.opipSHID);
           onHistoryChange(updatedList);
-          showAlert("Success", "Family history record deleted successfully", "success");
+          showAlert("Success", "Social history record deleted successfully", "success");
         } catch (error) {
           console.error("Delete error:", error);
-          showAlert("Error", "Failed to delete family history record", "error");
+          showAlert("Error", "Failed to delete social history record", "error");
         } finally {
           setLoading(false);
         }
       }
     },
-    [historyList, onHistoryChange, familyHistoryService, setLoading]
+    [historyList, onHistoryChange, socialHistoryService, setLoading]
   );
 
-  const columns: Column<OPIPHistFHDto>[] = useMemo(
+  const columns: Column<OPIPHistSHDto>[] = useMemo(
     () => [
       {
-        key: "opipFHDate",
+        key: "opipSHDate",
         header: "Record Date",
         visible: true,
         type: "date",
@@ -104,13 +104,13 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
         formatter: (value: Date) => new Date(value).toLocaleDateString(),
       },
       {
-        key: "opipFHDesc",
-        header: "Medical Condition",
+        key: "opipSHDesc",
+        header: "Lifestyle Factor",
         visible: true,
         width: 300,
       },
       {
-        key: "opipFHNotes",
+        key: "opipSHNotes",
         header: "Additional Notes",
         visible: true,
         width: 250,
@@ -120,7 +120,7 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
         header: "Actions",
         visible: true,
         width: 100,
-        render: (item: OPIPHistFHDto) => (
+        render: (item: OPIPHistSHDto) => (
           <Tooltip title="Delete Record">
             <IconButton
               onClick={(e) => {
@@ -129,7 +129,7 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
               }}
               size="small"
               color="error"
-              aria-label="delete family history"
+              aria-label="delete social history"
             >
               <Delete />
             </IconButton>
@@ -146,16 +146,16 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
   }, []);
 
   const handleDateChange = useCallback((date: Date | null) => {
-    setFormState((prev) => ({ ...prev, opipFHDate: date || new Date() }));
+    setFormState((prev) => ({ ...prev, opipSHDate: date || new Date() }));
   }, []);
 
   const validateForm = useCallback(() => {
-    if (!formState.opipFHDesc.trim()) {
-      showAlert("Warning", "Please enter the medical condition", "warning");
+    if (!formState.opipSHDesc.trim()) {
+      showAlert("Warning", "Please enter the lifestyle factor or social habit", "warning");
       return false;
     }
     return true;
-  }, [formState.opipFHDesc]);
+  }, [formState.opipSHDesc]);
 
   const handleAdd = useCallback(() => {
     if (!validateForm()) return;
@@ -173,14 +173,15 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
           p: 2,
           mb: 2,
           backgroundColor: (theme) => theme.palette.background.paper,
+          borderRadius: 2,
         }}
       >
         <Box display="flex" alignItems="center" mb={2}>
-          <FamilyRestroomIcon color="primary" sx={{ mr: 1 }} />
-          <MedicalInformationIcon color="primary" sx={{ mr: 1 }} />
-          <HistoryIcon color="primary" sx={{ mr: 1 }} />
+          <GroupIcon color="primary" sx={{ mr: 1 }} />
+          <LifestyleIcon color="primary" sx={{ mr: 1 }} />
+          <HealthAndSafetyIcon color="primary" sx={{ mr: 1 }} />
           <Typography variant="h6" component="h2">
-            Family Medical History
+            Social & Lifestyle History
           </Typography>
         </Box>
 
@@ -188,32 +189,32 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
           <FormField
             type="datepicker"
             label="Record Date"
-            value={formState.opipFHDate}
+            value={formState.opipSHDate}
             onChange={handleDateChange}
-            name="opipFHDate"
-            ControlID="opipFHDate"
+            name="opipSHDate"
+            ControlID="opipSHDate"
             size="small"
             isMandatory
           />
           <FormField
             type="textarea"
-            label="Medical Condition"
-            value={formState.opipFHDesc}
+            label="Lifestyle Factor"
+            value={formState.opipSHDesc}
             onChange={handleInputChange}
-            name="opipFHDesc"
-            ControlID="opipFHDesc"
-            placeholder="Enter family member's medical condition"
+            name="opipSHDesc"
+            ControlID="opipSHDesc"
+            placeholder="Enter lifestyle factors (e.g., smoking, alcohol, exercise habits)"
             rows={3}
             isMandatory
           />
           <FormField
             type="textarea"
             label="Additional Notes"
-            value={formState.opipFHNotes || ""}
+            value={formState.opipSHNotes || ""}
             onChange={handleInputChange}
-            name="opipFHNotes"
-            ControlID="opipFHNotes"
-            placeholder="Enter any additional notes or relevant information"
+            name="opipSHNotes"
+            ControlID="opipSHNotes"
+            placeholder="Enter frequency, duration, or other relevant details"
             rows={3}
           />
           <Grid item md={9}>
@@ -222,6 +223,7 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
                 mt: 2,
                 display: "flex",
                 justifyContent: "flex-end",
+                gap: 2,
               }}
             >
               <CustomButton
@@ -238,7 +240,20 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
                   },
                 }}
               />
-              <CustomButton variant="contained" icon={Add} text="Add Family History" onClick={handleAdd} color="primary" sx={{ minWidth: 160, ml: 2 }} />
+              <CustomButton
+                variant="contained"
+                icon={Add}
+                text="Add Social History"
+                onClick={handleAdd}
+                color="primary"
+                sx={{
+                  minWidth: 160,
+                  boxShadow: 2,
+                  "&:hover": {
+                    boxShadow: 4,
+                  },
+                }}
+              />
             </Box>
           </Grid>
         </Grid>
@@ -253,4 +268,4 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
   );
 };
 
-export default React.memo(FamilyHistory);
+export default React.memo(SocialHistory);

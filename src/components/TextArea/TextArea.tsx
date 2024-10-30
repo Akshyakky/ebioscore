@@ -1,11 +1,5 @@
 import React, { useMemo } from "react";
-import {
-  FormControl,
-  TextField,
-  FormHelperText,
-  Box,
-  Typography,
-} from "@mui/material";
+import { FormControl, TextField, FormHelperText, Box, Typography } from "@mui/material";
 import { SxProps } from "@mui/system";
 import { Theme } from "@mui/material/styles";
 
@@ -30,9 +24,9 @@ interface TextAreaProps {
 }
 
 const TextArea: React.FC<TextAreaProps> = ({
-  label = '',
+  label = "",
   name,
-  value = '',
+  value = "",
   onChange,
   rows = 3,
   isMandatory = false,
@@ -48,7 +42,6 @@ const TextArea: React.FC<TextAreaProps> = ({
   isSubmitted = false,
   errorMessage,
 }) => {
-
   const remainingChars = useMemo(() => {
     if (!maxLength || !value) return undefined;
     return maxLength - value.toString().length;
@@ -60,25 +53,16 @@ const TextArea: React.FC<TextAreaProps> = ({
 
   const displayHelperText = useMemo(() => {
     if (errorMessage) return errorMessage;
-    if (showError && isMandatory) return `${label || 'Field'} is required`;
+    if (showError && isMandatory) return `${label || "Field"} is required`;
     return helperText;
   }, [errorMessage, showError, isMandatory, label, helperText]);
 
   return (
-    <FormControl
-      className={className}
-      fullWidth
-      margin="normal"
-      style={style}
-      required={isMandatory}
-      disabled={disabled}
-      error={showError}
-      sx={sx}
-    >
+    <FormControl className={className} fullWidth margin="normal" style={style} required={isMandatory} disabled={disabled} error={showError} sx={sx}>
       <TextField
         label={label}
         name={name}
-        value={value || ''}
+        value={value || ""}
         onChange={onChange}
         multiline
         rows={rows}
@@ -93,30 +77,17 @@ const TextArea: React.FC<TextAreaProps> = ({
         error={showError}
         inputProps={{
           maxLength,
-          'aria-describedby': `${name}-helper-text`,
+          "aria-describedby": `${name}-helper-text`,
         }}
       />
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="flex-start"
-        mt={0.5}
-      >
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mt={0.5}>
         {displayHelperText && (
-          <FormHelperText
-            id={`${name}-helper-text`}
-            error={showError}
-            sx={{ margin: 0 }}
-          >
+          <FormHelperText id={`${name}-helper-text`} error={showError} sx={{ margin: 0 }}>
             {displayHelperText}
           </FormHelperText>
         )}
         {maxLength && (
-          <Typography
-            variant="caption"
-            color="textSecondary"
-            sx={{ marginLeft: 'auto' }}
-          >
+          <Typography variant="caption" color="textSecondary" sx={{ marginLeft: "auto" }}>
             {remainingChars} characters remaining
           </Typography>
         )}
