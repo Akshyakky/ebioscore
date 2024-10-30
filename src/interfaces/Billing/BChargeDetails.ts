@@ -1,18 +1,17 @@
+// src/interfaces/Billing/BChargeDetails.ts
+
+import { RecordFields } from "../Common/RecordFields";
+
 // Represents the main structure of ChargeDetailsDto
 export interface ChargeDetailsDto {
   chargeInfo: BChargeDto;
   chargeDetails: BChargeDetailsDto[];
   chargeAliases: BChargeAliasDto[];
+  faculties: BChargeFacultyDto[]; // Include faculties here
 }
 
 // Represents the structure of BChargeDto
-export interface BChargeDto {
-  rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
-  transferYN: string;
-  rNotes: string;
+export interface BChargeDto extends RecordFields {
   chargeID: number;
   chargeCode: string;
   chargeDesc: string;
@@ -36,13 +35,7 @@ export interface BChargeDto {
 }
 
 // Represents the structure of BChargeDetailsDto
-export interface BChargeDetailsDto {
-  rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
-  transferYN: string;
-  rNotes: string;
+export interface BChargeDetailsDto extends RecordFields {
   chDetID: number;
   chargeID: number;
   pTypeID: number;
@@ -54,16 +47,17 @@ export interface BChargeDetailsDto {
 }
 
 // Represents the structure of BChargeAliasDto
-export interface BChargeAliasDto {
-  rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
-  transferYN: string;
-  rNotes: string;
+export interface BChargeAliasDto extends RecordFields {
   chaliasID: number;
   chargeID: number;
   pTypeID: number;
-  chargeDesc: number;
-  chargeDescLang: number;
+  chargeDesc: string;
+  chargeDescLang: string;
+}
+
+// Represents the structure of BChargeFacultyDto
+export interface BChargeFacultyDto extends RecordFields {
+  bchfID: number;
+  chargeID: number;
+  aSubID: number;
 }

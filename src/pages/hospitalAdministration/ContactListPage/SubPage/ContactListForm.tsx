@@ -54,6 +54,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
   const { fieldsList, defaultFields } = useFieldsList(["city", "state", "nationality"]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
+
   const handleSpecialityChange = useCallback(
     (event: SelectChangeEvent<unknown>) => {
       const value = event.target.value as string[];

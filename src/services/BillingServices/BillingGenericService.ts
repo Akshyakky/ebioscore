@@ -10,10 +10,4 @@ export const serviceGroupService = createEntityService<BServiceGrpDto>("ServiceG
 
 export const paymentTypeService = createEntityService<BPayTypeDto>("PaymentTypes", "billingURL");
 
-export const chargeDetailsService = createEntityService<ChargeDetailsDto>("ChargeDetails", "billingURL");
-
-export const chargeService = createEntityService<BChargeDto>("BCharge", "billingURL");
-
-export const chargeDetailsEntityService = createEntityService<BChargeDetailsDto>("BChargeDetails", "billingURL");
-
-export const chargeAliasService = createEntityService<BChargeAliasDto>("BChargeAlias", "billingURL");
+export const chargeService = createEntityService<ChargeDetailsDto>("ChargeDetails", "billingURL");
