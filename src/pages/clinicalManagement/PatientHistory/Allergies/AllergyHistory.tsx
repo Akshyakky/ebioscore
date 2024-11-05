@@ -4,7 +4,7 @@ import { Box, Grid, Paper, Typography } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
 import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
-import { OPIPHistAllergyDetailDto, OPIPHistAllergyMastDto } from "../../../../interfaces/ClinicalManagement/AllergyDto";
+import { AllergyDto, OPIPHistAllergyDetailDto, OPIPHistAllergyMastDto } from "../../../../interfaces/ClinicalManagement/AllergyDto";
 import { MedicationListDto } from "../../../../interfaces/ClinicalManagement/MedicationListDto";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
@@ -19,8 +19,8 @@ interface AllergyHistoryProps {
   pChartID: number;
   opipNo: number;
   opipCaseNo: number;
-  historyList?: OPIPHistAllergyMastDto;
-  onHistoryChange: (allergy: OPIPHistAllergyMastDto) => void;
+  historyList?: AllergyDto;
+  onHistoryChange: (allergy: AllergyDto) => void;
 }
 
 const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
@@ -28,32 +28,35 @@ const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipC
   const { setLoading } = useLoading();
   const medicationListService = useMemo(() => createEntityService<MedicationListDto>("MedicationList", "clinicalManagementURL"), []);
 
-  const initialAllergyState = useMemo(
+  const initialAllergyState: AllergyDto = useMemo(
     () => ({
-      opipAlgId: 0,
-      opipNo,
-      opvID: 0,
-      pChartID,
-      opipCaseNo,
-      patOpip: "I",
-      opipDate: new Date(),
+      opIPHistAllergyMastDto: {
+        opipAlgId: 0,
+        opipNo,
+        opvID: 0,
+        pChartID,
+        opipCaseNo,
+        patOpip: "I",
+        opipDate: new Date(),
+        rActiveYN: "Y",
+        compID: compID ?? 0,
+        compCode: compCode ?? "",
+        compName: compName ?? "",
+        transferYN: "N",
+        rNotes: "",
+        oldPChartID: 0,
+      },
       allergyDetails: [],
-      rActiveYN: "Y",
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
-      transferYN: "N",
-      rNotes: "",
-      oldPChartID: 0,
     }),
     [pChartID, opipNo, opipCaseNo, compID, compCode, compName]
   );
 
-  const [formState, setFormState] = useState<OPIPHistAllergyMastDto>(historyList || initialAllergyState);
+  const [formState, setFormState] = useState<AllergyDto>(historyList || initialAllergyState);
   const [selectedMedication, setSelectedMedication] = useState<string>("");
   const [medicationSuggestions, setMedicationSuggestions] = useState<string[]>([]);
 
   useEffect(() => {
+    debugger;
     if (historyList) {
       setFormState(historyList);
     }
@@ -83,8 +86,8 @@ const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipC
           return;
         }
 
-        // Fetch medication details
         const medicationResponse = await medicationListService.find(`medText.equals("${medText}")`);
+
         if (!medicationResponse.success || !medicationResponse.data.length) {
           showAlert("Error", "Medication not found", "error");
           return;
@@ -93,13 +96,19 @@ const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipC
         const medication = medicationResponse.data[0];
         const newDetail: OPIPHistAllergyDetailDto = {
           opipAlgDetailId: 0,
-          opipAlgId: formState.opipAlgId || 0,
+          opipAlgId: formState.opIPHistAllergyMastDto.opipAlgId || 0,
           mfId: medication.mfID,
           mfName: medication.mfName,
           mlId: medication.mlID,
           medText: medication.medText,
           mGenId: medication.mGenID,
           mGenName: medication.mGenName,
+          rActiveYN: "Y",
+          compID: formState.opIPHistAllergyMastDto.compID,
+          compCode: formState.opIPHistAllergyMastDto.compCode,
+          compName: formState.opIPHistAllergyMastDto.compName,
+          transferYN: "N",
+          rNotes: "",
         };
 
         const updatedState = {

@@ -19,7 +19,7 @@ import PastMedication from "./PastMedicationHistory/PastMedication";
 import { PastMedicationDto } from "../../../interfaces/ClinicalManagement/PastMedicationDto";
 import { store } from "../../../store/store";
 import { pastMedicationService } from "../../../services/ClinicalManagementServices/pastMedicationService";
-import { OPIPHistAllergyMastDto } from "../../../interfaces/ClinicalManagement/AllergyDto";
+import { AllergyDto } from "../../../interfaces/ClinicalManagement/AllergyDto";
 import { allergyService } from "../../../services/ClinicalManagementServices/allergyService";
 import AllergyHistory from "./Allergies/AllergyHistory";
 
@@ -30,7 +30,7 @@ export interface HistoryState {
   reviewOfSystem: OPIPHistROSDto[];
   surgicalHistory: OPIPHistPSHDto[];
   pastMedications: PastMedicationDto;
-  allergies: OPIPHistAllergyMastDto;
+  allergies: AllergyDto;
 }
 interface PatientHistoryProps {
   pChartID: number;
@@ -66,6 +66,27 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
       oldPChartID: 0,
     },
     allergies: {
+      opIPHistAllergyMastDto: {
+        opipAlgId: 0,
+        opipNo,
+        opvID: 0,
+        pChartID,
+        opipCaseNo,
+        patOpip: "I",
+        opipDate: new Date(),
+        rActiveYN: "Y",
+        compID: compID ?? 0,
+        compCode: compCode ?? "",
+        compName: compName ?? "",
+        transferYN: "N",
+        rNotes: "",
+        oldPChartID: 0,
+      },
+      allergyDetails: [],
+    },
+  });
+  const getDefaultAllergyState = (pChartID: number, opipNo: number, opipCaseNo: number) => ({
+    opIPHistAllergyMastDto: {
       opipAlgId: 0,
       opipNo,
       opvID: 0,
@@ -73,7 +94,6 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
       opipCaseNo,
       patOpip: "I",
       opipDate: new Date(),
-      allergyDetails: [],
       rActiveYN: "Y",
       compID: compID ?? 0,
       compCode: compCode ?? "",
@@ -82,6 +102,7 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
       rNotes: "",
       oldPChartID: 0,
     },
+    allergyDetails: [],
   });
   const { setLoading } = useLoading();
   const fhService = createEntityService<OPIPHistFHDto>("OPIPHistFH", "clinicalManagementURL");
@@ -91,6 +112,7 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
   const pshService = createEntityService<OPIPHistPSHDto>("OPIPHistPSH", "clinicalManagementURL");
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
+    debugger;
     setTabValue(newValue);
   };
 
@@ -209,15 +231,19 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
   );
 
   const handleAllergyChange = useCallback(
-    (newAllergy: OPIPHistAllergyMastDto) => {
+    (newAllergy: AllergyDto) => {
+      debugger;
       setHistoryState((prev) => {
         const updated = {
           ...prev,
           allergies: {
-            ...newAllergy,
-            pChartID,
-            opipNo,
-            opipCaseNo,
+            opIPHistAllergyMastDto: {
+              ...newAllergy.opIPHistAllergyMastDto,
+              pChartID,
+              opipNo,
+              opipCaseNo,
+            },
+            allergyDetails: newAllergy.allergyDetails,
           },
         };
         onHistoryChange?.(updated);
@@ -253,21 +279,23 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
           transferYN: "N",
         },
         allergies: {
-          opipAlgId: 0,
-          opipNo,
-          opvID: 0,
-          pChartID,
-          opipCaseNo,
-          patOpip: "I",
-          opipDate: new Date(),
+          opIPHistAllergyMastDto: {
+            opipAlgId: 0,
+            opipNo,
+            opvID: 0,
+            pChartID,
+            opipCaseNo,
+            patOpip: "I",
+            opipDate: new Date(),
+            rActiveYN: "Y",
+            compID: compID ?? 0,
+            compCode: compCode ?? "",
+            compName: compName ?? "",
+            transferYN: "N",
+            rNotes: "",
+            oldPChartID: 0,
+          },
           allergyDetails: [],
-          rActiveYN: "Y",
-          compID: compID ?? 0,
-          compCode: compCode ?? "",
-          compName: compName ?? "",
-          transferYN: "N",
-          rNotes: "",
-          oldPChartID: 0,
         },
       });
       onHistoryChange?.(historyState);
@@ -280,7 +308,7 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
       setLoading(true);
       try {
         const query = `pChartID=${pChartID} AND opipNo=${opipNo} AND opipCaseNo=${opipCaseNo}`;
-        const [familyResponse, socialResponse, medicalResponse, rosResponse, surgicalResponse, pastMedicationResponse] = await Promise.all([
+        const [familyResponse, socialResponse, medicalResponse, rosResponse, surgicalResponse, pastMedicationResponse, allergyResponse] = await Promise.all([
           fhService.find(query),
           shService.find(query),
           pmhService.find(query),
@@ -289,6 +317,8 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
           pastMedicationService.getByKeyFields(pChartID, opipNo, opipCaseNo),
           allergyService.getByKeyFields(pChartID, opipNo, opipCaseNo),
         ]);
+
+        const defaultAllergyState = getDefaultAllergyState(pChartID, opipNo, opipCaseNo);
 
         const newHistoryState = {
           familyHistory: familyResponse.success ? familyResponse.data : [],
@@ -312,23 +342,7 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
             transferYN: "N",
             rNotes: "",
           },
-          allergies: {
-            opipAlgId: 0,
-            opipNo,
-            opvID: 0,
-            pChartID,
-            opipCaseNo,
-            patOpip: "I",
-            opipDate: new Date(),
-            allergyDetails: [],
-            rActiveYN: "Y",
-            compID: compID ?? 0,
-            compCode: compCode ?? "",
-            compName: compName ?? "",
-            transferYN: "N",
-            rNotes: "",
-            oldPChartID: 0,
-          },
+          allergies: allergyResponse.success && allergyResponse.data ? allergyResponse.data : defaultAllergyState,
         };
 
         setHistoryState(newHistoryState);

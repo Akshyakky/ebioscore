@@ -1,3 +1,4 @@
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
 import { RecordFieldsWithPhysician } from "../Common/PhysicianReferralFields";
 import { RecordFields } from "../Common/RecordFields";
 type YesNo = "Y" | "N";
@@ -106,7 +107,7 @@ export interface WrBedDetailsDto extends RecordFields {
   oldPChartID?: number;
 }
 
-export interface AdmissionDto {
+export interface AdmissionDto extends BaseDto {
   ipAdmissionDto: IPAdmissionDto;
   ipAdmissionDetailsDto: IPAdmissionDetailsDto;
   wrBedDetailsDto: WrBedDetailsDto;

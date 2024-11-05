@@ -13,7 +13,6 @@ import { OPIPHistPMHDto } from "../../interfaces/ClinicalManagement/OPIPHistPMHD
 import { OPIPHistPSHDto } from "../../interfaces/ClinicalManagement/OPIPHistPSHDto";
 import { OPIPHistROSDto } from "../../interfaces/ClinicalManagement/OPIPHistROSDto";
 import { OPIPHistSHDto } from "../../interfaces/ClinicalManagement/OPIPHistSHDto";
-import { PastMedicationDetailDto, PastMedicationDto } from "../../interfaces/ClinicalManagement/PastMedicationDto";
 import { AssocDiagnosisDetailDto, DiagnosisDetailDto, DiagnosisDto } from "../../interfaces/ClinicalManagement/DiagnosisDto";
 import { diagnosisService } from "../../services/ClinicalManagementServices/diagnosisService";
 import { HistoryState } from "../../pages/clinicalManagement/PatientHistory/PatientHistory";
@@ -106,21 +105,23 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
       oldPChartID: 0,
     },
     allergies: {
-      opipAlgId: 0,
-      opipNo: formData.ipAdmissionDto.opipNo || 0,
-      opvID: 0,
-      pChartID: formData.ipAdmissionDto.pChartID || 0,
-      opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
-      patOpip: "I",
-      opipDate: new Date(),
+      opIPHistAllergyMastDto: {
+        opipAlgId: 0,
+        opipNo: formData.ipAdmissionDto.opipNo || 0,
+        opvID: 0,
+        pChartID: formData.ipAdmissionDto.pChartID || 0,
+        opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
+        patOpip: "I",
+        opipDate: new Date(),
+        rActiveYN: "Y",
+        compID: compID ?? 0,
+        compCode: compCode ?? "",
+        compName: compName ?? "",
+        transferYN: "N",
+        rNotes: "",
+        oldPChartID: 0,
+      },
       allergyDetails: [],
-      rActiveYN: "Y",
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
-      transferYN: "N",
-      rNotes: "",
-      oldPChartID: 0,
     },
   });
   const insurancePageRef = useRef<any>(null);
@@ -234,21 +235,23 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
         oldPChartID: 0,
       },
       allergies: {
-        opipAlgId: 0,
-        opipNo: 0,
-        opvID: 0,
-        pChartID: 0,
-        opipCaseNo: 0,
-        patOpip: "I",
-        opipDate: new Date(),
+        opIPHistAllergyMastDto: {
+          opipAlgId: 0,
+          opipNo: 0,
+          opvID: 0,
+          pChartID: 0,
+          opipCaseNo: 0,
+          patOpip: "I",
+          opipDate: new Date(),
+          rActiveYN: "Y",
+          compID: compID ?? 0,
+          compCode: compCode ?? "",
+          compName: compName ?? "",
+          transferYN: "N",
+          rNotes: "",
+          oldPChartID: 0,
+        },
         allergyDetails: [],
-        rActiveYN: "Y",
-        compID: compID ?? 0,
-        compCode: compCode ?? "",
-        compName: compName ?? "",
-        transferYN: "N",
-        rNotes: "",
-        oldPChartID: 0,
       },
     });
 
@@ -423,10 +426,13 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
         }
         if (patientHistory.allergies?.allergyDetails.length > 0) {
           const allergyData = {
-            ...patientHistory.allergies,
-            opipNo,
-            opipCaseNo,
-            pChartID,
+            opIPHistAllergyMastDto: {
+              ...patientHistory.allergies.opIPHistAllergyMastDto,
+              opipNo: admissionData?.ipAdmissionDto.opipNo,
+              pChartID: admissionData?.ipAdmissionDto.pChartID,
+              opipCaseNo: admissionData?.ipAdmissionDto.oPIPCaseNo,
+            },
+            allergyDetails: patientHistory.allergies.allergyDetails,
           };
           await allergyService.createOrUpdateAllergy(allergyData);
         }
@@ -489,12 +495,13 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
           rActiveYN: "Y",
         },
         allergies: {
-          ...historyData.allergies,
-          pChartID: formData.ipAdmissionDto.pChartID,
-          opipNo: formData.ipAdmissionDto.opipNo || 0,
-          opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
-          patOpip: "I",
-          rActiveYN: "Y",
+          opIPHistAllergyMastDto: {
+            ...historyData.allergies.opIPHistAllergyMastDto,
+            pChartID: formData.ipAdmissionDto.pChartID,
+            opipNo: formData.ipAdmissionDto.opipNo || 0,
+            opipCaseNo: formData.ipAdmissionDto.oPIPCaseNo || 0,
+          },
+          allergyDetails: historyData.allergies.allergyDetails,
         },
       };
       // Update state with the validated data
@@ -543,21 +550,23 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
             oldPChartID: 0,
           },
           allergies: {
-            opipAlgId: 0,
-            opipNo: 0,
-            opvID: 0,
-            pChartID: 0,
-            opipCaseNo: 0,
-            patOpip: "I",
-            opipDate: new Date(),
+            opIPHistAllergyMastDto: {
+              opipAlgId: 0,
+              opipNo: 0,
+              opvID: 0,
+              pChartID: 0,
+              opipCaseNo: 0,
+              patOpip: "I",
+              opipDate: new Date(),
+              rActiveYN: "Y",
+              compID: compID ?? 0,
+              compCode: compCode ?? "",
+              compName: compName ?? "",
+              transferYN: "N",
+              rNotes: "",
+              oldPChartID: 0,
+            },
             allergyDetails: [],
-            rActiveYN: "Y",
-            compID: compID ?? 0,
-            compCode: compCode ?? "",
-            compName: compName ?? "",
-            transferYN: "N",
-            rNotes: "",
-            oldPChartID: 0,
           },
         });
         return;
@@ -597,17 +606,17 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
               ...(data.admissionData?.wrBedDetailsDto || {}),
             },
           }));
-
           // Fetch patient history data
-          const [familyHistoryResponse, socialHistoryResponse, medicalHistoryResponse, rosHistoryResponse, surgicalHistoryResponse, pastMedicationResponse] = await Promise.all([
-            fhService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
-            shService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
-            pmhService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
-            rosService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
-            pshService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
-            pastMedService.getByKeyFields(ipAdmissionDto.pChartID, ipAdmissionDto.opipNo, ipAdmissionDto.oPIPCaseNo),
-            allergyService.getByKeyFields(ipAdmissionDto.pChartID, ipAdmissionDto.opipNo, ipAdmissionDto.oPIPCaseNo),
-          ]);
+          const [familyHistoryResponse, socialHistoryResponse, medicalHistoryResponse, rosHistoryResponse, surgicalHistoryResponse, pastMedicationResponse, allergyResponse] =
+            await Promise.all([
+              fhService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
+              shService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
+              pmhService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
+              rosService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
+              pshService.find(`pChartID=${ipAdmissionDto.pChartID} AND opipNo=${ipAdmissionDto.opipNo} AND opipCaseNo=${ipAdmissionDto.oPIPCaseNo}`),
+              pastMedService.getByKeyFields(ipAdmissionDto.pChartID, ipAdmissionDto.opipNo, ipAdmissionDto.oPIPCaseNo),
+              allergyService.getByKeyFields(ipAdmissionDto.pChartID, ipAdmissionDto.opipNo, ipAdmissionDto.oPIPCaseNo),
+            ]);
 
           // Update patient history state
           const newHistoryState = {
@@ -633,23 +642,7 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
               rNotes: "",
               oldPChartID: 0,
             },
-            allergies: {
-              opipAlgId: 0,
-              opipNo: ipAdmissionDto.opipNo,
-              opvID: 0,
-              pChartID: ipAdmissionDto.pChartID,
-              opipCaseNo: ipAdmissionDto.oPIPCaseNo,
-              patOpip: "I",
-              opipDate: new Date(),
-              allergyDetails: [],
-              rActiveYN: "Y",
-              compID: compID ?? 0,
-              compCode: compCode ?? "",
-              compName: compName ?? "",
-              transferYN: "N",
-              rNotes: "",
-              oldPChartID: 0,
-            },
+            allergies: allergyResponse.success ? allergyResponse.data : [],
           };
 
           setPatientHistory(newHistoryState);

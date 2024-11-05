@@ -18,6 +18,10 @@ class ExtendedAdmissionService extends GenericEntityService<AdmissionDto> {
     return this.apiService.get<OperationResult<any>>(`${this.baseEndpoint}/GenerateAdmitCode`, this.getToken());
   }
 
+  async getCurrentAdmissions(): Promise<OperationResult<AdmissionDto[]>> {
+    return this.apiService.get<OperationResult<AdmissionDto[]>>(`${this.baseEndpoint}/GetCurrentAdmissions`, this.getToken());
+  }
+
   async getPatientAdmissionStatus(pChartID: number): Promise<
     OperationResult<{
       isAdmitted: boolean;

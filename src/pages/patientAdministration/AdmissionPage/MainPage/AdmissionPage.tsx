@@ -19,6 +19,7 @@ import { AdmissionDto } from "../../../../interfaces/PatientAdministration/Admis
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { useLoading } from "../../../../context/LoadingContext";
 import PatientHistory from "../../../clinicalManagement/PatientHistory/PatientHistory";
+import AdmissionListSearch from "../SubPage/AdmissionListSearch";
 
 export interface PatientHistory {
   [key: string]: any;
@@ -50,13 +51,31 @@ const AdmissionPage: React.FC = () => {
 
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const [isBedSelectionOpen, setIsBedSelectionOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const handleOpenBedSelection = useCallback(() => setIsBedSelectionOpen(true), []);
   const handleCloseBedSelection = useCallback(() => setIsBedSelectionOpen(false), []);
 
-  const handleAdvancedSearch = useCallback(async () => {
-    // Implement advanced search logic
+  const handleAdvancedSearch = useCallback(() => {
+    setIsSearchOpen(true);
   }, []);
+
+  const handleSearchClose = useCallback(() => {
+    setIsSearchOpen(false);
+  }, []);
+
+  const handleAdmissionSelect = useCallback(
+    (selectedAdmission: AdmissionDto) => {
+      // Update form data with selected admission
+      setFormData(selectedAdmission);
+      // Update other related states as needed
+      setPrimaryDiagnoses([]); // Reset or update as needed
+      setAssociatedDiagnoses([]); // Reset or update as needed
+      setShouldClearInsuranceData(false);
+      setShouldClearPatientHistory(false);
+    },
+    [setFormData]
+  );
 
   const actionButtons: ButtonProps[] = useMemo(
     () => [
@@ -158,6 +177,7 @@ const AdmissionPage: React.FC = () => {
         />
       </CustomAccordion>
       <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClearAll} onSave={handleSaveAll} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
+      <AdmissionListSearch open={isSearchOpen} onClose={handleSearchClose} onSelect={handleAdmissionSelect} />
     </Container>
   );
 };
