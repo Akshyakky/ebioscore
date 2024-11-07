@@ -7,9 +7,9 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { format } from "date-fns";
-import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/patientAdministrationService";
 import ClearIcon from "@mui/icons-material/Clear";
 import SearchIcon from "@mui/icons-material/Search";
+import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/admissionService";
 
 interface AdmissionListSearchProps {
   open: boolean;

@@ -334,7 +334,7 @@ const RegistrationPage: React.FC = () => {
     <>
       <Container maxWidth={false}>
         <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
+          <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
         </Box>
         <PatientSearch show={showPatientSearch} handleClose={() => setShowPatientSearch(false)} onEditPatient={handlePatientSelect} />
         <CustomAccordion title="Personal Details" defaultExpanded>

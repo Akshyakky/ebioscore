@@ -32,7 +32,7 @@ const DiagnosisListPage: React.FC = () => {
   return (
     <Container maxWidth={false}>
       <Box sx={{ marginBottom: 2 }}>
-        <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
+        <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
       </Box>
       <DiagnosisDetails selectedData={selectedData} />
       <DiagnosisSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />

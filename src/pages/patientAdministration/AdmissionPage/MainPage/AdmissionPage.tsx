@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Container, Box } from "@mui/material";
 import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
 import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
+import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon, MeetingRoom as MeetingRoomIcon } from "@mui/icons-material";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import AdmissionDetails from "../SubPage/AdmissionDetails";
 import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
@@ -12,7 +12,6 @@ import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
 import DiagnosisSection from "../../../clinicalManagement/Common/Diagnosis";
 import useAdmissionForm from "../../../../hooks/PatientAdminstration/useAdmissionForm";
-
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
@@ -84,6 +83,7 @@ const AdmissionPage: React.FC = () => {
         size: "medium",
         icon: SearchIcon,
         text: "Advanced Search",
+        color: "primary", // Blue button
         onClick: handleAdvancedSearch,
       },
       {
@@ -91,8 +91,19 @@ const AdmissionPage: React.FC = () => {
         icon: PrintIcon,
         text: "Print Admission Form",
         size: "medium",
+        color: "info", // Different color if needed
         onClick: () => {
           /* Implement print logic */
+        },
+      },
+      {
+        variant: "outlined",
+        icon: MeetingRoomIcon,
+        text: "Advised Admissions",
+        size: "medium",
+        color: "warning", // Blue button
+        onClick: () => {
+          /* Implement admissions logic */
         },
       },
     ],

@@ -1,8 +1,6 @@
 import { Box, Container } from "@mui/material";
 import React, { useCallback, useState } from "react";
-import ActionButtonGroup, {
-  ButtonProps,
-} from "../../../../components/Button/ActionButtonGroup";
+import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import { Search } from "@mui/icons-material";
 import { ProfileMastDto } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import ProfileDetails from "../SubPage/ProfileListDetails";
@@ -10,9 +8,7 @@ import ProfileListSearch from "../SubPage/ProfileListSearch";
 
 const ProfileListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<ProfileMastDto | undefined>(
-    undefined
-  );
+  const [selectedData, setSelectedData] = useState<ProfileMastDto | undefined>(undefined);
 
   const handleAdvancedSearch = useCallback(() => {
     setIsSearchOpen(true);
@@ -38,20 +34,10 @@ const ProfileListPage: React.FC = () => {
     <>
       <Container maxWidth={false}>
         <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup
-            buttons={actionButtons}
-            groupVariant="contained"
-            groupSize="medium"
-            orientation="horizontal"
-            color="primary"
-          />
+          <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
         </Box>
         <ProfileDetails />
-        <ProfileListSearch
-          open={isSearchOpen}
-          onClose={handleCloseSearch}
-          onSelect={handleSelect}
-        />
+        <ProfileListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
       </Container>
     </>
   );

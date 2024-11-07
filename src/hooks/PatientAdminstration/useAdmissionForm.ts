@@ -1,6 +1,6 @@
 // src/hooks/useAdmissionForm.ts
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { extendedAdmissionService } from "../../services/PatientAdministrationServices/patientAdministrationService";
+import { extendedAdmissionService } from "../../services/PatientAdministrationServices/admissionService";
 import { showAlert } from "../../utils/Common/showAlert";
 import { AdmissionDto, IPAdmissionDetailsDto, IPAdmissionDto, WrBedDetailsDto } from "../../interfaces/PatientAdministration/AdmissionDto";
 import { useLoading } from "../../context/LoadingContext";
