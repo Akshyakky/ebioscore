@@ -180,11 +180,8 @@ const CustomGrid = <T extends Record<string, any>>({
 
   const handleColumnResize = (columnKey: string, width: number) => {
     const newColumns = columns.map((col) => (col.key === columnKey ? { ...col, width } : col));
-    // Update columns state or prop here
   };
-
   const isSelected = (item: T) => selected.indexOf(item) !== -1;
-
   const sortedData = useMemo(() => {
     if (!orderBy) return data;
     return [...data].sort((a, b) => {
@@ -294,9 +291,7 @@ const CustomGrid = <T extends Record<string, any>>({
     [searchTerm, highlightMatch]
   );
 
-  const exportToCSV = () => {
-    // CSVLink component will handle the CSV export
-  };
+  const exportToCSV = () => {};
 
   const exportToPDF = useCallback(() => {
     const doc = new jsPDF();
@@ -372,16 +367,6 @@ const CustomGrid = <T extends Record<string, any>>({
       background: theme.palette.primary.dark,
     },
   }));
-
-  const visibleColumns = useMemo(() => columns.filter((col) => col.visible), [columns]);
-
-  const handleFilterChange = useCallback((columnKey: string, value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      [columnKey]: value,
-    }));
-    setPage(0);
-  }, []);
 
   return (
     <>

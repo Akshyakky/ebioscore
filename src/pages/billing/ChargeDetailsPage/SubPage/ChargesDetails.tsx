@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Paper, Typography, Grid, SelectChangeEvent, Box, TextField, Switch, Button } from "@mui/material";
+import { Paper, Typography, SelectChangeEvent, TextField } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import { ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
 import { store } from "../../../../store/store";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { serviceGroupService } from "../../../../services/BillingServices/BillingGenericService";
 import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
-
+import ChargeBasicDetails from "./Charges";
+import ChargeConfigDetails from "./ChargesAlias";
 const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) => {
   const { compID, compCode, compName } = store.getState().userDetails;
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");
@@ -56,6 +55,7 @@ const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) 
         chargeStatus: "A",
       },
     ],
+
     chargeAliases: editData?.chargeAliases || [
       {
         rActiveYN: "Y",
@@ -80,6 +80,9 @@ const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) 
   const [serviceGroups, setServiceGroups] = useState<any[]>([]);
   const [selectedFacultyIds, setSelectedFacultyIds] = useState<string[]>([]);
   const [, setSelectedFacultyNames] = useState<string>("");
+  const [selectedPicIds, setSelectedPicIds] = useState<string[]>([]);
+  const [selectedWardCategoryIds, setSelectedWardCategoryIds] = useState<string[]>([]);
+  const [aliasData, setAliasData] = useState<any[]>([]);
 
   const handleFacultyChange = useCallback(
     (event: SelectChangeEvent<unknown>) => {
@@ -107,6 +110,49 @@ const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) 
     },
     [compID, compCode, compName, dropdownValues.speciality]
   );
+
+  const handlePicChange = useCallback((event: SelectChangeEvent<unknown>) => {
+    const value = event.target.value as string[];
+    const pTypeID = value.length > 0 ? parseInt(value[0]) : 0;
+
+    setSelectedPicIds(value);
+    setFormData((prev) => ({
+      ...prev,
+      chargeDetails: prev.chargeDetails.map((detail) => ({
+        ...detail,
+        pTypeID,
+        chargeStatus: "A",
+      })),
+    }));
+  }, []);
+
+  const handleWardCategoryChange = useCallback((event: SelectChangeEvent<unknown>) => {
+    const value = event.target.value as string[];
+    setSelectedWardCategoryIds(value);
+    setFormData((prev: any) => ({
+      ...prev,
+      chargeDetails: [
+        {
+          ...prev.chargeDetails[0],
+          wCatID: parseInt(value[0]),
+        },
+      ],
+    }));
+  }, []);
+
+  const validateFormData = (data: ChargeDetailsDto): boolean => {
+    if (!data.chargeDetails?.[0]?.wCatID) {
+      showAlert("Error", "Ward Category is required", "error");
+      return false;
+    }
+
+    if (!data.chargeDetails?.[0]?.pTypeID) {
+      showAlert("Error", "PIC is required", "error");
+      return false;
+    }
+
+    return true;
+  };
 
   useEffect(() => {
     const fetchServiceGroups = async () => {
@@ -138,17 +184,6 @@ const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) 
     }
   }, [editData]);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      chargeInfo: {
-        ...prev.chargeInfo,
-        [name]: value,
-      },
-    }));
-  }, []);
-
   const handleSelectChange = useCallback((e: SelectChangeEvent) => {
     const { name, value } = e.target;
 
@@ -171,17 +206,23 @@ const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) 
   }, []);
 
   const handleSwitchChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
     setFormData((prev) => ({
       ...prev,
       chargeInfo: {
         ...prev.chargeInfo,
-        [field]: e.target.checked ? "Y" : "N",
+        [field]: checked ? "Y" : "N",
       },
     }));
   };
 
   const handleSave = async () => {
     setIsSubmitted(true);
+
+    if (!validateFormData(formData)) {
+      return;
+    }
+
     setLoading(true);
     try {
       debugger;
@@ -196,6 +237,7 @@ const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) 
         },
         chargeDetails: formData.chargeDetails.map((detail) => ({
           ...detail,
+          pTypeID: detail.pTypeID,
           compID: formData.chargeInfo.compID,
           compCode: formData.chargeInfo.compCode,
           compName: formData.chargeInfo.compName,
@@ -222,8 +264,8 @@ const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) 
           transferYN: "Y",
         })),
       };
-      const result = await chargeDetailsService.saveChargeDetails(chargeData);
 
+      const result = await chargeDetailsService.saveChargeDetails(chargeData);
       if (result.success) {
         showAlert("Success", "Charge details saved successfully!", "success", {
           onConfirm: handleClear,
@@ -238,27 +280,69 @@ const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) 
     }
   };
 
-  const aliasData =
-    dropdownValues.pic?.map((item) => ({
-      picName: item.label,
-      aliasName: "",
-    })) || [];
+  useEffect(() => {
+    if (dropdownValues.pic) {
+      const initialData = dropdownValues.pic.map((item, index) => ({
+        id: index,
+        picName: item.label,
+        aliasName: "",
+      }));
+      setAliasData(initialData);
+    }
+  }, [dropdownValues.pic]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      chargeInfo: {
+        ...prev.chargeInfo,
+        [name]: value,
+      },
+    }));
+
+    if (name === "chargeDesc") {
+      setAliasData((prevData) =>
+        prevData.map((item) => ({
+          ...item,
+          aliasName: value,
+        }))
+      );
+    }
+  }, []);
+
+  const handleAliasNameChange = (id: number, newValue: string) => {
+    setAliasData((prevData) => prevData.map((item) => (item.id === id ? { ...item, aliasName: newValue } : item)));
+    setFormData((prev) => ({
+      ...prev,
+      chargeInfo: {
+        ...prev.chargeInfo,
+        chargeDesc: newValue,
+      },
+    }));
+  };
 
   const columns = [
-    { key: "picName", header: "PIC Name", visible: true },
+    {
+      key: "picName",
+      header: "PIC Name",
+      visible: true,
+    },
     {
       key: "aliasName",
       header: "Alias Name",
       visible: true,
-      render: (item: any) => (
+      render: (item: { id: number; aliasName: string }) => (
         <TextField
           variant="outlined"
           size="small"
           fullWidth
-          placeholder="Enter Alias"
+          placeholder="Enter Alias (max 10 chars)"
           value={item.aliasName}
-          onChange={(e) => {
-            item.aliasName = e.target.value;
+          onChange={(e) => handleAliasNameChange(item.id, e.target.value)}
+          inputProps={{
+            maxLength: 10,
+            style: { width: "100%" },
           }}
         />
       ),
@@ -339,249 +423,36 @@ const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) 
   }, [compID, compCode, compName]);
 
   return (
-    <Paper variant="elevation" sx={{ padding: 2 }}>
+    <Paper variant="elevation" sx={{ padding: 2, mt: 2 }}>
       <Typography variant="h6">Charge Details</Typography>
 
-      <Grid container spacing={2}>
-        <FormField
-          type="text"
-          label="Code"
-          value={formData.chargeInfo.chargeCode}
-          onChange={handleInputChange}
-          name="chargeCode"
-          ControlID="chargeCode"
-          placeholder="SOC Code"
-          isMandatory
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="select"
-          label="Service Type"
-          value={formData.chargeInfo.chargeType}
-          onChange={handleSelectChange}
-          name="chargeType"
-          ControlID="chargeType"
-          options={dropdownValues.service || []}
-          isMandatory
-          isSubmitted={isSubmitted}
-        />
+      <ChargeBasicDetails
+        formData={formData}
+        handleInputChange={handleInputChange}
+        handleSelectChange={handleSelectChange}
+        handleSwitchChange={handleSwitchChange}
+        selectedFacultyIds={selectedFacultyIds}
+        handleFacultyChange={handleFacultyChange}
+        dropdownValues={dropdownValues}
+        serviceGroups={serviceGroups}
+        isSubmitted={isSubmitted}
+      />
 
-        <FormField
-          type="text"
-          label="Name"
-          value={formData.chargeInfo.chargeDesc}
-          onChange={handleInputChange}
-          name="chargeDesc"
-          ControlID="chargeDesc"
-          isMandatory
-          isSubmitted={isSubmitted}
-        />
-
-        <FormField
-          type="multiselect"
-          label="Faculty"
-          name="faculties"
-          ControlID="faculties"
-          value={selectedFacultyIds}
-          options={dropdownValues.speciality || []}
-          onChange={handleFacultyChange}
-          isSubmitted={isSubmitted}
-        />
-
-        <FormField
-          type="select"
-          label="Service Group"
-          value={formData.chargeInfo.sGrpID.toString()}
-          onChange={handleSelectChange}
-          name="sGrpID"
-          ControlID="sGrpID"
-          options={serviceGroups}
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="text"
-          label="Short Name"
-          value={formData.chargeInfo.cShortName}
-          onChange={handleInputChange}
-          name="cShortName"
-          ControlID="cShortName"
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="number"
-          label="Cost"
-          value={formData.chargeInfo.chargeCost || ""}
-          onChange={handleInputChange}
-          name="chargeCost"
-          ControlID="chargeCost"
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="text"
-          label="Resource Code"
-          value={formData.chargeInfo.cNhsCode || ""}
-          onChange={handleInputChange}
-          name="cNhsCode"
-          ControlID="cNhsCode"
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="text"
-          label="Resource Name"
-          value={formData.chargeInfo.cNhsEnglishName || ""}
-          onChange={handleInputChange}
-          name="cNhsEnglishName"
-          ControlID="cNhsEnglishName"
-          isSubmitted={isSubmitted}
-        />
-      </Grid>
-      <Grid container spacing={2}>
-        <FormField
-          type="switch"
-          label="Is Package"
-          value={formData.chargeInfo.regServiceYN || ""}
-          checked={formData.chargeInfo.regServiceYN === "Y"}
-          onChange={handleSwitchChange("regServiceYN")}
-          name="regServiceYN"
-          ControlID="regServiceYN"
-        />
-        <FormField
-          type="switch"
-          label="Apply Doctor % Share"
-          value={formData.chargeInfo.doctorShareYN || ""}
-          checked={formData.chargeInfo.doctorShareYN === "Y"}
-          onChange={handleSwitchChange("doctorShareYN")}
-          name="doctorShareYN"
-          ControlID="doctorShareYN"
-        />
-      </Grid>
-
-      <Grid container spacing={2}>
-        <FormField
-          type="select"
-          label="PIC"
-          value={formData.chargeDetails[0].pTypeID || 0}
-          onChange={handleSelectChange}
-          name="pic"
-          ControlID="pic"
-          options={dropdownValues.pic || []}
-          isMandatory
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="select"
-          label="Ward Category"
-          value={formData.chargeDetails[0].wCatID || 0}
-          onChange={handleSelectChange}
-          name="wardCategory"
-          ControlID="wardCategory"
-          options={dropdownValues.bedCategory || []}
-          isMandatory
-          isSubmitted={isSubmitted}
-        />
-        <Grid container spacing={2} alignItems="center">
-          <Grid item>
-            <Typography variant="body1">Percentage</Typography>
-          </Grid>
-          <Grid item>
-            <Switch
-              checked={formData.chargeInfo.percentage === "Y"}
-              onChange={(e) =>
-                handleSwitchChange("percentage")({
-                  target: { checked: e.target.checked },
-                } as React.ChangeEvent<HTMLInputElement>)
-              }
-              name="percentage"
-              color="primary"
-            />
-          </Grid>
-          <Grid item>
-            <Typography variant="body1">Amount</Typography>
-          </Grid>
-          <Grid item>
-            <TextField
-              type="number"
-              value={formData.chargeInfo.chValue || ""}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  chargeInfo: {
-                    ...prev.chargeInfo,
-                    chValue: e.target.value,
-                  },
-                }))
-              }
-              placeholder="0"
-              variant="outlined"
-              size="small"
-              InputProps={{ inputProps: { min: 0 } }}
-            />
-          </Grid>
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={2} alignItems="center">
-        <FormField
-          type="radio"
-          name="adjustmentType"
-          label=""
-          ControlID="adjustmentType"
-          value={formData.chargeInfo.adjustmentType || "None"}
-          options={[
-            { label: "None", value: "None" },
-            { label: "Increase", value: "Increase" },
-            { label: "Decrease", value: "Decrease" },
-          ]}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              chargeInfo: {
-                ...prev.chargeInfo,
-                adjustmentType: e.target.value,
-              },
-            }))
-          }
-          inline
-        />
-
-        <FormField
-          label=""
-          type="radio"
-          value={formData.chargeInfo.amountType || "Both"}
-          name="amountType"
-          ControlID="amountType"
-          options={[
-            { label: "Both", value: "Both" },
-            { label: "Dr Amt", value: "Dr Amt" },
-            { label: "Hosp Amt", value: "Hosp Amt" },
-          ]}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              chargeInfo: { ...prev.chargeInfo, amountType: e.target.value },
-            }))
-          }
-          inline
-        />
-      </Grid>
-
-      <Box display="flex" justifyContent="flex-start" mb={2}>
-        <Button variant={selectedTab === "ServiceCharges" ? "contained" : "outlined"} color="primary" onClick={() => setSelectedTab("ServiceCharges")}>
-          Service Charges
-        </Button>
-        <Button variant={selectedTab === "ServiceAlias" ? "contained" : "outlined"} color="primary" onClick={() => setSelectedTab("ServiceAlias")} sx={{ ml: 2 }}>
-          Service Alias
-        </Button>
-      </Box>
-
-      {selectedTab === "ServiceAlias" && (
-        <Box>
-          <Typography variant="h6" gutterBottom>
-            Service Alias
-          </Typography>
-          <CustomGrid columns={columns} data={aliasData} maxHeight="400px" pagination={false} selectable={false} />
-        </Box>
-      )}
+      <ChargeConfigDetails
+        formData={formData}
+        handleSwitchChange={handleSwitchChange}
+        selectedPicIds={selectedPicIds}
+        handlePicChange={handlePicChange}
+        selectedWardCategoryIds={selectedWardCategoryIds}
+        handleWardCategoryChange={handleWardCategoryChange}
+        dropdownValues={dropdownValues}
+        isSubmitted={isSubmitted}
+        setFormData={setFormData}
+        selectedTab={selectedTab}
+        setSelectedTab={setSelectedTab}
+        columns={columns}
+        aliasData={aliasData}
+      />
 
       <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </Paper>

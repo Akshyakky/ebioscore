@@ -1,16 +1,10 @@
-// src/interfaces/Billing/BChargeDetails.ts
-
 import { RecordFields } from "../Common/RecordFields";
-
-// Represents the main structure of ChargeDetailsDto
 export interface ChargeDetailsDto {
   chargeInfo: BChargeDto;
   chargeDetails: BChargeDetailsDto[];
   chargeAliases: BChargeAliasDto[];
-  faculties: BChargeFacultyDto[]; // Include faculties here
+  faculties: BChargeFacultyDto[];
 }
-
-// Represents the structure of BChargeDto
 export interface BChargeDto extends RecordFields {
   chargeID: number;
   chargeCode: string;
@@ -33,8 +27,6 @@ export interface BChargeDto extends RecordFields {
   nhsCstWt?: string;
   chargeCost?: string;
 }
-
-// Represents the structure of BChargeDetailsDto
 export interface BChargeDetailsDto extends RecordFields {
   chDetID: number;
   chargeID: number;
@@ -45,8 +37,6 @@ export interface BChargeDetailsDto extends RecordFields {
   chValue: number;
   chargeStatus: string;
 }
-
-// Represents the structure of BChargeAliasDto
 export interface BChargeAliasDto extends RecordFields {
   chaliasID: number;
   chargeID: number;
@@ -54,8 +44,6 @@ export interface BChargeAliasDto extends RecordFields {
   chargeDesc: string;
   chargeDescLang: string;
 }
-
-// Represents the structure of BChargeFacultyDto
 export interface BChargeFacultyDto extends RecordFields {
   bchfID: number;
   chargeID: number;
