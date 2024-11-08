@@ -1,4 +1,4 @@
-import { TextFieldProps } from "@mui/material";
+import { SxProps, TextFieldProps, Theme } from "@mui/material";
 
 export interface TextBoxProps {
   ControlID: string;
@@ -27,6 +27,7 @@ export interface TextBoxProps {
   onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   multiline?: boolean;
   rows?: number;
-  InputProps?: TextFieldProps['InputProps'];
-  InputLabelProps?: TextFieldProps['InputLabelProps'];
+  InputProps?: TextFieldProps["InputProps"];
+  InputLabelProps?: TextFieldProps["InputLabelProps"];
+  sx?: SxProps<Theme>;
 }

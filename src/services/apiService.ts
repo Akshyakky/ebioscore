@@ -11,7 +11,10 @@ const createApiClient = (baseURL: string) => {
     timeout: 10000,
     headers: {
       Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
+    withCredentials: true,
   });
 };
 

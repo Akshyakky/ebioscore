@@ -1,0 +1,366 @@
+import React, { useState, useCallback, useEffect } from "react";
+import { Box, Grid } from "@mui/material";
+import FormField from "../../../../components/FormField/FormField";
+import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SaveIcon from "@mui/icons-material/Save";
+import { useLoading } from "../../../../context/LoadingContext";
+import { showAlert } from "../../../../utils/Common/showAlert";
+import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
+import { IpDischargeDto } from "../../../../interfaces/PatientAdministration/IpDischargeDto";
+import { store } from "../../../../store/store";
+import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
+import useDropdownChange from "../../../../hooks/useDropdownChange";
+import { dischargeService } from "../../../../services/PatientAdministrationServices/DischargeService/DischargeService";
+import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
+import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
+import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
+import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/admissionService";
+import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
+
+interface DischargeDetailsProps {
+  selectedAdmission?: AdmissionDto;
+  onAdmissionSelect?: (admission: AdmissionDto) => void;
+  onClear?: () => void;
+}
+
+const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, onAdmissionSelect, onClear }) => {
+  const { compID, compCode, compName } = store.getState().userDetails;
+  const [formState, setFormState] = useState<IpDischargeDto>({
+    dischgID: 0,
+    pChartID: 0,
+    admitID: 0,
+    dischgDate: new Date(),
+    dischgTime: new Date(),
+    dischgStatus: "",
+    dischgPhyID: 0,
+    dischgPhyName: "",
+    releaseBedYN: "Y",
+    authorisedBy: "",
+    deliveryType: "",
+    dischargeCode: "",
+    dischgSumYN: "N",
+    facultyID: 0,
+    faculty: "",
+    dischgType: "DISCHARGED",
+    pChartCode: "",
+    pTitle: "",
+    pfName: "",
+    pmName: "",
+    plName: "",
+    defineStatus: "",
+    defineSituation: "",
+    situation: "",
+    rActiveYN: "Y",
+    compID: compID || 0,
+    compCode: compCode || "",
+    compName: compName || "",
+    transferYN: "N",
+    rNotes: "",
+  });
+
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const { setLoading } = useLoading();
+  const { handleDropdownChange } = useDropdownChange(setFormState);
+  const { fetchPatientSuggestions } = usePatientAutocomplete();
+
+  const dropdownValues = useDropdownValues(["dischargeStatus", "dischargeSituation", "deliveryType", "attendingPhy"]);
+
+  const handlePatientSelect = useCallback(
+    async (pChartID: number | null) => {
+      if (!pChartID) return;
+
+      setLoading(true);
+      try {
+        const result = await extendedAdmissionService.getPatientAdmissionStatus(pChartID);
+        if (!result.success) {
+          showAlert("Error", result.errorMessage || "Failed to fetch patient status", "error");
+          return;
+        }
+
+        const { data } = result;
+
+        if (data?.isAdmitted && data.admissionData) {
+          onAdmissionSelect?.(data.admissionData);
+
+          const admissionDto = data.admissionData.ipAdmissionDto;
+          if (admissionDto) {
+            setFormState((prev) => ({
+              ...prev,
+              pChartID: admissionDto.pChartID,
+              admitID: admissionDto.admitID,
+              pChartCode: admissionDto.pChartCode || "",
+              pTitle: admissionDto.pTitle || "",
+              pfName: admissionDto.pfName || "",
+              plName: admissionDto.plName || "",
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching patient details:", error);
+        showAlert("Error", "Failed to fetch patient details", "error");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading, onAdmissionSelect]
+  );
+
+  useEffect(() => {
+    if (selectedAdmission) {
+      const admission = selectedAdmission.ipAdmissionDto;
+      setFormState((prev) => ({
+        ...prev,
+        pChartID: admission?.pChartID || 0,
+        admitID: admission?.admitID || 0,
+        pChartCode: admission?.pChartCode || "",
+        pTitle: admission?.pTitle || "",
+        pfName: admission?.pfName || "",
+        plName: admission?.plName || "",
+      }));
+    } else {
+      handleClear();
+    }
+  }, [selectedAdmission]);
+
+  const handleClear = useCallback(() => {
+    setFormState({
+      dischgID: 0,
+      pChartID: 0,
+      admitID: 0,
+      dischgDate: new Date(),
+      dischgTime: new Date(),
+      dischgStatus: "",
+      dischgPhyID: 0,
+      dischgPhyName: "",
+      releaseBedYN: "N",
+      authorisedBy: "",
+      deliveryType: "",
+      dischargeCode: "",
+      dischgSumYN: "N",
+      facultyID: 0,
+      faculty: "",
+      dischgType: "DISCHARGED",
+      pChartCode: "",
+      pTitle: "",
+      pfName: "",
+      pmName: "",
+      plName: "",
+      defineStatus: "",
+      defineSituation: "",
+      situation: "",
+      rActiveYN: "Y",
+      compID: compID || 0,
+      compCode: compCode || "",
+      compName: compName || "",
+      transferYN: "N",
+      rNotes: "",
+    });
+    setIsSubmitted(false);
+    onClear?.();
+  }, [compID, compCode, compName, onClear]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormState((prev) => ({ ...prev, [name]: value }));
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    setIsSubmitted(true);
+    if (!formState.pChartID || !formState.dischgStatus || !formState.dischgPhyID) {
+      showAlert("Error", "Please fill all mandatory fields", "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await dischargeService.processDischarge(formState);
+      showAlert("Success", "Patient discharged successfully!", "success", {
+        onConfirm: handleClear,
+      });
+    } catch (error) {
+      showAlert("Error", "Failed to discharge patient", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [formState, handleClear, setLoading]);
+
+  const handleDateChange = useCallback((date: Date | null, type: "dischgDate" | "dischgTime") => {
+    if (date) {
+      setFormState((prev) => ({ ...prev, [type]: date }));
+    }
+  }, []);
+
+  return (
+    <>
+      <FormSectionWrapper title="Patient Information" spacing={1}>
+        {/* Patient Search with Autocomplete */}
+        <FormField
+          type="autocomplete"
+          label="UHID No."
+          value={formState.pChartCode}
+          onChange={(e) => setFormState((prev) => ({ ...prev, pChartCode: e.target.value }))}
+          name="pChartCode"
+          ControlID="pChartCode"
+          placeholder="Search by UHID, Name, Mobile"
+          isMandatory={true}
+          fetchSuggestions={fetchPatientSuggestions}
+          onSelectSuggestion={(suggestion) => {
+            const pChartCode = suggestion.split("|")[0].trim();
+            const numbersArray = extractNumbers(pChartCode);
+            const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
+            handlePatientSelect(pChartID);
+          }}
+          gridProps={{ xs: 12, md: 3, lg: 3 }}
+        />
+
+        {/* Patient Demographics */}
+        <Grid item xs={12} sm={6} md={9} lg={9} xl={9}>
+          <PatientDemographics pChartID={formState.pChartID} />
+        </Grid>
+
+        {/* Current Admission Summary */}
+        {selectedAdmission && (
+          <Grid container spacing={1} ml={0}>
+            <FormField
+              type="text"
+              label="Case Number"
+              value={selectedAdmission.ipAdmissionDto?.admitCode || ""}
+              ControlID="currentAdmitCode"
+              name="currentAdmitCode"
+              disabled
+              onChange={() => {}}
+              gridProps={{ xs: 12, sm: 6, md: 3 }}
+            />
+            <FormField
+              type="text"
+              label="Ward"
+              value={selectedAdmission.wrBedDetailsDto?.rGrpName || ""}
+              ControlID="currentWard"
+              name="currentWard"
+              disabled
+              onChange={() => {}}
+              gridProps={{ xs: 12, sm: 6, md: 3 }}
+            />
+            <FormField
+              type="text"
+              label="Bed"
+              value={selectedAdmission.wrBedDetailsDto?.bedName || ""}
+              ControlID="currentBed"
+              name="currentBed"
+              disabled
+              onChange={() => {}}
+              gridProps={{ xs: 12, sm: 6, md: 3 }}
+            />
+          </Grid>
+        )}
+
+        <FormField
+          type="datepicker"
+          label="Discharge Date"
+          value={formState.dischgDate}
+          onChange={(date) => handleDateChange(date, "dischgDate")}
+          name="dischgDate"
+          ControlID="dischgDate"
+          isMandatory
+          size="small"
+          gridProps={{ xs: 12, sm: 6, md: 3 }}
+        />
+
+        <FormField
+          type="timepicker"
+          label="Discharge Time"
+          value={formState.dischgTime}
+          onChange={(time) => handleDateChange(time, "dischgTime")}
+          name="dischgTime"
+          ControlID="dischgTime"
+          isMandatory
+          size="small"
+          gridProps={{ xs: 12, sm: 6, md: 3 }}
+        />
+
+        <FormField
+          type="select"
+          label="Discharge Physician"
+          value={formState.dischgPhyID?.toString() || ""}
+          onChange={handleDropdownChange(["dischgPhyID"], ["dischgPhyName"], dropdownValues.attendingPhy)}
+          name="dischgPhyID"
+          ControlID="dischgPhyID"
+          options={dropdownValues.attendingPhy}
+          isMandatory
+          size="small"
+          gridProps={{ xs: 12, sm: 6, md: 3 }}
+        />
+
+        <FormField
+          type="select"
+          label="Discharge Status"
+          value={formState.dischgStatus}
+          onChange={handleDropdownChange(["dischgStatus"], ["defineStatus"], dropdownValues.dischargeStatus)}
+          name="dischgStatus"
+          ControlID="dischgStatus"
+          options={dropdownValues.dischargeStatus}
+          isMandatory
+          size="small"
+          gridProps={{ xs: 12, sm: 6, md: 3 }}
+        />
+
+        <FormField
+          type="select"
+          label="Situation"
+          value={formState.situation}
+          onChange={handleDropdownChange(["situation"], ["defineSituation"], dropdownValues.dischargeSituation)}
+          name="situation"
+          ControlID="situation"
+          options={dropdownValues.dischargeSituation}
+          size="small"
+          gridProps={{ xs: 12, sm: 6, md: 3 }}
+        />
+
+        <FormField
+          type="select"
+          label="Delivery Type"
+          value={formState.deliveryType}
+          onChange={handleDropdownChange(["deliveryType"], [], dropdownValues.deliveryType)}
+          name="deliveryType"
+          ControlID="deliveryType"
+          options={dropdownValues.deliveryType}
+          size="small"
+          gridProps={{ xs: 12, sm: 6, md: 3 }}
+        />
+
+        <FormField
+          type="switch"
+          label="Release Bed"
+          checked={formState.releaseBedYN === "Y"}
+          value={formState.releaseBedYN}
+          onChange={(e) =>
+            setFormState((prev) => ({
+              ...prev,
+              releaseBedYN: e.target.checked ? "Y" : "N",
+            }))
+          }
+          name="releaseBedYN"
+          ControlID="releaseBedYN"
+          size="medium"
+          gridProps={{ xs: 12, sm: 6, md: 3 }}
+        />
+
+        <FormField
+          type="textarea"
+          label="Remarks"
+          value={formState.rNotes}
+          onChange={handleInputChange}
+          name="rNotes"
+          ControlID="rNotes"
+          rows={4}
+          size="small"
+          gridProps={{ xs: 12 }}
+        />
+      </FormSectionWrapper>
+      <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
+    </>
+  );
+};
+
+export default DischargeDetails;

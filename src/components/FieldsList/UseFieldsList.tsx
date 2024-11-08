@@ -1,56 +1,122 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 import { AppModifyFieldDto } from "../../interfaces/HospitalAdministration/AppModifiedlistDto";
 import { appModifiedListService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { showAlert } from "../../utils/Common/showAlert";
+import { useLoading } from "../../context/LoadingContext";
 
-const useFieldsList = (fieldNames: string[]) => {
-  const [fieldsList, setFieldsList] = useState<{ [key: string]: DropdownOption[] }>({});
-  const [defaultFields, setDefaultFields] = useState<{ [key: string]: string }>({});
-  const [isFetched, setIsFetched] = useState(false);
+interface FieldsListState {
+  fieldsList: Record<string, DropdownOption[]>;
+  defaultFields: Record<string, string>;
+  isFetched: boolean;
+  error: string | null;
+}
 
-  useEffect(() => {
-    const fetchFields = async () => {
-      try {
-        const response: any = await appModifiedListService.getAll();
-        const fieldsData = response.data || response;
-        if (!fieldsData || fieldsData.length === 0) {
-          return;
-        }
-        let fieldOptions: { [key: string]: DropdownOption[] } = {};
-        let defaultValues: { [key: string]: string } = {};
-        const normalizedFieldNames = fieldNames.map((name) => name.toLowerCase());
-        normalizedFieldNames.forEach((fieldName) => {
-          const filteredFields = fieldsData
-            .filter((field: AppModifyFieldDto) => {
-              return field.amlField?.toLowerCase() === fieldName && field.rActiveYN === "Y";
-            })
-            .map((field: AppModifyFieldDto) => ({
-              value: field.amlID.toString(),
-              label: field.amlName,
-              defaultYN: field.defaultYN,
-            }));
-          if (filteredFields.length === 0) {
-            return;
-          }
+interface UseFieldsListResult {
+  fieldsList: Record<string, DropdownOption[]>;
+  defaultFields: Record<string, string>;
+  isLoading: boolean;
+  error: string | null;
+  refreshFields: () => Promise<void>;
+}
+
+const useFieldsList = (fieldNames: string[]): UseFieldsListResult => {
+  const { setLoading } = useLoading();
+  const [state, setState] = useState<FieldsListState>({
+    fieldsList: {},
+    defaultFields: {},
+    isFetched: false,
+    error: null,
+  });
+
+  // Memoize normalized field names to prevent unnecessary recalculations
+  const normalizedFieldNames = useMemo(() => fieldNames.map((name) => name.toLowerCase()), [fieldNames]);
+
+  // Process fields data into options and defaults
+  const processFieldsData = useCallback(
+    (fieldsData: AppModifyFieldDto[]) => {
+      const fieldOptions: Record<string, DropdownOption[]> = {};
+      const defaultValues: Record<string, string> = {};
+
+      normalizedFieldNames.forEach((fieldName) => {
+        const filteredFields = fieldsData
+          .filter((field) => field.amlField?.toLowerCase() === fieldName && field.rActiveYN === "Y")
+          .map((field) => ({
+            value: field.amlID.toString(),
+            label: field.amlName,
+            defaultYN: field.defaultYN,
+            code: field.amlCode,
+            field: field.amlField,
+            active: field.rActiveYN,
+          }));
+
+        if (filteredFields.length > 0) {
           fieldOptions[fieldName] = filteredFields;
-          const defaultField = filteredFields.find((field: DropdownOption) => field.defaultYN === "Y");
+          const defaultField = filteredFields.find((field) => field.defaultYN === "Y");
           if (defaultField) {
             defaultValues[fieldName] = defaultField.value;
           }
-        });
-        setFieldsList(fieldOptions);
-        setDefaultFields(defaultValues);
-        setIsFetched(true);
-      } catch (error) {
-        showAlert("Error", "Failed to load fields", "error");
+        }
+      });
+
+      return { fieldOptions, defaultValues };
+    },
+    [normalizedFieldNames]
+  );
+
+  // Fetch fields data from the API
+  const fetchFields = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await appModifiedListService.getAll();
+      const fieldsData = response.data || response;
+
+      if (!fieldsData || !Array.isArray(fieldsData) || fieldsData.length === 0) {
+        throw new Error("No fields data available");
       }
-    };
-    if (!isFetched) {
+
+      const { fieldOptions, defaultValues } = processFieldsData(fieldsData);
+
+      setState((prev) => ({
+        ...prev,
+        fieldsList: fieldOptions,
+        defaultFields: defaultValues,
+        isFetched: true,
+        error: null,
+      }));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to load fields";
+      setState((prev) => ({
+        ...prev,
+        error: errorMessage,
+        isFetched: true,
+      }));
+      showAlert("Error", errorMessage, "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [processFieldsData, setLoading]);
+
+  // Refresh fields data manually
+  const refreshFields = useCallback(async () => {
+    setState((prev) => ({ ...prev, isFetched: false }));
+    await fetchFields();
+  }, [fetchFields]);
+
+  // Initial fetch effect
+  useEffect(() => {
+    if (!state.isFetched) {
       fetchFields();
     }
-  }, [fieldNames, isFetched]);
-  return { fieldsList, defaultFields };
+  }, [state.isFetched, fetchFields]);
+
+  return {
+    fieldsList: state.fieldsList,
+    defaultFields: state.defaultFields,
+    isLoading: !state.isFetched,
+    error: state.error,
+    refreshFields,
+  };
 };
 
 export default useFieldsList;

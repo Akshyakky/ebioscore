@@ -24,14 +24,10 @@ interface AutocompleteTextBoxProps {
   errorMessage?: string;
   inputValue?: any;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
-  InputProps?: Partial<React.ComponentProps<typeof TextField>['InputProps']>;
-
+  InputProps?: Partial<React.ComponentProps<typeof TextField>["InputProps"]>;
 }
 
-const AutocompleteTextBox = forwardRef<
-  HTMLInputElement,
-  AutocompleteTextBoxProps
->(
+const AutocompleteTextBox = forwardRef<HTMLInputElement, AutocompleteTextBoxProps>(
   (
     {
       ControlID,
@@ -80,20 +76,14 @@ const AutocompleteTextBox = forwardRef<
       fetchOptions(inputValue);
     }, [inputValue]);
 
-    const handleInputChange = (
-      event: React.SyntheticEvent<Element, Event> | null,
-      newInputValue: string
-    ) => {
+    const handleInputChange = (event: React.SyntheticEvent<Element, Event> | null, newInputValue: string) => {
       setInputValue(newInputValue);
       if (onChange && event) {
         onChange(event as React.ChangeEvent<HTMLInputElement>);
       }
     };
 
-    const handleSelect = (
-      event: React.SyntheticEvent,
-      newValue: string | null
-    ) => {
+    const handleSelect = (event: React.SyntheticEvent, newValue: string | null) => {
       if (onSelectSuggestion && newValue) {
         onSelectSuggestion(newValue);
       }
@@ -109,36 +99,23 @@ const AutocompleteTextBox = forwardRef<
           {parts.map((part, index) => (
             <span key={index}>
               {part}
-              {index < parts.length - 1 && matches && matches[index] && (
-                <span style={{ fontWeight: 700, color: "#1976d2" }}>
-                  {matches[index]}
-                </span>
-              )}
+              {index < parts.length - 1 && matches && matches[index] && <span style={{ fontWeight: 700, color: "#1976d2" }}>{matches[index]}</span>}
             </span>
           ))}
         </>
       );
     };
 
-    const renderOption = (
-      props: React.HTMLAttributes<HTMLLIElement>,
-      option: string
-    ) => {
+    const renderOption = (props: React.HTMLAttributes<HTMLLIElement>, option: string) => {
       return <li {...props}>{highlightMatch(option, inputValue)}</li>;
     };
 
     const controlId = `txt${ControlID}`;
     const isInvalid = (isMandatory && isSubmitted && !value) || !!errorMessage;
-    const errorToShow =
-      errorMessage || (isMandatory && !value ? `${title} is required.` : "");
+    const errorToShow = errorMessage || (isMandatory && !value ? `${title} is required.` : "");
 
     return (
-      <FormControl
-        fullWidth
-        className={className}
-        margin="normal"
-        style={style}
-      >
+      <FormControl fullWidth className={className} margin="normal" style={style}>
         <Autocomplete
           id={controlId}
           freeSolo

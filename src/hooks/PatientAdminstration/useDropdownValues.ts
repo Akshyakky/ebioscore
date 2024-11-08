@@ -24,6 +24,7 @@ import { roomGroupService, roomListService, wardCategoryService, wrBedService } 
 import { departmentService } from "../../services/CommonServices/CommonModelServices";
 import { DepartmentDto } from "../../interfaces/Billing/DepartmentDto";
 import { WardCategoryDto } from "../../interfaces/HospitalAdministration/WardCategoryDto";
+import { dischargeStatusService } from "../../services/PatientAdministrationServices/patientAdministrationService";
 
 type DropdownType =
   | "pic"
@@ -69,7 +70,10 @@ type DropdownType =
   | "beds"
   | "medicationDosage"
   | "medicationFrequency"
-  | "medicationInstruction";
+  | "medicationInstruction"
+  | "dischargeStatus"
+  | "dischargeSituation"
+  | "deliveryType";
 
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
   const [dropdownValues, setDropdownValues] = useState<Record<DropdownType, DropdownOption[]>>({} as Record<DropdownType, DropdownOption[]>);
@@ -283,6 +287,19 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
               value: item.minsId || 0,
               label: item.minsName || "",
             }));
+            break;
+          case "dischargeStatus":
+            response = await dischargeStatusService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.dsID || 0,
+              label: item.dsName || "",
+            }));
+            break;
+          case "dischargeSituation":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "SITUATION");
+            break;
+          case "deliveryType":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DELIVERYTYPE");
             break;
           default:
             throw new Error(`Unsupported dropdown type: ${type}`);

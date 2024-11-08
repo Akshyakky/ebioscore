@@ -1,14 +1,6 @@
 // components/ReportCriteria/ReportCriteria.tsx
 import React, { useEffect, useState } from "react";
-import {
-  Box,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  SelectChangeEvent,
-  Typography,
-} from "@mui/material";
+import { Box, Dialog, DialogActions, DialogContent, DialogTitle, SelectChangeEvent, Typography } from "@mui/material";
 import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomButton from "../../../components/Button/CustomButton";
 import PrintIcon from "@mui/icons-material/Print";
@@ -24,34 +16,21 @@ import { RootState } from "../../../store/reducers";
 import PdfViewer from "../../../components/PDFViewer/PdfViewer";
 
 interface ReportCriteriaProps {
-  onExportExcel: (
-    reportId: string,
-    fromDate: string,
-    toDate: string,
-    selectedCompanies: string[]
-  ) => void;
+  onExportExcel: (reportId: string, fromDate: string, toDate: string, selectedCompanies: string[]) => void;
   onPrintPDF: () => void;
   reportName: string;
   reportId: number;
   isModalOpen: boolean;
   handleCloseModal: () => void;
 }
-const ReportCriteria: React.FC<ReportCriteriaProps> = ({
-  onExportExcel,
-  onPrintPDF,
-  reportName,
-  reportId,
-  isModalOpen,
-  handleCloseModal,
-}) => {
+const ReportCriteria: React.FC<ReportCriteriaProps> = ({ onExportExcel, onPrintPDF, reportName, reportId, isModalOpen, handleCloseModal }) => {
   const [fromDate, setFromDate] = useState<Date | null>(new Date());
   const [toDate, setToDate] = useState<Date | null>(new Date());
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo.token!;
-  const formatDate = (date: Date | null) =>
-    date ? date.toISOString().split("T")[0] : "";
+  const formatDate = (date: Date | null) => (date ? date.toISOString().split("T")[0] : "");
   const [pdfUrl, setPdfUrl] = useState("");
   const [isPdfViewerOpen, setIsPdfViewerOpen] = useState(false);
 
@@ -90,9 +69,7 @@ const ReportCriteria: React.FC<ReportCriteriaProps> = ({
   const handleCompanyChange = (event: SelectChangeEvent<unknown>) => {
     const target = event.target as HTMLInputElement;
     const value = target.value;
-    setSelectedCompanies(
-      typeof value === "string" ? value.split(",") : (value as string[])
-    );
+    setSelectedCompanies(typeof value === "string" ? value.split(",") : (value as string[]));
   };
   // Corrected function without 'props' prefix
   const handleExportExcel = async () => {
@@ -120,7 +97,6 @@ const ReportCriteria: React.FC<ReportCriteriaProps> = ({
         toDate: formatDate(toDate),
         selectedCompanies: selectedCompanies,
       });
-      console.log("PDF generated successfully.");
     } catch (error) {
       console.error("Error generating PDF:", error);
     }
@@ -170,14 +146,7 @@ const ReportCriteria: React.FC<ReportCriteriaProps> = ({
             size="small"
           />
 
-          <FloatingLabelTextBox
-            ControlID="ToDate"
-            title="To Date"
-            type="date"
-            value={formatDate(toDate)}
-            onChange={(e) => handleToDateChange(e.target.value)}
-            size="small"
-          />
+          <FloatingLabelTextBox ControlID="ToDate" title="To Date" type="date" value={formatDate(toDate)} onChange={(e) => handleToDateChange(e.target.value)} size="small" />
         </Box>
         <MultiSelectDropdown
           label="Select Companies"
@@ -192,43 +161,13 @@ const ReportCriteria: React.FC<ReportCriteriaProps> = ({
           size="small"
           multiple={true}
         />
-        {isPdfViewerOpen && (
-          <PdfViewer
-            pdfUrl={pdfUrl}
-            onClose={() => setIsPdfViewerOpen(false)}
-            open={isPdfViewerOpen}
-            reportName={reportName}
-          />
-        )}
+        {isPdfViewerOpen && <PdfViewer pdfUrl={pdfUrl} onClose={() => setIsPdfViewerOpen(false)} open={isPdfViewerOpen} reportName={reportName} />}
       </DialogContent>
       <DialogActions>
-        <CustomButton
-          text="Cancel"
-          onClick={handleCloseModal}
-          icon={CancelIcon}
-          color="error"
-        />
-        <CustomButton
-          variant="contained"
-          icon={PrintIcon}
-          text="View PDF"
-          onClick={handleViewPDF}
-          color="secondary"
-        />
-        <CustomButton
-          variant="contained"
-          icon={PictureAsPdfIcon}
-          text="Export PDF"
-          onClick={handlePrintPDF}
-          color="success"
-        />
-        <CustomButton
-          variant="contained"
-          icon={CloudDownloadIcon}
-          text="Export Excel"
-          onClick={handleExportExcel}
-          color="primary"
-        />
+        <CustomButton text="Cancel" onClick={handleCloseModal} icon={CancelIcon} color="error" />
+        <CustomButton variant="contained" icon={PrintIcon} text="View PDF" onClick={handleViewPDF} color="secondary" />
+        <CustomButton variant="contained" icon={PictureAsPdfIcon} text="Export PDF" onClick={handlePrintPDF} color="success" />
+        <CustomButton variant="contained" icon={CloudDownloadIcon} text="Export Excel" onClick={handleExportExcel} color="primary" />
       </DialogActions>
     </Dialog>
   );

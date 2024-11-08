@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Container, Box } from "@mui/material";
 import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
 import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
+import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon, MeetingRoom as MeetingRoomIcon } from "@mui/icons-material";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import AdmissionDetails from "../SubPage/AdmissionDetails";
 import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
@@ -12,13 +12,13 @@ import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
 import DiagnosisSection from "../../../clinicalManagement/Common/Diagnosis";
 import useAdmissionForm from "../../../../hooks/PatientAdminstration/useAdmissionForm";
-
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { useLoading } from "../../../../context/LoadingContext";
 import PatientHistory from "../../../clinicalManagement/PatientHistory/PatientHistory";
+import AdmissionListSearch from "../SubPage/AdmissionListSearch";
 
 export interface PatientHistory {
   [key: string]: any;
@@ -43,20 +43,38 @@ const AdmissionPage: React.FC = () => {
     setShouldClearPatientHistory,
     insurancePageRef,
     updatePatientHistory,
-    patientHistory,
+    // patientHistory,
   } = useAdmissionForm();
   const { setLoading } = useLoading();
   const { handleDropdownChange } = useDropdownChange<AdmissionDto>(setFormData);
 
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const [isBedSelectionOpen, setIsBedSelectionOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const handleOpenBedSelection = useCallback(() => setIsBedSelectionOpen(true), []);
   const handleCloseBedSelection = useCallback(() => setIsBedSelectionOpen(false), []);
 
-  const handleAdvancedSearch = useCallback(async () => {
-    // Implement advanced search logic
+  const handleAdvancedSearch = useCallback(() => {
+    setIsSearchOpen(true);
   }, []);
+
+  const handleSearchClose = useCallback(() => {
+    setIsSearchOpen(false);
+  }, []);
+
+  const handleAdmissionSelect = useCallback(
+    (selectedAdmission: AdmissionDto) => {
+      // Update form data with selected admission
+      setFormData(selectedAdmission);
+      // Update other related states as needed
+      setPrimaryDiagnoses([]); // Reset or update as needed
+      setAssociatedDiagnoses([]); // Reset or update as needed
+      setShouldClearInsuranceData(false);
+      setShouldClearPatientHistory(false);
+    },
+    [setFormData]
+  );
 
   const actionButtons: ButtonProps[] = useMemo(
     () => [
@@ -65,6 +83,7 @@ const AdmissionPage: React.FC = () => {
         size: "medium",
         icon: SearchIcon,
         text: "Advanced Search",
+        color: "primary", // Blue button
         onClick: handleAdvancedSearch,
       },
       {
@@ -72,8 +91,19 @@ const AdmissionPage: React.FC = () => {
         icon: PrintIcon,
         text: "Print Admission Form",
         size: "medium",
+        color: "info", // Different color if needed
         onClick: () => {
           /* Implement print logic */
+        },
+      },
+      {
+        variant: "outlined",
+        icon: MeetingRoomIcon,
+        text: "Advised Admissions",
+        size: "medium",
+        color: "warning", // Blue button
+        onClick: () => {
+          /* Implement admissions logic */
         },
       },
     ],
@@ -149,9 +179,16 @@ const AdmissionPage: React.FC = () => {
         />
       </CustomAccordion>
       <CustomAccordion title="Patient History">
-        <PatientHistory pChartID={formData.ipAdmissionDto.pChartID || 0} opipNo={formData.ipAdmissionDto.opipNo || 0} opipCaseNo={formData.ipAdmissionDto.oPIPCaseNo || 0} />
+        <PatientHistory
+          pChartID={formData.ipAdmissionDto.pChartID}
+          opipNo={formData.ipAdmissionDto.opipNo}
+          opipCaseNo={formData.ipAdmissionDto.oPIPCaseNo}
+          shouldClear={shouldClearPatientHistory}
+          onHistoryChange={updatePatientHistory}
+        />
       </CustomAccordion>
       <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClearAll} onSave={handleSaveAll} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
+      <AdmissionListSearch open={isSearchOpen} onClose={handleSearchClose} onSelect={handleAdmissionSelect} />
     </Container>
   );
 };

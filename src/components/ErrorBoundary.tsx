@@ -1,7 +1,7 @@
-import { Component, ErrorInfo, ReactNode } from 'react';
-import { Box, Button, Paper, Typography, Container } from '@mui/material';
-import { RefreshRounded, BugReport } from '@mui/icons-material';
-import { toast } from 'react-toastify';
+import { Component, ErrorInfo, ReactNode } from "react";
+import { Box, Button, Paper, Typography, Container } from "@mui/material";
+import { RefreshRounded, BugReport } from "@mui/icons-material";
+import { toast } from "react-toastify";
 
 interface Props {
   children: ReactNode;
@@ -21,7 +21,7 @@ class ErrorBoundary extends Component<Props, State> {
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     };
   }
 
@@ -29,25 +29,25 @@ class ErrorBoundary extends Component<Props, State> {
     return {
       hasError: true,
       error,
-      errorInfo: null
+      errorInfo: null,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log the error to an error reporting service
-    console.error('Error caught by ErrorBoundary:', error, errorInfo);
+    console.error("Error caught by ErrorBoundary:", error, errorInfo);
 
     this.setState({
       error,
-      errorInfo
+      errorInfo,
     });
 
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
 
     // Show toast notification
-    toast.error('An error occurred. The application will try to recover.', {
-      position: 'top-right',
+    toast.error("An error occurred. The application will try to recover.", {
+      position: "top-right",
       autoClose: 5000,
     });
   }
@@ -63,12 +63,11 @@ class ErrorBoundary extends Component<Props, State> {
       errorInfo: this.state.errorInfo?.componentStack,
       timestamp: new Date().toISOString(),
       url: window.location.href,
-      userAgent: navigator.userAgent
+      userAgent: navigator.userAgent,
     };
 
     // You can send this to your error tracking service
-    console.log('Error Report:', errorReport);
-    toast.info('Error has been reported to the development team.');
+    toast.info("Error has been reported to the development team.");
   };
 
   render(): ReactNode {
@@ -84,11 +83,8 @@ class ErrorBoundary extends Component<Props, State> {
             sx={{
               p: 4,
               mt: 4,
-              textAlign: 'center',
-              backgroundColor: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? theme.palette.background.paper
-                  : theme.palette.grey[50]
+              textAlign: "center",
+              backgroundColor: (theme) => (theme.palette.mode === "dark" ? theme.palette.background.paper : theme.palette.grey[50]),
             }}
           >
             <Box sx={{ mb: 3 }}>
@@ -96,28 +92,24 @@ class ErrorBoundary extends Component<Props, State> {
                 Oops! Something went wrong
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                The application has encountered an unexpected error.
-                Our team has been notified and is working to fix the issue.
+                The application has encountered an unexpected error. Our team has been notified and is working to fix the issue.
               </Typography>
             </Box>
 
             <Box sx={{ mb: 4 }}>
-              {process.env.NODE_ENV === 'development' && (
+              {process.env.NODE_ENV === "development" && (
                 <Paper
                   variant="outlined"
                   sx={{
                     p: 2,
                     mt: 2,
-                    backgroundColor: (theme) =>
-                      theme.palette.mode === 'dark'
-                        ? theme.palette.grey[900]
-                        : theme.palette.grey[100],
-                    textAlign: 'left',
-                    overflow: 'auto',
-                    maxHeight: '200px'
+                    backgroundColor: (theme) => (theme.palette.mode === "dark" ? theme.palette.grey[900] : theme.palette.grey[100]),
+                    textAlign: "left",
+                    overflow: "auto",
+                    maxHeight: "200px",
                   }}
                 >
-                  <Typography variant="caption" component="pre" sx={{ whiteSpace: 'pre-wrap' }}>
+                  <Typography variant="caption" component="pre" sx={{ whiteSpace: "pre-wrap" }}>
                     {this.state.error?.toString()}
                     {this.state.errorInfo?.componentStack}
                   </Typography>
@@ -125,21 +117,11 @@ class ErrorBoundary extends Component<Props, State> {
               )}
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<RefreshRounded />}
-                onClick={this.handleRefresh}
-              >
+            <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
+              <Button variant="contained" color="primary" startIcon={<RefreshRounded />} onClick={this.handleRefresh}>
                 Refresh Page
               </Button>
-              <Button
-                variant="outlined"
-                color="secondary"
-                startIcon={<BugReport />}
-                onClick={this.handleReportError}
-              >
+              <Button variant="outlined" color="secondary" startIcon={<BugReport />} onClick={this.handleReportError}>
                 Report Error
               </Button>
             </Box>

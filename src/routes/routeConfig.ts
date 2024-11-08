@@ -32,7 +32,8 @@ import DiagnosisListPage from "../pages/clinicalManagement/DiagnosisList/MainPag
 import MedicationListPage from "../pages/clinicalManagement/MedicationList/MainPage/MedicationListPage";
 import AppModifiedListPage from "../pages/hospitalAdministration/AppModifiedList/MainPage/AppModifiedListPage";
 import ChargeDetailsPage from "../pages/billing/ChargeDetailsPage/MainPage/ChargeDetailsPage";
-import AlertPage from "../pages/common/AlertManagerPage/MainPage/AlertPage";
+import AlertPage from "../pages/common/AlertManagerPage/MainPage/Alertpage";
+import DischargePage from "../pages/patientAdministration/DischargePage/MainPage/DischargePage";
 
 interface RouteConfig {
   path: string;
@@ -74,6 +75,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/MedicationListPage", component: MedicationListPage, protected: true },
   { path: "/AppModifiedListPage", component: AppModifiedListPage, protected: true },
   { path: "/ChargeDetailsPage", component: ChargeDetailsPage, protected: true },
+  { path: "/DischargePage", component: DischargePage, protected: true },
 ];
 
 export default routeConfig;

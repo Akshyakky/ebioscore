@@ -3,50 +3,54 @@ import Grid from "@mui/material/Grid";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import CustomButton, { CustomButtonProps } from "./CustomButton";
 import { SvgIconComponent } from "@mui/icons-material";
+import { styled } from "@mui/material/styles";
 
-export interface ButtonProps extends Omit<CustomButtonProps, 'icon'> {
+// Styled ButtonGroup component
+const StyledButtonGroup = styled(ButtonGroup)(({ theme }) => ({
+  "& .MuiButtonGroup-grouped:not(:last-of-type)": {
+    borderColor: "rgba(255, 255, 255, 0.15)",
+  },
+  "& .MuiButton-root": {
+    textTransform: "none",
+    gap: theme.spacing(1),
+    fontSize: "0.875rem",
+    fontWeight: 500,
+    "& .MuiSvgIcon-root": {
+      fontSize: 20,
+    },
+  },
+}));
+
+export interface ButtonProps extends Omit<CustomButtonProps, "icon"> {
   icon?: SvgIconComponent;
+  color?: "inherit" | "primary" | "secondary" | "error" | "info" | "success" | "warning";
+  variant?: "text" | "outlined" | "contained";
 }
 
 interface ActionButtonGroupProps {
   buttons: ButtonProps[];
-  groupVariant?: "text" | "outlined" | "contained"; // Allow setting group-wide variant
-  groupSize?: "small" | "medium" | "large"; // Allow setting group-wide size
-  orientation?: "horizontal" | "vertical"; // Allow vertical orientation
-  color?: "inherit" | "primary" | "secondary" | "error" | "info" | "success" | "warning"; // Button color
+  orientation?: "horizontal" | "vertical";
 }
 
-const ActionButtonGroup: React.FC<ActionButtonGroupProps> = ({
-  buttons,
-  groupVariant = "contained",
-  groupSize = "medium",
-  orientation = "horizontal",
-  color = "primary",
-}) => {
+const ActionButtonGroup: React.FC<ActionButtonGroupProps> = ({ buttons, orientation = "horizontal" }) => {
   return (
     <Grid container spacing={1}>
       <Grid item xs={12}>
-        <ButtonGroup
-          variant={groupVariant}
-          size={groupSize}
-          orientation={orientation}
-          aria-label="action button group"
-          color={color} // Apply color to the entire group
-        >
+        <StyledButtonGroup orientation={orientation} aria-label="action button group" disableElevation disableRipple>
           {buttons.map((button, index) => (
             <CustomButton
               key={index}
-              variant={button.variant || groupVariant}
-              size={button.size || groupSize}
+              variant={button.variant}
+              size={button.size}
               icon={button.icon}
               text={button.text}
               onClick={button.onClick}
               className={button.className}
-              color={color}
+              color={button.color}
               ariaLabel={button.text || `button-${index}`}
             />
           ))}
-        </ButtonGroup>
+        </StyledButtonGroup>
       </Grid>
     </Grid>
   );

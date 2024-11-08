@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  forwardRef,
-  useImperativeHandle,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import { Grid, Typography } from "@mui/material";
 import CustomButton from "../../../../components/Button/CustomButton";
 import AddIcon from "@mui/icons-material/Add";
@@ -19,17 +13,10 @@ interface InsurancePageProps {
   shouldClearData: boolean;
 }
 
-const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
-  { pChartID, shouldClearData },
-  ref
-) => {
+const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = ({ pChartID, shouldClearData }, ref) => {
   const [showInsurancePopup, setShowInsurancePopup] = useState(false);
-  const [editingInsuranceData, setEditingInsuranceData] = useState<
-    OPIPInsurancesDto | undefined
-  >(undefined);
-  const [gridInsuranceData, setGridInsuranceData] = useState<
-    OPIPInsurancesDto[]
-  >([]);
+  const [editingInsuranceData, setEditingInsuranceData] = useState<OPIPInsurancesDto | undefined>(undefined);
+  const [gridInsuranceData, setGridInsuranceData] = useState<OPIPInsurancesDto[]>([]);
 
   useImperativeHandle(ref, () => ({
     saveInsuranceDetails,
@@ -39,13 +26,10 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
     try {
       const saveOperations = gridInsuranceData.map((insurance) => {
         const insuranceData = { ...insurance, pChartID: pChartID };
-        return InsuranceCarrierService.addOrUpdateOPIPInsurance(
-          insuranceData
-        );
+        return InsuranceCarrierService.addOrUpdateOPIPInsurance(insuranceData);
       });
 
       const results = await Promise.all(saveOperations);
-      console.log("Insurance details saved successfully:", results);
     } catch (error) {
       console.error("Error saving insurance details:", error);
     }
@@ -57,9 +41,7 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
   };
 
   const handleDeleteInsurance = (id: number) => {
-    const updatedGridData = gridInsuranceData.filter(
-      (insurance) => insurance.oPIPInsID !== id
-    );
+    const updatedGridData = gridInsuranceData.filter((insurance) => insurance.oPIPInsID !== id);
     setGridInsuranceData(updatedGridData);
   };
 
@@ -69,22 +51,15 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
         return [...prevData, { ...insuranceData, ID: generateNewId(prevData) }];
       }
       if (!insuranceData.oPIPInsID) {
-        return prevData.map((item) =>
-          item.ID === insuranceData.ID ? insuranceData : item
-        );
+        return prevData.map((item) => (item.ID === insuranceData.ID ? insuranceData : item));
       }
-      return prevData.map((item) =>
-        item.oPIPInsID === insuranceData.oPIPInsID ? insuranceData : item
-      );
+      return prevData.map((item) => (item.oPIPInsID === insuranceData.oPIPInsID ? insuranceData : item));
     });
     handleCloseInsurancePopup();
   };
 
   const generateNewId = <T extends { ID: number }>(data: T[]): number => {
-    const maxId = data.reduce(
-      (max, item) => (item.ID > max ? item.ID : max),
-      0
-    );
+    const maxId = data.reduce((max, item) => (item.ID > max ? item.ID : max), 0);
     return maxId + 1;
   };
 
@@ -132,26 +107,11 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
           </Typography>
         </Grid>
         <Grid item>
-          <CustomButton
-            text="Add Insurance Details"
-            onClick={handleOpenInsurancePopup}
-            icon={AddIcon}
-            color="primary"
-            variant="text"
-          />
+          <CustomButton text="Add Insurance Details" onClick={handleOpenInsurancePopup} icon={AddIcon} color="primary" variant="text" />
         </Grid>
       </Grid>
-      <PatientInsuranceForm
-        show={showInsurancePopup}
-        handleClose={handleCloseInsurancePopup}
-        handleSave={handleSaveInsurance}
-        editData={editingInsuranceData}
-      />
-      <PatientInsuranceGrid
-        insuranceData={gridInsuranceData}
-        onEdit={handleEditInsurance}
-        onDelete={handleDeleteInsurance}
-      />
+      <PatientInsuranceForm show={showInsurancePopup} handleClose={handleCloseInsurancePopup} handleSave={handleSaveInsurance} editData={editingInsuranceData} />
+      <PatientInsuranceGrid insuranceData={gridInsuranceData} onEdit={handleEditInsurance} onDelete={handleDeleteInsurance} />
     </>
   );
 };

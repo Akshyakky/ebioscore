@@ -35,7 +35,7 @@ const MedicationListPage: React.FC = () => {
   return (
     <Container maxWidth={false}>
       <Box sx={{ marginBottom: 2 }}>
-        <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
+        <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
       </Box>
       <MedicationListDetails selectedData={selectedData} />
       <MedicationListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />

@@ -2,11 +2,7 @@ import { Grid, Paper, Typography } from "@mui/material";
 import React, { useState } from "react";
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import {
-  Save as SaveIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-} from "@mui/icons-material";
+import { Save as SaveIcon, Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { ProfileMastDto } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import { useLoading } from "../../../../context/LoadingContext";
 import { store } from "../../../../store/store";
@@ -15,8 +11,7 @@ import { profileMastService } from "../../../../services/SecurityManagementServi
 
 const ProfileDetails = () => {
   const { setLoading } = useLoading();
-  const { compID, compCode, compName, userID, userName } =
-    store.getState().userDetails;
+  const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [profileId, setProfileId] = useState<number>(0);
   const [profileCode, setProfileCode] = useState<string>("");
@@ -43,7 +38,6 @@ const ProfileDetails = () => {
       compName: compName || "",
       transferYN: "N",
     };
-    console.log(ProfileMastDto);
     try {
       await profileMastService.save(ProfileMastDto);
       showAlert("Success", "Profile saved successfully!", "success", {
@@ -110,14 +104,7 @@ const ProfileDetails = () => {
               ControlID="rActiveYN"
               gridProps={{ xs: 12, sm: 6, md: 3 }}
             />
-            <FormSaveClearButton
-              clearText="Clear"
-              saveText={"Save"}
-              onClear={handleClear}
-              onSave={handleSave}
-              clearIcon={DeleteIcon}
-              saveIcon={SaveIcon}
-            />
+            <FormSaveClearButton clearText="Clear" saveText={"Save"} onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
           </Grid>
         </section>
       </Paper>

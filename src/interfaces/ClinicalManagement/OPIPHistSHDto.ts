@@ -1,15 +1,9 @@
-// src/interfaces/ClinicalManagement/OPIPHistSHDto.ts
-import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseHistoryDto } from "./BaseHistoryDto";
 
-export interface OPIPHistSHDto extends BaseDto {
+// src/interfaces/ClinicalManagement/OPIPHistSHDto.ts
+export interface OPIPHistSHDto extends BaseHistoryDto {
   opipSHID: number;
-  opipNo: number;
-  opvID: number;
-  pChartID: number;
-  opipCaseNo: number;
-  patOpip: string;
   opipSHDate: Date;
   opipSHDesc: string;
   opipSHNotes?: string;
-  oldPChartID: number;
 }

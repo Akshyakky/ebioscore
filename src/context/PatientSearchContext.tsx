@@ -13,19 +13,15 @@ interface PatientSearchContextProps {
 
 export const PatientSearchContext = createContext<PatientSearchContextProps>({
   searchResults: [],
-  performSearch: async () => { },
+  performSearch: async () => {},
 });
 
 interface PatientSearchProviderProps {
   children: React.ReactNode;
 }
 
-export const PatientSearchProvider: React.FC<PatientSearchProviderProps> = ({
-  children,
-}) => {
-  const [searchResults, setSearchResults] = useState<PatientRegistrationDto[]>(
-    []
-  );
+export const PatientSearchProvider: React.FC<PatientSearchProviderProps> = ({ children }) => {
+  const [searchResults, setSearchResults] = useState<PatientRegistrationDto[]>([]);
   const { setLoading } = useLoading();
   const userInfo = useSelector((state: RootState) => state.userDetails);
   const token = userInfo?.token;
@@ -40,12 +36,9 @@ export const PatientSearchProvider: React.FC<PatientSearchProviderProps> = ({
       setLoading(true);
       try {
         const result = await searchPatientDetails(searchTerm);
-        console.log("Fetched result:", result); // Debug log
         if (result.success) {
           setSearchResults(result.data || []);
-          console.log("Search results updated:", result.data); // Debug log
         } else {
-          console.error("Search was not successful");
           notifyError("Search failed. Please try again.");
         }
       } catch (error: any) {
@@ -58,9 +51,5 @@ export const PatientSearchProvider: React.FC<PatientSearchProviderProps> = ({
     [token]
   );
 
-  return (
-    <PatientSearchContext.Provider value={{ searchResults, performSearch }}>
-      {children}
-    </PatientSearchContext.Provider>
-  );
+  return <PatientSearchContext.Provider value={{ searchResults, performSearch }}>{children}</PatientSearchContext.Provider>;
 };

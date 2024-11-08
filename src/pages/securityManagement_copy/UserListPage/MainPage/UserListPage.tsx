@@ -32,7 +32,7 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
     if (selectedUser) {
       setSelectedUser({
         ...selectedUser,
-        adminUserYN: isSuper ? "Y" : "N"
+        adminUserYN: isSuper ? "Y" : "N",
       });
       setIsSuperUser(isSuper);
     }
@@ -99,9 +99,7 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
           };
 
           const updatedPermissions = permissions.map((perm) =>
-            perm.operationID === permission.aOPRID
-              ? { ...perm, auAccessID: result.data?.auAccessID, allow: result.data?.rActiveYN === "Y" }
-              : perm,
+            perm.operationID === permission.aOPRID ? { ...perm, auAccessID: result.data?.auAccessID, allow: result.data?.rActiveYN === "Y" } : perm
           );
           setPermissions(updatedPermissions);
         } else {
@@ -135,7 +133,7 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
           compName: permission.compName || "",
           profileID: selectedUser.profileID || 0,
           repID: permission.repID || 0,
-          profDetID: permission.profDetID
+          profDetID: permission.profDetID,
         });
 
         if (result.success) {
@@ -145,9 +143,7 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
           };
 
           const updatedPermissions = permissions.map((perm) =>
-            perm.operationID === permission.aOPRID
-              ? { ...perm, profDetID: result.data?.profDetID, allow: result.data?.rActiveYN === "Y" }
-              : perm,
+            perm.operationID === permission.aOPRID ? { ...perm, profDetID: result.data?.profDetID, allow: result.data?.rActiveYN === "Y" } : perm
           );
           setPermissions(updatedPermissions);
         } else {
@@ -195,12 +191,7 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
         />
       )}
 
-      <UserListSearch
-        show={isSearchDialogOpen}
-        handleClose={handleCloseSearchDialog}
-        onEditProfile={handleEditUser}
-      />
-
+      <UserListSearch show={isSearchDialogOpen} handleClose={handleCloseSearchDialog} onEditProfile={handleEditUser} />
     </Container>
   );
 };

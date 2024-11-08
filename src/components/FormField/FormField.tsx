@@ -1,20 +1,25 @@
-import React, { forwardRef, useMemo } from "react";
-import { Box, Grid, IconButton, SelectChangeEvent } from "@mui/material";
+import React, { forwardRef, useMemo, memo } from "react";
+import { Box, Grid, Theme, SelectChangeEvent } from "@mui/material";
 import { GridProps } from "@mui/material/Grid";
+import { TextFieldProps } from "@mui/material/TextField";
+import { SxProps, useTheme } from "@mui/material/styles";
+import AddIcon from "@mui/icons-material/Add";
+
+// Component imports
 import FloatingLabelTextBox from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import TextArea from "../TextArea/TextArea";
 import DropdownSelect from "../DropDown/DropdownSelect";
 import CustomSwitch from "../Checkbox/ColorSwitch";
 import RadioGroup from "../RadioGroup/RadioGroup";
 import AutocompleteTextBox from "../TextBox/AutocompleteTextBox/AutocompleteTextBox";
-import { TextFieldProps } from "@mui/material/TextField";
 import MultiSelectDropdown from "../DropDown/MultiSelectDropdown";
 import CustomDatePicker from "../DatePicker/CustomDatePicker";
 import CustomDateTimePicker from "../DateTimePicker/CustomDateTimePicker";
-import AddIcon from "@mui/icons-material/Add";
 import CustomButton from "../Button/CustomButton";
+import CustomTimePicker from "../TimePicker/CustomTimePicker";
 
-type FieldType =
+// Types
+export type FieldType =
   | "text"
   | "textarea"
   | "select"
@@ -28,11 +33,15 @@ type FieldType =
   | "multiselect"
   | "time"
   | "datepicker"
-  | "datetimepicker";
+  | "datetimepicker"
+  | "timepicker";
 
-interface DropdownOption {
+export interface DropdownOption {
   value: string;
   label: string;
+  disabled?: boolean;
+  group?: string;
+  metadata?: Record<string, any>;
 }
 
 interface BaseFormFieldProps {
@@ -58,18 +67,26 @@ interface BaseFormFieldProps {
   InputProps?: TextFieldProps["InputProps"];
   InputLabelProps?: TextFieldProps["InputLabelProps"];
   onBlur?: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  showAddButton?: boolean; // Controls visibility of the Add button
-  onAddClick?: () => void; // Callback function for Add button click
+  showAddButton?: boolean;
+  onAddClick?: () => void;
+  helperText?: string;
+  className?: string;
+  testId?: string;
+  sx?: SxProps<Theme>;
 }
 
 export interface TextFormFieldProps extends BaseFormFieldProps {
   type: "text" | "number" | "email" | "date" | "search" | "time";
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  mask?: string;
+  validation?: RegExp;
 }
 
 export interface TextAreaFormFieldProps extends BaseFormFieldProps {
   type: "textarea";
   onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  minRows?: number;
+  maxRows?: number;
 }
 
 export interface SelectFormFieldProps extends BaseFormFieldProps {
@@ -79,6 +96,7 @@ export interface SelectFormFieldProps extends BaseFormFieldProps {
   defaultText?: string;
   clearable?: boolean;
   onClear?: () => void;
+  groupBy?: string;
 }
 
 export interface MultiSelectFormFieldProps extends BaseFormFieldProps {
@@ -86,6 +104,7 @@ export interface MultiSelectFormFieldProps extends BaseFormFieldProps {
   options: DropdownOption[];
   onChange: (event: SelectChangeEvent<string[]>, child: React.ReactNode) => void;
   defaultText?: string;
+  maxSelections?: number;
 }
 
 export interface SwitchFormFieldProps extends BaseFormFieldProps {
@@ -100,6 +119,7 @@ export interface RadioFormFieldProps extends BaseFormFieldProps {
   options: DropdownOption[];
   onChange: (event: React.ChangeEvent<HTMLInputElement>, value: string) => void;
   inline?: boolean;
+  defaultValue?: string;
 }
 
 export interface AutocompleteFormFieldProps extends BaseFormFieldProps {
@@ -108,6 +128,8 @@ export interface AutocompleteFormFieldProps extends BaseFormFieldProps {
   fetchSuggestions?: (input: string) => Promise<string[]>;
   onSelectSuggestion?: (suggestion: string) => void;
   suggestions?: string[];
+  freeSolo?: boolean;
+  loadingText?: string;
 }
 
 export interface DatePickerFormFieldProps extends BaseFormFieldProps {
@@ -115,6 +137,9 @@ export interface DatePickerFormFieldProps extends BaseFormFieldProps {
   onChange: (date: Date | null) => void;
   minDate?: Date;
   maxDate?: Date;
+  format?: string;
+  disableFuture?: boolean;
+  disablePast?: boolean;
 }
 
 export interface DateTimePickerFormFieldProps extends BaseFormFieldProps {
@@ -122,6 +147,19 @@ export interface DateTimePickerFormFieldProps extends BaseFormFieldProps {
   onChange: (date: Date | null) => void;
   minDateTime?: Date;
   maxDateTime?: Date;
+  format?: string;
+  disableFuture?: boolean;
+  disablePast?: boolean;
+}
+
+export interface TimePickerFormFieldProps extends BaseFormFieldProps {
+  type: "timepicker";
+  onChange: (date: Date | null) => void;
+  minTime?: Date;
+  maxTime?: Date;
+  format?: string;
+  disableFuture?: boolean;
+  disablePast?: boolean;
 }
 
 export type FormFieldProps =
@@ -133,9 +171,40 @@ export type FormFieldProps =
   | AutocompleteFormFieldProps
   | MultiSelectFormFieldProps
   | DatePickerFormFieldProps
-  | DateTimePickerFormFieldProps;
+  | DateTimePickerFormFieldProps
+  | TimePickerFormFieldProps;
 
-const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
+const useStyles = (theme: Theme) => ({
+  fieldContainer: {
+    display: "flex",
+    alignItems: "center",
+    gap: theme.spacing(1),
+    width: "100%",
+  },
+  addButton: {
+    marginLeft: theme.spacing(1),
+    minWidth: "auto",
+    padding: theme.spacing(1),
+    transition: "all 0.2s ease-in-out",
+    "&:hover": {
+      transform: "scale(1.05)",
+      backgroundColor: theme.palette.primary.dark,
+    },
+  },
+  helperText: {
+    marginTop: theme.spacing(0.5),
+    fontSize: "0.75rem",
+    color: theme.palette.text.secondary,
+  },
+  errorText: {
+    color: theme.palette.error.main,
+  },
+});
+
+const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
+  const theme = useTheme();
+  const styles = useStyles(theme);
+
   const {
     type,
     label,
@@ -160,9 +229,25 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
     onBlur,
     showAddButton = false,
     onAddClick,
+    helperText,
+    className,
+    testId,
   } = props;
 
   const renderField = useMemo(() => {
+    const commonProps = {
+      name,
+      ControlID,
+      disabled,
+      readOnly,
+      size,
+      isMandatory,
+      isSubmitted,
+      errorMessage,
+      "data-testid": testId,
+      sx: { flex: 1 },
+    };
+
     switch (type) {
       case "text":
       case "number":
@@ -172,57 +257,46 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
       case "time":
         return (
           <FloatingLabelTextBox
+            {...commonProps}
             title={label}
-            placeholder={placeholder}
             value={value}
             onChange={(props as TextFormFieldProps).onChange}
-            onBlur={onBlur}
-            size={size}
-            isSubmitted={isSubmitted}
-            name={name}
-            ControlID={ControlID}
             type={type}
-            isMandatory={isMandatory}
-            errorMessage={errorMessage}
-            disabled={disabled}
-            readOnly={readOnly}
+            placeholder={placeholder}
             maxLength={maxLength}
-            max={max}
             min={min}
+            max={max}
             step={step}
-            inputPattern={type === "number" ? /^[0-9]*$/ : undefined}
+            onBlur={onBlur}
             InputProps={InputProps}
             InputLabelProps={InputLabelProps}
+            inputPattern={type === "number" ? /^[0-9]*$/ : undefined}
           />
         );
+
       case "textarea":
         return (
           <TextArea
+            {...commonProps}
             label={label}
             value={value}
-            placeholder={placeholder}
             onChange={(props as TextAreaFormFieldProps).onChange}
-            //onBlur={onBlur}
-            readOnly={readOnly}
             rows={rows}
-            name={name}
             maxLength={maxLength}
+            placeholder={placeholder}
           />
         );
+
       case "select":
         const selectProps = props as SelectFormFieldProps;
         return (
           <DropdownSelect
+            {...commonProps}
             label={label}
-            name={name}
             value={value}
             options={selectProps.options}
             onChange={selectProps.onChange}
-            size={size}
-            disabled={disabled}
-            isMandatory={isMandatory}
             defaultText={selectProps.defaultText}
-            isSubmitted={isSubmitted}
             clearable={selectProps.clearable}
             onClear={selectProps.onClear}
           />
@@ -232,16 +306,12 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
         const multiSelectProps = props as MultiSelectFormFieldProps;
         return (
           <MultiSelectDropdown
+            {...commonProps}
             label={label}
-            name={name}
             value={Array.isArray(value) ? value : [value]}
             options={multiSelectProps.options}
             onChange={multiSelectProps.onChange}
-            size={size}
-            disabled={disabled}
-            isMandatory={isMandatory}
             defaultText={multiSelectProps.defaultText}
-            isSubmitted={isSubmitted}
           />
         );
 
@@ -249,36 +319,25 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
         const switchProps = props as SwitchFormFieldProps;
         return (
           <CustomSwitch
+            {...commonProps}
             label={label}
-            size={size}
-            color={switchProps.color}
             checked={switchProps.checked}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
               switchProps.onChange(event, event.target.checked);
             }}
+            color={switchProps.color}
           />
         );
+
       case "radio":
         const radioProps = props as RadioFormFieldProps;
-        return (
-          <RadioGroup
-            name={name}
-            options={radioProps.options}
-            selectedValue={value}
-            onChange={radioProps.onChange}
-            isMandatory={isMandatory}
-            disabled={disabled}
-            label={label}
-            error={!!errorMessage}
-            helperText={errorMessage}
-            inline={radioProps.inline}
-          />
-        );
+        return <RadioGroup {...commonProps} options={radioProps.options} selectedValue={value} onChange={radioProps.onChange} label={label} inline={radioProps.inline} />;
+
       case "autocomplete":
         const autocompleteProps = props as AutocompleteFormFieldProps;
         return (
           <AutocompleteTextBox
-            ControlID={ControlID}
+            {...commonProps}
             title={label}
             value={value}
             onChange={autocompleteProps.onChange}
@@ -286,55 +345,54 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
             onSelectSuggestion={autocompleteProps.onSelectSuggestion}
             suggestions={autocompleteProps.suggestions}
             placeholder={placeholder}
-            type="text"
-            size={size}
-            isMandatory={isMandatory}
-            disabled={disabled}
-            readOnly={readOnly}
-            maxLength={maxLength}
-            isSubmitted={isSubmitted}
-            errorMessage={errorMessage}
-            onBlur={onBlur}
-            InputProps={InputProps}
             ref={ref}
           />
         );
+
       case "datepicker":
         const datePickerProps = props as DatePickerFormFieldProps;
         return (
           <CustomDatePicker
-            ControlID={ControlID}
+            {...commonProps}
             title={label}
             value={value}
             onChange={datePickerProps.onChange}
-            placeholder={placeholder}
-            size={size}
-            isMandatory={isMandatory}
-            disabled={disabled}
-            readOnly={readOnly}
-            errorMessage={errorMessage}
             minDate={datePickerProps.minDate}
             maxDate={datePickerProps.maxDate}
-            InputProps={InputProps}
-            InputLabelProps={InputLabelProps}
+            disableFuture={datePickerProps.disableFuture}
+            disablePast={datePickerProps.disablePast}
           />
         );
+
       case "datetimepicker":
         const dateTimePickerProps = props as DateTimePickerFormFieldProps;
         return (
           <CustomDateTimePicker
-            ControlID={ControlID}
+            {...commonProps}
             title={label}
             value={value}
             onChange={dateTimePickerProps.onChange}
-            placeholder={placeholder}
-            size={size}
-            isMandatory={isMandatory}
-            disabled={disabled}
-            readOnly={readOnly}
-            errorMessage={errorMessage}
             minDateTime={dateTimePickerProps.minDateTime}
             maxDateTime={dateTimePickerProps.maxDateTime}
+            disableFuture={dateTimePickerProps.disableFuture}
+            disablePast={dateTimePickerProps.disablePast}
+          />
+        );
+      case "timepicker":
+        const timePickerProps = props as TimePickerFormFieldProps;
+        return (
+          <CustomTimePicker
+            {...commonProps}
+            title={label}
+            value={value}
+            onChange={timePickerProps.onChange}
+            placeholder={placeholder}
+            size={size}
+            minTime={timePickerProps.minTime}
+            maxTime={timePickerProps.maxTime}
+            disableFuture={timePickerProps.disableFuture}
+            disablePast={timePickerProps.disablePast}
+            format={timePickerProps.format}
             InputProps={InputProps}
             InputLabelProps={InputLabelProps}
           />
@@ -342,64 +400,37 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
       default:
         return null;
     }
-  }, [
-    props,
-    type,
-    label,
-    value,
-    name,
-    ControlID,
-    size,
-    placeholder,
-    isMandatory,
-    errorMessage,
-    disabled,
-    readOnly,
-    maxLength,
-    min,
-    max,
-    step,
-    isSubmitted,
-    InputProps,
-    InputLabelProps,
-    onBlur,
-    ref,
-  ]);
+  }, [props, ref]);
+
+  const addButton = useMemo(() => {
+    if (!showAddButton || !onAddClick) return null;
+
+    return <CustomButton variant="contained" size="small" icon={AddIcon} onClick={onAddClick} ariaLabel={`add-${name}`} color="primary" sx={styles.addButton} />;
+  }, [showAddButton, onAddClick, name, styles.addButton]);
 
   return (
-    <Grid item {...gridProps}>
-      <Box display="flex" alignItems="center">
+    <Grid item {...gridProps} className={className}>
+      <Box sx={styles.fieldContainer}>
         {renderField}
-        {showAddButton && onAddClick && (
-          <CustomButton
-            variant="contained"
-            size="small"
-            icon={AddIcon}
-            onClick={onAddClick}
-            ariaLabel="add"
-            color="primary"
-            sx={{
-              marginTop: "4px",
-              marginRight: "4px",
-              transition: "background-color 0.3s ease, transform 0.3s ease",
-              "&:hover": {
-                backgroundColor: "blue.700",
-                transform: "scale(1.05)",
-              },
-              "&:active": {
-                backgroundColor: "blue.300",
-                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
-              },
-              marginLeft: 0.5,
-              padding: "8px 12px",
-            }}
-          />
-        )}
+        {addButton}
       </Box>
+      {(helperText || errorMessage) && (
+        <Box
+          component="span"
+          sx={{
+            ...styles.helperText,
+            ...(errorMessage && styles.errorText),
+          }}
+        >
+          {errorMessage || helperText}
+        </Box>
+      )}
     </Grid>
   );
 });
 
-FormField.displayName = "FormField";
+FormFieldComponent.displayName = "FormField";
+
+export const FormField = memo(FormFieldComponent);
 
 export default FormField;

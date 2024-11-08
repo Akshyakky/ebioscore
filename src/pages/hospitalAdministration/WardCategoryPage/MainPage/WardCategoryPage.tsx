@@ -26,21 +26,19 @@ const WardCategoryPage: React.FC = () => {
       icon: Search,
       text: "Advanced Search",
       onClick: handleAdvancedSearch,
-    }
+    },
   ];
 
   return (
     <>
       <Container maxWidth={false}>
         <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
+          <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
         </Box>
         <WardCategoryDetails editData={selectedData} />
         <WardCategorySearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
-
-
       </Container>
     </>
-  )
-}
+  );
+};
 export default WardCategoryPage;

@@ -104,7 +104,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
 
   const handleRoomGroupChange = useCallback(
     (name: string, value: any) => {
-      console.log("Selected Room Group ID:", value);
       setFormData((prev) => ({
         ...prev,
         [name]: value,

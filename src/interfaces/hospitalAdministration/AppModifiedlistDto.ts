@@ -1,4 +1,6 @@
-export interface AppModifyFieldDto {
+import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+
+export interface AppModifyFieldDto extends BaseDto {
   amlID: number;
   amlCode: string;
   amlName: string;

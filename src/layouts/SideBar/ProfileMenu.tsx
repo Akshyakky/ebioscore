@@ -31,7 +31,6 @@ const ProfileMenu = () => {
     if (userInfo.token) {
       try {
         const response = await AuthService.logout(userInfo.token);
-        console.log(response.data.Message);
         dispatch(logout());
         navigate("/login");
       } catch (error) {
@@ -43,28 +42,13 @@ const ProfileMenu = () => {
 
   return (
     <div>
-      <CustomButton
-        icon={AccountCircleIcon}
-        text={userInfo.userName ?? ""}
-        onClick={handleClick}
-        color="warning"
-      />
+      <CustomButton icon={AccountCircleIcon} text={userInfo.userName ?? ""} onClick={handleClick} color="warning" />
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
         <MenuItem onClick={handleClose}>
-          <CustomButton
-            icon={SettingsIcon}
-            text="Settings"
-            color="inherit"
-            variant="text"
-          />
+          <CustomButton icon={SettingsIcon} text="Settings" color="inherit" variant="text" />
         </MenuItem>
         <MenuItem onClick={handleLogout}>
-          <CustomButton
-            icon={LogoutIcon}
-            text="Logout"
-            color="inherit"
-            variant="text"
-          />
+          <CustomButton icon={LogoutIcon} text="Logout" color="inherit" variant="text" />
         </MenuItem>
       </Menu>
     </div>

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useRef } from "react";
+import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -6,12 +6,10 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   TableSortLabel,
   TablePagination,
   Checkbox,
   IconButton,
-  Tooltip,
   Button,
   Popover,
   TextField,
@@ -20,29 +18,43 @@ import {
   FormControl,
   InputLabel,
   Box,
+  Typography,
+  Drawer,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { FilterList as FilterListIcon, GetApp as ExportIcon, ExpandMore, ExpandLess } from "@mui/icons-material";
+import { FilterList as FilterListIcon, GetApp as ExportIcon, ExpandMore, ExpandLess, DragIndicator, Settings as SettingsIcon } from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import { CSVLink } from "react-csv";
-import jsPDF from "jspdf";
+import { saveAs } from "file-saver";
 import "jspdf-autotable";
-import ExportCSV from "../../utils/Common/ExportCSV";
+import { exportToPDF } from "./exportToPDF";
 
+export interface ColumnFilter {
+  type: "text" | "number" | "date" | "select";
+  value: any;
+  options?: { label: string; value: any }[];
+}
+type SingleArgumentFormatter = (value: any) => string | React.ReactNode;
+type TwoArgumentFormatter<T> = (value: any, row: T) => string | React.ReactNode;
 export interface Column<T> {
-  key: string;
+  key: keyof T & string;
   header: string;
   visible: boolean;
   sortable?: boolean;
   filterable?: boolean;
+  filter?: ColumnFilter;
   render?: (item: T, rowIndex: number, columnIndex: number) => React.ReactNode;
-  formatter?: (value: any) => string;
-  type?: "text" | "date" | "status" | "number";
+  formatter?: SingleArgumentFormatter | TwoArgumentFormatter<T>;
+  type?: "text" | "date" | "status" | "number" | "custom";
   width?: number;
+  minWidth?: number;
+  maxWidth?: number;
+  resizable?: boolean;
+  cellStyle?: React.CSSProperties;
+  headerStyle?: React.CSSProperties;
 }
 
-interface CustomGridProps<T> {
+export interface CustomGridProps<T> {
   columns: Column<T>[];
   data: T[];
   maxHeight?: string;
@@ -58,9 +70,58 @@ interface CustomGridProps<T> {
   showExportCSV?: boolean;
   showExportPDF?: boolean;
   exportFileName?: string;
+  onColumnOrderChange?: (newOrder: string[]) => void;
+  onColumnResize?: (columnKey: string, newWidth: number) => void;
+  onFilterChange?: (filters: Record<string, any>) => void;
+  rowKeyField?: keyof T;
+  customRowStyle?: (item: T) => React.CSSProperties;
+  customCellStyle?: (item: T, column: Column<T>) => React.CSSProperties;
+  virtualScroll?: boolean;
+  loading?: boolean;
+  error?: string;
+  emptyStateMessage?: string;
+  showColumnCustomization?: boolean;
+  initialSortBy?: { field: keyof T; direction: "asc" | "desc" };
+  gridStyle?: React.CSSProperties;
 }
+
+// Styled Components
+const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
+  position: "relative",
+  "&::-webkit-scrollbar": {
+    width: "8px",
+    height: "8px",
+  },
+  "&::-webkit-scrollbar-track": {
+    backgroundColor: theme.palette.grey[200],
+  },
+  "&::-webkit-scrollbar-thumb": {
+    backgroundColor: theme.palette.primary.main,
+    borderRadius: "4px",
+    "&:hover": {
+      backgroundColor: theme.palette.primary.dark,
+    },
+  },
+}));
+
+const ResizeHandle = styled("div")({
+  position: "absolute",
+  right: 0,
+  top: 0,
+  bottom: 0,
+  width: "4px",
+  cursor: "col-resize",
+  userSelect: "none",
+  touchAction: "none",
+  backgroundColor: "transparent",
+  "&:hover": {
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
+  },
+});
+
+// Component Implementation
 const CustomGrid = <T extends Record<string, any>>({
-  columns,
+  columns: initialColumns,
   data,
   maxHeight = "500px",
   minHeight,
@@ -74,10 +135,25 @@ const CustomGrid = <T extends Record<string, any>>({
   renderExpandedRow,
   showExportCSV = false,
   showExportPDF = false,
-  exportFileName = "table_data",
+  exportFileName = "grid_export",
+  onColumnOrderChange,
+  onColumnResize,
+  onFilterChange,
+  rowKeyField,
+  customRowStyle,
+  customCellStyle,
+  virtualScroll = false,
+  loading = false,
+  error,
+  emptyStateMessage = "No data available",
+  showColumnCustomization = false,
+  initialSortBy,
+  gridStyle,
 }: CustomGridProps<T>) => {
-  const [orderBy, setOrderBy] = useState<keyof T | "">("");
-  const [order, setOrder] = useState<"asc" | "desc">("asc");
+  // State Management
+  const [columns, setColumns] = useState<Column<T>[]>(initialColumns);
+  const [orderBy, setOrderBy] = useState<keyof T | "">(initialSortBy?.field || "");
+  const [order, setOrder] = useState<"asc" | "desc">(initialSortBy?.direction || "asc");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [selected, setSelected] = useState<T[]>([]);
@@ -85,445 +161,475 @@ const CustomGrid = <T extends Record<string, any>>({
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
   const [filterColumn, setFilterColumn] = useState<Column<T> | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-  const [columnOrder, setColumnOrder] = useState<string[]>(columns.map((col) => col.key));
-  const [resizing, setResizing] = useState<string | null>(null);
-  const tableRef = useRef<HTMLTableElement>(null);
+  const [resizingColumn, setResizingColumn] = useState<string | null>(null);
+  const [customizationOpen, setCustomizationOpen] = useState(false);
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(initialColumns.reduce((acc, col) => ({ ...acc, [col.key]: col.visible }), {}));
 
+  const tableRef = useRef<HTMLTableElement>(null);
+  const resizeStartX = useRef<number>(0);
+  const resizeStartWidth = useRef<number>(0);
+  const virtualScrollRef = useRef<HTMLDivElement>(null);
+
+  const applyFormatter = (formatter: SingleArgumentFormatter | TwoArgumentFormatter<T>, value: any, row: T): string | React.ReactNode => {
+    if (formatter.length === 1) {
+      return (formatter as SingleArgumentFormatter)(value);
+    }
+    return (formatter as TwoArgumentFormatter<T>)(value, row);
+  };
+
+  const renderCell = (item: T, column: Column<T>, rowIndex: number, columnIndex: number) => {
+    if (column.render) {
+      return column.render(item, rowIndex, columnIndex);
+    }
+
+    const value = item[column.key];
+
+    if (column.formatter) {
+      return applyFormatter(column.formatter, value, item);
+    }
+
+    return value;
+  };
+
+  const processedData = useMemo(() => {
+    let result = [...data];
+
+    // Apply Filters
+    result = result.filter((item) =>
+      Object.entries(filters).every(([key, value]) => {
+        const column = columns.find((col) => col.key === key);
+        if (!column || !value) return true;
+
+        const cellValue = item[key];
+        switch (column.type) {
+          case "date":
+            return format(new Date(cellValue), "yyyy-MM-dd") === format(new Date(value), "yyyy-MM-dd");
+          case "number":
+            return Number(cellValue) === Number(value);
+          case "status":
+            return String(cellValue).toLowerCase() === String(value).toLowerCase();
+          default:
+            return String(cellValue).toLowerCase().includes(String(value).toLowerCase());
+        }
+      })
+    );
+
+    // Apply Search
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter((item) =>
+        columns.some((col) => {
+          const value = item[col.key];
+          return String(value).toLowerCase().includes(term);
+        })
+      );
+    }
+
+    // Apply Sorting
+    if (orderBy) {
+      result.sort((a, b) => {
+        const aValue = a[orderBy];
+        const bValue = b[orderBy];
+        const comparison = aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+        return order === "asc" ? comparison : -comparison;
+      });
+    }
+
+    return result;
+  }, [data, filters, searchTerm, orderBy, order, columns]);
+
+  // Virtual Scroll Implementation
+  const virtualScrollData = useMemo(() => {
+    if (!virtualScroll) return processedData;
+
+    const rowHeight = 48; // Adjust based on your row height
+    const containerHeight = virtualScrollRef.current?.clientHeight || 0;
+    const visibleRows = Math.ceil(containerHeight / rowHeight);
+    const startIndex = Math.max(0, page * rowsPerPage);
+    const endIndex = Math.min(startIndex + visibleRows + 3, processedData.length);
+
+    return processedData.slice(startIndex, endIndex);
+  }, [processedData, virtualScroll, page, rowsPerPage]);
+
+  // Event Handlers
   const handleSort = useCallback(
     (property: keyof T) => {
       const isAsc = orderBy === property && order === "asc";
       setOrder(isAsc ? "desc" : "asc");
       setOrderBy(property);
     },
-    [order, orderBy]
+    [orderBy, order]
   );
 
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
+  const handleResizeStart = useCallback(
+    (event: React.MouseEvent, columnKey: string) => {
+      const column = columns.find((col) => col.key === columnKey);
+      if (!column?.resizable) return;
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+      event.preventDefault();
+      setResizingColumn(columnKey);
+      resizeStartX.current = event.clientX;
+      resizeStartWidth.current = column.width || 100;
 
-  const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) {
-      setSelected(filteredData);
-      onSelectionChange?.(filteredData);
-    } else {
-      setSelected([]);
-      onSelectionChange?.([]);
-    }
-  };
+      const handleResizeMove = (moveEvent: MouseEvent) => {
+        if (resizingColumn) {
+          const diff = moveEvent.clientX - resizeStartX.current;
+          const newWidth = Math.max(column.minWidth || 50, Math.min(resizeStartWidth.current + diff, column.maxWidth || 500));
 
-  const handleClick = (event: React.MouseEvent<unknown>, item: T) => {
-    if (!selectable) {
-      onRowClick?.(item);
-      return;
-    }
+          setColumns((prevColumns) => prevColumns.map((col) => (col.key === columnKey ? { ...col, width: newWidth } : col)));
 
-    const selectedIndex = selected.indexOf(item);
-    let newSelected: T[] = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, item);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
-    }
-
-    setSelected(newSelected);
-    onSelectionChange?.(newSelected);
-  };
-
-  const handleFilterClick = (event: React.MouseEvent<HTMLButtonElement>, column: Column<T>) => {
-    setFilterAnchorEl(event.currentTarget);
-    setFilterColumn(column);
-  };
-
-  const handleFilterClose = () => {
-    setFilterAnchorEl(null);
-    setFilterColumn(null);
-  };
-
-  const handleFilterApply = (value: any) => {
-    if (filterColumn) {
-      setFilters((prev) => ({ ...prev, [filterColumn.key]: value }));
-    }
-    handleFilterClose();
-    setPage(0);
-  };
-
-  const handleExpandRow = (rowIndex: number) => {
-    setExpandedRows((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(rowIndex)) {
-        newSet.delete(rowIndex);
-      } else {
-        newSet.add(rowIndex);
-      }
-      return newSet;
-    });
-  };
-
-  const handleColumnReorder = (dragIndex: number, hoverIndex: number) => {
-    const newColumnOrder = [...columnOrder];
-    const draggedColumn = newColumnOrder[dragIndex];
-    newColumnOrder.splice(dragIndex, 1);
-    newColumnOrder.splice(hoverIndex, 0, draggedColumn);
-    setColumnOrder(newColumnOrder);
-  };
-
-  const handleColumnResize = (columnKey: string, width: number) => {
-    const newColumns = columns.map((col) => (col.key === columnKey ? { ...col, width } : col));
-  };
-  const isSelected = (item: T) => selected.indexOf(item) !== -1;
-  const sortedData = useMemo(() => {
-    if (!orderBy) return data;
-    return [...data].sort((a, b) => {
-      if (a[orderBy] < b[orderBy]) return order === "asc" ? -1 : 1;
-      if (a[orderBy] > b[orderBy]) return order === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [data, order, orderBy]);
-
-  const filteredData = useMemo(() => {
-    return sortedData.filter((item) =>
-      Object.entries(filters).every(([key, value]) => {
-        const column = columns.find((col) => col.key === key);
-        if (!column) return true;
-        const cellValue = item[key];
-
-        switch (column.type) {
-          case "date":
-            const date = new Date(cellValue);
-            const filterDate = new Date(value);
-            return date.toDateString() === filterDate.toDateString();
-          case "status":
-            return cellValue === value;
-          case "number":
-            return cellValue === Number(value);
-          default:
-            return String(cellValue).toLowerCase().includes(String(value).toLowerCase());
+          onColumnResize?.(columnKey, newWidth);
         }
-      })
-    );
-  }, [sortedData, filters, columns]);
+      };
 
-  const searchedData = useMemo(() => {
-    if (!searchTerm) return filteredData;
-    return filteredData.filter((item) =>
-      columns.some((col) => {
-        const cellContent = item[col.key];
-        return typeof cellContent === "string" && cellContent.toLowerCase().includes(searchTerm.toLowerCase());
-      })
-    );
-  }, [filteredData, searchTerm, columns]);
+      const handleResizeEnd = () => {
+        setResizingColumn(null);
+        document.removeEventListener("mousemove", handleResizeMove);
+        document.removeEventListener("mouseup", handleResizeEnd);
+      };
 
-  const paginatedData = useMemo(() => {
-    if (!pagination) return searchedData;
-    return searchedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  }, [searchedData, page, rowsPerPage, pagination]);
-
-  const highlightMatch = useCallback((text: string, term: string) => {
-    const parts = text.split(new RegExp(`(${term})`, "gi"));
-    return (
-      <>
-        {parts.map((part, index) =>
-          part.toLowerCase() === term.toLowerCase() ? (
-            <span
-              key={index}
-              style={{
-                backgroundColor: "rgba(63, 81, 181, 0.2)",
-                color: "#1a237e",
-                fontWeight: "bold",
-                padding: "2px 0",
-                borderRadius: "2px",
-              }}
-            >
-              {part}
-            </span>
-          ) : (
-            part
-          )
-        )}
-      </>
-    );
-  }, []);
-
-  const renderCell = useCallback(
-    (item: T, column: Column<T>, rowIndex: number, columnIndex: number) => {
-      const cellContent = item[column.key];
-
-      if (searchTerm && typeof cellContent === "string") {
-        return highlightMatch(cellContent, searchTerm);
-      } else if (column.render) {
-        return <Box sx={{ minWidth: column.width || "auto" }}>{column.render(item, rowIndex, columnIndex)}</Box>;
-      } else if (column.formatter) {
-        return column.formatter(cellContent);
-      }
-
-      switch (column.type) {
-        case "date":
-          return format(new Date(cellContent), "dd/MM/yyyy");
-        case "status":
-          return (
-            <Box
-              sx={{
-                backgroundColor: cellContent === "Active" ? "green" : "red",
-                color: "white",
-                padding: "2px 8px",
-                borderRadius: "4px",
-                display: "inline-block",
-              }}
-            >
-              {cellContent}
-            </Box>
-          );
-        default:
-          return cellContent;
-      }
+      document.addEventListener("mousemove", handleResizeMove);
+      document.addEventListener("mouseup", handleResizeEnd);
     },
-    [searchTerm, highlightMatch]
+    [columns, onColumnResize]
   );
 
-  const exportToCSV = () => {};
+  // Export Functions
+  const exportToCSV = useCallback(() => {
+    const headers = columns.filter((col) => col.visible).map((col) => col.header);
 
-  const exportToPDF = useCallback(() => {
-    const doc = new jsPDF();
-    if (tableRef.current && "autoTable" in doc) {
-      (doc as any).autoTable({ html: tableRef.current });
-      doc.save(`${exportFileName}.pdf`);
-    } else {
-      console.error("autoTable is not available on the jsPDF instance");
-    }
-  }, [exportFileName]);
+    const csvData = processedData.map((item) =>
+      columns
+        .filter((col) => col.visible)
+        .map((col) => {
+          const value = item[col.key];
+          if (col.formatter) {
+            return col.formatter(value, item);
+          }
+          return value;
+        })
+    );
 
-  const renderFilterContent = () => {
-    if (!filterColumn) return null;
+    const csvContent = [headers.join(","), ...csvData.map((row) => row.join(","))].join("\n");
 
-    switch (filterColumn.type) {
-      case "date":
-        return <DatePicker label="Filter by date" onChange={(newValue) => handleFilterApply(newValue)} />;
-      case "status":
-        return (
-          <FormControl fullWidth>
-            <InputLabel>Status</InputLabel>
-            <Select value={filters[filterColumn.key] || ""} onChange={(e) => handleFilterApply(e.target.value)}>
-              <MenuItem value="Active">Active</MenuItem>
-              <MenuItem value="Inactive">Inactive</MenuItem>
-            </Select>
-          </FormControl>
-        );
-      default:
-        return <TextField label="Filter" value={filters[filterColumn.key] || ""} onChange={(e) => handleFilterApply(e.target.value)} />;
-    }
-  };
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+    saveAs(blob, `${exportFileName}.csv`);
+  }, [columns, processedData, exportFileName]);
 
-  const StyledTableRow = styled(TableRow)(({ theme }) => ({
-    "&:nth-of-type(odd)": {
-      backgroundColor: theme.palette.action.hover,
-    },
-    "&:last-child td, &:last-child th": {
-      border: 0,
-    },
-    "&:hover": {
-      backgroundColor: theme.palette.action.selected,
-    },
-  }));
+  const handleExportPDF = useCallback(() => {
+    exportToPDF({
+      columns,
+      data: processedData,
+      filename: exportFileName,
+      title: "Export Report",
+      subtitle: new Date().toLocaleString(),
+    });
+  }, [columns, processedData, exportFileName]);
+  // Column Customization
+  const renderColumnCustomization = () => (
+    <Drawer anchor="right" open={customizationOpen} onClose={() => setCustomizationOpen(false)}>
+      <Box sx={{ width: 300, p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Column Customization
+        </Typography>
+        {columns.map((column, index) => (
+          <Box
+            key={column.key}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              py: 1,
+              borderBottom: "1px solid rgba(0,0,0,0.12)",
+            }}
+          >
+            <DragIndicator sx={{ mr: 1, cursor: "grab" }} />
+            <Checkbox
+              checked={columnVisibility[column.key]}
+              onChange={(e) => {
+                setColumnVisibility((prev) => ({
+                  ...prev,
+                  [column.key]: e.target.checked,
+                }));
+                setColumns((prev) => prev.map((col) => (col.key === column.key ? { ...col, visible: e.target.checked } : col)));
+              }}
+            />
+            <Typography>{column.header}</Typography>
+          </Box>
+        ))}
+      </Box>
+    </Drawer>
+  );
 
-  const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    "&.MuiTableCell-head": {
-      backgroundColor: theme.palette.primary.dark,
-      color: theme.palette.common.white,
-      fontWeight: "bold",
-      textAlign: "left",
-    },
-    "&.MuiTableCell-body": {
-      fontSize: 14,
-    },
-  }));
-
-  const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
-    maxHeight,
-    minHeight,
-    overflow: "auto",
-    "&::-webkit-scrollbar": {
-      height: "6px",
-      width: "6px",
-    },
-    "&::-webkit-scrollbar-track": {
-      background: theme.palette.grey[200],
-    },
-    "&::-webkit-scrollbar-thumb": {
-      background: theme.palette.primary.main,
-      borderRadius: "3px",
-    },
-    "&::-webkit-scrollbar-thumb:hover": {
-      background: theme.palette.primary.dark,
-    },
-  }));
-
+  // Main Render
   return (
-    <>
-      {(showExportCSV || showExportPDF) && (
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-          {showExportCSV && <ExportCSV data={filteredData} columns={columns} filename={`${exportFileName}.csv`} />}
-          {showExportPDF && (
-            <Button startIcon={<ExportIcon />} onClick={exportToPDF}>
-              Export PDF
-            </Button>
-          )}
-        </Box>
-      )}
-      <StyledTableContainer>
-        <Table ref={tableRef} stickyHeader size="small" aria-label="customized table">
+    <Box sx={{ position: "relative", ...gridStyle }}>
+      {/* Toolbar */}
+      <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end", gap: 1 }}>
+        {showExportCSV && (
+          <Button startIcon={<ExportIcon />} onClick={exportToCSV} variant="outlined" size="small">
+            Export CSV
+          </Button>
+        )}
+        {showExportPDF && (
+          <Button startIcon={<ExportIcon />} onClick={handleExportPDF} variant="outlined" size="small">
+            Export PDF
+          </Button>
+        )}
+        {showColumnCustomization && (
+          <Button startIcon={<SettingsIcon />} onClick={() => setCustomizationOpen(true)} variant="outlined" size="small">
+            Customize Columns
+          </Button>
+        )}
+      </Box>
+
+      {/* Main Grid */}
+      <StyledTableContainer sx={{ maxHeight, minHeight }} ref={virtualScrollRef}>
+        <Table ref={tableRef} stickyHeader size="small">
+          {/* Table Header */}
           <TableHead>
             <TableRow>
-              {expandableRows && <StyledTableCell />}
+              {expandableRows && <TableCell padding="none" width={48} />}
               {selectable && (
-                <StyledTableCell padding="checkbox">
+                <TableCell padding="checkbox">
                   <Checkbox
-                    color="primary"
-                    indeterminate={selected.length > 0 && selected.length < searchedData.length}
-                    checked={searchedData.length > 0 && selected.length === searchedData.length}
-                    onChange={handleSelectAllClick}
-                    inputProps={{
-                      "aria-label": "select all items",
+                    indeterminate={selected.length > 0 && selected.length < processedData.length}
+                    checked={processedData.length > 0 && selected.length === processedData.length}
+                    onChange={(event) => {
+                      if (event.target.checked) {
+                        setSelected(processedData);
+                        onSelectionChange?.(processedData);
+                      } else {
+                        setSelected([]);
+                        onSelectionChange?.([]);
+                      }
                     }}
                   />
-                </StyledTableCell>
+                </TableCell>
               )}
-              {columnOrder.map((columnKey) => {
-                const col = columns.find((c) => c.key === columnKey);
-                if (!col || !col.visible) return null;
-                return (
-                  <StyledTableCell
-                    key={col.key}
-                    style={{ width: col.width }}
-                    draggable
-                    onDragStart={(e) => e.dataTransfer.setData("text/plain", col.key)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const draggedColumnKey = e.dataTransfer.getData("text");
-                      const dragIndex = columnOrder.indexOf(draggedColumnKey);
-                      const hoverIndex = columnOrder.indexOf(col.key);
-                      handleColumnReorder(dragIndex, hoverIndex);
+              {columns
+                .filter((col) => col.visible)
+                .map((column) => (
+                  <TableCell
+                    key={column.key}
+                    style={{
+                      width: column.width,
+                      minWidth: column.minWidth,
+                      maxWidth: column.maxWidth,
+                      position: "relative",
+                      ...column.headerStyle,
                     }}
                   >
                     <Box display="flex" alignItems="center">
-                      {col.sortable ? (
-                        <TableSortLabel active={orderBy === col.key} direction={orderBy === col.key ? order : "asc"} onClick={() => handleSort(col.key as keyof T)}>
-                          {col.header}
+                      {column.sortable ? (
+                        <TableSortLabel active={orderBy === column.key} direction={orderBy === column.key ? order : "asc"} onClick={() => handleSort(column.key as keyof T)}>
+                          {column.header}
                         </TableSortLabel>
                       ) : (
-                        col.header
+                        column.header
                       )}
-                      {col.filterable && (
-                        <IconButton size="small" onClick={(e) => handleFilterClick(e, col)}>
+                      {column.filterable && (
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            setFilterAnchorEl(e.currentTarget);
+                            setFilterColumn(column);
+                          }}
+                          color={filters[column.key] ? "primary" : "default"}
+                        >
                           <FilterListIcon fontSize="small" />
                         </IconButton>
                       )}
                     </Box>
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        right: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: "5px",
-                        cursor: "col-resize",
-                      }}
-                      onMouseDown={() => setResizing(col.key)}
-                    />
-                  </StyledTableCell>
-                );
-              })}
+                    {column.resizable && <ResizeHandle onMouseDown={(e) => handleResizeStart(e, column.key)} className="resize-handle" data-column-key={column.key} />}
+                  </TableCell>
+                ))}
             </TableRow>
           </TableHead>
+
+          {/* Table Body */}
           <TableBody>
-            {paginatedData.map((item, rowIndex) => {
-              const isItemSelected = isSelected(item);
-              const isExpanded = expandedRows.has(rowIndex);
-              return (
-                <React.Fragment key={`row-${rowIndex}`}>
-                  <StyledTableRow
-                    key={`row-${rowIndex}`}
-                    hover
-                    onClick={(event) => handleClick(event, item)}
-                    role="checkbox"
-                    aria-checked={isItemSelected}
-                    tabIndex={-1}
-                    selected={isItemSelected}
-                  >
-                    {expandableRows && (
-                      <StyledTableCell>
-                        <IconButton size="small" onClick={() => handleExpandRow(rowIndex)}>
-                          {isExpanded ? <ExpandLess /> : <ExpandMore />}
-                        </IconButton>
-                      </StyledTableCell>
-                    )}
-                    {selectable && (
-                      <StyledTableCell padding="checkbox">
-                        <Checkbox
-                          color="primary"
-                          checked={isItemSelected}
-                          inputProps={{
-                            "aria-labelledby": `enhanced-table-checkbox-${rowIndex}`,
-                          }}
-                        />
-                      </StyledTableCell>
-                    )}
-                    {columnOrder.map((columnKey, columnIndex) => {
-                      const col = columns.find((c) => c.key === columnKey);
-                      if (!col || !col.visible) return null;
-                      return (
-                        <StyledTableCell key={`${col.key}-${rowIndex}`} style={{ width: col.width || "auto" }}>
-                          {renderCell(item, col, rowIndex, columnIndex)}
-                        </StyledTableCell>
-                      );
-                    })}
-                  </StyledTableRow>
-                  {expandableRows && isExpanded && (
-                    <TableRow>
-                      <TableCell colSpan={columns.length + (selectable ? 2 : 1)}>{renderExpandedRow && renderExpandedRow(item)}</TableCell>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={columns.filter((col) => col.visible).length + (selectable ? 1 : 0) + (expandableRows ? 1 : 0)} align="center">
+                  <Box sx={{ p: 2 }}>Loading...</Box>
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={columns.filter((col) => col.visible).length + (selectable ? 1 : 0) + (expandableRows ? 1 : 0)} align="center">
+                  <Box sx={{ p: 2, color: "error.main" }}>{error}</Box>
+                </TableCell>
+              </TableRow>
+            ) : virtualScrollData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.filter((col) => col.visible).length + (selectable ? 1 : 0) + (expandableRows ? 1 : 0)} align="center">
+                  <Box sx={{ p: 2 }}>{emptyStateMessage}</Box>
+                </TableCell>
+              </TableRow>
+            ) : (
+              virtualScrollData.map((item, rowIndex) => {
+                const isItemSelected = selected.includes(item);
+                const isExpanded = expandedRows.has(rowIndex);
+                const rowKey = rowKeyField ? item[rowKeyField] : rowIndex;
+
+                return (
+                  <React.Fragment key={`row-${rowKey}`}>
+                    <TableRow
+                      hover
+                      onClick={(event) => {
+                        if (selectable) {
+                          const newSelected = isItemSelected ? selected.filter((i) => i !== item) : [...selected, item];
+                          setSelected(newSelected);
+                          onSelectionChange?.(newSelected);
+                        } else {
+                          onRowClick?.(item);
+                        }
+                      }}
+                      selected={isItemSelected}
+                      style={customRowStyle?.(item)}
+                    >
+                      {expandableRows && (
+                        <TableCell padding="none">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedRows((prev) => {
+                                const newSet = new Set(prev);
+                                if (newSet.has(rowIndex)) {
+                                  newSet.delete(rowIndex);
+                                } else {
+                                  newSet.add(rowIndex);
+                                }
+                                return newSet;
+                              });
+                            }}
+                          >
+                            {isExpanded ? <ExpandLess /> : <ExpandMore />}
+                          </IconButton>
+                        </TableCell>
+                      )}
+                      {selectable && (
+                        <TableCell padding="checkbox">
+                          <Checkbox checked={isItemSelected} />
+                        </TableCell>
+                      )}
+                      {columns
+                        .filter((col) => col.visible)
+                        .map((column, columnIndex) => (
+                          <TableCell
+                            key={`${rowIndex}-${column.key}`}
+                            style={{
+                              ...column.cellStyle,
+                              ...customCellStyle?.(item, column),
+                            }}
+                          >
+                            {renderCell(item, column, rowIndex, columnIndex)}
+                          </TableCell>
+                        ))}
                     </TableRow>
-                  )}
-                </React.Fragment>
-              );
-            })}
+                    {expandableRows && isExpanded && renderExpandedRow && (
+                      <TableRow>
+                        <TableCell colSpan={columns.filter((col) => col.visible).length + (selectable ? 1 : 0) + 1}>{renderExpandedRow(item)}</TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                );
+              })
+            )}
           </TableBody>
         </Table>
       </StyledTableContainer>
+
+      {/* Pagination */}
       {pagination && (
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={searchedData.length}
-          rowsPerPage={rowsPerPage}
+          count={processedData.length}
           page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(event) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={[5, 10, 25, 50]}
         />
       )}
+
+      {/* Filter Popover */}
       <Popover
         open={Boolean(filterAnchorEl)}
         anchorEl={filterAnchorEl}
-        onClose={handleFilterClose}
+        onClose={() => {
+          setFilterAnchorEl(null);
+          setFilterColumn(null);
+        }}
         anchorOrigin={{
           vertical: "bottom",
           horizontal: "left",
         }}
       >
-        {renderFilterContent()}
+        <Box sx={{ p: 2, minWidth: 200 }}>
+          {filterColumn?.filter?.type === "select" ? (
+            <FormControl fullWidth size="small">
+              <InputLabel>Filter by {filterColumn.header}</InputLabel>
+              <Select
+                value={filters[filterColumn.key] || ""}
+                onChange={(e) => {
+                  const newFilters = {
+                    ...filters,
+                    [filterColumn.key]: e.target.value,
+                  };
+                  setFilters(newFilters);
+                  onFilterChange?.(newFilters);
+                }}
+                label={`Filter by ${filterColumn.header}`}
+              >
+                <MenuItem value="">All</MenuItem>
+                {filterColumn.filter.options?.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          ) : filterColumn?.filter?.type === "date" ? (
+            <DatePicker
+              label={`Filter by ${filterColumn.header}`}
+              value={filters[filterColumn.key] || null}
+              onChange={(newValue) => {
+                const newFilters = {
+                  ...filters,
+                  [filterColumn.key]: newValue,
+                };
+                setFilters(newFilters);
+                onFilterChange?.(newFilters);
+              }}
+            />
+          ) : (
+            <TextField
+              fullWidth
+              size="small"
+              label={`Filter by ${filterColumn?.header}`}
+              value={filters[filterColumn?.key || ""] || ""}
+              onChange={(e) => {
+                const newFilters = {
+                  ...filters,
+                  [filterColumn?.key || ""]: e.target.value,
+                };
+                setFilters(newFilters);
+                onFilterChange?.(newFilters);
+              }}
+            />
+          )}
+        </Box>
       </Popover>
-    </>
+
+      {/* Column Customization Drawer */}
+      {renderColumnCustomization()}
+    </Box>
   );
 };
 
-export default CustomGrid;
+export default React.memo(CustomGrid) as typeof CustomGrid;

@@ -32,7 +32,7 @@ const DepartmentListPage: React.FC = () => {
     <>
       <Container maxWidth={false}>
         <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
+          <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
         </Box>
         <DepartmentListDetails editData={selectedData} />
         <DepartmentListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />

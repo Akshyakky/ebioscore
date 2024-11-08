@@ -34,7 +34,7 @@ const ServiceGroupsListPage: React.FC = () => {
     <>
       <Container maxWidth={false}>
         <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup buttons={actionButtons} groupVariant="contained" groupSize="medium" orientation="horizontal" color="primary" />
+          <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
         </Box>
         <ServiceGroupsListDetails editData={selectedData} />
         <ServiceGroupsListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
