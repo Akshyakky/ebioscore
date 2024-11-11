@@ -2,74 +2,67 @@
 import { createEntityService } from "../../../utils/Common/serviceFactory";
 import { IpDischargeDto } from "../../../interfaces/PatientAdministration/IpDischargeDto";
 import { handleError } from "../../CommonServices/HandlerError";
+import { CommonApiService } from "../../CommonApiService";
+import { APIConfig } from "../../../apiConfig";
+import { OperationResult } from "../../../interfaces/Common/OperationResult";
+import { GenericEntityService } from "../../GenericEntityService/GenericEntityService";
 
-class DischargeService {
-  private baseService = createEntityService<IpDischargeDto>("Discharge", "patientAdministrationURL");
+class DischargeService extends GenericEntityService<IpDischargeDto> {
+  constructor(apiService: CommonApiService, entityName: string) {
+    super(apiService, entityName);
+  }
 
   /**
    * Process a new discharge or update existing discharge
-   * @param dischargeData The discharge data to process
-   * @returns Promise with the processed discharge data
    */
-  async processDischarge(dischargeData: IpDischargeDto): Promise<IpDischargeDto> {
+  async processDischarge(dischargeData: IpDischargeDto): Promise<OperationResult<IpDischargeDto>> {
     const formattedData = this.formatDischargeData(dischargeData);
-    return await this.baseService.save(formattedData);
+    return await this.apiService.post<OperationResult<IpDischargeDto>>(`${this.baseEndpoint}/ProcessDischarge`, formattedData, this.getToken());
   }
 
   /**
    * Get discharge details by admission ID
-   * @param admitId The admission ID
-   * @returns Promise with the discharge details
    */
   async getDischargeByAdmissionId(admitId: number): Promise<IpDischargeDto | null> {
     const predicate = `admitID==${admitId}`;
-    return await this.baseService.firstOrDefault(predicate);
+    return await this.firstOrDefault(predicate);
   }
 
   /**
    * Get discharge details by patient chart ID
-   * @param pChartId The patient chart ID
-   * @returns Promise with the discharge details
    */
   async getDischargeByPatientChartId(pChartId: number): Promise<IpDischargeDto | null> {
     const predicate = `pChartID==${pChartId}`;
-    return await this.baseService.firstOrDefault(predicate);
+    return await this.firstOrDefault(predicate);
   }
 
   /**
    * Check if discharge exists for given admission
-   * @param admitId The admission ID
-   * @returns Promise with boolean indicating if discharge exists
    */
   async checkDischargeExists(admitId: number): Promise<boolean> {
     const predicate = `admitID==${admitId}`;
-    return await this.baseService.any(predicate);
+    return await this.any(predicate);
   }
 
   /**
    * Get all discharges with pagination
-   * @param pageIndex The page number
-   * @param pageSize The number of items per page
-   * @param filter Optional filter string
-   * @returns Promise with paginated discharge data
    */
   async getDischargesWithPagination(pageIndex: number, pageSize: number, filter?: string) {
-    try {
-      return await this.baseService.getPaged(pageIndex, pageSize, filter);
-    } catch (error) {
-      console.error("Error fetching paginated discharges:", error);
-      return handleError(error);
-    }
+    return await this.getPaged(pageIndex, pageSize, filter);
   }
 
   /**
    * Initialize a new discharge DTO with default values
-   * @param admitId The admission ID
-   * @param pChartId The patient chart ID
-   * @param companyDetails The company details
-   * @returns A new discharge DTO with default values
    */
-  initializeDischargeDto(admitId: number, pChartId: number, companyDetails: { compID: number; compCode: string; compName: string }): IpDischargeDto {
+  initializeDischargeDto(
+    admitId: number,
+    pChartId: number,
+    companyDetails: {
+      compID: number;
+      compCode: string;
+      compName: string;
+    }
+  ): IpDischargeDto {
     const currentDate = new Date();
     return {
       dischgID: 0,
@@ -87,7 +80,7 @@ class DischargeService {
       dischgSumYN: "N",
       facultyID: undefined,
       faculty: "",
-      dischgType: "",
+      dischgType: "DISCHARGED",
       pChartCode: "",
       pTitle: "",
       pfName: "",
@@ -105,11 +98,6 @@ class DischargeService {
     };
   }
 
-  /**
-   * Format discharge data for submission
-   * @param data The discharge data to format
-   * @returns Formatted discharge data
-   */
   private formatDischargeData(data: IpDischargeDto): IpDischargeDto {
     return {
       ...data,
@@ -138,11 +126,6 @@ class DischargeService {
     };
   }
 
-  /**
-   * Format YN field to ensure valid value
-   * @param value The value to format
-   * @returns "Y" or "N"
-   */
   private formatYNField(value: any): "Y" | "N" {
     if (typeof value === "boolean") {
       return value ? "Y" : "N";
@@ -154,6 +137,11 @@ class DischargeService {
   }
 }
 
-// Export singleton instance
-export const dischargeService = new DischargeService();
+export const dischargeService = new DischargeService(
+  new CommonApiService({
+    baseURL: APIConfig.patientAdministrationURL,
+  }),
+  "Discharge"
+);
+
 export default dischargeService;
