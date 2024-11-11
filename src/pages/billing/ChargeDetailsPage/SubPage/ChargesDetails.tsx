@@ -12,7 +12,11 @@ import { serviceGroupService } from "../../../../services/BillingServices/Billin
 import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
 import ChargeBasicDetails from "./Charges";
 import ChargeConfigDetails from "./ChargesAlias";
-const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) => {
+
+interface ChargeDetailsProps {
+  editData?: ChargeDetailsDto;
+}
+const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const { compID, compCode, compName } = store.getState().userDetails;
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");
   const [formData, setFormData] = useState<ChargeDetailsDto>({
@@ -39,6 +43,7 @@ const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) 
       cNhsEnglishName: "",
       chargeCost: "0",
     },
+
     chargeDetails: editData?.chargeDetails || [
       {
         rActiveYN: "Y",
@@ -83,6 +88,12 @@ const ChargeDetails: React.FC<{ editData?: ChargeDetailsDto }> = ({ editData }) 
   const [selectedPicIds, setSelectedPicIds] = useState<string[]>([]);
   const [selectedWardCategoryIds, setSelectedWardCategoryIds] = useState<string[]>([]);
   const [aliasData, setAliasData] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (editData) {
+      setFormData(editData);
+    }
+  }, [editData]);
 
   const handleFacultyChange = useCallback(
     (event: SelectChangeEvent<unknown>) => {

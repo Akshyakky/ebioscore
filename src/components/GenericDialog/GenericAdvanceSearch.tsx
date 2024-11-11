@@ -58,9 +58,7 @@ function GenericAdvanceSearch<T>({
   showExportPDF = false,
   pagination = false,
 }: CommonSearchDialogProps<T>) {
-  const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>(
-    {}
-  );
+  const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<T[]>([]);
 
@@ -106,43 +104,24 @@ function GenericAdvanceSearch<T>({
       key: "edit",
       header: "Edit",
       visible: isEditButtonVisible,
-      render: (row: T & { serialNumber: number; Status: string }) => (
-        <CustomButton
-          text="Edit"
-          onClick={() => handleEditAndClose(row)}
-          icon={Edit}
-          size="small"
-        />
-      ),
+      render: (row: T & { serialNumber: number; Status: string }) => <CustomButton text="Edit" onClick={() => handleEditAndClose(row)} icon={Edit} size="small" />,
     },
     ...columns.map((column) => ({
       ...column,
-      render: column.render
-        ? (row: T & { serialNumber: number; Status: string }) =>
-          column.render!(row) as React.ReactElement<any>
-        : undefined,
+      render: column.render ? (row: T & { serialNumber: number; Status: string }) => column.render!(row) as React.ReactElement<any> : undefined,
     })),
     {
       key: "status",
       header: "Status",
       visible: isStatusVisible,
-      render: (row: T & { serialNumber: number; Status: string }) => (
-        <Typography variant="body2">
-          {switchStatus[getItemId(row)] ? "Active" : "Hidden"}
-        </Typography>
-      ),
+      render: (row: T & { serialNumber: number; Status: string }) => <Typography variant="body2">{switchStatus[getItemId(row)] ? "Active" : "Hidden"}</Typography>,
     },
     {
       key: "action",
       header: "Action",
       visible: isActionVisible,
       render: (row: T & { serialNumber: number; Status: string }) => (
-        <CustomSwitch
-          size="small"
-          color="secondary"
-          checked={switchStatus[getItemId(row)]}
-          onChange={(event) => handleSwitchChange(row, event.target.checked)}
-        />
+        <CustomSwitch size="small" color="secondary" checked={switchStatus[getItemId(row)]} onChange={(event) => handleSwitchChange(row, event.target.checked)} />
       ),
     },
   ];
@@ -152,9 +131,7 @@ function GenericAdvanceSearch<T>({
     onClose();
   };
 
-  const handleSearchInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSearchTerm = event.target.value;
     setSearchTerm(newSearchTerm);
     if (onSearch) {
@@ -183,27 +160,11 @@ function GenericAdvanceSearch<T>({
           />
         </Grid>
       </Box>
-      <CustomGrid
-        columns={enhancedColumns}
-        data={dataWithIndex}
-        searchTerm={searchTerm}
-        showExportCSV={showExportCSV}
-        showExportPDF={showExportPDF}
-        pagination={pagination}
-      />
+      <CustomGrid columns={enhancedColumns} data={dataWithIndex} searchTerm={searchTerm} showExportCSV={showExportCSV} showExportPDF={showExportPDF} pagination={pagination} />
     </>
   );
 
-  const dialogActions = (
-    <CustomButton
-      variant="contained"
-      text="Close"
-      icon={Close}
-      size="medium"
-      onClick={handleDialogClose}
-      color="secondary"
-    />
-  );
+  const dialogActions = <CustomButton variant="contained" text="Close" icon={Close} size="medium" onClick={handleDialogClose} color="secondary" />;
 
   return (
     <GenericDialog

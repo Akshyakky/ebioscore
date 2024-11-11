@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, TextField } from "@mui/material";
 import { styled } from "@mui/material/styles";
+import FormField from "../../../../components/FormField/FormField";
 
 interface WardCategory {
   value: string;
@@ -38,7 +39,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   maxHeight: "500px",
   overflowY: "auto",
-  overflowX: "auto", // Enable horizontal scrolling
+  overflowX: "auto",
   "&::-webkit-scrollbar": {
     height: "6px",
     width: "6px",
@@ -66,23 +67,22 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 
 export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWardCategories = [], data = [], onSelectionChange, maxHeight = "500px" }) => {
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
-  const [gridData, setGridData] = useState<GridData[]>(data); // State for editable grid data
+  const [gridData, setGridData] = useState<GridData[]>(data);
 
   const handleRowSelect = (row: GridData, index: number) => {
     setSelectedRow(index);
     onSelectionChange?.(row);
   };
 
-  // Function to handle input changes in editable cells
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, rowIndex: number, field: string) => {
-    const newValue = e.target.value; // Keep input as a string during typing
+    const newValue = e.target.value;
+
     const updatedData = [...gridData];
     updatedData[rowIndex] = {
       ...updatedData[rowIndex],
-      [field]: newValue, // Temporarily store unformatted value
+      [field]: newValue,
     };
 
-    // If updating Dr Amt or Hosp Amt, recalculate Tot Amt
     const categoryPrefix = field.split("_")[0];
     if (field.includes("drAmt") || field.includes("hospAmt")) {
       const drAmt = parseFloat(updatedData[rowIndex][`${categoryPrefix}_drAmt`] || "0");
@@ -90,7 +90,7 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
       updatedData[rowIndex][`${categoryPrefix}_totAmt`] = (drAmt + hospAmt).toFixed(2);
     }
 
-    setGridData(updatedData); // Update the state with new values
+    setGridData(updatedData);
   };
 
   const renderGroupedHeaders = () => (
@@ -136,35 +136,45 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
         {selectedWardCategories.map((category) => (
           <React.Fragment key={`${category.value}-data-${rowIndex}`}>
             <StyledTableCell>
-              <TextField
-                variant="outlined"
-                size="small"
-                fullWidth
+              <FormField
+                type="number"
+                label="Dr Amt"
                 value={row[`${category.label}_drAmt`] || ""}
                 onChange={(e) => handleInputChange(e, rowIndex, `${category.label}_drAmt`)}
                 placeholder="0.00"
-                inputProps={{ inputMode: "decimal" }}
+                fullWidth
+                size="small"
+                ControlID={`${category.label}_drAmt`}
+                name={`${category.label}_drAmt`}
+                step="any"
               />
             </StyledTableCell>
             <StyledTableCell>
-              <TextField
-                variant="outlined"
-                size="small"
-                fullWidth
+              <FormField
+                type="number"
+                label="Hosp Amt"
                 value={row[`${category.label}_hospAmt`] || ""}
                 onChange={(e) => handleInputChange(e, rowIndex, `${category.label}_hospAmt`)}
                 placeholder="0.00"
-                inputProps={{ inputMode: "decimal" }}
+                fullWidth
+                size="small"
+                ControlID={`${category.label}_hospAmt`}
+                name={`${category.label}_hospAmt`}
+                step="any"
               />
             </StyledTableCell>
             <StyledTableCell>
-              <TextField
-                variant="outlined"
-                size="small"
-                fullWidth
-                value={parseFloat(row[`${category.label}_totAmt`] || "0").toFixed(2)}
+              <FormField
+                type="number"
+                label="Tot Amt"
+                value={row[`${category.label}_totAmt`] || "0.00"}
                 placeholder="0.00"
-                inputProps={{ readOnly: true }}
+                readOnly
+                fullWidth
+                size="small"
+                ControlID={`${category.label}_totAmt`}
+                name={`${category.label}_totAmt`}
+                onChange={() => {}}
               />
             </StyledTableCell>
           </React.Fragment>
@@ -175,12 +185,10 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
   return (
     <Box sx={{ maxHeight, maxWidth: "100%", overflowY: "auto", overflowX: "auto" }}>
       {" "}
-      {/* Enable both horizontal and vertical scrolling */}
       <Paper sx={{ maxHeight }}>
         <StyledTableContainer>
           <Table stickyHeader sx={{ minWidth: `${selectedWardCategories.length * 300 + 300}px` }}>
             {" "}
-            {/* Set dynamic width based on columns */}
             <TableHead>
               {renderGroupedHeaders()}
               {renderSubHeaders()}
