@@ -1,0 +1,27 @@
+// src/services/BillingServices/chargeDetailsService.ts
+import { CommonApiService } from "../CommonApiService";
+import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
+import { ChargeDetailsDto } from "../../interfaces/Billing/BChargeDetails";
+import { APIConfig } from "../../apiConfig";
+import { OperationResult } from "../../interfaces/Common/OperationResult";
+
+class ChargeDetailsService extends GenericEntityService<ChargeDetailsDto> {
+  constructor() {
+    super(
+      new CommonApiService({
+        baseURL: APIConfig.billingURL,
+      }),
+      "ChargeDetails"
+    );
+  }
+
+  async saveChargeDetails(chargeDetailsDto: ChargeDetailsDto): Promise<OperationResult<ChargeDetailsDto>> {
+    return this.apiService.post<OperationResult<ChargeDetailsDto>>(`${this.baseEndpoint}/SaveChargeDetails`, chargeDetailsDto, this.getToken());
+  }
+
+  async generateChargeCode(): Promise<OperationResult<string>> {
+    return this.apiService.get<OperationResult<string>>(`${this.baseEndpoint}/GenerateChargeCode`, this.getToken());
+  }
+}
+
+export const chargeDetailsService = new ChargeDetailsService();
