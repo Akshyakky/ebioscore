@@ -34,6 +34,7 @@ import AppModifiedListPage from "../pages/hospitalAdministration/AppModifiedList
 import ChargeDetailsPage from "../pages/billing/ChargeDetailsPage/MainPage/ChargeDetailsPage";
 import AlertPage from "../pages/common/AlertManagerPage/MainPage/Alertpage";
 import DischargePage from "../pages/patientAdministration/DischargePage/MainPage/DischargePage";
+import WardBedTransferPage from "../pages/patientAdministration/WardBedTransfer/MainPage/WardBedTransferPage";
 
 interface RouteConfig {
   path: string;
@@ -76,6 +77,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/AppModifiedListPage", component: AppModifiedListPage, protected: true },
   { path: "/ChargeDetailsPage", component: ChargeDetailsPage, protected: true },
   { path: "/DischargePage", component: DischargePage, protected: true },
+  { path: "/WardBedTransferPage", component: WardBedTransferPage, protected: true },
 ];
 
 export default routeConfig;

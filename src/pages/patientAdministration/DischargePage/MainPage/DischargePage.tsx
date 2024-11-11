@@ -23,7 +23,6 @@ const DischargePage: React.FC = () => {
     setIsSearchOpen(false);
   }, []);
 
-  // Add clear function
   const handleClearAll = useCallback(() => {
     setSelectedAdmission(undefined);
     setAdmissionHistory([]);
@@ -42,10 +41,10 @@ const DischargePage: React.FC = () => {
         }
       } catch (error) {
         console.error("Error fetching admission history:", error);
-        setAdmissionHistory([]); // Clear history on error
+        setAdmissionHistory([]);
       }
     } else {
-      setAdmissionHistory([]); // Clear history if no pChartID
+      setAdmissionHistory([]);
     }
   }, []);
 
