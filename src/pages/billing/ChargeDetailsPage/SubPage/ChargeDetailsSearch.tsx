@@ -1,59 +1,99 @@
+// src/components/Billing/SubPage/ChargeDetailsSearch.tsx
 import React from "react";
+import { ChargeDetailsDto, BChargeDto } from "../../../../interfaces/Billing/BChargeDetails";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
 import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
+import { Column } from "../../../../components/CustomGrid/CustomGrid";
 
 interface ChargeDetailsSearchProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (chargeDetailsDto: ChargeDetailsDto) => void;
+  onSelect: (chargeDetails: ChargeDetailsDto) => void;
+  filterId?: number; // Optional filterId prop to specify the ID
 }
 
-const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose, onSelect }) => {
-  const fetchItems = async () => {
+const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose, onSelect, filterId }) => {
+  // Fetch all Charge Details with optional filtering by ID
+  const fetchItems = async (): Promise<ChargeDetailsDto[]> => {
     try {
-      debugger;
+      // API call to fetch from the database
       const result = await chargeDetailsService.getAll();
-      return result || [];
+      const allData = result.data;
+
+      // Filter by chargeID if filterId is provided
+      if (filterId) {
+        return allData.filter((item: ChargeDetailsDto) => item.chargeInfo.chargeID === filterId);
+      }
+
+      return allData; // Return all data if no filterId is specified
     } catch (error) {
       console.error("Error fetching charge details:", error);
       return [];
     }
   };
 
+  // Update active status for specific item
   const updateActiveStatus = async (id: number, status: boolean) => {
     try {
-      return await chargeDetailsService.updateActiveStatus(id, status);
+      const result = await chargeDetailsService.updateActiveStatus(id, status);
+      return result;
     } catch (error) {
-      console.error("Error updating active status:", error);
+      console.error("Error updating status:", error);
       return false;
     }
   };
 
-  const getItemId = (item: ChargeDetailsDto) => item.chargeInfo.chargeID;
-  const getItemActiveStatus = (item: ChargeDetailsDto) => item.chargeInfo.rActiveYN === "Y";
-
-  // Define columns for the search table
-  const columns = [
-    { key: "serialNumber", header: "Sl No", visible: true, sortable: true },
-    { key: "chargeCode", header: "Charge Code", visible: true },
-    { key: "chargeDesc", header: "Charge Description", visible: true },
-    { key: "chargeType", header: "Charge Type", visible: true },
-    { key: "cShortName", header: "Short Name", visible: true },
-    { key: "chargeCost", header: "Cost", visible: true },
+  // Column definitions for displaying Charge Details data
+  const columns: Column<ChargeDetailsDto>[] = [
+    {
+      key: "chargeCode",
+      header: "Charge Code",
+      visible: true,
+      sortable: true,
+      render: (item: ChargeDetailsDto) => item.chargeInfo.chargeCode,
+    },
+    {
+      key: "chargeDesc",
+      header: "Charge Description",
+      visible: true,
+      render: (item: ChargeDetailsDto) => item.chargeInfo.chargeDesc,
+    },
+    {
+      key: "chargeType",
+      header: "Charge Type",
+      visible: true,
+      render: (item: ChargeDetailsDto) => item.chargeInfo.chargeType,
+    },
+    {
+      key: "cShortName",
+      header: "Short Name",
+      visible: true,
+      render: (item: ChargeDetailsDto) => item.chargeInfo.cShortName,
+    },
+    {
+      key: "chargeStatus",
+      header: "Status",
+      visible: true,
+      render: (item: ChargeDetailsDto) => item.chargeInfo.chargeStatus,
+    },
   ];
 
+  // Handler for item selection
+  const handleSelect = (data: ChargeDetailsDto) => {
+    onSelect(data);
+  };
+
   return (
-    <GenericAdvanceSearch
+    <GenericAdvanceSearch<ChargeDetailsDto>
       open={open}
       onClose={onClose}
-      onSelect={onSelect}
+      onSelect={handleSelect}
       title="CHARGE DETAILS LIST"
       fetchItems={fetchItems}
       updateActiveStatus={updateActiveStatus}
       columns={columns}
-      getItemId={getItemId}
-      getItemActiveStatus={getItemActiveStatus}
+      getItemId={(item) => item.chargeInfo.chargeID}
+      getItemActiveStatus={(item) => item.chargeInfo.chargeStatus === "Active"}
       searchPlaceholder="Enter charge code or description"
       isActionVisible={true}
       isStatusVisible={true}

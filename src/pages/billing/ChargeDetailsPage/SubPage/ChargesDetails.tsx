@@ -16,6 +16,7 @@ import ChargeConfigDetails from "./ChargesAlias";
 interface ChargeDetailsProps {
   editData?: ChargeDetailsDto;
 }
+
 const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const { compID, compCode, compName } = store.getState().userDetails;
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");

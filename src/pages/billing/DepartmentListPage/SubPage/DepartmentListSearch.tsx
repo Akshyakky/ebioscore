@@ -11,15 +11,12 @@ interface DepartmentListSearchProps {
 
 const DepartmentListSearch: React.FC<DepartmentListSearchProps> = ({ open, onClose, onSelect }) => {
   const fetchItems = () => departmentService.getAll().then((result) => result.data || []);
-
   const updateActiveStatus = async (id: number, status: boolean) => {
     const result = await departmentService.updateActiveStatus(id, status);
     return result;
   };
-
   const getItemId = (item: DepartmentDto) => item.deptID;
   const getItemActiveStatus = (item: DepartmentDto) => item.rActiveYN === "Y";
-
   const columns = [
     { key: "serialNumber", header: "Sl No", visible: true, sortable: true },
     { key: "deptCode", header: "Department Code", visible: true },

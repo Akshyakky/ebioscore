@@ -10,6 +10,7 @@ import { ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails"
 const ChargeDetailsPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<ChargeDetailsDto | undefined>(undefined);
+  const [specificChargeID, setSpecificChargeID] = useState<number | undefined>(undefined); // Define specificChargeID state
 
   const handleAdvancedSearch = () => {
     setIsSearchOpen(true);
@@ -22,6 +23,7 @@ const ChargeDetailsPage: React.FC = () => {
   const handleSelect = (data: ChargeDetailsDto) => {
     setSelectedData(data);
     setIsSearchOpen(false);
+    setSpecificChargeID(data.chargeInfo.chargeID); // Set the specificChargeID on selection
   };
 
   const actionButtons: ButtonProps[] = [
@@ -39,7 +41,12 @@ const ChargeDetailsPage: React.FC = () => {
         <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
       </Box>
       <ChargeDetails editData={selectedData} />
-      <ChargeDetailsSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
+      <ChargeDetailsSearch
+        open={isSearchOpen}
+        onClose={handleCloseSearch}
+        onSelect={handleSelect}
+        filterId={specificChargeID} // Pass specificChargeID state to filterId
+      />
     </Container>
   );
 };

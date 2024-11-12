@@ -8,13 +8,10 @@ import GenericDialog from "./GenericDialog";
 import Close from "@mui/icons-material/Close";
 import FormField from "../FormField/FormField";
 
-// Define the extended type that includes the additional properties
 type ExtendedItem<T> = T & {
   serialNumber: number;
   Status: string;
 };
-
-// Modify the CommonSearchDialogProps to use the correct column type
 interface CommonSearchDialogProps<T> {
   open: boolean;
   onClose: () => void;
@@ -71,6 +68,7 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
   }, [open]);
 
   const fetchAllItems = async () => {
+    debugger;
     const items = await fetchItems();
     const initialSwitchStatus = items.reduce(
       (statusMap, item) => {
@@ -101,7 +99,6 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
     Status: switchStatus[getItemId(item)] ? "Active" : "Hidden",
   }));
 
-  // Create the enhanced columns with proper typing
   const enhancedColumns = React.useMemo(() => {
     const editColumn: Column<ExtendedItem<T>> | null = isEditButtonVisible
       ? {
@@ -112,7 +109,6 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
           render: (_item: ExtendedItem<T>, rowIndex: number) => <CustomButton text="Edit" onClick={() => handleEditAndClose(searchResults[rowIndex])} icon={Edit} size="small" />,
         }
       : null;
-
     const statusColumn: Column<ExtendedItem<T>> | null = isStatusVisible
       ? {
           key: "Status" as keyof ExtendedItem<T> & string,
@@ -122,7 +118,6 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
           render: (item: ExtendedItem<T>) => <Typography variant="body2">{switchStatus[getItemId(item)] ? "Active" : "Hidden"}</Typography>,
         }
       : null;
-
     const actionColumn: Column<ExtendedItem<T>> | null = isActionVisible
       ? {
           key: "action" as keyof ExtendedItem<T> & string,
@@ -134,14 +129,12 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
           ),
         }
       : null;
-
     // Convert original columns to work with ExtendedItem<T>
     const convertedColumns: Column<ExtendedItem<T>>[] = originalColumns.map((col) => ({
       ...col,
       key: col.key as keyof ExtendedItem<T> & string,
       render: col.render ? (item: ExtendedItem<T>, rowIndex: number, columnIndex: number) => col.render!(item, rowIndex, columnIndex) : undefined,
     }));
-
     return [...(editColumn ? [editColumn] : []), ...convertedColumns, ...(statusColumn ? [statusColumn] : []), ...(actionColumn ? [actionColumn] : [])] as Column<
       ExtendedItem<T>
     >[];
@@ -181,12 +174,12 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
           />
         </Grid>
       </Box>
+
       <CustomGrid columns={enhancedColumns} data={dataWithIndex} searchTerm={searchTerm} showExportCSV={showExportCSV} showExportPDF={showExportPDF} pagination={pagination} />
     </>
   );
 
   const dialogActions = <CustomButton variant="contained" text="Close" icon={Close} size="medium" onClick={handleDialogClose} color="secondary" />;
-
   return (
     <GenericDialog
       open={open}
