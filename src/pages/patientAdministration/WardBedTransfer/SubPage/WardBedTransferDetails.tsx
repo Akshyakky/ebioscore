@@ -4,6 +4,7 @@ import { Box, Divider, Grid, SelectChangeEvent, Typography } from "@mui/material
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { MeetingRoom as BedViewIcon } from "@mui/icons-material";
 import SaveIcon from "@mui/icons-material/Save";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
@@ -23,6 +24,8 @@ import { extendedAdmissionService } from "../../../../services/PatientAdministra
 import { WrBedDto } from "../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
 import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
 import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
+import CustomButton from "../../../../components/Button/CustomButton";
+import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 
 interface WardBedTransferDetailsProps {
   selectedAdmission?: AdmissionDto;
@@ -54,6 +57,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
     rNotes: "",
   });
 
+  const [isBedSelectionOpen, setIsBedSelectionOpen] = useState(false);
   const [roomOptions, setRoomOptions] = useState<DropdownOption[]>([]);
   const [bedOptions, setBedOptions] = useState<DropdownOption[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -267,6 +271,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
   }, [selectedAdmission, formState.bedID, formState.admitID]);
 
   const handleSave = useCallback(async () => {
+    debugger;
     setIsSubmitted(true);
 
     if (!formState.pChartID || !formState.bedID || !formState.reasonForTransfer) {
@@ -338,6 +343,22 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
     [fetchRooms, fetchBeds]
   );
 
+  const handleOpenBedSelection = useCallback(() => {
+    setIsBedSelectionOpen(true);
+  }, []);
+
+  const handleCloseBedSelection = useCallback(() => {
+    setIsBedSelectionOpen(false);
+  }, []);
+
+  const handleBedSelectFromDialog = useCallback(
+    (selectedBed: WrBedDto) => {
+      handleBedSelectFromView(selectedBed);
+      setIsBedSelectionOpen(false);
+    },
+    [handleBedSelectFromView]
+  );
+
   return (
     <>
       <CustomAccordion title="Patient Information" defaultExpanded>
@@ -395,73 +416,59 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
       )}
 
       <CustomAccordion title="Bed Selection" defaultExpanded>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2, color: "primary.main" }}>
-            Option 1: Select Using Dropdowns
-          </Typography>
-          <Grid container spacing={2}>
-            <FormField
-              type="select"
-              label="New Ward"
-              value={formState.rGrpID.toString()}
-              onChange={handleWardChange}
-              name="rGrpID"
-              ControlID="rGrpID"
-              options={dropdownValues.roomGroup}
-              isMandatory
-              size="small"
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-            />
+        <Grid container spacing={2}>
+          <FormField
+            type="select"
+            label="New Ward"
+            value={formState.rGrpID.toString()}
+            onChange={handleWardChange}
+            name="rGrpID"
+            ControlID="rGrpID"
+            options={dropdownValues.roomGroup}
+            isMandatory
+            size="small"
+            gridProps={{ xs: 12, sm: 6, md: 4 }}
+          />
 
-            <FormField
-              type="select"
-              label="New Room"
-              value={formState.rlID.toString()}
-              onChange={handleRoomChange}
-              name="rlID"
-              ControlID="rlID"
-              options={roomOptions}
-              isMandatory
-              size="small"
-              disabled={!formState.rGrpID}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-            />
+          <FormField
+            type="select"
+            label="New Room"
+            value={formState.rlID.toString()}
+            onChange={handleRoomChange}
+            name="rlID"
+            ControlID="rlID"
+            options={roomOptions}
+            isMandatory
+            size="small"
+            disabled={!formState.rGrpID}
+            gridProps={{ xs: 12, sm: 6, md: 4 }}
+          />
 
-            <FormField
-              type="select"
-              label="New Bed"
-              value={formState.bedID.toString()}
-              onChange={handleBedChange}
-              name="bedID"
-              ControlID="bedID"
-              options={bedOptions}
-              isMandatory
-              size="small"
-              disabled={!formState.rlID}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-            />
+          <FormField
+            type="select"
+            label="New Bed"
+            value={formState.bedID.toString()}
+            onChange={handleBedChange}
+            name="bedID"
+            ControlID="bedID"
+            options={bedOptions}
+            isMandatory
+            size="small"
+            disabled={!formState.rlID}
+            gridProps={{ xs: 12, sm: 6, md: 4 }}
+          />
+
+          <Grid item xs={12}>
+            <Box sx={{ display: "flex", justifyContent: "flex-start", mt: 2 }}>
+              <CustomButton variant="outlined" text="Select Bed from Ward View" onClick={handleOpenBedSelection} icon={BedViewIcon} color="primary" sx={{ borderRadius: 1 }} />
+            </Box>
           </Grid>
-        </Box>
-
-        <Divider sx={{ my: 3 }} />
-
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2, color: "primary.main" }}>
-            Option 2: Visual Bed Selection
-          </Typography>
-          <Box
-            sx={{
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-              height: "500px",
-              overflow: "hidden",
-            }}
-          >
-            <ManageBedDetails onBedSelect={handleBedSelectFromView} isSelectionMode={true} />
-          </Box>
-        </Box>
+        </Grid>
       </CustomAccordion>
+
+      <GenericDialog open={isBedSelectionOpen} onClose={handleCloseBedSelection} title="Select a Bed" maxWidth="xl" fullWidth showCloseButton>
+        <ManageBedDetails onBedSelect={handleBedSelectFromDialog} isSelectionMode={true} />
+      </GenericDialog>
 
       <CustomAccordion title="Transfer Details" defaultExpanded>
         <Grid container spacing={2}>
@@ -480,7 +487,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
             ControlID="transferDate"
             isMandatory
             size="small"
-            gridProps={{ xs: 12, sm: 6, md: 4 }}
+            gridProps={{ xs: 12, sm: 6, md: 3 }}
           />
 
           <FormField
@@ -497,7 +504,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
             ControlID="reasonForTransfer"
             isMandatory
             size="small"
-            gridProps={{ xs: 12, sm: 6, md: 4 }}
+            gridProps={{ xs: 12, sm: 6, md: 3 }}
           />
 
           <FormField
@@ -509,7 +516,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
             ControlID="treatPhyID"
             options={dropdownValues.attendingPhy}
             size="small"
-            gridProps={{ xs: 12, sm: 6, md: 4 }}
+            gridProps={{ xs: 12, sm: 6, md: 3 }}
           />
 
           <FormField
@@ -521,7 +528,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
             ControlID="treatingPhySpecialty"
             disabled
             size="small"
-            gridProps={{ xs: 12, sm: 6, md: 4 }}
+            gridProps={{ xs: 12, sm: 6, md: 3 }}
           />
 
           <FormField
