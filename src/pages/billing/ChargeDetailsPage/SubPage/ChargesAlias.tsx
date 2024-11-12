@@ -25,8 +25,8 @@ interface ChargeConfigDetailsProps {
   selectedWardCategoryIds: string[];
   handleWardCategoryChange: (e: any) => void;
   dropdownValues: {
-    pic: DropdownOption[];
-    bedCategory: DropdownOption[];
+    pic?: DropdownOption[];
+    bedCategory?: DropdownOption[];
   };
   isSubmitted: boolean;
   setFormData: (value: any) => void;
@@ -39,9 +39,9 @@ interface ChargeConfigDetailsProps {
 export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
   formData,
   handleSwitchChange,
-  selectedPicIds,
+  selectedPicIds = [],
   handlePicChange,
-  selectedWardCategoryIds,
+  selectedWardCategoryIds = [],
   handleWardCategoryChange,
   dropdownValues = { pic: [], bedCategory: [] },
   isSubmitted,
@@ -60,41 +60,39 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
   };
 
   const serviceChargesData: GridData[] = useMemo(() => {
-    return (dropdownValues.pic || [])
-      .filter((picItem) => selectedPicIds.includes(picItem.value))
-      .map((picItem) => {
-        const baseData: GridData = {
-          picName: picItem.label,
-          backgroundColor: colorMapping[picItem.label] || "#ffffff",
-        };
+    const pics = dropdownValues.pic || [];
+    const bedCategories = dropdownValues.bedCategory || [];
+    const picsToUse = selectedPicIds.length > 0 ? pics.filter((picItem) => selectedPicIds.includes(picItem.value)) : pics;
+    const categoriesToUse = selectedWardCategoryIds.length > 0 ? bedCategories.filter((cat) => selectedWardCategoryIds.includes(cat.value)) : bedCategories;
+    return picsToUse.map((picItem) => {
+      const baseData: GridData = {
+        picName: picItem.label,
+        backgroundColor: colorMapping[picItem.label] || "#ffffff",
+      };
 
-        (selectedWardCategoryIds || []).forEach((id) => {
-          const category = dropdownValues.bedCategory?.find((cat) => cat.value === id);
-          const categoryLabel = category ? category.label : `Category ${id}`;
-          baseData[`${categoryLabel}_drAmt`] = 0;
-          baseData[`${categoryLabel}_hospAmt`] = 0;
-          baseData[`${categoryLabel}_totAmt`] = 0;
-        });
-
-        return baseData;
+      categoriesToUse.forEach((category) => {
+        const categoryLabel = category.label;
+        baseData[`${categoryLabel}_drAmt`] = 0;
+        baseData[`${categoryLabel}_hospAmt`] = 0;
+        baseData[`${categoryLabel}_totAmt`] = 0;
       });
-  }, [dropdownValues.pic, selectedPicIds, selectedWardCategoryIds, dropdownValues.bedCategory, colorMapping]);
 
-  const selectedWardCategories = useMemo(
-    () => (dropdownValues.bedCategory || []).filter((category) => selectedWardCategoryIds.includes(category.value)),
-    [dropdownValues.bedCategory, selectedWardCategoryIds]
-  );
+      return baseData;
+    });
+  }, [dropdownValues.pic, dropdownValues.bedCategory, selectedPicIds, selectedWardCategoryIds, colorMapping]);
+
+  const selectedWardCategories = useMemo(() => {
+    const bedCategories = dropdownValues.bedCategory || [];
+
+    return selectedWardCategoryIds.length > 0 ? bedCategories.filter((category) => selectedWardCategoryIds.includes(category.value)) : bedCategories;
+  }, [dropdownValues.bedCategory, selectedWardCategoryIds]);
 
   const handleGridSelectionChange = (row: any) => {
     console.log("Selected row:", row);
   };
 
   const handleViewButtonClick = () => {
-    if (selectedPicIds.length > 0 && selectedWardCategoryIds.length > 0) {
-      setShowGrid(true);
-    } else {
-      alert("Please select both PIC Name and Ward Category before viewing.");
-    }
+    setShowGrid(true);
   };
 
   return (
