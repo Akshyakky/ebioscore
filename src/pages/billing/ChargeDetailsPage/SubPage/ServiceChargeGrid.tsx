@@ -1,5 +1,7 @@
+// ServiceChargeGrid.tsx
+
 import React, { useState } from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, TextField } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import FormField from "../../../../components/FormField/FormField";
 
@@ -57,9 +59,6 @@ const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
 }));
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  "&:nth-of-type(odd)": {
-    backgroundColor: theme.palette.action.hover,
-  },
   "&:hover": {
     backgroundColor: theme.palette.action.selected,
   },
@@ -68,6 +67,17 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWardCategories = [], data = [], onSelectionChange, maxHeight = "500px" }) => {
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [gridData, setGridData] = useState<GridData[]>(data);
+
+  // Professional, strong color palette for row backgrounds
+  const rowColors = [
+    "#f4cccc", // Light Red
+    "#d9ead3", // Soft Green
+    "#fff2cc", // Light Yellow
+    "#cfe2f3", // Light Blue
+    "#f9cb9c", // Soft Orange
+    "#d0e0e3", // Light Teal
+    "#ead1dc", // Soft Pink
+  ];
 
   const handleRowSelect = (row: GridData, index: number) => {
     setSelectedRow(index);
@@ -83,6 +93,7 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
       [field]: newValue,
     };
 
+    // Auto-calculate Total Amount
     const categoryPrefix = field.split("_")[0];
     if (field.includes("drAmt") || field.includes("hospAmt")) {
       const drAmt = parseFloat(updatedData[rowIndex][`${categoryPrefix}_drAmt`] || "0");
@@ -126,7 +137,7 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
       <StyledTableRow
         key={rowIndex}
         sx={{
-          backgroundColor: row.backgroundColor || "inherit",
+          backgroundColor: rowColors[rowIndex % rowColors.length], // Apply solid background colors
         }}
       >
         <StyledTableCell>
@@ -184,11 +195,9 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
 
   return (
     <Box sx={{ maxHeight, maxWidth: "100%", overflowY: "auto", overflowX: "auto" }}>
-      {" "}
       <Paper sx={{ maxHeight }}>
         <StyledTableContainer>
           <Table stickyHeader sx={{ minWidth: `${selectedWardCategories.length * 300 + 300}px` }}>
-            {" "}
             <TableHead>
               {renderGroupedHeaders()}
               {renderSubHeaders()}

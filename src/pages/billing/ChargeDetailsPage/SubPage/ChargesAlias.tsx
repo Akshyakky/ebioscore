@@ -53,6 +53,18 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
 }) => {
   const [showGrid, setShowGrid] = useState(false);
 
+  const adjustmentOptions = [
+    { value: "None", label: "None" },
+    { value: "Increase", label: "Increase" },
+    { value: "Decrease", label: "Decrease" },
+  ];
+
+  const amountOptions = [
+    { value: "Both", label: "Both" },
+    { value: "Dr Amt", label: "Dr Amt" },
+    { value: "Hosp Amt", label: "Hosp Amt" },
+  ];
+
   const colorMapping: Record<string, string> = {
     "BPL CARD": "#f8d7da",
     DISASTER: "#d1ecf1",
@@ -160,12 +172,60 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
               ControlID="amount"
               size="small"
             />
+
+            <FormField
+              type="radio"
+              name=""
+              label="Adjustment Type"
+              value={formData.chargeInfo.adjustmentType || "None"}
+              onChange={(e) =>
+                setFormData((prev: any) => ({
+                  ...prev,
+                  chargeInfo: {
+                    ...prev.chargeInfo,
+                    adjustmentType: e.target.value,
+                  },
+                }))
+              }
+              options={adjustmentOptions}
+              inline
+              ControlID="adjustmentType"
+            />
+
+            <FormField
+              type="radio"
+              name=""
+              label="Amount Type"
+              value={formData.chargeInfo.amountType || "Hosp Amt"}
+              onChange={(e) =>
+                setFormData((prev: any) => ({
+                  ...prev,
+                  chargeInfo: {
+                    ...prev.chargeInfo,
+                    amountType: e.target.value,
+                  },
+                }))
+              }
+              options={amountOptions}
+              inline
+              ControlID="amountType"
+              sx={{ ml: 4 }}
+            />
           </Grid>
         </Grid>
       </Grid>
-
       <Grid item xs={12} sx={{ mt: 2 }}>
-        <CustomButton variant="contained" color="secondary" onClick={handleViewButtonClick} text="View" />
+        <Box display="flex" gap={2}>
+          <CustomButton variant="contained" color="secondary" onClick={handleViewButtonClick} text="View" />
+          <CustomButton
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              console.log("Apply button clicked");
+            }}
+            text="Apply"
+          />
+        </Box>
       </Grid>
 
       <Grid item xs={12} sx={{ mt: 2 }}>

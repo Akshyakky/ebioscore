@@ -92,7 +92,8 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
 
   useEffect(() => {
     if (editData) {
-      setFormData(editData); // Load the data for editing
+      setFormData(editData);
+      console.log("Edit data received in ChargeDetails:", editData); // Load the data for editing
     } else {
       handleClear();
     }
