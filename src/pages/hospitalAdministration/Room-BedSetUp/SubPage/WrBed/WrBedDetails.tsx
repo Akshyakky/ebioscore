@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from "react";
-import { Box, Grid, IconButton, Typography } from "@mui/material";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
+import { Box, Grid, IconButton, SelectChangeEvent, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
 import EditIcon from "@mui/icons-material/Edit";
@@ -14,7 +14,7 @@ import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { store } from "../../../../../store/store";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
-import { wrBedService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import { roomListService, wrBedService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Folder as FolderIcon, FolderOpen as FolderOpenIcon } from "@mui/icons-material";
 import { showAlert } from "../../../../../utils/Common/showAlert";
 
@@ -33,6 +33,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
   const [formData, setFormData] = useState<WrBedDto>(getInitialFormData());
   const { handleDropdownChange } = useDropdownChange<WrBedDto>(setFormData);
   const dropdownValues = useDropdownValues(["bedCategory", "service"]);
+  const [filteredRoomLists, setFilteredRoomLists] = useState<RoomListDto[]>([]);
 
   function getInitialFormData(): WrBedDto {
     return {
@@ -53,6 +54,24 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
       rgrpID: 0,
     };
   }
+
+  useEffect(() => {
+    if (formData.rgrpID) {
+      const filtered = roomLists.filter((room) => room.rgrpID === formData.rgrpID);
+      setFilteredRoomLists(filtered);
+    } else {
+      setFilteredRoomLists([]);
+    }
+  }, [formData.rgrpID, roomLists]);
+
+  const handleRoomGroupChange = useCallback((event: SelectChangeEvent<string>) => {
+    const newValue = event.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      rgrpID: parseInt(newValue, 10),
+      rlID: 0,
+    }));
+  }, []);
 
   const handleAdd = useCallback((isSubGroup: boolean = false, parentGroup?: WrBedDto) => {
     setFormData({
@@ -108,14 +127,16 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
     try {
       const response = await wrBedService.getById(row.bedID);
       if (response.success && response.data) {
-        setFormData({
-          ...response.data,
-          wbCatID: response.data.wbCatID || 0,
-          bchID: response.data.bchID || 0,
-          rlID: response.data.rlID || 0,
-        });
-        setDialogTitle("Edit Bed");
-        setIsDialogOpen(true);
+        const bedData = response.data;
+        const roomResponse = await roomListService.getById(bedData.rlID);
+        if (roomResponse.success && roomResponse.data) {
+          setFormData({
+            ...bedData,
+            rgrpID: roomResponse.data.rgrpID,
+          });
+          setDialogTitle("Edit Bed");
+          setIsDialogOpen(true);
+        }
       } else {
         showAlert("Error", response.errorMessage || "Failed to load bed details", "error");
       }
@@ -291,12 +312,13 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
             gridProps={{ xs: 12 }}
             fullWidth
           />
+
           <FormField
             type="select"
             label="Room Group"
             name="rgrpID"
             value={formData.rgrpID?.toString() || ""}
-            onChange={(e) => handleChange(e as React.ChangeEvent<HTMLInputElement>)}
+            onChange={handleRoomGroupChange}
             options={roomGroups.map((group) => ({
               label: group.rGrpName,
               value: group.rGrpID.toString(),
@@ -310,13 +332,14 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
             name="rlID"
             value={formData.rlID?.toString() || ""}
             onChange={(e) => handleChange(e as React.ChangeEvent<HTMLInputElement>)}
-            options={roomLists.map((list) => ({
+            options={filteredRoomLists.map((list) => ({
               label: list.rName,
               value: list.rlID.toString(),
             }))}
             gridProps={{ xs: 12 }}
             ControlID="rlID"
           />
+
           <FormField
             type="select"
             label="Bed Category"

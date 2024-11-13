@@ -53,6 +53,11 @@ const AppModifiedDetails: React.FC = () => {
     fetchMasterList();
   }, []);
 
+  const handleAddField = () => {
+    setFormData(null);
+    setIsFieldDialogOpen(true);
+  };
+
   const fetchMasterList = async () => {
     setLoading(true);
     try {
@@ -120,6 +125,18 @@ const AppModifiedDetails: React.FC = () => {
       if (response) {
         showAlert("Success", "Category added successfully", "success");
         setIsCategoryDialogOpen(false);
+        setCategoryFormData({
+          fieldID: 0,
+          fieldCode: "",
+          fieldName: "",
+          auGrpID: 0,
+          rActiveYN: "Y",
+          compID: store.getState().userDetails.compID || 0,
+          compCode: store.getState().userDetails.compCode || "",
+          compName: store.getState().userDetails.compName || "",
+          transferYN: "Y",
+          rNotes: null,
+        });
         fetchMasterList();
       } else {
         showAlert("Error", "Failed to add category", "error");
@@ -164,9 +181,15 @@ const AppModifiedDetails: React.FC = () => {
       showAlert("Error", "An error occurred while fetching field details.", "error");
     }
   }, []);
+  const handleCloseDialog = () => {
+    setFormData(null);
+    setIsFieldDialogOpen(false);
+  };
 
   const handleFieldAddedOrUpdated = () => {
     fetchFields(selectedMasterId);
+    setFormData(null);
+    setIsFieldDialogOpen(false);
   };
 
   const handleDelete = useCallback(
@@ -249,7 +272,7 @@ const AppModifiedDetails: React.FC = () => {
         </Grid>
         <Grid item xs={12} sm={12} md={12} container justifyContent="space-between" alignItems="center">
           <CustomButton icon={AddIcon} text="Add Category" onClick={() => setIsCategoryDialogOpen(true)} variant="contained" sx={{ float: "left" }} />
-          <CustomButton icon={AddIcon} text="Add Field" onClick={() => setIsFieldDialogOpen(true)} variant="contained" sx={{ float: "right" }} disabled={selectedMasterId === 0} />
+          <CustomButton icon={AddIcon} text="Add Field" onClick={handleAddField} variant="contained" sx={{ float: "right" }} disabled={selectedMasterId === 0} />
         </Grid>
       </Grid>
       <CustomGrid columns={columns} data={fieldsList} />
@@ -319,7 +342,7 @@ const AppModifiedDetails: React.FC = () => {
 
       <ModifiedFieldDialog
         open={isFieldDialogOpen}
-        onClose={() => setIsFieldDialogOpen(false)}
+        onClose={handleCloseDialog}
         selectedCategoryName={selectedCategoryName}
         isFieldCodeDisabled={true}
         initialFormData={formData || {}}

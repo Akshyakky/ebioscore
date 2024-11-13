@@ -2,13 +2,11 @@ import React from "react";
 import { DepartmentDto } from "../../../../interfaces/Billing/DepartmentDto";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { departmentService } from "../../../../services/CommonServices/CommonModelServices";
-
 interface DepartmentListSearchProps {
   open: boolean;
   onClose: () => void;
   onSelect: (departmentDto: DepartmentDto) => void;
 }
-
 const DepartmentListSearch: React.FC<DepartmentListSearchProps> = ({ open, onClose, onSelect }) => {
   const fetchItems = () => departmentService.getAll().then((result) => result.data || []);
   const updateActiveStatus = async (id: number, status: boolean) => {

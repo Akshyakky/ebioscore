@@ -1,5 +1,5 @@
 import React from "react";
-import { BChargeDto, ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
+import { BChargeDto } from "../../../../interfaces/Billing/BChargeDetails";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
 import { Column } from "../../../../components/CustomGrid/CustomGrid";
@@ -79,6 +79,7 @@ const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose
       pagination={true}
       showExportCSV={true}
       showExportPDF={true}
+      isEditButtonVisible={true}
     />
   );
 };
