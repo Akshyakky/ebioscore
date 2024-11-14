@@ -12,13 +12,13 @@ import { serviceGroupService } from "../../../../services/BillingServices/Billin
 import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
 import ChargeBasicDetails from "./Charges";
 import ChargeConfigDetails from "./ChargesAlias";
-
 interface ChargeDetailsProps {
   editData?: ChargeDetailsDto;
 }
 const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const { compID, compCode, compName } = store.getState().userDetails;
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");
+
   const [formData, setFormData] = useState<ChargeDetailsDto>({
     chargeInfo: {
       rActiveYN: "Y",
@@ -42,6 +42,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       cNhsCode: "",
       cNhsEnglishName: "",
       chargeCost: "0",
+      scheduleDate: new Date(),
     },
     chargeDetails: editData?.chargeDetails || [
       {
@@ -136,6 +137,15 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         chargeStatus: "A",
       })),
     }));
+  }, []);
+
+  const handleDateChange = useCallback((date: Date | null, type: "scheduleDate" | "") => {
+    if (date) {
+      setFormData((prev) => ({
+        ...prev,
+        chargeInfo: { ...prev.chargeInfo, [type]: date },
+      }));
+    }
   }, []);
 
   const handleWardCategoryChange = useCallback((event: SelectChangeEvent<unknown>) => {
@@ -437,7 +447,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   return (
     <Paper variant="elevation" sx={{ padding: 2, mt: 2 }}>
       <Typography variant="h6">Charge Details</Typography>
-
       <ChargeBasicDetails
         formData={formData}
         handleInputChange={handleInputChange}
@@ -448,6 +457,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         dropdownValues={dropdownValues}
         serviceGroups={serviceGroups}
         isSubmitted={isSubmitted}
+        handleDateChange={handleDateChange} // Make sure this line is included
       />
 
       <ChargeConfigDetails

@@ -12,6 +12,7 @@ interface ChargeBasicDetailsProps {
   dropdownValues: any;
   serviceGroups: any[];
   isSubmitted: boolean;
+  handleDateChange: (date: Date | null, type: "scheduleDate" | "") => void;
 }
 
 const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
@@ -24,6 +25,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
   dropdownValues,
   serviceGroups,
   isSubmitted,
+  handleDateChange,
 }) => {
   return (
     <Grid container spacing={2}>
@@ -117,6 +119,15 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             ControlID="cNhsEnglishName"
             isSubmitted={isSubmitted}
           />{" "}
+          <FormField
+            type="datepicker"
+            label="Schedule Date"
+            value={formData.chargeInfo.scheduleDate}
+            onChange={(date: Date | null) => handleDateChange(date, "scheduleDate")}
+            name="scheduleDate"
+            ControlID="scheduleDate"
+            isSubmitted={isSubmitted}
+          />
         </Grid>
         <Grid container spacing={2}>
           <FormField
