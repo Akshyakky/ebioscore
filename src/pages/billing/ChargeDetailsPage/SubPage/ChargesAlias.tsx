@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Grid, Typography, Box } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
@@ -10,13 +10,11 @@ interface DropdownOption {
   value: string;
   label: string;
 }
-
 interface GridData {
   picName: string;
   backgroundColor?: string;
   [key: string]: any;
 }
-
 interface ChargeConfigDetailsProps {
   formData: ChargeDetailsDto;
   handleSwitchChange: (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -35,7 +33,6 @@ interface ChargeConfigDetailsProps {
   columns: any[];
   aliasData: any[];
 }
-
 export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
   formData,
   handleSwitchChange,
@@ -52,6 +49,7 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
   aliasData,
 }) => {
   const [showGrid, setShowGrid] = useState(false);
+  const [gridData, setGridData] = useState<GridData[]>([]);
 
   const adjustmentOptions = [
     { value: "None", label: "None" },
@@ -71,11 +69,23 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
     ESIS: "#d4edda",
   };
 
+  const calculateAdjustedAmount = (baseAmount: number, adjustment: string, value: number) => {
+    switch (adjustment) {
+      case "Increase":
+        return baseAmount + value;
+      case "Decrease":
+        return Math.max(baseAmount - value, 0);
+      default:
+        return value;
+    }
+  };
+
   const serviceChargesData: GridData[] = useMemo(() => {
     const pics = dropdownValues.pic || [];
     const bedCategories = dropdownValues.bedCategory || [];
     const picsToUse = selectedPicIds.length > 0 ? pics.filter((picItem) => selectedPicIds.includes(picItem.value)) : pics;
     const categoriesToUse = selectedWardCategoryIds.length > 0 ? bedCategories.filter((cat) => selectedWardCategoryIds.includes(cat.value)) : bedCategories;
+
     return picsToUse.map((picItem) => {
       const baseData: GridData = {
         picName: picItem.label,
@@ -104,7 +114,42 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
   };
 
   const handleViewButtonClick = () => {
-    setShowGrid(true);
+    if (!showGrid) {
+      setGridData(serviceChargesData);
+      setShowGrid(true);
+    }
+  };
+
+  useEffect(() => {
+    if (showGrid) {
+      setGridData([...gridData]);
+    }
+  }, [showGrid, gridData]);
+
+  const handleApplyButtonClick = () => {
+    const amount = parseFloat(formData.chargeInfo.chValue) || 0;
+    const adjustmentType = formData.chargeInfo.adjustmentType;
+    const amountType = formData.chargeInfo.amountType;
+    const isPercentage = formData.chargeInfo.percentage === "Y";
+    const updatedData = gridData.map((row) => {
+      const updatedRow = { ...row };
+      selectedWardCategories.forEach((category) => {
+        const categoryLabel = category.label;
+        const currentDrAmt = parseFloat(updatedRow[`${categoryLabel}_drAmt`] || 0);
+        const currentHospAmt = parseFloat(updatedRow[`${categoryLabel}_hospAmt`] || 0);
+        const adjustmentValue = isPercentage ? (amount / 100) * (currentDrAmt + currentHospAmt) : amount;
+        if (amountType === "Both" || amountType === "Dr Amt") {
+          updatedRow[`${categoryLabel}_drAmt`] = calculateAdjustedAmount(currentDrAmt, adjustmentType, adjustmentValue);
+        }
+        if (amountType === "Both" || amountType === "Hosp Amt") {
+          updatedRow[`${categoryLabel}_hospAmt`] = calculateAdjustedAmount(currentHospAmt, adjustmentType, adjustmentValue);
+        }
+        updatedRow[`${categoryLabel}_totAmt`] = (parseFloat(updatedRow[`${categoryLabel}_drAmt`]) + parseFloat(updatedRow[`${categoryLabel}_hospAmt`])).toFixed(2);
+      });
+
+      return updatedRow;
+    });
+    setGridData(updatedData);
   };
 
   return (
@@ -151,7 +196,7 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
               />
             </Grid>
 
-            <Grid item sx={{ mt: 2 }}>
+            <Grid item sx={{ mt: 2, ml: -2 }}>
               <Typography variant="body1">Amount</Typography>
             </Grid>
             <FormField
@@ -176,7 +221,7 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
             <FormField
               type="radio"
               name=""
-              label="Adjustment Type"
+              label=""
               value={formData.chargeInfo.adjustmentType || "None"}
               onChange={(e) =>
                 setFormData((prev: any) => ({
@@ -195,7 +240,7 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
             <FormField
               type="radio"
               name=""
-              label="Amount Type"
+              label=""
               value={formData.chargeInfo.amountType || "Hosp Amt"}
               onChange={(e) =>
                 setFormData((prev: any) => ({
@@ -211,25 +256,18 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
               ControlID="amountType"
               sx={{ ml: 4 }}
             />
+            <Grid sx={{ mt: 2 }}>
+              <Box display="flex" gap={2}>
+                <CustomButton variant="contained" color="secondary" onClick={handleViewButtonClick} text="View" size="small" />
+                <CustomButton variant="contained" color="primary" onClick={handleApplyButtonClick} text="Apply" size="small" />
+              </Box>
+            </Grid>
           </Grid>
         </Grid>
       </Grid>
-      <Grid item xs={12} sx={{ mt: 2 }}>
-        <Box display="flex" gap={2}>
-          <CustomButton variant="contained" color="secondary" onClick={handleViewButtonClick} text="View" />
-          <CustomButton
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              console.log("Apply button clicked");
-            }}
-            text="Apply"
-          />
-        </Box>
-      </Grid>
 
-      <Grid item xs={12} sx={{ mt: 2 }}>
-        <Box display="flex" justifyContent="flex-start" mb={2}>
+      <Grid sx={{ mt: 2 }}>
+        <Box mb={2}>
           <CustomButton
             variant={selectedTab === "ServiceCharges" ? "contained" : "outlined"}
             color="primary"
@@ -246,10 +284,9 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
           <Typography variant="h6" gutterBottom>
             Service Charges
           </Typography>
-          <GroupedCustomGrid selectedWardCategories={selectedWardCategories} data={serviceChargesData} onSelectionChange={handleGridSelectionChange} />
+          <GroupedCustomGrid selectedWardCategories={selectedWardCategories} data={gridData} onSelectionChange={handleGridSelectionChange} />
         </Box>
       )}
-
       {selectedTab === "ServiceAlias" && (
         <Box>
           <Typography variant="h6" gutterBottom>

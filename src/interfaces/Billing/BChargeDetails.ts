@@ -27,6 +27,7 @@ export interface BChargeDto extends RecordFields {
   cNhsEnglishName?: string;
   nhsCstWt?: string;
   chargeCost?: string;
+  scheduleDate?: Date;
 }
 export interface BChargeDetailsDto extends RecordFields {
   chDetID: number;

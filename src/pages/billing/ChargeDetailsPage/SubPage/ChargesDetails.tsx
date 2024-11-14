@@ -16,10 +16,10 @@ import { useAppSelector } from "@/store/hooks";
 interface ChargeDetailsProps {
   editData?: ChargeDetailsDto;
 }
-
 const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");
+
   const [formData, setFormData] = useState<ChargeDetailsDto>({
     chargeInfo: {
       rActiveYN: "Y",
@@ -43,8 +43,8 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       cNhsCode: "",
       cNhsEnglishName: "",
       chargeCost: "0",
+      scheduleDate: new Date(),
     },
-
     chargeDetails: editData?.chargeDetails || [
       {
         rActiveYN: "Y",
@@ -61,7 +61,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         chargeStatus: "A",
       },
     ],
-
     chargeAliases: editData?.chargeAliases || [
       {
         rActiveYN: "Y",
@@ -93,7 +92,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   useEffect(() => {
     if (editData) {
       setFormData(editData);
-      console.log("Edit data received in ChargeDetails:", editData); // Load the data for editing
+      console.log("Edit data received in ChargeDetails:", editData);
     } else {
       handleClear();
     }
@@ -139,6 +138,15 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         chargeStatus: "A",
       })),
     }));
+  }, []);
+
+  const handleDateChange = useCallback((date: Date | null, type: "scheduleDate" | "") => {
+    if (date) {
+      setFormData((prev) => ({
+        ...prev,
+        chargeInfo: { ...prev.chargeInfo, [type]: date },
+      }));
+    }
   }, []);
 
   const handleWardCategoryChange = useCallback((event: SelectChangeEvent<unknown>) => {
@@ -440,7 +448,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   return (
     <Paper variant="elevation" sx={{ padding: 2, mt: 2 }}>
       <Typography variant="h6">Charge Details</Typography>
-
       <ChargeBasicDetails
         formData={formData}
         handleInputChange={handleInputChange}
@@ -451,6 +458,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         dropdownValues={dropdownValues}
         serviceGroups={serviceGroups}
         isSubmitted={isSubmitted}
+        handleDateChange={handleDateChange} // Make sure this line is included
       />
 
       <ChargeConfigDetails
