@@ -16,7 +16,6 @@ import ChargeConfigDetails from "./ChargesAlias";
 interface ChargeDetailsProps {
   editData?: ChargeDetailsDto;
 }
-
 const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const { compID, compCode, compName } = store.getState().userDetails;
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");
@@ -44,7 +43,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       cNhsEnglishName: "",
       chargeCost: "0",
     },
-
     chargeDetails: editData?.chargeDetails || [
       {
         rActiveYN: "Y",
@@ -61,7 +59,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         chargeStatus: "A",
       },
     ],
-
     chargeAliases: editData?.chargeAliases || [
       {
         rActiveYN: "Y",
@@ -93,7 +90,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   useEffect(() => {
     if (editData) {
       setFormData(editData);
-      console.log("Edit data received in ChargeDetails:", editData); // Load the data for editing
+      console.log("Edit data received in ChargeDetails:", editData);
     } else {
       handleClear();
     }

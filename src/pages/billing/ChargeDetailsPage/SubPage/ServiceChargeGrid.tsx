@@ -38,6 +38,22 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   },
 }));
 
+const StyledFormField = styled(FormField)(({ theme }) => ({
+  "& .MuiInputBase-root": {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    transition: "background-color 0.2s ease",
+    "&:hover": {
+      backgroundColor: "rgba(255, 255, 255, 1)",
+    },
+  },
+  "& .MuiOutlinedInput-root": {
+    "&.Mui-focused": {
+      backgroundColor: "#ffffff",
+      boxShadow: "0 0 0 2px rgba(0, 0, 0, 0.05)",
+    },
+  },
+}));
+
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   maxHeight: "500px",
   overflowY: "auto",
@@ -63,20 +79,16 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
     backgroundColor: theme.palette.action.selected,
   },
 }));
-
 export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWardCategories = [], data = [], onSelectionChange, maxHeight = "500px" }) => {
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
-  const [gridData, setGridData] = useState<GridData[]>(data);
-
-  // Professional, strong color palette for row backgrounds
   const rowColors = [
-    "#f4cccc", // Light Red
-    "#d9ead3", // Soft Green
-    "#fff2cc", // Light Yellow
-    "#cfe2f3", // Light Blue
-    "#f9cb9c", // Soft Orange
-    "#d0e0e3", // Light Teal
-    "#ead1dc", // Soft Pink
+    "rgba(236, 242, 255, 0.9)",
+    "rgba(255, 245, 238, 0.9)",
+    "rgba(240, 255, 244, 0.9)",
+    "rgba(255, 248, 240, 0.9)",
+    "rgba(245, 240, 255, 0.9)",
+    "rgba(240, 255, 255, 0.9)",
+    "rgba(255, 240, 245, 0.9)",
   ];
 
   const handleRowSelect = (row: GridData, index: number) => {
@@ -86,24 +98,19 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, rowIndex: number, field: string) => {
     const newValue = e.target.value;
-
-    const updatedData = [...gridData];
+    const updatedData = [...data];
     updatedData[rowIndex] = {
       ...updatedData[rowIndex],
       [field]: newValue,
     };
-
-    // Auto-calculate Total Amount
     const categoryPrefix = field.split("_")[0];
     if (field.includes("drAmt") || field.includes("hospAmt")) {
       const drAmt = parseFloat(updatedData[rowIndex][`${categoryPrefix}_drAmt`] || "0");
       const hospAmt = parseFloat(updatedData[rowIndex][`${categoryPrefix}_hospAmt`] || "0");
       updatedData[rowIndex][`${categoryPrefix}_totAmt`] = (drAmt + hospAmt).toFixed(2);
     }
-
-    setGridData(updatedData);
+    onSelectionChange?.(updatedData[rowIndex]);
   };
-
   const renderGroupedHeaders = () => (
     <TableRow>
       <StyledTableCell className="header" rowSpan={2}>
@@ -133,15 +140,29 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
   );
 
   const renderDataRows = () =>
-    gridData.map((row, rowIndex) => (
+    data.map((row, rowIndex) => (
       <StyledTableRow
         key={rowIndex}
         sx={{
-          backgroundColor: rowColors[rowIndex % rowColors.length], // Apply solid background colors
+          backgroundColor: rowColors[rowIndex % rowColors.length],
+          transition: "background-color 0.2s ease",
+          "&:hover": {
+            backgroundColor: rowColors[rowIndex % rowColors.length].replace("0.9)", "1)"),
+          },
         }}
       >
         <StyledTableCell>
-          <input type="radio" name="rowSelect" checked={selectedRow === rowIndex} onChange={() => handleRowSelect(row, rowIndex)} />
+          <input
+            type="radio"
+            name="rowSelect"
+            checked={selectedRow === rowIndex}
+            onChange={() => handleRowSelect(row, rowIndex)}
+            style={{
+              backgroundColor: "white",
+              padding: "5px",
+              borderRadius: "50%",
+            }}
+          />
         </StyledTableCell>
         <StyledTableCell>{row.picName}</StyledTableCell>
         {selectedWardCategories.map((category) => (
@@ -150,7 +171,7 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
               <FormField
                 type="number"
                 label="Dr Amt"
-                value={row[`${category.label}_drAmt`] || ""}
+                value={row[`${category.label}_drAmt`] || "0.00"}
                 onChange={(e) => handleInputChange(e, rowIndex, `${category.label}_drAmt`)}
                 placeholder="0.00"
                 fullWidth
@@ -158,13 +179,18 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
                 ControlID={`${category.label}_drAmt`}
                 name={`${category.label}_drAmt`}
                 step="any"
+                InputProps={{
+                  style: {
+                    backgroundColor: "#ffffff",
+                  },
+                }}
               />
             </StyledTableCell>
             <StyledTableCell>
               <FormField
                 type="number"
                 label="Hosp Amt"
-                value={row[`${category.label}_hospAmt`] || ""}
+                value={row[`${category.label}_hospAmt`] || "0.00"}
                 onChange={(e) => handleInputChange(e, rowIndex, `${category.label}_hospAmt`)}
                 placeholder="0.00"
                 fullWidth
@@ -172,6 +198,11 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
                 ControlID={`${category.label}_hospAmt`}
                 name={`${category.label}_hospAmt`}
                 step="any"
+                InputProps={{
+                  style: {
+                    backgroundColor: "#ffffff",
+                  },
+                }}
               />
             </StyledTableCell>
             <StyledTableCell>
@@ -186,6 +217,11 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
                 ControlID={`${category.label}_totAmt`}
                 name={`${category.label}_totAmt`}
                 onChange={() => {}}
+                InputProps={{
+                  style: {
+                    backgroundColor: "#ffffff",
+                  },
+                }}
               />
             </StyledTableCell>
           </React.Fragment>
