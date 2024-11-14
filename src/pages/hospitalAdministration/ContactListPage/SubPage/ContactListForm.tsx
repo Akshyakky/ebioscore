@@ -5,7 +5,6 @@ import { ContactListData } from "../../../../interfaces/HospitalAdministration/C
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import ContactListActions from "./ContactListActions";
 import ContactListSwitches from "./ContactListSwitches";
-import { useSelector } from "react-redux";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";

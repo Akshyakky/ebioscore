@@ -129,9 +129,9 @@ const AppModifiedDetails: React.FC = () => {
           fieldName: "",
           auGrpID: 0,
           rActiveYN: "Y",
-          compID: store.getState().userDetails.compID || 0,
-          compCode: store.getState().userDetails.compCode || "",
-          compName: store.getState().userDetails.compName || "",
+          compID: user.compID || 0,
+          compCode: user.compCode || "",
+          compName: user.compName || "",
           transferYN: "Y",
           rNotes: null,
         });
