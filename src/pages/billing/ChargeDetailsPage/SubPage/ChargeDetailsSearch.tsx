@@ -1,50 +1,69 @@
 import React from "react";
+import { BChargeDto } from "../../../../interfaces/Billing/BChargeDetails";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
 import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
+import { Column } from "../../../../components/CustomGrid/CustomGrid";
 
 interface ChargeDetailsSearchProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (chargeDetailsDto: ChargeDetailsDto) => void;
+  onSelect: (chargeDetails: BChargeDto) => void;
 }
 
 const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose, onSelect }) => {
-  const fetchItems = async () => {
+  const fetchItems = async (): Promise<BChargeDto[]> => {
     try {
-      debugger;
       const result = await chargeDetailsService.getAll();
-      return result || [];
+      return result.data;
     } catch (error) {
-      console.error("Error fetching charge details:", error);
       return [];
     }
   };
 
   const updateActiveStatus = async (id: number, status: boolean) => {
     try {
-      return await chargeDetailsService.updateActiveStatus(id, status);
+      const result = await chargeDetailsService.updateActiveStatus(id, status);
+      return result;
     } catch (error) {
-      console.error("Error updating active status:", error);
       return false;
     }
   };
 
-  const getItemId = (item: ChargeDetailsDto) => item.chargeInfo.chargeID;
-  const getItemActiveStatus = (item: ChargeDetailsDto) => item.chargeInfo.rActiveYN === "Y";
+  const getItemId = (item: BChargeDto) => item.chargeID;
+  const getItemActiveStatus = (item: BChargeDto) => item.chargeStatus === "Active";
 
-  // Define columns for the search table
-  const columns = [
-    { key: "serialNumber", header: "Sl No", visible: true, sortable: true },
-    { key: "chargeCode", header: "Charge Code", visible: true },
-    { key: "chargeDesc", header: "Charge Description", visible: true },
-    { key: "chargeType", header: "Charge Type", visible: true },
-    { key: "cShortName", header: "Short Name", visible: true },
-    { key: "chargeCost", header: "Cost", visible: true },
+  const columns: Column<BChargeDto>[] = [
+    {
+      key: "chargeCode",
+      header: "Service Code",
+      visible: true,
+      sortable: true,
+      render: (item: BChargeDto) => item.chargeCode,
+    },
+
+    {
+      key: "cNhsEnglishName",
+      header: "Service Name",
+      visible: true,
+      render: (item: BChargeDto) => item.cNhsEnglishName || "",
+    },
+
+    {
+      key: "chargeType",
+      header: "Service Type",
+      visible: true,
+      render: (item: BChargeDto) => item.chargeType,
+    },
+    {
+      key: "cShortName",
+      header: "Short Name",
+      visible: true,
+      render: (item: BChargeDto) => item.cShortName,
+    },
   ];
 
   return (
-    <GenericAdvanceSearch
+    <GenericAdvanceSearch<BChargeDto>
       open={open}
       onClose={onClose}
       onSelect={onSelect}
@@ -60,6 +79,7 @@ const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose
       pagination={true}
       showExportCSV={true}
       showExportPDF={true}
+      isEditButtonVisible={true}
     />
   );
 };

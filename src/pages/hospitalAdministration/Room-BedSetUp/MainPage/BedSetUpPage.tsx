@@ -55,13 +55,10 @@ const BedSetUpPage: React.FC = () => {
   const fetchBeds = async () => {
     setLoading(true);
     try {
-      // Fetch beds with their associated RoomList and RoomGroup
       const response = await wrBedService.getAllWithIncludes(["RoomList", "RoomList.RoomGroup"]);
       if (response.success && response.data) {
-        // Set the fetched beds with the RoomList and RoomGroup relationship to the state
         setBeds(response.data);
       } else {
-        // Log or handle errors related to invalid responses
         setBeds([]);
       }
     } catch (error) {

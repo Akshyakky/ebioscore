@@ -16,6 +16,7 @@ import { useAppSelector } from "@/store/hooks";
 interface ChargeDetailsProps {
   editData?: ChargeDetailsDto;
 }
+
 const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");
@@ -92,6 +93,9 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   useEffect(() => {
     if (editData) {
       setFormData(editData);
+      console.log("Edit data received in ChargeDetails:", editData); // Load the data for editing
+    } else {
+      handleClear();
     }
   }, [editData]);
 

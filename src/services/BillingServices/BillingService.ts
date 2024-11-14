@@ -12,7 +12,6 @@ interface MemSchemeAPIResponse {
   patMemID: string;
   patMemName: string;
 }
-
 interface PaymentSource {
   pTypeID: string;
   pTypeName: string;
@@ -26,7 +25,6 @@ const fetchPicValues = async (endpoint: string): Promise<DropdownOption[]> => {
       label: item.pTypeName,
     }));
   } catch (error) {
-    console.error("Error fetching pic values:", error);
     throw error;
   }
 };
@@ -39,7 +37,6 @@ const fetchMembershipScheme = async (endpoint: string, compId: number): Promise<
       label: item.patMemName,
     }));
   } catch (error) {
-    console.error("Error fetching membership scheme:", error);
     throw error;
   }
 };

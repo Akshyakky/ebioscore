@@ -1,6 +1,6 @@
 import React from "react";
-import { Grid } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
+import { Grid } from "@mui/material";
 
 interface ChargeBasicDetailsProps {
   formData: any;
@@ -116,7 +116,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             name="cNhsEnglishName"
             ControlID="cNhsEnglishName"
             isSubmitted={isSubmitted}
-          />
+          />{" "}
         </Grid>
         <Grid container spacing={2}>
           <FormField
