@@ -2,9 +2,8 @@ import React, { useCallback, useState, useMemo } from "react";
 import { Box, Container, Paper } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useSelector } from "react-redux";
-import ActionButtonGroup, { ButtonProps, } from "../../../../components/Button/ActionButtonGroup";
+import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import { useLoading } from "../../../../context/LoadingContext";
-import { RootState } from "../../../../store/reducers";
 import { ContactListService } from "../../../../services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { ContactListData } from "../../../../interfaces/HospitalAdministration/ContactListData";
 import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch";
@@ -12,9 +11,10 @@ import ContactListForm from "../SubPage/ContactListForm";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import useDayjs from "../../../../hooks/Common/useDateTime";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
+import { useAppSelector } from "@/store/hooks";
 
 const ContactListPage: React.FC = () => {
-  const { compID, compCode, compName } = useSelector((state: RootState) => state.userDetails);
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
   const { formatDateYMD, formatDateTime } = useDayjs();
 
@@ -66,7 +66,6 @@ const ContactListPage: React.FC = () => {
         stampPath: "",
         payPolicy: 0,
         transferYN: "N",
-
       },
       contactAddressDto: {
         cAddID: 0,
@@ -90,9 +89,9 @@ const ContactListPage: React.FC = () => {
         cAddStreet1: "",
         transferYN: "N",
         rActiveYN: "Y",
-        rNotes: ""
+        rNotes: "",
       },
-      contactDetailsDto: []
+      contactDetailsDto: [],
     };
   }, [compID, compCode, compName]);
 
@@ -119,11 +118,7 @@ const ContactListPage: React.FC = () => {
     setLoading(true);
     try {
       const contactDetails = await ContactListService.fetchContactDetails(conID);
-      if (
-        contactDetails &&
-        contactDetails.contactMastDto &&
-        contactDetails.contactAddressDto && contactDetails.contactDetailsDto
-      ) {
+      if (contactDetails && contactDetails.contactMastDto && contactDetails.contactAddressDto && contactDetails.contactDetailsDto) {
         setContactList(contactDetails);
         setSwitchStates({
           isEmployee: contactDetails.contactMastDto.isEmployeeYN === "Y",
@@ -156,7 +151,6 @@ const ContactListPage: React.FC = () => {
       isAuthorisedUser: false,
       isContract: false,
     });
-
   }, [getInitialContactListState]);
 
   const handleSave = useCallback(async () => {
@@ -165,25 +159,23 @@ const ContactListPage: React.FC = () => {
     try {
       const result = await ContactListService.saveContactList(contactList);
       if (result.success) {
-        showAlert('Notification', 'Contact list saved successfully', 'success', {
+        showAlert("Notification", "Contact list saved successfully", "success", {
           onConfirm: () => {
             handleClear();
             if (formRef.current) {
               formRef.current.resetForm();
             }
-          }
+          },
         });
       } else {
-        showAlert('Error', result.errorMessage || 'Failed to save contact list.', 'error');
+        showAlert("Error", result.errorMessage || "Failed to save contact list.", "error");
       }
     } catch (error) {
-      showAlert('Error', 'An unexpected error occurred while saving the contact list.', 'error');
+      showAlert("Error", "An unexpected error occurred while saving the contact list.", "error");
     } finally {
       setLoading(false);
     }
   }, [contactList, handleClear]);
-
-
 
   const actionButtons: ButtonProps[] = [
     {
@@ -215,11 +207,7 @@ const ContactListPage: React.FC = () => {
           />
         </Paper>
       </Container>
-      <ContactListSearch
-        open={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onEditContactList={handleEditContactList}
-      />
+      <ContactListSearch open={isSearchOpen} onClose={() => setIsSearchOpen(false)} onEditContactList={handleEditContactList} />
     </>
   );
 };

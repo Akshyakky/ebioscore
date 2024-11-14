@@ -6,10 +6,10 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
 import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { useAppSelector } from "@/store/hooks";
 
 interface ResourceDetailsProps {
   editData?: ResourceListData;
@@ -23,12 +23,12 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({ editData }) => {
     rNotes: "",
     rActiveYN: "Y",
     rLValidateYN: "N",
-    rLOtYN: "N"
+    rLOtYN: "N",
   });
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
+  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (editData) {
@@ -39,7 +39,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({ editData }) => {
         rNotes: editData.rNotes || "",
         rActiveYN: editData.rActiveYN || "Y",
         rLValidateYN: editData.rLValidateYN || "N",
-        rLOtYN: editData.rLOtYN || "N"
+        rLOtYN: editData.rLOtYN || "N",
       });
     } else {
       handleClear();
@@ -54,42 +54,48 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({ editData }) => {
       rNotes: "",
       rActiveYN: "Y",
       rLValidateYN: "N",
-      rLOtYN: "N"
+      rLOtYN: "N",
     });
   }, []);
 
-  const createResourceListData = useCallback((): ResourceListData => ({
-    rLID: editData ? editData.rLID : 0,
-    rLCode: formState.rLCode,
-    rLName: formState.rLName,
-    rNotes: formState.rNotes,
-    rActiveYN: formState.rActiveYN,
-    compID: compID || 0,
-    compCode: compCode || "",
-    compName: compName || "",
-    transferYN: "N",
-    rCreatedID: userID || 0,
-    rCreatedOn: serverDate || new Date(),
-    rCreatedBy: userName || "",
-    rModifiedID: userID || 0,
-    rModifiedOn: serverDate || new Date(),
-    rModifiedBy: userName || "",
-    rLValidateYN: formState.rLValidateYN,
-    rLOtYN: formState.rLOtYN
-  }), [formState, editData, compID, compCode, compName, userID, userName, serverDate]);
+  const createResourceListData = useCallback(
+    (): ResourceListData => ({
+      rLID: editData ? editData.rLID : 0,
+      rLCode: formState.rLCode,
+      rLName: formState.rLName,
+      rNotes: formState.rNotes,
+      rActiveYN: formState.rActiveYN,
+      compID: compID || 0,
+      compCode: compCode || "",
+      compName: compName || "",
+      transferYN: "N",
+      rCreatedID: userID || 0,
+      rCreatedOn: serverDate || new Date(),
+      rCreatedBy: userName || "",
+      rModifiedID: userID || 0,
+      rModifiedOn: serverDate || new Date(),
+      rModifiedBy: userName || "",
+      rLValidateYN: formState.rLValidateYN,
+      rLOtYN: formState.rLOtYN,
+    }),
+    [formState, editData, compID, compCode, compName, userID, userName, serverDate]
+  );
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormState(prev => ({ ...prev, [name]: value }));
+    setFormState((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  const handleSwitchChange = useCallback((name: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { checked } = event.target;
-    setFormState(prev => ({ ...prev, [name]: checked ? "Y" : "N" }));
-  }, []);
+  const handleSwitchChange = useCallback(
+    (name: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      const { checked } = event.target;
+      setFormState((prev) => ({ ...prev, [name]: checked ? "Y" : "N" }));
+    },
+    []
+  );
 
   const handleSave = async () => {
-    setFormState(prev => ({ ...prev, isSubmitted: true }));
+    setFormState((prev) => ({ ...prev, isSubmitted: true }));
     setLoading(true);
 
     try {
@@ -97,7 +103,7 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({ editData }) => {
       const result = await resourceListService.save(ResourceListData);
       if (result.success) {
         showAlert("Success", "Resource List saved successfully!", "success", {
-          onConfirm: handleClear
+          onConfirm: handleClear,
         });
       } else {
         showAlert("Error", result.errorMessage || "Failed to save Resource List.", "error");
@@ -143,53 +149,38 @@ const ResourceDetails: React.FC<ResourceDetailsProps> = ({ editData }) => {
         />
       </Grid>
       <Grid container spacing={2}>
-        <FormField
-          type="textarea"
-          label="Remarks"
-          value={formState.rNotes}
-          onChange={handleInputChange}
-          name="rNotes"
-          ControlID="rNotes"
-          placeholder="Notes"
-        />
+        <FormField type="textarea" label="Remarks" value={formState.rNotes} onChange={handleInputChange} name="rNotes" ControlID="rNotes" placeholder="Notes" />
       </Grid>
       <Grid container spacing={2}>
         <FormField
           type="switch"
-          label={formState.rActiveYN === 'Y' ? 'Active' : 'Hidden'}
+          label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
           value={formState.rActiveYN}
-          checked={formState.rActiveYN === 'Y'}
-          onChange={handleSwitchChange('rActiveYN')}
+          checked={formState.rActiveYN === "Y"}
+          onChange={handleSwitchChange("rActiveYN")}
           name="rActiveYN"
           ControlID="rActiveYN"
         />
         <FormField
           type="switch"
           label="Is Validate"
-          checked={formState.rLValidateYN === 'Y'}
+          checked={formState.rLValidateYN === "Y"}
           value={formState.rLValidateYN}
-          onChange={handleSwitchChange('rLValidateYN')}
+          onChange={handleSwitchChange("rLValidateYN")}
           name="rLValidateYN"
           ControlID="rLValidateYN"
         />
         <FormField
           type="switch"
           label="Is Operation Theatre"
-          checked={formState.rLOtYN === 'Y'}
+          checked={formState.rLOtYN === "Y"}
           value={formState.rLOtYN}
-          onChange={handleSwitchChange('rLOtYN')}
+          onChange={handleSwitchChange("rLOtYN")}
           name="rLOtYN"
           ControlID="rLOtYN"
         />
       </Grid>
-      <FormSaveClearButton
-        clearText="Clear"
-        saveText="Save"
-        onClear={handleClear}
-        onSave={handleSave}
-        clearIcon={DeleteIcon}
-        saveIcon={SaveIcon}
-      />
+      <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </Paper>
   );
 };

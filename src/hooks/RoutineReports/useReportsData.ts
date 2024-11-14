@@ -2,10 +2,7 @@
 import { useEffect, useState } from "react";
 import { useLoading } from "../../context/LoadingContext";
 
-const useReportsData = <T>(
-  fetchFunction: (auGrpID: number) => Promise<T[]>,
-  auGrpID: number
-) => {
+const useReportsData = <T>(fetchFunction: (auGrpID: number) => Promise<T[]>, auGrpID: number) => {
   const { setLoading } = useLoading(); // Use setLoading from context
   const [data, setData] = useState<T[]>([]);
   const [error, setError] = useState<Error | null>(null);

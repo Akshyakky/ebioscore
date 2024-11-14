@@ -17,11 +17,11 @@ import { OPIPHistPSHDto } from "../../../interfaces/ClinicalManagement/OPIPHistP
 import SurgicalHistory from "./PastSurgicalHistory/SurgicalHistory";
 import PastMedication from "./PastMedicationHistory/PastMedication";
 import { PastMedicationDto } from "../../../interfaces/ClinicalManagement/PastMedicationDto";
-import { store } from "../../../store/store";
 import { pastMedicationService } from "../../../services/ClinicalManagementServices/pastMedicationService";
 import { AllergyDto } from "../../../interfaces/ClinicalManagement/AllergyDto";
 import { allergyService } from "../../../services/ClinicalManagementServices/allergyService";
 import AllergyHistory from "./Allergies/AllergyHistory";
+import { useAppSelector } from "@/store/hooks";
 
 export interface HistoryState {
   familyHistory: OPIPHistFHDto[];
@@ -41,7 +41,7 @@ interface PatientHistoryProps {
 }
 export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo, opipCaseNo, shouldClear = false, onHistoryChange }) => {
   const [tabValue, setTabValue] = useState(0);
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [historyState, setHistoryState] = useState<HistoryState>({
     familyHistory: [],
     socialHistory: [],

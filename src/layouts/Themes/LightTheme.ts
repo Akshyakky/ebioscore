@@ -1,3 +1,4 @@
+//LightTheme.ts
 import { createTheme } from "@mui/material/styles";
 
 const drawerWidth = 340;

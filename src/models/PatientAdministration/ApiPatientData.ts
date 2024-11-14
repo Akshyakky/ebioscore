@@ -1,8 +1,8 @@
 // models/PatientAdministration/ApiPatientData.ts
 
 export interface ApiPatientData {
-    PChartCode: string;
-    FirstName: string;
-    LastName: string;
-    // ... other fields ...
+  PChartCode: string;
+  FirstName: string;
+  LastName: string;
+  // ... other fields ...
 }

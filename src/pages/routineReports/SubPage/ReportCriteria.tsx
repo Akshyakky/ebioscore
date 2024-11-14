@@ -12,8 +12,8 @@ import { Company } from "../../../types/Common/Company.type";
 import MultiSelectDropdown from "../../../components/DropDown/MultiSelectDropdown";
 import { ExportService } from "../../../services/RoutineReportService/ExportService";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../store/reducers";
 import PdfViewer from "../../../components/PDFViewer/PdfViewer";
+import { useAppSelector } from "@/store/hooks";
 
 interface ReportCriteriaProps {
   onExportExcel: (reportId: string, fromDate: string, toDate: string, selectedCompanies: string[]) => void;
@@ -28,7 +28,7 @@ const ReportCriteria: React.FC<ReportCriteriaProps> = ({ onExportExcel, onPrintP
   const [toDate, setToDate] = useState<Date | null>(new Date());
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
-  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const userInfo = useAppSelector((state) => state.auth);
   const token = userInfo.token!;
   const formatDate = (date: Date | null) => (date ? date.toISOString().split("T")[0] : "");
   const [pdfUrl, setPdfUrl] = useState("");
@@ -159,7 +159,7 @@ const ReportCriteria: React.FC<ReportCriteriaProps> = ({ onExportExcel, onPrintP
           onChange={handleCompanyChange}
           defaultText="Select Companies"
           size="small"
-          multiple={true}
+          // multiple={true}
         />
         {isPdfViewerOpen && <PdfViewer pdfUrl={pdfUrl} onClose={() => setIsPdfViewerOpen(false)} open={isPdfViewerOpen} reportName={reportName} />}
       </DialogContent>

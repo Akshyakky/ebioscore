@@ -12,23 +12,23 @@ interface MembershipSchemeProps {
   setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
 }
 
-const MembershipScheme: React.FC<MembershipSchemeProps> = ({
-  formData,
-  setFormData,
-}) => {
+const MembershipScheme: React.FC<MembershipSchemeProps> = ({ formData, setFormData }) => {
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
-  const dropdownValues = useDropdownValues(['membershipScheme']);
+  const dropdownValues = useDropdownValues(["membershipScheme"]);
   const serverDate = useServerDate();
 
-  const handleDateChange = useCallback((date: Date | null) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      patRegisters: {
-        ...prevFormData.patRegisters,
-        patMemSchemeExpiryDate: date ? date : serverDate,
-      },
-    }));
-  }, [setFormData]);
+  const handleDateChange = useCallback(
+    (date: Date | null) => {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        patRegisters: {
+          ...prevFormData.patRegisters,
+          patMemSchemeExpiryDate: date ? date : serverDate,
+        },
+      }));
+    },
+    [setFormData]
+  );
 
   return (
     <FormSectionWrapper title="Membership Scheme" spacing={1}>

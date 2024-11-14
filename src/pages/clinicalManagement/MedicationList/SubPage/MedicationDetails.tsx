@@ -8,17 +8,17 @@ import SaveIcon from "@mui/icons-material/Save";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { MedicationListDto } from "../../../../interfaces/ClinicalManagement/MedicationListDto";
-import { store } from "../../../../store/store";
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
+import { useAppSelector } from "@/store/hooks";
 
 interface MedicationListDetailsProps {
   selectedData?: MedicationListDto;
 }
 
 const MedicationListDetails: React.FC<MedicationListDetailsProps> = ({ selectedData }) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [formState, setFormState] = useState<MedicationListDto>({
     mlID: 0,
     mlCode: "",

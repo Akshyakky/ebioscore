@@ -12,9 +12,9 @@ import { RoomGroupDto, RoomListDto, WrBedDto } from "../../../../../interfaces/H
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
-import { store } from "../../../../../store/store";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import { roomGroupService, roomListService, wrBedService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import { useAppSelector } from "@/store/hooks";
 
 interface RoomListDetailsProps {
   roomLists: RoomListDto[];
@@ -30,6 +30,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
   const [formData, setFormData] = useState<RoomListDto>(getInitialFormData());
   const { handleDropdownChange } = useDropdownChange<RoomListDto>(setFormData);
   const dropdownValues = useDropdownValues(["floor", "unit", "roomGroup"]);
+  const user = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     setUpdatedRoomLists(roomLists);
@@ -53,9 +54,9 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
       noOfBeds: 0,
       rActiveYN: "Y",
       rgrpID: 0,
-      compID: store.getState().userDetails.compID || 0,
-      compCode: store.getState().userDetails.compCode || "",
-      compName: store.getState().userDetails.compName || "",
+      compID: user.compID || 0,
+      compCode: user.compCode || "",
+      compName: user.compName || "",
       transferYN: "Y",
       rLocation: "",
       rLocationID: 0,

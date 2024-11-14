@@ -1,12 +1,8 @@
 import { CommonApiService } from "../../CommonApiService";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { store } from "../../../store/store";
-import {
-  DateFilterType,
-  GetPatientVisitHistory,
-  revisitFormData,
-} from "../../../interfaces/PatientAdministration/revisitFormData";
+import { DateFilterType, GetPatientVisitHistory, OPVisitDto } from "../../../interfaces/PatientAdministration/revisitFormData";
+import { store } from "@/store";
 
 // Initialize ApiService with the base URL for the patient administration API
 const apiService = new CommonApiService({
@@ -14,34 +10,18 @@ const apiService = new CommonApiService({
 });
 
 // Function to get the token from the store
-const getToken = () => store.getState().userDetails.token!;
+const getToken = () => store.getState().auth.token!;
 
-export const getPatientHistoryByPChartID = async (
-  pChartID: number
-): Promise<{ data: GetPatientVisitHistory[]; success: boolean }> => {
-  return apiService.get<{ data: GetPatientVisitHistory[]; success: boolean }>(
-    `Revisit/GetPatientHistoryByPChartID/${pChartID}`,
-    getToken()
-  );
+export const getPatientHistoryByPChartID = async (pChartID: number): Promise<{ data: GetPatientVisitHistory[]; success: boolean }> => {
+  return apiService.get<{ data: GetPatientVisitHistory[]; success: boolean }>(`Revisit/GetPatientHistoryByPChartID/${pChartID}`, getToken());
 };
 
-export const saveOPVisits = async (
-  opVisitsData: revisitFormData
-): Promise<OperationResult<revisitFormData>> => {
-  return apiService.post<OperationResult<revisitFormData>>(
-    "Revisit/SaveVisitDetails",
-    opVisitsData,
-    getToken()
-  );
+export const saveOPVisits = async (opVisitsData: OPVisitDto): Promise<OperationResult<OPVisitDto>> => {
+  return apiService.post<OperationResult<OPVisitDto>>("Revisit/SaveVisitDetails", opVisitsData, getToken());
 };
 
-export const getLastVisitDetailsByPChartID = async (
-  pChartID: number
-): Promise<OperationResult<any>> => {
-  return apiService.get<OperationResult<any>>(
-    `Revisit/GetLastVisitDetails/${pChartID}`,
-    getToken()
-  );
+export const getLastVisitDetailsByPChartID = async (pChartID: number): Promise<OperationResult<any>> => {
+  return apiService.get<OperationResult<any>>(`Revisit/GetLastVisitDetails/${pChartID}`, getToken());
 };
 
 export const getWaitingPatientDetails = async (
@@ -62,22 +42,11 @@ export const getWaitingPatientDetails = async (
     params.endDate = endDate.toISOString().split("T")[0];
   }
 
-  return apiService.get<OperationResult<any[]>>(
-    "Revisit/GetWaitingPatientDetails",
-    getToken(),
-    params
-  );
+  return apiService.get<OperationResult<any[]>>("Revisit/GetWaitingPatientDetails", getToken(), params);
 };
 
-export const cancelVisit = async (
-  opVID: number,
-  modifiedBy: string
-): Promise<OperationResult<void>> => {
-  return apiService.post<OperationResult<void>>(
-    `Revisit/CancelVisit/${opVID}`,
-    { modifiedBy },
-    getToken()
-  );
+export const cancelVisit = async (opVID: number, modifiedBy: string): Promise<OperationResult<void>> => {
+  return apiService.post<OperationResult<void>>(`Revisit/CancelVisit/${opVID}`, { modifiedBy }, getToken());
 };
 
 // Exporting the service as an object

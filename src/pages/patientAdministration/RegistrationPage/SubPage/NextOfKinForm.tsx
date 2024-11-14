@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-
-import { Dialog, Grid, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Grid } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
 import { PatNokDetailsDto } from "../../../../interfaces/PatientAdministration/PatNokDetailsDto";
 import FormField from "../../../../components/FormField/FormField";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
@@ -21,6 +19,7 @@ import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
+import { useAppSelector } from "@/store/hooks";
 
 interface NextOfKinFormProps {
   show: boolean;
@@ -30,7 +29,7 @@ interface NextOfKinFormProps {
 }
 
 const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handleSave, editData }) => {
-  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const userInfo = useAppSelector((state) => state.auth);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const serverDate = useServerDate();

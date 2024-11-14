@@ -2,7 +2,7 @@ import { CommonApiService } from "../../CommonApiService";
 import { PatientRegistrationDto } from "../../../interfaces/PatientAdministration/PatientFormData";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { APIConfig } from "../../../apiConfig";
-import { store } from "../../../store/store";
+import { store } from "@/store";
 
 // Initialize ApiService with the base URL for the patient administration API
 const apiService = new CommonApiService({
@@ -10,25 +10,14 @@ const apiService = new CommonApiService({
 });
 
 // Function to get the token from the store
-const getToken = () => store.getState().userDetails.token!;
+const getToken = () => store.getState().auth.token!;
 
-export const savePatient = async (
-  patientRegistrationDto: PatientRegistrationDto
-): Promise<OperationResult<number>> => {
-  return apiService.post<OperationResult<number>>(
-    "Patient/SavePatientRegistration",
-    patientRegistrationDto,
-    getToken()
-  );
+export const savePatient = async (patientRegistrationDto: PatientRegistrationDto): Promise<OperationResult<number>> => {
+  return apiService.post<OperationResult<number>>("Patient/SavePatientRegistration", patientRegistrationDto, getToken());
 };
 
-export const getPatientDetails = async (
-  pChartID: number
-): Promise<OperationResult<PatientRegistrationDto>> => {
-  return apiService.get<OperationResult<PatientRegistrationDto>>(
-    `Patient/GetPatientDetails/${pChartID}`,
-    getToken()
-  );
+export const getPatientDetails = async (pChartID: number): Promise<OperationResult<PatientRegistrationDto>> => {
+  return apiService.get<OperationResult<PatientRegistrationDto>>(`Patient/GetPatientDetails/${pChartID}`, getToken());
 };
 
 // Exporting the service as an object

@@ -8,13 +8,13 @@ import { OPIPHistPSHDto } from "../../../../interfaces/ClinicalManagement/OPIPHi
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { store } from "../../../../store/store";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import SurgeryIcon from "@mui/icons-material/LocalHospital";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import HealingIcon from "@mui/icons-material/Healing";
 import ClearIcon from "@mui/icons-material/Clear";
+import { useAppSelector } from "@/store/hooks";
 
 interface SurgicalHistoryProps {
   pChartID: number;
@@ -25,7 +25,7 @@ interface SurgicalHistoryProps {
 }
 
 export const SurgicalHistory: React.FC<SurgicalHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const initialFormState: OPIPHistPSHDto = {
     opipPshID: 0,
     opipNo: opipNo,

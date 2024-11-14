@@ -8,13 +8,13 @@ import { OPIPHistSHDto } from "../../../../interfaces/ClinicalManagement/OPIPHis
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { store } from "../../../../store/store";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import GroupIcon from "@mui/icons-material/Group";
 import LifestyleIcon from "@mui/icons-material/Accessibility";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import ClearIcon from "@mui/icons-material/Clear";
+import { useAppSelector } from "@/store/hooks";
 
 interface SocialHistoryProps {
   pChartID: number;
@@ -25,7 +25,7 @@ interface SocialHistoryProps {
 }
 
 export const SocialHistory: React.FC<SocialHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
 
   const initialFormState: OPIPHistSHDto = useMemo(
     () => ({

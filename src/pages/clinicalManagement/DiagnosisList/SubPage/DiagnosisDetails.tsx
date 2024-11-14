@@ -7,15 +7,15 @@ import SaveIcon from "@mui/icons-material/Save";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { IcdDetailDto } from "../../../../interfaces/ClinicalManagement/IcdDetailDto";
-import { store } from "../../../../store/store";
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
+import { useAppSelector } from "@/store/hooks";
 
 interface DiagnosisDetailsProps {
   selectedData?: IcdDetailDto;
 }
 
 const DiagnosisDetails: React.FC<DiagnosisDetailsProps> = ({ selectedData }) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [formState, setFormState] = useState<IcdDetailDto>(() => ({
     icddId: 0,
     icdmId: 0,

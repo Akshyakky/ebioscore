@@ -3,19 +3,12 @@ import { Grid, Paper, Typography } from "@mui/material";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import {
-  ProfileMastDto,
-  ProfileListSearchResult,
-} from "../../../../interfaces/SecurityManagement/ProfileListData";
+import { ProfileMastDto, ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import { OperationResult } from "../../../../interfaces/Common/OperationResult";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
-import {
-  notifySuccess,
-  notifyError,
-} from "../../../../utils/Common/toastManager";
+import { notifySuccess, notifyError } from "../../../../utils/Common/toastManager";
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 import FormField from "../../../../components/FormField/FormField";
+import { useAppSelector } from "@/store/hooks";
 
 interface ProfileDetailsProps {
   profile: ProfileListSearchResult | null;
@@ -25,13 +18,8 @@ interface ProfileDetailsProps {
   refreshProfiles: () => void;
 }
 
-const ProfileDetails: React.FC<ProfileDetailsProps> = ({
-  profile,
-  onSave,
-  onClear,
-  refreshProfiles,
-}) => {
-  const { compID } = useSelector((state: RootState) => state.userDetails);
+const ProfileDetails: React.FC<ProfileDetailsProps> = ({ profile, onSave, onClear, refreshProfiles }) => {
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const [profileMastDto, setProfileMastDto] = useState<ProfileMastDto>({
@@ -40,7 +28,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     profileName: profile?.profileName || "",
     rActiveYN: profile ? (profile.status === "Hidden" ? "N" : "Y") : "Y",
     compID: compID!,
+    compCode: compCode ?? "",
+    compName: compName ?? "",
     rNotes: profile?.rNotes || "",
+    transferYN: "N",
   });
 
   useEffect(() => {
@@ -51,7 +42,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         profileName: profile.profileName,
         rActiveYN: profile.status === "Hidden" ? "N" : "Y",
         compID: compID!,
+        compCode: compCode ?? "",
+        compName: compName ?? "",
         rNotes: profile.rNotes,
+        transferYN: "N",
       });
     }
   }, [profile, compID]);
@@ -60,8 +54,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     setIsSubmitted(true);
     if (profileMastDto.profileCode && profileMastDto.profileName) {
       try {
-        const result: OperationResult<ProfileMastDto> =
-          await ProfileService.saveOrUpdateProfile(profileMastDto);
+        const result: OperationResult<ProfileMastDto> = await ProfileService.saveOrUpdateProfile(profileMastDto);
         if (result.success && result.data) {
           const savedProfile: ProfileListSearchResult = {
             profileID: result.data.profileID,
@@ -93,7 +86,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       profileName: "",
       rActiveYN: "Y",
       compID: compID!,
+      compCode: compCode ?? "",
+      compName: compName ?? "",
       rNotes: "",
+      transferYN: "N",
     });
     onClear();
     setIsSubmitted(false);
@@ -144,25 +140,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           />
         </Grid>
         <Grid container spacing={2}>
-          <FormField
-            type="textarea"
-            label="Notes"
-            value={profileMastDto.rNotes}
-            onChange={handleTextAreaChange}
-            name="rNotes"
-            ControlID="rNotes"
-            maxLength={4000}
-          />
+          <FormField type="textarea" label="Notes" value={profileMastDto.rNotes} onChange={handleTextAreaChange} name="rNotes" ControlID="rNotes" maxLength={4000} />
         </Grid>
       </section>
-      <FormSaveClearButton
-        clearText="Clear"
-        saveText="Save"
-        onClear={handleClear}
-        onSave={handleSave}
-        clearIcon={DeleteIcon}
-        saveIcon={SaveIcon}
-      />
+      <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </Paper>
   );
 };

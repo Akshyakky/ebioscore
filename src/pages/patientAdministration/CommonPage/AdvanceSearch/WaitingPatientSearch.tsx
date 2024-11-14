@@ -8,11 +8,11 @@ import CloseIcon from "@mui/icons-material/Close";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import { DateFilterType } from "../../../../interfaces/PatientAdministration/revisitFormData";
 import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
-import { UserState } from "../../../../store/userTypes";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import { formatDate } from "../../../../utils/Common/dateUtils";
 import FormField from "../../../../components/FormField/FormField";
 import { showAlert } from "../../../../utils/Common/showAlert";
+import { UserState } from "@/store/features/auth/types";
 
 interface WaitingPatientSearchProps {
   userInfo: UserState;
@@ -21,12 +21,7 @@ interface WaitingPatientSearchProps {
   onPatientSelect: (patientId: string) => void;
 }
 
-const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
-  userInfo,
-  show,
-  handleClose,
-  onPatientSelect,
-}) => {
+const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, show, handleClose, onPatientSelect }) => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState("");
@@ -37,15 +32,8 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
 
   const fetchWaitingPatients = useCallback(async () => {
     try {
-      const dateFilterTypeEnum = dateRange
-        ? DateFilterType[dateRange as keyof typeof DateFilterType]
-        : undefined;
-      const data = await RevisitService.getWaitingPatientDetails(
-        attendingPhy ? parseInt(attendingPhy) : undefined,
-        dateFilterTypeEnum,
-        fromDate,
-        toDate
-      );
+      const dateFilterTypeEnum = dateRange ? DateFilterType[dateRange as keyof typeof DateFilterType] : undefined;
+      const data = await RevisitService.getWaitingPatientDetails(attendingPhy ? parseInt(attendingPhy) : undefined, dateFilterTypeEnum, fromDate, toDate);
       setSearchResults(data.data || []);
 
       if (data.data?.length === 0) {
@@ -53,11 +41,7 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
       }
     } catch (error) {
       console.error("Failed to fetch waiting patient details", error);
-      showAlert(
-        "Error",
-        "Failed to fetch waiting patient details. Please try again.",
-        "error"
-      );
+      showAlert("Error", "Failed to fetch waiting patient details. Please try again.", "error");
     }
   }, [userInfo.token, attendingPhy, dateRange, fromDate, toDate]);
 
@@ -65,91 +49,73 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
     fetchWaitingPatients();
   }, [fetchWaitingPatients]);
 
-  const handleDateRangeChange = useCallback((
-    event: SelectChangeEvent<unknown>,
-    child: React.ReactNode
-  ) => {
+  const handleDateRangeChange = useCallback((event: SelectChangeEvent<unknown>, child: React.ReactNode) => {
     setDateRange(event.target.value as string);
   }, []);
 
-  const handleAttendingPhyChange = useCallback((
-    event: SelectChangeEvent<unknown>,
-    child: React.ReactNode
-  ) => {
+  const handleAttendingPhyChange = useCallback((event: SelectChangeEvent<unknown>, child: React.ReactNode) => {
     setAttendingPhy(event.target.value as string);
   }, []);
 
-  const handlePatientSelect = useCallback((patientId: string) => {
-    onPatientSelect(patientId);
-    handleClose();
-    showAlert("Success", "Patient selected successfully!", "success");
-  }, [onPatientSelect, handleClose]);
+  const handlePatientSelect = useCallback(
+    (patientId: string) => {
+      onPatientSelect(patientId);
+      handleClose();
+      showAlert("Success", "Patient selected successfully!", "success");
+    },
+    [onPatientSelect, handleClose]
+  );
 
-  const handleCancelVisit = useCallback(async (opVID: string) => {
-    try {
-      showAlert(
-        "Confirm",
-        "Are you sure you want to cancel this visit?",
-        "warning",
-        {
+  const handleCancelVisit = useCallback(
+    async (opVID: string) => {
+      try {
+        showAlert("Confirm", "Are you sure you want to cancel this visit?", "warning", {
           showCancelButton: true,
           confirmButtonText: "Yes, cancel it",
           cancelButtonText: "No, keep it",
           onConfirm: async () => {
-            const result = await RevisitService.cancelVisit(
-              parseInt(opVID),
-              userInfo.userName!
-            );
+            const result = await RevisitService.cancelVisit(parseInt(opVID), userInfo.userName!);
             if (result.success) {
               showAlert("Success", "Visit cancelled successfully!", "success");
               fetchWaitingPatients(); // Refresh the list
             } else {
-              showAlert(
-                "Error",
-                `Failed to cancel the visit: ${result.errorMessage}`,
-                "error"
-              );
+              showAlert("Error", `Failed to cancel the visit: ${result.errorMessage}`, "error");
             }
-          }
-        }
-      );
-    } catch (error) {
-      console.error("An error occurred while canceling the visit:", error);
-      showAlert(
-        "Error",
-        "An unexpected error occurred while canceling the visit.",
-        "error"
-      );
-    }
-  }, [userInfo.userName, fetchWaitingPatients]);
+          },
+        });
+      } catch (error) {
+        console.error("An error occurred while canceling the visit:", error);
+        showAlert("Error", "An unexpected error occurred while canceling the visit.", "error");
+      }
+    },
+    [userInfo.userName, fetchWaitingPatients]
+  );
 
-  const handleFromDateChange = useCallback((selectedDate: Date | null) => {
-    if (!selectedDate) return;
+  const handleFromDateChange = useCallback(
+    (selectedDate: Date | null) => {
+      if (!selectedDate) return;
 
-    if (toDate && selectedDate > toDate) {
-      showAlert(
-        "Warning",
-        "From Date cannot be greater than To Date",
-        "warning"
-      );
-      return;
-    }
-    setFromDate(selectedDate);
-  }, [toDate]);
+      if (toDate && selectedDate > toDate) {
+        showAlert("Warning", "From Date cannot be greater than To Date", "warning");
+        return;
+      }
+      setFromDate(selectedDate);
+    },
+    [toDate]
+  );
 
-  const handleToDateChange = useCallback((selectedDate: Date | null) => {
-    if (!selectedDate) return;
+  const handleToDateChange = useCallback(
+    (selectedDate: Date | null) => {
+      if (!selectedDate) return;
 
-    if (fromDate && selectedDate < fromDate) {
-      showAlert(
-        "Warning",
-        "To Date cannot be less than From Date",
-        "warning"
-      );
-      return;
-    }
-    setToDate(selectedDate);
-  }, [fromDate]);
+      if (fromDate && selectedDate < fromDate) {
+        showAlert("Warning", "To Date cannot be less than From Date", "warning");
+        return;
+      }
+      setToDate(selectedDate);
+    },
+    [fromDate]
+  );
 
   const columns = [
     {
@@ -167,15 +133,7 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
       key: "CancelVisit",
       header: "Action",
       visible: true,
-      render: (row: any) => (
-        <CustomButton
-          text="Cancel Visit"
-          onClick={() => handleCancelVisit(row.opVID.toString())}
-          icon={CancelIcon}
-          color="error"
-          size="small"
-        />
-      ),
+      render: (row: any) => <CustomButton text="Cancel Visit" onClick={() => handleCancelVisit(row.opVID.toString())} icon={CancelIcon} color="error" size="small" />,
     },
   ];
 
@@ -251,23 +209,11 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({
           </>
         )}
       </Grid>
-      <CustomGrid
-        columns={columns}
-        data={searchResults}
-        minHeight="500px"
-        maxHeight="500px"
-      />
+      <CustomGrid columns={columns} data={searchResults} minHeight="500px" maxHeight="500px" />
     </>
   );
 
-  const dialogActions = (
-    <CustomButton
-      icon={CloseIcon}
-      text="Close"
-      color="secondary"
-      onClick={handleClose}
-    />
-  );
+  const dialogActions = <CustomButton icon={CloseIcon} text="Close" color="secondary" onClick={handleClose} />;
 
   return (
     <GenericDialog

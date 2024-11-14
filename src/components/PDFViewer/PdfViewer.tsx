@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  Typography,
-  Box,
-} from "@mui/material";
+import { Dialog, DialogActions, DialogContent, Typography, Box } from "@mui/material";
 import CustomButton from "../Button/CustomButton";
 import CancelIcon from "@mui/icons-material/Cancel";
 import { useLoading } from "../../context/LoadingContext";
@@ -17,12 +11,7 @@ interface PdfViewerProps {
   reportName: string;
 }
 
-const PdfViewer: React.FC<PdfViewerProps> = ({
-  pdfUrl,
-  onClose,
-  open,
-  reportName,
-}) => {
+const PdfViewer: React.FC<PdfViewerProps> = ({ pdfUrl, onClose, open, reportName }) => {
   const { setLoading } = useLoading(); // Access the setLoading function from the context
   const [error, setError] = useState(false);
 
@@ -45,12 +34,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   };
 
   return (
-    <Dialog
-      fullScreen
-      open={open}
-      onClose={onClose}
-      aria-labelledby="pdf-viewer-title"
-    >
+    <Dialog fullScreen open={open} onClose={onClose} aria-labelledby="pdf-viewer-title">
       <DialogContent sx={{ p: 0, display: "flex", flexDirection: "column" }}>
         <Box sx={{ p: 2, backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>
           <Typography variant="h6" id="pdf-viewer-title">
@@ -84,12 +68,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
         </Box>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <CustomButton
-          text="Close"
-          onClick={onClose}
-          icon={CancelIcon}
-          color="error"
-        />
+        <CustomButton text="Close" onClick={onClose} icon={CancelIcon} color="error" />
       </DialogActions>
     </Dialog>
   );

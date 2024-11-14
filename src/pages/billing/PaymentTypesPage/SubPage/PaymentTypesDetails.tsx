@@ -5,17 +5,16 @@ import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
 import { useLoading } from "../../../../context/LoadingContext";
-import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { RootState } from "../../../../store/reducers";
-import { useSelector } from "react-redux";
+import { useAppSelector } from "../../../../store/hooks";
 import FormField from "../../../../components/FormField/FormField";
 import { paymentTypeService } from "../../../../services/BillingServices/BillingGenericService";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 
 const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({ editData }) => {
+  const user = useAppSelector((state) => state.auth);
   const [formState, setFormState] = useState({
     isSubmitted: false,
     payCode: "",
@@ -24,9 +23,9 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({ editData })
     bankCharge: 0,
     rNotes: "",
     rActiveYN: "Y",
-    compID: store.getState().userDetails.compID || 0,
-    compCode: store.getState().userDetails.compCode || "",
-    compName: store.getState().userDetails.compName || "",
+    compID: user.compID || 0,
+    compCode: user.compCode || "",
+    compName: user.compName || "",
   });
 
   const { handleDropdownChange } = useDropdownChange(setFormState);
@@ -34,8 +33,6 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({ editData })
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const { token } = useSelector((state: RootState) => state.userDetails);
-  const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
 
   useEffect(() => {
     if (editData) {
@@ -47,9 +44,9 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({ editData })
         bankCharge: editData.bankCharge || 0,
         rNotes: editData.rNotes || "",
         rActiveYN: editData.rActiveYN || "Y",
-        compID: store.getState().userDetails.compID || 0,
-        compCode: store.getState().userDetails.compCode || "",
-        compName: store.getState().userDetails.compName || "",
+        compID: user.compID || 0,
+        compCode: user.compCode || "",
+        compName: user.compName || "",
       });
     } else {
       handleClear();
@@ -65,18 +62,18 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({ editData })
       bankCharge: formState.bankCharge,
       rNotes: formState.rNotes,
       rActiveYN: formState.rActiveYN,
-      compID: store.getState().userDetails.compID || 0,
-      compCode: store.getState().userDetails.compCode || "",
-      compName: store.getState().userDetails.compName || "",
+      compID: user.compID || 0,
+      compCode: user.compCode || "",
+      compName: user.compName || "",
       transferYN: "N",
-      rCreatedID: userID || 0,
+      rCreatedID: user.userID || 0,
       rCreatedOn: serverDate || new Date(),
-      rCreatedBy: userName || "",
-      rModifiedID: userID || 0,
+      rCreatedBy: user.userName || "",
+      rModifiedID: user.userID || 0,
       rModifiedOn: serverDate || new Date(),
-      rModifiedBy: userName || "",
+      rModifiedBy: user.userName || "",
     }),
-    [formState, editData, compID, compCode, compName, userID, userName, serverDate]
+    [formState, editData, serverDate]
   );
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -120,11 +117,11 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({ editData })
       bankCharge: 0,
       rNotes: "",
       rActiveYN: "Y",
-      compID: store.getState().userDetails.compID || 0,
-      compCode: store.getState().userDetails.compCode || "",
-      compName: store.getState().userDetails.compName || "",
+      compID: user.compID || 0,
+      compCode: user.compCode || "",
+      compName: user.compName || "",
     });
-  }, []);
+  }, [user]);
 
   const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setFormState((prev) => ({

@@ -10,11 +10,7 @@ interface UserListSearchProps {
   onEditProfile: (user: UserListData) => void;
 }
 
-const UserListSearch: React.FC<UserListSearchProps> = ({
-  show,
-  handleClose,
-  onEditProfile,
-}) => {
+const UserListSearch: React.FC<UserListSearchProps> = ({ show, handleClose, onEditProfile }) => {
   const { fetchAllUsers } = useContext(UserListSearchContext);
 
   const updateActiveStatus = useCallback(async (appID: number, status: boolean) => {
@@ -27,16 +23,19 @@ const UserListSearch: React.FC<UserListSearchProps> = ({
     }
   }, []);
 
-  const handleSelect = useCallback(async (user: UserListData) => {
-    try {
-      const userDetails = await UserListService.getUserDetails(user.appID);
-      if (userDetails.success && userDetails.data) {
-        onEditProfile(userDetails.data);
+  const handleSelect = useCallback(
+    async (user: UserListData) => {
+      try {
+        const userDetails = await UserListService.getUserDetails(user.appID);
+        if (userDetails.success && userDetails.data) {
+          onEditProfile(userDetails.data);
+        }
+      } catch (error) {
+        console.error("Error fetching user details:", error);
       }
-    } catch (error) {
-      console.error("Error fetching user details:", error);
-    }
-  }, [onEditProfile]);
+    },
+    [onEditProfile]
+  );
 
   const columns = [
     { key: "fullName", header: "User Name", visible: true },

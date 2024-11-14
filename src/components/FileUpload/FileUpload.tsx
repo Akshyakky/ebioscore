@@ -13,7 +13,7 @@ interface FloatingLabelFileUploadProps extends TextBoxProps {
 const FloatingLabelFileUpload: React.FC<FloatingLabelFileUploadProps> = ({
   ControlID,
   title,
-  onChange = () => { },
+  onChange = () => {},
   className,
   style,
   isMandatory = false,
@@ -57,14 +57,7 @@ const FloatingLabelFileUpload: React.FC<FloatingLabelFileUploadProps> = ({
   const hasError = isMandatory && isSubmitted && !filePath;
 
   return (
-    <FormControl
-      variant="outlined"
-      fullWidth
-      margin="normal"
-      className={className}
-      style={style}
-      error={hasError}
-    >
+    <FormControl variant="outlined" fullWidth margin="normal" className={className} style={style} error={hasError}>
       <input
         accept={accept}
         style={{ display: "none" }}
@@ -84,29 +77,16 @@ const FloatingLabelFileUpload: React.FC<FloatingLabelFileUploadProps> = ({
       {filePath && preview && (
         <>
           {accept?.includes("image/") ? (
-            <img
-              src={filePath}
-              alt={fileName || "Uploaded File"}
-              style={{ display: "block", marginTop: "10px", maxWidth: "100%" }}
-            />
+            <img src={filePath} alt={fileName || "Uploaded File"} style={{ display: "block", marginTop: "10px", maxWidth: "100%" }} />
           ) : (
             <p style={{ marginTop: "10px" }}>{fileName}</p>
           )}
-          <Button
-            variant="text"
-            color="secondary"
-            onClick={handleClear}
-            style={{ marginTop: "10px" }}
-          >
+          <Button variant="text" color="secondary" onClick={handleClear} style={{ marginTop: "10px" }}>
             Clear
           </Button>
         </>
       )}
-      {hasError && (
-        <FormHelperText error>
-          {errorMessage || `${title} is required.`}
-        </FormHelperText>
-      )}
+      {hasError && <FormHelperText error>{errorMessage || `${title} is required.`}</FormHelperText>}
     </FormControl>
   );
 };

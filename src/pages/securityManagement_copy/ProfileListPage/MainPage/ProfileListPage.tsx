@@ -8,16 +8,15 @@ import { ProfileListSearchContext } from "../../../../context/SecurityManagement
 import { ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import OperationPermissionDetails, { ModuleOperation } from "../../CommonPage/OperationPermissionDetails";
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
-import { RootState } from "../../../../store/reducers";
-import { useSelector } from "react-redux";
 import { OperationPermissionDetailsDto } from "../../../../interfaces/SecurityManagement/OperationPermissionDetailsDto";
+import { useAppSelector } from "@/store/hooks";
 
 const ProfileListPage: React.FC = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<ProfileListSearchResult | null>(null);
   const { fetchAllProfiles } = useContext(ProfileListSearchContext);
-  const { token } = useSelector((state: RootState) => state.userDetails);
+  const { token } = useAppSelector((state) => state.auth);
   const [permissions, setPermissions] = useState<ModuleOperation[]>([]);
 
   const handleAdvancedSearch = async () => {

@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import Swal, { SweetAlertIcon, SweetAlertResult } from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
+import React, { useEffect } from "react";
+import Swal, { SweetAlertIcon, SweetAlertResult } from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 
 const MySwal = withReactContent(Swal);
 
@@ -24,7 +24,7 @@ interface CustomAlertProps {
 }
 
 const CustomAlert: React.FC<CustomAlertProps> = ({
-  title = '',
+  title = "",
   message,
   type,
   show,
@@ -32,10 +32,10 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
   showCancelButton = false,
   showPrintButton = false,
   showCloseButton = false,
-  confirmButtonText = 'OK',
-  cancelButtonText = 'Cancel',
-  printButtonText = 'Print',
-  closeButtonText = 'Close',
+  confirmButtonText = "OK",
+  cancelButtonText = "Cancel",
+  printButtonText = "Print",
+  closeButtonText = "Close",
   onConfirm,
   onCancel,
   onPrint,
@@ -52,19 +52,19 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
         confirmButtonText,
         cancelButtonText,
         showCloseButton,
-        footer: showPrintButton ? `<button id="print-button" class="swal2-print-button">${printButtonText}</button>` : '',
+        footer: showPrintButton ? `<button id="print-button" class="swal2-print-button">${printButtonText}</button>` : "",
         didOpen: () => {
           if (showPrintButton) {
-            const printButton = document.getElementById('print-button');
+            const printButton = document.getElementById("print-button");
             if (printButton) {
-              printButton.addEventListener('click', () => {
+              printButton.addEventListener("click", () => {
                 if (onPrint) onPrint();
               });
             }
           }
-          const container = document.querySelector('.swal2-container') as HTMLElement;
+          const container = document.querySelector(".swal2-container") as HTMLElement;
           if (container) {
-            container.style.zIndex = '1400';
+            container.style.zIndex = "1400";
           }
         },
         buttonsStyling: true,

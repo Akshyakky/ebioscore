@@ -3,28 +3,20 @@ import { Grid, Paper, Typography, SelectChangeEvent } from "@mui/material";
 import { DropdownOption } from "../../../interfaces/Common/DropdownOption";
 import moduleService from "../../../services/CommonServices/ModuleService";
 import { notifyError } from "../../../utils/Common/toastManager";
-import {
-  ProfileDetailsDropdowns,
-  ReportPermission,
-} from "../../../interfaces/SecurityManagement/ProfileListData";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../store/reducers";
+import { ProfileDetailsDropdowns, ReportPermission } from "../../../interfaces/SecurityManagement/ProfileListData";
 import useDropdownChange from "../../../hooks/useDropdownChange";
 import { ProfileService } from "../../../services/SecurityManagementServices/ProfileListServices";
 import { OperationPermissionDetailsDto } from "../../../interfaces/SecurityManagement/OperationPermissionDetailsDto";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import FormField from "../../../components/FormField/FormField";
 import PermissionSection from "./PermissionSection";
+import { useAppSelector } from "@/store/hooks";
 
 interface OperationPermissionProps {
   profileID: number;
   profileName: string;
-  saveModulePermission: (
-    permissions: OperationPermissionDetailsDto
-  ) => Promise<void>;
-  saveReportPermission: (
-    permissions: OperationPermissionDetailsDto
-  ) => Promise<void>;
+  saveModulePermission: (permissions: OperationPermissionDetailsDto) => Promise<void>;
+  saveReportPermission: (permissions: OperationPermissionDetailsDto) => Promise<void>;
   permissions: ModuleOperation[];
   setPermissions: React.Dispatch<React.SetStateAction<ModuleOperation[]>>;
 }
@@ -38,17 +30,8 @@ export interface ModuleOperation {
   reportYN: boolean;
 }
 
-const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
-  profileID,
-  profileName,
-  saveModulePermission,
-  saveReportPermission,
-  permissions,
-  setPermissions,
-}) => {
-  const { token, compID, userID, adminYN } = useSelector(
-    (state: RootState) => state.userDetails
-  );
+const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({ profileID, profileName, saveModulePermission, saveReportPermission, permissions, setPermissions }) => {
+  const { token, compID, userID, adminYN } = useAppSelector((state) => state.auth);
 
   const [dropdownValues, setDropdownValues] = useState({
     mainModulesOptions: [] as DropdownOption[],
@@ -57,36 +40,29 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
     reportPermissionsOptions: [] as DropdownOption[],
   });
 
-  const [selectedReportMainModule, setSelectedReportMainModule] =
-    useState<string>("");
+  const [selectedReportMainModule, setSelectedReportMainModule] = useState<string>("");
   const [selectAllChecked, setSelectAllChecked] = useState(false);
   const [selectAllReportChecked, setSelectAllReportChecked] = useState(false);
   const [isSubmitted] = useState(false);
 
-  const getInitialProfileDetailsDropdownsState =
-    (): ProfileDetailsDropdowns => ({
-      mainModuleID: "0",
-      mainModuleName: "",
-      subModuleID: "0",
-      subModuleName: "",
-      repMainModuleID: "0",
-      repMainModuleName: "",
-    });
+  const getInitialProfileDetailsDropdownsState = (): ProfileDetailsDropdowns => ({
+    mainModuleID: "0",
+    mainModuleName: "",
+    subModuleID: "0",
+    subModuleName: "",
+    repMainModuleID: "0",
+    repMainModuleName: "",
+  });
 
-  const [profileDetailsDropdowns, setProfileDetailsDropdowns] =
-    useState<ProfileDetailsDropdowns>(getInitialProfileDetailsDropdownsState());
+  const [profileDetailsDropdowns, setProfileDetailsDropdowns] = useState<ProfileDetailsDropdowns>(getInitialProfileDetailsDropdownsState());
 
-  const { handleDropdownChange } = useDropdownChange<ProfileDetailsDropdowns>(
-    setProfileDetailsDropdowns
-  );
+  const { handleDropdownChange } = useDropdownChange<ProfileDetailsDropdowns>(setProfileDetailsDropdowns);
 
   useEffect(() => {
     const fetchMainModules = async () => {
       if (token) {
         try {
-          const modulesData = await moduleService.getActiveModules(
-            adminYN === "Y" ? 0 : (userID ?? 0)
-          );
+          const modulesData = await moduleService.getActiveModules(adminYN === "Y" ? 0 : (userID ?? 0));
           setDropdownValues((prevValues) => ({
             ...prevValues,
             mainModulesOptions: modulesData.map((module) => ({
@@ -108,27 +84,20 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
 
   useEffect(() => {
     const fetchPermissions = async () => {
-      if (
-        profileDetailsDropdowns.mainModuleID &&
-        profileDetailsDropdowns.subModuleID &&
-        token
-      ) {
+      if (profileDetailsDropdowns.mainModuleID && profileDetailsDropdowns.subModuleID && token) {
         try {
-          const modulePermissionsData: OperationResult<ModuleOperation[]> =
-            await ProfileService.getProfileModuleOperations(
-              parseInt(profileDetailsDropdowns.subModuleID),
-              parseInt(profileDetailsDropdowns.mainModuleID),
-              profileID
-            );
+          const modulePermissionsData: OperationResult<ModuleOperation[]> = await ProfileService.getProfileModuleOperations(
+            parseInt(profileDetailsDropdowns.subModuleID),
+            parseInt(profileDetailsDropdowns.mainModuleID),
+            profileID
+          );
           if (modulePermissionsData.success && modulePermissionsData.data) {
             setPermissions((prevPermissions) => [
               ...prevPermissions.filter((permission) => permission.reportYN),
-              ...(modulePermissionsData.data ?? []).map(
-                (permission: ModuleOperation) => ({
-                  ...permission,
-                  reportYN: false,
-                })
-              ),
+              ...(modulePermissionsData.data ?? []).map((permission: ModuleOperation) => ({
+                ...permission,
+                reportYN: false,
+              })),
             ]);
           } else {
             notifyError("Error fetching module permissions");
@@ -139,35 +108,23 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
       }
     };
     fetchPermissions();
-  }, [
-    profileDetailsDropdowns.subModuleID,
-    profileDetailsDropdowns.mainModuleID,
-    token,
-    profileID,
-  ]);
+  }, [profileDetailsDropdowns.subModuleID, profileDetailsDropdowns.mainModuleID, token, profileID]);
 
   const fetchReportPermissions = async () => {
     if (selectedReportMainModule && token) {
       try {
-        const reportPermissionsData: OperationResult<ReportPermission[]> =
-          await ProfileService.getProfileReportOperations(
-            parseInt(selectedReportMainModule),
-            compID!,
-            profileID
-          );
+        const reportPermissionsData: OperationResult<ReportPermission[]> = await ProfileService.getProfileReportOperations(parseInt(selectedReportMainModule), compID!, profileID);
         if (reportPermissionsData.success && reportPermissionsData.data) {
           setPermissions((prevPermissions) => [
             ...prevPermissions.filter((permission) => !permission.reportYN),
-            ...(reportPermissionsData.data ?? []).map(
-              (permission: ReportPermission) => ({
-                profDetID: permission.profDetID,
-                operationID: permission.reportID,
-                operationName: permission.reportName,
-                allow: permission.allow,
-                auAccessID: permission.apAccessID,
-                reportYN: true,
-              })
-            ),
+            ...(reportPermissionsData.data ?? []).map((permission: ReportPermission) => ({
+              profDetID: permission.profDetID,
+              operationID: permission.reportID,
+              operationName: permission.reportName,
+              allow: permission.allow,
+              auAccessID: permission.apAccessID,
+              reportYN: true,
+            })),
           ]);
         } else {
           notifyError("Error fetching report permissions");
@@ -185,14 +142,8 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
     const fetchSubModules = async () => {
       if (profileDetailsDropdowns.mainModuleID && token) {
         try {
-          const subModulesData = await moduleService.getActiveSubModules(
-            adminYN === "Y" ? 0 : (userID ?? 0)
-          );
-          const filteredSubModules = subModulesData.filter(
-            (subModule) =>
-              subModule.auGrpID.toString() ===
-              profileDetailsDropdowns.mainModuleID
-          );
+          const subModulesData = await moduleService.getActiveSubModules(adminYN === "Y" ? 0 : (userID ?? 0));
+          const filteredSubModules = subModulesData.filter((subModule) => subModule.auGrpID.toString() === profileDetailsDropdowns.mainModuleID);
           setDropdownValues((prevValues) => ({
             ...prevValues,
             subModulesOptions: filteredSubModules.map((subModule) => ({
@@ -217,22 +168,13 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
     setSelectedReportMainModule(event.target.value);
   };
 
-  const handlePermissionChange = async (
-    operationID: number,
-    allow: boolean
-  ) => {
-    const updatedPermissions = permissions.map((permission) =>
-      permission.operationID === operationID
-        ? { ...permission, allow }
-        : permission
-    );
+  const handlePermissionChange = async (operationID: number, allow: boolean) => {
+    const updatedPermissions = permissions.map((permission) => (permission.operationID === operationID ? { ...permission, allow } : permission));
     setPermissions(updatedPermissions);
 
     if (profileID) {
       try {
-        const existingPermission = updatedPermissions.find(
-          (permission) => permission.operationID === operationID
-        );
+        const existingPermission = updatedPermissions.find((permission) => permission.operationID === operationID);
         if (!existingPermission) {
           throw new Error("Permission not found");
         }
@@ -273,22 +215,13 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
     }
   };
 
-  const handleReportPermissionChange = async (
-    reportID: number,
-    allow: boolean
-  ) => {
-    const updatedReportPermissions = permissions.map((permission) =>
-      permission.operationID === reportID
-        ? { ...permission, allow }
-        : permission
-    );
+  const handleReportPermissionChange = async (reportID: number, allow: boolean) => {
+    const updatedReportPermissions = permissions.map((permission) => (permission.operationID === reportID ? { ...permission, allow } : permission));
     setPermissions(updatedReportPermissions);
 
     if (profileID) {
       try {
-        const existingReportPermission = updatedReportPermissions.find(
-          (permission) => permission.operationID === reportID
-        );
+        const existingReportPermission = updatedReportPermissions.find((permission) => permission.operationID === reportID);
         if (!existingReportPermission) {
           throw new Error("Report permission not found");
         }
@@ -326,9 +259,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
     }
   };
 
-  const handleSelectAllChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleSelectAllChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked: boolean = event.target.checked;
 
     // Update permissions in state first to reflect the UI changes immediately
@@ -374,9 +305,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
     }
   };
 
-  const handleSelectAllReportChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleSelectAllReportChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked: boolean = event.target.checked;
 
     const updatedReportPermissions = permissions.map((permission) => ({
@@ -388,9 +317,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
     setPermissions(updatedReportPermissions);
 
     try {
-      for (const permission of updatedReportPermissions.filter(
-        (p) => p.reportYN
-      )) {
+      for (const permission of updatedReportPermissions.filter((p) => p.reportYN)) {
         const profileDetail: OperationPermissionDetailsDto = {
           profDetID: permission.profDetID!,
           profileID: profileID,
@@ -436,9 +363,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
 
   const handleReportPermissionClear = () => {
     setSelectedReportMainModule("");
-    setPermissions((prevPermissions) =>
-      prevPermissions.filter((permission) => !permission.reportYN)
-    );
+    setPermissions((prevPermissions) => prevPermissions.filter((permission) => !permission.reportYN));
     setSelectAllReportChecked(false);
   };
 
@@ -464,11 +389,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
               type="select"
               label="Main Modules"
               value={profileDetailsDropdowns.mainModuleID || ""}
-              onChange={handleDropdownChange(
-                ["mainModuleID"],
-                ["mainModuleName"],
-                dropdownValues.mainModulesOptions
-              )}
+              onChange={handleDropdownChange(["mainModuleID"], ["mainModuleName"], dropdownValues.mainModulesOptions)}
               options={dropdownValues.mainModulesOptions}
               isSubmitted={isSubmitted}
               name="MainModule"
@@ -481,11 +402,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
               label="Sub Modules"
               value={profileDetailsDropdowns.subModuleID || ""}
               options={dropdownValues.subModulesOptions}
-              onChange={handleDropdownChange(
-                ["subModuleID"],
-                ["subModuleName"],
-                dropdownValues.subModulesOptions
-              )}
+              onChange={handleDropdownChange(["subModuleID"], ["subModuleName"], dropdownValues.subModulesOptions)}
               isMandatory
               size="small"
               isSubmitted={isSubmitted}
@@ -493,18 +410,15 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
               onClear={handleClear}
               ControlID="SubModule"
             />
-            {profileDetailsDropdowns.mainModuleID &&
-              profileDetailsDropdowns.subModuleID && (
-                <PermissionSection
-                  title="Operation"
-                  permissions={permissions.filter(
-                    (permission) => !permission.reportYN
-                  )}
-                  selectAllChecked={selectAllChecked}
-                  handleSelectAllChange={handleSelectAllChange}
-                  handlePermissionChange={handlePermissionChange}
-                />
-              )}
+            {profileDetailsDropdowns.mainModuleID && profileDetailsDropdowns.subModuleID && (
+              <PermissionSection
+                title="Operation"
+                permissions={permissions.filter((permission) => !permission.reportYN)}
+                selectAllChecked={selectAllChecked}
+                handleSelectAllChange={handleSelectAllChange}
+                handlePermissionChange={handlePermissionChange}
+              />
+            )}
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
@@ -537,9 +451,7 @@ const OperationPermissionDetails: React.FC<OperationPermissionProps> = ({
             {selectedReportMainModule && (
               <PermissionSection
                 title="Report"
-                permissions={permissions.filter(
-                  (permission) => permission.reportYN
-                )}
+                permissions={permissions.filter((permission) => permission.reportYN)}
                 selectAllChecked={selectAllReportChecked}
                 handleSelectAllChange={handleSelectAllReportChange}
                 handlePermissionChange={handleReportPermissionChange}

@@ -1,28 +1,25 @@
 import React, { useState, useEffect, ChangeEvent, useContext } from "react";
-import { Box, Container, Grid, IconButton, Paper, Typography, InputAdornment, TextField, } from "@mui/material";
+import { Box, Container, Grid, IconButton, Paper, Typography, InputAdornment, TextField } from "@mui/material";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import { CompanyService } from "../../../../services/CommonServices/CompanyService";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import { UserListService } from "../../../../services/SecurityManagementServices/UserListService";
 import { SelectChangeEvent } from "@mui/material/Select";
 import { ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import { ContactListService } from "../../../../services/HospitalAdministrationServices/ContactListService/ContactListService";
-import {
-  notifyError,
-  notifySuccess,
-} from "../../../../utils/Common/toastManager";
+import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
 import FloatingLabelFileUpload from "../../../../components/FileUpload/FileUpload";
 import { UserListData } from "../../../../interfaces/SecurityManagement/UserListData";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import DeleteIcon from "@mui/icons-material/Edit";
-import SaveIcon from "@mui/icons-material/Save"
+import SaveIcon from "@mui/icons-material/Save";
 import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { OperationResult } from "../../../../interfaces/Common/OperationResult";
+import { useAppSelector } from "@/store/hooks";
 
 interface Company {
   compIDCompCode: string;
@@ -34,7 +31,7 @@ interface UserDetailsProps {
   onClear: () => void;
   isEditMode: boolean;
   refreshUsers: () => void;
-  onSuperUserChange: (isSuper: boolean) => void
+  onSuperUserChange: (isSuper: boolean) => void;
 }
 
 const defaultUserListData: UserListData = {
@@ -63,17 +60,11 @@ const defaultUserListData: UserListData = {
   appCode: "",
   appUAccess: "",
   profileID: 0,
-  repID: 0
+  repID: 0,
 };
 
-const UserDetails: React.FC<UserDetailsProps> = ({
-  user,
-  onSave,
-  onClear,
-  refreshUsers,
-  onSuperUserChange
-}) => {
-  const { token } = useSelector((state: RootState) => state.userDetails);
+const UserDetails: React.FC<UserDetailsProps> = ({ user, onSave, onClear, refreshUsers, onSuperUserChange }) => {
+  const { token } = useAppSelector((state) => state.auth);
   const [userList, setUserList] = useState<UserListData>(defaultUserListData);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [, setFile] = useState<File | null>(null);
@@ -95,7 +86,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     if (user) {
       setUserList(user);
       setIsSuperUser(user.adminUserYN === "Y");
-      if (typeof user.appUAccess === 'string') {
+      if (typeof user.appUAccess === "string") {
         setPassword(user.appUAccess);
         setConfirmPassword(user.appUAccess);
       }
@@ -119,34 +110,28 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       try {
         const response = await fetch(userList.digSignPath);
         if (!response.ok) {
-          throw new Error('Failed to fetch image');
+          throw new Error("Failed to fetch image");
         }
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
         setImageUrl(url);
       } catch (error) {
-        console.error('Error fetching image:', error);
-        setImageUrl('/path/to/default-image.jpg');
+        console.error("Error fetching image:", error);
+        setImageUrl("/path/to/default-image.jpg");
       }
     };
 
     fetchImage();
   }, [userList.digSignPath]);
 
-  const handleDropdownChange = async (
-    fieldNames: (keyof UserListData)[],
-    value: string,
-    options: DropdownOption[]
-  ) => {
+  const handleDropdownChange = async (fieldNames: (keyof UserListData)[], value: string, options: DropdownOption[]) => {
     const selectedOption = options.find((option) => option.value === value);
     if (selectedOption) {
       const updatedState = { ...userList };
 
       if (fieldNames.includes("conID")) {
         try {
-          const contactDetails = await ContactListService.fetchContactDetails(
-            parseInt(value)
-          );
+          const contactDetails = await ContactListService.fetchContactDetails(parseInt(value));
           updatedState.appUcatCode = contactDetails.contactMastDto.consValue;
           updatedState.appUcatType = contactDetails.contactMastDto.conCat;
         } catch (error) {
@@ -206,8 +191,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
 
     const fetchProfiles = async () => {
       try {
-        const result: OperationResult<ProfileListSearchResult[]> =
-          await ProfileService.getAllProfileDetails();
+        const result: OperationResult<ProfileListSearchResult[]> = await ProfileService.getAllProfileDetails();
         if (result.success && result.data && result.data.length > 0) {
           const profileOptions = result.data.map((profile) => ({
             label: profile.profileName,
@@ -241,7 +225,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
     const newValue = e.target.value;
     setPassword(newValue);
     if (!isPasswordValid(newValue)) {
-      console.log('Password does not meet complexity requirements');
+      console.log("Password does not meet complexity requirements");
     }
   };
 
@@ -300,7 +284,6 @@ const UserDetails: React.FC<UserDetailsProps> = ({
           notifySuccess("User saved successfully");
           onSave(userData);
           refreshUsers();
-
         } else {
           notifyError("Error saving user");
           console.error("Failed to save user:", result.errorMessage);
@@ -340,13 +323,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               label="Select User"
               value={userList.conID?.toString() || ""}
               options={dropdownValues.usersOptions}
-              onChange={(e: any) =>
-                handleDropdownChange(
-                  ["conName", "conID", "appUserName"],
-                  e.target.value,
-                  dropdownValues.usersOptions
-                )
-              }
+              onChange={(e: any) => handleDropdownChange(["conName", "conID", "appUserName"], e.target.value, dropdownValues.usersOptions)}
               isMandatory
               size="small"
               isSubmitted={isSubmitted}
@@ -386,12 +363,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      edge="end"
-                    >
+                    <IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} onMouseDown={handleMouseDownPassword} edge="end">
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
@@ -413,21 +385,12 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               size="small"
-              sx={{ m: 2, }}
+              sx={{ m: 2 }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="start">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowConfirmPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      edge="end"
-                    >
-                      {showConfirmPassword ? (
-                        <VisibilityOff />
-                      ) : (
-                        <Visibility />
-                      )}
+                    <IconButton aria-label="toggle password visibility" onClick={handleClickShowConfirmPassword} onMouseDown={handleMouseDownPassword} edge="end">
+                      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
@@ -446,13 +409,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               label="Company"
               value={userList.compCode || ""}
               options={dropdownValues.companyOptions}
-              onChange={(e: SelectChangeEvent<string>) =>
-                handleDropdownChange(
-                  ["compName", "compCode", "compID"],
-                  e.target.value,
-                  dropdownValues.companyOptions
-                )
-              }
+              onChange={(e: SelectChangeEvent<string>) => handleDropdownChange(["compName", "compCode", "compID"], e.target.value, dropdownValues.companyOptions)}
               isMandatory
               size="small"
               isSubmitted={isSubmitted}
@@ -464,13 +421,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
               label="Profile"
               value={(userList.profileID || 0).toString()}
               options={dropdownValues.profileOptions}
-              onChange={(e: SelectChangeEvent<string>) =>
-                handleDropdownChange(
-                  ["profileID"],
-                  e.target.value,
-                  dropdownValues.profileOptions
-                )
-              }
+              onChange={(e: SelectChangeEvent<string>) => handleDropdownChange(["profileID"], e.target.value, dropdownValues.profileOptions)}
               size="small"
               isSubmitted={isSubmitted}
             />
@@ -482,9 +433,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({
                 ControlID="fileUpload1"
                 title="Digital Signature"
                 value={userList.digSignPath || ""}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setUserList({ ...userList, digSignPath: e.target.value })
-                }
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setUserList({ ...userList, digSignPath: e.target.value })}
                 isMandatory={true}
                 isSubmitted={isSubmitted}
                 errorMessage={errorMessage}
@@ -499,24 +448,11 @@ const UserDetails: React.FC<UserDetailsProps> = ({
       </section>
 
       <Grid item xs={12} sm={6} md={3}>
-        <CustomSwitch
-          label="Is Super User"
-          size="medium"
-          color="secondary"
-          checked={isSuperUser}
-          onChange={handleSuperUserChange}
-        />
+        <CustomSwitch label="Is Super User" size="medium" color="secondary" checked={isSuperUser} onChange={handleSuperUserChange} />
       </Grid>
 
       <Box sx={{ marginTop: 2 }}>
-        <FormSaveClearButton
-          clearText="Clear"
-          saveText="Save"
-          onClear={handleClear}
-          onSave={handleSave}
-          clearIcon={DeleteIcon}
-          saveIcon={SaveIcon}
-        />
+        <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
       </Box>
     </Paper>
   );

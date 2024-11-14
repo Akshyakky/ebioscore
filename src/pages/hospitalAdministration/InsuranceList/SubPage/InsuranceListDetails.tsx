@@ -3,7 +3,6 @@ import { Paper, Typography, Grid } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useLoading } from "../../../../context/LoadingContext";
-import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
@@ -14,6 +13,7 @@ import { insuranceListService } from "../../../../services/HospitalAdministratio
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
 import { AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
+import { useAppSelector } from "@/store/hooks";
 
 const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData }) => {
   const [formState, setFormState] = useState<InsuranceListDto>({
@@ -47,7 +47,7 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
   const { setLoading } = useLoading();
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (editData) {

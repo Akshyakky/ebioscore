@@ -8,12 +8,12 @@ import { AllergyDto, OPIPHistAllergyDetailDto, OPIPHistAllergyMastDto } from "..
 import { MedicationListDto } from "../../../../interfaces/ClinicalManagement/MedicationListDto";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { store } from "../../../../store/store";
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MedicationIcon from "@mui/icons-material/Medication";
 import WarningIcon from "@mui/icons-material/Warning";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
+import { useAppSelector } from "@/store/hooks";
 
 interface AllergyHistoryProps {
   pChartID: number;
@@ -24,7 +24,7 @@ interface AllergyHistoryProps {
 }
 
 const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const { setLoading } = useLoading();
   const medicationListService = useMemo(() => createEntityService<MedicationListDto>("MedicationList", "clinicalManagementURL"), []);
 

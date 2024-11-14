@@ -1,15 +1,5 @@
 import React, { useMemo } from "react";
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
-  IconButton,
-  InputAdornment,
-  useTheme,
-  CircularProgress,
-} from "@mui/material";
+import { FormControl, InputLabel, Select, MenuItem, FormHelperText, IconButton, InputAdornment, useTheme, CircularProgress } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
 import ClearIcon from "@mui/icons-material/Clear";
 
@@ -50,10 +40,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
 
   const displayValue = useMemo(() => {
     if (!options) return "";
-    const selectedOption = options.find(
-      (option) =>
-        String(option.value) === String(value) || option.label === value
-    );
+    const selectedOption = options.find((option) => String(option.value) === String(value) || option.label === value);
     return selectedOption ? selectedOption.value : "";
   }, [value, options]);
 
@@ -62,14 +49,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   }
 
   return (
-    <FormControl
-      variant="outlined"
-      size={size}
-      fullWidth
-      className={className}
-      error={hasError}
-      margin="normal"
-    >
+    <FormControl variant="outlined" size={size} fullWidth className={className} error={hasError} margin="normal">
       <InputLabel id={`ddl-label-${name}`} htmlFor={`ddl-${name}`}>
         {label}
       </InputLabel>

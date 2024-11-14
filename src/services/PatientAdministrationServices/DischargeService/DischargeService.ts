@@ -1,7 +1,5 @@
 // src/services/patientAdministrationServices/DischargeService/DischargeService.ts
-import { createEntityService } from "../../../utils/Common/serviceFactory";
 import { IpDischargeDto } from "../../../interfaces/PatientAdministration/IpDischargeDto";
-import { handleError } from "../../CommonServices/HandlerError";
 import { CommonApiService } from "../../CommonApiService";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";

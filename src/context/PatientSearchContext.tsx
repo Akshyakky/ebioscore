@@ -2,9 +2,10 @@ import React, { createContext, useState, useCallback } from "react";
 import { PatientRegistrationDto } from "../interfaces/PatientAdministration/PatientFormData";
 import { searchPatientDetails } from "../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { useLoading } from "./LoadingContext";
-import { RootState } from "../store/reducers";
+import { RootState } from "@/store";
 import { useSelector } from "react-redux";
 import { notifyError } from "../utils/Common/toastManager";
+import { useAppSelector } from "@/store/hooks";
 
 interface PatientSearchContextProps {
   searchResults: PatientRegistrationDto[];
@@ -23,8 +24,7 @@ interface PatientSearchProviderProps {
 export const PatientSearchProvider: React.FC<PatientSearchProviderProps> = ({ children }) => {
   const [searchResults, setSearchResults] = useState<PatientRegistrationDto[]>([]);
   const { setLoading } = useLoading();
-  const userInfo = useSelector((state: RootState) => state.userDetails);
-  const token = userInfo?.token;
+  const { token } = useAppSelector((state: RootState) => state.auth);
 
   const performSearch = useCallback(
     async (searchTerm: string): Promise<void> => {

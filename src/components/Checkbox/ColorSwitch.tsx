@@ -22,9 +22,7 @@ const ColorSwitch = styled(Switch, {
         backgroundColor: switchColor || theme.palette.primary.main,
       },
       "&:hover": {
-        backgroundColor: switchColor
-          ? `${switchColor}B2`
-          : `${theme.palette.primary.main}B2`,
+        backgroundColor: switchColor ? `${switchColor}B2` : `${theme.palette.primary.main}B2`,
       },
     },
   },
@@ -33,13 +31,7 @@ const ColorSwitch = styled(Switch, {
   },
 }));
 
-const CustomSwitch: React.FC<CustomSwitchProps> = ({
-  label = "",
-  size = "medium",
-  color = "#4CAF50",
-  checked,
-  onChange,
-}) => {
+const CustomSwitch: React.FC<CustomSwitchProps> = ({ label = "", size = "medium", color = "#4CAF50", checked, onChange }) => {
   const theme = useTheme();
 
   return (

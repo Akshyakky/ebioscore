@@ -9,29 +9,22 @@ interface ContactListSearchContextProps {
   performSearch: (searchTerm: string) => Promise<void>;
 }
 
-export const ContactListSearchContext =
-  createContext<ContactListSearchContextProps>({
-    searchResults: [],
-    performSearch: async () => { },
-  });
+export const ContactListSearchContext = createContext<ContactListSearchContextProps>({
+  searchResults: [],
+  performSearch: async () => {},
+});
 
 interface ContextListSearchProviderProps {
   children: React.ReactNode;
 }
 
-export const ContactListSearchProvider = ({
-  children,
-}: ContextListSearchProviderProps) => {
-  const [searchResults, setSearchResults] = useState<ContactListSearchResult[]>(
-    []
-  );
+export const ContactListSearchProvider = ({ children }: ContextListSearchProviderProps) => {
+  const [searchResults, setSearchResults] = useState<ContactListSearchResult[]>([]);
   const { setLoading } = useLoading();
   const performSearch = async (searchterm: string): Promise<void> => {
     setLoading(true);
     try {
-      const result = await ContactListService.searchContactListDetails(
-        searchterm
-      );
+      const result = await ContactListService.searchContactListDetails(searchterm);
       if (result.success) {
         setSearchResults(result.data);
       } else {
@@ -45,9 +38,5 @@ export const ContactListSearchProvider = ({
       setLoading(false);
     }
   };
-  return (
-    <ContactListSearchContext.Provider value={{ searchResults, performSearch }}>
-      {children}
-    </ContactListSearchContext.Provider>
-  );
+  return <ContactListSearchContext.Provider value={{ searchResults, performSearch }}>{children}</ContactListSearchContext.Provider>;
 };

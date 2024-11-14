@@ -15,8 +15,8 @@ import GenericDialog from "../../../../../components/GenericDialog/GenericDialog
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
-import { store } from "../../../../../store/store";
 import { roomGroupService, roomListService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import { useAppSelector } from "@/store/hooks";
 
 interface RoomGroupDetailsProps {
   roomGroups: RoomGroupDto[];
@@ -27,7 +27,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups, fetchRo
   const { setLoading } = useLoading();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
-  const compID = store.getState().userDetails.compID;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
   const [roomGroupHierarchy, setRoomGroupHierarchy] = useState<RoomGroupDto[]>([]);
   const [formData, setFormData] = useState<RoomGroupDto>({
@@ -43,9 +43,9 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups, fetchRo
     deptID: 0,
     transferYN: "Y",
     rGrpTypeValue: "",
-    compID: compID || 0,
-    compCode: "",
-    compName: "",
+    compID: compID ?? 0,
+    compCode: compCode ?? "",
+    compName: compName ?? "",
   });
 
   const { handleDropdownChange } = useDropdownChange<RoomGroupDto>(setFormData);

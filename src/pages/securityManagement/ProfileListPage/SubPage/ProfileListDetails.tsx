@@ -2,16 +2,16 @@ import { Grid, Paper, Typography } from "@mui/material";
 import React, { useState } from "react";
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { Save as SaveIcon, Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
+import { Save as SaveIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { ProfileMastDto } from "../../../../interfaces/SecurityManagement/ProfileListData";
 import { useLoading } from "../../../../context/LoadingContext";
-import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { profileMastService } from "../../../../services/SecurityManagementServices/securityManagementService";
+import { useAppSelector } from "@/store/hooks";
 
 const ProfileDetails = () => {
   const { setLoading } = useLoading();
-  const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
+  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [profileId, setProfileId] = useState<number>(0);
   const [profileCode, setProfileCode] = useState<string>("");

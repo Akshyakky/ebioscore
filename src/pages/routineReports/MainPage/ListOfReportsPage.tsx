@@ -2,10 +2,7 @@ import React, { useState } from "react";
 import MainLayout from "../../../layouts/MainLayout/MainLayout";
 import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomGrid from "../../../components/CustomGrid/CustomGrid";
-import {
-  Column,
-  RoutineReports,
-} from "../../../interfaces/RoutineReports/RoutineReports.interface";
+import { Column, RoutineReports } from "../../../interfaces/RoutineReports/RoutineReports.interface";
 import { fetchReports } from "../../../services/ReportService/ReportService";
 import CustomButton from "../../../components/Button/CustomButton";
 import PrintIcon from "@mui/icons-material/Print";
@@ -23,11 +20,7 @@ const ListOfReportsPage: React.FC<ListOfReportsPageProps> = () => {
   const [isCriteriaOpen, setIsCriteriaOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState(0);
-  const {
-    searchTerm,
-    setSearchTerm,
-    filteredData: filteredReports,
-  } = useSearch<RoutineReports>(reports, ["repName"]);
+  const { searchTerm, setSearchTerm, filteredData: filteredReports } = useSearch<RoutineReports>(reports, ["repName"]);
 
   const columns: Column<RoutineReports>[] = [
     { key: "repName", header: "Report Name", visible: true },
@@ -35,13 +28,7 @@ const ListOfReportsPage: React.FC<ListOfReportsPageProps> = () => {
       key: "repID", // Use repID for key since 'print' is not a property of RoutineReports
       header: "Actions",
       visible: true,
-      render: (report) => (
-        <CustomButton
-          onClick={() => openCriteriaModal(report)}
-          text="Print"
-          icon={PrintIcon}
-        />
-      ),
+      render: (report) => <CustomButton onClick={() => openCriteriaModal(report)} text="Print" icon={PrintIcon} />,
     },
   ];
   // Handlers for the ReportCriteria actions
@@ -87,12 +74,7 @@ const ListOfReportsPage: React.FC<ListOfReportsPageProps> = () => {
             </Box>
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
-                <CustomGrid<RoutineReports>
-                  columns={columns}
-                  data={filteredReports}
-                  maxHeight="600px"
-                  searchTerm={searchTerm}
-                />
+                <CustomGrid<RoutineReports> columns={columns} data={filteredReports} maxHeight="600px" searchTerm={searchTerm} />
               </Grid>
             </Grid>
           </Box>

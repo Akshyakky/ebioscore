@@ -1,34 +1,17 @@
 import React, { useEffect, useState } from "react";
-import {
-  Container,
-  Grid,
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Badge,
-  SelectChangeEvent,
-  Paper,
-} from "@mui/material";
-import {
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  startOfYear,
-  endOfYear,
-} from "date-fns";
+import { Container, Grid, Box, Card, CardContent, Typography, Badge, SelectChangeEvent, Paper } from "@mui/material";
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import GroupIcon from "@mui/icons-material/Group";
 import PersonIcon from "@mui/icons-material/Person";
 import { DashBoardService } from "../../../services/DashboardServices/DashBoardService";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../store/reducers";
 import { useLoading } from "../../../context/LoadingContext";
 import DropdownSelect from "../../../components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import CustomButton from "../../../components/Button/CustomButton";
 import { styled, useTheme } from "@mui/material/styles";
+import { useAppSelector } from "@/store/hooks";
 
 // Define the interface for the count data
 interface CountData {
@@ -95,24 +78,12 @@ const titleMapping: TitleMapping = {
 const DashboardPage: React.FC = () => {
   const today = new Date();
   const setStartOfDay = (date: Date) => {
-    const utcDate = new Date(
-      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0)
-    );
+    const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0));
     return utcDate.toISOString().split("T")[0]; // Return only the date part
   };
 
   const setEndOfDay = (date: Date) => {
-    const utcDate = new Date(
-      Date.UTC(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        23,
-        59,
-        59,
-        999
-      )
-    );
+    const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999));
     return utcDate.toISOString();
   };
 
@@ -123,7 +94,7 @@ const DashboardPage: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState("TD");
   const [counts, setCounts] = useState<Record<string, CountData>>({});
   const [showCounts, setShowCounts] = useState(false);
-  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const userInfo = useAppSelector((state) => state.auth);
   const token = userInfo.token!;
   const { setLoading } = useLoading();
 
@@ -156,9 +127,7 @@ const DashboardPage: React.FC = () => {
         to = setEndOfDay(endOfWeek(today));
         break;
       case "LW": // Last Week
-        from = setStartOfDay(
-          startOfWeek(new Date(today.setDate(today.getDate() - 7)))
-        );
+        from = setStartOfDay(startOfWeek(new Date(today.setDate(today.getDate() - 7))));
         to = setEndOfDay(endOfWeek(new Date(today.setDate(today.getDate()))));
         break;
       case "TM": // This Month
@@ -166,24 +135,16 @@ const DashboardPage: React.FC = () => {
         to = setEndOfDay(endOfMonth(today));
         break;
       case "LM": // Last Month
-        from = setStartOfDay(
-          startOfMonth(new Date(today.setMonth(today.getMonth() - 1)))
-        );
-        to = setEndOfDay(
-          endOfMonth(new Date(today.setMonth(today.getMonth())))
-        );
+        from = setStartOfDay(startOfMonth(new Date(today.setMonth(today.getMonth() - 1))));
+        to = setEndOfDay(endOfMonth(new Date(today.setMonth(today.getMonth()))));
         break;
       case "TY": // This Year
         from = setStartOfDay(startOfYear(today));
         to = setEndOfDay(endOfYear(today));
         break;
       case "LY": // Last Year
-        from = setStartOfDay(
-          startOfYear(new Date(today.setFullYear(today.getFullYear() - 1)))
-        );
-        to = setEndOfDay(
-          endOfYear(new Date(today.setFullYear(today.getFullYear())))
-        );
+        from = setStartOfDay(startOfYear(new Date(today.setFullYear(today.getFullYear() - 1))));
+        to = setEndOfDay(endOfYear(new Date(today.setFullYear(today.getFullYear()))));
         break;
       case "DT": // Date Range
         return; // The user will pick the dates
@@ -216,27 +177,17 @@ const DashboardPage: React.FC = () => {
         "AdvanceCollection",
       ];
       for (const category of categories) {
-        const myCountResult = await DashBoardService.fetchCount(
-          `Get${category}Userwise`,
-          dateRange,
-        );
-        const overallCountResult = await DashBoardService.fetchCount(
-          `Get${category}`,
-          dateRange,
-        );
+        const myCountResult = await DashBoardService.fetchCount(`Get${category}Userwise`, dateRange);
+        const overallCountResult = await DashBoardService.fetchCount(`Get${category}`, dateRange);
 
-        const isMyCountAvailable =
-          !myCountResult.unauthorized && !myCountResult.error;
-        const isOverallCountAvailable =
-          !overallCountResult.unauthorized && !overallCountResult.error;
+        const isMyCountAvailable = !myCountResult.unauthorized && !myCountResult.error;
+        const isOverallCountAvailable = !overallCountResult.unauthorized && !overallCountResult.error;
 
         setCounts((prevCounts) => ({
           ...prevCounts,
           [category.toLowerCase()]: {
             myCount: isMyCountAvailable ? myCountResult.count : 0,
-            overallCount: isOverallCountAvailable
-              ? overallCountResult.count
-              : 0,
+            overallCount: isOverallCountAvailable ? overallCountResult.count : 0,
           },
         }));
       }
@@ -287,25 +238,14 @@ const DashboardPage: React.FC = () => {
   const theme = useTheme();
 
   return (
-
     <Container maxWidth={false}>
-      <Paper
-        elevation={3}
-        sx={{ padding: theme.spacing(5), marginTop: theme.spacing(5) }}
-      >
+      <Paper elevation={3} sx={{ padding: theme.spacing(5), marginTop: theme.spacing(5) }}>
         <Typography variant="h6" sx={{ borderBottom: "1px solid #000" }}>
           Statistics
         </Typography>
         <Grid container spacing={3} alignItems="center">
           <Grid item xs={12} sm={3} md={3} lg={3}>
-            <DropdownSelect
-              label="Select date range"
-              name="dateRange"
-              value={selectedOption}
-              options={dateRangeOptions}
-              onChange={handleSelect}
-              size="small"
-            />
+            <DropdownSelect label="Select date range" name="dateRange" value={selectedOption} options={dateRangeOptions} onChange={handleSelect} size="small" />
           </Grid>
           {selectedOption === "DT" && (
             <>
@@ -336,14 +276,7 @@ const DashboardPage: React.FC = () => {
             </>
           )}
           <Grid item xs={12} sm={3} md={3} lg={3}>
-            <CustomButton
-              variant="contained"
-              size="medium"
-              onClick={handleShowButtonClick}
-              icon={VisibilityIcon}
-              text="SHOW"
-              color="primary"
-            />
+            <CustomButton variant="contained" size="medium" onClick={handleShowButtonClick} icon={VisibilityIcon} text="SHOW" color="primary" />
           </Grid>
         </Grid>
 
@@ -356,11 +289,7 @@ const DashboardPage: React.FC = () => {
                     <Typography variant="h6" gutterBottom>
                       {titleMapping[key.toLowerCase()] || key}
                     </Typography>
-                    <Box
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
                       <StyledLeftBadge
                         badgeContent={countData.myCount}
                         color="primary"
@@ -392,7 +321,6 @@ const DashboardPage: React.FC = () => {
         )}
       </Paper>
     </Container>
-
   );
 };
 

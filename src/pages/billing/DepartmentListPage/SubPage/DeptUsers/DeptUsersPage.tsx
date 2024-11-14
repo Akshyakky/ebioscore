@@ -9,8 +9,8 @@ import DeptUsersListSearch from "./DeptUsersSearch";
 import { UserListSearchContext } from "../../../../../context/SecurityManagement/UserListSearchContext";
 import { UserListData } from "../../../../../interfaces/SecurityManagement/UserListData";
 import { useServerDate } from "../../../../../hooks/Common/useServerDate";
-import { store } from "../../../../../store/store";
 import { showAlert } from "../../../../../utils/Common/showAlert";
+import { useAppSelector } from "@/store/hooks";
 
 interface DeptUsersListPageProps {
   deptId: number;
@@ -23,7 +23,7 @@ export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({ deptId, deptNa
   const [deptUsers, setDeptUsers] = useState<DeptUserDto[]>([]);
   const { fetchAllUsers } = useContext(UserListSearchContext);
   const serverDate = useServerDate();
-  const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
+  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   //
   const [isDUSearchOpen, setIsDUSearchOpen] = useState(false);
 

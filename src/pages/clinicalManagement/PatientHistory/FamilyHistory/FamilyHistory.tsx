@@ -8,13 +8,13 @@ import { OPIPHistFHDto } from "../../../../interfaces/ClinicalManagement/OPIPHis
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { store } from "../../../../store/store";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
 import HistoryIcon from "@mui/icons-material/History";
 import ClearIcon from "@mui/icons-material/Clear";
+import { useAppSelector } from "@/store/hooks";
 
 interface FamilyHistoryProps {
   pChartID: number;
@@ -25,7 +25,7 @@ interface FamilyHistoryProps {
 }
 
 export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
 
   const initialFormState: OPIPHistFHDto = useMemo(
     () => ({

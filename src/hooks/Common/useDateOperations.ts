@@ -18,17 +18,11 @@ export const useDateOperations = () => {
   const DEFAULT_TIMEZONE = "Asia/Kolkata"; // Adjust as needed
 
   // Format dates
-  const formatDate = (
-    date: dayjs.ConfigType,
-    format: string = "DD/MM/YYYY"
-  ) => {
+  const formatDate = (date: dayjs.ConfigType, format: string = "DD/MM/YYYY") => {
     return dayjs(date).format(format);
   };
 
-  const formatDateTime = (
-    date: dayjs.ConfigType,
-    format: string = "DD/MM/YYYY HH:mm"
-  ) => {
+  const formatDateTime = (date: dayjs.ConfigType, format: string = "DD/MM/YYYY HH:mm") => {
     return dayjs(date).format(format);
   };
 
@@ -41,28 +35,17 @@ export const useDateOperations = () => {
     return dayjs(dateString, format);
   };
 
-  const parseDateTime = (
-    dateTimeString: string,
-    format: string = "DD/MM/YYYY HH:mm"
-  ) => {
+  const parseDateTime = (dateTimeString: string, format: string = "DD/MM/YYYY HH:mm") => {
     return dayjs(dateTimeString, format);
   };
 
-  const parseTime = (
-    timeString: string,
-    baseDate: dayjs.ConfigType = undefined
-  ) => {
+  const parseTime = (timeString: string, baseDate: dayjs.ConfigType = undefined) => {
     const [hours, minutes] = timeString.split(":").map(Number);
-    return baseDate
-      ? dayjs(baseDate).hour(hours).minute(minutes)
-      : dayjs().hour(hours).minute(minutes);
+    return baseDate ? dayjs(baseDate).hour(hours).minute(minutes) : dayjs().hour(hours).minute(minutes);
   };
 
   // Date calculations
-  const calculateDateRange = (
-    view: "day" | "week" | "workWeek" | "month",
-    date: dayjs.ConfigType
-  ) => {
+  const calculateDateRange = (view: "day" | "week" | "workWeek" | "month", date: dayjs.ConfigType) => {
     const dateObj = dayjs(date);
     let start = dateObj.startOf("day");
     let end = dateObj.endOf("day");
@@ -85,26 +68,15 @@ export const useDateOperations = () => {
     return { start, end };
   };
 
-  const calculateEndTime = (
-    startTime: dayjs.ConfigType,
-    durationMinutes: number
-  ) => {
+  const calculateEndTime = (startTime: dayjs.ConfigType, durationMinutes: number) => {
     return dayjs(startTime).add(durationMinutes, "minute");
   };
 
-  const addDuration = (
-    date: dayjs.ConfigType,
-    amount: number,
-    unit: dayjs.ManipulateType
-  ) => {
+  const addDuration = (date: dayjs.ConfigType, amount: number, unit: dayjs.ManipulateType) => {
     return dayjs(date).add(amount, unit);
   };
 
-  const subtractDuration = (
-    date: dayjs.ConfigType,
-    amount: number,
-    unit: dayjs.ManipulateType
-  ) => {
+  const subtractDuration = (date: dayjs.ConfigType, amount: number, unit: dayjs.ManipulateType) => {
     return dayjs(date).subtract(amount, unit);
   };
 

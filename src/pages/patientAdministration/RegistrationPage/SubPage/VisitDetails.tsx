@@ -13,21 +13,19 @@ interface VisitDetailsProps {
   isEditMode: boolean;
 }
 
-const VisitDetails: React.FC<VisitDetailsProps> = ({
-  formData,
-  setFormData,
-  isSubmitted,
-  isEditMode = false,
-}) => {
+const VisitDetails: React.FC<VisitDetailsProps> = ({ formData, setFormData, isSubmitted, isEditMode = false }) => {
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
-  const dropdownValues = useDropdownValues(['department', 'attendingPhy', 'primaryIntroducingSource']);
+  const dropdownValues = useDropdownValues(["department", "attendingPhy", "primaryIntroducingSource"]);
 
-  const visitOptions = useMemo(() => [
-    { value: "H", label: "Hospital" },
-    { value: "P", label: "Physician" },
-    { value: "N", label: "None" },
-  ], []);
+  const visitOptions = useMemo(
+    () => [
+      { value: "H", label: "Hospital" },
+      { value: "P", label: "Physician" },
+      { value: "N", label: "None" },
+    ],
+    []
+  );
 
   const isHospitalVisit = formData.opvisits.visitTypeVal === "H";
   const isPhysicianVisit = formData.opvisits.visitTypeVal === "P";
@@ -37,7 +35,6 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
   }
 
   return (
-
     <FormSectionWrapper title="Visit Details" spacing={1}>
       <FormField
         type="radio"
@@ -46,11 +43,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({
         ControlID="visitDetails"
         value={formData.opvisits.visitTypeVal}
         options={visitOptions}
-        onChange={handleRadioButtonChange(
-          ["opvisits", "visitTypeVal"],
-          ["opvisits", "visitType"],
-          visitOptions
-        )}
+        onChange={handleRadioButtonChange(["opvisits", "visitTypeVal"], ["opvisits", "visitType"], visitOptions)}
         inline={true}
         isSubmitted={isSubmitted}
         gridProps={{ xs: 12, sm: 6, md: 3 }}

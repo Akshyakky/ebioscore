@@ -7,48 +7,43 @@ import { DeptUnitListDto } from "../../../../interfaces/HospitalAdministration/D
 import DeptUnitListSearch from "../SubPage/DeptunitListSearch";
 
 const DeptUnitListPage: React.FC = () => {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [selectedData, setSelectedData] = useState<DeptUnitListDto | undefined>(undefined);
 
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const [selectedData, setSelectedData] = useState<DeptUnitListDto | undefined>(undefined);
+  const handleAdvancedSearch = () => {
+    setIsSearchOpen(true);
+  };
 
+  const handleCloseSearch = () => {
+    setIsSearchOpen(false);
+  };
 
-    const handleAdvancedSearch = () => {
-        setIsSearchOpen(true);
-    };
+  const handleSelect = (data: DeptUnitListDto) => {
+    setSelectedData(data);
+  };
 
-    const handleCloseSearch = () => {
-        setIsSearchOpen(false);
-    };
+  return (
+    <>
+      <Container maxWidth={false}>
+        <Box sx={{ marginBottom: 2 }}>
+          <ActionButtonGroup
+            buttons={[
+              {
+                variant: "contained",
+                size: "medium",
+                icon: SearchIcon,
+                text: "Advanced Search",
+                onClick: handleAdvancedSearch,
+              },
+            ]}
+          />
+        </Box>
 
-    const handleSelect = (data: DeptUnitListDto) => {
-        setSelectedData(data);
-    };
-
-    return (
-        <>
-            <Container maxWidth={false}>
-                <Box sx={{ marginBottom: 2 }}>
-                    <ActionButtonGroup
-                        buttons={[
-                            {
-                                variant: "contained",
-                                size: "medium",
-                                icon: SearchIcon,
-                                text: "Advanced Search",
-                                onClick: handleAdvancedSearch,
-                            },
-                        ]}
-                    />
-                </Box>
-
-
-                <DeptUnitListDetails editData={selectedData} />
-                <DeptUnitListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
-
-
-            </Container >
-        </>
-    );
+        <DeptUnitListDetails editData={selectedData} />
+        <DeptUnitListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
+      </Container>
+    </>
+  );
 };
 
 export default DeptUnitListPage;

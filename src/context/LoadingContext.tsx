@@ -13,18 +13,12 @@ interface LoadingProviderProps {
 }
 export const useLoading = () => useContext(LoadingContext);
 
-export const LoadingProvider: React.FC<LoadingProviderProps> = ({
-  children,
-}) => {
+export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const setLoading = (loading: boolean) => {
     setIsLoading(loading);
   };
 
-  return (
-    <LoadingContext.Provider value={{ isLoading, setLoading }}>
-      {children}
-    </LoadingContext.Provider>
-  );
+  return <LoadingContext.Provider value={{ isLoading, setLoading }}>{children}</LoadingContext.Provider>;
 };

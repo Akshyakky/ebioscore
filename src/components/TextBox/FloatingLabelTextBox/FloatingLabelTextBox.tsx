@@ -7,7 +7,7 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   ControlID,
   title,
   value = "",
-  onChange = () => { },
+  onChange = () => {},
   onBlur,
   placeholder,
   type = "text",
@@ -45,16 +45,9 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
     [onChange, inputPattern]
   );
 
-  const isInvalid = useMemo(
-    () => (isMandatory && isSubmitted && !value) || !!errorMessage,
-    [isMandatory, isSubmitted, value, errorMessage]
-  );
+  const isInvalid = useMemo(() => (isMandatory && isSubmitted && !value) || !!errorMessage, [isMandatory, isSubmitted, value, errorMessage]);
 
-  const errorToShow = useMemo(
-    () =>
-      errorMessage || (isMandatory && !value ? `${title} is required.` : ""),
-    [errorMessage, isMandatory, value, title]
-  );
+  const errorToShow = useMemo(() => errorMessage || (isMandatory && !value ? `${title} is required.` : ""), [errorMessage, isMandatory, value, title]);
 
   const inputProps: React.InputHTMLAttributes<HTMLInputElement> = {
     "aria-label": ariaLabel || title,
@@ -71,13 +64,7 @@ const FloatingLabelTextBox: React.FC<TextBoxProps> = ({
   }
 
   return (
-    <FormControl
-      variant="outlined"
-      fullWidth
-      margin="normal"
-      className={className}
-      style={style}
-    >
+    <FormControl variant="outlined" fullWidth margin="normal" className={className} style={style}>
       <TextField
         id={controlId}
         name={name}

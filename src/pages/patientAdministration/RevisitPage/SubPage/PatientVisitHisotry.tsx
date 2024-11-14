@@ -77,10 +77,7 @@ const PatientVisitHistory: React.FC<PatientVisitHistoryProps> = ({ pChartID }) =
         </Grid>
         <Grid container justifyContent="space-between">
           <Grid item xs={12} sm={12} lg={12} xl={12}>
-            <CustomGrid
-              columns={gridPatientHistoryColumns}
-              data={patientHistoryData}
-            />
+            <CustomGrid columns={gridPatientHistoryColumns} data={patientHistoryData} />
           </Grid>
         </Grid>
       </Grid>

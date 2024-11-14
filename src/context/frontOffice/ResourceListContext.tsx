@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useLoading } from "../LoadingContext";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store/reducers";
+import { RootState } from "../../store";
 import { notifyError } from "../../utils/Common/toastManager";
 import { ResourceListService } from "../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
 import { ResourceListData } from "../../interfaces/frontOffice/ResourceListData";
+import { useAppSelector } from "@/store/hooks";
 
 interface ResourceListContextProps {
   resourceList: ResourceListData[];
@@ -17,23 +17,20 @@ interface ResourceListContextProps {
 export const ResourceListContext = createContext<ResourceListContextProps>({
   resourceList: [],
   searchResults: [],
-  performSearch: async () => { },
-  fetchAllResources: async () => { },
-  updateResourceStatus: async () => { },
+  performSearch: async () => {},
+  fetchAllResources: async () => {},
+  updateResourceStatus: async () => {},
 });
 
 interface ResourceListProviderProps {
   children: React.ReactNode;
 }
 
-export const ResourceListProvider = ({
-  children,
-}: ResourceListProviderProps) => {
+export const ResourceListProvider = ({ children }: ResourceListProviderProps) => {
   const [resourceList, setResourceList] = useState<ResourceListData[]>([]);
   const [searchResults, setSearchResults] = useState<ResourceListData[]>([]);
   const { setLoading } = useLoading();
-  const userInfo = useSelector((state: RootState) => state.userDetails);
-  const token = userInfo?.token;
+  const { token } = useAppSelector((state: RootState) => state.auth);
 
   const fetchAllResources = async () => {
     if (!token) return;
@@ -64,9 +61,7 @@ export const ResourceListProvider = ({
       setSearchResults(resourceList);
     } else {
       const filteredResults = resourceList.filter(
-        (resource) =>
-          resource.rLName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          resource.rLCode.toLowerCase().includes(searchTerm.toLowerCase())
+        (resource) => resource.rLName.toLowerCase().includes(searchTerm.toLowerCase()) || resource.rLCode.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setSearchResults(filteredResults);
     }
@@ -77,9 +72,7 @@ export const ResourceListProvider = ({
     try {
       const response = await ResourceListService.updateResourceActiveStatus(resourceID, status === "active");
       if (response.success) {
-        const updatedResources = resourceList.map((resource) =>
-          resource.rLID === resourceID ? { ...resource, status } : resource
-        );
+        const updatedResources = resourceList.map((resource) => (resource.rLID === resourceID ? { ...resource, status } : resource));
         setResourceList(updatedResources);
         setSearchResults(updatedResources);
       } else {

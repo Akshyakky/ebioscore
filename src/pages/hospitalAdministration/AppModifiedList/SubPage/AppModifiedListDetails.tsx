@@ -2,9 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useLoading } from "../../../../context/LoadingContext";
 import { AppModifiedMast, AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
-import { store } from "../../../../store/store";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { appModifiedListService, appModifiedMastService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { showAlert } from "../../../../utils/Common/showAlert";
@@ -18,6 +15,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import moduleService from "../../../../services/CommonServices/ModuleService";
+import { useAppSelector } from "@/store/hooks";
 
 const AppModifiedDetails: React.FC = () => {
   const { setLoading } = useLoading();
@@ -27,14 +25,14 @@ const AppModifiedDetails: React.FC = () => {
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>("");
   const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([]);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
-  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const user = useAppSelector((state) => state.auth);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [formData, setFormData] = useState<AppModifyFieldDto | null>(null);
   const [dropdownValues, setDropdownValues] = useState({
     mainModulesOptions: [] as DropdownOption[],
     authGroupOptions: [] as DropdownOption[],
   });
-  const { token, adminYN, userID } = useSelector((state: RootState) => state.userDetails);
+  const { token, adminYN, userID } = useAppSelector((state) => state.auth);
   const [isDropdownLoading, setIsDropdownLoading] = useState(true);
   const [categoryFormData, setCategoryFormData] = useState<AppModifiedMast>({
     fieldID: 0,
@@ -42,9 +40,9 @@ const AppModifiedDetails: React.FC = () => {
     fieldName: "",
     auGrpID: 0,
     rActiveYN: "Y",
-    compID: store.getState().userDetails.compID || 0,
-    compCode: store.getState().userDetails.compCode || "",
-    compName: store.getState().userDetails.compName || "",
+    compID: user.compID || 0,
+    compCode: user.compCode || "",
+    compName: user.compName || "",
     transferYN: "Y",
     rNotes: null,
   });
@@ -131,9 +129,9 @@ const AppModifiedDetails: React.FC = () => {
           fieldName: "",
           auGrpID: 0,
           rActiveYN: "Y",
-          compID: store.getState().userDetails.compID || 0,
-          compCode: store.getState().userDetails.compCode || "",
-          compName: store.getState().userDetails.compName || "",
+          compID: user.compID || 0,
+          compCode: user.compCode || "",
+          compName: user.compName || "",
           transferYN: "Y",
           rNotes: null,
         });
@@ -234,7 +232,7 @@ const AppModifiedDetails: React.FC = () => {
       header: "Edit",
       visible: true,
       render: (row: AppModifyFieldDto) => {
-        if (row.modifyYN === "Y" || userInfo?.adminYN === "Y") {
+        if (row.modifyYN === "Y" || user.adminYN === "Y") {
           return <CustomButton onClick={() => handleEdit(row)} icon={EditIcon} text="Edit" variant="contained" size="small" />;
         }
         return null;

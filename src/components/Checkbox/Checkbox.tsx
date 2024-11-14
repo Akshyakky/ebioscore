@@ -12,34 +12,14 @@ interface CheckboxProps {
   isMandatory?: boolean;
   disabled?: boolean;
   className?: string;
-  size?: 'small' | 'medium';
+  size?: "small" | "medium";
 }
 
-const CustomCheckbox: React.FC<CheckboxProps> = ({
-  label,
-  name,
-  checked,
-  onChange,
-  isMandatory = false,
-  disabled = false,
-  className,
-  size = 'medium',
-  ...props
-}) => {
+const CustomCheckbox: React.FC<CheckboxProps> = ({ label, name, checked, onChange, isMandatory = false, disabled = false, className, size = "medium", ...props }) => {
   return (
     <FormGroup className={clsx(className)}>
       <FormControlLabel
-        control={
-          <Checkbox
-            checked={checked}
-            onChange={onChange}
-            name={name}
-            disabled={disabled}
-            color="primary"
-            size={size}
-            inputProps={{ "aria-required": isMandatory }}
-          />
-        }
+        control={<Checkbox checked={checked} onChange={onChange} name={name} disabled={disabled} color="primary" size={size} inputProps={{ "aria-required": isMandatory }} />}
         label={
           <>
             {label}

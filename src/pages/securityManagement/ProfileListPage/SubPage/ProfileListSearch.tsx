@@ -9,11 +9,7 @@ interface ProfileListSearchProps {
   onSelect: (profileMastDto: ProfileMastDto) => void;
 }
 
-const ProfileListSearch: React.FC<ProfileListSearchProps> = ({
-  open,
-  onClose,
-  onSelect,
-}) => {
+const ProfileListSearch: React.FC<ProfileListSearchProps> = ({ open, onClose, onSelect }) => {
   const fetchItems = async () => {
     try {
       const items = await profileMastService.getAll();

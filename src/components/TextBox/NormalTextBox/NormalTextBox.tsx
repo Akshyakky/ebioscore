@@ -25,16 +25,10 @@ const NormalTextBox: React.FC<TextBoxProps> = ({
 }) => {
   const controlId = `txt${ControlID}`;
   const isInvalid = (isMandatory && isSubmitted && !value) || !!errorMessage;
-  const errorToShow =
-    errorMessage || (isMandatory && !value ? `${title} is required.` : "");
+  const errorToShow = errorMessage || (isMandatory && !value ? `${title} is required.` : "");
 
   return (
-    <FormControl
-      fullWidth
-      variant="outlined"
-      className={className}
-      style={style}
-    >
+    <FormControl fullWidth variant="outlined" className={className} style={style}>
       <TextField
         id={controlId}
         label={title}

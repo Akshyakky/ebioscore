@@ -1,13 +1,5 @@
 import React from "react";
-import {
-  FormControl,
-  FormControlLabel,
-  Radio,
-  RadioGroup as MuiRadioGroup,
-  FormLabel,
-  FormHelperText,
-  Box,
-} from "@mui/material";
+import { FormControl, FormControlLabel, Radio, RadioGroup as MuiRadioGroup, FormLabel, FormHelperText, Box } from "@mui/material";
 import { SxProps } from "@mui/system";
 import { Theme } from "@mui/material/styles";
 
@@ -46,36 +38,14 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
   sx = {},
 }) => {
   return (
-    <FormControl
-      component="fieldset"
-      className={className}
-      required={isMandatory}
-      disabled={disabled}
-      error={error}
-      sx={sx}
-    >
+    <FormControl component="fieldset" className={className} required={isMandatory} disabled={disabled} error={error} sx={sx}>
       {label && <FormLabel component="legend">{label}</FormLabel>}
-      <MuiRadioGroup
-        name={name}
-        value={selectedValue}
-        onChange={onChange}
-        row={inline}
-        aria-required={isMandatory}
-      >
+      <MuiRadioGroup name={name} value={selectedValue} onChange={onChange} row={inline} aria-required={isMandatory}>
         {options.map((option, index) => (
-          <FormControlLabel
-            key={`${name}-${index}`}
-            value={option.value}
-            control={<Radio />}
-            label={option.label}
-            disabled={disabled}
-            sx={{ mb: inline ? 0 : 1 }}
-          />
+          <FormControlLabel key={`${name}-${index}`} value={option.value} control={<Radio />} label={option.label} disabled={disabled} sx={{ mb: inline ? 0 : 1 }} />
         ))}
       </MuiRadioGroup>
-      {helperText && (
-        <FormHelperText>{helperText}</FormHelperText>
-      )}
+      {helperText && <FormHelperText>{helperText}</FormHelperText>}
     </FormControl>
   );
 };

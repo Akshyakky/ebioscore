@@ -8,13 +8,13 @@ import { OPIPHistROSDto } from "../../../../interfaces/ClinicalManagement/OPIPHi
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { store } from "../../../../store/store";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import ClearIcon from "@mui/icons-material/Clear";
+import { useAppSelector } from "@/store/hooks";
 
 interface ReviewOfSystemProps {
   pChartID: number;
@@ -25,7 +25,7 @@ interface ReviewOfSystemProps {
 }
 
 export const ReviewOfSystem: React.FC<ReviewOfSystemProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const initialFormState: OPIPHistROSDto = {
     opipRosID: 0,
     opipNo: opipNo,

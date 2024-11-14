@@ -1,3 +1,4 @@
+//darkTheme.ts
 import { createTheme } from "@mui/material/styles";
 
 const drawerWidth = 340;
@@ -152,9 +153,7 @@ const darkTheme = createTheme({
     },
   },
   typography: {
-    fontFamily: ["Segoe UI", "Tahoma", "Geneva", "Verdana", "sans-serif"].join(
-      ","
-    ),
+    fontFamily: ["Segoe UI", "Tahoma", "Geneva", "Verdana", "sans-serif"].join(","),
     fontSize: 14, // Slightly smaller text for better contrast
   },
 });

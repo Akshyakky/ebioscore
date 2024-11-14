@@ -1,10 +1,12 @@
 import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "../../apiConfig";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
-import { store } from "../../store/store";
+import { store } from "@/store";
 
 const apiService = new CommonApiService({ baseURL: APIConfig.billingURL });
-const getToken = () => store.getState().userDetails.token!;
+
+// Function to get the token from the store
+const getToken = () => store.getState().auth.token!;
 
 interface MemSchemeAPIResponse {
   patMemID: string;

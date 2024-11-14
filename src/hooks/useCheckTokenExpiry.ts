@@ -1,50 +1,71 @@
 import { useEffect, useState, useCallback } from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "../store/reducers";
+import { useAppSelector } from "../store/hooks";
 import AuthService from "../services/AuthService/AuthService";
 import { debounce } from "../utils/Common/debounceUtils";
+import { selectUser } from "@/store/features/auth/selectors";
 
-const useCheckTokenExpiry = (
-  retryCount = 3,
-  retryDelay = 1000,
-  debounceDelay = 300
-): boolean => {
+interface TokenExpiryConfig {
+  retryCount?: number;
+  retryDelay?: number;
+  debounceDelay?: number;
+}
+
+const useCheckTokenExpiry = ({ retryCount = 3, retryDelay = 1000, debounceDelay = 300 }: TokenExpiryConfig = {}): boolean => {
   const [isTokenExpired, setIsTokenExpired] = useState(false);
-  const token = useSelector((state: RootState) => state.userDetails.token);
+  const { token, tokenExpiry } = useAppSelector(selectUser);
 
-  const checkExpiry = useCallback(async () => {
+  // First check local token expiry
+  const checkLocalExpiry = useCallback(() => {
+    if (!tokenExpiry) return true;
+    return Date.now() >= tokenExpiry;
+  }, [tokenExpiry]);
+
+  // Server-side token validation
+  const validateTokenWithServer = useCallback(async () => {
     let retries = 0;
+
     const attempt = async () => {
-      if (token) {
-        try {
-          const response = await AuthService.checkTokenExpiry(token);
-          if (response.data) {
-            setIsTokenExpired(response.data.isExpired);
-          }
-        } catch (error) {
-          if (retries < retryCount) {
-            retries++;
-            setTimeout(attempt, retryDelay);
-          } else {
-            setIsTokenExpired(true); // Assume expired if max retries reached
-          }
+      if (!token) {
+        setIsTokenExpired(true);
+        return;
+      }
+
+      try {
+        const response = await AuthService.checkTokenExpiry(token);
+        setIsTokenExpired(response.data?.isExpired ?? checkLocalExpiry());
+      } catch (error) {
+        console.error("Token validation error:", error);
+
+        if (retries < retryCount) {
+          retries++;
+          return new Promise((resolve) => setTimeout(() => resolve(attempt()), retryDelay));
+        } else {
+          setIsTokenExpired(true); // Assume expired if max retries reached
         }
       }
     };
-    attempt();
-  }, [token, retryCount, retryDelay]);
 
-  const debouncedCheckExpiry = useCallback(
-    debounce(checkExpiry, debounceDelay),
-    [checkExpiry, debounceDelay]
-  );
+    return attempt();
+  }, [token, retryCount, retryDelay, checkLocalExpiry]);
+
+  // Debounced server check
+  const debouncedValidateToken = useCallback(debounce(validateTokenWithServer, debounceDelay), [validateTokenWithServer, debounceDelay]);
 
   useEffect(() => {
-    debouncedCheckExpiry();
+    // First check local expiry
+    const locallyExpired = checkLocalExpiry();
+
+    if (locallyExpired) {
+      setIsTokenExpired(true);
+    } else {
+      // If not locally expired, validate with server
+      debouncedValidateToken();
+    }
+
     return () => {
-      debouncedCheckExpiry.cancel();
+      debouncedValidateToken.cancel();
     };
-  }, [debouncedCheckExpiry]);
+  }, [debouncedValidateToken, checkLocalExpiry]);
 
   return isTokenExpired;
 };

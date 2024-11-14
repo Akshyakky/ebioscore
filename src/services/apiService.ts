@@ -1,11 +1,11 @@
 import axios, { AxiosResponse } from "axios";
 import { OperationResult } from "../interfaces/Common/OperationResult";
 import { handleError } from "./CommonServices/HandlerError";
-import { store } from "../store/store";
+import { store } from "@/store";
 
 // Function to create an axios instance with a specific base URL
 const createApiClient = (baseURL: string) => {
-  const token = store.getState().userDetails.token!;
+  const token = store.getState().auth.token!;
   return axios.create({
     baseURL: baseURL,
     timeout: 10000,

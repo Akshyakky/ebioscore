@@ -6,11 +6,7 @@ const useSearch = <T>(data: T[], searchFields: (keyof T)[]) => {
 
   const filteredData = useMemo(() => {
     if (!searchTerm.trim()) return data;
-    return data.filter((item) =>
-      searchFields.some((field) =>
-        String(item[field]).toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
+    return data.filter((item) => searchFields.some((field) => String(item[field]).toLowerCase().includes(searchTerm.toLowerCase())));
   }, [data, searchTerm, searchFields]);
 
   return { searchTerm, setSearchTerm, filteredData };

@@ -1,15 +1,16 @@
-import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { Box, IconButton, CircularProgress, InputAdornment } from "@mui/material";
+import React, { useEffect, useCallback, useMemo, useRef } from "react";
+import { Box, IconButton, InputAdornment, useTheme } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
+import { format } from "date-fns";
+
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
 import FormField from "../../../../components/FormField/FormField";
-import { useLoading } from "../../../../context/LoadingContext";
 import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { format } from "date-fns";
-import ClearIcon from "@mui/icons-material/Clear";
-import SearchIcon from "@mui/icons-material/Search";
-import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/admissionService";
+import { useAppDispatch, useAppSelector } from "../../../../store/hooks";
+import { selectFilteredAdmissions, selectIsLoading, selectSearchTerm } from "@/store/features/admission/admissionSearch/admissionSelectors";
+import { clearSearch, fetchCurrentAdmissions, resetAdmissionSearch, setSearchTerm } from "@/store/features/admission/admissionSearch/admissionSearchSlice";
 
 interface AdmissionListSearchProps {
   open: boolean;
@@ -18,103 +19,49 @@ interface AdmissionListSearchProps {
 }
 
 const AdmissionListSearch: React.FC<AdmissionListSearchProps> = ({ open, onClose, onSelect }) => {
-  const [localSearchTerm, setLocalSearchTerm] = useState("");
-  const [admissions, setAdmissions] = useState<AdmissionDto[]>([]);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const dispatch = useAppDispatch();
+  const theme = useTheme();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const { setLoading } = useLoading();
 
-  // Cleanup function
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
+  const filteredAdmissions = useAppSelector(selectFilteredAdmissions);
+  const searchTerm = useAppSelector(selectSearchTerm);
+  const isLoading = useAppSelector(selectIsLoading);
 
-  // Reset on dialog close
+  // Load admissions when dialog opens
   useEffect(() => {
-    if (!open) {
-      setLocalSearchTerm("");
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    } else {
+    if (open) {
+      void dispatch(fetchCurrentAdmissions());
       // Focus search input when dialog opens
       setTimeout(() => {
         searchInputRef.current?.focus();
       }, 100);
+    } else {
+      dispatch(resetAdmissionSearch());
     }
-  }, [open]);
+  }, [open, dispatch]);
 
-  // Fetch admissions
-  useEffect(() => {
-    const fetchAdmissions = async () => {
-      if (!open) return;
-
-      try {
-        setLoading(true);
-        const response = await extendedAdmissionService.getCurrentAdmissions();
-        if (!response.success || !response.data) {
-          throw new Error("Failed to fetch admissions");
-        }
-        setAdmissions(response.data);
-      } catch (error) {
-        console.error("Error fetching admissions:", error);
-        showAlert("Error", "Failed to fetch admissions data", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAdmissions();
-  }, [open, setLoading]);
-
-  // Search handler with performance optimization
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setLocalSearchTerm(value);
-
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-  }, []);
+  // Handle search input change with debounce
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      dispatch(setSearchTerm(e.target.value));
+    },
+    [dispatch]
+  );
 
   // Clear search
   const handleClearSearch = useCallback(() => {
-    setLocalSearchTerm("");
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, []);
+    dispatch(clearSearch());
+    searchInputRef.current?.focus();
+  }, [dispatch]);
 
-  // Optimized search function
-  const getFilteredData = useCallback((data: AdmissionDto[], searchTerm: string) => {
-    if (!searchTerm.trim()) return data;
-
-    const searchLower = searchTerm.toLowerCase().trim();
-    return data.filter((admission) => {
-      const ipAdmission = admission.ipAdmissionDto;
-      const bedDetails = admission.wrBedDetailsDto;
-
-      const searchFields = [
-        ipAdmission?.admitCode,
-        ipAdmission?.pChartCode,
-        ipAdmission?.pfName,
-        ipAdmission?.plName,
-        ipAdmission?.pTitle,
-        ipAdmission?.deptName,
-        bedDetails?.rGrpName,
-        bedDetails?.bedName,
-      ];
-
-      return searchFields.some((field) => field?.toLowerCase().includes(searchLower));
-    });
-  }, []);
-
-  // Memoized filtered data
-  const filteredData = useMemo(() => getFilteredData(admissions, localSearchTerm), [admissions, localSearchTerm, getFilteredData]);
+  // Handle row selection
+  const handleRowClick = useCallback(
+    (admission: AdmissionDto) => {
+      onSelect(admission);
+      onClose();
+    },
+    [onSelect, onClose]
+  );
 
   // Memoized columns configuration
   const columns = useMemo<Column<AdmissionDto>[]>(
@@ -189,7 +136,7 @@ const AdmissionListSearch: React.FC<AdmissionListSearchProps> = ({ open, onClose
           type="text"
           label="Search"
           name="search"
-          value={localSearchTerm}
+          value={searchTerm}
           onChange={handleSearchChange}
           ControlID="admissionSearch"
           placeholder="Search by Admission No, UHID, Patient Name, Department, Ward or Bed"
@@ -203,7 +150,7 @@ const AdmissionListSearch: React.FC<AdmissionListSearchProps> = ({ open, onClose
                 <SearchIcon color="action" />
               </InputAdornment>
             ),
-            endAdornment: localSearchTerm && (
+            endAdornment: searchTerm && (
               <InputAdornment position="end">
                 <IconButton onClick={handleClearSearch} size="small" aria-label="clear search">
                   <ClearIcon />
@@ -215,14 +162,11 @@ const AdmissionListSearch: React.FC<AdmissionListSearchProps> = ({ open, onClose
 
         <CustomGrid
           columns={columns}
-          data={filteredData}
+          data={filteredAdmissions}
           maxHeight="60vh"
           pagination
           pageSize={10}
-          onRowClick={(item) => {
-            onSelect(item);
-            onClose();
-          }}
+          onRowClick={handleRowClick}
           searchTerm=""
           showExportCSV={false}
           showExportPDF={false}
