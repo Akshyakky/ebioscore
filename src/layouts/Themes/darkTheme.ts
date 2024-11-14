@@ -1,48 +1,123 @@
-//darkTheme.ts
-import { createTheme } from "@mui/material/styles";
-
-const drawerWidth = 340;
+// src/theme/darkTheme.ts
+import { createTheme, alpha, Shadows } from "@mui/material/styles";
+import { DRAWER_WIDTH, DARK_COLORS, SHADOWS, TYPOGRAPHY, TRANSITIONS, SHAPE, COMPONENT_CONSTANTS } from "./themeConstants";
 
 const darkTheme = createTheme({
   palette: {
     mode: "dark",
-    primary: {
-      main: "#90caf9", // Keep the primary color vibrant
-    },
-    background: {
-      default: "#121212", // Very dark background for the app
-      paper: "#1e1e1e", // Slightly lighter for cards, drawers, dialogs
-    },
-    text: {
-      primary: "#ffffff", // Bright text for dark mode
-      secondary: "#b0bec5", // Muted light gray for less important text
-    },
-    divider: "#424242", // Use a muted gray for dividers and borders
+    primary: DARK_COLORS.primary,
+    secondary: DARK_COLORS.secondary,
+    success: DARK_COLORS.success,
+    error: DARK_COLORS.error,
+    warning: DARK_COLORS.warning,
+    info: DARK_COLORS.info,
+    background: DARK_COLORS.background,
+    text: DARK_COLORS.text,
+    divider: DARK_COLORS.divider,
+    action: DARK_COLORS.action,
   },
+  typography: {
+    fontFamily: TYPOGRAPHY.fontFamily,
+    fontSize: 14,
+    h1: {
+      fontSize: TYPOGRAPHY.fontSizes["4xl"],
+      fontWeight: TYPOGRAPHY.fontWeights.bold,
+      lineHeight: TYPOGRAPHY.lineHeights.sm,
+      color: DARK_COLORS.text.primary,
+    },
+    h2: {
+      fontSize: TYPOGRAPHY.fontSizes["3xl"],
+      fontWeight: TYPOGRAPHY.fontWeights.semibold,
+      lineHeight: TYPOGRAPHY.lineHeights.sm,
+      color: DARK_COLORS.text.primary,
+    },
+    h3: {
+      fontSize: TYPOGRAPHY.fontSizes["2xl"],
+      fontWeight: TYPOGRAPHY.fontWeights.semibold,
+      lineHeight: TYPOGRAPHY.lineHeights.md,
+      color: DARK_COLORS.text.primary,
+    },
+    h4: {
+      fontSize: TYPOGRAPHY.fontSizes.xl,
+      fontWeight: TYPOGRAPHY.fontWeights.semibold,
+      lineHeight: TYPOGRAPHY.lineHeights.md,
+      color: DARK_COLORS.text.primary,
+    },
+    h5: {
+      fontSize: TYPOGRAPHY.fontSizes.lg,
+      fontWeight: TYPOGRAPHY.fontWeights.medium,
+      lineHeight: TYPOGRAPHY.lineHeights.lg,
+      color: DARK_COLORS.text.primary,
+    },
+    h6: {
+      fontSize: TYPOGRAPHY.fontSizes.md,
+      fontWeight: TYPOGRAPHY.fontWeights.medium,
+      lineHeight: TYPOGRAPHY.lineHeights.lg,
+      color: DARK_COLORS.text.primary,
+    },
+    body1: {
+      fontSize: TYPOGRAPHY.fontSizes.md,
+      lineHeight: TYPOGRAPHY.lineHeights.md,
+      color: DARK_COLORS.text.primary,
+    },
+    body2: {
+      fontSize: TYPOGRAPHY.fontSizes.sm,
+      lineHeight: TYPOGRAPHY.lineHeights.md,
+      color: DARK_COLORS.text.secondary,
+    },
+    button: {
+      textTransform: "none",
+      fontWeight: TYPOGRAPHY.fontWeights.medium,
+    },
+  },
+  shape: SHAPE,
+  shadows: ["none", ...Array(3).fill(SHADOWS.xs), ...Array(3).fill(SHADOWS.sm), ...Array(4).fill(SHADOWS.md), ...Array(14).fill(SHADOWS.xl)] as Shadows,
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        "*": {
+          boxSizing: "border-box",
+          margin: 0,
+          padding: 0,
+        },
+        html: {
+          WebkitFontSmoothing: "antialiased",
+          MozOsxFontSmoothing: "grayscale",
+          height: "100%",
+          width: "100%",
+        },
+        body: {
+          height: "100%",
+          backgroundColor: DARK_COLORS.background.default,
+        },
+      },
+    },
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          width: drawerWidth,
+          width: DRAWER_WIDTH,
           boxSizing: "border-box",
           overflowX: "hidden",
           padding: "10px 0",
-          background: "#253147", // Keep drawer background dark blue
-          color: "white",
+          background: DARK_COLORS.background.dark,
+          color: DARK_COLORS.text.primary,
+          borderRight: `1px solid ${DARK_COLORS.divider}`,
+          transition: `all ${TRANSITIONS.duration.standard}ms ${TRANSITIONS.easing.easeInOut}`,
           ".active-submenu-item": {
-            backgroundColor: "#2979ff",
-            color: "#fff",
+            backgroundColor: DARK_COLORS.primary.main,
+            color: DARK_COLORS.primary.contrastText,
+            borderLeft: `4px solid ${DARK_COLORS.primary.light}`,
             "& .MuiListItemIcon-root": {
-              color: "#fff",
+              color: DARK_COLORS.primary.contrastText,
             },
           },
           ".MuiListItem-root": {
-            transition: "background-color 0.3s",
+            transition: `all ${TRANSITIONS.duration.shorter}ms ${TRANSITIONS.easing.easeInOut}`,
             "&:hover": {
-              backgroundColor: "rgba(255, 255, 255, 0.1)",
-              color: "#fff",
+              backgroundColor: DARK_COLORS.action.hover,
+              color: DARK_COLORS.primary.light,
               "& .MuiListItemIcon-root": {
-                color: "#fff",
+                color: DARK_COLORS.primary.light,
               },
             },
           },
@@ -52,38 +127,41 @@ const darkTheme = createTheme({
     MuiDialog: {
       styleOverrides: {
         paper: {
-          backgroundColor: "#1e1e1e", // Dark dialog background
-          boxShadow: "none",
+          backgroundColor: DARK_COLORS.background.paper,
+          boxShadow: SHADOWS.xl,
+          borderRadius: SHAPE.borderRadius,
         },
       },
     },
     MuiDialogTitle: {
       styleOverrides: {
         root: {
-          backgroundColor: "#2979ff", // Use primary color for dialog headers
-          color: "#ffffff", // White text for header
-          borderBottom: "1px solid #424242",
-          padding: "16px",
-          fontSize: "18px",
-          fontWeight: "bold",
+          backgroundColor: DARK_COLORS.primary.main,
+          color: DARK_COLORS.primary.contrastText,
+          borderBottom: `1px solid ${DARK_COLORS.divider}`,
+          padding: COMPONENT_CONSTANTS.dialog.spacing,
+          height: COMPONENT_CONSTANTS.dialog.titleHeight,
+          fontSize: TYPOGRAPHY.fontSizes.lg,
+          fontWeight: TYPOGRAPHY.fontWeights.semibold,
         },
       },
     },
     MuiDialogContent: {
       styleOverrides: {
         root: {
-          backgroundColor: "#1e1e1e", // Dark content background
-          padding: "16px",
-          color: "#ffffff", // White text in content
+          backgroundColor: DARK_COLORS.background.paper,
+          padding: COMPONENT_CONSTANTS.dialog.spacing,
+          color: DARK_COLORS.text.primary,
         },
       },
     },
     MuiDialogActions: {
       styleOverrides: {
         root: {
-          borderTop: "1px solid #424242",
-          backgroundColor: "#2e2e2e", // Darker background for actions
-          padding: "8px",
+          borderTop: `1px solid ${DARK_COLORS.divider}`,
+          backgroundColor: DARK_COLORS.background.dark,
+          padding: COMPONENT_CONSTANTS.dialog.spacing / 2,
+          height: COMPONENT_CONSTANTS.dialog.footerHeight,
           display: "flex",
           justifyContent: "flex-end",
         },
@@ -93,25 +171,26 @@ const darkTheme = createTheme({
       styleOverrides: {
         root: {
           "& .MuiOutlinedInput-root": {
-            backgroundColor: "#2e2e2e", // Dark background for inputs
+            backgroundColor: DARK_COLORS.background.dark,
             "& fieldset": {
-              borderColor: "#424242", // Darker border for text fields
+              borderColor: DARK_COLORS.divider,
+              transition: `all ${TRANSITIONS.duration.shorter}ms ${TRANSITIONS.easing.easeInOut}`,
             },
             "&:hover fieldset": {
-              borderColor: "#2979ff", // Primary blue border on hover
+              borderColor: DARK_COLORS.primary.main,
             },
             "&.Mui-focused fieldset": {
-              borderColor: "#2979ff", // Primary blue border on focus
+              borderColor: DARK_COLORS.primary.main,
             },
           },
           "& .MuiInputBase-input": {
-            color: "#ffffff", // White text for input
+            color: DARK_COLORS.text.primary,
           },
           "& .MuiFormLabel-root": {
-            color: "#b0bec5", // Light gray label
-          },
-          "& .MuiFormLabel-root.Mui-focused": {
-            color: "#2979ff", // Primary color for focused labels
+            color: DARK_COLORS.text.secondary,
+            "&.Mui-focused": {
+              color: DARK_COLORS.primary.main,
+            },
           },
         },
       },
@@ -119,14 +198,29 @@ const darkTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: "4px", // Add slight border-radius for buttons
-          "&.MuiButton-containedPrimary": {
-            backgroundColor: "#2979ff", // Use primary color for filled buttons
-            color: "#fff", // White text
+          textTransform: "none",
+          borderRadius: SHAPE.borderRadius,
+          fontWeight: TYPOGRAPHY.fontWeights.medium,
+          height: COMPONENT_CONSTANTS.button.mediumHeight,
+        },
+        contained: {
+          boxShadow: "none",
+          "&:hover": {
+            boxShadow: SHADOWS.sm,
           },
-          "&.MuiButton-containedSecondary": {
-            backgroundColor: "#f44336", // Use red for danger actions
-            color: "#fff", // White text
+        },
+        containedPrimary: {
+          backgroundColor: DARK_COLORS.primary.main,
+          color: DARK_COLORS.primary.contrastText,
+          "&:hover": {
+            backgroundColor: DARK_COLORS.primary.dark,
+          },
+        },
+        containedSecondary: {
+          backgroundColor: DARK_COLORS.secondary.main,
+          color: DARK_COLORS.secondary.contrastText,
+          "&:hover": {
+            backgroundColor: DARK_COLORS.secondary.dark,
           },
         },
       },
@@ -134,27 +228,90 @@ const darkTheme = createTheme({
     MuiTable: {
       styleOverrides: {
         root: {
-          backgroundColor: "#1e1e1e", // Dark background for tables
-          color: "#ffffff", // White text
+          backgroundColor: DARK_COLORS.background.paper,
+          color: DARK_COLORS.text.primary,
+        },
+      },
+    },
+    MuiTableHead: {
+      styleOverrides: {
+        root: {
+          backgroundColor: DARK_COLORS.primary.main,
+          "& .MuiTableCell-head": {
+            color: DARK_COLORS.primary.contrastText,
+            fontWeight: TYPOGRAPHY.fontWeights.semibold,
+            height: COMPONENT_CONSTANTS.table.headerHeight,
+            borderBottom: "none",
+            "&:not(:last-child)": {
+              borderRight: `1px solid ${alpha(DARK_COLORS.primary.contrastText, 0.2)}`,
+            },
+          },
+        },
+      },
+    },
+    MuiTableBody: {
+      styleOverrides: {
+        root: {
+          "& .MuiTableRow-root": {
+            "&:nth-of-type(odd)": {
+              backgroundColor: alpha(DARK_COLORS.background.light, 0.05),
+            },
+            "&:hover": {
+              backgroundColor: DARK_COLORS.action.hover,
+            },
+          },
         },
       },
     },
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderBottom: "1px solid #424242", // Darker table borders
-          color: "#ffffff", // White text
-        },
-        head: {
-          backgroundColor: "#253147", // Dark blue for table headers
-          color: "#ffffff", // White text
+          borderBottom: `1px solid ${DARK_COLORS.divider}`,
+          color: DARK_COLORS.text.primary,
+          height: COMPONENT_CONSTANTS.table.rowHeight,
+          // padding: "12px 16px",
         },
       },
     },
-  },
-  typography: {
-    fontFamily: ["Segoe UI", "Tahoma", "Geneva", "Verdana", "sans-serif"].join(","),
-    fontSize: 14, // Slightly smaller text for better contrast
+    MuiTablePagination: {
+      styleOverrides: {
+        root: {
+          height: COMPONENT_CONSTANTS.table.paginationHeight,
+          borderTop: `1px solid ${DARK_COLORS.divider}`,
+          color: DARK_COLORS.text.primary,
+        },
+        selectLabel: {
+          color: DARK_COLORS.text.secondary,
+        },
+        displayedRows: {
+          color: DARK_COLORS.text.secondary,
+        },
+      },
+    },
+    // Add other dark theme specific component overrides...
+    MuiAlert: {
+      styleOverrides: {
+        root: {
+          borderRadius: SHAPE.borderRadius,
+        },
+        standardError: {
+          backgroundColor: alpha(DARK_COLORS.error.main, 0.12),
+          color: DARK_COLORS.error.light,
+        },
+        standardSuccess: {
+          backgroundColor: alpha(DARK_COLORS.success.main, 0.12),
+          color: DARK_COLORS.success.light,
+        },
+        standardWarning: {
+          backgroundColor: alpha(DARK_COLORS.warning.main, 0.12),
+          color: DARK_COLORS.warning.light,
+        },
+        standardInfo: {
+          backgroundColor: alpha(DARK_COLORS.info.main, 0.12),
+          color: DARK_COLORS.info.light,
+        },
+      },
+    },
   },
 });
 

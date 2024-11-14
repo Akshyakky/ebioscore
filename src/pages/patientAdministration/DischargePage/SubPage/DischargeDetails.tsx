@@ -328,6 +328,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
           isMandatory
           size="small"
           gridProps={{ xs: 12, sm: 6, md: 3 }}
+          clearable
         />
 
         <FormField

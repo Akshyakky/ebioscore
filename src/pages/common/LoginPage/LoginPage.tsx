@@ -1,6 +1,6 @@
 // src/pages/common/LoginPage/LoginPage.tsx
-import React, { useEffect, useMemo, useCallback } from "react";
-import { Container, Box, Card, CardContent, Button, Alert, CircularProgress, Link, Typography, Grid, useMediaQuery, alpha } from "@mui/material";
+import React, { useEffect, useMemo, useCallback, useRef, useState } from "react";
+import { Container, Box, Card, CardContent, Button, Alert, CircularProgress, Link, Typography, Grid, useMediaQuery, alpha, styled } from "@mui/material";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../../store/hooks";
@@ -13,10 +13,91 @@ import { CompanyService } from "../../../services/CommonServices/CompanyService"
 import { ClientParameterService } from "../../../services/CommonServices/ClientParameterService";
 import AuthService from "../../../services/AuthService/AuthService";
 import { useTheme } from "../../../context/Common/ThemeContext";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { IconButton, InputAdornment } from "@mui/material";
 
 // Import images
 import logo from "../../../assets/images/eBios.png";
 import backgroundImage from "/src/assets/images/LoginCoverImage.jpg";
+
+// Styled Components
+
+const AnimatedBox = styled(Box)`
+  @keyframes float {
+    0% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+    100% {
+      transform: translateY(0px);
+    }
+  }
+`;
+
+const StyledContainer = styled(Container)(({ theme }) => ({
+  "@keyframes gradientBG": {
+    "0%": { backgroundPosition: "0% 50%" },
+    "50%": { backgroundPosition: "100% 50%" },
+    "100%": { backgroundPosition: "0% 50%" },
+  },
+  background:
+    theme.palette.mode === "light"
+      ? "linear-gradient(-45deg, #f0f8ff, #e6f3ff, #f5f5f5, #ffffff)"
+      : `linear-gradient(-45deg, ${alpha(theme.palette.background.default, 0.9)}, 
+        ${alpha(theme.palette.background.paper, 0.8)})`,
+  backgroundSize: "400% 400%",
+  animation: "gradientBG 15s ease infinite",
+}));
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  width: "100%",
+  maxWidth: "400px",
+  background: theme.palette.mode === "light" ? "rgba(255, 255, 255, 0.95)" : "rgba(24, 26, 32, 0.95)", // Darker background for dark mode
+  backdropFilter: "blur(20px)",
+  borderRadius: "16px",
+  boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.15)",
+  border: theme.palette.mode === "light" ? "1px solid rgba(255, 255, 255, 0.18)" : "1px solid rgba(255, 255, 255, 0.08)",
+  transition: "all 0.3s ease-in-out",
+  overflow: "hidden",
+  "&:hover": {
+    transform: "translateY(-5px)",
+    boxShadow: "0 12px 40px 0 rgba(31, 38, 135, 0.25)",
+  },
+  "&::before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "4px",
+    background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+  },
+}));
+
+const StyledButton = styled(Button)(({ theme }) => ({
+  height: "48px",
+  fontSize: "16px",
+  fontWeight: 600,
+  textTransform: "none",
+  borderRadius: "8px",
+  backgroundColor: theme.palette.primary.main,
+  color: "#ffffff",
+  "&:hover": {
+    backgroundColor: theme.palette.primary.dark,
+  },
+}));
+
+const StyledAlert = styled(Alert)(({ theme }) => ({
+  borderRadius: "10px",
+  marginBottom: theme.spacing(2),
+  animation: "slideIn 0.3s ease-out",
+  "@keyframes slideIn": {
+    from: { transform: "translateY(-10px)", opacity: 0 },
+    to: { transform: "translateY(0)", opacity: 1 },
+  },
+}));
 
 interface LoginFormState {
   userName: string;
@@ -49,6 +130,68 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const [formState, setFormState] = React.useState<LoginFormState>(initialFormState);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const companySelectRef = useRef<HTMLSelectElement>(null);
+  const usernameInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
+
+  const [loginAttempts, setLoginAttempts] = useState({
+    count: 0,
+    lastAttempt: null as Date | null,
+    isLocked: false,
+    lockoutEndTime: null as Date | null,
+  });
+
+  const [fieldLoading, setFieldLoading] = useState({
+    company: false,
+    username: false,
+    password: false,
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Tab") {
+        const focusableElements = [companySelectRef.current, usernameInputRef.current, passwordInputRef.current, submitButtonRef.current].filter(Boolean);
+
+        // Cast the document.activeElement to HTMLElement
+        const activeElement = document.activeElement as HTMLElement | null;
+
+        if (!activeElement) return;
+
+        const currentIndex = focusableElements.findIndex((el) => el instanceof HTMLElement && el.isEqualNode(activeElement));
+
+        if (currentIndex > -1) {
+          const nextIndex = e.shiftKey ? (currentIndex - 1 + focusableElements.length) % focusableElements.length : (currentIndex + 1) % focusableElements.length;
+
+          const nextElement = focusableElements[nextIndex];
+          if (nextElement instanceof HTMLElement) {
+            nextElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const checkRateLimit = useCallback(() => {
+    const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes
+    const MAX_ATTEMPTS = 3;
+
+    if (loginAttempts.isLocked && loginAttempts.lockoutEndTime) {
+      const now = new Date();
+      if (now < loginAttempts.lockoutEndTime) {
+        const remainingTime = Math.ceil((loginAttempts.lockoutEndTime.getTime() - now.getTime()) / 1000);
+        return `Account locked. Try again in ${remainingTime} seconds.`;
+      }
+      setLoginAttempts((prev) => ({ ...prev, isLocked: false, count: 0 }));
+    }
+    return null;
+  }, [loginAttempts]);
 
   // Responsive breakpoints
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -115,6 +258,12 @@ const LoginPage: React.FC = () => {
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
+      const lockoutMessage = checkRateLimit();
+      if (lockoutMessage) {
+        setFormState((prev) => ({ ...prev, errorMessage: lockoutMessage }));
+        return;
+      }
+
       if (formState.licenseExpiryMessage === "Cannot log in. Your License has expired") {
         setFormState((prev) => ({
           ...prev,
@@ -131,6 +280,7 @@ const LoginPage: React.FC = () => {
         return;
       }
 
+      setFieldLoading({ company: true, username: true, password: true });
       setFormState((prev) => ({ ...prev, isLoggingIn: true, errorMessage: "" }));
 
       try {
@@ -159,6 +309,15 @@ const LoginPage: React.FC = () => {
           notifySuccess("Login successful!");
           navigate("/dashboard");
         } else {
+          setLoginAttempts((prev) => {
+            const newCount = prev.count + 1;
+            return {
+              count: newCount,
+              lastAttempt: new Date(),
+              isLocked: newCount >= 3,
+              lockoutEndTime: newCount >= 3 ? new Date(Date.now() + 5 * 60 * 1000) : null,
+            };
+          });
           setFormState((prev) => ({
             ...prev,
             errorMessage: tokenResponse.data?.user.ErrorMessage || "Invalid credentials",
@@ -174,7 +333,7 @@ const LoginPage: React.FC = () => {
         }));
       }
     },
-    [formState, selectedCompanyName, dispatch, navigate]
+    [formState, checkRateLimit, selectedCompanyName, dispatch, navigate]
   );
 
   const handleSelectCompany = useCallback((CompIDCompCode: string, compName: string) => {
@@ -191,37 +350,59 @@ const LoginPage: React.FC = () => {
     minHeight: "100vh",
     display: "flex",
     padding: isSmallScreen ? "10px" : isMediumScreen ? "20px" : "0",
-    backgroundColor: theme.palette.background.default,
+    background:
+      theme.palette.mode === "light"
+        ? `linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.95) 0%,
+            rgba(240, 248, 255, 0.95) 100%)`
+        : `linear-gradient(135deg,
+            rgba(18, 18, 18, 0.95) 0%,
+            rgba(28, 28, 28, 0.95) 100%)`,
   };
 
   const backgroundStyle = {
     backgroundImage: `url(${backgroundImage})`,
     backgroundSize: "cover",
     backgroundPosition: "center",
-    clipPath: isSmallScreen ? "none" : "polygon(0% 0%, 75% 0%, 100% 50%, 75% 100%, 0% 100%)",
     position: "relative" as const,
     minHeight: isSmallScreen ? "30vh" : "auto",
+    clipPath: isSmallScreen ? "none" : "polygon(0% 0%, 85% 0%, 100% 100%, 0% 100%)",
     "&::before": {
       content: '""',
       position: "absolute",
       top: 0,
       left: 0,
-      width: "100%",
-      height: "100%",
-      backgroundColor: isSmallScreen ? alpha(theme.palette.background.paper, 0.5) : alpha(theme.palette.background.paper, 0.2),
-      clipPath: isSmallScreen ? "none" : "inherit",
-      background: isSmallScreen ? "none" : `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.8)} 0%, ${alpha(theme.palette.background.paper, 0)} 100%)`,
+      right: 0,
+      bottom: 0,
+      background:
+        theme.palette.mode === "light"
+          ? "linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%)" // Darker overlay for light mode
+          : "linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)", // Darker overlay for dark mode
     },
+  };
+
+  const typographyStyles = {
+    color: theme.palette.mode === "light" ? "inherit" : theme.palette.primary.light,
+    textShadow: theme.palette.mode === "light" ? "2px 2px 4px rgba(0,0,0,0.2)" : "2px 2px 4px rgba(0,0,0,0.4)",
+  };
+
+  const linkStyles = {
+    color: theme.palette.mode === "light" ? theme.palette.primary.main : theme.palette.primary.light,
+    textDecoration: "none",
+    fontWeight: 500,
+    position: "relative",
     "&::after": {
       content: '""',
       position: "absolute",
-      bottom: 0,
-      right: 0,
-      width: "20%",
-      height: "40%",
-      backgroundColor: alpha(theme.palette.background.paper, 0.2),
-      borderRadius: "50%",
-      display: isSmallScreen ? "none" : "block",
+      width: "0",
+      height: "2px",
+      bottom: "-2px",
+      left: "0",
+      background: theme.palette.mode === "light" ? theme.palette.primary.main : theme.palette.primary.light,
+      transition: "width 0.3s ease",
+    },
+    "&:hover::after": {
+      width: "100%",
     },
   };
 
@@ -230,45 +411,164 @@ const LoginPage: React.FC = () => {
     alignItems: "center",
     justifyContent: "center",
     padding: isSmallScreen ? "20px 10px" : "20px",
+    backgroundColor: "transparent",
+    position: "relative",
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: theme.palette.mode === "light" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.2)",
+      backdropFilter: "blur(10px)",
+    },
   };
 
-  const cardStyle = {
-    width: "100%",
-    maxWidth: isSmallScreen ? "none" : "400px",
-    boxShadow: theme.shadows[6],
-    borderRadius: 3,
-    backgroundColor: alpha(theme.palette.background.paper, 0.9),
-    padding: isSmallScreen ? "1rem" : "2rem",
+  const inputStyles = {
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "8px",
+      backgroundColor: theme.palette.mode === "light" ? "#ffffff" : "rgba(255, 255, 255, 0.05)",
+      border: theme.palette.mode === "light" ? "1px solid rgba(0, 0, 0, 0.1)" : "1px solid rgba(255, 255, 255, 0.1)",
+      "&:hover": {
+        backgroundColor: theme.palette.mode === "light" ? "#ffffff" : "rgba(255, 255, 255, 0.08)",
+      },
+      "&.Mui-focused": {
+        backgroundColor: theme.palette.mode === "light" ? "#ffffff" : "rgba(255, 255, 255, 0.1)",
+      },
+    },
   };
 
   return (
-    <Container maxWidth={false} disableGutters sx={containerStyle}>
-      <Grid container sx={{ minHeight: "100%" }}>
-        <Grid item xs={12} md={8} sx={backgroundStyle} />
+    <StyledContainer maxWidth={false} disableGutters sx={containerStyle}>
+      <Grid
+        container
+        sx={{
+          minHeight: "100vh",
+          overflow: "hidden",
+          position: "relative",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background:
+              theme.palette.mode === "light"
+                ? "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 70%)"
+                : "radial-gradient(circle at 50% 50%, rgba(0,0,0,0.1) 0%, transparent 70%)",
+            pointerEvents: "none",
+          },
+        }}
+      >
+        <Grid item xs={12} md={8} sx={backgroundStyle}>
+          {!isSmallScreen && (
+            <AnimatedBox
+              sx={{
+                position: "absolute",
+                top: "40%",
+                left: "30%",
+                transform: "translate(-50%, -50%)",
+                color: "white",
+                textAlign: "center",
+                zIndex: 1,
+                animation: "float 3s ease-in-out infinite",
+                textShadow: "2px 2px 4px rgba(0,0,0,0.5)", // Enhanced text shadow for better visibility
+              }}
+            >
+              <Typography
+                variant="h3"
+                fontWeight="bold"
+                sx={{
+                  mb: 2,
+                  color: "#ffffff", // Explicit white color
+                  opacity: 0,
+                  animation: "fadeIn 0.8s ease-out forwards",
+                  "@keyframes fadeIn": {
+                    from: { opacity: 0, transform: "translateY(20px)" },
+                    to: { opacity: 1, transform: "translateY(0)" },
+                  },
+                }}
+              >
+                Healthcare Innovation
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: "#ffffff", // Explicit white color
+                  opacity: 0,
+                  animation: "fadeIn 0.8s ease-out 0.3s forwards",
+                  textShadow: "1px 1px 3px rgba(0,0,0,0.5)", // Enhanced text shadow
+                }}
+              >
+                Empowering better patient care through technology
+              </Typography>
+            </AnimatedBox>
+          )}
+        </Grid>
         <Grid item xs={12} md={4} sx={formContainerStyle}>
-          <Card sx={cardStyle}>
-            <CardContent>
-              <Box textAlign="center" mb={3} mt={1}>
-                <img src={logo} alt="Company Logo" style={{ maxWidth: "120px" }} />
+          <StyledCard>
+            <CardContent sx={{ p: 4 }}>
+              <Box
+                sx={{
+                  textAlign: "center",
+                  mb: 4,
+                  position: "relative",
+                }}
+              >
+                <Box
+                  component="img"
+                  src={logo}
+                  alt="Company Logo"
+                  sx={{
+                    maxWidth: "120px",
+                    transition: "transform 0.3s ease",
+                    "&:hover": {
+                      transform: "scale(1.05)",
+                    },
+                  }}
+                />
                 <Typography
                   variant={isSmallScreen ? "h6" : "h5"}
                   component="h1"
                   sx={{
                     mt: 2,
-                    mb: 2,
                     fontWeight: "bold",
-                    color: theme.palette.primary.main,
+                    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                    textShadow: `1px 1px 2px ${alpha(theme.palette.primary.main, 0.3)}`,
                   }}
                 >
                   Welcome to e-Bios
                 </Typography>
               </Box>
 
-              {formState.amcExpiryMessage && <Alert severity="warning">{formState.amcExpiryMessage}</Alert>}
-              {formState.licenseExpiryMessage && <Alert severity={formState.licenseDaysRemaining <= 0 ? "error" : "warning"}>{formState.licenseExpiryMessage}</Alert>}
+              {formState.amcExpiryMessage && <StyledAlert severity="warning">{formState.amcExpiryMessage}</StyledAlert>}
+              {formState.licenseExpiryMessage && <StyledAlert severity={formState.licenseDaysRemaining <= 0 ? "error" : "warning"}>{formState.licenseExpiryMessage}</StyledAlert>}
 
-              <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+              <Box
+                component="form"
+                onSubmit={handleSubmit}
+                aria-label="Login form"
+                sx={{
+                  mt: 1,
+                  "& .MuiTextField-root, & .MuiSelect-root": {
+                    mb: 2,
+                    "& .MuiOutlinedInput-root": {
+                      transition: "transform 0.2s ease",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                      },
+                    },
+                  },
+                }}
+              >
+                {/* Existing form fields with enhanced styling */}
                 <DropdownSelect
+                  ref={companySelectRef}
                   label="Select Company"
                   name="companyID"
                   value={formState.companyID && formState.companyCode ? `${formState.companyID},${formState.companyCode}` : ""}
@@ -282,66 +582,98 @@ const LoginPage: React.FC = () => {
                     handleSelectCompany(compIDCompCode, selectedCompany?.compName || "");
                   }}
                   size="small"
+                  loading={fieldLoading.company}
+                  aria-label="Company selection"
+                  aria-required="true"
                 />
 
                 <FloatingLabelTextBox
+                  ref={usernameInputRef}
                   ControlID="username"
                   title="Username"
                   value={formState.userName}
-                  onChange={(e) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      userName: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setFormState((prev) => ({ ...prev, userName: e.target.value }))}
                   size="small"
                   isMandatory
+                  loading={fieldLoading.username}
+                  aria-label="Username input"
+                  aria-required="true"
+                  sx={inputStyles}
                 />
 
                 <FloatingLabelTextBox
+                  ref={passwordInputRef}
                   ControlID="password"
                   title="Password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={formState.password}
-                  onChange={(e) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      password: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setFormState((prev) => ({ ...prev, password: e.target.value }))}
                   size="small"
                   isMandatory
+                  loading={fieldLoading.password}
+                  aria-label="Password input"
+                  aria-required="true"
+                  sx={inputStyles}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton aria-label="toggle password visibility" onClick={() => setShowPassword((prev) => !prev)} edge="end" size="small">
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
 
-                <Box textAlign="right" sx={{ mb: 2 }}>
-                  <Link href="/ForgotPasswordPage" variant="body2" color="primary">
+                <Box sx={{ textAlign: "right", mb: 2 }}>
+                  <Link
+                    href="/ForgotPasswordPage"
+                    sx={{
+                      color: theme.palette.primary.main,
+                      textDecoration: "none",
+                      fontWeight: 500,
+                      position: "relative",
+                      "&::after": {
+                        content: '""',
+                        position: "absolute",
+                        width: "0",
+                        height: "2px",
+                        bottom: "-2px",
+                        left: "0",
+                        background: theme.palette.primary.main,
+                        transition: "width 0.3s ease",
+                      },
+                      "&:hover::after": {
+                        width: "100%",
+                      },
+                    }}
+                  >
                     Forgot password?
                   </Link>
                 </Box>
 
-                <Button
+                <StyledButton
+                  ref={submitButtonRef}
                   type="submit"
                   fullWidth
-                  variant="contained"
-                  color="primary"
-                  sx={{
-                    mt: 3,
-                    mb: 2,
-                    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.25)",
-                  }}
-                  disabled={formState.isLoggingIn}
+                  disabled={formState.isLoggingIn || loginAttempts.isLocked}
                   startIcon={formState.isLoggingIn ? <CircularProgress size={20} /> : <LockOpenIcon />}
+                  aria-label="Sign in button"
                 >
                   {formState.isLoggingIn ? "Signing In..." : "Sign In"}
-                </Button>
+                </StyledButton>
 
-                {formState.errorMessage && <Alert severity="error">{formState.errorMessage}</Alert>}
+                {formState.errorMessage && (
+                  <StyledAlert severity="error" role="alert" aria-live="polite" sx={{ mt: 2 }}>
+                    {formState.errorMessage}
+                  </StyledAlert>
+                )}
               </Box>
             </CardContent>
-          </Card>
+          </StyledCard>
         </Grid>
       </Grid>
-    </Container>
+    </StyledContainer>
   );
 };
 
