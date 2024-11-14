@@ -4,7 +4,7 @@ import { extendedAdmissionService } from "../../services/PatientAdministrationSe
 import { showAlert } from "../../utils/Common/showAlert";
 import { AdmissionDto, IPAdmissionDetailsDto, IPAdmissionDto, WrBedDetailsDto } from "../../interfaces/PatientAdministration/AdmissionDto";
 import { useLoading } from "../../context/LoadingContext";
-import { store } from "../../store/store";
+import { RootState, store } from "@/store";
 import { PatientHistory } from "../../pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
 import { allergyService } from "../../services/ClinicalManagementServices/allergyService";
 import { createEntityService } from "../../utils/Common/serviceFactory";
@@ -17,6 +17,8 @@ import { AssocDiagnosisDetailDto, DiagnosisDetailDto, DiagnosisDto } from "../..
 import { diagnosisService } from "../../services/ClinicalManagementServices/diagnosisService";
 import { HistoryState } from "../../pages/clinicalManagement/PatientHistory/PatientHistory";
 import { pastMedicationService } from "../../services/ClinicalManagementServices/pastMedicationService";
+import { useAppSelector } from "@/store/hooks";
+import { useCompanyDetails } from "../Common/useCompanyDetails";
 
 interface UseAdmissionFormReturn {
   formData: AdmissionDto;
@@ -40,16 +42,16 @@ interface UseAdmissionFormReturn {
   updatePatientHistory: (historyData: any) => void;
 }
 
-const getCompanyDetails = () => {
-  const { compID, compCode, compName } = store.getState().userDetails;
-  return {
-    compID: compID || 0,
-    compCode: compCode || "",
-    compName: compName || "",
-    rActiveYN: "Y",
-    transferYN: "N",
-  };
-};
+// const getCompanyDetails = () => {
+//   const { compID, compCode, compName } = useAppSelector((state: RootState) => state.auth);
+//   return {
+//     compID: compID || 0,
+//     compCode: compCode || "",
+//     compName: compName || "",
+//     rActiveYN: "Y",
+//     transferYN: "N",
+//   };
+// };
 
 const initialFormState: AdmissionDto = {
   ipAdmissionDto: {
@@ -60,21 +62,22 @@ const initialFormState: AdmissionDto = {
     insuranceYN: "N",
     dischargeAdviceYN: "N",
     deliveryCaseYN: "N",
-    ...getCompanyDetails(),
+    ...useCompanyDetails,
   } as IPAdmissionDto,
   ipAdmissionDetailsDto: {
-    ...getCompanyDetails(),
+    ...useCompanyDetails,
     bStatus: "Available",
     bStatusValue: "AVLBL",
     wCatName: "Out Patient",
   } as IPAdmissionDetailsDto,
   wrBedDetailsDto: {
-    ...getCompanyDetails(),
+    ...useCompanyDetails,
   } as WrBedDetailsDto,
 };
 
 const useAdmissionForm = (): UseAdmissionFormReturn => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const companyDetails = useCompanyDetails();
+  const { compID, compCode, compName } = useAppSelector((state: RootState) => state.auth);
   const [formData, setFormData] = useState<AdmissionDto>(initialFormState);
   const [primaryDiagnoses, setPrimaryDiagnoses] = useState<DiagnosisDetailDto[]>([]);
   const [associatedDiagnoses, setAssociatedDiagnoses] = useState<AssocDiagnosisDetailDto[]>([]);
@@ -142,7 +145,7 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
           ...prev,
           ipAdmissionDto: {
             ...prev.ipAdmissionDto,
-            admitCode: admitCodeResponse.data,
+            admitCode: admitCodeResponse.data || "",
           },
         }));
       } else {
@@ -190,7 +193,7 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
   }, []);
 
   const handleClear = useCallback(() => {
-    const companyDetails = getCompanyDetails();
+    const companyDetails = useCompanyDetails();
     setFormData((prev) => ({
       ipAdmissionDto: {
         ...initialFormState.ipAdmissionDto,

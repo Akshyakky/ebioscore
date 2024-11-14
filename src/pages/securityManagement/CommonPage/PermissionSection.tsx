@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  Grid,
-  Typography,
-  Checkbox,
-  FormGroup,
-  FormControlLabel,
-} from "@mui/material";
+import { Grid, Typography, Checkbox, FormGroup, FormControlLabel } from "@mui/material";
 
 interface Permission {
   operationID: number;
@@ -21,13 +15,7 @@ interface PermissionSectionProps {
   handlePermissionChange: (operationID: number, isChecked: boolean) => void;
 }
 
-const PermissionSection: React.FC<PermissionSectionProps> = ({
-  title,
-  permissions,
-  selectAllChecked,
-  handleSelectAllChange,
-  handlePermissionChange,
-}) => {
+const PermissionSection: React.FC<PermissionSectionProps> = ({ title, permissions, selectAllChecked, handleSelectAllChange, handlePermissionChange }) => {
   return (
     <>
       {/* Header with Select All Checkbox */}
@@ -39,14 +27,7 @@ const PermissionSection: React.FC<PermissionSectionProps> = ({
         </Grid>
         <Grid item xs={6}>
           <FormControlLabel
-            control={
-              <Checkbox
-                checked={selectAllChecked}
-                onChange={handleSelectAllChange}
-                name={`selectAll_${title}`}
-                color="primary"
-              />
-            }
+            control={<Checkbox checked={selectAllChecked} onChange={handleSelectAllChange} name={`selectAll_${title}`} color="primary" />}
             label="Allow [Select All]"
           />
         </Grid>
@@ -55,29 +36,16 @@ const PermissionSection: React.FC<PermissionSectionProps> = ({
       {/* Permissions List */}
       <FormGroup>
         {permissions.map((permission) => (
-          <Grid
-            container
-            spacing={2}
-            alignItems="center"
-            key={permission.operationID}
-            sx={{ marginTop: 1 }}
-          >
+          <Grid container spacing={2} alignItems="center" key={permission.operationID} sx={{ marginTop: 1 }}>
             <Grid item xs={6}>
-              <Typography variant="body1">
-                {permission.operationName}
-              </Typography>
+              <Typography variant="body1">{permission.operationName}</Typography>
             </Grid>
             <Grid item xs={6}>
               <FormControlLabel
                 control={
                   <Checkbox
                     checked={permission.allow}
-                    onChange={(event) =>
-                      handlePermissionChange(
-                        permission.operationID,
-                        event.target.checked
-                      )
-                    }
+                    onChange={(event) => handlePermissionChange(permission.operationID, event.target.checked)}
                     name={`${title.toLowerCase()}permission_${permission.operationID}`}
                     color="primary"
                   />

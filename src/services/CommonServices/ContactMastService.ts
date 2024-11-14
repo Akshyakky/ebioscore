@@ -2,13 +2,13 @@ import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "../../apiConfig";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { store } from "../../store/store";
+import { store } from "@/store";
 
 // Initialize ApiService with the base URL for the common API
 const apiService = new CommonApiService({ baseURL: APIConfig.commonURL });
 
 // Function to get the token from the store
-const getToken = () => store.getState().userDetails.token!;
+const getToken = () => store.getState().auth.token!;
 
 interface PhyAPIResponse {
   consultantID: string;
@@ -20,15 +20,8 @@ interface RefAPIResponse {
   referralName: string;
 }
 
-const fetchAttendingPhysician = async (
-  endpoint: string,
-  compId: number
-): Promise<DropdownOption[]> => {
-  const response = await apiService.get<OperationResult<PhyAPIResponse[]>>(
-    `HospitalAdministration/${endpoint}`,
-    getToken(),
-    { compId }
-  );
+const fetchAttendingPhysician = async (endpoint: string, compId: number): Promise<DropdownOption[]> => {
+  const response = await apiService.get<OperationResult<PhyAPIResponse[]>>(`HospitalAdministration/${endpoint}`, getToken(), { compId });
 
   if (response.success) {
     const data = response.data ?? [];
@@ -41,15 +34,8 @@ const fetchAttendingPhysician = async (
   }
 };
 
-const fetchRefferalPhy = async (
-  endpoint: string,
-  compId: number
-): Promise<DropdownOption[]> => {
-  const response = await apiService.get<OperationResult<RefAPIResponse[]>>(
-    `HospitalAdministration/${endpoint}`,
-    getToken(),
-    { compId }
-  );
+const fetchRefferalPhy = async (endpoint: string, compId: number): Promise<DropdownOption[]> => {
+  const response = await apiService.get<OperationResult<RefAPIResponse[]>>(`HospitalAdministration/${endpoint}`, getToken(), { compId });
 
   if (response.success) {
     const data = response.data ?? [];
@@ -62,14 +48,8 @@ const fetchRefferalPhy = async (
   }
 };
 
-const fetchAvailableAttendingPhysicians = async (
-  pChartID: number
-): Promise<DropdownOption[]> => {
-  const response = await apiService.get<OperationResult<PhyAPIResponse[]>>(
-    "HospitalAdministration/GetAvailableConsultantsForPatientToday",
-    getToken(),
-    { pChartID }
-  );
+const fetchAvailableAttendingPhysicians = async (pChartID: number): Promise<DropdownOption[]> => {
+  const response = await apiService.get<OperationResult<PhyAPIResponse[]>>("HospitalAdministration/GetAvailableConsultantsForPatientToday", getToken(), { pChartID });
 
   if (response.success) {
     const data = response.data ?? [];

@@ -3,15 +3,16 @@ import { Grid, Paper, Typography } from "@mui/material";
 import { BServiceGrpDto } from "../../../../interfaces/Billing/BServiceGrpDto";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import FormField from "../../../../components/FormField/FormField";
 import { serviceGroupService } from "../../../../services/BillingServices/BillingGenericService";
+import { useAppSelector } from "@/store/hooks";
 
 const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ editData }) => {
+  const user = useAppSelector((state) => state.auth);
   const [formState, setFormState] = useState({
     isSubmitted: false,
     sGrpCode: "",
@@ -21,14 +22,14 @@ const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ edi
     labServiceYN: "N",
     isTherapyYN: "N",
     prnSGrpOrder: 1,
-    compID: store.getState().userDetails.compID || 0,
-    compCode: store.getState().userDetails.compCode || "",
-    compName: store.getState().userDetails.compName || "",
+    compID: user.compID || 0,
+    compCode: user.compCode || "",
+    compName: user.compName || "",
   });
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const { userID, userName } = store.getState().userDetails;
+  const { userID, userName } = user;
 
   useEffect(() => {
     if (editData) {
@@ -60,9 +61,9 @@ const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ edi
       prnSGrpOrder: 1,
       labServiceYN: formState.labServiceYN,
       isTherapyYN: formState.isTherapyYN,
-      compID: store.getState().userDetails.compID || 0,
-      compCode: store.getState().userDetails.compCode || "",
-      compName: store.getState().userDetails.compName || "",
+      compID: user.compID || 0,
+      compCode: user.compCode || "",
+      compName: user.compName || "",
     }),
     [formState, editData, userID, userName, serverDate]
   );
@@ -108,9 +109,9 @@ const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ edi
       labServiceYN: "N",
       isTherapyYN: "N",
       prnSGrpOrder: 1,
-      compID: store.getState().userDetails.compID || 0,
-      compCode: store.getState().userDetails.compCode || "",
-      compName: store.getState().userDetails.compName || "",
+      compID: user.compID || 0,
+      compCode: user.compCode || "",
+      compName: user.compName || "",
     });
   }, []);
 

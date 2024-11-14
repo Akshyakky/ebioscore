@@ -12,11 +12,11 @@ import { RoomGroupDto, RoomListDto, WrBedDto } from "../../../../../interfaces/H
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
-import { store } from "../../../../../store/store";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import { wrBedService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Folder as FolderIcon, FolderOpen as FolderOpenIcon } from "@mui/icons-material";
 import { showAlert } from "../../../../../utils/Common/showAlert";
+import { useAppSelector } from "@/store/hooks";
 
 interface WrBedDetailsProps {
   beds: WrBedDto[];
@@ -33,6 +33,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
   const [formData, setFormData] = useState<WrBedDto>(getInitialFormData());
   const { handleDropdownChange } = useDropdownChange<WrBedDto>(setFormData);
   const dropdownValues = useDropdownValues(["bedCategory", "service"]);
+  const user = useAppSelector((state) => state.auth);
 
   function getInitialFormData(): WrBedDto {
     return {
@@ -41,9 +42,9 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
       bedName: "",
       rlID: 0,
       rActiveYN: "Y",
-      compID: store.getState().userDetails.compID || 0,
-      compCode: store.getState().userDetails.compCode || "",
-      compName: store.getState().userDetails.compName || "",
+      compID: user.compID || 0,
+      compCode: user.compCode || "",
+      compName: user.compName || "",
       transferYN: "Y",
       blockBedYN: "N",
       wbCatID: 0,
@@ -71,9 +72,9 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
         wbCatID: formData.wbCatID ? parseInt(formData.wbCatID.toString(), 10) : undefined,
         bchID: formData.bchID ? parseInt(formData.bchID.toString(), 10) : undefined,
         bedStatus: formData.bedStatus || "",
-        compID: store.getState().userDetails.compID || 0,
-        compCode: store.getState().userDetails.compCode || "",
-        compName: store.getState().userDetails.compName || "",
+        compID: user.compID || 0,
+        compCode: user.compCode || "",
+        compName: user.compName || "",
         key: parseInt(formData.key.toString(), 10),
       };
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
-import { RootState } from "../../store/reducers";
+import { RootState } from "@/store";
 import { useLoading } from "../../context/LoadingContext";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 import { BillingService } from "../../services/BillingServices/BillingService";
@@ -25,6 +25,7 @@ import { departmentService } from "../../services/CommonServices/CommonModelServ
 import { DepartmentDto } from "../../interfaces/Billing/DepartmentDto";
 import { WardCategoryDto } from "../../interfaces/HospitalAdministration/WardCategoryDto";
 import { dischargeStatusService } from "../../services/PatientAdministrationServices/patientAdministrationService";
+import { useAppSelector } from "@/store/hooks";
 
 type DropdownType =
   | "pic"
@@ -78,7 +79,7 @@ type DropdownType =
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
   const [dropdownValues, setDropdownValues] = useState<Record<DropdownType, DropdownOption[]>>({} as Record<DropdownType, DropdownOption[]>);
   const { setLoading } = useLoading();
-  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const userInfo = useAppSelector((state: RootState) => state.auth);
   const compID = userInfo.compID!;
 
   const fetchDropdownValues = useCallback(

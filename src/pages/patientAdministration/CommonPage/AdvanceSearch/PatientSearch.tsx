@@ -1,7 +1,8 @@
+// PatientSearch.tsx
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Grid, Box } from "@mui/material";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
+import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { PatientSearchContext } from "../../../../context/PatientSearchContext";
 import { debounce } from "../../../../utils/Common/debounceUtils";
@@ -21,6 +22,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ show, handleClose, onEdit
   const [searchTerm, setSearchTerm] = useState("");
   const { performSearch, searchResults } = useContext(PatientSearchContext);
   const dayjs = useDayjs();
+
   const debouncedSearch = useCallback(
     debounce((searchQuery: string) => {
       if (searchQuery) {
@@ -41,62 +43,67 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ show, handleClose, onEdit
     handleClose();
   };
 
-  const columns = [
+  const columns: Column<PatientRegistrationDto>[] = [
     {
-      key: "patRegisters.pChartID",
+      key: "edit",
       header: "Edit",
       visible: true,
-      render: (row: PatientRegistrationDto) => (
-        <CustomButton text="Edit" onClick={() => handleEditAndClose(row.patRegisters?.pChartID.toString(), row.patRegisters?.pChartCode)} icon={EditIcon} size="small" />
+      render: (row) => (
+        <CustomButton
+          text="Edit"
+          onClick={() => handleEditAndClose(row.patRegisters?.pChartID.toString() || "", row.patRegisters?.pChartCode || "")}
+          icon={EditIcon}
+          size="small"
+        />
       ),
     },
     {
       key: "patRegisters.pChartCode",
       header: "UHID",
       visible: true,
-      render: (row: PatientRegistrationDto) => row.patRegisters?.pChartCode || "",
+      render: (row) => row.patRegisters?.pChartCode || "",
     },
     {
-      key: "patRegisters.pTitle",
+      key: "patientName",
       header: "Patient Name",
       visible: true,
-      render: (row: PatientRegistrationDto) => `${row.patRegisters?.pTitle || ""} ${row.patRegisters?.pFName || ""} ${row.patRegisters?.pLName || ""}`,
+      render: (row) => `${row.patRegisters?.pTitle || ""} ${row.patRegisters?.pFName || ""} ${row.patRegisters?.pLName || ""}`,
     },
     {
       key: "patRegisters.pRegDate",
       header: "Registration Date",
       visible: true,
-      render: (row: PatientRegistrationDto) => dayjs.formatDate(row.patRegisters?.pRegDate) || "",
+      render: (row) => dayjs.formatDate(row.patRegisters?.pRegDate) || "",
     },
     {
       key: "patRegisters.pGender",
       header: "Gender",
       visible: true,
-      render: (row: PatientRegistrationDto) => row.patRegisters?.pGender || "",
+      render: (row) => row.patRegisters?.pGender || "",
     },
     {
       key: "patAddress.pAddPhone1",
       header: "Mobile No",
       visible: true,
-      render: (row: PatientRegistrationDto) => row.patAddress?.pAddPhone1 || "",
+      render: (row) => row.patAddress?.pAddPhone1 || "",
     },
     {
       key: "patRegisters.pDob",
       header: "DOB",
       visible: true,
-      render: (row: PatientRegistrationDto) => dayjs.formatDate(row.patRegisters?.pDob) || "",
+      render: (row) => dayjs.formatDate(row.patRegisters?.pDob) || "",
     },
     {
       key: "patRegisters.indentityValue",
       header: "Identity No",
       visible: true,
-      render: (row: PatientRegistrationDto) => row.patRegisters?.indentityValue || "",
+      render: (row) => row.patRegisters?.indentityValue || "",
     },
     {
       key: "patRegisters.pTypeName",
       header: "Payment Source",
       visible: true,
-      render: (row: PatientRegistrationDto) => row.patRegisters?.pTypeName || "",
+      render: (row) => row.patRegisters?.pTypeName || "",
     },
   ];
 
@@ -128,7 +135,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ show, handleClose, onEdit
       open={show}
       onClose={handleClose}
       title="Patient Search"
-      maxWidth="lg"
+      maxWidth="xl"
       fullWidth
       disableBackdropClick
       dialogContentSx={{

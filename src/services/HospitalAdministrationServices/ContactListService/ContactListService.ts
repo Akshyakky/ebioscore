@@ -3,14 +3,14 @@ import { APIConfig } from "../../../apiConfig";
 import { DropdownOption } from "../../../interfaces/Common/DropdownOption";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { ContactListData } from "../../../interfaces/HospitalAdministration/ContactListData";
-import { store } from "../../../store/store";
+import { store } from "@/store";
 
 const apiService = new CommonApiService({
   baseURL: APIConfig.hospitalAdministrations,
 });
 
 // Function to get the token from the store
-const getToken = () => store.getState().userDetails.token!;
+const getToken = () => store.getState().auth.token!;
 
 const fetchActiveSpecialties = async (compId: number): Promise<DropdownOption[]> => {
   try {

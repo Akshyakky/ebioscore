@@ -8,7 +8,6 @@ import { OPIPHistPMHDto } from "../../../../interfaces/ClinicalManagement/OPIPHi
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { store } from "../../../../store/store";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
@@ -18,6 +17,7 @@ import HealingIcon from "@mui/icons-material/Healing";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
 import ClearIcon from "@mui/icons-material/Clear";
+import { useAppSelector } from "@/store/hooks";
 
 interface PastMedicalHistoryProps {
   pChartID: number;
@@ -28,7 +28,7 @@ interface PastMedicalHistoryProps {
 }
 
 export const MedicalHistory: React.FC<PastMedicalHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const initialFormState: OPIPHistPMHDto = {
     opippmhId: 0,
     opipNo: opipNo,

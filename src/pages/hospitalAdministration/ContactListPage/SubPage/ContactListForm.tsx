@@ -6,12 +6,12 @@ import useDropdownChange from "../../../../hooks/useDropdownChange";
 import ContactListActions from "./ContactListActions";
 import ContactListSwitches from "./ContactListSwitches";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
 import { AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
+import { useAppSelector } from "@/store/hooks";
 
 type SwitchStates = {
   isEmployee: boolean;
@@ -33,7 +33,7 @@ interface ContactListFormProps {
 }
 
 const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormProps>(({ contactList, setContactList, switchStates, setSwitchStates, onSave, onClear }, ref) => {
-  const { compID, compCode, compName } = useSelector((state: RootState) => state.userDetails);
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { handleDropdownChange } = useDropdownChange<ContactListData>(setContactList);
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);

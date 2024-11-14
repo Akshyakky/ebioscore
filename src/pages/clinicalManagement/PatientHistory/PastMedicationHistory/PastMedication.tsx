@@ -7,7 +7,6 @@ import CustomButton from "../../../../components/Button/CustomButton";
 import { PastMedicationDto, PastMedicationDetailDto } from "../../../../interfaces/ClinicalManagement/PastMedicationDto";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { store } from "../../../../store/store";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import { MedicationListDto } from "../../../../interfaces/ClinicalManagement/MedicationListDto";
@@ -15,6 +14,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import MedicationIcon from "@mui/icons-material/Medication";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import LocalPharmacyIcon from "@mui/icons-material/LocalPharmacy";
+import { useAppSelector } from "@/store/hooks";
 
 interface PastMedicationProps {
   pChartID: number;
@@ -25,7 +25,7 @@ interface PastMedicationProps {
 }
 
 const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipCaseNo, medicationData, onMedicationChange }) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const { setLoading } = useLoading();
   const dropdownValues = useDropdownValues(["medicationForm", "medicationDosage", "medicationFrequency", "medicationInstruction"]);
 

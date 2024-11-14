@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { DropdownOption } from "../interfaces/Common/DropdownOption";
 
-const useDropdown = (
-  serviceFunction: (...args: any[]) => Promise<any[]>,
-  transformData: (data: any[]) => DropdownOption[],
-  params: any[]
-) => {
+const useDropdown = (serviceFunction: (...args: any[]) => Promise<any[]>, transformData: (data: any[]) => DropdownOption[], params: any[]) => {
   const [options, setOptions] = useState<DropdownOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);

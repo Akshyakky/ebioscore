@@ -10,11 +10,7 @@ interface ProfileListSearchProps {
   onEditProfile: (profile: ProfileListSearchResult) => void;
 }
 
-const ProfileListSearch: React.FC<ProfileListSearchProps> = ({
-  open,
-  onClose,
-  onEditProfile,
-}) => {
+const ProfileListSearch: React.FC<ProfileListSearchProps> = ({ open, onClose, onEditProfile }) => {
   const { fetchAllProfiles } = useContext(ProfileListSearchContext);
   const [profiles, setProfiles] = useState<ProfileListSearchResult[]>([]);
 

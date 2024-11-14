@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { Box, Grid, SelectChangeEvent } from "@mui/material";
+import React, { useState, useCallback } from "react";
+import { Grid, SelectChangeEvent } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -8,16 +8,14 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
 import { IpDischargeDto } from "../../../../interfaces/PatientAdministration/IpDischargeDto";
-import { store } from "../../../../store/store";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { dischargeService } from "../../../../services/PatientAdministrationServices/DischargeService/DischargeService";
 import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/admissionService";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
+import { useAppSelector } from "@/store/hooks";
 
 interface DischargeDetailsProps {
   selectedAdmission?: AdmissionDto;
@@ -25,67 +23,62 @@ interface DischargeDetailsProps {
   onClear?: () => void;
 }
 
-const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, onAdmissionSelect, onClear }) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
-  const [formState, setFormState] = useState<IpDischargeDto>({
-    dischgID: 0,
-    pChartID: 0,
-    admitID: 0,
-    dischgDate: new Date(),
-    dischgTime: new Date(),
-    dischgStatus: "",
-    dischgPhyID: 0,
-    dischgPhyName: "",
-    releaseBedYN: "Y",
-    authorisedBy: "",
-    deliveryType: "",
-    dischargeCode: "",
-    dischgSumYN: "N",
-    facultyID: 0,
-    faculty: "",
-    dischgType: "DISCHARGED",
-    pChartCode: "",
-    pTitle: "",
-    pfName: "",
-    pmName: "",
-    plName: "",
-    defineStatus: "",
-    defineSituation: "",
-    situation: "",
-    rActiveYN: "Y",
-    compID: compID || 0,
-    compCode: compCode || "",
-    compName: compName || "",
-    transferYN: "N",
-    rNotes: "",
-  });
+const initialState = (compID?: number, compCode?: string, compName?: string): IpDischargeDto => ({
+  dischgID: 0,
+  pChartID: 0,
+  admitID: 0,
+  dischgDate: new Date(),
+  dischgTime: new Date(),
+  dischgStatus: "",
+  dischgPhyID: 0,
+  dischgPhyName: "",
+  releaseBedYN: "Y",
+  authorisedBy: "",
+  deliveryType: "",
+  dischargeCode: "",
+  dischgSumYN: "N",
+  facultyID: 0,
+  faculty: "",
+  dischgType: "DISCHARGED",
+  pChartCode: "",
+  pTitle: "",
+  pfName: "",
+  pmName: "",
+  plName: "",
+  defineStatus: "",
+  defineSituation: "",
+  situation: "",
+  rActiveYN: "Y",
+  compID: compID || 0,
+  compCode: compCode || "",
+  compName: compName || "",
+  transferYN: "N",
+  rNotes: "",
+});
 
+const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, onAdmissionSelect, onClear }) => {
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [formState, setFormState] = useState<IpDischargeDto>(() => initialState(compID || 0, compCode || "", compName || ""));
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { setLoading } = useLoading();
-  const { handleDropdownChange } = useDropdownChange(setFormState);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
 
   const dropdownValues = useDropdownValues(["dischargeStatus", "dischargeSituation", "deliveryType", "attendingPhy", "speciality"]);
 
   const handlePhysicianChange = useCallback(
     (event: SelectChangeEvent<string>) => {
-      debugger;
       const physicianValue = event.target.value;
       const selectedPhysician = dropdownValues.attendingPhy.find((phy) => phy.value === physicianValue);
 
       if (selectedPhysician) {
-        // Extract physician specialty from the label (assuming format: "Name | ID | Specialty")
         const [physicianName, specialty] = selectedPhysician.label.split("|").map((s) => s.trim());
-
-        // If specialty exists in the speciality dropdown options, select it
         const specialtyOption = dropdownValues.speciality.find((opt) => opt.label.trim() === specialty);
 
         setFormState((prev) => ({
           ...prev,
           dischgPhyID: Number(physicianValue),
           dischgPhyName: physicianName,
-          // Set the faculty value to the specialty value if found, otherwise keep previous value
-          faculty: specialtyOption ? specialtyOption.label : prev.faculty,
+          faculty: specialtyOption?.label || prev.faculty,
           facultyID: specialtyOption ? Number(specialtyOption.value) : prev.facultyID,
         }));
       }
@@ -93,59 +86,39 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
     [dropdownValues.attendingPhy, dropdownValues.speciality]
   );
 
+  const handleStatusChange = useCallback((event: SelectChangeEvent<string>) => {
+    setFormState((prev) => ({
+      ...prev,
+      dischgStatus: event.target.value,
+    }));
+  }, []);
+
+  const handleSituationChange = useCallback(
+    (event: SelectChangeEvent<string>) => {
+      const situation = event.target.value;
+      const selectedSituation = dropdownValues.dischargeSituation.find((opt) => opt.value === situation);
+
+      setFormState((prev) => ({
+        ...prev,
+        situation,
+        defineSituation: selectedSituation?.label || "",
+      }));
+    },
+    [dropdownValues.dischargeSituation]
+  );
+
+  const handleDeliveryTypeChange = useCallback((event: SelectChangeEvent<string>) => {
+    setFormState((prev) => ({
+      ...prev,
+      deliveryType: event.target.value,
+    }));
+  }, []);
+
   const handleClear = useCallback(() => {
-    setFormState({
-      dischgID: 0,
-      pChartID: 0,
-      admitID: 0,
-      dischgDate: new Date(),
-      dischgTime: new Date(),
-      dischgStatus: "",
-      dischgPhyID: 0,
-      dischgPhyName: "",
-      releaseBedYN: "N",
-      authorisedBy: "",
-      deliveryType: "",
-      dischargeCode: "",
-      dischgSumYN: "N",
-      facultyID: 0,
-      faculty: "",
-      dischgType: "DISCHARGED",
-      pChartCode: "",
-      pTitle: "",
-      pfName: "",
-      pmName: "",
-      plName: "",
-      defineStatus: "",
-      defineSituation: "",
-      situation: "",
-      rActiveYN: "Y",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
-      transferYN: "N",
-      rNotes: "",
-    });
+    setFormState(initialState(compID || 0, compCode || "", compName || ""));
     setIsSubmitted(false);
     onClear?.();
   }, [compID, compCode, compName, onClear]);
-
-  useEffect(() => {
-    if (selectedAdmission?.ipAdmissionDto) {
-      const admission = selectedAdmission.ipAdmissionDto;
-      setFormState((prev) => ({
-        ...prev,
-        pChartID: admission.pChartID || 0,
-        admitID: admission.admitID || 0,
-        pChartCode: admission.pChartCode || "",
-        pTitle: admission.pTitle || "",
-        pfName: admission.pfName || "",
-        plName: admission.plName || "",
-      }));
-    } else {
-      handleClear();
-    }
-  }, [selectedAdmission, handleClear]);
 
   const handlePatientSelect = useCallback(
     async (pChartID: number | null) => {
@@ -162,10 +135,9 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
         const { data } = result;
 
         if (data?.isAdmitted && data.admissionData) {
-          // Only call onAdmissionSelect if we have valid admission data
           onAdmissionSelect?.(data.admissionData);
-
           const admissionDto = data.admissionData.ipAdmissionDto;
+
           if (admissionDto) {
             setFormState((prev) => ({
               ...prev,
@@ -179,26 +151,22 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
           }
         } else {
           showAlert("Warning", "Selected patient is not currently admitted", "warning");
-          // Clear form state since patient is not admitted
           handleClear();
         }
       } catch (error) {
         console.error("Error fetching patient details:", error);
         showAlert("Error", "Failed to fetch patient details", "error");
-        // Clear form state on error
         handleClear();
       } finally {
         setLoading(false);
       }
     },
-    [setLoading, onAdmissionSelect, handleClear]
+    [onAdmissionSelect, handleClear]
   );
-
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormState((prev) => ({ ...prev, [name]: value }));
   }, []);
-
   const handleSave = useCallback(async () => {
     setIsSubmitted(true);
     if (!formState.pChartID || !formState.dischgStatus || !formState.dischgPhyID) {
@@ -221,7 +189,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
     } finally {
       setLoading(false);
     }
-  }, [formState, onClear, setLoading]);
+  }, [formState, onClear]);
 
   const handleDateChange = useCallback((date: Date | null, type: "dischgDate" | "dischgTime") => {
     if (date) {
@@ -353,7 +321,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
           type="select"
           label="Discharge Status"
           value={formState.dischgStatus}
-          onChange={handleDropdownChange([], ["dischgStatus"], dropdownValues.dischargeStatus)}
+          onChange={handleStatusChange}
           name="dischgStatus"
           ControlID="dischgStatus"
           options={dropdownValues.dischargeStatus}
@@ -366,7 +334,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
           type="select"
           label="Situation"
           value={formState.situation}
-          onChange={handleDropdownChange(["situation"], ["defineSituation"], dropdownValues.dischargeSituation)}
+          onChange={handleSituationChange}
           name="situation"
           ControlID="situation"
           options={dropdownValues.dischargeSituation}
@@ -378,7 +346,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
           type="select"
           label="Delivery Type"
           value={formState.deliveryType}
-          onChange={handleDropdownChange(["deliveryType"], [], dropdownValues.deliveryType)}
+          onChange={handleDeliveryTypeChange}
           name="deliveryType"
           ControlID="deliveryType"
           options={dropdownValues.deliveryType}

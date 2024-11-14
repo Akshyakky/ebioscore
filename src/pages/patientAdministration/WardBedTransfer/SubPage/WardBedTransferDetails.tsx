@@ -1,6 +1,6 @@
 //src/patientAdministration/DischargePage/SubPage/WardBedTransferDetails.tsx
-import React, { useState, useCallback, useEffect, forwardRef, useImperativeHandle, useRef } from "react";
-import { Box, Divider, Grid, SelectChangeEvent, Typography } from "@mui/material";
+import { useState, useCallback, useEffect, forwardRef, useImperativeHandle, useRef } from "react";
+import { Box, Grid, SelectChangeEvent, Typography } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -9,7 +9,6 @@ import SaveIcon from "@mui/icons-material/Save";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
-import { store } from "../../../../store/store";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
@@ -18,7 +17,6 @@ import { roomListService, wrBedService } from "../../../../services/HospitalAdmi
 import { wardBedTransferService } from "../../../../services/PatientAdministrationServices/WardBedTransferService/WardBedTransferService";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
-import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/admissionService";
 import { WrBedDto } from "../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
@@ -26,6 +24,7 @@ import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
 import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
 import CustomButton from "../../../../components/Button/CustomButton";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
+import { useAppSelector } from "@/store/hooks";
 
 interface WardBedTransferDetailsProps {
   selectedAdmission?: AdmissionDto;
@@ -34,7 +33,7 @@ interface WardBedTransferDetailsProps {
 }
 
 const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBedTransferDetailsProps>(({ selectedAdmission, onAdmissionSelect, onClear }, ref) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [formState, setFormState] = useState<BedTransferRequestDto>({
     admitID: 0,
     pChartID: 0,

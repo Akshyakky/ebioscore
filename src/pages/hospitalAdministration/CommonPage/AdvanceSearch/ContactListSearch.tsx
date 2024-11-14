@@ -10,16 +10,11 @@ interface ContactListSearchProps {
   onEditContactList: (conID: number) => void;
 }
 
-const ContactListSearch: React.FC<ContactListSearchProps> = ({
-  open,
-  onClose,
-  onEditContactList,
-}) => {
+const ContactListSearch: React.FC<ContactListSearchProps> = ({ open, onClose, onEditContactList }) => {
   const { performSearch, searchResults } = useContext(ContactListSearchContext);
   const [isInitialSearchDone, setIsInitialSearchDone] = useState(false);
 
   useEffect(() => {
-
     if (!isInitialSearchDone) {
       performSearch("");
       setIsInitialSearchDone(true);
@@ -29,7 +24,7 @@ const ContactListSearch: React.FC<ContactListSearchProps> = ({
   const fetchItems = useCallback(async () => {
     await performSearch("");
     setIsInitialSearchDone(true);
-    return searchResults
+    return searchResults;
   }, [searchResults]);
 
   const debouncedSearch = useCallback(

@@ -1,7 +1,6 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Container, Grid, Paper, SelectChangeEvent } from "@mui/material";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import { useLoading } from "../../../../context/LoadingContext";
 import SearchIcon from "@mui/icons-material/Search";
 import PrintIcon from "@mui/icons-material/Print";
@@ -25,24 +24,20 @@ import FormField from "../../../../components/FormField/FormField";
 import { OPVisitDto, RevisitFormErrors } from "../../../../interfaces/PatientAdministration/revisitFormData";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
+import { useAppSelector } from "@/store/hooks";
 
 const RevisitPage: React.FC = () => {
-  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const userInfo = useAppSelector((state) => state.auth);
   const compID = userInfo.compID!;
   const { setLoading } = useLoading();
   const { performSearch } = useContext(PatientSearchContext);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
 
-  const dropdownValues = useDropdownValues([
-    "pic",
-    "department",
-  ]);
+  const dropdownValues = useDropdownValues(["pic", "department"]);
 
   const DepartmentDropdownValues = useMemo(() => {
     if (!dropdownValues.department) return [];
-    return dropdownValues.department.filter((item: any) =>
-      item.rActiveYN === 'Y' && item.isUnitYN === 'Y'
-    );
+    return dropdownValues.department.filter((item: any) => item.rActiveYN === "Y" && item.isUnitYN === "Y");
   }, [dropdownValues.department]);
 
   const revisitInitialState = (): OPVisitDto => ({
@@ -98,11 +93,9 @@ const RevisitPage: React.FC = () => {
   const loadDropdownValues = useCallback(async () => {
     setLoading(true);
     try {
-      const [primaryIntroducingSource] = await Promise.all([
-        ContactMastService.fetchRefferalPhy("GetActiveReferralContacts", compID),
-      ]);
+      const [primaryIntroducingSource] = await Promise.all([ContactMastService.fetchRefferalPhy("GetActiveReferralContacts", compID)]);
 
-      setPrimaryIntroducingSource(primaryIntroducingSource.map(item => ({ value: item.value.toString(), label: item.label })));
+      setPrimaryIntroducingSource(primaryIntroducingSource.map((item) => ({ value: item.value.toString(), label: item.label })));
     } catch (error) {
       console.error("Error loading dropdown values:", error);
     } finally {
@@ -127,23 +120,24 @@ const RevisitPage: React.FC = () => {
     return Object.keys(errors).length === 0;
   }, [revisitFormData]);
 
-  const handleRadioButtonChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    setRevisitFormData(prev => ({
-      ...prev,
-      [name]: value,
-      pVisitTypeText: event.target.labels ? event.target.labels[0].textContent || "" : "",
-    }));
+  const handleRadioButtonChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = event.target;
+      setRevisitFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        pVisitTypeText: event.target.labels ? event.target.labels[0].textContent || "" : "",
+      }));
 
-    if (value === "H") {
-
-    } else if (value === "P") {
-      ContactMastService.fetchAvailableAttendingPhysicians(selectedPChartID)
-        .then(availablePhysicians => {
-          setAvailableAttendingPhysicians(availablePhysicians.map(item => ({ value: item.value.toString(), label: item.label })));
+      if (value === "H") {
+      } else if (value === "P") {
+        ContactMastService.fetchAvailableAttendingPhysicians(selectedPChartID).then((availablePhysicians) => {
+          setAvailableAttendingPhysicians(availablePhysicians.map((item) => ({ value: item.value.toString(), label: item.label })));
         });
-    }
-  }, [compID, selectedPChartID]);
+      }
+    },
+    [compID, selectedPChartID]
+  );
 
   const handlePatientSelect = useCallback(async (selectedSuggestion: string) => {
     setLoading(true);
@@ -153,14 +147,14 @@ const RevisitPage: React.FC = () => {
         setSelectedPChartID(pChartID);
         const [availablePhysicians, lastVisitResult] = await Promise.all([
           ContactMastService.fetchAvailableAttendingPhysicians(pChartID),
-          RevisitService.getLastVisitDetailsByPChartID(pChartID)
+          RevisitService.getLastVisitDetailsByPChartID(pChartID),
         ]);
 
         setAvailableAttendingPhysicians(availablePhysicians);
 
         if (lastVisitResult && lastVisitResult.success) {
-          const isAttendingPhysicianAvailable = availablePhysicians.some(physician => physician.value === lastVisitResult.data.attndPhyID);
-          setRevisitFormData(prev => ({
+          const isAttendingPhysicianAvailable = availablePhysicians.some((physician) => physician.value === lastVisitResult.data.attndPhyID);
+          setRevisitFormData((prev) => ({
             ...prev,
             pChartCode: selectedSuggestion.split("|")[0].trim(),
             pChartID: pChartID,
@@ -222,7 +216,7 @@ const RevisitPage: React.FC = () => {
     }
   }, [revisitFormData, validateForm, setLoading, handleClear]);
 
-  const handleCloseSuccessAlert = useCallback(() => setSuccessAlert(prev => ({ ...prev, open: false })), []);
+  const handleCloseSuccessAlert = useCallback(() => setSuccessAlert((prev) => ({ ...prev, open: false })), []);
 
   useEffect(() => {
     if (shouldClearInsuranceData) {
@@ -245,17 +239,8 @@ const RevisitPage: React.FC = () => {
         <Box sx={{ marginBottom: 2 }}>
           <ActionButtonGroup buttons={actionButtons} />
         </Box>
-        <PatientSearch
-          show={showPatientSearch}
-          handleClose={() => setShowPatientSearch(false)}
-          onEditPatient={handlePatientSelect}
-        />
-        <WaitingPatientSearch
-          userInfo={userInfo}
-          show={showWaitingPatientSearch}
-          handleClose={() => setShowWaitingPatientSearch(false)}
-          onPatientSelect={handlePatientSelect}
-        />
+        <PatientSearch show={showPatientSearch} handleClose={() => setShowPatientSearch(false)} onEditPatient={handlePatientSelect} />
+        <WaitingPatientSearch userInfo={userInfo} show={showWaitingPatientSearch} handleClose={() => setShowWaitingPatientSearch(false)} onPatientSelect={handlePatientSelect} />
         <Paper variant="elevation" sx={{ padding: 2 }}>
           <section aria-labelledby="personal-details-header">
             <Grid container spacing={2} alignItems="flex-start">
@@ -265,9 +250,7 @@ const RevisitPage: React.FC = () => {
                 value={revisitFormData.pChartCode}
                 name="pChartCode"
                 ControlID="UHID"
-                onChange={(e) =>
-                  setRevisitFormData({ ...revisitFormData, pChartCode: e.target.value })
-                }
+                onChange={(e) => setRevisitFormData({ ...revisitFormData, pChartCode: e.target.value })}
                 fetchSuggestions={fetchPatientSuggestions}
                 onSelectSuggestion={handlePatientSelect}
                 placeholder="Search through UHID, Name, DOB, Phone No...."
@@ -356,22 +339,11 @@ const RevisitPage: React.FC = () => {
               />
             </Grid>
           </section>
-          <InsurancePage
-            ref={insurancePageRef}
-            pChartID={selectedPChartID}
-            shouldClearData={shouldClearInsuranceData}
-          />
+          <InsurancePage ref={insurancePageRef} pChartID={selectedPChartID} shouldClearData={shouldClearInsuranceData} />
           <PatientVisitHistory pChartID={selectedPChartID} />
         </Paper>
       </Container>
-      <FormSaveClearButton
-        clearText="Clear"
-        saveText="Save"
-        onClear={handleClear}
-        onSave={handleSave}
-        clearIcon={DeleteIcon}
-        saveIcon={SaveIcon}
-      />
+      <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </>
   );
 };

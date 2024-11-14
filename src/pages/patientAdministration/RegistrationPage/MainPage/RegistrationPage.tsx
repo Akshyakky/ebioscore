@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Container, Paper, Box } from "@mui/material";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import PersonalDetails from "../SubPage/PersonalDetails";
 import ContactDetails from "../SubPage/ContactDetails";
@@ -24,12 +23,13 @@ import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { notifyError, notifySuccess, notifyWarning } from "../../../../utils/Common/toastManager";
+import { useAppSelector } from "@/store/hooks";
 
 const RegistrationPage: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formErrors, setFormErrors] = useState<RegistrationFormErrors>({});
   const { setLoading } = useLoading();
-  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const userInfo = useAppSelector((state) => state.auth);
   const [showPatientSearch, setShowPatientSearch] = useState(false);
   const [selectedPChartID, setSelectedPChartID] = useState<number>(0);
   const [shouldClearInsuranceData, setShouldClearInsuranceData] = useState(false);

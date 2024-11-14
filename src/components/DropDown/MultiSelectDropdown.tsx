@@ -1,14 +1,5 @@
 import React, { useMemo } from "react";
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
-  OutlinedInput,
-  Checkbox,
-  ListItemText,
-} from "@mui/material";
+import { FormControl, InputLabel, Select, MenuItem, FormHelperText, OutlinedInput, Checkbox, ListItemText } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
 import { styled } from "@mui/material/styles";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
@@ -68,23 +59,14 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   const renderValue = useMemo(() => {
     return (selected: string | string[]) => {
       if (Array.isArray(selected)) {
-        return selected
-          .map((val) => options.find((option) => option.value === val)?.label || val)
-          .join(", ");
+        return selected.map((val) => options.find((option) => option.value === val)?.label || val).join(", ");
       }
       return options.find((option) => option.value === selected)?.label || selected;
     };
   }, [options]);
 
   return (
-    <FormControl
-      variant="outlined"
-      size={size}
-      fullWidth
-      className={className}
-      error={hasError}
-      margin="normal"
-    >
+    <FormControl variant="outlined" size={size} fullWidth className={className} error={hasError} margin="normal">
       <InputLabel id={`ddl-label-${name}`} htmlFor={`ddl${name}`}>
         {label}
       </InputLabel>
@@ -105,17 +87,13 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         </MenuItem>
         {options.map((option) => (
           <StyledMenuItem key={option.value} value={option.value}>
-            <StyledCheckbox
-              checked={
-                Array.isArray(value) && value.indexOf(option.value) > -1
-              }
-            />
+            <StyledCheckbox checked={Array.isArray(value) && value.indexOf(option.value) > -1} />
             <StyledListItemText primary={option.label} />
           </StyledMenuItem>
         ))}
       </Select>
       {hasError && <FormHelperText>{label} is required.</FormHelperText>}
-    </FormControl >
+    </FormControl>
   );
 };
 

@@ -6,11 +6,11 @@ import { UserListSearchContext } from "../../../../context/SecurityManagement/Us
 import UserListSearch from "../../CommonPage/AdvanceSearch/UserListSearch";
 import UserDetails from "../SubPage/UserDetails";
 import { UserListData } from "../../../../interfaces/SecurityManagement/UserListData";
-import { RootState } from "../../../../store/reducers";
 import { useSelector } from "react-redux";
 import { UserListService } from "../../../../services/SecurityManagementServices/UserListService";
 import OperationPermissionDetails, { ModuleOperation } from "../../CommonPage/OperationPermissionDetails";
 import { OperationPermissionDetailsDto } from "../../../../interfaces/SecurityManagement/OperationPermissionDetailsDto";
+import { useAppSelector } from "@/store/hooks";
 
 interface OperationPermissionProps {
   profileID: number;
@@ -21,7 +21,7 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const { fetchAllUsers } = useContext(UserListSearchContext);
-  const { token, compID } = useSelector((state: RootState) => state.userDetails);
+  const { token, compID } = useAppSelector((state) => state.auth);
 
   const [selectedUser, setSelectedUser] = useState<UserListData | null>(null);
   const [isSuperUser, setIsSuperUser] = useState<boolean>(false);

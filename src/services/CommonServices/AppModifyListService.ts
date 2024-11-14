@@ -1,11 +1,11 @@
 // AppModifyListService.ts
+import { store } from "@/store";
 import { APIConfig } from "../../apiConfig";
 import { CommonApiService } from "../CommonApiService";
-import { store } from "../../store/store";
 
 const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });
 
-const getToken = () => store.getState().userDetails.token!;
+const getToken = () => store.getState().auth.token!;
 
 interface AppModifyList {
   id: number;
@@ -14,16 +14,10 @@ interface AppModifyList {
   defaultYn: string;
 }
 
-const fetchAppModifyList = async (
-  endpoint: string,
-  fieldCode: string
-): Promise<AppModifyList[]> => {
+const fetchAppModifyList = async (endpoint: string, fieldCode: string): Promise<AppModifyList[]> => {
   try {
     const token = getToken();
-    const response = await commonApiService.get<any[]>(
-      `AppModify/${endpoint}?fieldCode=${fieldCode}`,
-      token
-    );
+    const response = await commonApiService.get<any[]>(`AppModify/${endpoint}?fieldCode=${fieldCode}`, token);
     return response.map((item) => ({
       value: item.amlCode,
       label: item.amlName,

@@ -3,9 +3,8 @@ import axios from "axios";
 import { Document, Page, pdfjs } from "react-pdf";
 import { useSelector } from "react-redux";
 import { APIConfig } from "../../../../apiConfig";
-import { RootState } from "../../../../store/reducers";
-import MainLayout from "../../../../layouts/MainLayout/MainLayout";
 import CustomButton from "../../../../components/Button/CustomButton";
+import { useAppSelector } from "@/store/hooks";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 interface LoadSuccessParameters {
@@ -17,7 +16,7 @@ const RoutineReportsPA = () => {
   const [file, setFile] = useState<string | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const userInfo = useAppSelector((state) => state.auth);
   const token = userInfo.token!;
 
   const loadPdf = async () => {
@@ -100,39 +99,29 @@ const RoutineReportsPA = () => {
 
   return (
     <>
-      <CustomButton
-        onClick={() => setCurrentPage(currentPage - 1)}
-        disabled={currentPage === 1}
-        text="Previous Page"
-      />
-      <CustomButton
-        onClick={() => setCurrentPage(currentPage + 1)}
-        disabled={currentPage >= numPages}
-        text="Next Page"
-      />
+      <CustomButton onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1} text="Previous Page" />
+      <CustomButton onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage >= numPages} text="Next Page" />
       <CustomButton onClick={downloadPdf} text="Download PDF" />
       <CustomButton onClick={downloadExcel} text="Export to Excel" />
 
       {/* Add this line */}
-      {
-        file && (
-          <Document
-            file={file}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={(error) => {
-              console.error("Error while loading document!", error.message);
-              // Implement more sophisticated error handling
-            }}
-          >
-            <Page
-              pageNumber={currentPage}
-              renderAnnotationLayer={false}
-              renderTextLayer={false}
-              loading={<div>Loading...</div>} // Consider replacing this with a spinner or a skeleton screen
-            />
-          </Document>
-        )
-      }
+      {file && (
+        <Document
+          file={file}
+          onLoadSuccess={onDocumentLoadSuccess}
+          onLoadError={(error) => {
+            console.error("Error while loading document!", error.message);
+            // Implement more sophisticated error handling
+          }}
+        >
+          <Page
+            pageNumber={currentPage}
+            renderAnnotationLayer={false}
+            renderTextLayer={false}
+            loading={<div>Loading...</div>} // Consider replacing this with a spinner or a skeleton screen
+          />
+        </Document>
+      )}
     </>
   );
 };

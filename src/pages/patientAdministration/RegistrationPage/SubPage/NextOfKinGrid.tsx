@@ -12,77 +12,67 @@ interface NextOfKinGridProps {
   onDelete: (id: number) => void;
 }
 
-const NextOfKinGrid: React.FC<NextOfKinGridProps> = ({
-  kinData,
-  onEdit,
-  onDelete,
-}) => {
+const NextOfKinGrid: React.FC<NextOfKinGridProps> = ({ kinData, onEdit, onDelete }) => {
   const { formatDate, parse, formatDateYMD } = useDayjs();
-  const handleEdit = useCallback((row: PatNokDetailsDto) => {
+  const handleEdit = useCallback(
+    (row: PatNokDetailsDto) => {
+      onEdit(row);
+    },
+    [onEdit]
+  );
 
-    onEdit(row);
-  }, [onEdit]);
+  const handleDelete = useCallback(
+    (id: number) => {
+      onDelete(id);
+    },
+    [onDelete]
+  );
 
-  const handleDelete = useCallback((id: number) => {
-    onDelete(id);
-  }, [onDelete]);
-
-  const gridKinColumns = useMemo(() => [
-    {
-      key: "edit",
-      header: "Edit",
-      visible: true,
-      render: (row: PatNokDetailsDto) => (
-        <CustomButton
-          size="small"
-          onClick={() => handleEdit(row)}
-          icon={EditIcon}
-          color="primary"
-        />
-      ),
-    },
-    { key: "pNokRegStatus", header: "NOK Type", visible: true },
-    {
-      key: "pNokFName",
-      header: "Name",
-      visible: true,
-      render: (row: PatNokDetailsDto) => `${row.pNokFName} ${row.pNokLName}`,
-    },
-    { key: "pNokRelName", header: "Relationship", visible: true },
-    {
-      key: "pNokDob",
-      header: "DOB",
-      visible: true,
-      render: (row: PatNokDetailsDto) => formatDate(row.pNokDob),
-    },
-    { key: "pNokPostcode", header: "Post Code", visible: true },
-    {
-      key: "Address",
-      header: "Address",
-      visible: true,
-      render: (row: PatNokDetailsDto) =>
-        `${row.pNokStreet} Area : ${row.pNokArea} City :  ${row.pNokCity} Country : ${row.pNokActualCountry} Nationality : ${row.pNokCountryVal}`,
-    },
-    { key: "pAddPhone1", header: "Mobile", visible: true },
-    {
-      key: "pNokPssnID",
-      header: "Passport Id/No",
-      visible: true,
-    },
-    {
-      key: "delete",
-      header: "Delete",
-      visible: true,
-      render: (row: PatNokDetailsDto) => (
-        <CustomButton
-          size="small"
-          onClick={() => handleDelete(row.pNokID)}
-          icon={DeleteIcon}
-          color="error"
-        />
-      ),
-    },
-  ], [handleEdit, handleDelete]);
+  const gridKinColumns = useMemo(
+    () => [
+      {
+        key: "edit",
+        header: "Edit",
+        visible: true,
+        render: (row: PatNokDetailsDto) => <CustomButton size="small" onClick={() => handleEdit(row)} icon={EditIcon} color="primary" />,
+      },
+      { key: "pNokRegStatus", header: "NOK Type", visible: true },
+      {
+        key: "pNokFName",
+        header: "Name",
+        visible: true,
+        render: (row: PatNokDetailsDto) => `${row.pNokFName} ${row.pNokLName}`,
+      },
+      { key: "pNokRelName", header: "Relationship", visible: true },
+      {
+        key: "pNokDob",
+        header: "DOB",
+        visible: true,
+        render: (row: PatNokDetailsDto) => formatDate(row.pNokDob),
+      },
+      { key: "pNokPostcode", header: "Post Code", visible: true },
+      {
+        key: "Address",
+        header: "Address",
+        visible: true,
+        render: (row: PatNokDetailsDto) =>
+          `${row.pNokStreet} Area : ${row.pNokArea} City :  ${row.pNokCity} Country : ${row.pNokActualCountry} Nationality : ${row.pNokCountryVal}`,
+      },
+      { key: "pAddPhone1", header: "Mobile", visible: true },
+      {
+        key: "pNokPssnID",
+        header: "Passport Id/No",
+        visible: true,
+      },
+      {
+        key: "delete",
+        header: "Delete",
+        visible: true,
+        render: (row: PatNokDetailsDto) => <CustomButton size="small" onClick={() => handleDelete(row.pNokID)} icon={DeleteIcon} color="error" />,
+      },
+    ],
+    [handleEdit, handleDelete]
+  );
 
   return <CustomGrid columns={gridKinColumns} data={kinData} />;
 };

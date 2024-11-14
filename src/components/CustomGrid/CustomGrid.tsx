@@ -37,7 +37,7 @@ export interface ColumnFilter {
 type SingleArgumentFormatter = (value: any) => string | React.ReactNode;
 type TwoArgumentFormatter<T> = (value: any, row: T) => string | React.ReactNode;
 export interface Column<T> {
-  key: keyof T & string;
+  key: string;
   header: string;
   visible: boolean;
   sortable?: boolean;
@@ -101,6 +101,47 @@ const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
     "&:hover": {
       backgroundColor: theme.palette.primary.dark,
     },
+  },
+  // Add these properties
+  display: "flex",
+  flexDirection: "column",
+  overflow: "auto",
+}));
+
+const StyledTableHead = styled(TableHead)(({ theme }) => ({
+  position: "sticky",
+  top: 0,
+  zIndex: 2,
+  "& .MuiTableCell-head": {
+    background: theme.palette.mode === "light" ? "#1976d2" : "#2979ff",
+    color: "#ffffff",
+    fontWeight: 600,
+    fontSize: "14px",
+    padding: "7px 7px",
+    whiteSpace: "nowrap",
+    position: "sticky",
+    top: 0,
+    zIndex: 2,
+    borderBottom: "none",
+    "&:not(:last-child)": {
+      borderRight: `1px solid ${theme.palette.mode === "light" ? "#1565c0" : "#1e88e5"}`,
+    },
+  },
+}));
+
+const StyledTableSortLabel = styled(TableSortLabel)(({ theme }) => ({
+  color: "#ffffff !important",
+  "&.MuiTableSortLabel-root": {
+    color: "#ffffff",
+  },
+  "&.MuiTableSortLabel-root:hover": {
+    color: "#ffffff",
+  },
+  "&.MuiTableSortLabel-root.Mui-active": {
+    color: "#ffffff",
+  },
+  "& .MuiTableSortLabel-icon": {
+    color: "#ffffff !important",
   },
 }));
 
@@ -384,13 +425,12 @@ const CustomGrid = <T extends Record<string, any>>({
 
       {/* Main Grid */}
       <StyledTableContainer sx={{ maxHeight, minHeight }} ref={virtualScrollRef}>
-        <Table ref={tableRef} stickyHeader size="small">
-          {/* Table Header */}
-          <TableHead>
+        <Table ref={tableRef} stickyHeader size="small" sx={{ tableLayout: "fixed" }}>
+          <StyledTableHead>
             <TableRow>
-              {expandableRows && <TableCell padding="none" width={48} />}
+              {expandableRows && <TableCell padding="none" width={48} align="center" />}
               {selectable && (
-                <TableCell padding="checkbox">
+                <TableCell padding="checkbox" align="center">
                   <Checkbox
                     indeterminate={selected.length > 0 && selected.length < processedData.length}
                     checked={processedData.length > 0 && selected.length === processedData.length}
@@ -403,6 +443,15 @@ const CustomGrid = <T extends Record<string, any>>({
                         onSelectionChange?.([]);
                       }
                     }}
+                    sx={{
+                      color: "#ffffff",
+                      "&.Mui-checked": {
+                        color: "#ffffff",
+                      },
+                      "&.MuiCheckbox-indeterminate": {
+                        color: "#ffffff",
+                      },
+                    }}
                   />
                 </TableCell>
               )}
@@ -411,6 +460,7 @@ const CustomGrid = <T extends Record<string, any>>({
                 .map((column) => (
                   <TableCell
                     key={column.key}
+                    align={column.key === "edit" ? "center" : "left"}
                     style={{
                       width: column.width,
                       minWidth: column.minWidth,
@@ -419,11 +469,11 @@ const CustomGrid = <T extends Record<string, any>>({
                       ...column.headerStyle,
                     }}
                   >
-                    <Box display="flex" alignItems="center">
+                    <Box display="flex" alignItems="center" justifyContent={column.key === "edit" ? "center" : "flex-start"}>
                       {column.sortable ? (
-                        <TableSortLabel active={orderBy === column.key} direction={orderBy === column.key ? order : "asc"} onClick={() => handleSort(column.key as keyof T)}>
+                        <StyledTableSortLabel active={orderBy === column.key} direction={orderBy === column.key ? order : "asc"} onClick={() => handleSort(column.key as keyof T)}>
                           {column.header}
-                        </TableSortLabel>
+                        </StyledTableSortLabel>
                       ) : (
                         column.header
                       )}
@@ -434,7 +484,14 @@ const CustomGrid = <T extends Record<string, any>>({
                             setFilterAnchorEl(e.currentTarget);
                             setFilterColumn(column);
                           }}
-                          color={filters[column.key] ? "primary" : "default"}
+                          sx={{
+                            color: filters[column.key] ? "#ffffff" : "rgba(255, 255, 255, 0.7)",
+                            padding: "4px",
+                            marginLeft: "4px",
+                            "&:hover": {
+                              backgroundColor: "rgba(255, 255, 255, 0.1)",
+                            },
+                          }}
                         >
                           <FilterListIcon fontSize="small" />
                         </IconButton>
@@ -444,7 +501,7 @@ const CustomGrid = <T extends Record<string, any>>({
                   </TableCell>
                 ))}
             </TableRow>
-          </TableHead>
+          </StyledTableHead>
 
           {/* Table Body */}
           <TableBody>

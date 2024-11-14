@@ -1,7 +1,7 @@
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useState } from "react";
 import { useLoading } from "../LoadingContext";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store/reducers";
+import { useAppSelector } from "../../store/hooks";
+import { RootState } from "../../store";
 import { notifyError, notifySuccess } from "../../utils/Common/toastManager";
 import { BreakListService } from "../../services/FrontOfficeServices/BreakListServices/BreakListService";
 import { BreakListData } from "../../interfaces/frontOffice/BreakListData";
@@ -18,10 +18,10 @@ interface BreakListContextProps {
 export const BreakListContext = createContext<BreakListContextProps>({
   breakLists: [],
   breakList: null,
-  fetchAllBreakLists: async () => { },
-  getBreakListById: async () => { },
-  saveBreakList: async () => { },
-  updateBreakListActiveStatus: async () => { },
+  fetchAllBreakLists: async () => {},
+  getBreakListById: async () => {},
+  saveBreakList: async () => {},
+  updateBreakListActiveStatus: async () => {},
 });
 
 interface BreakListProviderProps {
@@ -32,14 +32,13 @@ export const BreakListProvider = ({ children }: BreakListProviderProps) => {
   const [breakLists, setBreakLists] = useState<BreakListData[]>([]);
   const [breakList, setBreakList] = useState<BreakListData | null>(null);
   const { setLoading } = useLoading();
-  const userInfo = useSelector((state: RootState) => state.userDetails);
-  const token = userInfo?.token;
+  const { token } = useAppSelector((state: RootState) => state.auth);
 
   const fetchAllBreakLists = async () => {
     if (!token) return;
     setLoading(true);
     try {
-      const result = await BreakListService.getAllBreakLists(token);
+      const result = await BreakListService.getAllBreakLists();
       if (result.success && result.data) {
         setBreakLists(result.data);
       } else {
@@ -58,7 +57,7 @@ export const BreakListProvider = ({ children }: BreakListProviderProps) => {
     if (!token) return;
     setLoading(true);
     try {
-      const result = await BreakListService.getBreakListById(token, id);
+      const result = await BreakListService.getBreakListById(id);
       if (result.success && result.data) {
         setBreakList(result.data);
       } else {
@@ -77,7 +76,7 @@ export const BreakListProvider = ({ children }: BreakListProviderProps) => {
     if (!token) return;
     setLoading(true);
     try {
-      const result = await BreakListService.saveBreakList(token, breakListData);
+      const result = await BreakListService.saveBreakList(breakListData);
       if (result.success) {
         notifySuccess("Break list saved successfully.");
         fetchAllBreakLists(); // Refresh the list
@@ -95,7 +94,7 @@ export const BreakListProvider = ({ children }: BreakListProviderProps) => {
     if (!token) return;
     setLoading(true);
     try {
-      const result = await BreakListService.updateBreakListActiveStatus(token, breakListId, isActive);
+      const result = await BreakListService.updateBreakListActiveStatus(breakListId, isActive);
       if (result.success) {
         notifySuccess("Break list status updated successfully.");
         fetchAllBreakLists(); // Refresh the list

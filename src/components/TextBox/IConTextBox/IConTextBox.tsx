@@ -64,11 +64,7 @@ const IconTextBox: React.FC<TextBoxProps> = ({
             readOnly: readOnly,
             endAdornment: icon ? (
               <InputAdornment position="end">
-                <IconButton
-                  aria-label={ariaLabelIcon}
-                  onClick={onIconClick}
-                  edge="end"
-                >
+                <IconButton aria-label={ariaLabelIcon} onClick={onIconClick} edge="end">
                   {icon}
                 </IconButton>
               </InputAdornment>

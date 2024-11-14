@@ -3,14 +3,15 @@ import { Paper, Typography, Grid } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useLoading } from "../../../../context/LoadingContext";
-import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import { WardCategoryDto } from "../../../../interfaces/HospitalAdministration/WardCategoryDto";
 import { wardCategoryService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import { useAppSelector } from "@/store/hooks";
 
 const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editData }) => {
+  const user = useAppSelector((state) => state.auth);
   const [formState, setFormState] = useState<WardCategoryDto>({
     isSubmitted: false,
     wCatID: 0,
@@ -19,13 +20,13 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
     rNotes: "",
     rActiveYN: "Y",
     transferYN: "Y",
-    compID: store.getState().userDetails.compID || 0,
+    compID: user.compID || 0,
     compCode: "",
     compName: "",
   });
 
   const { setLoading } = useLoading();
-  const { compID } = store.getState().userDetails;
+  const { compID } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (editData) {
@@ -51,21 +52,18 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
       wCatName: formState.wCatName,
       rNotes: formState.rNotes,
       rActiveYN: formState.rActiveYN,
-      compID: store.getState().userDetails.compID || 0,
-      compCode: store.getState().userDetails.compCode || "",
-      compName: store.getState().userDetails.compName || "",
+      compID: user.compID || 0,
+      compCode: user.compCode || "",
+      compName: user.compName || "",
       transferYN: "Y",
     }),
     [formState, editData, compID]
   );
 
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const { name, value } = e.target;
-      setFormState((prev) => ({ ...prev, [name]: value }));
-    },
-    []
-  );
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormState((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
   const handleSave = async () => {
     setFormState((prev) => ({ ...prev, isSubmitted: true }));
@@ -92,7 +90,6 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
     }
   };
 
-
   const handleClear = useCallback(() => {
     setFormState({
       isSubmitted: false,
@@ -113,11 +110,10 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
     }));
   }, []);
 
-
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Typography variant="h6" id="ward-category-header">
-        Room - Bed  Category Details
+        Room - Bed Category Details
       </Typography>
       <Grid container spacing={2}>
         <FormField
@@ -145,16 +141,7 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
         />
       </Grid>
       <Grid container spacing={2}>
-        <FormField
-          type="textarea"
-          label="Remarks"
-          value={formState.rNotes}
-          onChange={handleInputChange}
-          name="rNotes"
-          ControlID="rNotes"
-          placeholder="Remarks"
-          maxLength={4000}
-        />
+        <FormField type="textarea" label="Remarks" value={formState.rNotes} onChange={handleInputChange} name="rNotes" ControlID="rNotes" placeholder="Remarks" maxLength={4000} />
       </Grid>
       <Grid container spacing={2}>
         <FormField
@@ -168,14 +155,7 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
           size="medium"
         />
       </Grid>
-      <FormSaveClearButton
-        clearText="Clear"
-        saveText="Save"
-        onClear={handleClear}
-        onSave={handleSave}
-        clearIcon={DeleteIcon}
-        saveIcon={SaveIcon}
-      />
+      <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </Paper>
   );
 };

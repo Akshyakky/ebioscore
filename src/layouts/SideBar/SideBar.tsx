@@ -41,48 +41,48 @@ interface SideBarProps {
 const drawerWidth = 340;
 
 const StyledDrawer = styled(Drawer)(({ theme }) => ({
-  '& .MuiDrawer-paper': {
+  "& .MuiDrawer-paper": {
     width: drawerWidth,
-    boxSizing: 'border-box',
-    backgroundColor: theme.palette.mode === 'light' ? '#ffffff' : theme.palette.background.default,
+    boxSizing: "border-box",
+    backgroundColor: theme.palette.mode === "light" ? "#ffffff" : theme.palette.background.default,
     color: theme.palette.text.primary,
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
     borderRight: `1px solid ${theme.palette.divider}`,
   },
 }));
 
 const StyledNavLink = styled(NavLink)(({ theme }) => ({
-  textDecoration: 'none',
+  textDecoration: "none",
   color: theme.palette.text.primary,
-  '&.active-submenu-item': {
+  "&.active-submenu-item": {
     backgroundColor: alpha(theme.palette.primary.main, 0.08),
     borderLeft: `4px solid ${theme.palette.primary.main}`,
   },
 }));
 
 const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
-  borderRadius: '8px',
-  margin: '2px 8px',
-  '&:hover': {
+  borderRadius: "8px",
+  margin: "2px 8px",
+  "&:hover": {
     backgroundColor: alpha(theme.palette.primary.main, 0.04),
   },
-  '&.Mui-selected': {
+  "&.Mui-selected": {
     backgroundColor: alpha(theme.palette.primary.main, 0.08),
-    '&:hover': {
+    "&:hover": {
       backgroundColor: alpha(theme.palette.primary.main, 0.12),
     },
   },
 }));
 
 const SearchBox = styled(TextField)(({ theme }) => ({
-  '& .MuiOutlinedInput-root': {
-    borderRadius: '20px',
-    backgroundColor: theme.palette.mode === 'light' ? alpha(theme.palette.common.black, 0.04) : alpha(theme.palette.common.white, 0.15),
-    '&:hover': {
-      backgroundColor: theme.palette.mode === 'light' ? alpha(theme.palette.common.black, 0.07) : alpha(theme.palette.common.white, 0.25),
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "20px",
+    backgroundColor: theme.palette.mode === "light" ? alpha(theme.palette.common.black, 0.04) : alpha(theme.palette.common.white, 0.15),
+    "&:hover": {
+      backgroundColor: theme.palette.mode === "light" ? alpha(theme.palette.common.black, 0.07) : alpha(theme.palette.common.white, 0.25),
     },
-    '&.Mui-focused': {
-      backgroundColor: theme.palette.mode === 'light' ? alpha(theme.palette.common.black, 0.07) : alpha(theme.palette.common.white, 0.25),
+    "&.Mui-focused": {
+      backgroundColor: theme.palette.mode === "light" ? alpha(theme.palette.common.black, 0.07) : alpha(theme.palette.common.white, 0.25),
     },
   },
 }));
@@ -132,13 +132,9 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
     const fetchNavigationData = async () => {
       if (token) {
         try {
-          const modulesData = await moduleService.getActiveModules(
-            userID ?? 0,
-          );
+          const modulesData = await moduleService.getActiveModules(userID ?? 0);
           setModules(modulesData);
-          const subModulesData = await moduleService.getActiveSubModules(
-            userID ?? 0,
-          );
+          const subModulesData = await moduleService.getActiveSubModules(userID ?? 0);
           setSubModules(subModulesData);
         } catch (error) {
           console.error("Error fetching navigation data:", error);
@@ -157,11 +153,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
   const shouldDisplayModule = (module: ModuleDto) => {
     return (
       module.title.toLowerCase().includes(filterKeyword.toLowerCase()) ||
-      subModules.some(
-        (subModule) =>
-          subModule.auGrpID === module.auGrpID &&
-          subModule.title.toLowerCase().includes(filterKeyword.toLowerCase())
-      )
+      subModules.some((subModule) => subModule.auGrpID === module.auGrpID && subModule.title.toLowerCase().includes(filterKeyword.toLowerCase()))
     );
   };
 
@@ -169,15 +161,9 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
 
   const getFilteredSubModules = (module: ModuleDto) => {
     if (module.title.toLowerCase().includes(filterKeyword.toLowerCase())) {
-      return subModules.filter(
-        (subModule) => subModule.auGrpID === module.auGrpID
-      );
+      return subModules.filter((subModule) => subModule.auGrpID === module.auGrpID);
     } else {
-      return subModules.filter(
-        (subModule) =>
-          subModule.auGrpID === module.auGrpID &&
-          subModule.title.toLowerCase().includes(filterKeyword.toLowerCase())
-      );
+      return subModules.filter((subModule) => subModule.auGrpID === module.auGrpID && subModule.title.toLowerCase().includes(filterKeyword.toLowerCase()));
     }
   };
 
@@ -187,24 +173,18 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
       <AppBar
         position="fixed"
         sx={{
-          width: open ? `calc(100% - ${drawerWidth}px)` : '100%',
+          width: open ? `calc(100% - ${drawerWidth}px)` : "100%",
           ml: open ? `${drawerWidth}px` : 0,
-          transition: theme.transitions.create(['margin', 'width'], {
+          transition: theme.transitions.create(["margin", "width"], {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
           }),
-          boxShadow: 'none',
+          boxShadow: "none",
           borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
         <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerToggle}
-            edge="start"
-            sx={{ mr: 2 }}
-          >
+          <IconButton color="inherit" aria-label="open drawer" onClick={handleDrawerToggle} edge="start" sx={{ mr: 2 }}>
             {open ? <CloseIcon /> : <MenuIcon />}
           </IconButton>
           <Typography variant="h6" noWrap component="div" fontWeight="bold">
@@ -215,12 +195,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
           <ProfileMenu />
         </Toolbar>
       </AppBar>
-      <StyledDrawer
-        variant="persistent"
-        anchor="left"
-        open={open}
-        onClose={handleDrawerClose}
-      >
+      <StyledDrawer variant="persistent" anchor="left" open={open} onClose={handleDrawerClose}>
         <Box sx={{ padding: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
           <SearchBox
             variant="outlined"
@@ -242,33 +217,24 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
         <List sx={{ pt: 1 }}>
           {filteredModules.map((module) => (
             <React.Fragment key={`module-${module.auGrpID}`}>
-              <StyledListItemButton
-                onClick={() => toggleModule(module.auGrpID)}
-                selected={activeModuleId === module.auGrpID}
-              >
+              <StyledListItemButton onClick={() => toggleModule(module.auGrpID)} selected={activeModuleId === module.auGrpID}>
                 <ListItemIcon>
                   <Icon icon={module.iCon} style={{ fontSize: "24px", color: theme.palette.primary.main }} />
                 </ListItemIcon>
                 <ListItemText
                   primary={module.title}
                   primaryTypographyProps={{
-                    fontWeight: activeModuleId === module.auGrpID ? 'bold' : 'normal',
+                    fontWeight: activeModuleId === module.auGrpID ? "bold" : "normal",
                   }}
                 />
               </StyledListItemButton>
-              <Collapse
-                in={activeModuleId === module.auGrpID}
-                timeout="auto"
-                unmountOnExit
-              >
+              <Collapse in={activeModuleId === module.auGrpID} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
                   {getFilteredSubModules(module).map((subModule, index) => (
                     <StyledNavLink
                       to={subModule.link}
                       key={`subModule-${subModule.auGrpID}-${index}`}
-                      className={({ isActive }) =>
-                        isActive ? "active-submenu-item" : ""
-                      }
+                      className={({ isActive }) => (isActive ? "active-submenu-item" : "")}
                       onClick={(e) => {
                         e.preventDefault();
                         handleSubModuleClick(subModule.link);
@@ -276,16 +242,9 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
                     >
                       <StyledListItemButton sx={{ pl: 4 }}>
                         <ListItemIcon>
-                          <Icon
-                            icon={subModule.iCon}
-                            style={{ color: theme.palette.text.secondary }}
-                          />
+                          <Icon icon={subModule.iCon} style={{ color: theme.palette.text.secondary }} />
                         </ListItemIcon>
-                        <ListItemText
-                          primary={subModule.title}
-                          primaryTypographyProps={{
-                          }}
-                        />
+                        <ListItemText primary={subModule.title} primaryTypographyProps={{}} />
                       </StyledListItemButton>
                     </StyledNavLink>
                   ))}

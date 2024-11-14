@@ -6,15 +6,11 @@ import styles from "./GlobalSpinner.module.css";
 
 interface GlobalSpinnerProps {
   delay?: number;
-  color?: 'primary' | 'secondary' | 'inherit';
+  color?: "primary" | "secondary" | "inherit";
   size?: number;
 }
 
-const GlobalSpinner: React.FC<GlobalSpinnerProps> = ({
-  delay = 300,
-  color = "primary",
-  size = 40,
-}) => {
+const GlobalSpinner: React.FC<GlobalSpinnerProps> = ({ delay = 300, color = "primary", size = 40 }) => {
   const { isLoading } = useLoading();
   const [shouldRender, setShouldRender] = useState(false);
 

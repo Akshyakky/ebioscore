@@ -3,7 +3,6 @@ import { Paper, Typography, Grid } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useLoading } from "../../../../context/LoadingContext";
-import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
@@ -12,6 +11,7 @@ import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { ProductTaxListDto } from "../../../../interfaces/InventoryManagement/ProductTaxListDto";
 import { productListService } from "../../../../services/InventoryManagementService/inventoryManagementService";
+import { useAppSelector } from "@/store/hooks";
 
 const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData }) => {
   const [formState, setFormState] = useState<ProductListDto>({
@@ -39,8 +39,7 @@ const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData 
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { setLoading } = useLoading();
-  const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
-
+  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   useEffect(() => {
     if (editData) {
       setFormState(editData);

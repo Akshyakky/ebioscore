@@ -3,7 +3,7 @@ import { APIConfig } from "../../apiConfig";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 import { OperationResult } from "../../interfaces/Common/OperationResult";
 import { OPIPInsurancesDto } from "../../interfaces/PatientAdministration/InsuranceDetails";
-import { store } from "../../store/store";
+import { store } from "@/store";
 
 // Initialize ApiServices with different base URLs
 const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });
@@ -12,21 +12,16 @@ const patientAdminApiService = new CommonApiService({
 });
 
 // Function to get the token from the store
-const getToken = () => store.getState().userDetails.token!;
+const getToken = () => store.getState().auth.token!;
 
 interface APIResponse {
   insurID: string;
   insurName: string;
 }
 
-const fetchInsuranceOptions = async (
-  endpoint: string
-): Promise<DropdownOption[]> => {
+const fetchInsuranceOptions = async (endpoint: string): Promise<DropdownOption[]> => {
   try {
-    const response = await commonApiService.get<APIResponse[]>(
-      `InsuranceCarrier/${endpoint}`,
-      getToken()
-    );
+    const response = await commonApiService.get<APIResponse[]>(`InsuranceCarrier/${endpoint}`, getToken());
     return response.map((item) => ({
       value: item.insurID,
       label: item.insurName,
@@ -37,33 +32,16 @@ const fetchInsuranceOptions = async (
   }
 };
 
-const getOPIPInsuranceByPChartID = async (
-  pChartID: number
-): Promise<OperationResult<OPIPInsurancesDto[]>> => {
-  return patientAdminApiService.get<OperationResult<OPIPInsurancesDto[]>>(
-    `OPIPInsurances/GetOPIPInsuranceByPChartID/${pChartID}`,
-    getToken()
-  );
+const getOPIPInsuranceByPChartID = async (pChartID: number): Promise<OperationResult<OPIPInsurancesDto[]>> => {
+  return patientAdminApiService.get<OperationResult<OPIPInsurancesDto[]>>(`OPIPInsurances/GetOPIPInsuranceByPChartID/${pChartID}`, getToken());
 };
 
-const addOrUpdateOPIPInsurance = async (
-  opipInsuranceDto: OPIPInsurancesDto
-): Promise<OperationResult<OPIPInsurancesDto>> => {
-  return patientAdminApiService.post<OperationResult<OPIPInsurancesDto>>(
-    "OPIPInsurances/AddOrUpdateOPIPInsurance",
-    opipInsuranceDto,
-    getToken()
-  );
+const addOrUpdateOPIPInsurance = async (opipInsuranceDto: OPIPInsurancesDto): Promise<OperationResult<OPIPInsurancesDto>> => {
+  return patientAdminApiService.post<OperationResult<OPIPInsurancesDto>>("OPIPInsurances/AddOrUpdateOPIPInsurance", opipInsuranceDto, getToken());
 };
 
-const hideOPIPInsurance = async (
-  opipInsID: number
-): Promise<OperationResult<OPIPInsurancesDto>> => {
-  return patientAdminApiService.put<OperationResult<OPIPInsurancesDto>>(
-    `OPIPInsurances/HideOPIPInsurance/${opipInsID}`,
-    {},
-    getToken()
-  );
+const hideOPIPInsurance = async (opipInsID: number): Promise<OperationResult<OPIPInsurancesDto>> => {
+  return patientAdminApiService.put<OperationResult<OPIPInsurancesDto>>(`OPIPInsurances/HideOPIPInsurance/${opipInsID}`, {}, getToken());
 };
 
 export const InsuranceCarrierService = {

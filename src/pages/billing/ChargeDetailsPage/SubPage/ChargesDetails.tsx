@@ -6,18 +6,18 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import { ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
-import { store } from "../../../../store/store";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { serviceGroupService } from "../../../../services/BillingServices/BillingGenericService";
 import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
 import ChargeBasicDetails from "./Charges";
 import ChargeConfigDetails from "./ChargesAlias";
+import { useAppSelector } from "@/store/hooks";
 
 interface ChargeDetailsProps {
   editData?: ChargeDetailsDto;
 }
 const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");
   const [formData, setFormData] = useState<ChargeDetailsDto>({
     chargeInfo: {

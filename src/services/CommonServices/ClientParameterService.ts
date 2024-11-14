@@ -9,12 +9,9 @@ import { APIConfig } from "../../apiConfig";
  */
 const getClientParameter = async (clientCode: string): Promise<any> => {
   try {
-    const response = await axios.get(
-      `${APIConfig.moduleURL}GetClientParameter`,
-      {
-        params: { ClientCode: clientCode },
-      }
-    );
+    const response = await axios.get(`${APIConfig.moduleURL}GetClientParameter`, {
+      params: { ClientCode: clientCode },
+    });
     // Optionally add response validation here
     return response.data;
   } catch (error) {

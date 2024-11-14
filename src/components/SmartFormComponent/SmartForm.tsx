@@ -1,12 +1,7 @@
 import React, { useEffect, useCallback } from "react";
 import { Formik, Form, Field, ErrorMessage, useFormik } from "formik";
 import * as Yup from "yup";
-import {
-  Button,
-  CircularProgress,
-  FormControl,
-  FormHelperText,
-} from "@mui/material";
+import { Button, CircularProgress, FormControl, FormHelperText } from "@mui/material";
 import FloatingLabelTextBox from "../TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import DropdownSelect from "../DropDown/DropdownSelect";
 
@@ -122,11 +117,7 @@ const SmartForm: React.FC<SmartFormProps> = ({
           </ol>
         </nav>
       )}
-      <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={formik.handleSubmit}
-      >
+      <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={formik.handleSubmit}>
         {({ values, handleChange }) => (
           <Form>
             {formField.map((field) => (
@@ -149,9 +140,7 @@ const SmartForm: React.FC<SmartFormProps> = ({
                             handleChange(e);
                             handleFieldChange(field, e.target.value);
                           }}
-                          isMandatory={field.validation?.tests.some(
-                            (test: any) => test.OPTIONS.name === "required"
-                          )}
+                          isMandatory={field.validation?.tests.some((test: any) => test.OPTIONS.name === "required")}
                           errorMessage={getErrorMessage(field.fieldName)}
                         />
                       )}
@@ -165,9 +154,7 @@ const SmartForm: React.FC<SmartFormProps> = ({
                             handleChange(e);
                             handleFieldChange(field, e.target.value);
                           }}
-                          isMandatory={field.validation?.tests.some(
-                            (test: any) => test.OPTIONS.name === "required"
-                          )}
+                          isMandatory={field.validation?.tests.some((test: any) => test.OPTIONS.name === "required")}
                           errorMessage={getErrorMessage(field.fieldName)}
                         />
                       )}
@@ -181,9 +168,7 @@ const SmartForm: React.FC<SmartFormProps> = ({
                             handleChange(e);
                             handleFieldChange(field, e.target.value);
                           }}
-                          isMandatory={field.validation?.tests.some(
-                            (test: any) => test.OPTIONS.name === "required"
-                          )}
+                          isMandatory={field.validation?.tests.some((test: any) => test.OPTIONS.name === "required")}
                           errorMessage={getErrorMessage(field.fieldName)}
                         />
                       )}
@@ -195,14 +180,9 @@ const SmartForm: React.FC<SmartFormProps> = ({
                           options={listData?.[field.fieldName] || []}
                           onChange={(e) => {
                             handleChange(e);
-                            handleFieldChange(
-                              field,
-                              (e.target as HTMLInputElement).value
-                            );
+                            handleFieldChange(field, (e.target as HTMLInputElement).value);
                           }}
-                          isMandatory={field.validation?.tests.some(
-                            (test: any) => test.OPTIONS.name === "required"
-                          )}
+                          isMandatory={field.validation?.tests.some((test: any) => test.OPTIONS.name === "required")}
                           defaultText={field.listData?.defaultSelectedText}
                           clearable={field.showDropdownAddButton}
                           onClear={() => handleFieldChange(field, "")}
@@ -213,13 +193,7 @@ const SmartForm: React.FC<SmartFormProps> = ({
                       </FormHelperText>
                     </FormControl>
                     {field.showDropdownAddButton && (
-                      <Button
-                        type="button"
-                        onClick={() =>
-                          onDropdownAddButtonClick &&
-                          onDropdownAddButtonClick(field)
-                        }
-                      >
+                      <Button type="button" onClick={() => onDropdownAddButtonClick && onDropdownAddButtonClick(field)}>
                         Add
                       </Button>
                     )}
@@ -228,12 +202,7 @@ const SmartForm: React.FC<SmartFormProps> = ({
               </div>
             ))}
             <div className="d-flex justify-content-between">
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={showLoader || additionalValidation}
-              >
+              <Button type="submit" variant="contained" color="primary" disabled={showLoader || additionalValidation}>
                 {showLoader ? (
                   <>
                     <CircularProgress size={20} />
@@ -243,12 +212,7 @@ const SmartForm: React.FC<SmartFormProps> = ({
                   initSaveBtnText
                 )}
               </Button>
-              <Button
-                type="button"
-                variant="outlined"
-                color="secondary"
-                onClick={() => formik.resetForm()}
-              >
+              <Button type="button" variant="outlined" color="secondary" onClick={() => formik.resetForm()}>
                 Clear
               </Button>
             </div>

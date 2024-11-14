@@ -7,11 +7,11 @@ import SaveIcon from "@mui/icons-material/Save";
 import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
 import { useLoading } from "../../../../context/LoadingContext";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { store } from "../../../../store/store";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { notifyError } from "../../../../utils/Common/toastManager";
 import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 import { reasonListService, resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
+import { useAppSelector } from "@/store/hooks";
 
 const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) => {
   const [formState, setFormState] = useState({
@@ -21,12 +21,12 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
     rNotes: "",
     rActiveYN: "Y",
     arlDuration: 0,
-    rlID: 0
+    rlID: 0,
   });
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const { compID, compCode, compName, userID, userName } = store.getState().userDetails;
+  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   const [resourceList, setResourceList] = useState<ResourceListData[]>([]);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
         rNotes: editData.rNotes || "",
         rActiveYN: editData.rActiveYN || "Y",
         arlDuration: editData.arlDuration || 0,
-        rlID: editData.rlID || 0
+        rlID: editData.rlID || 0,
       });
     } else {
       handleClear();
@@ -53,32 +53,35 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
       rNotes: "",
       rActiveYN: "Y",
       arlDuration: 0,
-      rlID: 0
+      rlID: 0,
     });
   }, []);
 
-  const createReasonListData = useCallback((): ReasonListData => ({
-    arlID: editData ? editData.arlID : 0,
-    arlCode: formState.arlCode,
-    arlName: formState.arlName,
-    rNotes: formState.rNotes,
-    rActiveYN: formState.rActiveYN,
-    compID: compID || 0,
-    compCode: compCode || "",
-    compName: compName || "",
-    transferYN: "N",
-    rCreatedID: userID || 0,
-    rCreatedOn: serverDate || new Date(),
-    rCreatedBy: userName || "",
-    rModifiedID: userID || 0,
-    rModifiedOn: serverDate || new Date(),
-    rModifiedBy: userName || "",
-    arlDuration: formState.arlDuration,
-    arlDurDesc: "",
-    arlColor: 0,
-    rlName: "",
-    rlID: formState.rlID || 0
-  }), [formState, editData, compID, compCode, compName, userID, userName, serverDate]);
+  const createReasonListData = useCallback(
+    (): ReasonListData => ({
+      arlID: editData ? editData.arlID : 0,
+      arlCode: formState.arlCode,
+      arlName: formState.arlName,
+      rNotes: formState.rNotes,
+      rActiveYN: formState.rActiveYN,
+      compID: compID || 0,
+      compCode: compCode || "",
+      compName: compName || "",
+      transferYN: "N",
+      rCreatedID: userID || 0,
+      rCreatedOn: serverDate || new Date(),
+      rCreatedBy: userName || "",
+      rModifiedID: userID || 0,
+      rModifiedOn: serverDate || new Date(),
+      rModifiedBy: userName || "",
+      arlDuration: formState.arlDuration,
+      arlDurDesc: "",
+      arlColor: 0,
+      rlName: "",
+      rlID: formState.rlID || 0,
+    }),
+    [formState, editData, compID, compCode, compName, userID, userName, serverDate]
+  );
 
   useEffect(() => {
     const fetchResourceList = async () => {
@@ -98,11 +101,11 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormState(prev => ({ ...prev, [name]: value }));
+    setFormState((prev) => ({ ...prev, [name]: value }));
   }, []);
 
   const handleSave = async () => {
-    setFormState(prev => ({ ...prev, isSubmitted: true }));
+    setFormState((prev) => ({ ...prev, isSubmitted: true }));
     setLoading(true);
 
     try {
@@ -110,7 +113,7 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
       const result = await reasonListService.save(ReasonListData);
       if (result.success) {
         showAlert("Success", "Reason List saved successfully!", "success", {
-          onConfirm: handleClear
+          onConfirm: handleClear,
         });
       } else {
         showAlert("Error", result.errorMessage || "Failed to save Reason List.", "error");
@@ -124,15 +127,15 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
   };
 
   const handleSwitchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-    setFormState(prev => ({ ...prev, rActiveYN: checked ? "Y" : "N" }));
+    setFormState((prev) => ({ ...prev, rActiveYN: checked ? "Y" : "N" }));
   }, []);
 
   const handleDurationChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const parsedValue = value === "" ? 0 : parseInt(value);
-    setFormState(prev => ({
+    setFormState((prev) => ({
       ...prev,
-      arlDuration: isNaN(parsedValue) ? 0 : Math.max(0, parsedValue)
+      arlDuration: isNaN(parsedValue) ? 0 : Math.max(0, parsedValue),
     }));
   }, []);
 
@@ -178,8 +181,12 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
           placeholder="Enter duration"
           size="small"
           InputProps={{
-            endAdornment: <Typography variant="body2" sx={{ ml: 1, fontWeight: "550", color: "#313233" }}>Minutes</Typography>,
-            inputProps: { min: 0 }
+            endAdornment: (
+              <Typography variant="body2" sx={{ ml: 1, fontWeight: "550", color: "#313233" }}>
+                Minutes
+              </Typography>
+            ),
+            inputProps: { min: 0 },
           }}
         />
       </Grid>
@@ -188,7 +195,7 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
           type="select"
           label="Resource"
           value={formState.rlID.toString()}
-          onChange={(e) => setFormState(prev => ({ ...prev, rlID: parseInt(e.target.value) }))}
+          onChange={(e) => setFormState((prev) => ({ ...prev, rlID: parseInt(e.target.value) }))}
           name="rlID"
           ControlID="rlID"
           options={resourceList.map((resource) => ({
@@ -213,22 +220,15 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
       <Grid container spacing={2}>
         <FormField
           type="switch"
-          label={formState.rActiveYN === 'Y' ? 'Active' : 'Hidden'}
-          checked={formState.rActiveYN === 'Y'}
+          label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
+          checked={formState.rActiveYN === "Y"}
           value={formState.rActiveYN}
           onChange={handleSwitchChange}
           name="rActiveYN"
           ControlID="rActiveYN"
         />
       </Grid>
-      <FormSaveClearButton
-        clearText="Clear"
-        saveText="Save"
-        onClear={handleClear}
-        onSave={handleSave}
-        clearIcon={DeleteIcon}
-        saveIcon={SaveIcon}
-      />
+      <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </Paper>
   );
 };

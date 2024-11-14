@@ -10,9 +10,7 @@ export interface ServerTimeResponse {
   serverTimeZoneOffset: string;
 }
 
-export const fetchServerTime = async (): Promise<
-  OperationResult<ServerTimeResponse>
-> => {
+export const fetchServerTime = async (): Promise<OperationResult<ServerTimeResponse>> => {
   const url = "/ServerTime";
   return get<ServerTimeResponse>(url, APIConfig.commonURL);
 };

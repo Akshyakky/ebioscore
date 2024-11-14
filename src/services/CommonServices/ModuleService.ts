@@ -1,11 +1,11 @@
 import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "../../apiConfig";
-import { store } from "../../store/store";
+import { store } from "@/store";
 
 const apiService = new CommonApiService({ baseURL: APIConfig.moduleURL });
 
 // Function to get the token from the store
-const getToken = () => store.getState().userDetails.token!;
+const getToken = () => store.getState().auth.token!;
 
 export interface ModuleDto {
   auGrpID: number;

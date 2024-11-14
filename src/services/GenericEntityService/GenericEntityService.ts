@@ -1,5 +1,5 @@
+import { store } from "@/store";
 import { CommonApiService } from "../CommonApiService";
-import { store } from "../../store/store";
 export interface BaseDto {
   [key: string]: any;
 }
@@ -14,7 +14,7 @@ export class GenericEntityService<T extends BaseDto> {
   }
 
   protected getToken(): string {
-    return store.getState().userDetails.token!;
+    return store.getState().auth.token!;
   }
 
   async getAll(): Promise<T> {

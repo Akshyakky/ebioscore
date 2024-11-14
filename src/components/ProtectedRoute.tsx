@@ -1,20 +1,23 @@
+// src/components/ProtectedRoute/index.tsx
+import useCheckTokenExpiry from "@/hooks/useCheckTokenExpiry";
+import MainLayout from "@/layouts/MainLayout/MainLayout";
+import AuthService from "@/services/AuthService/AuthService";
+import { logout } from "@/store/features/auth/authSlice";
+import { selectIsAuthenticated, selectUser } from "@/store/features/auth/selectors";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import React, { useEffect, useCallback } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { Navigate } from "react-router-dom";
-import { RootState } from "../store/reducers";
-import useCheckTokenExpiry from "../hooks/useCheckTokenExpiry";
-import { logout } from "../store/actionCreators";
-import AuthService from "../services/AuthService/AuthService";
-import MainLayout from "../layouts/MainLayout/MainLayout";
+import { Navigate, useLocation } from "react-router-dom";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const location = useLocation();
+  const dispatch = useAppDispatch();
   const isTokenExpired = useCheckTokenExpiry();
-  const token = useSelector((state: RootState) => state.userDetails.token);
-  const dispatch = useDispatch();
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const { token } = useAppSelector(selectUser);
 
   const performLogout = useCallback(async () => {
     if (isTokenExpired && token) {
@@ -32,8 +35,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     performLogout();
   }, [performLogout]);
 
-  if (!token || isTokenExpired) {
-    return <Navigate to="/login" />;
+  if (!isAuthenticated || isTokenExpired) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <MainLayout>{children}</MainLayout>;

@@ -5,7 +5,6 @@ import SaveIcon from "@mui/icons-material/Save";
 import { OPIPInsurancesDto } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
 import FormField from "../../../../components/FormField/FormField";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../../store/reducers";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import CustomButton from "../../../../components/Button/CustomButton";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
@@ -14,6 +13,7 @@ import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
 import { AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
+import { useAppSelector } from "@/store/hooks";
 
 interface PatientInsuranceFormProps {
   show: boolean;
@@ -23,7 +23,7 @@ interface PatientInsuranceFormProps {
 }
 
 const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handleClose, handleSave, editData }) => {
-  const userInfo = useSelector((state: RootState) => state.userDetails);
+  const userInfo = useAppSelector((state) => state.auth);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const serverDate = useServerDate();
   const { formatDate, formatDateTime, parse, format, formatDateYMD } = useDayjs();

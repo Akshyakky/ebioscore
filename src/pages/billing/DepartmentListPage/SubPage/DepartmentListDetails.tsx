@@ -13,14 +13,14 @@ import CustomButton from "../../../../components/Button/CustomButton";
 import { DeptUsersPage } from "./DeptUsers/DeptUsersPage";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { departmentService } from "../../../../services/CommonServices/CommonModelServices";
-import { store } from "../../../../store/store";
+import { useAppSelector } from "@/store/hooks";
 
 interface DepartmentListDetailsProps {
   editData?: DepartmentDto;
 }
 
 const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData }) => {
-  const { compID, compCode, compName } = store.getState().userDetails;
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [formData, setFormData] = useState<DepartmentDto>({
     deptID: 0,
     deptCode: "",

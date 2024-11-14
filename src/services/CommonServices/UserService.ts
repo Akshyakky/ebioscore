@@ -2,24 +2,18 @@ import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "../../apiConfig";
 import { OperationResult } from "../../interfaces/Common/OperationResult";
 import { UserLockData } from "../../interfaces/SecurityManagement/UserLockData.interface";
-import { store } from "../../store/store";
+import { store } from "@/store";
 
 const apiService = new CommonApiService({
   baseURL: APIConfig.securityManagementURL,
 });
 
 // Function to get the token from the store
-const getToken = () => store.getState().userDetails.token!;
+const getToken = () => store.getState().auth.token!;
 
-export const saveAppUserLock = async (
-  userLockData: UserLockData
-): Promise<OperationResult<UserLockData>> => {
+export const saveAppUserLock = async (userLockData: UserLockData): Promise<OperationResult<UserLockData>> => {
   try {
-    return await apiService.post<OperationResult<UserLockData>>(
-      "SecurityManagement/AddAppUserLockAsync",
-      userLockData,
-      getToken()
-    );
+    return await apiService.post<OperationResult<UserLockData>>("SecurityManagement/AddAppUserLockAsync", userLockData, getToken());
   } catch (error) {
     console.error(`Error saving User Lock data:`, error);
     throw error;
