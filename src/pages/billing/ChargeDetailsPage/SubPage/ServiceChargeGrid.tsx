@@ -1,9 +1,8 @@
-// ServiceChargeGrid.tsx
-
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import FormField from "../../../../components/FormField/FormField";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 
 interface WardCategory {
   value: string;
@@ -20,6 +19,7 @@ interface GroupedCustomGridProps {
   selectedWardCategories?: WardCategory[];
   data?: GridData[];
   onSelectionChange?: (row: GridData) => void;
+  selectedPicValues?: DropdownOption[];
   maxHeight?: string;
 }
 
@@ -79,8 +79,15 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
     backgroundColor: theme.palette.action.selected,
   },
 }));
-export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWardCategories = [], data = [], onSelectionChange, maxHeight = "500px" }) => {
+export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({
+  selectedWardCategories = [],
+  selectedPicValues = [],
+  data: initialData = [],
+  onSelectionChange,
+  maxHeight = "500px",
+}) => {
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
+  const [data, setData] = useState<GridData[]>(initialData);
   const rowColors = [
     "rgba(236, 242, 255, 0.9)",
     "rgba(255, 245, 238, 0.9)",
@@ -95,32 +102,64 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
     setSelectedRow(index);
     onSelectionChange?.(row);
   };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, rowIndex: number, field: string) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, rowIndex: number, field: string) => {
     const newValue = e.target.value;
     const updatedData = [...data];
     updatedData[rowIndex] = {
       ...updatedData[rowIndex],
       [field]: newValue,
     };
+
     const categoryPrefix = field.split("_")[0];
     if (field.includes("drAmt") || field.includes("hospAmt")) {
       const drAmt = parseFloat(updatedData[rowIndex][`${categoryPrefix}_drAmt`] || "0");
       const hospAmt = parseFloat(updatedData[rowIndex][`${categoryPrefix}_hospAmt`] || "0");
       updatedData[rowIndex][`${categoryPrefix}_totAmt`] = (drAmt + hospAmt).toFixed(2);
     }
+
+    setData(updatedData);
     onSelectionChange?.(updatedData[rowIndex]);
   };
+
   const renderGroupedHeaders = () => (
     <TableRow>
-      <StyledTableCell className="header" rowSpan={2}>
+      <StyledTableCell
+        className="header"
+        rowSpan={2}
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 3,
+          backgroundColor: "inherit",
+        }}
+      >
         Select
       </StyledTableCell>
-      <StyledTableCell className="header" rowSpan={2}>
+      <StyledTableCell
+        className="header"
+        rowSpan={2}
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 3,
+          backgroundColor: "inherit",
+        }}
+      >
         PIC Name
       </StyledTableCell>
       {selectedWardCategories.map((category) => (
-        <StyledTableCell key={category.value} className="header" colSpan={3} align="center">
+        <StyledTableCell
+          key={category.value}
+          className="header"
+          colSpan={3}
+          align="center"
+          sx={{
+            position: "sticky",
+            top: 0,
+            zIndex: 3,
+            backgroundColor: "inherit",
+          }}
+        >
           {category.label}
         </StyledTableCell>
       ))}
@@ -140,94 +179,96 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({ selectedWa
   );
 
   const renderDataRows = () =>
-    data.map((row, rowIndex) => (
-      <StyledTableRow
-        key={rowIndex}
-        sx={{
-          backgroundColor: rowColors[rowIndex % rowColors.length],
-          transition: "background-color 0.2s ease",
-          "&:hover": {
-            backgroundColor: rowColors[rowIndex % rowColors.length].replace("0.9)", "1)"),
-          },
-        }}
-      >
-        <StyledTableCell>
-          <input
-            type="radio"
-            name="rowSelect"
-            checked={selectedRow === rowIndex}
-            onChange={() => handleRowSelect(row, rowIndex)}
-            style={{
-              backgroundColor: "white",
-              padding: "5px",
-              borderRadius: "50%",
-            }}
-          />
-        </StyledTableCell>
-        <StyledTableCell>{row.picName}</StyledTableCell>
-        {selectedWardCategories.map((category) => (
-          <React.Fragment key={`${category.value}-data-${rowIndex}`}>
-            <StyledTableCell>
-              <FormField
-                type="number"
-                label="Dr Amt"
-                value={row[`${category.label}_drAmt`] || "0.00"}
-                onChange={(e) => handleInputChange(e, rowIndex, `${category.label}_drAmt`)}
-                placeholder="0.00"
-                fullWidth
-                size="small"
-                ControlID={`${category.label}_drAmt`}
-                name={`${category.label}_drAmt`}
-                step="any"
-                InputProps={{
-                  style: {
-                    backgroundColor: "#ffffff",
-                  },
-                }}
-              />
-            </StyledTableCell>
-            <StyledTableCell>
-              <FormField
-                type="number"
-                label="Hosp Amt"
-                value={row[`${category.label}_hospAmt`] || "0.00"}
-                onChange={(e) => handleInputChange(e, rowIndex, `${category.label}_hospAmt`)}
-                placeholder="0.00"
-                fullWidth
-                size="small"
-                ControlID={`${category.label}_hospAmt`}
-                name={`${category.label}_hospAmt`}
-                step="any"
-                InputProps={{
-                  style: {
-                    backgroundColor: "#ffffff",
-                  },
-                }}
-              />
-            </StyledTableCell>
-            <StyledTableCell>
-              <FormField
-                type="number"
-                label="Tot Amt"
-                value={row[`${category.label}_totAmt`] || "0.00"}
-                placeholder="0.00"
-                readOnly
-                fullWidth
-                size="small"
-                ControlID={`${category.label}_totAmt`}
-                name={`${category.label}_totAmt`}
-                onChange={() => {}}
-                InputProps={{
-                  style: {
-                    backgroundColor: "#ffffff",
-                  },
-                }}
-              />
-            </StyledTableCell>
-          </React.Fragment>
-        ))}
-      </StyledTableRow>
-    ));
+    data
+      .filter((row) => selectedPicValues.some((pic) => pic.label === row.picName)) // Filter only selected PICs
+      .map((row, rowIndex) => (
+        <StyledTableRow
+          key={rowIndex}
+          sx={{
+            backgroundColor: rowColors[rowIndex % rowColors.length],
+            transition: "background-color 0.2s ease",
+            "&:hover": {
+              backgroundColor: rowColors[rowIndex % rowColors.length].replace("0.9)", "1)"),
+            },
+          }}
+        >
+          <StyledTableCell>
+            <input
+              type="radio"
+              name="rowSelect"
+              checked={selectedRow === rowIndex}
+              onChange={() => handleRowSelect(row, rowIndex)}
+              style={{
+                backgroundColor: "white",
+                padding: "5px",
+                borderRadius: "50%",
+              }}
+            />
+          </StyledTableCell>
+          <StyledTableCell>{row.picName}</StyledTableCell>
+          {selectedWardCategories.map((category) => (
+            <React.Fragment key={`${category.value}-data-${rowIndex}`}>
+              <StyledTableCell>
+                <FormField
+                  type="number"
+                  label="0.00"
+                  value={row[`${category.label}_drAmt`] || ""}
+                  onChange={(e) => handleInputChange(e, rowIndex, `${category.label}_drAmt`)}
+                  placeholder="0.00"
+                  fullWidth
+                  size="small"
+                  ControlID={`${category.label}_drAmt`}
+                  name={`${category.label}_drAmt`}
+                  step="any"
+                  InputProps={{
+                    style: {
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    },
+                  }}
+                />
+              </StyledTableCell>
+              <StyledTableCell>
+                <FormField
+                  type="number"
+                  label="0.00"
+                  value={row[`${category.label}_hospAmt`] || ""}
+                  onChange={(e) => handleInputChange(e, rowIndex, `${category.label}_hospAmt`)}
+                  placeholder="0.00"
+                  fullWidth
+                  size="small"
+                  ControlID={`${category.label}_hospAmt`}
+                  name={`${category.label}_hospAmt`}
+                  step="any"
+                  InputProps={{
+                    style: {
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    },
+                  }}
+                />
+              </StyledTableCell>
+              <StyledTableCell>
+                <FormField
+                  type="number"
+                  label="0.00"
+                  value={row[`${category.label}_totAmt`] || ""}
+                  placeholder="0.00"
+                  readOnly
+                  fullWidth
+                  size="small"
+                  ControlID={`${category.label}_totAmt`}
+                  name={`${category.label}_totAmt`}
+                  onChange={() => {}}
+                  InputProps={{
+                    style: {
+                      backgroundColor: "rgba(248, 249, 250, 0.9)",
+                    },
+                  }}
+                />
+              </StyledTableCell>
+            </React.Fragment>
+          ))}
+        </StyledTableRow>
+      ));
 
   return (
     <Box sx={{ maxHeight, maxWidth: "100%", overflowY: "auto", overflowX: "auto" }}>

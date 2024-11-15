@@ -458,7 +458,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         dropdownValues={dropdownValues}
         serviceGroups={serviceGroups}
         isSubmitted={isSubmitted}
-        handleDateChange={handleDateChange} // Make sure this line is included
+        handleDateChange={handleDateChange}
       />
 
       <ChargeConfigDetails
