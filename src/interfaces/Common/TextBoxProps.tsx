@@ -30,4 +30,7 @@ export interface TextBoxProps {
   InputProps?: TextFieldProps["InputProps"];
   InputLabelProps?: TextFieldProps["InputLabelProps"];
   sx?: SxProps<Theme>;
+  loading?: boolean;
+  "aria-label"?: string;
+  "aria-required"?: string;
 }
