@@ -91,7 +91,6 @@ const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData 
         showAlert("Error", result.errorMessage || "Failed to save Department.", "error");
       }
     } catch (error) {
-      console.error("Error saving Department:", error);
       showAlert("Error", "An unexpected error occurred while saving.", "error");
     } finally {
       setLoading(false);

@@ -109,6 +109,11 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
     return selectedWardCategoryIds.length > 0 ? bedCategories.filter((category) => selectedWardCategoryIds.includes(category.value)) : bedCategories;
   }, [dropdownValues.bedCategory, selectedWardCategoryIds]);
 
+  const selectedPicValues = useMemo(() => {
+    const pics = dropdownValues.pic || [];
+    return selectedPicIds.length > 0 ? pics.filter((pic) => selectedPicIds.includes(pic.value)) : pics;
+  }, [dropdownValues.pic, selectedPicIds]);
+
   const handleGridSelectionChange = (row: any) => {
     console.log("Selected row:", row);
   };
@@ -284,7 +289,7 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
           <Typography variant="h6" gutterBottom>
             Service Charges
           </Typography>
-          <GroupedCustomGrid selectedWardCategories={selectedWardCategories} data={gridData} onSelectionChange={handleGridSelectionChange} />
+          <GroupedCustomGrid selectedWardCategories={selectedWardCategories} data={gridData} onSelectionChange={handleGridSelectionChange} selectedPicValues={selectedPicValues} />
         </Box>
       )}
       {selectedTab === "ServiceAlias" && (
@@ -300,8 +305,8 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
         <FormField
           type="switch"
           label="Hide"
-          checked={formData.chargeInfo.rActiveYN === "N"}
-          onChange={(e) => handleSwitchChange("rActiveYN")(e)}
+          checked={formData.chargeInfo.rActiveYN === "Y"}
+          onChange={handleSwitchChange("rActiveYN")}
           name="rActiveYN"
           ControlID="rActiveYN"
           color="primary"
