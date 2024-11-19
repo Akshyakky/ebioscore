@@ -1,4 +1,5 @@
 // src/apiConfig.ts
+
 export const APIConfig = {
   moduleURL: import.meta.env.VITE_MODULE_URL,
   dashBoardURL: import.meta.env.VITE_DASHBOARD_URL,
