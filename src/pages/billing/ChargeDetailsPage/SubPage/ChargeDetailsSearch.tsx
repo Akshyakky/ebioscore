@@ -1,5 +1,5 @@
 import React from "react";
-import { BChargeDto } from "../../../../interfaces/Billing/BChargeDetails";
+import { ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
 import { Column } from "../../../../components/CustomGrid/CustomGrid";
@@ -7,14 +7,26 @@ import { Column } from "../../../../components/CustomGrid/CustomGrid";
 interface ChargeDetailsSearchProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (chargeDetails: BChargeDto) => void;
+  onSelect: (chargeDetails: ChargeDetailsDto) => void;
 }
 
 const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose, onSelect }) => {
-  const fetchItems = async (): Promise<BChargeDto[]> => {
+  const fetchItems = async (): Promise<ChargeDetailsDto[]> => {
     try {
-      const result = await chargeDetailsService.getAll();
-      return result.data;
+      const result = await chargeDetailsService.getAllChargeDetails();
+      if (!result.success || !result.data) {
+        console.error("Failed to fetch charge details:", result.errorMessage);
+        return [];
+      }
+      console.log("API Response:", result.data);
+      const mappedData = result.data.map((item) => ({
+        ...item,
+        chargeDetails: item.chargeDetails || [],
+        chargeAliases: item.chargeAliases || [],
+        faculties: item.faculties || [],
+      }));
+      console.log("Mapped Data:", mappedData);
+      return mappedData;
     } catch (error) {
       return [];
     }
@@ -29,41 +41,37 @@ const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose
     }
   };
 
-  const getItemId = (item: BChargeDto) => item.chargeID;
-  const getItemActiveStatus = (item: BChargeDto) => item.chargeStatus === "Active";
-
-  const columns: Column<BChargeDto>[] = [
+  const getItemId = (item: ChargeDetailsDto) => item.chargeInfo?.chargeID || 0;
+  const getItemActiveStatus = (item: ChargeDetailsDto) => item.chargeInfo?.chargeStatus === "Active";
+  const columns: Column<ChargeDetailsDto>[] = [
     {
-      key: "chargeCode",
+      key: "chargeInfo.chargeCode",
       header: "Service Code",
       visible: true,
-      sortable: true,
-      render: (item: BChargeDto) => item.chargeCode,
+      render: (item: ChargeDetailsDto) => item.chargeInfo?.chargeCode,
     },
-
     {
-      key: "cNhsEnglishName",
+      key: "chargeInfo.cNhsEnglishName",
       header: "Service Name",
       visible: true,
-      render: (item: BChargeDto) => item.cNhsEnglishName || "",
+      render: (item: ChargeDetailsDto) => item.chargeInfo?.chargeDesc,
     },
-
     {
-      key: "chargeType",
+      key: "chargeInfo.chargeType",
       header: "Service Type",
       visible: true,
-      render: (item: BChargeDto) => item.chargeType,
+      render: (item: ChargeDetailsDto) => item.chargeInfo?.chargeType,
     },
     {
-      key: "cShortName",
+      key: "chargeInfo.cShortName",
       header: "Short Name",
       visible: true,
-      render: (item: BChargeDto) => item.cShortName,
+      render: (item: ChargeDetailsDto) => item.chargeInfo?.cShortName,
     },
   ];
 
   return (
-    <GenericAdvanceSearch<BChargeDto>
+    <GenericAdvanceSearch<ChargeDetailsDto>
       open={open}
       onClose={onClose}
       onSelect={onSelect}

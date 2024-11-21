@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper
 import { styled } from "@mui/material/styles";
 import FormField from "../../../../components/FormField/FormField";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { BChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
 
 interface WardCategory {
   value: string;
@@ -12,6 +13,7 @@ interface WardCategory {
 interface GridData {
   picName: string;
   backgroundColor?: string;
+  chargeDetails?: BChargeDetailsDto[];
   [key: string]: any;
 }
 
@@ -21,6 +23,8 @@ interface GroupedCustomGridProps {
   onSelectionChange?: (row: GridData) => void;
   selectedPicValues?: DropdownOption[];
   maxHeight?: string;
+  onChargeDetailsChange?: (chargeDetails: BChargeDetailsDto[]) => void;
+  createChargeDetail: (picValue: string, categoryValue: string) => BChargeDetailsDto; // Add this
 }
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -84,6 +88,8 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({
   selectedPicValues = [],
   data: initialData = [],
   onSelectionChange,
+  onChargeDetailsChange,
+  createChargeDetail,
   maxHeight = "500px",
 }) => {
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
@@ -102,23 +108,51 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({
     setSelectedRow(index);
     onSelectionChange?.(row);
   };
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, rowIndex: number, field: string) => {
-    const newValue = e.target.value;
-    const updatedData = [...data];
-    updatedData[rowIndex] = {
-      ...updatedData[rowIndex],
-      [field]: newValue,
-    };
 
-    const categoryPrefix = field.split("_")[0];
-    if (field.includes("drAmt") || field.includes("hospAmt")) {
-      const drAmt = parseFloat(updatedData[rowIndex][`${categoryPrefix}_drAmt`] || "0");
-      const hospAmt = parseFloat(updatedData[rowIndex][`${categoryPrefix}_hospAmt`] || "0");
-      updatedData[rowIndex][`${categoryPrefix}_totAmt`] = (drAmt + hospAmt).toFixed(2);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, rowIndex: number, field: string, categoryId: string) => {
+    const newValue = parseFloat(e.target.value) || 0;
+    const updatedData = [...data];
+    const row = updatedData[rowIndex];
+
+    if (!row.chargeDetails) {
+      row.chargeDetails = [];
     }
 
+    // Ensure `chargeDetail` is initialized
+    let chargeDetail = row.chargeDetails.find((cd) => cd.wCatID === parseInt(categoryId));
+    if (!chargeDetail) {
+      chargeDetail = createChargeDetail(row.picName, categoryId);
+      row.chargeDetails.push(chargeDetail);
+    }
+
+    // Update values
+    if (field.includes("drAmt")) {
+      chargeDetail.dcValue = newValue; // Update Dr Amount
+    } else if (field.includes("hospAmt")) {
+      chargeDetail.hcValue = newValue; // Update Hosp Amount
+    }
+
+    chargeDetail.chValue = (chargeDetail.dcValue || 0) + (chargeDetail.hcValue || 0); // Compute Total Amount
+
+    row[`${field}`] = newValue; // Update field value in the row
+    row[`${field.split("_")[0]}_totAmt`] = chargeDetail.chValue; // Update total field
     setData(updatedData);
-    onSelectionChange?.(updatedData[rowIndex]);
+
+    onChargeDetailsChange?.(getAllChargeDetails(updatedData));
+  };
+
+  const getAllChargeDetails = (gridData: GridData[]): BChargeDetailsDto[] => {
+    return gridData.reduce((acc: BChargeDetailsDto[], row) => {
+      if (row.chargeDetails) {
+        acc.push(...row.chargeDetails);
+      }
+      return acc;
+    }, []);
+  };
+
+  const clearGridData = () => {
+    setData([]);
+    onChargeDetailsChange?.([]);
   };
 
   const renderGroupedHeaders = () => (
@@ -180,16 +214,12 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({
 
   const renderDataRows = () =>
     data
-      .filter((row) => selectedPicValues.some((pic) => pic.label === row.picName)) // Filter only selected PICs
+      .filter((row) => selectedPicValues.some((pic) => pic.label === row.picName))
       .map((row, rowIndex) => (
         <StyledTableRow
           key={rowIndex}
-          sx={{
-            backgroundColor: rowColors[rowIndex % rowColors.length],
-            transition: "background-color 0.2s ease",
-            "&:hover": {
-              backgroundColor: rowColors[rowIndex % rowColors.length].replace("0.9)", "1)"),
-            },
+          style={{
+            backgroundColor: rowColors[rowIndex % rowColors.length], // Apply alternating row colors
           }}
         >
           <StyledTableCell>
@@ -199,74 +229,75 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({
               checked={selectedRow === rowIndex}
               onChange={() => handleRowSelect(row, rowIndex)}
               style={{
-                backgroundColor: "white",
-                padding: "5px",
-                borderRadius: "50%",
+                backgroundColor: "#fff", // Match StyledFormField colors
               }}
             />
           </StyledTableCell>
           <StyledTableCell>{row.picName}</StyledTableCell>
-          {selectedWardCategories.map((category) => (
-            <React.Fragment key={`${category.value}-data-${rowIndex}`}>
-              <StyledTableCell>
-                <FormField
-                  type="number"
-                  label="0.00"
-                  value={row[`${category.label}_drAmt`] || ""}
-                  onChange={(e) => handleInputChange(e, rowIndex, `${category.label}_drAmt`)}
-                  placeholder="0.00"
-                  fullWidth
-                  size="small"
-                  ControlID={`${category.label}_drAmt`}
-                  name={`${category.label}_drAmt`}
-                  step="any"
-                  InputProps={{
-                    style: {
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                    },
-                  }}
-                />
-              </StyledTableCell>
-              <StyledTableCell>
-                <FormField
-                  type="number"
-                  label="0.00"
-                  value={row[`${category.label}_hospAmt`] || ""}
-                  onChange={(e) => handleInputChange(e, rowIndex, `${category.label}_hospAmt`)}
-                  placeholder="0.00"
-                  fullWidth
-                  size="small"
-                  ControlID={`${category.label}_hospAmt`}
-                  name={`${category.label}_hospAmt`}
-                  step="any"
-                  InputProps={{
-                    style: {
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                    },
-                  }}
-                />
-              </StyledTableCell>
-              <StyledTableCell>
-                <FormField
-                  type="number"
-                  label="0.00"
-                  value={row[`${category.label}_totAmt`] || ""}
-                  placeholder="0.00"
-                  readOnly
-                  fullWidth
-                  size="small"
-                  ControlID={`${category.label}_totAmt`}
-                  name={`${category.label}_totAmt`}
-                  onChange={() => {}}
-                  InputProps={{
-                    style: {
-                      backgroundColor: "rgba(248, 249, 250, 0.9)",
-                    },
-                  }}
-                />
-              </StyledTableCell>
-            </React.Fragment>
-          ))}
+          {selectedWardCategories.map((category) => {
+            const chargeDetail = row.chargeDetails?.find((cd) => cd.wCatID === parseInt(category.value));
+            return (
+              <React.Fragment key={`${category.value}-data-${rowIndex}`}>
+                <StyledTableCell>
+                  <FormField
+                    type="number"
+                    label="0.00"
+                    value={chargeDetail?.dcValue || row[`${category.label}_drAmt`] || ""}
+                    onChange={(e) => handleInputChange(e, rowIndex, `${category.label}_drAmt`, category.value)}
+                    placeholder="0.00"
+                    fullWidth
+                    size="small"
+                    ControlID={`${category.label}_drAmt`}
+                    name={`${category.label}_drAmt`}
+                    step="any"
+                    InputProps={{
+                      style: {
+                        backgroundColor: "#fff", // Match StyledFormField colors
+                      },
+                    }}
+                  />
+                </StyledTableCell>
+                <StyledTableCell>
+                  <FormField
+                    type="number"
+                    label="0.00"
+                    value={chargeDetail?.hcValue || row[`${category.label}_hospAmt`] || ""}
+                    onChange={(e) => handleInputChange(e, rowIndex, `${category.label}_hospAmt`, category.value)}
+                    placeholder="0.00"
+                    fullWidth
+                    size="small"
+                    ControlID={`${category.label}_hospAmt`}
+                    name={`${category.label}_hospAmt`}
+                    step="any"
+                    InputProps={{
+                      style: {
+                        backgroundColor: "#fff", // Match StyledFormField colors
+                      },
+                    }}
+                  />
+                </StyledTableCell>
+                <StyledTableCell>
+                  <FormField
+                    type="number"
+                    label="0.00"
+                    value={chargeDetail?.chValue || row[`${category.label}_totAmt`] || ""}
+                    placeholder="0.00"
+                    readOnly
+                    fullWidth
+                    size="small"
+                    ControlID={`${category.label}_totAmt`}
+                    name={`${category.label}_totAmt`}
+                    onChange={() => {}}
+                    InputProps={{
+                      style: {
+                        backgroundColor: "#fff", // Match StyledFormField colors
+                      },
+                    }}
+                  />
+                </StyledTableCell>
+              </React.Fragment>
+            );
+          })}
         </StyledTableRow>
       ));
 
