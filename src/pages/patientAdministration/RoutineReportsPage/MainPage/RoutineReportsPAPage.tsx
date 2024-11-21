@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { Document, Page, pdfjs } from "react-pdf";
-import { useSelector } from "react-redux";
 import { APIConfig } from "../../../../apiConfig";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { useAppSelector } from "@/store/hooks";
