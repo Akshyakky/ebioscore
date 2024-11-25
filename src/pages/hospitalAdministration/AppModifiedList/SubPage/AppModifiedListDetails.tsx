@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useLoading } from "../../../../context/LoadingContext";
-import { AppModifiedMast, AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
+import { AppModifiedMast, AppModifyFieldDto } from "../../../../interfaces/hospitalAdministration/AppModifiedlistDto";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { appModifiedListService, appModifiedMastService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { showAlert } from "../../../../utils/Common/showAlert";

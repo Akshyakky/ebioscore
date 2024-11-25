@@ -8,7 +8,7 @@ import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRig
 import { useLoading } from "../../../../../context/LoadingContext";
 import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../../components/Button/CustomButton";
-import { RoomGroupDto, RoomListDto, WrBedDto } from "../../../../../interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { RoomGroupDto, RoomListDto, WrBedDto } from "../../../../../interfaces/hospitalAdministration/Room-BedSetUpDto";
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";

@@ -1,7 +1,7 @@
 import { store } from "@/store";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { InsuranceListDto } from "../../../interfaces/HospitalAdministration/InsuranceListDto";
+import { InsuranceListDto } from "../../../interfaces/hospitalAdministration/InsuranceListDto";
 import { CommonApiService } from "../../CommonApiService";
 
 const apiService = new CommonApiService({

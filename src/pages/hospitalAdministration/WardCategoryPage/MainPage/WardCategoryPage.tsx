@@ -4,7 +4,7 @@ import Search from "@mui/icons-material/Search";
 import WardCategoryDetails from "../SubPage/WardCategoryDetails";
 import WardCategorySearch from "../SubPage/WardCategorySearch";
 import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import { WardCategoryDto } from "../../../../interfaces/HospitalAdministration/WardCategoryDto";
+import { WardCategoryDto } from "../../../../interfaces/hospitalAdministration/WardCategoryDto";
 
 const WardCategoryPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

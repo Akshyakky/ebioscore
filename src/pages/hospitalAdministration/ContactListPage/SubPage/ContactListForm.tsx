@@ -1,16 +1,16 @@
 import React, { useState, useMemo, useCallback, forwardRef, useImperativeHandle } from "react";
 import { Grid, SelectChangeEvent, Typography } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
-import { ContactListData } from "../../../../interfaces/HospitalAdministration/ContactListData";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import ContactListActions from "./ContactListActions";
 import ContactListSwitches from "./ContactListSwitches";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
-import { AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
+import { AppModifyFieldDto } from "../../../../interfaces/hospitalAdministration/AppModifiedlistDto";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useAppSelector } from "@/store/hooks";
+import { ContactListData } from "@/interfaces/hospitalAdministration/ContactListData";
 
 type SwitchStates = {
   isEmployee: boolean;

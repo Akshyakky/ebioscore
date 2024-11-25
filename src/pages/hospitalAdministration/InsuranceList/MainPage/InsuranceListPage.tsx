@@ -3,7 +3,7 @@ import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import { useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import InsuranceListDetails from "../SubPage/InsuranceListDetails";
-import { InsuranceListDto } from "../../../../interfaces/HospitalAdministration/InsuranceListDto";
+import { InsuranceListDto } from "../../../../interfaces/hospitalAdministration/InsuranceListDto";
 import InsuranceListSearch from "../SubPage/InsuranceListSearch";
 
 const InsuranceListPage: React.FC = () => {

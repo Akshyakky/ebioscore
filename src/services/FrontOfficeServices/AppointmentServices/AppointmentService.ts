@@ -3,7 +3,7 @@ import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { PaginatedList } from "../../../interfaces/Common/PaginatedList";
 import { store } from "@/store";
-import { AppointBookingDto } from "./../../../interfaces/FrontOffice/AppointBookingDto";
+import { AppointBookingDto } from "@/interfaces/frontOffice/AppointBookingDto";
 
 const commonApiService = new CommonApiService({
   baseURL: APIConfig.frontOffice,

@@ -5,9 +5,9 @@ import SaveIcon from "@mui/icons-material/Save";
 import GenericDialog from "../GenericDialog/GenericDialog";
 import CustomButton from "../Button/CustomButton";
 import FormField from "../FormField/FormField";
-import { AppModifyFieldDto } from "../../interfaces/HospitalAdministration/AppModifiedlistDto";
 import { appModifiedListService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { showAlert } from "../../utils/Common/showAlert";
+import { AppModifyFieldDto } from "@/interfaces/hospitalAdministration/AppModifiedlistDto";
 
 interface ModifiedFieldDialogProps {
   open: boolean;

@@ -2,8 +2,8 @@ import { CommonApiService } from "../../CommonApiService";
 import { APIConfig } from "../../../apiConfig";
 import { DropdownOption } from "../../../interfaces/Common/DropdownOption";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { ContactListData } from "../../../interfaces/HospitalAdministration/ContactListData";
 import { store } from "@/store";
+import { ContactListData } from "../../../interfaces/hospitalAdministration/ContactListData";
 
 const apiService = new CommonApiService({
   baseURL: APIConfig.hospitalAdministrations,

@@ -7,7 +7,7 @@ import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdow
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
-import { AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
+import { AppModifyFieldDto } from "../../../../interfaces/hospitalAdministration/AppModifiedlistDto";
 interface ContactDetailsProps {
   formData: PatientRegistrationDto;
   setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;

@@ -23,7 +23,7 @@ import {
 import { roomGroupService, roomListService, wardCategoryService, wrBedService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { departmentService } from "../../services/CommonServices/CommonModelServices";
 import { DepartmentDto } from "../../interfaces/Billing/DepartmentDto";
-import { WardCategoryDto } from "../../interfaces/HospitalAdministration/WardCategoryDto";
+import { WardCategoryDto } from "../../interfaces/hospitalAdministration/WardCategoryDto";
 import { dischargeStatusService } from "../../services/PatientAdministrationServices/patientAdministrationService";
 import { useAppSelector } from "@/store/hooks";
 
