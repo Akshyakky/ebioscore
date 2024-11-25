@@ -4,7 +4,7 @@ import Search from "@mui/icons-material/Search";
 import { useState } from "react";
 import ChargeDetails from "../SubPage/ChargesDetails";
 import ChargeDetailsSearch from "../SubPage/ChargeDetailsSearch";
-import { ChargeDetailsDto, BChargeDto } from "../../../../interfaces/Billing/BChargeDetails";
+import { ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
 
 const ChargeDetailsPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -18,86 +18,13 @@ const ChargeDetailsPage: React.FC = () => {
     setIsSearchOpen(false);
   };
 
-  const handleSelect = (data: BChargeDto) => {
-    const chargeDetailsData: ChargeDetailsDto = {
-      chargeInfo: {
-        chargeID: data.chargeID,
-        chargeCode: data.chargeCode,
-        chargeDesc: data.chargeDesc ?? "",
-        chargeType: data.chargeType,
-        cShortName: data.cShortName,
-        compID: 0,
-        compCode: "",
-        compName: "",
-        chargeCost: data.chargeCost,
-        rActiveYN: "Y",
-        transferYN: "Y",
-        rNotes: "",
-        chargeBreakYN: "N",
-        bChID: 0,
-        regServiceYN: data.regServiceYN,
-        doctorShareYN: "N",
-        cNhsCode: data.cNhsCode || "",
-        chargeStatus: "",
-        sGrpID: data.sGrpID,
-        chargeTo: "",
-        cNhsEnglishName: data.cNhsEnglishName ?? "",
-      },
-      // Populate default chargeDetails
-      chargeDetails: [
-        {
-          chDetID: 0,
-          chargeID: data.chargeID,
-          pTypeID: 1,
-          wCatID: 1,
-          dcValue: 0,
-          hcValue: 0,
-          chValue: 0,
-          chargeStatus: "A",
-          compID: 0,
-          compCode: "",
-          compName: "",
-          rActiveYN: "",
-          transferYN: "",
-          rNotes: "",
-        },
-        // Add more items if needed
-      ],
-      // Populate default chargeAliases
-      chargeAliases: [
-        {
-          chaliasID: 0,
-          chargeID: data.chargeID,
-          pTypeID: 1,
-          chargeDesc: "Default Alias",
-          chargeDescLang: "en",
-          compID: 0,
-          compCode: "",
-          compName: "",
-          rActiveYN: "",
-          transferYN: "",
-          rNotes: "",
-        },
-        // Add more items if needed
-      ],
-      // Populate default faculties
-      faculties: [
-        {
-          bchfID: 0,
-          chargeID: data.chargeID,
-          aSubID: 1,
-          compID: 0,
-          compCode: "",
-          compName: "",
-          rActiveYN: "",
-          transferYN: "",
-          rNotes: "",
-        },
-        // Add more items if needed
-      ],
-    };
-
-    setSelectedData(chargeDetailsData);
+  const handleSelect = (item: ChargeDetailsDto) => {
+    if (!item || !item.chargeInfo) {
+      console.error("Invalid item selected:", item);
+      return;
+    }
+    console.log("Selected item:", item);
+    setSelectedData(item);
     setIsSearchOpen(false);
   };
 

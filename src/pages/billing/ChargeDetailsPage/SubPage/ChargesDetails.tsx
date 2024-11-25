@@ -7,7 +7,6 @@ import { showAlert } from "../../../../utils/Common/showAlert";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import { ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import { serviceGroupService } from "../../../../services/BillingServices/BillingGenericService";
 import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
 import ChargeBasicDetails from "./Charges";
 import ChargeConfigDetails from "./ChargesAlias";
@@ -20,64 +19,86 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");
 
-  const [formData, setFormData] = useState<ChargeDetailsDto>({
-    chargeInfo: {
+  const defaultChargeDetails = [
+    {
       rActiveYN: "Y",
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
+      compID: compID || 0,
+      compCode: compCode || "",
+      compName: compName || "",
       transferYN: "Y",
       rNotes: "",
-      chargeID: 0,
-      chargeCode: "",
-      chargeDesc: "",
-      cShortName: "",
-      chargeType: "",
-      sGrpID: 0,
-      chargeTo: "",
-      chargeStatus: "",
-      chargeBreakYN: "N",
-      bChID: 0,
-      regServiceYN: "N",
-      doctorShareYN: "N",
-      cNhsCode: "",
-      cNhsEnglishName: "",
-      chargeCost: "0",
-      scheduleDate: new Date(),
+      chDetID: 0,
+      chargeID: editData?.chargeInfo?.chargeID || 0,
+      pTypeID: 0,
+      wCatID: 0,
+      dcValue: 0,
+      hcValue: 0,
+      chValue: 0,
+      chargeStatus: "Hidden",
     },
-    chargeDetails: editData?.chargeDetails || [
-      {
-        rActiveYN: "Y",
-        compID: compID ?? 0,
-        compCode: compCode ?? "",
-        compName: compName ?? "",
-        transferYN: "Y",
-        rNotes: "",
-        chDetID: 0,
-        chargeID: 0,
-        pTypeID: 0,
-        wCatID: 0,
-        chValue: 0,
-        chargeStatus: "A",
-      },
-    ],
-    chargeAliases: editData?.chargeAliases || [
-      {
-        rActiveYN: "Y",
-        compID: compID ?? 0,
-        compCode: compCode ?? "",
-        compName: compName ?? "",
-        transferYN: "Y",
-        rNotes: "",
-        chaliasID: 0,
-        chargeID: 0,
-        pTypeID: 0,
-        chargeDesc: "Tested",
-        chargeDescLang: "",
-      },
-    ],
-    faculties: editData?.faculties || [],
-  });
+  ];
+
+  const defaultChargeAliases = [
+    {
+      rActiveYN: "Y",
+      compID: compID || 0,
+      compCode: compCode || "",
+      compName: compName || "",
+      transferYN: "Y",
+      rNotes: "",
+      chaliasID: 0,
+      chargeID: editData?.chargeInfo?.chargeID || 0,
+      pTypeID: 0,
+      chargeDesc: "",
+      chargeDescLang: "en",
+      picName: "",
+      wardCategoryName: "",
+    },
+  ];
+
+  const defaultChargeFaculties = [
+    {
+      bchfID: 0,
+      chargeID: editData?.chargeInfo?.chargeID || 0,
+      aSubID: 0,
+      rActiveYN: "Y",
+      transferYN: "Y",
+      rNotes: "",
+      compID: compID || 0,
+      compCode: compCode || "",
+      compName: compName || "",
+    },
+  ];
+
+  const [formData, setFormData] = useState<ChargeDetailsDto>(() => ({
+    chargeInfo: {
+      rActiveYN: editData?.chargeInfo?.rActiveYN || "Y",
+      compID: editData?.chargeInfo?.compID || compID || 0,
+      compCode: editData?.chargeInfo?.compCode || compCode || "",
+      compName: editData?.chargeInfo?.compName || compName || "",
+      transferYN: editData?.chargeInfo?.transferYN || "Y",
+      rNotes: editData?.chargeInfo?.rNotes || "",
+      chargeID: editData?.chargeInfo?.chargeID || 0,
+      chargeCode: editData?.chargeInfo?.chargeCode || "",
+      chargeDesc: editData?.chargeInfo?.chargeDesc || "",
+      cShortName: editData?.chargeInfo?.cShortName || "",
+      chargeType: editData?.chargeInfo?.chargeType || "",
+      sGrpID: editData?.chargeInfo?.sGrpID || 0,
+      chargeTo: editData?.chargeInfo?.chargeTo || "",
+      chargeStatus: editData?.chargeInfo?.chargeStatus || "",
+      chargeBreakYN: editData?.chargeInfo?.chargeBreakYN || "N",
+      bChID: editData?.chargeInfo?.bChID || 0,
+      regServiceYN: editData?.chargeInfo?.regServiceYN || "N",
+      doctorShareYN: editData?.chargeInfo?.doctorShareYN || "N",
+      cNhsCode: editData?.chargeInfo?.cNhsCode || "",
+      cNhsEnglishName: editData?.chargeInfo?.cNhsEnglishName || "",
+      chargeCost: editData?.chargeInfo?.chargeCost || "0",
+      scheduleDate: editData?.chargeInfo?.scheduleDate || new Date(),
+    },
+    chargeDetails: editData?.chargeDetails || defaultChargeDetails,
+    chargeAliases: editData?.chargeAliases || defaultChargeAliases,
+    chargeFaculties: editData?.chargeFaculties || defaultChargeFaculties,
+  }));
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { setLoading } = useLoading();
@@ -90,52 +111,85 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const [aliasData, setAliasData] = useState<any[]>([]);
 
   useEffect(() => {
-    if (editData) {
-      setFormData(editData);
-      console.log("Edit data received in ChargeDetails:", editData);
+    if (editData && dropdownValues.pic && dropdownValues.bedCategory && dropdownValues.service && dropdownValues.speciality) {
+      const picName = dropdownValues.pic.find((pic) => Number(pic.value) === editData.chargeDetails?.[0]?.pTypeID)?.label || "";
+      const wardCategoryName = dropdownValues.bedCategory.find((category) => Number(category.value) === editData.chargeDetails?.[0]?.wCatID)?.label || "";
+      const serviceGroupName = dropdownValues.service.find((service) => Number(service.value) === editData.chargeInfo.sGrpID)?.label || "";
+      const facultyNames = dropdownValues.speciality.find((speciality) => Number(speciality.value) === editData.chargeFaculties?.[0]?.aSubID)?.label || "";
+      setSelectedPicIds([picName]);
+      setSelectedWardCategoryIds([wardCategoryName]);
+      setSelectedFacultyIds([facultyNames]);
+
+      setFormData((prev) => ({
+        ...prev,
+        chargeInfo: {
+          ...editData.chargeInfo,
+          picName,
+          wardCategoryName,
+          serviceGroupName,
+          facultyNames,
+        },
+        chargeDetails: editData.chargeDetails.map((detail) => ({
+          ...detail,
+          picName,
+          wardCategoryName,
+        })),
+      }));
     } else {
       handleClear();
     }
-  }, [editData]);
+  }, [editData, dropdownValues]);
 
   const handleFacultyChange = useCallback(
-    (event: SelectChangeEvent<unknown>) => {
-      const value = event.target.value as string[];
-      setSelectedFacultyIds(value);
-      setFormData((prev) => ({
-        ...prev,
-        faculties: value.map((val) => ({
-          bchfID: parseInt(val),
-          chargeID: prev.chargeInfo.chargeID,
-          aSubID: 0,
-          compID: compID!,
-          compCode: compCode!,
-          compName: compName!,
-          transferYN: "N",
-          rActiveYN: "Y",
-          rNotes: "",
-        })),
-      }));
+    (event: SelectChangeEvent<string[]>) => {
+      const value = event.target.value as string[]; // Selected faculty IDs
       const selectedNames = value
         .map((val) => dropdownValues.speciality.find((opt) => opt.value === val)?.label || "")
         .filter(Boolean)
         .join(", ");
-      setSelectedFacultyNames(selectedNames);
+
+      setSelectedFacultyIds(value);
+
+      setFormData((prev) => ({
+        ...prev,
+        chargeFaculties: prev.chargeFaculties.map((faculty, index) => ({
+          ...faculty,
+          aSubID: value[index] ? parseInt(value[index]) : 0, // Update faculty ID
+        })),
+        chargeInfo: {
+          ...prev.chargeInfo,
+          facultyNames: selectedNames, // Update faculty names
+        },
+      }));
     },
-    [compID, compCode, compName, dropdownValues.speciality]
+    [dropdownValues.speciality]
   );
 
   const handlePicChange = useCallback((event: SelectChangeEvent<unknown>) => {
     const value = event.target.value as string[];
+    setSelectedPicIds(value);
+
     const pTypeID = value.length > 0 ? parseInt(value[0]) : 0;
 
-    setSelectedPicIds(value);
     setFormData((prev) => ({
       ...prev,
       chargeDetails: prev.chargeDetails.map((detail) => ({
         ...detail,
         pTypeID,
         chargeStatus: "A",
+      })),
+    }));
+  }, []);
+
+  const handleWardCategoryChange = useCallback((event: SelectChangeEvent<unknown>) => {
+    const value = event.target.value as string[];
+    setSelectedWardCategoryIds(value);
+    const wCatID = value.length > 0 ? parseInt(value[0]) : 0;
+    setFormData((prev) => ({
+      ...prev,
+      chargeDetails: prev.chargeDetails.map((detail) => ({
+        ...detail,
+        wCatID,
       })),
     }));
   }, []);
@@ -147,20 +201,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         chargeInfo: { ...prev.chargeInfo, [type]: date },
       }));
     }
-  }, []);
-
-  const handleWardCategoryChange = useCallback((event: SelectChangeEvent<unknown>) => {
-    const value = event.target.value as string[];
-    setSelectedWardCategoryIds(value);
-    setFormData((prev: any) => ({
-      ...prev,
-      chargeDetails: [
-        {
-          ...prev.chargeDetails[0],
-          wCatID: parseInt(value[0]),
-        },
-      ],
-    }));
   }, []);
 
   const validateFormData = (data: ChargeDetailsDto): boolean => {
@@ -177,39 +217,8 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     return true;
   };
 
-  useEffect(() => {
-    const fetchServiceGroups = async () => {
-      try {
-        const response = await serviceGroupService.getAll();
-        if (response.success && Array.isArray(response.data)) {
-          setServiceGroups(
-            response.data.map((group: any) => ({
-              value: group.sGrpID.toString(),
-              label: group.sGrpName,
-            }))
-          );
-        }
-      } catch (error) {}
-    };
-    fetchServiceGroups();
-
-    if (editData) {
-      setFormData(editData);
-      setSelectedFacultyIds(editData.faculties.map((faculty) => faculty.bchfID.toString()));
-      setSelectedFacultyNames(
-        editData.faculties
-          .map((faculty) => dropdownValues.speciality.find((opt) => opt.value === faculty.bchfID.toString())?.label)
-          .filter(Boolean)
-          .join(", ")
-      );
-    } else {
-      handleClear();
-    }
-  }, [editData]);
-
   const handleSelectChange = useCallback((e: SelectChangeEvent) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       chargeInfo: {
@@ -240,64 +249,30 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   };
 
   const handleSave = async () => {
-    setIsSubmitted(true);
-
-    if (!validateFormData(formData)) {
-      return;
-    }
-
+    debugger;
     setLoading(true);
     try {
-      debugger;
-      const chargeData: ChargeDetailsDto = {
-        ...formData,
-        chargeInfo: {
-          ...formData.chargeInfo,
-          compID: compID || formData.chargeInfo.compID,
-          compCode: compCode || formData.chargeInfo.compCode,
-          compName: compName || formData.chargeInfo.compName,
-          chargeType: String(formData.chargeInfo.chargeType),
-        },
-        chargeDetails: formData.chargeDetails.map((detail) => ({
-          ...detail,
-          pTypeID: detail.pTypeID,
-          compID: formData.chargeInfo.compID,
-          compCode: formData.chargeInfo.compCode,
-          compName: formData.chargeInfo.compName,
-          chargeStatus: "A",
-        })),
-        chargeAliases: formData.chargeAliases.map((alias) => ({
-          ...alias,
-          compID: formData.chargeInfo.compID,
-          compCode: formData.chargeInfo.compCode,
-          compName: formData.chargeInfo.compName,
-          chargeDesc: "Tested",
-          chargeDescLang: alias.chargeDescLang || "en",
-          chargeID: alias.chargeID || formData.chargeInfo.chargeID,
-        })),
-        faculties: formData.faculties.map((facultyId) => ({
-          bchfID: facultyId.bchfID,
-          chargeID: formData.chargeInfo.chargeID,
-          aSubID: 0,
-          rActiveYN: "Y",
-          rNotes: "",
-          compID: formData.chargeInfo.compID,
-          compCode: formData.chargeInfo.compCode,
-          compName: formData.chargeInfo.compName,
-          transferYN: "Y",
-        })),
-      };
+      // const updatedChargeDetails = formData.chargeDetails.map((detail) => ({
+      //   ...detail,
+      //   picName: dropdownValues.pic.find((pic) => Number(pic.value) === detail.pTypeID)?.label || "",
+      //   wardCategoryName: dropdownValues.category.find((category) => Number(category.value) === detail.wCatID)?.label || "",
+      // }));
 
-      const result = await chargeDetailsService.saveChargeDetails(chargeData);
+      // const chargeData: ChargeDetailsDto = {
+      //   ...formData,
+      //   chargeDetails: updatedChargeDetails,
+      // };
+
+      const result = await chargeDetailsService.saveChargeDetails(formData);
+
       if (result.success) {
-        showAlert("Success", "Charge details saved successfully!", "success", {
-          onConfirm: handleClear,
-        });
+        showAlert("Success", "Charge details saved successfully!", "success");
       } else {
-        showAlert("Error", result.errorMessage || "An unexpected error occurred", "error");
+        showAlert("Error", result.errorMessage || "An error occurred", "error");
       }
     } catch (error) {
-      showAlert("Error", "An unexpected error occurred while saving charge details", "error");
+      console.error("Error saving charge details:", error);
+      showAlert("Error", "An unexpected error occurred", "error");
     } finally {
       setLoading(false);
     }
@@ -428,7 +403,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
           chargeDescLang: "",
         },
       ],
-      faculties: editData?.faculties || [
+      chargeFaculties: editData?.chargeFaculties || [
         {
           bchfID: 0,
           chargeID: 0,

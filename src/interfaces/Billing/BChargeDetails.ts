@@ -4,7 +4,7 @@ export interface ChargeDetailsDto extends BaseDto {
   chargeInfo: BChargeDto;
   chargeDetails: BChargeDetailsDto[];
   chargeAliases: BChargeAliasDto[];
-  faculties: BChargeFacultyDto[];
+  chargeFaculties: BChargeFacultyDto[];
 }
 export interface BChargeDto extends RecordFields {
   chargeID: number;
@@ -28,6 +28,10 @@ export interface BChargeDto extends RecordFields {
   nhsCstWt?: string;
   chargeCost?: string;
   scheduleDate?: Date;
+  picName?: string;
+  wardCategoryName?: string;
+  serviceGroupName?: string;
+  facultyNames?: string;
 }
 export interface BChargeDetailsDto extends RecordFields {
   chDetID: number;
@@ -38,6 +42,8 @@ export interface BChargeDetailsDto extends RecordFields {
   hcValue?: number;
   chValue: number;
   chargeStatus: string;
+  serviceGroupName?: string;
+  facultyNames?: string;
 }
 export interface BChargeAliasDto extends RecordFields {
   chaliasID: number;
@@ -45,6 +51,8 @@ export interface BChargeAliasDto extends RecordFields {
   pTypeID: number;
   chargeDesc: string;
   chargeDescLang: string;
+  picName?: string;
+  wardCategoryName?: string;
 }
 export interface BChargeFacultyDto extends RecordFields {
   bchfID: number;

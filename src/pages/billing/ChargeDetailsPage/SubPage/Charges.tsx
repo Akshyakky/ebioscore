@@ -1,9 +1,10 @@
 import React from "react";
 import FormField from "../../../../components/FormField/FormField";
 import { Grid } from "@mui/material";
+import { ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
 
 interface ChargeBasicDetailsProps {
-  formData: any;
+  formData: ChargeDetailsDto;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (e: any) => void;
   handleSwitchChange: (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -68,7 +69,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             label="Faculty"
             name="faculties"
             ControlID="faculties"
-            value={selectedFacultyIds}
+            value={selectedFacultyIds} // Use the correct value from state
             options={dropdownValues.speciality || []}
             onChange={handleFacultyChange}
             isSubmitted={isSubmitted}
@@ -76,11 +77,11 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
           <FormField
             type="select"
             label="Service Group"
-            value={formData.chargeInfo.sGrpID.toString()}
+            value={formData.chargeInfo.sGrpID}
             onChange={handleSelectChange}
             name="sGrpID"
             ControlID="sGrpID"
-            options={serviceGroups}
+            options={dropdownValues.service || []}
             isSubmitted={isSubmitted}
           />
           <FormField
