@@ -132,6 +132,8 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
         {} as Record<string, any>
       );
 
+      //Transformed Data
+
       const transformedData = Object.entries(groupedByPIC).map(([picName, values]) => ({
         picName,
         ...values,
