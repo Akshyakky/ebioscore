@@ -1,8 +1,8 @@
 import React, { useContext, useCallback, useEffect, useState } from "react";
-import { ContactListSearchResult } from "../../../../interfaces/HospitalAdministration/ContactListData";
 import { ContactListSearchContext } from "../../../../context/hospitalAdministration/ContactListSearchContext";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { debounce } from "../../../../utils/Common/debounceUtils";
+import { ContactListSearchResult } from "@/interfaces/hospitalAdministration/ContactListData";
 
 interface ContactListSearchProps {
   open: boolean;

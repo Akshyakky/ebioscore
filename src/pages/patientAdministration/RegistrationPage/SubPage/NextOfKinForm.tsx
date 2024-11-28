@@ -18,7 +18,7 @@ import { showAlert } from "../../../../utils/Common/showAlert";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
-import { AppModifyFieldDto } from "../../../../interfaces/HospitalAdministration/AppModifiedlistDto";
+import { AppModifyFieldDto } from "../../../../interfaces/hospitalAdministration/AppModifiedlistDto";
 import { useAppSelector } from "@/store/hooks";
 
 interface NextOfKinFormProps {

@@ -1,5 +1,5 @@
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { InsuranceListDto } from "../../../../interfaces/HospitalAdministration/InsuranceListDto";
+import { InsuranceListDto } from "../../../../interfaces/hospitalAdministration/InsuranceListDto";
 import { insuranceListService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 
 interface InsuranceListSearchProps {

@@ -169,7 +169,7 @@ const AppointmentPage: React.FC = () => {
       let newValue = value;
 
       // Convert string inputs to Date objects for date fields
-      if (["abDate", "abTime", "abEndTime", "dob"].includes(name)) {
+      if (["abDate", "abTime", "abEndTime", "dob"].includes(name as string)) {
         if (typeof value === "string") {
           newValue = new Date(value);
         }

@@ -9,7 +9,6 @@
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@iconify/react": "^5.0.2",
-    "@infisical/sdk": "^3.0.3",
     "@mui/icons-material": "^6.1.5",
     "@mui/lab": "^6.0.0-beta.10",
     "@mui/material": "^6.1.5",
@@ -63,7 +62,10 @@
   "type": "module",
   "scripts": {
     "dev": "set NODE_ENV=development && vite",
-    "build": "set NODE_ENV=production && vite build",
+    "build": "tsc && set NODE_ENV=production && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "analyze": "set NODE_ENV=production && vite build --mode analyze",
     "serve": "vite preview",
     "clean": "rimraf node_modules/.vite"
   },
@@ -86,6 +88,7 @@
     ]
   },
   "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.6",
     "@types/autosuggest-highlight": "^3.2.3",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^22.8.4",
@@ -94,8 +97,10 @@
     "@types/react-dom": "^18.3.1",
     "@types/react-pdf": "^7.0.0",
     "@vitejs/plugin-react": "^4.3.3",
+    "rollup-plugin-visualizer": "^5.12.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
-    "vite": "^5.4.10"
+    "vite": "^5.4.10",
+    "vite-plugin-compression": "^0.5.1"
   }
 }

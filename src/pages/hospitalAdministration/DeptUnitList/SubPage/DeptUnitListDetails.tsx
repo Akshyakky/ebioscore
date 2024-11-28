@@ -6,11 +6,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
-import { DeptUnitListDto } from "../../../../interfaces/HospitalAdministration/DeptunitListDto";
 import { DeptUnitListService } from "../../../../services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { useAppSelector } from "@/store/hooks";
+import { DeptUnitListDto } from "@/interfaces/hospitalAdministration/DeptunitListDto";
 
 interface DeptUnitListDetailsProps {
   editData?: DeptUnitListDto;
