@@ -1,4 +1,4 @@
-import { BChargeAliasDto, BChargeDetailsDto, BChargeDto, ChargeDetailsDto } from "../../interfaces/Billing/BChargeDetails";
+import { ChargeDetailsDto } from "../../interfaces/Billing/BChargeDetails";
 import { BPatTypeDto } from "../../interfaces/Billing/BPatTypeDto";
 import { BPayTypeDto } from "../../interfaces/Billing/BPayTypeDto";
 import { BServiceGrpDto } from "../../interfaces/Billing/BServiceGrpDto";

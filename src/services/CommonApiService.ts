@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { format, toZonedTime } from "date-fns-tz";
 import { handleError } from "./CommonServices/HandlerError";
+import { RequestQueueManager } from "./RequestQueueManager";
 
 export interface ApiConfig {
   baseURL: string;
@@ -11,6 +12,7 @@ type HttpMethod = "get" | "post" | "put" | "delete";
 export class CommonApiService {
   private readonly baseURL: string;
   private readonly timeZone: string;
+  private requestQueue = new RequestQueueManager();
 
   constructor(config: ApiConfig) {
     this.baseURL = config.baseURL;
@@ -78,13 +80,17 @@ export class CommonApiService {
     additionalHeaders?: Record<string, string>,
     params?: Record<string, unknown>
   ): Promise<T> {
-    try {
-      const response = await this.request<T>(method, endpoint, data, token, additionalHeaders, params);
-      return response.data;
-    } catch (error) {
-      handleError(error);
-      throw error;
-    }
+    const queueKey = `${method}_${endpoint}_${JSON.stringify(params)}`;
+
+    return this.requestQueue.enqueue(queueKey, async () => {
+      try {
+        const response = await this.request<T>(method, endpoint, data, token, additionalHeaders, params);
+        return response.data;
+      } catch (error) {
+        handleError(error);
+        throw error;
+      }
+    });
   }
 
   public async get<T>(endpoint: string, token?: string, params?: Record<string, unknown>, additionalHeaders?: Record<string, string>): Promise<T> {

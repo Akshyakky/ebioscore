@@ -177,7 +177,6 @@ const CustomGrid = <T extends Record<string, any>>({
   showExportCSV = false,
   showExportPDF = false,
   exportFileName = "grid_export",
-  onColumnOrderChange,
   onColumnResize,
   onFilterChange,
   rowKeyField,

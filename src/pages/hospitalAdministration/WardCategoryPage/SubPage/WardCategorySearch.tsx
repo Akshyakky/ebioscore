@@ -1,5 +1,5 @@
 import React from "react";
-import { WardCategoryDto } from "../../../../interfaces/HospitalAdministration/WardCategoryDto";
+import { WardCategoryDto } from "../../../../interfaces/hospitalAdministration/WardCategoryDto";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { wardCategoryService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 

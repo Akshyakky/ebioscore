@@ -5,43 +5,52 @@ import { ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
 
 interface ChargeBasicDetailsProps {
   formData: ChargeDetailsDto;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectChange: (e: any) => void;
   handleSwitchChange: (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleCodeSelect: (selectedSuggestion: any) => void;
+  fetchChargeCodeSuggestions: (searchTerm: string) => Promise<any[]>;
   selectedFacultyIds: string[];
   handleFacultyChange: (e: any) => void;
   dropdownValues: any;
   serviceGroups: any[];
   isSubmitted: boolean;
   handleDateChange: (date: Date | null, type: "scheduleDate" | "") => void;
+  updateChargeCode: (value: string) => void;
 }
-
 const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
   formData,
   handleInputChange,
   handleSelectChange,
   handleSwitchChange,
+  handleCodeSelect,
+  fetchChargeCodeSuggestions,
   selectedFacultyIds,
   handleFacultyChange,
   dropdownValues,
-  serviceGroups,
   isSubmitted,
   handleDateChange,
+  updateChargeCode,
 }) => {
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
         <Grid container spacing={2}>
           <FormField
-            type="text"
-            label="Code"
-            value={formData.chargeInfo.chargeCode}
-            onChange={handleInputChange}
-            name="chargeCode"
             ControlID="chargeCode"
-            placeholder="SOC Code"
+            label="Code"
+            name="chargeCode"
+            type="autocomplete"
+            placeholder="Search or select a charge code"
+            value={formData.chargeInfo.chargeCode || ""}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const { value } = e.target;
+              updateChargeCode(value);
+            }}
+            fetchSuggestions={fetchChargeCodeSuggestions}
+            onSelectSuggestion={handleCodeSelect}
             isMandatory
-            isSubmitted={isSubmitted}
+            isSubmitted={false}
           />
           <FormField
             type="select"
@@ -69,7 +78,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             label="Faculty"
             name="faculties"
             ControlID="faculties"
-            value={selectedFacultyIds} // Use the correct value from state
+            value={selectedFacultyIds}
             options={dropdownValues.speciality || []}
             onChange={handleFacultyChange}
             isSubmitted={isSubmitted}

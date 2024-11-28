@@ -6,7 +6,7 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { WardCategoryDto } from "../../../../interfaces/HospitalAdministration/WardCategoryDto";
+import { WardCategoryDto } from "../../../../interfaces/hospitalAdministration/WardCategoryDto";
 import { wardCategoryService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { useAppSelector } from "@/store/hooks";
 

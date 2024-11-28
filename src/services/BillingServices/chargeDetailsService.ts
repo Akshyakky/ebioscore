@@ -26,6 +26,11 @@ class ChargeDetailsService extends GenericEntityService<ChargeDetailsDto> {
   async getAllChargeDetails(): Promise<OperationResult<ChargeDetailsDto[]>> {
     return this.apiService.get<OperationResult<ChargeDetailsDto[]>>(`${this.baseEndpoint}/GetAllChargeDetails`, this.getToken());
   }
+
+  // New method: Fetch all details by ChargeID
+  async getAllByID(chargeID: number): Promise<OperationResult<ChargeDetailsDto>> {
+    return this.apiService.get<OperationResult<ChargeDetailsDto>>(`${this.baseEndpoint}/GetAllByID/${chargeID}`, this.getToken());
+  }
 }
 
 export const chargeDetailsService = new ChargeDetailsService();

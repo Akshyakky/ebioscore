@@ -5,19 +5,24 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
+import { BChargeDetailsDto, ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
 import ChargeBasicDetails from "./Charges";
 import ChargeConfigDetails from "./ChargesAlias";
-import { useAppSelector } from "@/store/hooks";
 
+import { useAppSelector } from "@/store/hooks";
 interface ChargeDetailsProps {
   editData?: ChargeDetailsDto;
+}
+interface GridData {
+  picName: string;
+  [key: string]: any;
 }
 const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");
+  const [gridData, setGridData] = useState<GridData[]>([]);
 
   const defaultChargeDetails = [
     {
@@ -101,14 +106,175 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   }));
 
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { setLoading } = useLoading();
+  const [, setLoading] = useState(false);
   const dropdownValues = useDropdownValues(["service", "speciality", "bedCategory", "pic"]);
-  const [serviceGroups, setServiceGroups] = useState<any[]>([]);
+  const [serviceGroups] = useState<any[]>([]);
   const [selectedFacultyIds, setSelectedFacultyIds] = useState<string[]>([]);
-  const [, setSelectedFacultyNames] = useState<string>("");
   const [selectedPicIds, setSelectedPicIds] = useState<string[]>([]);
   const [selectedWardCategoryIds, setSelectedWardCategoryIds] = useState<string[]>([]);
   const [aliasData, setAliasData] = useState<any[]>([]);
+
+  const fetchChargeCodeSuggestions = useCallback(async (searchTerm: string) => {
+    if (!searchTerm.trim()) return [];
+    try {
+      const response = await chargeDetailsService.getAll();
+      return (
+        response.data?.filter((item: any) => item.chargeCode.toLowerCase().includes(searchTerm.toLowerCase())).map((item: any) => `${item.chargeCode} - ${item.chargeDesc}`) || []
+      );
+    } catch (error) {
+      return [];
+    }
+  }, []);
+
+  const updateChargeCode = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      chargeInfo: {
+        ...prev.chargeInfo,
+        chargeCode: value,
+      },
+    }));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      chargeInfo: {
+        ...prev.chargeInfo,
+        [name]: value,
+      },
+    }));
+  };
+
+  const handleGridDataChange = useCallback(
+    (updatedData: GridData[]) => {
+      setGridData(updatedData);
+      const updatedChargeDetails = updatedData.flatMap((row) => {
+        return Object.entries(row).reduce((acc: BChargeDetailsDto[], [key, value]) => {
+          if (key === "picName") return acc;
+
+          const [categoryLabel, valueType] = key.split("_");
+          const picId = dropdownValues.pic?.find((p) => p.label === row.picName)?.value;
+          const wardCategory = dropdownValues.bedCategory?.find((cat) => cat.label === categoryLabel);
+          if (picId && wardCategory) {
+            const existingDetailIndex = acc.findIndex((detail) => detail.pTypeID === Number(picId) && detail.wCatID === Number(wardCategory.value));
+            if (existingDetailIndex === -1) {
+              if (valueType === "drAmt") {
+                acc.push({
+                  ...defaultChargeDetails[0],
+                  pTypeID: Number(picId),
+                  wCatID: Number(wardCategory.value),
+                  dcValue: Number(value),
+                  hcValue: 0,
+                });
+              } else if (valueType === "hospAmt") {
+                acc.push({
+                  ...defaultChargeDetails[0],
+                  pTypeID: Number(picId),
+                  wCatID: Number(wardCategory.value),
+                  dcValue: 0,
+                  hcValue: Number(value),
+                });
+              }
+            } else {
+              if (valueType === "drAmt") {
+                acc[existingDetailIndex].dcValue = Number(value);
+              } else if (valueType === "hospAmt") {
+                acc[existingDetailIndex].hcValue = Number(value);
+              }
+            }
+          }
+          return acc;
+        }, []);
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        chargeDetails: updatedChargeDetails,
+      }));
+    },
+    [dropdownValues.pic, dropdownValues.bedCategory]
+  );
+
+  const handleCodeSelect = async (selectedSuggestion: string) => {
+    const selectedCode = selectedSuggestion.split(" - ")[0]; // Extract chargeCode
+    handleInputChange({ target: { name: "chargeCode", value: selectedCode } } as React.ChangeEvent<HTMLInputElement>);
+    try {
+      const allChargesResponse = await chargeDetailsService.getAllChargeDetails();
+
+      if (allChargesResponse?.success && allChargesResponse.data) {
+        const allCharges = allChargesResponse.data as ChargeDetailsDto[];
+        const matchingCharge = allCharges.find((charge: ChargeDetailsDto) => charge.chargeInfo?.chargeCode === selectedCode);
+
+        if (matchingCharge?.chargeInfo?.chargeID) {
+          const chargeID = matchingCharge.chargeInfo.chargeID;
+          const chargeDetailsResponse = await chargeDetailsService.getAllByID(chargeID);
+
+          if (chargeDetailsResponse?.success && chargeDetailsResponse.data) {
+            const chargeDetails: ChargeDetailsDto = chargeDetailsResponse.data;
+
+            const picName = dropdownValues.pic.find((pic) => Number(pic.value) === chargeDetails.chargeDetails?.[0]?.pTypeID)?.label || "";
+            const wardCategoryName = dropdownValues.bedCategory.find((category) => Number(category.value) === chargeDetails.chargeDetails?.[0]?.wCatID)?.label || "";
+
+            // Transform data for grid
+            const groupedByPIC = chargeDetails.chargeDetails.reduce(
+              (acc, detail) => {
+                const picName = dropdownValues.pic?.find((p) => Number(p.value) === detail.pTypeID)?.label || "";
+                if (!acc[picName]) {
+                  acc[picName] = {};
+                }
+                const wardCategory = dropdownValues.bedCategory?.find((cat) => Number(cat.value) === detail.wCatID) || "";
+
+                if (wardCategory) {
+                  const categoryLabel = wardCategory.label;
+                  const drAmt = detail.dcValue || 0;
+                  const hospAmt = detail.hcValue || 0;
+                  const totAmt = drAmt + hospAmt;
+
+                  acc[picName][`${categoryLabel}_drAmt`] = drAmt.toFixed(2);
+                  acc[picName][`${categoryLabel}_hospAmt`] = hospAmt.toFixed(2);
+                  acc[picName][`${categoryLabel}_totAmt`] = totAmt.toFixed(2);
+                }
+                return acc;
+              },
+              {} as Record<string, any>
+            );
+
+            const transformedData = Object.entries(groupedByPIC).map(([picName, values]) => ({
+              picName,
+              ...values,
+            }));
+
+            // Set form data and update grid data
+            setFormData((prev) => ({
+              ...prev,
+              chargeInfo: {
+                ...chargeDetails.chargeInfo,
+                picName,
+                wardCategoryName,
+              },
+              chargeDetails: chargeDetails.chargeDetails.map((detail) => ({
+                ...detail,
+                picName,
+                wardCategoryName,
+              })),
+            }));
+
+            setSelectedPicIds([picName]);
+            setSelectedWardCategoryIds([wardCategoryName]);
+
+            // Use setGridData directly to update the grid in ChargeConfigDetails
+            setGridData(transformedData);
+          } else {
+          }
+        } else {
+        }
+      } else {
+      }
+    } catch (error) {}
+  };
 
   useEffect(() => {
     if (editData && dropdownValues.pic && dropdownValues.bedCategory && dropdownValues.service && dropdownValues.speciality) {
@@ -119,7 +285,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       setSelectedPicIds([picName]);
       setSelectedWardCategoryIds([wardCategoryName]);
       setSelectedFacultyIds([facultyNames]);
-
       setFormData((prev) => ({
         ...prev,
         chargeInfo: {
@@ -142,23 +307,21 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
 
   const handleFacultyChange = useCallback(
     (event: SelectChangeEvent<string[]>) => {
-      const value = event.target.value as string[]; // Selected faculty IDs
+      const value = event.target.value as string[];
       const selectedNames = value
         .map((val) => dropdownValues.speciality.find((opt) => opt.value === val)?.label || "")
         .filter(Boolean)
         .join(", ");
-
       setSelectedFacultyIds(value);
-
       setFormData((prev) => ({
         ...prev,
         chargeFaculties: prev.chargeFaculties.map((faculty, index) => ({
           ...faculty,
-          aSubID: value[index] ? parseInt(value[index]) : 0, // Update faculty ID
+          aSubID: value[index] ? parseInt(value[index]) : 0,
         })),
         chargeInfo: {
           ...prev.chargeInfo,
-          facultyNames: selectedNames, // Update faculty names
+          facultyNames: selectedNames,
         },
       }));
     },
@@ -184,12 +347,11 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const handleWardCategoryChange = useCallback((event: SelectChangeEvent<unknown>) => {
     const value = event.target.value as string[];
     setSelectedWardCategoryIds(value);
-    const wCatID = value.length > 0 ? parseInt(value[0]) : 0;
     setFormData((prev) => ({
       ...prev,
       chargeDetails: prev.chargeDetails.map((detail) => ({
         ...detail,
-        wCatID,
+        wCatID: value.length > 0 ? parseInt(value[0]) : 0,
       })),
     }));
   }, []);
@@ -202,20 +364,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       }));
     }
   }, []);
-
-  const validateFormData = (data: ChargeDetailsDto): boolean => {
-    if (!data.chargeDetails?.[0]?.wCatID) {
-      showAlert("Error", "Ward Category is required", "error");
-      return false;
-    }
-
-    if (!data.chargeDetails?.[0]?.pTypeID) {
-      showAlert("Error", "PIC is required", "error");
-      return false;
-    }
-
-    return true;
-  };
 
   const handleSelectChange = useCallback((e: SelectChangeEvent) => {
     const { name, value } = e.target;
@@ -249,29 +397,15 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   };
 
   const handleSave = async () => {
-    debugger;
     setLoading(true);
     try {
-      // const updatedChargeDetails = formData.chargeDetails.map((detail) => ({
-      //   ...detail,
-      //   picName: dropdownValues.pic.find((pic) => Number(pic.value) === detail.pTypeID)?.label || "",
-      //   wardCategoryName: dropdownValues.category.find((category) => Number(category.value) === detail.wCatID)?.label || "",
-      // }));
-
-      // const chargeData: ChargeDetailsDto = {
-      //   ...formData,
-      //   chargeDetails: updatedChargeDetails,
-      // };
-
       const result = await chargeDetailsService.saveChargeDetails(formData);
-
       if (result.success) {
         showAlert("Success", "Charge details saved successfully!", "success");
       } else {
         showAlert("Error", result.errorMessage || "An error occurred", "error");
       }
     } catch (error) {
-      console.error("Error saving charge details:", error);
       showAlert("Error", "An unexpected error occurred", "error");
     } finally {
       setLoading(false);
@@ -288,26 +422,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       setAliasData(initialData);
     }
   }, [dropdownValues.pic]);
-
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      chargeInfo: {
-        ...prev.chargeInfo,
-        [name]: value,
-      },
-    }));
-
-    if (name === "chargeDesc") {
-      setAliasData((prevData) =>
-        prevData.map((item) => ({
-          ...item,
-          aliasName: value,
-        }))
-      );
-    }
-  }, []);
 
   const handleAliasNameChange = (id: number, newValue: string) => {
     setAliasData((prevData) => prevData.map((item) => (item.id === id ? { ...item, aliasName: newValue } : item)));
@@ -434,6 +548,9 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         serviceGroups={serviceGroups}
         isSubmitted={isSubmitted}
         handleDateChange={handleDateChange}
+        fetchChargeCodeSuggestions={fetchChargeCodeSuggestions}
+        handleCodeSelect={handleCodeSelect}
+        updateChargeCode={updateChargeCode}
       />
 
       <ChargeConfigDetails
@@ -450,6 +567,9 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         setSelectedTab={setSelectedTab}
         columns={columns}
         aliasData={aliasData}
+        gridData={gridData}
+        onGridDataChange={handleGridDataChange}
+        editData={editData}
       />
 
       <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />

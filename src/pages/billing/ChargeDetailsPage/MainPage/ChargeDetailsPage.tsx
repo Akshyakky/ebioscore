@@ -3,9 +3,9 @@ import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/Ac
 import Search from "@mui/icons-material/Search";
 import { useState } from "react";
 import ChargeDetails from "../SubPage/ChargesDetails";
+
 import ChargeDetailsSearch from "../SubPage/ChargeDetailsSearch";
 import { ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
-
 const ChargeDetailsPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<ChargeDetailsDto | undefined>(undefined);
@@ -13,7 +13,6 @@ const ChargeDetailsPage: React.FC = () => {
   const handleAdvancedSearch = () => {
     setIsSearchOpen(true);
   };
-
   const handleCloseSearch = () => {
     setIsSearchOpen(false);
   };

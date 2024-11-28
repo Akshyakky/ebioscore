@@ -20,7 +20,12 @@ interface FetchCountResult {
 
 const fetchCount = async (endpoint: string, dateRange: DateRange): Promise<FetchCountResult> => {
   try {
-    const response = await apiService.get<number>(endpoint, getToken(), dateRange);
+    const params: Record<string, unknown> = {
+      fromDate: dateRange.fromDate,
+      toDate: dateRange.toDate,
+    };
+
+    const response = await apiService.get<number>(endpoint, getToken(), params);
     return { count: response, unauthorized: false, error: false };
   } catch (error) {
     if (error instanceof Error && error.message.includes("401")) {

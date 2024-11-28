@@ -30,16 +30,16 @@ const AppointmentDayViewPage: React.FC = () => {
   return (
     <>
       {/* First Header and Scheduler */}
-      <SchedulerHeader onRefresh={handleRefresh1} />
-      <SchedulerComponent ref={schedulerRef1} />
+      {/* <SchedulerHeader onRefresh={handleRefresh1} />
+      <SchedulerComponent ref={schedulerRef1} /> */}
 
       {/* Second Header and Scheduler */}
-      <SchedulerHeader onRefresh={handleRefresh2} />
-      <SchedulerComponent ref={schedulerRef2} />
+      {/* <SchedulerHeader onRefresh={handleRefresh2} />
+      <SchedulerComponent ref={schedulerRef2} /> */}
 
       {/* Third Header and Scheduler */}
-      <SchedulerHeader onRefresh={handleRefresh3} />
-      <SchedulerComponent ref={schedulerRef3} />
+      {/* <SchedulerHeader onRefresh={handleRefresh3} />
+      <SchedulerComponent ref={schedulerRef3} /> */}
 
       {/* Footer */}
       <SchedulerFooter />
