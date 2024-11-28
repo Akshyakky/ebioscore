@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import FormField from "../../../../components/FormField/FormField";
@@ -39,22 +39,6 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   "&.subheader": {
     backgroundColor: theme.palette.primary.light,
     color: theme.palette.primary.contrastText,
-  },
-}));
-
-const StyledFormField = styled(FormField)(({ theme }) => ({
-  "& .MuiInputBase-root": {
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    transition: "background-color 0.2s ease",
-    "&:hover": {
-      backgroundColor: "rgba(255, 255, 255, 1)",
-    },
-  },
-  "& .MuiOutlinedInput-root": {
-    "&.Mui-focused": {
-      backgroundColor: "#ffffff",
-      boxShadow: "0 0 0 2px rgba(0, 0, 0, 0.05)",
-    },
   },
 }));
 
@@ -100,6 +84,7 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({
     "rgba(240, 255, 244, 0.9)",
     "rgba(255, 248, 240, 0.9)",
     "rgba(245, 240, 255, 0.9)",
+
     "rgba(240, 255, 255, 0.9)",
     "rgba(255, 240, 245, 0.9)",
   ];
@@ -108,6 +93,28 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({
     setSelectedRow(index);
     onSelectionChange?.(row);
   };
+
+  useEffect(() => {
+    if (initialData.length > 0 && selectedWardCategories.length > 0) {
+      const updatedData = initialData.map((row) => {
+        const newRow = { ...row };
+        selectedWardCategories.forEach((category) => {
+          const chargeDetail = newRow.chargeDetails?.find((detail) => detail.wCatID.toString() === category.value);
+          if (chargeDetail) {
+            newRow[`${category.label}_hospAmt`] = chargeDetail.hcValue || 0;
+            newRow[`${category.label}_totAmt`] = chargeDetail.chValue || 0;
+          } else {
+            // Default to 0 if no charge details exist
+            newRow[`${category.label}_drAmt`] = 0;
+            newRow[`${category.label}_hospAmt`] = 0;
+            newRow[`${category.label}_totAmt`] = 0;
+          }
+        });
+        return newRow;
+      });
+      setData(updatedData);
+    }
+  }, [initialData, selectedWardCategories]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, rowIndex: number, field: string, categoryId: string) => {
     const newValue = parseFloat(e.target.value) || 0;
@@ -118,24 +125,21 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({
       row.chargeDetails = [];
     }
 
-    // Ensure `chargeDetail` is initialized
-    let chargeDetail = row.chargeDetails.find((cd) => cd.wCatID === parseInt(categoryId));
+    let chargeDetail = row.chargeDetails.find((cd) => cd.wCatID === parseInt(categoryId, 10));
     if (!chargeDetail) {
       chargeDetail = createChargeDetail(row.picName, categoryId);
       row.chargeDetails.push(chargeDetail);
     }
 
-    // Update values
     if (field.includes("drAmt")) {
-      chargeDetail.dcValue = newValue; // Update Dr Amount
+      chargeDetail.dcValue = newValue;
     } else if (field.includes("hospAmt")) {
-      chargeDetail.hcValue = newValue; // Update Hosp Amount
+      chargeDetail.hcValue = newValue;
     }
 
-    chargeDetail.chValue = (chargeDetail.dcValue || 0) + (chargeDetail.hcValue || 0); // Compute Total Amount
-
-    row[`${field}`] = newValue; // Update field value in the row
-    row[`${field.split("_")[0]}_totAmt`] = chargeDetail.chValue; // Update total field
+    chargeDetail.chValue = (chargeDetail.dcValue || 0) + (chargeDetail.hcValue || 0);
+    row[`${field}`] = newValue;
+    row[`${field.split("_")[0]}_totAmt`] = chargeDetail.chValue;
     setData(updatedData);
 
     onChargeDetailsChange?.(getAllChargeDetails(updatedData));
@@ -148,11 +152,6 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({
       }
       return acc;
     }, []);
-  };
-
-  const clearGridData = () => {
-    setData([]);
-    onChargeDetailsChange?.([]);
   };
 
   const renderGroupedHeaders = () => (
@@ -271,7 +270,7 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({
                     step="any"
                     InputProps={{
                       style: {
-                        backgroundColor: "#fff", // Match StyledFormField colors
+                        backgroundColor: "#fff",
                       },
                     }}
                   />
@@ -290,7 +289,7 @@ export const GroupedCustomGrid: React.FC<GroupedCustomGridProps> = ({
                     onChange={() => {}}
                     InputProps={{
                       style: {
-                        backgroundColor: "#fff", // Match StyledFormField colors
+                        backgroundColor: "#fff",
                       },
                     }}
                   />
