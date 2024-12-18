@@ -1,9 +1,10 @@
-import React, { useState, lazy, Suspense, useEffect } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
 import { Grid, Paper, Typography, Divider } from "@mui/material";
 import { RoomGroupDto, RoomListDto, WrBedDto } from "../../../../interfaces/hospitalAdministration/Room-BedSetUpDto";
 import Loader from "../../../../components/Loader/SkeletonLoader";
 import { roomGroupService, roomListService, wrBedService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { useLoading } from "../../../../context/LoadingContext";
+import React from "react";
 
 const RoomGroupDetails = lazy(() => import("../SubPage/RoomGroup/RoomGroupDetails"));
 const RoomListDetails = lazy(() => import("../SubPage/RoomList/RoomListDetails"));

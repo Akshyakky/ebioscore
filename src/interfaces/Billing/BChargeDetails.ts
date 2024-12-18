@@ -4,7 +4,8 @@ export interface ChargeDetailsDto extends BaseDto {
   chargeInfo: BChargeDto;
   chargeDetails: BChargeDetailsDto[];
   chargeAliases: BChargeAliasDto[];
-  chargeFaculties: BChargeFacultyDto[];
+  chargeFaculties?: BChargeFacultyDto[];
+  chargePackDetails?: BChargePackDto[];
 }
 export interface BChargeDto extends RecordFields {
   chargeID: number;
@@ -58,4 +59,14 @@ export interface BChargeFacultyDto extends RecordFields {
   bchfID: number;
   chargeID: number;
   aSubID: number;
+}
+export interface BChargePackDto extends RecordFields {
+  pkDetID: number;
+  chDetID: number;
+  chargeID: number;
+  chargeRevise: string;
+  chargeStatus: string;
+  DcValue: number;
+  hcValue: number;
+  chValue: number;
 }

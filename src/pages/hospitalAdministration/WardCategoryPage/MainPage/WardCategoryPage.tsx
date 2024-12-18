@@ -5,6 +5,7 @@ import WardCategoryDetails from "../SubPage/WardCategoryDetails";
 import WardCategorySearch from "../SubPage/WardCategorySearch";
 import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import { WardCategoryDto } from "../../../../interfaces/hospitalAdministration/WardCategoryDto";
+import React from "react";
 
 const WardCategoryPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

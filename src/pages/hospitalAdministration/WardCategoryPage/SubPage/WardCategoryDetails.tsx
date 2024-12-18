@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Paper, Typography, Grid } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -9,6 +9,7 @@ import FormSaveClearButton from "../../../../components/Button/FormSaveClearButt
 import { WardCategoryDto } from "../../../../interfaces/hospitalAdministration/WardCategoryDto";
 import { wardCategoryService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { useAppSelector } from "@/store/hooks";
+import React from "react";
 
 const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editData }) => {
   const user = useAppSelector((state) => state.auth);

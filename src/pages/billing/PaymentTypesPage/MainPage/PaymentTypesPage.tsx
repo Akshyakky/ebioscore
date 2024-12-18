@@ -3,7 +3,7 @@ import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/Ac
 import Search from "@mui/icons-material/Search";
 import PaymentTypesDetails from "../SubPage/PaymentTypesDetails";
 import PaymentTypesSearch from "../SubPage/PaymentTypesSearch";
-import { useState } from "react";
+import React, { useState } from "react";
 import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
 
 const PaymentTypesPage: React.FC = () => {

@@ -114,7 +114,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
           <FormField
             type="text"
             label="Resource Code"
-            value={formData.chargeInfo.cNhsCode || ""}
+            value={formData.chargeInfo.cNhsCode}
             onChange={handleInputChange}
             name="cNhsCode"
             ControlID="cNhsCode"
@@ -123,12 +123,12 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
           <FormField
             type="text"
             label="Resource Name"
-            value={formData.chargeInfo.cNhsEnglishName || ""}
+            value={formData.chargeInfo.cNhsEnglishName}
             onChange={handleInputChange}
             name="cNhsEnglishName"
             ControlID="cNhsEnglishName"
             isSubmitted={isSubmitted}
-          />{" "}
+          />
           <FormField
             type="datepicker"
             label="Schedule Date"
@@ -138,16 +138,15 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             ControlID="scheduleDate"
             isSubmitted={isSubmitted}
           />
-        </Grid>
-        <Grid container spacing={2}>
+
           <FormField
             type="switch"
             label="Is Package"
-            value={formData.chargeInfo.regServiceYN || ""}
-            checked={formData.chargeInfo.regServiceYN === "Y"}
-            onChange={handleSwitchChange("regServiceYN")}
-            name="regServiceYN"
-            ControlID="regServiceYN"
+            value={formData.chargeInfo.chargeBreakYN || ""}
+            checked={formData.chargeInfo.chargeBreakYN === "Y"}
+            onChange={handleSwitchChange("chargeBreakYN")}
+            name="chargeBreakYN"
+            ControlID="chargeBreakYN"
           />
           <FormField
             type="switch"
