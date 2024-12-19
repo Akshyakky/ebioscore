@@ -148,6 +148,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             name="chargeBreakYN"
             ControlID="chargeBreakYN"
           />
+
           <FormField
             type="switch"
             label="Apply Doctor % Share"

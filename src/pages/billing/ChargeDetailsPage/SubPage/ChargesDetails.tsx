@@ -56,7 +56,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       chargeID: editData?.chargeInfo?.chargeID || 0,
       pTypeID: 0,
       chargeDesc: "",
-      chargeDescLang: "en",
+      chargeDescLang: "",
       picName: "",
       wardCategoryName: "",
     },
@@ -282,6 +282,13 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const handleCodeSelect = async (selectedSuggestion: string) => {
     const selectedCode = selectedSuggestion.split(" - ")[0];
     handleInputChange({ target: { name: "chargeCode", value: selectedCode } } as React.ChangeEvent<HTMLInputElement>);
+
+    setAliasData((prevData) =>
+      prevData.map((item) => ({
+        ...item,
+        aliasName: selectedCode || "", // Set the alias name to the selected charge code
+      }))
+    );
     try {
       const allChargesResponse = await chargeDetailsService.getAllChargeDetails();
       if (allChargesResponse?.success && allChargesResponse.data) {
@@ -468,10 +475,32 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const handleSave = async () => {
     setLoading(true);
     try {
+      // Format chargeAliases data to align with BChargeAliasDto
+      const formattedChargeAliases = aliasData.map((alias) => ({
+        chaliasID: alias.id || 0,
+        chargeID: formData.chargeInfo.chargeID || 0,
+        pTypeID: parseInt(dropdownValues.pic?.find((pic) => pic.label === alias.picName)?.value || "0", 10),
+        chargeDesc: alias.aliasName || "",
+        chargeDescLang: alias.aliasName || "",
+        rActiveYN: "Y",
+        compID: formData.chargeInfo.compID || 0,
+        compCode: formData.chargeInfo.compCode || "",
+        compName: formData.chargeInfo.compName || "",
+        transferYN: "Y",
+        rNotes: "",
+      }));
+
+      // Update formData to include the formatted chargeAliases
+      setFormData((prev) => ({
+        ...prev,
+        chargeAliases: formattedChargeAliases,
+      }));
+
+      // Construct the requestData object for saving
       const requestData: ChargeDetailsDto = {
         chargeInfo: formData.chargeInfo,
         chargeDetails: formData.chargeDetails,
-        chargeAliases: formData.chargeAliases,
+        chargeAliases: formattedChargeAliases, // Use formatted data here
         chargeFaculties: formData.chargeFaculties || [],
         chargePackDetails: formData.chargePackages || [],
       };
@@ -494,21 +523,42 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       const initialData = dropdownValues.pic.map((item, index) => ({
         id: index,
         picName: item.label,
-        aliasName: "",
+        aliasName: "", // Initialize empty
       }));
       setAliasData(initialData);
     }
   }, [dropdownValues.pic]);
 
+  useEffect(() => {
+    if (formData.chargeInfo.chargeCode && aliasData.length > 0) {
+      const updatedAliasData = aliasData.map((item) => ({
+        ...item,
+        aliasName: item.aliasName || `${formData.chargeInfo.chargeCode}_${item.picName}`,
+      }));
+      setAliasData(updatedAliasData);
+    }
+  }, [formData.chargeInfo.chargeCode]);
+
   const handleAliasNameChange = (id: number, newValue: string) => {
     setAliasData((prevData) => prevData.map((item) => (item.id === id ? { ...item, aliasName: newValue } : item)));
-    setFormData((prev) => ({
-      ...prev,
-      chargeInfo: {
-        ...prev.chargeInfo,
-        chargeDesc: newValue,
-      },
-    }));
+
+    setFormData((prev: any) => {
+      const updatedAlias = aliasData.find((item) => item.id === id);
+
+      if (!updatedAlias) return prev;
+
+      const updatedChargeAliases = prev.chargeAliases.map((alias: any) => {
+        if (alias.chaliasID === updatedAlias.id) {
+          return { ...alias, chargeDesc: newValue, pTypeID: 1, chargeDescLang: alias.aliasName };
+        }
+        return alias;
+      });
+
+      return {
+        ...prev,
+        chargeAliases: updatedChargeAliases,
+      };
+    });
   };
 
   const columns = [
@@ -519,15 +569,15 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     },
     {
       key: "aliasName",
-      header: "Alias Name",
+      header: "Charge Alias",
       visible: true,
       render: (item: { id: number; aliasName: string }) => (
         <TextField
           variant="outlined"
           size="small"
           fullWidth
-          placeholder="Enter Alias (max 10 chars)"
-          value={item.aliasName}
+          placeholder="Charge Code"
+          value={item.aliasName || formData.chargeInfo.chargeCode || ""} // Show charge code if aliasName is empty
           onChange={(e) => handleAliasNameChange(item.id, e.target.value)}
           inputProps={{
             maxLength: 10,
