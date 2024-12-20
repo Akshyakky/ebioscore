@@ -49,8 +49,8 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             }}
             fetchSuggestions={fetchChargeCodeSuggestions}
             onSelectSuggestion={handleCodeSelect}
-            isMandatory
-            isSubmitted={false}
+            isMandatory={true}
+            isSubmitted={isSubmitted}
           />
           <FormField
             type="select"
@@ -60,7 +60,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             name="chargeType"
             ControlID="chargeType"
             options={dropdownValues.service || []}
-            isMandatory
+            isMandatory={true}
             isSubmitted={isSubmitted}
           />
           <FormField
@@ -70,9 +70,10 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             onChange={handleInputChange}
             name="chargeDesc"
             ControlID="chargeDesc"
-            isMandatory
+            isMandatory={true}
             isSubmitted={isSubmitted}
           />
+
           <FormField
             type="multiselect"
             label="Faculty"
@@ -83,6 +84,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             onChange={handleFacultyChange}
             isSubmitted={isSubmitted}
           />
+
           <FormField
             type="select"
             label="Service Group"
@@ -138,7 +140,9 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             ControlID="scheduleDate"
             isSubmitted={isSubmitted}
           />
+        </Grid>
 
+        <Grid container spacing={2}>
           <FormField
             type="switch"
             label="Is Package"

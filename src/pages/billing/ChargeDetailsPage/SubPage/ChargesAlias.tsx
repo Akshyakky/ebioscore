@@ -332,7 +332,7 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
     const adjustmentType = formData.chargeInfo.adjustmentType;
     const amountType = formData.chargeInfo.amountType;
     const isPercentage = formData.chargeInfo.percentage === "Y";
-    const adjustmentValue = parseFloat(formData.chargeInfo.chValue || "0");
+    const adjustmentValue = formData.chargeInfo.chValue ?? 0;
     const updatedGridData = applyAdjustmentToGrid(adjustmentType, adjustmentValue, isPercentage, amountType);
     setGridData(updatedGridData);
     onGridDataChange(updatedGridData);
@@ -381,14 +381,15 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
   const handleAmountChange = useCallback(
     (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
       const isPercentage = e.target.checked;
-      const currentValue = parseFloat(formData.chargeInfo.chValue || "0");
+      const currentValue = formData.chargeInfo.chValue ?? 0;
+
       setFormData((prev: ChargeDetailsDto) => {
         return {
           ...prev,
           chargeInfo: {
             ...prev.chargeInfo,
             [field]: isPercentage ? "Y" : "N",
-            chValue: currentValue.toString(),
+            chValue: currentValue,
           },
         };
       });

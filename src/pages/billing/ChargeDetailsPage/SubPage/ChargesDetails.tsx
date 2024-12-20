@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Paper, Typography, SelectChangeEvent, TextField } from "@mui/material";
+import { Paper, Typography, SelectChangeEvent, TextField, Grid } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
@@ -12,6 +12,7 @@ import { useAppSelector } from "@/store/hooks";
 import { showAlert } from "@/utils/Common/showAlert";
 import { useLoading } from "@/context/LoadingContext";
 import ChargePackageDetails from "./ChargePackDetails";
+import FormField from "@/components/FormField/FormField";
 interface ChargeDetailsProps {
   editData?: ChargeDetailsDto;
 }
@@ -27,7 +28,8 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
 
   const defaultChargeDetails = [
     {
-      rActiveYN: "Y",
+      isSubmitted: false,
+      rActiveYN: "N",
       compID: compID || 0,
       compCode: compCode || "",
       compName: compName || "",
@@ -46,7 +48,8 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
 
   const defaultChargeAliases = [
     {
-      rActiveYN: "Y",
+      isSubmitted: false,
+      rActiveYN: "N",
       compID: compID || 0,
       compCode: compCode || "",
       compName: compName || "",
@@ -64,11 +67,12 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
 
   const defaultChargeFaculties = [
     {
+      isSubmitted: false,
       bchfID: 0,
       chargeID: editData?.chargeInfo?.chargeID || 0,
       aSubID: 0,
-      rActiveYN: "Y",
-      transferYN: "Y",
+      rActiveYN: "N",
+      transferYN: "N",
       rNotes: "",
       compID: compID || 0,
       compCode: compCode || "",
@@ -78,6 +82,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
 
   const defaultChargePackages = [
     {
+      isSubmitted: false,
       pkDetID: 0,
       chDetID: 0,
       chargeID: 0,
@@ -94,7 +99,8 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
 
   const [formData, setFormData] = useState<ChargeDetailsDto>(() => ({
     chargeInfo: {
-      rActiveYN: editData?.chargeInfo?.rActiveYN || "Y",
+      isSubmitted: false,
+      rActiveYN: editData?.chargeInfo?.rActiveYN || "N",
       compID: editData?.chargeInfo?.compID || compID || 0,
       compCode: editData?.chargeInfo?.compCode || compCode || "",
       compName: editData?.chargeInfo?.compName || compName || "",
@@ -103,11 +109,13 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       chargeID: editData?.chargeInfo?.chargeID || 0,
       chargeCode: editData?.chargeInfo?.chargeCode || "",
       chargeDesc: editData?.chargeInfo?.chargeDesc || "",
+      chargeDescLang: editData?.chargeInfo?.chargeDesc || "",
       cShortName: editData?.chargeInfo?.cShortName || "",
       chargeType: editData?.chargeInfo?.chargeType || "",
       sGrpID: editData?.chargeInfo?.sGrpID || 0,
-      chargeTo: editData?.chargeInfo?.chargeTo || "",
-      chargeStatus: editData?.chargeInfo?.chargeStatus || "",
+      chargeTo: "Both",
+      chargeStatus: "ON",
+      regDefaultServiceYN: "N",
       chargeBreakYN: editData?.chargeInfo?.chargeBreakYN || "N",
       bChID: editData?.chargeInfo?.bChID || 0,
       regServiceYN: editData?.chargeInfo?.regServiceYN || "N",
@@ -117,6 +125,9 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       chargeCost: editData?.chargeInfo?.chargeCost || "0",
       scheduleDate: editData?.chargeInfo?.scheduleDate || new Date(),
       isBedServiceYN: editData?.chargeInfo?.isBedServiceYN || "N",
+      DcValue: editData?.chargeInfo?.DcValue || 0,
+      hcValue: editData?.chargeInfo?.hcValue || 0,
+      chValue: editData?.chargeInfo?.chValue || 0,
     },
     chargeDetails: editData?.chargeDetails || defaultChargeDetails,
     chargeAliases: editData?.chargeAliases || defaultChargeAliases,
@@ -125,8 +136,8 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       editData?.chargePackages ||
       defaultChargePackages.map((pkg) => ({
         ...pkg,
-        rActiveYN: "Y",
-        transferYN: "Y",
+        rActiveYN: "N",
+        transferYN: "N",
         rNotes: "",
       })),
   }));
@@ -176,8 +187,8 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       compID: compID || 0,
       compCode: compCode || "",
       compName: compName || "",
-      rActiveYN: "Y",
-      transferYN: "Y",
+      rActiveYN: "N",
+      transferYN: "N",
       rNotes: pkg.rNotes || "",
     }));
     setChargePackages(updatedPackages);
@@ -197,8 +208,8 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       DcValue: parseFloat(updatedRow[`${dropdownValues.bedCategory?.[0]?.label}_drAmt`] || "0"),
       hcValue: parseFloat(updatedRow[`${dropdownValues.bedCategory?.[0]?.label}_hospAmt`] || "0"),
       chValue: parseFloat(updatedRow[`${dropdownValues.bedCategory?.[0]?.label}_totAmt`] || "0"),
-      rActiveYN: "Y",
-      transferYN: "Y",
+      rActiveYN: "N",
+      transferYN: "N",
       rNotes: "",
       compID: compID || 0,
       compCode: compCode || "",
@@ -222,6 +233,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       chargeInfo: {
         ...prev.chargeInfo,
         [name]: value,
+        ...(name === "chargeDesc" && { chargeDescLang: value }),
       },
     }));
   };
@@ -279,6 +291,11 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     [gridData, selectedRowIndex, dropdownValues, formData]
   );
 
+  const validateFields = () => {
+    const { chargeCode, chargeDesc, chargeType, cShortName, sGrpID, chargeCost } = formData.chargeInfo;
+    return chargeCode && chargeDesc && chargeType && cShortName && sGrpID && chargeCost;
+  };
+
   const handleCodeSelect = async (selectedSuggestion: string) => {
     const selectedCode = selectedSuggestion.split(" - ")[0];
     handleInputChange({ target: { name: "chargeCode", value: selectedCode } } as React.ChangeEvent<HTMLInputElement>);
@@ -286,7 +303,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     setAliasData((prevData) =>
       prevData.map((item) => ({
         ...item,
-        aliasName: selectedCode || "", // Set the alias name to the selected charge code
+        aliasName: selectedCode || "",
       }))
     );
     try {
@@ -335,9 +352,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
           }
         }
       }
-    } catch (error) {
-      console.error("Error fetching charge details:", error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -474,33 +489,39 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
 
   const handleSave = async () => {
     setLoading(true);
+    setIsSubmitted(true);
+    if (!validateFields()) {
+      showAlert("Error", "Please fill out all mandatory fields.", "error");
+      return;
+    }
     try {
-      // Format chargeAliases data to align with BChargeAliasDto
       const formattedChargeAliases = aliasData.map((alias) => ({
         chaliasID: alias.id || 0,
         chargeID: formData.chargeInfo.chargeID || 0,
         pTypeID: parseInt(dropdownValues.pic?.find((pic) => pic.label === alias.picName)?.value || "0", 10),
         chargeDesc: alias.aliasName || "",
         chargeDescLang: alias.aliasName || "",
-        rActiveYN: "Y",
+        rActiveYN: "N",
         compID: formData.chargeInfo.compID || 0,
         compCode: formData.chargeInfo.compCode || "",
         compName: formData.chargeInfo.compName || "",
-        transferYN: "Y",
+        transferYN: "N",
         rNotes: "",
       }));
-
-      // Update formData to include the formatted chargeAliases
       setFormData((prev) => ({
         ...prev,
         chargeAliases: formattedChargeAliases,
       }));
-
-      // Construct the requestData object for saving
       const requestData: ChargeDetailsDto = {
-        chargeInfo: formData.chargeInfo,
+        chargeInfo: {
+          ...formData.chargeInfo,
+          chargeTo: "Both",
+          chargeStatus: "ON",
+          regDefaultServiceYN: "N",
+          chargeDescLang: formData.chargeInfo.chargeDesc || "",
+        },
         chargeDetails: formData.chargeDetails,
-        chargeAliases: formattedChargeAliases, // Use formatted data here
+        chargeAliases: formattedChargeAliases,
         chargeFaculties: formData.chargeFaculties || [],
         chargePackDetails: formData.chargePackages || [],
       };
@@ -523,7 +544,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       const initialData = dropdownValues.pic.map((item, index) => ({
         id: index,
         picName: item.label,
-        aliasName: "", // Initialize empty
+        aliasName: "",
       }));
       setAliasData(initialData);
     }
@@ -577,7 +598,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
           size="small"
           fullWidth
           placeholder="Charge Code"
-          value={item.aliasName || formData.chargeInfo.chargeCode || ""} // Show charge code if aliasName is empty
+          value={item.aliasName || formData.chargeInfo.chargeCode || ""}
           onChange={(e) => handleAliasNameChange(item.id, e.target.value)}
           inputProps={{
             maxLength: 10,
@@ -591,7 +612,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const handleClear = useCallback(() => {
     setFormData({
       chargeInfo: {
-        rActiveYN: "Y",
+        rActiveYN: "N",
         compID: compID || 0,
         compCode: compCode || "",
         compName: compName || "",
@@ -612,10 +633,13 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         cNhsCode: "",
         cNhsEnglishName: "",
         chargeCost: "0",
+        DcValue: 0,
+        hcValue: 0,
+        chValue: 0,
       },
       chargeDetails: [
         {
-          rActiveYN: "Y",
+          rActiveYN: "N",
           compID: compID ?? 0,
           compCode: compCode ?? "",
           compName: compName ?? "",
@@ -631,7 +655,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       ],
       chargeAliases: [
         {
-          rActiveYN: "Y",
+          rActiveYN: "N",
           compID: compID ?? 0,
           compCode: compCode ?? "",
           compName: compName ?? "",
@@ -649,7 +673,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
           bchfID: 0,
           chargeID: 0,
           aSubID: 0,
-          rActiveYN: "Y",
+          rActiveYN: "N",
           rNotes: "",
           compID: formData.chargeInfo.compID,
           compCode: formData.chargeInfo.compCode,
@@ -673,6 +697,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   return (
     <Paper variant="elevation" sx={{ padding: 2, mt: 2 }}>
       <Typography variant="h6">Charge Details</Typography>
+
       <ChargeBasicDetails
         formData={formData}
         handleInputChange={handleInputChange}
@@ -717,6 +742,27 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         selectedChargeCode={formData.chargeInfo.chargeCode}
         onRowUpdate={handleRowUpdate}
       />
+
+      <Grid container spacing={2} sx={{ mt: 2 }}>
+        <FormField
+          type="switch"
+          label="Hide"
+          value={formData.chargeInfo.rActiveYN || ""}
+          checked={formData.chargeInfo.rActiveYN === "Y"}
+          onChange={handleSwitchChange("rActiveYN")}
+          name="rActiveYN"
+          ControlID="rActiveYN"
+        />
+        <FormField
+          type="switch"
+          label="Is Bed Service"
+          value={formData.chargeInfo.isBedServiceYN || ""}
+          checked={formData.chargeInfo.isBedServiceYN === "Y"}
+          onChange={handleSwitchChange("isBedServiceYN")}
+          name="isBedServiceYN"
+          ControlID="isBedServiceYN"
+        />
+      </Grid>
 
       <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </Paper>
