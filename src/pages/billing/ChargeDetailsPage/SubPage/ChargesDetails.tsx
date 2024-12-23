@@ -29,7 +29,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const defaultChargeDetails = [
     {
       isSubmitted: false,
-      rActiveYN: "N",
+      rActiveYN: "Y",
       compID: compID || 0,
       compCode: compCode || "",
       compName: compName || "",
@@ -49,7 +49,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const defaultChargeAliases = [
     {
       isSubmitted: false,
-      rActiveYN: "N",
+      rActiveYN: "Y",
       compID: compID || 0,
       compCode: compCode || "",
       compName: compName || "",
@@ -71,7 +71,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       bchfID: 0,
       chargeID: editData?.chargeInfo?.chargeID || 0,
       aSubID: 0,
-      rActiveYN: "N",
+      rActiveYN: "Y",
       transferYN: "N",
       rNotes: "",
       compID: compID || 0,
@@ -100,7 +100,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const [formData, setFormData] = useState<ChargeDetailsDto>(() => ({
     chargeInfo: {
       isSubmitted: false,
-      rActiveYN: editData?.chargeInfo?.rActiveYN || "N",
+      rActiveYN: editData?.chargeInfo?.rActiveYN || "Y",
       compID: editData?.chargeInfo?.compID || compID || 0,
       compCode: editData?.chargeInfo?.compCode || compCode || "",
       compName: editData?.chargeInfo?.compName || compName || "",
@@ -136,7 +136,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       editData?.chargePackages ||
       defaultChargePackages.map((pkg) => ({
         ...pkg,
-        rActiveYN: "N",
+        rActiveYN: "Y",
         transferYN: "N",
         rNotes: "",
       })),
@@ -187,7 +187,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       compID: compID || 0,
       compCode: compCode || "",
       compName: compName || "",
-      rActiveYN: "N",
+      rActiveYN: "Y",
       transferYN: "N",
       rNotes: pkg.rNotes || "",
     }));
@@ -208,7 +208,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       DcValue: parseFloat(updatedRow[`${dropdownValues.bedCategory?.[0]?.label}_drAmt`] || "0"),
       hcValue: parseFloat(updatedRow[`${dropdownValues.bedCategory?.[0]?.label}_hospAmt`] || "0"),
       chValue: parseFloat(updatedRow[`${dropdownValues.bedCategory?.[0]?.label}_totAmt`] || "0"),
-      rActiveYN: "N",
+      rActiveYN: "Y",
       transferYN: "N",
       rNotes: "",
       compID: compID || 0,
@@ -356,6 +356,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   };
 
   useEffect(() => {
+    debugger;
     if (editData && dropdownValues.pic && dropdownValues.bedCategory && dropdownValues.service && dropdownValues.speciality) {
       const picName = dropdownValues.pic.find((pic) => Number(pic.value) === editData.chargeDetails?.[0]?.pTypeID)?.label || "";
       const wardCategoryName = dropdownValues.bedCategory.find((category) => Number(category.value) === editData.chargeDetails?.[0]?.wCatID)?.label || "";
@@ -501,7 +502,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         pTypeID: parseInt(dropdownValues.pic?.find((pic) => pic.label === alias.picName)?.value || "0", 10),
         chargeDesc: alias.aliasName || "",
         chargeDescLang: alias.aliasName || "",
-        rActiveYN: "N",
+        rActiveYN: "Y",
         compID: formData.chargeInfo.compID || 0,
         compCode: formData.chargeInfo.compCode || "",
         compName: formData.chargeInfo.compName || "",
@@ -612,7 +613,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const handleClear = useCallback(() => {
     setFormData({
       chargeInfo: {
-        rActiveYN: "N",
+        rActiveYN: "Y",
         compID: compID || 0,
         compCode: compCode || "",
         compName: compName || "",
@@ -639,7 +640,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       },
       chargeDetails: [
         {
-          rActiveYN: "N",
+          rActiveYN: "Y",
           compID: compID ?? 0,
           compCode: compCode ?? "",
           compName: compName ?? "",
@@ -655,7 +656,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       ],
       chargeAliases: [
         {
-          rActiveYN: "N",
+          rActiveYN: "Y",
           compID: compID ?? 0,
           compCode: compCode ?? "",
           compName: compName ?? "",
@@ -673,7 +674,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
           bchfID: 0,
           chargeID: 0,
           aSubID: 0,
-          rActiveYN: "N",
+          rActiveYN: "Y",
           rNotes: "",
           compID: formData.chargeInfo.compID,
           compCode: formData.chargeInfo.compCode,

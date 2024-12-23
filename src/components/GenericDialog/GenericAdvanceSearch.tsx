@@ -68,6 +68,7 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
   }, [open]);
 
   const fetchAllItems = async () => {
+    debugger;
     const items = await fetchItems();
     const initialSwitchStatus = items.reduce(
       (statusMap, item) => {
