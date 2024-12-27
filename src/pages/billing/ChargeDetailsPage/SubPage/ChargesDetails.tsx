@@ -3,7 +3,7 @@ import { Paper, Typography, SelectChangeEvent, TextField, Grid } from "@mui/mate
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { BChargeDetailsDto, BChargePackDto, ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
+import { BChargeDetailsDto, BChargePackDto, BDoctorSharePerShare, ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
 import ChargeBasicDetails from "./Charges";
@@ -13,6 +13,7 @@ import { showAlert } from "@/utils/Common/showAlert";
 import { useLoading } from "@/context/LoadingContext";
 import ChargePackageDetails from "./ChargePackDetails";
 import FormField from "@/components/FormField/FormField";
+import ChargeDoctorSharePerShare from "./ChargeDoctorSharePerShare";
 interface ChargeDetailsProps {
   editData?: ChargeDetailsDto;
 }
@@ -130,6 +131,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       chValue: editData?.chargeInfo?.chValue || 0,
     },
     chargeDetails: editData?.chargeDetails || defaultChargeDetails,
+    chargeDoctorShares: editData?.doctorSharePerShare,
     chargeAliases: editData?.chargeAliases || defaultChargeAliases,
     chargeFaculties: editData?.chargeFaculties || defaultChargeFaculties,
     chargePackages:
@@ -151,6 +153,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const [selectedWardCategoryIds, setSelectedWardCategoryIds] = useState<string[]>([]);
   const [aliasData, setAliasData] = useState<any[]>([]);
   const [, setChargePackages] = useState<BChargePackDto[]>(editData?.chargePackages || []);
+  const [doctorShareData, setDoctorShareData] = useState<BDoctorSharePerShare[]>([]);
 
   const fetchChargeCodeSuggestions = useCallback(async (searchTerm: string) => {
     if (!searchTerm.trim()) return [];
@@ -291,6 +294,19 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     [gridData, selectedRowIndex, dropdownValues, formData]
   );
 
+  const handleDoctorShareGridDataChange = useCallback((updatedRows: BDoctorSharePerShare[]) => {
+    setFormData((prev) => ({
+      ...prev,
+      doctorSharePerShare: updatedRows.map((row) => ({
+        ...row,
+        chargeID: prev.chargeInfo.chargeID || 0,
+        compID: prev.chargeInfo.compID || 0,
+        compCode: prev.chargeInfo.compCode || "",
+        compName: prev.chargeInfo.compName || "",
+      })),
+    }));
+  }, []);
+
   const validateFields = () => {
     const { chargeCode, chargeDesc, chargeType, cShortName, sGrpID, chargeCost } = formData.chargeInfo;
     return chargeCode && chargeDesc && chargeType && cShortName && sGrpID && chargeCost;
@@ -299,7 +315,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   const handleCodeSelect = async (selectedSuggestion: string) => {
     const selectedCode = selectedSuggestion.split(" - ")[0];
     handleInputChange({ target: { name: "chargeCode", value: selectedCode } } as React.ChangeEvent<HTMLInputElement>);
-
     setAliasData((prevData) =>
       prevData.map((item) => ({
         ...item,
@@ -307,18 +322,23 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       }))
     );
     try {
+      setLoading(true);
       const allChargesResponse = await chargeDetailsService.getAllChargeDetails();
       if (allChargesResponse?.success && allChargesResponse.data) {
         const allCharges = allChargesResponse.data as ChargeDetailsDto[];
         const matchingCharge = allCharges.find((charge: ChargeDetailsDto) => charge.chargeInfo?.chargeCode === selectedCode);
+
         if (matchingCharge?.chargeInfo?.chargeID) {
           const chargeID = matchingCharge.chargeInfo.chargeID;
           const chargeDetailsResponse = await chargeDetailsService.getAllByID(chargeID);
+
           if (chargeDetailsResponse?.success && chargeDetailsResponse.data) {
             const chargeDetails: ChargeDetailsDto = chargeDetailsResponse.data;
+
             const picName = dropdownValues.pic.find((pic) => Number(pic.value) === chargeDetails.chargeDetails?.[0]?.pTypeID)?.label || "";
             const wardCategoryName = dropdownValues.bedCategory.find((category) => Number(category.value) === chargeDetails.chargeDetails?.[0]?.wCatID)?.label || "";
             const facultyNames = dropdownValues.speciality.find((speciality) => Number(speciality.value) === chargeDetails.chargeFaculties?.[0]?.aSubID)?.label || "";
+
             const mergedGridData = dropdownValues.pic.map((pic) => {
               const savedDetails = chargeDetails.chargeDetails.filter((detail) => detail.pTypeID === Number(pic.value));
               const rowData: GridData = { picName: pic.label };
@@ -330,6 +350,8 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
               });
               return rowData;
             });
+
+            // Update form data including doctor share data
             setFormData((prev) => ({
               ...prev,
               chargeInfo: {
@@ -344,7 +366,15 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
                 picName,
                 wardCategoryName,
               })),
+              chargeDoctorSharePerShare: chargeDetails.doctorSharePerShare && Array.isArray(chargeDetails.doctorSharePerShare) ? chargeDetails.doctorSharePerShare : [], // Set to empty array if undefined or null
             }));
+
+            if (chargeDetails.doctorSharePerShare && Array.isArray(chargeDetails.doctorSharePerShare)) {
+              setDoctorShareData(chargeDetails.doctorSharePerShare);
+            } else {
+              setDoctorShareData([]);
+            }
+
             setSelectedPicIds([picName]);
             setSelectedWardCategoryIds([wardCategoryName]);
             setSelectedFacultyIds([facultyNames]);
@@ -352,11 +382,15 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
           }
         }
       }
-    } catch (error) {}
+    } catch (error) {
+      showAlert("Error", "Error fetching charge details.", "error");
+      console.error("Error fetching charge details:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    debugger;
     if (editData && dropdownValues.pic && dropdownValues.bedCategory && dropdownValues.service && dropdownValues.speciality) {
       const picName = dropdownValues.pic.find((pic) => Number(pic.value) === editData.chargeDetails?.[0]?.pTypeID)?.label || "";
       const wardCategoryName = dropdownValues.bedCategory.find((category) => Number(category.value) === editData.chargeDetails?.[0]?.wCatID)?.label || "";
@@ -390,8 +424,23 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
           picName,
           wardCategoryName,
         })),
+
+        doctorSharePerShare: editData.doctorSharePerShare || [],
       }));
       setGridData(mergedGridData);
+      if (editData.doctorSharePerShare && editData.doctorSharePerShare.length > 0) {
+        const updatedDoctorShareGridData = editData.doctorSharePerShare?.map((share, index) => ({
+          serialNumber: index + 1,
+          attendingPhysician: "",
+          docShare: share.doctorShare,
+          hospShare: share.hospShare,
+          totalAmount: share.doctorShare + share.hospShare,
+          conID: share.conID,
+          docShareID: share.docShareID,
+          picName: picName,
+        }));
+        setGridData((prevGridData) => [...prevGridData, ...updatedDoctorShareGridData]);
+      }
     } else {
       handleClear();
     }
@@ -484,6 +533,8 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       chargeInfo: {
         ...prev.chargeInfo,
         [field]: checked ? "Y" : "N",
+        ...(field === "chargeBreakYN" && { doctorShareYN: "N" }),
+        ...(field === "doctorShareYN" && { chargeBreakYN: "N" }),
       },
     }));
   };
@@ -493,9 +544,11 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     setIsSubmitted(true);
     if (!validateFields()) {
       showAlert("Error", "Please fill out all mandatory fields.", "error");
+      setLoading(false);
       return;
     }
     try {
+      debugger;
       const formattedChargeAliases = aliasData.map((alias) => ({
         chaliasID: alias.id || 0,
         chargeID: formData.chargeInfo.chargeID || 0,
@@ -525,7 +578,22 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         chargeAliases: formattedChargeAliases,
         chargeFaculties: formData.chargeFaculties || [],
         chargePackDetails: formData.chargePackages || [],
+        doctorSharePerShare: (formData.doctorSharePerShare || []).map((share: any) => ({
+          docShareID: share.docShareID,
+          chargeID: formData.chargeInfo.chargeID || 0,
+          conID: share.conID,
+          doctorShare: share.doctorShare,
+          hospShare: share.hospShare,
+          compID: compID || 0,
+          compCode: compCode || "",
+          compName: compName || "",
+          rActiveYN: "Y",
+          transferYN: "N",
+          rNotes: "",
+          isSubmitted: false,
+        })),
       };
+
       const result = await chargeDetailsService.saveChargeDetails(requestData);
       if (result.success) {
         showAlert("Success", "Charge details saved successfully!", "success");
@@ -563,19 +631,15 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
 
   const handleAliasNameChange = (id: number, newValue: string) => {
     setAliasData((prevData) => prevData.map((item) => (item.id === id ? { ...item, aliasName: newValue } : item)));
-
     setFormData((prev: any) => {
       const updatedAlias = aliasData.find((item) => item.id === id);
-
       if (!updatedAlias) return prev;
-
       const updatedChargeAliases = prev.chargeAliases.map((alias: any) => {
         if (alias.chaliasID === updatedAlias.id) {
           return { ...alias, chargeDesc: newValue, pTypeID: 1, chargeDescLang: alias.aliasName };
         }
         return alias;
       });
-
       return {
         ...prev,
         chargeAliases: updatedChargeAliases,
@@ -683,6 +747,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         },
       ],
       chargePackages: editData?.charge,
+      chargeDoctorShares: [],
     });
 
     setSelectedPicIds([]);
@@ -735,15 +800,20 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         onRowSelect={(rowIndex) => setSelectedRowIndex(rowIndex)}
       />
 
-      <ChargePackageDetails
-        chargeDetails={formData.chargeDetails}
-        chargeBreakYN={formData.chargeInfo.chargeBreakYN}
-        onChargePackagesChange={handleChargePackagesChange}
-        onGridDataChange={(updatedRows) => handleGridDataChange(updatedRows, "ChargePackageDetails")}
-        selectedChargeCode={formData.chargeInfo.chargeCode}
-        onRowUpdate={handleRowUpdate}
-      />
+      {formData.chargeInfo.chargeBreakYN === "Y" && formData.chargeInfo.doctorShareYN !== "Y" && (
+        <ChargePackageDetails
+          chargeDetails={formData.chargeDetails}
+          chargeBreakYN={formData.chargeInfo.chargeBreakYN}
+          onChargePackagesChange={handleChargePackagesChange}
+          onGridDataChange={(updatedRows) => handleGridDataChange(updatedRows, "ChargePackageDetails")}
+          selectedChargeCode={formData.chargeInfo.chargeCode}
+          onRowUpdate={handleRowUpdate}
+        />
+      )}
 
+      {formData.chargeInfo.doctorShareYN === "Y" && formData.chargeInfo.chargeBreakYN !== "Y" && (
+        <ChargeDoctorSharePerShare onGridDataChange={handleDoctorShareGridDataChange} chargeId={formData.chargeInfo.chargeID} savedDoctorShares={doctorShareData} />
+      )}
       <Grid container spacing={2} sx={{ mt: 2 }}>
         <FormField
           type="switch"

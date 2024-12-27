@@ -157,7 +157,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             type="switch"
             label="Apply Doctor % Share"
             value={formData.chargeInfo.doctorShareYN || ""}
-            checked={formData.chargeInfo.doctorShareYN === "Y"}
+            checked={formData.chargeInfo.doctorShareYN === "Y"} // Checked if "Y"
             onChange={handleSwitchChange("doctorShareYN")}
             name="doctorShareYN"
             ControlID="doctorShareYN"

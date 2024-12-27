@@ -20,7 +20,6 @@ const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose
     try {
       const result = await chargeDetailsService.getAllChargeDetails();
       if (!result.success || !result.data) {
-        console.error("Failed to fetch charge details:", result.errorMessage);
         return [];
       }
       const mappedData = result.data.map((item) => ({
@@ -32,7 +31,6 @@ const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose
       setItems(mappedData);
       return mappedData;
     } catch (error) {
-      console.error("Error fetching charge details:", error);
       return [];
     }
   };
@@ -71,8 +69,6 @@ const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose
         );
       }
     } catch (error) {
-      console.error("Failed to update status:", error);
-      // Revert back on error
       setItems((prevItems) =>
         prevItems.map((item) =>
           item.chargeInfo?.chargeID === id
@@ -94,7 +90,6 @@ const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose
       const result = await chargeDetailsService.updateActiveStatus(id, status);
       return !!result;
     } catch (error) {
-      console.error("Failed to update active status:", error);
       return false;
     }
   };

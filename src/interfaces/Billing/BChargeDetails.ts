@@ -6,6 +6,7 @@ export interface ChargeDetailsDto extends BaseDto {
   chargeAliases: BChargeAliasDto[];
   chargeFaculties?: BChargeFacultyDto[];
   chargePackDetails?: BChargePackDto[];
+  doctorSharePerShare?: BDoctorSharePerShare[];
 }
 export interface BChargeDto extends RecordFields {
   chargeID: number;
@@ -69,4 +70,12 @@ export interface BChargePackDto extends RecordFields {
   DcValue: number;
   hcValue: number;
   chValue: number;
+}
+
+export interface BDoctorSharePerShare extends RecordFields {
+  docShareID: number;
+  chargeID: number;
+  conID: number;
+  doctorShare: number;
+  hospShare: number;
 }
