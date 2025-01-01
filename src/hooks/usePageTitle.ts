@@ -35,6 +35,7 @@ const pageTitleMap: PageTitleMap = {
   "/ManageBedPage": "Manage BedPage ",
   "/DiagnosisListPage": "Diagnosis List ",
   "/MedicationListPage": "Medication List ",
+  "/MedicationFormPage": "Medication Form ",
   "/AppModifiedListPage": "App Modified List ",
   "/ChargeDetailsPage": "Schedule of Charge List ",
   "/DischargePage": "Patient Discharge ",

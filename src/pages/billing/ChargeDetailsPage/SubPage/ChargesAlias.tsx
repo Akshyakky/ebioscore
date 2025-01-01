@@ -58,6 +58,7 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
   const [showGrid, setShowGrid] = useState(false);
   const [, setGridData] = useState<GridData[]>([]);
   const [, setSelectedRowIndex] = useState<number | null>(null);
+
   const createChargeDetail = (pTypeID: string, wCatID: string): BChargeDetailsDto => ({
     chDetID: 0,
     chargeID: formData.chargeInfo.chargeID,

@@ -2,7 +2,8 @@ import { createContext, useState } from "react";
 import { useLoading } from "../LoadingContext";
 import { notifyError } from "../../utils/Common/toastManager";
 import { ContactListService } from "../../services/HospitalAdministrationServices/ContactListService/ContactListService";
-import { ContactListSearchResult } from "@/interfaces/hospitalAdministration/ContactListData";
+import React from "react";
+import { ContactListSearchResult } from "@/interfaces/HospitalAdministration/ContactListData";
 
 interface ContactListSearchContextProps {
   searchResults: ContactListSearchResult[];

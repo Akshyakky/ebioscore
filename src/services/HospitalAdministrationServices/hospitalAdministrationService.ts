@@ -1,8 +1,8 @@
-import { WardCategoryDto } from "../../interfaces/hospitalAdministration/WardCategoryDto";
-import { RoomGroupDto, RoomListDto, WrBedDto } from "../../interfaces/hospitalAdministration/Room-BedSetUpDto";
+import { WardCategoryDto } from "../../interfaces/HospitalAdministration/WardCategoryDto";
+import { RoomGroupDto, RoomListDto, WrBedDto } from "../../interfaces/HospitalAdministration/Room-BedSetUpDto";
 import { createEntityService } from "../../utils/Common/serviceFactory";
-import { InsuranceListDto } from "../../interfaces/hospitalAdministration/InsuranceListDto";
-import { AppModifiedMast, AppModifyFieldDto } from "../../interfaces/hospitalAdministration/AppModifiedlistDto";
+import { InsuranceListDto } from "../../interfaces/HospitalAdministration/InsuranceListDto";
+import { AppModifiedMast, AppModifyFieldDto } from "../../interfaces/HospitalAdministration/AppModifiedlistDto";
 
 export const roomGroupService = createEntityService<RoomGroupDto>("RoomGroup", "hospitalAdministrations");
 export const roomListService = createEntityService<RoomListDto>("RoomList", "hospitalAdministrations");

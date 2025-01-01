@@ -3,14 +3,31 @@ import { APIConfig } from "../../../apiConfig";
 import { DropdownOption } from "../../../interfaces/Common/DropdownOption";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { store } from "@/store";
-import { ContactListData } from "../../../interfaces/hospitalAdministration/ContactListData";
+import { ContactListData } from "../../../interfaces/HospitalAdministration/ContactListData";
 
 const apiService = new CommonApiService({
   baseURL: APIConfig.hospitalAdministrations,
 });
 
-// Function to get the token from the store
 const getToken = () => store.getState().auth.token!;
+interface GetNextCodeParams {
+  prefix: string;
+  padLength?: number;
+}
+
+const getNextCode = async ({ prefix, padLength }: GetNextCodeParams): Promise<OperationResult<string>> => {
+  try {
+    const response = await apiService.get<OperationResult<string>>("ContactList/GetNextCode", getToken(), { prefix, padLength });
+    return response;
+  } catch (error: any) {
+    console.error("Error generating next code:", error);
+    return {
+      success: false,
+      errorMessage: error.message || "An error occurred while generating the code",
+      data: undefined,
+    };
+  }
+};
 
 const fetchActiveSpecialties = async (compId: number): Promise<DropdownOption[]> => {
   try {
@@ -47,4 +64,5 @@ export const ContactListService = {
   saveContactList,
   searchContactListDetails,
   fetchContactDetails,
+  getNextCode,
 };

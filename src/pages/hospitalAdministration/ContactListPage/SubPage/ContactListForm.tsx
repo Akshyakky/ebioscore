@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, forwardRef, useImperativeHandle } from "react";
+import { useState, useMemo, useCallback, forwardRef, useImperativeHandle, useEffect } from "react";
 import { Grid, SelectChangeEvent, Typography } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
@@ -7,10 +7,12 @@ import ContactListSwitches from "./ContactListSwitches";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
-import { AppModifyFieldDto } from "../../../../interfaces/hospitalAdministration/AppModifiedlistDto";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useAppSelector } from "@/store/hooks";
-import { ContactListData } from "@/interfaces/hospitalAdministration/ContactListData";
+import { ContactListData } from "../../../../interfaces/HospitalAdministration/ContactListData";
+import React from "react";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 
 type SwitchStates = {
   isEmployee: boolean;
@@ -54,6 +56,15 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
 
+  useEffect(() => {
+    if (contactList.contactDetailsDto && contactList.contactDetailsDto.length > 0) {
+      const specialityIds = contactList.contactDetailsDto.map((detail) => detail.facName.toString());
+      setSelectedSpecialities(specialityIds);
+    } else {
+      setSelectedSpecialities([]);
+    }
+  }, [contactList.contactDetailsDto]);
+
   const handleSpecialityChange = useCallback(
     (event: SelectChangeEvent<unknown>) => {
       const value = event.target.value as string[];
@@ -76,6 +87,45 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
       }));
     },
     [compID, compCode, compName, dropdownValues.speciality, setContactList]
+  );
+
+  const handleCategoryChange = useCallback(
+    async (event: SelectChangeEvent<unknown>) => {
+      const selectedCategory = event.target.value as string;
+      const categoryOption = dropdownValues.category.find((opt) => opt.value === selectedCategory);
+      try {
+        handleDropdownChange(["contactMastDto", "consValue"], ["contactMastDto", "conCat"], dropdownValues.category);
+        if (selectedCategory && categoryOption) {
+          const prefix = categoryOption.value.toString().substring(0, 3).toUpperCase();
+          console.log("Requesting next code with params:", { prefix, padLength: 5 });
+          const result = await ContactListService.getNextCode({
+            prefix,
+            padLength: 5,
+          });
+
+          console.log("GetNextCode response:", result);
+
+          if (result && result.success && result.data) {
+            setContactList((prev: any) => ({
+              ...prev,
+              contactMastDto: {
+                ...prev.contactMastDto,
+                conCode: result.data,
+              },
+              contactAddressDto: {
+                ...prev.contactAddressDto,
+                conCode: result.data,
+              },
+            }));
+          } else {
+            console.error("Failed to generate next code:", result.errorMessage);
+          }
+        }
+      } catch (error) {
+        console.error("Error in handleCategoryChange:", error);
+      }
+    },
+    [dropdownValues.category, handleDropdownChange, setContactList]
   );
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -202,7 +252,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               ControlID="Category"
               value={contactList.contactMastDto.consValue}
               options={dropdownValues.category}
-              onChange={handleDropdownChange(["contactMastDto", "consValue"], ["contactMastDto", "conCat"], dropdownValues.category)}
+              onChange={handleCategoryChange}
               isMandatory={true}
               isSubmitted={isSubmitted}
               gridProps={{ xs: 12, sm: 6, md: 3 }}

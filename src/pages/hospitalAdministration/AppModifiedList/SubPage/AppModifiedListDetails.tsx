@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useLoading } from "../../../../context/LoadingContext";
-import { AppModifiedMast, AppModifyFieldDto } from "../../../../interfaces/hospitalAdministration/AppModifiedlistDto";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { appModifiedListService, appModifiedMastService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { showAlert } from "../../../../utils/Common/showAlert";
@@ -16,6 +15,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import moduleService from "../../../../services/CommonServices/ModuleService";
 import { useAppSelector } from "@/store/hooks";
+import React from "react";
+import { AppModifiedMast, AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
 
 const AppModifiedDetails: React.FC = () => {
   const { setLoading } = useLoading();
