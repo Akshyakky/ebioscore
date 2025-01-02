@@ -5,6 +5,7 @@ import PatientInvoiceCodeDetails from "../SubPage/PatientInvoiceCodeDetails";
 import PatientInvoiceCodeSearch from "../SubPage/PatientInvoiceCodeSearch";
 import { useState } from "react";
 import { BPatTypeDto } from "../../../../interfaces/Billing/BPatTypeDto";
+import React from "react";
 
 const PatientInvoiceCodePage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

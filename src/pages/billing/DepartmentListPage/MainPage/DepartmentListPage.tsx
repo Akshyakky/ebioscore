@@ -5,6 +5,7 @@ import DepartmentListDetails from "../SubPage/DepartmentListDetails";
 import { useState } from "react";
 import DepartmentListSearch from "../SubPage/DepartmentListSearch";
 import { DepartmentDto } from "./../../../../interfaces/Billing/DepartmentDto";
+import React from "react";
 
 const DepartmentListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

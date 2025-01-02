@@ -5,6 +5,7 @@ import PaymentTypesDetails from "../SubPage/PaymentTypesDetails";
 import PaymentTypesSearch from "../SubPage/PaymentTypesSearch";
 import { useState } from "react";
 import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
+import React from "react";
 
 const PaymentTypesPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

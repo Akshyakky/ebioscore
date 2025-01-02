@@ -2,6 +2,8 @@ import { Divider, Grid, Typography } from "@mui/material";
 import { Suspense } from "react";
 import { Loader } from "lucide-react";
 import AppModifiedDetails from "../SubPage/AppModifiedListDetails";
+import React from "react";
+
 const AppModifiedListPage: React.FC = () => {
   return (
     <Grid container spacing={1}>

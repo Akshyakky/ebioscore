@@ -5,6 +5,7 @@ import { useState } from "react";
 import ChargeDetails from "../SubPage/ChargesDetails";
 import ChargeDetailsSearch from "../SubPage/ChargeDetailsSearch";
 import { ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
+import React from "react";
 
 const ChargeDetailsPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

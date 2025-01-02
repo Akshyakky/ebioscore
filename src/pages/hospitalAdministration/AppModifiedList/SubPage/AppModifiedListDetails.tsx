@@ -16,6 +16,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import moduleService from "../../../../services/CommonServices/ModuleService";
 import { useAppSelector } from "@/store/hooks";
+import React from "react";
 
 const AppModifiedDetails: React.FC = () => {
   const { setLoading } = useLoading();

@@ -39,6 +39,7 @@ const pageTitleMap: PageTitleMap = {
   "/ChargeDetailsPage": "Schedule of Charge List ",
   "/DischargePage": "Patient Discharge ",
   "/WardBedTransferPage": "Patient Ward Bed Transfer ",
+  "/MedicationFormPage": "Medication Form ",
   // Add more mappings as needed
 };
 
