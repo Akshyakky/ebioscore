@@ -37,7 +37,7 @@ const MedicationFormPage: React.FC = () => {
               ]}
             />
           </Box>
-          <MedicationFormDetails editData={selectedData} />
+          <MedicationFormDetails selectedData={selectedData} />
           {/* <MedicationFormSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} /> */}
         </Container>
       );
