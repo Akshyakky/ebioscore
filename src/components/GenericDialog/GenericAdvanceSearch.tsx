@@ -68,7 +68,6 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
   }, [open]);
 
   const fetchAllItems = async () => {
-    debugger;
     const items = await fetchItems();
     const initialSwitchStatus = items.reduce(
       (statusMap, item) => {
@@ -82,6 +81,7 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
   };
 
   const handleEditAndClose = (item: T) => {
+    debugger;
     onClose();
     onSelect(item);
   };
@@ -129,7 +129,6 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
           ),
         }
       : null;
-    // Convert original columns to work with ExtendedItem<T>
     const convertedColumns: Column<ExtendedItem<T>>[] = originalColumns.map((col) => ({
       ...col,
       key: col.key as keyof ExtendedItem<T> & string,

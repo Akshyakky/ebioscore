@@ -22,6 +22,7 @@ import { AllergyDto } from "../../../interfaces/ClinicalManagement/AllergyDto";
 import { allergyService } from "../../../services/ClinicalManagementServices/allergyService";
 import AllergyHistory from "./Allergies/AllergyHistory";
 import { useAppSelector } from "@/store/hooks";
+import React from "react";
 
 export interface HistoryState {
   familyHistory: OPIPHistFHDto[];

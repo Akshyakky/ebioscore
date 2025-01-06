@@ -2,7 +2,7 @@ import React, { useContext, useCallback, useEffect, useState } from "react";
 import { ContactListSearchContext } from "../../../../context/hospitalAdministration/ContactListSearchContext";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { debounce } from "../../../../utils/Common/debounceUtils";
-import { ContactListSearchResult } from "@/interfaces/hospitalAdministration/ContactListData";
+import { ContactListSearchResult } from "@/interfaces/HospitalAdministration/ContactListData";
 
 interface ContactListSearchProps {
   open: boolean;
@@ -34,17 +34,17 @@ const ContactListSearch: React.FC<ContactListSearchProps> = ({ open, onClose, on
     [performSearch]
   );
 
+  const handleSelect = (item: ContactListSearchResult) => {
+    onEditContactList(item.conID);
+    onClose();
+  };
+
   const columns = [
     { key: "conName", header: "Name", visible: true },
     { key: "deptName", header: "Department", visible: true },
     { key: "conEmpYN", header: "Employee", visible: true },
     { key: "rActive", header: "Record Status", visible: true },
   ];
-
-  const handleSelect = (item: ContactListSearchResult) => {
-    onEditContactList(item.conID);
-    onClose();
-  };
 
   return (
     <GenericAdvanceSearch<ContactListSearchResult>
