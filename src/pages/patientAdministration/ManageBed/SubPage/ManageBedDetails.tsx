@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Typography, Box, Tooltip, TextField, useTheme, useMediaQuery } from "@mui/material";
-import { RoomGroupDto, RoomListDto, WrBedDto } from "../../../../interfaces/hospitalAdministration/Room-BedSetUpDto";
 import CustomTreeView, { TreeNodeType } from "../../../../components/TreeView/CustomTreeView";
 import { Refresh as RefreshIcon, Search as SearchIcon, Hotel as BedIcon } from "@mui/icons-material";
 import { roomGroupService, roomListService, wrBedService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { useLoading } from "../../../../context/LoadingContext";
 import CustomButton from "../../../../components/Button/CustomButton";
 import useDebounce from "../../../../hooks/Common/useDebounce";
+import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 
 interface ManageBedDetailsProps {
   onBedSelect?: (bed: WrBedDto) => void;

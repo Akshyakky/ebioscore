@@ -19,12 +19,12 @@ import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/u
 import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
 import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
 import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/admissionService";
-import { WrBedDto } from "../../../../interfaces/hospitalAdministration/Room-BedSetUpDto";
 import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
 import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
 import CustomButton from "../../../../components/Button/CustomButton";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import { useAppSelector } from "@/store/hooks";
+import { WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 
 interface WardBedTransferDetailsProps {
   selectedAdmission?: AdmissionDto;

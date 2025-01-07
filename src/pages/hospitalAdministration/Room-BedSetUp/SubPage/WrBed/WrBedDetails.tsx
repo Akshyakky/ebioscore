@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Box, Grid, IconButton, SelectChangeEvent, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
@@ -8,7 +8,6 @@ import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRig
 import { useLoading } from "../../../../../context/LoadingContext";
 import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../../components/Button/CustomButton";
-import { RoomGroupDto, RoomListDto, WrBedDto } from "../../../../../interfaces/hospitalAdministration/Room-BedSetUpDto";
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
@@ -17,6 +16,8 @@ import { roomListService, wrBedService } from "../../../../../services/HospitalA
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Folder as FolderIcon, FolderOpen as FolderOpenIcon } from "@mui/icons-material";
 import { showAlert } from "../../../../../utils/Common/showAlert";
 import { useAppSelector } from "@/store/hooks";
+import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import React from "react";
 
 interface WrBedDetailsProps {
   beds: WrBedDto[];
@@ -30,31 +31,33 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
   const [expandedBeds, setExpandedBeds] = useState<Set<number>>(new Set());
-  const [formData, setFormData] = useState<WrBedDto>(getInitialFormData());
+  const [formData, setFormData] = useState<WrBedDto>({} as WrBedDto);
   const { handleDropdownChange } = useDropdownChange<WrBedDto>(setFormData);
   const dropdownValues = useDropdownValues(["bedCategory", "service"]);
   const user = useAppSelector((state) => state.auth);
   const [filteredRoomLists, setFilteredRoomLists] = useState<RoomListDto[]>([]);
 
-  function getInitialFormData(): WrBedDto {
-    return {
-      bchID: 0,
-      bedID: 0,
-      bedName: "",
-      rlID: 0,
-      rActiveYN: "Y",
-      compID: user.compID || 0,
-      compCode: user.compCode || "",
-      compName: user.compName || "",
-      transferYN: "Y",
-      blockBedYN: "N",
-      wbCatID: 0,
-      key: 0,
-      bedStatusValue: "AVLBL",
-      bedStatus: "Available",
-      rgrpID: 0,
-    };
-  }
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        bchID: 0,
+        bedID: 0,
+        bedName: "",
+        rlID: 0,
+        rActiveYN: "Y",
+        compID: user.compID || 0,
+        compCode: user.compCode || "",
+        compName: user.compName || "",
+        transferYN: "Y",
+        blockBedYN: "N",
+        wbCatID: 0,
+        key: 0,
+        bedStatusValue: "AVLBL",
+        bedStatus: "Available",
+        rgrpID: 0,
+      });
+    }
+  }, [user]); // Run this effect when `user` changes
 
   useEffect(() => {
     if (formData.rgrpID) {
@@ -74,14 +77,33 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
     }));
   }, []);
 
-  const handleAdd = useCallback((isSubGroup: boolean = false, parentGroup?: WrBedDto) => {
-    setFormData({
-      ...getInitialFormData(),
-      key: isSubGroup ? parentGroup?.bedID || 0 : 0,
-    });
-    setDialogTitle(isSubGroup ? "Add Cradle" : "Add Bed");
-    setIsDialogOpen(true);
-  }, []);
+  const handleAdd = useCallback(
+    (isSubGroup: boolean = false, parentGroup?: WrBedDto) => {
+      // Initialize formData based on user directly here instead of calling getInitialFormData()
+      const newFormData: WrBedDto = {
+        bchID: 0,
+        bedID: 0,
+        bedName: "",
+        rlID: 0,
+        rActiveYN: "Y",
+        compID: user.compID || 0,
+        compCode: user.compCode || "",
+        compName: user.compName || "",
+        transferYN: "Y",
+        blockBedYN: "N",
+        wbCatID: 0,
+        key: isSubGroup ? parentGroup?.bedID || 0 : 0,
+        bedStatusValue: "AVLBL",
+        bedStatus: "Available",
+        rgrpID: 0,
+      };
+
+      setFormData(newFormData);
+      setDialogTitle(isSubGroup ? "Add Cradle" : "Add Bed");
+      setIsDialogOpen(true);
+    },
+    [user]
+  ); // Make sure `user` is included in the dependency array
 
   const handleAddDialogSubmit = useCallback(async () => {
     setLoading(true);

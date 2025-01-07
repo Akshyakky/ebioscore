@@ -8,13 +8,13 @@ import { useLoading } from "../../../../../context/LoadingContext";
 import { showAlert } from "../../../../../utils/Common/showAlert";
 import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../../components/Button/CustomButton";
-import { RoomGroupDto, RoomListDto, WrBedDto } from "../../../../../interfaces/hospitalAdministration/Room-BedSetUpDto";
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import { roomGroupService, roomListService, wrBedService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { useAppSelector } from "@/store/hooks";
+import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 
 interface RoomListDetailsProps {
   roomLists: RoomListDto[];
@@ -27,7 +27,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
   const [updatedRoomLists, setUpdatedRoomLists] = useState<RoomListDto[]>([]);
-  const [formData, setFormData] = useState<RoomListDto>(getInitialFormData());
+  const [formData, setFormData] = useState<RoomListDto>({} as RoomListDto);
   const { handleDropdownChange } = useDropdownChange<RoomListDto>(setFormData);
   const dropdownValues = useDropdownValues(["floor", "unit", "roomGroup"]);
   const user = useAppSelector((state) => state.auth);
@@ -45,8 +45,32 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
       : [];
   }, [updatedRoomGroups]);
 
-  function getInitialFormData(): RoomListDto {
-    return {
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        rlID: 0,
+        rlCode: "",
+        rNotes: "",
+        rName: "",
+        noOfBeds: 0,
+        rActiveYN: "Y",
+        rgrpID: 0,
+        compID: user.compID || 0,
+        compCode: user.compCode || "",
+        compName: user.compName || "",
+        transferYN: "Y",
+        rLocation: "",
+        rLocationID: 0,
+        deptName: "",
+        deptID: 0,
+        dulID: 0,
+        unitDesc: "",
+      });
+    }
+  }, [user]);
+
+  const handleAdd = useCallback(() => {
+    setFormData({
       rlID: 0,
       rlCode: "",
       rNotes: "",
@@ -54,9 +78,9 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
       noOfBeds: 0,
       rActiveYN: "Y",
       rgrpID: 0,
-      compID: user.compID || 0,
-      compCode: user.compCode || "",
-      compName: user.compName || "",
+      compID: user?.compID || 0,
+      compCode: user?.compCode || "",
+      compName: user?.compName || "",
       transferYN: "Y",
       rLocation: "",
       rLocationID: 0,
@@ -64,14 +88,32 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
       deptID: 0,
       dulID: 0,
       unitDesc: "",
-    };
-  }
-
-  const handleAdd = useCallback(() => {
-    setFormData(getInitialFormData());
+    });
     setDialogTitle("Add Room");
     setIsDialogOpen(true);
-  }, []);
+  }, [user]);
+
+  // function getInitialFormData(): RoomListDto {
+  //   return {
+  //     rlID: 0,
+  //     rlCode: "",
+  //     rNotes: "",
+  //     rName: "",
+  //     noOfBeds: 0,
+  //     rActiveYN: "Y",
+  //     rgrpID: 0,
+  //     compID: user.compID || 0,
+  //     compCode: user.compCode || "",
+  //     compName: user.compName || "",
+  //     transferYN: "Y",
+  //     rLocation: "",
+  //     rLocationID: 0,
+  //     deptName: "",
+  //     deptID: 0,
+  //     dulID: 0,
+  //     unitDesc: "",
+  //   };
+  // }
 
   useEffect(() => {
     dropdownValues.roomGroup = updatedRoomGroups

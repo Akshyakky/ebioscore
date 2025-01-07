@@ -10,13 +10,13 @@ import { useLoading } from "../../../../../context/LoadingContext";
 import { showAlert } from "../../../../../utils/Common/showAlert";
 import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../../components/Button/CustomButton";
-import { RoomGroupDto, RoomListDto } from "../../../../../interfaces/hospitalAdministration/Room-BedSetUpDto";
 import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
 import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
 import FormField from "../../../../../components/FormField/FormField";
 import useDropdownChange from "../../../../../hooks/useDropdownChange";
 import { roomGroupService, roomListService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { useAppSelector } from "@/store/hooks";
+import { RoomGroupDto, RoomListDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 
 interface RoomGroupDetailsProps {
   roomGroups: RoomGroupDto[];

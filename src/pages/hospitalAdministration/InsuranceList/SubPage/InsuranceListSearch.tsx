@@ -1,6 +1,7 @@
+import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { InsuranceListDto } from "../../../../interfaces/hospitalAdministration/InsuranceListDto";
 import { insuranceListService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
+import React from "react";
 
 interface InsuranceListSearchProps {
   open: boolean;

@@ -3,6 +3,7 @@ import { RoomGroupDto, RoomListDto, WrBedDto } from "../../interfaces/HospitalAd
 import { createEntityService } from "../../utils/Common/serviceFactory";
 import { InsuranceListDto } from "../../interfaces/HospitalAdministration/InsuranceListDto";
 import { AppModifiedMast, AppModifyFieldDto } from "../../interfaces/HospitalAdministration/AppModifiedlistDto";
+import React from "react";
 
 export const roomGroupService = createEntityService<RoomGroupDto>("RoomGroup", "hospitalAdministrations");
 export const roomListService = createEntityService<RoomListDto>("RoomList", "hospitalAdministrations");

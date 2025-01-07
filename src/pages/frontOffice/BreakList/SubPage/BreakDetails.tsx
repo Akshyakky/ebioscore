@@ -18,6 +18,7 @@ import { BreakConDetailData, BreakListData, BreakListDto } from "../../../../int
 import FormField from "../../../../components/FormField/FormField";
 import { breakConDetailsService, resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
 import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
+import { useAppSelector } from "@/store/hooks";
 
 const frequencyCodeMap = {
   none: "FO70",
@@ -39,11 +40,33 @@ const weekDayCodeMap = {
 const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const { compID, compCode, compName } = useSelector((state: any) => state.userDetails);
+
+  // Destructure from useAppSelector for user details
+  const { compID, compCode, compName, userID, userName } = useAppSelector((state: any) => state.auth);
+
   const [isSubmitted] = useState(false);
   const [isOneDay, setIsOneDay] = useState(false);
   const [openFrequencyDialog, setOpenFrequencyDialog] = useState(false);
-  const [formState, setFormState] = useState<BreakListData>(() => initializeFormState(serverDate, compID, compCode, compName));
+  const [formState, setFormState] = useState<BreakListData>({
+    bLID: 0,
+    bLName: "",
+    bLStartTime: serverDate || new Date(),
+    bLEndTime: serverDate || new Date(),
+    bLStartDate: serverDate || new Date(),
+    bLEndDate: serverDate || new Date(),
+    bLFrqNo: 0,
+    bLFrqDesc: "",
+    bLFrqWkDesc: "",
+    bColor: "",
+    rActiveYN: "Y",
+    rNotes: "",
+    isPhyResYN: "Y",
+    compID: compID || 0,
+    compCode: compCode || "",
+    compName: compName || "",
+    transferYN: "N",
+  });
+
   const [, setBreakConDetails] = useState<BreakConDetailData[]>([]);
   const [selectedOption, setSelectedOption] = useState("physician");
   const [resourceData, setResourceData] = useState<any[]>([]);
@@ -310,11 +333,29 @@ const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
   }, [formState, selectedItems, frequencyData, selectedOption]);
 
   const handleClear = useCallback(() => {
-    setFormState(initializeFormState(serverDate, compID, compCode, compName));
+    setFormState({
+      bLID: 0,
+      bLName: "",
+      bLStartTime: serverDate || new Date(),
+      bLEndTime: serverDate || new Date(),
+      bLStartDate: serverDate || new Date(),
+      bLEndDate: serverDate || new Date(),
+      bLFrqNo: 0,
+      bLFrqDesc: "",
+      bLFrqWkDesc: "",
+      bColor: "",
+      rActiveYN: "Y",
+      rNotes: "",
+      isPhyResYN: "Y",
+      compID: compID || 0,
+      compCode: compCode || "",
+      compName: compName || "",
+      transferYN: "N",
+    });
     setBreakConDetails([]);
     setSelectedItems([]);
     setIsOneDay(false);
-  }, [serverDate, compID, compCode, compName]);
+  }, []);
 
   const handleSaveFrequency = useCallback((data: FrequencyData) => {
     setFrequencyData(data);
@@ -520,36 +561,6 @@ const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
       )}
     </>
   );
-};
-
-const initializeFormState = (serverDate: Date, compID: number, compCode: string, compName: string): BreakListData => ({
-  bLID: 0,
-  bLName: "",
-  bLStartTime: serverDate || new Date(),
-  bLEndTime: serverDate || new Date(),
-  bLStartDate: serverDate || new Date(),
-  bLEndDate: serverDate || new Date(),
-  bLFrqNo: 0,
-  bLFrqDesc: "",
-  bLFrqWkDesc: "",
-  bColor: "",
-  rActiveYN: "Y",
-  rNotes: "",
-  isPhyResYN: "Y",
-  compID: compID || 0,
-  compCode: compCode || "",
-  compName: compName || "",
-  transferYN: "N",
-});
-
-const formatTime = (time: string | Date) => {
-  if (typeof time === "string") {
-    return time;
-  }
-
-  const hours = time.getHours().toString().padStart(2, "0");
-  const minutes = time.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
 };
 
 export default BreakDetails;
