@@ -187,6 +187,7 @@ const RegistrationPage: React.FC = () => {
   }, [userInfo, initializeFormData, fetchLatestUHID]);
 
   const validateFormData = useCallback(() => {
+    debugger;
     const errors: RegistrationFormErrors = {};
     if (!formData.patRegisters.pChartCode.trim()) {
       errors.pChartCode = "UHID is required.";
@@ -221,6 +222,7 @@ const RegistrationPage: React.FC = () => {
   }, [formData]);
 
   const handleSave = useCallback(async () => {
+    debugger;
     setIsSubmitted(true);
     if (!validateFormData()) {
       notifyWarning("Please fill all mandatory fields.");
@@ -229,6 +231,7 @@ const RegistrationPage: React.FC = () => {
 
     setLoading(true);
     try {
+      debugger;
       const response = await PatientService.savePatient(formData);
       if (response.success && response.data) {
         const pChartID = response.data;
@@ -277,6 +280,7 @@ const RegistrationPage: React.FC = () => {
   const handlePatientSelect = useCallback(async (selectedSuggestion: string) => {
     setLoading(true);
     try {
+      debugger;
       const numbersArray = extractNumbers(selectedSuggestion);
       const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
       if (pChartID) {
@@ -292,6 +296,7 @@ const RegistrationPage: React.FC = () => {
     async (pChartID: number) => {
       setLoading(true);
       try {
+        debugger;
         const patientDetails = await PatientService.getPatientDetails(pChartID);
         if (patientDetails.success && patientDetails.data) {
           setIsEditMode(true);

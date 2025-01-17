@@ -7,7 +7,7 @@ import CustomButton from "../Button/CustomButton";
 import FormField from "../FormField/FormField";
 import { appModifiedListService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { showAlert } from "../../utils/Common/showAlert";
-import { AppModifyFieldDto } from "@/interfaces/hospitalAdministration/AppModifiedlistDto";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
 
 interface ModifiedFieldDialogProps {
   open: boolean;

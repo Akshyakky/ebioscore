@@ -11,7 +11,7 @@ import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
-import { AppModifyFieldDto } from "../../../../interfaces/hospitalAdministration/AppModifiedlistDto";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
 
 interface PersonalDetailsProps {
   formData: PatientRegistrationDto;
@@ -32,6 +32,44 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
   const { fieldsList, defaultFields } = useFieldsList(["Nationality"]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
+
+  const titleToGenderMap: { [key: string]: string } = {
+    MR: "M",
+    MRS: "F",
+    MISS: "F",
+    MAST: "M",
+    Baby: "F",
+    "B/O": "M",
+    Dr: "",
+    "M/s": "",
+    SRI: "M",
+    SMT: "F",
+  };
+
+  const handleTitleChange = (selectedTitleValue: string) => {
+    debugger;
+    // 1) Get "M", "F", or "" from the map
+    const letterVal = titleToGenderMap[selectedTitleValue] || "";
+
+    // 2) Translate letterVal => "Male"/"Female" or empty
+    const mappedGender = letterVal === "M" ? "Male" : letterVal === "F" ? "Female" : "";
+
+    // 3) Update both pGenderVal and pGender
+    setFormData((prevFormData) => {
+      const updatedFormData = {
+        ...prevFormData,
+        patRegisters: {
+          ...prevFormData.patRegisters,
+          pTitleVal: selectedTitleValue,
+          pTitle: selectedTitleValue,
+          pGenderVal: mappedGender, // "Male" or "Female"
+          pGender: mappedGender, // Also set pGender so no validation error
+        },
+      };
+      console.log("Updated FormData:", updatedFormData);
+      return updatedFormData;
+    });
+  };
 
   useEffect(() => {
     uhidRef.current?.focus();
@@ -249,10 +287,11 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         ControlID="Title"
         value={formData.patRegisters.pTitleVal || ""}
         options={dropdownValues.title}
-        onChange={handleDropdownChange(["patRegisters", "pTitleVal"], ["patRegisters", "pTitle"], dropdownValues.title)}
+        onChange={(e) => handleTitleChange(e.target.value)} // Call the handler
         isMandatory={true}
         isSubmitted={isSubmitted}
       />
+
       <FormField
         type="text"
         label="First Name"
@@ -294,7 +333,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         isMandatory={true}
         maxLength={30}
       />
-
       <FormField
         type="select"
         label="Gender"
@@ -306,6 +344,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         isMandatory={true}
         isSubmitted={isSubmitted}
       />
+
       <FormField
         type="radio"
         label=""

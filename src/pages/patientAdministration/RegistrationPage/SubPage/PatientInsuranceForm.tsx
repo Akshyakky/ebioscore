@@ -11,9 +11,9 @@ import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdow
 import useDayjs from "../../../../hooks/Common/useDateTime";
 import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
-import { AppModifyFieldDto } from "../../../../interfaces/hospitalAdministration/AppModifiedlistDto";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useAppSelector } from "@/store/hooks";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
 
 interface PatientInsuranceFormProps {
   show: boolean;
