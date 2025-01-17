@@ -10,7 +10,7 @@ import { DeptUnitListService } from "../../../../services/HospitalAdministration
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { useAppSelector } from "@/store/hooks";
-import { DeptUnitListDto } from "@/interfaces/hospitalAdministration/DeptunitListDto";
+import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptunitListDto";
 
 interface DeptUnitListDetailsProps {
   editData?: DeptUnitListDto;
