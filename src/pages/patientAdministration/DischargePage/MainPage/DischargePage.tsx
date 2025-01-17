@@ -33,7 +33,6 @@ const DischargePage: React.FC = () => {
 
     if (admission.ipAdmissionDto?.pChartID) {
       try {
-        debugger;
         const result = await extendedAdmissionService.getPatientAdmissionStatus(admission.ipAdmissionDto.pChartID);
         if (result.success && result.data?.admissionHistory) {
           const formattedHistory = extendedAdmissionService.formatAdmissionHistoryForDisplay(result.data.admissionHistory);

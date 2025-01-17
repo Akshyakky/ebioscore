@@ -73,7 +73,7 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
     (kinDetails: PatNokDetailsDto) => {
       const kinWithDefaults = {
         ...kinDetails,
-        rActiveYN: "Y", // Set default active status for new records
+        rActiveYN: "Y",
       };
 
       setGridKinData((prevData) => {

@@ -149,7 +149,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
     async (selectedSuggestion: string) => {
       setLoading(true);
       try {
-        debugger;
         const pChartID = extractNumbers(selectedSuggestion)[0] || null;
         if (pChartID) {
           setNextOfKinData((prev) => ({
@@ -181,7 +180,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
           }
         }
       } catch (error) {
-        console.error("Error fetching patient details:", error);
       } finally {
         setLoading(false);
       }

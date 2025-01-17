@@ -47,14 +47,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
   };
 
   const handleTitleChange = (selectedTitleValue: string) => {
-    debugger;
-    // 1) Get "M", "F", or "" from the map
     const letterVal = titleToGenderMap[selectedTitleValue] || "";
-
-    // 2) Translate letterVal => "Male"/"Female" or empty
     const mappedGender = letterVal === "M" ? "Male" : letterVal === "F" ? "Female" : "";
-
-    // 3) Update both pGenderVal and pGender
     setFormData((prevFormData) => {
       const updatedFormData = {
         ...prevFormData,
@@ -62,11 +56,10 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
           ...prevFormData.patRegisters,
           pTitleVal: selectedTitleValue,
           pTitle: selectedTitleValue,
-          pGenderVal: mappedGender, // "Male" or "Female"
-          pGender: mappedGender, // Also set pGender so no validation error
+          pGenderVal: mappedGender,
+          pGender: mappedGender,
         },
       };
-      console.log("Updated FormData:", updatedFormData);
       return updatedFormData;
     });
   };

@@ -126,7 +126,6 @@ class ExtendedAdmissionService extends GenericEntityService<AdmissionDto> {
   }
 
   private formatAdmissionStatus(status: AdmissionStatus): string {
-    debugger;
     const statusMap: Record<AdmissionStatus, string> = {
       [AdmissionStatus.ADMITTED]: "Currently Admitted",
       [AdmissionStatus.DISCHARGED]: "Discharged",

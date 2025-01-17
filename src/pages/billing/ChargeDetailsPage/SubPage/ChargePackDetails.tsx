@@ -129,7 +129,6 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
 
   const handleGridDataChange = useCallback(
     async (updatedData: GridData[]) => {
-      debugger;
       const sanitizedRows = await Promise.all(
         updatedData.map(async (row) => {
           let chargeID = parseInt(row.serviceCode, 10);

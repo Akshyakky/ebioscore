@@ -66,7 +66,6 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
 
   const handleSpecialityChange = useCallback(
     (event: SelectChangeEvent<string[]>) => {
-      debugger;
       const selectedValues = event.target.value as string[];
       setSelectedSpecialities(selectedValues);
       const selectedNames = selectedValues
@@ -166,7 +165,6 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
   );
 
   const handleSave = useCallback(async () => {
-    debugger;
     setIsSubmitted(true);
     await onSave();
   }, [onSave]);

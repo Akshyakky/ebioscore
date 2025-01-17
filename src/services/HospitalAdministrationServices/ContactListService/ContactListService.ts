@@ -30,7 +30,6 @@ const fetchActiveSpecialties = async (compId: number): Promise<DropdownOption[]>
 // Generate a contact code based on the provided prefix and padding length
 const generateContactCode = async (prefix: string, padLength: number = 5): Promise<OperationResult<string>> => {
   try {
-    debugger;
     // Sending the API request to generate the contact code
     const response = await apiService.get<OperationResult<string>>(`ContactList/GenerateContactCode`, getToken(), { prefix, padLength });
 

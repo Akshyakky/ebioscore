@@ -270,7 +270,6 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
   }, [selectedAdmission, formState.bedID, formState.admitID]);
 
   const handleSave = useCallback(async () => {
-    debugger;
     setIsSubmitted(true);
 
     if (!formState.pChartID || !formState.bedID || !formState.reasonForTransfer) {
