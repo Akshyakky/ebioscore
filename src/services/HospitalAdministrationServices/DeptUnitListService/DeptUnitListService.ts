@@ -2,7 +2,7 @@ import { store } from "@/store";
 import { APIConfig } from "../../../apiConfig";
 import { OperationResult } from "../../../interfaces/Common/OperationResult";
 import { CommonApiService } from "../../CommonApiService";
-import { DeptUnitListDto } from "../../../interfaces/hospitalAdministration/DeptunitListDto";
+import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptunitListDto";
 
 const apiService = new CommonApiService({
   baseURL: APIConfig.hospitalAdministrations,
