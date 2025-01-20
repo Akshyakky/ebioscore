@@ -140,6 +140,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
 
   const handleNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
+      debugger;
       const value = e.target.value;
       const validatedValue = value.replace(/[^a-zA-Z\s]/g, "").toUpperCase();
       setFormData((prevFormData) => ({
@@ -280,7 +281,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         ControlID="Title"
         value={formData.patRegisters.pTitleVal || ""}
         options={dropdownValues.title}
-        onChange={(e) => handleTitleChange(e.target.value)} // Call the handler
+        onChange={(e) => handleTitleChange(e.target.value)}
         isMandatory={true}
         isSubmitted={isSubmitted}
       />
