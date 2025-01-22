@@ -34,16 +34,16 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
     try {
       const dateFilterTypeEnum = dateRange ? DateFilterType[dateRange as keyof typeof DateFilterType] : undefined;
       const data = await RevisitService.getWaitingPatientDetails(attendingPhy ? parseInt(attendingPhy) : undefined, dateFilterTypeEnum, fromDate, toDate);
+
+      // Set the search results
       setSearchResults(data.data || []);
 
-      if (data.data?.length === 0) {
-        showAlert("Info", "No waiting patients found for the selected criteria.", "info");
-      }
+      // Do not show any alert if no data is found
     } catch (error) {
       console.error("Failed to fetch waiting patient details", error);
       showAlert("Error", "Failed to fetch waiting patient details. Please try again.", "error");
     }
-  }, [userInfo.token, attendingPhy, dateRange, fromDate, toDate]);
+  }, [attendingPhy, dateRange, fromDate, toDate]);
 
   useEffect(() => {
     fetchWaitingPatients();

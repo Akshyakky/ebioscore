@@ -25,6 +25,7 @@ import { OPVisitDto, RevisitFormErrors } from "../../../../interfaces/PatientAdm
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { useAppSelector } from "@/store/hooks";
+import { showAlert } from "@/utils/Common/showAlert";
 
 const RevisitPage: React.FC = () => {
   const userInfo = useAppSelector((state) => state.auth);
@@ -89,6 +90,7 @@ const RevisitPage: React.FC = () => {
   const { handleDropdownChange } = useDropdownChange<OPVisitDto>(setRevisitFormData);
   const uhidRef = useRef<HTMLInputElement>(null);
   const insurancePageRef = useRef<any>(null);
+  const [resetKey, setResetKey] = useState(0);
 
   const loadDropdownValues = useCallback(async () => {
     setLoading(true);
@@ -193,8 +195,12 @@ const RevisitPage: React.FC = () => {
     setShouldClearInsuranceData(true);
     setIsSubmitted(false);
     setFormErrors({});
-    if (uhidRef.current) uhidRef.current.focus();
-  }, [revisitInitialState]);
+    setAvailableAttendingPhysicians([]);
+    setResetKey((prev) => prev + 1);
+    if (uhidRef.current) {
+      uhidRef.current.focus();
+    }
+  }, []);
 
   const handleSave = useCallback(async () => {
     setIsSubmitted(true);
@@ -206,6 +212,7 @@ const RevisitPage: React.FC = () => {
       if (response && response.success) {
         setSuccessAlert({ open: true, message: "Save successful" });
         handleClear();
+        showAlert("Success", "Error fetching charge details.", "success");
       } else {
         console.error("Save failed", response);
       }
@@ -216,7 +223,9 @@ const RevisitPage: React.FC = () => {
     }
   }, [revisitFormData, validateForm, setLoading, handleClear]);
 
-  const handleCloseSuccessAlert = useCallback(() => setSuccessAlert((prev) => ({ ...prev, open: false })), []);
+  const handleCloseSuccessAlert = useCallback(() => {
+    setSuccessAlert({ open: false, message: "" });
+  }, []);
 
   useEffect(() => {
     if (shouldClearInsuranceData) {
@@ -236,6 +245,7 @@ const RevisitPage: React.FC = () => {
             actions={[{ label: "OK", onClick: handleCloseSuccessAlert }]}
           />
         )}
+
         <Box sx={{ marginBottom: 2 }}>
           <ActionButtonGroup buttons={actionButtons} />
         </Box>
@@ -245,6 +255,7 @@ const RevisitPage: React.FC = () => {
           <section aria-labelledby="personal-details-header">
             <Grid container spacing={2} alignItems="flex-start">
               <FormField
+                key={resetKey}
                 type="autocomplete"
                 label="UHID"
                 value={revisitFormData.pChartCode}
@@ -313,11 +324,18 @@ const RevisitPage: React.FC = () => {
                 <FormField
                   type="select"
                   label="Attending Physician"
-                  value={revisitFormData.attendingPhysicianId}
+                  value={`${revisitFormData.attendingPhysicianId}-${revisitFormData.attendingPhysicianCDID}`} // Use conID-cdID for unique identification
                   name="attendingPhysicianId"
                   ControlID="AttendingPhysician"
                   options={availableAttendingPhysicians}
-                  onChange={handleDropdownChange(["attendingPhysicianId"], ["attendingPhysicianName"], availableAttendingPhysicians)}
+                  onChange={(event: SelectChangeEvent<string>) => {
+                    const [conID, cdID] = event.target.value.split("-");
+                    setRevisitFormData((prev) => ({
+                      ...prev,
+                      attendingPhysicianId: Number(conID),
+                      attendingPhysicianCDID: Number(cdID), // Store cdID in the form data
+                    }));
+                  }}
                   isMandatory={true}
                   isSubmitted={isSubmitted}
                   errorMessage={formErrors.attndPhyID}
