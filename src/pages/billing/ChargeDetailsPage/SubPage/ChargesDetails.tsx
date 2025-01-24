@@ -548,7 +548,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       return;
     }
     try {
-      debugger;
       const formattedChargeAliases = aliasData.map((alias) => ({
         chaliasID: alias.id || 0,
         chargeID: formData.chargeInfo.chargeID || 0,

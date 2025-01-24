@@ -22,6 +22,7 @@ import { AllergyDto } from "../../../interfaces/ClinicalManagement/AllergyDto";
 import { allergyService } from "../../../services/ClinicalManagementServices/allergyService";
 import AllergyHistory from "./Allergies/AllergyHistory";
 import { useAppSelector } from "@/store/hooks";
+import React from "react";
 
 export interface HistoryState {
   familyHistory: OPIPHistFHDto[];
@@ -112,7 +113,6 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
   const pshService = createEntityService<OPIPHistPSHDto>("OPIPHistPSH", "clinicalManagementURL");
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    debugger;
     setTabValue(newValue);
   };
 
@@ -232,7 +232,6 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
 
   const handleAllergyChange = useCallback(
     (newAllergy: AllergyDto) => {
-      debugger;
       setHistoryState((prev) => {
         const updated = {
           ...prev,

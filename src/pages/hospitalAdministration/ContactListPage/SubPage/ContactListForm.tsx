@@ -11,8 +11,9 @@ import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/Modi
 import { useAppSelector } from "@/store/hooks";
 import { ContactListData } from "../../../../interfaces/HospitalAdministration/ContactListData";
 import React from "react";
-import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { showAlert } from "@/utils/Common/showAlert";
 
 type SwitchStates = {
   isEmployee: boolean;
@@ -57,21 +58,24 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
   const [dialogCategory, setDialogCategory] = useState<string>("");
 
   useEffect(() => {
-    if (contactList.contactDetailsDto && contactList.contactDetailsDto.length > 0) {
-      const specialityIds = contactList.contactDetailsDto.map((detail) => detail.facName.toString());
-      setSelectedSpecialities(specialityIds);
-    } else {
-      setSelectedSpecialities([]);
+    if (contactList.contactDetailsDto.length > 0) {
+      const specialties = contactList.contactDetailsDto.filter((detail) => detail.facName).map((detail) => detail.facName.toString());
+      setSelectedSpecialities(specialties);
     }
-  }, [contactList.contactDetailsDto]);
+  }, [contactList]);
 
   const handleSpecialityChange = useCallback(
-    (event: SelectChangeEvent<unknown>) => {
-      const value = event.target.value as string[];
-      setSelectedSpecialities(value);
+    (event: SelectChangeEvent<string[]>) => {
+      const selectedValues = event.target.value as string[];
+      setSelectedSpecialities(selectedValues);
+      const selectedNames = selectedValues
+        .map((val) => dropdownValues.speciality.find((opt) => opt.value === val)?.label || "")
+        .filter(Boolean)
+        .join(", ");
+
       setContactList((prev) => ({
         ...prev,
-        contactDetailsDto: value.map((val) => ({
+        contactDetailsDto: selectedValues.map((val) => ({
           facID: parseInt(val),
           facName: dropdownValues.speciality.find((opt) => opt.value === val)?.label || "",
           compID: compID!,
@@ -84,48 +88,44 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
           rActiveYN: "Y",
           rNotes: "",
         })),
+        contactMastDto: {
+          ...prev.contactMastDto,
+          specialityNames: selectedNames,
+        },
       }));
     },
-    [compID, compCode, compName, dropdownValues.speciality, setContactList]
+    [dropdownValues.speciality, compID, compCode, compName, setContactList]
   );
 
   const handleCategoryChange = useCallback(
     async (event: SelectChangeEvent<unknown>) => {
       const selectedCategory = event.target.value as string;
-      const categoryOption = dropdownValues.category.find((opt) => opt.value === selectedCategory);
+      setContactList((prev) => ({
+        ...prev,
+        contactMastDto: {
+          ...prev.contactMastDto,
+          consValue: selectedCategory,
+          conCat: selectedCategory,
+        },
+      }));
       try {
-        handleDropdownChange(["contactMastDto", "consValue"], ["contactMastDto", "conCat"], dropdownValues.category);
-        if (selectedCategory && categoryOption) {
-          const prefix = categoryOption.value.toString().substring(0, 3).toUpperCase();
-          console.log("Requesting next code with params:", { prefix, padLength: 5 });
-          const result = await ContactListService.getNextCode({
-            prefix,
-            padLength: 5,
-          });
-
-          console.log("GetNextCode response:", result);
-
-          if (result && result.success && result.data) {
-            setContactList((prev: any) => ({
-              ...prev,
-              contactMastDto: {
-                ...prev.contactMastDto,
-                conCode: result.data,
-              },
-              contactAddressDto: {
-                ...prev.contactAddressDto,
-                conCode: result.data,
-              },
-            }));
-          } else {
-            console.error("Failed to generate next code:", result.errorMessage);
-          }
+        const result = await ContactListService.generateContactCode(selectedCategory, 5);
+        if (result) {
+          setContactList((prev: any) => ({
+            ...prev,
+            contactMastDto: {
+              ...prev.contactMastDto,
+              conCode: result,
+            },
+          }));
+        } else {
+          showAlert("Error", "Failed to generate code", "error");
         }
       } catch (error) {
-        console.error("Error in handleCategoryChange:", error);
+        showAlert("Error", "An error occurred while generating the contact code", "error");
       }
     },
-    [dropdownValues.category, handleDropdownChange, setContactList]
+    [setContactList]
   );
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -235,17 +235,6 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
         <section>
           <Grid container spacing={2} alignItems="flex-start">
             <FormField
-              type="text"
-              label="Code"
-              name="conCode"
-              ControlID="txtCode"
-              value={contactList.contactMastDto.conCode}
-              onChange={handleInputChange}
-              isSubmitted={isSubmitted}
-              isMandatory={true}
-              gridProps={{ xs: 12, sm: 6, md: 3 }}
-            />
-            <FormField
               type="select"
               label="Category"
               name="conCat"
@@ -257,6 +246,19 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               isSubmitted={isSubmitted}
               gridProps={{ xs: 12, sm: 6, md: 3 }}
             />
+
+            <FormField
+              type="text"
+              label="Code"
+              name="conCode"
+              ControlID="txtCode"
+              value={contactList.contactMastDto.conCode}
+              onChange={handleInputChange}
+              isSubmitted={isSubmitted}
+              isMandatory={true}
+              gridProps={{ xs: 12, sm: 6, md: 3 }}
+            />
+
             <FormField
               type="select"
               label="Department"
@@ -273,14 +275,12 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               <FormField
                 type="multiselect"
                 label="Speciality"
-                name="selectedSpecialities"
-                ControlID="Speciality"
+                name="specialities"
+                ControlID="specialities"
                 value={selectedSpecialities}
-                options={dropdownValues.speciality}
+                options={dropdownValues.speciality || []}
                 onChange={handleSpecialityChange}
-                isMandatory={true}
                 isSubmitted={isSubmitted}
-                gridProps={{ xs: 12, sm: 6, md: 3 }}
               />
             )}
           </Grid>

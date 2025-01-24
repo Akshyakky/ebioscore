@@ -1,4 +1,3 @@
-// src/pages/inventoryManagement/MedicationListPage/SubPage/MedicationListSearch.tsx
 import React, { useMemo } from "react";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { MedicationFormDto } from "../../../../interfaces/ClinicalManagement/MedicationFormDto";
@@ -12,11 +11,13 @@ interface MedicationFormSearchProps {
 
 const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClose, onSelect }) => {
   const medicationFormService = useMemo(() => createEntityService<MedicationFormDto>("MedicationForm", "clinicalManagementURL"), []);
+
   const fetchItems = async () => {
     try {
       const items = await medicationFormService.getAll();
       return items.data || [];
     } catch (error) {
+      console.error("Error fetching medication forms:", error);
       return [];
     }
   };
@@ -30,15 +31,15 @@ const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClo
     }
   };
 
-  const getItemId = (item: MedicationFormDto) => item.mlID;
+  const getItemId = (item: MedicationFormDto) => item.mFID;
   const getItemActiveStatus = (item: MedicationFormDto) => item.rActiveYN === "Y";
 
   const columns = [
-    { key: "serialNumber", header: "Sl.No", visible: true, sortable: true },
-    { key: "mlCode", header: "Medication Form Code", visible: true },
-    { key: "medText", header: "Medication Form Name", visible: true },
-    { key: "mfName", header: "Medication Form", visible: true },
-    { key: "mGenName", header: "Generic Name", visible: true },
+    { key: "serialNumber", header: "Sl.No", visible: true },
+    { key: "mFCode", header: "Medication Form Code", visible: true },
+    { key: "mFName", header: "Medication Form Name", visible: true },
+    { key: "modifyYN", header: "Modify", visible: true },
+    { key: "defaultYN", header: "Default", visible: true },
     { key: "rNotes", header: "Notes", visible: true },
   ];
 
@@ -53,7 +54,7 @@ const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClo
       columns={columns}
       getItemId={getItemId}
       getItemActiveStatus={getItemActiveStatus}
-      searchPlaceholder="Enter medication code or text"
+      searchPlaceholder="Enter medication form code or text"
       isActionVisible={true}
       isEditButtonVisible={true}
       isStatusVisible={true}

@@ -234,23 +234,17 @@ const RegistrationPage: React.FC = () => {
         const pChartID = response.data;
         let hasErrors = false;
         const actionText = isEditMode ? "updated" : "saved";
-
-        // Save Next of Kin Details
         if (nextOfKinPageRef.current) {
           try {
             await nextOfKinPageRef.current.saveKinDetails(pChartID);
           } catch (error) {
-            console.error("Error saving kin details:", error);
             hasErrors = true;
           }
         }
-
-        // Save Insurance Details
         if (insurancePageRef.current) {
           try {
             await insurancePageRef.current.saveInsuranceDetails(pChartID);
           } catch (error) {
-            console.error("Error saving insurance details:", error);
             hasErrors = true;
           }
         }
@@ -267,7 +261,6 @@ const RegistrationPage: React.FC = () => {
         throw new Error(response.errorMessage || "Failed to save registration.");
       }
     } catch (error) {
-      console.error("Registration error:", error);
       notifyError(error instanceof Error ? error.message : "An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -297,10 +290,8 @@ const RegistrationPage: React.FC = () => {
           setIsEditMode(true);
           setFormData(patientDetails.data);
         } else {
-          console.error("Fetching patient details was not successful or data is undefined");
         }
       } catch (error) {
-        console.error("Error fetching patient details:", error);
       } finally {
         setLoading(false);
       }

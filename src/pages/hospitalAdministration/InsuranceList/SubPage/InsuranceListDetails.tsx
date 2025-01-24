@@ -6,14 +6,14 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import FormField from "../../../../components/FormField/FormField";
 import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { InsuranceListDto } from "../../../../interfaces/hospitalAdministration/InsuranceListDto";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
 import { insuranceListService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
-import { AppModifyFieldDto } from "../../../../interfaces/hospitalAdministration/AppModifiedlistDto";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useAppSelector } from "@/store/hooks";
+import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
 
 const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData }) => {
   const [formState, setFormState] = useState<InsuranceListDto>({

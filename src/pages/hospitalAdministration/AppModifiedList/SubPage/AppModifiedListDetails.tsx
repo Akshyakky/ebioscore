@@ -147,7 +147,6 @@ const AppModifiedDetails: React.FC = () => {
 
   useEffect(() => {
     const fetchMainModules = async () => {
-      debugger;
       if (token) {
         setIsDropdownLoading(true);
         try {

@@ -9,7 +9,6 @@ import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListDat
 const ReasonListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<ReasonListData | undefined>(undefined);
-
   const handleAdvancedSearch = () => {
     setIsSearchOpen(true);
   };

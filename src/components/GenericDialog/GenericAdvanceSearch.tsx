@@ -12,6 +12,7 @@ type ExtendedItem<T> = T & {
   serialNumber: number;
   Status: string;
 };
+
 interface CommonSearchDialogProps<T> {
   open: boolean;
   onClose: () => void;
@@ -60,36 +61,88 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<T[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
     if (open) {
       fetchAllItems();
+    } else {
+      setSearchTerm("");
+      setDataLoaded(false);
     }
   }, [open]);
 
   const fetchAllItems = async () => {
-    debugger;
-    const items = await fetchItems();
-    const initialSwitchStatus = items.reduce(
-      (statusMap, item) => {
-        statusMap[getItemId(item)] = getItemActiveStatus(item);
-        return statusMap;
-      },
-      {} as { [key: number]: boolean }
-    );
-    setSwitchStatus(initialSwitchStatus);
-    setSearchResults(items);
+    setIsLoading(true);
+    setDataLoaded(false);
+    try {
+      const items = await fetchItems();
+      if (!Array.isArray(items)) {
+        console.error("Fetched items is not an array:", items);
+        setSearchResults([]);
+        return;
+      }
+
+      const initialSwitchStatus = items.reduce(
+        (statusMap, item) => {
+          if (item && getItemId(item)) {
+            statusMap[getItemId(item)] = getItemActiveStatus(item);
+          }
+          return statusMap;
+        },
+        {} as { [key: number]: boolean }
+      );
+
+      setSwitchStatus(initialSwitchStatus);
+      setSearchResults(items);
+      setDataLoaded(true);
+    } catch (error) {
+      console.error("Error fetching items:", error);
+      setSearchResults([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleEditAndClose = (item: T) => {
+  const handleEditAndClose = (rowIndex: number) => {
+    if (!dataLoaded) {
+      console.error("Data not yet loaded");
+      return;
+    }
+
+    if (!Array.isArray(searchResults) || searchResults.length === 0) {
+      console.error("No search results available");
+      return;
+    }
+
+    if (rowIndex < 0 || rowIndex >= searchResults.length) {
+      console.error(`Invalid row index: ${rowIndex}. Available rows: ${searchResults.length}`);
+      return;
+    }
+
+    const item = searchResults[rowIndex];
+    if (!item) {
+      console.error("Item not found at index:", rowIndex);
+      return;
+    }
+
+    if (!getItemId(item)) {
+      console.error("Selected item is missing ID:", item);
+      return;
+    }
+
     onClose();
     onSelect(item);
   };
-
   const handleSwitchChange = async (item: ExtendedItem<T>, checked: boolean) => {
-    const success = await updateActiveStatus(getItemId(item), checked);
-    if (success) {
-      setSwitchStatus((prev) => ({ ...prev, [getItemId(item)]: checked }));
+    try {
+      const success = await updateActiveStatus(getItemId(item), checked);
+      if (success) {
+        setSwitchStatus((prev) => ({ ...prev, [getItemId(item)]: checked }));
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
     }
   };
 
@@ -106,9 +159,12 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
           header: "Edit",
           visible: true,
           sortable: false,
-          render: (_item: ExtendedItem<T>, rowIndex: number) => <CustomButton text="Edit" onClick={() => handleEditAndClose(searchResults[rowIndex])} icon={Edit} size="small" />,
+          render: (_item: ExtendedItem<T>, rowIndex: number) => (
+            <CustomButton text="Edit" onClick={() => handleEditAndClose(rowIndex)} icon={Edit} size="small" disabled={isLoading || !dataLoaded} />
+          ),
         }
       : null;
+
     const statusColumn: Column<ExtendedItem<T>> | null = isStatusVisible
       ? {
           key: "Status" as keyof ExtendedItem<T> & string,
@@ -118,27 +174,33 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
           render: (item: ExtendedItem<T>) => <Typography variant="body2">{switchStatus[getItemId(item)] ? "Active" : "Hidden"}</Typography>,
         }
       : null;
+
     const actionColumn: Column<ExtendedItem<T>> | null = isActionVisible
       ? {
           key: "action" as keyof ExtendedItem<T> & string,
           header: "Action",
           visible: true,
           sortable: false,
-          render: (item: ExtendedItem<T>) => (
-            <CustomSwitch size="small" color="secondary" checked={switchStatus[getItemId(item)]} onChange={(event) => handleSwitchChange(item, event.target.checked)} />
-          ),
+          render: (item: ExtendedItem<T>) => {
+            const isItemEnabled = switchStatus[getItemId(item)] ?? false;
+
+            return (
+              <CustomSwitch size="small" color="secondary" checked={isItemEnabled} onChange={(event) => handleSwitchChange(item, event.target.checked)} disabled={isLoading} />
+            );
+          },
         }
       : null;
-    // Convert original columns to work with ExtendedItem<T>
+
     const convertedColumns: Column<ExtendedItem<T>>[] = originalColumns.map((col) => ({
       ...col,
       key: col.key as keyof ExtendedItem<T> & string,
       render: col.render ? (item: ExtendedItem<T>, rowIndex: number, columnIndex: number) => col.render!(item, rowIndex, columnIndex) : undefined,
     }));
+
     return [...(editColumn ? [editColumn] : []), ...convertedColumns, ...(statusColumn ? [statusColumn] : []), ...(actionColumn ? [actionColumn] : [])] as Column<
       ExtendedItem<T>
     >[];
-  }, [isEditButtonVisible, isStatusVisible, isActionVisible, originalColumns, switchStatus, searchResults]);
+  }, [isEditButtonVisible, isStatusVisible, isActionVisible, originalColumns, switchStatus, searchResults, isLoading]);
 
   const handleDialogClose = () => {
     setSearchTerm("");
@@ -180,6 +242,7 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
   );
 
   const dialogActions = <CustomButton variant="contained" text="Close" icon={Close} size="medium" onClick={handleDialogClose} color="secondary" />;
+
   return (
     <GenericDialog
       open={open}
@@ -197,7 +260,13 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
         overflowY: "auto",
       }}
     >
-      {dialogContent}
+      {isLoading ? (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+          <Typography>Loading...</Typography>
+        </Box>
+      ) : (
+        dialogContent
+      )}
     </GenericDialog>
   );
 }

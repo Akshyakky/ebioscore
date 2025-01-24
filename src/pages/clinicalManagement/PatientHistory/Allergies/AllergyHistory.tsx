@@ -56,7 +56,6 @@ const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipC
   const [medicationSuggestions, setMedicationSuggestions] = useState<string[]>([]);
 
   useEffect(() => {
-    debugger;
     if (historyList) {
       setFormState(historyList);
     }

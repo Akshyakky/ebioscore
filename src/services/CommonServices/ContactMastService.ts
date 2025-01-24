@@ -13,6 +13,7 @@ const getToken = () => store.getState().auth.token!;
 interface PhyAPIResponse {
   consultantID: string;
   consultantName: string;
+  consultantCDID: string; // cdID
 }
 
 interface RefAPIResponse {
@@ -49,12 +50,13 @@ const fetchRefferalPhy = async (endpoint: string, compId: number): Promise<Dropd
 };
 
 const fetchAvailableAttendingPhysicians = async (pChartID: number): Promise<DropdownOption[]> => {
+  debugger;
   const response = await apiService.get<OperationResult<PhyAPIResponse[]>>("HospitalAdministration/GetAvailableConsultantsForPatientToday", getToken(), { pChartID });
 
   if (response.success) {
     const data = response.data ?? [];
     return data.map((item) => ({
-      value: item.consultantID,
+      value: `${item.consultantID}-${item.consultantCDID}`, // Use a combination of conID and cdID
       label: item.consultantName,
     }));
   } else {

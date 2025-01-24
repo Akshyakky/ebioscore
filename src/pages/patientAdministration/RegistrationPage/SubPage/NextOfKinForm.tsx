@@ -4,7 +4,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
 import { PatNokDetailsDto } from "../../../../interfaces/PatientAdministration/PatNokDetailsDto";
 import FormField from "../../../../components/FormField/FormField";
-import { useSelector } from "react-redux";
 import useDropdownChange from "../../../../hooks/useDropdownChange";
 import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
 import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
@@ -18,8 +17,8 @@ import { showAlert } from "../../../../utils/Common/showAlert";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
 import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
-import { AppModifyFieldDto } from "../../../../interfaces/hospitalAdministration/AppModifiedlistDto";
 import { useAppSelector } from "@/store/hooks";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
 
 interface NextOfKinFormProps {
   show: boolean;
@@ -84,19 +83,22 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
   const { handleDropdownChange } = useDropdownChange<PatNokDetailsDto>(setNextOfKinData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatNokDetailsDto>(setNextOfKinData);
   const { setLoading } = useLoading();
+  const resetNextOfKinFormData = useCallback(() => {
+    setNextOfKinData(nextOfKinInitialFormState);
+  }, [nextOfKinInitialFormState]);
 
   useEffect(() => {
     if (editData) {
       setNextOfKinData({
+        ...nextOfKinInitialFormState,
         ...editData,
-        pNokDob: editData.pNokDob,
+        pNokDob: editData.pNokDob || serverDate,
+        pNokPChartCode: editData.pNokPChartCode || "",
       });
+    } else {
+      resetNextOfKinFormData();
     }
-  }, [editData]);
-
-  const resetNextOfKinFormData = useCallback(() => {
-    setNextOfKinData(nextOfKinInitialFormState);
-  }, [nextOfKinInitialFormState]);
+  }, [editData, nextOfKinInitialFormState, serverDate, resetNextOfKinFormData]);
 
   const handleSubmit = useCallback(async () => {
     setIsSubmitted(true);
@@ -154,27 +156,26 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
             pNokPChartCode: selectedSuggestion.split("|")[0].trim(),
             pNokPChartID: pChartID,
           }));
+
           const response = await PatientService.getPatientDetails(pChartID);
           if (response.success && response.data) {
             const patientDetails = response.data;
             setNextOfKinData((prev) => ({
               ...prev,
-              pNokFName: patientDetails.patRegisters.pFName ?? "",
-              pNokMName: patientDetails.patRegisters.pMName ?? "",
-              pNokLName: patientDetails.patRegisters.pLName ?? "",
-              pNokTitleVal: patientDetails.patRegisters.pTitle ?? "",
+              pNokFName: patientDetails.patRegisters.pFName || "",
+              pNokMName: patientDetails.patRegisters.pMName || "",
+              pNokLName: patientDetails.patRegisters.pLName || "",
+              pNokTitleVal: patientDetails.patRegisters.pTitle || "",
               pNokDob: patientDetails.patRegisters.pDob ? new Date(patientDetails.patRegisters.pDob) : serverDate,
-              pNokRelNameVal: patientDetails.patRegisters.pTypeName ?? "",
-              pNokStreet: patientDetails.patAddress.pAddStreet ?? "",
-              pNokAreaVal: patientDetails.patAddress.patAreaVal ?? "",
-              pNokCityVal: patientDetails.patAddress.pAddCityVal ?? "",
-              pNokActualCountryVal: patientDetails.patAddress.pAddActualCountryVal ?? "",
-              pNokPostcode: patientDetails.patAddress.pAddPostcode ?? "",
-              pAddPhone1: patientDetails.patAddress.pAddPhone1 ?? "", // Make sure this is correctly mapped
-              pAddPhone2: patientDetails.patAddress.pAddPhone2 ?? "",
-              pAddPhone3: patientDetails.patAddress.pAddPhone3 ?? "",
-              pNokCountryVal: patientDetails.patAddress.pAddActualCountryVal ?? "",
-              pNokPssnID: patientDetails.patRegisters.intIdPsprt ?? "",
+              pNokRelNameVal: patientDetails.patRegisters.pTypeName || "",
+              pNokStreet: patientDetails.patAddress.pAddStreet || "",
+              pNokAreaVal: patientDetails.patAddress.patAreaVal || "",
+              pNokCityVal: patientDetails.patAddress.pAddCityVal || "",
+              pNokActualCountryVal: patientDetails.patAddress.pAddActualCountryVal || "",
+              pNokPostcode: patientDetails.patAddress.pAddPostcode || "",
+              pAddPhone1: patientDetails.patAddress.pAddPhone1 || "",
+              pNokCountryVal: patientDetails.patAddress.pAddActualCountryVal || "",
+              pNokPssnID: patientDetails.patRegisters.intIdPsprt || "",
             }));
           }
         }
@@ -183,7 +184,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         setLoading(false);
       }
     },
-    [setLoading, serverDate, setNextOfKinData]
+    [setLoading, serverDate]
   );
 
   const handleDateChange = useCallback((date: Date | null) => {
@@ -192,6 +193,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
       pNokDob: date ? date : serverDate,
     }));
   }, []);
+
   const [, setFormDataDialog] = useState<AppModifyFieldDto>({
     amlID: 0,
     amlName: "",
@@ -249,17 +251,17 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
           label="UHID"
           name="pNokPChartCode"
           ControlID="UHID"
-          value={nextOfkinData.pNokPChartCode}
+          value={nextOfkinData.pNokPChartCode || ""}
           onChange={(e) =>
-            setNextOfKinData({
-              ...nextOfkinData,
+            setNextOfKinData((prev) => ({
+              ...prev,
               pNokPChartCode: e.target.value,
-            })
+            }))
           }
           fetchSuggestions={fetchPatientSuggestions}
           onSelectSuggestion={handlePatientSelect}
           isSubmitted={isSubmitted}
-          isMandatory={true}
+          isMandatory
           placeholder="Search through UHID, Name, DOB, Phone No...."
           gridProps={{ xs: 12, sm: 6, md: 4 }}
         />

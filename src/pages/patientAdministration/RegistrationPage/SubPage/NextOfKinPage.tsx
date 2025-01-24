@@ -45,8 +45,23 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
     setShowKinPopup(true);
   }, []);
 
-  const handleDeleteKin = useCallback((id: number) => {
-    setGridKinData((prevData) => prevData.filter((kin) => kin.pNokID !== id));
+  const handleDeleteKin = useCallback(async (kin: PatNokDetailsDto) => {
+    try {
+      const updatedKin = {
+        ...kin,
+        rActiveYN: "N",
+      };
+      const result = await PatNokService.saveNokDetails(updatedKin);
+      if (result.success) {
+        setGridKinData((prevData) => prevData.filter((item) => item.pNokID !== kin.pNokID));
+        showAlert("Success", "Next of Kin record deactivated successfully", "success");
+      } else {
+        showAlert("Error", "Failed to deactivate Next of Kin record", "error");
+      }
+    } catch (error) {
+      console.error("Error deactivating Next Of Kin:", error);
+      showAlert("Error", "An error occurred while deactivating the record", "error");
+    }
   }, []);
 
   const generateNewId = useCallback(<T extends { ID: number }>(data: T[]): number => {
@@ -56,17 +71,22 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
 
   const handleSaveKin = useCallback(
     (kinDetails: PatNokDetailsDto) => {
+      const kinWithDefaults = {
+        ...kinDetails,
+        rActiveYN: "Y",
+      };
+
       setGridKinData((prevData) => {
-        if (!kinDetails.pNokID && !kinDetails.ID) {
-          return [...prevData, { ...kinDetails, ID: generateNewId(prevData) }];
+        if (!kinWithDefaults.pNokID && !kinWithDefaults.ID) {
+          return [...prevData, { ...kinWithDefaults, ID: generateNewId(prevData) }];
         }
-        if (!kinDetails.pNokID) {
-          return prevData.map((item) => (item.ID === kinDetails.ID ? kinDetails : item));
+        if (!kinWithDefaults.pNokID) {
+          return prevData.map((item) => (item.ID === kinWithDefaults.ID ? kinWithDefaults : item));
         }
-        return prevData.map((item) => (item.pNokID === kinDetails.pNokID ? kinDetails : item));
+        return prevData.map((item) => (item.pNokID === kinWithDefaults.pNokID ? kinWithDefaults : item));
       });
-      setShowKinPopup(false); // Close the form after saving
-      showAlert("Success", "The Kin Details Saved succesfully", "success");
+      setShowKinPopup(false);
+      showAlert("Success", "The Kin Details Saved successfully", "success");
     },
     [generateNewId]
   );
@@ -76,10 +96,12 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
     try {
       const kinDetails = await PatNokService.getNokDetailsByPChartID(pChartID);
       if (kinDetails.success && kinDetails.data) {
-        const formattedData = kinDetails.data.map((kin) => ({
-          ...kin,
-          pNokDob: kin.pNokDob,
-        }));
+        const formattedData = kinDetails.data
+          .filter((kin) => kin.rActiveYN === "Y")
+          .map((kin) => ({
+            ...kin,
+            pNokDob: kin.pNokDob,
+          }));
         setGridKinData(formattedData);
       }
     } catch (error) {
