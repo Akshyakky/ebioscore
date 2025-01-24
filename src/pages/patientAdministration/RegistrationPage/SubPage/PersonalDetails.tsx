@@ -140,7 +140,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
 
   const handleNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
-      debugger;
       const value = e.target.value;
       const validatedValue = value.replace(/[^a-zA-Z\s]/g, "").toUpperCase();
       setFormData((prevFormData) => ({

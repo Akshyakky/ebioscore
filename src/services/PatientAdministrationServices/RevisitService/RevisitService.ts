@@ -49,7 +49,6 @@ export const cancelVisit = async (opVID: number, modifiedBy: string): Promise<Op
   return apiService.post<OperationResult<void>>(`Revisit/CancelVisit/${opVID}`, { modifiedBy }, getToken());
 };
 
-// Exporting the service as an object
 export const RevisitService = {
   getPatientHistoryByPChartID,
   saveOPVisits,

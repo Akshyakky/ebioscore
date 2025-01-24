@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
 import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
@@ -6,13 +6,14 @@ import { SelectChangeEvent, Grid } from "@mui/material";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CloseIcon from "@mui/icons-material/Close";
 import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import { DateFilterType } from "../../../../interfaces/PatientAdministration/revisitFormData";
+import { DateFilterType, OPVisitDto } from "../../../../interfaces/PatientAdministration/revisitFormData";
 import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
 import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import { formatDate } from "../../../../utils/Common/dateUtils";
 import FormField from "../../../../components/FormField/FormField";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { UserState } from "@/store/features/auth/types";
+import { ContactMastService } from "@/services/CommonServices/ContactMastService";
 
 interface WaitingPatientSearchProps {
   userInfo: UserState;
@@ -29,21 +30,20 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
   const [fromDate, setFromDate] = useState<Date | undefined>(new Date());
   const [toDate, setToDate] = useState<Date | undefined>(new Date());
   const [physicians, setPhysicians] = useState<Array<{ value: string; label: string }>>([]);
+  const [originalSearchResults, setOriginalSearchResults] = useState<any[]>([]);
 
   const fetchWaitingPatients = useCallback(async () => {
     try {
       const dateFilterTypeEnum = dateRange ? DateFilterType[dateRange as keyof typeof DateFilterType] : undefined;
       const data = await RevisitService.getWaitingPatientDetails(attendingPhy ? parseInt(attendingPhy) : undefined, dateFilterTypeEnum, fromDate, toDate);
+      const fetchedResults = data.data || [];
+      setOriginalSearchResults(fetchedResults);
       setSearchResults(data.data || []);
-
-      if (data.data?.length === 0) {
-        showAlert("Info", "No waiting patients found for the selected criteria.", "info");
-      }
     } catch (error) {
       console.error("Failed to fetch waiting patient details", error);
       showAlert("Error", "Failed to fetch waiting patient details. Please try again.", "error");
     }
-  }, [userInfo.token, attendingPhy, dateRange, fromDate, toDate]);
+  }, [attendingPhy, dateRange, fromDate, toDate]);
 
   useEffect(() => {
     fetchWaitingPatients();
@@ -53,9 +53,38 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
     setDateRange(event.target.value as string);
   }, []);
 
-  const handleAttendingPhyChange = useCallback((event: SelectChangeEvent<unknown>, child: React.ReactNode) => {
-    setAttendingPhy(event.target.value as string);
-  }, []);
+  useEffect(() => {
+    const fetchPhysicians = async () => {
+      try {
+        const endpoint = "GetActiveConsultants";
+        const fetchedPhysicians = await ContactMastService.fetchAttendingPhysician(endpoint, userInfo.compID);
+        setPhysicians(fetchedPhysicians);
+      } catch (error) {
+        console.error("Failed to fetch attending physicians", error);
+        showAlert("Error", "Failed to fetch attending physicians. Please try again.", "error");
+      }
+    };
+
+    fetchPhysicians();
+  }, [userInfo.compID]);
+
+  const handleAttendingPhyChange = useCallback(
+    (event: SelectChangeEvent<string>) => {
+      const [conID, cdID] = event.target.value.split("-");
+      const selectedPhysician = physicians.find((physician) => physician.value === `${conID}-${cdID}`);
+
+      setAttendingPhy(event.target.value);
+
+      if (selectedPhysician) {
+        console.log("Selected Physician Details:", {
+          consultantID: conID,
+          consultantCDID: cdID,
+          consultantName: selectedPhysician.label.split("|")[0].trim(),
+        });
+      }
+    },
+    [physicians]
+  );
 
   const handlePatientSelect = useCallback(
     (patientId: string) => {
@@ -77,7 +106,7 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
             const result = await RevisitService.cancelVisit(parseInt(opVID), userInfo.userName!);
             if (result.success) {
               showAlert("Success", "Visit cancelled successfully!", "success");
-              fetchWaitingPatients(); // Refresh the list
+              fetchWaitingPatients();
             } else {
               showAlert("Error", `Failed to cancel the visit: ${result.errorMessage}`, "error");
             }
@@ -90,6 +119,17 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
     },
     [userInfo.userName, fetchWaitingPatients]
   );
+
+  const filteredResults = useMemo(() => {
+    if (!searchTerm) return originalSearchResults;
+
+    const lowercasedSearchTerm = searchTerm.toLowerCase().trim();
+    return originalSearchResults.filter((patient) => Object.values(patient).some((value) => String(value).toLowerCase().includes(lowercasedSearchTerm)));
+  }, [searchTerm, originalSearchResults]);
+
+  useEffect(() => {
+    setSearchResults(filteredResults);
+  }, [filteredResults]);
 
   const handleFromDateChange = useCallback(
     (selectedDate: Date | null) => {
@@ -126,7 +166,7 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
     },
     { key: "opNumber", header: "Visit Code", visible: true },
     { key: "pChartCode", header: "UHID", visible: true },
-    { key: "deptName", header: "Patient Name", visible: true },
+    { key: "patientName", header: "Patient Name", visible: true },
     { key: "attendingPhysicianName", header: "Attending Physician", visible: true },
     { key: "rCreatedBy", header: "Visit Created By", visible: true },
     {
@@ -167,17 +207,17 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
             size="small"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <DropdownSelect
-            label="Select Attending Physician"
-            name="attendingPhy"
-            value={attendingPhy}
-            options={physicians}
-            onChange={handleAttendingPhyChange}
-            defaultText="Select Attending Physician"
-            size="small"
-          />
-        </Grid>
+        <FormField
+          type="select"
+          label="Attending Physician"
+          value={attendingPhy}
+          name="attendingPhy"
+          ControlID="AttendingPhysician"
+          options={physicians} // Use fetched physicians
+          onChange={handleAttendingPhyChange}
+          isMandatory={true}
+          size="small"
+        />
         {dateRange === "Custom" && (
           <>
             <FormField

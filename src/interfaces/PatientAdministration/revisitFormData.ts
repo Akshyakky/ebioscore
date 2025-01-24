@@ -21,6 +21,7 @@ export interface OPVisitDto extends RecordFieldsWithPhysician {
   refFacultyID?: number;
   refFaculty?: string;
   oldPChartID: number;
+  attendingPhysicianName: string;
 }
 
 export interface GetPatientVisitHistory {
@@ -38,7 +39,9 @@ export interface RevisitFormErrors {
   deptID?: string;
   attndPhyID?: string;
   primPhyID?: string;
-  // Add other fields as needed
+  attendingPhysicianName?: string;
+  attendingPhysicianSpecialtyId?: string;
+  attendingPhysicianSpecialty?: string;
 }
 
 export enum DateFilterType {

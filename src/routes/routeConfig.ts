@@ -38,6 +38,8 @@ import AlertPage from "@/pages/common/AlertManagerPage/MainPage/Alertpage";
 import MedicationFormPage from "@/pages/clinicalManagement/medicationForm/MainPage/MedicationFormPage";
 import MedicationFrequencyPage from "@/pages/clinicalManagement/MedicationFrequency/MainPage/MedicationFrequencyPage";
 import MedicationDosagePage from "@/pages/clinicalManagement/MedicationDosage/MainPage/MedicationDosagePage";
+import ProcedureListPage from "@/pages/clinicalManagement/ProcedureList/MainPage/ProcedureListPage";
+import MedicationGenericPage from "@/pages/clinicalManagement/MedicationGeneric/MainPage/MedicationGenericPage";
 
 interface RouteConfig {
   path: string;
@@ -83,6 +85,8 @@ const routeConfig: RouteConfig[] = [
   { path: "/WardBedTransferPage", component: WardBedTransferPage, protected: true },
   { path: "/MedicationFrequencyPage", component: MedicationFrequencyPage, protected: true },
   { path: "/MedicationDosagePage", component: MedicationDosagePage, protected: true },
+  { path: "/ProcedureListPage", component: ProcedureListPage, protected: true },
+  { path: "/MedicationGenericPage", component: MedicationGenericPage, protected: true },
 ];
 
 export default routeConfig;

@@ -13,6 +13,7 @@ const getToken = () => store.getState().auth.token!;
 interface PhyAPIResponse {
   consultantID: string;
   consultantName: string;
+  consultantCDID: string; // cdID
 }
 
 interface RefAPIResponse {
@@ -22,11 +23,10 @@ interface RefAPIResponse {
 
 const fetchAttendingPhysician = async (endpoint: string, compId: number): Promise<DropdownOption[]> => {
   const response = await apiService.get<OperationResult<PhyAPIResponse[]>>(`HospitalAdministration/${endpoint}`, getToken(), { compId });
-
   if (response.success) {
     const data = response.data ?? [];
     return data.map((item) => ({
-      value: item.consultantID,
+      value: `${item.consultantID}-${item.consultantCDID}`,
       label: item.consultantName,
     }));
   } else {
@@ -54,7 +54,7 @@ const fetchAvailableAttendingPhysicians = async (pChartID: number): Promise<Drop
   if (response.success) {
     const data = response.data ?? [];
     return data.map((item) => ({
-      value: item.consultantID,
+      value: `${item.consultantID}-${item.consultantCDID}`,
       label: item.consultantName,
     }));
   } else {
