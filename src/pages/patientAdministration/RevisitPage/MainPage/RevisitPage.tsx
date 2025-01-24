@@ -33,9 +33,7 @@ const RevisitPage: React.FC = () => {
   const { setLoading } = useLoading();
   const { performSearch } = useContext(PatientSearchContext);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
-
   const dropdownValues = useDropdownValues(["pic", "department"]);
-
   const DepartmentDropdownValues = useMemo(() => {
     if (!dropdownValues.department) return [];
     return dropdownValues.department.filter((item: any) => item.rActiveYN === "Y" && item.isUnitYN === "Y");
@@ -48,6 +46,8 @@ const RevisitPage: React.FC = () => {
     patOPIP: "O",
     attendingPhysicianId: 0,
     attendingPhysicianName: "",
+    attendingPhysicianSpecialtyId: 0,
+    attendingPhysicianSpecialty: "",
     primaryReferralSourceId: 0,
     primaryReferralSourceName: "",
     primaryPhysicianId: 0,
@@ -151,24 +151,27 @@ const RevisitPage: React.FC = () => {
           ContactMastService.fetchAvailableAttendingPhysicians(pChartID),
           RevisitService.getLastVisitDetailsByPChartID(pChartID),
         ]);
-
-        setAvailableAttendingPhysicians(availablePhysicians);
-
+        const savedPhysicianId = lastVisitResult?.data?.AttendingPhysicianId;
+        const savedPhysicianSpecialtyId = lastVisitResult?.data?.AttendingPhysicianSpecialtyId;
+        const filteredPhysicians = availablePhysicians.filter((physician) => physician.value !== `${savedPhysicianId}-${savedPhysicianSpecialtyId}`);
+        setAvailableAttendingPhysicians(filteredPhysicians);
         if (lastVisitResult && lastVisitResult.success) {
-          const isAttendingPhysicianAvailable = availablePhysicians.some((physician) => physician.value === lastVisitResult.data.attndPhyID);
+          const isSavedPhysicianAvailable = availablePhysicians.some((physician) => physician.value === `${savedPhysicianId}-${savedPhysicianSpecialtyId}`);
+
           setRevisitFormData((prev) => ({
             ...prev,
             pChartCode: selectedSuggestion.split("|")[0].trim(),
             pChartID: pChartID,
-            attndPhyID: isAttendingPhysicianAvailable ? lastVisitResult.data.attndPhyID : 0,
+            attendingPhysicianId: isSavedPhysicianAvailable ? savedPhysicianId : 0,
+            attendingPhysicianCDID: isSavedPhysicianAvailable ? savedPhysicianSpecialtyId : 0,
             deptID: lastVisitResult.data.deptID || prev.deptID,
             pTypeID: lastVisitResult.data.pTypeID || prev.pTypeID,
-            primPhyID: lastVisitResult.data.primPhyID || prev.primaryReferralSourceId,
+            primPhyID: lastVisitResult.data.primaryReferralSourceId || prev.primaryReferralSourceId,
           }));
         }
       }
     } catch (error) {
-      console.error("Error in handlePatientSelect:", error);
+      console.error("Error fetching attending physicians or patient details:", error);
     } finally {
       setLoading(false);
     }
@@ -208,11 +211,20 @@ const RevisitPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await RevisitService.saveOPVisits(revisitFormData);
+      debugger;
+      const response = await RevisitService.saveOPVisits({
+        ...revisitFormData,
+        attendingPhysicianId: revisitFormData.attendingPhysicianId,
+        attendingPhysicianCDID: revisitFormData.attendingPhysicianCDID,
+        attendingPhysicianName: revisitFormData.attendingPhysicianName,
+        attendingPhysicianSpecialtyId: revisitFormData.attendingPhysicianSpecialtyId,
+        attendingPhysicianSpecialty: revisitFormData.attendingPhysicianSpecialty,
+      });
+
       if (response && response.success) {
         setSuccessAlert({ open: true, message: "Save successful" });
         handleClear();
-        showAlert("Success", "Error fetching charge details.", "success");
+        showAlert("Success", "The revisit page is saved successfully", "success");
       } else {
         console.error("Save failed", response);
       }
@@ -250,7 +262,9 @@ const RevisitPage: React.FC = () => {
           <ActionButtonGroup buttons={actionButtons} />
         </Box>
         <PatientSearch show={showPatientSearch} handleClose={() => setShowPatientSearch(false)} onEditPatient={handlePatientSelect} />
+
         <WaitingPatientSearch userInfo={userInfo} show={showWaitingPatientSearch} handleClose={() => setShowWaitingPatientSearch(false)} onPatientSelect={handlePatientSelect} />
+
         <Paper variant="elevation" sx={{ padding: 2 }}>
           <section aria-labelledby="personal-details-header">
             <Grid container spacing={2} alignItems="flex-start">
@@ -324,16 +338,21 @@ const RevisitPage: React.FC = () => {
                 <FormField
                   type="select"
                   label="Attending Physician"
-                  value={`${revisitFormData.attendingPhysicianId}-${revisitFormData.attendingPhysicianCDID}`} // Use conID-cdID for unique identification
+                  value={`${revisitFormData.attendingPhysicianId}-${revisitFormData.attendingPhysicianCDID}`}
                   name="attendingPhysicianId"
                   ControlID="AttendingPhysician"
                   options={availableAttendingPhysicians}
                   onChange={(event: SelectChangeEvent<string>) => {
                     const [conID, cdID] = event.target.value.split("-");
+                    const selectedPhysician = availableAttendingPhysicians.find((physician) => physician.value === `${conID}-${cdID}`);
+
                     setRevisitFormData((prev) => ({
                       ...prev,
                       attendingPhysicianId: Number(conID),
-                      attendingPhysicianCDID: Number(cdID), // Store cdID in the form data
+                      attendingPhysicianCDID: Number(cdID),
+                      attendingPhysicianName: selectedPhysician?.label.split("|")[0].trim() || "",
+                      attendingPhysicianSpecialtyId: Number(cdID),
+                      attendingPhysicianSpecialty: selectedPhysician?.label.split("|")[1]?.trim() || "Unknown Specialty",
                     }));
                   }}
                   isMandatory={true}
