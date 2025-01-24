@@ -8,8 +8,6 @@ import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import { MedicationFormDto } from "../../../../interfaces/ClinicalManagement/MedicationFormDto";
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { useAppSelector } from "@/store/hooks";
 
 interface MedicationFormDetailsProps {
@@ -33,13 +31,28 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
     rNotes: "",
     mFSnomedCode: "",
   });
+  const [medicationForms, setMedicationForms] = useState<MedicationFormDto[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const { setLoading } = useLoading();
-  const { handleDropdownChange } = useDropdownChange(setFormState);
 
   const medicationFormService = useMemo(() => createEntityService<MedicationFormDto>("MedicationForm", "clinicalManagementURL"), []);
-  // const dropdownValues = useDropdownValues(["medicationForm", "medicationGeneric"]);
+
+  useEffect(() => {
+    const fetchMedicationForms = async () => {
+      setLoading(true);
+      try {
+        const response = await medicationFormService.getAll();
+        setMedicationForms(response.data || []);
+      } catch (error) {
+        showAlert("Error", "Failed to fetch medication forms.", "error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMedicationForms();
+  }, [medicationFormService]);
 
   useEffect(() => {
     if (editData) {
@@ -84,10 +97,48 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
     }
   }, [compID, compCode, compName, medicationFormService]);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
-  }, []);
+  const handleInputChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+
+      if (name === "defaultYN" && value === "Y") {
+        // Check if there are other records with DefaultYN = "Y"
+        const formsToUpdate = medicationForms.filter((form) => form.defaultYN === "Y" && form.mFID !== formState.mFID);
+
+        if (formsToUpdate.length > 0) {
+          const confirmed = await new Promise<boolean>((resolve) => {
+            showAlert(
+              "Confirmation",
+              `There are other entries set as default. Setting '${formState.mFName}' as the new default will remove default status from other entries. Continue?`,
+              "warning",
+              {
+                showConfirmButton: true,
+                showCancelButton: true,
+                confirmButtonText: "Yes",
+                cancelButtonText: "No",
+                onConfirm: () => resolve(true),
+                onCancel: () => resolve(false),
+              }
+            );
+          });
+
+          if (!confirmed) {
+            return;
+          }
+          const updatedForms = formsToUpdate.map((form) => ({
+            ...form,
+            defaultYN: "N",
+          }));
+
+          await Promise.all(updatedForms.map((form) => medicationFormService.save(form)));
+
+          setMedicationForms((prev) => prev.map((form) => (formsToUpdate.some((f) => f.mFID === form.mFID) ? { ...form, defaultYN: "N" } : form)));
+        }
+      }
+      setFormState((prev) => ({ ...prev, [name]: value }));
+    },
+    [formState.mFName, medicationForms, medicationFormService]
+  );
 
   const handleSave = useCallback(async () => {
     setIsSubmitted(true);
@@ -95,9 +146,7 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
       showAlert("Error", "Medication Form Code and Name are mandatory.", "error");
       return;
     }
-
     setLoading(true);
-
     try {
       await medicationFormService.save({ ...formState });
       showAlert("Success", "Medication Form saved successfully!", "success", {
@@ -193,7 +242,7 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
         <Grid item xs={12} md={3}>
           <FormField
             type="switch"
-            label={formState.rActiveYN === "Y" ? "Active" : "Inactive"}
+            label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
             value={formState.rActiveYN}
             checked={formState.rActiveYN === "Y"}
             onChange={(event) =>
@@ -207,7 +256,6 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
             size="medium"
           />
         </Grid>
-
       </Grid>
       <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </Paper>

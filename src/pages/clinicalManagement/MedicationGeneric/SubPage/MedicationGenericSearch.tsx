@@ -3,11 +3,16 @@ import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAd
 import { MedicationGenericDto } from "../../../../interfaces/ClinicalManagement/MedicationGenericDto";
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import { showAlert } from "../../../../utils/Common/showAlert";
+import CustomButton from "@/components/Button/CustomButton";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+
 interface MedicationGemericSearchProps {
   open: boolean;
   onClose: () => void;
   onSelect: (diagnosis: MedicationGenericDto) => void;
 }
+
 const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, onClose, onSelect }) => {
   const MedicationGenericService = useMemo(() => createEntityService<MedicationGenericDto>("MedicationGeneric", "clinicalManagementURL"), []);
 
@@ -21,6 +26,24 @@ const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, 
       return [];
     }
   }, [MedicationGenericService]);
+
+  const handleDelete = useCallback(
+    async (row: MedicationGenericDto) => {
+      try {
+        const updatedItem = { ...row, rActiveYN: "N" };
+        const result = await MedicationGenericService.save(updatedItem);
+        if (result) {
+          showAlert("Success", `${row.mGenName} deactivated successfully`, "success");
+          fetchItems();
+        } else {
+          showAlert("Error", "Failed to deactivate Medication Generic", "error");
+        }
+      } catch (error) {
+        showAlert("Error", "An error occurred while deactivating the Medication Generic", "error");
+      }
+    },
+    [MedicationGenericService, fetchItems]
+  );
 
   const updateActiveStatus = useCallback(
     async (id: number, status: boolean) => {
@@ -45,12 +68,34 @@ const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, 
 
   const columns = useMemo(
     () => [
-      { key: "serialNumber", header: "Sl.No", visible: true, sortable: true },
+      { key: "serialNumber", header: "Sl.No", visible: true },
       { key: "mGenCode", header: "Generic Code", visible: true },
       { key: "mGenName", header: "Generic Name", visible: true },
-      { key: "defaultYN", header: "Default", visible: true },
+      {
+        key: "defaultYN",
+        header: "Default",
+        visible: true,
+        render: (row: MedicationGenericDto) => (row.defaultYN === "Y" ? "Yes" : "No"),
+      },
+      {
+        key: "modifyYN",
+        header: "Modifiable",
+        visible: true,
+        render: (row: MedicationGenericDto) => (row.modifyYN === "Y" ? "Yes" : "No"),
+      },
+      {
+        key: "delete",
+        header: "Delete",
+        visible: true,
+        render: (row: MedicationGenericDto) => {
+          if (row.modifyYN === "Y") {
+            return <CustomButton onClick={() => handleDelete(row)} icon={DeleteIcon} text="Delete" variant="contained" color="error" size="small" />;
+          }
+          return null;
+        },
+      },
     ],
-    []
+    [handleDelete]
   );
 
   return (
@@ -65,9 +110,7 @@ const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, 
       getItemId={getItemId}
       getItemActiveStatus={getItemActiveStatus}
       searchPlaceholder="Enter Medication Generic code or name"
-      isActionVisible={true}
       isEditButtonVisible={true}
-      isStatusVisible={true}
     />
   );
 };
