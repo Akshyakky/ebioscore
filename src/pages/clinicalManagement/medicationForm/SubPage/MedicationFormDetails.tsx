@@ -31,8 +31,7 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
     compName: compName ?? "",
     transferYN: "N",
     rNotes: "",
-    mfID: 0,
-    mGenID: 0,
+    mFSnomedCode: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -40,7 +39,7 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
   const { handleDropdownChange } = useDropdownChange(setFormState);
 
   const medicationFormService = useMemo(() => createEntityService<MedicationFormDto>("MedicationForm", "clinicalManagementURL"), []);
-  const dropdownValues = useDropdownValues(["medicationForm", "medicationGeneric"]);
+  // const dropdownValues = useDropdownValues(["medicationForm", "medicationGeneric"]);
 
   useEffect(() => {
     if (editData) {
@@ -52,8 +51,7 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
       setFormState({
         ...formState,
         ...selectedData,
-        mfID: selectedData.mfID || 0,
-        mGenID: selectedData.mGenID || 0,
+        mFID: selectedData.mFID || 0,
       });
     } else {
       handleClear();
@@ -76,8 +74,7 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
         compName: compName ?? "",
         transferYN: "N",
         rNotes: "",
-        mfID: 0,
-        mGenID: 0,
+        mFSnomedCode: "",
       });
       setIsSubmitted(false);
     } catch (error) {
@@ -94,7 +91,7 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
 
   const handleSave = useCallback(async () => {
     setIsSubmitted(true);
-    if (!formState.mFCode || !formState.mFCode.trim() || !formState.mFName) {
+    if (!formState.mFCode || !formState.mFCode.trim() || !formState.mFSnomedCode || !formState.mFName) {
       showAlert("Error", "Medication Form Code and Name are mandatory.", "error");
       return;
     }
@@ -134,6 +131,19 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
 
         <FormField
           type="text"
+          label="Medication Form Snomed Code"
+          value={formState.mFSnomedCode ?? ""}
+          onChange={handleInputChange}
+          name="mFSnomedCode"
+          ControlID="mFSnomedCode"
+          placeholder="Enter medication form snomed code"
+          isMandatory={true}
+          size="small"
+          isSubmitted={isSubmitted}
+        />
+
+        <FormField
+          type="text"
           label="Medication Form Name"
           value={formState.mFName || ""}
           onChange={handleInputChange}
@@ -144,7 +154,13 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
           size="small"
           isSubmitted={isSubmitted}
         />
+      </Grid>
 
+      <Grid container spacing={2}>
+        <FormField type="textarea" label="Notes" value={formState.rNotes || ""} onChange={handleInputChange} name="rNotes" ControlID="rNotes" size="medium" rows={4} />
+      </Grid>
+
+      <Grid container spacing={2}>
         <FormField
           type="radio"
           label="Default"
@@ -192,9 +208,7 @@ const MedicationFormDetails: React.FC<MedicationFormDetailsProps> = ({ selectedD
           />
         </Grid>
 
-        <FormField type="textarea" label="Notes" value={formState.rNotes || ""} onChange={handleInputChange} name="rNotes" ControlID="rNotes" size="medium" rows={4} />
       </Grid>
-
       <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </Paper>
   );

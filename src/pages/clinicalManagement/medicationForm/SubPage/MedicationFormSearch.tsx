@@ -37,6 +37,7 @@ const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClo
   const columns = [
     { key: "serialNumber", header: "Sl.No", visible: true },
     { key: "mFCode", header: "Medication Form Code", visible: true },
+    { key: "mFSnomedCode", header: "Medication Form Snomed Code", visible: true },
     { key: "mFName", header: "Medication Form Name", visible: true },
     { key: "modifyYN", header: "Modify", visible: true },
     { key: "defaultYN", header: "Default", visible: true },

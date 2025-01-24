@@ -3,9 +3,9 @@
 import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
 
 export interface MedicationFrequencyDto extends BaseDto {
-  mfrqId: number;
-  mfrqCode: string;
-  mfrqName: string;
+  mFrqId: number;
+  mFrqCode: string;
+  mFrqName: string;
   modifyYn: string;
   defaultYn: string;
   rActiveYN: string;
@@ -14,4 +14,5 @@ export interface MedicationFrequencyDto extends BaseDto {
   compName: string;
   transferYN: string;
   rNotes: string;
+  mFrqSnomedCode: string;
 }

@@ -155,40 +155,40 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
   const enhancedColumns = React.useMemo(() => {
     const editColumn: Column<ExtendedItem<T>> | null = isEditButtonVisible
       ? {
-          key: "edit" as keyof ExtendedItem<T> & string,
-          header: "Edit",
-          visible: true,
-          sortable: false,
-          render: (_item: ExtendedItem<T>, rowIndex: number) => (
-            <CustomButton text="Edit" onClick={() => handleEditAndClose(rowIndex)} icon={Edit} size="small" disabled={isLoading || !dataLoaded} />
-          ),
-        }
+        key: "edit" as keyof ExtendedItem<T> & string,
+        header: "Edit",
+        visible: true,
+        sortable: false,
+        render: (_item: ExtendedItem<T>, rowIndex: number) => (
+          <CustomButton text="Edit" onClick={() => handleEditAndClose(rowIndex)} icon={Edit} size="small" disabled={isLoading || !dataLoaded} />
+        ),
+      }
       : null;
 
     const statusColumn: Column<ExtendedItem<T>> | null = isStatusVisible
       ? {
-          key: "Status" as keyof ExtendedItem<T> & string,
-          header: "Status",
-          visible: true,
-          sortable: false,
-          render: (item: ExtendedItem<T>) => <Typography variant="body2">{switchStatus[getItemId(item)] ? "Active" : "Hidden"}</Typography>,
-        }
+        key: "Status" as keyof ExtendedItem<T> & string,
+        header: "Status",
+        visible: true,
+        sortable: false,
+        render: (item: ExtendedItem<T>) => <Typography variant="body2">{switchStatus[getItemId(item)] ? "Active" : "Hidden"}</Typography>,
+      }
       : null;
 
     const actionColumn: Column<ExtendedItem<T>> | null = isActionVisible
       ? {
-          key: "action" as keyof ExtendedItem<T> & string,
-          header: "Action",
-          visible: true,
-          sortable: false,
-          render: (item: ExtendedItem<T>) => {
-            const isItemEnabled = switchStatus[getItemId(item)] ?? false;
+        key: "action" as keyof ExtendedItem<T> & string,
+        header: "Action",
+        visible: true,
+        sortable: false,
+        render: (item: ExtendedItem<T>) => {
+          const isItemEnabled = switchStatus[getItemId(item)] ?? false;
 
-            return (
-              <CustomSwitch size="small" color="secondary" checked={isItemEnabled} onChange={(event) => handleSwitchChange(item, event.target.checked)} disabled={isLoading} />
-            );
-          },
-        }
+          return (
+            <CustomSwitch size="small" color="secondary" checked={isItemEnabled} onChange={(event) => handleSwitchChange(item, event.target.checked)} disabled={isLoading} />
+          );
+        },
+      }
       : null;
 
     const convertedColumns: Column<ExtendedItem<T>>[] = originalColumns.map((col) => ({

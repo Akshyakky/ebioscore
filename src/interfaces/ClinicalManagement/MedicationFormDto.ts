@@ -12,4 +12,5 @@ export interface MedicationFormDto extends BaseDto {
   compName: string;
   transferYN: string;
   rNotes?: string;
+  mFSnomedCode?: string;
 }
