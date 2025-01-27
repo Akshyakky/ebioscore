@@ -1,13 +1,6 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React from "react";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { MedicationGenericDto } from "../../../../interfaces/ClinicalManagement/MedicationGenericDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import CustomButton from "@/components/Button/CustomButton";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { useAppSelector } from "@/store/hooks";
-import CustomSwitch from "@/components/Checkbox/ColorSwitch";
 import { medicationGenericService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface MedicationGemericSearchProps {
@@ -17,132 +10,49 @@ interface MedicationGemericSearchProps {
 }
 
 const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, onClose, onSelect }) => {
-  const MedicationGenericService = useMemo(() => createEntityService<MedicationGenericDto>("MedicationGeneric", "clinicalManagementURL"), []);
-  const user = useAppSelector((state) => state.auth);
-
-  const fetchItems = useCallback(async () => {
+  const fetchItems = async () => {
     try {
-      const result = await MedicationGenericService.getAll();
-      return result.success ? result.data : [];
+      const items = await medicationGenericService.getAll();
+      return items.data || [];
     } catch (error) {
-      console.error("Error fetching Medication generic list", error);
-      showAlert("Error", "Failed to fetch Medication generic list.", "error");
+      console.error("Error fetching medication dosage:", error);
       return [];
     }
-  }, [MedicationGenericService]);
+  };
 
-  const handleDelete = useCallback(
-    async (row: MedicationGenericDto) => {
-      try {
-        const updatedItem = { ...row, rActiveYN: "N" };
-        const result = await MedicationGenericService.save(updatedItem);
-        if (result) {
-          showAlert("Success", `${row.mGenName} deactivated successfully`, "success");
-          fetchItems();
-        } else {
-          showAlert("Error", "Failed to deactivate Medication Generic", "error");
-        }
-      } catch (error) {
-        showAlert("Error", "An error occurred while deactivating the Medication Generic", "error");
-      }
+  const updateActiveStatus = async (id: number, status: boolean) => {
+    try {
+      return await medicationGenericService.updateActiveStatus(id, status);
+    } catch (error) {
+      console.error("Error updating medication form active status:", error);
+      return false;
+    }
+  };
+
+  const getItemId = (item: MedicationGenericDto) => item.mFID;
+  const getItemActiveStatus = (item: MedicationGenericDto) => item.rActiveYN === "Y";
+
+  const columns = [
+    { key: "serialNumber", header: "Sl.No", visible: true },
+    { key: "mGenCode", header: "Generic Code", visible: true },
+    { key: "mGenName", header: "Generic Name", visible: true },
+    {
+      key: "defaultYN",
+      header: "Default",
+      visible: true,
+      render: (row: MedicationGenericDto) => (row.defaultYN === "Y" ? "Yes" : "No"),
     },
-    [MedicationGenericService, fetchItems]
-  );
-  const handleEdit = useCallback(
-    async (row: MedicationGenericDto) => {
-      try {
-        onSelect(row); // Pass the selected row to the parent component
-      } catch (error) {
-        showAlert("Error", "An error occurred while fetching field details.", "error");
-      }
+    {
+      key: "modifyYN",
+      header: "Modifiable",
+      visible: true,
+      render: (row: MedicationGenericDto) => (row.modifyYN === "Y" ? "Yes" : "No"),
     },
-    [onSelect]
-  );
-
-  const updateActiveStatus = useCallback(
-    async (id: number, status: boolean) => {
-      try {
-        const result = await MedicationGenericService.updateActiveStatus(id, status);
-        if (result) {
-          showAlert("Success", "Status updated successfully.", "success");
-          fetchItems();
-        }
-        return result;
-      } catch (error) {
-        console.error("Error updating Medication generic active status:", error);
-        showAlert("Error", "Failed to update status.", "error");
-        return false;
-      }
-    },
-    [MedicationGenericService, fetchItems]
-  );
-
-  const handleActiveToggle = useCallback(
-    async (row: MedicationGenericDto, status: boolean) => {
-      try {
-        const updatedItem = { ...row, rActiveYN: status ? "Y" : "N" };
-        const result = await medicationGenericService.save(updatedItem);
-        if (result) {
-          const message = status ? `${row.mFName} activated successfully` : `${row.mFName} deactivated successfully`;
-          showAlert("Success", message, "success");
-        } else {
-          showAlert("Error", "Failed to update status", "error");
-        }
-      } catch (error) {
-        showAlert("Error", "An error occurred while updating the status", "error");
-      }
-    },
-    [medicationGenericService]
-  );
-
-  const getItemId = useCallback((item: MedicationGenericDto) => item.mGenID, []);
-  const getItemActiveStatus = useCallback((item: MedicationGenericDto) => item.rActiveYN === "Y", []);
-
-  const columns = useMemo(
-    () => [
-      {
-        key: "edit",
-        header: "Edit",
-        visible: true,
-        render: (row: MedicationGenericDto) => {
-          if (row.modifyYN === "Y" || user.adminYN === "Y") {
-            return <CustomButton onClick={() => handleEdit(row)} icon={EditIcon} text="Edit" variant="contained" size="small" />;
-          }
-          return null;
-        },
-      },
-      { key: "serialNumber", header: "Sl.No", visible: true },
-      { key: "mGenCode", header: "Generic Code", visible: true },
-      { key: "mGenName", header: "Generic Name", visible: true },
-      {
-        key: "defaultYN",
-        header: "Default",
-        visible: true,
-        render: (row: MedicationGenericDto) => (row.defaultYN === "Y" ? "Yes" : "No"),
-      },
-      {
-        key: "modifyYN",
-        header: "Modifiable",
-        visible: true,
-        render: (row: MedicationGenericDto) => (row.modifyYN === "Y" ? "Yes" : "No"),
-      },
-      {
-        key: "activeStatus",
-        header: "Active Status",
-        visible: true,
-        render: (row: MedicationGenericDto) => {
-          if (row.modifyYN === "Y") {
-            return <CustomSwitch checked={row.rActiveYN === "Y"} onChange={(e) => handleActiveToggle(row, e.target.checked)} color="primary" />;
-          }
-          return null;
-        },
-      },
-    ],
-    [handleDelete]
-  );
+  ];
 
   return (
     <GenericAdvanceSearch
+      isEditButtonVisible={true}
       open={open}
       onClose={onClose}
       onSelect={onSelect}
@@ -153,6 +63,8 @@ const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, 
       getItemId={getItemId}
       getItemActiveStatus={getItemActiveStatus}
       searchPlaceholder="Enter Medication Generic code or name"
+      isStatusVisible={(item: MedicationGenericDto) => item.modifyYN === "Y"}
+      isActionVisible={(item: MedicationGenericDto) => item.modifyYN === "Y"}
     />
   );
 };
