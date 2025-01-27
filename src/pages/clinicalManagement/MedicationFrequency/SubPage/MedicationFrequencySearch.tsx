@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { MedicationFrequencyDto } from "../../../../interfaces/ClinicalManagement/MedicationFrequencyDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
+import { medicationFrequencyService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface MedicationFrequencySearchProps {
     open: boolean;
@@ -10,15 +10,11 @@ interface MedicationFrequencySearchProps {
 }
 
 const MedicationFrequencySearch: React.FC<MedicationFrequencySearchProps> = ({ open, onClose, onSelect }) => {
-    const medicationFrequencyService = useMemo(() => createEntityService<MedicationFrequencyDto>("MedicationFrequency", "clinicalManagementURL"), []);
-    const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
-
     const fetchItems = async () => {
         try {
             const items = await medicationFrequencyService.getAll();
             return items.data || [];
         } catch (error) {
-            console.error("Error fetching medication Frequency:", error);
             return [];
         }
     };
@@ -27,13 +23,12 @@ const MedicationFrequencySearch: React.FC<MedicationFrequencySearchProps> = ({ o
         try {
             return await medicationFrequencyService.updateActiveStatus(id, status);
         } catch (error) {
-            console.error("Error updating medication Frequency active status:", error);
             return false;
         }
     };
 
     const getItemId = (item: MedicationFrequencyDto) => item.mFrqId;
-    const getItemActiveStatus = (item: MedicationFrequencyDto) => switchStatus[item.mFrqId] ?? item.rActiveYN === "Y";
+    const getItemActiveStatus = (item: MedicationFrequencyDto) => item.rActiveYN === "Y";
 
     const columns = [
         { key: "serialNumber", header: "Sl.No", visible: true },
