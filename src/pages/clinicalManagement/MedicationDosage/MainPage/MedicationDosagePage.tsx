@@ -3,6 +3,8 @@ import { Box, Container } from "@mui/material";
 import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
 import { MedicationDosageDto } from "@/interfaces/ClinicalManagement/MedicationDosageDto";
+import MedicationDosageDetails from "../SubPage/MedicationDosageDetails";
+import MedicationDosageSearch from "../SubPage/MedicationDosageSearch";
 
 
 const MedicationDosagePage: React.FC = () => {
@@ -35,6 +37,8 @@ const MedicationDosagePage: React.FC = () => {
                     ]}
                 />
             </Box>
+            <MedicationDosageDetails selectedData={selectedData} />
+            <MedicationDosageSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
         </Container>
     );
 };

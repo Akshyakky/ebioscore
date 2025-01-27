@@ -9,6 +9,7 @@ import { showAlert } from "../../../../utils/Common/showAlert";
 import { MedicationGenericDto } from "../../../../interfaces/ClinicalManagement/MedicationGenericDto";
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import { useAppSelector } from "@/store/hooks";
+import { medicationGenericService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface MedicationGenericDetailsProps {
   selectedData?: MedicationGenericDto;
@@ -71,65 +72,77 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
     }
   }, [selectedData, handleClear]);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
-  }, []);
+  const handleInputChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      if (name === "defaultYN" && value === "Y") {
+        try {
+          const existingDefault = await MedicationGenericDetailsService.find("defaultYN='Y'");
+
+          if (existingDefault.data.length > 0) {
+            const confirmed = await new Promise<boolean>((resolve) => {
+              showAlert(
+                "Confirmation",
+                `There are other entries set as default. Setting '${formState.mGenName}' as the new default will remove default status from other entries. Continue?`,
+                "warning",
+                {
+                  showConfirmButton: true,
+                  showCancelButton: true,
+                  confirmButtonText: "Yes",
+                  cancelButtonText: "No",
+                  onConfirm: () => resolve(true),
+                  onCancel: () => resolve(false),
+                }
+              );
+            });
+
+            if (!confirmed) {
+              return;
+            }
+            const updatedRecords = existingDefault.data.map((record: MedicationGenericDto) => ({
+              ...record,
+              defaultYN: "N",
+            }));
+
+            await Promise.all(updatedRecords.map((record: MedicationGenericDto) => MedicationGenericDetailsService.save(record)));
+          }
+          setFormState((prev) => ({
+            ...prev,
+            [name]: value,
+          }));
+        } catch (error) {
+          showAlert("Error", "Failed to update default status.", "error");
+        }
+      } else {
+        setFormState((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+      }
+    },
+    [formState.mGenName, MedicationGenericDetailsService]
+  );
 
   const handleSave = useCallback(async () => {
     setIsSubmitted(true);
-    if (!formState.mGenCode || !formState.mGenName) {
-      showAlert("Error", "Medication Generic Code and Name are mandatory.", "error");
+    if (!formState.mGenCode || !formState.mGenCode.trim() || !formState.mGenName) {
+      showAlert("Error", "Medication Form Code and Name are mandatory.", "error");
       return;
     }
 
     setLoading(true);
 
     try {
-      let result = await MedicationGenericDetailsService.find("defaultYN='Y'");
-      if (result.data.length > 0) {
-        const confirmed = await new Promise<boolean>((resolve) => {
-          showAlert(
-            "Confirmation",
-            `There are other entries set as default. Setting '${formState.mGenName}' as the new default will remove default status from other entries. Continue?`,
-            "warning",
-            {
-              showConfirmButton: true,
-              showCancelButton: true,
-              confirmButtonText: "Yes",
-              cancelButtonText: "No",
-              onConfirm: () => resolve(true),
-              onCancel: () => resolve(false),
-            }
-          );
-        });
-        if (!confirmed) {
-          return;
-        }
-      }
-      await MedicationGenericDetailsService.save(formState);
-      showAlert("Success", `Medication Generic Detail ${isEditing ? "updated" : "saved"} successfully!`, "success", {
+      await medicationGenericService.save({ ...formState });
+      showAlert("Success", "Medication Form saved successfully!", "success", {
         onConfirm: handleClear,
       });
     } catch (error) {
-      showAlert("Error", `An unexpected error occurred while ${isEditing ? "updating" : "saving"}.`, "error");
+      showAlert("Error", "An unexpected error occurred while saving.", "error");
     } finally {
       setLoading(false);
     }
-  }, [formState, handleClear, MedicationGenericDetailsService, isEditing]);
-
-  const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormState((prev) => ({
-      ...prev,
-      rActiveYN: event.target.checked ? "Y" : "N",
-    }));
-  }, []);
-  const handleDefaultToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormState((prev) => ({
-      ...prev,
-      defaultYN: event.target.checked ? "Y" : "N",
-    }));
-  }, []);
+  }, [formState, medicationGenericService, setLoading, handleClear]);
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -161,28 +174,8 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
           size="small"
           isSubmitted={isSubmitted}
         />
-        <FormField
-          type="text"
-          label="Snomed Code"
-          value={formState.mSnomedCode}
-          onChange={handleInputChange}
-          name="mSnomedCode"
-          ControlID="snomedCode"
-          placeholder="Enter Snomed Code"
-          isMandatory={false}
-          size="small"
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="switch"
-          label={formState.defaultYN === "Y" ? "Default" : ""}
-          value={formState.defaultYN}
-          checked={formState.defaultYN === "Y"}
-          onChange={handleDefaultToggle}
-          name="defaultYN"
-          ControlID="defaultYN"
-          size="medium"
-        />
+      </Grid>
+      <Grid container spacing={2}>
         <FormField
           type="textarea"
           label="Notes"
@@ -193,16 +186,54 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
           placeholder="Notes"
           maxLength={4000}
         />
+      </Grid>
+      <Grid container spacing={2}>
         <FormField
-          type="switch"
-          label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
-          value={formState.rActiveYN}
-          checked={formState.rActiveYN === "Y"}
-          onChange={handleActiveToggle}
-          name="rActiveYN"
-          ControlID="rActiveYN"
-          size="medium"
+          type="radio"
+          label="Default"
+          value={formState.defaultYN}
+          onChange={handleInputChange}
+          name="defaultYN"
+          ControlID="defaultYN"
+          options={[
+            { label: "Yes", value: "Y" },
+            { label: "No", value: "N" },
+          ]}
+          size="small"
+          inline
         />
+        <FormField
+          type="radio"
+          label="Modify"
+          value={formState.modifyYN}
+          onChange={handleInputChange}
+          name="modifyYN"
+          ControlID="modifyYN"
+          options={[
+            { label: "Yes", value: "Y" },
+            { label: "No", value: "N" },
+          ]}
+          size="small"
+          inline
+        />
+
+        <Grid item xs={12} md={3}>
+          <FormField
+            type="switch"
+            label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
+            value={formState.rActiveYN}
+            checked={formState.rActiveYN === "Y"}
+            onChange={(event) =>
+              setFormState((prev) => ({
+                ...prev,
+                rActiveYN: event.target.checked ? "Y" : "N",
+              }))
+            }
+            name="rActiveYN"
+            ControlID="rActiveYN"
+            size="medium"
+          />
+        </Grid>
       </Grid>
 
       <FormSaveClearButton clearText="Clear" saveText={isEditing ? "Update" : "Save"} onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />

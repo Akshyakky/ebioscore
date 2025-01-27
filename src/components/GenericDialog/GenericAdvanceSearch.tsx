@@ -7,6 +7,7 @@ import CustomButton from "../Button/CustomButton";
 import GenericDialog from "./GenericDialog";
 import Close from "@mui/icons-material/Close";
 import FormField from "../FormField/FormField";
+import { useAppSelector } from "@/store/hooks";
 
 type ExtendedItem<T> = T & {
   serialNumber: number;
@@ -31,8 +32,8 @@ interface CommonSearchDialogProps<T> {
     dialogContentSx?: React.CSSProperties;
   };
   isEditButtonVisible?: boolean;
-  isStatusVisible?: boolean;
-  isActionVisible?: boolean;
+  isStatusVisible?: ((item: T) => boolean) | boolean;
+  isActionVisible?: ((item: T) => boolean) | boolean;
   showExportCSV?: boolean;
   showExportPDF?: boolean;
   pagination?: boolean;
@@ -63,6 +64,7 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
   const [searchResults, setSearchResults] = useState<T[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const user = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (open) {
@@ -135,11 +137,13 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
     onClose();
     onSelect(item);
   };
+
   const handleSwitchChange = async (item: ExtendedItem<T>, checked: boolean) => {
     try {
       const success = await updateActiveStatus(getItemId(item), checked);
       if (success) {
         setSwitchStatus((prev) => ({ ...prev, [getItemId(item)]: checked }));
+        fetchAllItems();
       }
     } catch (error) {
       console.error("Error updating status:", error);
@@ -155,40 +159,50 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
   const enhancedColumns = React.useMemo(() => {
     const editColumn: Column<ExtendedItem<T>> | null = isEditButtonVisible
       ? {
-        key: "edit" as keyof ExtendedItem<T> & string,
-        header: "Edit",
-        visible: true,
-        sortable: false,
-        render: (_item: ExtendedItem<T>, rowIndex: number) => (
-          <CustomButton text="Edit" onClick={() => handleEditAndClose(rowIndex)} icon={Edit} size="small" disabled={isLoading || !dataLoaded} />
-        ),
-      }
+          key: "edit" as keyof ExtendedItem<T> & string,
+          header: "Edit",
+          visible: true,
+          sortable: false,
+          render: (item: ExtendedItem<T>, rowIndex: number) => {
+            const canEdit = (item.modifyYN === "Y" || user?.adminYN === "Y" || item.modifyYN === undefined) && isEditButtonVisible; // Ensure visibility aligns with `isEditButtonVisible`
+
+            return canEdit ? <CustomButton text="Edit" onClick={() => handleEditAndClose(rowIndex)} icon={Edit} size="small" disabled={isLoading || !dataLoaded} /> : null;
+          },
+        }
       : null;
 
     const statusColumn: Column<ExtendedItem<T>> | null = isStatusVisible
       ? {
-        key: "Status" as keyof ExtendedItem<T> & string,
-        header: "Status",
-        visible: true,
-        sortable: false,
-        render: (item: ExtendedItem<T>) => <Typography variant="body2">{switchStatus[getItemId(item)] ? "Active" : "Hidden"}</Typography>,
-      }
+          key: "Status" as keyof ExtendedItem<T> & string,
+          header: "Status",
+          visible: true,
+          sortable: false,
+          render: (item: ExtendedItem<T>) => {
+            const shouldBeVisible = (typeof isStatusVisible === "function" && isStatusVisible(item)) || item.modifyYN === undefined; // Default visibility if `modifyYN` doesn't exist
+            return shouldBeVisible ? <Typography variant="body2">{switchStatus[getItemId(item)] ? "Active" : "Hidden"}</Typography> : null;
+          },
+        }
       : null;
 
     const actionColumn: Column<ExtendedItem<T>> | null = isActionVisible
       ? {
-        key: "action" as keyof ExtendedItem<T> & string,
-        header: "Action",
-        visible: true,
-        sortable: false,
-        render: (item: ExtendedItem<T>) => {
-          const isItemEnabled = switchStatus[getItemId(item)] ?? false;
-
-          return (
-            <CustomSwitch size="small" color="secondary" checked={isItemEnabled} onChange={(event) => handleSwitchChange(item, event.target.checked)} disabled={isLoading} />
-          );
-        },
-      }
+          key: "action" as keyof ExtendedItem<T> & string,
+          header: "Action",
+          visible: true,
+          sortable: false,
+          render: (item: ExtendedItem<T>) => {
+            const shouldBeVisible = (typeof isActionVisible === "function" && isActionVisible(item)) || item.modifyYN === undefined; // Default visibility if `modifyYN` doesn't exist
+            return shouldBeVisible ? (
+              <CustomSwitch
+                size="small"
+                color="secondary"
+                checked={switchStatus[getItemId(item)] ?? false}
+                onChange={(event) => handleSwitchChange(item, event.target.checked)}
+                disabled={isLoading}
+              />
+            ) : null;
+          },
+        }
       : null;
 
     const convertedColumns: Column<ExtendedItem<T>>[] = originalColumns.map((col) => ({
