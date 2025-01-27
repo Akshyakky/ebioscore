@@ -1,7 +1,7 @@
 // src/services/serverTimeService.ts
+import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { get } from "../apiService";
-import { APIConfig } from "../../apiConfig";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
 
 export interface ServerTimeResponse {
   currentTimeUtc: string;

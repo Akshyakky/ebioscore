@@ -1,8 +1,8 @@
+import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { APIConfig } from "../../apiConfig";
-import { UserListData, UserPermissionDto } from "../../interfaces/SecurityManagement/UserListData";
 import { store } from "@/store";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { UserListData, UserPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
 
 const apiService = new CommonApiService({
   baseURL: APIConfig.securityManagementURL,

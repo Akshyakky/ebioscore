@@ -1,9 +1,9 @@
+import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
-import { APIConfig } from "../../apiConfig";
-import { DropdownOption } from "../../interfaces/Common/DropdownOption";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { OPIPInsurancesDto } from "../../interfaces/PatientAdministration/InsuranceDetails";
 import { store } from "@/store";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
 
 // Initialize ApiServices with different base URLs
 const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });

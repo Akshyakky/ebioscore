@@ -1,8 +1,7 @@
-// ConstantValues.ts
-import { store } from "@/store";
-import { APIConfig } from "../../apiConfig";
-import { DropdownOption } from "../../interfaces/Common/DropdownOption";
+import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { store } from "@/store";
 
 const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });
 

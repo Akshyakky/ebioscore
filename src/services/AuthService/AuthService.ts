@@ -1,6 +1,6 @@
-import { OperationResult } from "./../../interfaces/Common/OperationResult";
+import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { post, postWithoutToken } from "../apiService";
-import { APIConfig } from "../../apiConfig";
 
 const API_URL = `${APIConfig.authURL}`;
 

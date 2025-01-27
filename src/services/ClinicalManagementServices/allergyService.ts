@@ -1,8 +1,9 @@
 // src/services/ClinicalManagementServices/allergyService.ts
-import { CommonApiService } from "../CommonApiService";
+
+import { AllergyDto } from "@/interfaces/ClinicalManagement/AllergyDto";
 import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
-import { AllergyDto } from "../../interfaces/ClinicalManagement/AllergyDto";
-import { APIConfig } from "../../apiConfig";
+import { CommonApiService } from "../CommonApiService";
+import { APIConfig } from "@/apiConfig";
 
 class AllergyService extends GenericEntityService<AllergyDto> {
   constructor() {

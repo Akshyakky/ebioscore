@@ -1,5 +1,5 @@
+import { APIConfig } from "@/apiConfig";
 import axios from "axios";
-import { APIConfig } from "../../apiConfig";
 
 /**
  * Fetch client parameters from the server.

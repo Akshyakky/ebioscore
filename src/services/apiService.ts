@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from "axios";
-import { OperationResult } from "../interfaces/Common/OperationResult";
-import { handleError } from "./CommonServices/HandlerError";
 import { store } from "@/store";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { handleError } from "./CommonServices/HandlerError";
 
 // Function to create an axios instance with a specific base URL
 const createApiClient = (baseURL: string) => {

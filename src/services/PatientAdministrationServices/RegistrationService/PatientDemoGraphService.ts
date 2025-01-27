@@ -1,7 +1,7 @@
-import { CommonApiService } from "../../CommonApiService";
-import { APIConfig } from "../../../apiConfig";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { PatientDemoGraph } from "../../../interfaces/PatientAdministration/patientDemoGraph";
+import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { PatientDemoGraph } from "@/interfaces/PatientAdministration/patientDemoGraph";
+import { CommonApiService } from "@/services/CommonApiService";
 import { store } from "@/store";
 
 // Initialize ApiService with the base URL for the patient administration API

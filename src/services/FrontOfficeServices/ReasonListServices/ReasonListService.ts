@@ -1,7 +1,7 @@
-import { APIConfig } from "../../../apiConfig";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { CommonApiService } from "../../CommonApiService";
-import { ReasonListData } from "../../../interfaces/frontOffice/ReasonListData";
+import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { ReasonListData } from "@/interfaces/frontOffice/ReasonListData";
+import { CommonApiService } from "@/services/CommonApiService";
 import { store } from "@/store";
 
 const commonApiService = new CommonApiService({
