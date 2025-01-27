@@ -88,9 +88,9 @@ const MedicationFrequencyDetails: React.FC<MedicationFrequencyDetailsProps> = ({
     const handleInputChange = useCallback(
         async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
             const { name, value } = e.target;
-            if (name === "defaultYn" && value === "Y") {
+            if (name === "defaultYN" && value === "Y") {
                 try {
-                    const existingDefault = await medicationFrequencyService.find("defaultYn='Y'");
+                    const existingDefault = await medicationFrequencyService.find("defaultYN='Y'");
 
                     if (existingDefault.data.length > 0) {
                         const confirmed = await new Promise<boolean>((resolve) => {
@@ -114,7 +114,7 @@ const MedicationFrequencyDetails: React.FC<MedicationFrequencyDetailsProps> = ({
                         }
                         const updatedRecords = existingDefault.data.map((record: MedicationFrequencyDto) => ({
                             ...record,
-                            defaultYn: "N",
+                            defaultYN: "N",
                         }));
 
                         await Promise.all(updatedRecords.map((record: MedicationFrequencyDto) => medicationFrequencyService.save(record)));
