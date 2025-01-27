@@ -18,7 +18,11 @@ import { useAppSelector } from "@/store/hooks";
 import React from "react";
 import { AppModifiedMast, AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
 
-const AppModifiedDetails: React.FC = () => {
+interface AppModifiedDetailsListProps {
+  selectedData?: AppModifiedMast;
+  editData?: AppModifiedMast;
+}
+const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedData, editData }) => {
   const { setLoading } = useLoading();
   const [masterList, setMasterList] = useState<AppModifiedMast[]>([]);
   const [fieldsList, setFieldsList] = useState<AppModifyFieldDto[]>([]);
@@ -103,15 +107,18 @@ const AppModifiedDetails: React.FC = () => {
     [setLoading, masterList]
   );
 
-  const handleMasterChange = async (event: SelectChangeEvent<string>) => {
-    const selectedId = parseInt(event.target.value);
-    setSelectedMasterId(selectedId);
-    const selectedCategory = masterList.find((master) => master.fieldID === selectedId);
-    if (selectedCategory) {
-      setSelectedCategoryName(selectedCategory.fieldName);
-      fetchFields(selectedId);
+  useEffect(() => {
+    if (selectedData) {
+      setSelectedMasterId(selectedData.fieldID);
+      setCategoryFormData(selectedData);
+      setIsCategoryDialogOpen(true);
+      const category = masterList.find((master) => master.fieldID === selectedData.fieldID);
+      if (category) {
+        setSelectedCategoryName(category.fieldName);
+      }
+      fetchFields(selectedData.fieldID);
     }
-  };
+  }, [selectedData]);
 
   const handleCategoryDialogSubmit = async () => {
     const { fieldCode, fieldName, auGrpID } = categoryFormData;
@@ -122,26 +129,74 @@ const AppModifiedDetails: React.FC = () => {
     try {
       const response = await appModifiedMastService.save(categoryFormData);
       if (response) {
-        showAlert("Success", "Category added successfully", "success");
+        showAlert("Success", categoryFormData.fieldID ? "Category updated successfully" : "Category added successfully", "success");
         setIsCategoryDialogOpen(false);
-        setCategoryFormData({
-          fieldID: 0,
-          fieldCode: "",
-          fieldName: "",
-          auGrpID: 0,
-          rActiveYN: "Y",
-          compID: user.compID || 0,
-          compCode: user.compCode || "",
-          compName: user.compName || "",
-          transferYN: "Y",
-          rNotes: null,
-        });
+        if (!categoryFormData.fieldID) {
+          setCategoryFormData({
+            fieldID: 0,
+            fieldCode: "",
+            fieldName: "",
+            auGrpID: 0,
+            rActiveYN: "Y",
+            compID: user.compID || 0,
+            compCode: user.compCode || "",
+            compName: user.compName || "",
+            transferYN: "Y",
+            rNotes: null,
+          });
+        }
+
         fetchMasterList();
+        if (categoryFormData.fieldID) {
+          fetchFields(categoryFormData.fieldID);
+        }
       } else {
-        showAlert("Error", "Failed to add category", "error");
+        showAlert("Error", "Failed to save category", "error");
       }
     } catch (error) {
       showAlert("Error", "An error occurred during submission.", "error");
+    }
+  };
+
+  useEffect(() => {
+    if (editData) {
+      setCategoryFormData({
+        ...categoryFormData,
+        ...editData,
+      });
+    } else if (selectedData) {
+      setCategoryFormData({
+        ...categoryFormData,
+        ...selectedData,
+        fieldID: selectedData.fieldID || 0,
+      });
+    } else {
+      handleClear();
+    }
+  }, [editData, selectedData]);
+
+  const handleClear = useCallback(() => {
+    setCategoryFormData({
+      fieldID: 0,
+      fieldCode: "",
+      fieldName: "",
+      auGrpID: 0,
+      rActiveYN: "Y",
+      compID: user.compID || 0,
+      compCode: user.compCode || "",
+      compName: user.compName || "",
+      transferYN: "Y",
+      rNotes: null,
+    });
+  }, []);
+
+  const handleMasterChange = async (event: SelectChangeEvent<string>) => {
+    const selectedId = parseInt(event.target.value);
+    setSelectedMasterId(selectedId);
+    const selectedCategory = masterList.find((master) => master.fieldID === selectedId);
+    if (selectedCategory) {
+      setSelectedCategoryName(selectedCategory.fieldName);
+      fetchFields(selectedId);
     }
   };
 
@@ -276,11 +331,28 @@ const AppModifiedDetails: React.FC = () => {
       <CustomGrid columns={columns} data={fieldsList} />
       <GenericDialog
         open={isCategoryDialogOpen}
-        onClose={() => setIsCategoryDialogOpen(false)}
-        title="Add New Category"
+        onClose={() => {
+          setIsCategoryDialogOpen(false);
+          if (selectedData) {
+            handleClear();
+          }
+        }}
+        title="ADD NEW CATEGORY"
         actions={
           <>
-            <CustomButton onClick={() => setIsCategoryDialogOpen(false)} icon={DeleteIcon} text="Cancel" variant="contained" color="error" sx={{ marginRight: 2 }} />
+            <CustomButton
+              onClick={() => {
+                setIsCategoryDialogOpen(false);
+                if (selectedData) {
+                  handleClear();
+                }
+              }}
+              icon={DeleteIcon}
+              text="Cancel"
+              variant="contained"
+              color="error"
+              sx={{ marginRight: 2 }}
+            />
             <CustomButton icon={SaveIcon} text="Save" onClick={handleCategoryDialogSubmit} variant="contained" color="success" />
           </>
         }
