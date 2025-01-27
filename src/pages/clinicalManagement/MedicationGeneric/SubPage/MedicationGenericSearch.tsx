@@ -28,7 +28,6 @@ const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, 
         const result = await MedicationGenericService.updateActiveStatus(id, status);
         if (result) {
           showAlert("Success", "Status updated successfully.", "success");
-          fetchItems();
         }
         return result;
       } catch (error) {

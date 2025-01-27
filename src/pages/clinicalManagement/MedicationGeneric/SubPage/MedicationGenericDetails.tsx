@@ -51,6 +51,7 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
         compName: compName ?? "",
         rNotes: "",
         transferYN: "N",
+        mSnomedCode: "",
       });
       setIsSubmitted(false);
       setIsEditing(false);
@@ -86,7 +87,6 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
 
     try {
       let result = await MedicationGenericDetailsService.find("defaultYN='Y'");
-      debugger;
       if (result.data.length > 0) {
         const confirmed = await new Promise<boolean>((resolve) => {
           showAlert(
@@ -158,6 +158,18 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
           ControlID="genName"
           placeholder="Enter Medication Generic name"
           isMandatory={true}
+          size="small"
+          isSubmitted={isSubmitted}
+        />
+        <FormField
+          type="text"
+          label="Snomed Code"
+          value={formState.mSnomedCode}
+          onChange={handleInputChange}
+          name="mSnomedCode"
+          ControlID="snomedCode"
+          placeholder="Enter Snomed Code"
+          isMandatory={false}
           size="small"
           isSubmitted={isSubmitted}
         />
