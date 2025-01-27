@@ -80,7 +80,8 @@ export class CommonApiService {
     additionalHeaders?: Record<string, string>,
     params?: Record<string, unknown>
   ): Promise<T> {
-    const queueKey = `${method}_${endpoint}_${JSON.stringify(params)}`;
+    const paramsString = params ? `_${JSON.stringify(params)}` : "";
+    const queueKey = `${method}_${endpoint}${paramsString}`;
 
     return this.requestQueue.enqueue(queueKey, async () => {
       try {
