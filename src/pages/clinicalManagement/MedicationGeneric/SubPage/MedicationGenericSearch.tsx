@@ -29,7 +29,8 @@ const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, 
     }
   };
 
-  const getItemId = (item: MedicationGenericDto) => item.mFID;
+  const getItemId = (item: MedicationGenericDto) => item.mGenID;
+
   const getItemActiveStatus = (item: MedicationGenericDto) => item.rActiveYN === "Y";
 
   const columns = [
