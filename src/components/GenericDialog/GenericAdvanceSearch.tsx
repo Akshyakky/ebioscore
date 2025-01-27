@@ -140,6 +140,7 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
       const success = await updateActiveStatus(getItemId(item), checked);
       if (success) {
         setSwitchStatus((prev) => ({ ...prev, [getItemId(item)]: checked }));
+        fetchAllItems();
       }
     } catch (error) {
       console.error("Error updating status:", error);

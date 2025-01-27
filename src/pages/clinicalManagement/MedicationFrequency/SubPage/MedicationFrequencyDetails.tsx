@@ -86,10 +86,56 @@ const MedicationFrequencyDetails: React.FC<MedicationFrequencyDetailsProps> = ({
         }
     }, [compID, compCode, compName, medicationFrequencyService]);
 
-    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormState((prev) => ({ ...prev, [name]: value }));
-    }, []);
+    const handleInputChange = useCallback(
+        async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+            const { name, value } = e.target;
+            if (name === "defaultYn" && value === "Y") {
+                try {
+                    const existingDefault = await medicationFrequencyService.find("defaultYn='Y'");
+
+                    if (existingDefault.data.length > 0) {
+                        const confirmed = await new Promise<boolean>((resolve) => {
+                            showAlert(
+                                "Confirmation",
+                                `There are other entries set as default. Setting '${formState.mGenName}' as the new default will remove default status from other entries. Continue?`,
+                                "warning",
+                                {
+                                    showConfirmButton: true,
+                                    showCancelButton: true,
+                                    confirmButtonText: "Yes",
+                                    cancelButtonText: "No",
+                                    onConfirm: () => resolve(true),
+                                    onCancel: () => resolve(false),
+                                }
+                            );
+                        });
+
+                        if (!confirmed) {
+                            return;
+                        }
+                        const updatedRecords = existingDefault.data.map((record: MedicationFrequencyDto) => ({
+                            ...record,
+                            defaultYn: "N",
+                        }));
+
+                        await Promise.all(updatedRecords.map((record: MedicationFrequencyDto) => medicationFrequencyService.save(record)));
+                    }
+                    setFormState((prev) => ({
+                        ...prev,
+                        [name]: value,
+                    }));
+                } catch (error) {
+                    showAlert("Error", "Failed to update default status.", "error");
+                }
+            } else {
+                setFormState((prev) => ({
+                    ...prev,
+                    [name]: value,
+                }));
+            }
+        },
+        [formState.mGenName, medicationFrequencyService]
+    );
 
     const handleSave = useCallback(async () => {
         debugger
