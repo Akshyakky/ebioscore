@@ -24,8 +24,8 @@ const MedicationFrequencyDetails: React.FC<MedicationFrequencyDetailsProps> = ({
         mFrqId: 0,
         mFrqCode: "",
         mFrqName: "",
-        modifyYn: "N",
-        defaultYn: "N",
+        modifyYN: "N",
+        defaultYN: "N",
         rActiveYN: "Y",
         compID: compID ?? 0,
         compCode: compCode ?? "",
@@ -43,7 +43,6 @@ const MedicationFrequencyDetails: React.FC<MedicationFrequencyDetailsProps> = ({
     //const dropdownValues = useDropdownValues(["medicationFrequency"]);
 
     useEffect(() => {
-        debugger
         if (editData) {
             setFormState({
                 ...formState,
@@ -63,13 +62,13 @@ const MedicationFrequencyDetails: React.FC<MedicationFrequencyDetailsProps> = ({
     const handleClear = useCallback(async () => {
         setLoading(true);
         try {
-            const nextCode = await medicationFrequencyService.getNextCode("MFRQ", 3);
+            const nextCode = await medicationFrequencyService.getNextCode("MFRQ", 5);
             setFormState({
                 mFrqId: 0,
                 mFrqCode: nextCode.data || "",
                 mFrqName: "",
-                modifyYn: "N",
-                defaultYn: "N",
+                modifyYN: "N",
+                defaultYN: "N",
                 rActiveYN: "Y",
                 compID: compID ?? 0,
                 compCode: compCode ?? "",
@@ -205,19 +204,25 @@ const MedicationFrequencyDetails: React.FC<MedicationFrequencyDetailsProps> = ({
                 />
             </Grid>
             <Grid container spacing={2}>
-
-                <FormField type="textarea" label="Notes" value={formState.rNotes || ""} onChange={handleInputChange} name="rNotes" ControlID="rNotes" size="medium" rows={4} />
+                <FormField
+                    type="textarea"
+                    label="Notes"
+                    value={formState.rNotes || ""}
+                    onChange={handleInputChange}
+                    name="rNotes"
+                    ControlID="rNotes"
+                    placeholder="Notes"
+                    maxLength={4000}
+                />
             </Grid>
             <Grid container spacing={2}>
-
-
                 <FormField
                     type="radio"
                     label="Default"
-                    value={formState.defaultYn}
+                    value={formState.defaultYN}
                     onChange={handleInputChange}
-                    name="defaultYn"
-                    ControlID="defaultYn"
+                    name="defaultYN"
+                    ControlID="defaultYN"
                     options={[
                         { label: "Yes", value: "Y" },
                         { label: "No", value: "N" },
@@ -228,10 +233,10 @@ const MedicationFrequencyDetails: React.FC<MedicationFrequencyDetailsProps> = ({
                 <FormField
                     type="radio"
                     label="Modify"
-                    value={formState.modifyYn}
+                    value={formState.modifyYN}
                     onChange={handleInputChange}
-                    name="modifyYn"
-                    ControlID="modifyYn"
+                    name="modifyYN"
+                    ControlID="modifyYN"
                     options={[
                         { label: "Yes", value: "Y" },
                         { label: "No", value: "N" },

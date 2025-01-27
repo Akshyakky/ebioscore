@@ -22,6 +22,7 @@ const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClo
       return [];
     }
   };
+
   const updateActiveStatus = async (id: number, status: boolean) => {
     try {
       return await medicationFormService.updateActiveStatus(id, status);

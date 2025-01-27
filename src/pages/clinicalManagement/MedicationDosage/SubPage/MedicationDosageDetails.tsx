@@ -61,7 +61,7 @@ const MedicationDosageDetails: React.FC<MedicationDosageDetailsProps> = ({ selec
     const handleClear = useCallback(async () => {
         setLoading(true);
         try {
-            const nextCode = await medicationDosageService.getNextCode("MD", 3);
+            const nextCode = await medicationDosageService.getNextCode("MD", 5);
             setFormState({
                 mDId: 0,
                 mDCode: nextCode.data || "",
@@ -202,8 +202,16 @@ const MedicationDosageDetails: React.FC<MedicationDosageDetailsProps> = ({ selec
                 />
             </Grid>
             <Grid container spacing={2}>
-
-                <FormField type="textarea" label="Notes" value={formState.rNotes || ""} onChange={handleInputChange} name="rNotes" ControlID="rNotes" size="medium" rows={4} />
+                <FormField
+                    type="textarea"
+                    label="Notes"
+                    value={formState.rNotes || ""}
+                    onChange={handleInputChange}
+                    name="rNotes"
+                    ControlID="rNotes"
+                    placeholder="Notes"
+                    maxLength={4000}
+                />
             </Grid>
             <Grid container spacing={2}>
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { MedicationFrequencyDto } from "../../../../interfaces/ClinicalManagement/MedicationFrequencyDto";
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
@@ -11,6 +11,7 @@ interface MedicationFrequencySearchProps {
 
 const MedicationFrequencySearch: React.FC<MedicationFrequencySearchProps> = ({ open, onClose, onSelect }) => {
     const medicationFrequencyService = useMemo(() => createEntityService<MedicationFrequencyDto>("MedicationFrequency", "clinicalManagementURL"), []);
+    const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
 
     const fetchItems = async () => {
         try {
@@ -32,20 +33,31 @@ const MedicationFrequencySearch: React.FC<MedicationFrequencySearchProps> = ({ o
     };
 
     const getItemId = (item: MedicationFrequencyDto) => item.mFrqId;
-    const getItemActiveStatus = (item: MedicationFrequencyDto) => item.rActiveYN === "Y";
+    const getItemActiveStatus = (item: MedicationFrequencyDto) => switchStatus[item.mFrqId] ?? item.rActiveYN === "Y";
 
     const columns = [
         { key: "serialNumber", header: "Sl.No", visible: true },
         { key: "mFrqCode", header: "Medication Frequency Code", visible: true },
         { key: "mFrqSnomedCode", header: "Medication Frequency Snomed Code", visible: true },
         { key: "mFrqName", header: "Medication Frequency Name", visible: true },
-        { key: "modifyYn", header: "Modify", visible: true },
-        { key: "defaultYn", header: "Default", visible: true },
+        {
+            key: "modifyYN",
+            header: "Modifiable",
+            visible: true,
+            render: (row: MedicationFrequencyDto) => (row.modifyYN === "Y" ? "Yes" : "No"),
+        },
+        {
+            key: "defaultYN",
+            header: "Default",
+            visible: true,
+            render: (row: MedicationFrequencyDto) => (row.defaultYN === "Y" ? "Yes" : "No"),
+        },
         { key: "rNotes", header: "Notes", visible: true },
     ];
 
     return (
         <GenericAdvanceSearch
+            isEditButtonVisible={true}
             open={open}
             onClose={onClose}
             onSelect={onSelect}
@@ -56,9 +68,8 @@ const MedicationFrequencySearch: React.FC<MedicationFrequencySearchProps> = ({ o
             getItemId={getItemId}
             getItemActiveStatus={getItemActiveStatus}
             searchPlaceholder="Enter medication frequency code or text"
-            isActionVisible={true}
-            isEditButtonVisible={true}
-            isStatusVisible={true}
+            isStatusVisible={(item: MedicationFrequencyDto) => item.modifyYN === "Y"}
+            isActionVisible={(item: MedicationFrequencyDto) => item.modifyYN === "Y"}
         />
     );
 };
