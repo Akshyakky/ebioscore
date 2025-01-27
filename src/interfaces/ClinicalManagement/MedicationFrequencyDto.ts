@@ -6,8 +6,8 @@ export interface MedicationFrequencyDto extends BaseDto {
   mFrqId: number;
   mFrqCode: string;
   mFrqName: string;
-  modifyYn: string;
-  defaultYn: string;
+  modifyYN: string;
+  defaultYN: string;
   rActiveYN: string;
   compID: number;
   compCode: string;
