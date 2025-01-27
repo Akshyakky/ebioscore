@@ -1,10 +1,12 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState, useEffect } from "react";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { MedicationFormDto } from "../../../../interfaces/ClinicalManagement/MedicationFormDto";
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import CustomButton from "@/components/Button/CustomButton";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { useAppSelector } from "@/store/hooks";
+import EditIcon from "@mui/icons-material/Edit";
+import CustomSwitch from "@/components/Checkbox/ColorSwitch";
 
 interface MedicationFormSearchProps {
   open: boolean;
@@ -14,32 +16,69 @@ interface MedicationFormSearchProps {
 
 const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClose, onSelect }) => {
   const medicationFormService = useMemo(() => createEntityService<MedicationFormDto>("MedicationForm", "clinicalManagementURL"), []);
+  const user = useAppSelector((state) => state.auth);
+  const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
+  const [isUpdating, setIsUpdating] = useState<{ [key: number]: boolean }>({});
+  const [items, setItems] = useState<MedicationFormDto[]>([]);
 
   const fetchItems = async () => {
     try {
-      const items = await medicationFormService.getAll();
-      return items.data || [];
+      const response = await medicationFormService.getAll();
+      if (response.data) {
+        setItems(response.data);
+        const initialSwitchStatus = response.data.reduce((statusMap: { [key: number]: boolean }, item: MedicationFormDto) => {
+          statusMap[item.mFID] = item.rActiveYN === "Y";
+          return statusMap;
+        }, {});
+        setSwitchStatus(initialSwitchStatus);
+      }
+      return response.data || [];
     } catch (error) {
       console.error("Error fetching medication forms:", error);
       return [];
     }
   };
 
-  const handleDelete = useCallback(
+  useEffect(() => {
+    if (open) {
+      fetchItems();
+    }
+  }, [open]);
+
+  const handleActiveToggle = async (row: MedicationFormDto, status: boolean) => {
+    if (isUpdating[row.mFID]) return; // Prevent multiple simultaneous updates
+
+    try {
+      setIsUpdating((prev) => ({ ...prev, [row.mFID]: true }));
+      setSwitchStatus((prev) => ({ ...prev, [row.mFID]: status }));
+      const updatedItem = { ...row, rActiveYN: status ? "Y" : "N" };
+      const result = await medicationFormService.save(updatedItem);
+      if (result && result.success) {
+        setItems((prevItems) => prevItems.map((item) => (item.mFID === row.mFID ? { ...item, rActiveYN: status ? "Y" : "N" } : item)));
+        const message = status ? `${row.mFName} activated successfully` : `${row.mFName} deactivated successfully`;
+        showAlert("Success", message, "success");
+      } else {
+        setSwitchStatus((prev) => ({ ...prev, [row.mFID]: !status }));
+        showAlert("Error", "Failed to update status", "error");
+      }
+    } catch (error) {
+      setSwitchStatus((prev) => ({ ...prev, [row.mFID]: !status }));
+      showAlert("Error", "An error occurred while updating the status", "error");
+    } finally {
+      setIsUpdating((prev) => ({ ...prev, [row.mFID]: false }));
+    }
+  };
+
+  const handleEdit = useCallback(
     async (row: MedicationFormDto) => {
       try {
-        const updatedItem = { ...row, rActiveYN: "N" };
-        const result = await medicationFormService.save(updatedItem);
-        if (result) {
-          showAlert("Success", `${row.mFName} deactivated successfully`, "success");
-        } else {
-          showAlert("Error", "Failed to deactivate medication form", "error");
-        }
+        onSelect(row);
+        onClose();
       } catch (error) {
-        showAlert("Error", "An error occurred while deactivating the medication form", "error");
+        showAlert("Error", "An error occurred while fetching field details.", "error");
       }
     },
-    [medicationFormService]
+    [onSelect, onClose]
   );
 
   const updateActiveStatus = async (id: number, status: boolean) => {
@@ -52,9 +91,20 @@ const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClo
   };
 
   const getItemId = (item: MedicationFormDto) => item.mFID;
-  const getItemActiveStatus = (item: MedicationFormDto) => item.rActiveYN === "Y";
+  const getItemActiveStatus = (item: MedicationFormDto) => switchStatus[item.mFID] ?? item.rActiveYN === "Y";
 
   const columns = [
+    {
+      key: "edit",
+      header: "Edit",
+      visible: true,
+      render: (row: MedicationFormDto) => {
+        if (row.modifyYN === "Y" || user.adminYN === "Y") {
+          return <CustomButton onClick={() => handleEdit(row)} icon={EditIcon} text="Edit" variant="contained" size="small" />;
+        }
+        return null;
+      },
+    },
     { key: "serialNumber", header: "Sl.No", visible: true },
     { key: "mFCode", header: "Medication Form Code", visible: true },
     { key: "mFSnomedCode", header: "Medication Form Snomed Code", visible: true },
@@ -73,12 +123,19 @@ const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClo
     },
     { key: "rNotes", header: "Notes", visible: true },
     {
-      key: "delete",
-      header: "Delete",
+      key: "activeStatus",
+      header: "Active Status",
       visible: true,
       render: (row: MedicationFormDto) => {
         if (row.modifyYN === "Y") {
-          return <CustomButton onClick={() => handleDelete(row)} icon={DeleteIcon} text="Delete" variant="contained" color="error" size="small" />;
+          return (
+            <CustomSwitch
+              checked={switchStatus[row.mFID] ?? row.rActiveYN === "Y"}
+              onChange={(e) => handleActiveToggle(row, e.target.checked)}
+              color="primary"
+              disabled={isUpdating[row.mFID]}
+            />
+          );
         }
         return null;
       },
@@ -97,7 +154,6 @@ const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClo
       getItemId={getItemId}
       getItemActiveStatus={getItemActiveStatus}
       searchPlaceholder="Enter medication form code or text"
-      isEditButtonVisible={true}
     />
   );
 };
