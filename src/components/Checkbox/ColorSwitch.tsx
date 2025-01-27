@@ -9,7 +9,7 @@ interface CustomSwitchProps {
   color?: string;
   checked: boolean;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  disabled?: boolean; // Added disabled prop
+  disabled?: boolean;
 }
 
 const ColorSwitch = styled(Switch, {
