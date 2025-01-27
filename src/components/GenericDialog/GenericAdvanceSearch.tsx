@@ -137,6 +137,7 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
     onClose();
     onSelect(item);
   };
+
   const handleSwitchChange = async (item: ExtendedItem<T>, checked: boolean) => {
     try {
       const success = await updateActiveStatus(getItemId(item), checked);
@@ -163,7 +164,8 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
           visible: true,
           sortable: false,
           render: (item: ExtendedItem<T>, rowIndex: number) => {
-            const canEdit = item.modifyYN === "Y" || user?.adminYN === "Y" || item.modifyYN === undefined; // Default visibility if modifyYN doesn't exist
+            const canEdit = (item.modifyYN === "Y" || user?.adminYN === "Y" || item.modifyYN === undefined) && isEditButtonVisible; // Ensure visibility aligns with `isEditButtonVisible`
+
             return canEdit ? <CustomButton text="Edit" onClick={() => handleEditAndClose(rowIndex)} icon={Edit} size="small" disabled={isLoading || !dataLoaded} /> : null;
           },
         }
@@ -176,8 +178,7 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
           visible: true,
           sortable: false,
           render: (item: ExtendedItem<T>) => {
-            const shouldBeVisible = (typeof isStatusVisible === "function" && isStatusVisible(item)) || item.modifyYN === undefined; // Default to visible if `modifyYN` doesn't exist
-
+            const shouldBeVisible = (typeof isStatusVisible === "function" && isStatusVisible(item)) || item.modifyYN === undefined; // Default visibility if `modifyYN` doesn't exist
             return shouldBeVisible ? <Typography variant="body2">{switchStatus[getItemId(item)] ? "Active" : "Hidden"}</Typography> : null;
           },
         }
@@ -190,7 +191,7 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
           visible: true,
           sortable: false,
           render: (item: ExtendedItem<T>) => {
-            const shouldBeVisible = (typeof isActionVisible === "function" && isActionVisible(item)) || item.modifyYN === undefined; // Default to visible if `modifyYN` doesn't exist
+            const shouldBeVisible = (typeof isActionVisible === "function" && isActionVisible(item)) || item.modifyYN === undefined; // Default visibility if `modifyYN` doesn't exist
             return shouldBeVisible ? (
               <CustomSwitch
                 size="small"

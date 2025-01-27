@@ -12,4 +12,5 @@ export interface MedicationGenericDto extends BaseDto {
   compName: string;
   transferYN: string;
   rNotes?: string;
+  mSnomedCode?: string;
 }

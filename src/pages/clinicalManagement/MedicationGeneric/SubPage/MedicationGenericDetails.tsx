@@ -52,6 +52,7 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
         compName: compName ?? "",
         rNotes: "",
         transferYN: "N",
+        mSnomedCode: "",
       });
       setIsSubmitted(false);
       setIsEditing(false);

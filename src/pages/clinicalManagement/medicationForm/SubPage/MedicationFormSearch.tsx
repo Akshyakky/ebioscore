@@ -1,7 +1,7 @@
-import React, { useMemo, useCallback, useState } from "react";
+import React from "react";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { MedicationFormDto } from "../../../../interfaces/ClinicalManagement/MedicationFormDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
+import { medicationFormService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface MedicationFormSearchProps {
   open: boolean;
@@ -10,9 +10,6 @@ interface MedicationFormSearchProps {
 }
 
 const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClose, onSelect }) => {
-  const medicationFormService = useMemo(() => createEntityService<MedicationFormDto>("MedicationForm", "clinicalManagementURL"), []);
-  const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
-
   const fetchItems = async () => {
     try {
       const items = await medicationFormService.getAll();
@@ -33,7 +30,7 @@ const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClo
   };
 
   const getItemId = (item: MedicationFormDto) => item.mFID;
-  const getItemActiveStatus = (item: MedicationFormDto) => switchStatus[item.mFID] ?? item.rActiveYN === "Y";
+  const getItemActiveStatus = (item: MedicationFormDto) => item.rActiveYN === "Y";
 
   const columns = [
     { key: "serialNumber", header: "Sl.No", visible: true },
