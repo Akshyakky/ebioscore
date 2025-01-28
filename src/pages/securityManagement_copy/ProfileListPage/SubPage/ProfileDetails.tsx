@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Grid, Paper, Typography } from "@mui/material";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { ProfileMastDto, ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
-import { OperationResult } from "../../../../interfaces/Common/OperationResult";
-import { notifySuccess, notifyError } from "../../../../utils/Common/toastManager";
-import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
-import FormField from "../../../../components/FormField/FormField";
 import { useAppSelector } from "@/store/hooks";
+import { ProfileListSearchResult, ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { ProfileService } from "@/services/SecurityManagementServices/ProfileListServices";
+import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
+import FormField from "@/components/FormField/FormField";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 interface ProfileDetailsProps {
   profile: ProfileListSearchResult | null;

@@ -1,17 +1,17 @@
 // src/pages/patientAdministration/WardBedTransferPage/MainPage/WardBedTransferPage.tsx
 import React, { useState, useCallback, useRef } from "react";
 import { Container, Box } from "@mui/material";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import { Search } from "@mui/icons-material";
+import { useLoading } from "@/context/LoadingContext";
+import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
+import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
+import { showAlert } from "@/utils/Common/showAlert";
+import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import CustomAccordion from "@/components/Accordion/CustomAccordion";
 import WardBedTransferDetails from "../SubPage/WardBedTransferDetails";
-import AdmissionListSearch from "../../AdmissionPage/SubPage/AdmissionListSearch";
-import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
-import { AdmissionHistoryDto } from "../../../../interfaces/PatientAdministration/AdmissionHistoryDto";
-import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
 import AdmissionHistory from "../../AdmissionPage/SubPage/AdmissionHistory";
-import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/admissionService";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { useLoading } from "../../../../context/LoadingContext";
+import AdmissionListSearch from "../../AdmissionPage/SubPage/AdmissionListSearch";
 
 const WardBedTransferPage: React.FC = () => {
   // State Management

@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import MainLayout from "../../../layouts/MainLayout/MainLayout";
-import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import CustomGrid from "../../../components/CustomGrid/CustomGrid";
-import { Column, RoutineReports } from "../../../interfaces/RoutineReports/RoutineReports.interface";
-import { fetchReports } from "../../../services/ReportService/ReportService";
-import CustomButton from "../../../components/Button/CustomButton";
 import PrintIcon from "@mui/icons-material/Print";
 import { Box, Grid, Paper, Typography } from "@mui/material";
-import useReportsData from "../../../hooks/RoutineReports/useReportsData";
-import useSearch from "../../../hooks/RoutineReports/useSearch";
+import useReportsData from "@/hooks/RoutineReports/useReportsData";
+import { RoutineReports } from "@/interfaces/RoutineReports/RoutineReports.interface";
+import { fetchReports } from "@/services/ReportService/ReportService";
+import useSearch from "@/hooks/RoutineReports/useSearch";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import CustomButton from "@/components/Button/CustomButton";
+import MainLayout from "@/layouts/MainLayout/MainLayout";
+import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import ReportCriteria from "../SubPage/ReportCriteria";
 interface ListOfReportsPageProps {
   // Your props here

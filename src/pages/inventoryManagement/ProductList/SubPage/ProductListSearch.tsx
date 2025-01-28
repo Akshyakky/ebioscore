@@ -1,7 +1,7 @@
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
+import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
 import React from "react";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { ProductListDto } from "../../../../interfaces/InventoryManagement/ProductListDto";
-import { productListService } from "../../../../services/InventoryManagementService/inventoryManagementService";
 
 interface ProductListSearchProps {
   open: boolean;

@@ -1,20 +1,20 @@
 // src/pages/clinicalManagement/patientHistory/SocialHistory.tsx
-import React, { useState, useCallback, useMemo } from "react";
-import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../components/Button/CustomButton";
-import { OPIPHistSHDto } from "../../../../interfaces/ClinicalManagement/OPIPHistSHDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
+import CustomButton from "@/components/Button/CustomButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import FormField from "@/components/FormField/FormField";
+import { useLoading } from "@/context/LoadingContext";
+import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
+import { useAppSelector } from "@/store/hooks";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Box, Grid, Grid2, IconButton, Paper, Tooltip, Typography } from "@mui/material";
+import React, { useCallback, useMemo, useState } from "react";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import GroupIcon from "@mui/icons-material/Group";
 import LifestyleIcon from "@mui/icons-material/Accessibility";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import ClearIcon from "@mui/icons-material/Clear";
-import { useAppSelector } from "@/store/hooks";
 
 interface SocialHistoryProps {
   pChartID: number;

@@ -1,22 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
-import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
-import { useLoading } from "../../../../context/LoadingContext";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import { appModifiedListService, appModifiedMastService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { Grid, SelectChangeEvent } from "@mui/material";
-import CustomButton from "../../../../components/Button/CustomButton";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import FormField from "../../../../components/FormField/FormField";
+import React, { useCallback, useEffect, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import moduleService from "../../../../services/CommonServices/ModuleService";
-import { useAppSelector } from "@/store/hooks";
-import React from "react";
 import { AppModifiedMast, AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { useLoading } from "@/context/LoadingContext";
+import { useAppSelector } from "@/store/hooks";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { appModifiedListService, appModifiedMastService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Grid, SelectChangeEvent } from "@mui/material";
+import moduleService from "@/services/CommonServices/ModuleService";
+import CustomButton from "@/components/Button/CustomButton";
+import FormField from "@/components/FormField/FormField";
+import CustomGrid from "@/components/CustomGrid/CustomGrid";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 
 interface AppModifiedDetailsListProps {
   selectedData?: AppModifiedMast;

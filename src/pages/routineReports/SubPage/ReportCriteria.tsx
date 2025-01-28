@@ -1,19 +1,18 @@
 // components/ReportCriteria/ReportCriteria.tsx
 import React, { useEffect, useState } from "react";
 import { Box, Dialog, DialogActions, DialogContent, DialogTitle, SelectChangeEvent, Typography } from "@mui/material";
-import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import CustomButton from "../../../components/Button/CustomButton";
 import PrintIcon from "@mui/icons-material/Print";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import { CompanyService } from "../../../services/CommonServices/CompanyService";
-import { Company } from "../../../types/Common/Company.type";
-import MultiSelectDropdown from "../../../components/DropDown/MultiSelectDropdown";
-import { ExportService } from "../../../services/RoutineReportService/ExportService";
-import { useSelector } from "react-redux";
-import PdfViewer from "../../../components/PDFViewer/PdfViewer";
 import { useAppSelector } from "@/store/hooks";
+import { Company } from "@/types/Common/Company.type";
+import { CompanyService } from "@/services/CommonServices/CompanyService";
+import { ExportService } from "@/services/RoutineReportService/ExportService";
+import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import MultiSelectDropdown from "@/components/DropDown/MultiSelectDropdown";
+import PdfViewer from "@/components/PDFViewer/PdfViewer";
+import CustomButton from "@/components/Button/CustomButton";
 
 interface ReportCriteriaProps {
   onExportExcel: (reportId: string, fromDate: string, toDate: string, selectedCompanies: string[]) => void;

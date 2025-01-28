@@ -1,9 +1,9 @@
 import React from "react";
 import { Box, Container } from "@mui/material";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import Search from "@mui/icons-material/Search";
 import { useCallback, useState } from "react";
-import { ProductTaxListDto } from "../../../../interfaces/InventoryManagement/ProductTaxListDto";
+import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import ProductTaxListDetails from "../SubPage/ProductTaxDetails";
 import ProductTaxListSearch from "../SubPage/ProductTaxListSearch";
 

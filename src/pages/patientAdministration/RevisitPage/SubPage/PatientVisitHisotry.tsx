@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
-import { GetPatientVisitHistory } from "../../../../interfaces/PatientAdministration/revisitFormData";
 import { Grid, Typography } from "@mui/material";
-import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
-import useDayjs from "../../../../hooks/Common/useDateTime";
-
+import { GetPatientVisitHistory } from "@/interfaces/PatientAdministration/revisitFormData";
+import useDayjs from "@/hooks/Common/useDateTime";
+import { RevisitService } from "@/services/PatientAdministrationServices/RevisitService/RevisitService";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 interface PatientVisitHistoryProps {
   pChartID: number;
 }

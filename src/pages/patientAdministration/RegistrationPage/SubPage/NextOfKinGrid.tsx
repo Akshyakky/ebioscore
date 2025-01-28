@@ -1,11 +1,11 @@
 import React, { useMemo, useCallback } from "react";
-import { PatNokDetailsDto } from "../../../../interfaces/PatientAdministration/PatNokDetailsDto";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../components/Button/CustomButton";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import useDayjs from "../../../../hooks/Common/useDateTime";
-import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
+import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
+import useDayjs from "@/hooks/Common/useDateTime";
+import { PatientService } from "@/services/PatientAdministrationServices/RegistrationService/PatientService";
+import CustomButton from "@/components/Button/CustomButton";
+import CustomGrid from "@/components/CustomGrid/CustomGrid";
 
 interface NextOfKinGridProps {
   kinData: PatNokDetailsDto[];

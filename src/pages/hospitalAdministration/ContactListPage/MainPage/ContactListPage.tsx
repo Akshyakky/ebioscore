@@ -1,17 +1,16 @@
-import { useCallback, useState, useMemo } from "react";
-import { Box, Container, Paper } from "@mui/material";
+import React, { useCallback, useMemo, useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import { useLoading } from "../../../../context/LoadingContext";
-import { ContactListService } from "../../../../services/HospitalAdministrationServices/ContactListService/ContactListService";
-import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch";
-import ContactListForm from "../SubPage/ContactListForm";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import useDayjs from "../../../../hooks/Common/useDateTime";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
 import { useAppSelector } from "@/store/hooks";
-import React from "react";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDayjs from "@/hooks/Common/useDateTime";
 import { ContactListData } from "@/interfaces/HospitalAdministration/ContactListData";
+import { useLoading } from "@/context/LoadingContext";
+import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
+import { showAlert } from "@/utils/Common/showAlert";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import { Box, Container, Paper } from "@mui/material";
+import ContactListForm from "../SubPage/ContactListForm";
+import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch";
 
 const ContactListPage: React.FC = () => {
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);

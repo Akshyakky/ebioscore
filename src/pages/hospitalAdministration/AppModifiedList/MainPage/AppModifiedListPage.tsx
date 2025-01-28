@@ -1,12 +1,11 @@
-import { Box, Container, Divider, Grid, Typography } from "@mui/material";
-import { Suspense, useState } from "react";
-import { Loader } from "lucide-react";
-import AppModifiedDetails from "../SubPage/AppModifiedListDetails";
-import React from "react";
-import AppModifiedListSearch from "../SubPage/AppModifiedListSearch";
-import { AppModifiedMast } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
-import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
+import React, { Suspense, useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
+import { Loader } from "lucide-react";
+import { AppModifiedMast } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { Box, Container, Divider, Grid, Typography } from "@mui/material";
+import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
+import AppModifiedDetails from "../SubPage/AppModifiedListDetails";
+import AppModifiedMastSearch from "../SubPage/AppModifiedListSearch";
 const AppModifiedListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<AppModifiedMast | undefined>(undefined);
@@ -47,7 +46,7 @@ const AppModifiedListPage: React.FC = () => {
           <Suspense fallback={<Loader type="skeleton" />}>
             <AppModifiedDetails selectedData={selectedData} />
           </Suspense>
-          <AppModifiedListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
+          <AppModifiedMastSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
         </Grid>
       </Grid>
     </Container>

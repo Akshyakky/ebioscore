@@ -1,18 +1,18 @@
+import React from "react";
 import { useState, useMemo, useCallback, forwardRef, useImperativeHandle, useEffect } from "react";
 import { Grid, SelectChangeEvent, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import ContactListActions from "./ContactListActions";
-import ContactListSwitches from "./ContactListSwitches";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
-import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useAppSelector } from "@/store/hooks";
-import { ContactListData } from "../../../../interfaces/HospitalAdministration/ContactListData";
-import React from "react";
+import { ContactListData } from "@/interfaces/HospitalAdministration/ContactListData";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useFieldsList from "@/components/FieldsList/UseFieldsList";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import FormField from "@/components/FormField/FormField";
+import ContactListSwitches from "./ContactListSwitches";
+import ContactListActions from "./ContactListActions";
+import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { showAlert } from "@/utils/Common/showAlert";
 
 type SwitchStates = {

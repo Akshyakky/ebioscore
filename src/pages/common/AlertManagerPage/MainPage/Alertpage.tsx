@@ -1,17 +1,17 @@
+import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
+import { useLoading } from "@/context/LoadingContext";
+import { PatientSearchContext } from "@/context/PatientSearchContext";
+import { AlertDto } from "@/interfaces/Common/AlertManager";
+import PatientSearch from "@/pages/patientAdministration/CommonPage/AdvanceSearch/PatientSearch";
+import { alertService } from "@/services/CommonServices/CommonModelServices";
+import { PatientService } from "@/services/PatientAdministrationServices/RegistrationService/PatientService";
+import { showAlertPopUp } from "@/utils/Common/alertMessage";
+import { showAlert } from "@/utils/Common/showAlert";
+import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
+import { Box, Container, Paper } from "@mui/material";
 import React, { useContext, useState } from "react";
-import { Container, Paper, Box } from "@mui/material";
-import { useLoading } from "../../../../context/LoadingContext";
-import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
-import { AlertDto } from "../../../../interfaces/Common/AlertManager";
 import AlertDetails from "../SubPage/AlertDetails";
-import PatientSearch from "../../../patientAdministration/CommonPage/AdvanceSearch/PatientSearch";
-import { PatientSearchContext } from "../../../../context/PatientSearchContext";
-import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
-import { Search as SearchIcon } from "@mui/icons-material";
-import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
-import { showAlertPopUp } from "../../../../utils/Common/alertMessage";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { alertService } from "../../../../services/CommonServices/CommonModelServices";
+import SearchIcon from "@mui/icons-material/Search";
 
 const AlertPage: React.FC = () => {
   const [selectedData, setSelectedData] = useState<AlertDto | undefined>(undefined);

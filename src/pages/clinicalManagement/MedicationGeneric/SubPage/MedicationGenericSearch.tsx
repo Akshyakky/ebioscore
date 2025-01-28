@@ -1,7 +1,7 @@
-import React from "react";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { MedicationGenericDto } from "../../../../interfaces/ClinicalManagement/MedicationGenericDto";
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
 import { medicationGenericService } from "@/services/ClinicalManagementServices/clinicalManagementService";
+import React from "react";
 
 interface MedicationGemericSearchProps {
   open: boolean;

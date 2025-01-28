@@ -1,8 +1,8 @@
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { ProfileListSearchContext } from "@/context/SecurityManagement/ProfileListSearchContext";
+import { ProfileListSearchResult } from "@/interfaces/SecurityManagement/ProfileListData";
+import { ProfileService } from "@/services/SecurityManagementServices/ProfileListServices";
 import React, { useCallback, useContext, useState } from "react";
-import { ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
-import { ProfileListSearchContext } from "../../../../context/SecurityManagement/ProfileListSearchContext";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
 
 interface ProfileListSearchProps {
   open: boolean;

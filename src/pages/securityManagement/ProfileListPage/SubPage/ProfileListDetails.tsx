@@ -1,13 +1,14 @@
 import { Grid, Paper, Typography } from "@mui/material";
 import React, { useState } from "react";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { Save as SaveIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import { ProfileMastDto } from "../../../../interfaces/SecurityManagement/ProfileListData";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { profileMastService } from "../../../../services/SecurityManagementServices/securityManagementService";
 import { useAppSelector } from "@/store/hooks";
+import { useLoading } from "@/context/LoadingContext";
+import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { profileMastService } from "@/services/SecurityManagementServices/securityManagementService";
+import { showAlert } from "@/utils/Common/showAlert";
+import FormField from "@/components/FormField/FormField";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import SaveIcon from "@mui/icons-material/Save";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const ProfileDetails = () => {
   const { setLoading } = useLoading();

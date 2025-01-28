@@ -1,7 +1,7 @@
 import React from "react";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { wardCategoryService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
+import { wardCategoryService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 
 interface WardCategorySearchProps {
   open: boolean;

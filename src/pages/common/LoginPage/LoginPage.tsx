@@ -1,22 +1,19 @@
 // src/pages/common/LoginPage/LoginPage.tsx
-import React, { useEffect, useMemo, useCallback, useRef, useState } from "react";
-import { Container, Box, Card, CardContent, Button, Alert, CircularProgress, Link, Typography, Grid, useMediaQuery, alpha, styled } from "@mui/material";
-import LockOpenIcon from "@mui/icons-material/LockOpen";
+import { Company } from "@/types/Common/Company.type";
+import { useAppDispatch } from "@/store/hooks";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch } from "../../../store/hooks";
-import { setUserDetails } from "../../../store/features/auth/authSlice";
-import DropdownSelect from "../../../components/DropDown/DropdownSelect";
-import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import { notifySuccess } from "../../../utils/Common/toastManager";
-import { Company } from "../../../types/Common/Company.type";
-import { CompanyService } from "../../../services/CommonServices/CompanyService";
-import { ClientParameterService } from "../../../services/CommonServices/ClientParameterService";
-import AuthService from "../../../services/AuthService/AuthService";
-import { useTheme } from "../../../context/Common/ThemeContext";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { IconButton, InputAdornment } from "@mui/material";
-
-// Import images
+import { useTheme } from "@/context/Common/ThemeContext";
+import { ClientParameterService } from "@/services/CommonServices/ClientParameterService";
+import { CompanyService } from "@/services/CommonServices/CompanyService";
+import AuthService from "@/services/AuthService/AuthService";
+import { setUserDetails } from "@/store/features/auth/authSlice";
+import { notifySuccess } from "@/utils/Common/toastManager";
+import DropdownSelect from "@/components/DropDown/DropdownSelect";
+import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import { Link, Visibility, VisibilityOff } from "@mui/icons-material";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
+import { Alert, alpha, Box, Button, Card, CardContent, CircularProgress, Container, Grid, IconButton, InputAdornment, styled, Typography, useMediaQuery } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import logo from "../../../assets/images/eBios.png";
 import backgroundImage from "/src/assets/images/LoginCoverImage.jpg";
 

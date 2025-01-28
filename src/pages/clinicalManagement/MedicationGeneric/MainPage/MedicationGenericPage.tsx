@@ -1,10 +1,10 @@
-import React, { useCallback, useState, useMemo } from "react";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
+import { Search } from "@mui/icons-material";
 import { Box, Container } from "@mui/material";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import Search from "@mui/icons-material/Search";
+import React, { useCallback, useMemo, useState } from "react";
 import MedicationGenericDetails from "../SubPage/MedicationGenericDetails";
 import MedicationGenericSearch from "../SubPage/MedicationGenericSearch";
-import { MedicationGenericDto } from "../../../../interfaces/ClinicalManagement/MedicationGenericDto";
 const MedicationGenericPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<MedicationGenericDto | undefined>(undefined);

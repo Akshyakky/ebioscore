@@ -1,7 +1,7 @@
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { profileMastService } from "@/services/SecurityManagementServices/securityManagementService";
 import React from "react";
-import { ProfileMastDto } from "../../../../interfaces/SecurityManagement/ProfileListData";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { profileMastService } from "../../../../services/SecurityManagementServices/securityManagementService";
 
 interface ProfileListSearchProps {
   open: boolean;

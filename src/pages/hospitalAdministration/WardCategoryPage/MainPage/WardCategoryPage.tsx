@@ -1,11 +1,11 @@
+import React from "react";
 import { Box, Container } from "@mui/material";
 import { useState } from "react";
 import Search from "@mui/icons-material/Search";
+import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import WardCategoryDetails from "../SubPage/WardCategoryDetails";
 import WardCategorySearch from "../SubPage/WardCategorySearch";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import React from "react";
-import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
 
 const WardCategoryPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

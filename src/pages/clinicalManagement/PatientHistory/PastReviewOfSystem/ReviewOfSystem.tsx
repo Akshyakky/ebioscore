@@ -1,20 +1,20 @@
 //src/pages/clinicalManagement/PastReviewOfSystem/ReviewOfSystem.tsx
-import React, { useState, useCallback, useMemo } from "react";
+import CustomButton from "@/components/Button/CustomButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import FormField from "@/components/FormField/FormField";
+import { useLoading } from "@/context/LoadingContext";
+import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
+import { useAppSelector } from "@/store/hooks";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../components/Button/CustomButton";
-import { OPIPHistROSDto } from "../../../../interfaces/ClinicalManagement/OPIPHistROSDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
+import React, { useCallback, useMemo, useState } from "react";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import ClearIcon from "@mui/icons-material/Clear";
-import { useAppSelector } from "@/store/hooks";
 
 interface ReviewOfSystemProps {
   pChartID: number;

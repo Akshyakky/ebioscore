@@ -1,6 +1,6 @@
 import React from "react";
 import { Grid } from "@mui/material";
-import CustomSwitch from "../../../../components/Checkbox/ColorSwitch";
+import CustomSwitch from "@/components/Checkbox/ColorSwitch";
 
 interface SwitchItem {
   label: string;

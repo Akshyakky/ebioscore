@@ -1,28 +1,28 @@
-import React, { useRef, useState, useCallback, useEffect } from "react";
-import { Box, Paper, Container } from "@mui/material";
+import useDayjs from "@/hooks/Common/useDateTime";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { AppointBookingDto } from "@/interfaces/frontOffice/AppointBookingDto";
+import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
+import { ReasonListService } from "@/services/FrontOfficeServices/ReasonListServices/ReasonListService";
+import { ResourceListService } from "@/services/FrontOfficeServices/ResourceListServices/ResourceListServices";
+import { useAppSelector } from "@/store/hooks";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Box, Container, Paper } from "@mui/material";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import SchedulerHeader from "../SubPage/SchedulerHeader";
+import SchedulerComponent from "../SubPage/SchedulerComponent";
+import SchedulerFooter from "../SubPage/SchedulerFooter";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import CustomButton from "@/components/Button/CustomButton";
+import AppointmentBookingForm from "../SubPage/AppointmentBookingForm";
 import CloseIcon from "@mui/icons-material/Close";
 import ClearAllIcon from "@mui/icons-material/ClearAll";
 import SaveIcon from "@mui/icons-material/Save";
-import SchedulerComponent from "../SubPage/SchedulerComponent";
-import SchedulerHeader from "../SubPage/SchedulerHeader";
-import SchedulerFooter from "../SubPage/SchedulerFooter";
-import AppointmentBookingForm from "../SubPage/AppointmentBookingForm";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import CustomButton from "../../../../components/Button/CustomButton";
-import { ReasonListService } from "../../../../services/FrontOfficeServices/ReasonListServices/ReasonListService";
-import { ResourceListService } from "../../../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
-import { AppointmentService } from "../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import { AppointBookingDto } from "../../../../interfaces/frontOffice/AppointBookingDto";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import useDayjs from "../../../../hooks/Common/useDateTime";
-import { useAppSelector } from "@/store/hooks";
 
 const AppointmentPage: React.FC = () => {
   const user = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
-  const { formatDateYMD, formatDateYMDHHmm, add } = useDayjs(serverDate);
+  const { add } = useDayjs(serverDate);
   const endTime = add(15, "minute", serverDate).toDate(); // Convert Dayjs to Date
   const getDefaultAppointBookingDto = useCallback(
     (): AppointBookingDto => ({

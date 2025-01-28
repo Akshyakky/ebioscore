@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Grid, Box, Pagination } from "@mui/material";
-import { Print } from "@mui/icons-material";
-import CustomButton from "../../../../components/Button/CustomButton";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import Close from "@mui/icons-material/Close";
-import FormField from "../../../../components/FormField/FormField";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
-import { AppointmentService } from "../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService";
-import { useLoading } from "../../../../context/LoadingContext";
-import { debounce } from "../../../../utils/Common/debounceUtils";
-import useDayjs from "../../../../hooks/Common/useDateTime";
-import { AppointBookingDto } from "../../../../interfaces/frontOffice/AppointBookingDto";
+import CustomButton from "@/components/Button/CustomButton";
+import CustomGrid from "@/components/CustomGrid/CustomGrid";
+import FormField from "@/components/FormField/FormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { useLoading } from "@/context/LoadingContext";
+import useDayjs from "@/hooks/Common/useDateTime";
+import { AppointBookingDto } from "@/interfaces/frontOffice/AppointBookingDto";
+import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
+import { Close, Print } from "@mui/icons-material";
+import { Box, debounce, Grid, Pagination } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
 
 interface AppointmentSearchProps {
   open: boolean;

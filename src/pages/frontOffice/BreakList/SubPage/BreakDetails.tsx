@@ -1,24 +1,23 @@
-import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { useLoading } from "../../../../context/LoadingContext";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { useSelector } from "react-redux";
-import { Grid, Paper, Typography } from "@mui/material";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
-import CustomCheckbox from "../../../../components/Checkbox/Checkbox";
-import CustomButton from "../../../../components/Button/CustomButton";
-import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Save from "@mui/icons-material/Save";
 import Delete from "@mui/icons-material/Delete";
-import { AppointmentService } from "../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService";
-import BreakFrequencyDetails, { FrequencyData } from "./BreakFrequencyDetails";
-import { formatDate } from "../../../../utils/Common/dateUtils";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { BreakConDetailData, BreakListData, BreakListDto } from "../../../../interfaces/frontOffice/BreakListData";
-import FormField from "../../../../components/FormField/FormField";
-import { breakConDetailsService, resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
-import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
+import { useLoading } from "@/context/LoadingContext";
+import { useServerDate } from "@/hooks/Common/useServerDate";
 import { useAppSelector } from "@/store/hooks";
+import { BreakConDetailData, BreakListData } from "@/interfaces/frontOffice/BreakListData";
+import BreakFrequencyDetails, { FrequencyData } from "./BreakFrequencyDetails";
+import { BreakListService } from "@/services/FrontOfficeServices/BreakListServices/BreakListService";
+import { breakConDetailsService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
+import { showAlert } from "@/utils/Common/showAlert";
+import CustomCheckbox from "@/components/Checkbox/Checkbox";
+import { Grid, Paper, Typography } from "@mui/material";
+import FormField from "@/components/FormField/FormField";
+import CustomButton from "@/components/Button/CustomButton";
+import CustomGrid from "@/components/CustomGrid/CustomGrid";
+import { formatDate } from "@/utils/Common/dateUtils";
+import ChangeCircleIcon from "@mui/icons-material/ChangeCircle";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 const frequencyCodeMap = {
   none: "FO70",

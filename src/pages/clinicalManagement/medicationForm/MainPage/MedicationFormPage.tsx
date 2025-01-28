@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
+import { MedicationFormDto } from "@/interfaces/ClinicalManagement/MedicationFormDto";
 import { Box, Container } from "@mui/material";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import SearchIcon from "@mui/icons-material/Search";
+import React, { useState } from "react";
 import MedicationFormDetails from "../SubPage/MedicationFormDetails";
 import MedicationFormSearch from "../SubPage/MedicationFormSearch";
-import { MedicationFormDto } from "../../../../interfaces/ClinicalManagement/MedicationFormDto";
-
+import SearchIcon from "@mui/icons-material/Search";
 const MedicationFormPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<MedicationFormDto | undefined>(undefined);

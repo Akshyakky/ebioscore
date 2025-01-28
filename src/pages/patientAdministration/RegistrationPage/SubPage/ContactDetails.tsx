@@ -1,13 +1,13 @@
 import React, { useMemo, useCallback, useState } from "react";
-import FormField from "../../../../components/FormField/FormField";
-import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
-import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
-import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import useRadioButtonChange from "@/hooks/useRadioButtonChange";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useFieldsList from "@/components/FieldsList/UseFieldsList";
+import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
+import FormField from "@/components/FormField/FormField";
+import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 interface ContactDetailsProps {
   formData: PatientRegistrationDto;
   setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
@@ -19,7 +19,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, 
   const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
 
   const dropdownValues = useDropdownValues(["area", "city", "country", "company"]);
-  const { fieldsList, defaultFields, isLoading, error, refreshFields } = useFieldsList(["area", "city", "country", "company"]);
+  const { fieldsList, defaultFields } = useFieldsList(["area", "city", "country", "company"]);
 
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");

@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useSelector } from "react-redux";
-import { Grid, Box } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
 import Close from "@mui/icons-material/Close";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import CustomButton from "../../../../components/Button/CustomButton";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import TextArea from "../../../../components/TextArea/TextArea";
-import { useLoading } from "../../../../context/LoadingContext";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { BreakConSuspendData } from "../../../../interfaces/frontOffice/BreakConSuspendData";
-import { breakConSuspendService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
-import { showAlert } from "../../../../utils/Common/showAlert";
+import { BreakConSuspendData } from "@/interfaces/frontOffice/BreakConSuspendData";
+import { useLoading } from "@/context/LoadingContext";
 import { useAppSelector } from "@/store/hooks";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Box, Grid } from "@mui/material";
+import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import CustomButton from "@/components/Button/CustomButton";
+import TextArea from "@/components/TextArea/TextArea";
+
 const formatToDDMMYYYY = (date: Date) => {
   return date ? date.toLocaleDateString("en-GB").split("/").reverse().join("-") : "Invalid Date";
 };
