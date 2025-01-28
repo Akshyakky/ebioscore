@@ -1,4 +1,4 @@
-import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { RecordFieldsWithPhysician } from "../Common/PhysicianReferralFields";
 import { RecordFields } from "../Common/RecordFields";
 type YesNo = "Y" | "N";

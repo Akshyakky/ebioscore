@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import moduleService from "../../services/CommonServices/ModuleService";
-import { ModuleDto, SubModuleDto } from "../../interfaces/Common/Modules";
+
 import {
   Drawer,
   List,
@@ -32,6 +31,7 @@ import { notifyError } from "../../utils/Common/toastManager";
 import { MaterialUISwitch } from "../../components/Switch/MaterialUISwitch";
 import { useTheme as useCustomTheme } from "../../context/Common/ThemeContext";
 import "./SideBar.css";
+import moduleService, { ModuleDto, SubModuleDto } from "@/services/CommonServices/ModuleService";
 
 interface SideBarProps {
   userID: number | null;

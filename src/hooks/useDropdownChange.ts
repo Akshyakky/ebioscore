@@ -1,5 +1,5 @@
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { SelectChangeEvent } from "@mui/material";
-import { DropdownOption } from "../interfaces/Common/DropdownOption";
 
 const useDropdownChange = <T extends object>(setFormData: React.Dispatch<React.SetStateAction<T>>) => {
   const handleDropdownChange =

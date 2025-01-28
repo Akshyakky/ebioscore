@@ -1,6 +1,6 @@
 // src/interfaces/ClinicalManagement/MedicationFrequencyDto.ts
 
-import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
 export interface MedicationFrequencyDto extends BaseDto {
   mFrqId: number;

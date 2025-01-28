@@ -1,5 +1,6 @@
-import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { RecordFields } from "../Common/RecordFields";
+
 export interface ChargeDetailsDto extends BaseDto {
   chargeInfo: BChargeDto;
   chargeDetails: BChargeDetailsDto[];

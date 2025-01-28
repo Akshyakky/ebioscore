@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
-import { useAppSelector } from "../store/hooks";
-import AuthService from "../services/AuthService/AuthService";
-import { debounce } from "../utils/Common/debounceUtils";
 import { selectUser } from "@/store/features/auth/selectors";
+import { useAppSelector } from "@/store/hooks";
+import AuthService from "@/services/AuthService/AuthService";
+import { debounce } from "@/utils/Common/debounceUtils";
 
 interface TokenExpiryConfig {
   retryCount?: number;

@@ -1,4 +1,4 @@
-import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { RecordFields } from "../Common/RecordFields";
 import { BaseHistoryDto } from "./BaseHistoryDto";
 

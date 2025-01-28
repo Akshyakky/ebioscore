@@ -1,8 +1,8 @@
+import { ProfileListSearchResult } from "@/interfaces/SecurityManagement/ProfileListData";
 import React, { createContext, useCallback } from "react";
 import { useLoading } from "../LoadingContext";
-import { notifyError } from "../../utils/Common/toastManager";
-import { ProfileService } from "../../services/SecurityManagementServices/ProfileListServices";
-import { ProfileListSearchResult } from "../../interfaces/SecurityManagement/ProfileListData";
+import { ProfileService } from "@/services/SecurityManagementServices/ProfileListServices";
+import { notifyError } from "@/utils/Common/toastManager";
 
 interface ProfileListSearchContextProps {
   fetchAllProfiles: () => Promise<ProfileListSearchResult[]>;

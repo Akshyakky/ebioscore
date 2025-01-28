@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Grid, Typography, Box } from "@mui/material";
 import { Edit } from "@mui/icons-material";
-import CustomSwitch from "../Checkbox/ColorSwitch";
+import Close from "@mui/icons-material/Close";
+import { useAppSelector } from "@/store/hooks";
 import CustomGrid, { Column } from "../CustomGrid/CustomGrid";
 import CustomButton from "../Button/CustomButton";
-import GenericDialog from "./GenericDialog";
-import Close from "@mui/icons-material/Close";
+import CustomSwitch from "../Checkbox/ColorSwitch";
 import FormField from "../FormField/FormField";
-import { useAppSelector } from "@/store/hooks";
+import GenericDialog from "./GenericDialog";
 
 type ExtendedItem<T> = T & {
   serialNumber: number;

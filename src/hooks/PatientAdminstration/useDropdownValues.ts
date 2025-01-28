@@ -1,17 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-import { useLoading } from "../../context/LoadingContext";
-import { DropdownOption } from "../../interfaces/Common/DropdownOption";
-import { BillingService } from "../../services/BillingServices/BillingService";
-import { ConstantValues } from "../../services/CommonServices/ConstantValuesService";
-import { AppModifyListService } from "../../services/CommonServices/AppModifyListService";
-import { ContactMastService } from "../../services/CommonServices/ContactMastService";
-import { InsuranceCarrierService } from "../../services/CommonServices/InsuranceCarrierService";
-import { ContactListService } from "../../services/HospitalAdministrationServices/ContactListService/ContactListService";
-import { DeptUnitListService } from "../../services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
-import { ServiceTypeService } from "../../services/BillingServices/ServiceTypeServices";
-import { productGroupService, productSubGroupService, productTaxService, productUnitService } from "../../services/InventoryManagementService/inventoryManagementService";
+
+import { useAppSelector } from "@/store/hooks";
+import { useLoading } from "@/context/LoadingContext";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { BillingService } from "@/services/BillingServices/BillingService";
+import { AppModifyListService } from "@/services/CommonServices/AppModifyListService";
+import { departmentService } from "@/services/CommonServices/CommonModelServices";
+import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
+import { ContactMastService } from "@/services/CommonServices/ContactMastService";
+import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
+import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
+import { DeptUnitListService } from "@/services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
+import { ServiceTypeService } from "@/services/BillingServices/ServiceTypeServices";
+import { roomGroupService, roomListService, wardCategoryService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
+import { productGroupService, productSubGroupService, productTaxService, productUnitService } from "@/services/InventoryManagementService/inventoryManagementService";
 import {
   consultantRoleService,
   medicationDosageService,
@@ -19,13 +23,8 @@ import {
   medicationFrequencyService,
   medicationGenericService,
   medicationInstructionService,
-} from "../../services/ClinicalManagementServices/clinicalManagementService";
-import { roomGroupService, roomListService, wardCategoryService, wrBedService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
-import { departmentService } from "../../services/CommonServices/CommonModelServices";
-import { DepartmentDto } from "../../interfaces/Billing/DepartmentDto";
-import { dischargeStatusService } from "../../services/PatientAdministrationServices/patientAdministrationService";
-import { WardCategoryDto } from "../../interfaces/HospitalAdministration/WardCategoryDto";
-import { useAppSelector } from "@/store/hooks";
+} from "@/services/ClinicalManagementServices/clinicalManagementService";
+import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
 
 type DropdownType =
   | "pic"

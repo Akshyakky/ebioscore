@@ -4,14 +4,14 @@ import MenuItem from "@mui/material/MenuItem";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
-import CustomButton from "../../components/Button/CustomButton";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { selectUser } from "../../store/features/auth/selectors";
-import { logout } from "../../store/features/auth/authSlice";
-import AuthService from "../../services/AuthService/AuthService";
 import { useNavigate } from "react-router-dom";
-import { notifyError, notifySuccess } from "../../utils/Common/toastManager";
 import { handleError } from "@/services/CommonServices/HandlerError";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/features/auth/selectors";
+import AuthService from "@/services/AuthService/AuthService";
+import { logout } from "@/store/features/auth/authSlice";
+import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
+import CustomButton from "@/components/Button/CustomButton";
 
 const ProfileMenu: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);

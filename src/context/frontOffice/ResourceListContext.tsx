@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useLoading } from "../LoadingContext";
-import { RootState } from "../../store";
-import { notifyError } from "../../utils/Common/toastManager";
-import { ResourceListService } from "../../services/FrontOfficeServices/ResourceListServices/ResourceListServices";
-import { ResourceListData } from "../../interfaces/frontOffice/ResourceListData";
 import { useAppSelector } from "@/store/hooks";
+import { ResourceListData } from "@/interfaces/frontOffice/ResourceListData";
+import { RootState } from "@/store";
+import { useLoading } from "../LoadingContext";
+import { ResourceListService } from "@/services/FrontOfficeServices/ResourceListServices/ResourceListServices";
+import { notifyError } from "@/utils/Common/toastManager";
 
 interface ResourceListContextProps {
   resourceList: ResourceListData[];
