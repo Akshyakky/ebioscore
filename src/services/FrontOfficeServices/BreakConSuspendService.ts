@@ -1,8 +1,8 @@
-import { store } from "@/store";
-import { APIConfig } from "../../apiConfig";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { BreakConSuspendData } from "../../interfaces/frontOffice/BreakConSuspendData";
+import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
+import { store } from "@/store";
+import { BreakConSuspendData } from "@/interfaces/frontOffice/BreakConSuspendData";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
 
 const commonApiService = new CommonApiService({
   baseURL: APIConfig.frontOffice,

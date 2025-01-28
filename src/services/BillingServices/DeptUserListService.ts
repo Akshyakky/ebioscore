@@ -1,8 +1,9 @@
+import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { APIConfig } from "../../apiConfig";
-import { DeptUserDto } from "../../interfaces/Billing/DeptUserDto";
 import { store } from "@/store";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { DeptUserDto } from "@/interfaces/Billing/DeptUserDto";
+
 const apiService = new CommonApiService({ baseURL: APIConfig.commonURL });
 const apiCategory = "DeptUser";
 

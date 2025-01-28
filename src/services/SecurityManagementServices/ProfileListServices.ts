@@ -1,9 +1,9 @@
-import { CommonApiService } from "../CommonApiService";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { APIConfig } from "../../apiConfig";
-import { ProfileMastDto, ProfileDetailDto, ProfileListSearchResult, ReportPermission } from "../../interfaces/SecurityManagement/ProfileListData";
-import { ModuleOperation } from "../../pages/securityManagement/CommonPage/OperationPermissionDetails";
 import { store } from "@/store";
+import { CommonApiService } from "../CommonApiService";
+import { APIConfig } from "@/apiConfig";
+import { ProfileDetailDto, ProfileListSearchResult, ProfileMastDto, ReportPermission } from "@/interfaces/SecurityManagement/ProfileListData";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { ModuleOperation } from "@/pages/securityManagement/CommonPage/OperationPermissionDetails";
 
 const apiService = new CommonApiService({
   baseURL: APIConfig.securityManagementURL,

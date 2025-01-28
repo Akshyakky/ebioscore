@@ -1,8 +1,8 @@
+import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
+import { CommonApiService } from "@/services/CommonApiService";
 import { store } from "@/store";
-import { APIConfig } from "../../../apiConfig";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { ProductListDto } from "../../../interfaces/InventoryManagement/ProductListDto";
-import { CommonApiService } from "../../CommonApiService";
 
 const apiService = new CommonApiService({
   baseURL: APIConfig.inventoryManagementURL,

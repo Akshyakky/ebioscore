@@ -1,5 +1,5 @@
 // src/store/features/admissionSearch/admissionSelectors.ts
-import { RootState } from "../../../index";
+import { RootState } from "@/store";
 import { createSelector } from "@reduxjs/toolkit";
 
 export const selectAdmissionSearchState = (state: RootState) => state.admissionSearch;

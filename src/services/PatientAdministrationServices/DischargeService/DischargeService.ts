@@ -1,9 +1,10 @@
 // src/services/patientAdministrationServices/DischargeService/DischargeService.ts
-import { IpDischargeDto } from "../../../interfaces/PatientAdministration/IpDischargeDto";
-import { CommonApiService } from "../../CommonApiService";
-import { APIConfig } from "../../../apiConfig";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { GenericEntityService } from "../../GenericEntityService/GenericEntityService";
+
+import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDto";
+import { CommonApiService } from "@/services/CommonApiService";
+import { GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
 
 class DischargeService extends GenericEntityService<IpDischargeDto> {
   constructor(apiService: CommonApiService, entityName: string) {

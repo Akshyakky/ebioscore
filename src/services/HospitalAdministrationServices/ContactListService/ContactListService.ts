@@ -1,9 +1,10 @@
-import { CommonApiService } from "../../CommonApiService";
-import { APIConfig } from "../../../apiConfig";
-import { DropdownOption } from "../../../interfaces/Common/DropdownOption";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
+import { APIConfig } from "@/apiConfig";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { ContactListData } from "@/interfaces/HospitalAdministration/ContactListData";
+import { CommonApiService } from "@/services/CommonApiService";
 import { store } from "@/store";
-import { ContactListData } from "../../../interfaces/HospitalAdministration/ContactListData";
+
 // Initialize the API service with the base URL from the configuration
 const apiService = new CommonApiService({
   baseURL: APIConfig.hospitalAdministrations,

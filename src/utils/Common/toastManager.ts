@@ -1,5 +1,5 @@
 //toastManager.ts
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 
 export const notifySuccess = (message: string) => {
   toast.success(message);

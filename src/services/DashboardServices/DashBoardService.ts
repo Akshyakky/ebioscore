@@ -1,5 +1,5 @@
+import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
-import { APIConfig } from "../../apiConfig";
 import { store } from "@/store";
 
 const apiService = new CommonApiService({ baseURL: APIConfig.dashBoardURL });

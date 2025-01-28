@@ -1,7 +1,7 @@
-import { CommonApiService } from "../../CommonApiService";
-import { PatientRegistrationDto } from "../../../interfaces/PatientAdministration/PatientFormData";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { APIConfig } from "../../../apiConfig";
+import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import { CommonApiService } from "@/services/CommonApiService";
 import { store } from "@/store";
 
 const apiService = new CommonApiService({
