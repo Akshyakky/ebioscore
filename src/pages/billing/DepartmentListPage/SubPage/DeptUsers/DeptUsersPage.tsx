@@ -1,16 +1,16 @@
+import CustomButton from "@/components/Button/CustomButton";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { UserListSearchContext } from "@/context/SecurityManagement/UserListSearchContext";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import { DeptUserDto } from "@/interfaces/Billing/DeptUserDto";
+import { UserListData } from "@/interfaces/SecurityManagement/UserListData";
+import { DeptUserListService } from "@/services/BillingServices/DeptUserListService";
+import { useAppSelector } from "@/store/hooks";
+import { showAlert } from "@/utils/Common/showAlert";
 import React, { useContext, useEffect, useState } from "react";
-import { DeptUserListService } from "../../../../../services/BillingServices/DeptUserListService";
-import { DeptUserDto } from "../../../../../interfaces/Billing/DeptUserDto";
-import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
-import CustomButton from "../../../../../components/Button/CustomButton";
-import AddIcon from "@mui/icons-material/Add";
 import DeptUsersList from "./DeptUsersList";
 import DeptUsersListSearch from "./DeptUsersSearch";
-import { UserListSearchContext } from "../../../../../context/SecurityManagement/UserListSearchContext";
-import { UserListData } from "../../../../../interfaces/SecurityManagement/UserListData";
-import { useServerDate } from "../../../../../hooks/Common/useServerDate";
-import { showAlert } from "../../../../../utils/Common/showAlert";
-import { useAppSelector } from "@/store/hooks";
+import AddIcon from "@mui/icons-material/Add";
 
 interface DeptUsersListPageProps {
   deptId: number;

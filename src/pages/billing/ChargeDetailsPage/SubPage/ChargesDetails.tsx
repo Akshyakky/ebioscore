@@ -1,19 +1,21 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Paper, Typography, SelectChangeEvent, TextField, Grid } from "@mui/material";
-import SaveIcon from "@mui/icons-material/Save";
-import DeleteIcon from "@mui/icons-material/Delete";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { BChargeDetailsDto, BChargePackDto, BDoctorSharePerShare, ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
+import React, { useCallback, useEffect } from "react";
+import { BChargeDetailsDto, BChargePackDto, BDoctorSharePerShare, ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
+import { useAppSelector } from "@/store/hooks";
+import { useState } from "react";
+import { useLoading } from "@/context/LoadingContext";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { chargeDetailsService } from "@/services/BillingServices/chargeDetailsService";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Grid, Paper, SelectChangeEvent, TextField, Typography } from "@mui/material";
 import ChargeBasicDetails from "./Charges";
 import ChargeConfigDetails from "./ChargesAlias";
-import { useAppSelector } from "@/store/hooks";
-import { showAlert } from "@/utils/Common/showAlert";
-import { useLoading } from "@/context/LoadingContext";
-import ChargePackageDetails from "./ChargePackDetails";
-import FormField from "@/components/FormField/FormField";
 import ChargeDoctorSharePerShare from "./ChargeDoctorSharePerShare";
+import FormField from "@/components/FormField/FormField";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SaveIcon from "@mui/icons-material/Save";
+import ChargePackageDetails from "./ChargePackDetails";
+
 interface ChargeDetailsProps {
   editData?: ChargeDetailsDto;
 }
@@ -351,7 +353,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
               return rowData;
             });
 
-            // Update form data including doctor share data
             setFormData((prev) => ({
               ...prev,
               chargeInfo: {

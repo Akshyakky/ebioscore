@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Grid, Typography, Box, SelectChangeEvent } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
 import AdvancedGrid, { ColumnConfig } from "@/components/AdvancedGrid/AdvancedGrid";
+import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { BDoctorSharePerShare, ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
+import { BDoctorSharePerShare } from "@/interfaces/Billing/BChargeDetails";
 import { useAppSelector } from "@/store/hooks";
+import { Box, Grid, SelectChangeEvent, Typography } from "@mui/material";
+import { useCallback, useEffect, useState } from "react";
+import React from "react";
 
 interface ChargeDoctorSharePerShareProps {
   onGridDataChange: (data: BDoctorSharePerShare[]) => void;

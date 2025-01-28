@@ -1,10 +1,11 @@
-import React, { useState } from "react";
-import { ChargeDetailsDto } from "../../../../interfaces/Billing/BChargeDetails";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { chargeDetailsService } from "../../../../services/BillingServices/chargeDetailsService";
-import { Column } from "../../../../components/CustomGrid/CustomGrid";
+import { Column } from "@/components/CustomGrid/CustomGrid";
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import Switch from "@mui/material/Switch";
+import { ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
+import { chargeDetailsService } from "@/services/BillingServices/chargeDetailsService";
+import { Switch } from "@mui/material";
+import { useState } from "react";
+import React from "react";
 
 interface ChargeDetailsSearchProps {
   open: boolean;

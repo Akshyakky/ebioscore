@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Grid, Typography, Box, SelectChangeEvent } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import CustomButton from "../../../../components/Button/CustomButton";
 import AdvancedGrid, { ColumnConfig } from "@/components/AdvancedGrid/AdvancedGrid";
-import { BChargeDetailsDto, BChargePackDto } from "../../../../interfaces/Billing/BChargeDetails";
+import CustomButton from "@/components/Button/CustomButton";
+import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { showAlert } from "@/utils/Common/showAlert";
+import { BChargeDetailsDto, BChargePackDto } from "@/interfaces/Billing/BChargeDetails";
 import { chargeDetailsService } from "@/services/BillingServices/chargeDetailsService";
 import { useAppSelector } from "@/store/hooks";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Box, Grid, SelectChangeEvent, Typography } from "@mui/material";
+import { useCallback, useEffect, useState } from "react";
+import React from "react";
 
 interface ChargePackageDetailsProps {
   chargeDetails?: BChargeDetailsDto[];
@@ -132,8 +133,6 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
       const sanitizedRows = await Promise.all(
         updatedData.map(async (row) => {
           let chargeID = parseInt(row.serviceCode, 10);
-
-          // Fetch chargeID dynamically if not present or invalid
           if (!chargeID || isNaN(chargeID)) {
             try {
               const response = await chargeDetailsService.getAllChargeDetails();
@@ -148,7 +147,7 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
           if (!chargeID || isNaN(chargeID)) {
             console.error("Charge ID missing for row:", row);
             showAlert("Error", `Charge ID is missing for row: ${JSON.stringify(row)}`, "error");
-            return null; // Mark the row as invalid
+            return null;
           }
 
           const sanitizedRow: GridData = {

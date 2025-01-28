@@ -1,7 +1,7 @@
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
+import { paymentTypeService } from "@/services/BillingServices/BillingGenericService";
 import React from "react";
-import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { paymentTypeService } from "../../../../services/BillingServices/BillingGenericService";
 
 interface PaymentTypesSearchProps {
   open: boolean;

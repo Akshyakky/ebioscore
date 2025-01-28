@@ -1,11 +1,10 @@
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import { BPatTypeDto } from "@/interfaces/Billing/BPatTypeDto";
 import { Box, Container } from "@mui/material";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import Search from "@mui/icons-material/Search";
+import React, { useState } from "react";
 import PatientInvoiceCodeDetails from "../SubPage/PatientInvoiceCodeDetails";
 import PatientInvoiceCodeSearch from "../SubPage/PatientInvoiceCodeSearch";
-import { useState } from "react";
-import { BPatTypeDto } from "../../../../interfaces/Billing/BPatTypeDto";
-import React from "react";
+import { Search } from "@mui/icons-material";
 
 const PatientInvoiceCodePage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
