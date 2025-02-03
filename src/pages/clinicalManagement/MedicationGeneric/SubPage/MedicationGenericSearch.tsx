@@ -37,6 +37,7 @@ const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, 
     { key: "serialNumber", header: "Sl.No", visible: true },
     { key: "mGenCode", header: "Generic Code", visible: true },
     { key: "mGenName", header: "Generic Name", visible: true },
+    { key: "mSnomedCode", header: "Snomed Code", visible: true },
     {
       key: "defaultYN",
       header: "Default",

@@ -72,6 +72,7 @@ const titleMapping: TitleMapping = {
   transfernote: "Transfer Note",
   transferpaydetail: "Transfer Pay Details",
   advancecollection: "Advance Collection",
+  dischargesummary: "Discarge Summary",
   // ... more mappings
 };
 
