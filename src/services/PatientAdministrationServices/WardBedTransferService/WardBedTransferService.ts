@@ -1,8 +1,9 @@
 // src/services/PatientAdministrationServices/WardBedTransferService.ts
-import { APIConfig } from "../../../apiConfig";
-import { CommonApiService } from "../../CommonApiService";
-import { GenericEntityService } from "../../GenericEntityService/GenericEntityService";
-import { BedTransferRequestDto } from "./../../../interfaces/PatientAdministration/BedTransferRequestDto";
+
+import { APIConfig } from "@/apiConfig";
+import { BedTransferRequestDto } from "@/interfaces/PatientAdministration/BedTransferRequestDto";
+import { CommonApiService } from "@/services/CommonApiService";
+import { GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
 
 class WardBedTransferService extends GenericEntityService<BedTransferRequestDto> {
   constructor() {

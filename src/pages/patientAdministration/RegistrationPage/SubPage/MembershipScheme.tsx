@@ -1,11 +1,10 @@
+import FormField from "@/components/FormField/FormField";
+import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import React, { useCallback } from "react";
-import FormField from "../../../../components/FormField/FormField";
-import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import useDayjs from "../../../../hooks/Common/useDateTime";
-import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
 
 interface MembershipSchemeProps {
   formData: PatientRegistrationDto;

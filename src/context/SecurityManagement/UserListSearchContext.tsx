@@ -1,7 +1,7 @@
+import { UserListData } from "@/interfaces/SecurityManagement/UserListData";
 import React, { createContext, useEffect, useCallback } from "react";
 import { useLoading } from "../LoadingContext";
-import { UserListData } from "../../interfaces/SecurityManagement/UserListData";
-import { UserListService } from "../../services/SecurityManagementServices/UserListService";
+import { UserListService } from "@/services/SecurityManagementServices/UserListService";
 
 interface UserListSearchContextProps {
   fetchAllUsers: () => Promise<UserListData[]>;

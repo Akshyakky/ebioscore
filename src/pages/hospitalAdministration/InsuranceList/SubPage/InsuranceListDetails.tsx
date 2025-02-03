@@ -2,18 +2,18 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Paper, Typography, Grid } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import { insuranceListService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
-import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
-import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useAppSelector } from "@/store/hooks";
 import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useFieldsList from "@/components/FieldsList/UseFieldsList";
+import { useLoading } from "@/context/LoadingContext";
+import { showAlert } from "@/utils/Common/showAlert";
+import { insuranceListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import FormField from "@/components/FormField/FormField";
+import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData }) => {
   const [formState, setFormState] = useState<InsuranceListDto>({

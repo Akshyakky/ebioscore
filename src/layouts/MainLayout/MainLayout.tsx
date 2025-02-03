@@ -1,9 +1,9 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
-import { useAppSelector } from "../../store/hooks";
+import { selectUser } from "@/store/features/auth/selectors";
+import { useAppSelector } from "@/store/hooks";
 import SideBar from "../SideBar/SideBar";
 import Footer from "../Footer";
-import { selectUser } from "@/store/features/auth/selectors";
 
 interface MainLayoutProps {
   children: React.ReactNode;

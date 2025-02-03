@@ -1,7 +1,6 @@
-// AppModifyListService.ts
-import { store } from "@/store";
-import { APIConfig } from "../../apiConfig";
+import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
+import { store } from "@/store";
 
 const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });
 

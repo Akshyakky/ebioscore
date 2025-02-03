@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../components/Button/CustomButton";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import { SelectChangeEvent, Grid } from "@mui/material";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CloseIcon from "@mui/icons-material/Close";
-import DropdownSelect from "../../../../components/DropDown/DropdownSelect";
-import { DateFilterType, OPVisitDto } from "../../../../interfaces/PatientAdministration/revisitFormData";
-import { RevisitService } from "../../../../services/PatientAdministrationServices/RevisitService/RevisitService";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import { formatDate } from "../../../../utils/Common/dateUtils";
-import FormField from "../../../../components/FormField/FormField";
-import { showAlert } from "../../../../utils/Common/showAlert";
 import { UserState } from "@/store/features/auth/types";
 import { ContactMastService } from "@/services/CommonServices/ContactMastService";
+import CustomGrid from "@/components/CustomGrid/CustomGrid";
+import DropdownSelect from "@/components/DropDown/DropdownSelect";
+import { DateFilterType } from "@/interfaces/PatientAdministration/revisitFormData";
+import { RevisitService } from "@/services/PatientAdministrationServices/RevisitService/RevisitService";
+import CustomButton from "@/components/Button/CustomButton";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { formatDate } from "@/utils/Common/dateUtils";
+import FormField from "@/components/FormField/FormField";
+import { showAlert } from "@/utils/Common/showAlert";
+import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 
 interface WaitingPatientSearchProps {
   userInfo: UserState;

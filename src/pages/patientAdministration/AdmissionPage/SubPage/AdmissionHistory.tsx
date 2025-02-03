@@ -1,8 +1,8 @@
 import React from "react";
 import { Box } from "@mui/material";
-import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
-import { AdmissionHistoryDto } from "../../../../interfaces/PatientAdministration/AdmissionHistoryDto";
 import { format } from "date-fns";
+import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 
 interface AdmissionHistoryProps {
   admissionHistory: AdmissionHistoryDto[];

@@ -1,15 +1,15 @@
+import React from "react";
 import { useState, useCallback, useEffect } from "react";
 import { Paper, Typography, Grid } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { wardCategoryService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { useAppSelector } from "@/store/hooks";
-import React from "react";
 import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
+import { useLoading } from "@/context/LoadingContext";
+import { showAlert } from "@/utils/Common/showAlert";
+import { wardCategoryService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import FormField from "@/components/FormField/FormField";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editData }) => {
   const user = useAppSelector((state) => state.auth);

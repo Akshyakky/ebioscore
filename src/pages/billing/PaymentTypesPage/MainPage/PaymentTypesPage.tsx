@@ -1,10 +1,10 @@
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
+import { Search } from "@mui/icons-material";
 import { Box, Container } from "@mui/material";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import Search from "@mui/icons-material/Search";
+import React, { useState } from "react";
 import PaymentTypesDetails from "../SubPage/PaymentTypesDetails";
 import PaymentTypesSearch from "../SubPage/PaymentTypesSearch";
-import React, { useState } from "react";
-import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
 
 const PaymentTypesPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

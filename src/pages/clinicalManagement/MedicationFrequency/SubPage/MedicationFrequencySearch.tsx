@@ -1,66 +1,72 @@
-import React, { useMemo } from "react";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { MedicationFrequencyDto } from "../../../../interfaces/ClinicalManagement/MedicationFrequencyDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { MedicationFrequencyDto } from "@/interfaces/ClinicalManagement/MedicationFrequencyDto";
+import { medicationFrequencyService } from "@/services/ClinicalManagementServices/clinicalManagementService";
+import React from "react";
 
 interface MedicationFrequencySearchProps {
-    open: boolean;
-    onClose: () => void;
-    onSelect: (medicationFrequency: MedicationFrequencyDto) => void;
+  open: boolean;
+  onClose: () => void;
+  onSelect: (medicationFrequency: MedicationFrequencyDto) => void;
 }
 
 const MedicationFrequencySearch: React.FC<MedicationFrequencySearchProps> = ({ open, onClose, onSelect }) => {
-    const medicationFrequencyService = useMemo(() => createEntityService<MedicationFrequencyDto>("MedicationFrequency", "clinicalManagementURL"), []);
+  const fetchItems = async () => {
+    try {
+      const items = await medicationFrequencyService.getAll();
+      return items.data || [];
+    } catch (error) {
+      return [];
+    }
+  };
 
-    const fetchItems = async () => {
-        try {
-            const items = await medicationFrequencyService.getAll();
-            return items.data || [];
-        } catch (error) {
-            console.error("Error fetching medication Frequency:", error);
-            return [];
-        }
-    };
+  const updateActiveStatus = async (id: number, status: boolean) => {
+    try {
+      return await medicationFrequencyService.updateActiveStatus(id, status);
+    } catch (error) {
+      return false;
+    }
+  };
 
-    const updateActiveStatus = async (id: number, status: boolean) => {
-        try {
-            return await medicationFrequencyService.updateActiveStatus(id, status);
-        } catch (error) {
-            console.error("Error updating medication Frequency active status:", error);
-            return false;
-        }
-    };
+  const getItemId = (item: MedicationFrequencyDto) => item.mFrqId;
+  const getItemActiveStatus = (item: MedicationFrequencyDto) => item.rActiveYN === "Y";
 
-    const getItemId = (item: MedicationFrequencyDto) => item.mFrqId;
-    const getItemActiveStatus = (item: MedicationFrequencyDto) => item.rActiveYN === "Y";
+  const columns = [
+    { key: "serialNumber", header: "Sl.No", visible: true },
+    { key: "mFrqCode", header: "Medication Frequency Code", visible: true },
+    { key: "mFrqSnomedCode", header: "Medication Frequency Snomed Code", visible: true },
+    { key: "mFrqName", header: "Medication Frequency Name", visible: true },
+    {
+      key: "modifyYN",
+      header: "Modifiable",
+      visible: true,
+      render: (row: MedicationFrequencyDto) => (row.modifyYN === "Y" ? "Yes" : "No"),
+    },
+    {
+      key: "defaultYN",
+      header: "Default",
+      visible: true,
+      render: (row: MedicationFrequencyDto) => (row.defaultYN === "Y" ? "Yes" : "No"),
+    },
+    { key: "rNotes", header: "Notes", visible: true },
+  ];
 
-    const columns = [
-        { key: "serialNumber", header: "Sl.No", visible: true },
-        { key: "mFrqCode", header: "Medication Frequency Code", visible: true },
-        { key: "mFrqSnomedCode", header: "Medication Frequency Snomed Code", visible: true },
-        { key: "mFrqName", header: "Medication Frequency Name", visible: true },
-        { key: "modifyYn", header: "Modify", visible: true },
-        { key: "defaultYn", header: "Default", visible: true },
-        { key: "rNotes", header: "Notes", visible: true },
-    ];
-
-    return (
-        <GenericAdvanceSearch
-            open={open}
-            onClose={onClose}
-            onSelect={onSelect}
-            title="MEDICATION FREQUENCY"
-            fetchItems={fetchItems}
-            updateActiveStatus={updateActiveStatus}
-            columns={columns}
-            getItemId={getItemId}
-            getItemActiveStatus={getItemActiveStatus}
-            searchPlaceholder="Enter medication frequency code or text"
-            isActionVisible={true}
-            isEditButtonVisible={true}
-            isStatusVisible={true}
-        />
-    );
+  return (
+    <GenericAdvanceSearch
+      isEditButtonVisible={true}
+      open={open}
+      onClose={onClose}
+      onSelect={onSelect}
+      title="MEDICATION FREQUENCY"
+      fetchItems={fetchItems}
+      updateActiveStatus={updateActiveStatus}
+      columns={columns}
+      getItemId={getItemId}
+      getItemActiveStatus={getItemActiveStatus}
+      searchPlaceholder="Enter medication frequency code or text"
+      isStatusVisible={(item: MedicationFrequencyDto) => item.modifyYN === "Y"}
+      isActionVisible={(item: MedicationFrequencyDto) => item.modifyYN === "Y"}
+    />
+  );
 };
 
 export default MedicationFrequencySearch;

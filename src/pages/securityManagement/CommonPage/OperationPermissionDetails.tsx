@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Grid, Paper, Typography, SelectChangeEvent } from "@mui/material";
-import { DropdownOption } from "../../../interfaces/Common/DropdownOption";
-import moduleService from "../../../services/CommonServices/ModuleService";
-import { notifyError } from "../../../utils/Common/toastManager";
-import { ProfileDetailsDropdowns, ReportPermission } from "../../../interfaces/SecurityManagement/ProfileListData";
-import useDropdownChange from "../../../hooks/useDropdownChange";
-import { ProfileService } from "../../../services/SecurityManagementServices/ProfileListServices";
-import { OperationPermissionDetailsDto } from "../../../interfaces/SecurityManagement/OperationPermissionDetailsDto";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import FormField from "../../../components/FormField/FormField";
-import PermissionSection from "./PermissionSection";
 import { useAppSelector } from "@/store/hooks";
+import { OperationPermissionDetailsDto } from "@/interfaces/SecurityManagement/OperationPermissionDetailsDto";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { ProfileDetailsDropdowns, ReportPermission } from "@/interfaces/SecurityManagement/ProfileListData";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import moduleService from "@/services/CommonServices/ModuleService";
+import { notifyError } from "@/utils/Common/toastManager";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { ProfileService } from "@/services/SecurityManagementServices/ProfileListServices";
+import FormField from "@/components/FormField/FormField";
+import PermissionSection from "./PermissionSection";
 
 interface OperationPermissionProps {
   profileID: number;

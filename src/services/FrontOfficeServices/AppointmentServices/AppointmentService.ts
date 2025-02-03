@@ -1,9 +1,9 @@
-import { CommonApiService } from "../../CommonApiService";
-import { APIConfig } from "../../../apiConfig";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { PaginatedList } from "../../../interfaces/Common/PaginatedList";
-import { store } from "@/store";
+import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { PaginatedList } from "@/interfaces/Common/PaginatedList";
 import { AppointBookingDto } from "@/interfaces/frontOffice/AppointBookingDto";
+import { CommonApiService } from "@/services/CommonApiService";
+import { store } from "@/store";
 
 const commonApiService = new CommonApiService({
   baseURL: APIConfig.frontOffice,

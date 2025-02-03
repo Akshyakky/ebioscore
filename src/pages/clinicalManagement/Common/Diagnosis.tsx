@@ -1,12 +1,11 @@
-import React, { useState, useCallback, useMemo } from "react";
-import { Grid, Typography, Paper } from "@mui/material";
-import FormField from "../../../components/FormField/FormField";
-import CustomGrid from "../../../components/CustomGrid/CustomGrid";
-import { Column } from "../../../components/CustomGrid/CustomGrid";
-import { createEntityService } from "../../../utils/Common/serviceFactory";
-import CustomButton from "../../../components/Button/CustomButton";
-import { showAlert } from "../../../utils/Common/showAlert";
-import { AssocDiagnosisDetailDto, DiagnosisDetailDto } from "../../../interfaces/ClinicalManagement/DiagnosisDto";
+import CustomButton from "@/components/Button/CustomButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import FormField from "@/components/FormField/FormField";
+import { AssocDiagnosisDetailDto, DiagnosisDetailDto } from "@/interfaces/ClinicalManagement/DiagnosisDto";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Grid, Paper, Typography } from "@mui/material";
+import React, { useCallback, useMemo, useState } from "react";
 interface DiagnosisSectionProps {
   primaryDiagnoses: DiagnosisDetailDto[];
   associatedDiagnoses: AssocDiagnosisDetailDto[];

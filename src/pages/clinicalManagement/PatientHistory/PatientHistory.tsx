@@ -1,28 +1,27 @@
 // src/pages/clinicalManagement/PatientHistory/PatientHistory.tsx
 
-import { Box, Paper, Tab, Tabs } from "@mui/material";
-import { useEffect, useState, useCallback } from "react";
-import { FamilyHistory } from "./FamilyHistory/FamilyHistory";
-import { TabPanel } from "./TabPanel";
-import { OPIPHistFHDto } from "../../../interfaces/ClinicalManagement/OPIPHistFHDto";
-import { OPIPHistSHDto } from "../../../interfaces/ClinicalManagement/OPIPHistSHDto";
-import { OPIPHistPMHDto } from "../../../interfaces/ClinicalManagement/OPIPHistPMHDto";
-import { createEntityService } from "../../../utils/Common/serviceFactory";
-import { useLoading } from "../../../context/LoadingContext";
-import { SocialHistory } from "./PastSocialHistory/SocialHistory";
-import MedicalHistory from "./PastMedicalHistory/MedicalHistory";
-import ReviewOfSystem from "./PastReviewOfSystem/ReviewOfSystem";
-import { OPIPHistROSDto } from "../../../interfaces/ClinicalManagement/OPIPHistROSDto";
-import { OPIPHistPSHDto } from "../../../interfaces/ClinicalManagement/OPIPHistPSHDto";
-import SurgicalHistory from "./PastSurgicalHistory/SurgicalHistory";
-import PastMedication from "./PastMedicationHistory/PastMedication";
-import { PastMedicationDto } from "../../../interfaces/ClinicalManagement/PastMedicationDto";
-import { pastMedicationService } from "../../../services/ClinicalManagementServices/pastMedicationService";
-import { AllergyDto } from "../../../interfaces/ClinicalManagement/AllergyDto";
-import { allergyService } from "../../../services/ClinicalManagementServices/allergyService";
-import AllergyHistory from "./Allergies/AllergyHistory";
+import { useLoading } from "@/context/LoadingContext";
+import { AllergyDto } from "@/interfaces/ClinicalManagement/AllergyDto";
+import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
+import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
+import { OPIPHistPSHDto } from "@/interfaces/ClinicalManagement/OPIPHistPSHDto";
+import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
+import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
+import { PastMedicationDto } from "@/interfaces/ClinicalManagement/PastMedicationDto";
+import { allergyService } from "@/services/ClinicalManagementServices/allergyService";
+import { pastMedicationService } from "@/services/ClinicalManagementServices/pastMedicationService";
 import { useAppSelector } from "@/store/hooks";
-import React from "react";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { Box, Paper, Tab, Tabs } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
+import { TabPanel } from "./TabPanel";
+import FamilyHistory from "./FamilyHistory/FamilyHistory";
+import SocialHistory from "./PastSocialHistory/SocialHistory";
+import MedicalHistory from "./PastMedicalHistory/MedicalHistory";
+import PastMedication from "./PastMedicationHistory/PastMedication";
+import ReviewOfSystem from "./PastReviewOfSystem/ReviewOfSystem";
+import SurgicalHistory from "./PastSurgicalHistory/SurgicalHistory";
+import AllergyHistory from "./Allergies/AllergyHistory";
 
 export interface HistoryState {
   familyHistory: OPIPHistFHDto[];

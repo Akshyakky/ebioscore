@@ -1,6 +1,6 @@
 // src/interfaces/ClinicalManagement/MedicationDosageDto.ts
 
-import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
 export interface MedicationDosageDto extends BaseDto {
   mDId: number;
@@ -14,5 +14,5 @@ export interface MedicationDosageDto extends BaseDto {
   compName: string;
   transferYN: string;
   rNotes: string;
-  mDSnomedCode: string
+  mDSnomedCode: string;
 }

@@ -1,13 +1,12 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle, useCallback, useMemo } from "react";
 import { Grid, Typography } from "@mui/material";
-import CustomButton from "../../../../components/Button/CustomButton";
 import AddIcon from "@mui/icons-material/Add";
-import { PatNokDetailsDto } from "../../../../interfaces/PatientAdministration/PatNokDetailsDto";
+import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
+import { PatNokService } from "@/services/PatientAdministrationServices/RegistrationService/PatNokService";
+import { showAlert } from "@/utils/Common/showAlert";
 import NextOfKinForm from "./NextOfKinForm";
 import NextOfKinGrid from "./NextOfKinGrid";
-import { PatNokService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatNokService";
-import useDayjs from "../../../../hooks/Common/useDateTime";
-import { showAlert } from "../../../../utils/Common/showAlert";
+import CustomButton from "@/components/Button/CustomButton";
 
 interface NextOfKinPageProps {
   pChartID: number;
@@ -18,7 +17,6 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
   const [showKinPopup, setShowKinPopup] = useState(false);
   const [editingKinData, setEditingKinData] = useState<PatNokDetailsDto | undefined>(undefined);
   const [gridKinData, setGridKinData] = useState<PatNokDetailsDto[]>([]);
-  const { formatDate, parse, formatDateYMD } = useDayjs();
 
   useImperativeHandle(ref, () => ({
     saveKinDetails,

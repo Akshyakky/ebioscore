@@ -1,7 +1,7 @@
-import React from "react";
-import FormField from "../../../../components/FormField/FormField";
-import { Grid } from "@mui/material";
+import FormField from "@/components/FormField/FormField";
 import { ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
+import { Grid } from "@mui/material";
+import React from "react";
 
 interface ChargeBasicDetailsProps {
   formData: ChargeDetailsDto;

@@ -1,15 +1,15 @@
-import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { Grid, Paper, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import DeleteIcon from "@mui/icons-material/Delete";
-import SaveIcon from "@mui/icons-material/Save";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { MedicationGenericDto } from "../../../../interfaces/ClinicalManagement/MedicationGenericDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
-import { useAppSelector } from "@/store/hooks";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import FormField from "@/components/FormField/FormField";
+import { useLoading } from "@/context/LoadingContext";
+import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
 import { medicationGenericService } from "@/services/ClinicalManagementServices/clinicalManagementService";
+import { useAppSelector } from "@/store/hooks";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Grid, Paper, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import SaveIcon from "@mui/icons-material/Save";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 interface MedicationGenericDetailsProps {
   selectedData?: MedicationGenericDto;

@@ -6,17 +6,17 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Folder as FolderIcon, FolderOpen as FolderOpenIcon } from "@mui/icons-material";
-import { useLoading } from "../../../../../context/LoadingContext";
-import { showAlert } from "../../../../../utils/Common/showAlert";
-import CustomGrid from "../../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../../components/Button/CustomButton";
-import GenericDialog from "../../../../../components/GenericDialog/GenericDialog";
-import useDropdownValues from "../../../../../hooks/PatientAdminstration/useDropdownValues";
-import FormField from "../../../../../components/FormField/FormField";
-import useDropdownChange from "../../../../../hooks/useDropdownChange";
-import { roomGroupService, roomListService } from "../../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { useAppSelector } from "@/store/hooks";
 import { RoomGroupDto, RoomListDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { useLoading } from "@/context/LoadingContext";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { roomGroupService, roomListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import { showAlert } from "@/utils/Common/showAlert";
+import CustomButton from "@/components/Button/CustomButton";
+import CustomGrid from "@/components/CustomGrid/CustomGrid";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import FormField from "@/components/FormField/FormField";
 
 interface RoomGroupDetailsProps {
   roomGroups: RoomGroupDto[];

@@ -1,5 +1,5 @@
-import { notifyError, notifyWarning } from "../../utils/Common/toastManager";
-import { OperationResult, ValidationError, ConcurrencyConflictInfo } from "../../interfaces/Common/OperationResult";
+import { ConcurrencyConflictInfo, OperationResult } from "@/interfaces/Common/OperationResult";
+import { notifyError, notifyWarning } from "@/utils/Common/toastManager";
 
 export const handleError = (error: any): OperationResult<any> => {
   // Initialize result with proper structure

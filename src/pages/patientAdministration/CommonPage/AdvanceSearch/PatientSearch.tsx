@@ -1,16 +1,15 @@
 // PatientSearch.tsx
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { Grid, Box } from "@mui/material";
-import FloatingLabelTextBox from "../../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../components/Button/CustomButton";
-import { PatientSearchContext } from "../../../../context/PatientSearchContext";
-import { debounce } from "../../../../utils/Common/debounceUtils";
+import { Grid, Box, debounce } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
-import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import useDayjs from "../../../../hooks/Common/useDateTime";
+import { PatientSearchContext } from "@/context/PatientSearchContext";
+import useDayjs from "@/hooks/Common/useDateTime";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import CustomButton from "@/components/Button/CustomButton";
+import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 
 interface PatientSearchProps {
   show: boolean;

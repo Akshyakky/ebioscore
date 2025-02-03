@@ -1,4 +1,4 @@
-import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
 export interface AppModifyFieldDto extends BaseDto {
   amlID: number;
@@ -15,7 +15,7 @@ export interface AppModifyFieldDto extends BaseDto {
   rNotes?: string | null;
 }
 
-export interface AppModifiedMast {
+export interface AppModifiedMast extends BaseDto {
   fieldID: number;
   fieldCode: string;
   fieldName: string;

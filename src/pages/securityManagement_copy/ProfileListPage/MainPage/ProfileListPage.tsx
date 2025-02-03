@@ -1,15 +1,16 @@
 import React, { useContext, useState } from "react";
 import { Box, Container } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import ProfileDetails from "../SubPage/ProfileDetails";
-import ProfileListSearch from "../../CommonPage/AdvanceSearch/ProfileListSearch";
-import { ProfileListSearchContext } from "../../../../context/SecurityManagement/ProfileListSearchContext";
-import { ProfileListSearchResult } from "../../../../interfaces/SecurityManagement/ProfileListData";
-import OperationPermissionDetails, { ModuleOperation } from "../../CommonPage/OperationPermissionDetails";
-import { ProfileService } from "../../../../services/SecurityManagementServices/ProfileListServices";
-import { OperationPermissionDetailsDto } from "../../../../interfaces/SecurityManagement/OperationPermissionDetailsDto";
+
 import { useAppSelector } from "@/store/hooks";
+import { ProfileListSearchResult } from "@/interfaces/SecurityManagement/ProfileListData";
+import { ProfileListSearchContext } from "@/context/SecurityManagement/ProfileListSearchContext";
+import OperationPermissionDetails, { ModuleOperation } from "../../CommonPage/OperationPermissionDetails";
+import { OperationPermissionDetailsDto } from "@/interfaces/SecurityManagement/OperationPermissionDetailsDto";
+import { ProfileService } from "@/services/SecurityManagementServices/ProfileListServices";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import ProfileListSearch from "../../CommonPage/AdvanceSearch/ProfileListSearch";
 
 const ProfileListPage: React.FC = () => {
   const [isSaved, setIsSaved] = useState(false);

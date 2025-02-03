@@ -1,7 +1,7 @@
+import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
-import { APIConfig } from "../../apiConfig";
-import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 import { store } from "@/store";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 
 // Initialize ApiService with the base URL for the common API
 const apiService = new CommonApiService({ baseURL: APIConfig.commonURL });

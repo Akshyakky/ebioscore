@@ -1,14 +1,14 @@
 //src/pages/patientAdministration/AdmissionPage/SubPage/AdmissionDetails.tsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { Grid, SelectChangeEvent } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
-import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
+import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { roomListService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
+import FormField from "@/components/FormField/FormField";
+import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
 import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
-import { roomListService, wrBedService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
 
 interface AdmissionDetailsProps {
   formData: AdmissionDto;

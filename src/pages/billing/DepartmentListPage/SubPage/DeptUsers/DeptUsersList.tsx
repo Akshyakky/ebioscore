@@ -1,7 +1,8 @@
-import React from "react";
-import { DeptUserDto } from "../../../../../interfaces/Billing/DeptUserDto";
+import FormField from "@/components/FormField/FormField";
+import { DeptUserDto } from "@/interfaces/Billing/DeptUserDto";
 import { Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
-import FormField from "../../../../../components/FormField/FormField";
+import React from "react";
+
 interface DeptUsersListProps {
   deptUsers: DeptUserDto[];
   handleSwitchChange: (deptUserID: number, allowYN: string, value: boolean) => void;

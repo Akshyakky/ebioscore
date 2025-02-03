@@ -1,17 +1,17 @@
 import React, { useEffect, useRef, useMemo, useCallback, useState } from "react";
-import FormField from "../../../../components/FormField/FormField";
-import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
-import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
-import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import useDayjs from "../../../../hooks/Common/useDateTime";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
-import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
-import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import useRadioButtonChange from "@/hooks/useRadioButtonChange";
+import useRegistrationUtils from "@/utils/PatientAdministration/RegistrationUtils";
+import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDayjs from "@/hooks/Common/useDateTime";
+import useFieldsList from "@/components/FieldsList/UseFieldsList";
+import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
+import FormField from "@/components/FormField/FormField";
+import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 
 interface PersonalDetailsProps {
   formData: PatientRegistrationDto;

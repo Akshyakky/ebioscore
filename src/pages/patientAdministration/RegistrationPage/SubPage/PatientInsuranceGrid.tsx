@@ -1,10 +1,10 @@
 import React, { useMemo, useCallback } from "react";
-import { OPIPInsurancesDto } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
-import CustomGrid from "../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../components/Button/CustomButton";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import useDayjs from "../../../../hooks/Common/useDateTime";
+import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
+import CustomButton from "@/components/Button/CustomButton";
+import CustomGrid from "@/components/CustomGrid/CustomGrid";
+import useDayjs from "@/hooks/Common/useDateTime";
 
 interface InsuranceGridProps {
   insuranceData: OPIPInsurancesDto[];

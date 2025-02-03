@@ -1,9 +1,9 @@
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
+import { debounce } from "@/utils/Common/debounceUtils";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useDayjs from "../Common/useDateTime";
 import { useServerDate } from "../Common/useServerDate";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { AppointmentService } from "../../services/FrontOfficeServices/AppointmentServices/AppointmentService";
-import { debounce } from "../../utils/Common/debounceUtils";
 
 interface SchedulerState {
   appointments: any[];

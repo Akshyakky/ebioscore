@@ -1,5 +1,5 @@
+import { RadioButtonOption } from "@/interfaces/Common/RadioButtonOption";
 import { Dispatch, SetStateAction } from "react";
-import { RadioButtonOption } from "../interfaces/Common/RadioButtonOption";
 
 const useRadioButtonChange = <T extends object>(setFormData: Dispatch<SetStateAction<T>>) => {
   const handleRadioButtonChange = (valuePath: (string | number)[], textPath: (string | number)[], options: RadioButtonOption[]) => (e: React.ChangeEvent<HTMLInputElement>) => {

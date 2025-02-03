@@ -1,8 +1,8 @@
-import { CommonApiService } from "../CommonApiService";
-import { APIConfig } from "../../apiConfig";
 import { saveAs } from "file-saver";
 import axios from "axios";
 import { store } from "@/store";
+import { CommonApiService } from "../CommonApiService";
+import { APIConfig } from "@/apiConfig";
 
 const apiService = new CommonApiService({
   baseURL: `${APIConfig.routineReportURL}RegistrationReport`,

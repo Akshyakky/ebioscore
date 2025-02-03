@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, SelectChangeEvent, Tooltip, Typography, useTheme } from "@mui/material";
 import { PersonOutline, Edit, CalendarToday, LocalHospital, Close, Save } from "@mui/icons-material";
-import { PatientDemographicDetails } from "../../../../interfaces/PatientAdministration/registrationFormData";
-import { RegistrationService } from "../../../../services/PatientAdministrationServices/RegistrationService/RegistrationService";
-import { useLoading } from "../../../../context/LoadingContext";
-import CustomButton from "../../../../components/Button/CustomButton";
-import FormField from "../../../../components/FormField/FormField";
-import { PatientDemoGraph, PatientDemoGraphError } from "../../../../interfaces/PatientAdministration/patientDemoGraph";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import { notifyError, notifySuccess } from "../../../../utils/Common/toastManager";
-import { PatientDemoGraphService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientDemoGraphService";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
+import { PatientDemographicDetails } from "@/interfaces/PatientAdministration/registrationFormData";
+import { useLoading } from "@/context/LoadingContext";
+import { PatientDemoGraph, PatientDemoGraphError } from "@/interfaces/PatientAdministration/patientDemoGraph";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
+import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
+import { PatientDemoGraphService } from "@/services/PatientAdministrationServices/RegistrationService/PatientDemoGraphService";
+import FormField from "@/components/FormField/FormField";
+import CustomButton from "@/components/Button/CustomButton";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 
 interface PatientDemographicsProps {
   pChartID: number;

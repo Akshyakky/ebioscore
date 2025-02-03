@@ -1,15 +1,14 @@
-import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { Grid, Paper, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import DeleteIcon from "@mui/icons-material/Delete";
-import SaveIcon from "@mui/icons-material/Save";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { IcdDetailDto } from "../../../../interfaces/ClinicalManagement/IcdDetailDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import FormField from "@/components/FormField/FormField";
+import { useLoading } from "@/context/LoadingContext";
+import { IcdDetailDto } from "@/interfaces/ClinicalManagement/IcdDetailDto";
 import { useAppSelector } from "@/store/hooks";
-
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Grid, Paper, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import SaveIcon from "@mui/icons-material/Save";
+import DeleteIcon from "@mui/icons-material/Delete";
 interface DiagnosisDetailsProps {
   selectedData?: IcdDetailDto;
 }

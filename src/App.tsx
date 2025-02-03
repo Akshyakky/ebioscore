@@ -3,18 +3,18 @@ import "./App.css";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Provider as ReduxProvider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
-import { store, persistor } from "./store";
 import { LoadingProvider } from "./context/LoadingContext";
-import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
-import ProtectedRoute from "./components/ProtectedRoute";
 import { ThemeProvider } from "./context/Common/ThemeContext";
 import { ToastContainer } from "react-toastify";
 import { Box, Button, Typography, Container, CircularProgress } from "@mui/material";
 import { Refresh } from "@mui/icons-material";
-import routeConfig from "./routes/routeConfig";
-import ErrorBoundary from "./components/ErrorBoundary";
-import RouteErrorBoundary from "./components/RouteErrorBoundary";
 import "react-toastify/dist/ReactToastify.css";
+import RouteErrorBoundary from "./components/RouteErrorBoundary";
+import ProtectedRoute from "./components/ProtectedRoute";
+import routeConfig from "./routes/routeConfig";
+import { persistor, store } from "./store";
+import ErrorBoundary from "./components/ErrorBoundary";
+import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
 
 // Types
 interface RouteConfig {

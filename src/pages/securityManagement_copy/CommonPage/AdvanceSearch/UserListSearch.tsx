@@ -1,8 +1,8 @@
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { UserListSearchContext } from "@/context/SecurityManagement/UserListSearchContext";
+import { UserListData } from "@/interfaces/SecurityManagement/UserListData";
+import { UserListService } from "@/services/SecurityManagementServices/UserListService";
 import React, { useContext, useCallback } from "react";
-import { UserListData } from "../../../../interfaces/SecurityManagement/UserListData";
-import { UserListSearchContext } from "../../../../context/SecurityManagement/UserListSearchContext";
-import { UserListService } from "../../../../services/SecurityManagementServices/UserListService";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 
 interface UserListSearchProps {
   show: boolean;

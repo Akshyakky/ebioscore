@@ -2,18 +2,17 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Grid, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
-import { OPIPInsurancesDto } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
-import FormField from "../../../../components/FormField/FormField";
-import { useSelector } from "react-redux";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import CustomButton from "../../../../components/Button/CustomButton";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import useDayjs from "../../../../hooks/Common/useDateTime";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
-import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useAppSelector } from "@/store/hooks";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useDayjs from "@/hooks/Common/useDateTime";
+import useFieldsList from "@/components/FieldsList/UseFieldsList";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import FormField from "@/components/FormField/FormField";
+import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
+import CustomButton from "@/components/Button/CustomButton";
 
 interface PatientInsuranceFormProps {
   show: boolean;

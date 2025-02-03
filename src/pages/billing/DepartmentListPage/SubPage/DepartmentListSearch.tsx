@@ -1,7 +1,8 @@
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
+import { departmentService } from "@/services/CommonServices/CommonModelServices";
 import React from "react";
-import { DepartmentDto } from "../../../../interfaces/Billing/DepartmentDto";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { departmentService } from "../../../../services/CommonServices/CommonModelServices";
+
 interface DepartmentListSearchProps {
   open: boolean;
   onClose: () => void;

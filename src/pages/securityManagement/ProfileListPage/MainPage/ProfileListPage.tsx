@@ -1,8 +1,8 @@
 import { Box, Container } from "@mui/material";
 import React, { useCallback, useState } from "react";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import { Search } from "@mui/icons-material";
-import { ProfileMastDto } from "../../../../interfaces/SecurityManagement/ProfileListData";
+import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import ProfileDetails from "../SubPage/ProfileListDetails";
 import ProfileListSearch from "../SubPage/ProfileListSearch";
 

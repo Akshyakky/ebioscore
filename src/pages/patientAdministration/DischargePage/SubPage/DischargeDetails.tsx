@@ -1,21 +1,21 @@
 import React, { useState, useCallback } from "react";
 import { Grid, SelectChangeEvent } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
-import { IpDischargeDto } from "../../../../interfaces/PatientAdministration/IpDischargeDto";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import { dischargeService } from "../../../../services/PatientAdministrationServices/DischargeService/DischargeService";
-import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
-import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
-import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
-import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/admissionService";
-import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 import { useAppSelector } from "@/store/hooks";
+import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
+import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDto";
+import { useLoading } from "@/context/LoadingContext";
+import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
+import { showAlert } from "@/utils/Common/showAlert";
+import dischargeService from "@/services/PatientAdministrationServices/DischargeService/DischargeService";
+import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
+import FormField from "@/components/FormField/FormField";
+import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
+import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 interface DischargeDetailsProps {
   selectedAdmission?: AdmissionDto;

@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
-import CustomButton from "../../../../components/Button/CustomButton";
-import { FormControlLabel, Checkbox, FormGroup, Typography } from "@mui/material";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import RepeatIcon from "@mui/icons-material/Repeat";
-import { formatDate } from "../../../../utils/Common/dateUtils";
+import React, { useEffect, useState } from "react";
 import Close from "@mui/icons-material/Close";
 import Save from "@mui/icons-material/Save";
-import FormField from "../../../../components/FormField/FormField";
-import { showAlert } from "../../../../utils/Common/showAlert";
+import RepeatIcon from "@mui/icons-material/Repeat";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import { showAlert } from "@/utils/Common/showAlert";
+import { formatDate } from "@/utils/Common/dateUtils";
+import FormField from "@/components/FormField/FormField";
+import { Checkbox, FormControlLabel, FormGroup, Typography } from "@mui/material";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import CustomButton from "@/components/Button/CustomButton";
 
 interface BreakFrequencyDetailsProps {
   open: boolean;

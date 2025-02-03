@@ -1,18 +1,18 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { Box, Container, Typography } from "@mui/material";
-import ProductOverviewDetail from "../SubPage/ProductOverviewDetails";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import FormField from "../../../../components/FormField/FormField";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import CustomButton from "../../../../components/Button/CustomButton";
 import { ThumbUp } from "@mui/icons-material";
 import Close from "@mui/icons-material/Close";
-import { ProductOverviewDto } from "../../../../interfaces/InventoryManagement/ProductOverviewDto";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import ProductOverviewSearch from "../SubPage/ProductOverviewSearch";
 import Search from "@mui/icons-material/Search";
-import { showAlert } from "../../../../utils/Common/showAlert";
+import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { showAlert } from "@/utils/Common/showAlert";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import ProductOverviewDetail from "../SubPage/ProductOverviewDetails";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import FormField from "@/components/FormField/FormField";
+import CustomButton from "@/components/Button/CustomButton";
+import ProductOverviewSearch from "../SubPage/ProductOverviewSearch";
 
 const ProductOverviewPage: React.FC = () => {
   const [selectedData, setSelectedData] = useState<ProductOverviewDto>({

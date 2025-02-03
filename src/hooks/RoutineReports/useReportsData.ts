@@ -1,6 +1,6 @@
 // useReportsData.ts - Adjusted to use useLoading
+import { useLoading } from "@/context/LoadingContext";
 import { useEffect, useState } from "react";
-import { useLoading } from "../../context/LoadingContext";
 
 const useReportsData = <T>(fetchFunction: (auGrpID: number) => Promise<T[]>, auGrpID: number) => {
   const { setLoading } = useLoading(); // Use setLoading from context

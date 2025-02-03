@@ -1,8 +1,8 @@
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { OTProcedureListDto } from "@/interfaces/ClinicalManagement/ProcedureListDto";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { showAlert } from "@/utils/Common/showAlert";
 import React, { useCallback, useMemo } from "react";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { OTProcedureListDto } from "../../../../interfaces/ClinicalManagement/ProcedureListDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
-import { showAlert } from "../../../../utils/Common/showAlert";
 interface ProcedureSearchProps {
   open: boolean;
   onClose: () => void;

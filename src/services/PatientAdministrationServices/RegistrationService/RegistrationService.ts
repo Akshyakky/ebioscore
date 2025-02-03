@@ -1,9 +1,10 @@
 // service/RegistrationService/RegistrationService.ts
-import { CommonApiService } from "../../CommonApiService";
-import { APIConfig } from "../../../apiConfig";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { PatientRegistrationDto } from "../../../interfaces/PatientAdministration/PatientFormData";
-import { PatientDemographicDetails } from "../../../interfaces/PatientAdministration/registrationFormData";
+
+import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import { PatientDemographicDetails } from "@/interfaces/PatientAdministration/registrationFormData";
+import { CommonApiService } from "@/services/CommonApiService";
 import { store } from "@/store";
 
 // Initialize ApiService with the base URL for the patient administration API

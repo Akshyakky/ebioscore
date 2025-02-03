@@ -1,10 +1,10 @@
+import FormField from "@/components/FormField/FormField";
+import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import useRadioButtonChange from "@/hooks/useRadioButtonChange";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import React, { useMemo } from "react";
-import FormField from "../../../../components/FormField/FormField";
-import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 
 interface VisitDetailsProps {
   formData: PatientRegistrationDto;

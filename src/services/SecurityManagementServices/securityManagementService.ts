@@ -1,10 +1,7 @@
-import { createEntityService } from "../../utils/Common/serviceFactory";
-import { ProfileMastDto } from "../../interfaces/SecurityManagement/ProfileListData";
+import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { createEntityService } from "@/utils/Common/serviceFactory";
 
-export const profileMastService = createEntityService<ProfileMastDto>(
-  "ProfileMast",
-  "securityManagementURL"
-);
+export const profileMastService = createEntityService<ProfileMastDto>("ProfileMast", "securityManagementURL");
 
 // If you have any other security management related services, you can add them here
 // For example:

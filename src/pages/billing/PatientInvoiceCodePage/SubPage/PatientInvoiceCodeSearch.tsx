@@ -1,7 +1,7 @@
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { BPatTypeDto } from "@/interfaces/Billing/BPatTypeDto";
+import { patientInvioceService } from "@/services/BillingServices/BillingGenericService";
 import React from "react";
-import { BPatTypeDto } from "../../../../interfaces/Billing/BPatTypeDto";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { patientInvioceService } from "../../../../services/BillingServices/BillingGenericService";
 
 interface PatientInvoiceCodeSearchProps {
   open: boolean;

@@ -1,7 +1,7 @@
-import React from "react";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { MedicationGenericDto } from "../../../../interfaces/ClinicalManagement/MedicationGenericDto";
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
 import { medicationGenericService } from "@/services/ClinicalManagementServices/clinicalManagementService";
+import React from "react";
 
 interface MedicationGemericSearchProps {
   open: boolean;
@@ -15,7 +15,6 @@ const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, 
       const items = await medicationGenericService.getAll();
       return items.data || [];
     } catch (error) {
-      console.error("Error fetching medication dosage:", error);
       return [];
     }
   };
@@ -24,13 +23,11 @@ const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, 
     try {
       return await medicationGenericService.updateActiveStatus(id, status);
     } catch (error) {
-      console.error("Error updating medication form active status:", error);
       return false;
     }
   };
 
   const getItemId = (item: MedicationGenericDto) => item.mGenID;
-
   const getItemActiveStatus = (item: MedicationGenericDto) => item.rActiveYN === "Y";
 
   const columns = [

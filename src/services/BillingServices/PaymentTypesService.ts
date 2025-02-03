@@ -1,8 +1,8 @@
+import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
-import { BPayTypeDto } from "../../interfaces/Billing/BPayTypeDto";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { APIConfig } from "../../apiConfig";
 import { store } from "@/store";
+import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
 
 const apiService = new CommonApiService({ baseURL: APIConfig.billingURL });
 

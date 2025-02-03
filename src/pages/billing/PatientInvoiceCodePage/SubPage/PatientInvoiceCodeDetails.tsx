@@ -1,16 +1,15 @@
-import { Paper, Typography, Grid } from "@mui/material";
-import { useState, useCallback, useEffect } from "react";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import SaveIcon from "@mui/icons-material/Save";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { BPatTypeDto } from "../../../../interfaces/Billing/BPatTypeDto";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import FormField from "../../../../components/FormField/FormField";
-import { patientInvioceService } from "../../../../services/BillingServices/BillingGenericService";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import FormField from "@/components/FormField/FormField";
+import { useLoading } from "@/context/LoadingContext";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import { BPatTypeDto } from "@/interfaces/Billing/BPatTypeDto";
+import { patientInvioceService } from "@/services/BillingServices/BillingGenericService";
 import { useAppSelector } from "@/store/hooks";
-import React from "react";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Grid, Paper, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SaveIcon from "@mui/icons-material/Save";
 
 const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({ editData }) => {
   const [formState, setFormState] = useState({

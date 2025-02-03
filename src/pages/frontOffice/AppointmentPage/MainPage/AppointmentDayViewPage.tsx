@@ -1,7 +1,4 @@
 import React, { useRef } from "react";
-import MainLayout from "../../../../layouts/MainLayout/MainLayout";
-import SchedulerHeader from "../SubPage/SchedulerHeader";
-import SchedulerComponent from "../SubPage/SchedulerComponent";
 import SchedulerFooter from "../SubPage/SchedulerFooter";
 
 const AppointmentDayViewPage: React.FC = () => {

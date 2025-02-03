@@ -15,7 +15,6 @@ const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClo
       const items = await medicationFormService.getAll();
       return items.data || [];
     } catch (error) {
-      console.error("Error fetching medication dosage:", error);
       return [];
     }
   };
@@ -24,7 +23,6 @@ const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClo
     try {
       return await medicationFormService.updateActiveStatus(id, status);
     } catch (error) {
-      console.error("Error updating medication form active status:", error);
       return false;
     }
   };

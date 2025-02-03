@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { BServiceGrpDto } from "../../../../interfaces/Billing/BServiceGrpDto";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import Search from "@mui/icons-material/Search";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import { BServiceGrpDto } from "@/interfaces/Billing/BServiceGrpDto";
+import { Search } from "@mui/icons-material";
 import { Box, Container } from "@mui/material";
+import React, { useState } from "react";
 import ServiceGroupsListDetails from "../SubPage/ServiceGroupsListDetails";
 import ServiceGroupsListSearch from "../SubPage/ServiceGroupsListSearch";
 

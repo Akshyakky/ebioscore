@@ -1,5 +1,6 @@
 import { store } from "@/store";
 import { CommonApiService } from "../CommonApiService";
+
 export interface BaseDto {
   [key: string]: any;
 }

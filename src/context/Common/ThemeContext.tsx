@@ -2,8 +2,8 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { ThemeProvider as MuiThemeProvider, Theme } from "@mui/material/styles";
 import { createTheme } from "@mui/material/styles";
-import darkTheme from "../../layouts/Themes/darkTheme";
-import lightTheme from "../../layouts/Themes/LightTheme";
+import darkTheme from "@/layouts/Themes/darkTheme";
+import lightTheme from "@/layouts/Themes/LightTheme";
 
 type ThemeContextType = {
   isDarkMode: boolean;
