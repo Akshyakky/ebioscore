@@ -16,6 +16,7 @@ export interface CustomButtonProps {
   color?: "inherit" | "primary" | "secondary" | "error" | "info" | "success" | "warning";
   ariaLabel?: string;
   sx?: SxProps<Theme>;
+  children?: React.ReactNode;
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({
@@ -29,6 +30,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   color = "primary",
   ariaLabel,
   sx,
+  children,
   ...props
 }) => {
   return (
@@ -44,7 +46,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
       sx={sx}
       {...props}
     >
-      {text}
+      {children || text}
     </Button>
   );
 };
