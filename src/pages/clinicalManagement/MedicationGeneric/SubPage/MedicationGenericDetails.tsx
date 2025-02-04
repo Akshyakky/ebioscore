@@ -28,6 +28,7 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
     compName: compName ?? "",
     transferYN: "N",
     rNotes: "",
+    mSnomedCode: "",
   }));
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -171,6 +172,18 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
           ControlID="genName"
           placeholder="Enter Medication Generic name"
           isMandatory={true}
+          size="small"
+          isSubmitted={isSubmitted}
+        />
+        <FormField
+          type="text"
+          label="Snomed Code"
+          value={formState.mSnomedCode}
+          onChange={handleInputChange}
+          name="mSnomedCode"
+          ControlID="snomedCode"
+          placeholder="Enter Snomed code"
+          isMandatory={false}
           size="small"
           isSubmitted={isSubmitted}
         />
