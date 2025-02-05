@@ -100,7 +100,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CITY");
             break;
           case "country":
-            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "ACTUALCOUNTRY");
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COUNTRY");
             break;
           case "company":
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COMPANY");

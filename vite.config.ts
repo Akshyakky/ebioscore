@@ -52,7 +52,7 @@ export default defineConfig({
 
           // UI related chunks
           "vendor-mui": ["@mui/material", "@mui/icons-material", "@mui/lab", "@mui/x-date-pickers"],
-          "vendor-forms": ["formik", "yup"],
+          "vendor-forms": ["yup"],
 
           // Utility chunks
           "vendor-utils": ["axios", "date-fns", "date-fns-tz", "clsx", "lodash"],
@@ -82,7 +82,6 @@ export default defineConfig({
       "react-router-dom",
       "react-redux",
       "@reduxjs/toolkit",
-      "formik",
       "yup",
       "axios",
       "lodash",
