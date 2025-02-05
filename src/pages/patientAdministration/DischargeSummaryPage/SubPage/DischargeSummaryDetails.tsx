@@ -15,6 +15,7 @@ import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import { DeleteIcon, SaveIcon } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
+import { dischargeSummaryService } from "@/services/PatientAdministrationServices/patientAdministrationService";
 interface DischargeSummaryDetailsProps {
   onClear?: () => void;
   selectedAdmission?: AdmissionDto;
@@ -66,14 +67,28 @@ const initialState = (compID?: number, compCode?: string, compName?: string): Ip
 const DischargeSummaryDetails: React.FC<DischargeSummaryDetailsProps> = ({ onClear, selectedAdmission, onAdmissionSelect }) => {
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [formState, setFormState] = useState<IpDischargeDetailsDto>(() => initialState(compID || 0, compCode || "", compName || ""));
-  const { control, setValue } = useForm<IpDischargeDetailsDto>({
+  // const { control, setValue } = useForm<IpDischargeDetailsDto>({
+  //   defaultValues: initialState(compID || 0, compCode || "", compName || ""),
+  // });
+  const { register, control, setValue } = useForm<IpDischargeDetailsDto>({
     defaultValues: initialState(compID || 0, compCode || "", compName || ""),
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { setLoading } = useLoading();
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const [isEditing, setIsEditing] = useState(false);
-  const handleInputChange = useCallback(
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormState((prev) => ({ ...prev, [name]: value }));
+  }, []);
+  const handleInputChangeRegister = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setValue(name, value); // Update the form state using react-hook-form's setValue
+    },
+    [setValue]
+  );
+  const handleInputControllerChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
       setValue(name, value); // Update the form state using react-hook-form's setValue
@@ -158,9 +173,15 @@ const DischargeSummaryDetails: React.FC<DischargeSummaryDetailsProps> = ({ onCle
     },
     [dropdownValues.attendingPhy, dropdownValues.speciality]
   );
-  function handleSave(): void {
-    throw new Error("Function not implemented.");
-  }
+  const handleSave = useCallback(async () => {
+    setIsSubmitted(true);
+    setLoading(true);
+    await dischargeSummaryService.save({ ...formState });
+    showAlert("Success", "Medication Form saved successfully!", "success", {
+      onConfirm: handleClear,
+    });
+    setLoading(false);
+  }, [formState, dischargeSummaryService, setLoading, handleClear]);
 
   return (
     <>
@@ -304,7 +325,7 @@ const DischargeSummaryDetails: React.FC<DischargeSummaryDetailsProps> = ({ onCle
               label="Menstrual Exam"
               value={field.value}
               onChange={(e) => {
-                handleInputChange(e); // Call your custom handleInputChange
+                handleInputControllerChange(e); // Call your custom handleInputChange
                 field.onChange(e); // Ensure react-hook-form is aware of the change
               }}
               name="menstrualExam"
@@ -324,7 +345,7 @@ const DischargeSummaryDetails: React.FC<DischargeSummaryDetailsProps> = ({ onCle
               label="Advice On Discharge"
               value={field.value}
               onChange={(e) => {
-                handleInputChange(e); // Call your custom handleInputChange
+                handleInputControllerChange(e); // Call your custom handleInputChange
                 field.onChange(e); // Ensure react-hook-form is aware of the change
               }}
               name="adviceOnDischarge"
@@ -335,18 +356,20 @@ const DischargeSummaryDetails: React.FC<DischargeSummaryDetailsProps> = ({ onCle
             />
           )}
         />
-
         <FormField
           type="textarea"
           label="Birth History"
-          value={formState.birthHistory}
-          onChange={handleInputChange}
+          {...register("birthHistory")} // Register the field with react-hook-form
+          onChange={(e) => {
+            handleInputChangeRegister(e); // Call your custom handleInputChange
+          }}
           name="birthHistory"
           ControlID="birthHistory"
           rows={4}
           size="small"
           gridProps={{ xs: 12 }}
         />
+
         <FormField
           type="textarea"
           label="Cheif Compliant"
