@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useForm, Controller } from "react-hook-form";
 import { Grid } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
 import { useAppSelector } from "@/store/hooks";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
 import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import useFieldsList from "@/components/FieldsList/UseFieldsList";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import useRadioButtonChange from "@/hooks/useRadioButtonChange";
 import { useLoading } from "@/context/LoadingContext";
 import { showAlert } from "@/utils/Common/showAlert";
 import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
@@ -27,16 +29,15 @@ interface NextOfKinFormProps {
 
 const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handleSave, editData }) => {
   const userInfo = useAppSelector((state) => state.auth);
-  const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
-  const [dialogCategory, setDialogCategory] = useState<string>("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const serverDate = useServerDate();
-  const { setLoading } = useLoading();
 
   const dropdownValues = useDropdownValues(["title", "relation", "area", "city", "country", "nationality"]);
   const { fieldsList, defaultFields } = useFieldsList(["nationality", "relation", "area", "city", "country"]);
-
-  const defaultValues: PatNokDetailsDto = useMemo(
+  const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
+  const [dialogCategory, setDialogCategory] = useState<string>("");
+  const nextOfKinInitialFormState: PatNokDetailsDto = useMemo(
     () => ({
       ID: 0,
       pNokID: 0,
@@ -78,88 +79,53 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
     }),
     [userInfo, serverDate]
   );
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<PatNokDetailsDto>({
-    defaultValues,
-  });
-
-  const regType = watch("pNokRegStatusVal");
+  const [nextOfkinData, setNextOfKinData] = useState<PatNokDetailsDto>(nextOfKinInitialFormState);
+  const { handleDropdownChange } = useDropdownChange<PatNokDetailsDto>(setNextOfKinData);
+  const { handleRadioButtonChange } = useRadioButtonChange<PatNokDetailsDto>(setNextOfKinData);
+  const { setLoading } = useLoading();
+  const resetNextOfKinFormData = useCallback(() => {
+    setNextOfKinData(nextOfKinInitialFormState);
+  }, [nextOfKinInitialFormState]);
 
   useEffect(() => {
     if (editData) {
-      reset({
-        ...defaultValues,
+      setNextOfKinData({
+        ...nextOfKinInitialFormState,
         ...editData,
         pNokDob: editData.pNokDob || serverDate,
         pNokPChartCode: editData.pNokPChartCode || "",
       });
     } else {
-      reset(defaultValues);
+      resetNextOfKinFormData();
     }
-  }, [editData, defaultValues, serverDate, reset]);
+  }, [editData, nextOfKinInitialFormState, serverDate, resetNextOfKinFormData]);
 
-  const handlePatientSelect = async (selectedSuggestion: string) => {
-    setLoading(true);
-    try {
-      const pChartID = extractNumbers(selectedSuggestion)[0] || null;
-      if (pChartID) {
-        setValue("pNokPChartCode", selectedSuggestion.split("|")[0].trim());
-        setValue("pNokPChartID", pChartID);
-
-        const response = await PatientService.getPatientDetails(pChartID);
-        if (response.success && response.data) {
-          const patientDetails = response.data;
-          setValue("pNokFName", patientDetails.patRegisters.pFName || "");
-          setValue("pNokMName", patientDetails.patRegisters.pMName || "");
-          setValue("pNokLName", patientDetails.patRegisters.pLName || "");
-          setValue("pNokTitleVal", patientDetails.patRegisters.pTitle || "");
-          setValue("pNokDob", new Date(patientDetails.patRegisters.pDob || serverDate));
-          setValue("pNokRelNameVal", patientDetails.patRegisters.pTypeName || "");
-          setValue("pNokStreet", patientDetails.patAddress.pAddStreet || "");
-          setValue("pNokAreaVal", patientDetails.patAddress.patAreaVal || "");
-          setValue("pNokCityVal", patientDetails.patAddress.pAddCityVal || "");
-          setValue("pNokActualCountryVal", patientDetails.patAddress.pAddActualCountryVal || "");
-          setValue("pNokPostcode", patientDetails.patAddress.pAddPostcode || "");
-          setValue("pAddPhone1", patientDetails.patAddress.pAddPhone1 || "");
-          setValue("pNokCountryVal", patientDetails.patAddress.pAddActualCountryVal || "");
-          setValue("pNokPssnID", patientDetails.patRegisters.intIdPsprt || "");
-        }
+  const handleSubmit = useCallback(async () => {
+    setIsSubmitted(true);
+    if (nextOfkinData.pNokFName.trim() && nextOfkinData.pNokLName.trim() && nextOfkinData.pAddPhone1.trim()) {
+      setLoading(true);
+      try {
+        await handleSave(nextOfkinData);
+        showAlert("Success", "The Kin Details Saved successfully", "success");
+        resetNextOfKinFormData();
+        handleClose();
+      } catch (error) {
+        showAlert("Error", "Failed to save Kin details. Please try again.", "error");
+      } finally {
+        setLoading(false);
+        setIsSubmitted(false);
       }
-    } catch (error) {
-      console.error("Error fetching patient details:", error);
-    } finally {
-      setLoading(false);
+    } else {
+      showAlert("Warning", "Please fill in all required fields", "warning");
+      setIsSubmitted(false);
     }
-  };
-
-  const onSubmit = async (data: PatNokDetailsDto) => {
-    setLoading(true);
-    try {
-      if (!data.pNokFName.trim() || !data.pNokLName.trim() || !data.pAddPhone1.trim()) {
-        showAlert("Warning", "Please fill in all required fields", "warning");
-        return;
-      }
-      await handleSave(data);
-      reset();
-      handleClose();
-    } catch (error) {
-      showAlert("Error", "Failed to save Kin details. Please try again.", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [nextOfkinData, handleSave, handleClose, resetNextOfKinFormData, setLoading]);
 
   const handleCloseWithClear = useCallback(() => {
-    reset();
+    setIsSubmitted(false);
+    resetNextOfKinFormData();
     handleClose();
-  }, [reset, handleClose]);
+  }, [resetNextOfKinFormData, handleClose]);
 
   const regOptions = useMemo(
     () => [
@@ -169,8 +135,96 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
     []
   );
 
+  const handleTextChange = useCallback(
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setNextOfKinData((prev) => ({
+        ...prev,
+        [field]: e.target.value,
+      }));
+    },
+    []
+  );
+
+  const handlePatientSelect = useCallback(
+    async (selectedSuggestion: string) => {
+      setLoading(true);
+      try {
+        const pChartID = extractNumbers(selectedSuggestion)[0] || null;
+        if (pChartID) {
+          setNextOfKinData((prev) => ({
+            ...prev,
+            pNokPChartCode: selectedSuggestion.split("|")[0].trim(),
+            pNokPChartID: pChartID,
+          }));
+
+          const response = await PatientService.getPatientDetails(pChartID);
+          if (response.success && response.data) {
+            const patientDetails = response.data;
+            setNextOfKinData((prev) => ({
+              ...prev,
+              pNokFName: patientDetails.patRegisters.pFName || "",
+              pNokMName: patientDetails.patRegisters.pMName || "",
+              pNokLName: patientDetails.patRegisters.pLName || "",
+              pNokTitleVal: patientDetails.patRegisters.pTitle || "",
+              pNokDob: patientDetails.patRegisters.pDob ? new Date(patientDetails.patRegisters.pDob) : serverDate,
+              pNokRelNameVal: patientDetails.patRegisters.pTypeName || "",
+              pNokStreet: patientDetails.patAddress.pAddStreet || "",
+              pNokAreaVal: patientDetails.patAddress.patAreaVal || "",
+              pNokCityVal: patientDetails.patAddress.pAddCityVal || "",
+              pNokActualCountryVal: patientDetails.patAddress.pAddActualCountryVal || "",
+              pNokPostcode: patientDetails.patAddress.pAddPostcode || "",
+              pAddPhone1: patientDetails.patAddress.pAddPhone1 || "",
+              pNokCountryVal: patientDetails.patAddress.pAddActualCountryVal || "",
+              pNokPssnID: patientDetails.patRegisters.intIdPsprt || "",
+            }));
+          }
+        }
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading, serverDate]
+  );
+
+  const handleDateChange = useCallback((date: Date | null) => {
+    setNextOfKinData((prev) => ({
+      ...prev,
+      pNokDob: date ? date : serverDate,
+    }));
+  }, []);
+
+  const [, setFormDataDialog] = useState<AppModifyFieldDto>({
+    amlID: 0,
+    amlName: "",
+    amlCode: "",
+    amlField: "",
+    defaultYN: "N",
+    modifyYN: "N",
+    rNotes: "",
+    rActiveYN: "Y",
+    compID: 0,
+    compCode: "",
+    compName: "",
+    transferYN: "Y",
+  });
+
   const handleAddField = (category: string) => {
     setDialogCategory(category);
+    setFormDataDialog({
+      amlID: 0,
+      amlName: "",
+      amlCode: "",
+      amlField: category,
+      defaultYN: "N",
+      modifyYN: "N",
+      rNotes: "",
+      rActiveYN: "Y",
+      compID: 0,
+      compCode: "",
+      compName: "",
+      transferYN: "Y",
+    });
     setIsFieldDialogOpen(true);
   };
 
@@ -179,291 +233,218 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
   };
 
   const dialogContent = (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <Grid container spacing={2}>
-        <Controller
-          name="pNokRegStatusVal"
-          control={control}
-          render={({ field }) => (
-            <FormField
-              type="radio"
-              label="NOK Type"
-              ControlID="RegOrNonReg"
-              name={field.name}
-              value={field.value}
-              options={regOptions}
-              onChange={(e) => {
-                field.onChange(e);
-                setValue("pNokRegStatus", e.target.value === "Y" ? "Registered" : "Non Registered");
-              }}
-              inline={true}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-            />
-          )}
+    <Grid container spacing={2}>
+      <FormField
+        type="radio"
+        label="NOK Type"
+        name="RegOrNonReg"
+        ControlID="RegOrNonReg"
+        value={nextOfkinData.pNokRegStatusVal}
+        options={regOptions}
+        onChange={handleRadioButtonChange(["pNokRegStatusVal"], ["pNokRegStatus"], regOptions)}
+        inline={true}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+      />
+      {nextOfkinData.pNokRegStatusVal === "Y" && (
+        <FormField
+          type="autocomplete"
+          label="UHID"
+          name="pNokPChartCode"
+          ControlID="UHID"
+          value={nextOfkinData.pNokPChartCode || ""}
+          onChange={(e) =>
+            setNextOfKinData((prev) => ({
+              ...prev,
+              pNokPChartCode: e.target.value,
+            }))
+          }
+          fetchSuggestions={fetchPatientSuggestions}
+          onSelectSuggestion={handlePatientSelect}
+          isSubmitted={isSubmitted}
+          isMandatory
+          placeholder="Search through UHID, Name, DOB, Phone No...."
+          gridProps={{ xs: 12, sm: 6, md: 4 }}
         />
+      )}
 
-        {regType === "Y" && (
-          <Controller
-            name="pNokPChartCode"
-            control={control}
-            render={({ field }) => (
-              <FormField
-                type="autocomplete"
-                label="UHID"
-                ControlID="UHID"
-                name={field.name}
-                value={field.value}
-                onChange={field.onChange}
-                fetchSuggestions={fetchPatientSuggestions}
-                onSelectSuggestion={handlePatientSelect}
-                isMandatory
-                placeholder="Search through UHID, Name, DOB, Phone No...."
-                gridProps={{ xs: 12, sm: 6, md: 4 }}
-              />
-            )}
-          />
-        )}
-        <Controller
-          name="pNokTitleVal"
-          control={control}
-          rules={{ required: "Title is required" }}
-          render={({ field }) => (
-            <FormField
-              type="select"
-              label="Title"
-              ControlID="Title"
-              name={field.name}
-              value={field.value}
-              options={dropdownValues.title}
-              onChange={(e) => {
-                field.onChange(e);
-                const selectedTitle = dropdownValues.title.find((t) => t.value === e.target.value);
-                setValue("pNokTitle", selectedTitle?.label || "");
-              }}
-              isMandatory={true}
-              errorMessage={errors.pNokTitleVal?.message}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-            />
-          )}
-        />
+      <FormField
+        type="select"
+        label="Title"
+        name="pNokTitleVal"
+        ControlID="Title"
+        value={String(nextOfkinData.pNokTitleVal)}
+        options={dropdownValues.title}
+        onChange={handleDropdownChange(["pNokTitleVal"], ["pNokTitle"], dropdownValues.title)}
+        isMandatory={true}
+        isSubmitted={isSubmitted}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+      />
 
-        <Controller
-          name="pNokFName"
-          control={control}
-          rules={{ required: "First Name is required" }}
-          render={({ field }) => (
-            <FormField
-              type="text"
-              label="First Name"
-              ControlID="FirstName"
-              name={field.name}
-              value={field.value}
-              onChange={field.onChange}
-              isMandatory={true}
-              errorMessage={errors.pNokFName?.message}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-            />
-          )}
-        />
+      <FormField
+        type="text"
+        label="First Name"
+        name="pNokFName"
+        ControlID="FirstName"
+        value={nextOfkinData.pNokFName}
+        onChange={handleTextChange("pNokFName")}
+        isMandatory={true}
+        isSubmitted={isSubmitted}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+      />
 
-        <Controller
-          name="pNokLName"
-          control={control}
-          rules={{ required: "Last Name is required" }}
-          render={({ field }) => (
-            <FormField
-              type="text"
-              label="Last Name"
-              ControlID="LastName"
-              name={field.name}
-              value={field.value}
-              onChange={field.onChange}
-              isMandatory={true}
-              errorMessage={errors.pNokLName?.message}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-            />
-          )}
-        />
+      <FormField
+        type="text"
+        label="Last Name"
+        name="pNokLName"
+        ControlID="LastName"
+        value={nextOfkinData.pNokLName}
+        onChange={handleTextChange("pNokLName")}
+        isMandatory={true}
+        isSubmitted={isSubmitted}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+      />
 
-        <Controller
-          name="pNokRelNameVal"
-          control={control}
-          rules={{ required: "Relationship is required" }}
-          render={({ field }) => (
-            <FormField
-              type="select"
-              label="Relationship"
-              ControlID="Relationship"
-              name={field.name}
-              value={field.value || defaultFields.relation}
-              options={fieldsList.relation}
-              onChange={(e) => {
-                field.onChange(e);
-                const selectedRelation = fieldsList.relation.find((r) => r.value === e.target.value);
-                setValue("pNokRelName", selectedRelation?.label || "");
-              }}
-              isMandatory={true}
-              errorMessage={errors.pNokRelNameVal?.message}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-              showAddButton={true}
-              onAddClick={() => handleAddField("relation")}
-            />
-          )}
-        />
+      <FormField
+        type="select"
+        label="Relationship"
+        name="pNokRelNameVal"
+        ControlID="Relationship"
+        value={nextOfkinData.pNokRelNameVal || defaultFields.relation}
+        options={fieldsList.relation}
+        onChange={handleDropdownChange(["pNokRelNameVal"], ["pNokRelName"], fieldsList.relation)}
+        isMandatory={true}
+        isSubmitted={isSubmitted}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+        showAddButton={true}
+        onAddClick={() => handleAddField("relation")}
+      />
 
-        <Controller
-          name="pNokDob"
-          control={control}
-          render={({ field }) => (
-            <FormField type="datepicker" label="Birth Date" ControlID="BirthDate" {...field} onChange={(date) => field.onChange(date)} gridProps={{ xs: 12, sm: 6, md: 4 }} />
-          )}
-        />
+      <FormField
+        type="datepicker"
+        label="Birth Date"
+        name="pNokDob"
+        ControlID="BirthDate"
+        value={nextOfkinData.pNokDob}
+        onChange={handleDateChange}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+      />
 
-        <Controller
-          name="pAddPhone1"
-          control={control}
-          rules={{ required: "Mobile No is required" }}
-          render={({ field }) => (
-            <FormField
-              type="text"
-              label="Mobile No"
-              ControlID="MobileNo"
-              name={field.name}
-              value={field.value}
-              onChange={field.onChange}
-              maxLength={20}
-              isMandatory={true}
-              errorMessage={errors.pAddPhone1?.message}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-            />
-          )}
-        />
-        <Controller
-          name="pNokStreet"
-          control={control}
-          render={({ field }) => <FormField type="text" label="Address" ControlID="Address" {...field} gridProps={{ xs: 12, sm: 6, md: 4 }} />}
-        />
-        <Controller
-          name="pNokAreaVal"
-          control={control}
-          render={({ field }) => (
-            <FormField
-              type="select"
-              label="Area"
-              ControlID="Area"
-              {...field}
-              value={field.value || defaultFields.area}
-              options={fieldsList.area}
-              onChange={(e) => {
-                field.onChange(e);
-                const selectedArea = fieldsList.area.find((a) => a.value === e.target.value);
-                setValue("pNokArea", selectedArea?.label || "");
-              }}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-              showAddButton={true}
-              onAddClick={() => handleAddField("area")}
-            />
-          )}
-        />
-        <Controller
-          name="pNokCityVal"
-          control={control}
-          render={({ field }) => (
-            <FormField
-              type="select"
-              label="City"
-              ControlID="City"
-              {...field}
-              value={field.value || defaultFields.city}
-              options={fieldsList.city}
-              onChange={(e) => {
-                field.onChange(e);
-                const selectedCity = fieldsList.city.find((c) => c.value === e.target.value);
-                setValue("pNokCity", selectedCity?.label || "");
-              }}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-              showAddButton={true}
-              onAddClick={() => handleAddField("city")}
-            />
-          )}
-        />
+      <FormField
+        type="text"
+        label="Mobile No"
+        name="pAddPhone1"
+        ControlID="MobileNo"
+        value={nextOfkinData.pAddPhone1}
+        onChange={handleTextChange("pAddPhone1")}
+        maxLength={20}
+        isMandatory={true}
+        isSubmitted={isSubmitted}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+      />
 
-        <Controller
-          name="pNokActualCountryVal"
-          control={control}
-          render={({ field }) => (
-            <FormField
-              type="select"
-              label="Country"
-              ControlID="Country"
-              {...field}
-              options={dropdownValues.country}
-              onChange={(e) => {
-                field.onChange(e);
-                const selectedCountry = dropdownValues.country.find((c) => c.value === e.target.value);
-                setValue("pNokActualCountry", selectedCountry?.label || "");
-              }}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-              showAddButton={true}
-              onAddClick={() => handleAddField("country")}
-            />
-          )}
-        />
+      <FormField
+        type="text"
+        label="Address"
+        name="pNokStreet"
+        ControlID="Address"
+        value={nextOfkinData.pNokStreet}
+        onChange={handleTextChange("pNokStreet")}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+      />
+      <FormField
+        type="select"
+        label="Area"
+        name="pNokAreaVal"
+        ControlID="Area"
+        value={nextOfkinData.pNokAreaVal || defaultFields.area}
+        options={fieldsList.area}
+        onChange={handleDropdownChange(["pNokAreaVal"], ["pNokArea"], fieldsList.area)}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+        showAddButton={true}
+        onAddClick={() => handleAddField("area")}
+      />
+      <FormField
+        type="select"
+        label="City"
+        name="pNokCityVal"
+        ControlID="City"
+        value={nextOfkinData.pNokCityVal || defaultFields.city}
+        options={fieldsList.city}
+        onChange={handleDropdownChange(["pNokCityVal"], ["pNokCity"], fieldsList.city)}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+        showAddButton={true}
+        onAddClick={() => handleAddField("city")}
+      />
+      <FormField
+        type="select"
+        label="Country"
+        name="pNokActualCountryVal"
+        ControlID="Country"
+        value={nextOfkinData.pNokActualCountry}
+        options={dropdownValues.country}
+        onChange={handleDropdownChange(["pNokActualCountryVal"], ["pNokActualCountry"], dropdownValues.country)}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+        showAddButton={true}
+        onAddClick={() => handleAddField("country")}
+      />
 
-        <Controller
-          name="pNokPostcode"
-          control={control}
-          render={({ field }) => <FormField type="text" label="Post Code" ControlID="PostCode" {...field} gridProps={{ xs: 12, sm: 6, md: 4 }} />}
-        />
+      <FormField
+        type="text"
+        label="Post Code"
+        name="pNokPostcode"
+        ControlID="PostCode"
+        value={nextOfkinData.pNokPostcode}
+        onChange={handleTextChange("pNokPostcode")}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+      />
+      <FormField
+        type="text"
+        label="Land Line No"
+        name="pAddPhone3"
+        ControlID="LandLineNo"
+        value={nextOfkinData.pAddPhone3}
+        onChange={handleTextChange("pAddPhone3")}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+      />
+      <FormField
+        type="select"
+        label="Nationality"
+        name="pNokCountryVal"
+        ControlID="Nationality"
+        value={nextOfkinData.pNokCountryVal || defaultFields.nationality}
+        options={fieldsList.nationality}
+        onChange={handleDropdownChange(["pNokCountryVal"], ["pNokCountry"], fieldsList.country)}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+        showAddButton={true}
+        onAddClick={() => handleAddField("nationality")}
+      />
+      <FormField
+        type="text"
+        label="Passport No"
+        name="pNokPssnID"
+        ControlID="PassportNo"
+        value={nextOfkinData.pNokPssnID}
+        onChange={handleTextChange("pNokPssnID")}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+      />
+      <FormField
+        type="text"
+        label="Work Phone No"
+        name="pAddPhone2"
+        ControlID="WorkPhoneNo"
+        value={nextOfkinData.pAddPhone2}
+        onChange={handleTextChange("pAddPhone2")}
+        gridProps={{ xs: 12, sm: 6, md: 4 }}
+      />
 
-        <Controller
-          name="pAddPhone3"
-          control={control}
-          render={({ field }) => <FormField type="text" label="Land Line No" ControlID="LandLineNo" {...field} gridProps={{ xs: 12, sm: 6, md: 4 }} />}
-        />
-
-        <Controller
-          name="pNokCountryVal"
-          control={control}
-          render={({ field }) => (
-            <FormField
-              type="select"
-              label="Nationality"
-              ControlID="Nationality"
-              {...field}
-              value={field.value || defaultFields.nationality}
-              options={fieldsList.nationality}
-              onChange={(e) => {
-                field.onChange(e);
-                const selectedNationality = fieldsList.nationality.find((n) => n.value === e.target.value);
-                setValue("pNokCountry", selectedNationality?.label || "");
-              }}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-              showAddButton={true}
-              onAddClick={() => handleAddField("nationality")}
-            />
-          )}
-        />
-        <Controller
-          name="pNokPssnID"
-          control={control}
-          render={({ field }) => <FormField type="text" label="Passport No" ControlID="PassportNo" {...field} gridProps={{ xs: 12, sm: 6, md: 4 }} />}
-        />
-        <Controller
-          name="pAddPhone2"
-          control={control}
-          render={({ field }) => <FormField type="text" label="Work Phone No" ControlID="WorkPhoneNo" {...field} gridProps={{ xs: 12, sm: 6, md: 4 }} />}
-        />
-
-        <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
-      </Grid>
-    </form>
+      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
+    </Grid>
   );
 
   const dialogActions = (
     <>
       <CustomButton variant="contained" size="medium" onClick={handleCloseWithClear} text="Close" color="secondary" icon={CloseIcon} ariaLabel="Close" />
-      <CustomButton icon={SaveIcon} variant="contained" size="medium" text="Save" color="success" onClick={handleSubmit(onSubmit)} ariaLabel="Save Nok" />
+      <CustomButton icon={SaveIcon} variant="contained" size="medium" text="Save" color="success" onClick={handleSubmit} ariaLabel="Save Nok" />
     </>
   );
 
