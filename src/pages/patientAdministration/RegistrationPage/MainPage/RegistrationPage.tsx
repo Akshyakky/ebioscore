@@ -37,7 +37,7 @@ const RegistrationPage: React.FC = () => {
   const nextOfKinPageRef = useRef<any>(null);
   const insurancePageRef = useRef<any>(null);
   const serverDate = useServerDate();
-  const { formatDate, formatDateTime, parse, formatDateYMD } = useDayjs();
+  const { formatDate } = useDayjs();
   const { fetchLatestUHID } = useRegistrationUtils();
   const { performSearch } = useContext(PatientSearchContext);
 
@@ -182,7 +182,6 @@ const RegistrationPage: React.FC = () => {
       }
     });
     window.scrollTo(0, 0);
-    notifySuccess("Form cleared successfully!");
   }, [userInfo, initializeFormData, fetchLatestUHID]);
 
   const validateFormData = useCallback(() => {
@@ -280,23 +279,19 @@ const RegistrationPage: React.FC = () => {
     }
   }, []);
 
-  const fetchPatientDetailsAndUpdateForm = useCallback(
-    async (pChartID: number) => {
-      setLoading(true);
-      try {
-        const patientDetails = await PatientService.getPatientDetails(pChartID);
-        if (patientDetails.success && patientDetails.data) {
-          setIsEditMode(true);
-          setFormData(patientDetails.data);
-        } else {
-        }
-      } catch (error) {
-      } finally {
-        setLoading(false);
+  const fetchPatientDetailsAndUpdateForm = useCallback(async (pChartID: number) => {
+    setLoading(true);
+    try {
+      const patientDetails = await PatientService.getPatientDetails(pChartID);
+      if (patientDetails.success && patientDetails.data) {
+        setIsEditMode(true);
+        setFormData(patientDetails.data);
       }
-    },
-    [formatDate]
-  );
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const handleAdvancedSearch = useCallback(async () => {
     setShowPatientSearch(true);
@@ -328,7 +323,7 @@ const RegistrationPage: React.FC = () => {
         </Box>
         <PatientSearch show={showPatientSearch} handleClose={() => setShowPatientSearch(false)} onEditPatient={handlePatientSelect} />
         <CustomAccordion title="Personal Details" defaultExpanded>
-          <PersonalDetails formData={formData} setFormData={setFormData} isSubmitted={isSubmitted} onPatientSelect={handlePatientSelect} />
+          <PersonalDetails formData={formData} setFormData={setFormData} isSubmitted={isSubmitted} onPatientSelect={handlePatientSelect} isEditMode={isEditMode} />
         </CustomAccordion>
         <CustomAccordion title="Contact Details" defaultExpanded>
           <ContactDetails formData={formData} setFormData={setFormData} isSubmitted={isSubmitted} />

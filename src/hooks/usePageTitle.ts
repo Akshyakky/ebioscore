@@ -44,8 +44,7 @@ const pageTitleMap: PageTitleMap = {
   "/MedicationDosagePage": "Medication Dosage",
   "/ProcedureListPage": "Procedure List",
   "/MedicationGenericPage": "Medication Generic",
-  "/InvestigationListPage": "Investigation List",
-  "/ComponentEntryTypePage": "Component EntryType Page ",
+  "/DischargeSummaryPage": "Discharge Summary",
   // Add more mappings as needed
 };
 

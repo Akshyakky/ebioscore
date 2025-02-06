@@ -18,9 +18,10 @@ interface PersonalDetailsProps {
   setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
   isSubmitted: boolean;
   onPatientSelect: (selectedSuggestion: string) => void;
+  isEditMode?: boolean;
 }
 
-const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData, isSubmitted, onPatientSelect }) => {
+const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData, isSubmitted, onPatientSelect, isEditMode = false }) => {
   const dropdownValues = useDropdownValues(["pic", "title", "gender", "ageUnit", "nationality"]);
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
@@ -222,6 +223,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         isMandatory={true}
         placeholder="Search through UHID, Name, DOB, Phone No...."
         maxLength={20}
+        disabled={isEditMode}
       />
       <FormField
         type="datepicker"
@@ -241,6 +243,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         isSubmitted={isSubmitted}
         isMandatory={true}
         maxDate={new Date()}
+        disabled={isEditMode}
       />
       <FormField
         type="select"

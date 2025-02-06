@@ -23,7 +23,7 @@ export const AppointmentService = {
   },
 
   fetchAllResources: async (): Promise<OperationResult<any[]>> => {
-    const url = `ResourceList/GetAllResourceLists`;
+    const url = `ResourceList/GetAll`;
     return commonApiService.get<OperationResult<any[]>>(url, getToken());
   },
 

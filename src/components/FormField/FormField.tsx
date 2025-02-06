@@ -177,19 +177,24 @@ export type FormFieldProps =
 const useStyles = (theme: Theme) => ({
   fieldContainer: {
     display: "flex",
-    alignItems: "center",
-    gap: theme.spacing(1),
+    alignItems: "flex-start",
     width: "100%",
   },
   addButton: {
-    marginLeft: theme.spacing(1),
-    minWidth: "auto",
-    padding: theme.spacing(1),
+    marginTop: theme.spacing(2),
+    minWidth: "32px",
+    width: "32px",
+    height: "40px",
+    padding: 0,
+    borderRadius: "4px",
     transition: "all 0.2s ease-in-out",
     "&:hover": {
       transform: "scale(1.05)",
       backgroundColor: theme.palette.primary.dark,
     },
+  },
+  addIcon: {
+    fontSize: "20px",
   },
   helperText: {
     marginTop: theme.spacing(0.5),
@@ -405,15 +410,19 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
   const addButton = useMemo(() => {
     if (!showAddButton || !onAddClick) return null;
 
-    return <CustomButton variant="contained" size="small" icon={AddIcon} onClick={onAddClick} ariaLabel={`add-${name}`} color="primary" sx={styles.addButton} />;
-  }, [showAddButton, onAddClick, name, styles.addButton]);
+    return (
+      <CustomButton variant="contained" size="small" onClick={onAddClick} ariaLabel={`add-${name}`} color="primary" sx={styles.addButton}>
+        <AddIcon sx={styles.addIcon} />
+      </CustomButton>
+    );
+  }, [showAddButton, onAddClick, name, styles.addButton, styles.addIcon]);
 
   return (
     <Grid item {...gridProps} className={className}>
       <Box sx={styles.fieldContainer}>
         {renderField}
         {addButton}
-      </Box>
+      </Box> 
       {(helperText || errorMessage) && (
         <Box
           component="span"

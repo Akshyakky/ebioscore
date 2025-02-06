@@ -270,6 +270,12 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
 
     try {
       setLoading(true);
+      formData.ipAdmissionDto.compCode = "KVG";
+      formData.ipAdmissionDetailsDto.compCode = "KVG";
+      formData.wrBedDetailsDto.compCode = "KVG";
+      formData.ipAdmissionDto.compName = "KVG Medical College";
+      formData.ipAdmissionDetailsDto.compName = "KVG Medical College";
+      formData.wrBedDetailsDto.compName = "KVG Medical College";
       // Save admission first
       const admissionResult = await extendedAdmissionService.admitPatient(formData);
       if (!admissionResult.success) {
