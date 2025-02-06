@@ -40,6 +40,8 @@ import MedicationFrequencyPage from "@/pages/clinicalManagement/MedicationFreque
 import MedicationDosagePage from "@/pages/clinicalManagement/MedicationDosage/MainPage/MedicationDosagePage";
 import ProcedureListPage from "@/pages/clinicalManagement/ProcedureList/MainPage/ProcedureListPage";
 import MedicationGenericPage from "@/pages/clinicalManagement/MedicationGeneric/MainPage/MedicationGenericPage";
+import InvestigationListPage from "@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage";
+import ComponentEntryTypePage from "@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage";
 
 interface RouteConfig {
   path: string;
@@ -87,6 +89,8 @@ const routeConfig: RouteConfig[] = [
   { path: "/MedicationDosagePage", component: MedicationDosagePage, protected: true },
   { path: "/ProcedureListPage", component: ProcedureListPage, protected: true },
   { path: "/MedicationGenericPage", component: MedicationGenericPage, protected: true },
+  { path: "/InvestigationListPage", component: InvestigationListPage, protected: true },
+  { path: "/ComponentEntryTypePage", component: ComponentEntryTypePage, protected: true },
 ];
 
 export default routeConfig;

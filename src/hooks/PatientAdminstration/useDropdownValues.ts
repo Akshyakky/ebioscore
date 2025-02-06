@@ -25,6 +25,7 @@ import {
   medicationInstructionService,
 } from "@/services/ClinicalManagementServices/clinicalManagementService";
 import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
+import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
 
 type DropdownType =
   | "pic"
@@ -73,7 +74,10 @@ type DropdownType =
   | "medicationInstruction"
   | "dischargeStatus"
   | "dischargeSituation"
-  | "deliveryType";
+  | "deliveryType"
+  | "investigationType"
+  | "language"
+  | "entryType";
 
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
   const [dropdownValues, setDropdownValues] = useState<Record<DropdownType, DropdownOption[]>>({} as Record<DropdownType, DropdownOption[]>);
@@ -312,6 +316,19 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             break;
           case "deliveryType":
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DELIVERYTYPE");
+            break;
+          case "investigationType":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "INVESTIGATIONTYPE");
+            break;
+          case "language":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "LANGUAGE");
+            break;
+          case "entryType":
+            response = await componentEntryTypeService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.lCentID || 0,
+              label: item.lCentName || "",
+            }));
             break;
           default:
             throw new Error(`Unsupported dropdown type: ${type}`);
