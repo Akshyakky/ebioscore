@@ -253,8 +253,16 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
         type="select"
         label="Attending Physician"
         name="Attending Physician"
-        value={formData.ipAdmissionDto.attendingPhysicianId || ""}
-        onChange={onDropdownChange(["ipAdmissionDto", "attendingPhysicianId"], ["ipAdmissionDto", "attendingPhysicianName"], dropdownValues.attendingPhy)}
+        value={`${formData.ipAdmissionDto.attendingPhysicianId || ""}-${formData.ipAdmissionDto.specialityID || ""}`}
+        onChange={(e) => {
+          const [physicianId, specialityId] = e.target.value.split("-").map(Number);
+          onChange("ipAdmissionDto", {
+            ...formData.ipAdmissionDto,
+            attendingPhysicianId: physicianId,
+            specialityID: specialityId,
+            attendingPhysicianName: dropdownValues.attendingPhy.find((option) => option.value === e.target.value)?.label || "",
+          });
+        }}
         options={dropdownValues.attendingPhy}
         ControlID="attendingPhysician"
         gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -275,7 +283,7 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
         type="select"
         label="Patient Attendant"
         name="patNokID"
-        value={formData.ipAdmissionDto.patNokID || ""}
+        value={formData.ipAdmissionDto.patNokID || 0}
         onChange={(e) => onChange("ipAdmissionDto", { ...formData.ipAdmissionDto, patNokID: Number(e.target.value) })}
         options={dropdownValues.attendingPhy}
         ControlID="patNokID"

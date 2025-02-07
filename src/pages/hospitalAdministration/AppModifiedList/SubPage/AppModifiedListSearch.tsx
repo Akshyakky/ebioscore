@@ -1,7 +1,7 @@
+import React from "react";
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 import { AppModifiedMast } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
 import { appModifiedMastService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
-import React from "react";
 
 interface AppModifiedMastSearchProps {
   open: boolean;

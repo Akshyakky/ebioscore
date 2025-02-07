@@ -25,6 +25,7 @@ import {
   medicationInstructionService,
 } from "@/services/ClinicalManagementServices/clinicalManagementService";
 import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
+import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
 import { appSubModuleService, appUserModuleService } from "@/services/SecurityManagementServices/securityManagementServices";
 
 type DropdownType =
@@ -75,6 +76,9 @@ type DropdownType =
   | "dischargeStatus"
   | "dischargeSituation"
   | "deliveryType"
+  | "investigationType"
+  | "language"
+  | "entryType"
   | "mainModules"
   | "subModules";
 
@@ -103,7 +107,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CITY");
             break;
           case "country":
-            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "ACTUALCOUNTRY");
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COUNTRY");
             break;
           case "company":
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COMPANY");
@@ -315,6 +319,19 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             break;
           case "deliveryType":
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DELIVERYTYPE");
+            break;
+          case "investigationType":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "INVESTIGATIONTYPE");
+            break;
+          case "language":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "LANGUAGE");
+            break;
+          case "entryType":
+            response = await componentEntryTypeService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.lCentID || 0,
+              label: item.lCentName || "",
+            }));
             break;
           case "mainModules":
             response = await appUserModuleService.getAll();
