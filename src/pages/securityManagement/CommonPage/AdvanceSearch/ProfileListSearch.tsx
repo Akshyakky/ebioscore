@@ -1,7 +1,6 @@
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 import { ProfileListSearchContext } from "@/context/SecurityManagement/ProfileListSearchContext";
 import { ProfileListSearchResult } from "@/interfaces/SecurityManagement/ProfileListData";
-import { ProfileService } from "@/services/SecurityManagementServices/ProfileListServices";
 import React, { useCallback, useContext, useState } from "react";
 
 interface ProfileListSearchProps {
@@ -21,11 +20,11 @@ const ProfileListSearch: React.FC<ProfileListSearchProps> = ({ open, onClose, on
   }, [fetchAllProfiles]);
 
   const updateActiveStatus = async (id: number, status: boolean) => {
-    const result = await ProfileService.updateProfileActiveStatus(id, status);
-    if (result.success) {
-      await fetchItems();
-    }
-    return result.success;
+    // const result = await ProfileService.updateProfileActiveStatus(id, status);
+    // if (result.success) {
+    //   await fetchItems();
+    // }
+    // return result.success;
   };
 
   const columns = [
@@ -36,21 +35,22 @@ const ProfileListSearch: React.FC<ProfileListSearchProps> = ({ open, onClose, on
   ];
 
   return (
-    <GenericAdvanceSearch<ProfileListSearchResult>
-      open={open}
-      onClose={onClose}
-      onSelect={onEditProfile}
-      title="PROFILE SEARCH LIST"
-      fetchItems={fetchItems}
-      updateActiveStatus={updateActiveStatus}
-      columns={columns}
-      getItemId={(item) => item.profileID}
-      getItemActiveStatus={(item) => item.rActiveYN === "Y"}
-      searchPlaceholder="Enter profile code or name"
-      isEditButtonVisible={true}
-      isActionVisible={true}
-      isStatusVisible={true}
-    />
+    <></>
+    // <GenericAdvanceSearch<ProfileListSearchResult>
+    //   open={open}
+    //   onClose={onClose}
+    //   onSelect={onEditProfile}
+    //   title="PROFILE SEARCH LIST"
+    //   fetchItems={fetchItems}
+    //   updateActiveStatus={updateActiveStatus}
+    //   columns={columns}
+    //   getItemId={(item) => item.profileID}
+    //   getItemActiveStatus={(item) => item.rActiveYN === "Y"}
+    //   searchPlaceholder="Enter profile code or name"
+    //   isEditButtonVisible={true}
+    //   isActionVisible={true}
+    //   isStatusVisible={true}
+    // />
   );
 };
 

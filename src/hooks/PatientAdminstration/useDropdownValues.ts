@@ -25,6 +25,7 @@ import {
   medicationInstructionService,
 } from "@/services/ClinicalManagementServices/clinicalManagementService";
 import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
+import { appSubModuleService, appUserModuleService } from "@/services/SecurityManagementServices/securityManagementServices";
 
 type DropdownType =
   | "pic"
@@ -73,7 +74,9 @@ type DropdownType =
   | "medicationInstruction"
   | "dischargeStatus"
   | "dischargeSituation"
-  | "deliveryType";
+  | "deliveryType"
+  | "mainModules"
+  | "subModules";
 
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
   const [dropdownValues, setDropdownValues] = useState<Record<DropdownType, DropdownOption[]>>({} as Record<DropdownType, DropdownOption[]>);
@@ -312,6 +315,21 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             break;
           case "deliveryType":
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DELIVERYTYPE");
+            break;
+          case "mainModules":
+            response = await appUserModuleService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.aUGrpID || 0,
+              label: item.aUGrpName || "",
+            }));
+            break;
+          case "subModules":
+            response = await appSubModuleService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.aSubID || 0,
+              label: item.aSubName || "",
+              aUGrpID: item.aUGrpID || 0,
+            }));
             break;
           default:
             throw new Error(`Unsupported dropdown type: ${type}`);

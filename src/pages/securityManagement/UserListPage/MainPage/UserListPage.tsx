@@ -4,7 +4,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import { useAppSelector } from "@/store/hooks";
 import { UserListSearchContext } from "@/context/SecurityManagement/UserListSearchContext";
 import { UserListData } from "@/interfaces/SecurityManagement/UserListData";
-import OperationPermissionDetails, { ModuleOperation } from "../../CommonPage/OperationPermissionDetails";
 import { OperationPermissionDetailsDto } from "@/interfaces/SecurityManagement/OperationPermissionDetailsDto";
 import { UserListService } from "@/services/SecurityManagementServices/UserListService";
 import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
@@ -177,17 +176,6 @@ const UserListPage: React.FC<OperationPermissionProps> = () => {
         refreshUsers={refreshUsers}
         onSuperUserChange={handleSuperUserChange}
       />
-
-      {isSaved && selectedUser && !isSuperUser && (
-        <OperationPermissionDetails
-          profileID={selectedUser.profileID}
-          profileName={selectedUser.appUserName}
-          saveModulePermission={saveUserPermission}
-          saveReportPermission={saveUserReportPermission}
-          permissions={permissions}
-          setPermissions={setPermissions}
-        />
-      )}
 
       <UserListSearch show={isSearchDialogOpen} handleClose={handleCloseSearchDialog} onEditProfile={handleEditUser} />
     </Container>
