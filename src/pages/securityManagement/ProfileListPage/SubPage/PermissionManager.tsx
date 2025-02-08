@@ -49,6 +49,19 @@ interface PermissionsListProps {
 const PermissionsList: React.FC<PermissionsListProps> = ({ permissions, selectedPermissions, handlePermissionChange, disabled = false }) => {
   return (
     <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <FormField
+          type="switch"
+          label="Select all"
+          name={`selectAll`}
+          ControlID={`permission-selectAll`}
+          value={""}
+          checked={false}
+          onChange={() => {}}
+          disabled={disabled}
+          gridProps={{ xs: 12 }}
+        />
+      </Grid>
       {permissions.map((permission: ProfileDetailDto) => (
         <Grid item xs={12} key={permission.accessID}>
           <FormField
@@ -129,11 +142,17 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
         profileID: profileId,
         profileName: profileName,
         rActiveYN: updatedItems.includes(permission.accessID) ? "Y" : "N",
+        compID: 1,
+        compCode: "KVG",
+        compName: "KVG",
+        rNotes: "",
+        transferYN: "Y",
       }));
 
       setSelectedItems(updatedItems);
       setPermissions(updatedPermissions);
-      await profileListService.saveProfileDetailsByType(updatedPermissions, type);
+      const clickedPermission = updatedPermissions.filter((permission) => permission.accessID === id);
+      await profileListService.saveProfileDetailsByType(clickedPermission, type);
     } catch (error) {
       console.error("Error saving permission:", error);
       if (type === "M") {
@@ -145,6 +164,11 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
   const handleMainModuleChange = (event: SelectChangeEvent<string>) => {
     const value = parseInt(event.target.value);
     setMainId(value);
+    if (!value) {
+      setPermissions([]);
+      setSelectedItems([]);
+      return;
+    }
     if (type === "R") {
       fetchPermissions(value, 0, 1);
     }
@@ -153,6 +177,11 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
   const handleSubModuleChange = (event: SelectChangeEvent<string>) => {
     const value = parseInt(event.target.value);
     setSubId(value);
+    if (!value) {
+      setPermissions([]);
+      setSelectedItems([]);
+      return;
+    }
     if (type === "M") {
       fetchPermissions(mainId, value, 1);
     }
