@@ -6,9 +6,8 @@ import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButton
 import ProfileDetails from "../SubPage/ProfileListDetails";
 import ProfileListSearch from "../SubPage/ProfileListSearch";
 import { createEntityService } from "@/utils/Common/serviceFactory";
-import ModulePermissions from "../SubPage/ModulePermissions";
 import { Grid } from "@mui/material";
-import ReportPermissions from "../SubPage/ReportPermissions";
+import PermissionManager from "../SubPage/PermissionManager";
 
 const ProfileListPage: React.FC = () => {
   const profileMastService = useMemo(() => createEntityService<ProfileMastDto>("ProfileMast", "securityManagementURL"), []);
@@ -49,10 +48,24 @@ const ProfileListPage: React.FC = () => {
         {selectedData && (
           <Grid container spacing={3}>
             <Grid item xs={12} md={6} lg={4} xl={3}>
-              <ModulePermissions profileId={selectedData.profileID} profileName={selectedData.profileName} />
+              <PermissionManager
+                profileId={selectedData.profileID}
+                profileName={selectedData.profileName}
+                title="Module Permissions"
+                type="M"
+                useMainModules={true}
+                useSubModules={true}
+              />
             </Grid>
             <Grid item xs={12} md={6} lg={4} xl={3}>
-              <ReportPermissions profileId={selectedData.profileID} profileName={selectedData.profileName} />
+              <PermissionManager
+                profileId={selectedData.profileID}
+                profileName={selectedData.profileName}
+                title="Report Permissions"
+                type="R"
+                useMainModules={true}
+                useSubModules={false}
+              />
             </Grid>
           </Grid>
         )}
