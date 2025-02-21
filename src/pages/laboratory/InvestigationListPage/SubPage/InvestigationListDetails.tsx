@@ -8,11 +8,11 @@ import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface InvestigationListDetailsProps {
-  editData?: LInvMastDto;
   onUpdate: (data: LInvMastDto) => void;
+  investigationData?: LInvMastDto | null;
 }
 
-const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ editData, onUpdate }) => {
+const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onUpdate, investigationData }) => {
   const dropdownValues = useDropdownValues(["investigationType"]);
   const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
@@ -53,12 +53,29 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ edi
   const { handleDropdownChange } = useDropdownChange<LInvMastDto>(setFormState);
 
   useEffect(() => {
-    if (editData) {
-      setFormState(editData);
-    } else {
-      handleClear();
+    if (investigationData) {
+      console.log("Populating form with data:", investigationData);
+      // Ensure all required fields are included
+      const updatedFormState = {
+        ...formState, // Keep default values as fallback
+        ...investigationData, // Override with incoming data
+        // Ensure these fields are properly set
+        invCode: investigationData.invCode || "",
+        invName: investigationData.invName || "",
+        invShortName: investigationData.invShortName || "",
+        invSampleType: investigationData.invSampleType || "",
+        invType: investigationData.invType || "",
+        invNHCode: investigationData.invNHCode || "",
+        invNHEnglishName: investigationData.invNHEnglishName || "",
+        invTitle: investigationData.invTitle || "",
+        invReportYN: investigationData.invReportYN || "N",
+        invSampleYN: investigationData.invSampleYN || "N",
+      };
+
+      setFormState(updatedFormState);
+      console.log("Form state updated:", updatedFormState);
     }
-  }, [editData]);
+  }, [investigationData]);
 
   useEffect(() => {
     onUpdate(formState);

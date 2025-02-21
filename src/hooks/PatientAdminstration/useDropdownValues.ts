@@ -25,7 +25,7 @@ import {
   medicationInstructionService,
 } from "@/services/ClinicalManagementServices/clinicalManagementService";
 import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
-import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
+import { componentEntryTypeService, templategroupService } from "@/services/Laboratory/LaboratoryService";
 
 type DropdownType =
   | "pic"
@@ -77,7 +77,8 @@ type DropdownType =
   | "deliveryType"
   | "investigationType"
   | "language"
-  | "entryType";
+  | "entryType"
+  | "templateGroup";
 
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
   const [dropdownValues, setDropdownValues] = useState<Record<DropdownType, DropdownOption[]>>({} as Record<DropdownType, DropdownOption[]>);
@@ -330,6 +331,10 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
               label: item.lCentName || "",
             }));
             break;
+          case "templateGroup":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "TEMPLATEGROUP");
+            break;
+
           default:
             throw new Error(`Unsupported dropdown type: ${type}`);
         }

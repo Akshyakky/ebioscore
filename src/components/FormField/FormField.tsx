@@ -422,7 +422,7 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
       <Box sx={styles.fieldContainer}>
         {renderField}
         {addButton}
-      </Box> 
+      </Box>
       {(helperText || errorMessage) && (
         <Box
           component="span"

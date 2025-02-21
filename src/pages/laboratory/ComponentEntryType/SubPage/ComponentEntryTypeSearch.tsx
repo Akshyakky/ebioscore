@@ -1,5 +1,4 @@
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
-import { ResourceListData } from "@/interfaces/frontOffice/ResourceListData";
 import { LComponentEntryTypeDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
 import React from "react";
