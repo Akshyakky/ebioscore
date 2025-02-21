@@ -12,7 +12,6 @@ import { UserListService } from "@/services/SecurityManagementServices/UserListS
 import { CompanyService } from "@/services/CommonServices/CompanyService";
 import { ProfileListSearchResult } from "@/interfaces/SecurityManagement/ProfileListData";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { ProfileService } from "@/services/SecurityManagementServices/ProfileListServices";
 import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
@@ -190,16 +189,16 @@ const UserDetails: React.FC<UserDetailsProps> = ({ user, onSave, onClear, refres
 
     const fetchProfiles = async () => {
       try {
-        const result: OperationResult<ProfileListSearchResult[]> = await ProfileService.getAllProfileDetails();
-        if (result.success && result.data && result.data.length > 0) {
-          const profileOptions = result.data.map((profile) => ({
-            label: profile.profileName,
-            value: profile.profileID.toString(),
-          }));
-          setDropdownValues((prevState) => ({ ...prevState, profileOptions }));
-        } else {
-          console.error("Failed to fetch profiles");
-        }
+        // const result: OperationResult<ProfileListSearchResult[]> = await ProfileService.getAllProfileDetails();
+        // if (result.success && result.data && result.data.length > 0) {
+        //   const profileOptions = result.data.map((profile) => ({
+        //     label: profile.profileName,
+        //     value: profile.profileID.toString(),
+        //   }));
+        //   setDropdownValues((prevState) => ({ ...prevState, profileOptions }));
+        // } else {
+        //   console.error("Failed to fetch profiles");
+        // }
       } catch (error) {
         console.error("Fetching profiles failed:", error);
         setErrorMessage("Failed to load profiles.");

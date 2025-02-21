@@ -1,7 +1,6 @@
 import { ProfileListSearchResult } from "@/interfaces/SecurityManagement/ProfileListData";
 import React, { createContext, useCallback } from "react";
 import { useLoading } from "../LoadingContext";
-import { ProfileService } from "@/services/SecurityManagementServices/ProfileListServices";
 import { notifyError } from "@/utils/Common/toastManager";
 
 interface ProfileListSearchContextProps {
@@ -22,13 +21,7 @@ export const ProfileListSearchProvider = ({ children }: ProfileListSearchProvide
   const fetchAllProfiles = useCallback(async (): Promise<ProfileListSearchResult[]> => {
     setLoading(true);
     try {
-      const profilesResult = await ProfileService.getAllProfileDetails();
-      if (profilesResult.success && profilesResult.data) {
-        return profilesResult.data;
-      } else {
-        notifyError(profilesResult.errorMessage || "Failed to fetch profiles. Please try again.");
-        return [];
-      }
+      return [];
     } catch (error) {
       notifyError("An error occurred while fetching profiles.");
       return [];
