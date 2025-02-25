@@ -81,7 +81,10 @@ type DropdownType =
   | "entryType"
   | "templateGroup"
   | "mainModules"
-  | "subModules";
+  | "subModules"
+  | "mainGroup"
+  | "subTitle"
+  | "sampleType";
 
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
   const [dropdownValues, setDropdownValues] = useState<Record<DropdownType, DropdownOption[]>>({} as Record<DropdownType, DropdownOption[]>);
@@ -353,6 +356,16 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
               aUGrpID: item.aUGrpID || 0,
             }));
             break;
+          case "mainGroup":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "MAINMODULE");
+            break;
+          case "subTitle":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "SUBTITLE");
+            break;
+          case "sampleType":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "SAMPLETYPE");
+            break;
+
           default:
             throw new Error(`Unsupported dropdown type: ${type}`);
         }

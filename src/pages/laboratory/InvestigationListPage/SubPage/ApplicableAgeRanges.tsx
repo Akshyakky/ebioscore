@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -17,19 +17,23 @@ import {
   Box,
 } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import EditIcon from "@mui/icons-material/Edit";
 import FormField from "@/components/FormField/FormField";
 import { LCompAgeRangeDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { useAppSelector } from "@/store/hooks";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { showAlert } from "@/utils/Common/showAlert";
+import { LComponentDto } from "@/interfaces/Laboratory/LInvMastDto";
 
 interface ApplicableAgeRangeTableProps {
   ageRanges: LCompAgeRangeDto[];
   componentId: number | undefined;
   onAddAgeRange: (newAgeRange: LCompAgeRangeDto) => void;
+  onUpdateAgeRange: (updatedAgeRange: LCompAgeRangeDto) => void;
+  selectedComponent?: LComponentDto;
 }
 
-const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRanges, componentId, onAddAgeRange }) => {
+const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRanges, componentId, onAddAgeRange, onUpdateAgeRange, selectedComponent }) => {
   const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
 
@@ -60,39 +64,149 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
     rModifiedOn: serverDate || new Date(),
   });
 
-  const handleOpenModal = () => setOpenModal(true);
-  const handleCloseModal = () => setOpenModal(false);
+  const [selectedRow, setSelectedRow] = useState<number | null>(() => {
+    const activeRange = ageRanges.find((range) => (range.compOID === componentId || range.cappID === componentId) && range.rActiveYN === "Y");
+    return activeRange?.carID || null;
+  });
 
-  const handleInputChange = (name: string, value: any) => {
-    setNewAgeRange((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const [isEditing, setIsEditing] = useState(false);
+  const [filteredAgeRanges, setFilteredAgeRanges] = useState<LCompAgeRangeDto[]>([]);
+
+  const handleOpenModal = () => setOpenModal(true);
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    if (!isEditing) {
+      resetNewAgeRange();
+    }
+    setIsEditing(false);
   };
 
-  const handleAdd = () => {
+  const handleInputChange = (rowId: number, field: string, value: any) => {
+    if (selectedRow !== rowId) {
+      showAlert("warning", "Please select the row first to edit", "warning");
+      return;
+    }
+
+    const updatedRange = ageRanges.find((range) => range.carID === rowId);
+    if (updatedRange) {
+      const newRange = {
+        ...updatedRange,
+        [field]: value,
+        carAgeValue:
+          field === "carStart" || field === "carEnd"
+            ? `${field === "carStart" ? value : updatedRange.carStart}-${field === "carEnd" ? value : updatedRange.carEnd} ${updatedRange.carAgeType}`
+            : updatedRange.carAgeValue,
+        rModifiedOn: serverDate || new Date(),
+        rModifiedID: userID || 0,
+        rModifiedBy: userName || "",
+      };
+      onUpdateAgeRange(newRange);
+      setNewAgeRange(newRange);
+    }
+  };
+
+  const handleRowSelect = (carID: number) => {
+    setSelectedRow(selectedRow === carID ? null : carID);
+    const selectedRange = ageRanges.find((range) => range.carID === carID);
+    if (selectedRange) {
+      setNewAgeRange(selectedRange);
+      setIsEditing(true);
+    }
+  };
+
+  const handleEdit = (row: LCompAgeRangeDto, event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    setNewAgeRange({
+      ...row,
+      rModifiedOn: serverDate || new Date(),
+      rModifiedID: userID || 0,
+      rModifiedBy: userName || "",
+    });
+    setIsEditing(true);
+    setOpenModal(true);
+  };
+
+  const handleSave = () => {
     if (!newAgeRange.carName || newAgeRange.carStart >= newAgeRange.carEnd) {
       showAlert("error", "Please enter a valid age range", "error");
       return;
     }
 
-    onAddAgeRange({
+    const updatedRange = {
       ...newAgeRange,
       cappID: componentId,
+      compoID: selectedComponent?.compoID,
+      compID: compID || 1,
       carAgeValue: `${newAgeRange.carStart}-${newAgeRange.carEnd} ${newAgeRange.carAgeType}`,
       carSexValue: newAgeRange.carSex,
-    });
+      rActiveYN: "Y",
+      rModifiedOn: serverDate || new Date(),
+      rModifiedID: userID || 0,
+      rModifiedBy: userName || "",
+    };
+
+    if (isEditing) {
+      const updatedAgeRanges = ageRanges.map((range) => (range.carID === updatedRange.carID ? updatedRange : range));
+      onUpdateAgeRange(updatedRange);
+      setFilteredAgeRanges(updatedAgeRanges.filter((range) => range.compoID === selectedComponent?.compoID || range.cappID === componentId));
+    } else {
+      onAddAgeRange(updatedRange);
+    }
 
     handleCloseModal();
-    setNewAgeRange((prev) => ({
-      ...prev,
+    resetNewAgeRange();
+    setIsEditing(false);
+  };
+
+  const resetNewAgeRange = () => {
+    setNewAgeRange({
+      carID: 0,
+      cappID: componentId,
       carName: "",
+      carSex: "Either",
       carStart: 0,
       carEnd: 0,
-      carSex: "Either",
       carAgeType: "Years",
-    }));
+      carSexValue: "",
+      carAgeValue: "",
+      cappName: "",
+      cappOrder: 0,
+      rActiveYN: "Y",
+      compID: compID || 1,
+      compCode: compCode || "",
+      compName: compName || "",
+      transferYN: "N",
+      rNotes: "",
+      rCreatedID: userID || 0,
+      rCreatedBy: userName || "",
+      rModifiedID: userID || 0,
+      rModifiedBy: userName || "",
+      rCreatedOn: serverDate || new Date(),
+      rModifiedOn: serverDate || new Date(),
+    });
   };
+
+  useEffect(() => {
+    const activeRange = ageRanges.find((range) => (range.compOID === componentId || range.cappID === componentId) && range.rActiveYN === "Y");
+    if (activeRange) {
+      setSelectedRow(activeRange.carID);
+    }
+  }, [ageRanges, componentId]);
+
+  useEffect(() => {
+    if (selectedRow) {
+      const currentRange = ageRanges.find((range) => range.carID === selectedRow);
+      if (currentRange) {
+        setNewAgeRange(currentRange);
+      }
+    }
+  }, [ageRanges, selectedRow]);
+
+  useEffect(() => {
+    const filtered = ageRanges.filter((range) => range.cappID === componentId || range.compOID === selectedComponent?.compoID);
+    setFilteredAgeRanges(filtered);
+  }, [ageRanges, componentId, selectedComponent]);
 
   return (
     <Box sx={{ mt: 3 }}>
@@ -108,8 +222,9 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
       <TableContainer component={Paper} sx={{ boxShadow: 3, borderRadius: 2 }}>
         <Table>
           <TableHead>
-            <TableRow sx={{ backgroundColor: "#1976d2", color: "white" }}>
+            <TableRow sx={{ backgroundColor: "#1976d2" }}>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Select</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>Actions</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Applicable For - Age Range</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Lower</TableCell>
               <TableCell sx={{ color: "white", fontWeight: "bold" }}>Upper</TableCell>
@@ -117,26 +232,69 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
             </TableRow>
           </TableHead>
           <TableBody>
-            {ageRanges.map((row) => (
+            {filteredAgeRanges.map((row) => (
               <TableRow
                 key={row.carID}
                 sx={{
                   "&:hover": { backgroundColor: "#f0f0f0" },
                   transition: "background-color 0.2s",
+                  backgroundColor: selectedRow === row.carID ? "#e3f2fd" : "inherit",
+                  cursor: "pointer",
                 }}
+                onClick={() => handleRowSelect(row.carID)}
               >
-                <TableCell>
-                  <FormField value={row.carID} type="switch" label="" name={`select-${row.carID}`} ControlID={`select-${row.carID}`} checked={false} onChange={() => {}} />
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <FormField
+                    value={row.carID}
+                    type="switch"
+                    label=""
+                    name={`select-${row.carID}`}
+                    ControlID={`select-${row.carID}`}
+                    checked={selectedRow === row.carID}
+                    onChange={() => handleRowSelect(row.carID)}
+                  />
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <Button size="small" startIcon={<EditIcon />} onClick={(e) => handleEdit(row, e)} sx={{ minWidth: "auto" }}>
+                    Edit
+                  </Button>
                 </TableCell>
                 <TableCell>{`${row.carSex} ${row.carStart}-${row.carEnd} ${row.carAgeType}`}</TableCell>
                 <TableCell>
-                  <FormField type="number" label="" name="carStart" ControlID={`carStart-${row.carID}`} value={row.carStart} disabled onChange={() => {}} />
+                  <FormField
+                    type="number"
+                    label=""
+                    name="carStart"
+                    ControlID={`carStart-${row.carID}`}
+                    value={row.carStart}
+                    onChange={(e) => handleInputChange(row.carID, "carStart", Number(e.target.value))}
+                    size="small"
+                    fullWidth
+                  />
                 </TableCell>
                 <TableCell>
-                  <FormField type="number" label="" name="carEnd" ControlID={`carEnd-${row.carID}`} value={row.carEnd} disabled onChange={() => {}} />
+                  <FormField
+                    type="number"
+                    label=""
+                    name="carEnd"
+                    ControlID={`carEnd-${row.carID}`}
+                    value={row.carEnd}
+                    onChange={(e) => handleInputChange(row.carID, "carEnd", Number(e.target.value))}
+                    size="small"
+                    fullWidth
+                  />
                 </TableCell>
                 <TableCell>
-                  <FormField type="text" label="" name={`normalValue-${row.carID}`} ControlID={`normalValue-${row.carID}`} value="" onChange={() => {}} />
+                  <FormField
+                    type="text"
+                    label=""
+                    name={`normalValue-${row.carID}`}
+                    ControlID={`normalValue-${row.carID}`}
+                    value={row.carName || ""}
+                    onChange={(e) => handleInputChange(row.carID, "carName", e.target.value)}
+                    size="small"
+                    fullWidth
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -144,9 +302,8 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
         </Table>
       </TableContainer>
 
-      {/* Add Age Range Modal */}
       <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ backgroundColor: "#2C3E50", color: "white" }}>Add Age Range</DialogTitle>
+        <DialogTitle sx={{ backgroundColor: "#2C3E50", color: "white" }}>{newAgeRange.carID > 0 ? "Edit Age Range" : "Add Age Range"}</DialogTitle>
         <DialogContent>
           <FormField
             type="text"
@@ -154,7 +311,7 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
             name="carName"
             ControlID="carName"
             value={newAgeRange.carName}
-            onChange={(e) => handleInputChange("carName", e.target.value)}
+            onChange={(e) => setNewAgeRange({ ...newAgeRange, carName: e.target.value })}
           />
           <FormField
             type="select"
@@ -167,7 +324,7 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
               { value: "Male", label: "Male" },
               { value: "Female", label: "Female" },
             ]}
-            onChange={(e) => handleInputChange("carSex", e.target.value)}
+            onChange={(e) => setNewAgeRange({ ...newAgeRange, carSex: e.target.value })}
           />
           <FormField
             type="number"
@@ -175,7 +332,7 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
             name="carStart"
             ControlID="carStart"
             value={newAgeRange.carStart}
-            onChange={(e) => handleInputChange("carStart", Number(e.target.value))}
+            onChange={(e) => setNewAgeRange({ ...newAgeRange, carStart: Number(e.target.value) })}
           />
           <FormField
             type="number"
@@ -183,7 +340,7 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
             name="carEnd"
             ControlID="carEnd"
             value={newAgeRange.carEnd}
-            onChange={(e) => handleInputChange("carEnd", Number(e.target.value))}
+            onChange={(e) => setNewAgeRange({ ...newAgeRange, carEnd: Number(e.target.value) })}
           />
           <FormField
             type="select"
@@ -196,7 +353,7 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
               { value: "Months", label: "Months" },
               { value: "Years", label: "Years" },
             ]}
-            onChange={(e) => handleInputChange("carAgeType", e.target.value)}
+            onChange={(e) => setNewAgeRange({ ...newAgeRange, carAgeType: e.target.value })}
           />
 
           <FormField
@@ -211,8 +368,8 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
         </DialogContent>
 
         <DialogActions>
-          <Button variant="contained" color="success" onClick={handleAdd}>
-            Save
+          <Button variant="contained" color="success" onClick={handleSave}>
+            {newAgeRange.carID > 0 ? "Update" : "Save"}
           </Button>
           <Button variant="contained" color="error" onClick={handleCloseModal}>
             Close

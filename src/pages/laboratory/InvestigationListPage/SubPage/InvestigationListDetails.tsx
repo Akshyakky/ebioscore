@@ -2,20 +2,23 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Paper, Typography, Grid } from "@mui/material";
 import { LInvMastDto } from "@/interfaces/Laboratory/LInvMastDto";
 import FormField from "@/components/FormField/FormField";
-import useDropdownChange from "@/hooks/useDropdownChange";
 import { useAppSelector } from "@/store/hooks";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { debounce } from "lodash";
+import { SelectChangeEvent } from "@mui/material";
 
 interface InvestigationListDetailsProps {
   onUpdate: (data: LInvMastDto) => void;
   investigationData?: LInvMastDto | null;
+  shouldReset?: boolean;
 }
 
-const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onUpdate, investigationData }) => {
-  const dropdownValues = useDropdownValues(["investigationType"]);
+const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onUpdate, investigationData, shouldReset }) => {
+  const dropdownValues = useDropdownValues(["investigationType", "sampleType"]);
   const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
+
   const [formState, setFormState] = useState<LInvMastDto>({
     invID: 0,
     invName: "",
@@ -48,79 +51,117 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
     rModifiedOn: serverDate || new Date(),
     transferYN: "Y",
     rActiveYN: "Y",
+    lComponentsDto: [
+      {
+        mGrpID: 0,
+      },
+    ],
+    investigationDto: {},
   });
 
-  const { handleDropdownChange } = useDropdownChange<LInvMastDto>(setFormState);
+  const debouncedUpdate = useCallback(
+    debounce((newState: LInvMastDto) => {
+      onUpdate(newState);
+    }, 500),
+    [onUpdate]
+  );
 
   useEffect(() => {
     if (investigationData) {
-      console.log("Populating form with data:", investigationData);
-      // Ensure all required fields are included
-      const updatedFormState = {
-        ...formState, // Keep default values as fallback
-        ...investigationData, // Override with incoming data
-        // Ensure these fields are properly set
-        invCode: investigationData.invCode || "",
-        invName: investigationData.invName || "",
-        invShortName: investigationData.invShortName || "",
-        invSampleType: investigationData.invSampleType || "",
-        invType: investigationData.invType || "",
-        invNHCode: investigationData.invNHCode || "",
-        invNHEnglishName: investigationData.invNHEnglishName || "",
-        invTitle: investigationData.invTitle || "",
-        invReportYN: investigationData.invReportYN || "N",
-        invSampleYN: investigationData.invSampleYN || "N",
-      };
-
-      setFormState(updatedFormState);
-      console.log("Form state updated:", updatedFormState);
+      setFormState((prevState) => ({
+        ...prevState,
+        ...investigationData,
+        compID: investigationData.compID || compID || 0,
+        compCode: investigationData.compCode || compCode || "",
+        compName: investigationData.compName || compName || "",
+        rModifiedID: userID || 0,
+        rModifiedBy: userName || "",
+        rModifiedOn: serverDate || new Date(),
+      }));
     }
-  }, [investigationData]);
+  }, [investigationData, compID, compCode, compName, userID, userName, serverDate]);
 
   useEffect(() => {
-    onUpdate(formState);
-  }, [formState, onUpdate]);
+    if (shouldReset) {
+      const initialState = {
+        invID: 0,
+        invName: "",
+        invTypeCode: "",
+        invReportYN: "N",
+        invSampleYN: "N",
+        invTitle: "",
+        invSTitle: "",
+        invPrintOrder: 0,
+        deptID: 0,
+        deptName: "",
+        rCreatedOn: serverDate || new Date(),
+        rModifiedOn: serverDate || new Date(),
+        rCreatedID: 0,
+        rCreatedBy: "",
+        rModifiedID: 0,
+        rModifiedBy: "",
+        bchID: 0,
+        invCode: "",
+        invType: "",
+        invNHCode: "",
+        invNHEnglishName: "",
+        invNHGreekName: "",
+        invSampleType: "",
+        invShortName: "",
+        methods: "",
+        coopLabs: "",
+        transferYN: "Y",
+        rActiveYN: "Y",
+        compID: compID || 0,
+        compCode: compCode || "",
+        compName: compName || "",
+        lComponentsDto: [
+          {
+            mGrpID: 0,
+          },
+        ],
+        investigationDto: {},
+      };
 
-  const handleClear = useCallback(() => {
-    setFormState({
-      invID: 0,
-      invName: "",
-      invTypeCode: "",
-      invReportYN: "N",
-      invSampleYN: "N",
-      invTitle: "",
-      invSTitle: "",
-      invPrintOrder: 0,
-      deptID: 0,
-      deptName: "",
-      rCreatedOn: serverDate || new Date(),
-      rModifiedOn: serverDate || new Date(),
-      rCreatedID: 0,
-      rCreatedBy: "",
-      rModifiedID: 0,
-      rModifiedBy: "",
-      bchID: 0,
-      invCode: "",
-      invType: "",
-      invNHCode: "",
-      invNHEnglishName: "",
-      invNHGreekName: "",
-      invSampleType: "",
-      invShortName: "",
-      methods: "",
-      coopLabs: "",
-      transferYN: "Y",
-      rActiveYN: "Y",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
-    });
-  }, [onUpdate, serverDate, userID, userName]);
+      setFormState(initialState);
+      onUpdate(initialState);
+    }
+  }, [shouldReset, compID, compCode, compName, serverDate, onUpdate]);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
-  }, []);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setFormState((prev) => {
+        const updatedState = { ...prev, [name]: value };
+        debouncedUpdate(updatedState);
+        return updatedState;
+      });
+    },
+    [debouncedUpdate]
+  );
+
+  const handleSelectChange = useCallback(
+    (e: SelectChangeEvent<string>) => {
+      const { name, value } = e.target;
+      setFormState((prev) => {
+        const updatedState = { ...prev, [name]: value };
+        debouncedUpdate(updatedState);
+        return updatedState;
+      });
+    },
+    [debouncedUpdate]
+  );
+
+  const handleSwitchChange = useCallback(
+    (name: string) => (e: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+      setFormState((prev) => {
+        const updatedState = { ...prev, [name]: checked ? "Y" : "N" };
+        debouncedUpdate(updatedState);
+        return updatedState;
+      });
+    },
+    [debouncedUpdate]
+  );
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -152,15 +193,10 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
           type="select"
           label="Sample Type"
           value={formState.invSampleType || ""}
-          onChange={(e) => setFormState((prev) => ({ ...prev, invSampleType: e.target.value }))}
+          onChange={handleSelectChange}
           name="invSampleType"
           ControlID="invSampleType"
-          options={[
-            { value: "", label: "Select an Option" },
-            { value: "Blood", label: "Blood" },
-            { value: "Urine", label: "Urine" },
-            { value: "Saliva", label: "Saliva" },
-          ]}
+          options={dropdownValues.sampleType || [{ value: "", label: "Loading..." }]}
           isMandatory
         />
 
@@ -168,7 +204,7 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
           type="select"
           label="Investigation Type"
           value={formState.invType || ""}
-          onChange={(e) => setFormState((prev) => ({ ...prev, invType: e.target.value }))}
+          onChange={handleSelectChange}
           name="invType"
           ControlID="invType"
           options={dropdownValues.investigationType || [{ value: "", label: "Loading..." }]}
@@ -210,7 +246,7 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
           type="switch"
           label="Report Entry Required"
           checked={formState.invReportYN === "Y"}
-          onChange={(e, checked) => setFormState((prev) => ({ ...prev, invReportYN: checked ? "Y" : "N" }))}
+          onChange={handleSwitchChange("invReportYN")}
           name="invReportYN"
           ControlID="invReportYN"
           placeholder="Enter Resource Name"
@@ -220,7 +256,7 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
           type="switch"
           label="Sample Required"
           checked={formState.invSampleYN === "Y"}
-          onChange={(e, checked) => setFormState((prev) => ({ ...prev, invSampleYN: checked ? "Y" : "N" }))}
+          onChange={handleSwitchChange("invSampleYN")}
           name="invSampleYN"
           ControlID="invSampleYN"
           placeholder="Enter Resource Name"
@@ -231,4 +267,4 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
   );
 };
 
-export default InvestigationListDetails;
+export default React.memo(InvestigationListDetails);

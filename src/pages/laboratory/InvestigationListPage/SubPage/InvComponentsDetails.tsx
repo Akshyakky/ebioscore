@@ -16,23 +16,14 @@ interface LComponentDetailsProps {
   onUpdateCompMultiple: (multipleData: LCompMultipleDto) => void;
   onUpdateAgeRange: (ageRangeData: LCompAgeRangeDto) => void;
   onUpdateTemplate: (ageRangeData: LCompTemplateDto) => void;
-  selectedComponent?: LComponentDto;
+  selectedComponent?: LComponentDto & { ageRanges?: LCompAgeRangeDto[] };
   setSelectedComponent: React.Dispatch<React.SetStateAction<LComponentDto | null>>;
 }
-
-const mainGroupOptions = [
-  { value: "1", label: "Group 1" },
-  { value: "2", label: "Group 2" },
-];
-
-const subTitleOptions = [
-  { value: "1", label: "Title 1" },
-  { value: "2", label: "Title 2" },
-];
 
 const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdateCompMultiple, onUpdateAgeRange, onUpdateTemplate, selectedComponent, setSelectedComponent }) => {
   const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
+
   const [formState, setFormState] = useState<LComponentDto>({
     invID: 0,
     invNameCD: "",
@@ -81,100 +72,87 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
   });
 
   const [ageRanges, setAgeRanges] = useState<LCompAgeRangeDto[]>([]);
-  const dropdownValues = useDropdownValues(["entryType"]);
+  const dropdownValues = useDropdownValues(["entryType", "mainGroup", "subTitle"]);
   const [selectedLCentID, setSelectedLCentID] = useState<number | null>(null);
 
-  // Add useEffect to populate form when selectedComponent changes
   useEffect(() => {
     if (selectedComponent) {
-      console.log("Populating component form with:", selectedComponent);
-      setFormState({
-        ...formState,
-        ...selectedComponent,
-        // Ensure all required fields are set
-        compoID: selectedComponent.compoID || 0,
-        compOCodeCD: selectedComponent.compOCodeCD || "",
-        compoNameCD: selectedComponent.compoNameCD || "",
-        cShortNameCD: selectedComponent.cShortNameCD || "",
-        lCentID: selectedComponent.lCentID || 0,
-        compInterpretCD: selectedComponent.compInterpretCD || "",
-        compUnitCD: selectedComponent.compUnitCD || "",
-        cNHSEnglishNameCD: selectedComponent.cNHSEnglishNameCD || "",
-        deltaValPercent: selectedComponent.deltaValPercent,
-      });
-
-      // Set the entry type
-      if (selectedComponent.lCentID) {
-        setSelectedLCentID(selectedComponent.lCentID);
+      setFormState(selectedComponent);
+      setSelectedLCentID(selectedComponent.lCentID || null);
+      if (selectedComponent.lCentID === 6) {
+        const componentAgeRanges = selectedComponent.ageRanges || [];
+        setAgeRanges(componentAgeRanges);
       }
     }
-  }, [selectedComponent]);
+  }, [selectedComponent?.compoID]);
 
-  const handleTextInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleTextInputChange = useCallback((event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
+    setFormState((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
-    setFormState((prev) => ({
-      ...prev,
-      [name]: value ?? "",
-    }));
-
-    setFormComp((prev) => ({
-      ...prev,
-      [name]: value ?? "",
-    }));
-  };
-
-  const handleSelectChange = (event: SelectChangeEvent<string>, child: ReactNode) => {
+  const handleSelectChange = useCallback((event: SelectChangeEvent<string>) => {
     const { name, value } = event.target;
     setFormState((prev) => ({ ...prev, [name]: value }));
 
     if (name === "lCentID") {
       setSelectedLCentID(Number(value));
     }
-  };
+  }, []);
 
-  const handleAddAgeRange = (newAgeRange: LCompAgeRangeDto) => {
-    setAgeRanges((prev) => [...prev, newAgeRange]);
-    onUpdateAgeRange(newAgeRange);
-  };
-
-  const handleOkClick = () => {
+  const handleOkClick = useCallback(() => {
     debugger;
     if (!formState.compCode || !formState.compName || !formState.lCentID) {
       showAlert("error", "Please fill all required fields", "error");
       return;
     }
 
-    // First update component to get the compoID
-    onUpdate(formState);
-
-    // If it's a template type component, update the template with the correct compoID
+    const componentWithAgeRanges = {
+      ...formState,
+      ageRanges: formState.lCentID === 6 ? ageRanges : [],
+    };
+    onUpdate(componentWithAgeRanges);
     if (formState.lCentID === 7) {
-      const componentToUse = {
-        ...formState,
-        compoID: formState.compoID || 0, // This will be the newly created component's ID
-      };
-
-      // Pass the updated component to CompTemplateDetails
-      setSelectedComponent(componentToUse);
-    }
-
-    // Update multiple choice if applicable
-    if (formState.lCentID === 5) {
+      setSelectedComponent(componentWithAgeRanges);
+    } else if (formState.lCentID === 5 && formComp) {
       onUpdateCompMultiple(formComp);
+    } else if (formState.lCentID === 6 && ageRanges.length > 0) {
+      ageRanges.forEach((range) => {
+        onUpdateAgeRange({
+          ...range,
+          compOID: formState.compoID,
+          cappID: formState.compoID,
+        });
+      });
     }
+  }, [formState, formComp, ageRanges, onUpdate, onUpdateCompMultiple, onUpdateAgeRange, setSelectedComponent]);
 
-    // Update age range if applicable
-    if (formState.lCentID === 6 && ageRanges.length > 0) {
-      ageRanges.forEach((range) => onUpdateAgeRange(range));
-    }
+  const handleAgeRangeUpdate = useCallback(
+    (newAgeRange: LCompAgeRangeDto) => {
+      setAgeRanges((prev) => {
+        const exists = prev.some((range) => range.carSex === newAgeRange.carSex && range.carStart === newAgeRange.carStart && range.carEnd === newAgeRange.carEnd);
 
-    // Clear form after saving
+        if (!exists) {
+          const updatedRange = {
+            ...newAgeRange,
+            compOID: formState.compoID,
+            cappID: formState.compoID,
+          };
+          return [...prev, updatedRange];
+        }
+        return prev;
+      });
+    },
+    [formState.compoID]
+  );
+
+  const handleClose = () => {
     setFormState({
       invID: 0,
       invNameCD: "",
       lCentID: 0,
       deptID: 1,
+      compoID: 0,
       lCentNameCD: "",
       lCentTypeCD: "",
       compDetailYN: "N",
@@ -216,36 +194,8 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
       rNotes: "",
     });
     setAgeRanges([]);
-  };
-
-  const handleClose = () => {
-    onUpdate(formState);
-    setFormState({
-      invID: 0,
-      invNameCD: "",
-      lCentID: 0,
-      deptID: 1,
-      lCentNameCD: "",
-      lCentTypeCD: "",
-      compDetailYN: "N",
-      rActiveYN: "Y",
-      transferYN: "N",
-      compInterpretCD: "",
-      compUnitCD: "",
-      compOCodeCD: "",
-      cShortNameCD: "",
-      cNHSEnglishNameCD: "",
-      deltaValPercent: undefined,
-      compID: compID || 1,
-      compCode: compCode || "",
-      compName: compName || "",
-      rModifiedID: userID || 0,
-      rModifiedBy: userName || "",
-      rCreatedID: userID || 0,
-      rCreatedBy: userName || "",
-      rCreatedOn: serverDate || new Date(),
-      rModifiedOn: serverDate || new Date(),
-    });
+    setSelectedLCentID(null);
+    setSelectedComponent(null);
   };
 
   return (
@@ -274,16 +224,19 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
             ControlID="compoNameCD"
             gridProps={{ xs: 12 }}
           />
+
           <FormField
             type="select"
-            label="Maingroup"
-            name="mGrpID"
-            value={formState.mGrpID?.toString() || ""}
+            label="Maingroup "
+            value={formState.mGrpID || ""}
             onChange={handleSelectChange}
-            options={mainGroupOptions}
+            name="mGrpID"
             ControlID="mGrpID"
+            options={dropdownValues.mainGroup || [{ value: "", label: "Loading..." }]}
+            isMandatory
             gridProps={{ xs: 12 }}
           />
+
           <FormField
             type="textarea"
             label="Method"
@@ -319,11 +272,12 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
           <FormField
             type="select"
             label="Sub Title"
-            name="compoTitleCD"
-            value={formState.compoTitleCD}
+            value={formState.compoTitleCD || ""}
             onChange={handleSelectChange}
-            options={subTitleOptions}
-            ControlID="subTitle"
+            name="compoTitleCD"
+            ControlID="compoTitleCD"
+            options={dropdownValues.subTitle || [{ value: "", label: "Loading..." }]}
+            isMandatory
             gridProps={{ xs: 12 }}
           />
           <FormField
@@ -359,11 +313,27 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
         </Grid>
       </Grid>
 
-      {selectedLCentID === 5 && <CompMultipleDetails compName={compName || ""} onUpdateCompMultiple={onUpdateCompMultiple} />}
+      {selectedLCentID === 5 && (
+        <Grid item xs={12}>
+          <CompMultipleDetails
+            compName={selectedComponent?.compoNameCD || ""}
+            compOID={selectedComponent?.compoID || 0}
+            invID={selectedComponent?.invID || 0}
+            selectedValue={selectedComponent?.selectedValue || ""}
+            onUpdateCompMultiple={onUpdateCompMultiple}
+          />
+        </Grid>
+      )}
 
       {selectedLCentID === 6 && (
         <Box sx={{ mt: 4, p: 3, borderRadius: 3, bgcolor: "#f5f5f5", boxShadow: 1 }}>
-          <ApplicableAgeRangeTable ageRanges={ageRanges} componentId={formState.compoID} onAddAgeRange={handleAddAgeRange} />
+          <ApplicableAgeRangeTable
+            ageRanges={ageRanges}
+            componentId={formState.compoID}
+            onAddAgeRange={handleAgeRangeUpdate}
+            onUpdateAgeRange={onUpdateAgeRange}
+            selectedComponent={selectedComponent}
+          />
         </Box>
       )}
 
@@ -377,12 +347,23 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
         />
       )}
 
-      <CustomButton variant="contained" color="primary" onClick={handleOkClick} sx={{ marginTop: 3 }}>
-        OK
-      </CustomButton>
-      <CustomButton variant="contained" color="error" onClick={handleClose} sx={{ marginTop: 3 }}>
-        Close
-      </CustomButton>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 2,
+          mt: 4,
+          mb: 2,
+          px: 1,
+        }}
+      >
+        <CustomButton variant="contained" color="primary" onClick={handleOkClick}>
+          OK
+        </CustomButton>
+        <CustomButton variant="contained" color="error" onClick={handleClose}>
+          Clear
+        </CustomButton>
+      </Box>
     </Paper>
   );
 };

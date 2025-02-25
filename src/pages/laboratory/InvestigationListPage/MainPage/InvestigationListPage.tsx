@@ -1,10 +1,9 @@
 import React, { useState, useCallback } from "react";
-import { Box, Button, Card, CardContent, Container, Grid, Typography, Paper, Divider, IconButton, styled, Zoom, Tooltip, Slide, Chip, CircularProgress } from "@mui/material";
+import { Box, Button, Container, Grid, Typography, Paper, Divider, IconButton, styled, Zoom, Slide, Chip, CircularProgress } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
-import SettingsIcon from "@mui/icons-material/Settings";
 import EditIcon from "@mui/icons-material/Edit";
 import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
 import InvestigationListDetails from "../SubPage/InvestigationListDetails";
@@ -16,118 +15,6 @@ import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-
-const AnimatedCard = styled(Card)(({ theme }) => ({
-  position: "relative",
-  overflow: "hidden",
-  cursor: "pointer",
-  transition: "all 0.3s ease",
-  boxShadow: theme.shadows[5],
-  borderRadius: 10,
-  "&:hover": {
-    boxShadow: theme.shadows[12],
-    transform: "scale(1.02)",
-  },
-}));
-
-const DetailField = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2),
-  backgroundColor: theme.palette.grey[100],
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: theme.shadows[1],
-  transition: "all 0.3s ease",
-  "&:hover": {
-    backgroundColor: theme.palette.grey[200],
-    transform: "scale(1.03)",
-  },
-}));
-
-const StyledTemplateCard = styled(Card)(({ theme }) => ({
-  position: "relative",
-  transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-  background: "linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)",
-  backdropFilter: "blur(10px)",
-  border: "1px solid rgba(255, 255, 255, 0.3)",
-  "&:hover": {
-    transform: "translateY(-8px) scale(1.01)",
-    boxShadow: "0 20px 30px rgba(0, 0, 0, 0.1)",
-    "&::before": {
-      transform: "translateX(0)",
-      opacity: 1,
-    },
-  },
-  "&::before": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "4px",
-    background: "linear-gradient(90deg, #2196f3, #00bcd4, #3f51b5)",
-    transform: "translateX(-100%)",
-    opacity: 0,
-    transition: "all 0.4s ease",
-  },
-  "& .actions": {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    opacity: 0,
-    transform: "translateX(10px)",
-    transition: "all 0.3s ease",
-  },
-  "&:hover .actions": {
-    opacity: 1,
-    transform: "translateX(0)",
-  },
-}));
-
-const TemplateContent = styled(Box)(({ theme }) => ({
-  position: "relative",
-  padding: theme.spacing(2),
-  backgroundColor: "rgba(255, 255, 255, 0.9)",
-  borderRadius: theme.shape.borderRadius,
-  border: "1px solid rgba(0, 0, 0, 0.08)",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.05)",
-  transition: "all 0.3s ease",
-  "&:hover": {
-    backgroundColor: "rgba(255, 255, 255, 1)",
-    boxShadow: "0 8px 12px rgba(0, 0, 0, 0.08)",
-  },
-}));
-
-const AnimatedIconButton = styled(IconButton)(({ theme }) => ({
-  transition: "all 0.3s ease",
-  "&:hover": {
-    transform: "scale(1.1) rotate(5deg)",
-    backgroundColor: theme.palette.action.hover,
-  },
-}));
-
-const ComponentHeader = styled(Box)(({ theme }) => ({
-  display: "flex",
-  justifyContent: "space-between",
-  padding: theme.spacing(2),
-  background: "linear-gradient(135deg, #2196F3 0%, #1976D2 100%)",
-  borderRadius: "10px 10px 0 0",
-  color: "white",
-  position: "relative",
-  overflow: "hidden",
-  "&::after": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: "linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)",
-    animation: "shimmer 2s infinite",
-  },
-  "@keyframes shimmer": {
-    "0%": { transform: "translateX(-100%)" },
-    "100%": { transform: "translateX(100%)" },
-  },
-}));
 
 const ComponentListItem = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -162,115 +49,6 @@ const ComponentListItem = styled(Box)(({ theme }) => ({
   },
 }));
 
-const DetailCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2.5),
-  borderRadius: theme.shape.borderRadius * 2,
-  background: "linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)",
-  position: "relative",
-  overflow: "hidden",
-  maxHeight: "80vh",
-  overflowY: "auto",
-  "&::-webkit-scrollbar": {
-    width: "6px",
-  },
-  "&::-webkit-scrollbar-track": {
-    background: "#f1f1f1",
-    borderRadius: "10px",
-  },
-  "&::-webkit-scrollbar-thumb": {
-    background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
-    borderRadius: "10px",
-  },
-}));
-
-const InfoItem = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(1.5),
-  marginBottom: theme.spacing(1.5),
-  backgroundColor: "#fff",
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-  transition: "all 0.3s ease",
-  position: "relative",
-  overflow: "hidden",
-  "&::before": {
-    content: '""',
-    position: "absolute",
-    left: 0,
-    top: 0,
-    height: "100%",
-    width: "3px",
-    background: "linear-gradient(to bottom, #2196F3, #21CBF3)",
-    opacity: 0,
-    transition: "opacity 0.3s ease",
-  },
-  "&:hover": {
-    transform: "translateY(-2px)",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-    "&::before": {
-      opacity: 1,
-    },
-  },
-}));
-
-const DetailInfoGrid = styled(Grid)(({ theme }) => ({
-  marginTop: theme.spacing(3),
-  "& .detail-label": {
-    color: theme.palette.text.secondary,
-    fontWeight: 500,
-    fontSize: "0.875rem",
-    marginBottom: theme.spacing(0.5),
-  },
-  "& .detail-value": {
-    fontSize: "1rem",
-    fontWeight: 500,
-  },
-}));
-
-const DetailSection = styled(Box)(({ theme }) => ({
-  position: "relative",
-  padding: theme.spacing(3),
-  borderRadius: theme.shape.borderRadius * 2,
-  background: "linear-gradient(135deg, #fff 0%, #f8f9fa 100%)",
-  "&::before": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "6px",
-    background: "linear-gradient(90deg, #2196F3, #21CBF3, #2196F3)",
-    borderRadius: "8px 8px 0 0",
-    animation: "shimmerBorder 2s infinite linear",
-  },
-  "@keyframes shimmerBorder": {
-    "0%": { backgroundPosition: "0% 0%" },
-    "100%": { backgroundPosition: "200% 0%" },
-  },
-}));
-
-const SectionTitle = styled(Typography)(({ theme }) => ({
-  position: "relative",
-  marginBottom: theme.spacing(3),
-  paddingBottom: theme.spacing(1),
-  color: theme.palette.primary.main,
-  fontWeight: 600,
-  "&::after": {
-    content: '""',
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    width: "40px",
-    height: "3px",
-    background: theme.palette.primary.main,
-    borderRadius: "2px",
-    animation: "expandWidth 0.5s ease-out forwards",
-  },
-  "@keyframes expandWidth": {
-    from: { width: "0" },
-    to: { width: "40px" },
-  },
-}));
-
 const InvestigationListPage: React.FC = () => {
   const [investigationDetails, setInvestigationDetails] = useState<LInvMastDto | null>(null);
   const [componentDetails, setComponentDetails] = useState<LComponentDto[]>([]);
@@ -281,6 +59,7 @@ const InvestigationListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isComponentDialogOpen, setIsComponentDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [shouldResetForm, setShouldResetForm] = useState(false);
   const dropdownValues = useDropdownValues(["entryType"]);
 
   const handleAdvancedSearch = () => setIsSearchOpen(true);
@@ -299,51 +78,85 @@ const InvestigationListPage: React.FC = () => {
     setIsSearchOpen(false);
   };
 
-  const updateComponentDetails = useCallback((data: LComponentDto) => {
-    setComponentDetails((prev) => [...prev, data]);
+  const updateComponentDetails = useCallback((data: LComponentDto & { ageRanges?: LCompAgeRangeDto[] }) => {
+    setComponentDetails((prev) => {
+      const existingIndex = prev.findIndex((c) => c.compoID === data.compoID);
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = data;
+        return updated;
+      }
+      return [...prev, data];
+    });
+    if (data.ageRanges?.length) {
+      setAgeRangeDetails((prev) => {
+        const filteredRanges = prev.filter((range) => range.compOID !== data.compoID);
+        const updatedRanges = data.ageRanges!.map((range) => ({
+          ...range,
+          compOID: data.compoID,
+          cappID: data.compoID,
+        }));
+
+        return [...filteredRanges, ...updatedRanges];
+      });
+    }
+
     setIsComponentDialogOpen(false);
   }, []);
 
   const updateCompMultipleDetails = useCallback((data: LCompMultipleDto) => {
+    if (!data.cmValues?.trim()) return;
     setCompMultipleDetails((prev) => {
-      const exists = prev.some((item) => item.cmValues === data.cmValues);
-      if (!exists) {
-        return [...prev, data];
+      const filtered = prev.filter((item) => item.cmValues?.trim() !== "");
+      const existingIndex = filtered.findIndex((item) => item.compOID === data.compOID && item.cmValues === data.cmValues);
+      if (existingIndex >= 0) {
+        const updated = [...filtered];
+        updated[existingIndex] = data;
+        return updated;
       }
-      return prev;
+      if (data.defaultYN === "Y") {
+        filtered.forEach((item) => {
+          if (item.compOID === data.compOID) {
+            item.defaultYN = "N";
+          }
+        });
+      }
+      return [...filtered, data];
     });
   }, []);
 
   const updateAgeRangeDetails = useCallback((data: LCompAgeRangeDto) => {
     setAgeRangeDetails((prev) => {
-      const exists = prev.some((item) => item.carSex === data.carSex && item.carStart === data.carStart && item.carEnd === data.carEnd && item.carAgeType === data.carAgeType);
+      const existingIndex = prev.findIndex(
+        (item) => item.carID === data.carID || (item.cappID === data.cappID && item.carSex === data.carSex && item.carStart === data.carStart && item.carEnd === data.carEnd)
+      );
 
-      if (!exists) {
-        return [...prev, data];
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...data,
+          carID: prev[existingIndex].carID,
+        };
+        return updated;
       }
-      return prev;
+      return [...prev, data];
     });
   }, []);
 
   const updateTemplateDetails = useCallback((data: LCompTemplateDto) => {
     setTemplateDetails((prev) => {
-      // Check if template with same group and component exists
       const existingIndex = prev.findIndex((t) => t.tGroupID === data.tGroupID && t.compOID === data.compOID);
-
       if (existingIndex >= 0) {
-        // Update existing template
         const updated = [...prev];
         updated[existingIndex] = data;
         return updated;
       } else {
-        // Add new template
         return [...prev, data];
       }
     });
   }, []);
 
   const handleSave = async () => {
-    debugger;
     if (!investigationDetails || componentDetails.length === 0) {
       showAlert("error", "Please enter all required details before saving.", "error");
       return;
@@ -351,68 +164,76 @@ const InvestigationListPage: React.FC = () => {
 
     const payload: investigationDto = {
       lInvMastDto: investigationDetails,
-      lComponentsDto: componentDetails,
+      lComponentsDto: componentDetails.map((comp) => ({
+        ...comp,
+        mGrpID: typeof comp.mGrpID === "string" ? parseInt((comp.mGrpID as string).replace(/\D/g, "")) : comp.mGrpID || 0,
+        deltaValPercent: typeof comp.deltaValPercent === "string" ? parseFloat(comp.deltaValPercent as string) : comp.deltaValPercent,
+      })),
       lCompMultipleDtos: compMultipleDetails,
       lCompAgeRangeDtos: ageRangeDetails,
       lCompTemplateDtos: templateDetails,
+      investigationDto: investigationDetails,
     };
 
     try {
+      setIsLoading(true);
       const response = await investigationlistService.save(payload);
       if (response.success) {
         showAlert("success", "Investigation details saved successfully!", "success");
+        setShouldResetForm(true);
         handleClear();
+        setIsSearchOpen(false);
+        setIsComponentDialogOpen(false);
       } else {
         showAlert("error", response.errorMessage || "Failed to save data.", "error");
       }
     } catch (error) {
       showAlert("error", "An error occurred while saving the data.", "error");
+    } finally {
+      setIsLoading(false);
+      setTimeout(() => {
+        setShouldResetForm(false);
+      }, 100);
     }
   };
 
   const handleClear = () => {
+    setShouldResetForm(true);
     setInvestigationDetails(null);
     setComponentDetails([]);
     setSelectedComponent(null);
     setCompMultipleDetails([]);
     setAgeRangeDetails([]);
     setTemplateDetails([]);
+    setIsSearchOpen(false);
+    setIsComponentDialogOpen(false);
+    setTimeout(() => {
+      setShouldResetForm(false);
+    }, 100);
   };
-
-  const handleEditTemplate = (componentId: number) => {
-    const template = templateDetails.find((t) => t.compOID === componentId);
-    if (template) {
-      console.log("Editing template:", template);
-    }
-  };
-
-  const handleDeleteTemplate = (componentId: number) => {
-    console.log("Deleting template for component:", componentId);
-  };
-
   const getEntryTypeName = (lCentID: number | undefined) => {
     if (!lCentID) return "Not Specified";
-
-    // First try to find in dropdown values
     const entryTypeFromDropdown = dropdownValues["entryType"]?.find((item) => Number(item.value) === lCentID);
 
     if (entryTypeFromDropdown) {
       return entryTypeFromDropdown.label;
     }
-
-    // Map common entry type IDs to names if dropdown fails
     const entryTypeMap: { [key: number]: string } = {
       5: "Multiple Choice",
       6: "Age Range",
       7: "Template Values [Alpha Numeric]",
-      // Add other mappings as needed
     };
 
     return entryTypeMap[lCentID] || "Not Specified";
   };
 
   const handleEditComponent = (component: LComponentDto) => {
-    setSelectedComponent(component);
+    const componentAgeRanges = ageRangeDetails.filter((range) => range.compOID === component.compoID || range.cappID === component.compoID);
+
+    setSelectedComponent({
+      ...component,
+      ageRanges: componentAgeRanges,
+    });
     setIsComponentDialogOpen(true);
   };
 
@@ -423,68 +244,66 @@ const InvestigationListPage: React.FC = () => {
     }
   };
 
-  const debugTemplates = (selectedComp: LComponentDto) => {
-    console.log("All Templates:", templateDetails);
-    console.log("Selected Component:", selectedComp);
-    const filtered = templateDetails.filter((t) => t.compOID === selectedComp.compoID);
-    console.log("Filtered Templates:", filtered);
-  };
-
-  const handleEdit = async (investigation: investigationDto) => {
+  const handleEdit = useCallback(async (investigation: investigationDto) => {
     try {
+      setIsLoading(true);
       const invID = investigation.lInvMastDto?.invID;
       if (!invID) {
-        showAlert("error", "Investigation ID not found", "error");
+        showAlert("error", "Invalid investigation ID", "error");
         return;
       }
-
-      setIsLoading(true);
       const response = await investigationlistService.getById(invID);
-      console.log("Edit API Response:", response);
-
       if (response.success && response.data) {
-        const investigationData = response.data;
-        console.log("Investigation Data to populate:", investigationData);
+        setInvestigationDetails(response.data.lInvMastDto);
+        const components = response.data.lComponentsDto || [];
+        const ageRanges = response.data.lCompAgeRangeDtos || [];
+        const componentsWithAgeRanges = components.map((comp: LComponentDto) => {
+          const componentAgeRanges = ageRanges
+            .filter((range: LCompAgeRangeDto) => range.compOID === comp.compoID || range.cappID === comp.compoID)
+            .map((range: LCompAgeRangeDto) => ({
+              ...range,
+              compOID: comp.compoID,
+              cappID: comp.compoID,
+              rActiveYN: "Y",
+            }));
 
-        // Update main investigation details
-        setInvestigationDetails(investigationData);
+          return {
+            ...comp,
+            ageRanges: componentAgeRanges,
+          };
+        });
 
-        // Update components and related details
-        if (investigationData.lComponentsDto && investigationData.lComponentsDto.length > 0) {
-          setComponentDetails(investigationData.lComponentsDto);
-          // Set the first component as selected by default
-          setSelectedComponent(investigationData.lComponentsDto[0]);
-          setIsComponentDialogOpen(true); // Open the component dialog automatically
+        setComponentDetails(componentsWithAgeRanges);
+        const activeAgeRanges = ageRanges.map((range: LCompAgeRangeDto) => ({
+          ...range,
+          rActiveYN: "Y",
+        }));
+        setAgeRangeDetails(activeAgeRanges);
+
+        setCompMultipleDetails(response.data.lCompMultipleDtos || []);
+        setTemplateDetails(response.data.lCompTemplateDtos || []);
+
+        if (componentsWithAgeRanges.length > 0) {
+          setSelectedComponent({
+            ...componentsWithAgeRanges[0],
+            ageRanges: activeAgeRanges.filter(
+              (range: LCompAgeRangeDto) => range.compOID === componentsWithAgeRanges[0].compoID || range.cappID === componentsWithAgeRanges[0].compoID
+            ),
+          });
         }
-
-        if (investigationData.lCompMultipleDtos) {
-          setCompMultipleDetails(investigationData.lCompMultipleDtos);
-        }
-
-        if (investigationData.lCompAgeRangeDtos) {
-          setAgeRangeDetails(investigationData.lCompAgeRangeDtos);
-        }
-
-        if (investigationData.lCompTemplateDtos) {
-          setTemplateDetails(investigationData.lCompTemplateDtos);
-        }
-
-        setIsSearchOpen(false);
       } else {
         showAlert("error", response.errorMessage || "Failed to fetch investigation details", "error");
       }
     } catch (error) {
-      console.error("Error fetching investigation details:", error);
-      showAlert("error", "An error occurred while fetching the investigation details", "error");
+      showAlert("error", "An error occurred while fetching investigation details", "error");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const renderComponentDetails = () => (
     <Box sx={{ mb: 4 }}>
       <Grid container spacing={3}>
-        {/* Left side - Component List */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 2, maxHeight: "70vh", overflow: "auto", borderRadius: 3 }}>
             <Box
@@ -517,7 +336,7 @@ const InvestigationListPage: React.FC = () => {
             </Box>
 
             {componentDetails.map((component: LComponentDto) => (
-              <Zoom in key={component.compCode}>
+              <Zoom in key={`component-${component.compoID}-${component.compOCodeCD}`}>
                 <ComponentListItem className={selectedComponent?.compoID === component.compoID ? "selected" : ""}>
                   <Box sx={{ pl: 2, width: "100%" }}>
                     <Box
@@ -529,9 +348,9 @@ const InvestigationListPage: React.FC = () => {
                       }}
                     >
                       <Box sx={{ flex: 1, cursor: "pointer" }} onClick={() => setSelectedComponent(component)}>
-                        <Typography sx={{ fontWeight: 600, fontSize: "0.9rem" }}>{component.compoNameCD}</Typography>
+                        <Typography sx={{ fontWeight: 600, fontSize: "0.9rem" }}>{component.compoNameCD || "Unnamed Component"}</Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {component.compOCodeCD}
+                          {component.compOCodeCD || "No Code"}
                         </Typography>
                       </Box>
                       <Box sx={{ display: "flex", gap: 1 }}>
@@ -579,7 +398,6 @@ const InvestigationListPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        {/* Right side - Details Panel */}
         <Grid item xs={12} md={8}>
           <Slide direction="left" in={!!selectedComponent}>
             <Paper sx={{ p: 3, borderRadius: 3 }}>
@@ -653,7 +471,6 @@ const InvestigationListPage: React.FC = () => {
                       </Box>
                     </Grid>
 
-                    {/* Show type-specific details based on lCentID */}
                     {selectedComponent.lCentID === 7 && (
                       <Grid item xs={12}>
                         <Box sx={{ mt: 2 }}>
@@ -661,7 +478,6 @@ const InvestigationListPage: React.FC = () => {
                             Template Values
                           </Typography>
                           {(() => {
-                            // Filter templates for the current component only
                             const componentTemplates = templateDetails.filter((t) => t.compOID === selectedComponent.compoID);
 
                             if (componentTemplates.length === 0) {
@@ -672,7 +488,6 @@ const InvestigationListPage: React.FC = () => {
                               );
                             }
 
-                            // Group templates by template group
                             const groupedTemplates = componentTemplates.reduce(
                               (acc, template) => {
                                 const groupName = template.tGroupName || "Unnamed Group";
@@ -686,7 +501,7 @@ const InvestigationListPage: React.FC = () => {
                             );
 
                             return Object.entries(groupedTemplates).map(([groupName, templates]) => (
-                              <Zoom in key={`group-${selectedComponent.compoID}-${groupName}`}>
+                              <Zoom in key={`group-${groupName}`}>
                                 <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
                                   <Box sx={{ mb: 1 }}>
                                     <Typography variant="caption" color="text.secondary">
@@ -698,7 +513,7 @@ const InvestigationListPage: React.FC = () => {
                                   </Box>
                                   <Divider sx={{ my: 1 }} />
                                   {templates.map((template) => (
-                                    <Box key={`template-${template.cTID}`}>
+                                    <Box key={template.cTID}>
                                       <Typography
                                         component="div"
                                         variant="body2"
@@ -716,18 +531,26 @@ const InvestigationListPage: React.FC = () => {
                       </Grid>
                     )}
 
-                    {selectedComponent.lCentID === 6 && (
+                    {selectedComponent?.lCentID === 6 && (
                       <Grid item xs={12}>
                         <Box sx={{ mt: 2 }}>
                           <Typography variant="subtitle2" color="primary" sx={{ mb: 2 }}>
                             Age Range Values
                           </Typography>
                           {ageRangeDetails
-                            .filter((ar) => ar.compOID === selectedComponent.compoID)
-                            .map((range, index) => (
-                              <Zoom in key={index}>
+                            .filter((ar: LCompAgeRangeDto) => ar.compOID === selectedComponent.compoID || ar.cappID === selectedComponent.compoID)
+                            .map((range: LCompAgeRangeDto) => (
+                              <Zoom in key={`range-${range.carID}`}>
                                 <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-                                  <Typography variant="body2">{`${range.carStart} - ${range.carEnd} ${range.carAgeType} (${range.carSex})`}</Typography>
+                                  <Typography variant="body2">
+                                    <strong>Normal Value:</strong> {range.carName}
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    <strong>Age Range:</strong> {`${range.carStart} - ${range.carEnd} ${range.carAgeType}`}
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    <strong>Sex:</strong> {range.carSex}
+                                  </Typography>
                                 </Paper>
                               </Zoom>
                             ))}
@@ -744,7 +567,7 @@ const InvestigationListPage: React.FC = () => {
                           {compMultipleDetails
                             .filter((cm) => cm.compOID === selectedComponent.compoID)
                             .map((choice, index) => (
-                              <Zoom in key={index}>
+                              <Zoom in key={`choice-${choice.cmID}-${choice.compOID}-${index}`}>
                                 <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
                                   <Typography variant="body2">{choice.cmValues}</Typography>
                                 </Paper>
@@ -809,7 +632,7 @@ const InvestigationListPage: React.FC = () => {
       </Box>
 
       <Box sx={{ mb: 4 }}>
-        <InvestigationListDetails onUpdate={updateInvestigationDetails} investigationData={investigationDetails} />
+        <InvestigationListDetails onUpdate={updateInvestigationDetails} investigationData={investigationDetails} shouldReset={shouldResetForm} />
       </Box>
 
       {renderComponentDetails()}
@@ -819,6 +642,7 @@ const InvestigationListPage: React.FC = () => {
       </Box>
 
       <InvestigationListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} onEdit={handleEdit} />
+
       <GenericDialog open={isComponentDialogOpen} onClose={() => setIsComponentDialogOpen(false)} title="Add New Component" maxWidth="md" fullWidth>
         <LComponentDetails
           onUpdate={updateComponentDetails}
