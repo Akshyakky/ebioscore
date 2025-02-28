@@ -111,6 +111,7 @@ export interface LCompMultipleDto extends BaseDto {
   rModifiedBy?: string;
   rCreatedIdNr?: number;
   rModifiedId?: number;
+  invID?: number;
 }
 export interface LCompAgeRangeDto extends BaseDto {
   carID: number;

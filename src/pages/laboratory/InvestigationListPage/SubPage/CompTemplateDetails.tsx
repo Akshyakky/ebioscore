@@ -888,7 +888,7 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
 
           <RichTextEditor value={editorValue} onChange={handleEditorChange} />
 
-          <Button
+          {/* <Button
             variant="contained"
             color="primary"
             onClick={handleAddTemplate}
@@ -907,7 +907,7 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
             }}
           >
             Add Template
-          </Button>
+          </Button> */}
         </CardContent>
       </Card>
 

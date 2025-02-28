@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState, ChangeEvent, ReactNode } from "react";
-import { Paper, Typography, Grid, Box, SelectChangeEvent, Button, IconButton, RadioGroup, FormControlLabel, Radio, Grow, Fade } from "@mui/material";
+import React, { useCallback, useEffect, useState, ChangeEvent } from "react";
+import { Paper, Typography, Grid, Box, SelectChangeEvent } from "@mui/material";
 import FormField from "@/components/FormField/FormField";
 import { LCompAgeRangeDto, LCompMultipleDto, LComponentDto, LCompTemplateDto } from "@/interfaces/Laboratory/LInvMastDto";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
@@ -111,7 +111,9 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
       ...formState,
       ageRanges: formState.lCentID === 6 ? ageRanges : [],
     };
+
     onUpdate(componentWithAgeRanges);
+
     if (formState.lCentID === 7) {
       setSelectedComponent(componentWithAgeRanges);
     } else if (formState.lCentID === 5 && formComp) {
@@ -127,23 +129,17 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
     }
   }, [formState, formComp, ageRanges, onUpdate, onUpdateCompMultiple, onUpdateAgeRange, setSelectedComponent]);
 
+  const handleUpdateAgeRange = (updatedAgeRange: LCompAgeRangeDto) => {
+    setAgeRanges((prev) => prev.map((range) => (range.carID === updatedAgeRange.carID ? updatedAgeRange : range)));
+  };
+
   const handleAgeRangeUpdate = useCallback(
     (newAgeRange: LCompAgeRangeDto) => {
-      setAgeRanges((prev) => {
-        const exists = prev.some((range) => range.carSex === newAgeRange.carSex && range.carStart === newAgeRange.carStart && range.carEnd === newAgeRange.carEnd);
+      setAgeRanges((prev) => prev.map((range) => (range.carID === newAgeRange.carID ? { ...range, ...newAgeRange } : range)));
 
-        if (!exists) {
-          const updatedRange = {
-            ...newAgeRange,
-            compOID: formState.compoID,
-            cappID: formState.compoID,
-          };
-          return [...prev, updatedRange];
-        }
-        return prev;
-      });
+      onUpdateAgeRange(newAgeRange);
     },
-    [formState.compoID]
+    [onUpdateAgeRange]
   );
 
   const handleClose = () => {
@@ -197,6 +193,38 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
     setSelectedLCentID(null);
     setSelectedComponent(null);
   };
+
+  const updateCompMultipleDetails = useCallback(
+    (data: LCompMultipleDto) => {
+      if (!data.cmValues?.trim()) return;
+
+      // Update form state
+      setFormComp(data);
+
+      // Pass to parent with complete context
+      onUpdateCompMultiple({
+        ...data,
+        invID: selectedComponent?.invID || 0,
+        compOID: selectedComponent?.compoID || 0,
+        rModifiedOn: new Date(),
+        compID: selectedComponent?.compID || 1,
+        compName: selectedComponent?.compoNameCD || "",
+        compCode: selectedComponent?.compOCodeCD || "",
+      });
+    },
+    [onUpdateCompMultiple, selectedComponent]
+  );
+
+  useEffect(() => {
+    if (selectedComponent) {
+      setFormState(selectedComponent);
+      setSelectedLCentID(selectedComponent.lCentID || null);
+      if (selectedComponent.lCentID === 6) {
+        const componentAgeRanges = selectedComponent.ageRanges || [];
+        setAgeRanges(componentAgeRanges);
+      }
+    }
+  }, [selectedComponent, selectedComponent?.ageRanges]); // 🔹 Add `selectedComponent?.ageRanges`
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -319,7 +347,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
             compName={selectedComponent?.compoNameCD || ""}
             compOID={selectedComponent?.compoID || 0}
             invID={selectedComponent?.invID || 0}
-            selectedValue={selectedComponent?.selectedValue || ""}
             onUpdateCompMultiple={onUpdateCompMultiple}
           />
         </Grid>

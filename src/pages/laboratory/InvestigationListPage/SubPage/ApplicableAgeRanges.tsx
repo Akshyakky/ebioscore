@@ -73,36 +73,49 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
   const [filteredAgeRanges, setFilteredAgeRanges] = useState<LCompAgeRangeDto[]>([]);
 
   const handleOpenModal = () => setOpenModal(true);
+
   const handleCloseModal = () => {
-    setOpenModal(false);
     if (!isEditing) {
-      resetNewAgeRange();
+      resetNewAgeRange(); // Reset only when not editing
     }
+
     setIsEditing(false);
+    setOpenModal(false); // Move this to the end to ensure all updates happen first
   };
 
   const handleInputChange = (rowId: number, field: string, value: any) => {
+    debugger;
     if (selectedRow !== rowId) {
       showAlert("warning", "Please select the row first to edit", "warning");
       return;
     }
 
-    const updatedRange = ageRanges.find((range) => range.carID === rowId);
-    if (updatedRange) {
-      const newRange = {
-        ...updatedRange,
-        [field]: value,
-        carAgeValue:
-          field === "carStart" || field === "carEnd"
-            ? `${field === "carStart" ? value : updatedRange.carStart}-${field === "carEnd" ? value : updatedRange.carEnd} ${updatedRange.carAgeType}`
-            : updatedRange.carAgeValue,
-        rModifiedOn: serverDate || new Date(),
-        rModifiedID: userID || 0,
-        rModifiedBy: userName || "",
-      };
-      onUpdateAgeRange(newRange);
-      setNewAgeRange(newRange);
-    }
+    setFilteredAgeRanges((prev) =>
+      prev.map((range) =>
+        range.carID === rowId
+          ? {
+              ...range,
+              [field]: value,
+              carAgeValue:
+                field === "carStart" || field === "carEnd"
+                  ? `${field === "carStart" ? value : range.carStart}-${field === "carEnd" ? value : range.carEnd} ${range.carAgeType}`
+                  : range.carAgeValue,
+              rModifiedOn: serverDate || new Date(),
+              rModifiedID: userID || 0,
+              rModifiedBy: userName || "",
+            }
+          : range
+      )
+    );
+
+    setNewAgeRange((prev) => ({
+      ...prev,
+      [field]: value,
+      carAgeValue:
+        field === "carStart" || field === "carEnd"
+          ? `${field === "carStart" ? value : prev.carStart}-${field === "carEnd" ? value : prev.carEnd} ${prev.carAgeType}`
+          : prev.carAgeValue,
+    }));
   };
 
   const handleRowSelect = (carID: number) => {
@@ -114,20 +127,8 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
     }
   };
 
-  const handleEdit = (row: LCompAgeRangeDto, event: React.MouseEvent) => {
-    event.stopPropagation();
-
-    setNewAgeRange({
-      ...row,
-      rModifiedOn: serverDate || new Date(),
-      rModifiedID: userID || 0,
-      rModifiedBy: userName || "",
-    });
-    setIsEditing(true);
-    setOpenModal(true);
-  };
-
   const handleSave = () => {
+    debugger;
     if (!newAgeRange.carName || newAgeRange.carStart >= newAgeRange.carEnd) {
       showAlert("error", "Please enter a valid age range", "error");
       return;
@@ -136,7 +137,7 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
     const updatedRange = {
       ...newAgeRange,
       cappID: componentId,
-      compoID: selectedComponent?.compoID,
+      compOID: selectedComponent?.compoID,
       compID: compID || 1,
       carAgeValue: `${newAgeRange.carStart}-${newAgeRange.carEnd} ${newAgeRange.carAgeType}`,
       carSexValue: newAgeRange.carSex,
@@ -146,17 +147,33 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
       rModifiedBy: userName || "",
     };
 
-    if (isEditing) {
-      const updatedAgeRanges = ageRanges.map((range) => (range.carID === updatedRange.carID ? updatedRange : range));
-      onUpdateAgeRange(updatedRange);
-      setFilteredAgeRanges(updatedAgeRanges.filter((range) => range.compoID === selectedComponent?.compoID || range.cappID === componentId));
-    } else {
-      onAddAgeRange(updatedRange);
-    }
+    // 🔹 Update local state to reflect changes instantly
+    setFilteredAgeRanges((prev) =>
+      prev.some((range) => range.carID === updatedRange.carID) ? prev.map((range) => (range.carID === updatedRange.carID ? updatedRange : range)) : [...prev, updatedRange]
+    );
 
-    handleCloseModal();
-    resetNewAgeRange();
-    setIsEditing(false);
+    // 🔹 Notify parent component to update global state
+    onUpdateAgeRange(updatedRange);
+
+    setNewAgeRange(updatedRange);
+    setTimeout(() => handleCloseModal(), 50);
+  };
+
+  const handleEdit = (row: LCompAgeRangeDto, event: React.MouseEvent) => {
+    debugger;
+    event.stopPropagation();
+
+    const updatedRow = filteredAgeRanges.find((range) => range.carID === row.carID) || row;
+
+    setNewAgeRange({
+      ...updatedRow,
+      rModifiedOn: serverDate || new Date(),
+      rModifiedID: userID || 0,
+      rModifiedBy: userName || "",
+    });
+
+    setIsEditing(true);
+    setOpenModal(true);
   };
 
   const resetNewAgeRange = () => {
@@ -185,6 +202,8 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
       rCreatedOn: serverDate || new Date(),
       rModifiedOn: serverDate || new Date(),
     });
+
+    setFilteredAgeRanges((prev) => prev); // Ensure the table updates
   };
 
   useEffect(() => {
@@ -204,8 +223,7 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
   }, [ageRanges, selectedRow]);
 
   useEffect(() => {
-    const filtered = ageRanges.filter((range) => range.cappID === componentId || range.compOID === selectedComponent?.compoID);
-    setFilteredAgeRanges(filtered);
+    setFilteredAgeRanges(ageRanges.filter((range) => range.cappID === componentId || range.compOID === selectedComponent?.compoID));
   }, [ageRanges, componentId, selectedComponent]);
 
   return (

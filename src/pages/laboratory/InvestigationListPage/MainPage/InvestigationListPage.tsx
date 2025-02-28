@@ -106,44 +106,70 @@ const InvestigationListPage: React.FC = () => {
 
   const updateCompMultipleDetails = useCallback((data: LCompMultipleDto) => {
     if (!data.cmValues?.trim()) return;
+
     setCompMultipleDetails((prev) => {
-      const filtered = prev.filter((item) => item.cmValues?.trim() !== "");
-      const existingIndex = filtered.findIndex((item) => item.compOID === data.compOID && item.cmValues === data.cmValues);
-      if (existingIndex >= 0) {
-        const updated = [...filtered];
-        updated[existingIndex] = data;
-        return updated;
+      // Keep only active values
+      const filtered = prev.filter((item) => item.cmValues?.trim() !== "" && item.rActiveYN !== "N");
+
+      // For inactive items, just filter them out
+      if (data.rActiveYN === "N") {
+        return filtered.filter((item) => item.cmID !== data.cmID);
       }
-      if (data.defaultYN === "Y") {
-        filtered.forEach((item) => {
-          if (item.compOID === data.compOID) {
-            item.defaultYN = "N";
-          }
-        });
+
+      // Handle updates and new additions
+      const existingItemIndex = filtered.findIndex(
+        (item) =>
+          // Match by ID if it exists
+          (data.cmID > 0 && item.cmID === data.cmID) ||
+          // Or match by compOID and value for new items
+          (data.cmID === 0 && item.compOID === data.compOID && item.cmValues === data.cmValues)
+      );
+
+      if (existingItemIndex >= 0) {
+        // Update existing item
+        const updatedItems = [...filtered];
+        updatedItems[existingItemIndex] = {
+          ...filtered[existingItemIndex],
+          ...data,
+          cmValues: data.cmValues,
+          rActiveYN: "Y",
+        };
+        return updatedItems;
       }
-      return [...filtered, data];
+
+      // Add new item
+      return [...filtered, { ...data, rActiveYN: "Y" }];
     });
   }, []);
 
   const updateAgeRangeDetails = useCallback((data: LCompAgeRangeDto) => {
+    debugger;
     setAgeRangeDetails((prev) => {
-      const existingIndex = prev.findIndex(
-        (item) => item.carID === data.carID || (item.cappID === data.cappID && item.carSex === data.carSex && item.carStart === data.carStart && item.carEnd === data.carEnd)
-      );
+      const updatedRanges = prev.map((range) => (range.carID === data.carID ? { ...range, ...data } : range));
 
-      if (existingIndex >= 0) {
-        const updated = [...prev];
-        updated[existingIndex] = {
-          ...data,
-          carID: prev[existingIndex].carID,
-        };
-        return updated;
-      }
-      return [...prev, data];
+      return updatedRanges.some((range) => range.carID === data.carID) ? updatedRanges : [...prev, data];
     });
+
+    // 🔹 Ensure Component Details also updates
+    setComponentDetails((prev) =>
+      prev.map((comp) =>
+        comp.compoID === data.cappID
+          ? {
+              ...comp,
+              ageRanges: prev.filter((range) => range.compOID === comp.compoID || range.cappID === comp.compoID).map((range) => (range.carID === data.carID ? data : range)),
+            }
+          : comp
+      )
+    );
+
+    // 🔹 Update the selected component's state if currently selected
+    setSelectedComponent((prev) =>
+      prev && prev.compoID === data.cappID ? { ...prev, ageRanges: prev.ageRanges?.map((range: LCompAgeRangeDto) => (range.carID === data.carID ? data : range)) } : prev
+    );
   }, []);
 
   const updateTemplateDetails = useCallback((data: LCompTemplateDto) => {
+    debugger;
     setTemplateDetails((prev) => {
       const existingIndex = prev.findIndex((t) => t.tGroupID === data.tGroupID && t.compOID === data.compOID);
       if (existingIndex >= 0) {
@@ -154,9 +180,32 @@ const InvestigationListPage: React.FC = () => {
         return [...prev, data];
       }
     });
+
+    // 🔹 Ensure selectedComponent updates with templates
+    setComponentDetails((prev) =>
+      prev.map((comp) =>
+        comp.compoID === data.compOID
+          ? {
+              ...comp,
+              templates: [...(comp.templates || []).filter((t: LCompTemplateDto) => t.tGroupID !== data.tGroupID), data],
+            }
+          : comp
+      )
+    );
+
+    // 🔹 Update `selectedComponent` directly
+    setSelectedComponent((prev) =>
+      prev && prev.compoID === data.compOID
+        ? {
+            ...prev,
+            templates: [...(prev.templates || []).filter((t: LCompTemplateDto) => t.tGroupID !== data.tGroupID), data],
+          }
+        : prev
+    );
   }, []);
 
   const handleSave = async () => {
+    debugger;
     if (!investigationDetails || componentDetails.length === 0) {
       showAlert("error", "Please enter all required details before saving.", "error");
       return;
@@ -169,15 +218,27 @@ const InvestigationListPage: React.FC = () => {
         mGrpID: typeof comp.mGrpID === "string" ? parseInt((comp.mGrpID as string).replace(/\D/g, "")) : comp.mGrpID || 0,
         deltaValPercent: typeof comp.deltaValPercent === "string" ? parseFloat(comp.deltaValPercent as string) : comp.deltaValPercent,
       })),
-      lCompMultipleDtos: compMultipleDetails,
+      lCompMultipleDtos: compMultipleDetails.map((multiple) => ({
+        ...multiple,
+        cmID: multiple.cmID,
+        compOID: multiple.compOID,
+        cmValues: multiple.cmValues,
+        rModifiedOn: new Date(),
+        rActiveYN: "Y",
+        compID: multiple.compID || 1,
+        compCode: multiple.compCode || "",
+        compName: multiple.compName || "",
+        transferYN: multiple.transferYN || "N",
+      })),
       lCompAgeRangeDtos: ageRangeDetails,
       lCompTemplateDtos: templateDetails,
-      investigationDto: investigationDetails,
     };
 
     try {
       setIsLoading(true);
+      console.log("Saving Payload:", JSON.stringify(payload, null, 2)); // Debug log to check payload
       const response = await investigationlistService.save(payload);
+
       if (response.success) {
         showAlert("success", "Investigation details saved successfully!", "success");
         setShouldResetForm(true);
@@ -649,7 +710,10 @@ const InvestigationListPage: React.FC = () => {
           onUpdateCompMultiple={updateCompMultipleDetails}
           onUpdateAgeRange={updateAgeRangeDetails}
           onUpdateTemplate={updateTemplateDetails}
-          selectedComponent={selectedComponent!}
+          selectedComponent={{
+            ...selectedComponent!,
+            ageRanges: ageRangeDetails.filter((ar) => ar.compOID === selectedComponent?.compoID || ar.cappID === selectedComponent?.compoID),
+          }}
           setSelectedComponent={setSelectedComponent}
         />
       </GenericDialog>
