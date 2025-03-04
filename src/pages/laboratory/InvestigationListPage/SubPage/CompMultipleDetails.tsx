@@ -13,6 +13,9 @@ interface CompMultipleDetailsProps {
   compID?: number;
   compCode?: string;
   onUpdateCompMultiple: (multipleData: LCompMultipleDto) => void;
+  selectedValue: string;
+  formComp: LCompMultipleDto; // Receive formComp as a prop
+  setFormComp: React.Dispatch<React.SetStateAction<LCompMultipleDto>>; // Receive setFormComp as a prop
 }
 
 interface MultipleValue {
@@ -21,7 +24,7 @@ interface MultipleValue {
   invID?: number;
 }
 
-const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ compName, compOID, invID, compID, compCode, onUpdateCompMultiple }) => {
+const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, compName, compOID, invID, compID, compCode, onUpdateCompMultiple }) => {
   const [multipleSelectionState, setMultipleSelectionState] = useState({
     newValue: "",
     valuesList: [] as MultipleValue[],
@@ -66,7 +69,6 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ compName, com
   };
 
   const handleAddValue = () => {
-    debugger;
     if (multipleSelectionState.newValue.trim() === "") {
       showAlert("error", "Please enter a valid value", "error");
       return;
@@ -89,6 +91,12 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ compName, com
       rCreatedOn: existingValue?.cmID ? undefined : new Date(),
     };
 
+    // Update formComp state before calling onUpdateCompMultiple
+    setFormComp(updateData); // Make sure formComp is updated
+
+    // Now call onUpdateCompMultiple to update formComp in parent component
+    onUpdateCompMultiple(updateData);
+
     setMultipleSelectionState((prev) => ({
       ...prev,
       valuesList:
@@ -98,8 +106,6 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ compName, com
       newValue: "",
       editIndex: null,
     }));
-
-    onUpdateCompMultiple(updateData);
   };
 
   const handleEditValue = (index: number) => {

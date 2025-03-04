@@ -75,6 +75,7 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
   const handleOpenModal = () => setOpenModal(true);
 
   const handleCloseModal = () => {
+    debugger;
     if (!isEditing) {
       resetNewAgeRange(); // Reset only when not editing
     }

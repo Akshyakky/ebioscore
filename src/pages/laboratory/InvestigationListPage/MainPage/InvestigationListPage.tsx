@@ -15,6 +15,7 @@ import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { useAppSelector } from "@/store/hooks";
 
 const ComponentListItem = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -61,6 +62,7 @@ const InvestigationListPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [shouldResetForm, setShouldResetForm] = useState(false);
   const dropdownValues = useDropdownValues(["entryType"]);
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
 
   const handleAdvancedSearch = () => setIsSearchOpen(true);
   const handleCloseSearch = () => setIsSearchOpen(false);
@@ -72,9 +74,8 @@ const InvestigationListPage: React.FC = () => {
   const handleSelect = (selectedInvestigation: investigationDto) => {
     setInvestigationDetails(selectedInvestigation.lInvMastDto);
     setComponentDetails(selectedInvestigation.lComponentsDto || []);
-    setCompMultipleDetails(selectedInvestigation.lCompMultipleDtos || []);
-    setAgeRangeDetails(selectedInvestigation.lCompAgeRangeDtos || []);
     setTemplateDetails(selectedInvestigation.lCompTemplateDtos || []);
+    setSelectedComponent(selectedInvestigation.lComponentsDto?.[0] || null);
     setIsSearchOpen(false);
   };
 
@@ -106,39 +107,22 @@ const InvestigationListPage: React.FC = () => {
 
   const updateCompMultipleDetails = useCallback((data: LCompMultipleDto) => {
     if (!data.cmValues?.trim()) return;
-
     setCompMultipleDetails((prev) => {
-      // Keep only active values
-      const filtered = prev.filter((item) => item.cmValues?.trim() !== "" && item.rActiveYN !== "N");
-
-      // For inactive items, just filter them out
-      if (data.rActiveYN === "N") {
-        return filtered.filter((item) => item.cmID !== data.cmID);
+      const filtered = prev.filter((item) => item.cmValues?.trim() !== "");
+      const existingIndex = filtered.findIndex((item) => item.compOID === data.compOID && item.cmValues === data.cmValues);
+      if (existingIndex >= 0) {
+        const updated = [...filtered];
+        updated[existingIndex] = data;
+        return updated;
       }
-
-      // Handle updates and new additions
-      const existingItemIndex = filtered.findIndex(
-        (item) =>
-          // Match by ID if it exists
-          (data.cmID > 0 && item.cmID === data.cmID) ||
-          // Or match by compOID and value for new items
-          (data.cmID === 0 && item.compOID === data.compOID && item.cmValues === data.cmValues)
-      );
-
-      if (existingItemIndex >= 0) {
-        // Update existing item
-        const updatedItems = [...filtered];
-        updatedItems[existingItemIndex] = {
-          ...filtered[existingItemIndex],
-          ...data,
-          cmValues: data.cmValues,
-          rActiveYN: "Y",
-        };
-        return updatedItems;
+      if (data.defaultYN === "Y") {
+        filtered.forEach((item) => {
+          if (item.compOID === data.compOID) {
+            item.defaultYN = "N";
+          }
+        });
       }
-
-      // Add new item
-      return [...filtered, { ...data, rActiveYN: "Y" }];
+      return [...filtered, data];
     });
   }, []);
 
@@ -169,7 +153,6 @@ const InvestigationListPage: React.FC = () => {
   }, []);
 
   const updateTemplateDetails = useCallback((data: LCompTemplateDto) => {
-    debugger;
     setTemplateDetails((prev) => {
       const existingIndex = prev.findIndex((t) => t.tGroupID === data.tGroupID && t.compOID === data.compOID);
       if (existingIndex >= 0) {
@@ -181,7 +164,6 @@ const InvestigationListPage: React.FC = () => {
       }
     });
 
-    // 🔹 Ensure selectedComponent updates with templates
     setComponentDetails((prev) =>
       prev.map((comp) =>
         comp.compoID === data.compOID
@@ -193,7 +175,6 @@ const InvestigationListPage: React.FC = () => {
       )
     );
 
-    // 🔹 Update `selectedComponent` directly
     setSelectedComponent((prev) =>
       prev && prev.compoID === data.compOID
         ? {
@@ -215,8 +196,13 @@ const InvestigationListPage: React.FC = () => {
       lInvMastDto: investigationDetails,
       lComponentsDto: componentDetails.map((comp) => ({
         ...comp,
-        mGrpID: typeof comp.mGrpID === "string" ? parseInt((comp.mGrpID as string).replace(/\D/g, "")) : comp.mGrpID || 0,
-        deltaValPercent: typeof comp.deltaValPercent === "string" ? parseFloat(comp.deltaValPercent as string) : comp.deltaValPercent,
+        compCode: compCode || "",
+        compName: compName || "",
+        invNameCD: investigationDetails?.invName || "",
+        // lCentNameCD: comp.lCentNameCD || "DEFAULT_LCENT_NAME",
+        // lCentTypeCD: comp.lCentTypeCD || "DEFAULT_LCENT_TYPE",
+        mGrpID: typeof comp.mGrpID === "string" ? parseInt(comp.mGrpID, 10) || 0 : comp.mGrpID || 0,
+        deltaValPercent: typeof comp.deltaValPercent === "string" ? parseFloat(comp.deltaValPercent) : comp.deltaValPercent || 0,
       })),
       lCompMultipleDtos: compMultipleDetails.map((multiple) => ({
         ...multiple,
@@ -396,7 +382,7 @@ const InvestigationListPage: React.FC = () => {
               </Button>
             </Box>
 
-            {componentDetails.map((component: LComponentDto) => (
+            {componentDetails.map((component) => (
               <Zoom in key={`component-${component.compoID}-${component.compOCodeCD}`}>
                 <ComponentListItem className={selectedComponent?.compoID === component.compoID ? "selected" : ""}>
                   <Box sx={{ pl: 2, width: "100%" }}>
@@ -532,6 +518,7 @@ const InvestigationListPage: React.FC = () => {
                       </Box>
                     </Grid>
 
+                    {/* Template Values */}
                     {selectedComponent.lCentID === 7 && (
                       <Grid item xs={12}>
                         <Box sx={{ mt: 2 }}>
@@ -539,7 +526,7 @@ const InvestigationListPage: React.FC = () => {
                             Template Values
                           </Typography>
                           {(() => {
-                            const componentTemplates = templateDetails.filter((t) => t.compOID === selectedComponent.compoID);
+                            const componentTemplates = templateDetails.filter((template) => template.compOID === selectedComponent.compoID);
 
                             if (componentTemplates.length === 0) {
                               return (
@@ -552,9 +539,7 @@ const InvestigationListPage: React.FC = () => {
                             const groupedTemplates = componentTemplates.reduce(
                               (acc, template) => {
                                 const groupName = template.tGroupName || "Unnamed Group";
-                                if (!acc[groupName]) {
-                                  acc[groupName] = [];
-                                }
+                                if (!acc[groupName]) acc[groupName] = [];
                                 acc[groupName].push(template);
                                 return acc;
                               },
@@ -562,14 +547,11 @@ const InvestigationListPage: React.FC = () => {
                             );
 
                             return Object.entries(groupedTemplates).map(([groupName, templates]) => (
-                              <Zoom in key={`group-${groupName}`}>
+                              <Zoom in key={groupName}>
                                 <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
                                   <Box sx={{ mb: 1 }}>
                                     <Typography variant="caption" color="text.secondary">
-                                      Template Group:
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                      {groupName}
+                                      Template Group: {groupName}
                                     </Typography>
                                   </Box>
                                   <Divider sx={{ my: 1 }} />
@@ -592,6 +574,7 @@ const InvestigationListPage: React.FC = () => {
                       </Grid>
                     )}
 
+                    {/* Age Range Values */}
                     {selectedComponent?.lCentID === 6 && (
                       <Grid item xs={12}>
                         <Box sx={{ mt: 2 }}>
@@ -619,21 +602,28 @@ const InvestigationListPage: React.FC = () => {
                       </Grid>
                     )}
 
-                    {selectedComponent.lCentID === 5 && (
+                    {/* Multiple Choice Values */}
+                    {selectedComponent?.lCentID === 5 && (
                       <Grid item xs={12}>
                         <Box sx={{ mt: 2 }}>
                           <Typography variant="subtitle2" color="primary" sx={{ mb: 2 }}>
                             Multiple Choice Values
                           </Typography>
-                          {compMultipleDetails
-                            .filter((cm) => cm.compOID === selectedComponent.compoID)
-                            .map((choice, index) => (
-                              <Zoom in key={`choice-${choice.cmID}-${choice.compOID}-${index}`}>
-                                <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-                                  <Typography variant="body2">{choice.cmValues}</Typography>
-                                </Paper>
-                              </Zoom>
-                            ))}
+                          {compMultipleDetails.filter((cm: LCompMultipleDto) => cm.compOID === selectedComponent.compoID).length === 0 ? (
+                            <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
+                              No multiple choice values found for this component
+                            </Typography>
+                          ) : (
+                            compMultipleDetails
+                              .filter((cm: LCompMultipleDto) => cm.compOID === selectedComponent.compoID)
+                              .map((choice: LCompMultipleDto, index: number) => (
+                                <Zoom in key={`choice-${choice.cmID}-${choice.compOID}-${index}`}>
+                                  <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
+                                    <Typography variant="body2">{choice.cmValues}</Typography>
+                                  </Paper>
+                                </Zoom>
+                              ))
+                          )}
                         </Box>
                       </Grid>
                     )}
