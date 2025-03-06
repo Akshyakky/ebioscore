@@ -63,6 +63,7 @@ const InvestigationListPage: React.FC = () => {
   const [shouldResetForm, setShouldResetForm] = useState(false);
   const dropdownValues = useDropdownValues(["entryType"]);
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [updatedComponentDetails, setUpdatedComponentDetails] = useState<LComponentDto[]>([]); // New state for updated components
 
   const handleAdvancedSearch = () => setIsSearchOpen(true);
   const handleCloseSearch = () => setIsSearchOpen(false);
@@ -80,6 +81,7 @@ const InvestigationListPage: React.FC = () => {
   };
 
   const updateComponentDetails = useCallback((data: LComponentDto & { ageRanges?: LCompAgeRangeDto[] }) => {
+    debugger;
     setComponentDetails((prev) => {
       const existingIndex = prev.findIndex((c) => c.compoID === data.compoID);
       if (existingIndex >= 0) {
@@ -106,6 +108,7 @@ const InvestigationListPage: React.FC = () => {
   }, []);
 
   const updateCompMultipleDetails = useCallback((data: LCompMultipleDto) => {
+    debugger;
     if (!data.cmValues?.trim()) return;
     setCompMultipleDetails((prev) => {
       const filtered = prev.filter((item) => item.cmValues?.trim() !== "");
@@ -126,30 +129,20 @@ const InvestigationListPage: React.FC = () => {
     });
   }, []);
 
-  const updateAgeRangeDetails = useCallback((data: LCompAgeRangeDto) => {
-    debugger;
+  const updateAgeRangeDetails = useCallback((newAgeRange: LCompAgeRangeDto) => {
     setAgeRangeDetails((prev) => {
-      const updatedRanges = prev.map((range) => (range.carID === data.carID ? { ...range, ...data } : range));
-
-      return updatedRanges.some((range) => range.carID === data.carID) ? updatedRanges : [...prev, data];
+      const updatedRanges = prev.map((range) => (range.carID === newAgeRange.carID ? { ...range, ...newAgeRange } : range));
+      return updatedRanges.some((range) => range.carID === newAgeRange.carID) ? updatedRanges : [...prev, newAgeRange];
     });
 
-    // 🔹 Ensure Component Details also updates
-    setComponentDetails((prev) =>
-      prev.map((comp) =>
-        comp.compoID === data.cappID
-          ? {
-              ...comp,
-              ageRanges: prev.filter((range) => range.compOID === comp.compoID || range.cappID === comp.compoID).map((range) => (range.carID === data.carID ? data : range)),
-            }
-          : comp
-      )
-    );
-
-    // 🔹 Update the selected component's state if currently selected
-    setSelectedComponent((prev) =>
-      prev && prev.compoID === data.cappID ? { ...prev, ageRanges: prev.ageRanges?.map((range: LCompAgeRangeDto) => (range.carID === data.carID ? data : range)) } : prev
-    );
+    // Update the selected component's ageRanges
+    setSelectedComponent((prev) => {
+      if (prev) {
+        const updatedAgeRanges = prev.ageRanges ? prev.ageRanges.map((range: LCompAgeRangeDto) => (range.carID === newAgeRange.carID ? newAgeRange : range)) : [];
+        return { ...prev, ageRanges: updatedAgeRanges };
+      }
+      return prev;
+    });
   }, []);
 
   const updateTemplateDetails = useCallback((data: LCompTemplateDto) => {
@@ -615,7 +608,7 @@ const InvestigationListPage: React.FC = () => {
                             </Typography>
                           ) : (
                             compMultipleDetails
-                              .filter((cm: LCompMultipleDto) => cm.compOID === selectedComponent.compoID)
+                              .filter((cm: LCompMultipleDto) => cm.compOID === selectedComponent.compoID && cm.cmValues?.trim())
                               .map((choice: LCompMultipleDto, index: number) => (
                                 <Zoom in key={`choice-${choice.cmID}-${choice.compOID}-${index}`}>
                                   <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
@@ -703,6 +696,7 @@ const InvestigationListPage: React.FC = () => {
           selectedComponent={{
             ...selectedComponent!,
             ageRanges: ageRangeDetails.filter((ar) => ar.compOID === selectedComponent?.compoID || ar.cappID === selectedComponent?.compoID),
+            templates: templateDetails.filter((template) => template.compOID === selectedComponent?.compoID),
           }}
           setSelectedComponent={setSelectedComponent}
         />

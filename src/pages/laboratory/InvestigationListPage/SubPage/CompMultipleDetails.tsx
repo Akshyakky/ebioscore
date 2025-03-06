@@ -68,7 +68,9 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
     setMultipleSelectionState((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Inside CompMultipleDetails
   const handleAddValue = () => {
+    debugger;
     if (multipleSelectionState.newValue.trim() === "") {
       showAlert("error", "Please enter a valid value", "error");
       return;
@@ -91,11 +93,8 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
       rCreatedOn: existingValue?.cmID ? undefined : new Date(),
     };
 
-    // Update formComp state before calling onUpdateCompMultiple
-    setFormComp(updateData); // Make sure formComp is updated
-
-    // Now call onUpdateCompMultiple to update formComp in parent component
-    onUpdateCompMultiple(updateData);
+    setFormComp(updateData); // Update formComp state with new data
+    onUpdateCompMultiple(updateData); // Notify parent to update the list
 
     setMultipleSelectionState((prev) => ({
       ...prev,
