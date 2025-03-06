@@ -64,29 +64,17 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
     rModifiedOn: serverDate || new Date(),
   });
 
-  const [selectedRow, setSelectedRow] = useState<number | null>(null);
+  const [, setSelectedRow] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
   const handleOpenModal = () => setOpenModal(true);
 
   const handleCloseModal = () => {
     if (!isEditing) {
-      resetNewAgeRange(); // Reset only when not editing
+      resetNewAgeRange();
     }
-
     setIsEditing(false);
-    setOpenModal(false); // Move this to the end to ensure all updates happen first
-  };
-
-  const handleInputChange = (field: string, value: any) => {
-    setNewAgeRange({
-      ...newAgeRange,
-      [field]: value,
-      carAgeValue:
-        field === "carStart" || field === "carEnd"
-          ? `${field === "carStart" ? value : newAgeRange.carStart}-${field === "carEnd" ? value : newAgeRange.carEnd} ${newAgeRange.carAgeType}`
-          : newAgeRange.carAgeValue,
-    });
+    setOpenModal(false);
   };
 
   const handleSave = () => {
@@ -94,7 +82,6 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
       showAlert("error", "Please enter a valid age range", "error");
       return;
     }
-
     const updatedRange = {
       ...newAgeRange,
       cappID: componentId,
@@ -106,13 +93,11 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
       rModifiedID: userID || 0,
       rModifiedBy: userName || "",
     };
-
     if (newAgeRange.carID === 0) {
-      onAddAgeRange(updatedRange); // Add new range
+      onAddAgeRange(updatedRange);
     } else {
-      onUpdateAgeRange(updatedRange); // Update existing range
+      onUpdateAgeRange(updatedRange);
     }
-
     setNewAgeRange(updatedRange);
     handleCloseModal();
   };

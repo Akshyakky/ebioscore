@@ -38,7 +38,7 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
     cShortNameCD: "",
     cNHSEnglishNameCD: "",
     deltaValPercent: undefined,
-    compCode: selectedComponent?.compCode || "", // Initialize with selected component values or empty string
+    compCode: selectedComponent?.compCode || "",
     compName: selectedComponent?.compName || "",
     invNameCD: selectedComponent?.invNameCD || "",
     lCentNameCD: selectedComponent?.lCentNameCD || "",
@@ -96,20 +96,15 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
     (event: SelectChangeEvent<string>) => {
       const { name, value } = event.target;
       setFormState((prev) => ({ ...prev, [name]: value }));
-
       if (name === "lCentID") {
         const selectedID = Number(value);
         setSelectedLCentID(selectedID);
-
-        // Fetch or derive lCentNameCD and lCentTypeCD based on the selected lCentID
         const selectedEntry = dropdownValues["entryType"]?.find((item: any) => item.value === selectedID);
-
-        // If a valid entry is found, update lCentNameCD and lCentTypeCD
         if (selectedEntry) {
           setFormState((prev) => ({
             ...prev,
-            lCentNameCD: selectedEntry.lCentName || "", // Update lCentNameCD
-            lCentTypeCD: selectedEntry.lCentType || "", // Update lCentTypeCD
+            lCentNameCD: selectedEntry.lCentName || "",
+            lCentTypeCD: selectedEntry.lCentType || "",
           }));
         }
       }
@@ -119,7 +114,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
 
   const updateTemplateDetails = useCallback(
     (newTemplate: LCompTemplateDto) => {
-      debugger;
       setTemplateDetails((prev: LCompTemplateDto[]) => {
         const existingIndex = prev.findIndex((t) => t.tGroupID === newTemplate.tGroupID && t.compOID === newTemplate.compOID);
         if (existingIndex >= 0) {
@@ -130,20 +124,19 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
           return [...prev, newTemplate];
         }
       });
-      onUpdateTemplate(newTemplate); // Pass the updated template to the parent
+      onUpdateTemplate(newTemplate);
     },
     [onUpdateTemplate]
   );
 
   const handleOkClick = useCallback(() => {
-    debugger;
     if (!formState.compOCodeCD || !formState.compoNameCD || !formState.lCentID) {
       showAlert("error", "Please fill all required fields", "error");
       return;
     }
     const componentWithAgeRanges = {
       ...formState,
-      compoID: formState.compoID || 0, // Ensure it's passed correctly
+      compoID: formState.compoID || 0,
       ageRanges: formState.lCentID === 6 ? ageRanges : [],
     };
 
@@ -171,22 +164,16 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
 
   const handleAgeRangeUpdate = useCallback(
     (newAgeRange: LCompAgeRangeDto) => {
-      debugger;
       setAgeRanges((prev) => {
-        // Check if the age range exists
         const existingIndex = prev.findIndex((range) => range.carID === newAgeRange.carID);
         if (existingIndex >= 0) {
-          // If it exists, update it
           const updatedRanges = [...prev];
           updatedRanges[existingIndex] = { ...updatedRanges[existingIndex], ...newAgeRange };
           return updatedRanges;
         } else {
-          // If it doesn't exist, add it
           return [...prev, newAgeRange];
         }
       });
-
-      // Notify parent component to update global state
       onUpdateAgeRange(newAgeRange);
     },
     [onUpdateAgeRange]
@@ -245,11 +232,10 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
   };
 
   useEffect(() => {
-    debugger;
     if (selectedComponent) {
       setFormState({
         ...selectedComponent,
-        compoID: selectedComponent.compoID || 0, // Ensure compoID is passed correctly
+        compoID: selectedComponent.compoID || 0,
       });
       setSelectedLCentID(selectedComponent.lCentID || null);
       if (selectedComponent.lCentID === 6) {
@@ -257,7 +243,7 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
         setAgeRanges(componentAgeRanges);
       }
     }
-  }, [selectedComponent?.compoID]); // Watch for changes in selectedComponent or its compoID
+  }, [selectedComponent?.compoID]);
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -382,8 +368,8 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
             invID={selectedComponent?.invID || 0}
             selectedValue={selectedComponent?.selectedValue || ""}
             onUpdateCompMultiple={onUpdateCompMultiple}
-            formComp={formComp} // Pass formComp to the child
-            setFormComp={setFormComp} // Pass setFormComp to the child
+            formComp={formComp}
+            setFormComp={setFormComp}
           />
         </Grid>
       )}
@@ -405,7 +391,7 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({ onUpdate, onUpdat
           onUpdateTemplate={updateTemplateDetails}
           selectedComponent={{
             ...formState,
-            compoID: formState.compoID, // Ensure compoID is passed
+            compoID: formState.compoID,
             invID: formState.invID,
             compCode: formState.compOCodeCD,
           }}

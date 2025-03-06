@@ -9,10 +9,7 @@ import FormatListNumberedIcon from "@mui/icons-material/FormatListNumbered";
 import FormatAlignLeftIcon from "@mui/icons-material/FormatAlignLeft";
 import FormatAlignCenterIcon from "@mui/icons-material/FormatAlignCenter";
 import FormatAlignRightIcon from "@mui/icons-material/FormatAlignRight";
-import UndoIcon from "@mui/icons-material/Undo";
-import RedoIcon from "@mui/icons-material/Redo";
 import FormatColorTextIcon from "@mui/icons-material/FormatColorText";
-import FormatColorFillIcon from "@mui/icons-material/FormatColorFill";
 import FormatClearIcon from "@mui/icons-material/FormatClear";
 import InsertLinkIcon from "@mui/icons-material/InsertLink";
 import CodeIcon from "@mui/icons-material/Code";
@@ -77,12 +74,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
     // Save current selection
     const selection = document.getSelection();
     const range = selection?.getRangeAt(0);
-
-    // Focus editor before executing command
     if (editorRef.current) {
       editorRef.current.focus();
-
-      // Restore selection if exists
       if (range) {
         selection?.removeAllRanges();
         selection?.addRange(range);
@@ -125,8 +118,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
         display: showColorPicker ? "grid" : "none",
         gridTemplateColumns: "repeat(10, 1fr)",
         gap: 0.5,
+        height: "100%",
       }}
-      onMouseDown={(e) => e.preventDefault()} // Prevent losing selection
+      onMouseDown={(e) => e.preventDefault()}
     >
       {COLORS.map((color) => (
         <Box
@@ -137,7 +131,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
           }}
           sx={{
             width: 24,
-            height: 24,
+            height: 4,
             backgroundColor: color,
             cursor: "pointer",
             border: "1px solid #ccc",
@@ -152,9 +146,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
   );
 
   return (
-    <Paper elevation={3} sx={{ border: "1px solid #e0e0e0", borderRadius: 2, overflow: "hidden" }}>
+    <Paper elevation={3} sx={{ border: "1px solidrgb(161, 43, 43)", borderRadius: 2, overflow: "hidden", height: "100%" }}>
       <Box sx={{ backgroundColor: "#f5f5f5", borderBottom: "1px solid #e0e0e0" }}>
-        {/* First Toolbar Row */}
         <Box
           sx={{
             p: 1,
@@ -210,8 +203,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
             </Box>
           </Tooltip>
         </Box>
-
-        {/* Second Toolbar Row */}
         <Box
           sx={{
             p: 1,
@@ -298,7 +289,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
         sx={{
           p: 2,
           minHeight: "300px",
-          maxHeight: "500px",
+          maxHeight: "700px",
           overflowY: "auto",
           backgroundColor: "#ffffff",
           "&:focus": {

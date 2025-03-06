@@ -63,7 +63,6 @@ const InvestigationListPage: React.FC = () => {
   const [shouldResetForm, setShouldResetForm] = useState(false);
   const dropdownValues = useDropdownValues(["entryType"]);
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
-  const [updatedComponentDetails, setUpdatedComponentDetails] = useState<LComponentDto[]>([]); // New state for updated components
 
   const handleAdvancedSearch = () => setIsSearchOpen(true);
   const handleCloseSearch = () => setIsSearchOpen(false);
@@ -77,11 +76,12 @@ const InvestigationListPage: React.FC = () => {
     setComponentDetails(selectedInvestigation.lComponentsDto || []);
     setTemplateDetails(selectedInvestigation.lCompTemplateDtos || []);
     setSelectedComponent(selectedInvestigation.lComponentsDto?.[0] || null);
+    setAgeRangeDetails(selectedInvestigation.lCompAgeRangeDtos || []);
+    setCompMultipleDetails(selectedInvestigation.lCompMultipleDtos || []);
     setIsSearchOpen(false);
   };
 
   const updateComponentDetails = useCallback((data: LComponentDto & { ageRanges?: LCompAgeRangeDto[] }) => {
-    debugger;
     setComponentDetails((prev) => {
       const existingIndex = prev.findIndex((c) => c.compoID === data.compoID);
       if (existingIndex >= 0) {
@@ -108,7 +108,6 @@ const InvestigationListPage: React.FC = () => {
   }, []);
 
   const updateCompMultipleDetails = useCallback((data: LCompMultipleDto) => {
-    debugger;
     if (!data.cmValues?.trim()) return;
     setCompMultipleDetails((prev) => {
       const filtered = prev.filter((item) => item.cmValues?.trim() !== "");
@@ -135,7 +134,6 @@ const InvestigationListPage: React.FC = () => {
       return updatedRanges.some((range) => range.carID === newAgeRange.carID) ? updatedRanges : [...prev, newAgeRange];
     });
 
-    // Update the selected component's ageRanges
     setSelectedComponent((prev) => {
       if (prev) {
         const updatedAgeRanges = prev.ageRanges ? prev.ageRanges.map((range: LCompAgeRangeDto) => (range.carID === newAgeRange.carID ? newAgeRange : range)) : [];
@@ -179,7 +177,6 @@ const InvestigationListPage: React.FC = () => {
   }, []);
 
   const handleSave = async () => {
-    debugger;
     if (!investigationDetails || componentDetails.length === 0) {
       showAlert("error", "Please enter all required details before saving.", "error");
       return;
@@ -192,8 +189,6 @@ const InvestigationListPage: React.FC = () => {
         compCode: compCode || "",
         compName: compName || "",
         invNameCD: investigationDetails?.invName || "",
-        // lCentNameCD: comp.lCentNameCD || "DEFAULT_LCENT_NAME",
-        // lCentTypeCD: comp.lCentTypeCD || "DEFAULT_LCENT_TYPE",
         mGrpID: typeof comp.mGrpID === "string" ? parseInt(comp.mGrpID, 10) || 0 : comp.mGrpID || 0,
         deltaValPercent: typeof comp.deltaValPercent === "string" ? parseFloat(comp.deltaValPercent) : comp.deltaValPercent || 0,
       })),
@@ -204,7 +199,7 @@ const InvestigationListPage: React.FC = () => {
         cmValues: multiple.cmValues,
         rModifiedOn: new Date(),
         rActiveYN: "Y",
-        compID: multiple.compID || 1,
+        compID: compID || 0,
         compCode: multiple.compCode || "",
         compName: multiple.compName || "",
         transferYN: multiple.transferYN || "N",
@@ -215,7 +210,6 @@ const InvestigationListPage: React.FC = () => {
 
     try {
       setIsLoading(true);
-      console.log("Saving Payload:", JSON.stringify(payload, null, 2)); // Debug log to check payload
       const response = await investigationlistService.save(payload);
 
       if (response.success) {
@@ -269,10 +263,11 @@ const InvestigationListPage: React.FC = () => {
 
   const handleEditComponent = (component: LComponentDto) => {
     const componentAgeRanges = ageRangeDetails.filter((range) => range.compOID === component.compoID || range.cappID === component.compoID);
-
+    const componentMultipleChoices = compMultipleDetails.filter((multiple) => multiple.compOID === component.compoID && multiple.cmValues?.trim() !== "");
     setSelectedComponent({
       ...component,
       ageRanges: componentAgeRanges,
+      multipleChoices: componentMultipleChoices,
     });
     setIsComponentDialogOpen(true);
   };
@@ -511,7 +506,6 @@ const InvestigationListPage: React.FC = () => {
                       </Box>
                     </Grid>
 
-                    {/* Template Values */}
                     {selectedComponent.lCentID === 7 && (
                       <Grid item xs={12}>
                         <Box sx={{ mt: 2 }}>
@@ -567,7 +561,6 @@ const InvestigationListPage: React.FC = () => {
                       </Grid>
                     )}
 
-                    {/* Age Range Values */}
                     {selectedComponent?.lCentID === 6 && (
                       <Grid item xs={12}>
                         <Box sx={{ mt: 2 }}>
@@ -595,7 +588,6 @@ const InvestigationListPage: React.FC = () => {
                       </Grid>
                     )}
 
-                    {/* Multiple Choice Values */}
                     {selectedComponent?.lCentID === 5 && (
                       <Grid item xs={12}>
                         <Box sx={{ mt: 2 }}>
@@ -678,15 +670,11 @@ const InvestigationListPage: React.FC = () => {
       <Box sx={{ mb: 4 }}>
         <InvestigationListDetails onUpdate={updateInvestigationDetails} investigationData={investigationDetails} shouldReset={shouldResetForm} />
       </Box>
-
       {renderComponentDetails()}
-
       <Box sx={{ mt: 4 }}>
         <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
       </Box>
-
       <InvestigationListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} onEdit={handleEdit} />
-
       <GenericDialog open={isComponentDialogOpen} onClose={() => setIsComponentDialogOpen(false)} title="Add New Component" maxWidth="md" fullWidth>
         <LComponentDetails
           onUpdate={updateComponentDetails}

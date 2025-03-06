@@ -57,7 +57,7 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
   const [openModal, setOpenModal] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [selectedTemplate] = useState<Template | null>(null);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
   const [formDataDialog, setFormDataDialog] = useState<AppModifyFieldDto>({
@@ -108,14 +108,12 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
       showAlert("error", "Please select a template group and enter content", "error");
       return;
     }
-
     try {
       const selectedGroup = templateGroups.find((g) => g.amlID === selectedTemplateGroupId);
       if (!selectedGroup) {
         showAlert("error", "Selected template group not found", "error");
         return;
       }
-
       const newTemplate: LCompTemplateDto = {
         cTID: 0,
         tGroupID: selectedGroup.amlID,
@@ -137,12 +135,8 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
         rCreatedId: userID || 0,
       };
 
-      // Add the new template but avoid resetting other form data.
       onUpdateTemplate(newTemplate);
       showAlert("success", "Template added successfully", "success");
-
-      // Do not reset the editorValue here
-      // Keep the selectedTemplateGroupId to maintain the selected state
     } catch (error) {
       showAlert("error", "Failed to add template", "error");
     }
@@ -370,13 +364,11 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
         await appModifiedListService.save(updatedGroup);
         await fetchTemplateGroups();
       }
-    } catch (error) {
-      console.error("Error deleting template group:", error);
-    }
+    } catch (error) {}
   };
 
   return (
-    <Box sx={{ p: 3, display: "flex", gap: 3, backgroundColor: "#f4f6f8" }}>
+    <Box sx={{ p: 3, display: "flex", gap: 3, backgroundColor: "#f4f6f8", position: "relative", minHeight: "calc(100vh - 120px)" }}>
       <Card
         sx={{
           flex: 1,
@@ -384,8 +376,8 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
           boxShadow: 3,
           backgroundColor: "#ffffff",
           transition: "height 0.3s ease-in-out",
-          minHeight: "250px",
-          maxHeight: "90vh",
+          minHeight: "100px",
+          maxHeight: "70vh",
           display: "flex",
           flexDirection: "column",
         }}
@@ -469,7 +461,7 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
               borderRadius: 2,
               boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
               overflow: "auto",
-              height: "300px",
+              height: "400px",
               border: "1px solid #e0e0e0",
               "& .MuiTable-root": {
                 borderCollapse: "separate",
@@ -570,21 +562,43 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
         </CardContent>
       </Card>
 
-      <Card sx={{ flex: 1, borderRadius: 3, boxShadow: 3, backgroundColor: "#ffffff" }}>
-        <CardContent>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-            <Typography variant="h6" fontWeight="bold" color="primary">
-              Template Editor
-            </Typography>
+      <Card
+        sx={{
+          flex: 1,
+          borderRadius: 3,
+          boxShadow: 3,
+          backgroundColor: "#ffffff",
+          display: "flex",
+          flexDirection: "column",
+          height: "665px",
+        }}
+      >
+        <CardContent sx={{ display: "flex", flexDirection: "column", height: "665px" }}>
+          <Typography variant="h6" fontWeight="bold" color="primary">
+            Template Editor
+          </Typography>
 
-            {selectedTemplate && (
-              <Button variant="contained" color="primary" onClick={handleSaveTemplateContent} startIcon={<SaveIcon />}>
-                Save Template
-              </Button>
-            )}
+          <Box sx={{ flex: 1, border: "1px solid #e0e0e0", borderRadius: 2, overflow: "hidden" }}>
+            <RichTextEditor value={editorValue} onChange={handleEditorChange} />
           </Box>
 
-          <RichTextEditor value={editorValue} onChange={handleEditorChange} />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleAddTemplate}
+            startIcon={<SaveIcon />}
+            sx={{
+              mt: 2,
+              borderRadius: 2,
+              fontWeight: "bold",
+              background: "linear-gradient(135deg,rgb(42, 117, 7) 30%,rgb(35, 121, 27) 90%)",
+              "&:hover": {
+                background: "linear-gradient(135deg,rgb(8, 112, 30) 30%,rgb(12, 94, 23) 90%)",
+              },
+            }}
+          >
+            Save Template
+          </Button>
         </CardContent>
       </Card>
 
@@ -646,24 +660,6 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
         isFieldCodeDisabled={true}
         initialFormData={formDataDialog}
       />
-
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleAddTemplate}
-        sx={{
-          mt: 2,
-          borderRadius: 2,
-          fontWeight: "bold",
-          background: "linear-gradient(135deg, #007FFF 30%, #0059B2 90%)",
-          boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.15)",
-          "&:hover": {
-            background: "linear-gradient(135deg, #0059B2 30%, #004396 90%)",
-          },
-        }}
-      >
-        Add Template Value
-      </Button>
     </Box>
   );
 };
