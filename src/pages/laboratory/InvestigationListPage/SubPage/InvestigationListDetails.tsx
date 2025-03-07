@@ -15,7 +15,7 @@ interface InvestigationListDetailsProps {
 }
 
 const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onUpdate, investigationData, shouldReset }) => {
-  const dropdownValues = useDropdownValues(["investigationType", "sampleType"]);
+  const dropdownValues = useDropdownValues(["investigationType", "sampleType", "service"]);
   const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
 
@@ -162,6 +162,8 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
     },
     [debouncedUpdate]
   );
+  // Filter service options based on `isLabYN === 'Y'`
+  const filteredServiceOptions = dropdownValues.service?.filter((item) => item.isLabYN && item.isLabYN === "Y") || [];
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -207,10 +209,9 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
           onChange={handleSelectChange}
           name="invType"
           ControlID="invType"
-          options={dropdownValues.investigationType || [{ value: "", label: "Loading..." }]}
+          options={filteredServiceOptions.length > 0 ? filteredServiceOptions : [{ value: "", label: "No Service Available" }]}
           isMandatory
         />
-
         <FormField
           type="text"
           label="Resource Code"

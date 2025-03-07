@@ -12,7 +12,7 @@ import { ContactMastService } from "@/services/CommonServices/ContactMastService
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { DeptUnitListService } from "@/services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
-import { ServiceTypeService } from "@/services/BillingServices/ServiceTypeServices";
+// import { ServiceTypeService } from "@/services/BillingServices/ServiceTypeServices";
 import { roomGroupService, roomListService, wardCategoryService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
 import { productGroupService, productSubGroupService, productTaxService, productUnitService } from "@/services/InventoryManagementService/inventoryManagementService";
@@ -27,6 +27,8 @@ import {
 import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
 import { componentEntryTypeService, templategroupService } from "@/services/Laboratory/LaboratoryService";
 import { appSubModuleService, appUserModuleService } from "@/services/SecurityManagementServices/securityManagementServices";
+import { serviceTypeService } from "@/services/BillingServices/BillingGenericService";
+import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 
 type DropdownType =
   | "pic"
@@ -84,7 +86,9 @@ type DropdownType =
   | "subModules"
   | "mainGroup"
   | "subTitle"
-  | "sampleType";
+  | "sampleType"
+  | "chargeType"
+  | "serviceType";
 
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
   const [dropdownValues, setDropdownValues] = useState<Record<DropdownType, DropdownOption[]>>({} as Record<DropdownType, DropdownOption[]>);
@@ -206,11 +210,13 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             }));
             break;
           case "service":
-            response = await ServiceTypeService.getAllServiceType();
-            response = (response.data || []).map((item: any) => ({
+            response = await serviceTypeService.getAll();
+            response = (response.data || []).map((item: ServiceTypeDto) => ({
               value: item.bchID || 0,
               label: item.bchName || "",
+              isLabYN: item.isLabYN, // Add this line to include isLabYN in the mapped data
             }));
+
             break;
           case "bedCategory":
             response = await wardCategoryService.getAll();
@@ -364,6 +370,14 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             break;
           case "sampleType":
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "SAMPLETYPE");
+            break;
+
+          case "serviceType":
+            response = await serviceTypeService.getAll();
+            response = (response.data || []).map((item: ServiceTypeDto) => ({
+              value: item.bchID || 0,
+              label: item.bchName || "",
+            }));
             break;
 
           default:
