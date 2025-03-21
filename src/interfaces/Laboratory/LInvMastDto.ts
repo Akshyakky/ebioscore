@@ -60,7 +60,7 @@ export interface LComponentDto extends BaseDto {
   deptNameCD?: string;
   deltaValPercent?: number;
   compOCodeCD?: string;
-  compoID?: number;
+  compoID: number;
   compoNameCD?: string;
   compoTitleCD?: string;
   invCodeCD?: string;
@@ -158,4 +158,18 @@ export interface LCompTemplateDto extends BaseDto {
   rCreatedId?: number;
   rModifiedId?: number;
   invID?: number;
+}
+
+export interface InvestigationFormErrors {
+  invCode?: string;
+  invName?: string;
+  invShortName?: string;
+  bchID?: string;
+}
+
+export interface ComponentFormErrors {
+  compOCodeCD?: string;
+  compoNameCD?: string;
+  cShortNameCD?: string;
+  lCentID?: string;
 }

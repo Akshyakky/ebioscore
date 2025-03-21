@@ -9,13 +9,19 @@ import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
 import InvestigationListDetails from "../SubPage/InvestigationListDetails";
 import InvestigationListSearch from "../SubPage/InvestigationListSearch";
 import LComponentDetails from "../SubPage/InvComponentsDetails";
-import { investigationDto, LInvMastDto, LComponentDto, LCompMultipleDto, LCompAgeRangeDto, LCompTemplateDto } from "@/interfaces/Laboratory/LInvMastDto";
+import { investigationDto, LInvMastDto, LComponentDto, LCompMultipleDto, LCompAgeRangeDto, LCompTemplateDto, InvestigationFormErrors } from "@/interfaces/Laboratory/LInvMastDto";
 import { showAlert } from "@/utils/Common/showAlert";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { useAppSelector } from "@/store/hooks";
+import PrintPreferences from "../SubPage/PrintPreference";
+import { notifyWarning } from "@/utils/Common/toastManager";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import PrintIcon from "@mui/icons-material/Print";
+import NavBar from "@/components/GenericNav/GenericNav";
+import CustomButton from "@/components/Button/CustomButton";
 
 const ComponentListItem = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -57,15 +63,20 @@ const InvestigationListPage: React.FC = () => {
   const [ageRangeDetails, setAgeRangeDetails] = useState<LCompAgeRangeDto[]>([]);
   const [templateDetails, setTemplateDetails] = useState<LCompTemplateDto[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<LComponentDto | null>(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isComponentDialogOpen, setIsComponentDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [shouldResetForm, setShouldResetForm] = useState(false);
   const dropdownValues = useDropdownValues(["entryType"]);
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
-
-  const handleAdvancedSearch = () => setIsSearchOpen(true);
-  const handleCloseSearch = () => setIsSearchOpen(false);
+  const [activeView, setActiveView] = useState<"component" | "printPreferences">("component");
+  const [isComponentDialogOpen, setIsComponentDialogOpen] = useState(false);
+  const [unsavedComponents, setUnsavedComponents] = useState<LComponentDto[]>([]);
+  const [, setFormErrors] = useState<InvestigationFormErrors>({});
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [printPreferences, setPrintPreferences] = useState<{ invTitle?: string; invSTitle?: string }>({
+    invTitle: "",
+    invSTitle: "",
+  });
 
   const updateInvestigationDetails = useCallback((data: LInvMastDto) => {
     setInvestigationDetails(data);
@@ -78,34 +89,90 @@ const InvestigationListPage: React.FC = () => {
     setSelectedComponent(selectedInvestigation.lComponentsDto?.[0] || null);
     setAgeRangeDetails(selectedInvestigation.lCompAgeRangeDtos || []);
     setCompMultipleDetails(selectedInvestigation.lCompMultipleDtos || []);
+    setPrintPreferences({
+      invTitle: selectedInvestigation.lInvMastDto?.invTitle || "",
+      invSTitle: selectedInvestigation.lInvMastDto?.invSTitle || "",
+    });
     setIsSearchOpen(false);
   };
 
-  const updateComponentDetails = useCallback((data: LComponentDto & { ageRanges?: LCompAgeRangeDto[] }) => {
-    setComponentDetails((prev) => {
-      const existingIndex = prev.findIndex((c) => c.compoID === data.compoID);
-      if (existingIndex >= 0) {
-        const updated = [...prev];
-        updated[existingIndex] = data;
-        return updated;
-      }
-      return [...prev, data];
-    });
-    if (data.ageRanges?.length) {
-      setAgeRangeDetails((prev) => {
-        const filteredRanges = prev.filter((range) => range.compOID !== data.compoID);
-        const updatedRanges = data.ageRanges!.map((range) => ({
-          ...range,
-          compOID: data.compoID,
-          cappID: data.compoID,
-        }));
+  const handleAdvancedSearch = () => {
+    setIsSearchOpen(true);
+  };
 
-        return [...filteredRanges, ...updatedRanges];
-      });
+  const handleCloseSearch = () => {
+    setIsSearchOpen(false);
+  };
+
+  const validateFormData = useCallback(() => {
+    const errors: InvestigationFormErrors = {};
+    if (!investigationDetails?.invCode?.trim()) {
+      errors.invCode = "Investigation Code is required.";
+    }
+    if (!investigationDetails?.invName?.trim()) {
+      errors.invName = "Investigation Name is required.";
+    }
+    if (!investigationDetails?.invShortName?.trim()) {
+      errors.invShortName = "Investigation Short Name  is required.";
+    }
+    if (!investigationDetails?.bchID) {
+      errors.bchID = "Investigation Type  is required.";
     }
 
-    setIsComponentDialogOpen(false);
-  }, []);
+    setFormErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      if (isSubmitted) {
+      }
+      return false;
+    }
+
+    return true;
+  }, [investigationDetails, isSubmitted]);
+
+  const updateComponentDetails = useCallback(
+    (
+      data: LComponentDto & {
+        ageRanges?: LCompAgeRangeDto[];
+        multipleChoiceValues?: LCompMultipleDto[];
+      }
+    ) => {
+      setComponentDetails((prev) => {
+        const existingComponentIndex = prev.findIndex((c) => c.compoID === data.compoID);
+        if (existingComponentIndex !== -1) {
+          return prev.map((comp) =>
+            comp.compoID === data.compoID
+              ? {
+                  ...comp,
+                  ...data,
+                  multipleChoiceValues: data.multipleChoiceValues || comp.multipleChoiceValues || [],
+                  ageRanges: data.ageRanges || comp.ageRanges || [],
+                }
+              : comp
+          );
+        }
+
+        return [...prev, data];
+      });
+
+      if (data.ageRanges?.length) {
+        setAgeRangeDetails((prev) => {
+          const filteredRanges = prev.filter((range) => range.compOID !== data.compoID);
+
+          const updatedRanges = (data.ageRanges ?? []).map((range) => ({
+            ...range,
+            compOID: data.compoID || 0,
+            cappID: data.compoID || 0,
+          }));
+
+          return [...filteredRanges, ...updatedRanges];
+        });
+      }
+
+      setIsComponentDialogOpen(false);
+    },
+    []
+  );
 
   const updateCompMultipleDetails = useCallback((data: LCompMultipleDto) => {
     if (!data.cmValues?.trim()) return;
@@ -130,13 +197,23 @@ const InvestigationListPage: React.FC = () => {
 
   const updateAgeRangeDetails = useCallback((newAgeRange: LCompAgeRangeDto) => {
     setAgeRangeDetails((prev) => {
-      const updatedRanges = prev.map((range) => (range.carID === newAgeRange.carID ? { ...range, ...newAgeRange } : range));
-      return updatedRanges.some((range) => range.carID === newAgeRange.carID) ? updatedRanges : [...prev, newAgeRange];
+      const existingEntryIndex = prev.findIndex(
+        (range) => range.carStart === newAgeRange.carStart && range.carEnd === newAgeRange.carEnd && range.carName === newAgeRange.carName && range.carSex === newAgeRange.carSex
+      );
+
+      if (existingEntryIndex !== -1) {
+        const updatedRanges = [...prev];
+        updatedRanges[existingEntryIndex] = { ...prev[existingEntryIndex], ...newAgeRange };
+        return updatedRanges;
+      }
+
+      return [...prev, newAgeRange];
     });
 
     setSelectedComponent((prev) => {
       if (prev) {
         const updatedAgeRanges = prev.ageRanges ? prev.ageRanges.map((range: LCompAgeRangeDto) => (range.carID === newAgeRange.carID ? newAgeRange : range)) : [];
+
         return { ...prev, ageRanges: updatedAgeRanges };
       }
       return prev;
@@ -176,21 +253,118 @@ const InvestigationListPage: React.FC = () => {
     );
   }, []);
 
-  const handleSave = async () => {
-    if (!investigationDetails || componentDetails.length === 0) {
-      showAlert("error", "Please enter all required details before saving.", "error");
+  const handleCodeSelect = async (selectedSuggestion: string) => {
+    const selectedCode = selectedSuggestion?.split(" - ")[0]?.trim();
+    if (!selectedCode) {
+      showAlert("Error", "Invalid investigation code selected.", "error");
       return;
     }
 
+    try {
+      setIsLoading(true);
+      const allInvestigationsResponse = await investigationlistService.getAll();
+      if (allInvestigationsResponse?.success && allInvestigationsResponse.data) {
+        const allInvestigations = allInvestigationsResponse.data;
+
+        const matchingInvestigation = allInvestigations.find((inv: LInvMastDto) => inv?.lInvMastDto?.invCode === selectedCode);
+
+        if (matchingInvestigation?.lInvMastDto?.invID) {
+          const investigationDetailsResponse = await investigationlistService.getById(matchingInvestigation.lInvMastDto.invID);
+
+          if (investigationDetailsResponse?.success && investigationDetailsResponse.data) {
+            const investigationDetails = investigationDetailsResponse.data;
+
+            setInvestigationDetails({
+              ...investigationDetails.lInvMastDto,
+              invCode: selectedCode,
+            });
+            setComponentDetails(investigationDetails.lComponentsDto || []);
+            setCompMultipleDetails(investigationDetails.lCompMultipleDtos || []);
+            setAgeRangeDetails(investigationDetails.lCompAgeRangeDtos || []);
+            setTemplateDetails(investigationDetails.lCompTemplateDtos || []);
+            setPrintPreferences({
+              invTitle: investigationDetails.lInvMastDto?.invTitle || "",
+              invSTitle: investigationDetails.lInvMastDto?.invSTitle || "",
+            });
+
+            if (investigationDetails.lComponentsDto?.length > 0) {
+              setSelectedComponent({
+                ...investigationDetails.lComponentsDto[0],
+                ageRanges:
+                  investigationDetails.lCompAgeRangeDtos?.filter(
+                    (range: LCompAgeRangeDto) => range.compOID === investigationDetails.lComponentsDto[0].compoID || range.cappID === investigationDetails.lComponentsDto[0].compoID
+                  ) || [],
+              });
+            }
+          } else {
+            showAlert("Info", "No matching investigation details found.", "info");
+          }
+        } else {
+          showAlert("Info", "No matching investigation found.", "info");
+        }
+      } else {
+        showAlert("Error", "Failed to fetch investigations.", "error");
+      }
+    } catch (error) {
+      console.error("Error fetching investigation details:", error);
+      showAlert("Error", "Error fetching investigation details.", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const mergedComponents = [...componentDetails, ...unsavedComponents];
+
+  const handleSave = async () => {
+    setIsSubmitted(true);
+    if (!validateFormData()) {
+      notifyWarning("Please fill all mandatory fields.");
+      return;
+    }
+    const defaultInvestigationDetails: LInvMastDto = {
+      invID: investigationDetails?.invID ?? 0,
+      invName: investigationDetails?.invName || "",
+      invTypeCode: investigationDetails?.invTypeCode || "",
+      invReportYN: investigationDetails?.invReportYN || "N",
+      invSampleYN: investigationDetails?.invSampleYN || "N",
+      invPrintOrder: investigationDetails?.invPrintOrder || 0,
+      deptID: investigationDetails?.deptID ?? 0,
+      rCreatedOn: investigationDetails?.rCreatedOn || new Date(),
+      rModifiedOn: investigationDetails?.rModifiedOn || new Date(),
+      rCreatedID: investigationDetails?.rCreatedID || 0,
+      rModifiedID: investigationDetails?.rModifiedID || 0,
+      bchID: investigationDetails?.bchID ?? 0,
+      invCode: investigationDetails?.invCode || "",
+      invType: investigationDetails?.invType || "",
+      invNHCode: investigationDetails?.invNHCode || "",
+      invNHEnglishName: investigationDetails?.invNHEnglishName || "",
+      invNHGreekName: investigationDetails?.invNHGreekName || "",
+      invSampleType: investigationDetails?.invSampleType || "",
+      invShortName: investigationDetails?.invShortName || "",
+      methods: investigationDetails?.methods || "",
+      coopLabs: investigationDetails?.coopLabs || "",
+      compID: investigationDetails?.compID ?? 0,
+      compCode: investigationDetails?.compCode || "",
+      compName: investigationDetails?.compName || "",
+      transferYN: investigationDetails?.transferYN || "N",
+      rActiveYN: investigationDetails?.rActiveYN || "Y",
+    };
+
     const payload: investigationDto = {
-      lInvMastDto: investigationDetails,
-      lComponentsDto: componentDetails.map((comp) => ({
+      lInvMastDto: {
+        ...defaultInvestigationDetails,
+        invTitle: printPreferences.invTitle,
+        invSTitle: printPreferences.invSTitle,
+      },
+      lComponentsDto: mergedComponents.map((comp, index) => ({
         ...comp,
         compCode: compCode || "",
         compName: compName || "",
         invNameCD: investigationDetails?.invName || "",
         mGrpID: typeof comp.mGrpID === "string" ? parseInt(comp.mGrpID, 10) || 0 : comp.mGrpID || 0,
         deltaValPercent: typeof comp.deltaValPercent === "string" ? parseFloat(comp.deltaValPercent) : comp.deltaValPercent || 0,
+        compoID: comp.compoID < 0 ? 0 : comp.compoID,
+        compOrder: comp.compOrder || index + 1,
       })),
       lCompMultipleDtos: compMultipleDetails.map((multiple) => ({
         ...multiple,
@@ -204,7 +378,10 @@ const InvestigationListPage: React.FC = () => {
         compName: multiple.compName || "",
         transferYN: multiple.transferYN || "N",
       })),
-      lCompAgeRangeDtos: ageRangeDetails,
+      lCompAgeRangeDtos: ageRangeDetails.filter(
+        (range, index, self) => index === self.findIndex((r) => r.carStart === range.carStart && r.carEnd === range.carEnd && r.carName === range.carName)
+      ),
+
       lCompTemplateDtos: templateDetails,
     };
 
@@ -213,16 +390,19 @@ const InvestigationListPage: React.FC = () => {
       const response = await investigationlistService.save(payload);
 
       if (response.success) {
+        const updatedComponents = [...componentDetails.filter((comp) => comp.compoID !== 0), ...response.data.lComponentsDto];
+        setComponentDetails(updatedComponents);
         showAlert("success", "Investigation details saved successfully!", "success");
         setShouldResetForm(true);
         handleClear();
         setIsSearchOpen(false);
         setIsComponentDialogOpen(false);
+        setUnsavedComponents([]);
       } else {
         showAlert("error", response.errorMessage || "Failed to save data.", "error");
       }
     } catch (error) {
-      showAlert("error", "An error occurred while saving the data.", "error");
+      showAlert("Warning", "Please Add AtLeast One Component To Save Investigation", "warning");
     } finally {
       setIsLoading(false);
       setTimeout(() => {
@@ -233,6 +413,7 @@ const InvestigationListPage: React.FC = () => {
 
   const handleClear = () => {
     setShouldResetForm(true);
+    setIsSubmitted(false);
     setInvestigationDetails(null);
     setComponentDetails([]);
     setSelectedComponent(null);
@@ -241,10 +422,12 @@ const InvestigationListPage: React.FC = () => {
     setTemplateDetails([]);
     setIsSearchOpen(false);
     setIsComponentDialogOpen(false);
+    setPrintPreferences({ invTitle: "", invSTitle: "" });
     setTimeout(() => {
       setShouldResetForm(false);
     }, 100);
   };
+
   const getEntryTypeName = (lCentID: number | undefined) => {
     if (!lCentID) return "Not Specified";
     const entryTypeFromDropdown = dropdownValues["entryType"]?.find((item) => Number(item.value) === lCentID);
@@ -264,16 +447,18 @@ const InvestigationListPage: React.FC = () => {
   const handleEditComponent = (component: LComponentDto) => {
     const componentAgeRanges = ageRangeDetails.filter((range) => range.compOID === component.compoID || range.cappID === component.compoID);
     const componentMultipleChoices = compMultipleDetails.filter((multiple) => multiple.compOID === component.compoID && multiple.cmValues?.trim() !== "");
+
     setSelectedComponent({
       ...component,
       ageRanges: componentAgeRanges,
       multipleChoices: componentMultipleChoices,
     });
+
     setIsComponentDialogOpen(true);
   };
 
   const handleDeleteComponent = (component: LComponentDto) => {
-    setComponentDetails((prev) => prev.filter((c) => c.compoID !== component.compoID));
+    setComponentDetails((prev) => prev.map((c) => (c.compoID === component.compoID ? { ...c, rActiveYN: "N" } : c)));
     if (selectedComponent?.compoID === component.compoID) {
       setSelectedComponent(null);
     }
@@ -281,34 +466,44 @@ const InvestigationListPage: React.FC = () => {
 
   const handleEdit = useCallback(async (investigation: investigationDto) => {
     try {
+      debugger;
       setIsLoading(true);
       const invID = investigation.lInvMastDto?.invID;
       if (!invID) {
         showAlert("error", "Invalid investigation ID", "error");
         return;
       }
+
       const response = await investigationlistService.getById(invID);
       if (response.success && response.data) {
+        const investigationDetails = response.data.lInvMastDto;
         setInvestigationDetails(response.data.lInvMastDto);
+        setPrintPreferences({
+          invTitle: investigationDetails.invTitle || "",
+          invSTitle: investigationDetails.invSTitle || "",
+        });
         const components = response.data.lComponentsDto || [];
         const ageRanges = response.data.lCompAgeRangeDtos || [];
-        const componentsWithAgeRanges = components.map((comp: LComponentDto) => {
-          const componentAgeRanges = ageRanges
-            .filter((range: LCompAgeRangeDto) => range.compOID === comp.compoID || range.cappID === comp.compoID)
-            .map((range: LCompAgeRangeDto) => ({
-              ...range,
-              compOID: comp.compoID,
-              cappID: comp.compoID,
-              rActiveYN: "Y",
-            }));
+        const sortedComponents = components
+          .sort((a: LComponentDto, b: LComponentDto) => (a.compOrder || 0) - (b.compOrder || 0))
+          .map((comp: LComponentDto) => {
+            const componentAgeRanges = ageRanges
+              .filter((range: LCompAgeRangeDto) => range.compOID === comp.compoID || range.cappID === comp.compoID)
+              .map((range: LCompAgeRangeDto) => ({
+                ...range,
+                compOID: comp.compoID,
+                cappID: comp.compoID,
+                rActiveYN: "Y",
+              }));
 
-          return {
-            ...comp,
-            ageRanges: componentAgeRanges,
-          };
-        });
+            return {
+              ...comp,
+              ageRanges: componentAgeRanges,
+            };
+          });
 
-        setComponentDetails(componentsWithAgeRanges);
+        setComponentDetails(sortedComponents);
+
         const activeAgeRanges = ageRanges.map((range: LCompAgeRangeDto) => ({
           ...range,
           rActiveYN: "Y",
@@ -318,12 +513,10 @@ const InvestigationListPage: React.FC = () => {
         setCompMultipleDetails(response.data.lCompMultipleDtos || []);
         setTemplateDetails(response.data.lCompTemplateDtos || []);
 
-        if (componentsWithAgeRanges.length > 0) {
+        if (sortedComponents.length > 0) {
           setSelectedComponent({
-            ...componentsWithAgeRanges[0],
-            ageRanges: activeAgeRanges.filter(
-              (range: LCompAgeRangeDto) => range.compOID === componentsWithAgeRanges[0].compoID || range.cappID === componentsWithAgeRanges[0].compoID
-            ),
+            ...sortedComponents[0],
+            ageRanges: activeAgeRanges.filter((range: LCompAgeRangeDto) => range.compOID === sortedComponents[0].compoID || range.cappID === sortedComponents[0].compoID),
           });
         }
       } else {
@@ -336,133 +529,235 @@ const InvestigationListPage: React.FC = () => {
     }
   }, []);
 
+  const handleUpdateComponentOrder = (updatedComponents: LComponentDto[]) => {
+    setComponentDetails(updatedComponents);
+  };
+
+  const handleAddComponent = () => {
+    setSelectedComponent(null);
+    setIsComponentDialogOpen(true);
+  };
+
+  const navButtons = [
+    {
+      label: "Component Details",
+      value: "component",
+      onClick: () => setActiveView("component"),
+      icon: <VisibilityIcon />,
+    },
+    {
+      label: "Print Preferences",
+      value: "printPreferences",
+      onClick: () => setActiveView("printPreferences"),
+      icon: <PrintIcon />,
+    },
+  ];
+
   const renderComponentDetails = () => (
     <Box sx={{ mb: 4 }}>
-      <Grid container spacing={3}>
+      <Grid container spacing={4}>
+        <Grid item xs={12}>
+          <CustomButton variant="contained" color="primary" icon={AddIcon} onClick={handleAddComponent} size="small">
+            Add Component
+          </CustomButton>
+        </Grid>
+
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, maxHeight: "70vh", overflow: "auto", borderRadius: 3 }}>
-            <Box
+          <Paper
+            sx={{
+              p: 3,
+              maxHeight: "75vh",
+              overflow: "auto",
+              borderRadius: "16px",
+              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+              background: "linear-gradient(145deg, #ffffff, #f5f7fa)",
+              position: "relative",
+              "&:before": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: "4px",
+                background: "linear-gradient(90deg, #3a7bd5, #00d2ff)",
+                borderRadius: "16px 16px 0 0",
+              },
+            }}
+          >
+            <Typography
+              variant="h6"
               sx={{
                 mb: 3,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+                fontWeight: 600,
+                background: "linear-gradient(90deg, #3a7bd5, #00d2ff)",
+                backgroundClip: "text",
+                textFillColor: "transparent",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
               }}
             >
-              <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
-                Components List
-              </Typography>
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={() => setIsComponentDialogOpen(true)}
-                sx={{
-                  background: "linear-gradient(45deg, #4CAF50 30%, #45a849 90%)",
-                  color: "white",
-                  boxShadow: "0 2px 8px rgba(76, 175, 80, 0.3)",
-                  "&:hover": {
-                    background: "linear-gradient(45deg, #45a849 30%, #4CAF50 90%)",
-                  },
-                }}
-              >
-                Add
-              </Button>
-            </Box>
+              Component Library
+            </Typography>
 
-            {componentDetails.map((component) => (
-              <Zoom in key={`component-${component.compoID}-${component.compOCodeCD}`}>
-                <ComponentListItem className={selectedComponent?.compoID === component.compoID ? "selected" : ""}>
-                  <Box sx={{ pl: 2, width: "100%" }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 1,
-                      }}
-                    >
-                      <Box sx={{ flex: 1, cursor: "pointer" }} onClick={() => setSelectedComponent(component)}>
-                        <Typography sx={{ fontWeight: 600, fontSize: "0.9rem" }}>{component.compoNameCD || "Unnamed Component"}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {component.compOCodeCD || "No Code"}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: "flex", gap: 1 }}>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleEditComponent(component)}
+            {componentDetails
+              .filter((comp) => comp.rActiveYN !== "N")
+              .map((component) => (
+                <Zoom in key={`component-${component.compoID}-${component.compOCodeCD}`} timeout={300}>
+                  <ComponentListItem
+                    className={selectedComponent?.compoID === component.compoID ? "selected" : ""}
+                    sx={{
+                      mb: 2,
+                      borderRadius: "12px",
+                      transition: "all 0.3s ease",
+                      background: selectedComponent?.compoID === component.compoID ? "linear-gradient(145deg, rgba(33, 150, 243, 0.08), rgba(33, 150, 243, 0.15))" : "white",
+                      boxShadow: selectedComponent?.compoID === component.compoID ? "0 4px 20px rgba(33, 150, 243, 0.15)" : "0 2px 8px rgba(0, 0, 0, 0.05)",
+                      border: selectedComponent?.compoID === component.compoID ? "1px solid rgba(33, 150, 243, 0.3)" : "1px solid rgba(0, 0, 0, 0.05)",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 6px 20px rgba(0, 0, 0, 0.1)",
+                      },
+                    }}
+                  >
+                    <Box sx={{ p: 2, width: "100%" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 1,
+                        }}
+                      >
+                        <Box
                           sx={{
+                            flex: 1,
+                            cursor: "pointer",
+                            transition: "all 0.2s ease",
                             "&:hover": {
-                              transform: "scale(1.1)",
+                              transform: "translateX(2px)",
+                            },
+                          }}
+                          onClick={() => setSelectedComponent(component)}
+                        >
+                          <Typography
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: "1rem",
+                              color: selectedComponent?.compoID === component.compoID ? "#1976d2" : "inherit",
+                            }}
+                          >
+                            {component.compoNameCD || "Unnamed Component"}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {component.compOCodeCD || "No Code"}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleEditComponent(component)}
+                            sx={{
                               background: "rgba(33, 150, 243, 0.1)",
-                            },
-                          }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleDeleteComponent(component)}
-                          sx={{
-                            "&:hover": {
-                              transform: "scale(1.1)",
+                              transition: "all 0.2s ease",
+                              "&:hover": {
+                                transform: "scale(1.1) rotate(5deg)",
+                                background: "rgba(33, 150, 243, 0.2)",
+                              },
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteComponent(component)}
+                            sx={{
                               background: "rgba(244, 67, 54, 0.1)",
-                            },
-                          }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                              transition: "all 0.2s ease",
+                              "&:hover": {
+                                transform: "scale(1.1) rotate(-5deg)",
+                                background: "rgba(244, 67, 54, 0.2)",
+                              },
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
                       </Box>
+                      <Chip
+                        size="small"
+                        label={getEntryTypeName(component.lCentID)}
+                        sx={{
+                          background: "linear-gradient(45deg, #3a7bd5, #00d2ff)",
+                          color: "white",
+                          fontSize: "0.75rem",
+                          fontWeight: 500,
+                          borderRadius: "8px",
+                          "& .MuiChip-label": {
+                            px: 1.5,
+                          },
+                        }}
+                      />
                     </Box>
-                    <Chip
-                      size="small"
-                      label={getEntryTypeName(component.lCentID)}
-                      sx={{
-                        background: "linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)",
-                        color: "white",
-                        fontSize: "0.75rem",
-                      }}
-                    />
-                  </Box>
-                </ComponentListItem>
-              </Zoom>
-            ))}
+                  </ComponentListItem>
+                </Zoom>
+              ))}
           </Paper>
         </Grid>
 
         <Grid item xs={12} md={8}>
-          <Slide direction="left" in={!!selectedComponent}>
-            <Paper sx={{ p: 3, borderRadius: 3 }}>
-              {selectedComponent ? (
+          <Slide direction="left" in={!!selectedComponent && selectedComponent.rActiveYN !== "N"} timeout={400}>
+            <Paper
+              sx={{
+                p: 3,
+                borderRadius: "16px",
+                background: "linear-gradient(145deg, #ffffff, #f5f7fa)",
+                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+                minHeight: "60vh",
+                display: "flex",
+                flexDirection: "column",
+                position: "relative",
+              }}
+            >
+              {selectedComponent && selectedComponent.rActiveYN !== "N" ? (
                 <>
                   <Box
                     sx={{
                       mb: 3,
                       pb: 2,
                       borderBottom: "2px solid",
-                      borderImage: "linear-gradient(to right, #2196F3, transparent) 1",
+                      borderImage: "linear-gradient(to right, #3a7bd5, #00d2ff, transparent) 1",
                     }}
                   >
-                    <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        mb: 2,
+                        fontWeight: 600,
+                        background: "linear-gradient(90deg, #3a7bd5, #00d2ff)",
+                        backgroundClip: "text",
+                        textFillColor: "transparent",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        display: "inline-block",
+                      }}
+                    >
                       Component Details
                     </Typography>
-                    <Grid container spacing={2}>
+                    <Grid container spacing={3}>
                       <Grid item xs={6}>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
                           Component Type
                         </Typography>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                           {getEntryTypeName(selectedComponent.lCentID)}
                         </Typography>
                       </Grid>
                       <Grid item xs={6}>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
                           Component Name
                         </Typography>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                           {selectedComponent.compoNameCD}
                         </Typography>
                       </Grid>
@@ -473,43 +768,85 @@ const InvestigationListPage: React.FC = () => {
                     <Grid item xs={12} sm={6}>
                       <Box
                         sx={{
-                          p: 2,
-                          borderRadius: 2,
-                          bgcolor: "rgba(33, 150, 243, 0.03)",
-                          border: "1px solid rgba(33, 150, 243, 0.1)",
+                          p: 3,
+                          borderRadius: "12px",
+                          background: "linear-gradient(145deg, #ffffff, #f0f7ff)",
+                          border: "1px solid rgba(58, 123, 213, 0.15)",
                           transition: "all 0.3s ease",
-                          "&:hover": { transform: "translateY(-2px)" },
+                          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.05)",
+                          "&:hover": {
+                            transform: "translateY(-4px)",
+                            boxShadow: "0 8px 24px rgba(58, 123, 213, 0.15)",
+                          },
                         }}
                       >
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{
+                            display: "block",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#3a7bd5",
+                          }}
+                        >
                           Component Code
                         </Typography>
-                        <Typography variant="body1">{selectedComponent.compOCodeCD}</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {selectedComponent.compOCodeCD}
+                        </Typography>
                       </Box>
                     </Grid>
 
                     <Grid item xs={12} sm={6}>
                       <Box
                         sx={{
-                          p: 2,
-                          borderRadius: 2,
-                          bgcolor: "rgba(33, 150, 243, 0.03)",
-                          border: "1px solid rgba(33, 150, 243, 0.1)",
+                          p: 3,
+                          borderRadius: "12px",
+                          background: "linear-gradient(145deg, #ffffff, #f0f7ff)",
+                          border: "1px solid rgba(58, 123, 213, 0.15)",
                           transition: "all 0.3s ease",
-                          "&:hover": { transform: "translateY(-2px)" },
+                          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.05)",
+                          "&:hover": {
+                            transform: "translateY(-4px)",
+                            boxShadow: "0 8px 24px rgba(58, 123, 213, 0.15)",
+                          },
                         }}
                       >
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{
+                            display: "block",
+                            mb: 1,
+                            fontWeight: 500,
+                            color: "#3a7bd5",
+                          }}
+                        >
                           Short Name
                         </Typography>
-                        <Typography variant="body1">{selectedComponent.cShortNameCD}</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {selectedComponent.cShortNameCD}
+                        </Typography>
                       </Box>
                     </Grid>
 
                     {selectedComponent.lCentID === 7 && (
                       <Grid item xs={12}>
                         <Box sx={{ mt: 2 }}>
-                          <Typography variant="subtitle2" color="primary" sx={{ mb: 2 }}>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              mb: 2,
+                              fontWeight: 600,
+                              background: "linear-gradient(90deg, #3a7bd5, #00d2ff)",
+                              backgroundClip: "text",
+                              textFillColor: "transparent",
+                              WebkitBackgroundClip: "text",
+                              WebkitTextFillColor: "transparent",
+                              display: "inline-block",
+                            }}
+                          >
                             Template Values
                           </Typography>
                           {(() => {
@@ -517,9 +854,23 @@ const InvestigationListPage: React.FC = () => {
 
                             if (componentTemplates.length === 0) {
                               return (
-                                <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
-                                  No template values found for this component
-                                </Typography>
+                                <Box
+                                  sx={{
+                                    p: 4,
+                                    borderRadius: "12px",
+                                    background: "linear-gradient(145deg, #ffffff, #f0f7ff)",
+                                    border: "1px dashed rgba(58, 123, 213, 0.3)",
+                                    textAlign: "center",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <Typography variant="body2" color="text.secondary">
+                                    No template values found for this component
+                                  </Typography>
+                                </Box>
                               );
                             }
 
@@ -533,17 +884,50 @@ const InvestigationListPage: React.FC = () => {
                               {} as Record<string, LCompTemplateDto[]>
                             );
 
-                            return Object.entries(groupedTemplates).map(([groupName, templates]) => (
-                              <Zoom in key={groupName}>
-                                <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
+                            return Object.entries(groupedTemplates).map(([groupName, templates], index) => (
+                              <Zoom in key={groupName} timeout={300 + index * 100}>
+                                <Paper
+                                  sx={{
+                                    p: 3,
+                                    mb: 2,
+                                    borderRadius: "12px",
+                                    background: "linear-gradient(145deg, #ffffff, #f0f7ff)",
+                                    border: "1px solid rgba(58, 123, 213, 0.15)",
+                                    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.05)",
+                                    transition: "all 0.3s ease",
+                                    "&:hover": {
+                                      boxShadow: "0 8px 24px rgba(58, 123, 213, 0.15)",
+                                    },
+                                  }}
+                                >
                                   <Box sx={{ mb: 1 }}>
-                                    <Typography variant="caption" color="text.secondary">
+                                    <Typography
+                                      variant="subtitle2"
+                                      sx={{
+                                        fontWeight: 600,
+                                        color: "#3a7bd5",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        "& svg": {
+                                          mr: 1,
+                                        },
+                                      }}
+                                    >
                                       Template Group: {groupName}
                                     </Typography>
                                   </Box>
-                                  <Divider sx={{ my: 1 }} />
-                                  {templates.map((template) => (
-                                    <Box key={template.cTID}>
+                                  <Divider sx={{ my: 2 }} />
+                                  {templates.map((template, tIndex) => (
+                                    <Box
+                                      key={template.cTID}
+                                      sx={{
+                                        p: 2,
+                                        borderRadius: "8px",
+                                        mb: tIndex < templates.length - 1 ? 2 : 0,
+                                        background: "rgba(255, 255, 255, 0.5)",
+                                        border: "1px solid rgba(58, 123, 213, 0.1)",
+                                      }}
+                                    >
                                       <Typography
                                         component="div"
                                         variant="body2"
@@ -564,26 +948,82 @@ const InvestigationListPage: React.FC = () => {
                     {selectedComponent?.lCentID === 6 && (
                       <Grid item xs={12}>
                         <Box sx={{ mt: 2 }}>
-                          <Typography variant="subtitle2" color="primary" sx={{ mb: 2 }}>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              mb: 2,
+                              fontWeight: 600,
+                              background: "linear-gradient(90deg, #3a7bd5, #00d2ff)",
+                              backgroundClip: "text",
+                              textFillColor: "transparent",
+                              WebkitBackgroundClip: "text",
+                              WebkitTextFillColor: "transparent",
+                              display: "inline-block",
+                            }}
+                          >
                             Age Range Values
                           </Typography>
-                          {ageRangeDetails
-                            .filter((ar: LCompAgeRangeDto) => ar.compOID === selectedComponent.compoID || ar.cappID === selectedComponent.compoID)
-                            .map((range: LCompAgeRangeDto) => (
-                              <Zoom in key={`range-${range.carID}`}>
-                                <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-                                  <Typography variant="body2">
-                                    <strong>Normal Value:</strong> {range.carName}
-                                  </Typography>
-                                  <Typography variant="body2">
-                                    <strong>Age Range:</strong> {`${range.carStart} - ${range.carEnd} ${range.carAgeType}`}
-                                  </Typography>
-                                  <Typography variant="body2">
-                                    <strong>Sex:</strong> {range.carSex}
-                                  </Typography>
-                                </Paper>
-                              </Zoom>
-                            ))}
+                          {[
+                            ...new Map(
+                              ageRangeDetails
+                                .filter((ar: LCompAgeRangeDto) => ar.compOID === selectedComponent.compoID || ar.cappID === selectedComponent.compoID)
+                                .map((item) => [item.carID, item])
+                            ),
+                          ].map(([_, range]: [number, LCompAgeRangeDto], index) => (
+                            <Zoom in key={`range-${range.carID}`} timeout={300 + index * 100}>
+                              <Paper
+                                sx={{
+                                  p: 3,
+                                  mb: 2,
+                                  borderRadius: "12px",
+                                  background: "linear-gradient(145deg, #ffffff, #f0f7ff)",
+                                  border: "1px solid rgba(58, 123, 213, 0.15)",
+                                  transition: "all 0.3s ease",
+                                  boxShadow: "0 4px 16px rgba(0, 0, 0, 0.05)",
+                                  "&:hover": {
+                                    transform: "translateY(-2px)",
+                                    boxShadow: "0 8px 24px rgba(58, 123, 213, 0.15)",
+                                  },
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    mb: 1,
+                                    "& strong": {
+                                      fontWeight: 600,
+                                      color: "#3a7bd5",
+                                    },
+                                  }}
+                                >
+                                  <strong>Normal Value:</strong> {range.carName}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    mb: 1,
+                                    "& strong": {
+                                      fontWeight: 600,
+                                      color: "#3a7bd5",
+                                    },
+                                  }}
+                                >
+                                  <strong>Age Range:</strong> {`${range.carStart} - ${range.carEnd} ${range.carAgeType}`}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    "& strong": {
+                                      fontWeight: 600,
+                                      color: "#3a7bd5",
+                                    },
+                                  }}
+                                >
+                                  <strong>Sex:</strong> {range.carSex}
+                                </Typography>
+                              </Paper>
+                            </Zoom>
+                          ))}
                         </Box>
                       </Grid>
                     )}
@@ -591,23 +1031,78 @@ const InvestigationListPage: React.FC = () => {
                     {selectedComponent?.lCentID === 5 && (
                       <Grid item xs={12}>
                         <Box sx={{ mt: 2 }}>
-                          <Typography variant="subtitle2" color="primary" sx={{ mb: 2 }}>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              mb: 2,
+                              fontWeight: 600,
+                              background: "linear-gradient(90deg, #3a7bd5, #00d2ff)",
+                              backgroundClip: "text",
+                              textFillColor: "transparent",
+                              WebkitBackgroundClip: "text",
+                              WebkitTextFillColor: "transparent",
+                              display: "inline-block",
+                            }}
+                          >
                             Multiple Choice Values
                           </Typography>
                           {compMultipleDetails.filter((cm: LCompMultipleDto) => cm.compOID === selectedComponent.compoID).length === 0 ? (
-                            <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
-                              No multiple choice values found for this component
-                            </Typography>
+                            <Box
+                              sx={{
+                                p: 4,
+                                borderRadius: "12px",
+                                background: "linear-gradient(145deg, #ffffff, #f0f7ff)",
+                                border: "1px dashed rgba(58, 123, 213, 0.3)",
+                                textAlign: "center",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <Typography variant="body2" color="text.secondary">
+                                No multiple choice values found for this component
+                              </Typography>
+                            </Box>
                           ) : (
-                            compMultipleDetails
-                              .filter((cm: LCompMultipleDto) => cm.compOID === selectedComponent.compoID && cm.cmValues?.trim())
-                              .map((choice: LCompMultipleDto, index: number) => (
-                                <Zoom in key={`choice-${choice.cmID}-${choice.compOID}-${index}`}>
-                                  <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-                                    <Typography variant="body2">{choice.cmValues}</Typography>
-                                  </Paper>
-                                </Zoom>
-                              ))
+                            <Grid container spacing={2}>
+                              {compMultipleDetails
+                                .filter((cm: LCompMultipleDto) => cm.compOID === selectedComponent.compoID)
+                                .map((choice: LCompMultipleDto, index: number) => (
+                                  <Grid item xs={12} sm={6} md={4} key={`choice-${choice.cmID}-${choice.compOID}-${index}`}>
+                                    <Zoom in timeout={300 + index * 50}>
+                                      <Paper
+                                        sx={{
+                                          p: 2,
+                                          height: "100%",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          borderRadius: "12px",
+                                          background: "linear-gradient(145deg, #ffffff, #f0f7ff)",
+                                          border: "1px solid rgba(58, 123, 213, 0.15)",
+                                          transition: "all 0.3s ease",
+                                          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.05)",
+                                          "&:hover": {
+                                            transform: "translateY(-2px)",
+                                            boxShadow: "0 8px 24px rgba(58, 123, 213, 0.15)",
+                                          },
+                                        }}
+                                      >
+                                        <Typography
+                                          variant="body2"
+                                          sx={{
+                                            textAlign: "center",
+                                            fontWeight: 500,
+                                          }}
+                                        >
+                                          {choice.cmValues}
+                                        </Typography>
+                                      </Paper>
+                                    </Zoom>
+                                  </Grid>
+                                ))}
+                            </Grid>
                           )}
                         </Box>
                       </Grid>
@@ -617,12 +1112,32 @@ const InvestigationListPage: React.FC = () => {
               ) : (
                 <Box
                   sx={{
-                    py: 6,
+                    py: 8,
                     textAlign: "center",
                     color: "text.secondary",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                    background: "linear-gradient(145deg, #ffffff, #f0f7ff)",
+                    borderRadius: "12px",
                   }}
                 >
-                  <Typography>Select a component from the list</Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      mb: 2,
+                      fontWeight: 500,
+                      color: "#3a7bd5",
+                      opacity: 0.7,
+                    }}
+                  >
+                    No Component Selected
+                  </Typography>
+                  <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                    Select a component from the list to view details
+                  </Typography>
                 </Box>
               )}
             </Paper>
@@ -668,14 +1183,37 @@ const InvestigationListPage: React.FC = () => {
       </Box>
 
       <Box sx={{ mb: 4 }}>
-        <InvestigationListDetails onUpdate={updateInvestigationDetails} investigationData={investigationDetails} shouldReset={shouldResetForm} />
+        <InvestigationListDetails
+          onUpdate={updateInvestigationDetails}
+          investigationData={investigationDetails}
+          shouldReset={shouldResetForm}
+          onCodeSelect={handleCodeSelect}
+          isSubmitted={isSubmitted}
+        />
       </Box>
-      {renderComponentDetails()}
+
+      <NavBar buttons={navButtons} />
+
+      {/* Conditionally render details based on activeView */}
+      {activeView === "component" && renderComponentDetails()}
+      {activeView === "printPreferences" && (
+        <PrintPreferences
+          componentsList={componentDetails}
+          reportTitle={printPreferences.invTitle || ""}
+          subTitle={printPreferences.invSTitle || ""}
+          onReportTitleChange={(title) => setPrintPreferences((prev) => ({ ...prev, invTitle: title }))}
+          onSubTitleChange={(subTitle) => setPrintPreferences((prev) => ({ ...prev, invSTitle: subTitle }))}
+          onClear={() => setPrintPreferences({ invTitle: "", invSTitle: "" })}
+          onUpdateComponentOrder={handleUpdateComponentOrder}
+        />
+      )}
+
       <Box sx={{ mt: 4 }}>
         <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
       </Box>
       <InvestigationListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} onEdit={handleEdit} />
-      <GenericDialog open={isComponentDialogOpen} onClose={() => setIsComponentDialogOpen(false)} title="Add New Component" maxWidth="md" fullWidth>
+
+      <GenericDialog open={isComponentDialogOpen} onClose={() => setIsComponentDialogOpen(false)} title="Add New Component" maxWidth="xl" fullWidth>
         <LComponentDetails
           onUpdate={updateComponentDetails}
           onUpdateCompMultiple={updateCompMultipleDetails}
@@ -687,6 +1225,7 @@ const InvestigationListPage: React.FC = () => {
             templates: templateDetails.filter((template) => template.compOID === selectedComponent?.compoID),
           }}
           setSelectedComponent={setSelectedComponent}
+          totalComponentsForInvestigation={componentDetails.filter((comp) => comp.invID === investigationDetails?.invID).length}
         />
       </GenericDialog>
     </Container>

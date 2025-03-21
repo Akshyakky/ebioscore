@@ -7,14 +7,18 @@ import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { debounce } from "lodash";
 import { SelectChangeEvent } from "@mui/material";
+import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
 
 interface InvestigationListDetailsProps {
   onUpdate: (data: LInvMastDto) => void;
   investigationData?: LInvMastDto | null;
   shouldReset?: boolean;
+  onSelect?: (data: LInvMastDto) => void;
+  onCodeSelect?: (selectedSuggestion: string) => void;
+  isSubmitted?: boolean;
 }
 
-const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onUpdate, investigationData, shouldReset }) => {
+const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onUpdate, investigationData, shouldReset, onCodeSelect, isSubmitted }) => {
   const dropdownValues = useDropdownValues(["investigationType", "sampleType", "service"]);
   const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
@@ -61,7 +65,12 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
 
   const debouncedUpdate = useCallback(
     debounce((newState: LInvMastDto) => {
-      onUpdate(newState);
+      const formattedState = {
+        ...newState,
+        invType: String(newState.invType || ""),
+        investigationDto: newState.investigationDto || {},
+      };
+      onUpdate(formattedState);
     }, 500),
     [onUpdate]
   );
@@ -71,15 +80,46 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
       setFormState((prevState) => ({
         ...prevState,
         ...investigationData,
+        invType: String(investigationData.invType || ""),
         compID: investigationData.compID || compID || 0,
         compCode: investigationData.compCode || compCode || "",
         compName: investigationData.compName || compName || "",
         rModifiedID: userID || 0,
         rModifiedBy: userName || "",
         rModifiedOn: serverDate || new Date(),
+        investigationDto: investigationData.investigationDto || {},
       }));
     }
   }, [investigationData, compID, compCode, compName, userID, userName, serverDate]);
+
+  const fetchInvestigationCodeSuggestions = useCallback(async (searchTerm: string) => {
+    if (!searchTerm.trim()) return [];
+
+    try {
+      const response = await investigationlistService.getAll();
+      return (
+        response.data
+          ?.filter((item: any) => {
+            const invCode = item.lInvMastDto?.invCode?.toLowerCase();
+            return invCode && invCode.startsWith(searchTerm.toLowerCase());
+          })
+          .map((item: any) => {
+            const invCode = item.lInvMastDto?.invCode || "";
+            const invName = item.lInvMastDto?.invName || "";
+            return `${invCode} - ${invName}`;
+          }) || []
+      );
+    } catch (error) {
+      return [];
+    }
+  }, []);
+
+  const updateInvestigationCode = (value: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      invCode: value,
+    }));
+  };
 
   useEffect(() => {
     if (shouldReset) {
@@ -144,7 +184,7 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
     (e: SelectChangeEvent<string>) => {
       const { name, value } = e.target;
       setFormState((prev) => {
-        const updatedState = { ...prev, [name]: value };
+        const updatedState = { ...prev, [name]: String(value) };
         debouncedUpdate(updatedState);
         return updatedState;
       });
@@ -162,7 +202,7 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
     },
     [debouncedUpdate]
   );
-  // Filter service options based on `isLabYN === 'Y'`
+
   const filteredServiceOptions = dropdownValues.service?.filter((item) => item.isLabYN && item.isLabYN === "Y") || [];
 
   return (
@@ -171,16 +211,34 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
 
       <Grid container spacing={2}>
         <FormField
-          type="text"
-          label="Investigation Code"
-          value={formState.invCode}
-          onChange={handleInputChange}
-          name="invCode"
           ControlID="invCode"
-          placeholder="Enter Code"
-          isMandatory
+          label="Investigation Code"
+          name="invCode"
+          type="autocomplete"
+          placeholder="Search or select a charge code"
+          value={formState.invCode}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            const { value } = e.target;
+            updateInvestigationCode(value);
+          }}
+          fetchSuggestions={fetchInvestigationCodeSuggestions}
+          onSelectSuggestion={onCodeSelect}
+          isSubmitted={isSubmitted}
+          isMandatory={true}
+          maxLength={60}
         />
-        <FormField type="text" label="Name" value={formState.invName} onChange={handleInputChange} name="invName" ControlID="invName" placeholder="Enter Name" isMandatory />
+
+        <FormField
+          type="text"
+          label="Name"
+          value={formState.invName}
+          onChange={handleInputChange}
+          name="invName"
+          ControlID="invName"
+          placeholder="Enter Name"
+          isMandatory={true}
+          isSubmitted={isSubmitted}
+        />
         <FormField
           type="text"
           label="Short Name"
@@ -189,29 +247,33 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
           name="invShortName"
           ControlID="invShortName"
           placeholder="Enter Short Name"
+          maxLength={500}
+          isSubmitted={isSubmitted}
+          isMandatory={true}
         />
 
         <FormField
           type="select"
           label="Sample Type"
-          value={formState.invSampleType || ""}
+          value={String(formState.invSampleType || "")}
           onChange={handleSelectChange}
           name="invSampleType"
           ControlID="invSampleType"
           options={dropdownValues.sampleType || [{ value: "", label: "Loading..." }]}
-          isMandatory
         />
 
         <FormField
           type="select"
           label="Investigation Type"
-          value={formState.invType || ""}
+          value={String(formState.bchID || "")}
           onChange={handleSelectChange}
-          name="invType"
-          ControlID="invType"
+          name="bchID"
+          ControlID="bchID"
           options={filteredServiceOptions.length > 0 ? filteredServiceOptions : [{ value: "", label: "No Service Available" }]}
-          isMandatory
+          isMandatory={true}
+          isSubmitted={isSubmitted}
         />
+
         <FormField
           type="text"
           label="Resource Code"
@@ -220,6 +282,7 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
           name="invNHCode"
           ControlID="invNHCode"
           placeholder="Enter Resource Code"
+          maxLength={1000}
         />
         <FormField
           type="text"
@@ -229,6 +292,29 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
           name="invNHEnglishName"
           ControlID="invNHEnglishName"
           placeholder="Enter Resource Name"
+          maxLength={1000}
+        />
+
+        <FormField
+          type="text"
+          label="Coop Labs"
+          value={formState.coopLabs}
+          onChange={handleInputChange}
+          name="coopLabs"
+          ControlID="coopLabs"
+          placeholder="Enter Coop Labs Name"
+          maxLength={500}
+        />
+
+        <FormField
+          type="text"
+          label="Method"
+          value={formState.methods}
+          onChange={handleInputChange}
+          name="methods"
+          ControlID="methods"
+          placeholder="Enter Methods Name"
+          maxLength={500}
         />
       </Grid>
 
@@ -252,6 +338,7 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
           ControlID="invReportYN"
           placeholder="Enter Resource Name"
           value={formState.invReportYN}
+          maxLength={1000}
         />
         <FormField
           type="switch"

@@ -11,21 +11,30 @@ interface InvestigationListSearchProps {
 }
 
 const InvestigationListSearch: React.FC<InvestigationListSearchProps> = ({ open, onClose, onSelect }) => {
+  // Fetch Investigation Data
   const fetchItems = async () => {
     const result = await investigationlistService.getAll();
     return result.success && result.data ? result.data : [];
   };
 
-  const updateActiveStatus = async (id: number, status: boolean) => {
+  // Corrected Toggle Logic for Active Status
+  const updateActiveStatus = async (id: number, currentStatus: boolean) => {
     try {
-      const result = await investigationlistService.updateActiveStatus(id, status);
+      const updatedStatus = currentStatus ? true : false; // Correctly toggles the value
+      const result = await investigationlistService.updateActiveStatus(id, updatedStatus);
 
       if (result) {
-        await fetchItems();
+        const updatedItems = await fetchItems(); // Refresh data after status update
+        const updatedItem = updatedItems.find((item: investigationDto) => item.lInvMastDto?.invID === id);
+
+        if (updatedItem) {
+          updatedItem.lInvMastDto.rActiveYN = updatedStatus; // Correctly assign the updated status
+        }
       }
+
       return result;
     } catch (error) {
-      console.error("Error updating status:", error);
+      console.error("Error updating active status:", error);
       return false;
     }
   };

@@ -132,7 +132,6 @@ const MedicationFrequencyDetails: React.FC<MedicationFrequencyDetailsProps> = ({
   );
 
   const handleSave = useCallback(async () => {
-    debugger;
     setIsSubmitted(true);
 
     if (!formState.mFrqCode || !formState.mFrqCode.trim() || !formState.mFrqName || !formState.mFrqSnomedCode) {

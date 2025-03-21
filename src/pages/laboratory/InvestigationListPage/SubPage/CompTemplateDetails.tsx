@@ -84,26 +84,8 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
   const handleEditorChange = (htmlContent: string) => {
     setEditorValue(htmlContent);
   };
-  const handleSaveTemplateContent = () => {
-    debugger;
-    if (selectedTemplate) {
-      const updatedTemplate: LCompTemplateDto = {
-        ...selectedTemplate,
-        cTText: editorValue,
-        rModifiedOn: serverDate || new Date(),
-        rModifiedBy: userName || "",
-        rModifiedId: userID || 0,
-      };
-
-      const updatedTemplates = templates.map((t) => (t.cTID === selectedTemplate.cTID ? { ...updatedTemplate, selected: true } : t));
-
-      setTemplates(updatedTemplates);
-      onUpdateTemplate(updatedTemplate);
-    }
-  };
 
   const handleAddTemplate = async () => {
-    debugger;
     if (!selectedTemplateGroupId || !editorValue.trim()) {
       showAlert("error", "Please select a template group and enter content", "error");
       return;
@@ -149,7 +131,6 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
   };
 
   const handleSaveTemplate = () => {
-    debugger;
     if (newTemplateName.trim() === "") return;
     const templateData: LCompTemplateDto = {
       cTID: 0,
@@ -269,10 +250,8 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
   };
 
   const fetchTemplateGroups = async () => {
-    debugger;
     setIsLoading(true);
     setError(null);
-
     try {
       const response = await appModifiedListService.getAll();
       const allFields = response.data || response;
@@ -319,7 +298,6 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
   };
 
   useEffect(() => {
-    debugger;
     if (selectedComponent) {
       fetchTemplateGroups();
     }
@@ -330,7 +308,6 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
   const handleEditTemplateGroup = async (group: TemplateGroup) => {
     setIsEditLoading(true);
     try {
-      debugger;
       const response = await appModifiedListService.getById(group.amlID);
       const templateGroup = response.data || response;
       if (templateGroup) {

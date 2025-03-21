@@ -98,7 +98,6 @@ const RevisitPage: React.FC = () => {
 
       setPrimaryIntroducingSource(primaryIntroducingSource.map((item) => ({ value: item.value.toString(), label: item.label })));
     } catch (error) {
-      console.error("Error loading dropdown values:", error);
     } finally {
       setLoading(false);
     }
@@ -170,7 +169,6 @@ const RevisitPage: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error("Error fetching attending physicians or patient details:", error);
     } finally {
       setLoading(false);
     }
@@ -210,7 +208,6 @@ const RevisitPage: React.FC = () => {
 
     setLoading(true);
     try {
-      debugger;
       const response = await RevisitService.saveOPVisits({
         ...revisitFormData,
         attendingPhysicianId: revisitFormData.attendingPhysicianId,
@@ -225,10 +222,8 @@ const RevisitPage: React.FC = () => {
         handleClear();
         showAlert("Success", "The revisit page is saved successfully", "success");
       } else {
-        console.error("Save failed", response);
       }
     } catch (error) {
-      console.error("Error in saving OP Visits", error);
     } finally {
       setLoading(false);
     }
