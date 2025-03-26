@@ -207,8 +207,6 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser }) => {
         compID: compID || 0,
         compCode: compCode || "",
         compName: compName || "",
-        rActiveYN: userForm.rActiveYN || "Y",
-        transferYN: "N",
       });
       if (response.success) {
         showAlert("Success", "User saved successfully!", "success", {
