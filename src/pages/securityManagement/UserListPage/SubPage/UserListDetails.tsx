@@ -203,12 +203,12 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser }) => {
     try {
       const response = await userList.save({
         ...userForm,
+        profileID: userForm.profileID || 0,
+        compID: compID || 0,
         compCode: compCode || "",
         compName: compName || "",
-        compID: compID || 0,
-        rActiveYN: "Y",
+        rActiveYN: userForm.rActiveYN || "Y",
         transferYN: "N",
-        profileID: userForm.profileID || 0,
       });
       if (response.success) {
         showAlert("Success", "User saved successfully!", "success", {
