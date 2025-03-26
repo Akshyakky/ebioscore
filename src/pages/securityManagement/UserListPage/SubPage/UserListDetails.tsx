@@ -200,12 +200,25 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser }) => {
     if (newPassword && userForm.appUAccess !== userForm.confirmPassword) {
       return;
     }
-
     try {
-      const response = await userList.save(userForm);
-      showAlert("Success", "User saved successfully!", "success", {
-        onConfirm: handleClear,
+      const response = await userList.save({
+        ...userForm,
+        compCode: compCode || "",
+        compName: compName || "",
+        compID: compID || 0,
+        rActiveYN: "Y",
+        transferYN: "N",
+        profileID: userForm.profileID || 0,
       });
+      if (response.success) {
+        showAlert("Success", "User saved successfully!", "success", {
+          onConfirm: handleClear,
+        });
+      } else {
+        showAlert("Error", "User not saved", "error", {
+          onConfirm: handleClear,
+        });
+      }
     } catch (error) {
       showAlert("Error", "An unexpected error occurred while saving.", "error");
     } finally {
