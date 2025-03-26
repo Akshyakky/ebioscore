@@ -1,7 +1,7 @@
 import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
 import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "@/apiConfig";
-import { ProfileDetailDto, ProfileModuleOperationDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { ProfileDetailDto, ProfileModuleOperationDto, ProfileModulesDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 class ProfileListService extends GenericEntityService<ProfileModuleOperationDto> {
   constructor() {
@@ -23,6 +23,12 @@ class ProfileListService extends GenericEntityService<ProfileModuleOperationDto>
   }
   async saveProfileModuleOperation(profileModuleOperationDto: ProfileModuleOperationDto): Promise<OperationResult<ProfileModuleOperationDto>> {
     return this.apiService.post<OperationResult<ProfileModuleOperationDto>>(`${this.baseEndpoint}/SaveOrUpdateProfileDetail`, profileModuleOperationDto, this.getToken());
+  }
+  async getProfileDetailsByProfileId(profileId: number, profileType: string): Promise<OperationResult<ProfileModulesDto[]>> {
+    return this.apiService.get<OperationResult<ProfileModulesDto[]>>(
+      `${this.baseEndpoint}/GetProfileDetailsByProfileId?profileId=${profileId}&profileType=${profileType}`,
+      this.getToken()
+    );
   }
 }
 

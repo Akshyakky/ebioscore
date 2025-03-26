@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Grid, SelectChangeEvent, Typography } from "@mui/material";
 import FormField from "@/components/FormField/FormField";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
-import { ProfileDetailDto } from "@/interfaces/SecurityManagement/ProfileListData";
-import { profileListService } from "@/services/SecurityManagementServices/ProfileListServices";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
+import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
+import { UserListDto, UserListPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
 import { useAppSelector } from "@/store/hooks";
 import { RootState } from "@/store";
 
@@ -43,7 +43,7 @@ const DropdownList: React.FC<DropdownListProps> = ({ options, handleChange, labe
 };
 
 interface PermissionsListProps {
-  permissions: ProfileDetailDto[];
+  permissions: UserListPermissionDto[];
   selectedPermissions: number[];
   handlePermissionChange: (id: number) => void;
   disabled?: boolean;
@@ -53,7 +53,7 @@ const PermissionsList: React.FC<PermissionsListProps> = ({ permissions, selected
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
-        {permissions && permissions.length > 0 && (
+        {permissions && permissions.length > 0 && false && (
           <FormField
             type="switch"
             label="Select all"
@@ -67,7 +67,7 @@ const PermissionsList: React.FC<PermissionsListProps> = ({ permissions, selected
           />
         )}
       </Grid>
-      {permissions.map((permission: ProfileDetailDto) => (
+      {permissions.map((permission: UserListPermissionDto) => (
         <Grid item xs={12} key={permission.accessID}>
           <FormField
             type="switch"
@@ -87,16 +87,15 @@ const PermissionsList: React.FC<PermissionsListProps> = ({ permissions, selected
 };
 
 interface PermissionManagerProps {
-  profileId: number;
-  profileName: string;
+  userDetails: UserListDto;
   title: string;
   type: "M" | "R";
   useMainModules?: boolean;
   useSubModules?: boolean;
 }
 
-const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profileName, title, type, useMainModules = true, useSubModules = false }) => {
-  const [permissions, setPermissions] = useState<ProfileDetailDto[]>([]);
+const PermissionManagerUserList: React.FC<PermissionManagerProps> = ({ userDetails, title, type, useMainModules = true, useSubModules = false }) => {
+  const [permissions, setPermissions] = useState<UserListPermissionDto[]>([]);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [mainModules, setMainModules] = useState<DropdownOption[]>([]);
   const [subModules, setSubModules] = useState<DropdownOption[]>([]);
@@ -104,7 +103,6 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
   const [subId, setSubId] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { compID, compCode, compName } = useAppSelector((state: RootState) => state.auth);
-
   const dropdownValues = useDropdownValues(["mainModules", "subModules"]);
 
   useEffect(() => {
@@ -128,9 +126,11 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
 
     setIsLoading(true);
     try {
-      const result: any = await profileListService.getProfileDetailsByType(mainID, subID, compID, profileId, type);
+      const result: any = await userListServices.getUserListPermissionsByType(userDetails.appID, mainID, subID, type);
       setPermissions(result.data);
-      const selectedPermissions = result.data.filter((permission: ProfileDetailDto) => permission.rActiveYN === "Y").map((permission: ProfileDetailDto) => permission.accessID);
+      const selectedPermissions = result.data
+        .filter((permission: UserListPermissionDto) => permission.allowAccess === "Y")
+        .map((permission: UserListPermissionDto) => permission.accessID);
       setSelectedItems(selectedPermissions);
     } catch (error) {
       console.error(`Error fetching ${type === "M" ? "module" : "report"} permissions:`, error);
@@ -143,23 +143,61 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
     try {
       const updatedItems = selectedItems.includes(id) ? selectedItems.filter((item) => item !== id) : [...selectedItems, id];
 
-      const updatedPermissions: ProfileDetailDto[] = permissions.map((permission: ProfileDetailDto) => ({
+      const updatedPermissions: UserListPermissionDto[] = permissions.map((permission: UserListPermissionDto) => ({
         ...permission,
-        profileID: profileId,
-        profileName: profileName,
-        rActiveYN: updatedItems.includes(permission.accessID) ? "Y" : "N",
-        compID: compID || 0,
-        compCode: compCode || "",
-        compName: compName || "",
+        allowAccess: updatedItems.includes(permission.accessID) ? "Y" : "N",
+        compID: compID,
+        compCode: compCode,
+        compName: compName,
         rNotes: "",
         transferYN: "Y",
       }));
 
       setSelectedItems(updatedItems);
       setPermissions(updatedPermissions);
-      const clickedPermission = updatedPermissions.filter((permission) => permission.accessID === id);
-      await profileListService.saveProfileDetailsByType(clickedPermission, type);
-      notifySuccess("Permission applied!");
+      const clickedPermission: UserListPermissionDto[] = updatedPermissions.filter((permission) => permission.accessID === id);
+      if (type === "M") {
+        const userModulePermissions: any[] = clickedPermission.map((permission: UserListPermissionDto) => ({
+          auAccessID: permission.accessDetailID,
+          aOprID: permission.accessID,
+          appID: userDetails.appID,
+          appUName: userDetails.appUserName,
+          allowYN: permission.allowAccess,
+          profileID: 0,
+          compID: compID,
+          compCode: compCode,
+          compName: compName,
+          rNotes: "",
+          transferYN: "Y",
+          rActiveYN: "Y",
+        }));
+        const response = await userListServices.saveUserListPermissionsByType(userModulePermissions, type);
+        if (response.success) {
+          notifySuccess("Permission applied!");
+        } else {
+          notifyError("Permission not applied!");
+        }
+      } else {
+        const userReportPermissions: any[] = updatedPermissions.map((permission: UserListPermissionDto) => ({
+          apAccessID: permission.accessDetailID,
+          repID: permission.accessID,
+          appID: userDetails.appID,
+          allowYN: permission.allowAccess,
+          profileID: 0,
+          compID: compID,
+          compCode: compCode,
+          compName: compName,
+          rNotes: "",
+          transferYN: "Y",
+          rActiveYN: "Y",
+        }));
+        const response = await userListServices.saveUserListPermissionsByType(userReportPermissions, type);
+        if (response.success) {
+          notifySuccess("Permission applied!");
+        } else {
+          notifyError("Permission not applied!");
+        }
+      }
     } catch (error) {
       notifyError("Permission not applied!");
       console.error("Error saving permission:", error);
@@ -235,4 +273,4 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
   );
 };
 
-export default PermissionManager;
+export default PermissionManagerUserList;

@@ -21,14 +21,6 @@ export const saveUser = async (userData: UserListData): Promise<OperationResult<
   return apiService.post<OperationResult<UserListData>>("User/SaveUser", userData, getToken());
 };
 
-export const saveOrUpdateUserPermission = async (userPermission: UserPermissionDto): Promise<OperationResult<UserPermissionDto>> => {
-  return apiService.post<OperationResult<UserPermissionDto>>("User/SaveOrUpdateAppUserAccess", userPermission, getToken());
-};
-
-export const saveOrUpdateUserReportPermission = async (userReportPermission: UserPermissionDto): Promise<OperationResult<UserPermissionDto>> => {
-  return apiService.post<OperationResult<UserPermissionDto>>("User/SaveOrUpdateAppReportAccess", userReportPermission, getToken());
-};
-
 export const getUserDetails = async (appID: number): Promise<OperationResult<UserListData>> => {
   return apiService.get<OperationResult<UserListData>>(`User/GetUserDetails/${appID}`, getToken());
 };
@@ -41,8 +33,6 @@ export const UserListService = {
   getActiveWorkingUsers,
   getAllUsers,
   saveUser,
-  saveOrUpdateUserPermission,
-  saveOrUpdateUserReportPermission,
   getUserDetails,
   updateUserActiveStatus,
 };
