@@ -46,22 +46,33 @@ interface PermissionsListProps {
   permissions: UserListPermissionDto[];
   selectedPermissions: number[];
   handlePermissionChange: (id: number) => void;
+  handleAllPermissionChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   disabled?: boolean;
+  isSelectAll: boolean;
 }
 
-const PermissionsList: React.FC<PermissionsListProps> = ({ permissions, selectedPermissions, handlePermissionChange, disabled = false }) => {
+const PermissionsList: React.FC<PermissionsListProps> = ({
+  permissions,
+  selectedPermissions,
+  handlePermissionChange,
+  handleAllPermissionChange,
+  disabled = false,
+  isSelectAll,
+}) => {
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
-        {permissions && permissions.length > 0 && false && (
+        {permissions && permissions.length > 0 && (
           <FormField
             type="switch"
             label="Select all"
             name={`selectAll`}
             ControlID={`permission-selectAll`}
             value={""}
-            checked={false}
-            onChange={() => {}}
+            checked={isSelectAll}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              handleAllPermissionChange(event);
+            }}
             disabled={disabled}
             gridProps={{ xs: 12 }}
           />
@@ -104,7 +115,7 @@ const PermissionManagerUserList: React.FC<PermissionManagerProps> = ({ userDetai
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { compID, compCode, compName } = useAppSelector((state: RootState) => state.auth);
   const dropdownValues = useDropdownValues(["mainModules", "subModules"]);
-
+  const [isSelectAll, setIsSelectAll] = useState<boolean>(false);
   useEffect(() => {
     setMainModules(dropdownValues.mainModules || []);
   }, [dropdownValues.mainModules]);
@@ -198,6 +209,7 @@ const PermissionManagerUserList: React.FC<PermissionManagerProps> = ({ userDetai
           notifyError("Permission not applied!");
         }
       }
+      fetchPermissions(mainId, subId);
     } catch (error) {
       notifyError("Permission not applied!");
       console.error("Error saving permission:", error);
@@ -207,6 +219,38 @@ const PermissionManagerUserList: React.FC<PermissionManagerProps> = ({ userDetai
     }
   };
 
+  const handleAllPermissionChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("Select All checked:", event.target.checked);
+    const selectAllChecked = event.target.checked;
+    setIsSelectAll(selectAllChecked);
+
+    const updatedPermissions: any[] = permissions.map((permission: UserListPermissionDto) => ({
+      auAccessID: permission.accessDetailID,
+      aOprID: permission.accessID,
+      appID: userDetails.appID,
+      appUName: userDetails.appUserName,
+      allowYN: selectAllChecked ? "Y" : "N",
+      profileID: 0,
+      compID: compID,
+      compCode: compCode,
+      compName: compName,
+      rNotes: "",
+      transferYN: "Y",
+      rActiveYN: "Y",
+    }));
+    console.log("updatedPermissions:", updatedPermissions);
+    if (type === "M") {
+      const response = await userListServices.saveUserListPermissionsByType(updatedPermissions, type);
+      console.log("Updated response:", response);
+      if (response.success) {
+        notifySuccess("Permission applied!");
+      } else {
+        setIsSelectAll(!selectAllChecked);
+        notifyError("Permission not applied!");
+      }
+      fetchPermissions(mainId, subId);
+    }
+  };
   const handleMainModuleChange = (event: SelectChangeEvent<string>) => {
     const value = parseInt(event.target.value);
     setMainId(value);
@@ -223,6 +267,7 @@ const PermissionManagerUserList: React.FC<PermissionManagerProps> = ({ userDetai
   const handleSubModuleChange = (event: SelectChangeEvent<string>) => {
     const value = parseInt(event.target.value);
     setSubId(value);
+    setIsSelectAll(false);
     if (!value) {
       setPermissions([]);
       setSelectedItems([]);
@@ -232,7 +277,6 @@ const PermissionManagerUserList: React.FC<PermissionManagerProps> = ({ userDetai
       fetchPermissions(mainId, value);
     }
   };
-
   return (
     <Grid container spacing={3}>
       <Grid item xs={12}>
@@ -267,7 +311,14 @@ const PermissionManagerUserList: React.FC<PermissionManagerProps> = ({ userDetai
         </Grid>
       </Grid>
       <Grid item xs={12}>
-        <PermissionsList permissions={permissions} selectedPermissions={selectedItems} handlePermissionChange={handlePermissionChange} disabled={isLoading} />
+        <PermissionsList
+          permissions={permissions}
+          selectedPermissions={selectedItems}
+          handlePermissionChange={handlePermissionChange}
+          handleAllPermissionChange={handleAllPermissionChange}
+          isSelectAll={isSelectAll}
+          disabled={isLoading}
+        />
       </Grid>
     </Grid>
   );
