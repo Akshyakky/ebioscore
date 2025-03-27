@@ -188,7 +188,7 @@ const PermissionManagerUserList: React.FC<PermissionManagerProps> = ({ userDetai
         } else {
           notifyError("Permission not applied!");
         }
-      } else {
+      } else if (type === "R") {
         const userReportPermissions: any[] = updatedPermissions.map((permission: UserListPermissionDto) => ({
           apAccessID: permission.accessDetailID,
           repID: permission.accessID,
@@ -224,23 +224,22 @@ const PermissionManagerUserList: React.FC<PermissionManagerProps> = ({ userDetai
     const selectAllChecked = event.target.checked;
     setIsSelectAll(selectAllChecked);
 
-    const updatedPermissions: any[] = permissions.map((permission: UserListPermissionDto) => ({
-      auAccessID: permission.accessDetailID,
-      aOprID: permission.accessID,
-      appID: userDetails.appID,
-      appUName: userDetails.appUserName,
-      allowYN: selectAllChecked ? "Y" : "N",
-      profileID: 0,
-      compID: compID,
-      compCode: compCode,
-      compName: compName,
-      rNotes: "",
-      transferYN: "Y",
-      rActiveYN: "Y",
-    }));
-    console.log("updatedPermissions:", updatedPermissions);
     if (type === "M") {
-      const response = await userListServices.saveUserListPermissionsByType(updatedPermissions, type);
+      const updatedModulePermissions: any[] = permissions.map((permission: UserListPermissionDto) => ({
+        auAccessID: permission.accessDetailID,
+        aOprID: permission.accessID,
+        appID: userDetails.appID,
+        appUName: userDetails.appUserName,
+        allowYN: selectAllChecked ? "Y" : "N",
+        profileID: 0,
+        compID: compID,
+        compCode: compCode,
+        compName: compName,
+        rNotes: "",
+        transferYN: "Y",
+        rActiveYN: "Y",
+      }));
+      const response = await userListServices.saveUserListPermissionsByType(updatedModulePermissions, type);
       console.log("Updated response:", response);
       if (response.success) {
         notifySuccess("Permission applied!");
@@ -248,8 +247,30 @@ const PermissionManagerUserList: React.FC<PermissionManagerProps> = ({ userDetai
         setIsSelectAll(!selectAllChecked);
         notifyError("Permission not applied!");
       }
-      fetchPermissions(mainId, subId);
+    } else if (type === "R") {
+      const updatedReportPermissions: any[] = permissions.map((permission: UserListPermissionDto) => ({
+        apAccessID: permission.accessDetailID,
+        repID: permission.accessID,
+        appID: userDetails.appID,
+        allowYN: selectAllChecked ? "Y" : "N",
+        profileID: 0,
+        compID: compID,
+        compCode: compCode,
+        compName: compName,
+        rNotes: "",
+        transferYN: "Y",
+        rActiveYN: "Y",
+      }));
+      const response = await userListServices.saveUserListPermissionsByType(updatedReportPermissions, type);
+      console.log("Updated response:", response);
+      if (response.success) {
+        notifySuccess("Permission applied!");
+      } else {
+        setIsSelectAll(!selectAllChecked);
+        notifyError("Permission not applied!");
+      }
     }
+    fetchPermissions(mainId, subId);
   };
   const handleMainModuleChange = (event: SelectChangeEvent<string>) => {
     const value = parseInt(event.target.value);
