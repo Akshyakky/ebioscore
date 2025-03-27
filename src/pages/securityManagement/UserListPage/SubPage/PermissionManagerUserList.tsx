@@ -131,6 +131,10 @@ const PermissionManagerUserList: React.FC<PermissionManagerProps> = ({ userDetai
     }
   }, [mainId, dropdownValues.subModules, useSubModules]);
 
+  useEffect(() => {
+    setIsSelectAll(permissions.length > 0 && permissions.every((p) => p.allowAccess === "Y"));
+  }, [permissions]);
+
   async function fetchPermissions(mainID: number, subID: number) {
     if (!mainID && type === "R") return;
     if (!subID && type === "M") return;
