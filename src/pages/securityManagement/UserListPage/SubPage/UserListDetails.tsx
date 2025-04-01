@@ -195,13 +195,13 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
   };
   const handleSaveUser = async () => {
     setIsSubmitted(true);
-    setLoading(true);
     if (!userForm.appUcatCode) {
       return;
     }
     if (newPassword && userForm.appUAccess !== userForm.confirmPassword) {
       return;
     }
+    setLoading(true);
     try {
       const response = await userList.save({
         ...userForm,

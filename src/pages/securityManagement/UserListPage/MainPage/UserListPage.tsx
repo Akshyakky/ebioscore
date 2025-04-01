@@ -38,7 +38,11 @@ const UserListPage: React.FC = () => {
     <>
       <Container maxWidth={false}>
         <Box sx={{ marginBottom: 2 }}>
-          {!selectedData && <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />}
+          {!selectedData && (
+            <Box sx={{ marginBottom: 2 }}>
+              <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
+            </Box>
+          )}
           <UserListDetails selectedUser={selectedData} handleClearPage={handleClearPage} />
           <UserListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
         </Box>

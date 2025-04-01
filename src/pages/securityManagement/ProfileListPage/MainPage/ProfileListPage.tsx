@@ -41,9 +41,11 @@ const ProfileListPage: React.FC = () => {
   return (
     <>
       <Container maxWidth={false}>
-        <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
-        </Box>
+        {!selectedData && (
+          <Box sx={{ marginBottom: 2 }}>
+            <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
+          </Box>
+        )}
         <ProfileDetails editData={selectedData} profileMastService={profileMastService} isClear={handleClearPage} />
         <ProfileListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} profileMastService={profileMastService} />
         {selectedData && (
