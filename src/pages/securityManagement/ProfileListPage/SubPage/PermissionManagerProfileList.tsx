@@ -97,7 +97,7 @@ const PermissionsList: React.FC<PermissionsListProps> = ({
   );
 };
 
-interface PermissionManagerProps {
+interface PermissionManagerProfileListProps {
   profileId: number;
   profileName: string;
   title: string;
@@ -106,7 +106,7 @@ interface PermissionManagerProps {
   useSubModules?: boolean;
 }
 
-const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profileName, title, type, useMainModules = true, useSubModules = false }) => {
+const PermissionManagerProfileList: React.FC<PermissionManagerProfileListProps> = ({ profileId, profileName, title, type, useMainModules = true, useSubModules = false }) => {
   const [permissions, setPermissions] = useState<ProfileDetailDto[]>([]);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [mainModules, setMainModules] = useState<DropdownOption[]>([]);
@@ -285,4 +285,4 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
   );
 };
 
-export default PermissionManager;
+export default PermissionManagerProfileList;

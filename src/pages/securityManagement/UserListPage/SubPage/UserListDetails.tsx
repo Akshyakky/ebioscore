@@ -14,6 +14,7 @@ import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData"
 import ProfilePermissionsListModal from "./ProfilePermissionsListModal";
 import ProfilePermissionsModifyModal from "./ProfilePermissionsModifyModal";
 import PermissionManagerUserList from "./PermissionManagerUserList";
+import PermissionManager from "../../CommonPage/PermissionManager";
 interface UserListProps {
   selectedUser?: UserListDto;
 }
@@ -443,10 +444,10 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser }) => {
         <Paper variant="outlined" sx={{ padding: 2 }}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6} lg={4} xl={3}>
-              <PermissionManagerUserList userDetails={userForm} title="Module Permissions" type="M" useMainModules={true} useSubModules={true} />
+              <PermissionManager mode="user" details={userForm} title="Module Permissions" type="M" useMainModules={true} useSubModules={true} />
             </Grid>
             <Grid item xs={12} md={6} lg={4} xl={3}>
-              <PermissionManagerUserList userDetails={userForm} title="Report Permissions" type="R" useMainModules={true} useSubModules={false} />
+              <PermissionManager mode="user" details={userForm} title="Report Permissions" type="R" useMainModules={true} useSubModules={false} />
             </Grid>
           </Grid>
         </Paper>
