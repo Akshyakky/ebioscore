@@ -3,7 +3,6 @@ import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "@/apiConfig";
 import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { AppUserAccessDto } from "@/interfaces/SecurityManagement/AppUserAccessDto";
 class UserListServices extends GenericEntityService<UserListDto> {
   constructor() {
     super(

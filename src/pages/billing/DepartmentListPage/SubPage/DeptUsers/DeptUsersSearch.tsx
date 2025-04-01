@@ -2,7 +2,6 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import Add from "@mui/icons-material/Add";
 import { UserListData } from "@/interfaces/SecurityManagement/UserListData";
 import { UserListSearchContext } from "@/context/SecurityManagement/UserListSearchContext";
-import { UserListService } from "@/services/SecurityManagementServices/UserListService";
 import CustomButton from "@/components/Button/CustomButton";
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 
@@ -31,11 +30,11 @@ const DeptUsersListSearch: React.FC<DeptUsersSearchProps> = ({ open, handleClose
   const handleSelect = useCallback(
     async (user: UserListData) => {
       try {
-        const userDetails = await UserListService.getUserDetails(user.appID);
-        if (userDetails.success && userDetails.data) {
-          onSelectUser(userDetails.data);
-          handleClose();
-        }
+        // const userDetails = await UserListService.getUserDetails(user.appID);
+        // if (userDetails.success && userDetails.data) {
+        //   onSelectUser(userDetails.data);
+        //   handleClose();
+        // }
       } catch (error) {
         console.error("Error fetching user details:", error);
       }
