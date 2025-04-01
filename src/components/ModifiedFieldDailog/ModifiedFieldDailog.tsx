@@ -11,7 +11,7 @@ import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifi
 
 interface ModifiedFieldDialogProps {
   open: boolean;
-  onClose: () => void;
+  onClose: (saved?: boolean) => void;
   selectedCategoryName: string;
   isFieldCodeDisabled?: boolean;
   initialFormData?: Partial<AppModifyFieldDto>;
@@ -145,12 +145,14 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
           amlName: "",
           amlCode: "",
         }));
-        onClose();
+        onClose(true);
       } else {
         showAlert("Error", "Failed to save field", "error");
+        onClose(false);
       }
     } catch (error) {
-      showAlert("Error", "An error occurred while saving the field", "error");
+      console.error("Error saving:", error);
+      onClose(false);
     }
   };
 
@@ -162,14 +164,18 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
     }));
   };
 
+  const handleClose = () => {
+    onClose(false);
+  };
+
   return (
     <GenericDialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title={formData.amlID ? "Edit Field" : "Add New Field"}
       actions={
         <>
-          <CustomButton onClick={onClose} icon={DeleteIcon} text="Cancel" variant="contained" color="error" sx={{ marginRight: 2 }} />
+          <CustomButton onClick={handleClose} icon={DeleteIcon} text="Cancel" variant="contained" color="error" sx={{ marginRight: 2 }} />
           <CustomButton icon={SaveIcon} text="Save" onClick={handleFormSubmit} variant="contained" color="success" />
         </>
       }

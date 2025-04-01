@@ -1,11 +1,13 @@
 import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
 import { store } from "@/store";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { createEntityService } from "@/utils/Common/serviceFactory";
 
 const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });
 
 const getToken = () => store.getState().auth.token!;
-
+export const appModifyFieldService = createEntityService<AppModifyFieldDto>("AppModify", "commonURL");
 interface AppModifyList {
   id: number;
   value: string;

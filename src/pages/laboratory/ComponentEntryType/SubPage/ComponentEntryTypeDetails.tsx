@@ -5,16 +5,13 @@ import { useLoading } from "@/context/LoadingContext";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { useAppSelector } from "@/store/hooks";
 import { showAlert } from "@/utils/Common/showAlert";
-import { Grid, Paper, SelectChangeEvent, Typography } from "@mui/material";
+import { Grid, Paper, Typography } from "@mui/material";
 import FormField from "@/components/FormField/FormField";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import { LComponentEntryTypeDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
-// import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 const ComponentEntryTypeDetails: React.FC<{ editData?: LComponentEntryTypeDto }> = ({ editData }) => {
-  // const dropdownValues = useDropdownValues(["language"]);
-
   const [formState, setFormState] = useState({
     isSubmitted: false,
     lCentID: 0,
@@ -73,14 +70,12 @@ const ComponentEntryTypeDetails: React.FC<{ editData?: LComponentEntryTypeDto }>
   }, []);
 
   const createComponentEntryTypeData = useCallback((): LComponentEntryTypeDto => {
-    // const selectedLanguage = dropdownValues.language?.find((lang) => lang.value === formState.langType);
-
     return {
       lCentID: formState.lCentID,
       lCentName: formState.lCentName,
       lCentDesc: formState.lCentDesc,
       lCentType: formState.lCentType,
-      langType: "English", // Ensure the label is saved
+      langType: "English",
       rActiveYN: formState.rActiveYN,
       compID: compID || 0,
       compCode: compCode || "",
@@ -107,8 +102,6 @@ const ComponentEntryTypeDetails: React.FC<{ editData?: LComponentEntryTypeDto }>
 
     try {
       const componentEntryTypeData = createComponentEntryTypeData();
-      console.log("Payload being sent:", componentEntryTypeData); // Debugging the payload
-
       const result = await componentEntryTypeService.save(componentEntryTypeData);
       if (result.success) {
         showAlert("Success", "Component Entry Type saved successfully!", "success", {
@@ -118,7 +111,6 @@ const ComponentEntryTypeDetails: React.FC<{ editData?: LComponentEntryTypeDto }>
         showAlert("Error", result.errorMessage || "Failed to save Component Entry Type.", "error");
       }
     } catch (error) {
-      console.error("Error saving Component Entry Type:", error);
       showAlert("Error", "An unexpected error occurred while saving.", "error");
     } finally {
       setLoading(false);
@@ -168,18 +160,6 @@ const ComponentEntryTypeDetails: React.FC<{ editData?: LComponentEntryTypeDto }>
           placeholder="Enter component type"
           size="small"
         />
-        {/* <FormField
-          type="select"
-          label="Language Type"
-          value={formState.langType || ""}
-          onChange={(e) => {
-            const selectedLanguage = dropdownValues.language?.find((lang) => lang.value === e.target.value);
-            setFormState((prev) => ({ ...prev, langType: selectedLanguage ? selectedLanguage.label : e.target.value }));
-          }}
-          name="langType"
-          ControlID="langType"
-          options={dropdownValues.language || [{ value: "", label: "Loading..." }]}
-        /> */}
       </Grid>
       <Grid container spacing={2}>
         <FormField

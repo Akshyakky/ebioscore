@@ -1,7 +1,7 @@
 // src/pages/common/LoginPage/LoginPage.tsx
 import { Company } from "@/types/Common/Company.type";
 import { useAppDispatch } from "@/store/hooks";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useTheme } from "@/context/Common/ThemeContext";
 import { ClientParameterService } from "@/services/CommonServices/ClientParameterService";
 import { CompanyService } from "@/services/CommonServices/CompanyService";
@@ -93,6 +93,26 @@ const StyledAlert = styled(Alert)(({ theme }) => ({
   "@keyframes slideIn": {
     from: { transform: "translateY(-10px)", opacity: 0 },
     to: { transform: "translateY(0)", opacity: 1 },
+  },
+}));
+
+const StyledRouterLink = styled(RouterLink)(({ theme }) => ({
+  color: theme.palette.primary.main,
+  textDecoration: "none",
+  fontWeight: 500,
+  position: "relative",
+  "&::after": {
+    content: '""',
+    position: "absolute",
+    width: 0,
+    height: "2px",
+    bottom: "-2px",
+    left: 0,
+    background: theme.palette.primary.main,
+    transition: "width 0.3s ease",
+  },
+  "&:hover::after": {
+    width: "100%",
   },
 }));
 
@@ -623,30 +643,7 @@ const LoginPage: React.FC = () => {
                 />
 
                 <Box sx={{ textAlign: "right", mb: 2 }}>
-                  <Link
-                    href="/ForgotPasswordPage"
-                    sx={{
-                      color: theme.palette.primary.main,
-                      textDecoration: "none",
-                      fontWeight: 500,
-                      position: "relative",
-                      "&::after": {
-                        content: '""',
-                        position: "absolute",
-                        width: "0",
-                        height: "2px",
-                        bottom: "-2px",
-                        left: "0",
-                        background: theme.palette.primary.main,
-                        transition: "width 0.3s ease",
-                      },
-                      "&:hover::after": {
-                        width: "100%",
-                      },
-                    }}
-                  >
-                    Forgot password?
-                  </Link>
+                  <StyledRouterLink to="/ForgotPasswordPage">Forgot password?</StyledRouterLink>
                 </Box>
 
                 <StyledButton

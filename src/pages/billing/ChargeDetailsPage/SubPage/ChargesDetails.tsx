@@ -148,7 +148,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { setLoading } = useLoading();
-  const dropdownValues = useDropdownValues(["service", "speciality", "bedCategory", "pic"]);
+  const dropdownValues = useDropdownValues(["service", "speciality", "bedCategory", "pic", "serviceType"]);
   const [serviceGroups] = useState<any[]>([]);
   const [selectedFacultyIds, setSelectedFacultyIds] = useState<string[]>([]);
   const [selectedPicIds, setSelectedPicIds] = useState<string[]>([]);

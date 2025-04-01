@@ -1,8 +1,11 @@
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
 export interface investigationDto extends BaseDto {
-  linvMastDto: LInvMastDto;
-  lcomponentsDto: LComponentDto[];
+  lInvMastDto: LInvMastDto;
+  lComponentsDto: LComponentDto[];
+  lCompMultipleDtos: LCompMultipleDto[];
+  lCompAgeRangeDtos: LCompAgeRangeDto[];
+  lCompTemplateDtos: LCompTemplateDto[];
 }
 
 export interface LInvMastDto extends BaseDto {
@@ -57,7 +60,7 @@ export interface LComponentDto extends BaseDto {
   deptNameCD?: string;
   deltaValPercent?: number;
   compOCodeCD?: string;
-  compoID?: number;
+  compoID: number;
   compoNameCD?: string;
   compoTitleCD?: string;
   invCodeCD?: string;
@@ -67,7 +70,7 @@ export interface LComponentDto extends BaseDto {
   cShortNameCD?: string;
   rActiveYN: string;
   compID: number;
-  compCode: string;
+  compCode?: string;
   compName: string;
   transferYN: string;
   rNotes?: string;
@@ -90,4 +93,83 @@ export interface LComponentEntryTypeDto extends BaseDto {
   rModifiedBy?: string;
   rCreatedIdNr?: number;
   rModifiedId?: number;
+}
+
+export interface LCompMultipleDto extends BaseDto {
+  cmID: number;
+  cmValues?: string;
+  compOID?: number;
+  defaultYN?: string;
+  rActiveYN: string;
+  compID: number;
+  compCode: string;
+  compName: string;
+  transferYN: string;
+  rNotes?: string;
+  rCreatedOn?: Date;
+  rModifiedOn?: Date;
+  rModifiedBy?: string;
+  rCreatedIdNr?: number;
+  rModifiedId?: number;
+  invID?: number;
+}
+export interface LCompAgeRangeDto extends BaseDto {
+  carID: number;
+  cappID?: number;
+  compoID?: number;
+  carName?: string;
+  carSex?: string;
+  carStart: number;
+  carEnd: number;
+  carAgeType?: string;
+  carSexValue?: string;
+  carAgeValue?: string;
+  cappName: string;
+  cappOrder?: number;
+  rActiveYN: string;
+  compID: number;
+  compCode: string;
+  compName: string;
+  transferYN: string;
+  rNotes?: string;
+  rCreatedOn?: Date;
+  rModifiedOn?: Date;
+  rModifiedBy?: string;
+  rCreatedIdNr?: number;
+  rModifiedId?: number;
+}
+
+export interface LCompTemplateDto extends BaseDto {
+  cTID: number;
+  tGroupID: number;
+  tGroupName?: string;
+  cTText?: string;
+  isBlankYN?: string;
+  compOID?: number;
+  rActiveYN: string;
+  compID: number;
+  compCode?: string;
+  compName: string;
+  transferYN: string;
+  rNotes?: string;
+  rCreatedOn?: Date;
+  rModifiedOn?: Date;
+  rModifiedBy?: string;
+  rCreatedId?: number;
+  rModifiedId?: number;
+  invID?: number;
+}
+
+export interface InvestigationFormErrors {
+  invCode?: string;
+  invName?: string;
+  invShortName?: string;
+  bchID?: string;
+}
+
+export interface ComponentFormErrors {
+  compOCodeCD?: string;
+  compoNameCD?: string;
+  cShortNameCD?: string;
+  lCentID?: string;
 }

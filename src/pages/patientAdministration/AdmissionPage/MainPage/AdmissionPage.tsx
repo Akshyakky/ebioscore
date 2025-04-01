@@ -132,7 +132,6 @@ const AdmissionPage: React.FC = () => {
 
   const handleSaveAll = async () => {
     try {
-      debugger;
       setLoading(true);
       const success = await handleSave();
 

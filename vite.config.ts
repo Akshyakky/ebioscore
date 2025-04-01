@@ -98,5 +98,6 @@ export default defineConfig({
     hmr: {
       overlay: false,
     },
+    allowedHosts: true,
   },
 });
