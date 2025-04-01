@@ -22,8 +22,8 @@ const UserListPage: React.FC = () => {
     setSelectedData(data);
   }, []);
 
-  const handleClearPage = (isClear: boolean) => {
-    isClear && setSelectedData(undefined);
+  const handleClearPage = () => {
+    setSelectedData(undefined);
   };
 
   const actionButtons: ButtonProps[] = [
@@ -38,8 +38,8 @@ const UserListPage: React.FC = () => {
     <>
       <Container maxWidth={false}>
         <Box sx={{ marginBottom: 2 }}>
-          <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
-          <UserListDetails selectedUser={selectedData} />
+          {!selectedData && <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />}
+          <UserListDetails selectedUser={selectedData} handleClearPage={handleClearPage} />
           <UserListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
         </Box>
       </Container>

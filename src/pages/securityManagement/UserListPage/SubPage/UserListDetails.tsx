@@ -17,9 +17,10 @@ import PermissionManagerUserList from "./PermissionManagerUserList";
 import PermissionManager from "../../CommonPage/PermissionManager";
 interface UserListProps {
   selectedUser?: UserListDto;
+  handleClearPage: () => void;
 }
 
-const UserListDetails: React.FC<UserListProps> = ({ selectedUser }) => {
+const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPage }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const profileMastService = useMemo(() => createEntityService<ProfileMastDto>("ProfileMast", "securityManagementURL"), []);
@@ -191,6 +192,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser }) => {
     setDigSignImageName("");
     setIsSubmitted(false);
     setNewPassword(true);
+    handleClearPage();
   };
   const handleSaveUser = async () => {
     setIsSubmitted(true);
@@ -441,7 +443,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser }) => {
         </section>
       </Paper>
       {permissionView && (
-        <Paper variant="outlined" sx={{ padding: 2 }}>
+        <Paper variant="outlined" sx={{ padding: 2, marginTop: 2, borderRadius: 2, boxShadow: theme.shadows[10] }}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6} lg={4} xl={3}>
               <PermissionManager mode="user" details={userForm} title="Module Permissions" type="M" useMainModules={true} useSubModules={true} />

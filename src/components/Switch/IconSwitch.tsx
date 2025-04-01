@@ -1,14 +1,15 @@
 import React from "react";
 import { Switch, styled } from "@mui/material";
+import { height } from "@mui/system";
 
 const IconSwitch = styled(({ icon: Icon, ...props }: any) => {
   // Create a component that properly handles the icon color based on state
-  const CustomIcon = () => <Icon style={{ color: props.checked ? "green" : "red" }} />;
+  const CustomIcon = () => <Icon style={{ color: props.checked ? "green" : "maroon", paddingTop: "8px", height: "30px" }} />;
 
   return <Switch {...props} checkedIcon={<CustomIcon />} icon={<CustomIcon />} disabled={props.disabled} />;
 })(({ theme }) => ({
-  width: 62,
-  height: 34,
+  width: 70,
+  height: 40,
   padding: 7,
   "& .MuiSwitch-switchBase": {
     margin: 1,
@@ -61,7 +62,7 @@ const IconSwitch = styled(({ icon: Icon, ...props }: any) => {
   "& .MuiSwitch-track": {
     opacity: 1,
     backgroundColor: "#aab4be", // Grey color for the track
-    borderRadius: 20 / 2,
+    borderRadius: 15,
     ...theme.applyStyles("dark", {
       backgroundColor: "#8796A5",
     }),

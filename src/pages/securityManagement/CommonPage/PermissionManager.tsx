@@ -12,6 +12,7 @@ import { useAppSelector } from "@/store/hooks";
 import { RootState } from "@/store";
 import { Add, Book, Cancel, Delete, Edit, FileUpload, Lock, Print, Save } from "@mui/icons-material";
 import IconSwitch from "@/components/Switch/IconSwitch";
+import { showAlert } from "@/utils/Common/showAlert";
 
 interface DropdownListProps {
   options: DropdownOption[];
@@ -286,6 +287,8 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
 
   const handleAllPermissionChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectAllChecked = event.target.checked;
+    const userConfirmed = await showAlert("Confirm Action", `Are you sure you want to ${selectAllChecked ? "select" : "deselect"} all permissions?`, "warning", true);
+    if (!userConfirmed) return;
     setIsSelectAll(selectAllChecked);
 
     let response;
