@@ -1,6 +1,5 @@
 import React from "react";
 import { Switch, styled } from "@mui/material";
-import { height } from "@mui/system";
 
 const IconSwitch = styled(({ icon: Icon, ...props }: any) => {
   // Create a component that properly handles the icon color based on state

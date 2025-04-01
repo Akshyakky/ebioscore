@@ -14,7 +14,6 @@ interface ProfilePermissionsModifyModalProps {
 }
 
 const ProfilePermissionsModifyModal: React.FC<ProfilePermissionsModifyModalProps> = ({ profileId, open, onClose }) => {
-  const { setLoading } = useLoading();
   const [profileName, setProfileName] = useState<string>("");
   const profileMastService = useMemo(() => createEntityService<ProfileMastDto>("ProfileMast", "securityManagementURL"), []);
   useEffect(() => {

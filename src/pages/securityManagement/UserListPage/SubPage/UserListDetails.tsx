@@ -13,7 +13,6 @@ import { userListServices } from "@/services/SecurityManagementServices/UserList
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import ProfilePermissionsListModal from "./ProfilePermissionsListModal";
 import ProfilePermissionsModifyModal from "./ProfilePermissionsModifyModal";
-import PermissionManagerUserList from "./PermissionManagerUserList";
 import PermissionManager from "../../CommonPage/PermissionManager";
 interface UserListProps {
   selectedUser?: UserListDto;

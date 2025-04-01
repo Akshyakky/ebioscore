@@ -111,7 +111,7 @@ const PermissionsList: React.FC<PermissionsListProps> = ({
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 2,
+              gap: 1,
             }}
           >
             <IconSwitch
@@ -120,7 +120,9 @@ const PermissionsList: React.FC<PermissionsListProps> = ({
               onChange={() => handlePermissionChange(permission.accessID)}
               disabled={disabled}
             />
-            <span>{permission.accessName}</span>
+            <Typography variant="body1" sx={{ flexGrow: 1, fontWeight: 500, fontSize: 16 }}>
+              {permission.accessName}
+            </Typography>
           </Grid>
         );
       })}
