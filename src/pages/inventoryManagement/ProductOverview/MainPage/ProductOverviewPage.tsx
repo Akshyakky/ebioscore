@@ -14,7 +14,7 @@ import FormField from "@/components/FormField/FormField";
 import CustomButton from "@/components/Button/CustomButton";
 import ProductOverviewSearch from "../SubPage/ProductOverviewSearch";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
-import useDepartmentSelection from "@/hooks/Common/useDepartmentSelection";
+import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 
 const ProductOverviewPage: React.FC = () => {
   const [selectedData, setSelectedData] = useState<ProductOverviewDto>({

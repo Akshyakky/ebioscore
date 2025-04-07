@@ -4,7 +4,7 @@ import Search from "@mui/icons-material/Search";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import { PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
-import useDepartmentSelection from "@/hooks/Common/useDepartmentSelection";
+import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 
 const PurchaseOrderPage: React.FC = () => {
   const [selectedData, setSelectedData] = React.useState<PurchaseOrderMastDto>({
