@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, Container, Typography } from "@mui/material";
 import { ThumbUp } from "@mui/icons-material";
 import Close from "@mui/icons-material/Close";
@@ -13,6 +13,8 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import FormField from "@/components/FormField/FormField";
 import CustomButton from "@/components/Button/CustomButton";
 import ProductOverviewSearch from "../SubPage/ProductOverviewSearch";
+import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
+import useDepartmentSelection from "@/hooks/Common/useDepartmentSelection";
 
 const ProductOverviewPage: React.FC = () => {
   const [selectedData, setSelectedData] = useState<ProductOverviewDto>({
@@ -32,35 +34,14 @@ const ProductOverviewPage: React.FC = () => {
     transferYN: "N",
   });
 
-  const [dialogOpen, setDialogOpen] = useState(true);
-  const [isDepartmentSelected, setIsDepartmentSelected] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const { handleDropdownChange } = useDropdownChange<ProductOverviewDto>(setSelectedData);
-  const dropdownValues = useDropdownValues(["department"]);
+  const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect, requireDepartmentSelection } = useDepartmentSelection({
+    isDialogOpen: true,
+  });
   const isSubmitted = false;
-
-  const handleCloseDialog = useCallback(() => {
-    if (isDepartmentSelected) {
-      setDialogOpen(false);
-    } else {
-      showAlert("Warning", "Please select a department before closing.", "warning");
-    }
-  }, [isDepartmentSelected]);
-
-  const handleOkClick = useCallback(() => {
-    if (selectedData.deptID === 0) {
-      showAlert("Warning", "Please select a department to continue.", "warning");
-    } else {
-      setIsDepartmentSelected(true);
-      setDialogOpen(false);
-      showAlert("Success", "Department selected successfully!", "success");
-    }
-  }, [selectedData.deptID]);
-
   const handleDepartmentChange = useCallback(() => {
-    setDialogOpen(true);
-  }, []);
-
+    openDialog();
+  }, [openDialog]);
   const handleAdvancedSearch = useCallback(() => {
     if (!isDepartmentSelected) {
       showAlert("Warning", "Please select a department first before searching.", "warning");
@@ -80,6 +61,16 @@ const ProductOverviewPage: React.FC = () => {
     }));
     showAlert("Success", "Product overview details loaded successfully!", "success");
   }, []);
+
+  useEffect(() => {
+    if (isDepartmentSelected) {
+      setSelectedData((prev) => ({
+        ...prev,
+        deptID: deptId,
+        department: deptName,
+      }));
+    }
+  }, [deptId, deptName, isDepartmentSelected]);
 
   const actionButtons: ButtonProps[] = useMemo(
     () => [
@@ -102,28 +93,13 @@ const ProductOverviewPage: React.FC = () => {
 
       {isDepartmentSelected && <ProductOverviewDetail selectedData={selectedData} onChangeDepartment={handleDepartmentChange} />}
 
-      <GenericDialog open={dialogOpen} onClose={handleCloseDialog} title="Select Department" maxWidth="sm">
-        <Typography variant="h6" gutterBottom>
-          Please select a department
-        </Typography>
-        <FormField
-          type="select"
-          label="Department"
-          name="deptID"
-          ControlID="Department"
-          value={selectedData.deptID === 0 ? "" : String(selectedData.deptID)}
-          options={dropdownValues.department}
-          onChange={handleDropdownChange(["deptID"], ["department"], dropdownValues.department)}
-          isMandatory={true}
-          isSubmitted={isSubmitted}
-          gridProps={{ xs: 12, sm: 6, md: 6 }}
-        />
-
-        <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: 2 }}>
-          <CustomButton variant="contained" onClick={handleCloseDialog} text="Close" sx={{ marginRight: 1 }} color="error" icon={Close} />
-          <CustomButton variant="contained" onClick={handleOkClick} text="OK" color="success" icon={ThumbUp} />
-        </Box>
-      </GenericDialog>
+      <DepartmentSelectionDialog
+        open={isDialogOpen}
+        onClose={closeDialog}
+        onSelectDepartment={handleDepartmentSelect}
+        initialDeptId={selectedData.deptID}
+        requireSelection={true}
+      />
 
       <ProductOverviewSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} selectedDeptID={selectedData.deptID} />
     </Container>
