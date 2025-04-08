@@ -19,6 +19,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
   const dropdownValues = useDropdownValues(["department"]);
   const [productOptions, setProductOptions] = useState<ProductListDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [productName, setProductName] = useState<string>("");
   const fetchProductSuggestions = useCallback(
     async (inputValue: string): Promise<void> => {
       if (!inputValue || inputValue.length < 1) {
@@ -43,7 +44,34 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
     },
     [purchaseOrderData?.fromDeptID]
   );
+  const handleProductSelect = useCallback(async (selectedProductString: string) => {
+    const [selectedProductCode] = selectedProductString.split(" - ");
+    // setFormState((prevState) => ({
+    //   ...prevState,
+    //   productCode: selectedProductCode,
+    // }));
+    try {
+      const response = await ProductListService.getAllProductList();
+      if (response.success && response.data) {
+        const selectedProductDetails = response.data
+          .filter((product) => product.productCode === selectedProductCode)
+          .map(({ serialNumber, MFName, ...rest }) => ({
+            ...rest,
+            MFName,
+          }));
 
+        // setFormState((prevState) => ({
+        //   ...prevState,
+        //   ...selectedProductDetails[0],
+        //   productID: selectedProductDetails[0]?.productID || 0,
+        // }));
+        // setFieldsDisabled(true);
+        // setSelectedProductData(selectedProductDetails);
+      }
+    } catch (error) {
+      showAlert("error", "Failed to fetch product details", "error");
+    }
+  }, []);
   useEffect(() => {
     if (purchaseOrderData?.fromDeptName) {
       const fetchPOCode = async (deptName: string) => {
@@ -134,8 +162,20 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
         </Grid>
       </Grid>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          {/* <DepartmentInfoChange deptName={purchaseOrderData?.fromDeptName || "N/A"} handleChangeClick={handleDepartmentChange} /> */}
+        <Grid item xs={12} sm={6} md={4}>
+          <FormField
+            ControlID="productName"
+            label="Search Product"
+            name="productCode"
+            type="autocomplete"
+            placeholder="Search through product..."
+            value={productName}
+            onChange={(e) => setProductName(e.target.value)}
+            suggestions={productOptions.map((product) => `${product.productCode} - ${product.productName}`)}
+            onSelectSuggestion={handleProductSelect}
+            isMandatory
+            gridProps={{ xs: 12 }}
+          />
         </Grid>
       </Grid>
     </Paper>
