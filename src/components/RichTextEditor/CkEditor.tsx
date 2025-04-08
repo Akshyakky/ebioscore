@@ -71,7 +71,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
   }, [value]);
 
   const execCommand = (command: string, value: string = "") => {
-    // Save current selection
     const selection = document.getSelection();
     const range = selection?.getRangeAt(0);
     if (editorRef.current) {
@@ -112,7 +111,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
         zIndex: 1000,
         width: 200,
         p: 1,
-        backgroundColor: "white",
         boxShadow: 3,
         borderRadius: 1,
         display: showColorPicker ? "grid" : "none",
@@ -147,7 +145,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
 
   return (
     <Paper elevation={3} sx={{ border: "1px solidrgb(161, 43, 43)", borderRadius: 2, overflow: "hidden", height: "100%" }}>
-      <Box sx={{ backgroundColor: "#f5f5f5", borderBottom: "1px solid #e0e0e0" }}>
+      <Box sx={{ borderBottom: "1px solid #e0e0e0" }}>
         <Box
           sx={{
             p: 1,
@@ -291,7 +289,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
           minHeight: "300px",
           maxHeight: "700px",
           overflowY: "auto",
-          backgroundColor: "#ffffff",
+          // backgroundColor: "#ffffff",
           "&:focus": {
             outline: "none",
             boxShadow: "inset 0 0 0 2px #2196f3",
@@ -305,7 +303,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
             paddingLeft: "1em",
           },
           "& pre": {
-            backgroundColor: "#f5f5f5",
+            // backgroundColor: "#f5f5f5",
             padding: "1em",
             borderRadius: "4px",
             fontFamily: "monospace",

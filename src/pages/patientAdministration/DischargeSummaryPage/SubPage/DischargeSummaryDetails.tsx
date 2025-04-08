@@ -13,7 +13,8 @@ import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
-import { DeleteIcon, SaveIcon } from "lucide-react";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SaveIcon from "@mui/icons-material/Save";
 import { useForm, Controller } from "react-hook-form";
 import { dischargeSummaryService } from "@/services/PatientAdministrationServices/patientAdministrationService";
 interface DischargeSummaryDetailsProps {
@@ -368,6 +369,7 @@ const DischargeSummaryDetails: React.FC<DischargeSummaryDetailsProps> = ({ onCle
           rows={4}
           size="small"
           gridProps={{ xs: 12 }}
+          value={formState.birthHistory}
         />
 
         <FormField

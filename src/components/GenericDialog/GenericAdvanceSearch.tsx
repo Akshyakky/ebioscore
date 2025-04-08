@@ -67,7 +67,6 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
   const user = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    debugger;
     if (open) {
       fetchAllItems();
     } else {

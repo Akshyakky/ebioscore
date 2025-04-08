@@ -1,7 +1,7 @@
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 import { investigationDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
-import React from "react";
+import React, { ChangeEvent, useEffect, useState } from "react";
 
 interface InvestigationListSearchProps {
   open: boolean;
@@ -11,24 +11,47 @@ interface InvestigationListSearchProps {
 }
 
 const InvestigationListSearch: React.FC<InvestigationListSearchProps> = ({ open, onClose, onSelect }) => {
-  // Fetch Investigation Data
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredInvestigations, setFilteredInvestigations] = useState<any[]>([]);
+  const [investigations, setInvestigations] = useState<any[]>([]);
   const fetchItems = async () => {
     const result = await investigationlistService.getAll();
     return result.success && result.data ? result.data : [];
   };
 
-  // Corrected Toggle Logic for Active Status
+  useEffect(() => {
+    if (open) {
+      fetchItems();
+    }
+  }, [open, fetchItems]);
+
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredInvestigations(investigations);
+    } else {
+      const lowerTerm = searchTerm.toLowerCase().trim();
+      const filtered = investigations.filter((inv) => {
+        const invName = inv.lInvMastDto?.invName || "";
+        const invID = String(inv.lInvMastDto?.invID || "");
+        return invName.toLowerCase().includes(lowerTerm) || invID.toLowerCase().includes(lowerTerm);
+      });
+      setFilteredInvestigations(filtered);
+    }
+  }, [searchTerm, investigations]);
+
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
   const updateActiveStatus = async (id: number, currentStatus: boolean) => {
     try {
-      const updatedStatus = currentStatus ? true : false; // Correctly toggles the value
+      const updatedStatus = currentStatus ? true : false;
       const result = await investigationlistService.updateActiveStatus(id, updatedStatus);
-
       if (result) {
-        const updatedItems = await fetchItems(); // Refresh data after status update
+        const updatedItems = await fetchItems();
         const updatedItem = updatedItems.find((item: investigationDto) => item.lInvMastDto?.invID === id);
-
         if (updatedItem) {
-          updatedItem.lInvMastDto.rActiveYN = updatedStatus; // Correctly assign the updated status
+          updatedItem.lInvMastDto.rActiveYN = updatedStatus;
         }
       }
 

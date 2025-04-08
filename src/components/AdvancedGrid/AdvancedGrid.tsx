@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Box, Checkbox, Radio } from "@mui/material";
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Box } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
-export interface ColumnConfig {
+export interface ColumnConfig<T = any> {
   key: string;
   label: string;
   group?: string;
@@ -12,6 +12,7 @@ export interface ColumnConfig {
   width?: string;
   align?: "left" | "center" | "right";
   onChange?: (event: React.ChangeEvent<HTMLInputElement>, row: any) => void;
+  renderCell?: (row: T) => React.ReactNode; // For custom cell rendering
 }
 
 interface GenericGridProps<T> {
@@ -20,6 +21,9 @@ interface GenericGridProps<T> {
   onRowChange?: (updatedData: T[]) => void;
   onRowSelect?: (rowIndex: number) => void;
   maxHeight?: string;
+  checkboxSelection?: boolean;
+  onSelectionChange?: (newSelection: number[]) => void;
+  onCellEdit?: (rowId: number, field: string, value: any) => void;
 }
 
 const rowColors = [
@@ -97,7 +101,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   },
 }));
 
-const AdvancedGrid = <T extends Record<string, any>>({ data: initialData, columns, onRowChange, maxHeight = "500px", onRowSelect }: GenericGridProps<T>) => {
+const AdvancedGrid = <T extends Record<string, any>>({ data: initialData, columns, onRowChange, maxHeight = "500px", onRowSelect, onCellEdit }: GenericGridProps<T>) => {
   const [data, setData] = useState<T[]>(initialData);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
 
@@ -126,12 +130,17 @@ const AdvancedGrid = <T extends Record<string, any>>({ data: initialData, column
 
     setData(updatedData);
     if (onRowChange) onRowChange(updatedData);
+
+    // Call onCellEdit if provided
+    if (onCellEdit && "id" in updatedData[rowIndex]) {
+      onCellEdit(updatedData[rowIndex].id, columnKey as string, updatedValue);
+    }
   };
 
   const handleSelectRow = (rowIndex: number) => {
     setSelectedRow(rowIndex);
     if (onRowSelect) {
-      onRowSelect(rowIndex); // Call the callback if it exists
+      onRowSelect(rowIndex);
     }
   };
 
@@ -166,6 +175,7 @@ const AdvancedGrid = <T extends Record<string, any>>({ data: initialData, column
             position: "sticky",
             top: Object.keys(groupedColumns).length > 1 ? 48 : 0,
             zIndex: 2,
+            width: col.width || "auto",
           }}
         >
           {col.label}
@@ -183,17 +193,13 @@ const AdvancedGrid = <T extends Record<string, any>>({ data: initialData, column
         }}
       >
         {columns.map((col) => {
-          if (col.key === "select" && col.type === "Radio") {
-            return (
-              <StyledTableCell key={col.key} align="center">
-                <Radio checked={selectedRow === rowIndex} onChange={() => handleSelectRow(rowIndex)} />
-              </StyledTableCell>
-            );
-          }
-
           return (
             <StyledTableCell key={col.key} align={col.align || "center"}>
-              {col.input && col.editable ? (
+              {col.renderCell ? (
+                // Use custom rendering function if provided
+                col.renderCell(row)
+              ) : col.input && col.editable ? (
+                // Default input field for editable columns
                 <StyledTextField
                   fullWidth
                   variant="outlined"
@@ -206,6 +212,7 @@ const AdvancedGrid = <T extends Record<string, any>>({ data: initialData, column
                   }}
                 />
               ) : (
+                // Default text display
                 row[col.key] || ""
               )}
             </StyledTableCell>
@@ -214,7 +221,8 @@ const AdvancedGrid = <T extends Record<string, any>>({ data: initialData, column
       </StyledTableRow>
     ));
 
-  const totalWidth = columns.reduce((sum, col) => sum + parseInt(col.width || "150", 10), 50);
+  const totalWidth = columns.reduce((sum, col) => sum + parseInt(col.width || "150", 10), 0);
+
   return (
     <Box sx={{ maxHeight, maxWidth: "100%", overflow: "auto" }}>
       <Paper sx={{ maxHeight }}>
