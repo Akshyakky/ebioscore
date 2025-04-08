@@ -43,6 +43,7 @@ import MedicationGenericPage from "@/pages/clinicalManagement/MedicationGeneric/
 import InvestigationListPage from "@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage";
 import ComponentEntryTypePage from "@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage";
 import ForgotPasswordPage from "@/pages/common/ForgotPasswordPage/ForgotPasswordPage";
+import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
 
 interface RouteConfig {
   path: string;
@@ -92,6 +93,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/MedicationGenericPage", component: MedicationGenericPage, protected: true },
   { path: "/InvestigationListPage", component: InvestigationListPage, protected: true },
   { path: "/ComponentEntryTypePage", component: ComponentEntryTypePage, protected: true },
+  { path: "/PurchaseOrderPage", component: PurchaseOrderPage, protected: true },
   { path: "/ForgotPasswordPage", component: ForgotPasswordPage, protected: false },
 ];
 

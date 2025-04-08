@@ -64,6 +64,18 @@ export interface AppSubModuleDto extends BaseDto {
   transferYN: string;
 }
 
+export interface ProfileModulesDto {
+  profDetID: number;
+  profileID: number;
+  profileName: string;
+  aOprID: number;
+  aOprName: string;
+  aSubID: number;
+  aSubName: string;
+  aUGrpID: number;
+  aUGrpName: string;
+}
+
 export interface ProfileModuleOperationDto extends BaseDto {
   profileID: number;
   profDetID: number;

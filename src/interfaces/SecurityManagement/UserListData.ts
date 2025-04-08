@@ -1,3 +1,32 @@
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
+
+export interface UserListDto extends BaseDto {
+  appID: number;
+  appUserName: string;
+  appGeneralCode: string;
+  conID: number;
+  appUcatCode: string;
+  appUcatType: string;
+  adminUserYN: string;
+  conCompId?: number;
+  digSignPath: string;
+  appCode: string;
+  appUAccess?: string;
+  profileID: number;
+  rActiveYN: string;
+  rCreatedOn: string;
+  rCreatedID: number;
+  rCreatedBy: string;
+  rModifiedOn: string;
+  rModifiedID: number;
+  rModifiedBy: string;
+  rNotes?: string;
+  compCode: string;
+  compID?: number;
+  compName: string;
+  transferYN?: string;
+}
+
 export interface UserListData {
   appID: number;
   appUserName: string;
@@ -78,9 +107,9 @@ export interface UserPermissionDropdowns {
   repMainModuleName: string;
 }
 
-interface UserPermission {
-  profDetID?: number;
-  reportID: number;
-  reportName: string;
-  allow: boolean;
+export interface UserListPermissionDto {
+  accessDetailID: number;
+  accessID: number;
+  accessName: string;
+  allowAccess: string;
 }

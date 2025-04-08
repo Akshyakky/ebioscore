@@ -5,6 +5,9 @@ import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { ProfileDetailDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { profileListService } from "@/services/SecurityManagementServices/ProfileListServices";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
+import { useAppSelector } from "@/store/hooks";
+import { RootState } from "@/store";
 
 interface DropdownListProps {
   options: DropdownOption[];
@@ -43,24 +46,37 @@ interface PermissionsListProps {
   permissions: ProfileDetailDto[];
   selectedPermissions: number[];
   handlePermissionChange: (id: number) => void;
+  handleAllPermissionChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   disabled?: boolean;
+  isSelectAll: boolean;
 }
 
-const PermissionsList: React.FC<PermissionsListProps> = ({ permissions, selectedPermissions, handlePermissionChange, disabled = false }) => {
+const PermissionsList: React.FC<PermissionsListProps> = ({
+  permissions,
+  selectedPermissions,
+  handlePermissionChange,
+  handleAllPermissionChange,
+  isSelectAll,
+  disabled = false,
+}) => {
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
-        <FormField
-          type="switch"
-          label="Select all"
-          name={`selectAll`}
-          ControlID={`permission-selectAll`}
-          value={""}
-          checked={false}
-          onChange={() => {}}
-          disabled={disabled}
-          gridProps={{ xs: 12 }}
-        />
+        {permissions && permissions.length > 0 && (
+          <FormField
+            type="switch"
+            label="Select all"
+            name={`selectAll`}
+            ControlID={`permission-selectAll`}
+            value={""}
+            checked={isSelectAll}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              handleAllPermissionChange(event);
+            }}
+            disabled={disabled}
+            gridProps={{ xs: 12 }}
+          />
+        )}
       </Grid>
       {permissions.map((permission: ProfileDetailDto) => (
         <Grid item xs={12} key={permission.accessID}>
@@ -81,7 +97,7 @@ const PermissionsList: React.FC<PermissionsListProps> = ({ permissions, selected
   );
 };
 
-interface PermissionManagerProps {
+interface PermissionManagerProfileListProps {
   profileId: number;
   profileName: string;
   title: string;
@@ -90,7 +106,7 @@ interface PermissionManagerProps {
   useSubModules?: boolean;
 }
 
-const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profileName, title, type, useMainModules = true, useSubModules = false }) => {
+const PermissionManagerProfileList: React.FC<PermissionManagerProfileListProps> = ({ profileId, profileName, title, type, useMainModules = true, useSubModules = false }) => {
   const [permissions, setPermissions] = useState<ProfileDetailDto[]>([]);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [mainModules, setMainModules] = useState<DropdownOption[]>([]);
@@ -98,7 +114,8 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
   const [mainId, setMainId] = useState<number>(0);
   const [subId, setSubId] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
+  const { compID, compCode, compName } = useAppSelector((state: RootState) => state.auth);
+  const [isSelectAll, setIsSelectAll] = useState<boolean>(false);
   const dropdownValues = useDropdownValues(["mainModules", "subModules"]);
 
   useEffect(() => {
@@ -115,14 +132,17 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
       setSelectedItems([]);
     }
   }, [mainId, dropdownValues.subModules, useSubModules]);
+  useEffect(() => {
+    setIsSelectAll(permissions.length > 0 && permissions.every((p) => p.rActiveYN === "Y"));
+  }, [permissions]);
 
-  async function fetchPermissions(mainID: number, subID: number, compID: number) {
+  async function fetchPermissions(mainID: number, subID: number) {
     if (!mainID && type === "R") return;
     if (!subID && type === "M") return;
 
     setIsLoading(true);
     try {
-      const result: any = await profileListService.getProfileDetailsByType(mainID, subID, compID, 1, type);
+      const result: any = await profileListService.getProfileDetailsByType(mainID, subID, compID, profileId, type);
       setPermissions(result.data);
       const selectedPermissions = result.data.filter((permission: ProfileDetailDto) => permission.rActiveYN === "Y").map((permission: ProfileDetailDto) => permission.accessID);
       setSelectedItems(selectedPermissions);
@@ -142,9 +162,9 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
         profileID: profileId,
         profileName: profileName,
         rActiveYN: updatedItems.includes(permission.accessID) ? "Y" : "N",
-        compID: 1,
-        compCode: "KVG",
-        compName: "KVG",
+        compID: compID || 0,
+        compCode: compCode || "",
+        compName: compName || "",
         rNotes: "",
         transferYN: "Y",
       }));
@@ -152,15 +172,46 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
       setSelectedItems(updatedItems);
       setPermissions(updatedPermissions);
       const clickedPermission = updatedPermissions.filter((permission) => permission.accessID === id);
-      await profileListService.saveProfileDetailsByType(clickedPermission, type);
+      const response = await profileListService.saveProfileDetailsByType(clickedPermission, type);
+      if (response.success) {
+        notifySuccess("Permission applied!");
+      } else {
+        notifyError("Permission not applied!");
+      }
+      fetchPermissions(mainId, subId);
     } catch (error) {
+      notifyError("Permission not applied!");
       console.error("Error saving permission:", error);
       if (type === "M") {
-        fetchPermissions(mainId, subId, 1);
+        fetchPermissions(mainId, subId);
       }
     }
   };
+  const handleAllPermissionChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("Select All checked:", event.target.checked);
+    const selectAllChecked = event.target.checked;
+    setIsSelectAll(selectAllChecked);
+    const updatedPermissions: ProfileDetailDto[] = permissions.map((permission: ProfileDetailDto) => ({
+      ...permission,
+      profileID: profileId,
+      profileName: profileName,
+      rActiveYN: selectAllChecked ? "Y" : "N",
+      compID: compID || 0,
+      compCode: compCode || "",
+      compName: compName || "",
+      rNotes: "",
+      transferYN: "Y",
+    }));
 
+    setPermissions(updatedPermissions);
+    const response = await profileListService.saveProfileDetailsByType(updatedPermissions, type);
+    if (response.success) {
+      notifySuccess("Permission applied!");
+    } else {
+      notifyError("Permission not applied!");
+    }
+    fetchPermissions(mainId, subId);
+  };
   const handleMainModuleChange = (event: SelectChangeEvent<string>) => {
     const value = parseInt(event.target.value);
     setMainId(value);
@@ -170,7 +221,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
       return;
     }
     if (type === "R") {
-      fetchPermissions(value, 0, 1);
+      fetchPermissions(value, 0);
     }
   };
 
@@ -183,7 +234,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
       return;
     }
     if (type === "M") {
-      fetchPermissions(mainId, value, 1);
+      fetchPermissions(mainId, value);
     }
   };
 
@@ -221,10 +272,17 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ profileId, profil
         </Grid>
       </Grid>
       <Grid item xs={12}>
-        <PermissionsList permissions={permissions} selectedPermissions={selectedItems} handlePermissionChange={handlePermissionChange} disabled={isLoading} />
+        <PermissionsList
+          permissions={permissions}
+          selectedPermissions={selectedItems}
+          handlePermissionChange={handlePermissionChange}
+          handleAllPermissionChange={handleAllPermissionChange}
+          isSelectAll={isSelectAll}
+          disabled={isLoading}
+        />
       </Grid>
     </Grid>
   );
 };
 
-export default PermissionManager;
+export default PermissionManagerProfileList;
