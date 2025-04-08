@@ -8,6 +8,7 @@ import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSel
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import { Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
 import PurchaseOrderHeader from "../SubPage/PurchaseOrderHeader";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 
 const PurchaseOrderPage: React.FC = () => {
   const initialPOMastDto: PurchaseOrderMastDto = {
@@ -53,6 +54,10 @@ const PurchaseOrderPage: React.FC = () => {
   });
   const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const [isSubmitted, setIsSubmitted] = React.useState(false);
+  const [selectedProduct, setSelectedProduct] = React.useState<ProductListDto | undefined>(undefined);
+  const handleSelectedProduct = (product: ProductListDto) => {
+    setSelectedProduct(product);
+  };
   const handleAdvancedSearch = () => {
     requireDepartmentSelection(() => {
       setIsSearchOpen(true);
@@ -70,7 +75,6 @@ const PurchaseOrderPage: React.FC = () => {
 
   useEffect(() => {
     if (isDepartmentSelected) {
-      console.log("Department selected:", deptId, deptName);
       setSelectedData((prev) => ({
         ...prev,
         fromDeptID: deptId,
@@ -97,7 +101,6 @@ const PurchaseOrderPage: React.FC = () => {
   };
   const handleSave = () => {
     setIsSubmitted(true);
-    console.log("Form Data to Save:", selectedData);
   };
   return (
     <>
@@ -106,7 +109,13 @@ const PurchaseOrderPage: React.FC = () => {
           <Box sx={{ marginBottom: 2 }}>
             <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
           </Box>
-          <PurchaseOrderHeader purchaseOrderData={selectedData} handleDepartmentChange={handleDepartmentChange} onFormChange={handleFormDataChange} isSubmitted={isSubmitted} />
+          <PurchaseOrderHeader
+            purchaseOrderData={selectedData}
+            handleDepartmentChange={handleDepartmentChange}
+            onFormChange={handleFormDataChange}
+            isSubmitted={isSubmitted}
+            handleSelectedProduct={handleSelectedProduct}
+          />
           <Box sx={{ mt: 4 }}>
             <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
           </Box>
