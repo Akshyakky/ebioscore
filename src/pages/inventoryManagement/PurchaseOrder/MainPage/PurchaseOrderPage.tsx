@@ -5,9 +5,12 @@ import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButton
 import { PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import { Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
+import PurchaseOrderHeader from "../SubPage/PurchaseOrderHeader";
 
 const PurchaseOrderPage: React.FC = () => {
-  const [selectedData, setSelectedData] = React.useState<PurchaseOrderMastDto>({
+  const initialPOMastDto: PurchaseOrderMastDto = {
     pOID: 0,
     supplierID: 0,
     supplierName: "",
@@ -42,14 +45,14 @@ const PurchaseOrderPage: React.FC = () => {
     compName: "",
     transferYN: "",
     rNotes: "",
-  });
+  };
 
-  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
-
+  const [selectedData, setSelectedData] = React.useState<PurchaseOrderMastDto>(initialPOMastDto);
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect, requireDepartmentSelection } = useDepartmentSelection({
     isDialogOpen: true,
   });
-
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
+  const [isSubmitted, setIsSubmitted] = React.useState(false);
   const handleAdvancedSearch = () => {
     requireDepartmentSelection(() => {
       setIsSearchOpen(true);
@@ -67,6 +70,7 @@ const PurchaseOrderPage: React.FC = () => {
 
   useEffect(() => {
     if (isDepartmentSelected) {
+      console.log("Department selected:", deptId, deptName);
       setSelectedData((prev) => ({
         ...prev,
         fromDeptID: deptId,
@@ -79,12 +83,35 @@ const PurchaseOrderPage: React.FC = () => {
     console.log("Selected Data:", selectedData);
   }, [selectedData]);
 
+  const handleDepartmentChange = () => {
+    openDialog();
+  };
+  const handleFormDataChange = (fieldName: keyof PurchaseOrderMastDto, value: any) => {
+    setSelectedData((prev) => ({
+      ...prev,
+      [fieldName]: value,
+    }));
+  };
+  const handleClear = () => {
+    setSelectedData(initialPOMastDto);
+  };
+  const handleSave = () => {
+    setIsSubmitted(true);
+    console.log("Form Data to Save:", selectedData);
+  };
   return (
-    <Container maxWidth={false}>
-      <Box sx={{ marginBottom: 2 }}>
-        <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
-      </Box>
-
+    <>
+      {deptId > 0 && (
+        <Container maxWidth={false}>
+          <Box sx={{ marginBottom: 2 }}>
+            <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
+          </Box>
+          <PurchaseOrderHeader purchaseOrderData={selectedData} handleDepartmentChange={handleDepartmentChange} onFormChange={handleFormDataChange} isSubmitted={isSubmitted} />
+          <Box sx={{ mt: 4 }}>
+            <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
+          </Box>
+        </Container>
+      )}
       <DepartmentSelectionDialog
         open={isDialogOpen}
         onClose={closeDialog}
@@ -92,7 +119,7 @@ const PurchaseOrderPage: React.FC = () => {
         initialDeptId={selectedData.fromDeptID}
         requireSelection={true}
       />
-    </Container>
+    </>
   );
 };
 

@@ -1,17 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Container, Typography } from "@mui/material";
-import { ThumbUp } from "@mui/icons-material";
-import Close from "@mui/icons-material/Close";
+import { Box, Container } from "@mui/material";
 import Search from "@mui/icons-material/Search";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
-import useDropdownChange from "@/hooks/useDropdownChange";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { showAlert } from "@/utils/Common/showAlert";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import ProductOverviewDetail from "../SubPage/ProductOverviewDetails";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import FormField from "@/components/FormField/FormField";
-import CustomButton from "@/components/Button/CustomButton";
 import ProductOverviewSearch from "../SubPage/ProductOverviewSearch";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";

@@ -31,7 +31,7 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
   const dropdownValues = useDropdownValues(["department"]);
   const isSubmitted = false;
   const navigate = useNavigate();
-  // Reset selected department when dialog opens with a new initialDeptId
+
   useEffect(() => {
     setSelectedDeptId(initialDeptId);
   }, [initialDeptId, open]);
@@ -42,7 +42,7 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
       setSelectedDeptId(deptId);
 
       // Find the department name from the selected ID
-      const selectedDept = dropdownValues.department.find((dept) => dept.value === String(deptId));
+      const selectedDept = dropdownValues.department.find((dept) => parseInt(dept.value) === deptId);
       if (selectedDept) {
         setDeptName(selectedDept.label);
       }

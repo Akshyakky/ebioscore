@@ -2,6 +2,7 @@ import { ProductGroupDto, ProductSubGroupDto, ProductUnitDto } from "@/interface
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
 import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
+import { PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 
 export const productListService = createEntityService<ProductListDto>("ProductList", "inventoryManagementURL");
@@ -10,3 +11,4 @@ export const productGroupService = createEntityService<ProductGroupDto>("Product
 export const productUnitService = createEntityService<ProductUnitDto>("ProductUnit", "inventoryManagementURL");
 export const productTaxService = createEntityService<ProductTaxListDto>("ProductTaxList", "inventoryManagementURL");
 export const productOverviewService = createEntityService<ProductOverviewDto>("ProductOverview", "inventoryManagementURL");
+export const purchaseOrderMastService = createEntityService<PurchaseOrderMastDto>("PurchaseOrderMast", "inventoryManagementURL");
