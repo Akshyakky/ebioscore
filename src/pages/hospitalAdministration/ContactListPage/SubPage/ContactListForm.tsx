@@ -100,14 +100,17 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
   const handleCategoryChange = useCallback(
     async (event: SelectChangeEvent<unknown>) => {
       const selectedCategory = event.target.value as string;
+      const selectedPhysician = selectedCategory === "PHY";
       setContactList((prev) => ({
         ...prev,
         contactMastDto: {
           ...prev.contactMastDto,
           consValue: selectedCategory,
           conCat: selectedCategory,
+          conTitle: selectedPhysician ? "DR" : "", //MIT : PHY to Dr else nothing
         },
       }));
+
       try {
         const result = await ContactListService.generateContactCode(selectedCategory, 5);
         if (result) {

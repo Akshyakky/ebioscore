@@ -15,18 +15,18 @@ interface ContactListSwitchesProps {
 
 const ContactListSwitches: React.FC<ContactListSwitchesProps> = ({ switchStates, handleSwitchChange, contactList }) => {
   const switches: SwitchItem[] = [
-    { label: "is Employee", name: "isEmployee" },
-    { label: "is Referral", name: "isReferral" },
+    { label: "Employee", name: "isEmployee" },
+    { label: "Referral", name: "isReferral" },
     ...(contactList.contactMastDto.consValue === "PHY"
       ? [
-          { label: "is Appointment", name: "isAppointment" },
-          { label: "is Super Speciality", name: "isSuperSpeciality" },
+          { label: "Appointment", name: "isAppointment" },
+          { label: "Super Speciality", name: "isSuperSpeciality" },
         ]
       : []),
     ...(switchStates.isEmployee
       ? [
-          { label: "is User Required", name: "isUserRequired" },
-          { label: "is Authorised User", name: "isAuthorisedUser" },
+          { label: "User Required", name: "isUserRequired" },
+          { label: "Authorised User", name: "isAuthorisedUser" },
         ]
       : []),
   ];
