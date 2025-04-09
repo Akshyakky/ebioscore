@@ -24,7 +24,7 @@ const ComponentDetailsSection: React.FC<ComponentDetailsSectionProps> = ({
   componentDetails,
   unsavedComponents,
   selectedComponent,
-  // templateDe tails,
+  // templateDetails,
   // ageRangeDetails,
   // compMultipleDetails,
   onAddComponent,

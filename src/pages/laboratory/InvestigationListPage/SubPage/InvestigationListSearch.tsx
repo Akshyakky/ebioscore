@@ -14,16 +14,21 @@ const InvestigationListSearch: React.FC<InvestigationListSearchProps> = ({ open,
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredInvestigations, setFilteredInvestigations] = useState<any[]>([]);
   const [investigations, setInvestigations] = useState<any[]>([]);
+
   const fetchItems = async () => {
     const result = await investigationlistService.getAll();
-    return result.success && result.data ? result.data : [];
+    const data = result.success && result.data ? result.data : [];
+
+    setInvestigations(data); // ✅ fix added
+    setFilteredInvestigations(data); // ✅ also set this initially
+    return data;
   };
 
   useEffect(() => {
     if (open) {
-      fetchItems();
+      fetchItems(); // ✅ This now sets investigations properly
     }
-  }, [open, fetchItems]);
+  }, [open]);
 
   useEffect(() => {
     if (!searchTerm) {
@@ -31,9 +36,14 @@ const InvestigationListSearch: React.FC<InvestigationListSearchProps> = ({ open,
     } else {
       const lowerTerm = searchTerm.toLowerCase().trim();
       const filtered = investigations.filter((inv) => {
-        const invName = inv.lInvMastDto?.invName || "";
-        const invID = String(inv.lInvMastDto?.invID || "");
-        return invName.toLowerCase().includes(lowerTerm) || invID.toLowerCase().includes(lowerTerm);
+        const { invName = "", invID = "", invCode = "", invShortName = "", invType = "" } = inv.lInvMastDto || {};
+        return (
+          invName.toLowerCase().includes(lowerTerm) ||
+          invID.toString().toLowerCase().includes(lowerTerm) ||
+          invCode.toLowerCase().includes(lowerTerm) ||
+          invShortName.toLowerCase().includes(lowerTerm) ||
+          invType.toLowerCase().includes(lowerTerm)
+        );
       });
       setFilteredInvestigations(filtered);
     }
@@ -43,23 +53,26 @@ const InvestigationListSearch: React.FC<InvestigationListSearchProps> = ({ open,
     setSearchTerm(e.target.value);
   };
 
-  const updateActiveStatus = async (id: number, currentStatus: boolean) => {
-    try {
-      const updatedStatus = currentStatus ? true : false;
-      const result = await investigationlistService.updateActiveStatus(id, updatedStatus);
-      if (result) {
-        const updatedItems = await fetchItems();
-        const updatedItem = updatedItems.find((item: investigationDto) => item.lInvMastDto?.invID === id);
-        if (updatedItem) {
-          updatedItem.lInvMastDto.rActiveYN = updatedStatus;
-        }
-      }
+  const updateActiveStatus = async (id: number, status: boolean) => {
+    debugger;
+    const result = await investigationlistService.updateActiveStatus(id, status);
 
-      return result;
-    } catch (error) {
-      console.error("Error updating active status:", error);
-      return false;
-    }
+    setInvestigations((prev) =>
+      prev.map((inv) => {
+        if (inv.lInvMastDto?.invID === id) {
+          return {
+            ...inv,
+            lInvMastDto: {
+              ...inv.lInvMastDto,
+              rActiveYN: status ? "Y" : "N",
+            },
+          };
+        }
+        return inv;
+      })
+    );
+
+    return result;
   };
 
   const columns = [

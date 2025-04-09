@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useCallback, ChangeEvent } from "react";
-import { Grid, Box, Paper, Typography, IconButton } from "@mui/material";
+import { Grid, Box } from "@mui/material";
 import CustomButton from "@/components/Button/CustomButton";
 import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
 import { showAlert } from "@/utils/Common/showAlert";
 import CloseIcon from "@mui/icons-material/Close";
+import SpecialGrid from "@/components/SpecialGrid/SpecialGrid";
 
 interface InvestigationPrintOrderProps {
   show: boolean;
@@ -73,56 +71,6 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ show,
       order: index + 1,
     }));
     setOrderedInvestigations(ordered);
-  };
-
-  const handleDragStart = (event: React.DragEvent, index: number) => {
-    event.dataTransfer.setData("drag-item-index", index.toString());
-  };
-
-  const handleDrop = (event: React.DragEvent, dropIndex: number) => {
-    const draggedIndex = Number(event.dataTransfer.getData("drag-item-index"));
-    if (draggedIndex === dropIndex) return;
-    const updated = [...orderedInvestigations];
-    const [draggedItem] = updated.splice(draggedIndex, 1);
-    updated.splice(dropIndex, 0, draggedItem);
-    updateInvestigationOrder(updated);
-  };
-
-  const moveInvestigation = (index: number, direction: "up" | "down") => {
-    setOrderedInvestigations((prev) => {
-      const newOrder = [...prev];
-      if (direction === "up" && index > 0) {
-        [newOrder[index - 1], newOrder[index]] = [newOrder[index], newOrder[index - 1]];
-      } else if (direction === "down" && index < newOrder.length - 1) {
-        [newOrder[index + 1], newOrder[index]] = [newOrder[index], newOrder[index + 1]];
-      }
-      updateInvestigationOrder(newOrder);
-      return newOrder;
-    });
-  };
-
-  const moveToTop = () => {
-    if (selectedInvestigationId === null) return;
-    setOrderedInvestigations((prev) => {
-      const item = prev.find((inv) => inv.lInvMastDto?.invID === selectedInvestigationId);
-      if (!item) return prev;
-      const rest = prev.filter((inv) => inv.lInvMastDto?.invID !== selectedInvestigationId);
-      const newOrder = [item, ...rest];
-      updateInvestigationOrder(newOrder);
-      return newOrder;
-    });
-  };
-
-  const moveToBottom = () => {
-    if (selectedInvestigationId === null) return;
-    setOrderedInvestigations((prev) => {
-      const item = prev.find((inv) => inv.lInvMastDto?.invID === selectedInvestigationId);
-      if (!item) return prev;
-      const rest = prev.filter((inv) => inv.lInvMastDto?.invID !== selectedInvestigationId);
-      const newOrder = [...rest, item];
-      updateInvestigationOrder(newOrder);
-      return newOrder;
-    });
   };
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -196,117 +144,20 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ show,
   };
 
   const renderDraggableList = () => (
-    <>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          fontWeight: "bold",
-          backgroundColor: "#1976D2",
-          color: "#FFFFFF",
-          p: "8px 16px",
-          mb: 1,
-          borderRadius: 2,
-        }}
-      >
-        <Typography sx={{ width: 140 }}>Print Order</Typography>
-        <Typography sx={{ flex: 1 }}>Investigation Name</Typography>
-        <Typography sx={{ width: 100, textAlign: "center" }}>Actions</Typography>
-      </Box>
-
-      <Paper
-        variant="outlined"
-        sx={{
-          maxHeight: "40vh",
-          overflowY: "auto",
-          p: 2,
-          borderRadius: 2,
-          backgroundColor: "#FFFFFF",
-          borderColor: "#ECEFF1",
-        }}
-      >
-        {orderedInvestigations.length > 0 ? (
-          orderedInvestigations.map((inv, index) => (
-            <Box
-              key={inv.lInvMastDto?.invID}
-              draggable
-              onClick={() => {
-                setSelectedInvestigationId(inv.lInvMastDto?.invID || null);
-                handleOpenMoveDialog(inv);
-              }}
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => handleDrop(e, index)}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                p: "10px 16px",
-                borderRadius: 2,
-                mb: 1.5,
-                cursor: "move",
-                backgroundColor: selectedInvestigationId === inv.lInvMastDto?.invID ? "#E3F2FD" : index % 2 === 0 ? "#F7FAFC" : "#FFFFFF",
-                boxShadow: selectedInvestigationId === inv.lInvMastDto?.invID ? "0px 2px 8px rgba(33,150,243,0.2)" : "0px 1px 4px rgba(0,0,0,0.05)",
-                transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
-                },
-              }}
-            >
-              <Box sx={{ width: 140, display: "flex", alignItems: "center" }}>
-                <DragIndicatorIcon sx={{ color: "#90A4AE", mr: 1 }} />
-                <Typography sx={{ fontWeight: 500, color: "#455A64" }}>{inv.lInvMastDto?.invID}</Typography>
-              </Box>
-              <Typography
-                sx={{
-                  flex: 1,
-                  fontWeight: 500,
-                  color: "#455A64",
-                  fontSize: "0.95rem",
-                }}
-              >
-                {inv.lInvMastDto?.invName || "Unnamed Investigation"}
-              </Typography>
-              <Box
-                sx={{
-                  width: 100,
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: 0.5,
-                }}
-              >
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    moveInvestigation(index, "up");
-                  }}
-                  disabled={index === 0}
-                  sx={{ p: 0.5 }}
-                >
-                  <ArrowUpwardIcon fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    moveInvestigation(index, "down");
-                  }}
-                  disabled={index === orderedInvestigations.length - 1}
-                  sx={{ p: 0.5 }}
-                >
-                  <ArrowDownwardIcon fontSize="small" />
-                </IconButton>
-              </Box>
-            </Box>
-          ))
-        ) : (
-          <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 4, fontStyle: "italic" }}>
-            No investigations available.
-          </Typography>
-        )}
-      </Paper>
-    </>
+    <SpecialGrid
+      data={orderedInvestigations}
+      onReorder={(newList) => setOrderedInvestigations(newList)}
+      getItemId={(item) => item.lInvMastDto?.invID}
+      renderLabel={(item) => item.lInvMastDto?.invName || "Unnamed Investigation"}
+      selectedId={selectedInvestigationId}
+      onSelect={(id) => {
+        setSelectedInvestigationId(id);
+        const selected = orderedInvestigations.find((inv) => inv.lInvMastDto?.invID === id);
+        if (selected) {
+          handleOpenMoveDialog(selected);
+        }
+      }}
+    />
   );
 
   const dialogContent = (

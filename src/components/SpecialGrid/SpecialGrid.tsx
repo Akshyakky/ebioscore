@@ -11,6 +11,8 @@ export interface SpecialGridProps<T> {
   onReorder: (newOrder: T[]) => void;
   getItemId: (item: T) => number;
   renderLabel: (item: T) => string;
+  onSelect?: (id: number) => void;
+  selectedId?: number | null;
 }
 
 const Row = styled(Box)(({ theme }) => ({
@@ -38,7 +40,7 @@ const LeftContent = styled(Box)({
   gap: 10,
 });
 
-const SpecialGrid = <T extends {}>({ data, onReorder, getItemId, renderLabel }: SpecialGridProps<T>) => {
+const SpecialGrid = <T extends {}>({ data, onReorder, getItemId, renderLabel, onSelect }: SpecialGridProps<T>) => {
   const [orderedData, setOrderedData] = useState<T[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const theme = useTheme();
@@ -100,7 +102,7 @@ const SpecialGrid = <T extends {}>({ data, onReorder, getItemId, renderLabel }: 
             onDragStart={(e) => handleDragStart(e, index)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(e, index)}
-            onClick={() => setSelectedId(id)}
+            onClick={() => onSelect?.(id)}
             sx={{
               borderLeft: isSelected ? `4px solid ${theme.palette.primary.main}` : "4px solid transparent",
             }}

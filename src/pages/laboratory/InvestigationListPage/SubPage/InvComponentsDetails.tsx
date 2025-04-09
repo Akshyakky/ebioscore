@@ -40,7 +40,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
   const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
   const [isDeltaValueDisabled, setIsDeltaValueDisabled] = useState(false);
-  const [tempCompoID, setTempCompoID] = useState(1); // Start from 1
 
   // Create a ref to hold the latest ageRanges
   const ageRangesRef = useRef<LCompAgeRangeDto[]>([]);
@@ -104,6 +103,8 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
   const [selectedLCentID, setSelectedLCentID] = useState<number | null>(null);
   const [templateDetails, setTemplateDetails] = useState<LCompTemplateDto[]>([]);
   const [compMultipleList, setCompMultipleList] = useState<LCompMultipleDto[]>([]);
+  const isEditMode = !!selectedComponent && selectedComponent.compoID !== 0;
+  const [tempCompoID, setTempCompoID] = useState(1);
 
   // IMPORTANT: Sync the ref with state whenever ageRanges changes
   useEffect(() => {
@@ -297,21 +298,21 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
       return;
     }
 
-    const isEditMode = selectedComponent?.compoID !== 0;
-    const currentAgeRanges = [...ageRangesRef.current]; // Get the latest age ranges from ref
+    const isEditMode = !!selectedComponent; // ✅ Check based on selection, not compoID
+    const currentAgeRanges = [...ageRangesRef.current];
+    const assignedCompoID = isEditMode ? selectedComponent!.compoID : tempCompoID;
 
     const updatedComponent: LComponentDto = {
       ...formState,
-      compoID: formState.compoID,
+      compoID: assignedCompoID,
       compOrder: isEditMode ? formState.compOrder : totalComponentsForInvestigation + 1,
       multipleChoices: [...compMultipleList],
-      // Use the captured age ranges from ref
       ageRanges:
         formState.lCentID === 6
           ? currentAgeRanges.map((ar) => ({
               ...ar,
               cappID: 0,
-              compoID: formState.compoID,
+              compoID: assignedCompoID,
               carID: ar.carID || 0,
               carAgeValue: `${ar.carStart}-${ar.carEnd} ${ar.carAgeType}`,
               carSexValue: ar.carSex,
@@ -327,17 +328,27 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
           : [],
     };
 
-    console.log("Submitting component with age ranges:", updatedComponent.ageRanges);
-
     if (isEditMode) {
       onUpdate(updatedComponent);
     } else {
       setUnsavedComponents((prev) => [...prev, updatedComponent]);
+      setTempCompoID((prev) => prev + 1); // 🆙 Increment only for new additions
     }
 
     handleClose();
     handleCloseDialog();
-  }, [formState, compMultipleList, templateDetails, validateComponentForm, onUpdate, setUnsavedComponents, handleCloseDialog, selectedComponent, totalComponentsForInvestigation]);
+  }, [
+    formState,
+    compMultipleList,
+    templateDetails,
+    validateComponentForm,
+    onUpdate,
+    setUnsavedComponents,
+    handleCloseDialog,
+    selectedComponent,
+    totalComponentsForInvestigation,
+    tempCompoID,
+  ]);
 
   const handleClose = () => {
     setFormState({
@@ -536,8 +547,9 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
         }}
       >
         <CustomButton variant="contained" color="primary" onClick={handleOkClick}>
-          OK
+          {isEditMode ? "Update" : "OK"}
         </CustomButton>
+
         <CustomButton variant="contained" color="error" onClick={handleClose}>
           Clear
         </CustomButton>

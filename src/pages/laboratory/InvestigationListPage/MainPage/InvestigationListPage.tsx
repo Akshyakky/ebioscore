@@ -238,7 +238,7 @@ const InvestigationListPage: React.FC<Props> = () => {
       // All components (saved & unsaved) should reset compoID to 0
       const allComponents: LComponentDto[] = [...componentDetails, ...unsavedComponents].map((comp, i) => ({
         ...comp,
-        compoID: 0, // backend assigns IDs
+        compoID: comp.compoID || 0, // backend assigns IDs
         compOrder: i + 1,
         compCode: comp.compCode || "",
         compName: comp.compName || "",
@@ -264,7 +264,7 @@ const InvestigationListPage: React.FC<Props> = () => {
           payload.lCompMultipleDtos.push(
             ...comp.multipleChoices.map((mc: LCompMultipleDto) => ({
               ...mc,
-              compoID: 0, // backend will assign compoID
+              compoID: comp.compoID || 0,
               cmID: 0,
               invID: comp.invID,
               compID: comp.compID,
@@ -339,11 +339,17 @@ const InvestigationListPage: React.FC<Props> = () => {
   };
 
   const handleEditComponent = (component: LComponentDto) => {
+    debugger;
+
+    const isUnsaved = component.compoID !== 0 && unsavedComponents.some((c) => c.compoID === component.compoID);
+
     const compWithNestedData: LComponentDto = {
       ...component,
-      multipleChoices: compMultipleDetails.filter((mc) => mc.compoID === component.compoID || mc.compOID === component.compoID),
-      ageRanges: ageRangeDetails.filter((ar) => ar.compoID === component.compoID || ar.cappID === component.compoID),
-      templates: templateDetails.filter((tpl) => tpl.compoID === component.compoID),
+      multipleChoices: isUnsaved ? component.multipleChoices || [] : compMultipleDetails.filter((mc) => mc.compoID === component.compoID || mc.compOID === component.compoID),
+
+      ageRanges: isUnsaved ? component.ageRanges || [] : ageRangeDetails.filter((ar) => ar.compoID === component.compoID || ar.cappID === component.compoID),
+
+      templates: isUnsaved ? component.templates || [] : templateDetails.filter((tpl) => tpl.compoID === component.compoID),
     };
 
     setSelectedComponent(compWithNestedData);
@@ -351,20 +357,54 @@ const InvestigationListPage: React.FC<Props> = () => {
   };
 
   const handleDeleteComponent = (component: LComponentDto) => {
-    setComponentDetails((prev) => prev.map((c) => (c.compoID === component.compoID ? { ...c, rActiveYN: "N" } : c)));
-    if (selectedComponent?.compoID === component.compoID) setSelectedComponent(null);
+    const activeSaved = componentDetails.filter((c) => c.rActiveYN !== "N" && c.compoID !== component.compoID);
+    const activeUnsaved = unsavedComponents.filter((c) => c.rActiveYN !== "N" && c.compoID !== component.compoID);
+
+    const totalActive = activeSaved.length + activeUnsaved.length;
+
+    // ⛔ If trying to delete the only active component, block it
+    if (totalActive === 0) {
+      showAlert("Warning", "At least one component is required for this investigation. Deletion not allowed.", "warning");
+
+      return;
+    }
+
+    const existsInUnsaved = unsavedComponents.some((c) => c.compoID === component.compoID);
+
+    if (existsInUnsaved) {
+      setUnsavedComponents((prev) => prev.map((c) => (c.compoID === component.compoID ? { ...c, rActiveYN: "N" } : c)));
+    } else {
+      setComponentDetails((prev) => prev.map((c) => (c.compoID === component.compoID ? { ...c, rActiveYN: "N" } : c)));
+    }
+
+    if (selectedComponent?.compoID === component.compoID) {
+      setSelectedComponent(null);
+    }
   };
+
   const updateInvestigationDetails = useCallback((data: LInvMastDto) => {
     setInvestigationDetails(data);
   }, []);
 
   const updateComponentDetails = useCallback((compData: LComponentDto) => {
+    debugger;
     setComponentDetails((prev) => {
       const idx = prev.findIndex((c) => c.compoID === compData.compoID);
       if (idx >= 0) {
         return prev.map((c, i) => (i === idx ? { ...c, ...compData } : c));
       }
-      return [...prev, compData];
+      return prev;
+    });
+
+    setUnsavedComponents((prev) => {
+      const idx = prev.findIndex((c) => c.compoID === compData.compoID);
+      if (idx >= 0) {
+        // replace existing unsaved component
+        const updated = [...prev];
+        updated[idx] = { ...compData };
+        return updated;
+      }
+      return prev; // if not found, don’t add
     });
   }, []);
 
@@ -428,21 +468,31 @@ const InvestigationListPage: React.FC<Props> = () => {
     return found ? found.label : "Not Specified";
   };
 
-  const renderComponentDetails = () => (
-    <ComponentDetailsSection
-      componentDetails={componentDetails}
-      unsavedComponents={unsavedComponents}
-      selectedComponent={selectedComponent}
-      templateDetails={templateDetails}
-      ageRangeDetails={ageRangeDetails}
-      compMultipleDetails={compMultipleDetails}
-      onAddComponent={handleAddComponent}
-      onEditComponent={handleEditComponent}
-      onDeleteComponent={handleDeleteComponent}
-      onSelectComponent={setSelectedComponent}
-      getEntryTypeName={getEntryTypeName}
-    />
-  );
+  const renderComponentDetails = () => {
+    debugger;
+    const filteredComponentDetails = componentDetails.filter((comp) => comp.rActiveYN !== "N");
+    const filteredUnsavedComponents = unsavedComponents.filter((comp) => comp.rActiveYN !== "N");
+
+    // Auto-deselect if selected component is deleted
+    const isDeleted = selectedComponent?.rActiveYN === "N";
+    const validSelectedComponent = isDeleted ? null : selectedComponent;
+
+    return (
+      <ComponentDetailsSection
+        componentDetails={filteredComponentDetails}
+        unsavedComponents={filteredUnsavedComponents}
+        selectedComponent={validSelectedComponent}
+        templateDetails={templateDetails}
+        ageRangeDetails={ageRangeDetails}
+        compMultipleDetails={compMultipleDetails}
+        onAddComponent={handleAddComponent}
+        onEditComponent={handleEditComponent}
+        onDeleteComponent={handleDeleteComponent}
+        onSelectComponent={setSelectedComponent}
+        getEntryTypeName={getEntryTypeName}
+      />
+    );
+  };
 
   return (
     <Container maxWidth={false} sx={{ mt: 2 }}>

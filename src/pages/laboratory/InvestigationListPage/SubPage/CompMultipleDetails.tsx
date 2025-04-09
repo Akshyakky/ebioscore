@@ -40,15 +40,21 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (existingChoices?.length) {
-      const filtered = existingChoices.filter((ec) => ec.rActiveYN !== "N");
-      const mapped = filtered.map((ec) => ({
-        cmID: ec.cmID,
-        value: ec.cmValues || "",
-        invID: ec.invID,
-      }));
-      setMultipleState((prev) => ({ ...prev, valuesList: mapped }));
-    }
+    const initialize = async () => {
+      if (existingChoices?.length) {
+        const filtered = existingChoices.filter((ec) => ec.rActiveYN !== "N");
+        const mapped = filtered.map((ec) => ({
+          cmID: ec.cmID,
+          value: ec.cmValues || "",
+          invID: ec.invID,
+        }));
+        setMultipleState((prev) => ({ ...prev, valuesList: mapped }));
+      } else {
+        await fetchServerChoices(); // fallback only
+      }
+    };
+
+    initialize();
   }, [existingChoices]);
 
   const fetchServerChoices = useCallback(async () => {
@@ -72,10 +78,6 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
       setIsLoading(false);
     }
   }, [invID, compoID]);
-
-  useEffect(() => {
-    fetchServerChoices();
-  }, [fetchServerChoices]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setMultipleState((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -181,11 +183,10 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      bgcolor: "white",
                       p: 1,
                       mb: 1,
                       borderRadius: 2,
-                      boxShadow: 1,
+                      boxShadow: 10,
                     }}
                   >
                     <Typography variant="body2">{item.value}</Typography>
