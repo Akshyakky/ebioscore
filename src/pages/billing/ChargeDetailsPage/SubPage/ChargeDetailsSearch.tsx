@@ -1,162 +1,74 @@
-import { Column } from "@/components/CustomGrid/CustomGrid";
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
 import { chargeDetailsService } from "@/services/BillingServices/chargeDetailsService";
-import { Switch } from "@mui/material";
-import { useState } from "react";
+import { showAlert } from "@/utils/Common/showAlert";
+import { useCallback } from "react";
 import React from "react";
 
 interface ChargeDetailsSearchProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (chargeDetails: ChargeDetailsDto) => void;
+  onSelect: (chargeDetails: any) => void;
 }
 
 const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose, onSelect }) => {
-  const dropdownValues = useDropdownValues(["service"]);
-  const [items, setItems] = useState<ChargeDetailsDto[]>([]);
-
-  const fetchItems = async (): Promise<ChargeDetailsDto[]> => {
+  const fetchItems = useCallback(async () => {
     try {
-      const result = await chargeDetailsService.getAllChargeDetails();
-      if (!result.success || !result.data) {
-        return [];
-      }
-      const mappedData = result.data.map((item) => ({
-        ...item,
-        chargeDetails: item.chargeDetails || [],
-        chargeAliases: item.chargeAliases || [],
-        faculties: item.faculties || [],
-      }));
-      setItems(mappedData);
-      return mappedData;
+      const result: any = await chargeDetailsService.getAll();
+      return result.success ? result.data : [];
     } catch (error) {
+      console.error("Error fetching User:", error);
+      showAlert("Error", "Failed to User.", "error");
       return [];
     }
-  };
+  }, [chargeDetailsService]);
 
-  const handleStatusChange = async (id: number, currentStatus: boolean) => {
-    const newStatus = !currentStatus;
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.chargeInfo?.chargeID === id
-          ? {
-              ...item,
-              chargeInfo: {
-                ...item.chargeInfo,
-                rActiveYN: newStatus ? "Y" : "N",
-              },
-            }
-          : item
-      )
-    );
+  //   try {
+  //     debugger;
+  //     const result: any = await chargeDetailsService.getAll();
+  //     if (result.success && result.data) {
+  //       const chargelistDatas: any = result.data.map((item: ChargeDetailsDto) => item.chargeInfo);
+  //       console.log("Fetching items...", chargelistDatas);
+  //       return chargelistDatas;
+  //     } else {
+  //       return [];
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching User:", error);
+  //     showAlert("Error", "Failed to User.", "error");
+  //     return [];
+  //   }
+  // }, [chargeDetailsService]);
 
-    try {
-      const success = await updateActiveStatus(id, newStatus);
-      if (!success) {
-        setItems((prevItems) =>
-          prevItems.map((item) =>
-            item.chargeInfo?.chargeID === id
-              ? {
-                  ...item,
-                  chargeInfo: {
-                    ...item.chargeInfo,
-                    rActiveYN: currentStatus ? "Y" : "N",
-                  },
-                }
-              : item
-          )
-        );
+  const updateActiveStatus = useCallback(
+    async (id: number, status: boolean) => {
+      try {
+        const result = await chargeDetailsService.updateActiveStatus(id, status);
+        if (result) {
+          showAlert("Success", "Status updated successfully.", "success");
+        }
+        return result;
+      } catch (error) {
+        console.error("Error updating User active status:", error);
+        showAlert("Error", "Failed to update user status.", "error");
+        return false;
       }
-    } catch (error) {
-      setItems((prevItems) =>
-        prevItems.map((item) =>
-          item.chargeInfo?.chargeID === id
-            ? {
-                ...item,
-                chargeInfo: {
-                  ...item.chargeInfo,
-                  rActiveYN: currentStatus ? "Y" : "N",
-                },
-              }
-            : item
-        )
-      );
-    }
-  };
+    },
+    [chargeDetailsService]
+  );
 
-  const updateActiveStatus = async (id: number, status: boolean): Promise<boolean> => {
-    try {
-      const result = await chargeDetailsService.updateActiveStatus(id, status);
-      return !!result;
-    } catch (error) {
-      return false;
-    }
-  };
+  const getItemId = (item: any) => item?.chargeID;
+  const getItemActiveStatus = (item: any) => item.rActiveYN === "Y";
 
-  const getItemId = (item: ChargeDetailsDto) => item.chargeInfo?.chargeID || 0;
-  const getItemActiveStatus = (item: ChargeDetailsDto) => item.chargeInfo?.rActiveYN === "Y";
-
-  const columns: Column<ChargeDetailsDto>[] = [
-    {
-      key: "chargeInfo.chargeCode",
-      header: "Service Code",
-      visible: true,
-      render: (item: ChargeDetailsDto) => item.chargeInfo?.chargeCode,
-    },
-    {
-      key: "chargeInfo.cNhsEnglishName",
-      header: "Service Name",
-      visible: true,
-      render: (item: ChargeDetailsDto) => item.chargeInfo?.chargeDesc,
-    },
-    {
-      key: "chargeInfo.chargeType",
-      header: "Service Type",
-      visible: true,
-      render: (item: ChargeDetailsDto) => {
-        if (!dropdownValues.service) return "Loading...";
-        const service = dropdownValues.service.find((service) => String(service.value) === String(item.chargeInfo?.chargeType));
-        return service ? service.label : "Unknown";
-      },
-    },
-    {
-      key: "chargeInfo.cShortName",
-      header: "Short Name",
-      visible: true,
-      render: (item: ChargeDetailsDto) => item.chargeInfo?.cShortName,
-    },
-    {
-      key: "chargeInfo.status",
-      header: "Status",
-      visible: true,
-      render: (item: ChargeDetailsDto) => {
-        const isActive = item.chargeInfo?.rActiveYN === "Y";
-        return <span className="whitespace-nowrap">{isActive ? "Active" : "Hidden"}</span>;
-      },
-    },
-    {
-      key: "chargeInfo.action",
-      header: "Action",
-      visible: true,
-      render: (item: ChargeDetailsDto) => {
-        const isActive = item.chargeInfo?.rActiveYN === "Y";
-        return (
-          <Switch
-            checked={isActive}
-            onChange={() => {
-              const id = item.chargeInfo?.chargeID || 0;
-              handleStatusChange(id, isActive);
-            }}
-          />
-        );
-      },
-    },
+  const columns = [
+    { key: "serialNumber", header: "Sl.No", visible: true, sortable: true },
+    { key: "chargeCode", header: "Service Code", visible: true },
+    { key: "cNhsEnglishName", header: "Service Name", visible: true },
+    { key: "chargeType", header: "Service Type", visible: true },
+    { key: "cShortName", header: "Service S Name", visible: true },
+    { key: "status", header: "Service Status", visible: true },
   ];
-
   return (
-    <GenericAdvanceSearch<ChargeDetailsDto>
+    <GenericAdvanceSearch
       open={open}
       onClose={onClose}
       onSelect={onSelect}
@@ -167,10 +79,9 @@ const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose
       getItemId={getItemId}
       getItemActiveStatus={getItemActiveStatus}
       searchPlaceholder="Enter charge code or description"
-      pagination={true}
-      showExportCSV={true}
-      showExportPDF={true}
+      isActionVisible={true}
       isEditButtonVisible={true}
+      isStatusVisible={true}
     />
   );
 };

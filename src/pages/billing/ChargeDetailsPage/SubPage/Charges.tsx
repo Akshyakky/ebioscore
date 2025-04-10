@@ -32,6 +32,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
   handleDateChange,
   updateChargeCode,
 }) => {
+  if (!formData?.chargeInfo) return null;
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
@@ -88,7 +89,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
           <FormField
             type="select"
             label="Service Group"
-            value={formData.chargeInfo.sGrpID}
+            value={formData.chargeInfo?.sGrpID ?? ""}
             onChange={handleSelectChange}
             name="sGrpID"
             ControlID="sGrpID"

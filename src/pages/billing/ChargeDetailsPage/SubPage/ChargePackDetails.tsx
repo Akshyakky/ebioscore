@@ -260,9 +260,7 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Package Details
-      </Typography>
+      <Typography variant="h6">Package Details</Typography>
 
       <Grid container spacing={2}>
         <Grid item xs={12}>
@@ -282,7 +280,7 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
           <Grid item xs={12} sx={{ mt: 2 }}>
             <Box
               sx={{
-                border: "1px solid #e0e0e0",
+                border: "1px solidrgb(10, 9, 9)",
                 borderRadius: "4px",
                 overflow: "hidden",
               }}

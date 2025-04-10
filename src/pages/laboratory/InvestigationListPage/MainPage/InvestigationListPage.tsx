@@ -1,9 +1,7 @@
 import React, { useState, useCallback } from "react";
-import { Box, Container, Grid, Typography, Paper, IconButton, Chip, CircularProgress } from "@mui/material";
+import { Box, Container, CircularProgress } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import PrintIcon from "@mui/icons-material/Print";
-import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import { useAppSelector } from "@/store/hooks";
@@ -82,29 +80,41 @@ const InvestigationListPage: React.FC<Props> = () => {
       };
     });
 
-  const handleSelect = (selectedInvestigation: investigationDto) => {
-    const enhancedComponents = enhanceComponentDetails(
-      selectedInvestigation.lComponentsDto || [],
-      selectedInvestigation.lCompMultipleDtos || [],
-      selectedInvestigation.lCompAgeRangeDtos || [],
-      selectedInvestigation.lCompTemplateDtos || []
-    );
+  const handleSelect = async (selectedInvestigation: investigationDto) => {
+    try {
+      if (!selectedInvestigation.invID) {
+        showAlert("Error", "Selected investigation is invalid", "error");
+        return;
+      }
+      setIsLoading(true);
+      const response = await investigationlistService.getById(selectedInvestigation.invID);
+      if (response.success && response.data) {
+        const data = response.data;
 
-    setInvestigationDetails(selectedInvestigation.lInvMastDto);
-    setComponentDetails(enhancedComponents);
-    setTemplateDetails(selectedInvestigation.lCompTemplateDtos || []);
-    setAgeRangeDetails(selectedInvestigation.lCompAgeRangeDtos || []);
-    setCompMultipleDetails(selectedInvestigation.lCompMultipleDtos || []);
-    setPrintPreferences({
-      invTitle: selectedInvestigation.lInvMastDto?.invTitle || "",
-      invSTitle: selectedInvestigation.lInvMastDto?.invSTitle || "",
-    });
+        const enhancedComponents = enhanceComponentDetails(data.lComponentsDto || [], data.lCompMultipleDtos || [], data.lCompAgeRangeDtos || [], data.lCompTemplateDtos || []);
 
-    if (enhancedComponents.length) {
-      setSelectedComponent(enhancedComponents[0]);
+        setInvestigationDetails(data.lInvMastDto);
+        setComponentDetails(enhancedComponents);
+        setCompMultipleDetails(data.lCompMultipleDtos || []);
+        setAgeRangeDetails(data.lCompAgeRangeDtos || []);
+        setTemplateDetails(data.lCompTemplateDtos || []);
+        setPrintPreferences({
+          invTitle: data.lInvMastDto?.invTitle || "",
+          invSTitle: data.lInvMastDto?.invSTitle || "",
+        });
+        if (enhancedComponents.length) {
+          setSelectedComponent(enhancedComponents[0]);
+        }
+
+        setIsSearchOpen(false);
+      } else {
+        showAlert("Error", "Failed to fetch full investigation details", "error");
+      }
+    } catch (err) {
+      showAlert("Error", "An error occurred while selecting the investigation", "error");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsSearchOpen(false);
   };
 
   const handleEdit = useCallback(async (investigation: investigationDto) => {
@@ -153,7 +163,6 @@ const InvestigationListPage: React.FC<Props> = () => {
   }, [investigationDetails]);
 
   const handleCodeSelect = async (selectedSuggestion: string) => {
-    debugger;
     const selectedCode = selectedSuggestion?.split(" - ")[0]?.trim();
     if (!selectedCode) {
       showAlert("Error", "Invalid investigation code selected.", "error");
@@ -225,7 +234,6 @@ const InvestigationListPage: React.FC<Props> = () => {
 
   const handleSave = async () => {
     try {
-      debugger;
       setIsSubmitted(true);
 
       if (!validateFormData()) {
@@ -339,8 +347,6 @@ const InvestigationListPage: React.FC<Props> = () => {
   };
 
   const handleEditComponent = (component: LComponentDto) => {
-    debugger;
-
     const isUnsaved = component.compoID !== 0 && unsavedComponents.some((c) => c.compoID === component.compoID);
 
     const compWithNestedData: LComponentDto = {
@@ -387,7 +393,6 @@ const InvestigationListPage: React.FC<Props> = () => {
   }, []);
 
   const updateComponentDetails = useCallback((compData: LComponentDto) => {
-    debugger;
     setComponentDetails((prev) => {
       const idx = prev.findIndex((c) => c.compoID === compData.compoID);
       if (idx >= 0) {
@@ -469,7 +474,6 @@ const InvestigationListPage: React.FC<Props> = () => {
   };
 
   const renderComponentDetails = () => {
-    debugger;
     const filteredComponentDetails = componentDetails.filter((comp) => comp.rActiveYN !== "N");
     const filteredUnsavedComponents = unsavedComponents.filter((comp) => comp.rActiveYN !== "N");
 
@@ -521,7 +525,7 @@ const InvestigationListPage: React.FC<Props> = () => {
       >
         <ActionButtonGroup buttons={actionButtons} />
 
-        <InvestigationListSearch open={isSearchOpen} onClose={() => setIsSearchOpen(false)} onSelect={handleSelect} onEdit={handleEdit} />
+        <InvestigationListSearch open={isSearchOpen} onClose={() => setIsSearchOpen(false)} onSelect={handleSelect} />
         <InvestigationPrintOrder
           show={showInvestigationPrintOrder}
           handleClose={() => setShowInvestigationPrintOrder(false)}

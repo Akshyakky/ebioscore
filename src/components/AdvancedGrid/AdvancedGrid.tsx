@@ -189,7 +189,7 @@ const AdvancedGrid = <T extends Record<string, any>>({ data: initialData, column
       <StyledTableRow
         key={rowIndex}
         sx={{
-          backgroundColor: rowColors[rowIndex % rowColors.length],
+          backgroundColor: (theme) => (theme.palette.mode === "dark" ? theme.palette.background.default : theme.palette.background.paper),
         }}
       >
         {columns.map((col) => {

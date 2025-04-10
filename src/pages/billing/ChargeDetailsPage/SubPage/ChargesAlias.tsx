@@ -513,8 +513,8 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
             />
             <Grid item sx={{ mt: 2 }}>
               <Box display="flex" gap={2}>
-                <CustomButton variant="contained" color="secondary" onClick={handleViewButtonClick} text="View" size="small" />
-                <CustomButton variant="contained" color="primary" onClick={handleApplyButtonClick} text="Apply" size="small" />
+                <CustomButton variant="contained" onClick={handleViewButtonClick} text="View" size="small" />
+                <CustomButton variant="contained" onClick={handleApplyButtonClick} text="Apply" size="small" />
               </Box>
             </Grid>
           </Grid>

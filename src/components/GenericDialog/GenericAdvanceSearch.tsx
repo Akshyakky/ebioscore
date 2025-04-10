@@ -65,7 +65,6 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
   const [isLoading, setIsLoading] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const user = useAppSelector((state) => state.auth);
-
   useEffect(() => {
     if (open) {
       fetchAllItems();
@@ -80,6 +79,7 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
     setDataLoaded(false);
     try {
       const items = await fetchItems();
+
       if (!Array.isArray(items)) {
         console.error("Fetched items is not an array:", items);
         setSearchResults([]);
