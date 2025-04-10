@@ -320,7 +320,7 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
           ControlID="rActiveYN"
           size="medium"
         />
-        <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
+        <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryCode={dialogCategory} isFieldCodeDisabled={true} />
       </Grid>
       <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </Paper>
