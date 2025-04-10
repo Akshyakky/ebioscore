@@ -24,9 +24,20 @@ interface CompMultipleDetailsProps {
   formComp: LCompMultipleDto;
   setFormComp: Dispatch<SetStateAction<LCompMultipleDto>>;
   existingChoices?: LCompMultipleDto[];
+  onMultipleListChange?: (list: LCompMultipleDto[]) => void;
 }
 
-const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, compName, compoID, invID, compID, compCode, onUpdateCompMultiple, existingChoices }) => {
+const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
+  setFormComp,
+  compName,
+  compoID,
+  invID,
+  compID,
+  compCode,
+  onUpdateCompMultiple,
+  existingChoices,
+  onMultipleListChange,
+}) => {
   const [multipleState, setMultipleState] = useState<{
     newValue: string;
     valuesList: MultipleValue[];
@@ -49,11 +60,11 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
           invID: ec.invID,
         }));
         setMultipleState((prev) => ({ ...prev, valuesList: mapped }));
+        triggerSync(mapped);
       } else {
-        await fetchServerChoices(); // fallback only
+        await fetchServerChoices();
       }
     };
-
     initialize();
   }, [existingChoices]);
 
@@ -71,8 +82,9 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
           invID: item.invID,
         }));
         setMultipleState((prev) => ({ ...prev, valuesList: mapped }));
+        triggerSync(mapped);
       }
-    } catch (err) {
+    } catch {
       showAlert("error", "Failed to load multiple choice values", "error");
     } finally {
       setIsLoading(false);
@@ -83,23 +95,42 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
     setMultipleState((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const triggerSync = (list: MultipleValue[]) => {
+    if (!onMultipleListChange) return;
+    const finalList: LCompMultipleDto[] = list.map((item) => ({
+      cmID: item.cmID,
+      cmValues: item.value,
+      compoID: compoID || 0,
+      invID,
+      rActiveYN: "Y",
+      compID: compID || 0,
+      compCode: compCode || "",
+      compName,
+      transferYN: "N",
+      rModifiedOn: new Date(),
+    }));
+    onMultipleListChange(finalList);
+  };
+
   const handleAddValue = () => {
     const { newValue, editIndex, valuesList } = multipleState;
     if (!newValue.trim()) {
       showAlert("warning", "Please enter a valid value.", "warning");
       return;
     }
+
     const isEdit = editIndex !== null && editIndex >= 0;
-    const existingItem = isEdit ? valuesList[editIndex] : null;
     let updatedValues = [...valuesList];
     let newMCID = 0;
-    if (isEdit && existingItem) {
-      updatedValues = valuesList.map((item, idx) => (idx === editIndex ? { ...item, value: newValue.trim() } : item));
-      newMCID = existingItem.cmID;
+
+    if (isEdit) {
+      newMCID = valuesList[editIndex!].cmID;
+      updatedValues[editIndex!] = { ...valuesList[editIndex!], value: newValue.trim() };
     } else {
       updatedValues.push({ cmID: 0, value: newValue.trim(), invID });
     }
-    const finalItem = {
+
+    const finalItem: LCompMultipleDto = {
       cmID: newMCID,
       compoID: compoID || 0,
       invID,
@@ -107,17 +138,21 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
       rActiveYN: "Y",
       compID: compID || 0,
       compCode: compCode || "",
-      compName: compName,
+      compName,
       transferYN: "N",
       rModifiedOn: new Date(),
     };
+
     onUpdateCompMultiple(finalItem);
     setFormComp(finalItem);
+
     setMultipleState({
       newValue: "",
       valuesList: updatedValues,
       editIndex: null,
     });
+
+    triggerSync(updatedValues);
   };
 
   const handleEditValue = (idx: number) => {
@@ -140,14 +175,18 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
         rActiveYN: "N",
         compID: compID || 0,
         compCode: compCode || "",
-        compName: compName,
+        compName,
         transferYN: "N",
       });
     }
+
+    const newList = multipleState.valuesList.filter((_, i) => i !== idx);
     setMultipleState((prev) => ({
       ...prev,
-      valuesList: prev.valuesList.filter((_, i) => i !== idx),
+      valuesList: newList,
     }));
+
+    triggerSync(newList);
   };
 
   const { newValue, valuesList, editIndex } = multipleState;
@@ -157,6 +196,7 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
       <Typography variant="subtitle1" sx={{ mb: 2 }}>
         Multiple Values
       </Typography>
+
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
           <CircularProgress />
@@ -171,6 +211,7 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
               {editIndex !== null ? "Update Value" : "Add Value"}
             </CustomButton>
           </Grid>
+
           {valuesList.length > 0 && (
             <Grid item xs={12}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>

@@ -519,6 +519,7 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
           formComp={formComp}
           setFormComp={setFormComp}
           existingChoices={selectedComponent?.multipleChoices || []}
+          onMultipleListChange={setCompMultipleList}
         />
       )}
       {selectedLCentID === 6 && (
