@@ -66,7 +66,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ show, handleClose, onEdit
       key: "patientName",
       header: "Patient Name",
       visible: true,
-      render: (row) => `${row.patRegisters?.pTitle || ""} ${row.patRegisters?.pFName || ""} ${row.patRegisters?.pLName || ""}`,
+      render: (row) => `${row.patRegisters?.pFName || ""} ${row.patRegisters?.pLName || ""}`,
     },
     {
       key: "patRegisters.pRegDate",
@@ -94,7 +94,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ show, handleClose, onEdit
     },
     {
       key: "patRegisters.indentityValue",
-      header: "Identity No",
+      header: "Adhar No",
       visible: true,
       render: (row) => row.patRegisters?.indentityValue || "",
     },
