@@ -12,7 +12,7 @@ class ProfileListService extends GenericEntityService<ProfileModuleOperationDto>
       "ProfileDetail"
     );
   }
-  async getProfileDetailsByType(aUGrpID: number, subID: number, compID: number, profileID: number, profileType: string): Promise<ProfileDetailDto[]> {
+  async getProfileDetailsByType(aUGrpID: number, subID: number, compID: number | null, profileID: number, profileType: string): Promise<ProfileDetailDto[]> {
     return this.apiService.get<ProfileDetailDto[]>(
       `${this.baseEndpoint}/GetProfileDetailsByType?aUGrpID=${aUGrpID}&subID=${subID}&compID=${compID}&profileID=${profileID}&profileType=${profileType}`,
       this.getToken()

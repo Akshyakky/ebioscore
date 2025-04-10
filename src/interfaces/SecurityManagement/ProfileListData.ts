@@ -6,7 +6,7 @@ export interface ProfileMastDto extends BaseDto {
   profileName: string;
   rActiveYN: string;
   rNotes: string;
-  compID: number;
+  compID: number | null;
   compCode: string;
   compName: string;
   transferYN: string;
@@ -20,7 +20,7 @@ export interface ProfileDetailDto extends BaseDto {
   accessName: string;
   profileType: string;
   rActiveYN: string;
-  compID: number;
+  compID: number | null;
   compCode: string;
   compName: string;
   rNotes: string;
@@ -58,7 +58,7 @@ export interface AppSubModuleDto extends BaseDto {
   menuUrl: string;
   rActiveYN: string;
   rNotes: string;
-  compID: number;
+  compID: number | null;
   compCode: string;
   compName: string;
   transferYN: string;

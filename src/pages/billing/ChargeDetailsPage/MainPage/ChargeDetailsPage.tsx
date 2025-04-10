@@ -1,11 +1,13 @@
 import { Box, Container } from "@mui/material";
-import React from "react";
+import React, { useEffect } from "react";
 import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import Search from "@mui/icons-material/Search";
 import { useState } from "react";
 import { ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
 import ChargeDetailsSearch from "../SubPage/ChargeDetailsSearch";
 import ChargeDetails from "../SubPage/ChargesDetails";
+import { showAlert } from "@/utils/Common/showAlert";
+import { chargeDetailsService } from "@/services/BillingServices/chargeDetailsService";
 
 const ChargeDetailsPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -18,14 +20,36 @@ const ChargeDetailsPage: React.FC = () => {
     setIsSearchOpen(false);
   };
 
-  const handleSelect = (item: ChargeDetailsDto) => {
-    if (!item || !item.chargeInfo) {
-      console.error("Invalid item selected:", item);
-      return;
+  useEffect(() => {
+    if (selectedData) {
+      console.log("Selected Data:", selectedData);
     }
-    console.log("Selected item:", item);
-    setSelectedData(item);
-    setIsSearchOpen(false);
+  }, [selectedData]);
+  const handleSelect = async (item: any) => {
+    debugger;
+    try {
+      if (!item?.chargeID) {
+        showAlert("Error", "Invalid item selected.", "error");
+        return;
+      }
+
+      const response = await chargeDetailsService.getAllByID(item.chargeID);
+      if (response.success && response.data) {
+        const rawData = response.data;
+        setSelectedData({ ...rawData, chargeAliases: rawData.chargeAliases || [] });
+        setSelectedData({ ...rawData, chargeDetails: rawData.chargeDetails || [] });
+        setSelectedData({ ...rawData, chargeFaculties: rawData.chargeFaculties || [] });
+        setSelectedData({ ...rawData, chargeInfo: rawData.chargeInfo || [] });
+        setSelectedData({ ...rawData, chargePackDetails: rawData.chargePackDetails || [] });
+        setSelectedData({ ...rawData, doctorSharePerShare: rawData.doctorSharePerShare || [] });
+        setIsSearchOpen(false);
+      } else {
+        showAlert("Error", "Failed to fetch charge details.", "error");
+      }
+    } catch (error) {
+      console.error("Error fetching charge details:", error);
+      showAlert("Error", "An error occurred while fetching charge details.", "error");
+    }
   };
 
   const actionButtons: ButtonProps[] = [

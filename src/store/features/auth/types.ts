@@ -4,7 +4,7 @@ export interface UserState {
   token: string | null;
   adminYN: string | null;
   userName: string | null;
-  compID: number;
+  compID: number | null;
   compName: string | null;
   compCode: string | null;
   tokenExpiry: number | null;

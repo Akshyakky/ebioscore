@@ -57,7 +57,7 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
     const fetchPhysicians = async () => {
       try {
         const endpoint = "GetActiveConsultants";
-        const fetchedPhysicians = await ContactMastService.fetchAttendingPhysician(endpoint, userInfo.compID);
+        const fetchedPhysicians = await ContactMastService.fetchAttendingPhysician(endpoint, userInfo.compID || 0);
         setPhysicians(fetchedPhysicians);
       } catch (error) {
         console.error("Failed to fetch attending physicians", error);

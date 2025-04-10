@@ -486,6 +486,7 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
             />
           </Box>
         );
+
       default:
         return null;
     }

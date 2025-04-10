@@ -1,53 +1,63 @@
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 import { investigationDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
-import React from "react";
+import { showAlert } from "@/utils/Common/showAlert";
+import React, { useCallback } from "react";
 
 interface InvestigationListSearchProps {
   open: boolean;
   onClose: () => void;
   onSelect: (investigation: investigationDto) => void;
-  onEdit?: (investigation: investigationDto) => void;
+  // onEdit?: (investigation: investigationDto) => void;
 }
 
 const InvestigationListSearch: React.FC<InvestigationListSearchProps> = ({ open, onClose, onSelect }) => {
-  // Fetch Investigation Data
-  const fetchItems = async () => {
-    const result = await investigationlistService.getAll();
-    return result.success && result.data ? result.data : [];
-  };
-
-  // Corrected Toggle Logic for Active Status
-  const updateActiveStatus = async (id: number, currentStatus: boolean) => {
+  const fetchItems = useCallback(async () => {
     try {
-      const updatedStatus = currentStatus ? true : false; // Correctly toggles the value
-      const result = await investigationlistService.updateActiveStatus(id, updatedStatus);
-
-      if (result) {
-        const updatedItems = await fetchItems(); // Refresh data after status update
-        const updatedItem = updatedItems.find((item: investigationDto) => item.lInvMastDto?.invID === id);
-
-        if (updatedItem) {
-          updatedItem.lInvMastDto.rActiveYN = updatedStatus; // Correctly assign the updated status
-        }
+      const result: any = await investigationlistService.getAll();
+      if (result.success && result.data) {
+        const invListDatas: any = result.data.map((item: investigationDto) => item.lInvMastDto);
+        return invListDatas;
+      } else {
+        return [];
       }
-
-      return result;
     } catch (error) {
-      console.error("Error updating active status:", error);
-      return false;
+      console.error("Error fetching User:", error);
+      showAlert("Error", "Failed to User.", "error");
+      return [];
     }
-  };
+  }, [investigationlistService]);
+
+  const updateActiveStatus = useCallback(
+    async (id: number, status: boolean) => {
+      try {
+        const result = await investigationlistService.updateActiveStatus(id, status);
+        if (result) {
+          showAlert("Success", "Status updated successfully.", "success");
+        }
+        return result;
+      } catch (error) {
+        console.error("Error updating User active status:", error);
+        showAlert("Error", "Failed to update user status.", "error");
+        return false;
+      }
+    },
+    [investigationlistService]
+  );
+
+  const getItemId = (item: any) => item.invID;
+  const getItemActiveStatus = (item: any) => item.rActiveYN === "Y";
 
   const columns = [
-    { key: "invCode", header: "Investigation Code", visible: true, render: (item: investigationDto) => item.lInvMastDto?.invCode || "" },
-    { key: "invName", header: "Name", visible: true, render: (item: investigationDto) => item.lInvMastDto?.invName || "" },
-    { key: "invShortName", header: "Short Name", visible: true, render: (item: investigationDto) => item.lInvMastDto?.invShortName || "" },
-    { key: "invType", header: "Type", visible: true, render: (item: investigationDto) => item.lInvMastDto?.invType || "" },
+    { key: "serialNumber", header: "Sl.No", visible: true, sortable: true },
+    { key: "invCode", header: "Investigation Code", visible: true },
+    { key: "invName", header: "Investigation Name", visible: true },
+    { key: "invShortName", header: "Investigation SName", visible: true },
+    { key: "invType", header: "Investigation Type", visible: true },
   ];
 
   return (
-    <GenericAdvanceSearch<investigationDto>
+    <GenericAdvanceSearch
       open={open}
       onClose={onClose}
       onSelect={onSelect}
@@ -55,11 +65,11 @@ const InvestigationListSearch: React.FC<InvestigationListSearchProps> = ({ open,
       fetchItems={fetchItems}
       updateActiveStatus={updateActiveStatus}
       columns={columns}
-      getItemId={(item) => item.lInvMastDto?.invID || 0}
-      getItemActiveStatus={(item) => item.lInvMastDto?.rActiveYN === "Y"}
+      getItemId={getItemId}
+      getItemActiveStatus={getItemActiveStatus}
       searchPlaceholder="Search by Investigation Code, Name, Type, Department"
-      isEditButtonVisible={true}
       isActionVisible={true}
+      isEditButtonVisible={true}
       isStatusVisible={true}
     />
   );

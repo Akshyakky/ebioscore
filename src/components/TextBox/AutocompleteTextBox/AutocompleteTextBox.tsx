@@ -58,12 +58,11 @@ const AutocompleteTextBox = forwardRef<HTMLInputElement, AutocompleteTextBoxProp
     const [options, setOptions] = useState<string[]>([]);
 
     useEffect(() => {
-      if (suggestions && suggestions.length > 0) {
-        setOptions(suggestions);
-      } else if (inputValue) {
-        fetchOptions(inputValue);
+      // Sync value → inputValue on external reset or selection
+      if (value !== inputValue) {
+        setInputValue(value || "");
       }
-    }, [suggestions, inputValue]);
+    }, [value]);
 
     const fetchOptions = async (input: string) => {
       if (fetchSuggestions) {
@@ -84,8 +83,8 @@ const AutocompleteTextBox = forwardRef<HTMLInputElement, AutocompleteTextBoxProp
     };
 
     const handleSelect = (event: React.SyntheticEvent, newValue: string | null) => {
-      if (onSelectSuggestion && newValue) {
-        onSelectSuggestion(newValue);
+      if (onSelectSuggestion) {
+        onSelectSuggestion(newValue || "");
       }
     };
 
@@ -120,8 +119,9 @@ const AutocompleteTextBox = forwardRef<HTMLInputElement, AutocompleteTextBoxProp
           id={controlId}
           freeSolo
           options={options}
-          inputValue={value || ""}
+          inputValue={inputValue}
           onInputChange={handleInputChange}
+          value={inputValue}
           onChange={handleSelect}
           renderOption={renderOption}
           ListboxProps={{

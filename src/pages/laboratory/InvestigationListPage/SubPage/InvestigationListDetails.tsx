@@ -93,6 +93,7 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
   }, [investigationData, compID, compCode, compName, userID, userName, serverDate]);
 
   const fetchInvestigationCodeSuggestions = useCallback(async (searchTerm: string) => {
+    debugger;
     if (!searchTerm.trim()) return [];
 
     try {
@@ -117,8 +118,15 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
   const updateInvestigationCode = (value: string) => {
     setFormState((prev) => ({
       ...prev,
-      invCode: value,
+      invCode: "",
     }));
+
+    setTimeout(() => {
+      setFormState((prev) => ({
+        ...prev,
+        invCode: value,
+      }));
+    }, 10); // Small timeout to ensure re-render
   };
 
   useEffect(() => {

@@ -392,25 +392,34 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   };
 
   useEffect(() => {
-    if (editData && dropdownValues.pic && dropdownValues.bedCategory && dropdownValues.service && dropdownValues.speciality) {
+    debugger;
+    if (editData && dropdownValues.pic && dropdownValues.bedCategory && dropdownValues.service && dropdownValues.speciality && Array.isArray(editData.chargeDetails)) {
       const picName = dropdownValues.pic.find((pic) => Number(pic.value) === editData.chargeDetails?.[0]?.pTypeID)?.label || "";
+
       const wardCategoryName = dropdownValues.bedCategory.find((category) => Number(category.value) === editData.chargeDetails?.[0]?.wCatID)?.label || "";
-      const serviceGroupName = dropdownValues.service.find((service) => Number(service.value) === editData.chargeInfo.sGrpID)?.label || "";
+
+      const serviceGroupName = dropdownValues.service.find((service) => Number(service.value) === editData.chargeInfo?.sGrpID)?.label || "";
+
       const facultyNames = dropdownValues.speciality.find((speciality) => Number(speciality.value) === editData.chargeFaculties?.[0]?.aSubID)?.label || "";
+
       const mergedGridData = dropdownValues.pic.map((pic) => {
-        const savedDetails = editData.chargeDetails.filter((detail) => detail.pTypeID === Number(pic.value));
+        const savedDetails = editData.chargeDetails?.filter((detail) => detail.pTypeID === Number(pic.value)) || [];
         const rowData: GridData = { picName: pic.label };
+
         dropdownValues.bedCategory.forEach((category) => {
           const matchingDetail = savedDetails.find((detail) => detail.wCatID === Number(category.value));
           rowData[`${category.label}_drAmt`] = matchingDetail?.dcValue?.toFixed(2) || "0.00";
           rowData[`${category.label}_hospAmt`] = matchingDetail?.hcValue?.toFixed(2) || "0.00";
           rowData[`${category.label}_totAmt`] = ((matchingDetail?.dcValue || 0) + (matchingDetail?.hcValue || 0)).toFixed(2);
         });
+
         return rowData;
       });
+
       setSelectedPicIds([picName]);
       setSelectedWardCategoryIds([wardCategoryName]);
       setSelectedFacultyIds([facultyNames]);
+
       setFormData((prev) => ({
         ...prev,
         chargeInfo: {
@@ -420,14 +429,15 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
           serviceGroupName,
           facultyNames,
         },
-        chargeDetails: editData.chargeDetails.map((detail) => ({
-          ...detail,
-          picName,
-          wardCategoryName,
-        })),
-
+        chargeDetails:
+          editData.chargeDetails?.map((detail) => ({
+            ...detail,
+            picName,
+            wardCategoryName,
+          })) || [],
         doctorSharePerShare: editData.doctorSharePerShare || [],
       }));
+
       setGridData(mergedGridData);
       if (editData.doctorSharePerShare && editData.doctorSharePerShare.length > 0) {
         const updatedDoctorShareGridData = editData.doctorSharePerShare?.map((share, index) => ({
@@ -435,11 +445,12 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
           attendingPhysician: "",
           docShare: share.doctorShare,
           hospShare: share.hospShare,
-          totalAmount: share.doctorShare + share.hospShare,
+          totalAmount: (share.doctorShare || 0) + (share.hospShare || 0),
           conID: share.conID,
           docShareID: share.docShareID,
-          picName: picName,
+          picName,
         }));
+
         setGridData((prevGridData) => [...prevGridData, ...updatedDoctorShareGridData]);
       }
     } else {
