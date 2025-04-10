@@ -430,7 +430,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         showAddButton={true}
         onAddClick={() => handleAddField("Nationality")}
       />
-      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
+      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryCode={dialogCategory} isFieldCodeDisabled={true} />
     </FormSectionWrapper>
   );
 };

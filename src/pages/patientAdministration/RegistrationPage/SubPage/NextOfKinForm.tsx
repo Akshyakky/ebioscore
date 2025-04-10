@@ -437,7 +437,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         gridProps={{ xs: 12, sm: 6, md: 4 }}
       />
 
-      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
+      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryCode={dialogCategory} isFieldCodeDisabled={true} />
     </Grid>
   );
 

@@ -299,7 +299,7 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
             gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
           />
 
-          <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
+          <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryCode={dialogCategory} isFieldCodeDisabled={true} />
         </Grid>
       </DialogContent>
       <DialogActions>

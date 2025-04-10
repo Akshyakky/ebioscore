@@ -321,7 +321,7 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
       <ModifiedFieldDialog
         open={isFieldDialogOpen}
         onClose={handleFieldDialogClose}
-        selectedCategoryName={dialogCategory}
+        selectedCategoryCode={dialogCategory}
         isFieldCodeDisabled={true}
         initialFormData={formDataDialog}
       />

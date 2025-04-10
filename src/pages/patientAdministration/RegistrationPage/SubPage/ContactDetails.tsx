@@ -199,7 +199,7 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, 
         />
       </FormSectionWrapper>
 
-      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
+      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryCode={dialogCategory} isFieldCodeDisabled={true} />
     </>
   );
 };
