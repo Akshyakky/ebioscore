@@ -25,7 +25,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
     const [selectedProductCode] = selectedProductString.split(" - ");
     const selectedProduct = productOptions.find((product) => product.productCode === selectedProductCode);
     if (selectedProduct) {
-      console.log("Selected product H:", selectedProduct);
+      console.log("Selected Prod");
       handleSelectedProduct(selectedProduct);
     }
   }, []);
@@ -54,7 +54,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Grid container spacing={2}>
         <Grid item xs={12}>
-          <DepartmentInfoChange deptName={purchaseOrderData?.fromDeptName || "N/A"} handleChangeClick={handleDepartmentChange} />
+          <DepartmentInfoChange deptName={purchaseOrderData?.fromDeptName || "Select Department"} handleChangeClick={handleDepartmentChange} />
         </Grid>
       </Grid>
       <Grid container spacing={2}>
@@ -132,12 +132,11 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
             label="Search Product"
             name="productCode"
             type="autocomplete"
-            placeholder="Search through product..."
+            placeholder="Add product to the grid"
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
             suggestions={productOptions.map((product) => `${product.productCode} - ${product.productName}`)}
             onSelectSuggestion={handleProductSelect}
-            isMandatory
             gridProps={{ xs: 12 }}
           />
         </Grid>

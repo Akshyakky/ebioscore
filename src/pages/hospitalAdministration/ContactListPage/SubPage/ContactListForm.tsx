@@ -52,6 +52,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
     "department",
     "employeeStatus",
     "speciality",
+    "employeeRoom",
   ]);
   const { fieldsList, defaultFields } = useFieldsList(["city", "state", "nationality"]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
@@ -365,6 +366,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               value={contactList.contactMastDto.conDob}
               onChange={handleDateChange}
               isSubmitted={isSubmitted}
+              maxDate={serverDate}
               gridProps={{ xs: 12, sm: 6, md: 3 }}
             />
             <FormField
@@ -417,6 +419,17 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               isSubmitted={isSubmitted}
               gridProps={{ xs: 12, sm: 12, md: 3 }}
               maxLength={50}
+            />
+            <FormField
+              type="select"
+              label="Room No"
+              name="aPhyRoomName"
+              ControlID="aPhyRoomName"
+              value={contactList.contactMastDto.aPhyRoomName || ""}
+              options={dropdownValues.employeeRoom}
+              onChange={handleDropdownChange([""], ["contactMastDto", "aPhyRoomName"], dropdownValues.employeeRoom)}
+              isSubmitted={isSubmitted}
+              gridProps={{ xs: 12, sm: 6, md: 3 }}
             />
           </Grid>
         </section>
@@ -568,11 +581,11 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               ControlID="EmployeeStatus"
               value={contactList.contactMastDto.conEmpStatus || ""}
               options={dropdownValues.employeeStatus}
-              onChange={handleDropdownChange([""], ["contactMastDto", "conEmpStatus"], dropdownValues.employeeStatus)}
+              onChange={handleDropdownChange([""], ["contactMastDto", "employeeStatus"], dropdownValues.employeeStatus)}
               isSubmitted={isSubmitted}
               gridProps={{ xs: 12, sm: 6, md: 3 }}
             />
-            <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
+            <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryCode={dialogCategory} isFieldCodeDisabled={true} />
           </Grid>
         </section>
       </>
