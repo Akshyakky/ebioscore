@@ -30,7 +30,7 @@ import { appSubModuleService, appUserModuleService } from "@/services/SecurityMa
 import { serviceTypeService } from "@/services/BillingServices/BillingGenericService";
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 
-type DropdownType =
+export type DropdownType =
   | "pic"
   | "title"
   | "gender"
@@ -413,7 +413,10 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
     });
   }, [requiredDropdowns, fetchDropdownValues, dropdownValues]);
 
-  return dropdownValues;
+  return {
+    ...dropdownValues,
+    refreshDropdownValues: fetchDropdownValues,
+  };
 };
 
 export default useDropdownValues;

@@ -141,6 +141,7 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
         showAlert("Error", "Failed to save field", "error");
         onClose(false);
       }
+      setIsSubmitted(false);
     } catch (error) {
       console.error("Error saving:", error);
       onClose(false);
