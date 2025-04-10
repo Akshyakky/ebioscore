@@ -166,9 +166,26 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
     },
     [setSwitchStates, setContactList]
   );
+  const isContactMastValid = (): boolean => {
+    const contactMast = contactList.contactMastDto;
+
+    if (!contactMast.consValue) return false;
+
+    if (contactMast.consValue === "PHY") {
+      if (!contactMast.accCode || selectedSpecialities.length === 0) return false;
+    }
+
+    const requiredFields = [contactMast.conTitle, contactMast.conFName, contactMast.conLName, contactMast.conGender];
+
+    return requiredFields.every(Boolean);
+  };
 
   const handleSave = useCallback(async () => {
     setIsSubmitted(true);
+
+    if (!isContactMastValid()) {
+      return;
+    }
     await onSave();
   }, [onSave]);
 
@@ -283,6 +300,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
                 value={selectedSpecialities}
                 options={dropdownValues.speciality || []}
                 onChange={handleSpecialityChange}
+                isMandatory={contactList.contactMastDto.consValue === "PHY"}
                 isSubmitted={isSubmitted}
               />
             )}
@@ -380,6 +398,25 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               onChange={handleInputChange}
               isSubmitted={isSubmitted}
               gridProps={{ xs: 12, sm: 6, md: 3 }}
+            />
+            <FormField
+              type="text"
+              label="Allergic to any Medicine"
+              name="allergicToMedicine"
+              ControlID="allergicToMedicine"
+              value={contactList.contactMastDto.allergicToMedicine || ""}
+              onChange={(e) =>
+                setContactList((prev) => ({
+                  ...prev,
+                  contactMastDto: {
+                    ...prev.contactMastDto,
+                    allergicToMedicine: e.target.value,
+                  },
+                }))
+              }
+              isSubmitted={isSubmitted}
+              gridProps={{ xs: 12, sm: 12, md: 3 }}
+              maxLength={50}
             />
           </Grid>
         </section>

@@ -152,7 +152,6 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
 
           case "employeeStatus":
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "EMPLOYEESTATUS");
-            console.log("employeeStatus", response);
             break;
 
           case "productCategory":
