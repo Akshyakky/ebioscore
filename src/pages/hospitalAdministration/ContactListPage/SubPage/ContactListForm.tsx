@@ -5,7 +5,7 @@ import { useAppSelector } from "@/store/hooks";
 import { ContactListData } from "@/interfaces/HospitalAdministration/ContactListData";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
 import useFieldsList from "@/components/FieldsList/UseFieldsList";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
@@ -40,7 +40,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
   const { handleDropdownChange } = useDropdownChange<ContactListData>(setContactList);
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
   const serverDate = useServerDate();
-  const dropdownValues = useDropdownValues([
+  const { refreshDropdownValues, ...dropdownValues } = useDropdownValues([
     "title",
     "gender",
     "bloodGroup",
@@ -250,6 +250,21 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
     setIsFieldDialogOpen(false);
   };
 
+  const onFieldAddedOrUpdated = () => {
+    if (dialogCategory) {
+      const dropdownMap: Record<string, DropdownType> = {
+        EMPROOM: "employeeRoom",
+        NATIONALITY: "nationality",
+        CITY: "city",
+        STATE: "state",
+      };
+      const dropdownType = dropdownMap[dialogCategory];
+      if (dropdownType) {
+        refreshDropdownValues(dropdownType);
+      }
+    }
+  };
+
   const renderFormFields = useMemo(
     () => (
       <>
@@ -322,6 +337,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               onChange={handleDropdownChange([""], ["contactMastDto", "conTitle"], dropdownValues.title)}
               isMandatory={true}
               isSubmitted={isSubmitted}
+              disabled={contactList.contactMastDto.consValue === "PHY"}
               gridProps={{ xs: 12, sm: 6, md: 3 }}
             />
             <FormField
@@ -391,6 +407,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               isSubmitted={isSubmitted}
               gridProps={{ xs: 12, sm: 6, md: 3 }}
             />
+
             <FormField
               type="text"
               label="ID/Passport No"
@@ -430,6 +447,8 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               onChange={handleDropdownChange([""], ["contactMastDto", "aPhyRoomName"], dropdownValues.employeeRoom)}
               isSubmitted={isSubmitted}
               gridProps={{ xs: 12, sm: 6, md: 3 }}
+              onAddClick={() => handleAddField("EMPROOM")}
+              showAddButton={true}
             />
           </Grid>
         </section>
@@ -454,12 +473,12 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               name="cAddCity"
               ControlID="City"
               value={contactList.contactAddressDto.cAddCity || defaultFields.city}
-              options={fieldsList.city}
-              onChange={handleDropdownChange([""], ["contactAddressDto", "cAddCity"], fieldsList.city)}
+              options={dropdownValues.city}
+              onChange={handleDropdownChange([""], ["contactAddressDto", "cAddCity"], dropdownValues.city)}
               isSubmitted={isSubmitted}
               gridProps={{ xs: 12, sm: 6, md: 3 }}
               showAddButton={true}
-              onAddClick={() => handleAddField("city")}
+              onAddClick={() => handleAddField("CITY")}
             />
             <FormField
               type="select"
@@ -467,12 +486,12 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               name="cAddState"
               ControlID="State"
               value={contactList.contactAddressDto.cAddState || defaultFields.state}
-              options={fieldsList.state}
-              onChange={handleDropdownChange([""], ["contactAddressDto", "cAddState"], fieldsList.state)}
+              options={dropdownValues.state}
+              onChange={handleDropdownChange([""], ["contactAddressDto", "cAddState"], dropdownValues.state)}
               isSubmitted={isSubmitted}
               gridProps={{ xs: 12, sm: 6, md: 3 }}
               showAddButton={true}
-              onAddClick={() => handleAddField("state")}
+              onAddClick={() => handleAddField("STATE")}
             />
             <FormField
               type="select"
@@ -480,12 +499,12 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               name="cAddCountry"
               ControlID="Nationality"
               value={contactList.contactAddressDto.cAddCountry || defaultFields.nationality}
-              options={fieldsList.nationality}
-              onChange={handleDropdownChange([""], ["contactAddressDto", "cAddCountry"], fieldsList.nationality)}
+              options={dropdownValues.nationality}
+              onChange={handleDropdownChange([""], ["contactAddressDto", "cAddCountry"], dropdownValues.nationality)}
               isSubmitted={isSubmitted}
               gridProps={{ xs: 12, sm: 6, md: 3 }}
               showAddButton={true}
-              onAddClick={() => handleAddField("nationality")}
+              onAddClick={() => handleAddField("NATIONALITY")}
             />
             <FormField
               type="email"
@@ -585,7 +604,13 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
               isSubmitted={isSubmitted}
               gridProps={{ xs: 12, sm: 6, md: 3 }}
             />
-            <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryCode={dialogCategory} isFieldCodeDisabled={true} />
+            <ModifiedFieldDialog
+              open={isFieldDialogOpen}
+              onClose={handleFieldDialogClose}
+              selectedCategoryCode={dialogCategory}
+              isFieldCodeDisabled={true}
+              onFieldAddedOrUpdated={onFieldAddedOrUpdated}
+            />
           </Grid>
         </section>
       </>
