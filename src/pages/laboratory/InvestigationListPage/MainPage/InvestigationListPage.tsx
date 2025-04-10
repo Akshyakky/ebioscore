@@ -28,7 +28,6 @@ interface Props {
 }
 
 const InvestigationListPage: React.FC<Props> = () => {
-  const { compCode, compName } = useAppSelector((state) => state.auth);
   const dropdownValues = useDropdownValues(["entryType"]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);

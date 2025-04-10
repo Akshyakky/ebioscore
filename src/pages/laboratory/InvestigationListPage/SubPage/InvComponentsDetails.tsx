@@ -10,6 +10,7 @@ import { notifyWarning } from "@/utils/Common/toastManager";
 import ApplicableAgeRangeTable from "./ApplicableAgeRanges";
 import CompMultipleDetails from "./CompMultipleDetails";
 import CompTemplateDetails from "./CompTemplateDetails";
+import { showAlert } from "@/utils/Common/showAlert";
 
 interface LComponentDetailsProps {
   onUpdate: (componentData: LComponentDto) => void;
@@ -302,6 +303,11 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
     const currentAgeRanges = [...ageRangesRef.current];
     const assignedCompoID = isEditMode ? selectedComponent!.compoID : tempCompoID;
 
+    if (formState.lCentID === 5 && compMultipleList.filter((m) => m.rActiveYN !== "N").length === 0) {
+      showAlert("Warning", "Please add at least one Multiple Choice value for this entry type.  ", "warning");
+      return;
+    }
+
     const updatedComponent: LComponentDto = {
       ...formState,
       compoID: assignedCompoID,
@@ -521,7 +527,7 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
             ageRanges={ageRanges}
             componentId={formState.compoID}
             onAddAgeRange={handleAgeRangeUpdate}
-            onUpdateAgeRange={handleAgeRangeUpdate} // Use the same handler for both add and update
+            onUpdateAgeRange={handleAgeRangeUpdate}
             onDeleteAgeRanges={handleDeleteAgeRange}
             selectedComponent={selectedComponent}
           />
