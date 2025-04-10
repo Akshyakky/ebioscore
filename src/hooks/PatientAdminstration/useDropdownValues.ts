@@ -88,7 +88,8 @@ type DropdownType =
   | "subTitle"
   | "sampleType"
   | "chargeType"
-  | "serviceType";
+  | "serviceType"
+  | "employeeRoom";
 
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
   const [dropdownValues, setDropdownValues] = useState<Record<DropdownType, DropdownOption[]>>({} as Record<DropdownType, DropdownOption[]>);
@@ -146,12 +147,16 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "MARITALSTATUS");
             break;
 
+          case "employeeRoom":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "EMPROOM");
+            break;
+
           case "category":
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CATEGORY");
             break;
 
           case "employeeStatus":
-            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "EMPYOYEESTATUS");
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "EMPLOYEESTATUS");
             break;
 
           case "productCategory":

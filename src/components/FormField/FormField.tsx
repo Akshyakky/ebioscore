@@ -342,7 +342,7 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
         return (
           <DropdownSelect
             {...commonProps}
-            label={label}
+            label={selectProps.isMandatory ? `${label} *` : label}
             value={value}
             options={selectProps.options}
             onChange={selectProps.onChange}
@@ -388,7 +388,7 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
         return (
           <AutocompleteTextBox
             {...commonProps}
-            title={label}
+            title={autocompleteProps.isMandatory ? `${label} *` : label}
             value={value}
             onChange={autocompleteProps.onChange}
             fetchSuggestions={autocompleteProps.fetchSuggestions}

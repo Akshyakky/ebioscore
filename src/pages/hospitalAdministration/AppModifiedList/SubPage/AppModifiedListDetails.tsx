@@ -26,7 +26,7 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
   const [masterList, setMasterList] = useState<AppModifiedMast[]>([]);
   const [fieldsList, setFieldsList] = useState<AppModifyFieldDto[]>([]);
   const [selectedMasterId, setSelectedMasterId] = useState<number>(0);
-  const [selectedCategoryName, setSelectedCategoryName] = useState<string>("");
+  const [selectedCategoryCode, setSelectedCategoryCode] = useState<string>("");
   const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([]);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const user = useAppSelector((state) => state.auth);
@@ -91,7 +91,7 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
           const selectedCategory = masterList.find((master) => master.fieldID === amlID);
           if (selectedCategory) {
             const filteredFields = fieldsData.filter((field) => {
-              return field.amlField === selectedCategory.fieldName && field.rActiveYN === "Y";
+              return field.amlField === selectedCategory.fieldCode && field.rActiveYN === "Y";
             });
             setFieldsList(filteredFields);
             if (callback) callback();
@@ -113,7 +113,7 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
       setIsCategoryDialogOpen(true);
       const category = masterList.find((master) => master.fieldID === selectedData.fieldID);
       if (category) {
-        setSelectedCategoryName(category.fieldName);
+        setSelectedCategoryCode(category.fieldCode);
       }
       fetchFields(selectedData.fieldID);
     }
@@ -193,8 +193,9 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
     const selectedId = parseInt(event.target.value);
     setSelectedMasterId(selectedId);
     const selectedCategory = masterList.find((master) => master.fieldID === selectedId);
+
     if (selectedCategory) {
-      setSelectedCategoryName(selectedCategory.fieldName);
+      setSelectedCategoryCode(selectedCategory.fieldCode);
       fetchFields(selectedId);
     }
   };
@@ -412,7 +413,7 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
       <ModifiedFieldDialog
         open={isFieldDialogOpen}
         onClose={handleCloseDialog}
-        selectedCategoryName={selectedCategoryName}
+        selectedCategoryCode={selectedCategoryCode}
         isFieldCodeDisabled={true}
         initialFormData={formData || {}}
         onFieldAddedOrUpdated={handleFieldAddedOrUpdated}
