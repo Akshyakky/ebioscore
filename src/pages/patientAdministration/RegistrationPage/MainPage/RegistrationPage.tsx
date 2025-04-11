@@ -202,7 +202,10 @@ const RegistrationPage: React.FC = () => {
       errors.title = "Title is required";
     } else if (!formData.patRegisters.indentityValue) {
       errors.indetityNo = "Indentity Number is required";
-    } else if ((formData.patRegisters.pDobOrAge === "DOB" && !formData.patRegisters.pDob) || formData.patRegisters.pDobOrAge === "Age") {
+    } else if (
+      (formData.patRegisters.pDobOrAge === "DOB" && !formData.patRegisters.pDob) ||
+      (formData.patRegisters.pDobOrAge === "Age" && (!formData.patOverview.pAgeNumber || !formData.patOverview.pAgeDescriptionVal))
+    ) {
       errors.dateOfBirth = "Date of birth or Age is required";
     } else if (formData.opvisits?.visitTypeVal === "H" && (formData.patRegisters.deptID === 0 || !formData.patRegisters.deptName)) {
       errors.department = "Department is required";

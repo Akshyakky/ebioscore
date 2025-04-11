@@ -82,7 +82,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({ formData, setFormData, isSu
           label="Primary Introducing Source"
           name="primaryReferralSourceId"
           ControlID="PrimaryIntroducingSource"
-          value={formData.patRegisters.primaryReferralSourceId}
+          value={formData.patRegisters.primaryReferralSourceId === 0 ? "" : String(formData.patRegisters.primaryReferralSourceId)}
           options={dropdownValues.primaryIntroducingSource}
           onChange={handleDropdownChange(["patRegisters", "primaryReferralSourceId"], ["patRegisters", "primaryReferralSourceName"], dropdownValues.primaryIntroducingSource)}
           isSubmitted={isSubmitted}
