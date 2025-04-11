@@ -3,7 +3,7 @@ import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifi
 import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useRadioButtonChange from "@/hooks/useRadioButtonChange";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
 import useFieldsList from "@/components/FieldsList/UseFieldsList";
 import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
 import FormField from "@/components/FormField/FormField";
@@ -17,8 +17,7 @@ interface ContactDetailsProps {
 const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, isSubmitted }) => {
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
-
-  const dropdownValues = useDropdownValues(["area", "city", "country", "company"]);
+  const { refreshDropdownValues, ...dropdownValues } = useDropdownValues(["area", "city", "country", "company"]);
   const { fieldsList, defaultFields } = useFieldsList(["area", "city", "country", "company"]);
 
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
@@ -91,6 +90,21 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, 
     [setFormData]
   );
 
+  const onFieldAddedOrUpdated = () => {
+    if (dialogCategory) {
+      const dropdownMap: Record<string, DropdownType> = {
+        CITY: "city",
+        AREA: "area",
+        COUNTRY: "country",
+        COMPANY: "company",
+      };
+      const dropdownType = dropdownMap[dialogCategory];
+      if (dropdownType) {
+        refreshDropdownValues(dropdownType);
+      }
+    }
+  };
+
   return (
     <>
       <FormSectionWrapper title="Contact Details" spacing={1}>
@@ -108,25 +122,26 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, 
           label="Area"
           name="patAreaVal"
           ControlID="Area"
-          value={formData.patAddress.patAreaVal || defaultFields.area || ""}
-          options={fieldsList.area || dropdownValues.area || []}
-          onChange={handleDropdownChange(["patAddress", "patAreaVal"], ["patAddress", "patArea"], fieldsList.area || [])}
+          value={formData.patAddress.patAreaVal || dropdownValues.area || ""}
+          options={dropdownValues.area}
+          onChange={handleDropdownChange(["patAddress", "patAreaVal"], ["patAddress", "patArea"], dropdownValues.area || [])}
           isSubmitted={isSubmitted}
           showAddButton={true}
-          onAddClick={() => handleAddField("Area")}
+          onAddClick={() => handleAddField("AREA")}
         />
 
         <FormField
           type="select"
-          label="City"
-          name="pAddCityVal"
+          label="City "
+          name="City"
           ControlID="City"
-          value={formData.patAddress.pAddCityVal || defaultFields.city || ""}
-          options={fieldsList.city || dropdownValues.city || []}
-          onChange={handleDropdownChange(["patAddress", "pAddCityVal"], ["patAddress", "pAddCity"], fieldsList.city || [])}
+          value={formData.patAddress.pAddCityVal || dropdownValues.city || ""}
+          options={dropdownValues.city}
+          onChange={handleDropdownChange(["patAddress", "pAddCityVal"], ["patAddress", "pAddCity"], dropdownValues.city || [])}
           isSubmitted={isSubmitted}
+          gridProps={{ xs: 12, sm: 6, md: 3 }}
+          onAddClick={() => handleAddField("CITY")}
           showAddButton={true}
-          onAddClick={() => handleAddField("City")}
         />
 
         <FormField
@@ -134,12 +149,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, 
           label="Country"
           name="pAddActualCountryVal"
           ControlID="Country"
-          value={formData.patAddress.pAddActualCountryVal || defaultFields.country || ""}
-          options={fieldsList.country || dropdownValues.country || []}
-          onChange={handleDropdownChange(["patAddress", "pAddActualCountryVal"], ["patAddress", "pAddActualCountry"], fieldsList.country || [])}
+          value={formData.patAddress.pAddActualCountryVal || dropdownValues.country || ""}
+          options={dropdownValues.country}
+          onChange={handleDropdownChange(["patAddress", "pAddActualCountryVal"], ["patAddress", "pAddActualCountry"], dropdownValues.country || [])}
           isSubmitted={isSubmitted}
           showAddButton={true}
-          onAddClick={() => handleAddField("Country")}
+          onAddClick={() => handleAddField("COUNTRY")}
         />
 
         <FormField
@@ -165,12 +180,12 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, 
           label="Company"
           name="patCompNameVal"
           ControlID="Company"
-          value={formData.patRegisters.patCompNameVal || defaultFields.company || ""}
-          options={fieldsList.company || dropdownValues.company || []}
+          value={formData.patRegisters.patCompNameVal || dropdownValues.company || ""}
+          options={dropdownValues.company}
           onChange={handleDropdownChange(["patRegisters", "patCompNameVal"], ["patRegisters", "patCompName"], dropdownValues.company)}
           isSubmitted={isSubmitted}
           showAddButton={true}
-          onAddClick={() => handleAddField("Company")}
+          onAddClick={() => handleAddField("COMPANY")}
         />
 
         <FormField
@@ -199,7 +214,13 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, 
         />
       </FormSectionWrapper>
 
-      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryCode={dialogCategory} isFieldCodeDisabled={true} />
+      <ModifiedFieldDialog
+        open={isFieldDialogOpen}
+        onClose={handleFieldDialogClose}
+        selectedCategoryCode={dialogCategory}
+        isFieldCodeDisabled={true}
+        onFieldAddedOrUpdated={onFieldAddedOrUpdated}
+      />
     </>
   );
 };

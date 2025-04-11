@@ -128,7 +128,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "GENDER");
             break;
           case "ageUnit":
-            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "AGEUNITS");
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "AGEUNIT");
             break;
 
           case "coverFor":

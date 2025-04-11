@@ -7,7 +7,7 @@ import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifi
 import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
 import useFieldsList from "@/components/FieldsList/UseFieldsList";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useRadioButtonChange from "@/hooks/useRadioButtonChange";
@@ -32,9 +32,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const serverDate = useServerDate();
-
-  const dropdownValues = useDropdownValues(["title", "relation", "area", "city", "country", "nationality"]);
-  const { fieldsList, defaultFields } = useFieldsList(["nationality", "relation", "area", "city", "country"]);
+  const { refreshDropdownValues, ...dropdownValues } = useDropdownValues(["title", "relation", "area", "city", "country", "nationality"]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
   const nextOfKinInitialFormState: PatNokDetailsDto = useMemo(
@@ -86,6 +84,22 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
   const resetNextOfKinFormData = useCallback(() => {
     setNextOfKinData(nextOfKinInitialFormState);
   }, [nextOfKinInitialFormState]);
+
+  const onFieldAddedOrUpdated = () => {
+    if (dialogCategory) {
+      const dropdownMap: Record<string, DropdownType> = {
+        CITY: "city",
+        AREA: "area",
+        COUNTRY: "country",
+        NATIONALITY: "nationality",
+        RELATION: "relation",
+      };
+      const dropdownType = dropdownMap[dialogCategory];
+      if (dropdownType) {
+        refreshDropdownValues(dropdownType);
+      }
+    }
+  };
 
   useEffect(() => {
     if (editData) {
@@ -309,14 +323,14 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         label="Relationship"
         name="pNokRelNameVal"
         ControlID="Relationship"
-        value={nextOfkinData.pNokRelNameVal || defaultFields.relation}
-        options={fieldsList.relation}
-        onChange={handleDropdownChange(["pNokRelNameVal"], ["pNokRelName"], fieldsList.relation)}
+        value={nextOfkinData.pNokRelNameVal || dropdownValues.relation}
+        options={dropdownValues.relation}
+        onChange={handleDropdownChange(["pNokRelNameVal"], ["pNokRelName"], dropdownValues.relation)}
         isMandatory={true}
         isSubmitted={isSubmitted}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
         showAddButton={true}
-        onAddClick={() => handleAddField("relation")}
+        onAddClick={() => handleAddField("RELATION")}
       />
 
       <FormField
@@ -356,24 +370,24 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         label="Area"
         name="pNokAreaVal"
         ControlID="Area"
-        value={nextOfkinData.pNokAreaVal || defaultFields.area}
-        options={fieldsList.area}
-        onChange={handleDropdownChange(["pNokAreaVal"], ["pNokArea"], fieldsList.area)}
+        value={nextOfkinData.pNokAreaVal || dropdownValues.area}
+        options={dropdownValues.area}
+        onChange={handleDropdownChange(["pNokAreaVal"], ["pNokArea"], dropdownValues.area)}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
         showAddButton={true}
-        onAddClick={() => handleAddField("area")}
+        onAddClick={() => handleAddField("AREA")}
       />
       <FormField
         type="select"
         label="City"
         name="pNokCityVal"
         ControlID="City"
-        value={nextOfkinData.pNokCityVal || defaultFields.city}
-        options={fieldsList.city}
-        onChange={handleDropdownChange(["pNokCityVal"], ["pNokCity"], fieldsList.city)}
+        value={nextOfkinData.pNokCityVal || dropdownValues.city}
+        options={dropdownValues.city}
+        onChange={handleDropdownChange(["pNokCityVal"], ["pNokCity"], dropdownValues.city)}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
         showAddButton={true}
-        onAddClick={() => handleAddField("city")}
+        onAddClick={() => handleAddField("CITY")}
       />
       <FormField
         type="select"
@@ -385,7 +399,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         onChange={handleDropdownChange(["pNokActualCountryVal"], ["pNokActualCountry"], dropdownValues.country)}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
         showAddButton={true}
-        onAddClick={() => handleAddField("country")}
+        onAddClick={() => handleAddField("COUNTRY")}
       />
 
       <FormField
@@ -411,12 +425,12 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         label="Nationality"
         name="pNokCountryVal"
         ControlID="Nationality"
-        value={nextOfkinData.pNokCountryVal || defaultFields.nationality}
-        options={fieldsList.nationality}
-        onChange={handleDropdownChange(["pNokCountryVal"], ["pNokCountry"], fieldsList.country)}
+        value={nextOfkinData.pNokCountryVal || dropdownValues.nationality}
+        options={dropdownValues.nationality}
+        onChange={handleDropdownChange(["pNokCountryVal"], ["pNokCountry"], dropdownValues.country)}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
         showAddButton={true}
-        onAddClick={() => handleAddField("nationality")}
+        onAddClick={() => handleAddField("NATIONALITY")}
       />
       <FormField
         type="text"
@@ -437,7 +451,13 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         gridProps={{ xs: 12, sm: 6, md: 4 }}
       />
 
-      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryCode={dialogCategory} isFieldCodeDisabled={true} />
+      <ModifiedFieldDialog
+        open={isFieldDialogOpen}
+        onClose={handleFieldDialogClose}
+        selectedCategoryCode={dialogCategory}
+        onFieldAddedOrUpdated={onFieldAddedOrUpdated}
+        isFieldCodeDisabled={true}
+      />
     </Grid>
   );
 

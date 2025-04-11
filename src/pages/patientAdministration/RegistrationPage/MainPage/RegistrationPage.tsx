@@ -202,11 +202,6 @@ const RegistrationPage: React.FC = () => {
       errors.title = "Title is required";
     } else if (!formData.patRegisters.indentityValue) {
       errors.indetityNo = "Indentity Number is required";
-    } else if (
-      (formData.patRegisters.pDobOrAge === "DOB" && !formData.patRegisters.pDob) ||
-      (formData.patRegisters.pDobOrAge === "Age" && (!formData.patOverview.pAgeNumber || !formData.patOverview.pAgeDescriptionVal))
-    ) {
-      errors.dateOfBirth = "Date of birth or Age is required";
     } else if (formData.opvisits?.visitTypeVal === "H" && (formData.patRegisters.deptID === 0 || !formData.patRegisters.deptName)) {
       errors.department = "Department is required";
     } else if (formData.opvisits?.visitTypeVal === "P" && (formData.patRegisters.attendingPhysicianId === 0 || !formData.patRegisters.attendingPhysicianName)) {
@@ -227,6 +222,23 @@ const RegistrationPage: React.FC = () => {
       notifyWarning("Please fill all mandatory fields.");
       return;
     }
+    if (formData.patRegisters.pDobOrAge === "Age") {
+      const { pAgeNumber, pAgeDescriptionVal } = formData.patOverview;
+      const today = new Date();
+      const dob = new Date(today);
+
+      if (pAgeDescriptionVal === "Years") {
+        dob.setFullYear(today.getFullYear() - pAgeNumber);
+      } else if (pAgeDescriptionVal === "Months") {
+        dob.setMonth(today.getMonth() - pAgeNumber);
+      } else if (pAgeDescriptionVal === "Days") {
+        dob.setDate(today.getDate() - pAgeNumber);
+      }
+
+      formData.patRegisters.pDob = dob;
+      formData.patRegisters.pDobOrAgeVal = "Y";
+      formData.patRegisters.pDobOrAge = "DOB";
+    }
 
     setLoading(true);
     try {
@@ -235,6 +247,7 @@ const RegistrationPage: React.FC = () => {
         const pChartID = response.data;
         let hasErrors = false;
         const actionText = isEditMode ? "updated" : "saved";
+
         if (nextOfKinPageRef.current) {
           try {
             await nextOfKinPageRef.current.saveKinDetails(pChartID);
@@ -242,6 +255,7 @@ const RegistrationPage: React.FC = () => {
             hasErrors = true;
           }
         }
+
         if (insurancePageRef.current) {
           try {
             await insurancePageRef.current.saveInsuranceDetails(pChartID);
@@ -255,7 +269,9 @@ const RegistrationPage: React.FC = () => {
             onConfirm: handleClear,
           });
         } else {
-          showAlert("Success", `Registration ${actionText} successfully!`, "success", { onConfirm: handleClear });
+          showAlert("Success", `Registration ${actionText} successfully!`, "success", {
+            onConfirm: handleClear,
+          });
           notifySuccess(`Patient registration ${actionText} successfully!`);
         }
       } else {

@@ -6,13 +6,13 @@ import { useAppSelector } from "@/store/hooks";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
 import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
 import useDayjs from "@/hooks/Common/useDateTime";
-import useFieldsList from "@/components/FieldsList/UseFieldsList";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import FormField from "@/components/FormField/FormField";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 import CustomButton from "@/components/Button/CustomButton";
+import { notifyWarning } from "@/utils/Common/toastManager";
 
 interface PatientInsuranceFormProps {
   show: boolean;
@@ -25,9 +25,8 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
   const userInfo = useAppSelector((state) => state.auth);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const serverDate = useServerDate();
-  const { formatDate, formatDateTime, parse, format, formatDateYMD } = useDayjs();
-  const dropdownValues = useDropdownValues(["insurance", "relation", "coverFor"]);
-  const { fieldsList, defaultFields } = useFieldsList(["relation"]);
+  const { formatDate, formatDateYMD } = useDayjs();
+  const { refreshDropdownValues, ...dropdownValues } = useDropdownValues(["insurance", "relation", "coverFor"]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
   const insuranceFormInitialState: OPIPInsurancesDto = useMemo(
@@ -74,6 +73,18 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
     setInsuranceForm(insuranceFormInitialState);
   }, [insuranceFormInitialState]);
 
+  const onFieldAddedOrUpdated = () => {
+    if (dialogCategory) {
+      const dropdownMap: Record<string, DropdownType> = {
+        RELATION: "relation",
+      };
+      const dropdownType = dropdownMap[dialogCategory];
+      if (dropdownType) {
+        refreshDropdownValues(dropdownType);
+      }
+    }
+  };
+
   useEffect(() => {
     if (editData) {
       setInsuranceForm({
@@ -86,6 +97,10 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
 
   const handleSubmit = useCallback(() => {
     setIsSubmitted(true);
+    if (!insuranceForm.policyNumber?.trim()) {
+      notifyWarning("Policy Number is required.");
+      return;
+    }
     if (insuranceForm.insurName.trim()) {
       handleSave(insuranceForm);
       resetInsuranceFormData();
@@ -93,7 +108,6 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
       setIsSubmitted(false);
     }
   }, [insuranceForm, handleSave, resetInsuranceFormData, handleClose]);
-
   const handleCloseWithClear = useCallback(() => {
     resetInsuranceFormData();
     handleClose();
@@ -236,12 +250,12 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
             label="Relationship"
             name="relationVal"
             ControlID="Relationship"
-            value={insuranceForm.relationVal || defaultFields.relation}
-            options={fieldsList.relation}
-            onChange={handleDropdownChange(["relationVal"], ["relation"], fieldsList.relation)}
+            value={insuranceForm.relationVal || dropdownValues.relation}
+            options={dropdownValues.relation}
+            onChange={handleDropdownChange(["relationVal"], ["relation"], dropdownValues.relation)}
             gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
             showAddButton={true}
-            onAddClick={() => handleAddField("relation")}
+            onAddClick={() => handleAddField("RELATION")}
           />
           <FormField
             type="select"
@@ -299,7 +313,13 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
             gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
           />
 
-          <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryCode={dialogCategory} isFieldCodeDisabled={true} />
+          <ModifiedFieldDialog
+            open={isFieldDialogOpen}
+            onClose={handleFieldDialogClose}
+            selectedCategoryCode={dialogCategory}
+            onFieldAddedOrUpdated={onFieldAddedOrUpdated}
+            isFieldCodeDisabled={true}
+          />
         </Grid>
       </DialogContent>
       <DialogActions>
