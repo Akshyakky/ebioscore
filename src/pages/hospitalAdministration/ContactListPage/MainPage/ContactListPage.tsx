@@ -3,7 +3,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { useAppSelector } from "@/store/hooks";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDayjs from "@/hooks/Common/useDateTime";
-import { ContactListData } from "@/interfaces/HospitalAdministration/ContactListData";
+import { ContactListData, ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
 import { useLoading } from "@/context/LoadingContext";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { showAlert } from "@/utils/Common/showAlert";
@@ -14,6 +14,7 @@ import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch"
 
 const ContactListPage: React.FC = () => {
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [selectedData, setSelectedData] = useState<ContactMastData | undefined>(undefined);
   const serverDate = useServerDate();
   const { formatDateYMD, formatDateTime } = useDayjs();
 
@@ -112,7 +113,9 @@ const ContactListPage: React.FC = () => {
   const handleAdvancedSearch = async () => {
     setIsSearchOpen(true);
   };
-
+  const handleSelect = useCallback((data: ContactMastData) => {
+    setSelectedData(data);
+  }, []);
   const handleEditContactList = async (conID: number) => {
     setLoading(true);
     try {
@@ -206,7 +209,7 @@ const ContactListPage: React.FC = () => {
           />
         </Paper>
       </Container>
-      <ContactListSearch open={isSearchOpen} onClose={() => setIsSearchOpen(false)} onEditContactList={handleEditContactList} />
+      <ContactListSearch open={isSearchOpen} onClose={() => setIsSearchOpen(false)} onSelect={handleSelect} />
     </>
   );
 };
