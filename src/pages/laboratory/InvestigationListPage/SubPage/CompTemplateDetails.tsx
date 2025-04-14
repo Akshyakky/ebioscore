@@ -149,7 +149,7 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
 
   const handleAddTemplate = async () => {
     if (!selectedTemplateGroupId || !editorValue.trim()) {
-      showAlert("error", "Please select a template group (checkbox) and enter template content", "error");
+      showAlert("warning", "Please select a template group (checkbox) and enter template content", "warning");
       return;
     }
 

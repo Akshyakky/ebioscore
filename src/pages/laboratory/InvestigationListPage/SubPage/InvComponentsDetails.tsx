@@ -303,8 +303,21 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
     const currentAgeRanges = [...ageRangesRef.current];
     const assignedCompoID = isEditMode ? selectedComponent!.compoID : tempCompoID;
 
+    // If Entry Type = 5 (Multiple Values), ensure at least one multiple choice value is added
     if (formState.lCentID === 5 && compMultipleList.filter((m) => m.rActiveYN !== "N").length === 0) {
-      showAlert("Warning", "Please add at least one Multiple Choice value for this entry type.  ", "warning");
+      showAlert("Warning", "Please add at least one Multiple Choice value for this entry type.", "warning");
+      return;
+    }
+
+    // If Entry Type = 6 (Applicable Age Range), ensure at least one age range is added
+    if (formState.lCentID === 6 && currentAgeRanges.length === 0) {
+      showAlert("Warning", "Please add at least one Age Range for this entry type.", "warning");
+      return;
+    }
+
+    // If Entry Type = 7 (Template), ensure at least one template is added
+    if (formState.lCentID === 7 && templateDetails.length === 0) {
+      showAlert("Warning", "Please add at least one Template for this entry type.", "warning");
       return;
     }
 

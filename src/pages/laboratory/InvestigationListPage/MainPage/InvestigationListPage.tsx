@@ -164,7 +164,6 @@ const InvestigationListPage: React.FC<Props> = () => {
   const handleCodeSelect = async (selectedSuggestion: string) => {
     const selectedCode = selectedSuggestion?.split(" - ")[0]?.trim();
     if (!selectedCode) {
-      showAlert("Error", "Invalid investigation code selected.", "error");
       return;
     }
 
@@ -185,7 +184,6 @@ const InvestigationListPage: React.FC<Props> = () => {
 
             const { lComponentsDto = [], lCompMultipleDtos = [], lCompAgeRangeDtos = [], lCompTemplateDtos = [] } = investigationDetails;
 
-            // Attach multiple, age, and template data to each component
             const enhancedComponents = lComponentsDto.map((comp: LComponentDto) => {
               const compoID = comp.compoID;
 
@@ -403,30 +401,23 @@ const InvestigationListPage: React.FC<Props> = () => {
     setUnsavedComponents((prev) => {
       const idx = prev.findIndex((c) => c.compoID === compData.compoID);
       if (idx >= 0) {
-        // replace existing unsaved component
         const updated = [...prev];
         updated[idx] = { ...compData };
         return updated;
       }
-      return prev; // if not found, don’t add
+      return prev;
     });
   }, []);
 
   const updateCompMultipleDetails = useCallback((multipleData: LCompMultipleDto) => {
     setCompMultipleDetails((prev) => {
       let updated: LCompMultipleDto[];
-
       const existingIndex = prev.findIndex((m) => m.cmID === multipleData.cmID && m.compoID === multipleData.compoID);
-
       if (existingIndex >= 0) {
-        // 🔁 Update existing by cmID
         updated = prev.map((m, i) => (i === existingIndex ? { ...m, ...multipleData } : m));
       } else {
-        // ➕ Add new
         updated = [...prev, multipleData];
       }
-
-      // 🔁 Reflect update inside componentDetails (UI)
       setComponentDetails((prevComponents) =>
         prevComponents.map((comp) =>
           comp.compoID === multipleData.compoID
@@ -475,8 +466,6 @@ const InvestigationListPage: React.FC<Props> = () => {
   const renderComponentDetails = () => {
     const filteredComponentDetails = componentDetails.filter((comp) => comp.rActiveYN !== "N");
     const filteredUnsavedComponents = unsavedComponents.filter((comp) => comp.rActiveYN !== "N");
-
-    // Auto-deselect if selected component is deleted
     const isDeleted = selectedComponent?.rActiveYN === "N";
     const validSelectedComponent = isDeleted ? null : selectedComponent;
 
