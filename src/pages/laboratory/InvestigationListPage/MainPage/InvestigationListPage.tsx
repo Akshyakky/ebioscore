@@ -70,15 +70,14 @@ const InvestigationListPage: React.FC<Props> = () => {
   ];
 
   const enhanceComponentDetails = (components: LComponentDto[], multiples: LCompMultipleDto[], ages: LCompAgeRangeDto[], templates: LCompTemplateDto[]): LComponentDto[] =>
-    components.map((comp) => {
-      return {
-        ...comp,
-        multipleChoices: multiples.filter((mc) => mc.compoID === comp.compoID || mc.compOID === comp.compoID || mc.compID === comp.compID),
-        ageRanges: ages.filter((ar) => ar.compoID === comp.compoID || ar.cappID === comp.compoID || ar.compID === comp.compID),
-        templates: templates.filter((tpl) => tpl.compoID === comp.compoID || tpl.compID === comp.compID || tpl.compCode === comp.compCode),
-      };
-    });
+    components.map((comp) => ({
+      ...comp,
+      multipleChoices: multiples.filter((m) => m.compoID === comp.compoID || m.compOID === comp.compoID || m.compID === comp.compID),
+      ageRanges: ages.filter((ar) => ar.compoID === comp.compoID || ar.cappID === comp.compoID || ar.compID === comp.compID),
+      templates: templates.filter((tpl) => tpl.compoID === comp.compoID || tpl.compID === comp.compID || tpl.compCode === comp.compCode),
+    }));
 
+  // 1) Searching/Selecting an existing Investigation
   const handleSelect = async (selectedInvestigation: investigationDto) => {
     try {
       if (!selectedInvestigation.invID) {
@@ -86,14 +85,14 @@ const InvestigationListPage: React.FC<Props> = () => {
         return;
       }
       setIsLoading(true);
+
       const response = await investigationlistService.getById(selectedInvestigation.invID);
       if (response.success && response.data) {
         const data = response.data;
-
-        const enhancedComponents = enhanceComponentDetails(data.lComponentsDto || [], data.lCompMultipleDtos || [], data.lCompAgeRangeDtos || [], data.lCompTemplateDtos || []);
+        const enhanced = enhanceComponentDetails(data.lComponentsDto || [], data.lCompMultipleDtos || [], data.lCompAgeRangeDtos || [], data.lCompTemplateDtos || []);
 
         setInvestigationDetails(data.lInvMastDto);
-        setComponentDetails(enhancedComponents);
+        setComponentDetails(enhanced);
         setCompMultipleDetails(data.lCompMultipleDtos || []);
         setAgeRangeDetails(data.lCompAgeRangeDtos || []);
         setTemplateDetails(data.lCompTemplateDtos || []);
@@ -101,10 +100,8 @@ const InvestigationListPage: React.FC<Props> = () => {
           invTitle: data.lInvMastDto?.invTitle || "",
           invSTitle: data.lInvMastDto?.invSTitle || "",
         });
-        if (enhancedComponents.length) {
-          setSelectedComponent(enhancedComponents[0]);
-        }
 
+        if (enhanced.length) setSelectedComponent(enhanced[0]);
         setIsSearchOpen(false);
       } else {
         showAlert("Error", "Failed to fetch full investigation details", "error");
@@ -116,40 +113,7 @@ const InvestigationListPage: React.FC<Props> = () => {
     }
   };
 
-  const handleEdit = useCallback(async (investigation: investigationDto) => {
-    try {
-      setIsLoading(true);
-      if (!investigation.lInvMastDto?.invID) return;
-
-      const response = await investigationlistService.getById(investigation.lInvMastDto.invID);
-      if (response.success && response.data) {
-        const data = response.data;
-
-        const enhancedComponents = enhanceComponentDetails(data.lComponentsDto || [], data.lCompMultipleDtos || [], data.lCompAgeRangeDtos || [], data.lCompTemplateDtos || []);
-
-        setInvestigationDetails(data.lInvMastDto);
-        setComponentDetails(enhancedComponents);
-        setCompMultipleDetails(data.lCompMultipleDtos || []);
-        setAgeRangeDetails(data.lCompAgeRangeDtos || []);
-        setTemplateDetails(data.lCompTemplateDtos || []);
-        setPrintPreferences({
-          invTitle: data.lInvMastDto?.invTitle || "",
-          invSTitle: data.lInvMastDto?.invSTitle || "",
-        });
-
-        if (enhancedComponents.length > 0) {
-          setSelectedComponent(enhancedComponents[0]);
-        }
-      } else {
-        showAlert("Error", "Could not fetch details", "error");
-      }
-    } catch (err) {
-      showAlert("Error", "Failed to edit investigation", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
+  // 2) Validate top-level Investigation form
   const validateFormData = useCallback(() => {
     const errors: InvestigationFormErrors = {};
     if (!investigationDetails?.invCode?.trim()) errors.invCode = "Investigation Code is required.";
@@ -160,6 +124,142 @@ const InvestigationListPage: React.FC<Props> = () => {
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   }, [investigationDetails]);
+
+  // 3) Actually save (upsert) the Investigation with components
+  const handleSave = async () => {
+    try {
+      debugger;
+      setIsSubmitted(true);
+
+      // -- Validate top-level fields
+      if (!validateFormData()) {
+        notifyWarning("Please fill all mandatory fields.");
+        return;
+      }
+
+      // -- Gather active (not deleted) components
+      const activeSaved = componentDetails.filter((c) => c.rActiveYN !== "N");
+      const activeUnsaved = unsavedComponents.filter((c) => c.rActiveYN !== "N");
+      const allActive = [...activeSaved, ...activeUnsaved];
+
+      if (allActive.length === 0) {
+        showAlert("Warning", "Please add at least one component.", "warning");
+        return;
+      }
+
+      setIsLoading(true);
+
+      // -- Prep final list of components
+      // Keep existing compoIDs for updates, use 0 for new
+      const finalComponents: LComponentDto[] = allActive.map((comp, index) => ({
+        ...comp,
+        compOrder: index + 1,
+        compoID: comp.compoID || 0, // 0 => new in the DB
+        mGrpID: typeof comp.mGrpID === "string" ? parseInt(comp.mGrpID, 10) || 0 : comp.mGrpID || 0,
+        // etc...
+      }));
+
+      // Build the main payload
+      const payload: investigationDto = {
+        lInvMastDto: {
+          ...investigationDetails,
+          invID: investigationDetails?.invID || 0, // 0 => new
+          invTitle: printPreferences.invTitle,
+          invSTitle: printPreferences.invSTitle,
+        } as LInvMastDto,
+        lComponentsDto: finalComponents,
+        lCompMultipleDtos: [],
+        lCompAgeRangeDtos: [],
+        lCompTemplateDtos: [],
+      };
+
+      // For each component, attach sub-lists
+      finalComponents.forEach((comp) => {
+        // multiple choices
+        if (comp.multipleChoices?.length) {
+          payload.lCompMultipleDtos.push(
+            ...comp.multipleChoices.map((mc: LCompMultipleDto) => ({
+              ...mc,
+              cmID: 0, // for brand-new, or keep it if you prefer
+              compoID: comp.compoID || 0,
+              compID: comp.compID,
+              invID: comp.invID,
+              compCode: comp.compCode,
+              compName: comp.compoNameCD,
+            }))
+          );
+        }
+        // age ranges
+        if (comp.ageRanges?.length) {
+          payload.lCompAgeRangeDtos.push(
+            ...comp.ageRanges.map((ar: LCompAgeRangeDto) => ({
+              ...ar,
+              carID: 0,
+              cappID: 0,
+              compoID: 0,
+              compID: comp.compID,
+              invID: comp.invID,
+              compCode: comp.compCode,
+              compName: comp.compoNameCD,
+            }))
+          );
+        }
+        // templates
+        if (comp.templates?.length) {
+          payload.lCompTemplateDtos.push(
+            ...comp.templates.map((tpl: LCompTemplateDto) => ({
+              ...tpl,
+              cTID: 0,
+              compoID: 0,
+              compID: comp.compID,
+              invID: comp.invID,
+              compCode: comp.compCode,
+              compName: comp.compoNameCD,
+            }))
+          );
+        }
+      });
+
+      // -- Call the API
+      const response = await investigationlistService.save(payload);
+      if (response.success) {
+        showAlert("Success", "Investigation saved successfully", "success");
+        handleClear();
+      } else {
+        showAlert("Error", response.errorMessage || "Save failed", "error");
+      }
+    } catch (err: any) {
+      if (err.response?.data) {
+        console.error("Server said:", err.response.data);
+      }
+      showAlert("Error", "Error occurred while saving the investigation.", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 4) Clear the entire form
+  const handleClear = () => {
+    setShouldResetForm(true);
+    setIsSubmitted(false);
+    setInvestigationDetails(null);
+    setComponentDetails([]);
+    setCompMultipleDetails([]);
+    setAgeRangeDetails([]);
+    setTemplateDetails([]);
+    setPrintPreferences({ invTitle: "", invSTitle: "" });
+    setSelectedComponent(null);
+    setIsSearchOpen(false);
+    setIsComponentDialogOpen(false);
+    setUnsavedComponents([]);
+    setTimeout(() => setShouldResetForm(false), 100);
+  };
+
+  // 5) Additional helper methods, e.g. add a new component
+  const handleAddComponent = () => {
+    setSelectedComponent(null);
+    setIsComponentDialogOpen(true);
+  };
 
   const handleCodeSelect = async (selectedSuggestion: string) => {
     const selectedCode = selectedSuggestion?.split(" - ")[0]?.trim();
@@ -184,6 +284,7 @@ const InvestigationListPage: React.FC<Props> = () => {
 
             const { lComponentsDto = [], lCompMultipleDtos = [], lCompAgeRangeDtos = [], lCompTemplateDtos = [] } = investigationDetails;
 
+            // Attach multiple, age, and template data to each component
             const enhancedComponents = lComponentsDto.map((comp: LComponentDto) => {
               const compoID = comp.compoID;
 
@@ -229,132 +330,14 @@ const InvestigationListPage: React.FC<Props> = () => {
     }
   };
 
-  const handleSave = async () => {
-    try {
-      setIsSubmitted(true);
-
-      if (!validateFormData()) {
-        notifyWarning("Please fill all mandatory fields.");
-        return;
-      }
-
-      setIsLoading(true);
-
-      // All components (saved & unsaved) should reset compoID to 0
-      const allComponents: LComponentDto[] = [...componentDetails, ...unsavedComponents].map((comp, i) => ({
-        ...comp,
-        compoID: comp.compoID || 0, // backend assigns IDs
-        compOrder: i + 1,
-        compCode: comp.compCode || "",
-        compName: comp.compName || "",
-        mGrpID: typeof comp.mGrpID === "string" ? parseInt(comp.mGrpID, 10) || 0 : comp.mGrpID || 0,
-      }));
-
-      const payload: investigationDto = {
-        lInvMastDto: {
-          ...investigationDetails,
-          invTitle: printPreferences.invTitle,
-          invSTitle: printPreferences.invSTitle,
-          invID: investigationDetails?.invID ?? 0,
-        } as LInvMastDto,
-        lComponentsDto: allComponents,
-        lCompMultipleDtos: [],
-        lCompAgeRangeDtos: [],
-        lCompTemplateDtos: [],
-      };
-
-      // Properly associate multiple choices, age ranges, and templates
-      allComponents.forEach((comp) => {
-        if (comp.multipleChoices?.length) {
-          payload.lCompMultipleDtos.push(
-            ...comp.multipleChoices.map((mc: LCompMultipleDto) => ({
-              ...mc,
-              compoID: comp.compoID || 0,
-              cmID: 0,
-              invID: comp.invID,
-              compID: comp.compID,
-              compCode: comp.compCode,
-              compName: comp.compoNameCD,
-            }))
-          );
-        }
-        if (comp.ageRanges?.length) {
-          payload.lCompAgeRangeDtos.push(
-            ...comp.ageRanges.map((ar: LCompAgeRangeDto) => ({
-              ...ar,
-              cappID: 0, // backend will assign cappID
-              compoID: 0,
-              carID: 0,
-              compID: comp.compID,
-              compCode: comp.compCode,
-              compName: comp.compoNameCD,
-            }))
-          );
-        }
-        if (comp.templates?.length) {
-          payload.lCompTemplateDtos.push(
-            ...comp.templates.map((tp: LCompTemplateDto) => ({
-              ...tp,
-              compoID: 0, // backend will assign compoID
-              cTID: 0,
-              invID: comp.invID,
-              compID: comp.compID,
-              compCode: comp.compCode,
-              compName: comp.compoNameCD,
-            }))
-          );
-        }
-      });
-
-      const response = await investigationlistService.save(payload);
-
-      if (response.success) {
-        showAlert("Success", "Investigation saved successfully", "success");
-        setShouldResetForm(true);
-        handleClear();
-        setUnsavedComponents([]);
-      } else {
-        showAlert("Error", response.errorMessage || "Save failed", "error");
-      }
-    } catch (err) {
-      showAlert("Warning", "Please Add At-least One Component  ", "warning");
-    } finally {
-      setIsLoading(false);
-      setTimeout(() => setShouldResetForm(false), 100);
-    }
-  };
-
-  const handleClear = () => {
-    setShouldResetForm(true);
-    setIsSubmitted(false);
-    setInvestigationDetails(null);
-    setComponentDetails([]);
-    setCompMultipleDetails([]);
-    setAgeRangeDetails([]);
-    setTemplateDetails([]);
-    setPrintPreferences({ invTitle: "", invSTitle: "" });
-    setSelectedComponent(null);
-    setIsSearchOpen(false);
-    setIsComponentDialogOpen(false);
-    setTimeout(() => setShouldResetForm(false), 100);
-  };
-  const handleAddComponent = () => {
-    setSelectedComponent(null);
-    setIsComponentDialogOpen(true);
-  };
-
   const handleEditComponent = (component: LComponentDto) => {
     const isUnsaved = component.compoID !== 0 && unsavedComponents.some((c) => c.compoID === component.compoID);
-
     const compWithNestedData: LComponentDto = {
       ...component,
       multipleChoices: isUnsaved ? component.multipleChoices || [] : compMultipleDetails.filter((mc) => mc.compoID === component.compoID || mc.compOID === component.compoID),
-
       ageRanges: isUnsaved ? component.ageRanges || [] : ageRangeDetails.filter((ar) => ar.compoID === component.compoID || ar.cappID === component.compoID),
-
       templates: isUnsaved ? component.templates || [] : templateDetails.filter((tpl) => tpl.compoID === component.compoID),
     };
-
     setSelectedComponent(compWithNestedData);
     setIsComponentDialogOpen(true);
   };

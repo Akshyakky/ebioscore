@@ -93,7 +93,6 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
   }, [investigationData, compID, compCode, compName, userID, userName, serverDate]);
 
   const fetchInvestigationCodeSuggestions = useCallback(async (searchTerm: string) => {
-    debugger;
     if (!searchTerm.trim()) return [];
 
     try {

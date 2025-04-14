@@ -301,7 +301,8 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
 
     const isEditMode = !!selectedComponent; // ✅ Check based on selection, not compoID
     const currentAgeRanges = [...ageRangesRef.current];
-    const assignedCompoID = isEditMode ? selectedComponent!.compoID : tempCompoID;
+    // If we are *not* editing an existing component, forcibly set `compoID=0`
+    const assignedCompoID = isEditMode ? selectedComponent!.compoID : 0;
 
     // If Entry Type = 5 (Multiple Values), ensure at least one multiple choice value is added
     if (formState.lCentID === 5 && compMultipleList.filter((m) => m.rActiveYN !== "N").length === 0) {
@@ -351,7 +352,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
       onUpdate(updatedComponent);
     } else {
       setUnsavedComponents((prev) => [...prev, updatedComponent]);
-      setTempCompoID((prev) => prev + 1); // 🆙 Increment only for new additions
     }
 
     handleClose();
