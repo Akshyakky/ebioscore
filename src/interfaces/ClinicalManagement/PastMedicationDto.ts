@@ -1,6 +1,6 @@
 // src/interfaces/ClinicalManagement/PastMedicationDto.ts
 
-import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { BaseHistoryDto } from "./BaseHistoryDto";
 
 export interface PastMedicationDto extends BaseHistoryDto {

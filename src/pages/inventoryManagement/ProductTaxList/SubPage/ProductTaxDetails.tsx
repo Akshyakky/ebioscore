@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Grid, Paper, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { ProductTaxListDto } from "../../../../interfaces/InventoryManagement/ProductTaxListDto";
-import { productTaxService } from "../../../../services/InventoryManagementService/inventoryManagementService";
+
 import { useAppSelector } from "@/store/hooks";
+import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
+import { useLoading } from "@/context/LoadingContext";
+import { productTaxService } from "@/services/InventoryManagementService/inventoryManagementService";
+import { showAlert } from "@/utils/Common/showAlert";
+import FormField from "@/components/FormField/FormField";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 interface ProductTaxListDetailsProps {
   selectedData?: ProductTaxListDto;

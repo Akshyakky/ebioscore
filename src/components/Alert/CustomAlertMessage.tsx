@@ -1,9 +1,9 @@
+import { AlertDto } from "@/interfaces/Common/AlertManager";
 import React from "react";
-import CustomGrid from "../CustomGrid/CustomGrid";
-import { AlertDto } from "../../interfaces/Common/AlertManager";
-import CustomButton from "../Button/CustomButton";
-import Close from "@mui/icons-material/Close";
 import GenericDialog from "../GenericDialog/GenericDialog";
+import CustomButton from "../Button/CustomButton";
+import CustomGrid from "../CustomGrid/CustomGrid";
+import { Close } from "@mui/icons-material";
 
 interface AlertPopUpProps {
   open: boolean;

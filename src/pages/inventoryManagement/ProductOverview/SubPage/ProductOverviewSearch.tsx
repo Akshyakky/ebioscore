@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { ProductOverviewDto } from "../../../../interfaces/InventoryManagement/ProductOverviewDto";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { productOverviewService } from "../../../../services/InventoryManagementService/inventoryManagementService";
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
+import { productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
+import React, { useEffect, useState } from "react";
+
 interface ProductOverviewSearchProps {
   open: boolean;
   onClose: () => void;

@@ -1,32 +1,30 @@
-import axios from "axios";
-import { APIConfig } from "../../apiConfig";
+import { CommonApiService, ApiConfig } from "@/services/CommonApiService";
+import { APIConfig } from "@/apiConfig";
+import { Company } from "@/types/Common/Company.type";
 
-const getCompanies = async () => {
+// Create API configuration
+const apiConfig: ApiConfig = {
+  baseURL: APIConfig.moduleURL,
+};
+
+// Initialize the CommonApiService with our configuration
+const apiService = new CommonApiService(apiConfig);
+
+/**
+ * Retrieves the list of companies from the API
+ * @returns Promise containing an array of Company objects
+ */
+const getCompanies = async (): Promise<Company[]> => {
   try {
-    const response = await axios.get(`${APIConfig.moduleURL}GetCompanies`);
-    // Add response validation or transformation here if needed
-    return response.data;
+    // Using the CommonApiService to make the request
+    // Note: No token is needed as this is called from the login page
+    const response = await apiService.get<Company[]>("GetCompanies");
+    return response;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      // Handle Axios errors specifically
-      if (error.response) {
-        // Server responded with a status code outside the 2xx range
-        console.error("Error response:", error.response.data);
-        throw new Error("Error fetching companies: " + error.response.status);
-      } else if (error.request) {
-        // No response was received
-        console.error("No response:", error.request);
-        throw new Error("No response from server");
-      } else {
-        // Something went wrong in setting up the request
-        console.error("Error message:", error.message);
-        throw new Error("Error setting up request");
-      }
-    } else {
-      // Handle non-Axios errors
-      console.error("Unexpected error:", error);
-      throw new Error("An unexpected error occurred");
-    }
+    // The CommonApiService already handles basic error logging
+    // We can add additional company-specific error handling here if needed
+    console.error("Failed to retrieve companies:", error);
+    throw error; // Re-throw to allow the calling component to handle the error
   }
 };
 

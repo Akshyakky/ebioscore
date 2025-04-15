@@ -1,20 +1,21 @@
 // src/pages/clinicalManagement/patientHistory/FamilyHistory.tsx
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
+
+import { useAppSelector } from "@/store/hooks";
+import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
+import { useLoading } from "@/context/LoadingContext";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { showAlert } from "@/utils/Common/showAlert";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../components/Button/CustomButton";
-import { OPIPHistFHDto } from "../../../../interfaces/ClinicalManagement/OPIPHistFHDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
+import FormField from "@/components/FormField/FormField";
+import CustomButton from "@/components/Button/CustomButton";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
 import HistoryIcon from "@mui/icons-material/History";
 import ClearIcon from "@mui/icons-material/Clear";
-import { useAppSelector } from "@/store/hooks";
 
 interface FamilyHistoryProps {
   pChartID: number;

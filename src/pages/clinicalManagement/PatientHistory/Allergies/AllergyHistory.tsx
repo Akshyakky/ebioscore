@@ -1,19 +1,18 @@
 // src/pages/clinicalManagement/AllergyHistory/AllergyHistory.tsx
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import CustomButton from "@/components/Button/CustomButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import FormField from "@/components/FormField/FormField";
+import { AllergyDto, OPIPHistAllergyDetailDto } from "@/interfaces/ClinicalManagement/AllergyDto";
+import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
+import { useAppSelector } from "@/store/hooks";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Grid, Paper, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../components/Button/CustomButton";
-import { AllergyDto, OPIPHistAllergyDetailDto, OPIPHistAllergyMastDto } from "../../../../interfaces/ClinicalManagement/AllergyDto";
-import { MedicationListDto } from "../../../../interfaces/ClinicalManagement/MedicationListDto";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MedicationIcon from "@mui/icons-material/Medication";
 import WarningIcon from "@mui/icons-material/Warning";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
-import { useAppSelector } from "@/store/hooks";
 
 interface AllergyHistoryProps {
   pChartID: number;
@@ -25,7 +24,6 @@ interface AllergyHistoryProps {
 
 const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
-  const { setLoading } = useLoading();
   const medicationListService = useMemo(() => createEntityService<MedicationListDto>("MedicationList", "clinicalManagementURL"), []);
 
   const initialAllergyState: AllergyDto = useMemo(
@@ -53,10 +51,8 @@ const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipC
 
   const [formState, setFormState] = useState<AllergyDto>(historyList || initialAllergyState);
   const [selectedMedication, setSelectedMedication] = useState<string>("");
-  const [medicationSuggestions, setMedicationSuggestions] = useState<string[]>([]);
 
   useEffect(() => {
-    debugger;
     if (historyList) {
       setFormState(historyList);
     }

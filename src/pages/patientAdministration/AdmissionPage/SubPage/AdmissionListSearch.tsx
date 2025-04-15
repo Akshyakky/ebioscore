@@ -3,14 +3,13 @@ import { Box, IconButton, InputAdornment, useTheme } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import { format } from "date-fns";
-
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
-import FormField from "../../../../components/FormField/FormField";
-import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
-import { useAppDispatch, useAppSelector } from "../../../../store/hooks";
 import { selectFilteredAdmissions, selectIsLoading, selectSearchTerm } from "@/store/features/admission/admissionSearch/admissionSelectors";
 import { clearSearch, fetchCurrentAdmissions, resetAdmissionSearch, setSearchTerm } from "@/store/features/admission/admissionSearch/admissionSearchSlice";
+import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import FormField from "@/components/FormField/FormField";
 
 interface AdmissionListSearchProps {
   open: boolean;

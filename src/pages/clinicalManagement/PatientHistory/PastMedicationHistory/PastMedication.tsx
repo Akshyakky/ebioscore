@@ -1,20 +1,19 @@
 // src/pages/clinicalManagement/PatientHistory/PastMedication/PastMedication.tsx
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import CustomButton from "@/components/Button/CustomButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import FormField from "@/components/FormField/FormField";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
+import { PastMedicationDetailDto, PastMedicationDto } from "@/interfaces/ClinicalManagement/PastMedicationDto";
+import { useAppSelector } from "@/store/hooks";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Grid, Paper, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../components/Button/CustomButton";
-import { PastMedicationDto, PastMedicationDetailDto } from "../../../../interfaces/ClinicalManagement/PastMedicationDto";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
-import { MedicationListDto } from "../../../../interfaces/ClinicalManagement/MedicationListDto";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MedicationIcon from "@mui/icons-material/Medication";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import LocalPharmacyIcon from "@mui/icons-material/LocalPharmacy";
-import { useAppSelector } from "@/store/hooks";
 
 interface PastMedicationProps {
   pChartID: number;
@@ -26,7 +25,6 @@ interface PastMedicationProps {
 
 const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipCaseNo, medicationData, onMedicationChange }) => {
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
-  const { setLoading } = useLoading();
   const dropdownValues = useDropdownValues(["medicationForm", "medicationDosage", "medicationFrequency", "medicationInstruction"]);
 
   const [selectedMedication, setSelectedMedication] = useState<string>("");

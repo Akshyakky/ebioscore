@@ -1,7 +1,7 @@
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { ResourceListData } from "@/interfaces/frontOffice/ResourceListData";
+import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import React from "react";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
-import { resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
 
 interface ResourceListSearchProps {
   open: boolean;

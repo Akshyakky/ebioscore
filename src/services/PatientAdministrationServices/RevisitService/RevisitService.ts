@@ -1,7 +1,7 @@
-import { CommonApiService } from "../../CommonApiService";
-import { APIConfig } from "../../../apiConfig";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { DateFilterType, GetPatientVisitHistory, OPVisitDto } from "../../../interfaces/PatientAdministration/revisitFormData";
+import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { DateFilterType, GetPatientVisitHistory, OPVisitDto } from "@/interfaces/PatientAdministration/revisitFormData";
+import { CommonApiService } from "@/services/CommonApiService";
 import { store } from "@/store";
 
 // Initialize ApiService with the base URL for the patient administration API
@@ -49,7 +49,6 @@ export const cancelVisit = async (opVID: number, modifiedBy: string): Promise<Op
   return apiService.post<OperationResult<void>>(`Revisit/CancelVisit/${opVID}`, { modifiedBy }, getToken());
 };
 
-// Exporting the service as an object
 export const RevisitService = {
   getPatientHistoryByPChartID,
   saveOPVisits,

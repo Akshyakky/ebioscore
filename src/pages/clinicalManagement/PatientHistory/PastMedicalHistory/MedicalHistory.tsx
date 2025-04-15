@@ -1,23 +1,20 @@
 //src/pages/clinicalManagment/PastMedicalHistory/MedicalHistory
-import React, { useState, useCallback, useMemo } from "react";
+import CustomButton from "@/components/Button/CustomButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import FormField from "@/components/FormField/FormField";
+import { useLoading } from "@/context/LoadingContext";
+import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
+import { useAppSelector } from "@/store/hooks";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../components/Button/CustomButton";
-import { OPIPHistPMHDto } from "../../../../interfaces/ClinicalManagement/OPIPHistPMHDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
+import React, { useCallback, useMemo, useState } from "react";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
-import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
-import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
-import MedicationIcon from "@mui/icons-material/Medication";
 import HealingIcon from "@mui/icons-material/Healing";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
 import ClearIcon from "@mui/icons-material/Clear";
-import { useAppSelector } from "@/store/hooks";
 
 interface PastMedicalHistoryProps {
   pChartID: number;

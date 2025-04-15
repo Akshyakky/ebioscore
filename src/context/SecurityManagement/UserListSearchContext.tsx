@@ -1,7 +1,7 @@
+import { UserListData, UserListDto } from "@/interfaces/SecurityManagement/UserListData";
 import React, { createContext, useEffect, useCallback } from "react";
 import { useLoading } from "../LoadingContext";
-import { UserListData } from "../../interfaces/SecurityManagement/UserListData";
-import { UserListService } from "../../services/SecurityManagementServices/UserListService";
+import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 
 interface UserListSearchContextProps {
   fetchAllUsers: () => Promise<UserListData[]>;
@@ -18,13 +18,13 @@ interface UserListSearchProviderProps {
 export const UserListSearchProvider = ({ children }: UserListSearchProviderProps) => {
   const { setLoading } = useLoading();
 
-  const fetchAllUsers = useCallback(async (): Promise<UserListData[]> => {
+  const fetchAllUsers = useCallback(async (): Promise<any[]> => {
     setLoading(true);
     try {
-      const result = await UserListService.getAllUsers();
+      const result = await userListServices.getAllAppUsers();
       console.log("The users is ", result);
       if (result.success && result.data) {
-        return result.data;
+        return [];
       } else {
         return [];
       }

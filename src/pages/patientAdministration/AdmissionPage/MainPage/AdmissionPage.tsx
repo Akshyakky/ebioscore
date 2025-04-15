@@ -1,23 +1,24 @@
 //src/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage.tsx
+//src/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage.tsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Container, Box } from "@mui/material";
-import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon, MeetingRoom as MeetingRoomIcon } from "@mui/icons-material";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
+import useAdmissionForm from "@/hooks/PatientAdminstration/useAdmissionForm";
+import { useLoading } from "@/context/LoadingContext";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
+import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import { showAlert } from "@/utils/Common/showAlert";
+import CustomAccordion from "@/components/Accordion/CustomAccordion";
 import AdmissionDetails from "../SubPage/AdmissionDetails";
-import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
-import CustomButton from "../../../../components/Button/CustomButton";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
+import CustomButton from "@/components/Button/CustomButton";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
+import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
 import DiagnosisSection from "../../../clinicalManagement/Common/Diagnosis";
-import useAdmissionForm from "../../../../hooks/PatientAdminstration/useAdmissionForm";
-import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { useLoading } from "../../../../context/LoadingContext";
-import PatientHistory from "../../../clinicalManagement/PatientHistory/PatientHistory";
+import PatientHistory from "@/pages/clinicalManagement/PatientHistory/PatientHistory";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import AdmissionListSearch from "../SubPage/AdmissionListSearch";
 
 export interface PatientHistory {

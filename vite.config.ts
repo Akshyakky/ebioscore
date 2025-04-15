@@ -52,7 +52,7 @@ export default defineConfig({
 
           // UI related chunks
           "vendor-mui": ["@mui/material", "@mui/icons-material", "@mui/lab", "@mui/x-date-pickers"],
-          "vendor-forms": ["formik", "yup"],
+          "vendor-forms": ["yup"],
 
           // Utility chunks
           "vendor-utils": ["axios", "date-fns", "date-fns-tz", "clsx", "lodash"],
@@ -82,7 +82,6 @@ export default defineConfig({
       "react-router-dom",
       "react-redux",
       "@reduxjs/toolkit",
-      "formik",
       "yup",
       "axios",
       "lodash",
@@ -92,6 +91,10 @@ export default defineConfig({
       "@mui/x-date-pickers",
     ],
     exclude: ["@mui/icons-material/esm"],
+    force: true,
+    esbuildOptions: {
+      target: "esnext",
+    },
   },
   server: {
     port: 3000,
@@ -99,5 +102,12 @@ export default defineConfig({
     hmr: {
       overlay: false,
     },
+    watch: {
+      usePolling: true,
+    },
+    fs: {
+      strict: false,
+    },
   },
+  cacheDir: "node_modules/.vite",
 });

@@ -1,5 +1,8 @@
-import React, { useCallback, useState, useRef, useEffect } from "react";
-import { Box, Divider, Grid, IconButton, Menu, MenuItem, Tooltip, Typography, Checkbox, useTheme } from "@mui/material";
+import AutocompleteTextBox from "@/components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
+import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
+import { Box, Checkbox, Divider, Grid, IconButton, Menu, MenuItem, Tooltip, Typography, useTheme } from "@mui/material";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import AppointmentSearch from "./AppointmentList";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PersonIcon from "@mui/icons-material/Person";
@@ -10,9 +13,6 @@ import ListAltIcon from "@mui/icons-material/ListAlt";
 import PeopleIcon from "@mui/icons-material/People";
 import PrintIcon from "@mui/icons-material/Print";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
-import AutocompleteTextBox from "../../../../components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
-import { AppointmentService } from "../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService";
-import AppointmentSearch from "./AppointmentList";
 
 interface SchedulerHeaderProps {
   onRefresh: () => void;

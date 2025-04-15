@@ -1,0 +1,23 @@
+import { GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
+import { CommonApiService } from "@/services/CommonApiService";
+import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+class PurchaseOrderMastServices extends GenericEntityService<PurchaseOrderMastDto> {
+  constructor() {
+    super(
+      new CommonApiService({
+        baseURL: APIConfig.inventoryManagementURL,
+      }),
+      "PurchaseOrderMast"
+    );
+  }
+  async getPOCode(departmentName: string): Promise<OperationResult<string>> {
+    return this.apiService.get<OperationResult<string>>(`${this.baseEndpoint}/GeneratePurchaseOrderCode?departmentName=${departmentName}`, this.getToken());
+  }
+  async getPOProductDetails(productCode: string, deptId: number, barcode: boolean = false): Promise<OperationResult<any>> {
+    return this.apiService.get<OperationResult<any>>(`${this.baseEndpoint}/GetPOProductDetails?productCode=${productCode}&deptId=${deptId}&barcode=${barcode}`, this.getToken());
+  }
+}
+
+export const purchaseOrderMastServices = new PurchaseOrderMastServices();

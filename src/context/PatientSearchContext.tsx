@@ -1,11 +1,10 @@
 import React, { createContext, useState, useCallback } from "react";
-import { PatientRegistrationDto } from "../interfaces/PatientAdministration/PatientFormData";
-import { searchPatientDetails } from "../services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { useLoading } from "./LoadingContext";
 import { RootState } from "@/store";
-import { useSelector } from "react-redux";
-import { notifyError } from "../utils/Common/toastManager";
 import { useAppSelector } from "@/store/hooks";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import { notifyError } from "@/utils/Common/toastManager";
+import { searchPatientDetails } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
 
 interface PatientSearchContextProps {
   searchResults: PatientRegistrationDto[];

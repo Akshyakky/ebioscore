@@ -1,17 +1,17 @@
-import { Paper, Typography, Grid, SelectChangeEvent } from "@mui/material";
-import { useState, useCallback, useEffect, useMemo } from "react";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import SaveIcon from "@mui/icons-material/Save";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import FormField from "@/components/FormField/FormField";
+import { useLoading } from "@/context/LoadingContext";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
+import { paymentTypeService } from "@/services/BillingServices/BillingGenericService";
+import { useAppSelector } from "@/store/hooks";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Grid, Paper, SelectChangeEvent, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { BPayTypeDto } from "../../../../interfaces/Billing/BPayTypeDto";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { useAppSelector } from "../../../../store/hooks";
-import FormField from "../../../../components/FormField/FormField";
-import { paymentTypeService } from "../../../../services/BillingServices/BillingGenericService";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
+import SaveIcon from "@mui/icons-material/Save";
 
 const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({ editData }) => {
   const user = useAppSelector((state) => state.auth);

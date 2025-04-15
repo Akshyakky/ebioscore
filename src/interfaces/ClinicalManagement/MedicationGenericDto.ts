@@ -1,4 +1,4 @@
-import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
 export interface MedicationGenericDto extends BaseDto {
   mGenID: number;
@@ -12,4 +12,5 @@ export interface MedicationGenericDto extends BaseDto {
   compName: string;
   transferYN: string;
   rNotes?: string;
+  mSnomedCode?: string;
 }

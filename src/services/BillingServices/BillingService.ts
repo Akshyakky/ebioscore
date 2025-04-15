@@ -1,7 +1,7 @@
+import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
-import { APIConfig } from "../../apiConfig";
-import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 import { store } from "@/store";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 
 const apiService = new CommonApiService({ baseURL: APIConfig.billingURL });
 

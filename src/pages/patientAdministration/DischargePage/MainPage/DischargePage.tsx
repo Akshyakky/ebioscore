@@ -1,14 +1,14 @@
 import React, { useState, useCallback } from "react";
 import { Container, Box } from "@mui/material";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import Search from "@mui/icons-material/Search";
+import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
+import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
+import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import CustomAccordion from "@/components/Accordion/CustomAccordion";
 import DischargeDetails from "../SubPage/DischargeDetails";
-import AdmissionListSearch from "../../AdmissionPage/SubPage/AdmissionListSearch";
-import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
-import { AdmissionHistoryDto } from "../../../../interfaces/PatientAdministration/AdmissionHistoryDto";
-import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
 import AdmissionHistory from "../../AdmissionPage/SubPage/AdmissionHistory";
-import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/admissionService";
+import AdmissionListSearch from "../../AdmissionPage/SubPage/AdmissionListSearch";
 
 const DischargePage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -33,7 +33,6 @@ const DischargePage: React.FC = () => {
 
     if (admission.ipAdmissionDto?.pChartID) {
       try {
-        debugger;
         const result = await extendedAdmissionService.getPatientAdmissionStatus(admission.ipAdmissionDto.pChartID);
         if (result.success && result.data?.admissionHistory) {
           const formattedHistory = extendedAdmissionService.formatAdmissionHistoryForDisplay(result.data.admissionHistory);

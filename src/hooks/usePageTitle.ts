@@ -35,11 +35,17 @@ const pageTitleMap: PageTitleMap = {
   "/ManageBedPage": "Manage BedPage ",
   "/DiagnosisListPage": "Diagnosis List ",
   "/MedicationListPage": "Medication List ",
-  "/AppModifiedListPage": "App Modified List ",
-  "/ChargeDetailsPage": "Schedule of Charge List ",
+  "/MedicationFormPage": "Medication Form ",
+  "/AppModifiedListPage": "App Modified List",
+  "/ChargeDetailsPage": "Schedule of Charge List",
   "/DischargePage": "Patient Discharge ",
   "/WardBedTransferPage": "Patient Ward Bed Transfer ",
-  "/MedicationFormPage": "Medication Form ",
+  "/MedicationFrequencyPage": "Medication Frequency",
+  "/MedicationDosagePage": "Medication Dosage",
+  "/ProcedureListPage": "Procedure List",
+  "/MedicationGenericPage": "Medication Generic",
+  "/InvestigationListPage": "Investigation List",
+  "/ComponentEntryTypePage": "Component EntryType Page ",
   // Add more mappings as needed
 };
 

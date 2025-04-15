@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
-import { useAppSelector } from "../store/hooks";
-import AuthService from "../services/AuthService/AuthService";
-import { debounce } from "../utils/Common/debounceUtils";
 import { selectUser } from "@/store/features/auth/selectors";
+import { useAppSelector } from "@/store/hooks";
+import AuthService from "@/services/AuthService/AuthService";
+import { debounce } from "@/utils/Common/debounceUtils";
 
 interface TokenExpiryConfig {
   retryCount?: number;
@@ -32,7 +32,7 @@ const useCheckTokenExpiry = ({ retryCount = 3, retryDelay = 1000, debounceDelay 
 
       try {
         const response = await AuthService.checkTokenExpiry(token);
-        setIsTokenExpired(response.data?.isExpired ?? checkLocalExpiry());
+        setIsTokenExpired(response.isExpired ?? checkLocalExpiry());
       } catch (error) {
         console.error("Token validation error:", error);
 

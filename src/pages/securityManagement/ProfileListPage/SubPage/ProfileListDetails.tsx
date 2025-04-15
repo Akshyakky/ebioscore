@@ -1,23 +1,42 @@
 import { Grid, Paper, Typography } from "@mui/material";
-import React, { useState } from "react";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { Save as SaveIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import { ProfileMastDto } from "../../../../interfaces/SecurityManagement/ProfileListData";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { profileMastService } from "../../../../services/SecurityManagementServices/securityManagementService";
+import React, { useEffect, useState } from "react";
 import { useAppSelector } from "@/store/hooks";
+import { useLoading } from "@/context/LoadingContext";
+import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { showAlert } from "@/utils/Common/showAlert";
+import FormField from "@/components/FormField/FormField";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import SaveIcon from "@mui/icons-material/Save";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { createEntityService } from "@/utils/Common/serviceFactory";
 
-const ProfileDetails = () => {
+interface ProfileListDetailsProps {
+  editData?: ProfileMastDto;
+  profileMastService: ReturnType<typeof createEntityService<ProfileMastDto>>;
+  isClear: (isClear: boolean) => void;
+}
+const ProfileDetails: React.FC<ProfileListDetailsProps> = ({ editData, profileMastService, isClear }) => {
   const { setLoading } = useLoading();
-  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [profileId, setProfileId] = useState<number>(0);
   const [profileCode, setProfileCode] = useState<string>("");
   const [profileName, setProfileName] = useState<string>("");
   const [rNotes, setRNotes] = useState<string>("");
   const [rActiveYN, setRActiveYN] = useState<string>("Y");
+
+  useEffect(() => {
+    if (editData) {
+      setProfileId(editData.profileID || 0);
+      setProfileCode(editData.profileCode || "");
+      setProfileName(editData.profileName || "");
+      setRActiveYN(editData.rActiveYN || "N");
+      setRNotes(editData.rNotes || "");
+    } else {
+      handleClear();
+    }
+  }, [editData]);
+
   const handleActiveToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRActiveYN(event.target.checked ? "Y" : "N");
   };
@@ -50,11 +69,13 @@ const ProfileDetails = () => {
     }
   };
   const handleClear = () => {
+    setProfileId(0);
     setProfileCode("");
     setProfileName("");
     setRNotes("");
     setRActiveYN("Y");
     setIsSubmitted(false);
+    isClear(true);
   };
   return (
     <>

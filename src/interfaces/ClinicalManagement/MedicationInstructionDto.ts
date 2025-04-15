@@ -1,6 +1,6 @@
 // src/interfaces/ClinicalManagement/MedicationInstructionDto.ts
 
-import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
 export interface MedicationInstructionDto extends BaseDto {
   minsId: number;

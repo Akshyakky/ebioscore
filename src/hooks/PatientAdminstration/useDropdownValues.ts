@@ -1,17 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-import { useLoading } from "../../context/LoadingContext";
-import { DropdownOption } from "../../interfaces/Common/DropdownOption";
-import { BillingService } from "../../services/BillingServices/BillingService";
-import { ConstantValues } from "../../services/CommonServices/ConstantValuesService";
-import { AppModifyListService } from "../../services/CommonServices/AppModifyListService";
-import { ContactMastService } from "../../services/CommonServices/ContactMastService";
-import { InsuranceCarrierService } from "../../services/CommonServices/InsuranceCarrierService";
-import { ContactListService } from "../../services/HospitalAdministrationServices/ContactListService/ContactListService";
-import { DeptUnitListService } from "../../services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
-import { ServiceTypeService } from "../../services/BillingServices/ServiceTypeServices";
-import { productGroupService, productSubGroupService, productTaxService, productUnitService } from "../../services/InventoryManagementService/inventoryManagementService";
+
+import { useAppSelector } from "@/store/hooks";
+import { useLoading } from "@/context/LoadingContext";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { BillingService } from "@/services/BillingServices/BillingService";
+import { AppModifyListService } from "@/services/CommonServices/AppModifyListService";
+import { departmentService } from "@/services/CommonServices/CommonModelServices";
+import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
+import { ContactMastService } from "@/services/CommonServices/ContactMastService";
+import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
+import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
+import { DeptUnitListService } from "@/services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
+// import { ServiceTypeService } from "@/services/BillingServices/ServiceTypeServices";
+import { roomGroupService, roomListService, wardCategoryService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
+import { productGroupService, productSubGroupService, productTaxService, productUnitService } from "@/services/InventoryManagementService/inventoryManagementService";
 import {
   consultantRoleService,
   medicationDosageService,
@@ -19,15 +23,14 @@ import {
   medicationFrequencyService,
   medicationGenericService,
   medicationInstructionService,
-} from "../../services/ClinicalManagementServices/clinicalManagementService";
-import { roomGroupService, roomListService, wardCategoryService, wrBedService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
-import { departmentService } from "../../services/CommonServices/CommonModelServices";
-import { DepartmentDto } from "../../interfaces/Billing/DepartmentDto";
-import { WardCategoryDto } from "../../interfaces/hospitalAdministration/WardCategoryDto";
-import { dischargeStatusService } from "../../services/PatientAdministrationServices/patientAdministrationService";
-import { useAppSelector } from "@/store/hooks";
+} from "@/services/ClinicalManagementServices/clinicalManagementService";
+import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
+import { componentEntryTypeService, templategroupService } from "@/services/Laboratory/LaboratoryService";
+import { appSubModuleService, appUserModuleService } from "@/services/SecurityManagementServices/securityManagementServices";
+import { serviceTypeService } from "@/services/BillingServices/BillingGenericService";
+import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 
-type DropdownType =
+export type DropdownType =
   | "pic"
   | "title"
   | "gender"
@@ -74,7 +77,19 @@ type DropdownType =
   | "medicationInstruction"
   | "dischargeStatus"
   | "dischargeSituation"
-  | "deliveryType";
+  | "deliveryType"
+  | "investigationType"
+  | "language"
+  | "entryType"
+  | "templateGroup"
+  | "mainModules"
+  | "subModules"
+  | "mainGroup"
+  | "subTitle"
+  | "sampleType"
+  | "chargeType"
+  | "serviceType"
+  | "employeeRoom";
 
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
   const [dropdownValues, setDropdownValues] = useState<Record<DropdownType, DropdownOption[]>>({} as Record<DropdownType, DropdownOption[]>);
@@ -91,15 +106,6 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
           case "pic":
             response = await BillingService.fetchPicValues("GetPICDropDownValues");
             break;
-          case "title":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "PTIT");
-            break;
-          case "gender":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "PSEX");
-            break;
-          case "ageUnit":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "PAT");
-            break;
           case "nationality":
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "NATIONALITY");
             break;
@@ -110,11 +116,65 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CITY");
             break;
           case "country":
-            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "ACTUALCOUNTRY");
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COUNTRY");
             break;
           case "company":
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COMPANY");
             break;
+          case "title":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "TITLE");
+            break;
+          case "gender":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "GENDER");
+            break;
+          case "ageUnit":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "AGEUNIT");
+            break;
+
+          case "coverFor":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "COVERFOR");
+            break;
+
+          case "departmentTypes":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DEPARTMENTTYPES");
+            break;
+
+          case "bloodGroup":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "BLOODGROUP");
+            break;
+
+          case "maritalStatus":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "MARITALSTATUS");
+            break;
+
+          case "employeeRoom":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "EMPROOM");
+            break;
+
+          case "category":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CATEGORY");
+            break;
+
+          case "employeeStatus":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "EMPLOYEESTATUS");
+            break;
+
+          case "productCategory":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "PRODUCTCATEGORY");
+            break;
+
+          case "payment":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "PAYMENT");
+            break;
+
+          case "admissionType":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "ADMISSIONTYPE");
+            break;
+
+          case "caseType":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CASETYPE");
+            break;
+
           case "department":
             response = await departmentService.getAll();
             response = (response.data || []).map((item: DepartmentDto) => ({
@@ -138,26 +198,8 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
           case "insurance":
             response = await InsuranceCarrierService.fetchInsuranceOptions("GetAllActiveForDropDown");
             break;
-          case "coverFor":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "COVR");
-            break;
-          case "departmentTypes":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "DTYP");
-            break;
-          case "bloodGroup":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "PBLD");
-            break;
-          case "maritalStatus":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "PMAR");
-            break;
           case "state":
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "STATE");
-            break;
-          case "category":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "ACAT");
-            break;
-          case "employeeStatus":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "EMPS");
             break;
           case "speciality":
             response = await ContactListService.fetchActiveSpecialties(compID);
@@ -173,11 +215,13 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             }));
             break;
           case "service":
-            response = await ServiceTypeService.getAllServiceType();
-            response = (response.data || []).map((item: any) => ({
+            response = await serviceTypeService.getAll();
+            response = (response.data || []).map((item: ServiceTypeDto) => ({
               value: item.bchID || 0,
               label: item.bchName || "",
+              isLabYN: item.isLabYN, // Add this line to include isLabYN in the mapped data
             }));
+
             break;
           case "bedCategory":
             response = await wardCategoryService.getAll();
@@ -185,9 +229,6 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
               value: item.wCatID || 0,
               label: item.wCatName || "",
             }));
-            break;
-          case "productCategory":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "PMED");
             break;
           case "productSubGroup":
             response = await productSubGroupService.getAll();
@@ -252,15 +293,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
               label: item.rName || "",
             }));
             break;
-          case "payment":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "PAYT");
-            break;
-          case "admissionType":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "REGT");
-            break;
-          case "caseType":
-            response = await ConstantValues.fetchConstantValues("GetConstantValues", "CTYP");
-            break;
+
           case "beds":
             response = await wrBedService.getAll();
             response = (response.data || []).map((item: any) => ({
@@ -302,6 +335,56 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
           case "deliveryType":
             response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DELIVERYTYPE");
             break;
+          case "investigationType":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "INVESTIGATIONTYPE");
+            break;
+          case "language":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "LANGUAGE");
+            break;
+          case "entryType":
+            response = await componentEntryTypeService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.lCentID || 0,
+              label: item.lCentName || "",
+            }));
+            break;
+          case "templateGroup":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "TEMPLATEGROUP");
+            break;
+
+          case "mainModules":
+            response = await appUserModuleService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.aUGrpID || 0,
+              label: item.aUGrpName || "",
+            }));
+            break;
+          case "subModules":
+            response = await appSubModuleService.getAll();
+            response = (response.data || []).map((item: any) => ({
+              value: item.aSubID || 0,
+              label: item.aSubName || "",
+              aUGrpID: item.aUGrpID || 0,
+            }));
+            break;
+          case "mainGroup":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "MAINMODULE");
+            break;
+          case "subTitle":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "SUBTITLE");
+            break;
+          case "sampleType":
+            response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "SAMPLETYPE");
+            break;
+
+          case "serviceType":
+            response = await serviceTypeService.getAll();
+            response = (response.data || []).map((item: ServiceTypeDto) => ({
+              value: item.bchID || 0,
+              label: item.bchName || "",
+            }));
+            break;
+
           default:
             throw new Error(`Unsupported dropdown type: ${type}`);
         }
@@ -330,7 +413,10 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
     });
   }, [requiredDropdowns, fetchDropdownValues, dropdownValues]);
 
-  return dropdownValues;
+  return {
+    ...dropdownValues,
+    refreshDropdownValues: fetchDropdownValues,
+  };
 };
 
 export default useDropdownValues;

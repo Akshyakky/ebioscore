@@ -1,7 +1,7 @@
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { ReasonListData } from "@/interfaces/frontOffice/ReasonListData";
+import { reasonListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import React from "react";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { reasonListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
-import { ReasonListData } from "../../../../interfaces/frontOffice/ReasonListData";
 
 interface ReasonListSearchProps {
   open: boolean;

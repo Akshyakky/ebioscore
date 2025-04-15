@@ -1,16 +1,16 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Grid, Paper, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { DeptUnitListService } from "../../../../services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
 import { useAppSelector } from "@/store/hooks";
-import { DeptUnitListDto } from "@/interfaces/hospitalAdministration/DeptunitListDto";
+import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptunitListDto";
+import { useLoading } from "@/context/LoadingContext";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { DeptUnitListService } from "@/services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
+import { showAlert } from "@/utils/Common/showAlert";
+import FormField from "@/components/FormField/FormField";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 interface DeptUnitListDetailsProps {
   editData?: DeptUnitListDto;

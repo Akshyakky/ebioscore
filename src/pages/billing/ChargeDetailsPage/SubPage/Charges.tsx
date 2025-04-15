@@ -1,46 +1,56 @@
-import React from "react";
-import FormField from "../../../../components/FormField/FormField";
-import { Grid } from "@mui/material";
+import FormField from "@/components/FormField/FormField";
 import { ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
+import { Grid } from "@mui/material";
+import React from "react";
 
 interface ChargeBasicDetailsProps {
   formData: ChargeDetailsDto;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectChange: (e: any) => void;
   handleSwitchChange: (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleCodeSelect: (selectedSuggestion: any) => void;
+  fetchChargeCodeSuggestions: (searchTerm: string) => Promise<any[]>;
   selectedFacultyIds: string[];
   handleFacultyChange: (e: any) => void;
   dropdownValues: any;
   serviceGroups: any[];
   isSubmitted: boolean;
   handleDateChange: (date: Date | null, type: "scheduleDate" | "") => void;
+  updateChargeCode: (value: string) => void;
 }
-
 const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
   formData,
   handleInputChange,
   handleSelectChange,
   handleSwitchChange,
+  handleCodeSelect,
+  fetchChargeCodeSuggestions,
   selectedFacultyIds,
   handleFacultyChange,
   dropdownValues,
-  serviceGroups,
   isSubmitted,
   handleDateChange,
+  updateChargeCode,
 }) => {
+  if (!formData?.chargeInfo) return null;
   return (
     <Grid container spacing={2}>
       <Grid item xs={12}>
         <Grid container spacing={2}>
           <FormField
-            type="text"
-            label="Code"
-            value={formData.chargeInfo.chargeCode}
-            onChange={handleInputChange}
-            name="chargeCode"
             ControlID="chargeCode"
-            placeholder="SOC Code"
-            isMandatory
+            label="Code"
+            name="chargeCode"
+            type="autocomplete"
+            placeholder="Search or select a charge code"
+            value={formData.chargeInfo.chargeCode || ""}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const { value } = e.target;
+              updateChargeCode(value);
+            }}
+            fetchSuggestions={fetchChargeCodeSuggestions}
+            onSelectSuggestion={handleCodeSelect}
+            isMandatory={true}
             isSubmitted={isSubmitted}
           />
           <FormField
@@ -51,7 +61,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             name="chargeType"
             ControlID="chargeType"
             options={dropdownValues.service || []}
-            isMandatory
+            isMandatory={true}
             isSubmitted={isSubmitted}
           />
           <FormField
@@ -61,23 +71,25 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             onChange={handleInputChange}
             name="chargeDesc"
             ControlID="chargeDesc"
-            isMandatory
+            isMandatory={true}
             isSubmitted={isSubmitted}
           />
+
           <FormField
             type="multiselect"
             label="Faculty"
             name="faculties"
             ControlID="faculties"
-            value={selectedFacultyIds} // Use the correct value from state
+            value={selectedFacultyIds}
             options={dropdownValues.speciality || []}
             onChange={handleFacultyChange}
             isSubmitted={isSubmitted}
           />
+
           <FormField
             type="select"
             label="Service Group"
-            value={formData.chargeInfo.sGrpID}
+            value={formData.chargeInfo?.sGrpID ?? ""}
             onChange={handleSelectChange}
             name="sGrpID"
             ControlID="sGrpID"
@@ -105,7 +117,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
           <FormField
             type="text"
             label="Resource Code"
-            value={formData.chargeInfo.cNhsCode || ""}
+            value={formData.chargeInfo.cNhsCode}
             onChange={handleInputChange}
             name="cNhsCode"
             ControlID="cNhsCode"
@@ -114,12 +126,12 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
           <FormField
             type="text"
             label="Resource Name"
-            value={formData.chargeInfo.cNhsEnglishName || ""}
+            value={formData.chargeInfo.cNhsEnglishName}
             onChange={handleInputChange}
             name="cNhsEnglishName"
             ControlID="cNhsEnglishName"
             isSubmitted={isSubmitted}
-          />{" "}
+          />
           <FormField
             type="datepicker"
             label="Schedule Date"
@@ -130,21 +142,23 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
             isSubmitted={isSubmitted}
           />
         </Grid>
+
         <Grid container spacing={2}>
           <FormField
             type="switch"
             label="Is Package"
-            value={formData.chargeInfo.regServiceYN || ""}
-            checked={formData.chargeInfo.regServiceYN === "Y"}
-            onChange={handleSwitchChange("regServiceYN")}
-            name="regServiceYN"
-            ControlID="regServiceYN"
+            value={formData.chargeInfo.chargeBreakYN || ""}
+            checked={formData.chargeInfo.chargeBreakYN === "Y"}
+            onChange={handleSwitchChange("chargeBreakYN")}
+            name="chargeBreakYN"
+            ControlID="chargeBreakYN"
           />
+
           <FormField
             type="switch"
             label="Apply Doctor % Share"
             value={formData.chargeInfo.doctorShareYN || ""}
-            checked={formData.chargeInfo.doctorShareYN === "Y"}
+            checked={formData.chargeInfo.doctorShareYN === "Y"} // Checked if "Y"
             onChange={handleSwitchChange("doctorShareYN")}
             name="doctorShareYN"
             ControlID="doctorShareYN"

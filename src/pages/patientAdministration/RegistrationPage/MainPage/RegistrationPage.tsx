@@ -1,29 +1,28 @@
 import React, { useContext, useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { Container, Paper, Box } from "@mui/material";
-import { useSelector } from "react-redux";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
+import { Container, Box } from "@mui/material";
+import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
+import { useAppSelector } from "@/store/hooks";
+import { RegistrationFormErrors } from "@/interfaces/PatientAdministration/registrationFormData";
+import { useLoading } from "@/context/LoadingContext";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDayjs from "@/hooks/Common/useDateTime";
+import useRegistrationUtils from "@/utils/PatientAdministration/RegistrationUtils";
+import { PatientSearchContext } from "@/context/PatientSearchContext";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import { notifyError, notifySuccess, notifyWarning } from "@/utils/Common/toastManager";
+import { PatientService } from "@/services/PatientAdministrationServices/RegistrationService/PatientService";
+import { showAlert } from "@/utils/Common/showAlert";
+import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import PatientSearch from "../../CommonPage/AdvanceSearch/PatientSearch";
+import CustomAccordion from "@/components/Accordion/CustomAccordion";
 import PersonalDetails from "../SubPage/PersonalDetails";
 import ContactDetails from "../SubPage/ContactDetails";
 import VisitDetails from "../SubPage/VisitDetails";
 import MembershipScheme from "../SubPage/MembershipScheme";
-import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
-import { useLoading } from "../../../../context/LoadingContext";
-import useRegistrationUtils from "../../../../utils/PatientAdministration/RegistrationUtils";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import PatientSearch from "../../CommonPage/AdvanceSearch/PatientSearch";
-import { PatientSearchContext } from "../../../../context/PatientSearchContext";
-import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
-import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
-import InsurancePage from "../SubPage/InsurancePage";
-import { RegistrationFormErrors } from "../../../../interfaces/PatientAdministration/registrationFormData";
-import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
 import NextOfKinPage from "../SubPage/NextOfKinPage";
-import useDayjs from "../../../../hooks/Common/useDateTime";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { notifyError, notifySuccess, notifyWarning } from "../../../../utils/Common/toastManager";
-import { useAppSelector } from "@/store/hooks";
+import InsurancePage from "../SubPage/InsurancePage";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 const RegistrationPage: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -38,7 +37,7 @@ const RegistrationPage: React.FC = () => {
   const nextOfKinPageRef = useRef<any>(null);
   const insurancePageRef = useRef<any>(null);
   const serverDate = useServerDate();
-  const { formatDate, formatDateTime, parse, formatDateYMD } = useDayjs();
+  const { formatDate } = useDayjs();
   const { fetchLatestUHID } = useRegistrationUtils();
   const { performSearch } = useContext(PatientSearchContext);
 
@@ -183,7 +182,6 @@ const RegistrationPage: React.FC = () => {
       }
     });
     window.scrollTo(0, 0);
-    notifySuccess("Form cleared successfully!");
   }, [userInfo, initializeFormData, fetchLatestUHID]);
 
   const validateFormData = useCallback(() => {
@@ -204,8 +202,6 @@ const RegistrationPage: React.FC = () => {
       errors.title = "Title is required";
     } else if (!formData.patRegisters.indentityValue) {
       errors.indetityNo = "Indentity Number is required";
-    } else if ((formData.patRegisters.pDobOrAge === "DOB" && !formData.patRegisters.pDob) || formData.patRegisters.pDobOrAge === "Age") {
-      errors.dateOfBirth = "Date of birth or Age is required";
     } else if (formData.opvisits?.visitTypeVal === "H" && (formData.patRegisters.deptID === 0 || !formData.patRegisters.deptName)) {
       errors.department = "Department is required";
     } else if (formData.opvisits?.visitTypeVal === "P" && (formData.patRegisters.attendingPhysicianId === 0 || !formData.patRegisters.attendingPhysicianName)) {
@@ -226,6 +222,23 @@ const RegistrationPage: React.FC = () => {
       notifyWarning("Please fill all mandatory fields.");
       return;
     }
+    if (formData.patRegisters.pDobOrAge === "Age") {
+      const { pAgeNumber, pAgeDescriptionVal } = formData.patOverview;
+      const today = new Date();
+      const dob = new Date(today);
+
+      if (pAgeDescriptionVal === "Years") {
+        dob.setFullYear(today.getFullYear() - pAgeNumber);
+      } else if (pAgeDescriptionVal === "Months") {
+        dob.setMonth(today.getMonth() - pAgeNumber);
+      } else if (pAgeDescriptionVal === "Days") {
+        dob.setDate(today.getDate() - pAgeNumber);
+      }
+
+      formData.patRegisters.pDob = dob;
+      formData.patRegisters.pDobOrAgeVal = "Y";
+      formData.patRegisters.pDobOrAge = "DOB";
+    }
 
     setLoading(true);
     try {
@@ -235,22 +248,18 @@ const RegistrationPage: React.FC = () => {
         let hasErrors = false;
         const actionText = isEditMode ? "updated" : "saved";
 
-        // Save Next of Kin Details
         if (nextOfKinPageRef.current) {
           try {
             await nextOfKinPageRef.current.saveKinDetails(pChartID);
           } catch (error) {
-            console.error("Error saving kin details:", error);
             hasErrors = true;
           }
         }
 
-        // Save Insurance Details
         if (insurancePageRef.current) {
           try {
             await insurancePageRef.current.saveInsuranceDetails(pChartID);
           } catch (error) {
-            console.error("Error saving insurance details:", error);
             hasErrors = true;
           }
         }
@@ -260,14 +269,15 @@ const RegistrationPage: React.FC = () => {
             onConfirm: handleClear,
           });
         } else {
-          showAlert("Success", `Registration ${actionText} successfully!`, "success", { onConfirm: handleClear });
+          showAlert("Success", `Registration ${actionText} successfully!`, "success", {
+            onConfirm: handleClear,
+          });
           notifySuccess(`Patient registration ${actionText} successfully!`);
         }
       } else {
         throw new Error(response.errorMessage || "Failed to save registration.");
       }
     } catch (error) {
-      console.error("Registration error:", error);
       notifyError(error instanceof Error ? error.message : "An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -288,25 +298,19 @@ const RegistrationPage: React.FC = () => {
     }
   }, []);
 
-  const fetchPatientDetailsAndUpdateForm = useCallback(
-    async (pChartID: number) => {
-      setLoading(true);
-      try {
-        const patientDetails = await PatientService.getPatientDetails(pChartID);
-        if (patientDetails.success && patientDetails.data) {
-          setIsEditMode(true);
-          setFormData(patientDetails.data);
-        } else {
-          console.error("Fetching patient details was not successful or data is undefined");
-        }
-      } catch (error) {
-        console.error("Error fetching patient details:", error);
-      } finally {
-        setLoading(false);
+  const fetchPatientDetailsAndUpdateForm = useCallback(async (pChartID: number) => {
+    setLoading(true);
+    try {
+      const patientDetails = await PatientService.getPatientDetails(pChartID);
+      if (patientDetails.success && patientDetails.data) {
+        setIsEditMode(true);
+        setFormData(patientDetails.data);
       }
-    },
-    [formatDate]
-  );
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const handleAdvancedSearch = useCallback(async () => {
     setShowPatientSearch(true);
@@ -338,7 +342,7 @@ const RegistrationPage: React.FC = () => {
         </Box>
         <PatientSearch show={showPatientSearch} handleClose={() => setShowPatientSearch(false)} onEditPatient={handlePatientSelect} />
         <CustomAccordion title="Personal Details" defaultExpanded>
-          <PersonalDetails formData={formData} setFormData={setFormData} isSubmitted={isSubmitted} onPatientSelect={handlePatientSelect} />
+          <PersonalDetails formData={formData} setFormData={setFormData} isSubmitted={isSubmitted} onPatientSelect={handlePatientSelect} isEditMode={isEditMode} />
         </CustomAccordion>
         <CustomAccordion title="Contact Details" defaultExpanded>
           <ContactDetails formData={formData} setFormData={setFormData} isSubmitted={isSubmitted} />

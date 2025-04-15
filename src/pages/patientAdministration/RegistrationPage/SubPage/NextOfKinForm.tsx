@@ -2,24 +2,23 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Grid } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
-import { PatNokDetailsDto } from "../../../../interfaces/PatientAdministration/PatNokDetailsDto";
-import FormField from "../../../../components/FormField/FormField";
-import { useSelector } from "react-redux";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
-import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
-import CustomButton from "../../../../components/Button/CustomButton";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { useLoading } from "../../../../context/LoadingContext";
-import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
-import { PatientService } from "../../../../services/PatientAdministrationServices/RegistrationService/PatientService";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-import useFieldsList from "../../../../components/FieldsList/UseFieldsList";
-import ModifiedFieldDialog from "../../../../components/ModifiedFieldDailog/ModifiedFieldDailog";
-import { AppModifyFieldDto } from "../../../../interfaces/hospitalAdministration/AppModifiedlistDto";
 import { useAppSelector } from "@/store/hooks";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
+import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
+import useFieldsList from "@/components/FieldsList/UseFieldsList";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import useRadioButtonChange from "@/hooks/useRadioButtonChange";
+import { useLoading } from "@/context/LoadingContext";
+import { showAlert } from "@/utils/Common/showAlert";
+import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
+import { PatientService } from "@/services/PatientAdministrationServices/RegistrationService/PatientService";
+import FormField from "@/components/FormField/FormField";
+import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
+import CustomButton from "@/components/Button/CustomButton";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 
 interface NextOfKinFormProps {
   show: boolean;
@@ -33,9 +32,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const serverDate = useServerDate();
-
-  const dropdownValues = useDropdownValues(["title", "relation", "area", "city", "country", "nationality"]);
-  const { fieldsList, defaultFields } = useFieldsList(["nationality", "relation", "area", "city", "country"]);
+  const { refreshDropdownValues, ...dropdownValues } = useDropdownValues(["title", "relation", "area", "city", "country", "nationality"]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
   const nextOfKinInitialFormState: PatNokDetailsDto = useMemo(
@@ -84,19 +81,38 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
   const { handleDropdownChange } = useDropdownChange<PatNokDetailsDto>(setNextOfKinData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatNokDetailsDto>(setNextOfKinData);
   const { setLoading } = useLoading();
+  const resetNextOfKinFormData = useCallback(() => {
+    setNextOfKinData(nextOfKinInitialFormState);
+  }, [nextOfKinInitialFormState]);
+
+  const onFieldAddedOrUpdated = () => {
+    if (dialogCategory) {
+      const dropdownMap: Record<string, DropdownType> = {
+        CITY: "city",
+        AREA: "area",
+        COUNTRY: "country",
+        NATIONALITY: "nationality",
+        RELATION: "relation",
+      };
+      const dropdownType = dropdownMap[dialogCategory];
+      if (dropdownType) {
+        refreshDropdownValues(dropdownType);
+      }
+    }
+  };
 
   useEffect(() => {
     if (editData) {
       setNextOfKinData({
+        ...nextOfKinInitialFormState,
         ...editData,
-        pNokDob: editData.pNokDob,
+        pNokDob: editData.pNokDob || serverDate,
+        pNokPChartCode: editData.pNokPChartCode || "",
       });
+    } else {
+      resetNextOfKinFormData();
     }
-  }, [editData]);
-
-  const resetNextOfKinFormData = useCallback(() => {
-    setNextOfKinData(nextOfKinInitialFormState);
-  }, [nextOfKinInitialFormState]);
+  }, [editData, nextOfKinInitialFormState, serverDate, resetNextOfKinFormData]);
 
   const handleSubmit = useCallback(async () => {
     setIsSubmitted(true);
@@ -154,27 +170,26 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
             pNokPChartCode: selectedSuggestion.split("|")[0].trim(),
             pNokPChartID: pChartID,
           }));
+
           const response = await PatientService.getPatientDetails(pChartID);
           if (response.success && response.data) {
             const patientDetails = response.data;
             setNextOfKinData((prev) => ({
               ...prev,
-              pNokFName: patientDetails.patRegisters.pFName ?? "",
-              pNokMName: patientDetails.patRegisters.pMName ?? "",
-              pNokLName: patientDetails.patRegisters.pLName ?? "",
-              pNokTitleVal: patientDetails.patRegisters.pTitle ?? "",
+              pNokFName: patientDetails.patRegisters.pFName || "",
+              pNokMName: patientDetails.patRegisters.pMName || "",
+              pNokLName: patientDetails.patRegisters.pLName || "",
+              pNokTitleVal: patientDetails.patRegisters.pTitle || "",
               pNokDob: patientDetails.patRegisters.pDob ? new Date(patientDetails.patRegisters.pDob) : serverDate,
-              pNokRelNameVal: patientDetails.patRegisters.pTypeName ?? "",
-              pNokStreet: patientDetails.patAddress.pAddStreet ?? "",
-              pNokAreaVal: patientDetails.patAddress.patAreaVal ?? "",
-              pNokCityVal: patientDetails.patAddress.pAddCityVal ?? "",
-              pNokActualCountryVal: patientDetails.patAddress.pAddActualCountryVal ?? "",
-              pNokPostcode: patientDetails.patAddress.pAddPostcode ?? "",
-              pAddPhone1: patientDetails.patAddress.pAddPhone1 ?? "", // Make sure this is correctly mapped
-              pAddPhone2: patientDetails.patAddress.pAddPhone2 ?? "",
-              pAddPhone3: patientDetails.patAddress.pAddPhone3 ?? "",
-              pNokCountryVal: patientDetails.patAddress.pAddActualCountryVal ?? "",
-              pNokPssnID: patientDetails.patRegisters.intIdPsprt ?? "",
+              pNokRelNameVal: patientDetails.patRegisters.pTypeName || "",
+              pNokStreet: patientDetails.patAddress.pAddStreet || "",
+              pNokAreaVal: patientDetails.patAddress.patAreaVal || "",
+              pNokCityVal: patientDetails.patAddress.pAddCityVal || "",
+              pNokActualCountryVal: patientDetails.patAddress.pAddActualCountryVal || "",
+              pNokPostcode: patientDetails.patAddress.pAddPostcode || "",
+              pAddPhone1: patientDetails.patAddress.pAddPhone1 || "",
+              pNokCountryVal: patientDetails.patAddress.pAddActualCountryVal || "",
+              pNokPssnID: patientDetails.patRegisters.intIdPsprt || "",
             }));
           }
         }
@@ -183,7 +198,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         setLoading(false);
       }
     },
-    [setLoading, serverDate, setNextOfKinData]
+    [setLoading, serverDate]
   );
 
   const handleDateChange = useCallback((date: Date | null) => {
@@ -192,6 +207,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
       pNokDob: date ? date : serverDate,
     }));
   }, []);
+
   const [, setFormDataDialog] = useState<AppModifyFieldDto>({
     amlID: 0,
     amlName: "",
@@ -249,17 +265,17 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
           label="UHID"
           name="pNokPChartCode"
           ControlID="UHID"
-          value={nextOfkinData.pNokPChartCode}
+          value={nextOfkinData.pNokPChartCode || ""}
           onChange={(e) =>
-            setNextOfKinData({
-              ...nextOfkinData,
+            setNextOfKinData((prev) => ({
+              ...prev,
               pNokPChartCode: e.target.value,
-            })
+            }))
           }
           fetchSuggestions={fetchPatientSuggestions}
           onSelectSuggestion={handlePatientSelect}
           isSubmitted={isSubmitted}
-          isMandatory={true}
+          isMandatory
           placeholder="Search through UHID, Name, DOB, Phone No...."
           gridProps={{ xs: 12, sm: 6, md: 4 }}
         />
@@ -307,14 +323,14 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         label="Relationship"
         name="pNokRelNameVal"
         ControlID="Relationship"
-        value={nextOfkinData.pNokRelNameVal || defaultFields.relation}
-        options={fieldsList.relation}
-        onChange={handleDropdownChange(["pNokRelNameVal"], ["pNokRelName"], fieldsList.relation)}
+        value={nextOfkinData.pNokRelNameVal || dropdownValues.relation}
+        options={dropdownValues.relation}
+        onChange={handleDropdownChange(["pNokRelNameVal"], ["pNokRelName"], dropdownValues.relation)}
         isMandatory={true}
         isSubmitted={isSubmitted}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
         showAddButton={true}
-        onAddClick={() => handleAddField("relation")}
+        onAddClick={() => handleAddField("RELATION")}
       />
 
       <FormField
@@ -354,24 +370,24 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         label="Area"
         name="pNokAreaVal"
         ControlID="Area"
-        value={nextOfkinData.pNokAreaVal || defaultFields.area}
-        options={fieldsList.area}
-        onChange={handleDropdownChange(["pNokAreaVal"], ["pNokArea"], fieldsList.area)}
+        value={nextOfkinData.pNokAreaVal || dropdownValues.area}
+        options={dropdownValues.area}
+        onChange={handleDropdownChange(["pNokAreaVal"], ["pNokArea"], dropdownValues.area)}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
         showAddButton={true}
-        onAddClick={() => handleAddField("area")}
+        onAddClick={() => handleAddField("AREA")}
       />
       <FormField
         type="select"
         label="City"
         name="pNokCityVal"
         ControlID="City"
-        value={nextOfkinData.pNokCityVal || defaultFields.city}
-        options={fieldsList.city}
-        onChange={handleDropdownChange(["pNokCityVal"], ["pNokCity"], fieldsList.city)}
+        value={nextOfkinData.pNokCityVal || dropdownValues.city}
+        options={dropdownValues.city}
+        onChange={handleDropdownChange(["pNokCityVal"], ["pNokCity"], dropdownValues.city)}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
         showAddButton={true}
-        onAddClick={() => handleAddField("city")}
+        onAddClick={() => handleAddField("CITY")}
       />
       <FormField
         type="select"
@@ -383,7 +399,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         onChange={handleDropdownChange(["pNokActualCountryVal"], ["pNokActualCountry"], dropdownValues.country)}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
         showAddButton={true}
-        onAddClick={() => handleAddField("country")}
+        onAddClick={() => handleAddField("COUNTRY")}
       />
 
       <FormField
@@ -409,12 +425,12 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         label="Nationality"
         name="pNokCountryVal"
         ControlID="Nationality"
-        value={nextOfkinData.pNokCountryVal || defaultFields.nationality}
-        options={fieldsList.nationality}
-        onChange={handleDropdownChange(["pNokCountryVal"], ["pNokCountry"], fieldsList.country)}
+        value={nextOfkinData.pNokCountryVal || dropdownValues.nationality}
+        options={dropdownValues.nationality}
+        onChange={handleDropdownChange(["pNokCountryVal"], ["pNokCountry"], dropdownValues.country)}
         gridProps={{ xs: 12, sm: 6, md: 4 }}
         showAddButton={true}
-        onAddClick={() => handleAddField("nationality")}
+        onAddClick={() => handleAddField("NATIONALITY")}
       />
       <FormField
         type="text"
@@ -435,7 +451,13 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         gridProps={{ xs: 12, sm: 6, md: 4 }}
       />
 
-      <ModifiedFieldDialog open={isFieldDialogOpen} onClose={handleFieldDialogClose} selectedCategoryName={dialogCategory} isFieldCodeDisabled={true} />
+      <ModifiedFieldDialog
+        open={isFieldDialogOpen}
+        onClose={handleFieldDialogClose}
+        selectedCategoryCode={dialogCategory}
+        onFieldAddedOrUpdated={onFieldAddedOrUpdated}
+        isFieldCodeDisabled={true}
+      />
     </Grid>
   );
 

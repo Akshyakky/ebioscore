@@ -1,4 +1,7 @@
 // RoutineReports/RoutineReports.interface.ts
+
+import { JSX } from "react";
+
 // RoutineReports.interface.ts
 export interface RoutineReports {
   repID: number;

@@ -1,12 +1,11 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import { Grid, Typography } from "@mui/material";
-import CustomButton from "../../../../components/Button/CustomButton";
 import AddIcon from "@mui/icons-material/Add";
-import { OPIPInsurancesDto } from "../../../../interfaces/PatientAdministration/InsuranceDetails";
+import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
+import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
+import CustomButton from "@/components/Button/CustomButton";
 import PatientInsuranceForm from "./PatientInsuranceForm";
 import PatientInsuranceGrid from "./PatientInsuranceGrid";
-import { InsuranceCarrierService } from "../../../../services/CommonServices/InsuranceCarrierService";
-import useDayjs from "../../../../hooks/Common/useDateTime";
 
 interface InsurancePageProps {
   pChartID: number;

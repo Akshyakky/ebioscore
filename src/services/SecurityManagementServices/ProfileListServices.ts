@@ -1,44 +1,35 @@
+import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
 import { CommonApiService } from "../CommonApiService";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { APIConfig } from "../../apiConfig";
-import { ProfileMastDto, ProfileDetailDto, ProfileListSearchResult, ReportPermission } from "../../interfaces/SecurityManagement/ProfileListData";
-import { ModuleOperation } from "../../pages/securityManagement/CommonPage/OperationPermissionDetails";
-import { store } from "@/store";
+import { APIConfig } from "@/apiConfig";
+import { ProfileDetailDto, ProfileModuleOperationDto, ProfileModulesDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+class ProfileListService extends GenericEntityService<ProfileModuleOperationDto> {
+  constructor() {
+    super(
+      new CommonApiService({
+        baseURL: APIConfig.securityManagementURL,
+      }),
+      "ProfileDetail"
+    );
+  }
+  async getProfileDetailsByType(aUGrpID: number, subID: number, compID: number | null, profileID: number, profileType: string): Promise<ProfileDetailDto[]> {
+    return this.apiService.get<ProfileDetailDto[]>(
+      `${this.baseEndpoint}/GetProfileDetailsByType?aUGrpID=${aUGrpID}&subID=${subID}&compID=${compID}&profileID=${profileID}&profileType=${profileType}`,
+      this.getToken()
+    );
+  }
+  async saveProfileDetailsByType(profileDetailDto: ProfileDetailDto[], profileType: string): Promise<OperationResult<ProfileDetailDto[]>> {
+    return this.apiService.post<OperationResult<ProfileDetailDto[]>>(`${this.baseEndpoint}/SaveProfileDetailsByType?profileType=${profileType}`, profileDetailDto, this.getToken());
+  }
+  async saveProfileModuleOperation(profileModuleOperationDto: ProfileModuleOperationDto): Promise<OperationResult<ProfileModuleOperationDto>> {
+    return this.apiService.post<OperationResult<ProfileModuleOperationDto>>(`${this.baseEndpoint}/SaveOrUpdateProfileDetail`, profileModuleOperationDto, this.getToken());
+  }
+  async getProfileDetailsByProfileId(profileId: number, profileType: string): Promise<OperationResult<ProfileModulesDto[]>> {
+    return this.apiService.get<OperationResult<ProfileModulesDto[]>>(
+      `${this.baseEndpoint}/GetProfileDetailsByProfileId?profileId=${profileId}&profileType=${profileType}`,
+      this.getToken()
+    );
+  }
+}
 
-const apiService = new CommonApiService({
-  baseURL: APIConfig.securityManagementURL,
-});
-const getToken = () => store.getState().auth.token!;
-
-export const saveOrUpdateProfile = async (profileMastDto: ProfileMastDto): Promise<OperationResult<ProfileMastDto>> => {
-  return apiService.post<OperationResult<ProfileMastDto>>("Profile/SaveOrUpdateProfile", profileMastDto, getToken());
-};
-
-export const saveOrUpdateProfileDetail = async (profileDetailDto: ProfileDetailDto): Promise<OperationResult<ProfileDetailDto>> => {
-  return apiService.post<OperationResult<ProfileDetailDto>>("Profile/SaveOrUpdateProfileDetail", profileDetailDto, getToken());
-};
-
-export const getAllProfileDetails = async (): Promise<OperationResult<ProfileListSearchResult[]>> => {
-  return apiService.get<OperationResult<ProfileListSearchResult[]>>("Profile/GetAllProfileDetails", getToken());
-};
-
-export const getProfileModuleOperations = async (subID: number, compID: number, profileID: number): Promise<OperationResult<ModuleOperation[]>> => {
-  return apiService.get<OperationResult<ModuleOperation[]>>("SecurityManagement/GetProfileModuleOperations", getToken(), { subID, compID, profileID });
-};
-
-export const getProfileReportOperations = async (subID: number, compID: number, profileID: number): Promise<OperationResult<ReportPermission[]>> => {
-  return apiService.get<OperationResult<ReportPermission[]>>("SecurityManagement/GetProfileReportOperations", getToken(), { subID, compID, profileID });
-};
-
-export const updateProfileActiveStatus = async (profileID: number, rActiveYN: boolean): Promise<OperationResult<boolean>> => {
-  return apiService.put<OperationResult<boolean>>(`Profile/UpdateProfileActiveStatus/${profileID}`, rActiveYN, getToken());
-};
-
-export const ProfileService = {
-  saveOrUpdateProfile,
-  saveOrUpdateProfileDetail,
-  getAllProfileDetails,
-  getProfileModuleOperations,
-  getProfileReportOperations,
-  updateProfileActiveStatus,
-};
+export const profileListService = new ProfileListService();

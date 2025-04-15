@@ -1,12 +1,11 @@
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import { BreakListDto } from "@/interfaces/frontOffice/BreakListData";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Search } from "@mui/icons-material";
+import { Box, Container } from "@mui/material";
 import React, { useState } from "react";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import Search from "@mui/icons-material/Search";
-import { Container } from "@mui/system";
-import { Box } from "@mui/material";
 import BreakDetails from "../SubPage/BreakDetails";
-import { BreakListDto } from "../../../../interfaces/frontOffice/BreakListData";
 import BreakListSearch from "../SubPage/BreakListsearch";
-import { showAlert } from "../../../../utils/Common/showAlert";
 
 const BreakListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

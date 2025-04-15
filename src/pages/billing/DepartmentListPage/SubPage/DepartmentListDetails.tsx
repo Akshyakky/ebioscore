@@ -1,20 +1,19 @@
-import React, { useState, useEffect, useCallback } from "react";
+import CustomButton from "@/components/Button/CustomButton";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import FormField from "@/components/FormField/FormField";
+import { useLoading } from "@/context/LoadingContext";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
+import { departmentService } from "@/services/CommonServices/CommonModelServices";
+import { useAppSelector } from "@/store/hooks";
+import { showAlert } from "@/utils/Common/showAlert";
 import { Grid, Paper, SelectChangeEvent, Typography } from "@mui/material";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
+import React, { useCallback, useEffect, useState } from "react";
+import { DeptUsersPage } from "./DeptUsers/DeptUsersPage";
 import SaveIcon from "@mui/icons-material/Save";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { DepartmentDto } from "../../../../interfaces/Billing/DepartmentDto";
-import FormField from "../../../../components/FormField/FormField";
-import CustomButton from "../../../../components/Button/CustomButton";
-import { DeptUsersPage } from "./DeptUsers/DeptUsersPage";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import { departmentService } from "../../../../services/CommonServices/CommonModelServices";
-import { useAppSelector } from "@/store/hooks";
-
 interface DepartmentListDetailsProps {
   editData?: DepartmentDto;
 }

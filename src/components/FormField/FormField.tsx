@@ -1,5 +1,5 @@
-import React, { forwardRef, useMemo, memo } from "react";
-import { Box, Grid, Theme, SelectChangeEvent } from "@mui/material";
+import React, { forwardRef, useMemo, memo, useState } from "react";
+import { Box, Grid, Theme, SelectChangeEvent, InputAdornment, IconButton } from "@mui/material";
 import { GridProps } from "@mui/material/Grid";
 import { TextFieldProps } from "@mui/material/TextField";
 import { SxProps, useTheme } from "@mui/material/styles";
@@ -17,6 +17,9 @@ import CustomDatePicker from "../DatePicker/CustomDatePicker";
 import CustomDateTimePicker from "../DateTimePicker/CustomDateTimePicker";
 import CustomButton from "../Button/CustomButton";
 import CustomTimePicker from "../TimePicker/CustomTimePicker";
+import { GridVisibilityOffIcon } from "@mui/x-data-grid";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
 
 // Types
 export type FieldType =
@@ -34,7 +37,9 @@ export type FieldType =
   | "time"
   | "datepicker"
   | "datetimepicker"
-  | "timepicker";
+  | "timepicker"
+  | "password"
+  | "file";
 
 export interface DropdownOption {
   value: string;
@@ -43,7 +48,19 @@ export interface DropdownOption {
   group?: string;
   metadata?: Record<string, any>;
 }
-
+export interface PasswordFormFieldProps extends BaseFormFieldProps {
+  type: "password";
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  showPasswordToggle?: boolean;
+}
+export interface FileFormFieldProps extends BaseFormFieldProps {
+  type: "file";
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  accept?: string;
+  multiple?: boolean;
+  maxFileSize?: number;
+  allowedFileTypes?: string[];
+}
 interface BaseFormFieldProps {
   type: FieldType;
   label: string;
@@ -172,24 +189,31 @@ export type FormFieldProps =
   | MultiSelectFormFieldProps
   | DatePickerFormFieldProps
   | DateTimePickerFormFieldProps
-  | TimePickerFormFieldProps;
+  | TimePickerFormFieldProps
+  | PasswordFormFieldProps
+  | FileFormFieldProps;
 
 const useStyles = (theme: Theme) => ({
   fieldContainer: {
     display: "flex",
-    alignItems: "center",
-    gap: theme.spacing(1),
+    alignItems: "flex-start",
     width: "100%",
   },
   addButton: {
-    marginLeft: theme.spacing(1),
-    minWidth: "auto",
-    padding: theme.spacing(1),
+    marginTop: theme.spacing(2),
+    minWidth: "32px",
+    width: "32px",
+    height: "40px",
+    padding: 0,
+    borderRadius: "4px",
     transition: "all 0.2s ease-in-out",
     "&:hover": {
       transform: "scale(1.05)",
       backgroundColor: theme.palette.primary.dark,
     },
+  },
+  addIcon: {
+    fontSize: "20px",
   },
   helperText: {
     marginTop: theme.spacing(0.5),
@@ -204,7 +228,11 @@ const useStyles = (theme: Theme) => ({
 const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
   const theme = useTheme();
   const styles = useStyles(theme);
+  const [showPassword, setShowPassword] = useState(false);
 
+  const handleTogglePassword = () => {
+    setShowPassword((prev) => !prev);
+  };
   const {
     type,
     label,
@@ -273,6 +301,28 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
             inputPattern={type === "number" ? /^[0-9]*$/ : undefined}
           />
         );
+      case "password":
+        return (
+          <FloatingLabelTextBox
+            {...commonProps}
+            title={label}
+            value={value}
+            onChange={(props as PasswordFormFieldProps).onChange}
+            type={showPassword ? "text" : "password"}
+            placeholder={placeholder}
+            InputProps={{
+              ...InputProps,
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton aria-label="toggle password visibility" onClick={handleTogglePassword} edge="end" size="small">
+                    {showPassword ? <GridVisibilityOffIcon /> : <VisibilityIcon />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            InputLabelProps={InputLabelProps}
+          />
+        );
 
       case "textarea":
         return (
@@ -292,7 +342,7 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
         return (
           <DropdownSelect
             {...commonProps}
-            label={label}
+            label={selectProps.isMandatory ? `${label} *` : label}
             value={value}
             options={selectProps.options}
             onChange={selectProps.onChange}
@@ -338,7 +388,7 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
         return (
           <AutocompleteTextBox
             {...commonProps}
-            title={label}
+            title={autocompleteProps.isMandatory ? `${label} *` : label}
             value={value}
             onChange={autocompleteProps.onChange}
             fetchSuggestions={autocompleteProps.fetchSuggestions}
@@ -397,6 +447,46 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
             InputLabelProps={InputLabelProps}
           />
         );
+      case "file":
+        const fileProps = props as FileFormFieldProps;
+        const hiddenFileInput = (
+          <input type="file" onChange={fileProps.onChange} accept={fileProps.accept} multiple={fileProps.multiple} style={{ display: "none" }} ref={ref} id={ControlID} />
+        );
+
+        return (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {hiddenFileInput}
+            <FloatingLabelTextBox
+              {...commonProps}
+              title={label}
+              value={value ? (Array.isArray(value) ? value.map((f) => f.name).join(", ") : typeof value === "object" ? value.name : value) : ""}
+              readOnly
+              placeholder={placeholder || "Select file"}
+              InputProps={{
+                ...InputProps,
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      component="label"
+                      htmlFor={ControlID}
+                      size="small"
+                      color="primary"
+                      sx={{
+                        "&:hover": {
+                          backgroundColor: "rgba(25, 118, 210, 0.04)",
+                        },
+                      }}
+                    >
+                      <AttachFileIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              InputLabelProps={InputLabelProps}
+            />
+          </Box>
+        );
+
       default:
         return null;
     }
@@ -405,8 +495,12 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
   const addButton = useMemo(() => {
     if (!showAddButton || !onAddClick) return null;
 
-    return <CustomButton variant="contained" size="small" icon={AddIcon} onClick={onAddClick} ariaLabel={`add-${name}`} color="primary" sx={styles.addButton} />;
-  }, [showAddButton, onAddClick, name, styles.addButton]);
+    return (
+      <CustomButton variant="contained" size="small" onClick={onAddClick} ariaLabel={`add-${name}`} color="primary" sx={styles.addButton}>
+        <AddIcon sx={styles.addIcon} />
+      </CustomButton>
+    );
+  }, [showAddButton, onAddClick, name, styles.addButton, styles.addIcon]);
 
   return (
     <Grid item {...gridProps} className={className}>

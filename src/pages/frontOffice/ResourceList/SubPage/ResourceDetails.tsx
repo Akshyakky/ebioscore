@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Grid, Paper, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { useLoading } from "../../../../context/LoadingContext";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
-import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
+import { ResourceListData } from "@/interfaces/frontOffice/ResourceListData";
+import { useLoading } from "@/context/LoadingContext";
+import { useServerDate } from "@/hooks/Common/useServerDate";
 import { useAppSelector } from "@/store/hooks";
+import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+import { showAlert } from "@/utils/Common/showAlert";
+import { Grid, Paper, Typography } from "@mui/material";
+import FormField from "@/components/FormField/FormField";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 interface ResourceDetailsProps {
   editData?: ResourceListData;

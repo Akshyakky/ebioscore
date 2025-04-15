@@ -1,7 +1,7 @@
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { BServiceGrpDto } from "@/interfaces/Billing/BServiceGrpDto";
+import { serviceGroupService } from "@/services/BillingServices/BillingGenericService";
 import React from "react";
-import { BServiceGrpDto } from "../../../../interfaces/Billing/BServiceGrpDto";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { serviceGroupService } from "../../../../services/BillingServices/BillingGenericService";
 
 interface ServiceGroupsListSearchProps {
   open: boolean;

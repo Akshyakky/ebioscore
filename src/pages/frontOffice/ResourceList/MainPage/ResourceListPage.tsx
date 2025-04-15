@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { Box, Container } from "@mui/material";
-import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
+import { ResourceListData } from "@/interfaces/frontOffice/ResourceListData";
+import { Box, Container } from "@mui/material";
+import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
 import ResourceDetails from "../SubPage/ResourceDetails";
 import ResourceListSearch from "../SubPage/ResourceListSearch";
-import { ResourceListData } from "../../../../interfaces/frontOffice/ResourceListData";
 
 const ResourceListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

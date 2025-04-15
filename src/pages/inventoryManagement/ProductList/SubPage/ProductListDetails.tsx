@@ -2,16 +2,15 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Paper, Typography, Grid } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { ProductListDto } from "../../../../interfaces/InventoryManagement/ProductListDto";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import { ProductTaxListDto } from "../../../../interfaces/InventoryManagement/ProductTaxListDto";
-import { productListService } from "../../../../services/InventoryManagementService/inventoryManagementService";
 import { useAppSelector } from "@/store/hooks";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { useLoading } from "@/context/LoadingContext";
+import { showAlert } from "@/utils/Common/showAlert";
+import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
+import FormField from "@/components/FormField/FormField";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 const ProductListDetails: React.FC<{ editData?: ProductListDto }> = ({ editData }) => {
   const [formState, setFormState] = useState<ProductListDto>({

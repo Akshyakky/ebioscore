@@ -1,22 +1,19 @@
 // src/pages/common/LoginPage/LoginPage.tsx
-import React, { useEffect, useMemo, useCallback, useRef, useState } from "react";
-import { Container, Box, Card, CardContent, Button, Alert, CircularProgress, Link, Typography, Grid, useMediaQuery, alpha, styled } from "@mui/material";
+import { Company } from "@/types/Common/Company.type";
+import { useAppDispatch } from "@/store/hooks";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
+import { useTheme } from "@/context/Common/ThemeContext";
+import { ClientParameterService } from "@/services/CommonServices/ClientParameterService";
+import { CompanyService } from "@/services/CommonServices/CompanyService";
+import AuthService from "@/services/AuthService/AuthService";
+import { setUserDetails } from "@/store/features/auth/authSlice";
+import { notifySuccess } from "@/utils/Common/toastManager";
+import DropdownSelect from "@/components/DropDown/DropdownSelect";
+import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import { Link, Visibility, VisibilityOff } from "@mui/icons-material";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
-import { useNavigate } from "react-router-dom";
-import { useAppDispatch } from "../../../store/hooks";
-import { setUserDetails } from "../../../store/features/auth/authSlice";
-import DropdownSelect from "../../../components/DropDown/DropdownSelect";
-import FloatingLabelTextBox from "../../../components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import { notifySuccess } from "../../../utils/Common/toastManager";
-import { Company } from "../../../types/Common/Company.type";
-import { CompanyService } from "../../../services/CommonServices/CompanyService";
-import { ClientParameterService } from "../../../services/CommonServices/ClientParameterService";
-import AuthService from "../../../services/AuthService/AuthService";
-import { useTheme } from "../../../context/Common/ThemeContext";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { IconButton, InputAdornment } from "@mui/material";
-
-// Import images
+import { Alert, alpha, Box, Button, Card, CardContent, CircularProgress, Container, Grid, IconButton, InputAdornment, styled, Typography, useMediaQuery } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import logo from "../../../assets/images/eBios.png";
 import backgroundImage from "/src/assets/images/LoginCoverImage.jpg";
 
@@ -96,6 +93,26 @@ const StyledAlert = styled(Alert)(({ theme }) => ({
   "@keyframes slideIn": {
     from: { transform: "translateY(-10px)", opacity: 0 },
     to: { transform: "translateY(0)", opacity: 1 },
+  },
+}));
+
+const StyledRouterLink = styled(RouterLink)(({ theme }) => ({
+  color: theme.palette.primary.main,
+  textDecoration: "none",
+  fontWeight: 500,
+  position: "relative",
+  "&::after": {
+    content: '""',
+    position: "absolute",
+    width: 0,
+    height: "2px",
+    bottom: "-2px",
+    left: 0,
+    background: theme.palette.primary.main,
+    transition: "width 0.3s ease",
+  },
+  "&:hover::after": {
+    width: "100%",
   },
 }));
 
@@ -225,8 +242,8 @@ const LoginPage: React.FC = () => {
           licenseDaysRemaining < 0
             ? "Cannot log in. Your License has expired"
             : licenseDaysRemaining <= 30
-              ? `Your License will expire in ${Math.ceil(licenseDaysRemaining)} day(s)`
-              : "",
+            ? `Your License will expire in ${Math.ceil(licenseDaysRemaining)} day(s)`
+            : "",
       }));
     } catch (error) {
       console.error("Failed to fetch client parameters:", error);
@@ -287,18 +304,21 @@ const LoginPage: React.FC = () => {
         const tokenResponse = await AuthService.generateToken({
           UserName: formState.userName,
           Password: formState.password,
+          CompanyID: parseInt(formState.companyID),
+          CompanyCode: formState.companyCode,
+          CompanyName: selectedCompanyName,
         });
 
-        if (tokenResponse.data?.token) {
-          const jwtToken = JSON.parse(atob(tokenResponse.data.token.split(".")[1]));
+        if (tokenResponse.token) {
+          const jwtToken = JSON.parse(atob(tokenResponse.token.split(".")[1]));
           const tokenExpiry = new Date(jwtToken.exp * 1000).getTime();
 
           dispatch(
             setUserDetails({
-              userID: tokenResponse.data.user.userID,
-              token: tokenResponse.data.token,
-              adminYN: tokenResponse.data.user.adminYN,
-              userName: tokenResponse.data.user.userName,
+              userID: tokenResponse.user.userID,
+              token: tokenResponse.token,
+              adminYN: tokenResponse.user.adminYN,
+              userName: tokenResponse.user.userName,
               compID: parseInt(formState.companyID),
               compCode: formState.companyCode,
               compName: selectedCompanyName,
@@ -320,7 +340,7 @@ const LoginPage: React.FC = () => {
           });
           setFormState((prev) => ({
             ...prev,
-            errorMessage: tokenResponse.data?.user.ErrorMessage || "Invalid credentials",
+            errorMessage: tokenResponse.user.ErrorMessage || "Invalid credentials",
             isLoggingIn: false,
           }));
         }
@@ -626,30 +646,7 @@ const LoginPage: React.FC = () => {
                 />
 
                 <Box sx={{ textAlign: "right", mb: 2 }}>
-                  <Link
-                    href="/ForgotPasswordPage"
-                    sx={{
-                      color: theme.palette.primary.main,
-                      textDecoration: "none",
-                      fontWeight: 500,
-                      position: "relative",
-                      "&::after": {
-                        content: '""',
-                        position: "absolute",
-                        width: "0",
-                        height: "2px",
-                        bottom: "-2px",
-                        left: "0",
-                        background: theme.palette.primary.main,
-                        transition: "width 0.3s ease",
-                      },
-                      "&:hover::after": {
-                        width: "100%",
-                      },
-                    }}
-                  >
-                    Forgot password?
-                  </Link>
+                  <StyledRouterLink to="/ForgotPasswordPage">Forgot password?</StyledRouterLink>
                 </Box>
 
                 <StyledButton

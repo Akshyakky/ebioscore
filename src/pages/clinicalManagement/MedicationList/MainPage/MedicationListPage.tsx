@@ -1,11 +1,11 @@
 // src/pages/inventoryManagement/MedicationListPage/MainPage/MedicationListPage.tsx
-import React, { useState } from "react";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
+import { Search } from "@mui/icons-material";
 import { Box, Container } from "@mui/material";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import Search from "@mui/icons-material/Search";
+import React, { useState } from "react";
 import MedicationListDetails from "../SubPage/MedicationDetails";
 import MedicationListSearch from "../SubPage/MedicationListSearch";
-import { MedicationListDto } from "../../../../interfaces/ClinicalManagement/MedicationListDto";
 
 const MedicationListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

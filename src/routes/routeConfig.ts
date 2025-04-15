@@ -35,7 +35,15 @@ import ChargeDetailsPage from "../pages/billing/ChargeDetailsPage/MainPage/Charg
 import DischargePage from "../pages/patientAdministration/DischargePage/MainPage/DischargePage";
 import WardBedTransferPage from "../pages/patientAdministration/WardBedTransfer/MainPage/WardBedTransferPage";
 import AlertPage from "@/pages/common/AlertManagerPage/MainPage/Alertpage";
-import MedicationFormPage from "@/pages/clinicalManagement/medicationForm/MainPage/medicationFormPage";
+import MedicationFormPage from "@/pages/clinicalManagement/medicationForm/MainPage/MedicationFormPage";
+import MedicationFrequencyPage from "@/pages/clinicalManagement/MedicationFrequency/MainPage/MedicationFrequencyPage";
+import MedicationDosagePage from "@/pages/clinicalManagement/MedicationDosage/MainPage/MedicationDosagePage";
+import ProcedureListPage from "@/pages/clinicalManagement/ProcedureList/MainPage/ProcedureListPage";
+import MedicationGenericPage from "@/pages/clinicalManagement/MedicationGeneric/MainPage/MedicationGenericPage";
+import InvestigationListPage from "@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage";
+import ComponentEntryTypePage from "@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage";
+import ForgotPasswordPage from "@/pages/common/ForgotPasswordPage/ForgotPasswordPage";
+import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
 
 interface RouteConfig {
   path: string;
@@ -74,11 +82,19 @@ const routeConfig: RouteConfig[] = [
   { path: "/ManageBedPage", component: ManageBedPage, protected: true },
   { path: "/DiagnosisListPage", component: DiagnosisListPage, protected: true },
   { path: "/MedicationListPage", component: MedicationListPage, protected: true },
+  { path: "/MedicationFormPage", component: MedicationFormPage, protected: true },
   { path: "/AppModifiedListPage", component: AppModifiedListPage, protected: true },
   { path: "/ChargeDetailsPage", component: ChargeDetailsPage, protected: true },
   { path: "/DischargePage", component: DischargePage, protected: true },
   { path: "/WardBedTransferPage", component: WardBedTransferPage, protected: true },
-  { path: "/MedicationFormPage", component: MedicationFormPage, protected: true },
+  { path: "/MedicationFrequencyPage", component: MedicationFrequencyPage, protected: true },
+  { path: "/MedicationDosagePage", component: MedicationDosagePage, protected: true },
+  { path: "/ProcedureListPage", component: ProcedureListPage, protected: true },
+  { path: "/MedicationGenericPage", component: MedicationGenericPage, protected: true },
+  { path: "/InvestigationListPage", component: InvestigationListPage, protected: true },
+  { path: "/ComponentEntryTypePage", component: ComponentEntryTypePage, protected: true },
+  { path: "/PurchaseOrderPage", component: PurchaseOrderPage, protected: true },
+  { path: "/ForgotPasswordPage", component: ForgotPasswordPage, protected: false },
 ];
 
 export default routeConfig;

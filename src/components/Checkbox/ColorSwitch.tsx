@@ -9,6 +9,7 @@ interface CustomSwitchProps {
   color?: string;
   checked: boolean;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
 }
 
 const ColorSwitch = styled(Switch, {
@@ -25,13 +26,30 @@ const ColorSwitch = styled(Switch, {
         backgroundColor: switchColor ? `${switchColor}B2` : `${theme.palette.primary.main}B2`,
       },
     },
+    "&.Mui-disabled": {
+      "& + .MuiSwitch-track": {
+        opacity: theme.palette.mode === "light" ? 0.7 : 0.3,
+      },
+      "&.Mui-checked": {
+        "& + .MuiSwitch-track": {
+          backgroundColor: theme.palette.mode === "light" ? "#E9E9EA" : "#39393D",
+        },
+      },
+    },
   },
   "& .MuiSwitch-track": {
     backgroundColor: "#ccc",
   },
 }));
 
-const CustomSwitch: React.FC<CustomSwitchProps> = ({ label = "", size = "medium", color = "#4CAF50", checked, onChange }) => {
+const CustomSwitch: React.FC<CustomSwitchProps> = ({
+  label = "",
+  size = "medium",
+  color = "#4CAF50",
+  checked,
+  onChange,
+  disabled = false, // Added with default value
+}) => {
   const theme = useTheme();
 
   return (
@@ -42,18 +60,20 @@ const CustomSwitch: React.FC<CustomSwitchProps> = ({ label = "", size = "medium"
           onChange={onChange}
           size={size}
           switchColor={color}
+          disabled={disabled} // Added disabled prop
           sx={{
             "& .MuiSwitch-thumb": {
-              color: "#fff",
+              color: disabled ? "#BDBDBD" : "#fff",
             },
             "& .MuiSwitch-switchBase:not(.Mui-checked)": {
-              color: "#ccc",
+              color: disabled ? "#BDBDBD" : "#ccc",
             },
           }}
         />
       }
       label={label}
       labelPlacement="end"
+      disabled={disabled} // Added disabled prop to FormControlLabel
     />
   );
 };

@@ -7,12 +7,13 @@ import CustomButton from "../Button/CustomButton";
 import FormField from "../FormField/FormField";
 import { appModifiedListService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { showAlert } from "../../utils/Common/showAlert";
-import { AppModifyFieldDto } from "@/interfaces/hospitalAdministration/AppModifiedlistDto";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { useAppSelector } from "@/store/hooks";
 
 interface ModifiedFieldDialogProps {
   open: boolean;
-  onClose: () => void;
-  selectedCategoryName: string;
+  onClose: (saved?: boolean) => void;
+  selectedCategoryCode: string;
   isFieldCodeDisabled?: boolean;
   initialFormData?: Partial<AppModifyFieldDto>;
   onFieldAddedOrUpdated?: () => void;
@@ -21,7 +22,7 @@ interface ModifiedFieldDialogProps {
 const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
   open,
   onClose,
-  selectedCategoryName,
+  selectedCategoryCode,
   isFieldCodeDisabled = true,
   initialFormData = {},
   onFieldAddedOrUpdated,
@@ -30,7 +31,7 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
     amlID: 0,
     amlName: "",
     amlCode: "",
-    amlField: selectedCategoryName,
+    amlField: selectedCategoryCode,
     defaultYN: "N",
     modifyYN: "N",
     rNotes: "",
@@ -41,32 +42,35 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
     transferYN: "Y",
     ...initialFormData,
   });
-
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   useEffect(() => {
     if (open) {
       setFormData((prev) => {
-        if (prev.amlField !== selectedCategoryName || JSON.stringify(prev) !== JSON.stringify({ ...prev, ...initialFormData })) {
+        if (prev.amlField !== selectedCategoryCode || JSON.stringify(prev) !== JSON.stringify({ ...prev, ...initialFormData })) {
           return {
             ...prev,
-            amlField: selectedCategoryName,
+            amlField: selectedCategoryCode,
             ...initialFormData,
+            compID: compID || 0,
+            compCode: compCode || "",
+            compName: compName || "",
           };
         }
         return prev;
       });
 
       if (!formData.amlCode) {
-        generateFieldCode(selectedCategoryName);
+        generateFieldCode(selectedCategoryCode);
       }
     }
-  }, [open, selectedCategoryName, initialFormData]);
+  }, [open, selectedCategoryCode, initialFormData]);
 
   const generateFieldCode = useCallback(async (prefix: string) => {
     try {
-      const response: any = await appModifiedListService.getAll();
-      const fieldsData = response.data || response;
-      const highestNumber = getHighestExistingCode(prefix, fieldsData);
-      const nextNumber = highestNumber + 1;
+      const response: any = await appModifiedListService.count(`amlField == "${prefix}"`);
+      const fieldsCount = response.data;
+      const nextNumber = fieldsCount + 1;
       const formattedCounter = nextNumber.toString().padStart(2, "0");
       const newCode = `${prefix}${formattedCounter}`;
 
@@ -81,31 +85,18 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
     }
   }, []);
 
-  const getHighestExistingCode = (categoryName: string, fields: AppModifyFieldDto[]): number => {
-    const categoryFields = fields.filter((field) => field.amlField === categoryName);
-    let highestNumber = 0;
-
-    categoryFields.forEach((field) => {
-      const codeMatch = field.amlCode.match(/\d+$/);
-      if (codeMatch) {
-        const number = parseInt(codeMatch[0]);
-        highestNumber = Math.max(highestNumber, number);
-      }
-    });
-    return highestNumber;
-  };
-
   const handleFormSubmit = async () => {
     try {
+      setIsSubmitted(true);
+
       if (!formData.amlName || !formData.amlCode) {
-        showAlert("Error", "Field Name and Field Code cannot be empty", "error");
         return;
       }
       if (formData.defaultYN === "Y") {
         const existingFieldsResponse: any = await appModifiedListService.getAll();
         const fieldsData = existingFieldsResponse.data || existingFieldsResponse;
         const fieldsToUpdate = fieldsData.filter(
-          (field: AppModifyFieldDto) => field.defaultYN === "Y" && field.amlField === selectedCategoryName && field.amlID !== formData.amlID
+          (field: AppModifyFieldDto) => field.defaultYN === "Y" && field.amlField === selectedCategoryCode && field.amlID !== formData.amlID
         );
         if (fieldsToUpdate.length > 0) {
           const confirmed = await new Promise<boolean>((resolve) => {
@@ -145,12 +136,15 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
           amlName: "",
           amlCode: "",
         }));
-        onClose();
+        onClose(true);
       } else {
         showAlert("Error", "Failed to save field", "error");
+        onClose(false);
       }
+      setIsSubmitted(false);
     } catch (error) {
-      showAlert("Error", "An error occurred while saving the field", "error");
+      console.error("Error saving:", error);
+      onClose(false);
     }
   };
 
@@ -162,14 +156,19 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
     }));
   };
 
+  const handleClose = () => {
+    onClose(false);
+    setIsSubmitted(false);
+  };
+
   return (
     <GenericDialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       title={formData.amlID ? "Edit Field" : "Add New Field"}
       actions={
         <>
-          <CustomButton onClick={onClose} icon={DeleteIcon} text="Cancel" variant="contained" color="error" sx={{ marginRight: 2 }} />
+          <CustomButton onClick={handleClose} icon={DeleteIcon} text="Cancel" variant="contained" color="error" sx={{ marginRight: 2 }} />
           <CustomButton icon={SaveIcon} text="Save" onClick={handleFormSubmit} variant="contained" color="success" />
         </>
       }
@@ -185,7 +184,7 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
           isMandatory={true}
           gridProps={{ xs: 12 }}
           fullWidth
-          disabled={isFieldCodeDisabled}
+          // disabled={isFieldCodeDisabled}
         />
         <FormField
           type="text"
@@ -195,6 +194,7 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
           onChange={(e) => setFormData((prev) => ({ ...prev, amlName: e.target.value }))}
           ControlID="amlName"
           isMandatory={true}
+          isSubmitted={isSubmitted}
           gridProps={{ xs: 12 }}
           fullWidth
         />
@@ -202,10 +202,11 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
           type="text"
           label="Field"
           name="amlField"
-          value={selectedCategoryName}
+          value={selectedCategoryCode}
           onChange={() => {}}
           disabled={true}
           ControlID="amlField"
+          isSubmitted={isSubmitted}
           isMandatory={true}
           gridProps={{ xs: 12 }}
           fullWidth

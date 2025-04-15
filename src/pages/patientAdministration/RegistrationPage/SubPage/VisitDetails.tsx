@@ -1,10 +1,10 @@
+import FormField from "@/components/FormField/FormField";
+import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import useRadioButtonChange from "@/hooks/useRadioButtonChange";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import React, { useMemo } from "react";
-import FormField from "../../../../components/FormField/FormField";
-import { PatientRegistrationDto } from "../../../../interfaces/PatientAdministration/PatientFormData";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import useRadioButtonChange from "../../../../hooks/useRadioButtonChange";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 
 interface VisitDetailsProps {
   formData: PatientRegistrationDto;
@@ -82,7 +82,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({ formData, setFormData, isSu
           label="Primary Introducing Source"
           name="primaryReferralSourceId"
           ControlID="PrimaryIntroducingSource"
-          value={formData.patRegisters.primaryReferralSourceId}
+          value={formData.patRegisters.primaryReferralSourceId === 0 ? "" : String(formData.patRegisters.primaryReferralSourceId)}
           options={dropdownValues.primaryIntroducingSource}
           onChange={handleDropdownChange(["patRegisters", "primaryReferralSourceId"], ["patRegisters", "primaryReferralSourceName"], dropdownValues.primaryIntroducingSource)}
           isSubmitted={isSubmitted}

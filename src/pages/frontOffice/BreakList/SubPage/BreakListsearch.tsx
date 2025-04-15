@@ -1,18 +1,16 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { formatDate } from "../../../../utils/Common/dateUtils";
+import CustomButton from "@/components/Button/CustomButton";
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { useLoading } from "@/context/LoadingContext";
+import { BreakConSuspendData } from "@/interfaces/frontOffice/BreakConSuspendData";
+import { BreakConDetailData, BreakListData } from "@/interfaces/frontOffice/BreakListData";
+import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
+import { BreakListService } from "@/services/FrontOfficeServices/BreakListServices/BreakListService";
+import { breakConDetailsService, breakConSuspendService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+import { formatDate } from "@/utils/Common/dateUtils";
+import { showAlert } from "@/utils/Common/showAlert";
+import React, { useCallback, useEffect, useState } from "react";
 import BreakSuspendDetails from "./BreakSuspendDetails";
-import PauseCircleOutline from "@mui/icons-material/PauseCircleOutline";
-import PlayCircleOutline from "@mui/icons-material/PlayCircleOutline";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import CustomButton from "../../../../components/Button/CustomButton";
-import { breakConDetailsService, breakConSuspendService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
-import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
-import { AppointmentService } from "../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService";
-import { resourceListService } from "../../../../services/FrontOfficeServices/FrontOfiiceApiServices";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { useLoading } from "../../../../context/LoadingContext";
-import { BreakConDetailData, BreakListData } from "../../../../interfaces/frontOffice/BreakListData";
-import { BreakConSuspendData } from "../../../../interfaces/frontOffice/BreakConSuspendData";
+import { PauseCircleOutline, PlayCircleOutline } from "@mui/icons-material";
 
 interface BreakListSearchProps {
   open: boolean;

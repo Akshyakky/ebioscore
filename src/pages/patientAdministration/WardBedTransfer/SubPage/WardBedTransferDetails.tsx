@@ -1,30 +1,29 @@
 //src/patientAdministration/DischargePage/SubPage/WardBedTransferDetails.tsx
 import { useState, useCallback, useEffect, forwardRef, useImperativeHandle, useRef } from "react";
-import { Box, Grid, SelectChangeEvent, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
+import { Box, Grid, SelectChangeEvent } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { MeetingRoom as BedViewIcon } from "@mui/icons-material";
 import SaveIcon from "@mui/icons-material/Save";
-import { useLoading } from "../../../../context/LoadingContext";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { AdmissionDto } from "../../../../interfaces/PatientAdministration/AdmissionDto";
-import useDropdownValues from "../../../../hooks/PatientAdminstration/useDropdownValues";
-import useDropdownChange from "../../../../hooks/useDropdownChange";
-import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
-import { BedTransferRequestDto } from "../../../../interfaces/PatientAdministration/BedTransferRequestDto";
-import { roomListService, wrBedService } from "../../../../services/HospitalAdministrationServices/hospitalAdministrationService";
-import { wardBedTransferService } from "../../../../services/PatientAdministrationServices/WardBedTransferService/WardBedTransferService";
-import { usePatientAutocomplete } from "../../../../hooks/PatientAdminstration/usePatientAutocomplete";
-import extractNumbers from "../../../../utils/PatientAdministration/extractNumbers";
-import { DropdownOption } from "../../../../interfaces/Common/DropdownOption";
-import { extendedAdmissionService } from "../../../../services/PatientAdministrationServices/admissionService";
-import { WrBedDto } from "../../../../interfaces/hospitalAdministration/Room-BedSetUpDto";
-import CustomAccordion from "../../../../components/Accordion/CustomAccordion";
-import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
-import CustomButton from "../../../../components/Button/CustomButton";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
 import { useAppSelector } from "@/store/hooks";
+import { WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
+import { BedTransferRequestDto } from "@/interfaces/PatientAdministration/BedTransferRequestDto";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { useLoading } from "@/context/LoadingContext";
+import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { roomListService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
+import { showAlert } from "@/utils/Common/showAlert";
+import { wardBedTransferService } from "@/services/PatientAdministrationServices/WardBedTransferService/WardBedTransferService";
+import CustomAccordion from "@/components/Accordion/CustomAccordion";
+import FormField from "@/components/FormField/FormField";
+import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
+import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
+import CustomButton from "@/components/Button/CustomButton";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 interface WardBedTransferDetailsProps {
   selectedAdmission?: AdmissionDto;
@@ -61,7 +60,6 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
   const [bedOptions, setBedOptions] = useState<DropdownOption[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { setLoading } = useLoading();
-  const { handleDropdownChange } = useDropdownChange(setFormState);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const uhidInputRef = useRef<HTMLInputElement>(null);
 
@@ -270,7 +268,6 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
   }, [selectedAdmission, formState.bedID, formState.admitID]);
 
   const handleSave = useCallback(async () => {
-    debugger;
     setIsSubmitted(true);
 
     if (!formState.pChartID || !formState.bedID || !formState.reasonForTransfer) {

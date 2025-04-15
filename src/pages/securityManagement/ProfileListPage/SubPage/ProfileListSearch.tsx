@@ -1,31 +1,50 @@
-import React from "react";
-import { ProfileMastDto } from "../../../../interfaces/SecurityManagement/ProfileListData";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { profileMastService } from "../../../../services/SecurityManagementServices/securityManagementService";
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { showAlert } from "@/utils/Common/showAlert";
+
+import React, { useCallback } from "react";
 
 interface ProfileListSearchProps {
   open: boolean;
   onClose: () => void;
   onSelect: (profileMastDto: ProfileMastDto) => void;
+  profileMastService: ReturnType<typeof createEntityService<ProfileMastDto>>;
 }
 
-const ProfileListSearch: React.FC<ProfileListSearchProps> = ({ open, onClose, onSelect }) => {
-  const fetchItems = async () => {
+const ProfileListSearch: React.FC<ProfileListSearchProps> = ({
+  open,
+  onClose,
+  onSelect,
+  profileMastService,
+}) => {
+  const fetchItems = useCallback(async () => {
     try {
-      const items = await profileMastService.getAll();
-      return items.data || [];
+      const result = await profileMastService.getAll();
+      return result.success ? result.data : [];
     } catch (error) {
+      console.error("Error fetching Profile:", error);
+      showAlert("Error", "Failed to Profile.", "error");
       return [];
     }
-  };
-  const updateActiveStatus = async (id: number, status: boolean) => {
-    try {
-      return await profileMastService.updateActiveStatus(id, status);
-    } catch (error) {
-      console.error("Error updating Profle List active status:", error);
-      return false;
-    }
-  };
+  }, [profileMastService]);
+
+  const updateActiveStatus = useCallback(
+    async (id: number, status: boolean) => {
+      try {
+        const result = await profileMastService.updateActiveStatus(id, status);
+        if (result) {
+          showAlert("Success", "Status updated successfully.", "success");
+        }
+        return result;
+      } catch (error) {
+        console.error("Error updating Profile active status:", error);
+        showAlert("Error", "Failed to update status.", "error");
+        return false;
+      }
+    },
+    [profileMastService]
+  );
   const getItemId = (item: ProfileMastDto) => item.profileID;
   const getItemActiveStatus = (item: ProfileMastDto) => item.rActiveYN === "Y";
   const columns = [

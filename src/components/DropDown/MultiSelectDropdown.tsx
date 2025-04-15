@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
-import { FormControl, InputLabel, Select, MenuItem, FormHelperText, OutlinedInput, Checkbox, ListItemText } from "@mui/material";
-import { SelectChangeEvent } from "@mui/material/Select";
-import { styled } from "@mui/material/styles";
+import { FormControl, InputLabel, Select, MenuItem, FormHelperText, OutlinedInput, Checkbox, ListItemText, SelectChangeEvent } from "@mui/material";
+import { styled, useTheme } from "@mui/material/styles";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 
 interface MultiSelectDropdownProps {
@@ -18,25 +17,6 @@ interface MultiSelectDropdownProps {
   isSubmitted?: boolean;
 }
 
-const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
-  backgroundColor: "#fff",
-  color: "#000",
-  "&:hover": {
-    backgroundColor: "var(--hover-color)",
-  },
-}));
-
-const StyledCheckbox = styled(Checkbox)(({ theme }) => ({
-  color: "var(--primary-color)",
-  "&.Mui-checked": {
-    color: "var(--primary-color)",
-  },
-}));
-
-const StyledListItemText = styled(ListItemText)(({ theme }) => ({
-  color: "#000",
-}));
-
 const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   label,
   name,
@@ -50,6 +30,11 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   className,
   isSubmitted = false,
 }) => {
+  const theme = useTheme();
+
+  const backgroundColor = theme.palette.mode === "dark" ? theme.palette.background.paper : "#fff";
+  const textColor = theme.palette.mode === "dark" ? theme.palette.text.primary : "#000";
+
   const isEmptyValue = useMemo(() => {
     return Array.isArray(value) ? value.length === 0 : value === "" || value === "0";
   }, [value]);
@@ -65,13 +50,32 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
     };
   }, [options]);
 
+  const StyledMenuItem = styled(MenuItem)(() => ({
+    backgroundColor: backgroundColor,
+    color: textColor,
+    "&:hover": {
+      backgroundColor: theme.palette.action.hover,
+    },
+  }));
+
+  const StyledCheckbox = styled(Checkbox)(() => ({
+    color: theme.palette.primary.main,
+    "&.Mui-checked": {
+      color: theme.palette.primary.main,
+    },
+  }));
+
+  const StyledListItemText = styled(ListItemText)(() => ({
+    color: textColor,
+  }));
+
   return (
     <FormControl variant="outlined" size={size} fullWidth className={className} error={hasError} margin="normal">
       <InputLabel id={`ddl-label-${name}`} htmlFor={`ddl${name}`}>
         {label}
       </InputLabel>
       <Select
-        multiple={true}
+        multiple
         labelId={`ddl-label-${name}`}
         id={`ddl${name}`}
         name={name}
@@ -81,6 +85,21 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         disabled={disabled}
         input={<OutlinedInput label={label} />}
         renderValue={renderValue}
+        MenuProps={{
+          PaperProps: {
+            style: {
+              maxHeight: 300, // 👈 limit dropdown height
+              backgroundColor: backgroundColor,
+              color: textColor,
+            },
+          },
+        }}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            backgroundColor: backgroundColor,
+            color: textColor,
+          },
+        }}
       >
         <MenuItem disabled value="">
           <em>{defaultText || `Select ${label}`}</em>

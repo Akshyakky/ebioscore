@@ -1,24 +1,24 @@
 // src/hooks/useAdmissionForm.ts
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { extendedAdmissionService } from "../../services/PatientAdministrationServices/admissionService";
-import { showAlert } from "../../utils/Common/showAlert";
-import { AdmissionDto, IPAdmissionDetailsDto, IPAdmissionDto, WrBedDetailsDto } from "../../interfaces/PatientAdministration/AdmissionDto";
-import { useLoading } from "../../context/LoadingContext";
-import { RootState, store } from "@/store";
-import { PatientHistory } from "../../pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
-import { allergyService } from "../../services/ClinicalManagementServices/allergyService";
-import { createEntityService } from "../../utils/Common/serviceFactory";
-import { OPIPHistFHDto } from "../../interfaces/ClinicalManagement/OPIPHistFHDto";
-import { OPIPHistPMHDto } from "../../interfaces/ClinicalManagement/OPIPHistPMHDto";
-import { OPIPHistPSHDto } from "../../interfaces/ClinicalManagement/OPIPHistPSHDto";
-import { OPIPHistROSDto } from "../../interfaces/ClinicalManagement/OPIPHistROSDto";
-import { OPIPHistSHDto } from "../../interfaces/ClinicalManagement/OPIPHistSHDto";
-import { AssocDiagnosisDetailDto, DiagnosisDetailDto, DiagnosisDto } from "../../interfaces/ClinicalManagement/DiagnosisDto";
-import { diagnosisService } from "../../services/ClinicalManagementServices/diagnosisService";
-import { HistoryState } from "../../pages/clinicalManagement/PatientHistory/PatientHistory";
-import { pastMedicationService } from "../../services/ClinicalManagementServices/pastMedicationService";
 import { useAppSelector } from "@/store/hooks";
+import { AdmissionDto, IPAdmissionDetailsDto, IPAdmissionDto, WrBedDetailsDto } from "@/interfaces/PatientAdministration/AdmissionDto";
+import { AssocDiagnosisDetailDto, DiagnosisDetailDto, DiagnosisDto } from "@/interfaces/ClinicalManagement/DiagnosisDto";
 import { useCompanyDetails } from "../Common/useCompanyDetails";
+import { RootState } from "@/store";
+import { PatientHistory } from "@/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
+import { useLoading } from "@/context/LoadingContext";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
+import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
+import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
+import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
+import { OPIPHistPSHDto } from "@/interfaces/ClinicalManagement/OPIPHistPSHDto";
+import { pastMedicationService } from "@/services/ClinicalManagementServices/pastMedicationService";
+import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
+import { showAlert } from "@/utils/Common/showAlert";
+import { diagnosisService } from "@/services/ClinicalManagementServices/diagnosisService";
+import { allergyService } from "@/services/ClinicalManagementServices/allergyService";
+import { HistoryState } from "@/pages/clinicalManagement/PatientHistory/PatientHistory";
 
 interface UseAdmissionFormReturn {
   formData: AdmissionDto;
@@ -270,6 +270,12 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
 
     try {
       setLoading(true);
+      formData.ipAdmissionDto.compCode = "KVG";
+      formData.ipAdmissionDetailsDto.compCode = "KVG";
+      formData.wrBedDetailsDto.compCode = "KVG";
+      formData.ipAdmissionDto.compName = "KVG Medical College";
+      formData.ipAdmissionDetailsDto.compName = "KVG Medical College";
+      formData.wrBedDetailsDto.compName = "KVG Medical College";
       // Save admission first
       const admissionResult = await extendedAdmissionService.admitPatient(formData);
       if (!admissionResult.success) {

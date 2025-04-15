@@ -1,7 +1,4 @@
-export function debounce<T extends (...args: any[]) => void>(
-  func: T,
-  wait: number
-): T & { cancel: () => void } {
+export function debounce<T extends (...args: any[]) => void>(func: T, wait: number): T & { cancel: () => void } {
   let timeout: NodeJS.Timeout | null = null;
 
   function debounced(this: any, ...args: any[]) {

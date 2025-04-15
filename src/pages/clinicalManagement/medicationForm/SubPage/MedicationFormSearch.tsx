@@ -1,8 +1,7 @@
-// src/pages/inventoryManagement/MedicationListPage/SubPage/MedicationListSearch.tsx
-import React, { useMemo } from "react";
+import React from "react";
 import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
 import { MedicationFormDto } from "../../../../interfaces/ClinicalManagement/MedicationFormDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
+import { medicationFormService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface MedicationFormSearchProps {
   open: boolean;
@@ -11,7 +10,6 @@ interface MedicationFormSearchProps {
 }
 
 const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClose, onSelect }) => {
-  const medicationFormService = useMemo(() => createEntityService<MedicationFormDto>("MedicationForm", "clinicalManagementURL"), []);
   const fetchItems = async () => {
     try {
       const items = await medicationFormService.getAll();
@@ -25,25 +23,36 @@ const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClo
     try {
       return await medicationFormService.updateActiveStatus(id, status);
     } catch (error) {
-      console.error("Error updating medication form active status:", error);
       return false;
     }
   };
 
-  const getItemId = (item: MedicationFormDto) => item.mlID;
+  const getItemId = (item: MedicationFormDto) => item.mFID;
   const getItemActiveStatus = (item: MedicationFormDto) => item.rActiveYN === "Y";
 
   const columns = [
-    { key: "serialNumber", header: "Sl.No", visible: true, sortable: true},
-    { key: "mlCode", header: "Medication Form Code", visible: true },
-    { key: "medText", header: "Medication Form Name", visible: true },
-    { key: "mfName", header: "Medication Form", visible: true},
-    { key: "mGenName", header: "Generic Name", visible: true },
-    { key: "rNotes", header: "Notes", visible: true }
+    { key: "serialNumber", header: "Sl.No", visible: true },
+    { key: "mFCode", header: "Medication Form Code", visible: true },
+    { key: "mFSnomedCode", header: "Medication Form Snomed Code", visible: true },
+    { key: "mFName", header: "Medication Form Name", visible: true },
+    {
+      key: "modifyYN",
+      header: "Modifiable",
+      visible: true,
+      render: (row: MedicationFormDto) => (row.modifyYN === "Y" ? "Yes" : "No"),
+    },
+    {
+      key: "defaultYN",
+      header: "Default",
+      visible: true,
+      render: (row: MedicationFormDto) => (row.defaultYN === "Y" ? "Yes" : "No"),
+    },
+    { key: "rNotes", header: "Notes", visible: true },
   ];
 
   return (
     <GenericAdvanceSearch
+      isEditButtonVisible={true}
       open={open}
       onClose={onClose}
       onSelect={onSelect}
@@ -53,10 +62,9 @@ const MedicationFormSearch: React.FC<MedicationFormSearchProps> = ({ open, onClo
       columns={columns}
       getItemId={getItemId}
       getItemActiveStatus={getItemActiveStatus}
-      searchPlaceholder="Enter medication code or text"
-      isActionVisible={true}
-      isEditButtonVisible={true}
-      isStatusVisible={true}
+      searchPlaceholder="Enter medication form code or text"
+      isStatusVisible={(item: MedicationFormDto) => item.modifyYN === "Y"}
+      isActionVisible={(item: MedicationFormDto) => item.modifyYN === "Y"}
     />
   );
 };

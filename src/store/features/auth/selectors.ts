@@ -1,5 +1,6 @@
 // src/store/features/auth/selectors.ts
-import { RootState } from "../../index";
+
+import { RootState } from "@/store";
 
 export const selectUser = (state: RootState) => state.auth;
 export const selectIsAuthenticated = (state: RootState) => Boolean(state.auth.token);

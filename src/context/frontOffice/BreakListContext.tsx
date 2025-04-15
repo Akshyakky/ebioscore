@@ -1,10 +1,10 @@
+import { BreakListData } from "@/interfaces/frontOffice/BreakListData";
 import React, { createContext, useState } from "react";
 import { useLoading } from "../LoadingContext";
-import { useAppSelector } from "../../store/hooks";
-import { RootState } from "../../store";
-import { notifyError, notifySuccess } from "../../utils/Common/toastManager";
-import { BreakListService } from "../../services/FrontOfficeServices/BreakListServices/BreakListService";
-import { BreakListData } from "../../interfaces/frontOffice/BreakListData";
+import { useAppSelector } from "@/store/hooks";
+import { RootState } from "@/store";
+import { BreakListService } from "@/services/FrontOfficeServices/BreakListServices/BreakListService";
+import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 
 interface BreakListContextProps {
   breakLists: BreakListData[];

@@ -1,8 +1,8 @@
 // src/pages/inventoryManagement/MedicationListPage/SubPage/MedicationListSearch.tsx
+import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
+import { createEntityService } from "@/utils/Common/serviceFactory";
 import React, { useMemo } from "react";
-import GenericAdvanceSearch from "../../../../components/GenericDialog/GenericAdvanceSearch";
-import { MedicationListDto } from "../../../../interfaces/ClinicalManagement/MedicationListDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
 
 interface MedicationListSearchProps {
   open: boolean;

@@ -1,15 +1,15 @@
-import React, { useCallback, useEffect, useState } from "react";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import FormField from "@/components/FormField/FormField";
+import { useLoading } from "@/context/LoadingContext";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import { BServiceGrpDto } from "@/interfaces/Billing/BServiceGrpDto";
+import { serviceGroupService } from "@/services/BillingServices/BillingGenericService";
+import { useAppSelector } from "@/store/hooks";
+import { showAlert } from "@/utils/Common/showAlert";
 import { Grid, Paper, Typography } from "@mui/material";
-import { BServiceGrpDto } from "../../../../interfaces/Billing/BServiceGrpDto";
-import { useLoading } from "../../../../context/LoadingContext";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import { showAlert } from "../../../../utils/Common/showAlert";
+import React, { useCallback, useEffect, useState } from "react";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import FormField from "../../../../components/FormField/FormField";
-import { serviceGroupService } from "../../../../services/BillingServices/BillingGenericService";
-import { useAppSelector } from "@/store/hooks";
 
 const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ editData }) => {
   const user = useAppSelector((state) => state.auth);

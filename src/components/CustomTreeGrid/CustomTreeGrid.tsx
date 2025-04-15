@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { DataGridPro, GridColDef, GridRenderCellParams, GridRowsProp, DataGridProProps } from "@mui/x-data-grid-pro";
+import { JSX } from "react";
 
 export interface Column<T> {
   key: string;

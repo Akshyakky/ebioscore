@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Document, Page, pdfjs } from "react-pdf";
-import { APIConfig } from "../../../../apiConfig";
-import CustomButton from "../../../../components/Button/CustomButton";
 import { useAppSelector } from "@/store/hooks";
+import React from "react";
+import { APIConfig } from "@/apiConfig";
+import CustomButton from "@/components/Button/CustomButton";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 interface LoadSuccessParameters {

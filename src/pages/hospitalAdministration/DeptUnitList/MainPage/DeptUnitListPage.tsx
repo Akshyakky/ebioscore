@@ -1,10 +1,11 @@
+import React from "react";
 import { Box, Container } from "@mui/material";
-import DeptUnitListDetails from "../SubPage/DeptUnitListDetails";
-import ActionButtonGroup from "../../../../components/Button/ActionButtonGroup";
 import SearchIcon from "@mui/icons-material/Search";
 import { useState } from "react";
+import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptunitListDto";
+import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
+import DeptUnitListDetails from "../SubPage/DeptUnitListDetails";
 import DeptUnitListSearch from "../SubPage/DeptunitListSearch";
-import { DeptUnitListDto } from "@/interfaces/hospitalAdministration/DeptunitListDto";
 
 const DeptUnitListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

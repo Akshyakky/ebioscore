@@ -21,3 +21,12 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+src/services/CommonApiService.ts
+.vs/ProjectSettings.json
+.vs/slnx.sqlite
+.vs/VSWorkspaceState.json
+.vs/ebioscore/CopilotIndices/17.12.53.23981/CodeChunks.db
+.vs/ebioscore/CopilotIndices/17.12.53.23981/SemanticSymbols.db
+.vs/ebioscore/FileContentIndex/766ac34d-dadd-414d-84cc-1aa88a361841.vsidx
+.vs/ebioscore/v17/.wsuo
+.vs/ebioscore/v17/DocumentLayout.json

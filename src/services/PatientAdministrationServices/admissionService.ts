@@ -1,10 +1,10 @@
+import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { BaseDto, GenericEntityService } from "../GenericEntityService/GenericEntityService";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
 import { CommonApiService } from "../CommonApiService";
-import { APIConfig } from "../../apiConfig";
-import { AdmissionDto } from "../../interfaces/PatientAdministration/AdmissionDto";
-import { OperationResult } from "../../interfaces/Common/OperationResult";
-import { PatientRegistrationDto } from "../../interfaces/PatientAdministration/PatientFormData";
-import { AdmissionHistoryDto } from "../../interfaces/PatientAdministration/AdmissionHistoryDto";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { APIConfig } from "@/apiConfig";
 
 export enum AdmissionStatus {
   ADMITTED = "ADMITTED",
@@ -126,7 +126,6 @@ class ExtendedAdmissionService extends GenericEntityService<AdmissionDto> {
   }
 
   private formatAdmissionStatus(status: AdmissionStatus): string {
-    debugger;
     const statusMap: Record<AdmissionStatus, string> = {
       [AdmissionStatus.ADMITTED]: "Currently Admitted",
       [AdmissionStatus.DISCHARGED]: "Discharged",

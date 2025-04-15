@@ -1,11 +1,10 @@
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import { Box, Container } from "@mui/material";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import Search from "@mui/icons-material/Search";
+import React, { useState } from "react";
 import DepartmentListDetails from "../SubPage/DepartmentListDetails";
-import { useState } from "react";
 import DepartmentListSearch from "../SubPage/DepartmentListSearch";
-import { DepartmentDto } from "./../../../../interfaces/Billing/DepartmentDto";
-import React from "react";
+import SearchIcon from "@mui/icons-material/Search";
 
 const DepartmentListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -23,7 +22,7 @@ const DepartmentListPage: React.FC = () => {
   const actionButtons: ButtonProps[] = [
     {
       variant: "contained",
-      icon: Search,
+      icon: SearchIcon,
       text: "Advanced Search",
       onClick: handleAdvancedSearch,
     },

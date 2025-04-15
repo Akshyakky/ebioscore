@@ -12,4 +12,7 @@ export const APIConfig = {
   frontOffice: import.meta.env.VITE_FRONT_OFFICE_URL,
   inventoryManagementURL: import.meta.env.VITE_INVENTORY_MANAGEMENT_URL,
   clinicalManagementURL: import.meta.env.VITE_CLINICAL_MANAGEMENT_URL,
+  laboratoryURL: import.meta.env.VITE_LABORATORY_URL,
 };
+
+// || "http://BIOSOFTDEV005:7028/api/",

@@ -1,23 +1,21 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Grid, Paper, SelectChangeEvent, Typography } from "@mui/material";
-import FormField from "../../../../components/FormField/FormField";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
-import { ProductOverviewDto } from "../../../../interfaces/InventoryManagement/ProductOverviewDto";
-import { ProductListService } from "../../../../services/InventoryManagementService/ProductListService/ProductListService";
-import { ProductListDto } from "../../../../interfaces/InventoryManagement/ProductListDto";
-import { showAlert } from "../../../../utils/Common/showAlert";
-import { debounce } from "../../../../utils/Common/debounceUtils";
+import { debounce, Grid, Paper, SelectChangeEvent, Typography } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
-import CustomButton from "../../../../components/Button/CustomButton";
 import AddIcon from "@mui/icons-material/Add";
 import Close from "@mui/icons-material/Close";
-import GenericDialog from "../../../../components/GenericDialog/GenericDialog";
-
 import { ChangeCircleRounded } from "@mui/icons-material";
-import { productOverviewService } from "../../../../services/InventoryManagementService/inventoryManagementService";
 import { useAppSelector } from "@/store/hooks";
+import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
+import { productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
+import { showAlert } from "@/utils/Common/showAlert";
+import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import CustomButton from "@/components/Button/CustomButton";
+import FormField from "@/components/FormField/FormField";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 
 interface ProductOverviewDetailProps {
   selectedData?: ProductOverviewDto; // Data for editing
@@ -253,65 +251,6 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
       showAlert("error", "Failed to fetch product details", "error");
     }
   }, []);
-
-  //     setFormState({
-  //         pvID: 0,
-  //         productID: 0,
-  //         productCode: "",
-  //         fsbCode: "N",
-  //         rackNo: "",
-  //         shelfNo: "",
-  //         minLevelUnits: 0,
-  //         maxLevelUnits: 0,
-  //         dangerLevelUnits: 0,
-  //         reOrderLevel: 0,
-  //         avgDemand: 0,
-  //         stockLevel: 0,
-  //         supplierAllocation: "N",
-  //         poStatus: "N",
-  //         deptID: 0,
-  //         department: "",
-  //         defaultYN: "N",
-  //         isAutoIndentYN: "N",
-  //         productLocation: "",
-  //         rActiveYN: "Y",
-  //         compID: user.compID || 0,
-  //         compCode: "",
-  //         compName: "",
-  //         transferYN: "N",
-  //         rNotes: "",
-  //     });
-  //     setSelectedProductData([]);
-  //     setFieldsDisabled(false);
-  // };
-  // const handleSave = async () => {
-  //     try {
-  //         const productOverview: ProductOverviewDto = {
-  //             ...formState,
-  //             fsbCode: formState.fsbCode || "N",
-  //             supplierAllocation: formState.supplierAllocation || "N",
-  //             poStatus: formState.poStatus || "N",
-  //             defaultYN: formState.defaultYN || "N",
-  //             isAutoIndentYN: formState.isAutoIndentYN || "N",
-  //             deptID: formState.deptID || 1,
-  //             minLevelUnits: formState.minLevelUnits || 0,
-  //             maxLevelUnits: formState.maxLevelUnits || 0,
-  //             dangerLevelUnits: formState.dangerLevelUnits || 0,
-  //             reOrderLevel: formState.reOrderLevel || 0,
-  //             avgDemand: formState.avgDemand || 0,
-  //             stockLevel: formState.stockLevel || 0,
-  //             compID: user.compID || 0,
-  //         };
-
-  //         const service = productOverviewService;
-  //         await service.save(productOverview);
-  //         showAlert("success", "Product saved successfully!", "success");
-  //         setDialogOpen(false);
-  //     } catch (error) {
-  //         showAlert("Error", "Failed to save product.", "error");
-  //         console.error(error);
-  //     }
-  // };
 
   const handleEdit = (productID: number) => {
     setDialogOpen(true);

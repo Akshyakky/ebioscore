@@ -1,10 +1,11 @@
+import React from "react";
 import { Box, Container } from "@mui/material";
 import Search from "@mui/icons-material/Search";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
 import ProductListDetails from "../SubPage/ProductListDetails";
 import { useState } from "react";
-import { ProductListDto } from "../../../../interfaces/InventoryManagement/ProductListDto";
 import ProductListSearch from "../SubPage/ProductListSearch";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 
 const ProductListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

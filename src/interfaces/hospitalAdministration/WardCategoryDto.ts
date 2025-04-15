@@ -1,4 +1,4 @@
-import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
 export interface WardCategoryDto extends BaseDto {
   wCatID: number;

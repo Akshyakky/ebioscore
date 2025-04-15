@@ -1,16 +1,14 @@
-import React, { useMemo, useCallback, forwardRef, useImperativeHandle, useEffect, useState, useRef } from "react";
-import { Scheduler, Resource } from "devextreme-react/scheduler";
-import "devextreme/dist/css/dx.light.css";
-import { useServerDate } from "../../../../hooks/Common/useServerDate";
-import useDayjs from "../../../../hooks/Common/useDateTime";
-import { useAppointments } from "../../../../hooks/FrontOffice/useAppointments";
-import { CommonService } from "../../../../services/CommonServices/CommonService";
-import { BreakListService } from "../../../../services/FrontOfficeServices/BreakListServices/BreakListService";
-import { useLoading } from "../../../../context/LoadingContext";
+import { useLoading } from "@/context/LoadingContext";
+import useDayjs from "@/hooks/Common/useDateTime";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import { useAppointments } from "@/hooks/FrontOffice/useAppointments";
+import { CommonService } from "@/services/CommonServices/CommonService";
+import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
+import { BreakListService } from "@/services/FrontOfficeServices/BreakListServices/BreakListService";
+import { Box, useTheme } from "@mui/material";
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { dxSchedulerAppointment } from "devextreme/ui/scheduler";
-import { useTheme } from "@mui/material/styles";
-import { Box } from "@mui/material";
-import { AppointmentService } from "../../../../services/FrontOfficeServices/AppointmentServices/AppointmentService";
+import { Scheduler, Resource } from "devextreme-react/scheduler";
 
 const views: Array<"day" | "week" | "workWeek" | "month"> = ["day", "week", "workWeek", "month"];
 

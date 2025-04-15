@@ -1,10 +1,10 @@
-import React, { useCallback, useState, useMemo } from "react";
-import { Box, Container } from "@mui/material";
-import ActionButtonGroup, { ButtonProps } from "../../../../components/Button/ActionButtonGroup";
-import Search from "@mui/icons-material/Search";
+import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
+import { IcdDetailDto } from "@/interfaces/ClinicalManagement/IcdDetailDto";
+import { Search } from "@mui/icons-material";
+import { Box, ButtonProps, Container } from "@mui/material";
+import React, { useCallback, useMemo, useState } from "react";
 import DiagnosisDetails from "../SubPage/DiagnosisDetails";
 import DiagnosisSearch from "../SubPage/DiagnosisSearch";
-import { IcdDetailDto } from "../../../../interfaces/ClinicalManagement/IcdDetailDto";
 
 const DiagnosisListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);

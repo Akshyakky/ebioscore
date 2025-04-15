@@ -1,8 +1,8 @@
+import { APIConfig } from "@/apiConfig";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
+import { CommonApiService } from "@/services/CommonApiService";
 import { store } from "@/store";
-import { APIConfig } from "../../../apiConfig";
-import { OperationResult } from "../../../interfaces/Common/OperationResult";
-import { InsuranceListDto } from "../../../interfaces/hospitalAdministration/InsuranceListDto";
-import { CommonApiService } from "../../CommonApiService";
 
 const apiService = new CommonApiService({
   baseURL: APIConfig.hospitalAdministrations,

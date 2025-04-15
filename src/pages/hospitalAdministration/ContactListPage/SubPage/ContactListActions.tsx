@@ -1,8 +1,8 @@
 import React from "react";
-import { Box } from "@mui/material";
-import FormSaveClearButton from "../../../../components/Button/FormSaveClearButton";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
+import { Box } from "@mui/material";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 interface ContactListActionsProps {
   handleSave: () => void;

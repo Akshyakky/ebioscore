@@ -1,10 +1,13 @@
-import { BaseDto } from "../../services/GenericEntityService/GenericEntityService";
+import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { RecordFields } from "../Common/RecordFields";
+
 export interface ChargeDetailsDto extends BaseDto {
   chargeInfo: BChargeDto;
   chargeDetails: BChargeDetailsDto[];
   chargeAliases: BChargeAliasDto[];
-  chargeFaculties: BChargeFacultyDto[];
+  chargeFaculties?: BChargeFacultyDto[];
+  chargePackDetails?: BChargePackDto[];
+  doctorSharePerShare?: BDoctorSharePerShare[];
 }
 export interface BChargeDto extends RecordFields {
   chargeID: number;
@@ -58,4 +61,39 @@ export interface BChargeFacultyDto extends RecordFields {
   bchfID: number;
   chargeID: number;
   aSubID: number;
+}
+export interface BChargePackDto extends RecordFields {
+  pkDetID: number;
+  chDetID: number;
+  chargeID: number;
+  chargeRevise: string;
+  chargeStatus: string;
+  DcValue: number;
+  hcValue: number;
+  chValue: number;
+}
+
+export interface BDoctorSharePerShare extends RecordFields {
+  docShareID: number;
+  chargeID: number;
+  conID: number;
+  doctorShare: number;
+  hospShare: number;
+}
+
+export interface ServiceTypeDto extends BaseDto {
+  bchID: number;
+  bchCode: string;
+  bchName: string;
+  bPackYN: string;
+  facultyYN: string;
+  labYN: string;
+  isLabYN: string;
+  isusndYN: string;
+  isRadYN: string;
+  ismedgrpYN: string;
+  showinsocYN: string;
+  langType: string;
+  isemrYN: string;
+  bchOeder: number;
 }
