@@ -59,10 +59,11 @@ export const AuthService = {
     return result as unknown as TokenResponse;
   },
 
-  logout: async (token: string): Promise<OperationResult<any>> => {
+  logout: async (token: string): Promise<any> => {
     const url = `Logout`;
     const data: LogoutRequestModel = { Token: token };
-    return await apiService.post<OperationResult<any>>(url, data, token);
+    const result = await apiService.post<OperationResult<any>>(url, data, token);
+    return result as any;
   },
 
   checkTokenExpiry: async (token: string): Promise<OperationResult<TokenExpiryCheckResponse>> => {
