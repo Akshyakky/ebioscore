@@ -2,6 +2,8 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { format, toZonedTime } from "date-fns-tz";
 import { handleError } from "./CommonServices/HandlerError";
 import { RequestQueueManager } from "./RequestQueueManager";
+import CryptoJS from "crypto-js";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
 
 export interface ApiConfig {
   baseURL: string;
@@ -12,11 +14,20 @@ type HttpMethod = "get" | "post" | "put" | "delete";
 export class CommonApiService {
   private readonly baseURL: string;
   private readonly timeZone: string;
+  private readonly apiSecret: string;
   private requestQueue = new RequestQueueManager();
 
   constructor(config: ApiConfig) {
     this.baseURL = config.baseURL;
     this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    this.apiSecret = import.meta.env.VITE_API_SECRET;
+  }
+
+  private generateSignature(data: unknown): string {
+    const payload = JSON.stringify(this.processData(data));
+    // Using crypto-js for browser compatibility
+    const hmac = CryptoJS.HmacSHA256(payload, this.apiSecret);
+    return hmac.toString().toLowerCase();
   }
 
   private getHeaders(token?: string, additionalHeaders?: Record<string, string>): Record<string, string> {
@@ -24,10 +35,20 @@ export class CommonApiService {
       "Content-Type": "application/json",
       Accept: "application/json",
       "Time-Zone": this.timeZone,
+      "X-Request-ID": crypto.randomUUID ? crypto.randomUUID() : self.crypto.randomUUID(),
+      "X-Request-Timestamp": new Date().toISOString(),
+      // Prevent MIME type sniffing
+      "X-Content-Type-Options": "nosniff",
+      // Prevent clickjacking
+      "X-Frame-Options": "DENY",
+      // Enable strict XSS protection
+      "X-XSS-Protection": "1; mode=block",
     };
+
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
+
     return { ...headers, ...additionalHeaders };
   }
 
@@ -42,13 +63,10 @@ export class CommonApiService {
     } else if (Array.isArray(data)) {
       return data.map((item) => this.processData(item));
     } else if (typeof data === "object" && data !== null) {
-      return Object.entries(data).reduce(
-        (acc, [key, value]) => {
-          acc[key] = this.processData(value);
-          return acc;
-        },
-        {} as Record<string, unknown>
-      );
+      return Object.entries(data).reduce((acc, [key, value]) => {
+        acc[key] = this.processData(value);
+        return acc;
+      }, {} as Record<string, unknown>);
     }
     return data;
   }
@@ -61,14 +79,28 @@ export class CommonApiService {
     additionalHeaders?: Record<string, string>,
     params?: Record<string, unknown>
   ): Promise<AxiosResponse<T>> {
+    const processedData = this.processData(data);
+    const signature = this.generateSignature(processedData);
+
     const config: AxiosRequestConfig = {
       method,
       url: `${this.baseURL}${endpoint}`,
-      headers: this.getHeaders(token, additionalHeaders),
-      data: this.processData(data),
+      headers: {
+        ...this.getHeaders(token, additionalHeaders),
+        "X-Request-Signature": signature,
+      },
+      data: processedData,
       params: this.processData(params),
       withCredentials: true,
+      // Add request timeout
+      timeout: 30000,
+      // Limit response size
+      maxContentLength: 10 * 1024 * 1024, // 10MB
+      maxBodyLength: 10 * 1024 * 1024, // 10MB
+      // Validate status
+      validateStatus: (status) => status >= 200 && status < 300,
     };
+
     return axios(config);
   }
 

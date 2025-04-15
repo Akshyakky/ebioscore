@@ -91,6 +91,10 @@ export default defineConfig({
       "@mui/x-date-pickers",
     ],
     exclude: ["@mui/icons-material/esm"],
+    force: true,
+    esbuildOptions: {
+      target: "esnext",
+    },
   },
   server: {
     port: 3000,
@@ -98,6 +102,12 @@ export default defineConfig({
     hmr: {
       overlay: false,
     },
-    allowedHosts: true,
+    watch: {
+      usePolling: true,
+    },
+    fs: {
+      strict: false,
+    },
   },
+  cacheDir: "node_modules/.vite",
 });
