@@ -66,10 +66,11 @@ export const AuthService = {
     return result as any;
   },
 
-  checkTokenExpiry: async (token: string): Promise<OperationResult<TokenExpiryCheckResponse>> => {
+  checkTokenExpiry: async (token: string): Promise<TokenExpiryCheckResponse> => {
     const url = `CheckTokenExpiry`;
     const data: TokenValidationModel = { Token: token };
-    return await apiService.post<OperationResult<TokenExpiryCheckResponse>>(url, data, token);
+    const result = await apiService.post<OperationResult<TokenExpiryCheckResponse>>(url, data, token);
+    return result as unknown as TokenExpiryCheckResponse;
   },
 
   validateToken: async (token: string): Promise<OperationResult<TokenValidationResponse>> => {

@@ -32,7 +32,7 @@ const useCheckTokenExpiry = ({ retryCount = 3, retryDelay = 1000, debounceDelay 
 
       try {
         const response = await AuthService.checkTokenExpiry(token);
-        setIsTokenExpired(response.data?.isExpired ?? checkLocalExpiry());
+        setIsTokenExpired(response.isExpired ?? checkLocalExpiry());
       } catch (error) {
         console.error("Token validation error:", error);
 
