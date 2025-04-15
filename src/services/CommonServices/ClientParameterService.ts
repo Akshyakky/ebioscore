@@ -1,5 +1,13 @@
+import { CommonApiService, ApiConfig } from "@/services/CommonApiService";
 import { APIConfig } from "@/apiConfig";
-import axios from "axios";
+
+// Create API configuration
+const apiConfig: ApiConfig = {
+  baseURL: APIConfig.moduleURL,
+};
+
+// Initialize the CommonApiService with our configuration
+const apiService = new CommonApiService(apiConfig);
 
 /**
  * Fetch client parameters from the server.
@@ -9,20 +17,18 @@ import axios from "axios";
  */
 const getClientParameter = async (clientCode: string): Promise<any> => {
   try {
-    const response = await axios.get(`${APIConfig.moduleURL}GetClientParameter`, {
-      params: { ClientCode: clientCode },
-    });
-    // Optionally add response validation here
-    return response.data;
+    // Using the CommonApiService to make the request with params
+    const response = await apiService.get<any>(
+      "GetClientParameter",
+      undefined, // No token required for this endpoint
+      { ClientCode: clientCode }
+    );
+    return response;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      // Handle Axios errors specifically
-      // Provide detailed logging or custom error messages as needed
-      throw new Error("Error fetching client parameters: " + error.message);
-    } else {
-      // Handle non-Axios errors
-      throw error;
-    }
+    // CommonApiService already handles basic error logging
+    // We can add additional client parameter specific error handling if needed
+    console.error(`Failed to retrieve client parameter for code ${clientCode}:`, error);
+    throw error; // Re-throw to allow the calling component to handle the error
   }
 };
 
