@@ -44,6 +44,7 @@ import InvestigationListPage from "@/pages/laboratory/InvestigationListPage/Main
 import ComponentEntryTypePage from "@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage";
 import ForgotPasswordPage from "@/pages/common/ForgotPasswordPage/ForgotPasswordPage";
 import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
+import IndentProductPage from "@/pages/inventoryManagement/IndentProduct/MainPage/IndentProductPage";
 
 interface RouteConfig {
   path: string;
@@ -95,6 +96,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/ComponentEntryTypePage", component: ComponentEntryTypePage, protected: true },
   { path: "/PurchaseOrderPage", component: PurchaseOrderPage, protected: true },
   { path: "/ForgotPasswordPage", component: ForgotPasswordPage, protected: false },
+  { path: "/IndentProductPage", component: IndentProductPage, protected: true },
 ];
 
 export default routeConfig;

@@ -8,7 +8,7 @@ import { ChangeCircleRounded } from "@mui/icons-material";
 import { useAppSelector } from "@/store/hooks";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
-import { productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
+import { productListService, productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { showAlert } from "@/utils/Common/showAlert";
 import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
@@ -18,16 +18,12 @@ import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 
 interface ProductOverviewDetailProps {
-  selectedData?: ProductOverviewDto; // Data for editing
+  selectedData?: ProductOverviewDto;
   onChangeDepartment?: () => void;
-  editData?: ProductOverviewDto; // For editing existing data
+  editData?: ProductOverviewDto;
 }
 
-const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
-  selectedData,
-  onChangeDepartment,
-  editData, // Pass edit data as prop
-}) => {
+const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({ selectedData, onChangeDepartment }) => {
   const user = useAppSelector((state) => state.auth);
   const [formState, setFormState] = useState<ProductOverviewDto>({
     pvID: 0,
@@ -60,7 +56,7 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
   });
 
   const [productOptions, setProductOptions] = useState<ProductListDto[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [, setIsLoading] = useState(false);
   const [selectedProductData, setSelectedProductData] = useState<ProductListDto[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [fieldsDisabled, setFieldsDisabled] = useState(false);
@@ -69,7 +65,7 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
   useEffect(() => {
     if (selectedData?.pvID) {
       setFormState({
-        ...selectedData, // Populate form with edit data
+        ...selectedData,
         compID: user.compID || 0,
       });
       setDialogOpen(true);
@@ -77,15 +73,6 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
       handleClear();
     }
   }, [selectedData]);
-  const [isHovered, setIsHovered] = useState(false);
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-  };
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -190,25 +177,25 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
     convertToDays();
   }, [formState.leadTime, formState.leadTimeUnit, convertToDays]);
 
-  const fetchProductSuggestions = useCallback(async (inputValue: string): Promise<void> => {
-    if (!inputValue || inputValue.length < 1) {
-      setProductOptions([]);
-      return;
-    }
+  const fetchProductSuggestions = useCallback(async (searchTerm: string) => {
+    if (!searchTerm.trim()) return [];
 
-    setIsLoading(true);
     try {
-      const response = await ProductListService.getAllProductList();
-      if (response.success && response.data) {
-        const filteredProducts = response.data.filter((product) => product.productCode?.toLowerCase().includes(inputValue.toLowerCase()));
-        setProductOptions(filteredProducts);
-      } else {
-        showAlert("error", "Failed to fetch product suggestions", "error");
-      }
+      const response = await productListService.getAll();
+      return (
+        response.data
+          ?.filter((product: any) => {
+            const prodCode = product.productCode?.toLowerCase();
+            return prodCode && prodCode.startsWith(searchTerm.toLowerCase());
+          })
+          .map((product: any) => {
+            const prodCode = product.productCode || "";
+            const prodName = product.productName || "";
+            return `${prodCode} - ${prodName}`;
+          }) || []
+      );
     } catch (error) {
-      showAlert("error", "Failed to fetch product suggestions", "error");
-    } finally {
-      setIsLoading(false);
+      return [];
     }
   }, []);
 
@@ -224,28 +211,35 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
   );
 
   const handleProductSelect = useCallback(async (selectedProductString: string) => {
+    // Extract the selected product code from the suggestion string.
     const [selectedProductCode] = selectedProductString.split(" - ");
     setFormState((prevState) => ({
       ...prevState,
       productCode: selectedProductCode,
     }));
+
     try {
-      const response = await ProductListService.getAllProductList();
+      const response = await productListService.getAll();
       if (response.success && response.data) {
+        // Filter for the product with the matching product code and map the result.
         const selectedProductDetails = response.data
-          .filter((product) => product.productCode === selectedProductCode)
-          .map(({ serialNumber, MFName, ...rest }) => ({
+          .filter((product: any) => product.productCode === selectedProductCode)
+          // Use aliasing to destructure mfName as MFName.
+          .map(({ serialNumber, mfName: MFName, ...rest }: any) => ({
             ...rest,
             MFName,
           }));
 
-        setFormState((prevState) => ({
-          ...prevState,
-          ...selectedProductDetails[0],
-          productID: selectedProductDetails[0]?.productID || 0,
-        }));
-        setFieldsDisabled(true);
-        setSelectedProductData(selectedProductDetails);
+        // Proceed only if we got details for the selected product.
+        if (selectedProductDetails.length > 0) {
+          setFormState((prevState) => ({
+            ...prevState,
+            ...selectedProductDetails[0],
+            productID: selectedProductDetails[0].productID || 0,
+          }));
+          setFieldsDisabled(true);
+          setSelectedProductData(selectedProductDetails);
+        }
       }
     } catch (error) {
       showAlert("error", "Failed to fetch product details", "error");
@@ -294,10 +288,17 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({
             type="autocomplete"
             placeholder="Search through product..."
             value={formState.productCode || ""}
-            onChange={handleProductCodeChange}
-            suggestions={productOptions.map((product) => `${product.productCode} - ${product.productName}`)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const { value } = e.target;
+              setFormState((prev) => ({
+                ...prev,
+                productCode: value,
+              }));
+            }}
+            fetchSuggestions={fetchProductSuggestions} // Function that returns suggestions as per the input
             onSelectSuggestion={handleProductSelect}
-            isMandatory
+            isMandatory={true}
+            maxLength={60}
             gridProps={{ xs: 12 }}
           />
         </Grid>

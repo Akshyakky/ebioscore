@@ -46,7 +46,7 @@ const pageTitleMap: PageTitleMap = {
   "/MedicationGenericPage": "Medication Generic",
   "/InvestigationListPage": "Investigation List",
   "/ComponentEntryTypePage": "Component EntryType Page ",
-  // Add more mappings as needed
+  "/IndentProductPage": "Indent Product",
 };
 
 export const usePageTitle = () => {
