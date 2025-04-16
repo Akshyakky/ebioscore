@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, forwardRef } from "react";
+import React, { useMemo, useCallback, forwardRef, useState, useEffect } from "react";
 import TextField, { TextFieldProps } from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
 import { TextBoxProps } from "../../../interfaces/Common/TextBoxProps";
@@ -39,11 +39,29 @@ const FloatingLabelTextBox = forwardRef<HTMLInputElement, TextBoxProps>(
   ) => {
     const controlId = useMemo(() => `txt${ControlID}`, [ControlID]);
 
+    // Use local state to immediately update UI without waiting for parent rerender
+    const [localValue, setLocalValue] = useState(value);
+
+    // Sync local state with prop value when it changes externally
+    useEffect(() => {
+      setLocalValue(value);
+    }, [value]);
+
+    // Handle direct typing with improved performance
     const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
+
+        // Update local state immediately for responsive UI
+        setLocalValue(newValue);
+
+        // Only validate and update parent if pattern matches or no pattern exists
         if (!inputPattern || inputPattern.test(newValue)) {
-          onChange(e);
+          // Use requestAnimationFrame to defer the parent state update
+          // This prevents blocking the UI thread during rapid key presses
+          requestAnimationFrame(() => {
+            onChange(e);
+          });
         }
       },
       [onChange, inputPattern]
@@ -75,7 +93,8 @@ const FloatingLabelTextBox = forwardRef<HTMLInputElement, TextBoxProps>(
           name={name}
           label={title || ""}
           type={type}
-          value={value}
+          // Use localValue for UI rendering to ensure responsiveness
+          value={localValue}
           onChange={handleChange}
           onBlur={onBlur}
           onKeyPress={onKeyPress}

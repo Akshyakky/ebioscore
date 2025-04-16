@@ -14,6 +14,7 @@ import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData"
 import ProfilePermissionsListModal from "./ProfilePermissionsListModal";
 import ProfilePermissionsModifyModal from "./ProfilePermissionsModifyModal";
 import PermissionManager from "../../CommonPage/PermissionManager";
+import { Company } from "@/types/Common/Company.type";
 interface UserListProps {
   selectedUser?: UserListDto;
   handleClearPage: () => void;
@@ -69,7 +70,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
     const fetchCompanies = async () => {
       try {
         const companyData = await CompanyService.getCompanies();
-        const companies: DropdownOption[] = companyData.map((company: DropdownOption) => ({
+        const companies: DropdownOption[] = companyData.map((company: Company) => ({
           value: company.compIDCompCode.split(",")[0],
           label: company.compName,
         }));
