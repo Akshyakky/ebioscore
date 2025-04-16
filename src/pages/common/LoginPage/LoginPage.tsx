@@ -242,8 +242,8 @@ const LoginPage: React.FC = () => {
           licenseDaysRemaining < 0
             ? "Cannot log in. Your License has expired"
             : licenseDaysRemaining <= 30
-              ? `Your License will expire in ${Math.ceil(licenseDaysRemaining)} day(s)`
-              : "",
+            ? `Your License will expire in ${Math.ceil(licenseDaysRemaining)} day(s)`
+            : "",
       }));
     } catch (error) {
       console.error("Failed to fetch client parameters:", error);
@@ -304,18 +304,21 @@ const LoginPage: React.FC = () => {
         const tokenResponse = await AuthService.generateToken({
           UserName: formState.userName,
           Password: formState.password,
+          CompanyID: parseInt(formState.companyID),
+          CompanyCode: formState.companyCode,
+          CompanyName: selectedCompanyName,
         });
 
-        if (tokenResponse.data?.token) {
-          const jwtToken = JSON.parse(atob(tokenResponse.data.token.split(".")[1]));
+        if (tokenResponse.token) {
+          const jwtToken = JSON.parse(atob(tokenResponse.token.split(".")[1]));
           const tokenExpiry = new Date(jwtToken.exp * 1000).getTime();
 
           dispatch(
             setUserDetails({
-              userID: tokenResponse.data.user.userID,
-              token: tokenResponse.data.token,
-              adminYN: tokenResponse.data.user.adminYN,
-              userName: tokenResponse.data.user.userName,
+              userID: tokenResponse.user.userID,
+              token: tokenResponse.token,
+              adminYN: tokenResponse.user.adminYN,
+              userName: tokenResponse.user.userName,
               compID: parseInt(formState.companyID),
               compCode: formState.companyCode,
               compName: selectedCompanyName,
@@ -337,7 +340,7 @@ const LoginPage: React.FC = () => {
           });
           setFormState((prev) => ({
             ...prev,
-            errorMessage: tokenResponse.data?.user.ErrorMessage || "Invalid credentials",
+            errorMessage: tokenResponse.user.ErrorMessage || "Invalid credentials",
             isLoggingIn: false,
           }));
         }

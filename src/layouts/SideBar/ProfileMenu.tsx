@@ -31,7 +31,7 @@ const ProfileMenu: React.FC = () => {
     if (user.token) {
       try {
         const result = await AuthService.logout(user.token);
-        if (result.success) {
+        if (result.message) {
           dispatch(logout());
           notifySuccess("Logged out successfully");
           navigate("/login");

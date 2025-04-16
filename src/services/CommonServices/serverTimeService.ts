@@ -1,7 +1,7 @@
 // src/services/serverTimeService.ts
 import { APIConfig } from "@/apiConfig";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { get } from "../apiService";
+import { CommonApiService } from "../CommonApiService";
 
 export interface ServerTimeResponse {
   currentTimeUtc: string;
@@ -10,7 +10,9 @@ export interface ServerTimeResponse {
   serverTimeZoneOffset: string;
 }
 
+const apiService = new CommonApiService({ baseURL: APIConfig.commonURL });
+
 export const fetchServerTime = async (): Promise<OperationResult<ServerTimeResponse>> => {
-  const url = "/ServerTime";
-  return get<ServerTimeResponse>(url, APIConfig.commonURL);
+  const url = "ServerTime";
+  return apiService.get<OperationResult<ServerTimeResponse>>(url);
 };
