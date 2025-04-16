@@ -44,6 +44,7 @@ import InvestigationListPage from "@/pages/laboratory/InvestigationListPage/Main
 import ComponentEntryTypePage from "@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage";
 import ForgotPasswordPage from "@/pages/common/ForgotPasswordPage/ForgotPasswordPage";
 import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
+import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
 
 interface RouteConfig {
   path: string;
@@ -95,6 +96,8 @@ const routeConfig: RouteConfig[] = [
   { path: "/ComponentEntryTypePage", component: ComponentEntryTypePage, protected: true },
   { path: "/PurchaseOrderPage", component: PurchaseOrderPage, protected: true },
   { path: "/ForgotPasswordPage", component: ForgotPasswordPage, protected: false },
+  // 404 Not Found route - must be placed last to catch all unmatched routes
+  { path: "*", component: NotFoundPage, protected: false },
 ];
 
 export default routeConfig;

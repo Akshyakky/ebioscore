@@ -15,6 +15,8 @@ import routeConfig from "./routes/routeConfig";
 import { persistor, store } from "./store";
 import ErrorBoundary from "./components/ErrorBoundary";
 import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
+import { QueryProvider } from "./providers/QueryProvider";
+import RouteNotFoundBoundary from "./components/RouteNotFoundBoundary";
 
 // Types
 interface RouteConfig {
@@ -87,29 +89,32 @@ const App: React.FC = () => {
     <ReduxProvider store={store}>
       <PersistGate loading={<PersistLoadingFallback />} persistor={persistor}>
         <ErrorBoundary onError={handleAppError} fallback={<ErrorFallback />}>
-          <ThemeProvider>
-            <LoadingProvider>
-              <Router>
-                <GlobalSpinner delay={500} color="secondary" size={50} />
-                <ToastContainer
-                  position="top-right"
-                  autoClose={1500}
-                  hideProgressBar={false}
-                  newestOnTop={false}
-                  closeOnClick
-                  rtl={false}
-                  pauseOnFocusLoss
-                  draggable
-                  pauseOnHover
-                />
-                <Routes>
-                  {memoizedRoutes}
-                  <Route path="/" element={<Navigate replace to="/login" />} />
-                  <Route path="*" element={<Navigate replace to="/login" />} />
-                </Routes>
-              </Router>
-            </LoadingProvider>
-          </ThemeProvider>
+          <QueryProvider>
+            <ThemeProvider>
+              <LoadingProvider>
+                <Router>
+                  <GlobalSpinner delay={500} color="secondary" size={50} />
+                  <ToastContainer
+                    position="top-right"
+                    autoClose={1500}
+                    hideProgressBar={false}
+                    newestOnTop={false}
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                  />
+                  <RouteNotFoundBoundary>
+                    <Routes>
+                      {memoizedRoutes}
+                      <Route path="/" element={<Navigate replace to="/login" />} />
+                    </Routes>
+                  </RouteNotFoundBoundary>
+                </Router>
+              </LoadingProvider>
+            </ThemeProvider>
+          </QueryProvider>
         </ErrorBoundary>
       </PersistGate>
     </ReduxProvider>
