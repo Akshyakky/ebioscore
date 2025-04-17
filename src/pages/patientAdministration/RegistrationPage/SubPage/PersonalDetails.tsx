@@ -12,6 +12,8 @@ import useFieldsList from "@/components/FieldsList/UseFieldsList";
 import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
 import FormField from "@/components/FormField/FormField";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
+import { showAlert } from "@/utils/Common/showAlert";
+import { notifyWarning } from "@/utils/Common/toastManager";
 
 interface PersonalDetailsProps {
   formData: PatientRegistrationDto;
@@ -33,35 +35,36 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
 
-  const titleToGenderMap: { [key: string]: string } = {
-    MR: "M",
-    MRS: "F",
-    MISS: "F",
-    MAST: "M",
-    Baby: "F",
-    "B/O": "M",
-    Dr: "",
-    "M/s": "",
-    SRI: "M",
-    SMT: "F",
-  };
-
   const handleTitleChange = (selectedTitleValue: string) => {
-    const letterVal = titleToGenderMap[selectedTitleValue] || "";
-    const mappedGender = letterVal === "M" ? "Male" : letterVal === "F" ? "Female" : "";
-    setFormData((prevFormData) => {
-      const updatedFormData = {
-        ...prevFormData,
-        patRegisters: {
-          ...prevFormData.patRegisters,
-          pTitleVal: selectedTitleValue,
-          pTitle: selectedTitleValue,
-          pGenderVal: mappedGender,
-          pGender: mappedGender,
-        },
-      };
-      return updatedFormData;
-    });
+    const selectedTitleOption = dropdownValues.title.find((t) => t.value === selectedTitleValue);
+    const selectedTitleLabel = selectedTitleOption?.label?.trim().toUpperCase() || "";
+    const titleToGenderMap: { [key: string]: string } = {
+      MR: "M",
+      MRS: "F",
+      MISS: "F",
+      MAST: "M",
+      BABY: "F",
+      "B/O": "M",
+      DR: "",
+      "M/S": "",
+      SRI: "M",
+      SMT: "F",
+    };
+
+    const genderCode = titleToGenderMap[selectedTitleLabel] || "";
+    const genderOption = dropdownValues.gender.find((g) =>
+      genderCode === "M" ? g.label?.toLowerCase() === "male" : genderCode === "F" ? g.label?.toLowerCase() === "female" : false
+    );
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      patRegisters: {
+        ...prevFormData.patRegisters,
+        pTitleVal: selectedTitleValue,
+        pTitle: selectedTitleValue,
+        pGenderVal: genderOption?.value || "",
+        pGender: genderOption?.label || "",
+      },
+    }));
   };
 
   useEffect(() => {
@@ -147,12 +150,18 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
   const handleDOBChange = useCallback(
     (newDate: Date | null) => {
       if (newDate) {
+        const today = new Date();
+        if (newDate > today) {
+          notifyWarning("Date of Birth cannot be a future date.");
+          return;
+        }
+
         const { age, ageType, ageUnit } = calculateAge(newDate);
         setFormData((prevFormData) => ({
           ...prevFormData,
           patRegisters: {
             ...prevFormData.patRegisters,
-            pDob: newDate ? newDate : serverDate,
+            pDob: newDate,
           },
           PApproxAge: age,
           PAgeType: ageType,
@@ -165,7 +174,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         }));
       }
     },
-    [calculateAge, formatDateYMD, setFormData]
+    [calculateAge, setFormData]
   );
 
   const handleUHIDBlur = useCallback(() => {
@@ -187,7 +196,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
   const handleNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
       const value = e.target.value;
-      const validatedValue = value.replace(/[^a-zA-Z\s]/g, "").toUpperCase();
+      const validatedValue = value.replace(/[^a-zA-Z0-9\s]/g, "").toUpperCase();
       setFormData((prevFormData) => ({
         ...prevFormData,
         patRegisters: {
@@ -288,7 +297,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         isSubmitted={isSubmitted}
         isMandatory={true}
         maxDate={new Date()}
-        disabled={isEditMode}
+        disabled={true}
       />
       <FormField
         type="select"

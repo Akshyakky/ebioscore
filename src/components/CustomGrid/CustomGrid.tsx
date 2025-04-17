@@ -576,6 +576,9 @@ const CustomGrid = <T extends Record<string, any>>({
                           <TableCell
                             key={`${rowIndex}-${column.key}`}
                             style={{
+                              overflow: "hidden",
+                              whiteSpace: "nowrap",
+                              textOverflow: "ellipsis",
                               ...column.cellStyle,
                               ...customCellStyle?.(item, column),
                             }}

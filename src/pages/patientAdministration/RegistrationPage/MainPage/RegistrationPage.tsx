@@ -217,11 +217,24 @@ const RegistrationPage: React.FC = () => {
   }, [formData]);
 
   const handleSave = useCallback(async () => {
+    debugger;
     setIsSubmitted(true);
     if (!validateFormData()) {
       notifyWarning("Please fill all mandatory fields.");
       return;
     }
+
+    // 🚫 Prevent future DOB save
+    if (formData.patRegisters.pDobOrAge === "DOB" && formData.patRegisters.pDob) {
+      const today = new Date();
+      const dob = new Date(formData.patRegisters.pDob);
+      if (dob > today) {
+        notifyWarning("Date of Birth cannot be a future date.");
+        return;
+      }
+    }
+
+    // 🎯 Convert Age to DOB if selected
     if (formData.patRegisters.pDobOrAge === "Age") {
       const { pAgeNumber, pAgeDescriptionVal } = formData.patOverview;
       const today = new Date();

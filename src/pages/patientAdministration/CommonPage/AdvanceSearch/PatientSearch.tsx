@@ -47,6 +47,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ show, handleClose, onEdit
       key: "edit",
       header: "Edit",
       visible: true,
+      width: 80,
       render: (row) => (
         <CustomButton
           text="Edit"
@@ -60,48 +61,58 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ show, handleClose, onEdit
       key: "patRegisters.pChartCode",
       header: "UHID",
       visible: true,
+      width: 130,
+      minWidth: 100,
+      maxWidth: 150,
       render: (row) => row.patRegisters?.pChartCode || "",
     },
     {
       key: "patientName",
       header: "Patient Name",
       visible: true,
+      width: 200,
       render: (row) => `${row.patRegisters?.pFName || ""} ${row.patRegisters?.pLName || ""}`,
     },
     {
       key: "patRegisters.pRegDate",
       header: "Registration Date",
       visible: true,
+      width: 150,
       render: (row) => dayjs.formatDate(row.patRegisters?.pRegDate) || "",
     },
     {
       key: "patRegisters.pGender",
       header: "Gender",
       visible: true,
+      width: 100,
       render: (row) => row.patRegisters?.pGender || "",
     },
     {
       key: "patAddress.pAddPhone1",
       header: "Mobile No",
       visible: true,
+      width: 150,
       render: (row) => row.patAddress?.pAddPhone1 || "",
     },
     {
       key: "patRegisters.pDob",
       header: "DOB",
       visible: true,
+      width: 150,
       render: (row) => dayjs.formatDate(row.patRegisters?.pDob) || "",
     },
     {
       key: "patRegisters.indentityValue",
       header: "Adhar No",
       visible: true,
+      width: 180,
       render: (row) => row.patRegisters?.indentityValue || "",
     },
     {
       key: "patRegisters.pTypeName",
       header: "Payment Source",
       visible: true,
+      width: 160,
       render: (row) => row.patRegisters?.pTypeName || "",
     },
   ];
