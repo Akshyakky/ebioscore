@@ -15,11 +15,12 @@ interface MultipleValue {
 
 interface CompMultipleDetailsProps {
   compName: string;
-  compoID?: number;
+  compoID?: number; // the unique ID for the component; must be updated with the new value from the backend
   invID?: number;
   compID?: number;
   compCode?: string;
   onUpdateCompMultiple: (multipleData: LCompMultipleDto) => void;
+  indexID: number; // <-- ADD THIS
   selectedValue: string;
   formComp: LCompMultipleDto;
   setFormComp: Dispatch<SetStateAction<LCompMultipleDto>>;
@@ -37,6 +38,7 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
   onUpdateCompMultiple,
   existingChoices,
   onMultipleListChange,
+  indexID,
 }) => {
   const [multipleState, setMultipleState] = useState<{
     newValue: string;
@@ -50,10 +52,12 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // Initialize the multiple-choice values state.
   useEffect(() => {
     const initialize = async () => {
       if (existingChoices?.length) {
         const filtered = existingChoices.filter((ec) => ec.rActiveYN !== "N");
+        // Map each choice while retaining its unique cmID.
         const mapped = filtered.map((ec) => ({
           cmID: ec.cmID,
           value: ec.cmValues || "",
@@ -68,6 +72,8 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
     initialize();
   }, [existingChoices]);
 
+  // Fetch the multiple-choice values from the server,
+  // filtering on compOID (the field linking a multiple-choice record to its component)
   const fetchServerChoices = useCallback(async () => {
     if (!invID || !compoID) return;
     setIsLoading(true);
@@ -75,7 +81,7 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
       const response = await investigationlistService.getById(invID);
       if (response.success && response.data) {
         const data = response.data.lCompMultipleDtos || [];
-        const relevant = data.filter((d: LCompMultipleDto) => d.compoID === compoID && d.rActiveYN !== "N");
+        const relevant = data.filter((d: LCompMultipleDto) => d.compOID === compoID && d.rActiveYN !== "N");
         const mapped = relevant.map((item: LCompMultipleDto) => ({
           cmID: item.cmID,
           value: item.cmValues || "",
@@ -95,6 +101,8 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
     setMultipleState((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // Syncs the local values to the parent component,
+  // ensuring each item keeps its unique cmID and the correct compoID is used.
   const triggerSync = (list: MultipleValue[]) => {
     if (!onMultipleListChange) return;
     const finalList: LCompMultipleDto[] = list.map((item) => ({
@@ -102,6 +110,7 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
       cmValues: item.value,
       compoID: compoID || 0,
       invID,
+      indexID, // <-- PASS THE CORRECT INDEX ID
       rActiveYN: "Y",
       compID: compID || 0,
       compCode: compCode || "",
@@ -121,20 +130,23 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
 
     const isEdit = editIndex !== null && editIndex >= 0;
     let updatedValues = [...valuesList];
-    let newMCID = 0;
+    let currentCMID = 0;
 
     if (isEdit) {
-      newMCID = valuesList[editIndex!].cmID;
+      // When editing, retain the existing cmID.
+      currentCMID = valuesList[editIndex!].cmID;
       updatedValues[editIndex!] = { ...valuesList[editIndex!], value: newValue.trim() };
     } else {
+      // For a new record, set cmID to 0 so the backend generates a new unique id.
       updatedValues.push({ cmID: 0, value: newValue.trim(), invID });
     }
 
     const finalItem: LCompMultipleDto = {
-      cmID: newMCID,
+      cmID: currentCMID, // 0 for new records or existing id for edits.
       compoID: compoID || 0,
       invID,
       cmValues: newValue.trim(),
+      indexID, // <-- ADD HERE TOO
       rActiveYN: "Y",
       compID: compID || 0,
       compCode: compCode || "",
@@ -167,6 +179,7 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
   const handleRemoveValue = (idx: number) => {
     const item = multipleState.valuesList[idx];
     if (item.cmID !== 0) {
+      // Mark the record as inactive.
       onUpdateCompMultiple({
         cmID: item.cmID,
         cmValues: item.value,

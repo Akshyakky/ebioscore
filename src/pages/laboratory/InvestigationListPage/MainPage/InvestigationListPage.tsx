@@ -72,7 +72,7 @@ const InvestigationListPage: React.FC<Props> = () => {
   const enhanceComponentDetails = (components: LComponentDto[], multiples: LCompMultipleDto[], ages: LCompAgeRangeDto[], templates: LCompTemplateDto[]): LComponentDto[] =>
     components.map((comp) => ({
       ...comp,
-      multipleChoices: multiples.filter((m) => m.compoID === comp.compoID || m.compOID === comp.compoID || m.compID === comp.compID),
+      multipleChoices: multiples.filter((mc) => mc.compOID === comp.compoID),
       ageRanges: ages.filter((ar) => ar.compoID === comp.compoID || ar.cappID === comp.compoID || ar.compID === comp.compID),
       templates: templates.filter((tpl) => tpl.compoID === comp.compoID || tpl.compID === comp.compID || tpl.compCode === comp.compCode),
     }));
@@ -155,6 +155,7 @@ const InvestigationListPage: React.FC<Props> = () => {
         ...comp,
         compOrder: index + 1,
         compoID: comp.compoID || 0, // 0 => new in the DB
+        indexID: comp.indexID,
         mGrpID: typeof comp.mGrpID === "string" ? parseInt(comp.mGrpID, 10) || 0 : comp.mGrpID || 0,
         // etc...
       }));
@@ -175,47 +176,55 @@ const InvestigationListPage: React.FC<Props> = () => {
 
       // For each component, attach sub-lists
       finalComponents.forEach((comp) => {
-        // multiple choices
+        // Filter multipleChoices based on indexID
         if (comp.multipleChoices?.length) {
           payload.lCompMultipleDtos.push(
-            ...comp.multipleChoices.map((mc: LCompMultipleDto) => ({
-              ...mc,
-              cmID: 0, // for brand-new, or keep it if you prefer
-              compoID: comp.compoID || 0,
-              compID: comp.compID,
-              invID: comp.invID,
-              compCode: comp.compCode,
-              compName: comp.compoNameCD,
-            }))
+            ...comp.multipleChoices
+              .filter((mc: LCompMultipleDto) => mc.indexID === comp.indexID)
+              .map((mc: LCompMultipleDto) => ({
+                ...mc,
+                cmID: mc.cmID || 0,
+                compoID: comp.compoID || 0,
+                compID: comp.compID,
+                invID: comp.invID,
+                compCode: comp.compCode,
+                compName: comp.compoNameCD,
+              }))
           );
         }
-        // age ranges
+
+        // Filter ageRanges based on indexID
         if (comp.ageRanges?.length) {
           payload.lCompAgeRangeDtos.push(
-            ...comp.ageRanges.map((ar: LCompAgeRangeDto) => ({
-              ...ar,
-              carID: 0,
-              cappID: 0,
-              compoID: 0,
-              compID: comp.compID,
-              invID: comp.invID,
-              compCode: comp.compCode,
-              compName: comp.compoNameCD,
-            }))
+            ...comp.ageRanges
+              .filter((ar: LCompAgeRangeDto) => ar.indexID === comp.indexID)
+              .map((ar: LCompAgeRangeDto) => ({
+                ...ar,
+                carID: ar.carID || 0,
+                cappID: 0,
+                compoID: comp.compoID || 0,
+                compID: comp.compID,
+                invID: comp.invID,
+                compCode: comp.compCode,
+                compName: comp.compoNameCD,
+              }))
           );
         }
-        // templates
+
+        // Filter templates based on indexID
         if (comp.templates?.length) {
           payload.lCompTemplateDtos.push(
-            ...comp.templates.map((tpl: LCompTemplateDto) => ({
-              ...tpl,
-              cTID: 0,
-              compoID: 0,
-              compID: comp.compID,
-              invID: comp.invID,
-              compCode: comp.compCode,
-              compName: comp.compoNameCD,
-            }))
+            ...comp.templates
+              .filter((tpl: LCompTemplateDto) => tpl.indexID === comp.indexID)
+              .map((tpl: LCompTemplateDto) => ({
+                ...tpl,
+                cTID: tpl.cTID || 0,
+                compoID: comp.compoID || 0,
+                compID: comp.compID,
+                invID: comp.invID,
+                compCode: comp.compCode,
+                compName: comp.compoNameCD,
+              }))
           );
         }
       });
@@ -268,6 +277,7 @@ const InvestigationListPage: React.FC<Props> = () => {
     }
 
     try {
+      debugger;
       setIsLoading(true);
 
       const allInvestigationsResponse = await investigationlistService.getAll();
@@ -285,16 +295,12 @@ const InvestigationListPage: React.FC<Props> = () => {
             const { lComponentsDto = [], lCompMultipleDtos = [], lCompAgeRangeDtos = [], lCompTemplateDtos = [] } = investigationDetails;
 
             // Attach multiple, age, and template data to each component
-            const enhancedComponents = lComponentsDto.map((comp: LComponentDto) => {
-              const compoID = comp.compoID;
-
-              return {
-                ...comp,
-                multipleChoices: lCompMultipleDtos.filter((mc: LCompMultipleDto) => mc.compoID === compoID || mc.compOID === compoID),
-                ageRanges: lCompAgeRangeDtos.filter((ar: LCompAgeRangeDto) => ar.compoID === compoID || ar.cappID === compoID),
-                templates: lCompTemplateDtos.filter((tpl: LCompTemplateDto) => tpl.compoID === comp.compoID || tpl.compID === comp.compID || tpl.compCode === comp.compCode),
-              };
-            });
+            const enhancedComponents = lComponentsDto.map((comp: LComponentDto) => ({
+              ...comp,
+              multipleChoices: lCompMultipleDtos.filter((mc: LCompMultipleDto) => mc.compOID === comp.compoID),
+              ageRanges: lCompAgeRangeDtos.filter((ar: LCompAgeRangeDto) => ar.compoID === comp.compoID),
+              templates: lCompTemplateDtos.filter((tpl: LCompTemplateDto) => tpl.compoID === comp.compoID),
+            }));
 
             setInvestigationDetails({
               ...investigationDetails.lInvMastDto,
@@ -331,13 +337,16 @@ const InvestigationListPage: React.FC<Props> = () => {
   };
 
   const handleEditComponent = (component: LComponentDto) => {
+    debugger;
     const isUnsaved = component.compoID !== 0 && unsavedComponents.some((c) => c.compoID === component.compoID);
     const compWithNestedData: LComponentDto = {
       ...component,
-      multipleChoices: isUnsaved ? component.multipleChoices || [] : compMultipleDetails.filter((mc) => mc.compoID === component.compoID || mc.compOID === component.compoID),
-      ageRanges: isUnsaved ? component.ageRanges || [] : ageRangeDetails.filter((ar) => ar.compoID === component.compoID || ar.cappID === component.compoID),
+
+      multipleChoices: isUnsaved ? component.multipleChoices || [] : compMultipleDetails.filter((mc) => mc.compOID === component.compoID),
+      ageRanges: isUnsaved ? component.ageRanges || [] : ageRangeDetails.filter((ar) => ar.compoID === component.compoID),
       templates: isUnsaved ? component.templates || [] : templateDetails.filter((tpl) => tpl.compoID === component.compoID),
     };
+
     setSelectedComponent(compWithNestedData);
     setIsComponentDialogOpen(true);
   };

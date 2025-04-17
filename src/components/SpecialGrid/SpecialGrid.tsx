@@ -11,7 +11,8 @@ export interface SpecialGridProps<T> {
   onReorder: (newOrder: T[]) => void;
   getItemId: (item: T) => number;
   renderLabel: (item: T) => string;
-  onSelect?: (id: number) => void;
+  onSelect?: (id: number, event?: React.MouseEvent) => void;
+
   selectedId?: number | null;
 }
 
@@ -102,7 +103,10 @@ const SpecialGrid = <T extends {}>({ data, onReorder, getItemId, renderLabel, on
             onDragStart={(e) => handleDragStart(e, index)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleDrop(e, index)}
-            onClick={() => onSelect?.(id)}
+            onClick={(e) => {
+              if ((e.target as HTMLElement)?.closest(".arrow-button")) return; // 🔐 ignore arrow clicks
+              onSelect?.(id);
+            }}
             sx={{
               borderLeft: isSelected ? `4px solid ${theme.palette.primary.main}` : "4px solid transparent",
             }}
@@ -121,10 +125,27 @@ const SpecialGrid = <T extends {}>({ data, onReorder, getItemId, renderLabel, on
               </Typography>
             </LeftContent>
             <Box>
-              <IconButton size="small" disabled={index === 0} onClick={() => moveItem(index, index - 1)}>
+              <IconButton
+                size="small"
+                disabled={index === 0}
+                className="action-no-select"
+                onClick={(e) => {
+                  e.stopPropagation(); // ✅ Prevent bubbling to Row
+                  moveItem(index, index - 1);
+                }}
+              >
                 <ArrowUpwardIcon fontSize="small" />
               </IconButton>
-              <IconButton size="small" disabled={index === orderedData.length - 1} onClick={() => moveItem(index, index + 1)}>
+
+              <IconButton
+                size="small"
+                disabled={index === orderedData.length - 1}
+                className="action-no-select"
+                onClick={(e) => {
+                  e.stopPropagation(); // ✅ Prevent bubbling to Row
+                  moveItem(index, index + 1);
+                }}
+              >
                 <ArrowDownwardIcon fontSize="small" />
               </IconButton>
             </Box>

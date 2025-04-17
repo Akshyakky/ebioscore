@@ -74,6 +74,7 @@ export interface LComponentDto extends BaseDto {
   compName: string;
   transferYN: string;
   rNotes?: string;
+  indexID?: number;
 }
 
 export interface LComponentEntryTypeDto extends BaseDto {
@@ -112,6 +113,7 @@ export interface LCompMultipleDto extends BaseDto {
   rCreatedIdNr?: number;
   rModifiedId?: number;
   invID?: number;
+  indexID?: number;
 }
 export interface LCompAgeRangeDto extends BaseDto {
   carID: number;
@@ -137,6 +139,7 @@ export interface LCompAgeRangeDto extends BaseDto {
   rModifiedBy?: string;
   rCreatedIdNr?: number;
   rModifiedId?: number;
+  indexID?: number;
 }
 
 export interface LCompTemplateDto extends BaseDto {
@@ -158,6 +161,7 @@ export interface LCompTemplateDto extends BaseDto {
   rCreatedId?: number;
   rModifiedId?: number;
   invID?: number;
+  indexID?: number;
 }
 
 export interface InvestigationFormErrors {
