@@ -1,9 +1,11 @@
 import React from "react";
-import { Box, useTheme } from "@mui/material";
+import { Box, useTheme, Fab, Tooltip } from "@mui/material";
 import { selectUser } from "@/store/features/auth/selectors";
 import { useAppSelector } from "@/store/hooks";
 import SideBar from "../SideBar/SideBar";
 import Footer from "../Footer";
+import HomeIcon from "@mui/icons-material/Home";
+import { useNavigate } from "react-router-dom";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -12,6 +14,7 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const theme = useTheme();
   const userInfo = useAppSelector(selectUser);
+  const navigate = useNavigate();
 
   // Calculate effective user ID for admin permissions
   const effectiveUserID = React.useMemo(() => {
@@ -59,6 +62,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               minHeight: "calc(100vh - 180px)", // Account for header and footer
               display: "flex",
               flexDirection: "column",
+              position: "relative",
             }}
           >
             {children}

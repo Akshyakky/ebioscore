@@ -12,26 +12,67 @@ import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import { Link, Visibility, VisibilityOff } from "@mui/icons-material";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
-import { Alert, alpha, Box, Button, Card, CardContent, CircularProgress, Container, Grid, IconButton, InputAdornment, styled, Typography, useMediaQuery } from "@mui/material";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import {
+  Alert,
+  alpha,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Container,
+  Grid,
+  IconButton,
+  InputAdornment,
+  styled,
+  Typography,
+  useMediaQuery,
+  Fade,
+  Grow,
+  Avatar,
+} from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import logo from "../../../assets/images/eBios.png";
 import backgroundImage from "/src/assets/images/LoginCoverImage.jpg";
 
-// Styled Components
-
+// Styled Components with enhanced animations and effects
 const AnimatedBox = styled(Box)`
   @keyframes float {
     0% {
       transform: translateY(0px);
     }
     50% {
-      transform: translateY(-10px);
+      transform: translateY(-15px);
     }
     100% {
       transform: translateY(0px);
     }
   }
 `;
+
+const HexagonShape = styled(Box)(({ theme }) => ({
+  width: "60px",
+  height: "60px",
+  position: "absolute",
+  backgroundImage: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.7)}, ${alpha(theme.palette.primary.light, 0.7)})`,
+  clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "white",
+  zIndex: 0,
+  backdropFilter: "blur(8px)",
+  transition: "all 0.3s ease",
+  opacity: 0.9,
+  "&:hover": {
+    opacity: 1,
+    transform: "scale(1.1)",
+  },
+}));
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   "@keyframes gradientBG": {
@@ -46,50 +87,100 @@ const StyledContainer = styled(Container)(({ theme }) => ({
         ${alpha(theme.palette.background.paper, 0.8)})`,
   backgroundSize: "400% 400%",
   animation: "gradientBG 15s ease infinite",
+  minHeight: "100vh",
+  overflow: "hidden",
 }));
 
-const StyledCard = styled(Card)(({ theme }) => ({
+const FormWrapper = styled(Box)(({ theme }) => ({
+  position: "relative",
+  zIndex: 1,
   width: "100%",
-  maxWidth: "400px",
-  background: theme.palette.mode === "light" ? "rgba(255, 255, 255, 0.95)" : "rgba(24, 26, 32, 0.95)", // Darker background for dark mode
-  backdropFilter: "blur(20px)",
-  borderRadius: "16px",
-  boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.15)",
-  border: theme.palette.mode === "light" ? "1px solid rgba(255, 255, 255, 0.18)" : "1px solid rgba(255, 255, 255, 0.08)",
-  transition: "all 0.3s ease-in-out",
+  maxWidth: "450px",
+  background: theme.palette.mode === "light" ? "rgba(255, 255, 255, 0.7)" : "rgba(24, 26, 32, 0.7)",
+  backdropFilter: "blur(15px)",
+  borderRadius: "20px",
+  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+  padding: theme.spacing(4),
+  border: theme.palette.mode === "light" ? "1px solid rgba(255, 255, 255, 0.5)" : "1px solid rgba(255, 255, 255, 0.08)",
   overflow: "hidden",
+  transition: "transform 0.3s ease",
   "&:hover": {
     transform: "translateY(-5px)",
-    boxShadow: "0 12px 40px 0 rgba(31, 38, 135, 0.25)",
   },
   "&::before": {
     content: '""',
     position: "absolute",
     top: 0,
     left: 0,
-    width: "100%",
-    height: "4px",
-    background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+    right: 0,
+    height: "5px",
+    background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+    zIndex: 2,
+  },
+}));
+
+const GlowingOrb = styled(Box)(({ theme, color = "primary" }) => ({
+  position: "absolute",
+  width: "150px",
+  height: "150px",
+  borderRadius: "50%",
+  background:
+    color === "primary"
+      ? `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.8)} 0%, ${alpha(theme.palette.primary.main, 0)} 70%)`
+      : `radial-gradient(circle, ${alpha(theme.palette.secondary.main, 0.8)} 0%, ${alpha(theme.palette.secondary.main, 0)} 70%)`,
+  filter: "blur(35px)",
+  opacity: 0.6,
+  zIndex: 0,
+}));
+
+const FloatingIcon = styled(Box)(({ theme }) => ({
+  position: "absolute",
+  zIndex: 0,
+  animation: "float 6s ease-in-out infinite",
+  "& svg": {
+    fontSize: "28px",
+    color: alpha(theme.palette.mode === "light" ? theme.palette.primary.main : theme.palette.primary.light, 0.7),
   },
 }));
 
 const StyledButton = styled(Button)(({ theme }) => ({
-  height: "48px",
+  height: "52px",
   fontSize: "16px",
   fontWeight: 600,
   textTransform: "none",
-  borderRadius: "8px",
-  backgroundColor: theme.palette.primary.main,
+  borderRadius: "10px",
+  backgroundImage: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+  boxShadow: `0 5px 15px ${alpha(theme.palette.primary.main, 0.25)}`,
   color: "#ffffff",
+  position: "relative",
+  overflow: "hidden",
+  transition: "all 0.3s ease",
+  "&::after": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent)",
+    transform: "translateX(-100%)",
+  },
   "&:hover": {
-    backgroundColor: theme.palette.primary.dark,
+    transform: "translateY(-3px)",
+    boxShadow: `0 8px 25px ${alpha(theme.palette.primary.main, 0.35)}`,
+    backgroundImage: `linear-gradient(45deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+    "&::after": {
+      transform: "translateX(100%)",
+      transition: "transform 0.8s ease",
+    },
   },
 }));
 
 const StyledAlert = styled(Alert)(({ theme }) => ({
   borderRadius: "10px",
   marginBottom: theme.spacing(2),
-  animation: "slideIn 0.3s ease-out",
+  animation: "slideIn 0.4s ease-out",
+  boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
   "@keyframes slideIn": {
     from: { transform: "translateY(-10px)", opacity: 0 },
     to: { transform: "translateY(0)", opacity: 1 },
@@ -101,6 +192,7 @@ const StyledRouterLink = styled(RouterLink)(({ theme }) => ({
   textDecoration: "none",
   fontWeight: 500,
   position: "relative",
+  transition: "color 0.3s ease",
   "&::after": {
     content: '""',
     position: "absolute",
@@ -111,8 +203,85 @@ const StyledRouterLink = styled(RouterLink)(({ theme }) => ({
     background: theme.palette.primary.main,
     transition: "width 0.3s ease",
   },
+  "&:hover": {
+    color: theme.palette.primary.dark,
+  },
   "&:hover::after": {
     width: "100%",
+  },
+}));
+
+// Enhanced input styles
+const AnimatedInput = styled(Box)(({ theme }) => ({
+  position: "relative",
+  zIndex: 1,
+  transition: "transform 0.3s ease",
+  "&:focus-within": {
+    transform: "scale(1.02)",
+  },
+  "& .MuiOutlinedInput-root": {
+    transition: "all 0.3s ease",
+    borderRadius: "10px",
+    backgroundColor: theme.palette.mode === "light" ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 255, 255, 0.05)",
+    backdropFilter: "blur(5px)",
+    boxShadow: "0 3px 10px rgba(0, 0, 0, 0.05)",
+    border: theme.palette.mode === "light" ? "1px solid rgba(0, 0, 0, 0.05)" : "1px solid rgba(255, 255, 255, 0.1)",
+    "&:hover": {
+      backgroundColor: theme.palette.mode === "light" ? "rgba(255, 255, 255, 0.95)" : "rgba(255, 255, 255, 0.08)",
+      boxShadow: "0 5px 15px rgba(0, 0, 0, 0.08)",
+    },
+    "&.Mui-focused": {
+      boxShadow: `0 5px 20px ${alpha(theme.palette.primary.main, 0.2)}`,
+      backgroundColor: theme.palette.mode === "light" ? "#ffffff" : "rgba(255, 255, 255, 0.12)",
+    },
+  },
+}));
+
+const LogoAnimation = styled(Box)(({ theme }) => ({
+  position: "relative",
+  zIndex: 2,
+  display: "inline-block",
+  "&::after": {
+    content: '""',
+    position: "absolute",
+    width: "150%",
+    height: "150%",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.2)} 0%, transparent 70%)`,
+    borderRadius: "50%",
+    opacity: 0,
+    transition: "opacity 0.5s ease, transform 0.5s ease",
+  },
+  "&:hover::after": {
+    opacity: 1,
+    transform: "translate(-50%, -50%) scale(1.1)",
+  },
+}));
+
+const BrandName = styled(Typography)(({ theme }) => ({
+  fontWeight: "bold",
+  background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+  backgroundClip: "text",
+  WebkitBackgroundClip: "text",
+  color: "transparent",
+  position: "relative",
+  display: "inline-block",
+  "&::after": {
+    content: '""',
+    position: "absolute",
+    bottom: "-5px",
+    left: "0",
+    width: "100%",
+    height: "2px",
+    background: `linear-gradient(to right, ${theme.palette.primary.main}, transparent)`,
+    transform: "scaleX(0)",
+    transformOrigin: "left",
+    transition: "transform 0.5s ease",
+  },
+  "&:hover::after": {
+    transform: "scaleX(1)",
   },
 }));
 
@@ -148,6 +317,7 @@ const LoginPage: React.FC = () => {
   const { theme } = useTheme();
   const [formState, setFormState] = React.useState<LoginFormState>(initialFormState);
   const [showPassword, setShowPassword] = useState(false);
+  const [animationComplete, setAnimationComplete] = useState(false);
 
   const companySelectRef = useRef<HTMLSelectElement>(null);
   const usernameInputRef = useRef<HTMLInputElement>(null);
@@ -166,6 +336,14 @@ const LoginPage: React.FC = () => {
     username: false,
     password: false,
   });
+
+  // Animation timing effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAnimationComplete(true);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -395,67 +573,7 @@ const LoginPage: React.FC = () => {
       right: 0,
       bottom: 0,
       background:
-        theme.palette.mode === "light"
-          ? "linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%)" // Darker overlay for light mode
-          : "linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)", // Darker overlay for dark mode
-    },
-  };
-
-  const typographyStyles = {
-    color: theme.palette.mode === "light" ? "inherit" : theme.palette.primary.light,
-    textShadow: theme.palette.mode === "light" ? "2px 2px 4px rgba(0,0,0,0.2)" : "2px 2px 4px rgba(0,0,0,0.4)",
-  };
-
-  const linkStyles = {
-    color: theme.palette.mode === "light" ? theme.palette.primary.main : theme.palette.primary.light,
-    textDecoration: "none",
-    fontWeight: 500,
-    position: "relative",
-    "&::after": {
-      content: '""',
-      position: "absolute",
-      width: "0",
-      height: "2px",
-      bottom: "-2px",
-      left: "0",
-      background: theme.palette.mode === "light" ? theme.palette.primary.main : theme.palette.primary.light,
-      transition: "width 0.3s ease",
-    },
-    "&:hover::after": {
-      width: "100%",
-    },
-  };
-
-  const formContainerStyle = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: isSmallScreen ? "20px 10px" : "20px",
-    backgroundColor: "transparent",
-    position: "relative",
-    "&::before": {
-      content: '""',
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: theme.palette.mode === "light" ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.2)",
-      backdropFilter: "blur(10px)",
-    },
-  };
-
-  const inputStyles = {
-    "& .MuiOutlinedInput-root": {
-      borderRadius: "8px",
-      backgroundColor: theme.palette.mode === "light" ? "#ffffff" : "rgba(255, 255, 255, 0.05)",
-      border: theme.palette.mode === "light" ? "1px solid rgba(0, 0, 0, 0.1)" : "1px solid rgba(255, 255, 255, 0.1)",
-      "&:hover": {
-        backgroundColor: theme.palette.mode === "light" ? "#ffffff" : "rgba(255, 255, 255, 0.08)",
-      },
-      "&.Mui-focused": {
-        backgroundColor: theme.palette.mode === "light" ? "#ffffff" : "rgba(255, 255, 255, 0.1)",
-      },
+        theme.palette.mode === "light" ? "linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%)" : "linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)",
     },
   };
 
@@ -467,207 +585,244 @@ const LoginPage: React.FC = () => {
           minHeight: "100vh",
           overflow: "hidden",
           position: "relative",
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background:
-              theme.palette.mode === "light"
-                ? "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 70%)"
-                : "radial-gradient(circle at 50% 50%, rgba(0,0,0,0.1) 0%, transparent 70%)",
-            pointerEvents: "none",
-          },
         }}
       >
         <Grid item xs={12} md={8} sx={backgroundStyle}>
           {!isSmallScreen && (
-            <AnimatedBox
-              sx={{
-                position: "absolute",
-                top: "40%",
-                left: "30%",
-                transform: "translate(-50%, -50%)",
-                color: "white",
-                textAlign: "center",
-                zIndex: 1,
-                animation: "float 3s ease-in-out infinite",
-                textShadow: "2px 2px 4px rgba(0,0,0,0.5)", // Enhanced text shadow for better visibility
-              }}
-            >
-              <Typography
-                variant="h3"
-                fontWeight="bold"
+            <Fade in={animationComplete} timeout={1000}>
+              <AnimatedBox
                 sx={{
-                  mb: 2,
-                  color: "#ffffff", // Explicit white color
-                  opacity: 0,
-                  animation: "fadeIn 0.8s ease-out forwards",
-                  "@keyframes fadeIn": {
-                    from: { opacity: 0, transform: "translateY(20px)" },
-                    to: { opacity: 1, transform: "translateY(0)" },
-                  },
+                  position: "absolute",
+                  top: "40%",
+                  left: "30%",
+                  transform: "translate(-50%, -50%)",
+                  color: "white",
+                  textAlign: "center",
+                  zIndex: 1,
+                  animation: "float 5s ease-in-out infinite",
+                  textShadow: "2px 2px 8px rgba(0,0,0,0.6)",
                 }}
               >
-                Healthcare Innovation
-              </Typography>
-              <Typography
-                variant="h6"
-                sx={{
-                  color: "#ffffff", // Explicit white color
-                  opacity: 0,
-                  animation: "fadeIn 0.8s ease-out 0.3s forwards",
-                  textShadow: "1px 1px 3px rgba(0,0,0,0.5)", // Enhanced text shadow
-                }}
-              >
-                Empowering better patient care through technology
-              </Typography>
-            </AnimatedBox>
+                <Typography
+                  variant="h3"
+                  fontWeight="bold"
+                  sx={{
+                    mb: 3,
+                    color: "#ffffff",
+                    opacity: 0,
+                    animation: "fadeIn 1s ease-out forwards 0.5s",
+                    "@keyframes fadeIn": {
+                      from: { opacity: 0, transform: "translateY(25px)" },
+                      to: { opacity: 1, transform: "translateY(0)" },
+                    },
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  Healthcare Innovation
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "#ffffff",
+                    opacity: 0,
+                    animation: "fadeIn 1s ease-out 1s forwards",
+                    textShadow: "1px 1px 4px rgba(0,0,0,0.7)",
+                    maxWidth: "80%",
+                    margin: "0 auto",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Empowering better patient care through technology
+                </Typography>
+              </AnimatedBox>
+            </Fade>
           )}
         </Grid>
-        <Grid item xs={12} md={4} sx={formContainerStyle}>
-          <StyledCard>
-            <CardContent sx={{ p: 4 }}>
-              <Box
-                sx={{
-                  textAlign: "center",
-                  mb: 4,
-                  position: "relative",
-                }}
-              >
+
+        <Grid
+          item
+          xs={12}
+          md={4}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: isSmallScreen ? "20px 10px" : "20px",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          {/* Visual elements to make the form area more interesting */}
+          <GlowingOrb sx={{ top: "-20px", right: "40px" }} />
+          <GlowingOrb color="primary" sx={{ bottom: "10%", left: "10%" }} />
+
+          {/* Hexagon elements to match left side design */}
+          <Fade in={true} timeout={1000}>
+            <HexagonShape sx={{ top: "19%", right: "15%" }}>
+              <HealthAndSafetyIcon sx={{ fontSize: 30 }} />
+            </HexagonShape>
+          </Fade>
+
+          <Fade in={true} timeout={1500}>
+            <HexagonShape sx={{ bottom: "19%", right: "60%" }}>
+              <LocalHospitalIcon sx={{ fontSize: 30 }} />
+            </HexagonShape>
+          </Fade>
+
+          {/* Floating medical icons */}
+          <Fade in={true} timeout={2000}>
+            <FloatingIcon sx={{ top: "25%", left: "15%", animation: "float 4s ease-in-out infinite" }}>
+              <MedicalServicesIcon />
+            </FloatingIcon>
+          </Fade>
+
+          <Grow in={true} timeout={800}>
+            <FormWrapper>
+              <Box sx={{ position: "relative", zIndex: 2 }}>
+                {/* Logo with enhanced animation */}
                 <Box
-                  component="img"
-                  src={logo}
-                  alt="Company Logo"
                   sx={{
-                    maxWidth: "120px",
-                    transition: "transform 0.3s ease",
-                    "&:hover": {
-                      transform: "scale(1.05)",
-                    },
-                  }}
-                />
-                <Typography
-                  variant={isSmallScreen ? "h6" : "h5"}
-                  component="h1"
-                  sx={{
-                    mt: 2,
-                    fontWeight: "bold",
-                    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                    backgroundClip: "text",
-                    WebkitBackgroundClip: "text",
-                    color: "transparent",
-                    textShadow: `1px 1px 2px ${alpha(theme.palette.primary.main, 0.3)}`,
+                    textAlign: "center",
+                    mb: 3,
+                    position: "relative",
                   }}
                 >
-                  Welcome to e-Bios
-                </Typography>
-              </Box>
+                  <LogoAnimation
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      mb: 2,
+                    }}
+                  ></LogoAnimation>
 
-              {formState.amcExpiryMessage && <StyledAlert severity="warning">{formState.amcExpiryMessage}</StyledAlert>}
-              {formState.licenseExpiryMessage && <StyledAlert severity={formState.licenseDaysRemaining <= 0 ? "error" : "warning"}>{formState.licenseExpiryMessage}</StyledAlert>}
+                  <BrandName variant={isSmallScreen ? "h5" : "h4"} sx={{ mb: 1 }}>
+                    e-Bios
+                  </BrandName>
 
-              <Box
-                component="form"
-                onSubmit={handleSubmit}
-                aria-label="Login form"
-                sx={{
-                  mt: 1,
-                  "& .MuiTextField-root, & .MuiSelect-root": {
-                    mb: 2,
-                    "& .MuiOutlinedInput-root": {
-                      transition: "transform 0.2s ease",
-                      "&:hover": {
-                        transform: "translateY(-2px)",
-                      },
-                    },
-                  },
-                }}
-              >
-                {/* Existing form fields with enhanced styling */}
-                <DropdownSelect
-                  ref={companySelectRef}
-                  label="Select Company"
-                  name="companyID"
-                  value={formState.companyID && formState.companyCode ? `${formState.companyID},${formState.companyCode}` : ""}
-                  options={formState.companies.map((c) => ({
-                    value: c.compIDCompCode,
-                    label: c.compName,
-                  }))}
-                  onChange={(event) => {
-                    const compIDCompCode = event.target.value as string;
-                    const selectedCompany = formState.companies.find((c) => c.compIDCompCode === compIDCompCode);
-                    handleSelectCompany(compIDCompCode, selectedCompany?.compName || "");
-                  }}
-                  size="small"
-                  loading={fieldLoading.company}
-                  aria-label="Company selection"
-                  aria-required="true"
-                />
-
-                <FloatingLabelTextBox
-                  ref={usernameInputRef}
-                  ControlID="username"
-                  title="Username"
-                  value={formState.userName}
-                  onChange={(e) => setFormState((prev) => ({ ...prev, userName: e.target.value }))}
-                  size="small"
-                  isMandatory
-                  loading={fieldLoading.username}
-                  aria-label="Username input"
-                  aria-required="true"
-                  sx={inputStyles}
-                />
-
-                <FloatingLabelTextBox
-                  ref={passwordInputRef}
-                  ControlID="password"
-                  title="Password"
-                  type={showPassword ? "text" : "password"}
-                  value={formState.password}
-                  onChange={(e) => setFormState((prev) => ({ ...prev, password: e.target.value }))}
-                  size="small"
-                  isMandatory
-                  loading={fieldLoading.password}
-                  aria-label="Password input"
-                  aria-required="true"
-                  sx={inputStyles}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton aria-label="toggle password visibility" onClick={() => setShowPassword((prev) => !prev)} edge="end" size="small">
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-
-                <Box sx={{ textAlign: "right", mb: 2 }}>
-                  <StyledRouterLink to="/ForgotPasswordPage">Forgot password?</StyledRouterLink>
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{
+                      fontWeight: 500,
+                      opacity: 0.9,
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    Hospital Information System
+                  </Typography>
                 </Box>
 
-                <StyledButton
-                  ref={submitButtonRef}
-                  type="submit"
-                  fullWidth
-                  disabled={formState.isLoggingIn || loginAttempts.isLocked}
-                  startIcon={formState.isLoggingIn ? <CircularProgress size={20} /> : <LockOpenIcon />}
-                  aria-label="Sign in button"
-                >
-                  {formState.isLoggingIn ? "Signing In..." : "Sign In"}
-                </StyledButton>
-
-                {formState.errorMessage && (
-                  <StyledAlert severity="error" role="alert" aria-live="polite" sx={{ mt: 2 }}>
-                    {formState.errorMessage}
+                {formState.amcExpiryMessage && (
+                  <StyledAlert severity="warning" icon={false} sx={{ mb: 3 }}>
+                    {formState.amcExpiryMessage}
                   </StyledAlert>
                 )}
+
+                {formState.licenseExpiryMessage && (
+                  <StyledAlert severity={formState.licenseDaysRemaining <= 0 ? "error" : "warning"} icon={false} sx={{ mb: 3 }}>
+                    {formState.licenseExpiryMessage}
+                  </StyledAlert>
+                )}
+
+                <Box
+                  component="form"
+                  onSubmit={handleSubmit}
+                  aria-label="Login form"
+                  sx={{
+                    mt: 1,
+                    "& .MuiTextField-root, & .MuiSelect-root": {
+                      mb: 3,
+                    },
+                  }}
+                >
+                  <AnimatedInput>
+                    <DropdownSelect
+                      ref={companySelectRef}
+                      label="Select Company"
+                      name="companyID"
+                      value={formState.companyID && formState.companyCode ? `${formState.companyID},${formState.companyCode}` : ""}
+                      options={formState.companies.map((c) => ({
+                        value: c.compIDCompCode,
+                        label: c.compName,
+                      }))}
+                      onChange={(event) => {
+                        const compIDCompCode = event.target.value as string;
+                        const selectedCompany = formState.companies.find((c) => c.compIDCompCode === compIDCompCode);
+                        handleSelectCompany(compIDCompCode, selectedCompany?.compName || "");
+                      }}
+                      size="small"
+                      loading={fieldLoading.company}
+                      aria-label="Company selection"
+                      aria-required="true"
+                    />
+                  </AnimatedInput>
+
+                  <AnimatedInput>
+                    <FloatingLabelTextBox
+                      ref={usernameInputRef}
+                      ControlID="username"
+                      title="Username"
+                      value={formState.userName}
+                      onChange={(e) => setFormState((prev) => ({ ...prev, userName: e.target.value }))}
+                      size="small"
+                      isMandatory
+                      loading={fieldLoading.username}
+                      aria-label="Username input"
+                      aria-required="true"
+                    />
+                  </AnimatedInput>
+
+                  <AnimatedInput>
+                    <FloatingLabelTextBox
+                      ref={passwordInputRef}
+                      ControlID="password"
+                      title="Password"
+                      type={showPassword ? "text" : "password"}
+                      value={formState.password}
+                      onChange={(e) => setFormState((prev) => ({ ...prev, password: e.target.value }))}
+                      size="small"
+                      isMandatory
+                      loading={fieldLoading.password}
+                      aria-label="Password input"
+                      aria-required="true"
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton aria-label="toggle password visibility" onClick={() => setShowPassword((prev) => !prev)} edge="end" size="small">
+                              {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </AnimatedInput>
+
+                  <Box sx={{ textAlign: "right", mb: 2 }}>
+                    <StyledRouterLink to="/ForgotPasswordPage">Forgot password?</StyledRouterLink>
+                  </Box>
+
+                  <StyledButton
+                    ref={submitButtonRef}
+                    type="submit"
+                    fullWidth
+                    disabled={formState.isLoggingIn || loginAttempts.isLocked}
+                    endIcon={formState.isLoggingIn ? <CircularProgress size={20} color="inherit" /> : <KeyboardArrowRightIcon />}
+                    aria-label="Sign in button"
+                  >
+                    {formState.isLoggingIn ? "Signing In..." : "Sign In"}
+                  </StyledButton>
+
+                  {formState.errorMessage && (
+                    <Fade in={!!formState.errorMessage}>
+                      <StyledAlert severity="error" role="alert" aria-live="polite" sx={{ mt: 3 }}>
+                        {formState.errorMessage}
+                      </StyledAlert>
+                    </Fade>
+                  )}
+                </Box>
               </Box>
-            </CardContent>
-          </StyledCard>
+            </FormWrapper>
+          </Grow>
         </Grid>
       </Grid>
     </StyledContainer>

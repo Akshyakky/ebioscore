@@ -4,6 +4,7 @@ import MenuItem from "@mui/material/MenuItem";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
+import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate } from "react-router-dom";
 import { handleError } from "@/services/CommonServices/HandlerError";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -12,6 +13,7 @@ import AuthService from "@/services/AuthService/AuthService";
 import { logout } from "@/store/features/auth/authSlice";
 import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 import CustomButton from "@/components/Button/CustomButton";
+import { Divider } from "@mui/material";
 
 const ProfileMenu: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -48,6 +50,11 @@ const ProfileMenu: React.FC = () => {
     }
   };
 
+  const handleDashboard = () => {
+    navigate("/dashboard");
+    handleClose();
+  };
+
   return (
     <div>
       <CustomButton
@@ -79,6 +86,10 @@ const ProfileMenu: React.FC = () => {
           },
         }}
       >
+        <MenuItem onClick={handleDashboard}>
+          <CustomButton icon={HomeIcon} text="Dashboard" color="inherit" variant="text" sx={{ justifyContent: "flex-start" }} />
+        </MenuItem>
+        <Divider />
         <MenuItem onClick={handleClose}>
           <CustomButton icon={SettingsIcon} text="Settings" color="inherit" variant="text" sx={{ justifyContent: "flex-start" }} />
         </MenuItem>

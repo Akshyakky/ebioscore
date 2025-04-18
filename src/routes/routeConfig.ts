@@ -45,6 +45,7 @@ import ComponentEntryTypePage from "@/pages/laboratory/ComponentEntryType/MainPa
 import ForgotPasswordPage from "@/pages/common/ForgotPasswordPage/ForgotPasswordPage";
 import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
 import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
+import { Navigate } from "react-router-dom";
 
 interface RouteConfig {
   path: string;
@@ -54,6 +55,7 @@ interface RouteConfig {
 }
 
 const routeConfig: RouteConfig[] = [
+  // { path: "/", component: () => <Navigate to="/dashboard" />, protected: true },
   { path: "/login", component: LoginPage, protected: false },
   { path: "/dashboard", component: DashboardPage, protected: true },
   { path: "/registrationpage", component: RegistrationPage, protected: true, providers: [PatientSearchProvider] },

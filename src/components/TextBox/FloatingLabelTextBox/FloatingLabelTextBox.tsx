@@ -1,5 +1,5 @@
-import React, { useMemo, useCallback, forwardRef, useState, useEffect } from "react";
-import TextField, { TextFieldProps } from "@mui/material/TextField";
+import React, { useMemo, useCallback, forwardRef, useState, useEffect, useRef } from "react";
+import TextField from "@mui/material/TextField";
 import FormControl from "@mui/material/FormControl";
 import { TextBoxProps } from "../../../interfaces/Common/TextBoxProps";
 
@@ -37,28 +37,46 @@ const FloatingLabelTextBox = forwardRef<HTMLInputElement, TextBoxProps>(
     },
     ref
   ) => {
+    // Memoize control ID to avoid recreating on each render
     const controlId = useMemo(() => `txt${ControlID}`, [ControlID]);
 
-    // Use local state to immediately update UI without waiting for parent rerender
+    // Use local state for immediate UI updates
     const [localValue, setLocalValue] = useState(value);
 
-    // Sync local state with prop value when it changes externally
-    useEffect(() => {
-      setLocalValue(value);
-    }, [value]);
+    // Track if we're currently in a user-initiated update
+    const isUserUpdate = useRef(false);
 
-    // Handle direct typing with improved performance
+    // Sync local state with external value changes
+    useEffect(() => {
+      // Only update if the current change wasn't initiated by the user
+      // This prevents the cursor from jumping around while typing
+      if (!isUserUpdate.current && value !== localValue) {
+        setLocalValue(value || "");
+      } else {
+        isUserUpdate.current = false;
+      }
+    }, [value, localValue]);
+
+    // Memoize error states
+    const isInvalid = useMemo(() => (isMandatory && isSubmitted && !value) || !!errorMessage, [isMandatory, isSubmitted, value, errorMessage]);
+
+    const errorToShow = useMemo(() => errorMessage || (isMandatory && !value ? `${title} is required.` : ""), [errorMessage, isMandatory, value, title]);
+
+    // Efficient change handler that doesn't recreate on every render
     const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
 
-        // Update local state immediately for responsive UI
+        // Mark this as a user-initiated update
+        isUserUpdate.current = true;
+
+        // Immediately update local state for responsive UI
         setLocalValue(newValue);
 
         // Only validate and update parent if pattern matches or no pattern exists
         if (!inputPattern || inputPattern.test(newValue)) {
-          // Use requestAnimationFrame to defer the parent state update
-          // This prevents blocking the UI thread during rapid key presses
+          // Use requestAnimationFrame to batch updates efficiently
+          // This is more immediate than debouncing but still batches multiple keystrokes
           requestAnimationFrame(() => {
             onChange(e);
           });
@@ -67,60 +85,90 @@ const FloatingLabelTextBox = forwardRef<HTMLInputElement, TextBoxProps>(
       [onChange, inputPattern]
     );
 
-    const isInvalid = useMemo(() => (isMandatory && isSubmitted && !value) || !!errorMessage, [isMandatory, isSubmitted, value, errorMessage]);
+    // Memoize input props to prevent unnecessary reconciliation
+    const inputProps = useMemo(() => {
+      const props: React.InputHTMLAttributes<HTMLInputElement> = {
+        "aria-label": ariaLabel || title,
+        maxLength: maxLength,
+        ...InputProps.inputProps,
+      };
 
-    const errorToShow = useMemo(() => errorMessage || (isMandatory && !value ? `${title} is required.` : ""), [errorMessage, isMandatory, value, title]);
-
-    const inputProps: React.InputHTMLAttributes<HTMLInputElement> = {
-      "aria-label": ariaLabel || title,
-      maxLength: maxLength,
-      ...InputProps.inputProps,
-    };
-
-    if (type === "number" || type === "date") {
-      inputProps.max = max;
-      inputProps.min = min;
-      if (type === "number") {
-        inputProps.step = step;
+      if (type === "number" || type === "date") {
+        props.max = max;
+        props.min = min;
+        if (type === "number") {
+          props.step = step;
+        }
       }
-    }
+
+      return props;
+    }, [ariaLabel, title, maxLength, InputProps.inputProps, type, max, min, step]);
+
+    // Memoize TextField props to minimize reconciliation
+    const textFieldProps = useMemo(
+      () => ({
+        ref,
+        id: controlId,
+        name,
+        label: title || "",
+        type,
+        value: localValue,
+        onChange: handleChange,
+        onBlur,
+        onKeyPress,
+        placeholder: placeholder || title,
+        size,
+        disabled,
+        required: isMandatory,
+        error: isInvalid,
+        helperText: isInvalid ? errorToShow : "",
+        autoComplete,
+        "aria-describedby": isInvalid ? `${controlId}-error` : undefined,
+        multiline,
+        rows,
+        InputProps: {
+          readOnly,
+          ...InputProps,
+          inputProps,
+        },
+        InputLabelProps: {
+          shrink: type === "date" ? true : undefined,
+          ...InputLabelProps,
+        },
+      }),
+      [
+        ref,
+        controlId,
+        name,
+        title,
+        type,
+        localValue,
+        handleChange,
+        onBlur,
+        onKeyPress,
+        placeholder,
+        size,
+        disabled,
+        isMandatory,
+        isInvalid,
+        errorToShow,
+        autoComplete,
+        multiline,
+        rows,
+        readOnly,
+        InputProps,
+        inputProps,
+        InputLabelProps,
+      ]
+    );
 
     return (
       <FormControl variant="outlined" fullWidth margin="normal" className={className} style={style}>
-        <TextField
-          ref={ref}
-          id={controlId}
-          name={name}
-          label={title || ""}
-          type={type}
-          // Use localValue for UI rendering to ensure responsiveness
-          value={localValue}
-          onChange={handleChange}
-          onBlur={onBlur}
-          onKeyPress={onKeyPress}
-          placeholder={placeholder || title}
-          size={size}
-          disabled={disabled}
-          required={isMandatory}
-          InputProps={{
-            readOnly: readOnly,
-            ...InputProps,
-            inputProps: inputProps,
-          }}
-          error={isInvalid}
-          helperText={isInvalid ? errorToShow : ""}
-          autoComplete={autoComplete}
-          aria-describedby={isInvalid ? `${controlId}-error` : undefined}
-          multiline={multiline}
-          rows={rows}
-          InputLabelProps={{
-            shrink: type === "date" ? true : undefined,
-            ...InputLabelProps,
-          }}
-        />
+        <TextField {...textFieldProps} />
       </FormControl>
     );
   }
 );
+
 FloatingLabelTextBox.displayName = "FloatingLabelTextBox";
-export default FloatingLabelTextBox;
+export default React.memo(FloatingLabelTextBox);
