@@ -1,14 +1,15 @@
-// src/context/ThemeContext.tsx
+// src/context/Common/ThemeContext.tsx
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { ThemeProvider as MuiThemeProvider, Theme } from "@mui/material/styles";
 import { createTheme } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
 import darkTheme from "@/layouts/Themes/darkTheme";
 import lightTheme from "@/layouts/Themes/LightTheme";
 
 type ThemeContextType = {
   isDarkMode: boolean;
   toggleTheme: () => void;
-  theme: Theme; // Include the full Material-UI theme object
+  theme: Theme;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -31,7 +32,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleTheme, theme }}>
-      <MuiThemeProvider theme={theme}>{children}</MuiThemeProvider>
+      <MuiThemeProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </MuiThemeProvider>
     </ThemeContext.Provider>
   );
 };

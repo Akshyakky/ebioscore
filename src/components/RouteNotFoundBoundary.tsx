@@ -5,6 +5,7 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import HomeIcon from "@mui/icons-material/Home";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useAppSelector } from "@/store/hooks";
+import { RootState } from "@/store"; // Adjust the path based on your project structure
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -26,7 +27,7 @@ interface RouteNotFoundBoundaryProps {
 const RouteNotFoundBoundary: React.FC<RouteNotFoundBoundaryProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const isAuthenticated = useAppSelector((state) => !!state.auth.token);
+  const isAuthenticated = useAppSelector((state: RootState) => !!state.auth.token);
 
   // Check if the current path exists in the available routes
   const isKnownRoute = React.useMemo(() => {
@@ -77,7 +78,7 @@ const RouteNotFoundBoundary: React.FC<RouteNotFoundBoundaryProps> = ({ children 
       "/",
     ];
 
-    return knownRoutes.includes(location.pathname);
+    return knownRoutes.some((route) => route.toLowerCase() === location.pathname.toLowerCase());
   }, [location.pathname]);
 
   const handleGoBack = () => {

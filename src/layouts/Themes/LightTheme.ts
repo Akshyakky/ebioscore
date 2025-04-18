@@ -1,6 +1,6 @@
-// src/theme/lightTheme.ts
-import { createTheme, alpha, Shadows } from "@mui/material/styles";
-import { DRAWER_WIDTH, LIGHT_COLORS, SHADOWS, TYPOGRAPHY, TRANSITIONS, SHAPE, COMPONENT_CONSTANTS } from "./themeConstants";
+// src/layouts/Themes/LightTheme.ts
+import { createTheme, alpha } from "@mui/material/styles";
+import { DRAWER_WIDTH, LIGHT_COLORS, SHADOWS, TYPOGRAPHY, TRANSITIONS, SHAPE, COMPONENT_CONSTANTS, SPACING_UNIT } from "./themeConstants";
 
 const lightTheme = createTheme({
   palette: {
@@ -63,7 +63,7 @@ const lightTheme = createTheme({
     },
   },
   shape: SHAPE,
-  shadows: ["none", ...Array(3).fill(SHADOWS.xs), ...Array(3).fill(SHADOWS.sm), ...Array(4).fill(SHADOWS.md), ...Array(14).fill(SHADOWS.xl)] as Shadows,
+  spacing: SPACING_UNIT,
   transitions: {
     easing: TRANSITIONS.easing,
     duration: TRANSITIONS.duration,
@@ -110,7 +110,7 @@ const lightTheme = createTheme({
           ".MuiListItem-root": {
             transition: `all ${TRANSITIONS.duration.shorter}ms ${TRANSITIONS.easing.easeInOut}`,
             "&:hover": {
-              backgroundColor: LIGHT_COLORS.primary.hover,
+              backgroundColor: alpha(LIGHT_COLORS.primary.main, 0.04),
               color: LIGHT_COLORS.primary.main,
               "& .MuiListItemIcon-root": {
                 color: LIGHT_COLORS.primary.main,
@@ -251,7 +251,7 @@ const lightTheme = createTheme({
               backgroundColor: alpha(LIGHT_COLORS.grey[100], 0.5),
             },
             "&:hover": {
-              backgroundColor: LIGHT_COLORS.primary.hover,
+              backgroundColor: alpha(LIGHT_COLORS.primary.main, 0.04),
             },
           },
         },
@@ -263,7 +263,6 @@ const lightTheme = createTheme({
           borderBottom: `1px solid ${LIGHT_COLORS.divider}`,
           color: LIGHT_COLORS.text.primary,
           height: COMPONENT_CONSTANTS.table.rowHeight,
-          // padding: "6px 8px",
         },
       },
     },

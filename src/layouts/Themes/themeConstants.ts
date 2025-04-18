@@ -1,4 +1,4 @@
-// src/theme/themeConstants.ts
+// src/layouts/Themes/themeConstants.ts
 import { alpha } from "@mui/material/styles";
 
 // Layout Constants
@@ -44,54 +44,36 @@ export const LIGHT_COLORS = {
     light: "#42a5f5",
     dark: "#1565c0",
     contrastText: "#ffffff",
-    hover: alpha("#1976d2", 0.04),
-    active: alpha("#1976d2", 0.12),
-    disabled: alpha("#1976d2", 0.38),
   },
   secondary: {
     main: "#f50057",
     light: "#ff4081",
     dark: "#c51162",
     contrastText: "#ffffff",
-    hover: alpha("#f50057", 0.04),
-    active: alpha("#f50057", 0.12),
-    disabled: alpha("#f50057", 0.38),
   },
   success: {
     main: "#2e7d32",
     light: "#4caf50",
     dark: "#1b5e20",
     contrastText: "#ffffff",
-    hover: alpha("#2e7d32", 0.04),
-    active: alpha("#2e7d32", 0.12),
-    disabled: alpha("#2e7d32", 0.38),
   },
   error: {
     main: "#d32f2f",
     light: "#ef5350",
     dark: "#c62828",
     contrastText: "#ffffff",
-    hover: alpha("#d32f2f", 0.04),
-    active: alpha("#d32f2f", 0.12),
-    disabled: alpha("#d32f2f", 0.38),
   },
   warning: {
     main: "#ed6c02",
     light: "#ff9800",
     dark: "#e65100",
     contrastText: "#ffffff",
-    hover: alpha("#ed6c02", 0.04),
-    active: alpha("#ed6c02", 0.12),
-    disabled: alpha("#ed6c02", 0.38),
   },
   info: {
     main: "#0288d1",
     light: "#03a9f4",
     dark: "#01579b",
     contrastText: "#ffffff",
-    hover: alpha("#0288d1", 0.04),
-    active: alpha("#0288d1", 0.12),
-    disabled: alpha("#0288d1", 0.38),
   },
   grey: {
     50: "#fafafa",
@@ -139,54 +121,36 @@ export const DARK_COLORS = {
     light: "#e3f2fd",
     dark: "#42a5f5",
     contrastText: "#000000",
-    hover: alpha("#90caf9", 0.08),
-    active: alpha("#90caf9", 0.16),
-    disabled: alpha("#90caf9", 0.38),
   },
   secondary: {
     main: "#f48fb1",
     light: "#f8bbd0",
     dark: "#c2185b",
     contrastText: "#000000",
-    hover: alpha("#f48fb1", 0.08),
-    active: alpha("#f48fb1", 0.16),
-    disabled: alpha("#f48fb1", 0.38),
   },
   success: {
     main: "#66bb6a",
     light: "#81c784",
     dark: "#388e3c",
     contrastText: "#000000",
-    hover: alpha("#66bb6a", 0.08),
-    active: alpha("#66bb6a", 0.16),
-    disabled: alpha("#66bb6a", 0.38),
   },
   error: {
     main: "#f44336",
     light: "#e57373",
     dark: "#d32f2f",
     contrastText: "#ffffff",
-    hover: alpha("#f44336", 0.08),
-    active: alpha("#f44336", 0.16),
-    disabled: alpha("#f44336", 0.38),
   },
   warning: {
     main: "#ffa726",
     light: "#ffb74d",
     dark: "#f57c00",
     contrastText: "#000000",
-    hover: alpha("#ffa726", 0.08),
-    active: alpha("#ffa726", 0.16),
-    disabled: alpha("#ffa726", 0.38),
   },
   info: {
     main: "#29b6f6",
     light: "#4fc3f7",
     dark: "#0288d1",
     contrastText: "#000000",
-    hover: alpha("#29b6f6", 0.08),
-    active: alpha("#29b6f6", 0.16),
-    disabled: alpha("#29b6f6", 0.38),
   },
   grey: {
     50: "#fafafa",
@@ -288,39 +252,32 @@ export const TRANSITIONS = {
 // Component-specific constants
 export const COMPONENT_CONSTANTS = {
   table: {
-    headerHeight: 40, // Reduced from 56
-    rowHeight: 36, // Reduced from 52
-    paginationHeight: 40, // Reduced from 52
-    denseHeaderHeight: 32, // Reduced from 44
-    denseRowHeight: 32, // Reduced from 40
-    densePaginationHeight: 32, // Reduced from 44
+    headerHeight: 40,
+    rowHeight: 36,
+    paginationHeight: 40,
+    denseHeaderHeight: 32,
+    denseRowHeight: 32,
+    densePaginationHeight: 32,
   },
   dialog: {
-    spacing: 16, // Reduced from 24
-    titleHeight: 48, // Reduced from 64
-    footerHeight: 48, // Reduced from 64
+    spacing: 16,
+    titleHeight: 48,
+    footerHeight: 48,
   },
   drawer: {
-    miniWidth: 56, // Reduced from 72
+    miniWidth: 56,
     standardWidth: DRAWER_WIDTH,
   },
   tooltip: {
     fontSize: "0.75rem",
-    padding: "4px 8px", // Reduced from "8px 16px"
-    arrowSize: 6, // Reduced from 8
+    padding: "4px 8px",
+    arrowSize: 6,
   },
   button: {
-    smallHeight: 28, // Reduced from 32
-    mediumHeight: 32, // Reduced from 40
-    largeHeight: 40, // Reduced from 48
+    smallHeight: 28,
+    mediumHeight: 32,
+    largeHeight: 40,
   },
-};
-
-// Media Query Breakpoints
-export const MEDIA_QUERIES = {
-  up: (breakpoint: keyof typeof BREAKPOINTS) => `@media (min-width: ${BREAKPOINTS[breakpoint]}px)`,
-  down: (breakpoint: keyof typeof BREAKPOINTS) => `@media (max-width: ${BREAKPOINTS[breakpoint] - 0.05}px)`,
-  between: (start: keyof typeof BREAKPOINTS, end: keyof typeof BREAKPOINTS) => `@media (min-width: ${BREAKPOINTS[start]}px) and (max-width: ${BREAKPOINTS[end] - 0.05}px)`,
 };
 
 // Shape Constants
@@ -344,6 +301,5 @@ export default {
   TYPOGRAPHY,
   TRANSITIONS,
   COMPONENT_CONSTANTS,
-  MEDIA_QUERIES,
   SHAPE,
 };
