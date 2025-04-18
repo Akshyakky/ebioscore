@@ -1,5 +1,5 @@
 import React from "react";
-import Grid from "@mui/material/Grid";
+import { Stack, Grid } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import CustomButton, { CustomButtonProps } from "./CustomButton";
 import { SvgIconComponent } from "@mui/icons-material";
@@ -34,8 +34,8 @@ interface ActionButtonGroupProps {
 
 const ActionButtonGroup: React.FC<ActionButtonGroupProps> = ({ buttons, orientation = "horizontal" }) => {
   return (
-    <Grid container spacing={1}>
-      <Grid item xs={12}>
+    <Stack spacing={1}>
+      <Grid>
         <StyledButtonGroup orientation={orientation} aria-label="action button group" disableElevation disableRipple>
           {buttons.map((button, index) => (
             <CustomButton
@@ -52,7 +52,7 @@ const ActionButtonGroup: React.FC<ActionButtonGroupProps> = ({ buttons, orientat
           ))}
         </StyledButtonGroup>
       </Grid>
-    </Grid>
+    </Stack>
   );
 };
 

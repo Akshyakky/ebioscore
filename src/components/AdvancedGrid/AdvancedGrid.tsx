@@ -26,16 +26,6 @@ interface GenericGridProps<T> {
   onCellEdit?: (rowId: number, field: string, value: any) => void;
 }
 
-const rowColors = [
-  "rgba(255, 229, 204, 0.8)",
-  "rgba(204, 255, 229, 0.8)",
-  "rgba(229, 204, 255, 0.8)",
-  "rgba(255, 255, 204, 0.8)",
-  "rgba(204, 229, 255, 0.8)",
-  "rgba(255, 204, 229, 0.8)",
-  "rgba(229, 255, 204, 0.8)",
-];
-
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   border: `1px solid ${theme.palette.divider}`,
   textAlign: "center",
