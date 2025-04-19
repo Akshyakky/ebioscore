@@ -46,7 +46,7 @@ import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPag
 import IndentProductPage from "@/pages/inventoryManagement/IndentProduct/MainPage/IndentProductPage";
 import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
 import { Navigate } from "react-router-dom";
-import AlertPage from "@/pages/common/AlertManagerPage/MainPage/AlertPage";
+import AlertPage from "@/pages/common/AlertManagerPage/MainPage/Alertpage";
 
 interface RouteConfig {
   path: string;
