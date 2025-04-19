@@ -34,7 +34,6 @@ import AppModifiedListPage from "../pages/hospitalAdministration/AppModifiedList
 import ChargeDetailsPage from "../pages/billing/ChargeDetailsPage/MainPage/ChargeDetailsPage";
 import DischargePage from "../pages/patientAdministration/DischargePage/MainPage/DischargePage";
 import WardBedTransferPage from "../pages/patientAdministration/WardBedTransfer/MainPage/WardBedTransferPage";
-import AlertPage from "@/pages/common/AlertManagerPage/MainPage/Alertpage";
 import MedicationFormPage from "@/pages/clinicalManagement/medicationForm/MainPage/MedicationFormPage";
 import MedicationFrequencyPage from "@/pages/clinicalManagement/MedicationFrequency/MainPage/MedicationFrequencyPage";
 import MedicationDosagePage from "@/pages/clinicalManagement/MedicationDosage/MainPage/MedicationDosagePage";
@@ -46,6 +45,7 @@ import ForgotPasswordPage from "@/pages/common/ForgotPasswordPage/ForgotPassword
 import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
 import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
 import { Navigate } from "react-router-dom";
+import AlertPage from "@/pages/common/AlertManagerPage/MainPage/Alertpage";
 
 interface RouteConfig {
   path: string;

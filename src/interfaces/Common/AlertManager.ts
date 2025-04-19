@@ -11,12 +11,6 @@ export interface AlertDto extends BaseDto {
   oPIPDate: string;
   alertDescription: string;
   rActiveYN: string;
-  rCreatedOn: string;
-  rCreatedID: number;
-  rCreatedBy: string;
-  rModifiedOn: string;
-  rModifiedID: number;
-  rModifiedBy: string;
   category: string;
   oldPChartID: number;
   pChartCode: string;

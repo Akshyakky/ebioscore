@@ -1,105 +1,85 @@
+// src/pages/common/AlertManagerPage/MainPage/AlertPage.tsx
+import React, { useState, useContext } from "react";
+import { Box, Container, Paper, Typography } from "@mui/material";
 import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
-import { useLoading } from "@/context/LoadingContext";
-import { PatientSearchContext } from "@/context/PatientSearchContext";
-import { AlertDto } from "@/interfaces/Common/AlertManager";
-import PatientSearch from "@/pages/patientAdministration/CommonPage/AdvanceSearch/PatientSearch";
-import { alertService } from "@/services/CommonServices/CommonModelServices";
-import { PatientService } from "@/services/PatientAdministrationServices/RegistrationService/PatientService";
-import { showAlertPopUp } from "@/utils/Common/alertMessage";
-import { showAlert } from "@/utils/Common/showAlert";
-import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
-import { Box, Container, Paper } from "@mui/material";
-import React, { useContext, useState } from "react";
-import AlertDetails from "../SubPage/AlertDetails";
 import SearchIcon from "@mui/icons-material/Search";
+import AlertDetails from "../SubPage/AlertDetails";
+import PatientSearch from "@/pages/patientAdministration/CommonPage/AdvanceSearch/PatientSearch";
+import { PatientSearchContext } from "@/context/PatientSearchContext";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import { AlertManagerProvider } from "@/context/Common/AlertManagerContext";
 
 const AlertPage: React.FC = () => {
-  const [selectedData, setSelectedData] = useState<AlertDto | undefined>(undefined);
-  const { setLoading } = useLoading();
   const [showPatientSearch, setShowPatientSearch] = useState(false);
   const { performSearch } = useContext(PatientSearchContext);
-  const [, setSelectedPChartID] = useState<number>(0);
-  const [alerts, setAlerts] = useState<AlertDto[]>([]);
-
-  const handlePatientSelect = async (selectedSuggestion: string, pChartCode: string) => {
-    setLoading(true);
-    try {
-      const numbersArray = extractNumbers(pChartCode);
-      const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
-      if (pChartID) {
-        await fetchPatientDetailsAndUpdateForm(pChartID);
-        setSelectedPChartID(pChartID);
-
-        const alertResult = await alertService.getById(pChartID);
-
-        if (alertResult.success && alertResult.data) {
-          const activeAlerts = alertResult.data.filter((alert: AlertDto) => alert.rActiveYN === "Y");
-
-          setSelectedData({
-            ...alertResult.data,
-            pChartCode: pChartCode,
-          });
-          setAlerts(activeAlerts);
-
-          if (activeAlerts.length > 0) {
-            showAlertPopUp(activeAlerts);
-          } else {
-            console.info("No active alerts found.");
-          }
-        } else {
-          console.error("Failed to fetch alert details.");
-          setAlerts([]);
-        }
-      } else {
-        showAlert("Error", "Unable to select patient. Please try again.", "error");
-      }
-    } catch (error) {
-      console.error("Error in handlePatientSelect:", error);
-      showAlert("Error", "An unexpected error occurred while selecting the patient.", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-  const fetchPatientDetailsAndUpdateForm = async (pChartID: number) => {
-    setLoading(true);
-    try {
-      const patientDetails = await PatientService.getPatientDetails(pChartID);
-      if (patientDetails.success && patientDetails.data) {
-      } else {
-        console.error("Fetching patient details was not successful or data is undefined");
-      }
-    } catch (error) {
-      console.error("Error fetching patient details:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [selectedPatient, setSelectedPatient] = useState<{ pChartID: number; pChartCode: string } | null>(null);
 
   const handleAdvancedSearch = async () => {
     setShowPatientSearch(true);
     await performSearch("");
   };
 
+  const handlePatientSelect = (selectedSuggestion: string, pChartCode: string) => {
+    const pChartID = parseInt(pChartCode.replace(/[^0-9]/g, "")) || 0;
+    setSelectedPatient({
+      pChartID,
+      pChartCode,
+    });
+    setShowPatientSearch(false);
+  };
+
   return (
-    <Container maxWidth={false}>
-      <Box sx={{ marginBottom: 2 }}>
-        <ActionButtonGroup
-          buttons={[
-            {
-              variant: "contained",
-              size: "medium",
-              icon: SearchIcon,
-              text: "Advanced Search",
-              onClick: handleAdvancedSearch,
-            },
-          ]}
-        />
-      </Box>
-      <PatientSearch show={showPatientSearch} handleClose={() => setShowPatientSearch(false)} onEditPatient={handlePatientSelect} />
-      <Paper variant="outlined" sx={{ padding: 2 }}>
-        <AlertDetails editData={selectedData} alerts={alerts} />
-      </Paper>
-    </Container>
+    <AlertManagerProvider>
+      <Container maxWidth={false}>
+        {/* <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+          <NotificationsActiveIcon fontSize="large" color="primary" sx={{ mr: 2 }} />
+          <Typography variant="h5" fontWeight="medium">
+            Alert Manager
+          </Typography>
+        </Box> */}
+
+        <Box sx={{ mb: 3 }}>
+          <ActionButtonGroup
+            buttons={[
+              {
+                variant: "contained",
+                size: "medium",
+                icon: SearchIcon,
+                text: "Advanced Patient Search",
+                onClick: handleAdvancedSearch,
+              },
+            ]}
+          />
+        </Box>
+
+        <PatientSearch show={showPatientSearch} handleClose={() => setShowPatientSearch(false)} onEditPatient={handlePatientSelect} />
+
+        <Paper variant="outlined" sx={{ padding: 3 }}>
+          <AlertDetails
+            editData={
+              selectedPatient
+                ? {
+                    oPIPAlertID: 0,
+                    pChartID: selectedPatient.pChartID,
+                    pChartCode: selectedPatient.pChartCode,
+                    // Other required properties with defaults
+                    oPIPNo: 0,
+                    oPIPCaseNo: 0,
+                    patOPIPYN: "Y",
+                    alertDescription: "",
+                    oPIPDate: new Date().toISOString(),
+                    category: "",
+                    oldPChartID: 0,
+                    oPVID: 0,
+                    rActiveYN: "Y",
+                    payID: 0,
+                  }
+                : undefined
+            }
+          />
+        </Paper>
+      </Container>
+    </AlertManagerProvider>
   );
 };
 
