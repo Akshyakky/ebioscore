@@ -463,10 +463,10 @@ const DashboardPage: React.FC = () => {
       {/* Header Section */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          <DashboardIcon sx={{ fontSize: 28, mr: 1, color: theme.palette.primary.main }} />
+          {/* <DashboardIcon sx={{ fontSize: 28, mr: 1, color: theme.palette.primary.main }} />
           <Typography variant="h5" fontWeight={600}>
             Dashboard
-          </Typography>
+          </Typography> */}
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
           <ButtonGroup variant="outlined" size="small">

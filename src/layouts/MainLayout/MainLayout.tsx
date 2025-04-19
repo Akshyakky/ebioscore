@@ -127,6 +127,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             }),
             maxWidth: "100%",
             overflowX: "hidden",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           {/* Breadcrumbs navigation */}
@@ -143,6 +145,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               display: "flex",
               flexDirection: "column",
               position: "relative",
+              flex: 1,
               ...(isDashboard && {
                 p: { xs: 0, sm: 0 },
                 backgroundColor: "transparent",
@@ -152,6 +155,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           >
             {children}
           </Box>
+
+          {/* Include Footer only for Dashboard */}
+          {isDashboard && <Footer />}
 
           {/* Back to top button (visible when scrolled) */}
           <Zoom in={scrolled}>
@@ -175,7 +181,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </Zoom>
         </Box>
       </Box>
-      <Footer />
 
       {/* Error notification */}
       <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseError} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
