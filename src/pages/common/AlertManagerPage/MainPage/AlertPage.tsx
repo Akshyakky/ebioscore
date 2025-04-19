@@ -72,7 +72,6 @@ const AlertPage: React.FC = () => {
                     oldPChartID: 0,
                     oPVID: 0,
                     rActiveYN: "Y",
-                    payID: 0,
                   }
                 : undefined
             }

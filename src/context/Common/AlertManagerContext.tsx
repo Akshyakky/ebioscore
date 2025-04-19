@@ -6,6 +6,7 @@ import { useAppSelector } from "@/store/hooks";
 import { showAlert } from "@/utils/Common/showAlert";
 import useDayjs from "@/hooks/Common/useDateTime";
 import { useServerDate } from "@/hooks/Common/useServerDate";
+import { AlertManagerServices } from "@/services/CommonServices/AlertManagerServices";
 
 interface AlertManagerContextType {
   alerts: AlertDto[];
@@ -37,12 +38,11 @@ export const AlertManagerProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     setIsLoading(true);
     try {
-      const result = await alertService.getById(pChartID);
+      const result = await alertService.GetAlertBypChartID(pChartID);
 
       if (result.success && result.data) {
         const activeAlerts = result.data.filter((alert: AlertDto) => alert.rActiveYN === "Y");
         setAlerts(activeAlerts);
-        return activeAlerts;
       } else {
         setAlerts([]);
       }

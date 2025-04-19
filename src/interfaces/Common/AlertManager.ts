@@ -1,7 +1,6 @@
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
 export interface AlertDto extends BaseDto {
-  payID: number;
   oPIPAlertID: number;
   oPIPNo: number;
   oPVID: number;
