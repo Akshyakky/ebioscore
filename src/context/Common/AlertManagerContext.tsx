@@ -1,7 +1,7 @@
 // src/context/AlertManagerContext.tsx
 import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from "react";
 import { AlertDto } from "@/interfaces/Common/AlertManager";
-import { alertService } from "@/services/CommonServices/CommonModelServices";
+import { alertService, baseAlertService } from "@/services/CommonServices/CommonModelServices";
 import { useAppSelector } from "@/store/hooks";
 import { showAlert } from "@/utils/Common/showAlert";
 import useDayjs from "@/hooks/Common/useDateTime";
@@ -64,7 +64,7 @@ export const AlertManagerProvider: React.FC<{ children: ReactNode }> = ({ childr
         oPIPCaseNo: 0,
         patOPIPYN: "Y",
         alertDescription: description,
-        oPIPDate: formatISO(new Date()),
+        oPIPDate: new Date(),
         category: "",
         oldPChartID: 0,
         rActiveYN: "Y",
@@ -90,7 +90,7 @@ export const AlertManagerProvider: React.FC<{ children: ReactNode }> = ({ childr
   const deleteAlert = useCallback(async (alertId: number) => {
     setIsLoading(true);
     try {
-      const isSuccess = await alertService.updateActiveStatus(alertId, false);
+      const isSuccess = await baseAlertService.updateActiveStatus(alertId, false);
 
       if (isSuccess) {
         setAlerts((prevAlerts) => prevAlerts.filter((alert) => alert.oPIPAlertID !== alertId));
@@ -115,7 +115,7 @@ export const AlertManagerProvider: React.FC<{ children: ReactNode }> = ({ childr
     setIsLoading(true);
     try {
       for (const alert of alerts) {
-        const result = await alertService.save(alert);
+        const result = await baseAlertService.save(alert);
         if (!result.success) {
           throw new Error(result.errorMessage || "Failed to save Alert.");
         }

@@ -37,24 +37,27 @@ const AlertList: React.FC<AlertListProps> = ({ alerts, onEditAlert, onDeleteAler
         key: "serialNo",
         header: "No.",
         visible: true,
-        width: 70,
+        width: 60,
         render: (_, rowIndex: number) => <Typography variant="body2">{rowIndex + 1}</Typography>,
       },
       {
         key: "oPIPDate",
         header: "Date",
         visible: true,
-        width: 120,
+        width: 110,
         formatter: (value: Date) => <Typography variant="body2">{value ? formatDate(new Date(value)) : "-"}</Typography>,
       },
       {
         key: "alertDescription",
         header: "Description",
         visible: true,
+        width: 300,
         formatter: (value: string) => (
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <PriorityHighIcon color="error" fontSize="small" sx={{ mr: 1 }} />
-            <Typography variant="body2">{value}</Typography>
+            <Typography variant="body2" noWrap sx={{ maxWidth: 360, textOverflow: "ellipsis" }}>
+              {value}
+            </Typography>
           </Box>
         ),
       },
@@ -62,16 +65,16 @@ const AlertList: React.FC<AlertListProps> = ({ alerts, onEditAlert, onDeleteAler
         key: "rCreatedBy",
         header: "Created By",
         visible: true,
-        width: 150,
+        width: 100,
         formatter: (value: string) => <Chip size="small" label={value || "System"} color="primary" variant="outlined" sx={{ fontWeight: 500 }} />,
       },
       {
         key: "actions",
         header: "Actions",
         visible: true,
-        width: 120,
+        width: 80,
         render: (item: AlertDto, index: number) => (
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
             <CustomButton icon={EditIcon} onClick={() => onEditAlert(item, index)} color="primary" size="small" variant="outlined" ariaLabel="Edit alert" />
             <CustomButton icon={DeleteIcon} onClick={() => handleDelete(item)} color="error" size="small" variant="outlined" ariaLabel="Delete alert" />
           </Box>
@@ -89,7 +92,6 @@ const AlertList: React.FC<AlertListProps> = ({ alerts, onEditAlert, onDeleteAler
         sx={{
           display: "flex",
           alignItems: "center",
-          mb: 2,
         }}
       >
         <PriorityHighIcon color="error" sx={{ mr: 1 }} />

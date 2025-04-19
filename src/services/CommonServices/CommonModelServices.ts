@@ -11,26 +11,11 @@ const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });
 const getToken = () => store.getState().auth.token!;
 
 // Create the base services using the factory
-const baseAlertService = createEntityService<AlertDto>("Alert", "commonURL");
+export const baseAlertService = createEntityService<AlertDto>("Alert", "commonURL");
 export const departmentService = createEntityService<DepartmentDto>("Department", "commonURL");
 
 // Create the alertService with all required methods
 export const alertService = {
-  // Standard methods from the base service
-  getAll: baseAlertService.getAll,
-  getById: baseAlertService.getById,
-  save: baseAlertService.save,
-  updateActiveStatus: baseAlertService.updateActiveStatus,
-  getNextCode: baseAlertService.getNextCode,
-  find: baseAlertService.find,
-  getPaged: baseAlertService.getPaged,
-  firstOrDefault: baseAlertService.firstOrDefault,
-  count: baseAlertService.count,
-  any: baseAlertService.any,
-  getAllWithIncludes: baseAlertService.getAllWithIncludes,
-  bulkSave: baseAlertService.bulkSave,
-  bulkUpdate: baseAlertService.bulkUpdate,
-
   // Custom method for retrieving alerts by patient chart ID
   GetAlertBypChartID: async (pChartID: number): Promise<OperationResult<AlertDto[]>> => {
     try {

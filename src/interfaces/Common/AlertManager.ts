@@ -7,7 +7,7 @@ export interface AlertDto extends BaseDto {
   pChartID: number;
   oPIPCaseNo: number;
   patOPIPYN: string;
-  oPIPDate: string;
+  oPIPDate: Date;
   alertDescription: string;
   rActiveYN: string;
   category: string;
