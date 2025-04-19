@@ -67,7 +67,7 @@ const AlertPage: React.FC = () => {
                     oPIPCaseNo: 0,
                     patOPIPYN: "Y",
                     alertDescription: "",
-                    oPIPDate: new Date().toISOString(),
+                    oPIPDate: new Date(),
                     category: "",
                     oldPChartID: 0,
                     oPVID: 0,
