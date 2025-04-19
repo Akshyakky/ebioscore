@@ -153,11 +153,11 @@ const BreadcrumbChip = styled(Chip, {
   };
 
   return {
-    height: 26,
+    height: 20,
     fontSize: "0.75rem",
     backgroundColor: alpha(getColorForCategory(), 0.1),
     color: getColorForCategory(),
-    fontWeight: 600,
+    fontWeight: 500,
     border: `1px solid ${alpha(getColorForCategory(), 0.3)}`,
     "& .MuiChip-label": {
       padding: "0 8px",
@@ -228,10 +228,10 @@ const BreadcrumbsNavigation: React.FC<BreadcrumbsNavigationProps> = ({ showHome 
   return (
     <Box
       sx={{
-        mb: 2,
-        mt: 1,
-        px: 1,
-        py: 0.75,
+        mb: 1,
+        mt: 0,
+        px: 0,
+        py: 0,
         backgroundColor: theme.palette.background.default,
         borderRadius: 1,
         display: "flex",

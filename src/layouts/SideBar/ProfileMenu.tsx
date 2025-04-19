@@ -139,8 +139,9 @@ const ProfileMenu: React.FC = () => {
           variant="text"
           color="warning"
           onClick={handleClick}
-          startIcon={<UserAvatar>{getInitials(user?.userName || "")}</UserAvatar>}
-          endIcon={<AccountCircleIcon />}
+          // startIcon={<UserAvatar>{getInitials(user?.userName || "")}</UserAvatar>}
+          endIcon={<UserAvatar>{getInitials(user?.userName || "")}</UserAvatar>}
+          // endIcon={<AccountCircleIcon />}
           aria-controls={open ? "profile-menu" : undefined}
           aria-haspopup="true"
           aria-expanded={open ? "true" : undefined}

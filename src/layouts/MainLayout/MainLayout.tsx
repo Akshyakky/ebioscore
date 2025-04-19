@@ -141,7 +141,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               borderRadius: 2,
               boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12)",
               p: { xs: 2, sm: 3 },
-              minHeight: "calc(100vh - 180px)", // Account for header and footer
+              minHeight: "calc(100vh - 300px)", // Account for header and footer
               display: "flex",
               flexDirection: "column",
               position: "relative",
