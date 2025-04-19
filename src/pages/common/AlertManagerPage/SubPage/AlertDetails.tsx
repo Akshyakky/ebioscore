@@ -149,9 +149,10 @@ const AlertDetails: React.FC<AlertDetailsProps> = ({ editData, alerts: initialAl
         clearAlerts();
         setEditingAlert(null);
         setEditingIndex(null);
+        setSelectedPChartID(0);
       },
     });
-  }, [clearAlerts]);
+  }, [clearAlerts, setSelectedPChartID]);
 
   return (
     <Box>

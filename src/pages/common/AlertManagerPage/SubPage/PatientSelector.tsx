@@ -1,5 +1,5 @@
 // src/pages/common/AlertManagerPage/SubPage/PatientSelector.tsx
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Grid, Paper, Typography, Box, Chip } from "@mui/material";
 import FormField from "@/components/FormField/FormField";
 import PatientDemographics from "@/pages/patientAdministration/CommonPage/Demograph/PatientDemographics";
@@ -17,6 +17,12 @@ interface PatientSelectorProps {
 const PatientSelector: React.FC<PatientSelectorProps> = ({ pChartID, onPatientSelect, disabled = false, isSubmitted = false }) => {
   const [pChartCode, setPChartCode] = useState<string>("");
   const { fetchPatientSuggestions } = usePatientAutocomplete();
+
+  useEffect(() => {
+    if (!pChartID) {
+      setPChartCode("");
+    }
+  }, [pChartID]);
 
   const handlePatientSelect = useCallback(
     async (selectedSuggestion: string) => {
