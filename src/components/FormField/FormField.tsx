@@ -1,4 +1,4 @@
-import React, { forwardRef, useMemo, memo, useState } from "react";
+import React, { forwardRef, useMemo, memo, useState, useCallback } from "react";
 import { Box, Grid, Theme, SelectChangeEvent, InputAdornment, IconButton } from "@mui/material";
 import { GridProps } from "@mui/material/Grid";
 import { TextFieldProps } from "@mui/material/TextField";
@@ -48,11 +48,13 @@ export interface DropdownOption {
   group?: string;
   metadata?: Record<string, any>;
 }
+
 export interface PasswordFormFieldProps extends BaseFormFieldProps {
   type: "password";
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   showPasswordToggle?: boolean;
 }
+
 export interface FileFormFieldProps extends BaseFormFieldProps {
   type: "file";
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -61,6 +63,7 @@ export interface FileFormFieldProps extends BaseFormFieldProps {
   maxFileSize?: number;
   allowedFileTypes?: string[];
 }
+
 interface BaseFormFieldProps {
   type: FieldType;
   label: string;
@@ -193,46 +196,53 @@ export type FormFieldProps =
   | PasswordFormFieldProps
   | FileFormFieldProps;
 
-const useStyles = (theme: Theme) => ({
-  fieldContainer: {
-    display: "flex",
-    alignItems: "flex-start",
-    width: "100%",
-  },
-  addButton: {
-    marginTop: theme.spacing(2),
-    minWidth: "32px",
-    width: "32px",
-    height: "40px",
-    padding: 0,
-    borderRadius: "4px",
-    transition: "all 0.2s ease-in-out",
-    "&:hover": {
-      transform: "scale(1.05)",
-      backgroundColor: theme.palette.primary.dark,
-    },
-  },
-  addIcon: {
-    fontSize: "20px",
-  },
-  helperText: {
-    marginTop: theme.spacing(0.5),
-    fontSize: "0.75rem",
-    color: theme.palette.text.secondary,
-  },
-  errorText: {
-    color: theme.palette.error.main,
-  },
-});
+// Custom hook for styles to improve performance
+const useFieldStyles = (theme: Theme) => {
+  return useMemo(
+    () => ({
+      fieldContainer: {
+        display: "flex",
+        alignItems: "flex-start",
+        width: "100%",
+      },
+      addButton: {
+        marginTop: theme.spacing(2),
+        minWidth: "32px",
+        width: "32px",
+        height: "40px",
+        padding: 0,
+        borderRadius: "4px",
+        transition: "all 0.2s ease-in-out",
+        "&:hover": {
+          transform: "scale(1.05)",
+          backgroundColor: theme.palette.primary.dark,
+        },
+      },
+      addIcon: {
+        fontSize: "20px",
+      },
+      helperText: {
+        marginTop: theme.spacing(0.5),
+        fontSize: "0.75rem",
+        color: theme.palette.text.secondary,
+      },
+      errorText: {
+        color: theme.palette.error.main,
+      },
+    }),
+    [theme]
+  );
+};
 
 const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
   const theme = useTheme();
-  const styles = useStyles(theme);
+  const styles = useFieldStyles(theme);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleTogglePassword = () => {
+  const handleTogglePassword = useCallback(() => {
     setShowPassword((prev) => !prev);
-  };
+  }, []);
+
   const {
     type,
     label,
@@ -262,8 +272,9 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
     testId,
   } = props;
 
-  const renderField = useMemo(() => {
-    const commonProps = {
+  // Memoize common props to prevent unnecessary re-renders
+  const commonProps = useMemo(
+    () => ({
       name,
       ControlID,
       disabled,
@@ -274,8 +285,28 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
       errorMessage,
       "data-testid": testId,
       sx: { flex: 1 },
-    };
+    }),
+    [name, ControlID, disabled, readOnly, size, isMandatory, isSubmitted, errorMessage, testId]
+  );
 
+  // Create password input props with toggle functionality
+  const passwordInputProps = useMemo(() => {
+    if (type !== "password") return InputProps;
+
+    return {
+      ...InputProps,
+      endAdornment: (
+        <InputAdornment position="end">
+          <IconButton aria-label="toggle password visibility" onClick={handleTogglePassword} edge="end" size="small">
+            {showPassword ? <GridVisibilityOffIcon /> : <VisibilityIcon />}
+          </IconButton>
+        </InputAdornment>
+      ),
+    };
+  }, [InputProps, type, showPassword, handleTogglePassword]);
+
+  // Render specific field based on type
+  const renderField = useMemo(() => {
     switch (type) {
       case "text":
       case "number":
@@ -310,16 +341,7 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
             onChange={(props as PasswordFormFieldProps).onChange}
             type={showPassword ? "text" : "password"}
             placeholder={placeholder}
-            InputProps={{
-              ...InputProps,
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton aria-label="toggle password visibility" onClick={handleTogglePassword} edge="end" size="small">
-                    {showPassword ? <GridVisibilityOffIcon /> : <VisibilityIcon />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
+            InputProps={passwordInputProps}
             InputLabelProps={InputLabelProps}
           />
         );
@@ -428,6 +450,7 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
             disablePast={dateTimePickerProps.disablePast}
           />
         );
+
       case "timepicker":
         const timePickerProps = props as TimePickerFormFieldProps;
         return (
@@ -447,15 +470,19 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
             InputLabelProps={InputLabelProps}
           />
         );
+
       case "file":
         const fileProps = props as FileFormFieldProps;
-        const hiddenFileInput = (
+
+        // Create file input element - but hidden
+        const fileInput = (
           <input type="file" onChange={fileProps.onChange} accept={fileProps.accept} multiple={fileProps.multiple} style={{ display: "none" }} ref={ref} id={ControlID} />
         );
 
+        // Create a nice text field with an icon for file selection
         return (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {hiddenFileInput}
+            {fileInput}
             <FloatingLabelTextBox
               {...commonProps}
               title={label}
@@ -490,8 +517,9 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
       default:
         return null;
     }
-  }, [props, ref]);
+  }, [type, commonProps, label, value, placeholder, maxLength, min, max, step, onBlur, InputProps, passwordInputProps, InputLabelProps, rows, props, showPassword, ref, ControlID]);
 
+  // Add button for fields
   const addButton = useMemo(() => {
     if (!showAddButton || !onAddClick) return null;
 
