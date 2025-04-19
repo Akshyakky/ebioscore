@@ -947,9 +947,9 @@ const DashboardPage: React.FC = () => {
                         return (
                           <tr
                             key={key}
-                            style={{
-                              "&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.04) },
-                            }}
+                            // style={{
+                            //   "&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.04) },
+                            // }}
                           >
                             <td
                               style={{
