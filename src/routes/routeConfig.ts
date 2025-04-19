@@ -43,9 +43,10 @@ import InvestigationListPage from "@/pages/laboratory/InvestigationListPage/Main
 import ComponentEntryTypePage from "@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage";
 import ForgotPasswordPage from "@/pages/common/ForgotPasswordPage/ForgotPasswordPage";
 import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
+import IndentProductPage from "@/pages/inventoryManagement/IndentProduct/MainPage/IndentProductPage";
 import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
 import { Navigate } from "react-router-dom";
-import AlertPage from "@/pages/common/AlertManagerPage/MainPage/Alertpage";
+import IndentProductPage from "@/pages/inventoryManagement/IndentProduct/MainPage/IndentProductPage";
 
 interface RouteConfig {
   path: string;
@@ -98,6 +99,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/ComponentEntryTypePage", component: ComponentEntryTypePage, protected: true },
   { path: "/PurchaseOrderPage", component: PurchaseOrderPage, protected: true },
   { path: "/ForgotPasswordPage", component: ForgotPasswordPage, protected: false },
+  { path: "/IndentProductPage", component: IndentProductPage, protected: true },
   // 404 Not Found route - must be placed last to catch all unmatched routes
   { path: "*", component: NotFoundPage, protected: false },
 ];

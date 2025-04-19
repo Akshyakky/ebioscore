@@ -1,3 +1,4 @@
+import { IndentSaveRequestDto } from "@/interfaces/InventoryManagement/IndentProductDto";
 import { ProductGroupDto, ProductSubGroupDto, ProductUnitDto } from "@/interfaces/InventoryManagement/ProductGroup-Unit-SubGroup";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
@@ -12,3 +13,4 @@ export const productUnitService = createEntityService<ProductUnitDto>("ProductUn
 export const productTaxService = createEntityService<ProductTaxListDto>("ProductTaxList", "inventoryManagementURL");
 export const productOverviewService = createEntityService<ProductOverviewDto>("ProductOverview", "inventoryManagementURL");
 export const purchaseOrderMastService = createEntityService<PurchaseOrderMastDto>("PurchaseOrderMast", "inventoryManagementURL");
+export const indentProductService = createEntityService<IndentSaveRequestDto>("IndentProdutc", "inventoryManagementURL");

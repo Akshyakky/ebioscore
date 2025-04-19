@@ -43,24 +43,29 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
     setShowKinPopup(true);
   }, []);
 
-  const handleDeleteKin = useCallback(async (kin: PatNokDetailsDto) => {
-    try {
-      const updatedKin = {
-        ...kin,
-        rActiveYN: "N",
-      };
-      const result = await PatNokService.saveNokDetails(updatedKin);
-      if (result.success) {
-        setGridKinData((prevData) => prevData.filter((item) => item.pNokID !== kin.pNokID));
-        showAlert("Success", "Next of Kin record deactivated successfully", "success");
-      } else {
-        showAlert("Error", "Failed to deactivate Next of Kin record", "error");
+  const handleDeleteKin = useCallback(
+    async (kin: PatNokDetailsDto) => {
+      debugger;
+      try {
+        const updatedKin = {
+          ...kin,
+          pChartID: pChartID,
+          rActiveYN: "N",
+        };
+        const result = await PatNokService.saveNokDetails(updatedKin);
+        if (result.success) {
+          setGridKinData((prevData) => prevData.filter((item) => item.pNokID !== kin.pNokID));
+          showAlert("Success", "Next of Kin record deactivated successfully", "success");
+        } else {
+          showAlert("Error", "Failed to deactivate Next of Kin record", "error");
+        }
+      } catch (error) {
+        console.error("Error deactivating Next Of Kin:", error);
+        showAlert("Error", "An error occurred while deactivating the record", "error");
       }
-    } catch (error) {
-      console.error("Error deactivating Next Of Kin:", error);
-      showAlert("Error", "An error occurred while deactivating the record", "error");
-    }
-  }, []);
+    },
+    [pChartID]
+  );
 
   const generateNewId = useCallback(<T extends { ID: number }>(data: T[]): number => {
     const maxId = data.reduce((max, item) => (item.ID > max ? item.ID : max), 0);

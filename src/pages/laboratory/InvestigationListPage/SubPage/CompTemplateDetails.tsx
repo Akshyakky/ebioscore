@@ -25,9 +25,10 @@ interface TemplateGroup extends AppModifyFieldDto {
 interface LCompTemplateDetailsProps {
   onUpdateTemplate: (templateData: LCompTemplateDto) => void;
   selectedComponent: LComponentDto;
+  indexID: number; // <-- ADD THIS
 }
 
-const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemplate, selectedComponent }) => {
+const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemplate, selectedComponent, indexID }) => {
   const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -80,6 +81,11 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
             invResponse.data.lCompTemplateDtos?.filter(
               (t: LCompTemplateDto) => (t.compOID === selectedComponent.compoID || t.compoID === selectedComponent.compoID) && t.rActiveYN === "Y"
             ) || [];
+
+          // after fetching compTemplates…
+          compTemplates.forEach(
+            (t) => onUpdateTemplate({ ...t, indexID }) // ← BACK‑FILL IT
+          );
 
           templateGroupFields.forEach((group: TemplateGroup) => {
             group.templates = compTemplates.filter((template) => template.tGroupID === group.amlID);
@@ -165,6 +171,7 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
       tGroupName: group.amlName,
       cTText: editorValue,
       isBlankYN: "N",
+      indexID,
       compOID: selectedComponent.compoID,
       invID: selectedComponent.invID,
       compCode: selectedComponent.compCode,

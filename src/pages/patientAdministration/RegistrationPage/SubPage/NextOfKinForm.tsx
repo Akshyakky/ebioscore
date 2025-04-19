@@ -19,6 +19,7 @@ import FormField from "@/components/FormField/FormField";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 import CustomButton from "@/components/Button/CustomButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { notifyError, notifyWarning } from "@/utils/Common/toastManager";
 
 interface NextOfKinFormProps {
   show: boolean;
@@ -114,24 +115,46 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
     }
   }, [editData, nextOfKinInitialFormState, serverDate, resetNextOfKinFormData]);
 
+  const validateFormData = (): boolean => {
+    const { pNokTitleVal, pNokFName, pNokLName, pNokRelNameVal, pAddPhone1, pNokPChartCode, pNokRegStatusVal, pNokPChartID } = nextOfkinData;
+
+    let isValid = true;
+
+    if (!pNokTitleVal || !pNokFName.trim() || !pNokLName.trim() || !pNokRelNameVal || !pAddPhone1.trim()) {
+      // notifyError("Please fill all mandatory fields.");
+      isValid = false;
+    }
+
+    // If Registered is selected, enforce UHID selection
+    if (pNokRegStatusVal === "Y") {
+      if (!pNokPChartCode.trim() || !pNokPChartID || pNokPChartID <= 0) {
+        notifyError("Please select registered data.");
+        isValid = false;
+      }
+    }
+
+    return isValid;
+  };
+
   const handleSubmit = useCallback(async () => {
     setIsSubmitted(true);
-    if (nextOfkinData.pNokFName.trim() && nextOfkinData.pNokLName.trim() && nextOfkinData.pAddPhone1.trim()) {
-      setLoading(true);
-      try {
-        await handleSave(nextOfkinData);
-        showAlert("Success", "The Kin Details Saved successfully", "success");
-        resetNextOfKinFormData();
-        handleClose();
-      } catch (error) {
-        showAlert("Error", "Failed to save Kin details. Please try again.", "error");
-      } finally {
-        setLoading(false);
-        setIsSubmitted(false);
-      }
-    } else {
-      showAlert("Warning", "Please fill in all required fields", "warning");
-      setIsSubmitted(false);
+
+    if (!validateFormData()) {
+      notifyWarning("Please fill all mandatory fields.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await handleSave(nextOfkinData);
+      showAlert("Success", "The Kin Details Saved successfully", "success");
+      resetNextOfKinFormData();
+      handleClose();
+    } catch (error) {
+      showAlert("Error", "Failed to save Kin details. Please try again.", "error");
+    } finally {
+      setLoading(false);
+      setIsSubmitted(false); // optional: reset if dialog closes or refreshes
     }
   }, [nextOfkinData, handleSave, handleClose, resetNextOfKinFormData, setLoading]);
 
@@ -270,6 +293,7 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
             setNextOfKinData((prev) => ({
               ...prev,
               pNokPChartCode: e.target.value,
+              pNokPChartID: 0, // Invalidate the selection unless properly selected from suggestion
             }))
           }
           fetchSuggestions={fetchPatientSuggestions}

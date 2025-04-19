@@ -29,7 +29,6 @@ interface LComponentDetailsProps {
 
 const LComponentDetails: React.FC<LComponentDetailsProps> = ({
   onUpdate,
-  onUpdateCompMultiple,
   onUpdateAgeRange,
   onUpdateTemplate,
   selectedComponent,
@@ -42,14 +41,14 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
   const serverDate = useServerDate();
   const [isDeltaValueDisabled, setIsDeltaValueDisabled] = useState(false);
 
-  // Create a ref to hold the latest ageRanges
+  // Create a ref to hold the latest ageRanges.
   const ageRangesRef = useRef<LCompAgeRangeDto[]>([]);
 
   const [formState, setFormState] = useState<LComponentDto>({
     invID: 0,
     lCentID: 0,
     deptID: 1,
-    compoID: 0,
+    compoID: 0, // For a new component, this remains 0.
     compDetailYN: "N",
     rActiveYN: "Y",
     transferYN: "N",
@@ -95,9 +94,8 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
     rNotes: "",
   });
 
-  // Keep track of age ranges in state
+  // State for age ranges.
   const [ageRanges, setAgeRanges] = useState<LCompAgeRangeDto[]>([]);
-
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [, setFormErrors] = useState<ComponentFormErrors>({});
   const dropdownValues = useDropdownValues(["entryType", "mainGroup", "subTitle"]);
@@ -107,15 +105,27 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
   const isEditMode = !!selectedComponent && selectedComponent.compoID !== 0;
   const [tempCompoID, setTempCompoID] = useState(1);
 
-  // IMPORTANT: Sync the ref with state whenever ageRanges changes
+  const indexCounterRef = useRef(1); // start with 1 or max + 1 based on component count
+  const [currentIndexID, setCurrentIndexID] = useState<number>(() => selectedComponent?.indexID || 1);
+
+  useEffect(() => {
+    // whenever total changes or selectedComponent changes
+    if (selectedComponent) {
+      setCurrentIndexID(selectedComponent.indexID || indexCounterRef.current);
+    } else {
+      // assign next
+      indexCounterRef.current = totalComponentsForInvestigation + 1 > indexCounterRef.current ? totalComponentsForInvestigation + 1 : indexCounterRef.current;
+      setCurrentIndexID(indexCounterRef.current);
+    }
+  }, [selectedComponent, totalComponentsForInvestigation]);
+  // Update the ageRanges ref when ageRanges state changes.
   useEffect(() => {
     ageRangesRef.current = [...ageRanges];
-    console.log("Age ranges updated:", ageRanges);
   }, [ageRanges]);
 
+  // When loading an existing component, update formState and related fields.
   useEffect(() => {
     if (!selectedComponent) return;
-
     setFormState(() => ({
       ...selectedComponent,
       mGrpID: selectedComponent.mGrpID || 0,
@@ -129,33 +139,29 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
     }));
 
     setSelectedLCentID(selectedComponent.lCentID || null);
-
+    // For Entry Type 6 (age range), load the active ranges.
     if (selectedComponent.lCentID === 6) {
       const activeRanges = (selectedComponent.ageRanges || []).filter((ar) => ar.rActiveYN !== "N");
       setAgeRanges(activeRanges);
-      ageRangesRef.current = [...activeRanges]; // Sync the ref immediately
-      console.log("Loading age ranges:", activeRanges);
+      ageRangesRef.current = [...activeRanges];
     }
-
+    // For Entry Type 5 (multiple values), load saved values.
     if (selectedComponent.lCentID === 5 && Array.isArray(selectedComponent.multipleChoices)) {
-      // ✅ Load saved values (active only) into compMultipleList
       const activeChoices = selectedComponent.multipleChoices.filter((mc) => mc.rActiveYN !== "N");
       setCompMultipleList(activeChoices);
-
-      // optional: reset the input formComp
+      // Clear the input field.
       setFormComp((prev) => ({
         ...prev,
         compID: compID || 1,
         compCode: compCode || "",
         compName: compName || "",
-        cmValues: "", // clear the input
+        cmValues: "",
       }));
     }
   }, [selectedComponent]);
 
   const validateComponentForm = useCallback(() => {
     const errors: ComponentFormErrors = {};
-
     if (!formState.compOCodeCD?.trim()) {
       errors.compOCodeCD = "Component Code is required.";
     }
@@ -168,10 +174,9 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
     if (!formState.lCentID) {
       errors.lCentID = "Entry Type is required.";
     }
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [formState, setFormErrors]);
+  }, [formState]);
 
   const handleTextInputChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormState((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -206,18 +211,14 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
   const handleUpdateCompMultiple = (multipleData: LCompMultipleDto) => {
     setCompMultipleList((prev) => {
       const existingIndex = prev.findIndex((m) => m.cmID === multipleData.cmID);
-
       if (multipleData.rActiveYN === "N") {
         return prev.filter((m) => m.cmID !== multipleData.cmID);
       }
-
       if (existingIndex >= 0) {
         const updated = [...prev];
         updated[existingIndex] = { ...multipleData };
         return updated;
       }
-
-      // Add new value
       return [...prev, multipleData];
     });
   };
@@ -233,140 +234,138 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
         }
         return [...prev, newTemplate];
       });
-
       setSelectedComponent((prev) => {
         if (!prev) return prev;
         const filtered = (prev.templates || []).filter((t: LCompTemplateDto) => t.tGroupID !== newTemplate.tGroupID);
         return { ...prev, templates: [...filtered, newTemplate] };
       });
-
       onUpdateTemplate(newTemplate);
     },
     [onUpdateTemplate, setTemplateDetails, setSelectedComponent]
   );
 
-  // Handler for deleting age ranges
   const handleDeleteAgeRange = useCallback((ids: number[]) => {
     setAgeRanges((prev) => {
       const updated = prev.filter((range) => !ids.includes(range.carID));
-      ageRangesRef.current = updated; // Keep the ref in sync
+      ageRangesRef.current = updated;
       return updated;
     });
   }, []);
 
   const handleAgeRangeUpdate = useCallback(
     (newRange: LCompAgeRangeDto) => {
-      console.log("Handling age range update:", newRange);
-
       const enriched: LCompAgeRangeDto = {
         ...newRange,
         compoID: formState.compoID || selectedComponent?.compoID || 0,
         carAgeValue: `${newRange.carStart}-${newRange.carEnd} ${newRange.carAgeType}`,
         carSexValue: newRange.carSex,
       };
-
       setAgeRanges((prev) => {
         const updated = [...prev];
         const idx = updated.findIndex((ar) => ar.carID === newRange.carID);
-
         if (idx >= 0) {
           updated[idx] = enriched;
         } else {
           updated.push(enriched);
         }
-
-        // Important: Keep the ref in sync immediately
         ageRangesRef.current = [...updated];
-        console.log("Updated age ranges:", updated);
-
         return updated;
       });
-
-      // Call the parent update function immediately
       onUpdateAgeRange(enriched);
     },
     [formState.compoID, selectedComponent?.compoID, onUpdateAgeRange]
   );
 
-  // Modified OK click handler to use the ref for age ranges
-  const handleOkClick = useCallback(() => {
-    debugger;
-    console.log("OK clicked, current age ranges:", ageRangesRef.current);
+  useEffect(() => {
+    if (totalComponentsForInvestigation > 0) {
+      indexCounterRef.current = Math.max(1, totalComponentsForInvestigation + 1);
+    }
+  }, [totalComponentsForInvestigation]);
 
+  const handleOkClick = useCallback(() => {
     setIsSubmitted(true);
     if (!validateComponentForm()) {
       notifyWarning("Please fill all mandatory fields.");
       return;
     }
 
-    const isEditMode = !!selectedComponent; // ✅ Check based on selection, not compoID
-    const currentAgeRanges = [...ageRangesRef.current];
-    // If we are *not* editing an existing component, forcibly set `compoID=0`
-    const assignedCompoID = isEditMode ? selectedComponent!.compoID : 0;
-
-    // If Entry Type = 5 (Multiple Values), ensure at least one multiple choice value is added
+    // Validate based on Entry Type
     if (formState.lCentID === 5 && compMultipleList.filter((m) => m.rActiveYN !== "N").length === 0) {
-      showAlert("Warning", "Please add at least one Multiple Choice value for this entry type.", "warning");
+      showAlert("Warning", "Please add at least one Multiple Choice value", "warning");
+      return;
+    }
+    if (formState.lCentID === 6 && ageRangesRef.current.filter((a) => a.rActiveYN !== "N").length === 0) {
+      showAlert("Warning", "Please add at least one Age Range", "warning");
+      return;
+    }
+    if (formState.lCentID === 7 && templateDetails.filter((t) => t.rActiveYN !== "N").length === 0) {
+      showAlert("Warning", "Please add at least one Template.", "warning");
       return;
     }
 
-    // If Entry Type = 6 (Applicable Age Range), ensure at least one age range is added
-    if (formState.lCentID === 6 && currentAgeRanges.length === 0) {
-      showAlert("Warning", "Please add at least one Age Range for this entry type.", "warning");
-      return;
+    // Use our currentIndexID here
+    const idxID = currentIndexID;
+    if (!isEditMode) {
+      indexCounterRef.current = idxID + 1;
     }
 
-    // If Entry Type = 7 (Template), ensure at least one template is added
-    if (formState.lCentID === 7 && templateDetails.length === 0) {
-      showAlert("Warning", "Please add at least one Template for this entry type.", "warning");
-      return;
-    }
-
-    const updatedComponent: LComponentDto = {
+    const updated: LComponentDto = {
       ...formState,
-      compoID: assignedCompoID,
+      compoID: isEditMode ? selectedComponent?.compoID || 0 : 0,
       compOrder: isEditMode ? formState.compOrder : totalComponentsForInvestigation + 1,
-      multipleChoices: [...compMultipleList],
+      indexID: idxID,
+      multipleChoices:
+        formState.lCentID === 5
+          ? compMultipleList.map((m) => ({
+              ...m,
+              indexID: idxID,
+            }))
+          : [],
       ageRanges:
         formState.lCentID === 6
-          ? currentAgeRanges.map((ar) => ({
+          ? ageRangesRef.current.map((ar) => ({
               ...ar,
-              cappID: 0,
-              compoID: assignedCompoID,
-              carID: ar.carID || 0,
-              carAgeValue: `${ar.carStart}-${ar.carEnd} ${ar.carAgeType}`,
-              carSexValue: ar.carSex,
+              indexID: idxID,
             }))
           : [],
       templates:
         formState.lCentID === 7
-          ? templateDetails.map((t) => ({
-              ...t,
-              compOID: 0,
-              cTID: t.cTID || 0,
+          ? templateDetails.map((tpl) => ({
+              ...tpl,
+              indexID: idxID,
             }))
           : [],
     };
 
     if (isEditMode) {
-      onUpdate(updatedComponent);
+      onUpdate(updated);
     } else {
-      setUnsavedComponents((prev) => [...prev, updatedComponent]);
+      setTempCompoID((p) => p + 1);
+      setUnsavedComponents((prev) => {
+        const existingIndex = prev.findIndex((c) => c.indexID === updated.indexID);
+        if (existingIndex >= 0) {
+          const clone = [...prev];
+          clone[existingIndex] = updated;
+          return clone;
+        }
+        return [...prev, updated];
+      });
     }
 
     handleClose();
     handleCloseDialog();
   }, [
+    validateComponentForm,
     formState,
     compMultipleList,
     templateDetails,
-    validateComponentForm,
+    currentIndexID,
+    isEditMode,
+    tempCompoID,
+    totalComponentsForInvestigation,
     onUpdate,
     setUnsavedComponents,
     handleCloseDialog,
-    selectedComponent,
-    totalComponentsForInvestigation,
-    tempCompoID,
   ]);
 
   const handleClose = () => {
@@ -405,7 +404,7 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
       defaultYN: "Y",
     }));
     setAgeRanges([]);
-    ageRangesRef.current = []; // Clear the ref as well
+    ageRangesRef.current = [];
     setSelectedLCentID(null);
     setSelectedComponent(null);
   };
@@ -415,7 +414,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
       <Typography variant="h6" sx={{ marginBottom: 2 }}>
         Add New Component
       </Typography>
-
       <Grid container spacing={2}>
         <FormField
           type="text"
@@ -439,7 +437,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
           isSubmitted={isSubmitted}
           isMandatory={true}
         />
-
         <FormField
           type="select"
           label="Maingroup"
@@ -451,7 +448,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
           isSubmitted={isSubmitted}
           isMandatory={true}
         />
-
         <FormField
           type="select"
           label="Entry Type"
@@ -463,7 +459,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
           isSubmitted={isSubmitted}
           isMandatory={true}
         />
-
         <FormField
           type="text"
           label="Short Name"
@@ -475,7 +470,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
           isSubmitted={isSubmitted}
           isMandatory={true}
         />
-
         <FormField
           type="select"
           label="Sub Title"
@@ -485,9 +479,7 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
           ControlID="compoTitleCD"
           options={dropdownValues.subTitle || [{ value: "", label: "Loading..." }]}
         />
-
         <FormField type="text" label="Units" name="compUnitCD" value={formState.compUnitCD} onChange={handleTextInputChange} ControlID="units" maxLength={300} />
-
         <FormField
           type="number"
           label="Delta Value"
@@ -498,7 +490,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
           disabled={isDeltaValueDisabled}
           maxLength={300}
         />
-
         <FormField
           type="textarea"
           label="Sample"
@@ -509,7 +500,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
           rows={4}
           maxLength={1000}
         />
-
         <FormField
           type="textarea"
           label="Interpretation"
@@ -533,6 +523,7 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
           setFormComp={setFormComp}
           existingChoices={selectedComponent?.multipleChoices || []}
           onMultipleListChange={setCompMultipleList}
+          indexID={currentIndexID}
         />
       )}
       {selectedLCentID === 6 && (
@@ -544,12 +535,14 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
             onUpdateAgeRange={handleAgeRangeUpdate}
             onDeleteAgeRanges={handleDeleteAgeRange}
             selectedComponent={selectedComponent}
+            indexID={currentIndexID}
           />
         </Box>
       )}
       {selectedLCentID === 7 && (
         <CompTemplateDetails
           onUpdateTemplate={handleUpdateTemplateDetails}
+          indexID={currentIndexID}
           selectedComponent={{
             ...formState,
             compoID: formState.compoID,
@@ -558,18 +551,10 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
           }}
         />
       )}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 2,
-          mt: 3,
-        }}
-      >
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
         <CustomButton variant="contained" color="primary" onClick={handleOkClick}>
           {isEditMode ? "Update" : "OK"}
         </CustomButton>
-
         <CustomButton variant="contained" color="error" onClick={handleClose}>
           Clear
         </CustomButton>
