@@ -6,7 +6,7 @@ import { useAppSelector } from "@/store/hooks";
 import { showAlert } from "@/utils/Common/showAlert";
 import useDayjs from "@/hooks/Common/useDateTime";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import { AlertManagerServices } from "@/services/CommonServices/AlertManagerServices";
+import { RootState } from "@/store";
 
 interface AlertManagerContextType {
   alerts: AlertDto[];
@@ -29,7 +29,7 @@ export const AlertManagerProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [selectedPChartID, setSelectedPChartID] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const { userID, userName } = useAppSelector((state) => state.auth);
+  const { userID, userName } = useAppSelector((state: RootState) => state.auth);
   const { date: serverDate, formatDate, formatISO } = useDayjs(useServerDate());
 
   // Fetch alerts for a patient

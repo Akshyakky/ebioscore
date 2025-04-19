@@ -6,13 +6,13 @@ import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "@/apiConfig";
 import { store } from "@/store";
 
-// Create the base services using the factory
-const baseAlertService = createEntityService<AlertDto>("Alert", "commonURL");
-export const departmentService = createEntityService<DepartmentDto>("Department", "commonURL");
-
 // Initialize API service for the custom method
 const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });
 const getToken = () => store.getState().auth.token!;
+
+// Create the base services using the factory
+const baseAlertService = createEntityService<AlertDto>("Alert", "commonURL");
+export const departmentService = createEntityService<DepartmentDto>("Department", "commonURL");
 
 // Create the alertService with all required methods
 export const alertService = {
