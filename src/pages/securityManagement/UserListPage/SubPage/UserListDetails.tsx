@@ -70,7 +70,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
     const fetchCompanies = async () => {
       try {
         const companyData = await CompanyService.getCompanies();
-        const companies: DropdownOption[] = companyData.map((company: Company) => ({
+        const companies: DropdownOption[] = companyData.map((company: any) => ({
           value: company.compIDCompCode.split(",")[0],
           label: company.compName,
         }));
@@ -199,8 +199,10 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
     if (!userForm.appUcatCode) {
       return;
     }
-    if (newPassword && userForm.appUAccess !== userForm.confirmPassword) {
-      return;
+    if (newPassword) {
+      if (userForm.appUAccess !== userForm.confirmPassword) return;
+      if (!userForm.appUAccess) return;
+      if (!userForm.confirmPassword) return;
     }
     setLoading(true);
     try {
@@ -330,6 +332,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                       isSubmitted={isSubmitted}
                       name="appUAccess"
                       ControlID="appUAccess"
+                      isMandatory={newPassword}
                       gridProps={{ xs: 12, sm: 12, md: 8 }}
                     />
                   </Grid>
@@ -343,6 +346,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                       isSubmitted={isSubmitted}
                       name="confirmPassword"
                       ControlID="confirmPassword"
+                      isMandatory={newPassword}
                       gridProps={{ xs: 12, sm: 12, md: 8 }}
                     />
                   </Grid>
@@ -415,7 +419,6 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                   onChange={handleChangeUserForm}
                   disabled={false}
                   defaultText={`Select Profile`}
-                  isMandatory={true}
                   size="small"
                   gridProps={{ xs: 12, sm: 12, md: 8 }}
                 />
