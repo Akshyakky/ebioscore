@@ -1,7 +1,7 @@
 import { APIConfig } from "@/apiConfig";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { PaginatedList } from "@/interfaces/Common/PaginatedList";
-import { AppointBookingDto } from "@/interfaces/frontOffice/AppointBookingDto";
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { CommonApiService } from "@/services/CommonApiService";
 import { store } from "@/store";
 

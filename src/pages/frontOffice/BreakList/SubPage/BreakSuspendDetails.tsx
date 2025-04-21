@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Close from "@mui/icons-material/Close";
-import { BreakConSuspendData } from "@/interfaces/frontOffice/BreakConSuspendData";
+import { BreakConSuspendData } from "@/interfaces/FrontOffice/BreakConSuspendData";
 import { useLoading } from "@/context/LoadingContext";
 import { useAppSelector } from "@/store/hooks";
 import { useServerDate } from "@/hooks/Common/useServerDate";

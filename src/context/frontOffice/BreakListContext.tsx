@@ -1,4 +1,4 @@
-import { BreakListData } from "@/interfaces/frontOffice/BreakListData";
+import { BreakListData } from "@/interfaces/FrontOffice/BreakListData";
 import React, { createContext, useState } from "react";
 import { useLoading } from "../LoadingContext";
 import { useAppSelector } from "@/store/hooks";

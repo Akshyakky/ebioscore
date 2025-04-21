@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { ResourceListData } from "@/interfaces/frontOffice/ResourceListData";
+import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import { useLoading } from "@/context/LoadingContext";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { useAppSelector } from "@/store/hooks";

@@ -4,7 +4,7 @@ import Delete from "@mui/icons-material/Delete";
 import { useLoading } from "@/context/LoadingContext";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { useAppSelector } from "@/store/hooks";
-import { BreakConDetailData, BreakListData } from "@/interfaces/frontOffice/BreakListData";
+import { BreakConDetailData, BreakListData } from "@/interfaces/FrontOffice/BreakListData";
 import BreakFrequencyDetails, { FrequencyData } from "./BreakFrequencyDetails";
 import { BreakListService } from "@/services/FrontOfficeServices/BreakListServices/BreakListService";
 import { breakConDetailsService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";

@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { ReasonListData } from "@/interfaces/frontOffice/ReasonListData";
+import { ReasonListData } from "@/interfaces/FrontOffice/ReasonListData";
 import { useLoading } from "@/context/LoadingContext";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import { ResourceListData } from "@/interfaces/frontOffice/ResourceListData";
+import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import { useAppSelector } from "@/store/hooks";
 import { reasonListService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { notifyError } from "@/utils/Common/toastManager";
