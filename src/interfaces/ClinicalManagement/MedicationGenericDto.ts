@@ -7,9 +7,6 @@ export interface MedicationGenericDto extends BaseDto {
   modifyYN: string;
   defaultYN: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
   mSnomedCode?: string;

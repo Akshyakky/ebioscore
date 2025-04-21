@@ -83,6 +83,7 @@ export interface CustomGridProps<T> {
   showColumnCustomization?: boolean;
   initialSortBy?: { field: keyof T; direction: "asc" | "desc" };
   gridStyle?: React.CSSProperties;
+  customFilter?: (item: T, searchValue: string) => boolean;
 }
 
 // Styled Components
@@ -189,6 +190,7 @@ const CustomGrid = <T extends Record<string, any>>({
   showColumnCustomization = false,
   initialSortBy,
   gridStyle,
+  customFilter,
 }: CustomGridProps<T>) => {
   // State Management
   const [columns, setColumns] = useState<Column<T>[]>(initialColumns);
@@ -257,12 +259,18 @@ const CustomGrid = <T extends Record<string, any>>({
     // Apply Search
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      result = result.filter((item) =>
-        columns.some((col) => {
-          const value = item[col.key];
-          return String(value).toLowerCase().includes(term);
-        })
-      );
+
+      // Use customFilter if provided, otherwise use the default filter logic
+      if (customFilter) {
+        result = result.filter((item) => customFilter(item, term));
+      } else {
+        result = result.filter((item) =>
+          columns.some((col) => {
+            const value = item[col.key];
+            return String(value).toLowerCase().includes(term);
+          })
+        );
+      }
     }
 
     // Apply Sorting
@@ -276,7 +284,7 @@ const CustomGrid = <T extends Record<string, any>>({
     }
 
     return result;
-  }, [data, filters, searchTerm, orderBy, order, columns]);
+  }, [data, filters, searchTerm, orderBy, order, columns, customFilter]);
 
   // Virtual Scroll Implementation
   const virtualScrollData = useMemo(() => {

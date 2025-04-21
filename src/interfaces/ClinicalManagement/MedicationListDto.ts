@@ -14,7 +14,4 @@ export interface MedicationListDto extends BaseDto {
   productID?: number | null;
   calcQtyYN: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
 }

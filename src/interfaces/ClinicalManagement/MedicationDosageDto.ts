@@ -9,9 +9,6 @@ export interface MedicationDosageDto extends BaseDto {
   modifyYN: string;
   defaultYN: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes: string;
   mDSnomedCode: string;

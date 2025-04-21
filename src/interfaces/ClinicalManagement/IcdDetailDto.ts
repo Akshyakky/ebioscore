@@ -9,9 +9,6 @@ export interface IcdDetailDto extends BaseDto {
   icddVer?: string;
   icddNameGreek?: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
 }

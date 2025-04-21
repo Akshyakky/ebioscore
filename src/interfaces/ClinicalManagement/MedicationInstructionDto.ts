@@ -9,9 +9,6 @@ export interface MedicationInstructionDto extends BaseDto {
   modifyYn: string;
   defaultYn: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes: string;
 }

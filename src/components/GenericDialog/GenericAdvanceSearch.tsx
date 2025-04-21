@@ -37,6 +37,7 @@ interface CommonSearchDialogProps<T> {
   showExportCSV?: boolean;
   showExportPDF?: boolean;
   pagination?: boolean;
+  customFilter?: (item: T, searchValue: string) => boolean;
 }
 
 function GenericAdvanceSearch<T extends Record<string, any>>({
@@ -58,6 +59,7 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
   showExportCSV = false,
   showExportPDF = false,
   pagination = false,
+  customFilter,
 }: CommonSearchDialogProps<T>) {
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -86,15 +88,12 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
         return;
       }
 
-      const initialSwitchStatus = items.reduce(
-        (statusMap, item) => {
-          if (item && getItemId(item)) {
-            statusMap[getItemId(item)] = getItemActiveStatus(item);
-          }
-          return statusMap;
-        },
-        {} as { [key: number]: boolean }
-      );
+      const initialSwitchStatus = items.reduce((statusMap, item) => {
+        if (item && getItemId(item)) {
+          statusMap[getItemId(item)] = getItemActiveStatus(item);
+        }
+        return statusMap;
+      }, {} as { [key: number]: boolean });
 
       setSwitchStatus(initialSwitchStatus);
       setSearchResults(items);
@@ -251,7 +250,15 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
         </Grid>
       </Box>
 
-      <CustomGrid columns={enhancedColumns} data={dataWithIndex} searchTerm={searchTerm} showExportCSV={showExportCSV} showExportPDF={showExportPDF} pagination={pagination} />
+      <CustomGrid
+        columns={enhancedColumns}
+        data={dataWithIndex}
+        searchTerm={searchTerm}
+        showExportCSV={showExportCSV}
+        showExportPDF={showExportPDF}
+        pagination={pagination}
+        customFilter={customFilter ? (item: ExtendedItem<T>, searchValue: string) => customFilter(item as T, searchValue) : undefined}
+      />
     </>
   );
 

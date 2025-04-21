@@ -1,21 +1,13 @@
-import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
-import FormField from "@/components/FormField/FormField";
-import { useLoading } from "@/context/LoadingContext";
+import React from "react";
 import { IcdDetailDto } from "@/interfaces/ClinicalManagement/IcdDetailDto";
-import { useAppSelector } from "@/store/hooks";
-import { createEntityService } from "@/utils/Common/serviceFactory";
-import { showAlert } from "@/utils/Common/showAlert";
-import { Grid, Paper, Typography } from "@mui/material";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import SaveIcon from "@mui/icons-material/Save";
-import DeleteIcon from "@mui/icons-material/Delete";
+import MedicalEntityForm from "../../Components/MedicalEntityForm/MedicalEntityForm";
+
 interface DiagnosisDetailsProps {
   selectedData?: IcdDetailDto;
 }
 
 const DiagnosisDetails: React.FC<DiagnosisDetailsProps> = ({ selectedData }) => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
-  const [formState, setFormState] = useState<IcdDetailDto>(() => ({
+  const initialFormState: IcdDetailDto = {
     icddId: 0,
     icdmId: 0,
     icddCode: "",
@@ -24,180 +16,78 @@ const DiagnosisDetails: React.FC<DiagnosisDetailsProps> = ({ selectedData }) => 
     icddVer: "",
     icddNameGreek: "",
     rActiveYN: "Y",
-    compID: compID ?? 0,
-    compCode: compCode ?? "",
-    compName: compName ?? "",
+    compID: 0,
+    compCode: "",
+    compName: "",
     rNotes: "",
     transferYN: "N",
-  }));
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  };
 
-  const { setLoading } = useLoading();
+  const formFields = [
+    {
+      name: "icddCode",
+      label: "ICD Code",
+      type: "text" as const,
+      placeholder: "Enter ICD code",
+      isMandatory: true,
+    },
+    {
+      name: "icddName",
+      label: "ICD Name",
+      type: "text" as const,
+      placeholder: "Enter ICD name",
+      isMandatory: true,
+    },
+    {
+      name: "icddVer",
+      label: "Version",
+      type: "text" as const,
+      placeholder: "Enter version",
+    },
+    {
+      name: "icddNameGreek",
+      label: "Greek Name",
+      type: "text" as const,
+      placeholder: "Enter Greek name",
+    },
+    {
+      name: "icddCustYN",
+      label: "Custom",
+      type: "switch" as const,
+    },
+    {
+      name: "rNotes",
+      label: "Notes",
+      type: "textarea" as const,
+      placeholder: "Notes",
+      maxLength: 4000,
+      gridWidth: 12,
+    },
+    {
+      name: "rActiveYN",
+      label: "Active",
+      type: "switch" as const,
+    },
+  ];
 
-  const icdDetailService = useMemo(() => createEntityService<IcdDetailDto>("IcdDetail", "clinicalManagementURL"), []);
-
-  const handleClear = useCallback(async () => {
-    setLoading(true);
-    try {
-      const nextCode = await icdDetailService.getNextCode("ICD", 4);
-      setFormState({
-        icddId: 0,
-        icdmId: 0,
-        icddCode: nextCode.data,
-        icddName: "",
-        icddCustYN: "N",
-        icddVer: "",
-        icddNameGreek: "",
-        rActiveYN: "Y",
-        compID: compID || 0,
-        compCode: compCode || "",
-        compName: compName || "",
-        rNotes: "",
-        transferYN: "N",
-      });
-      setIsSubmitted(false);
-      setIsEditing(false);
-    } catch (error) {
-      showAlert("Error", "Failed to fetch the next ICD Code.", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [compID, compCode, compName, icdDetailService]);
-
-  useEffect(() => {
-    if (selectedData) {
-      setFormState(selectedData);
-      setIsEditing(true);
-    } else {
-      handleClear();
-    }
-  }, [selectedData, handleClear]);
-
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
-  }, []);
-
-  const handleSave = useCallback(async () => {
-    setIsSubmitted(true);
-    if (!formState.icddCode.trim() || !formState.icddName) {
-      showAlert("Error", "ICD Code and Name are mandatory.", "error");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      await icdDetailService.save(formState);
-      showAlert("Success", `ICD Detail ${isEditing ? "updated" : "saved"} successfully!`, "success", {
-        onConfirm: handleClear,
-      });
-    } catch (error) {
-      showAlert("Error", `An unexpected error occurred while ${isEditing ? "updating" : "saving"}.`, "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [formState, handleClear, icdDetailService, isEditing]);
-
-  const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormState((prev) => ({
-      ...prev,
-      rActiveYN: event.target.checked ? "Y" : "N",
-    }));
-  }, []);
-
-  const handleCustomToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormState((prev) => ({
-      ...prev,
-      icddCustYN: event.target.checked ? "Y" : "N",
-    }));
-  }, []);
+  const validateForm = (formData: IcdDetailDto): string | null => {
+    if (!formData.icddCode.trim()) return "ICD Code is required";
+    if (!formData.icddName.trim()) return "ICD Name is required";
+    return null;
+  };
 
   return (
-    <Paper variant="elevation" sx={{ padding: 2 }}>
-      <Typography variant="h6" id="icd-details-header">
-        DIAGNOSIS DETAILS
-      </Typography>
-      <Grid container spacing={2}>
-        <FormField
-          type="text"
-          label="ICD Code"
-          value={formState.icddCode}
-          onChange={handleInputChange}
-          name="icddCode"
-          ControlID="icddCode"
-          placeholder="Enter ICD code"
-          isMandatory={true}
-          size="small"
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="text"
-          label="ICD Name"
-          value={formState.icddName}
-          onChange={handleInputChange}
-          name="icddName"
-          ControlID="icddName"
-          placeholder="Enter ICD name"
-          isMandatory
-          size="small"
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="text"
-          label="Version"
-          value={formState.icddVer || ""}
-          onChange={handleInputChange}
-          name="icddVer"
-          ControlID="icddVer"
-          placeholder="Enter version"
-          size="small"
-        />
-        <FormField
-          type="text"
-          label="Greek Name"
-          value={formState.icddNameGreek || ""}
-          onChange={handleInputChange}
-          name="icddNameGreek"
-          ControlID="icddNameGreek"
-          placeholder="Enter Greek name"
-          size="small"
-        />
-        <FormField
-          type="switch"
-          label="Custom"
-          value={formState.icddCustYN}
-          checked={formState.icddCustYN === "Y"}
-          onChange={handleCustomToggle}
-          name="icddCustYN"
-          ControlID="icddCustYN"
-          size="medium"
-        />
-        <FormField
-          type="textarea"
-          label="Notes"
-          value={formState.rNotes || ""}
-          onChange={handleInputChange}
-          name="rNotes"
-          ControlID="rNotes"
-          placeholder="Notes"
-          maxLength={4000}
-        />
-        <FormField
-          type="switch"
-          label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
-          value={formState.rActiveYN}
-          checked={formState.rActiveYN === "Y"}
-          onChange={handleActiveToggle}
-          name="rActiveYN"
-          ControlID="rActiveYN"
-          size="medium"
-        />
-      </Grid>
-
-      <FormSaveClearButton clearText="Clear" saveText={isEditing ? "Update" : "Save"} onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
-    </Paper>
+    <MedicalEntityForm<IcdDetailDto>
+      title="DIAGNOSIS DETAILS"
+      entityName="IcdDetail"
+      codePrefix="ICD"
+      codeLength={4}
+      selectedData={selectedData}
+      initialFormState={initialFormState}
+      formFields={formFields}
+      serviceUrl="clinicalManagementURL"
+      validateForm={validateForm}
+    />
   );
 };
 
