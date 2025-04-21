@@ -1,6 +1,6 @@
-// src/theme/darkTheme.ts
-import { createTheme, alpha, Shadows } from "@mui/material/styles";
-import { DRAWER_WIDTH, DARK_COLORS, SHADOWS, TYPOGRAPHY, TRANSITIONS, SHAPE, COMPONENT_CONSTANTS } from "./themeConstants";
+// src/layouts/Themes/darkTheme.ts
+import { createTheme, alpha } from "@mui/material/styles";
+import { DRAWER_WIDTH, DARK_COLORS, SHADOWS, TYPOGRAPHY, TRANSITIONS, SHAPE, COMPONENT_CONSTANTS, SPACING_UNIT } from "./themeConstants";
 
 const darkTheme = createTheme({
   palette: {
@@ -71,7 +71,11 @@ const darkTheme = createTheme({
     },
   },
   shape: SHAPE,
-  shadows: ["none", ...Array(3).fill(SHADOWS.xs), ...Array(3).fill(SHADOWS.sm), ...Array(4).fill(SHADOWS.md), ...Array(14).fill(SHADOWS.xl)] as Shadows,
+  spacing: SPACING_UNIT,
+  transitions: {
+    easing: TRANSITIONS.easing,
+    duration: TRANSITIONS.duration,
+  },
   components: {
     MuiCssBaseline: {
       styleOverrides: {
@@ -269,7 +273,6 @@ const darkTheme = createTheme({
           borderBottom: `1px solid ${DARK_COLORS.divider}`,
           color: DARK_COLORS.text.primary,
           height: COMPONENT_CONSTANTS.table.rowHeight,
-          // padding: "12px 16px",
         },
       },
     },
@@ -288,7 +291,6 @@ const darkTheme = createTheme({
         },
       },
     },
-    // Add other dark theme specific component overrides...
     MuiAlert: {
       styleOverrides: {
         root: {

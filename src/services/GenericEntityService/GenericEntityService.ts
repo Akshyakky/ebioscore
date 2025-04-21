@@ -15,7 +15,8 @@ export class GenericEntityService<T extends BaseDto> {
   }
 
   protected getToken(): string {
-    return store.getState().auth.token!;
+    const state = store.getState() as { auth?: { token?: string } };
+    return state.auth?.token ?? "";
   }
 
   async getAll(): Promise<T> {

@@ -205,7 +205,7 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
       if (token) {
         setIsDropdownLoading(true);
         try {
-          const modulesData = await moduleService.getActiveModules(adminYN === "Y" ? 0 : (userID ?? 0));
+          const modulesData = await moduleService.getActiveModules(adminYN === "Y" ? 0 : userID ?? 0);
           const mainModuleOptions = modulesData.map((module) => ({
             label: module.title,
             value: module.auGrpID.toString(),

@@ -1,6 +1,6 @@
 // FormSaveClearButton.tsx
 import React from "react";
-import { Grid, useMediaQuery, useTheme, Box } from "@mui/material";
+import { Stack, useMediaQuery, useTheme, Box } from "@mui/material";
 import Button from "@mui/material/Button";
 import { SvgIconComponent } from "@mui/icons-material";
 
@@ -45,18 +45,18 @@ const FormSaveClearButton: React.FC<FormSaveClearButtonProps> = ({
         zIndex: theme.zIndex.appBar,
       }}
     >
-      <Grid container spacing={2} justifyContent="space-between">
-        <Grid item xs={6} sx={{ textAlign: isMobile ? "center" : "left" }}>
+      <Stack direction="row" spacing={2} justifyContent="space-between">
+        <Box sx={{ flex: 1, textAlign: isMobile ? "center" : "left" }}>
           <Button variant={clearVariant} color={clearColor} onClick={onClear} startIcon={ClearIcon && <ClearIcon />} fullWidth={isMobile} aria-label="clear form">
             {clearText}
           </Button>
-        </Grid>
-        <Grid item xs={6} sx={{ textAlign: isMobile ? "center" : "right" }}>
+        </Box>
+        <Box sx={{ flex: 1, textAlign: isMobile ? "center" : "right" }}>
           <Button variant={saveVariant} color={saveColor} onClick={onSave} startIcon={SaveIcon && <SaveIcon />} fullWidth={isMobile} aria-label="save form">
             {saveText}
           </Button>
-        </Grid>
-      </Grid>
+        </Box>
+      </Stack>
     </Box>
   );
 };

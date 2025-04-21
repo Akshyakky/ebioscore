@@ -80,7 +80,7 @@ export const exportToPDF = <T extends Record<string, any>>({ columns, data, file
     didDrawPage: (data) => {
       // Add page number at the bottom
       doc.setFontSize(8);
-      doc.text(`Page ${data.pageNumber} of ${data.pageCount}`, pageWidth / 2, doc.internal.pageSize.height - 5, { align: "center" });
+      doc.text(`Page ${data.pageNumber} of ${doc.getNumberOfPages()}`, pageWidth / 2, doc.internal.pageSize.height - 5, { align: "center" });
     },
   };
 

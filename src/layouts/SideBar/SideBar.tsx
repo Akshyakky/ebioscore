@@ -20,6 +20,7 @@ import {
   useTheme,
   styled,
   alpha,
+  Tooltip,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Icon } from "@iconify/react";
@@ -27,6 +28,7 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import ProfileMenu from "./ProfileMenu";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
+import HomeIcon from "@mui/icons-material/Home";
 import { notifyError } from "../../utils/Common/toastManager";
 import { MaterialUISwitch } from "../../components/Switch/MaterialUISwitch";
 import { useTheme as useCustomTheme } from "../../context/Common/ThemeContext";
@@ -74,6 +76,16 @@ const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
   },
 }));
 
+const DashboardListItemButton = styled(ListItemButton)(({ theme }) => ({
+  borderRadius: "8px",
+  margin: "2px 8px",
+  backgroundColor: alpha(theme.palette.primary.main, 0.12),
+  borderLeft: `4px solid ${theme.palette.primary.main}`,
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.primary.main, 0.2),
+  },
+}));
+
 const SearchBox = styled(TextField)(({ theme }) => ({
   "& .MuiOutlinedInput-root": {
     borderRadius: "20px",
@@ -101,6 +113,11 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
   const handleSubModuleClick = (path: string) => {
     handleDrawerClose();
     navigate(path);
+  };
+
+  const handleDashboardClick = () => {
+    navigate("/dashboard");
+    handleDrawerClose();
   };
 
   const handleDrawerToggle = () => {
@@ -187,6 +204,14 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
           <IconButton color="inherit" aria-label="open drawer" onClick={handleDrawerToggle} edge="start" sx={{ mr: 2 }}>
             {open ? <CloseIcon /> : <MenuIcon />}
           </IconButton>
+
+          {/* Add Dashboard Button to AppBar */}
+          <Tooltip title="Go to Dashboard">
+            <IconButton color="inherit" aria-label="dashboard" onClick={handleDashboardClick} sx={{ mr: 2 }}>
+              <HomeIcon />
+            </IconButton>
+          </Tooltip>
+
           <Typography variant="h6" noWrap component="div" fontWeight="bold">
             {pageTitle}
           </Typography>

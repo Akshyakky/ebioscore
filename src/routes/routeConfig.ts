@@ -34,7 +34,6 @@ import AppModifiedListPage from "../pages/hospitalAdministration/AppModifiedList
 import ChargeDetailsPage from "../pages/billing/ChargeDetailsPage/MainPage/ChargeDetailsPage";
 import DischargePage from "../pages/patientAdministration/DischargePage/MainPage/DischargePage";
 import WardBedTransferPage from "../pages/patientAdministration/WardBedTransfer/MainPage/WardBedTransferPage";
-import AlertPage from "@/pages/common/AlertManagerPage/MainPage/Alertpage";
 import MedicationFormPage from "@/pages/clinicalManagement/medicationForm/MainPage/MedicationFormPage";
 import MedicationFrequencyPage from "@/pages/clinicalManagement/MedicationFrequency/MainPage/MedicationFrequencyPage";
 import MedicationDosagePage from "@/pages/clinicalManagement/MedicationDosage/MainPage/MedicationDosagePage";
@@ -45,6 +44,9 @@ import ComponentEntryTypePage from "@/pages/laboratory/ComponentEntryType/MainPa
 import ForgotPasswordPage from "@/pages/common/ForgotPasswordPage/ForgotPasswordPage";
 import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
 import IndentProductPage from "@/pages/inventoryManagement/IndentProduct/MainPage/IndentProductPage";
+import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
+import { Navigate } from "react-router-dom";
+import AlertPage from "@/pages/common/AlertManagerPage/MainPage/Alertpage";
 
 interface RouteConfig {
   path: string;
@@ -54,6 +56,7 @@ interface RouteConfig {
 }
 
 const routeConfig: RouteConfig[] = [
+  // { path: "/", component: () => <Navigate to="/dashboard" />, protected: true },
   { path: "/login", component: LoginPage, protected: false },
   { path: "/dashboard", component: DashboardPage, protected: true },
   { path: "/registrationpage", component: RegistrationPage, protected: true, providers: [PatientSearchProvider] },
@@ -97,6 +100,8 @@ const routeConfig: RouteConfig[] = [
   { path: "/PurchaseOrderPage", component: PurchaseOrderPage, protected: true },
   { path: "/ForgotPasswordPage", component: ForgotPasswordPage, protected: false },
   { path: "/IndentProductPage", component: IndentProductPage, protected: true },
+  // 404 Not Found route - must be placed last to catch all unmatched routes
+  { path: "*", component: NotFoundPage, protected: false },
 ];
 
 export default routeConfig;

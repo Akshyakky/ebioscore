@@ -14,6 +14,7 @@ import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData"
 import ProfilePermissionsListModal from "./ProfilePermissionsListModal";
 import ProfilePermissionsModifyModal from "./ProfilePermissionsModifyModal";
 import PermissionManager from "../../CommonPage/PermissionManager";
+import { Company } from "@/types/Common/Company.type";
 interface UserListProps {
   selectedUser?: UserListDto;
   handleClearPage: () => void;
