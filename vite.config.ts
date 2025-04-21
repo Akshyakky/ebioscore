@@ -1,8 +1,8 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
 import viteCompression from "vite-plugin-compression";
+import react from "@vitejs/plugin-react";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -13,7 +13,7 @@ export default defineConfig({
       },
     }),
     visualizer({
-      filename: "build/stats.html",
+      filename: "build/eBiosCoreApp/stats.html",
       open: false,
       gzipSize: true,
       template: "treemap",
@@ -34,7 +34,7 @@ export default defineConfig({
     dedupe: ["react", "react-dom", "@mui/material"],
   },
   build: {
-    outDir: "build",
+    outDir: "build/eBiosCoreApp",
     sourcemap: process.env.NODE_ENV !== "production",
     chunkSizeWarningLimit: 1600,
     commonjsOptions: {
