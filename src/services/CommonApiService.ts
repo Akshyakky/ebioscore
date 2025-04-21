@@ -30,12 +30,27 @@ export class CommonApiService {
     return hmac.toString().toLowerCase();
   }
 
+  private generateUUID(): string {
+    // Try native implementation first
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+      return window.crypto.randomUUID();
+    }
+
+    // Fallback implementation
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      const r = (Math.random() * 16) | 0;
+      const v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
   private getHeaders(token?: string, additionalHeaders?: Record<string, string>): Record<string, string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       Accept: "application/json",
       "Time-Zone": this.timeZone,
       "X-Request-ID": crypto.randomUUID ? crypto.randomUUID() : self.crypto.randomUUID(),
+      //"X-Request-ID": this.generateUUID(),
       "X-Request-Timestamp": new Date().toISOString(),
       // Prevent MIME type sniffing
       "X-Content-Type-Options": "nosniff",
