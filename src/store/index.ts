@@ -1,7 +1,7 @@
 // src/store/index.ts
 import { configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from "redux-persist";
-import storage from "redux-persist/lib/storage";
+import storage from "redux-persist/lib/storage/session";
 import { combineReducers } from "redux";
 import authReducer from "./features/auth/authSlice";
 import admissionSearchReducer from "./features/admission/admissionSearch/admissionSearchSlice";
