@@ -102,38 +102,40 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
     async (event: SelectChangeEvent<unknown>) => {
       const selectedCategory = event.target.value as string;
       const selectedPhysician = selectedCategory === "PHY";
+
       setContactList((prev) => ({
         ...prev,
         contactMastDto: {
           ...prev.contactMastDto,
           consValue: selectedCategory,
           conCat: selectedCategory,
-          conTitle: selectedPhysician ? "DR" : "", //MIT : PHY to Dr else nothing
+          conTitle: selectedPhysician ? "DR" : "",
         },
       }));
-
-      try {
-        const result = await ContactListService.generateContactCode(selectedCategory, 5);
-        if (result) {
-          setContactList((prev: any) => ({
-            ...prev,
-            contactMastDto: {
-              ...prev.contactMastDto,
-              conCode: result,
-            },
-          }));
-        } else {
-          showAlert("Error", "Failed to generate code", "error");
+      if (selectedCategory)
+        try {
+          const result = await ContactListService.generateContactCode(selectedCategory, 5);
+          if (result) {
+            setContactList((prev: any) => ({
+              ...prev,
+              contactMastDto: {
+                ...prev.contactMastDto,
+                conCode: result,
+              },
+            }));
+          } else {
+            showAlert("Error", "Failed to generate code", "error");
+          }
+        } catch (error) {
+          showAlert("Error", "An error occurred while generating the contact code", "error");
         }
-      } catch (error) {
-        showAlert("Error", "An error occurred while generating the contact code", "error");
-      }
     },
     [setContactList]
   );
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    console.log(value);
     setContactList((prev) => {
       if (name === "conCode") {
         return {
@@ -142,12 +144,25 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
           contactAddressDto: { ...prev.contactAddressDto, conCode: value },
         };
       }
+      if (name === "conFName") {
+        return {
+          ...prev,
+          contactMastDto: { ...prev.contactMastDto, conFName: value.toUpperCase() },
+        };
+      }
+      if (name === "conLName") {
+        return {
+          ...prev,
+          contactMastDto: { ...prev.contactMastDto, conLName: value.toUpperCase() },
+        };
+      }
       if (name in prev.contactAddressDto) {
         return {
           ...prev,
           contactAddressDto: { ...prev.contactAddressDto, [name]: value },
         };
       }
+
       return {
         ...prev,
         contactMastDto: { ...prev.contactMastDto, [name]: value },
