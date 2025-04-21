@@ -99,9 +99,11 @@ export function MedicalEntityForm<T extends BaseDto>({
     setFormState((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  const handleSwitchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormState((prev) => ({ ...prev, [name]: checked ? "Y" : "N" }));
+  const createSwitchHandler = useCallback((fieldName: string) => {
+    return (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { checked } = e.target;
+      setFormState((prev) => ({ ...prev, [fieldName]: checked ? "Y" : "N" }));
+    };
   }, []);
 
   const handleDefaultChange = useCallback(
@@ -233,7 +235,7 @@ export function MedicalEntityForm<T extends BaseDto>({
             type="switch"
             value={switchValue}
             checked={switchValue === "Y"}
-            onChange={handleSwitchChange}
+            onChange={createSwitchHandler(field.name)}
             label={switchValue === "Y" ? `${field.label} (Active)` : `${field.label} (Inactive)`}
           />
         );
