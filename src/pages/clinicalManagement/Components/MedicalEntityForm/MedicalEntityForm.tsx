@@ -263,11 +263,11 @@ export function MedicalEntityForm<T extends BaseDto>({
         {title}
       </Typography>
       <Grid container spacing={2}>
-        {formFields.map((field) => (
-          <Grid item key={field.name} xs={12} md={field.gridWidth || (field.type === "textarea" ? 12 : field.type === "switch" ? 3 : 6)}>
-            {renderField(field)}
-          </Grid>
-        ))}
+        {formFields.map((field) =>
+          renderField({
+            ...field,
+          })
+        )}
       </Grid>
 
       <FormSaveClearButton clearText="Clear" saveText={isEditing ? "Update" : "Save"} onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
