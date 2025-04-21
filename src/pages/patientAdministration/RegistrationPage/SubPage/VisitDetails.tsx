@@ -68,7 +68,7 @@ const VisitDetails: React.FC<VisitDetailsProps> = ({ formData, setFormData, isSu
           label="Attending Physician"
           name="attendingPhysicianId"
           ControlID="AttendingPhysician"
-          value={formData.patRegisters.attendingPhysicianName}
+          value={formData.patRegisters.attendingPhysicianId === 0 ? null : formData.patRegisters.attendingPhysicianId}
           options={dropdownValues.attendingPhy}
           onChange={handleDropdownChange(["patRegisters", "attendingPhysicianId"], ["patRegisters", "attendingPhysicianName"], dropdownValues.attendingPhy)}
           isSubmitted={isSubmitted}

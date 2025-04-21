@@ -22,9 +22,18 @@ interface ApplicableAgeRangeTableProps {
   onAddAgeRange: (newAgeRange: LCompAgeRangeDto) => void;
   onUpdateAgeRange: (updatedAgeRange: LCompAgeRangeDto) => void;
   onDeleteAgeRanges: (ageRangeIds: number[]) => void;
+  indexID: number; // <-- ADD THIS
 }
 
-const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRanges, componentId, selectedComponent, onAddAgeRange, onUpdateAgeRange, onDeleteAgeRanges }) => {
+const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({
+  ageRanges,
+  componentId,
+  selectedComponent,
+  onAddAgeRange,
+  onUpdateAgeRange,
+  onDeleteAgeRanges,
+  indexID,
+}) => {
   const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
 
@@ -78,6 +87,7 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
     return {
       ...src,
       carID: newId,
+      indexID,
       cappID: componentId,
       compOID: selectedComponent?.compoID,
       carAgeValue: `${src.carStart}-${src.carEnd} ${src.carAgeType}`,
@@ -125,8 +135,6 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
         return [...prev, finalItem];
       }
     });
-
-    // Ensure parent is updated
     if (isEditing) {
       onUpdateAgeRange(finalItem);
     } else {
@@ -141,8 +149,6 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
     if (confirmed) {
       onDeleteAgeRanges([id]);
       setSelectedRows((prev) => prev.filter((rowId) => rowId !== id));
-
-      // Update local state immediately
       setUpdatedAgeRanges((prev) => prev.filter((item) => item.carID !== id));
     }
   };
@@ -155,8 +161,6 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
     const confirmed = await showAlert("Confirm Deletion", `Delete ${selectedRows.length} record(s)?`, "warning", true);
     if (confirmed) {
       onDeleteAgeRanges(selectedRows);
-
-      // Update local state immediately
       setUpdatedAgeRanges((prev) => prev.filter((item) => !selectedRows.includes(item.carID)));
       setSelectedRows([]);
     }
@@ -169,6 +173,7 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({ ageRa
       return prev.map((item) => {
         if (item.carID === rowId) {
           const updated = {
+            indexID,
             ...item,
             [field]: numericVal,
             carAgeValue: `${field === "carStart" ? numericVal : item.carStart}-${field === "carEnd" ? numericVal : item.carEnd} ${item.carAgeType}`,

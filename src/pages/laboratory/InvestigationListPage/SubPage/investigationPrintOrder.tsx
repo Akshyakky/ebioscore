@@ -65,6 +65,13 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ show,
     setOrderedInvestigations(ordered);
   }, [filteredInvestigations]);
 
+  // Clear search term when dialog is closed
+  useEffect(() => {
+    if (!show) {
+      setSearchTerm("");
+    }
+  }, [show]);
+
   const updateInvestigationOrder = (updatedList: any[]) => {
     const ordered = updatedList.map((inv, index) => ({
       ...inv,
@@ -109,10 +116,11 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ show,
         const updated = [...orderedInvestigations];
         const oldIndex = updated.findIndex((inv) => inv.lInvMastDto?.invID === moveItem.lInvMastDto?.invID);
         if (oldIndex === -1) return;
+
         const [item] = updated.splice(oldIndex, 1);
-        updated.splice(newPos - 1, 0, item);
-        item.lInvMastDto.invID = newPos;
-        updateInvestigationOrder(updated);
+        updated.splice(newPos - 1, 0, item); // insert at new position
+        updateInvestigationOrder(updated); // updates the internal order field, not the ID
+
         showAlert("Success", `Moved to position ${newPos}`, "success");
         handleCloseMoveDialog();
       },
@@ -143,6 +151,12 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ show,
     handleCloseMoveDialog();
   };
 
+  // Custom close handler that clears the search term
+  const handleDialogClose = () => {
+    setSearchTerm(""); // Clear search term
+    handleClose(); // Call the original handleClose from props
+  };
+
   const renderDraggableList = () => (
     <SpecialGrid
       data={orderedInvestigations}
@@ -150,10 +164,12 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ show,
       getItemId={(item) => item.lInvMastDto?.invID}
       renderLabel={(item) => item.lInvMastDto?.invName || "Unnamed Investigation"}
       selectedId={selectedInvestigationId}
-      onSelect={(id) => {
-        setSelectedInvestigationId(id);
+      onSelect={(id: any, e: any) => {
+        if (e?.target?.closest(".arrow-button")) return;
+
         const selected = orderedInvestigations.find((inv) => inv.lInvMastDto?.invID === id);
         if (selected) {
+          setSelectedInvestigationId(id);
           handleOpenMoveDialog(selected);
         }
       }}
@@ -177,13 +193,13 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ show,
       {renderDraggableList()}
     </Box>
   );
-  const dialogActions = <CustomButton icon={CloseIcon} text="Close" color="secondary" onClick={handleClose} />;
+  const dialogActions = <CustomButton icon={CloseIcon} text="Close" color="secondary" onClick={handleDialogClose} />;
 
   return (
     <>
       <GenericDialog
         open={show}
-        onClose={handleClose}
+        onClose={handleDialogClose}
         title="Saved Investigations"
         maxWidth="lg"
         fullWidth

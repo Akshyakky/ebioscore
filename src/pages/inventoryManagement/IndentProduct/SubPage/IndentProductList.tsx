@@ -40,34 +40,58 @@ const IndentProductListDetails: React.FC = () => {
   const handleClear = useCallback(async () => {
     setLoading(true);
     try {
-      const nextCode = await indentProductService.getNextCode("INDENT", 3);
-      setFormState({
-        IndentMaster: {
-          indentID: 0,
-          indentCode: nextCode.data, // ✅ auto-filled
-          indentType: "Department Indent",
-          indentDate: new Date().toISOString().split("T")[0],
-          fromDeptID: undefined,
-          fromDeptName: "",
-          toDeptID: undefined,
-          toDeptName: "",
-          rActiveYN: "Y",
-          compID: compID || 0,
-          compCode: compCode || "",
-          compName: compName || "",
-          transferYN: "N",
-          remarks: "",
-        },
-        IndentDetails: [],
-      });
-      setIsSubmitted(false);
+      debugger;
+      // Remove debugger statement from production code
+      // debugger;
+
+      const nextCode = await indentProductService.getNextCode("IND", 3);
+      console.log("Next Code Response:", nextCode); // Log the response for debugging
+
+      // Check if the response has data before using it
+      if (nextCode && nextCode.data) {
+        debugger;
+        setFormState({
+          IndentMaster: {
+            indentID: 0,
+            indentCode: nextCode.data,
+            indentType: "Department Indent", // Set a default value
+            indentDate: new Date().toISOString().split("T")[0],
+            fromDeptID: undefined,
+            fromDeptName: "",
+            toDeptID: undefined,
+            toDeptName: "",
+            rActiveYN: "Y",
+            compID: compID || 0,
+            compCode: compCode || "",
+            compName: compName || "",
+            transferYN: "N",
+            remarks: "",
+          },
+          IndentDetails: [],
+        });
+        setIsSubmitted(false);
+      } else {
+        // Handle when response doesn't have expected data
+        throw new Error("Invalid response format");
+      }
     } catch (error) {
-      showAlert("Error", "Failed to generate next indent code.", "error");
+      console.error("Error fetching next indent code:", error);
+      // More specific error message based on the error type
+      const errorMessage = error === "Network Error" ? "Cannot connect to the server. Please check your network connection." : "Failed to generate next indent code.";
+      showAlert("Error", errorMessage, "error");
+
+      // Set a temporary code if we can't get one from the server
+      setFormState((prev) => ({
+        ...prev,
+        IndentMaster: {
+          ...prev.IndentMaster,
+          indentCode: "IND-TEMP",
+        },
+      }));
     } finally {
       setLoading(false);
     }
   }, [compID, compCode, compName, setLoading]);
-
   useEffect(() => {
     handleClear();
   }, [handleClear]);

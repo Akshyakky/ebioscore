@@ -13,6 +13,7 @@ import FormField from "@/components/FormField/FormField";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 import CustomButton from "@/components/Button/CustomButton";
 import { notifyWarning } from "@/utils/Common/toastManager";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 
 interface PatientInsuranceFormProps {
   show: boolean;
@@ -172,161 +173,165 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
     setIsFieldDialogOpen(false);
   };
 
-  return (
-    <Dialog open={show} onClose={handleClose} maxWidth="lg" fullWidth>
-      <DialogTitle>Patient Insurance</DialogTitle>
-      <DialogContent>
-        <Grid container spacing={2}>
-          <FormField
-            type="select"
-            label="Insurance"
-            name="insurID"
-            ControlID="Insurance"
-            value={insuranceForm.insurID === 0 ? "" : insuranceForm.insurID.toString()}
-            options={dropdownValues.insurance}
-            onChange={handleDropdownChange(["insurID"], ["insurName"], dropdownValues.insurance)}
-            isMandatory={true}
-            isSubmitted={isSubmitted}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
-          <FormField
-            type="text"
-            label="Policy Holder"
-            name="policyHolder"
-            ControlID="PolicyHolder"
-            value={insuranceForm.policyHolder}
-            onChange={handleTextChange("policyHolder")}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
-          <FormField
-            type="text"
-            label="Policy Number"
-            name="policyNumber"
-            ControlID="PolicyNumber"
-            value={insuranceForm.policyNumber}
-            onChange={handleTextChange("policyNumber")}
-            isMandatory={true}
-            isSubmitted={isSubmitted}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
-          <FormField
-            type="text"
-            label="Group Number"
-            name="groupNumber"
-            ControlID="GroupNumber"
-            value={insuranceForm.groupNumber}
-            onChange={handleTextChange("groupNumber")}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
-          <FormField
-            type="datepicker"
-            label="Policy Start Date"
-            name="policyStartDt"
-            ControlID="PolicyStartDate"
-            value={insuranceForm.policyStartDt ? new Date(insuranceForm.policyStartDt) : null}
-            onChange={handleDateChange("policyStartDt")}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
-          <FormField
-            type="datepicker"
-            label="Policy End Date"
-            name="policyEndDt"
-            ControlID="PolicyEndDate"
-            value={insuranceForm.policyEndDt ? new Date(insuranceForm.policyEndDt) : null}
-            onChange={handleDateChange("policyEndDt")}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
-          <FormField
-            type="text"
-            label="Guarantor"
-            name="guarantor"
-            ControlID="Guarantor"
-            value={insuranceForm.guarantor}
-            onChange={handleTextChange("guarantor")}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
-          <FormField
-            type="select"
-            label="Relationship"
-            name="relationVal"
-            ControlID="Relationship"
-            value={insuranceForm.relationVal || dropdownValues.relation}
-            options={dropdownValues.relation}
-            onChange={handleDropdownChange(["relationVal"], ["relation"], dropdownValues.relation)}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-            showAddButton={true}
-            onAddClick={() => handleAddField("RELATION")}
-          />
-          <FormField
-            type="select"
-            label="Covered For"
-            name="coveredVal"
-            ControlID="CoveredFor"
-            value={String(insuranceForm.coveredVal)}
-            options={dropdownValues.coverFor}
-            onChange={handleDropdownChange(["coveredVal"], ["coveredFor"], dropdownValues.coverFor)}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
-          <FormField
-            type="text"
-            label="Address 1"
-            name="address1"
-            ControlID="Address1"
-            value={insuranceForm.address1}
-            onChange={handleTextChange("address1")}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
-          <FormField
-            type="text"
-            label="Address 2"
-            name="address2"
-            ControlID="Address2"
-            value={insuranceForm.address2}
-            onChange={handleTextChange("address2")}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
-          <FormField
-            type="text"
-            label="Phone 1"
-            name="phone1"
-            ControlID="Phone1"
-            value={insuranceForm.phone1}
-            onChange={handleTextChange("phone1")}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
-          <FormField
-            type="text"
-            label="Phone 2"
-            name="phone2"
-            ControlID="Phone2"
-            value={insuranceForm.phone2}
-            onChange={handleTextChange("phone2")}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
-          <FormField
-            type="text"
-            label="Remarks"
-            name="rNotes"
-            ControlID="Remarks"
-            value={insuranceForm.rNotes}
-            onChange={handleTextChange("rNotes")}
-            gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-          />
+  const dialogContent = (
+    <Grid container spacing={2}>
+      <FormField
+        type="select"
+        label="Insurance"
+        name="insurID"
+        ControlID="Insurance"
+        value={insuranceForm.insurID === 0 ? "" : insuranceForm.insurID.toString()}
+        options={dropdownValues.insurance}
+        onChange={handleDropdownChange(["insurID"], ["insurName"], dropdownValues.insurance)}
+        isMandatory={true}
+        isSubmitted={isSubmitted}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
+      <FormField
+        type="text"
+        label="Policy Holder"
+        name="policyHolder"
+        ControlID="PolicyHolder"
+        value={insuranceForm.policyHolder}
+        onChange={handleTextChange("policyHolder")}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
+      <FormField
+        type="text"
+        label="Policy Number"
+        name="policyNumber"
+        ControlID="PolicyNumber"
+        value={insuranceForm.policyNumber}
+        onChange={handleTextChange("policyNumber")}
+        isMandatory={true}
+        isSubmitted={isSubmitted}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
+      <FormField
+        type="text"
+        label="Group Number"
+        name="groupNumber"
+        ControlID="GroupNumber"
+        value={insuranceForm.groupNumber}
+        onChange={handleTextChange("groupNumber")}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
+      <FormField
+        type="datepicker"
+        label="Policy Start Date"
+        name="policyStartDt"
+        ControlID="PolicyStartDate"
+        value={insuranceForm.policyStartDt ? new Date(insuranceForm.policyStartDt) : null}
+        onChange={handleDateChange("policyStartDt")}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
+      <FormField
+        type="datepicker"
+        label="Policy End Date"
+        name="policyEndDt"
+        ControlID="PolicyEndDate"
+        value={insuranceForm.policyEndDt ? new Date(insuranceForm.policyEndDt) : null}
+        onChange={handleDateChange("policyEndDt")}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
+      <FormField
+        type="text"
+        label="Guarantor"
+        name="guarantor"
+        ControlID="Guarantor"
+        value={insuranceForm.guarantor}
+        onChange={handleTextChange("guarantor")}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
+      <FormField
+        type="select"
+        label="Relationship"
+        name="relationVal"
+        ControlID="Relationship"
+        value={insuranceForm.relationVal || dropdownValues.relation}
+        options={dropdownValues.relation}
+        onChange={handleDropdownChange(["relationVal"], ["relation"], dropdownValues.relation)}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+        showAddButton={true}
+        onAddClick={() => handleAddField("RELATION")}
+      />
+      <FormField
+        type="select"
+        label="Covered For"
+        name="coveredVal"
+        ControlID="CoveredFor"
+        value={String(insuranceForm.coveredVal)}
+        options={dropdownValues.coverFor}
+        onChange={handleDropdownChange(["coveredVal"], ["coveredFor"], dropdownValues.coverFor)}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
+      <FormField
+        type="text"
+        label="Address 1"
+        name="address1"
+        ControlID="Address1"
+        value={insuranceForm.address1}
+        onChange={handleTextChange("address1")}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
+      <FormField
+        type="text"
+        label="Address 2"
+        name="address2"
+        ControlID="Address2"
+        value={insuranceForm.address2}
+        onChange={handleTextChange("address2")}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
+      <FormField
+        type="text"
+        label="Phone 1"
+        name="phone1"
+        ControlID="Phone1"
+        value={insuranceForm.phone1}
+        onChange={handleTextChange("phone1")}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
+      <FormField
+        type="text"
+        label="Phone 2"
+        name="phone2"
+        ControlID="Phone2"
+        value={insuranceForm.phone2}
+        onChange={handleTextChange("phone2")}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
+      <FormField
+        type="text"
+        label="Remarks"
+        name="rNotes"
+        ControlID="Remarks"
+        value={insuranceForm.rNotes}
+        onChange={handleTextChange("rNotes")}
+        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+      />
 
-          <ModifiedFieldDialog
-            open={isFieldDialogOpen}
-            onClose={handleFieldDialogClose}
-            selectedCategoryCode={dialogCategory}
-            onFieldAddedOrUpdated={onFieldAddedOrUpdated}
-            isFieldCodeDisabled={true}
-          />
-        </Grid>
-      </DialogContent>
-      <DialogActions>
-        <CustomButton text="Close" icon={CloseIcon} variant="contained" size="medium" color="secondary" onClick={handleCloseWithClear} />
-        <CustomButton text="Save" icon={SaveIcon} variant="contained" size="medium" color="success" onClick={handleSubmit} />
-      </DialogActions>
-    </Dialog>
+      <ModifiedFieldDialog
+        open={isFieldDialogOpen}
+        onClose={handleFieldDialogClose}
+        selectedCategoryCode={dialogCategory}
+        onFieldAddedOrUpdated={onFieldAddedOrUpdated}
+        isFieldCodeDisabled={true}
+      />
+    </Grid>
+  );
+
+  const dialogActions = (
+    <>
+      <CustomButton text="Close" icon={CloseIcon} variant="contained" size="medium" color="secondary" onClick={handleCloseWithClear} />
+      <CustomButton text="Save" icon={SaveIcon} variant="contained" size="medium" color="success" onClick={handleSubmit} />
+    </>
+  );
+
+  return (
+    <GenericDialog open={show} onClose={handleCloseWithClear} title="Patient Insurance" maxWidth="lg" fullWidth actions={dialogActions} dialogContentSx={{ p: 2 }}>
+      {dialogContent}
+    </GenericDialog>
   );
 };
 
