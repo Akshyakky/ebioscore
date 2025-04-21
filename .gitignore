@@ -12,6 +12,7 @@
 /build
 /eBiosCoreApp
 /dist
+/eBiosCoreApp
 
 # misc
 .DS_Store
