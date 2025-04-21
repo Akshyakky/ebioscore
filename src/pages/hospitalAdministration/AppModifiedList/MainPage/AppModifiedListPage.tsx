@@ -1,7 +1,7 @@
 import React, { Suspense, useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import { Loader } from "lucide-react";
-import { AppModifiedMast } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { AppModifiedMast } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { Box, Container, Divider, Grid, Typography } from "@mui/material";
 import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
 import AppModifiedDetails from "../SubPage/AppModifiedListDetails";

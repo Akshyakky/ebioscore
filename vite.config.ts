@@ -103,7 +103,8 @@ export default defineConfig({
       overlay: false,
     },
     watch: {
-      usePolling: true,
+      usePolling: false,
+      ignored: ["**/.vite_cache/**", "**/node_modules/**"],
     },
     fs: {
       strict: false,

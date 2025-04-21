@@ -1,4 +1,4 @@
-import { AppModifiedMast, AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { AppModifiedMast, AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
 import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";

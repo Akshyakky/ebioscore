@@ -62,7 +62,7 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
     } finally {
       setLoading(false);
     }
-  }, [compID, compCode, compName, MedicationGenericDetails]);
+  }, [compID, compCode, compName, MedicationGenericDetailsService]);
 
   useEffect(() => {
     if (selectedData) {
@@ -73,10 +73,20 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
     }
   }, [selectedData, handleClear]);
 
-  const handleInputChange = useCallback(
+  // Simple handler for text fields - no async operations
+  const handleTextChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormState((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }, []);
+
+  // Special handler for defaultYN with its async logic
+  const handleDefaultYNChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
-      if (name === "defaultYN" && value === "Y") {
+      if (value === "Y") {
         try {
           const existingDefault = await MedicationGenericDetailsService.find("defaultYN='Y'");
 
@@ -107,22 +117,37 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
 
             await Promise.all(updatedRecords.map((record: MedicationGenericDto) => MedicationGenericDetailsService.save(record)));
           }
-          setFormState((prev) => ({
-            ...prev,
-            [name]: value,
-          }));
         } catch (error) {
           showAlert("Error", "Failed to update default status.", "error");
+          return;
         }
-      } else {
-        setFormState((prev) => ({
-          ...prev,
-          [name]: value,
-        }));
       }
+
+      setFormState((prev) => ({
+        ...prev,
+        defaultYN: value,
+      }));
     },
     [formState.mGenName, MedicationGenericDetailsService]
   );
+
+  // Simple handler for modifyYN radio buttons
+  const handleModifyYNChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { value } = e.target;
+    setFormState((prev) => ({
+      ...prev,
+      modifyYN: value,
+    }));
+  }, []);
+
+  // Handler for active switch
+  const handleActiveChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setFormState((prev) => ({
+      ...prev,
+      rActiveYN: checked ? "Y" : "N",
+    }));
+  }, []);
 
   const handleSave = useCallback(async () => {
     setIsSubmitted(true);
@@ -155,7 +180,7 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
           type="text"
           label="Medication Generic Code"
           value={formState.mGenCode}
-          onChange={handleInputChange}
+          onChange={handleTextChange}
           name="mGenCode"
           ControlID="genCode"
           placeholder="Enter Medication Generic code"
@@ -167,7 +192,7 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
           type="text"
           label="Medication Generic Name"
           value={formState.mGenName}
-          onChange={handleInputChange}
+          onChange={handleTextChange}
           name="mGenName"
           ControlID="genName"
           placeholder="Enter Medication Generic name"
@@ -179,7 +204,7 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
           type="text"
           label="Snomed Code"
           value={formState.mSnomedCode}
-          onChange={handleInputChange}
+          onChange={handleTextChange}
           name="mSnomedCode"
           ControlID="snomedCode"
           placeholder="Enter Snomed code"
@@ -189,23 +214,14 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
         />
       </Grid>
       <Grid container spacing={2}>
-        <FormField
-          type="textarea"
-          label="Notes"
-          value={formState.rNotes || ""}
-          onChange={handleInputChange}
-          name="rNotes"
-          ControlID="rNotes"
-          placeholder="Notes"
-          maxLength={4000}
-        />
+        <FormField type="textarea" label="Notes" value={formState.rNotes || ""} onChange={handleTextChange} name="rNotes" ControlID="rNotes" placeholder="Notes" maxLength={4000} />
       </Grid>
       <Grid container spacing={2}>
         <FormField
           type="radio"
           label="Default"
           value={formState.defaultYN}
-          onChange={handleInputChange}
+          onChange={handleDefaultYNChange}
           name="defaultYN"
           ControlID="defaultYN"
           options={[
@@ -219,7 +235,7 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
           type="radio"
           label="Modify"
           value={formState.modifyYN}
-          onChange={handleInputChange}
+          onChange={handleModifyYNChange}
           name="modifyYN"
           ControlID="modifyYN"
           options={[
@@ -236,12 +252,7 @@ const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ sel
             label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
             value={formState.rActiveYN}
             checked={formState.rActiveYN === "Y"}
-            onChange={(event) =>
-              setFormState((prev) => ({
-                ...prev,
-                rActiveYN: event.target.checked ? "Y" : "N",
-              }))
-            }
+            onChange={handleActiveChange}
             name="rActiveYN"
             ControlID="rActiveYN"
             size="medium"

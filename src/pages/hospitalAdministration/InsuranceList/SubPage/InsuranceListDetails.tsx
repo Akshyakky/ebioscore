@@ -3,8 +3,7 @@ import { Paper, Typography, Grid } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useAppSelector } from "@/store/hooks";
-import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
-import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import useFieldsList from "@/components/FieldsList/UseFieldsList";
@@ -14,6 +13,7 @@ import { insuranceListService } from "@/services/HospitalAdministrationServices/
 import FormField from "@/components/FormField/FormField";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
 
 const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData }) => {
   const [formState, setFormState] = useState<InsuranceListDto>({

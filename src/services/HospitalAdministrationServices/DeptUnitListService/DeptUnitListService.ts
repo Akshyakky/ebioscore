@@ -1,6 +1,6 @@
 import { APIConfig } from "@/apiConfig";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptunitListDto";
+import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
 import { CommonApiService } from "@/services/CommonApiService";
 import { store } from "@/store";
 

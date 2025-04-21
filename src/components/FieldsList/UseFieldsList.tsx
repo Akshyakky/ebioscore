@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { DropdownOption } from "../FormField/FormField";
 import { useLoading } from "@/context/LoadingContext";
 import { appModifiedListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";

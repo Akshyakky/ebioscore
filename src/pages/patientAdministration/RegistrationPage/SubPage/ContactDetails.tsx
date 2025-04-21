@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, useState } from "react";
-import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useRadioButtonChange from "@/hooks/useRadioButtonChange";

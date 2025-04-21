@@ -1,5 +1,5 @@
 import React from "react";
-import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptunitListDto";
+import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
 import { DeptUnitListService } from "@/services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 
