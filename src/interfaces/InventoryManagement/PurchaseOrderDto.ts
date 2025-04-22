@@ -30,9 +30,6 @@ export interface PurchaseOrderMastDto extends BaseDto {
   netSGSTTaxAmt?: number;
   totalTaxableAmt?: number;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
 }
@@ -90,9 +87,11 @@ export interface PurchaseOrderDetailDto extends BaseDto {
   sgstPerValue?: number;
   sgstTaxAmt?: number;
   taxableAmt?: number;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
+}
+
+export interface purchaseOrderSaveDto {
+  purchaseOrderMast: PurchaseOrderMastDto;
+  purchaseOrderDetail: PurchaseOrderDetailDto[];
 }

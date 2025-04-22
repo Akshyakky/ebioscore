@@ -6,20 +6,21 @@ import FormField from "@/components/FormField/FormField";
 
 interface PurchaseOrderGridProps {
   poDetailDto?: PurchaseOrderDetailDto;
+  handleProductsGrid: (data: any) => void;
 }
 
 interface GridRowData extends PurchaseOrderDetailDto {
   itemTotal: number;
 }
 
-const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto }) => {
+const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, handleProductsGrid }) => {
   const [gridData, setGridData] = useState<GridRowData[]>([]);
 
   useEffect(() => {
     if (poDetailDto) {
       const productExists = gridData.some((item) => item.productID === poDetailDto.productID);
       if (!productExists) {
-        const itemTotal = (poDetailDto.requiredPack || 0) * (poDetailDto.packPrice || 0) - (poDetailDto.disc || 0);
+        const itemTotal = (poDetailDto.requiredPack || 0) * (poDetailDto.packPrice || 0) - (poDetailDto.discAmt || 0);
 
         const newRow: GridRowData = {
           ...poDetailDto,
@@ -48,6 +49,10 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto }) =>
 
     setGridData(updatedData);
   };
+
+  useEffect(() => {
+    handleProductsGrid(gridData);
+  }, [gridData]);
 
   return (
     <Paper sx={{ mt: 2 }}>
@@ -129,37 +134,37 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto }) =>
                 <TableCell align="right">
                   <FormField
                     type="number"
-                    value={row.disc || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "disc")}
+                    value={row.discAmt || 0}
+                    onChange={(e) => handleCellChange(Number(e.target.value), index, "discAmt")}
                     label=""
-                    name="disc"
-                    ControlID={`disc_${row.productID}`}
+                    name="discAmt"
+                    ControlID={`discAmt_${row.productID}`}
                   />
                 </TableCell>
 
                 <TableCell align="right">
                   <FormField
                     type="number"
-                    value={row.discPercentage || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "discPercentage")}
+                    value={row.discPercentageAmt || 0}
+                    onChange={(e) => handleCellChange(Number(e.target.value), index, "discPercentageAmt")}
                     label=""
-                    name="discPercentage"
-                    ControlID={`discPercentage_${row.productID}`}
+                    name="discPercentageAmt"
+                    ControlID={`discPercentageAmt_${row.productID}`}
                   />
                 </TableCell>
 
                 <TableCell align="right">
                   <FormField
                     type="number"
-                    value={row.taxPercentage || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "taxPercentage")}
+                    value={row.cgstPerValue || 0}
+                    onChange={(e) => handleCellChange(Number(e.target.value), index, "cgstPerValue")}
                     label=""
-                    name="taxPercentage"
-                    ControlID={`taxPercentage_${row.productID}`}
+                    name="cgstPerValue"
+                    ControlID={`cgstPerValue_${row.productID}`}
                   />
                 </TableCell>
 
-                <TableCell align="right">{row.reorderLevel || 0}</TableCell>
+                <TableCell align="right">{row.rOL || 0}</TableCell>
 
                 <TableCell align="right">{row.itemTotal.toFixed(2)}</TableCell>
 
