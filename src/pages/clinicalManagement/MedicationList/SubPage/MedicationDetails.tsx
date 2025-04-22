@@ -12,6 +12,20 @@ const MedicationListDetails: React.FC<MedicationListDetailsProps> = ({ selectedD
   // Fetch dropdown values for medication forms and generics
   const dropdownValues = useDropdownValues(["medicationForm", "medicationGeneric"]);
 
+  // Local state to track the dropdown values (needed to properly initialize the form)
+  const [dropdownFormOptions, setDropdownFormOptions] = useState<{ label: string; value: string }[]>([]);
+  const [dropdownGenericOptions, setDropdownGenericOptions] = useState<{ label: string; value: string }[]>([]);
+
+  // Process dropdown options after they're loaded
+  useEffect(() => {
+    if (dropdownValues.medicationForm && dropdownValues.medicationForm.length > 0) {
+      setDropdownFormOptions(dropdownValues.medicationForm);
+    }
+    if (dropdownValues.medicationGeneric && dropdownValues.medicationGeneric.length > 0) {
+      setDropdownGenericOptions(dropdownValues.medicationGeneric);
+    }
+  }, [dropdownValues.medicationForm, dropdownValues.medicationGeneric]);
+
   const initialFormState: MedicationListDto = {
     mlID: 0,
     mlCode: "",
@@ -52,14 +66,14 @@ const MedicationListDetails: React.FC<MedicationListDetailsProps> = ({ selectedD
       name: "mfID",
       label: "Medication Form",
       type: "select" as const,
-      options: dropdownValues.medicationForm,
+      options: dropdownFormOptions,
       gridWidth: 4,
     },
     {
       name: "mGenID",
       label: "Generic Name",
       type: "select" as const,
-      options: dropdownValues.medicationGeneric,
+      options: dropdownGenericOptions,
       gridWidth: 4,
     },
     {
@@ -99,6 +113,7 @@ const MedicationListDetails: React.FC<MedicationListDetailsProps> = ({ selectedD
       formFields={formFields}
       serviceUrl="clinicalManagementURL"
       validateForm={validateForm}
+      onSaved={onSaved}
     />
   );
 };
