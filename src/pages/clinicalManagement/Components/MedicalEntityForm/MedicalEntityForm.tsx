@@ -33,6 +33,7 @@ interface FormFieldConfig {
   options?: { label: string; value: string }[];
   gridWidth?: number;
   maxLength?: number;
+  customHandler?: (e: SelectChangeEvent<string>, child: React.ReactNode) => Record<string, any>;
 }
 
 export function MedicalEntityForm<T extends BaseDto>({
@@ -68,6 +69,7 @@ export function MedicalEntityForm<T extends BaseDto>({
       if ("mFrqCode" in initialFormState) (initialFormState as any).mFrqCode = nextCode.data;
       if ("mDCode" in initialFormState) (initialFormState as any).mDCode = nextCode.data;
       if ("mlCode" in initialFormState) (initialFormState as any).mlCode = nextCode.data;
+      if ("procedureCode" in initialFormState) (initialFormState as any).procedureCode = nextCode.data;
 
       setFormState(initialFormState);
       setIsSubmitted(false);
@@ -93,11 +95,21 @@ export function MedicalEntityForm<T extends BaseDto>({
     setFormState((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  // Add a specific handler for select changes
-  const handleSelectChange = useCallback((e: SelectChangeEvent<string>, child: React.ReactNode) => {
-    const { name, value } = e.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
-  }, []);
+  const handleSelectChange = useCallback(
+    (e: SelectChangeEvent<string>, child: React.ReactNode) => {
+      const { name, value } = e.target;
+
+      const field = formFields.find((f) => f.name === name);
+
+      if (field && field.customHandler) {
+        const updates = field.customHandler(e, child);
+        setFormState((prev) => ({ ...prev, ...updates }));
+      } else {
+        setFormState((prev) => ({ ...prev, [name]: value }));
+      }
+    },
+    [formFields]
+  );
 
   const createSwitchHandler = useCallback((fieldName: string) => {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
