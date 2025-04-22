@@ -2,7 +2,7 @@ import { GenericEntityService } from "@/services/GenericEntityService/GenericEnt
 import { CommonApiService } from "@/services/CommonApiService";
 import { APIConfig } from "@/apiConfig";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 class PurchaseOrderMastServices extends GenericEntityService<PurchaseOrderMastDto> {
   constructor() {
     super(
@@ -17,6 +17,9 @@ class PurchaseOrderMastServices extends GenericEntityService<PurchaseOrderMastDt
   }
   async getPOProductDetails(productCode: string, deptId: number, barcode: boolean = false): Promise<OperationResult<any>> {
     return this.apiService.get<OperationResult<any>>(`${this.baseEndpoint}/GetPOProductDetails?productCode=${productCode}&deptId=${deptId}&barcode=${barcode}`, this.getToken());
+  }
+  async savePurchaseOrder(purchaseOrderData: purchaseOrderSaveDto): Promise<OperationResult<any[]>> {
+    return this.apiService.post<OperationResult<any[]>>(`${this.baseEndpoint}/SavePurchaseOrder`, purchaseOrderData, this.getToken());
   }
 }
 

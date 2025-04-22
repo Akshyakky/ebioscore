@@ -11,6 +11,7 @@ import PurchaseOrderHeader from "../SubPage/PurchaseOrderHeader";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import PurchaseOrderGrid from "../SubPage/PurchaseOrderGrid";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
+import PurchaseOrderFooter from "../SubPage/PurchaseOrderFooter";
 
 const PurchaseOrderPage: React.FC = () => {
   const initialPOMastDto: PurchaseOrderMastDto = {
@@ -43,9 +44,6 @@ const PurchaseOrderPage: React.FC = () => {
     netSGSTTaxAmt: 0,
     totalTaxableAmt: 0,
     rActiveYN: "",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "",
     rNotes: "",
   };
@@ -58,9 +56,57 @@ const PurchaseOrderPage: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductListDto | undefined>(undefined);
   const [pODetailDto, setPODetailDto] = useState<PurchaseOrderDetailDto>();
+  const [totDiscAmtPer, setTotDiscAmtPer] = useState<number>(0);
+  const [isDiscPercentage, setIsDiscPercentage] = useState<boolean>(false);
+
+  const handleApplyDiscount = () => {
+    const updatedData = gridData.map((row) => {
+      let discAmt = 0;
+      let discPercentageAmt = 0;
+      let itemTotal = row.requiredPack * row.packPrice;
+
+      if (isDiscPercentage) {
+        discPercentageAmt = totDiscAmtPer;
+        discAmt = (itemTotal * totDiscAmtPer) / 100;
+      } else {
+        discAmt = totDiscAmtPer;
+      }
+
+      const updatedItemTotal = itemTotal - discAmt;
+
+      return {
+        ...row,
+        discAmt,
+        discPercentageAmt,
+        itemTotal: updatedItemTotal,
+      };
+    });
+
+    setGridData(updatedData); // Update in state
+  };
+  const handleApprovedByChange = (id: number, name: string) => {
+    setSelectedData((prev) => ({
+      ...prev,
+      pOApprovedID: id,
+      pOApprovedBy: name,
+    }));
+  };
+  const handleRemarksChange = (value: string) => {
+    setSelectedData((prev) => ({
+      ...prev,
+      rNotes: value,
+    }));
+  };
+  const handleFinalizeToggle = (isFinalized: boolean) => {
+    setSelectedData((prev) => ({
+      ...prev,
+      pOApprovedYN: isFinalized ? "Y" : "N",
+    }));
+  };
 
   const handleSelectedProduct = (product: ProductListDto) => {
     console.log("Selected product:", product);
+
     setSelectedProduct(product);
   };
   const handleProductsGrid = (gridItems: any) => {
@@ -148,9 +194,6 @@ const PurchaseOrderPage: React.FC = () => {
         sgstPerValue: selectedProduct.sgstPerValue,
         sgstTaxAmt: 0,
         taxableAmt: selectedProduct.defaultPrice ?? 0,
-        compID: selectedProduct.compID,
-        compCode: selectedProduct.compCode,
-        compName: selectedProduct.compName,
         transferYN: selectedProduct.transferYN,
         rNotes: selectedProduct.rNotes,
       };
@@ -202,8 +245,8 @@ const PurchaseOrderPage: React.FC = () => {
       const netSGSTTaxAmt = gridData.reduce((sum, item) => sum + (item.sgstTaxAmt || 0), 0);
       const taxAmt = netCGSTTaxAmt + netSGSTTaxAmt;
 
-      const purchaseOrderData: purchaseOrderSaveDto = {
-        purchaseOrderMast: {
+      let purchaseOrderData: purchaseOrderSaveDto = {
+        purchaseOrderMastDto: {
           ...selectedData,
           totalAmt,
           taxAmt,
@@ -214,8 +257,19 @@ const PurchaseOrderPage: React.FC = () => {
           pOStatusCode: "PENDING",
           pOStatus: "Pending",
           rActiveYN: "Y",
+          compID: 1,
+          compCode: "TEST",
+          compName: "TEST",
+          auGrpID: 18,
+          catDesc: "catDesc",
+          catValue: "catValue",
+          pOApprovedID: 5,
+          pOApprovedBy: "pOApprovedBy",
+          supplierName: "supplierName",
+          pOType: "pOType",
+          pOTypeValue: "pOTe",
         },
-        purchaseOrderDetail: gridData.map((row) => ({
+        purchaseOrderDetailDto: gridData.map((row) => ({
           pODetID: row.pODetID || 0,
           pOID: row.pOID || 0,
           indentID: row.indentID || 0,
@@ -269,16 +323,28 @@ const PurchaseOrderPage: React.FC = () => {
           taxableAmt: row.taxableAmt || 0,
           transferYN: row.transferYN || "N",
           rNotes: row.rNotes || "",
+          compID: 1,
+          compCode: "TEST",
+          compName: "TEST",
         })),
       };
 
       console.log("Submitting purchase order:", purchaseOrderData);
+      purchaseOrderData.purchaseOrderMastDto.pODate = "2025-05-05";
+      purchaseOrderData.purchaseOrderMastDto.pOApprovedYN = "Y";
+      purchaseOrderData.purchaseOrderMastDto.transferYN = "Y";
+      try {
+        const response = purchaseOrderMastServices.savePurchaseOrder(purchaseOrderData);
+        console.log(response);
+      } catch (error) {}
     } catch (error) {
       console.error("Error saving purchase order:", error);
       // showAlert("error", "An error occurred while saving the purchase order", "error");
     }
   };
-
+  useEffect(() => {
+    console.log(selectedData);
+  }, [selectedData]);
   return (
     <>
       {deptId > 0 && (
@@ -294,6 +360,18 @@ const PurchaseOrderPage: React.FC = () => {
             handleSelectedProduct={handleSelectedProduct}
           />
           <PurchaseOrderGrid poDetailDto={pODetailDto} handleProductsGrid={handleProductsGrid} />
+          <PurchaseOrderFooter
+            totDiscAmtPer={totDiscAmtPer}
+            setTotDiscAmtPer={setTotDiscAmtPer}
+            isDiscPercentage={isDiscPercentage}
+            setIsDiscPercentage={setIsDiscPercentage}
+            handleApplyDiscount={handleApplyDiscount}
+            handleApprovedByChange={handleApprovedByChange}
+            handleRemarksChange={handleRemarksChange}
+            handleFinalizeToggle={handleFinalizeToggle}
+            purchaseOrderMastData={selectedData}
+          />
+
           <Box sx={{ mt: 4 }}>
             <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
           </Box>

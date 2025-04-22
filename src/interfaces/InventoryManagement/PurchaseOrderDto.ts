@@ -92,6 +92,6 @@ export interface PurchaseOrderDetailDto extends BaseDto {
 }
 
 export interface purchaseOrderSaveDto {
-  purchaseOrderMast: PurchaseOrderMastDto;
-  purchaseOrderDetail: PurchaseOrderDetailDto[];
+  purchaseOrderMastDto: PurchaseOrderMastDto;
+  purchaseOrderDetailDto: PurchaseOrderDetailDto[];
 }
