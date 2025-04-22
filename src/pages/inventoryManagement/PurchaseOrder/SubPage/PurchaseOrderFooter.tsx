@@ -1,7 +1,7 @@
 import FormField from "@/components/FormField/FormField";
 import { PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
-import { Button, Grid, Paper, Stack } from "@mui/material";
-import React, { useState } from "react";
+import { Button, Grid, Paper, Stack, Typography } from "@mui/material";
+import React from "react";
 
 // Props
 interface PurchaseOrderFooterProps {
@@ -32,13 +32,18 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
     { value: "2", label: "Dr. Sneha Rao" },
     { value: "3", label: "Mr. Kiran Patil" },
   ];
-  const [remarkz, setRemarkz] = useState("");
+  const infoItem = (label: string, value: string | number) => (
+    <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 140 }}>
+      <Typography fontWeight="bold">{label}:</Typography>
+      <Typography>{value}</Typography>
+    </Stack>
+  );
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Grid container spacing={2} alignItems="center">
         {/* Left Section: Discount Area */}
         <Grid item xs={12} sm={6}>
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={2} alignItems="center">
             <FormField
               type="number"
               label={`Total Disc in ${isDiscPercentage ? "%" : "Amt"}`}
@@ -90,9 +95,17 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
               name="approvedBy"
               ControlID="approvedBy"
               options={approvedByOptions}
-              isMandatory
               gridProps={{ sm: 6 }}
             />
+          </Stack>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" mt={2} flexWrap="wrap">
+            {infoItem("Items Total", purchaseOrderMastData.totalAmt || "0.00")}
+            {infoItem("Tax Amount", purchaseOrderMastData.totalTaxableAmt || "0.00")}
+            {infoItem("Disc Amt", purchaseOrderMastData.discAmt || "0.00")}
+            {infoItem("Coin Adjustment", purchaseOrderMastData.coinAdjAmt || "0.00")}
+            {infoItem("Net Amt", purchaseOrderMastData.netAmt || "0.00")}
           </Stack>
         </Grid>
         <Grid item xs={12} sm={6}>
