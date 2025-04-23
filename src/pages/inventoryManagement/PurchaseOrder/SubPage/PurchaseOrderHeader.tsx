@@ -26,8 +26,9 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
     const selectedProduct = productOptions.find((product) => product.productCode === selectedProductCode);
     console.log(selectedProduct);
     if (selectedProduct) {
-      console.log("Selected Prod");
+      console.log("Selected Prod", selectedProduct);
       handleSelectedProduct(selectedProduct);
+      setProductName("");
     }
   }, []);
   useEffect(() => {

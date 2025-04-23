@@ -61,28 +61,26 @@ const PurchaseOrderPage: React.FC = () => {
 
   const handleApplyDiscount = () => {
     const updatedData = gridData.map((row) => {
-      let discAmt = 0;
-      let discPercentageAmt = 0;
-      let itemTotal = row.requiredPack * row.packPrice;
+      const itemTotalBeforeDisc = row.requiredPack * row.packPrice;
+      let discAmt = isDiscPercentage ? (itemTotalBeforeDisc * totDiscAmtPer) / 100 : totDiscAmtPer;
+      const taxableAmt = itemTotalBeforeDisc - discAmt;
 
-      if (isDiscPercentage) {
-        discPercentageAmt = totDiscAmtPer;
-        discAmt = (itemTotal * totDiscAmtPer) / 100;
-      } else {
-        discAmt = totDiscAmtPer;
-      }
-
-      const updatedItemTotal = itemTotal - discAmt;
+      const cgstTaxAmt = (taxableAmt * (row.cgstPerValue || 0)) / 100;
+      const sgstTaxAmt = (taxableAmt * (row.sgstPerValue || 0)) / 100;
 
       return {
         ...row,
         discAmt,
-        discPercentageAmt,
-        itemTotal: updatedItemTotal,
+        discPercentageAmt: isDiscPercentage ? totDiscAmtPer : 0,
+        taxableAmt,
+        cgstTaxAmt,
+        sgstTaxAmt,
+        itemTotal: taxableAmt + cgstTaxAmt + sgstTaxAmt,
       };
     });
 
-    setGridData(updatedData); // Update in state
+    setGridData(updatedData);
+    recalculateTotals(updatedData);
   };
   const handleApprovedByChange = (id: number, name: string) => {
     setSelectedData((prev) => ({
@@ -111,7 +109,7 @@ const PurchaseOrderPage: React.FC = () => {
   };
   const handleProductsGrid = (gridItems: any) => {
     setGridData(gridItems);
-    console.log("Selected product gridItems:", gridItems);
+    recalculateTotals(gridItems);
   };
 
   const handleAdvancedSearch = () => {
@@ -221,6 +219,8 @@ const PurchaseOrderPage: React.FC = () => {
 
   const handleClear = () => {
     setSelectedData(initialPOMastDto);
+    setGridData([]);
+    setTotDiscAmtPer(0);
     setIsSubmitted(false);
   };
 
@@ -239,11 +239,13 @@ const PurchaseOrderPage: React.FC = () => {
 
     try {
       // Calculate totals for the purchase order
-      const totalAmt = gridData.reduce((sum, item) => sum + (item.itemTotal || 0), 0);
-      const totalTaxableAmt = gridData.reduce((sum, item) => sum + (item.taxableAmt || 0), 0);
-      const netCGSTTaxAmt = gridData.reduce((sum, item) => sum + (item.cgstTaxAmt || 0), 0);
-      const netSGSTTaxAmt = gridData.reduce((sum, item) => sum + (item.sgstTaxAmt || 0), 0);
+      const totalAmt = gridData.reduce((sum, item) => sum + item.itemTotal, 0);
+      const totalTaxableAmt = gridData.reduce((sum, item) => sum + item.taxableAmt, 0);
+      const netCGSTTaxAmt = gridData.reduce((sum, item) => sum + item.cgstTaxAmt, 0);
+      const netSGSTTaxAmt = gridData.reduce((sum, item) => sum + item.sgstTaxAmt, 0);
       const taxAmt = netCGSTTaxAmt + netSGSTTaxAmt;
+
+      const netAmt = totalAmt - (selectedData.discAmt || 0) + taxAmt - (selectedData.coinAdjAmt || 0);
 
       let purchaseOrderData: purchaseOrderSaveDto = {
         purchaseOrderMastDto: {
@@ -345,6 +347,27 @@ const PurchaseOrderPage: React.FC = () => {
   useEffect(() => {
     console.log(selectedData);
   }, [selectedData]);
+
+  const recalculateTotals = (updatedGrid: any[]) => {
+    const totalAmt = updatedGrid.reduce((sum, item) => sum + (item.itemTotal || 0), 0);
+    const totalTaxableAmt = updatedGrid.reduce((sum, item) => sum + (item.taxableAmt || 0), 0);
+    const netCGSTTaxAmt = updatedGrid.reduce((sum, item) => sum + (item.cgstTaxAmt || 0), 0);
+    const netSGSTTaxAmt = updatedGrid.reduce((sum, item) => sum + (item.sgstTaxAmt || 0), 0);
+    const taxAmt = netCGSTTaxAmt + netSGSTTaxAmt;
+
+    const netAmt = totalAmt - (selectedData.discAmt || 0) + taxAmt - (selectedData.coinAdjAmt || 0);
+
+    setSelectedData((prev) => ({
+      ...prev,
+      totalAmt,
+      taxAmt,
+      netCGSTTaxAmt,
+      netSGSTTaxAmt,
+      totalTaxableAmt,
+      netAmt,
+    }));
+  };
+
   return (
     <>
       {deptId > 0 && (

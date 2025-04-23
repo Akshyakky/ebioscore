@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import FormField from "@/components/FormField/FormField";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface PurchaseOrderGridProps {
   poDetailDto?: PurchaseOrderDetailDto;
@@ -15,7 +16,7 @@ interface GridRowData extends PurchaseOrderDetailDto {
 
 const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, handleProductsGrid }) => {
   const [gridData, setGridData] = useState<GridRowData[]>([]);
-
+  const dropdownValues = useDropdownValues(["taxType"]);
   useEffect(() => {
     if (poDetailDto) {
       const productExists = gridData.some((item) => item.productID === poDetailDto.productID);
@@ -44,8 +45,8 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
     };
 
     // Update itemTotal if any related field is updated
-    const { requiredPack = 0, packPrice = 0, disc = 0 } = updatedData[rowIndex];
-    updatedData[rowIndex].itemTotal = requiredPack * packPrice - disc;
+    const { requiredPack = 0, packPrice = 0, discAmt = 0, cgstTaxAmt = 0, sgstTaxAmt = 0 } = updatedData[rowIndex];
+    updatedData[rowIndex].itemTotal = requiredPack * packPrice - discAmt + cgstTaxAmt + sgstTaxAmt;
 
     setGridData(updatedData);
   };
@@ -53,7 +54,7 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
   useEffect(() => {
     handleProductsGrid(gridData);
   }, [gridData]);
-
+  console.log("row.cgstPerValue Data", poDetailDto);
   return (
     <Paper sx={{ mt: 2 }}>
       <TableContainer sx={{ minHeight: 300 }}>
@@ -155,12 +156,18 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
 
                 <TableCell align="right">
                   <FormField
-                    type="number"
-                    value={row.cgstPerValue || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "cgstPerValue")}
+                    type="select"
+                    value={dropdownValues.taxType.find((tax) => Number(tax.label) === Number(row.cgstPerValue))?.value || ""}
+                    onChange={(e) => {
+                      const selectedTax = dropdownValues.taxType.find((tax) => Number(tax.value) === Number(e.target.value));
+                      const selectedRate = Number(selectedTax?.label || 0);
+
+                      handleCellChange(selectedRate, index, "cgstPerValue");
+                    }}
+                    options={dropdownValues.taxType}
                     label=""
-                    name="cgstPerValue"
-                    ControlID={`cgstPerValue_${row.productID}`}
+                    name="gstPercent"
+                    ControlID={`gstPercent_${row.productID}`}
                   />
                 </TableCell>
 

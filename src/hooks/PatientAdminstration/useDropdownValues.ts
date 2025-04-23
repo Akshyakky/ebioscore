@@ -29,6 +29,7 @@ import { componentEntryTypeService, templategroupService } from "@/services/Labo
 import { appSubModuleService, appUserModuleService } from "@/services/SecurityManagementServices/securityManagementServices";
 import { serviceTypeService } from "@/services/BillingServices/BillingGenericService";
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
+import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
 
 export type DropdownType =
   | "pic"
@@ -89,6 +90,7 @@ export type DropdownType =
   | "sampleType"
   | "chargeType"
   | "serviceType"
+  | "taxType"
   | "employeeRoom";
 
 const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
@@ -228,6 +230,13 @@ const useDropdownValues = (requiredDropdowns: DropdownType[]) => {
             response = (response.data || []).map((item: WardCategoryDto) => ({
               value: item.wCatID || 0,
               label: item.wCatName || "",
+            }));
+            break;
+          case "taxType":
+            response = await productTaxService.getAll();
+            response = (response.data || []).map((item: ProductTaxListDto) => ({
+              value: item.pTaxID || 0,
+              label: item.pTaxAmt || "",
             }));
             break;
           case "productSubGroup":

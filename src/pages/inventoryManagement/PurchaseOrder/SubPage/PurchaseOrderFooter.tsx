@@ -38,7 +38,7 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
         {label}
       </Typography>
       <Typography color="primary" fontWeight="bold">
-        ₹ {value}
+        ₹ {Number(value).toFixed(2)}
       </Typography>
     </Stack>
   );
