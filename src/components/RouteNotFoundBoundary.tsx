@@ -75,6 +75,7 @@ const RouteNotFoundBoundary: React.FC<RouteNotFoundBoundaryProps> = ({ children 
       "/ComponentEntryTypePage",
       "/PurchaseOrderPage",
       "/ForgotPasswordPage",
+      "/EmployeeRegistrationForm",
       "/",
     ];
 

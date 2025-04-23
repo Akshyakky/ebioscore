@@ -47,6 +47,7 @@ import IndentProductPage from "@/pages/inventoryManagement/IndentProduct/MainPag
 import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
 import { Navigate } from "react-router-dom";
 import AlertPage from "@/pages/common/AlertManagerPage/MainPage/Alertpage";
+import EmployeeRegistrationForm from "@/pages/patientAdministration/RegistrationPage/MainPage/EmployeeRegistrationForm";
 
 interface RouteConfig {
   path: string;
@@ -100,6 +101,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/PurchaseOrderPage", component: PurchaseOrderPage, protected: true },
   { path: "/ForgotPasswordPage", component: ForgotPasswordPage, protected: false },
   { path: "/IndentProductPage", component: IndentProductPage, protected: true },
+  { path: "/EmployeeRegistrationForm", component: EmployeeRegistrationForm, protected: true },
   // 404 Not Found route - must be placed last to catch all unmatched routes
   { path: "*", component: NotFoundPage, protected: false },
 ];

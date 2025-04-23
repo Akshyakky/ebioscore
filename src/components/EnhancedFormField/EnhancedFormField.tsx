@@ -1,687 +1,773 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, ReactNode, JSX } from "react";
+import { Controller, Control, FieldValues, Path } from "react-hook-form";
 import {
-  Grid,
   TextField,
+  Checkbox,
   FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  FormControlLabel,
   FormHelperText,
+  FormLabel,
+  InputAdornment,
+  MenuItem,
   Radio,
   RadioGroup,
-  FormControlLabel,
+  Select,
   Autocomplete,
-  InputAdornment,
+  Box,
   IconButton,
-  Typography,
+  Chip,
+  Stack,
+  InputLabel,
+  FormGroup,
   SelectChangeEvent,
+  TextFieldProps,
+  FormControlProps,
+  CheckboxProps,
+  RadioGroupProps,
+  SelectProps,
+  AutocompleteProps,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
-import { Controller, useFormContext, RegisterOptions } from "react-hook-form";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import dayjs, { Dayjs } from "dayjs";
 
-interface EnhancedFormFieldProps {
-  type: string;
+// Define option type for select, radio, checkbox, etc.
+export interface OptionType {
+  value: string | number | boolean;
   label: string;
-  name: string;
-  ControlID: string;
-  value?: any;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent<unknown> | Date | null) => void;
-  options?: { value: string; label: string }[];
-  isSubmitted?: boolean;
-  isMandatory?: boolean;
-  gridProps?: { xs: number; sm?: number; md?: number; lg?: number; xl?: number };
-  placeholder?: string;
-  disabled?: boolean;
-  maxLength?: number;
-  maxDate?: Date;
-  onBlur?: () => void;
-  fetchSuggestions?: (input: string) => Promise<string[]>;
-  onSelectSuggestion?: (suggestion: string) => void;
-  inline?: boolean;
-  showAddButton?: boolean;
-  onAddClick?: () => void;
-  InputProps?: any;
-  size?: "small" | "medium";
-  rules?: RegisterOptions; // React Hook Form validation rules
-  useFormController?: boolean; // Flag to use React Hook Form Controller
-  defaultValue?: any; // Default value for React Hook Form
 }
 
-const EnhancedFormField: React.FC<EnhancedFormFieldProps> = ({
-  type,
-  label,
+// Field types
+export type FieldType =
+  | "text"
+  | "email"
+  | "password"
+  | "number"
+  | "search"
+  | "tel"
+  | "url"
+  | "textarea"
+  | "select"
+  | "multiselect"
+  | "autocomplete"
+  | "radio"
+  | "checkbox"
+  | "datepicker"
+  | "datetimepicker"
+  | "file";
+
+// Common props for all field types
+interface FormFieldCommonProps<TFieldValues extends FieldValues> {
+  name: Path<TFieldValues>;
+  control: Control<TFieldValues>;
+  label?: string;
+  required?: boolean;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  placeholder?: string;
+  helperText?: string;
+  variant?: "outlined" | "filled" | "standard";
+  size?: "small" | "medium";
+  defaultValue?: any;
+  onChange?: (value: any) => void;
+  onBlur?: (event: React.FocusEvent<HTMLElement>) => void;
+  shrink?: boolean;
+  adornment?: ReactNode;
+  adornmentPosition?: "start" | "end";
+}
+
+// Specific props for text-like inputs
+interface TextFieldTypeProps {
+  type: "text" | "email" | "password" | "number" | "search" | "tel" | "url";
+  min?: number;
+  max?: number;
+  step?: number;
+  pattern?: string;
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+  InputProps?: Partial<TextFieldProps["InputProps"]>;
+}
+
+// Specific props for textarea
+interface TextareaTypeProps {
+  type: "textarea";
+  rows?: number;
+  inputProps?: React.InputHTMLAttributes<HTMLTextAreaElement>;
+  InputProps?: Partial<TextFieldProps["InputProps"]>;
+}
+
+// Specific props for select and multiselect
+interface SelectTypeProps {
+  type: "select";
+  options: OptionType[];
+  multiple?: boolean;
+  inputProps?: React.InputHTMLAttributes<HTMLSelectElement>;
+  InputProps?: Partial<TextFieldProps["InputProps"]>;
+}
+
+// Specific props for autocomplete
+interface AutocompleteTypeProps {
+  type: "autocomplete" | "multiselect";
+  options: OptionType[];
+  multiple?: boolean;
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+  InputProps?: Partial<TextFieldProps["InputProps"]>;
+}
+
+// Specific props for radio
+interface RadioTypeProps {
+  type: "radio";
+  options: OptionType[];
+  row?: boolean;
+}
+
+// Specific props for checkbox
+interface CheckboxTypeProps {
+  type: "checkbox";
+  options?: OptionType[];
+  row?: boolean;
+}
+
+// Specific props for datepicker and datetimepicker
+interface DatePickerTypeProps {
+  type: "datepicker" | "datetimepicker";
+  minDate?: Dayjs;
+  maxDate?: Dayjs;
+}
+
+// Specific props for file input
+interface FileTypeProps {
+  type: "file";
+  accept?: string;
+  maxSize?: number;
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+  InputProps?: Partial<TextFieldProps["InputProps"]>;
+}
+
+// Combine all possible props using discriminated union
+export type FormFieldProps<TFieldValues extends FieldValues> = FormFieldCommonProps<TFieldValues> &
+  (TextFieldTypeProps | TextareaTypeProps | SelectTypeProps | AutocompleteTypeProps | RadioTypeProps | CheckboxTypeProps | DatePickerTypeProps | FileTypeProps);
+
+/**
+ * FormField - A comprehensive form field component that supports various field types
+ * Integrates with React Hook Form and Material UI
+ */
+const FormField = <TFieldValues extends FieldValues>({
   name,
-  ControlID,
-  value,
-  onChange,
-  options = [],
-  isSubmitted = false,
-  isMandatory = false,
-  gridProps = { xs: 12, sm: 6, md: 3 },
-  placeholder = "",
+  control,
+  label,
+  type = "text",
+  required = false,
   disabled = false,
-  maxLength,
-  maxDate,
-  onBlur,
-  fetchSuggestions,
-  onSelectSuggestion,
-  inline = false,
-  showAddButton = false,
-  onAddClick,
-  InputProps,
+  fullWidth = true,
+  placeholder = "",
+  helperText = "",
+  variant = "outlined",
   size = "medium",
-  rules,
-  useFormController = false,
   defaultValue,
-}) => {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [inputValue, setInputValue] = useState("");
+  onChange: externalOnChange,
+  onBlur: externalOnBlur,
+  shrink,
+  adornment,
+  adornmentPosition = "end",
+  ...rest
+}: FormFieldProps<TFieldValues>): JSX.Element => {
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [fileError, setFileError] = useState<string>("");
 
-  // Get React Hook Form context if available
-  const formContext = useFormContext();
-  const isHookForm = useFormController && formContext;
+  // Type guards for checking field types
+  const isTextField = (type: FieldType): type is TextFieldTypeProps["type"] => ["text", "email", "password", "number", "search", "tel", "url"].includes(type);
 
-  // Set up validation rules
-  const validationRules: RegisterOptions = {
-    ...(isMandatory && { required: "This field is required" }),
-    ...rules,
+  const isTextArea = (type: FieldType): boolean => type === "textarea";
+  const isSelect = (type: FieldType): boolean => type === "select";
+  const isMultiSelect = (type: FieldType): boolean => type === "multiselect";
+  const isAutocomplete = (type: FieldType): boolean => type === "autocomplete";
+  const isRadio = (type: FieldType): boolean => type === "radio";
+  const isCheckbox = (type: FieldType): boolean => type === "checkbox";
+  const isDatePicker = (type: FieldType): boolean => type === "datepicker";
+  const isDateTimePicker = (type: FieldType): boolean => type === "datetimepicker";
+  const isFileInput = (type: FieldType): boolean => type === "file";
+
+  // Safely access properties based on field type
+  const getOptions = (): OptionType[] => {
+    if (isSelect(type) || isMultiSelect(type) || isAutocomplete(type) || isRadio(type) || isCheckbox(type)) {
+      return (rest as any).options || [];
+    }
+    return [];
   };
 
-  // Validate field if it's mandatory and submitted for non-hook form mode
-  const isError = !isHookForm && isSubmitted && isMandatory && (value === null || value === undefined || value === "" || (Array.isArray(value) && value.length === 0));
+  const getMultiple = (): boolean => {
+    if (isSelect(type) || isMultiSelect(type) || isAutocomplete(type)) {
+      return (rest as any).multiple || false;
+    }
+    return false;
+  };
 
-  // Handle autocomplete input change
-  const handleAutocompleteInputChange = async (event: React.SyntheticEvent, newInputValue: string) => {
-    setInputValue(newInputValue);
+  const getRows = (): number => {
+    if (isTextArea(type)) {
+      return (rest as any).rows || 4;
+    }
+    return 4;
+  };
 
-    if (fetchSuggestions && newInputValue.trim().length > 0) {
-      try {
-        const fetchedSuggestions = await fetchSuggestions(newInputValue);
-        setSuggestions(fetchedSuggestions);
-      } catch (error) {
-        console.error("Error fetching suggestions:", error);
-        setSuggestions([]);
+  const getInputProps = (): any => {
+    return (rest as any).inputProps || {};
+  };
+
+  const getInputPropsObj = (): any => {
+    return (rest as any).InputProps || {};
+  };
+
+  const getMin = (): number | undefined => {
+    if (isTextField(type) && type === "number") {
+      return (rest as any).min;
+    }
+    return undefined;
+  };
+
+  const getMax = (): number | undefined => {
+    if (isTextField(type) && type === "number") {
+      return (rest as any).max;
+    }
+    return undefined;
+  };
+
+  const getStep = (): number | undefined => {
+    if (isTextField(type) && type === "number") {
+      return (rest as any).step;
+    }
+    return undefined;
+  };
+
+  const getPattern = (): string | undefined => {
+    if (isTextField(type)) {
+      return (rest as any).pattern;
+    }
+    return undefined;
+  };
+
+  const getAccept = (): string | undefined => {
+    if (isFileInput(type)) {
+      return (rest as any).accept;
+    }
+    return undefined;
+  };
+
+  const getMaxSize = (): number | undefined => {
+    if (isFileInput(type)) {
+      return (rest as any).maxSize;
+    }
+    return undefined;
+  };
+
+  const getRow = (): boolean => {
+    if (isRadio(type) || isCheckbox(type)) {
+      return (rest as any).row || false;
+    }
+    return false;
+  };
+
+  // Handle password visibility toggle
+  const handleClickShowPassword = (): void => {
+    setShowPassword(!showPassword);
+  };
+
+  // Validate file
+  const validateFile = (file: File | null): boolean => {
+    if (!file) return true;
+
+    const maxSize = getMaxSize();
+    const accept = getAccept();
+
+    if (maxSize && file.size > maxSize) {
+      const sizeMB = Math.round(maxSize / 1048576);
+      setFileError(`File size should not exceed ${sizeMB} MB`);
+      return false;
+    }
+
+    if (accept) {
+      const acceptedTypes: string[] = accept.split(",").map((type: string): string => type.trim());
+      const fileType = file.type;
+      const fileExtension = `.${file.name.split(".").pop()}`;
+
+      if (!acceptedTypes.some((type: string) => type === fileType || type === fileExtension || (type.includes("/*") && fileType.startsWith(type.replace("/*", "/"))))) {
+        setFileError(`File type not supported. Accepted types: ${accept}`);
+        return false;
       }
-    } else {
-      setSuggestions([]);
     }
+
+    setFileError("");
+    return true;
   };
 
-  // When using React Hook Form mode, reset the input value when field is reset
-  useEffect(() => {
-    if (isHookForm && defaultValue !== undefined) {
-      setInputValue("");
+  // Render the appropriate field based on type
+  const renderField = ({ field, fieldState }: { field: any; fieldState: { error?: { message?: string } } }) => {
+    const { error } = fieldState;
+    const errorMessage = error?.message || fileError;
+
+    // Common props for most field types
+    const commonProps = {
+      id: `field-${name}`,
+      label,
+      error: !!errorMessage,
+      helperText: errorMessage || helperText,
+      disabled,
+      fullWidth,
+      required,
+      placeholder,
+      size,
+      variant,
+      InputProps: {
+        ...getInputPropsObj(),
+        ...(adornment && {
+          [adornmentPosition === "start" ? "startAdornment" : "endAdornment"]: <InputAdornment position={adornmentPosition}>{adornment}</InputAdornment>,
+        }),
+      },
+      inputProps: {
+        ...getInputProps(),
+      },
+      ...rest,
+    };
+
+    // Text-like inputs
+    if (isTextField(type)) {
+      return (
+        <TextField
+          {...commonProps}
+          {...field}
+          type={type}
+          inputProps={{
+            ...getInputProps(),
+            ...(type === "number" && {
+              min: getMin(),
+              max: getMax(),
+              step: getStep(),
+            }),
+          }}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            field.onChange(e);
+            externalOnChange?.(e);
+          }}
+          onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+            field.onBlur(e);
+            externalOnBlur?.(e);
+          }}
+          InputLabelProps={{
+            shrink: shrink,
+          }}
+        />
+      );
     }
-  }, [isHookForm, defaultValue]);
 
-  // Renders field when using React Hook Form
-  const renderHookFormField = () => {
-    if (!formContext) return null;
+    // Password field
+    if (isTextField(type) && type === "password") {
+      return (
+        <TextField
+          {...commonProps}
+          {...field}
+          type={showPassword ? "text" : "password"}
+          InputProps={{
+            ...getInputPropsObj(),
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} edge="end">
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            field.onChange(e);
+            externalOnChange?.(e);
+          }}
+          onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+            field.onBlur(e);
+            externalOnBlur?.(e);
+          }}
+        />
+      );
+    }
 
-    return (
-      <Controller
-        name={name}
-        control={formContext.control}
-        defaultValue={defaultValue}
-        rules={validationRules}
-        render={({ field, fieldState: { error } }) => {
-          // Make the field props available for the different component types
-          const fieldProps = {
-            ...field,
-            error: !!error,
-            helperText: error?.message || "",
-            disabled,
-            size,
-            id: ControlID,
-          };
+    // Text area
+    if (isTextArea(type)) {
+      return (
+        <TextField
+          {...commonProps}
+          {...field}
+          multiline
+          rows={getRows()}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+            field.onChange(e);
+            externalOnChange?.(e);
+          }}
+          onBlur={(e: React.FocusEvent<HTMLTextAreaElement>) => {
+            field.onBlur(e);
+            externalOnBlur?.(e);
+          }}
+        />
+      );
+    }
 
-          switch (type) {
-            case "text":
-              return (
-                <TextField {...fieldProps} label={label} fullWidth placeholder={placeholder} inputProps={{ maxLength }} InputProps={InputProps} variant="outlined" margin="dense" />
-              );
+    // Select field
+    if (isSelect(type)) {
+      const options = getOptions();
+      const multiple = getMultiple();
 
-            case "email":
-              return (
-                <TextField
-                  {...fieldProps}
-                  label={label}
-                  fullWidth
-                  type="email"
-                  placeholder={placeholder}
-                  inputProps={{ maxLength }}
-                  InputProps={InputProps}
-                  variant="outlined"
-                  margin="dense"
-                />
-              );
+      return (
+        <FormControl error={!!errorMessage} disabled={disabled} fullWidth={fullWidth} required={required} variant={variant} size={size}>
+          <InputLabel id={`${name}-label`}>{label}</InputLabel>
+          <Select
+            {...field}
+            labelId={`${name}-label`}
+            id={`field-${name}`}
+            multiple={multiple}
+            label={label}
+            onChange={(e: SelectChangeEvent<unknown>) => {
+              field.onChange(e);
+              externalOnChange?.(e);
+            }}
+            onBlur={(e: React.FocusEvent<HTMLElement>) => {
+              field.onBlur(e);
+              externalOnBlur?.(e);
+            }}
+            renderValue={
+              multiple
+                ? (selected: any) => (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {(selected as Array<string | number>).map((value) => {
+                        const option: OptionType = options.find((opt: OptionType) => opt.value === value) || { value: "", label: "" };
+                        return <Chip key={String(value)} label={option.label || value} size="small" />;
+                      })}
+                    </Box>
+                  )
+                : undefined
+            }
+            {...(rest as any)}
+          >
+            {options.map((option) => (
+              <MenuItem key={String(option.value)} value={String(option.value)}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+          {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
+        </FormControl>
+      );
+    }
 
-            case "number":
-              return (
-                <TextField
-                  {...fieldProps}
-                  label={label}
-                  fullWidth
-                  type="number"
-                  placeholder={placeholder}
-                  inputProps={{ maxLength }}
-                  InputProps={InputProps}
-                  variant="outlined"
-                  margin="dense"
-                />
-              );
+    // Multi-select using Autocomplete
+    if (isMultiSelect(type)) {
+      const options = getOptions();
 
-            case "textarea":
-              return (
-                <TextField
-                  {...fieldProps}
-                  label={label}
-                  fullWidth
-                  multiline
-                  rows={4}
-                  placeholder={placeholder}
-                  inputProps={{ maxLength }}
-                  InputProps={InputProps}
-                  variant="outlined"
-                  margin="dense"
-                />
-              );
+      return (
+        <Autocomplete
+          {...field}
+          multiple
+          id={`field-${name}`}
+          options={options}
+          getOptionLabel={(option: any) => {
+            // Handle both object options and simple value options
+            if (typeof option === "object" && option !== null) {
+              return option.label || "";
+            }
+            const foundOption: OptionType | undefined = options.find((opt: OptionType) => opt.value === option);
+            return foundOption ? foundOption.label : String(option);
+          }}
+          isOptionEqualToValue={(option: OptionType, value: any) => {
+            if (typeof value === "object" && value !== null) {
+              return option.value === value.value;
+            }
+            return option.value === value;
+          }}
+          value={field.value || []}
+          disabled={disabled}
+          fullWidth={fullWidth}
+          onChange={(_: any, newValue: any) => {
+            // Transform selected options to array of values
+            const values = newValue.map((item: any) => (typeof item === "object" ? item.value : item));
+            field.onChange(values);
+            externalOnChange?.(values);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={label}
+              variant={variant}
+              error={!!errorMessage}
+              helperText={errorMessage || helperText}
+              required={required}
+              size={size}
+              InputLabelProps={{
+                shrink: shrink,
+              }}
+            />
+          )}
+          {...(rest as any)}
+        />
+      );
+    }
 
-            case "select":
-              return (
-                <FormControl fullWidth error={!!error} disabled={disabled} size={size} variant="outlined" margin="dense">
-                  <InputLabel id={`${ControlID}-label`}>{label}</InputLabel>
-                  <Select
-                    {...fieldProps}
-                    labelId={`${ControlID}-label`}
-                    label={label}
-                    displayEmpty
-                    endAdornment={
-                      showAddButton && (
-                        <InputAdornment position="end">
-                          <IconButton onClick={onAddClick} size="small" edge="end">
-                            <AddCircleIcon />
-                          </IconButton>
-                        </InputAdornment>
-                      )
-                    }
-                  >
-                    <MenuItem value="" disabled>
-                      <em>Select</em>
-                    </MenuItem>
-                    {options.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {error && <FormHelperText>{error.message}</FormHelperText>}
-                </FormControl>
-              );
+    // Autocomplete field
+    if (isAutocomplete(type)) {
+      const options = getOptions();
 
-            case "multiselect":
-              return (
-                <FormControl fullWidth error={!!error} disabled={disabled} size={size} variant="outlined" margin="dense">
-                  <InputLabel id={`${ControlID}-label`}>{label}</InputLabel>
-                  <Select
-                    {...fieldProps}
-                    labelId={`${ControlID}-label`}
-                    multiple
-                    label={label}
-                    renderValue={(selected) => {
-                      if (Array.isArray(selected)) {
-                        return selected
-                          .map((val) => {
-                            const option = options.find((opt) => opt.value === val);
-                            return option ? option.label : val;
-                          })
-                          .join(", ");
-                      }
-                      return "";
-                    }}
-                  >
-                    {options.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {error && <FormHelperText>{error.message}</FormHelperText>}
-                </FormControl>
-              );
+      return (
+        <Autocomplete
+          {...field}
+          id={`field-${name}`}
+          options={options}
+          getOptionLabel={(option: any) => {
+            // Handle both object options and simple value options
+            if (typeof option === "object" && option !== null) {
+              return option.label || "";
+            }
+            const foundOption: OptionType | undefined = options.find((opt: OptionType) => opt.value === option);
+            return foundOption ? foundOption.label : option?.toString() || "";
+          }}
+          isOptionEqualToValue={(option: OptionType, value: any) => {
+            if (typeof value === "object" && value !== null) {
+              return option.value === value.value;
+            }
+            return option.value === value;
+          }}
+          value={field.value || null}
+          disabled={disabled}
+          fullWidth={fullWidth}
+          onChange={(_: any, newValue: any) => {
+            // Transform to value
+            const value = newValue ? (typeof newValue === "object" ? newValue.value : newValue) : null;
+            field.onChange(value);
+            externalOnChange?.(value);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={label}
+              variant={variant}
+              error={!!errorMessage}
+              helperText={errorMessage || helperText}
+              required={required}
+              size={size}
+              InputLabelProps={{
+                shrink: shrink,
+              }}
+            />
+          )}
+          {...(rest as any)}
+        />
+      );
+    }
 
-            case "radio":
-              return (
-                <FormControl component="fieldset" error={!!error} fullWidth margin="dense">
-                  {label && <Typography variant="subtitle2">{label}</Typography>}
-                  <RadioGroup {...fieldProps} row={inline}>
-                    {options.map((option) => (
-                      <FormControlLabel
-                        key={option.value}
-                        value={option.value}
-                        control={<Radio size={size === "small" ? "small" : "medium"} />}
-                        label={option.label}
-                        disabled={disabled}
+    // Radio group
+    if (isRadio(type)) {
+      const options = getOptions();
+      const row = getRow();
+
+      return (
+        <FormControl component="fieldset" error={!!errorMessage} disabled={disabled} required={required} fullWidth={fullWidth}>
+          <FormLabel component="legend">{label}</FormLabel>
+          <RadioGroup
+            {...field}
+            aria-label={String(name)}
+            name={String(name)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              field.onChange(e);
+              externalOnChange?.(e);
+            }}
+          >
+            <Stack direction={row ? "row" : "column"} spacing={1}>
+              {options.map((option: OptionType) => (
+                <FormControlLabel key={String(option.value)} value={option.value} control={<Radio size={size} />} label={option.label} />
+              ))}
+            </Stack>
+          </RadioGroup>
+          {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
+        </FormControl>
+      );
+    }
+
+    // Checkbox
+    if (isCheckbox(type)) {
+      const options = getOptions();
+      const row = getRow();
+
+      if (options.length > 0) {
+        // Multiple checkboxes
+        return (
+          <FormControl component="fieldset" error={!!errorMessage} disabled={disabled} required={required} fullWidth={fullWidth}>
+            <FormLabel component="legend">{label}</FormLabel>
+            <FormGroup row={row}>
+              {options.map((option: OptionType) => {
+                const isChecked: boolean = Array.isArray(field.value) ? field.value.includes(option.value) : false;
+
+                return (
+                  <FormControlLabel
+                    key={String(option.value)}
+                    control={
+                      <Checkbox
+                        checked={isChecked}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          let newValue: Array<string | number | boolean> = [...(field.value || [])];
+                          if (e.target.checked) {
+                            newValue.push(option.value);
+                          } else {
+                            newValue = newValue.filter((val) => val !== option.value);
+                          }
+                          field.onChange(newValue);
+                          externalOnChange?.(newValue);
+                        }}
+                        size={size}
                       />
-                    ))}
-                  </RadioGroup>
-                  {error && <FormHelperText>{error.message}</FormHelperText>}
-                </FormControl>
-              );
-
-            case "autocomplete":
-              return (
-                <Autocomplete
-                  id={ControlID}
-                  freeSolo
-                  options={suggestions}
-                  inputValue={inputValue}
-                  onInputChange={handleAutocompleteInputChange}
-                  onChange={(event, newValue) => {
-                    field.onChange(newValue);
-                    if (onSelectSuggestion && typeof newValue === "string") {
-                      onSelectSuggestion(newValue);
                     }
-                  }}
-                  disabled={disabled}
-                  size={size}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={label}
-                      error={!!error}
-                      helperText={error?.message || ""}
-                      placeholder={placeholder}
-                      fullWidth
-                      variant="outlined"
-                      margin="dense"
-                      InputProps={{
-                        ...params.InputProps,
-                        ...InputProps,
-                      }}
-                    />
-                  )}
-                />
-              );
-
-            case "datepicker":
-              return (
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DatePicker
-                    label={label}
-                    value={field.value || null}
-                    onChange={(newDate) => {
-                      field.onChange(newDate);
-                    }}
-                    disabled={disabled}
-                    maxDate={maxDate}
-                    slotProps={{
-                      textField: {
-                        id: ControlID,
-                        error: !!error,
-                        helperText: error?.message || "",
-                        fullWidth: true,
-                        margin: "dense",
-                        variant: "outlined",
-                        size: size,
-                      },
-                    }}
+                    label={option.label}
                   />
-                </LocalizationProvider>
-              );
+                );
+              })}
+            </FormGroup>
+            {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
+          </FormControl>
+        );
+      }
 
-            case "datetimepicker":
-              return (
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DateTimePicker
-                    label={label}
-                    value={field.value || null}
-                    onChange={(newDateTime) => {
-                      field.onChange(newDateTime);
-                    }}
-                    disabled={disabled}
-                    maxDate={maxDate}
-                    slotProps={{
-                      textField: {
-                        id: ControlID,
-                        error: !!error,
-                        helperText: error?.message || "",
-                        fullWidth: true,
-                        margin: "dense",
-                        variant: "outlined",
-                        size: size,
-                      },
-                    }}
-                  />
-                </LocalizationProvider>
-              );
+      // Single checkbox
+      return (
+        <FormControl error={!!errorMessage} disabled={disabled} required={required} fullWidth={fullWidth}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                {...field}
+                checked={field.value || false}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  field.onChange(e.target.checked);
+                  externalOnChange?.(e.target.checked);
+                }}
+                size={size}
+              />
+            }
+            label={label}
+          />
+          {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
+        </FormControl>
+      );
+    }
 
-            default:
-              return <TextField {...fieldProps} label={label} fullWidth placeholder={placeholder} InputProps={InputProps} variant="outlined" margin="dense" />;
-          }
+    // Date picker
+    if (isDatePicker(type)) {
+      return (
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DatePicker
+            label={label}
+            value={field.value ? dayjs(field.value) : null}
+            onChange={(newValue) => {
+              field.onChange(newValue);
+              externalOnChange?.(newValue);
+            }}
+            disabled={disabled}
+            slotProps={{
+              textField: {
+                variant,
+                fullWidth,
+                required,
+                error: !!errorMessage,
+                helperText: errorMessage || helperText,
+                size,
+                InputLabelProps: {
+                  shrink: true,
+                },
+              },
+            }}
+            {...(rest as any)}
+          />
+        </LocalizationProvider>
+      );
+    }
+
+    // Date-time picker
+    if (isDateTimePicker(type)) {
+      return (
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DateTimePicker
+            label={label}
+            value={field.value ? dayjs(field.value) : null}
+            onChange={(newValue) => {
+              field.onChange(newValue);
+              externalOnChange?.(newValue);
+            }}
+            disabled={disabled}
+            slotProps={{
+              textField: {
+                variant,
+                fullWidth,
+                required,
+                error: !!errorMessage,
+                helperText: errorMessage || helperText,
+                size,
+                InputLabelProps: {
+                  shrink: true,
+                },
+              },
+            }}
+            {...(rest as any)}
+          />
+        </LocalizationProvider>
+      );
+    }
+
+    // File input
+    if (isFileInput(type)) {
+      const accept = getAccept();
+
+      return (
+        <TextField
+          {...commonProps}
+          type="file"
+          InputLabelProps={{
+            shrink: true,
+          }}
+          inputProps={{
+            ...getInputProps(),
+            accept,
+          }}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0] || null;
+            const isValid = validateFile(file);
+            if (isValid) {
+              field.onChange(file);
+              externalOnChange?.(file);
+            } else {
+              e.target.value = "";
+              field.onChange(null);
+              externalOnChange?.(null);
+            }
+          }}
+          onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+            field.onBlur(e);
+            externalOnBlur?.(e);
+          }}
+        />
+      );
+    }
+
+    // Default to text input
+    return (
+      <TextField
+        {...commonProps}
+        {...field}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          field.onChange(e);
+          externalOnChange?.(e);
+        }}
+        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+          field.onBlur(e);
+          externalOnBlur?.(e);
         }}
       />
     );
   };
 
-  // Renders field with traditional props approach
-  const renderStandardField = () => {
-    switch (type) {
-      case "text":
-        return (
-          <TextField
-            fullWidth
-            id={ControlID}
-            name={name}
-            label={label}
-            value={value ?? ""}
-            onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
-            onBlur={onBlur}
-            error={isError}
-            helperText={isError ? "This field is required" : ""}
-            placeholder={placeholder}
-            disabled={disabled}
-            size={size}
-            inputProps={{
-              maxLength: maxLength,
-            }}
-            InputProps={InputProps}
-            variant="outlined"
-            margin="dense"
-          />
-        );
-
-      case "email":
-        return (
-          <TextField
-            fullWidth
-            id={ControlID}
-            name={name}
-            label={label}
-            value={value ?? ""}
-            onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
-            onBlur={onBlur}
-            error={isError || (value && !/\S+@\S+\.\S+/.test(value))}
-            helperText={isError ? "This field is required" : value && !/\S+@\S+\.\S+/.test(value) ? "Invalid email format" : ""}
-            placeholder={placeholder}
-            disabled={disabled}
-            size={size}
-            type="email"
-            inputProps={{
-              maxLength: maxLength,
-            }}
-            InputProps={InputProps}
-            variant="outlined"
-            margin="dense"
-          />
-        );
-
-      case "number":
-        return (
-          <TextField
-            fullWidth
-            id={ControlID}
-            name={name}
-            label={label}
-            value={value ?? ""}
-            onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
-            onBlur={onBlur}
-            error={isError}
-            helperText={isError ? "This field is required" : ""}
-            placeholder={placeholder}
-            disabled={disabled}
-            size={size}
-            type="number"
-            inputProps={{
-              maxLength: maxLength,
-            }}
-            InputProps={InputProps}
-            variant="outlined"
-            margin="dense"
-          />
-        );
-
-      case "textarea":
-        return (
-          <TextField
-            fullWidth
-            id={ControlID}
-            name={name}
-            label={label}
-            value={value ?? ""}
-            onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
-            onBlur={onBlur}
-            error={isError}
-            helperText={isError ? "This field is required" : ""}
-            placeholder={placeholder}
-            disabled={disabled}
-            size={size}
-            multiline
-            rows={4}
-            inputProps={{
-              maxLength: maxLength,
-            }}
-            InputProps={InputProps}
-            variant="outlined"
-            margin="dense"
-          />
-        );
-
-      case "select":
-        return (
-          <FormControl fullWidth error={isError} disabled={disabled} size={size} variant="outlined" margin="dense">
-            <InputLabel id={`${ControlID}-label`}>{label}</InputLabel>
-            <Select
-              labelId={`${ControlID}-label`}
-              id={ControlID}
-              name={name}
-              value={value !== undefined && value !== null ? value : ""}
-              onChange={onChange as (e: SelectChangeEvent<unknown>) => void}
-              label={label}
-              displayEmpty
-              endAdornment={
-                showAddButton && (
-                  <InputAdornment position="end">
-                    <IconButton onClick={onAddClick} size="small" edge="end">
-                      <AddCircleIcon />
-                    </IconButton>
-                  </InputAdornment>
-                )
-              }
-            >
-              <MenuItem value="" disabled>
-                <em>Select</em>
-              </MenuItem>
-              {options.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-            {isError && <FormHelperText>This field is required</FormHelperText>}
-          </FormControl>
-        );
-
-      case "multiselect":
-        return (
-          <FormControl fullWidth error={isError} disabled={disabled} size={size} variant="outlined" margin="dense">
-            <InputLabel id={`${ControlID}-label`}>{label}</InputLabel>
-            <Select
-              labelId={`${ControlID}-label`}
-              id={ControlID}
-              name={name}
-              multiple
-              value={Array.isArray(value) ? value : []}
-              onChange={onChange as (e: SelectChangeEvent<unknown>) => void}
-              label={label}
-              renderValue={(selected) => {
-                if (Array.isArray(selected)) {
-                  return selected
-                    .map((val) => {
-                      const option = options.find((opt) => opt.value === val);
-                      return option ? option.label : val;
-                    })
-                    .join(", ");
-                }
-                return "";
-              }}
-            >
-              {options.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-            {isError && <FormHelperText>This field is required</FormHelperText>}
-          </FormControl>
-        );
-
-      case "radio":
-        return (
-          <FormControl component="fieldset" error={isError} fullWidth margin="dense">
-            {label && <Typography variant="subtitle2">{label}</Typography>}
-            <RadioGroup id={ControlID} name={name} value={value || ""} onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void} row={inline}>
-              {options.map((option) => (
-                <FormControlLabel
-                  key={option.value}
-                  value={option.value}
-                  control={<Radio size={size === "small" ? "small" : "medium"} />}
-                  label={option.label}
-                  disabled={disabled}
-                />
-              ))}
-            </RadioGroup>
-            {isError && <FormHelperText>This field is required</FormHelperText>}
-          </FormControl>
-        );
-
-      case "autocomplete":
-        return (
-          <Autocomplete
-            id={ControlID}
-            freeSolo
-            options={suggestions}
-            inputValue={inputValue}
-            onInputChange={handleAutocompleteInputChange}
-            onChange={(event, newValue) => {
-              if (onSelectSuggestion && typeof newValue === "string") {
-                onSelectSuggestion(newValue);
-              }
-            }}
-            disabled={disabled}
-            size={size}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label={label}
-                name={name}
-                value={value || ""}
-                onChange={(e) => {
-                  setInputValue(e.target.value);
-                  (onChange as (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void)(e);
-                }}
-                onBlur={onBlur}
-                error={isError}
-                helperText={isError ? "This field is required" : ""}
-                placeholder={placeholder}
-                fullWidth
-                variant="outlined"
-                margin="dense"
-                InputProps={{
-                  ...params.InputProps,
-                  ...InputProps,
-                }}
-              />
-            )}
-          />
-        );
-
-      case "datepicker":
-        return (
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              label={label}
-              value={value || null}
-              onChange={(newDate) => {
-                onChange && onChange(newDate);
-              }}
-              disabled={disabled}
-              maxDate={maxDate}
-              slotProps={{
-                textField: {
-                  id: ControlID,
-                  name: name,
-                  fullWidth: true,
-                  error: isError,
-                  helperText: isError ? "This field is required" : "",
-                  size: size,
-                  margin: "dense",
-                  variant: "outlined",
-                },
-              }}
-            />
-          </LocalizationProvider>
-        );
-
-      case "datetimepicker":
-        return (
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DateTimePicker
-              label={label}
-              value={value || null}
-              onChange={(newDateTime) => {
-                onChange && onChange(newDateTime);
-              }}
-              disabled={disabled}
-              maxDate={maxDate}
-              slotProps={{
-                textField: {
-                  id: ControlID,
-                  name: name,
-                  fullWidth: true,
-                  error: isError,
-                  helperText: isError ? "This field is required" : "",
-                  size: size,
-                  margin: "dense",
-                  variant: "outlined",
-                },
-              }}
-            />
-          </LocalizationProvider>
-        );
-
-      default:
-        return (
-          <TextField
-            fullWidth
-            id={ControlID}
-            name={name}
-            label={label}
-            value={value || ""}
-            onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
-            onBlur={onBlur}
-            error={isError}
-            helperText={isError ? "This field is required" : ""}
-            placeholder={placeholder}
-            disabled={disabled}
-            size={size}
-            InputProps={InputProps}
-            variant="outlined"
-            margin="dense"
-          />
-        );
-    }
-  };
-
-  return (
-    <Grid item {...gridProps}>
-      {isHookForm ? renderHookFormField() : renderStandardField()}
-    </Grid>
-  );
+  return <Controller name={name} control={control} defaultValue={defaultValue} render={renderField} />;
 };
 
-export default EnhancedFormField;
+export default FormField;
