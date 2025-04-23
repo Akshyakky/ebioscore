@@ -19,22 +19,18 @@ import {
   Tabs,
   MenuItem,
   Menu,
-  Stack,
 } from "@mui/material";
 import { BarChart, Bar, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { styled } from "@mui/material/styles";
 import {
-  Dashboard as DashboardIcon,
   Person as PersonIcon,
   Group as GroupIcon,
   VisibilityOutlined as VisibilityIcon,
   CalendarToday as CalendarIcon,
   TrendingUp as TrendingUpIcon,
-  Settings as SettingsIcon,
   Bookmark as BookmarkIcon,
   FileDownload as DownloadIcon,
   FilterList as FilterIcon,
-  ArrowDropDown as ArrowDropDownIcon,
   MoreVert as MoreVertIcon,
   BarChart as BarChartIcon,
   DonutLarge as DonutIcon,
@@ -68,7 +64,6 @@ const StyledCard = styled(Card)(({ theme }) => ({
   boxShadow: "0px 4px 12px rgba(0,0,0,0.08)",
   borderRadius: 12,
   transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
-  height: "100%",
   "&:hover": {
     transform: "translateY(-4px)",
     boxShadow: "0px 8px 16px rgba(0,0,0,0.12)",
@@ -228,7 +223,6 @@ const DashboardPage: React.FC = () => {
   const [bookmarkAnchorEl, setBookmarkAnchorEl] = useState<null | HTMLElement>(null);
 
   const userInfo = useAppSelector((state) => state.auth);
-  const token = userInfo.token!;
   const { setLoading } = useLoading();
 
   function setStartOfDay(date: Date) {
@@ -462,12 +456,7 @@ const DashboardPage: React.FC = () => {
     <Container maxWidth={false}>
       {/* Header Section */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          {/* <DashboardIcon sx={{ fontSize: 28, mr: 1, color: theme.palette.primary.main }} />
-          <Typography variant="h5" fontWeight={600}>
-            Dashboard
-          </Typography> */}
-        </Box>
+        <Box sx={{ display: "flex", alignItems: "center" }}></Box>
         <Box sx={{ display: "flex", gap: 1 }}>
           <ButtonGroup variant="outlined" size="small">
             <Tooltip title="Card View">
@@ -875,7 +864,7 @@ const DashboardPage: React.FC = () => {
                   Comparative Analysis
                 </Typography>
                 <Box sx={{ height: 400 }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                  {/* <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={Object.entries(counts).map(([key, data]) => ({
                         name: titleMapping[key.toLowerCase()]?.title || key,
@@ -904,7 +893,7 @@ const DashboardPage: React.FC = () => {
                       <Bar dataKey="personal" name="Personal" fill={theme.palette.primary.main} />
                       <Bar dataKey="overall" name="Overall" fill={theme.palette.secondary.main} />
                     </BarChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer> */}
                 </Box>
               </CardContent>
             </StyledCard>
