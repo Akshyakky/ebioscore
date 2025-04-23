@@ -109,6 +109,8 @@ export default defineConfig({
     fs: {
       strict: false,
     },
+    middlewareMode: false,
+    force: true,
   },
   cacheDir: "node_modules/.vite",
 });
