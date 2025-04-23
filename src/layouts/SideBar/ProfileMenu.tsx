@@ -1,5 +1,23 @@
 import React, { useState } from "react";
-import { Menu, MenuItem, Divider, Box, Typography, Avatar, IconButton, ListItemIcon, Tooltip, alpha, useTheme, Button, styled } from "@mui/material";
+import {
+  Menu,
+  MenuItem,
+  Divider,
+  Box,
+  Typography,
+  Avatar,
+  ListItemIcon,
+  Tooltip,
+  alpha,
+  useTheme,
+  Button,
+  styled,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -8,6 +26,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import SecurityIcon from "@mui/icons-material/Security";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 import { useNavigate } from "react-router-dom";
 import { handleError } from "@/services/CommonServices/HandlerError";
@@ -71,6 +90,7 @@ const MenuItemWithIcon = styled(MenuItem)(({ theme }) => ({
 
 const ProfileMenu: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const user = useAppSelector(selectUser);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -96,7 +116,21 @@ const ProfileMenu: React.FC = () => {
     setAnchorEl(null);
   };
 
-  const handleLogout = async () => {
+  // Modified to show confirmation dialog instead of direct logout
+  const handleLogoutClick = () => {
+    handleClose(); // Close the menu
+    setLogoutDialogOpen(true); // Open the confirmation dialog
+  };
+
+  // Cancel logout
+  const handleCancelLogout = () => {
+    setLogoutDialogOpen(false);
+  };
+
+  // Confirmed logout
+  const handleConfirmLogout = async () => {
+    setLogoutDialogOpen(false);
+
     if (user?.token) {
       try {
         const result = await AuthService.logout(user.token);
@@ -111,8 +145,6 @@ const ProfileMenu: React.FC = () => {
         const errorResult = handleError(error);
         console.error("Logout failed:", errorResult.errorMessage);
         notifyError(errorResult.errorMessage || "");
-      } finally {
-        handleClose();
       }
     }
   };
@@ -139,9 +171,7 @@ const ProfileMenu: React.FC = () => {
           variant="text"
           color="warning"
           onClick={handleClick}
-          // startIcon={<UserAvatar>{getInitials(user?.userName || "")}</UserAvatar>}
           endIcon={<UserAvatar>{getInitials(user?.userName || "")}</UserAvatar>}
-          // endIcon={<AccountCircleIcon />}
           aria-controls={open ? "profile-menu" : undefined}
           aria-haspopup="true"
           aria-expanded={open ? "true" : undefined}
@@ -193,9 +223,6 @@ const ProfileMenu: React.FC = () => {
           <Typography variant="subtitle1" fontWeight={600}>
             {user?.userName || "User"}
           </Typography>
-          {/* <Typography variant="body2" color="text.secondary" align="center">
-            {user?.email || "user@example.com"}
-          </Typography> */}
           <Typography
             variant="caption"
             sx={{
@@ -266,7 +293,7 @@ const ProfileMenu: React.FC = () => {
         <Divider sx={{ my: 1 }} />
 
         <MenuItemWithIcon
-          onClick={handleLogout}
+          onClick={handleLogoutClick}
           sx={{
             color: theme.palette.error.main,
             "&:hover": {
@@ -280,6 +307,47 @@ const ProfileMenu: React.FC = () => {
           <Typography variant="body2">Logout</Typography>
         </MenuItemWithIcon>
       </Menu>
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={handleCancelLogout}
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+        PaperProps={{
+          elevation: 3,
+          sx: {
+            borderRadius: 2,
+            maxWidth: 400,
+          },
+        }}
+      >
+        <DialogTitle
+          id="logout-dialog-title"
+          sx={{
+            pb: 1,
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            color: theme.palette.error.main,
+          }}
+        >
+          <WarningAmberIcon color="error" /> Confirm Logout
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="logout-dialog-description" sx={{ color: theme.palette.text.primary }}>
+            Are you sure you want to log out? Any unsaved changes will be lost.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleCancelLogout} variant="outlined" sx={{ minWidth: 100 }}>
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmLogout} variant="contained" color="error" sx={{ minWidth: 100 }}>
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
