@@ -33,9 +33,13 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
     { value: "3", label: "Mr. Kiran Patil" },
   ];
   const infoItem = (label: string, value: string | number) => (
-    <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 140 }}>
-      <Typography fontWeight="bold">{label}:</Typography>
-      <Typography>{value}</Typography>
+    <Stack direction="column" spacing={1} alignItems="center" sx={{ minWidth: 140 }}>
+      <Typography color="primary" fontWeight="bold">
+        {label}
+      </Typography>
+      <Typography color="primary" fontWeight="bold">
+        ₹ {value}
+      </Typography>
     </Stack>
   );
   return (
@@ -46,7 +50,7 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
           <Stack direction="row" spacing={2} alignItems="center">
             <FormField
               type="number"
-              label={`Total Disc in ${isDiscPercentage ? "%" : "Amt"}`}
+              label={`Total Disc in ${isDiscPercentage ? "Percentage [%]" : "Amount"}`}
               value={totDiscAmtPer}
               onChange={(e) => setTotDiscAmtPer(Number(e.target.value))}
               isSubmitted={false}

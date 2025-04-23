@@ -56,7 +56,7 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
 
   return (
     <Paper sx={{ mt: 2 }}>
-      <TableContainer>
+      <TableContainer sx={{ minHeight: 300 }}>
         <Table size="small">
           <TableHead>
             <TableRow>
