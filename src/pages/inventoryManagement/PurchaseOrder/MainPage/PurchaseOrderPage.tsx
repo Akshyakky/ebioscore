@@ -61,17 +61,29 @@ const PurchaseOrderPage: React.FC = () => {
 
   const handleApplyDiscount = () => {
     const updatedData = gridData.map((row) => {
-      const itemTotalBeforeDisc = row.requiredPack * row.packPrice;
-      let discAmt = isDiscPercentage ? (itemTotalBeforeDisc * totDiscAmtPer) / 100 : totDiscAmtPer;
-      const taxableAmt = itemTotalBeforeDisc - discAmt;
+      const requiredPack = row.requiredPack || 0;
+      const packPrice = row.packPrice || 0;
+      const baseTotal = requiredPack * packPrice;
 
+      let discAmt = 0;
+      let discPercentageAmt = 0;
+
+      if (isDiscPercentage) {
+        discPercentageAmt = totDiscAmtPer;
+        discAmt = baseTotal ? (baseTotal * totDiscAmtPer) / 100 : 0;
+      } else {
+        discAmt = totDiscAmtPer;
+        discPercentageAmt = baseTotal ? (totDiscAmtPer / baseTotal) * 100 : 0;
+      }
+
+      const taxableAmt = baseTotal - discAmt;
       const cgstTaxAmt = (taxableAmt * (row.cgstPerValue || 0)) / 100;
       const sgstTaxAmt = (taxableAmt * (row.sgstPerValue || 0)) / 100;
 
       return {
         ...row,
         discAmt,
-        discPercentageAmt: isDiscPercentage ? totDiscAmtPer : 0,
+        discPercentageAmt,
         taxableAmt,
         cgstTaxAmt,
         sgstTaxAmt,
@@ -82,6 +94,7 @@ const PurchaseOrderPage: React.FC = () => {
     setGridData(updatedData);
     recalculateTotals(updatedData);
   };
+
   const handleApprovedByChange = (id: number, name: string) => {
     setSelectedData((prev) => ({
       ...prev,

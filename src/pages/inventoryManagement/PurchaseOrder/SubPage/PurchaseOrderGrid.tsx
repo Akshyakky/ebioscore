@@ -39,15 +39,32 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
 
   const handleCellChange = (value: number, rowIndex: number, field: keyof GridRowData) => {
     const updatedData = [...gridData];
-    updatedData[rowIndex] = {
-      ...updatedData[rowIndex],
-      [field]: value,
-    };
+    const currentRow = { ...updatedData[rowIndex], [field]: value };
 
-    // Update itemTotal if any related field is updated
-    const { requiredPack = 0, packPrice = 0, discAmt = 0, cgstTaxAmt = 0, sgstTaxAmt = 0 } = updatedData[rowIndex];
-    updatedData[rowIndex].itemTotal = requiredPack * packPrice - discAmt + cgstTaxAmt + sgstTaxAmt;
+    const requiredPack = currentRow.requiredPack || 0;
+    const packPrice = currentRow.packPrice || 0;
+    const baseTotal = requiredPack * packPrice;
 
+    if (field === "discAmt") {
+      // If user entered discount amount, update percentage
+      currentRow.discPercentageAmt = baseTotal ? (value / baseTotal) * 100 : 0;
+    } else if (field === "discPercentageAmt") {
+      // If user entered discount %, update discount amount
+      currentRow.discAmt = baseTotal ? (baseTotal * value) / 100 : 0;
+    }
+
+    // Recalculate tax values
+    const taxableAmt = baseTotal - (currentRow.discAmt || 0);
+    const cgstTaxAmt = (taxableAmt * (currentRow.cgstPerValue || 0)) / 100;
+    const sgstTaxAmt = (taxableAmt * (currentRow.sgstPerValue || 0)) / 100;
+
+    // Update calculated fields
+    currentRow.taxableAmt = taxableAmt;
+    currentRow.cgstTaxAmt = cgstTaxAmt;
+    currentRow.sgstTaxAmt = sgstTaxAmt;
+    currentRow.itemTotal = taxableAmt + cgstTaxAmt + sgstTaxAmt;
+
+    updatedData[rowIndex] = currentRow;
     setGridData(updatedData);
   };
 
