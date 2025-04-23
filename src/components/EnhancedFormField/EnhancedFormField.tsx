@@ -1,4 +1,4 @@
-import React, { useState, ReactNode, JSX } from "react";
+import React, { useState, ReactNode } from "react";
 import { Controller, Control, FieldValues, Path } from "react-hook-form";
 import {
   TextField,
@@ -21,17 +21,13 @@ import {
   FormGroup,
   SelectChangeEvent,
   TextFieldProps,
-  FormControlProps,
-  CheckboxProps,
-  RadioGroupProps,
-  SelectProps,
-  AutocompleteProps,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import dayjs, { Dayjs } from "dayjs";
 
 // Define option type for select, radio, checkbox, etc.
@@ -74,13 +70,12 @@ interface FormFieldCommonProps<TFieldValues extends FieldValues> {
   defaultValue?: any;
   onChange?: (value: any) => void;
   onBlur?: (event: React.FocusEvent<HTMLElement>) => void;
-  shrink?: boolean;
   adornment?: ReactNode;
   adornmentPosition?: "start" | "end";
 }
 
-// Specific props for text-like inputs
-interface TextFieldTypeProps {
+// Type guards for other props based on field type
+type TextFieldTypeProps = {
   type: "text" | "email" | "password" | "number" | "search" | "tel" | "url";
   min?: number;
   max?: number;
@@ -88,70 +83,64 @@ interface TextFieldTypeProps {
   pattern?: string;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
   InputProps?: Partial<TextFieldProps["InputProps"]>;
-}
+};
 
-// Specific props for textarea
-interface TextareaTypeProps {
+// Define other specific props types similarly to your original component
+type TextareaTypeProps = {
   type: "textarea";
   rows?: number;
   inputProps?: React.InputHTMLAttributes<HTMLTextAreaElement>;
   InputProps?: Partial<TextFieldProps["InputProps"]>;
-}
+};
 
-// Specific props for select and multiselect
-interface SelectTypeProps {
+type SelectTypeProps = {
   type: "select";
   options: OptionType[];
   multiple?: boolean;
   inputProps?: React.InputHTMLAttributes<HTMLSelectElement>;
   InputProps?: Partial<TextFieldProps["InputProps"]>;
-}
+};
 
-// Specific props for autocomplete
-interface AutocompleteTypeProps {
+type AutocompleteTypeProps = {
   type: "autocomplete" | "multiselect";
   options: OptionType[];
   multiple?: boolean;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
   InputProps?: Partial<TextFieldProps["InputProps"]>;
-}
+};
 
-// Specific props for radio
-interface RadioTypeProps {
+type RadioTypeProps = {
   type: "radio";
   options: OptionType[];
   row?: boolean;
-}
+};
 
-// Specific props for checkbox
-interface CheckboxTypeProps {
+type CheckboxTypeProps = {
   type: "checkbox";
   options?: OptionType[];
   row?: boolean;
-}
+};
 
-// Specific props for datepicker and datetimepicker
-interface DatePickerTypeProps {
+type DatePickerTypeProps = {
   type: "datepicker" | "datetimepicker";
   minDate?: Dayjs;
   maxDate?: Dayjs;
-}
+};
 
-// Specific props for file input
-interface FileTypeProps {
+type FileTypeProps = {
   type: "file";
   accept?: string;
   maxSize?: number;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
   InputProps?: Partial<TextFieldProps["InputProps"]>;
-}
+};
 
 // Combine all possible props using discriminated union
 export type FormFieldProps<TFieldValues extends FieldValues> = FormFieldCommonProps<TFieldValues> &
   (TextFieldTypeProps | TextareaTypeProps | SelectTypeProps | AutocompleteTypeProps | RadioTypeProps | CheckboxTypeProps | DatePickerTypeProps | FileTypeProps);
 
 /**
- * FormField - A comprehensive form field component that supports various field types
+ * FormField - A comprehensive form field component for Material UI v7
  * Integrates with React Hook Form and Material UI
  */
 const FormField = <TFieldValues extends FieldValues>({
@@ -169,17 +158,15 @@ const FormField = <TFieldValues extends FieldValues>({
   defaultValue,
   onChange: externalOnChange,
   onBlur: externalOnBlur,
-  shrink,
   adornment,
   adornmentPosition = "end",
   ...rest
-}: FormFieldProps<TFieldValues>): JSX.Element => {
+}: FormFieldProps<TFieldValues>) => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [fileError, setFileError] = useState<string>("");
 
   // Type guards for checking field types
   const isTextField = (type: FieldType): type is TextFieldTypeProps["type"] => ["text", "email", "password", "number", "search", "tel", "url"].includes(type);
-
   const isTextArea = (type: FieldType): boolean => type === "textarea";
   const isSelect = (type: FieldType): boolean => type === "select";
   const isMultiSelect = (type: FieldType): boolean => type === "multiselect";
@@ -190,7 +177,7 @@ const FormField = <TFieldValues extends FieldValues>({
   const isDateTimePicker = (type: FieldType): boolean => type === "datetimepicker";
   const isFileInput = (type: FieldType): boolean => type === "file";
 
-  // Safely access properties based on field type
+  // Helper functions to access properties based on field type
   const getOptions = (): OptionType[] => {
     if (isSelect(type) || isMultiSelect(type) || isAutocomplete(type) || isRadio(type) || isCheckbox(type)) {
       return (rest as any).options || [];
@@ -220,61 +207,25 @@ const FormField = <TFieldValues extends FieldValues>({
     return (rest as any).InputProps || {};
   };
 
-  const getMin = (): number | undefined => {
-    if (isTextField(type) && type === "number") {
-      return (rest as any).min;
-    }
-    return undefined;
-  };
+  // Other getter functions similar to your original component
+  const getMin = (): number | undefined => (isTextField(type) && type === "number" ? (rest as any).min : undefined);
 
-  const getMax = (): number | undefined => {
-    if (isTextField(type) && type === "number") {
-      return (rest as any).max;
-    }
-    return undefined;
-  };
+  const getMax = (): number | undefined => (isTextField(type) && type === "number" ? (rest as any).max : undefined);
 
-  const getStep = (): number | undefined => {
-    if (isTextField(type) && type === "number") {
-      return (rest as any).step;
-    }
-    return undefined;
-  };
+  const getStep = (): number | undefined => (isTextField(type) && type === "number" ? (rest as any).step : undefined);
 
-  const getPattern = (): string | undefined => {
-    if (isTextField(type)) {
-      return (rest as any).pattern;
-    }
-    return undefined;
-  };
+  const getAccept = (): string | undefined => (isFileInput(type) ? (rest as any).accept : undefined);
 
-  const getAccept = (): string | undefined => {
-    if (isFileInput(type)) {
-      return (rest as any).accept;
-    }
-    return undefined;
-  };
+  const getMaxSize = (): number | undefined => (isFileInput(type) ? (rest as any).maxSize : undefined);
 
-  const getMaxSize = (): number | undefined => {
-    if (isFileInput(type)) {
-      return (rest as any).maxSize;
-    }
-    return undefined;
-  };
+  const getRow = (): boolean => (isRadio(type) || isCheckbox(type) ? (rest as any).row || false : false);
 
-  const getRow = (): boolean => {
-    if (isRadio(type) || isCheckbox(type)) {
-      return (rest as any).row || false;
-    }
-    return false;
-  };
-
-  // Handle password visibility toggle
+  // Toggle password visibility
   const handleClickShowPassword = (): void => {
     setShowPassword(!showPassword);
   };
 
-  // Validate file
+  // Validate file uploads
   const validateFile = (file: File | null): boolean => {
     if (!file) return true;
 
@@ -288,11 +239,13 @@ const FormField = <TFieldValues extends FieldValues>({
     }
 
     if (accept) {
-      const acceptedTypes: string[] = accept.split(",").map((type: string): string => type.trim());
+      const acceptedTypes = accept.split(",").map((type) => type.trim());
       const fileType = file.type;
       const fileExtension = `.${file.name.split(".").pop()}`;
 
-      if (!acceptedTypes.some((type: string) => type === fileType || type === fileExtension || (type.includes("/*") && fileType.startsWith(type.replace("/*", "/"))))) {
+      const isValidType = acceptedTypes.some((type) => type === fileType || type === fileExtension || (type.includes("/*") && fileType.startsWith(type.replace("/*", "/"))));
+
+      if (!isValidType) {
         setFileError(`File type not supported. Accepted types: ${accept}`);
         return false;
       }
@@ -302,12 +255,12 @@ const FormField = <TFieldValues extends FieldValues>({
     return true;
   };
 
-  // Render the appropriate field based on type
+  // Main render function for Controller
   const renderField = ({ field, fieldState }: { field: any; fieldState: { error?: { message?: string } } }) => {
     const { error } = fieldState;
     const errorMessage = error?.message || fileError;
 
-    // Common props for most field types
+    // Common props for text-based fields
     const commonProps = {
       id: `field-${name}`,
       label,
@@ -328,11 +281,10 @@ const FormField = <TFieldValues extends FieldValues>({
       inputProps: {
         ...getInputProps(),
       },
-      ...rest,
     };
 
-    // Text-like inputs
-    if (isTextField(type)) {
+    // Handle text fields (input, email, number, etc.)
+    if (isTextField(type) && type !== "password") {
       return (
         <TextField
           {...commonProps}
@@ -355,13 +307,13 @@ const FormField = <TFieldValues extends FieldValues>({
             externalOnBlur?.(e);
           }}
           InputLabelProps={{
-            shrink: shrink,
+            shrink: field.value ? true : undefined,
           }}
         />
       );
     }
 
-    // Password field
+    // Password field with visibility toggle
     if (isTextField(type) && type === "password") {
       return (
         <TextField
@@ -373,7 +325,7 @@ const FormField = <TFieldValues extends FieldValues>({
             endAdornment: (
               <InputAdornment position="end">
                 <IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} edge="end">
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                  {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                 </IconButton>
               </InputAdornment>
             ),
@@ -390,7 +342,7 @@ const FormField = <TFieldValues extends FieldValues>({
       );
     }
 
-    // Text area
+    // Textarea
     if (isTextArea(type)) {
       return (
         <TextField
@@ -437,14 +389,13 @@ const FormField = <TFieldValues extends FieldValues>({
                 ? (selected: any) => (
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                       {(selected as Array<string | number>).map((value) => {
-                        const option: OptionType = options.find((opt: OptionType) => opt.value === value) || { value: "", label: "" };
+                        const option = options.find((opt) => opt.value === value) || { value: "", label: "" };
                         return <Chip key={String(value)} label={option.label || value} size="small" />;
                       })}
                     </Box>
                   )
                 : undefined
             }
-            {...(rest as any)}
           >
             {options.map((option) => (
               <MenuItem key={String(option.value)} value={String(option.value)}>
@@ -457,38 +408,42 @@ const FormField = <TFieldValues extends FieldValues>({
       );
     }
 
-    // Multi-select using Autocomplete
-    if (isMultiSelect(type)) {
+    // Autocomplete with multiselect support
+    if (isMultiSelect(type) || isAutocomplete(type)) {
       const options = getOptions();
+      const multiple = isMultiSelect(type) || getMultiple();
 
       return (
         <Autocomplete
           {...field}
-          multiple
+          multiple={multiple}
           id={`field-${name}`}
           options={options}
           getOptionLabel={(option: any) => {
-            // Handle both object options and simple value options
             if (typeof option === "object" && option !== null) {
               return option.label || "";
             }
-            const foundOption: OptionType | undefined = options.find((opt: OptionType) => opt.value === option);
+            const foundOption = options.find((opt) => opt.value === option);
             return foundOption ? foundOption.label : String(option);
           }}
-          isOptionEqualToValue={(option: OptionType, value: any) => {
+          isOptionEqualToValue={(option, value) => {
             if (typeof value === "object" && value !== null) {
-              return option.value === value.value;
+              return (option as OptionType).value === (value as OptionType).value;
             }
-            return option.value === value;
+            return (option as OptionType).value === value;
           }}
-          value={field.value || []}
+          value={field.value || (multiple ? [] : null)}
           disabled={disabled}
-          fullWidth={fullWidth}
-          onChange={(_: any, newValue: any) => {
-            // Transform selected options to array of values
-            const values = newValue.map((item: any) => (typeof item === "object" ? item.value : item));
-            field.onChange(values);
-            externalOnChange?.(values);
+          onChange={(_, newValue) => {
+            if (multiple) {
+              const values = (newValue as Array<any>).map((item: any) => (typeof item === "object" ? item.value : item));
+              field.onChange(values);
+              externalOnChange?.(values);
+            } else {
+              const value = newValue ? (typeof newValue === "object" && "value" in newValue ? (newValue as OptionType).value : newValue) : null;
+              field.onChange(value);
+              externalOnChange?.(value);
+            }
           }}
           renderInput={(params) => (
             <TextField
@@ -500,62 +455,10 @@ const FormField = <TFieldValues extends FieldValues>({
               required={required}
               size={size}
               InputLabelProps={{
-                shrink: shrink,
+                shrink: field.value ? true : undefined,
               }}
             />
           )}
-          {...(rest as any)}
-        />
-      );
-    }
-
-    // Autocomplete field
-    if (isAutocomplete(type)) {
-      const options = getOptions();
-
-      return (
-        <Autocomplete
-          {...field}
-          id={`field-${name}`}
-          options={options}
-          getOptionLabel={(option: any) => {
-            // Handle both object options and simple value options
-            if (typeof option === "object" && option !== null) {
-              return option.label || "";
-            }
-            const foundOption: OptionType | undefined = options.find((opt: OptionType) => opt.value === option);
-            return foundOption ? foundOption.label : option?.toString() || "";
-          }}
-          isOptionEqualToValue={(option: OptionType, value: any) => {
-            if (typeof value === "object" && value !== null) {
-              return option.value === value.value;
-            }
-            return option.value === value;
-          }}
-          value={field.value || null}
-          disabled={disabled}
-          fullWidth={fullWidth}
-          onChange={(_: any, newValue: any) => {
-            // Transform to value
-            const value = newValue ? (typeof newValue === "object" ? newValue.value : newValue) : null;
-            field.onChange(value);
-            externalOnChange?.(value);
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label={label}
-              variant={variant}
-              error={!!errorMessage}
-              helperText={errorMessage || helperText}
-              required={required}
-              size={size}
-              InputLabelProps={{
-                shrink: shrink,
-              }}
-            />
-          )}
-          {...(rest as any)}
         />
       );
     }
@@ -576,19 +479,18 @@ const FormField = <TFieldValues extends FieldValues>({
               field.onChange(e);
               externalOnChange?.(e);
             }}
+            row={row}
           >
-            <Stack direction={row ? "row" : "column"} spacing={1}>
-              {options.map((option: OptionType) => (
-                <FormControlLabel key={String(option.value)} value={option.value} control={<Radio size={size} />} label={option.label} />
-              ))}
-            </Stack>
+            {options.map((option) => (
+              <FormControlLabel key={String(option.value)} value={option.value} control={<Radio size={size} />} label={option.label} />
+            ))}
           </RadioGroup>
           {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
         </FormControl>
       );
     }
 
-    // Checkbox
+    // Checkbox group or single checkbox
     if (isCheckbox(type)) {
       const options = getOptions();
       const row = getRow();
@@ -599,8 +501,8 @@ const FormField = <TFieldValues extends FieldValues>({
           <FormControl component="fieldset" error={!!errorMessage} disabled={disabled} required={required} fullWidth={fullWidth}>
             <FormLabel component="legend">{label}</FormLabel>
             <FormGroup row={row}>
-              {options.map((option: OptionType) => {
-                const isChecked: boolean = Array.isArray(field.value) ? field.value.includes(option.value) : false;
+              {options.map((option) => {
+                const isChecked = Array.isArray(field.value) ? field.value.includes(option.value) : false;
 
                 return (
                   <FormControlLabel
@@ -608,8 +510,8 @@ const FormField = <TFieldValues extends FieldValues>({
                     control={
                       <Checkbox
                         checked={isChecked}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          let newValue: Array<string | number | boolean> = [...(field.value || [])];
+                        onChange={(e) => {
+                          let newValue = [...(field.value || [])];
                           if (e.target.checked) {
                             newValue.push(option.value);
                           } else {
@@ -637,9 +539,8 @@ const FormField = <TFieldValues extends FieldValues>({
           <FormControlLabel
             control={
               <Checkbox
-                {...field}
                 checked={field.value || false}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                onChange={(e) => {
                   field.onChange(e.target.checked);
                   externalOnChange?.(e.target.checked);
                 }}
@@ -653,42 +554,13 @@ const FormField = <TFieldValues extends FieldValues>({
       );
     }
 
-    // Date picker
-    if (isDatePicker(type)) {
-      return (
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            label={label}
-            value={field.value ? dayjs(field.value) : null}
-            onChange={(newValue) => {
-              field.onChange(newValue);
-              externalOnChange?.(newValue);
-            }}
-            disabled={disabled}
-            slotProps={{
-              textField: {
-                variant,
-                fullWidth,
-                required,
-                error: !!errorMessage,
-                helperText: errorMessage || helperText,
-                size,
-                InputLabelProps: {
-                  shrink: true,
-                },
-              },
-            }}
-            {...(rest as any)}
-          />
-        </LocalizationProvider>
-      );
-    }
+    // Date pickers
+    if (isDatePicker(type) || isDateTimePicker(type)) {
+      const PickerComponent = isDatePicker(type) ? DatePicker : DateTimePicker;
 
-    // Date-time picker
-    if (isDateTimePicker(type)) {
       return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DateTimePicker
+          <PickerComponent
             label={label}
             value={field.value ? dayjs(field.value) : null}
             onChange={(newValue) => {
@@ -709,7 +581,6 @@ const FormField = <TFieldValues extends FieldValues>({
                 },
               },
             }}
-            {...(rest as any)}
           />
         </LocalizationProvider>
       );
@@ -750,7 +621,7 @@ const FormField = <TFieldValues extends FieldValues>({
       );
     }
 
-    // Default to text input
+    // Default text field as fallback
     return (
       <TextField
         {...commonProps}

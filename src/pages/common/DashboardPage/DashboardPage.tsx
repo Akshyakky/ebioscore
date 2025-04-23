@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Box,
   Container,
-  Grid,
   Paper,
   Typography,
   Card,
@@ -20,6 +19,7 @@ import {
   Tabs,
   MenuItem,
   Menu,
+  Stack,
 } from "@mui/material";
 import { BarChart, Bar, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { styled } from "@mui/material/styles";
@@ -510,13 +510,14 @@ const DashboardPage: React.FC = () => {
         <Typography variant="h6" fontWeight={500} sx={{ mb: 2 }}>
           Date Range
         </Typography>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={3} md={3} lg={3}>
+        <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, alignItems: { sm: "center" } }}>
+          <Box sx={{ flex: "1 1 auto", maxWidth: { xs: "100%", sm: "25%" } }}>
             <DropdownSelect label="Select date range" name="dateRange" value={selectedOption} options={dateRangeOptions} onChange={handleSelect} size="small" />
-          </Grid>
+          </Box>
+
           {selectedOption === "DT" && (
             <>
-              <Grid item xs={12} sm={3} md={3} lg={3}>
+              <Box sx={{ flex: "1 1 auto", maxWidth: { xs: "100%", sm: "25%" } }}>
                 <FloatingLabelTextBox
                   ControlID="fromDate"
                   title="From"
@@ -527,8 +528,8 @@ const DashboardPage: React.FC = () => {
                   name="fromDate"
                   ariaLabel="From Date"
                 />
-              </Grid>
-              <Grid item xs={12} sm={3} md={3} lg={3}>
+              </Box>
+              <Box sx={{ flex: "1 1 auto", maxWidth: { xs: "100%", sm: "25%" } }}>
                 <FloatingLabelTextBox
                   ControlID="toDate"
                   title="To"
@@ -539,18 +540,18 @@ const DashboardPage: React.FC = () => {
                   name="toDate"
                   ariaLabel="To Date"
                 />
-              </Grid>
+              </Box>
             </>
           )}
-          <Grid item xs={12} sm={3} md={3} lg={3}>
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <CustomButton variant="contained" size="medium" onClick={handleShowButtonClick} icon={VisibilityIcon} text="SHOW" color="primary" />
-              <IconButton>
-                <FilterIcon />
-              </IconButton>
-            </Box>
-          </Grid>
-        </Grid>
+
+          <Box sx={{ display: "flex", gap: 1, alignSelf: { xs: "flex-end", sm: "center" } }}>
+            <CustomButton variant="contained" size="medium" onClick={handleShowButtonClick} icon={VisibilityIcon} text="SHOW" color="primary" />
+            <IconButton>
+              <FilterIcon />
+            </IconButton>
+          </Box>
+        </Box>
+
         {showCounts && (
           <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
             <CalendarIcon fontSize="small" sx={{ mr: 1, color: theme.palette.text.secondary }} />
@@ -563,9 +564,16 @@ const DashboardPage: React.FC = () => {
 
       {/* Summary Section - Only shown when data is loaded */}
       {showCounts && (
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <StyledCard>
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 3,
+            mb: 3,
+          }}
+        >
+          <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 45%", md: "1 1 22%" } }}>
+            <StyledCard sx={{ height: "100%" }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Total Activities (Personal)
@@ -580,9 +588,10 @@ const DashboardPage: React.FC = () => {
                 </Box>
               </CardContent>
             </StyledCard>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StyledCard>
+          </Box>
+
+          <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 45%", md: "1 1 22%" } }}>
+            <StyledCard sx={{ height: "100%" }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Total Activities (Overall)
@@ -597,9 +606,10 @@ const DashboardPage: React.FC = () => {
                 </Box>
               </CardContent>
             </StyledCard>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StyledCard>
+          </Box>
+
+          <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 45%", md: "1 1 22%" } }}>
+            <StyledCard sx={{ height: "100%" }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Highest Activity
@@ -619,9 +629,10 @@ const DashboardPage: React.FC = () => {
                 </Box>
               </CardContent>
             </StyledCard>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StyledCard>
+          </Box>
+
+          <Box sx={{ flex: { xs: "1 1 100%", sm: "1 1 45%", md: "1 1 22%" } }}>
+            <StyledCard sx={{ height: "100%" }}>
               <CardContent>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Distribution
@@ -639,8 +650,8 @@ const DashboardPage: React.FC = () => {
                 </Box>
               </CardContent>
             </StyledCard>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       )}
 
       {/* Category Details Section */}
@@ -761,7 +772,13 @@ const DashboardPage: React.FC = () => {
 
           {/* Cards View */}
           {viewMode === "cards" && (
-            <Grid container spacing={3}>
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 3,
+              }}
+            >
               {Object.entries(counts).map(([key, countData]) => {
                 const mappingKey = key.toLowerCase();
                 const mappingInfo = titleMapping[mappingKey] || {
@@ -771,7 +788,18 @@ const DashboardPage: React.FC = () => {
                 };
 
                 return (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={key}>
+                  <Box
+                    key={key}
+                    sx={{
+                      flex: {
+                        xs: "1 1 100%",
+                        sm: "1 1 45%",
+                        md: "1 1 30%",
+                        lg: "1 1 22%",
+                      },
+                      minWidth: { xs: "100%", sm: "260px", md: "280px" },
+                    }}
+                  >
                     <StyledStatCard onClick={() => handleCategoryClick(key)}>
                       <CardContent>
                         <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -833,10 +861,10 @@ const DashboardPage: React.FC = () => {
                         </Box>
                       </CardContent>
                     </StyledStatCard>
-                  </Grid>
+                  </Box>
                 );
               })}
-            </Grid>
+            </Box>
           )}
 
           {/* Chart View */}

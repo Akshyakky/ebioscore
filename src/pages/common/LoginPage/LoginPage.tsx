@@ -10,31 +10,12 @@ import { setUserDetails } from "@/store/features/auth/authSlice";
 import { notifySuccess } from "@/utils/Common/toastManager";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
-import { Link, Visibility, VisibilityOff } from "@mui/icons-material";
-import LockOpenIcon from "@mui/icons-material/LockOpen";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
-import {
-  Alert,
-  alpha,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Container,
-  Grid,
-  IconButton,
-  InputAdornment,
-  styled,
-  Typography,
-  useMediaQuery,
-  Fade,
-  Grow,
-  Avatar,
-} from "@mui/material";
+import { Alert, alpha, Box, Button, CircularProgress, Container, Stack, IconButton, InputAdornment, styled, Typography, useMediaQuery, Fade, Grow } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import logo from "../../../assets/images/eBios.png";
 import backgroundImage from "/src/assets/images/LoginCoverImage.jpg";
@@ -544,50 +525,42 @@ const LoginPage: React.FC = () => {
     }));
   }, []);
 
-  const containerStyle = {
-    minHeight: "100vh",
-    display: "flex",
-    padding: isSmallScreen ? "10px" : isMediumScreen ? "20px" : "0",
-    background:
-      theme.palette.mode === "light"
-        ? `linear-gradient(135deg, 
-            rgba(255, 255, 255, 0.95) 0%,
-            rgba(240, 248, 255, 0.95) 100%)`
-        : `linear-gradient(135deg,
-            rgba(18, 18, 18, 0.95) 0%,
-            rgba(28, 28, 28, 0.95) 100%)`,
-  };
-
-  const backgroundStyle = {
-    backgroundImage: `url(${backgroundImage})`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    position: "relative" as const,
-    minHeight: isSmallScreen ? "30vh" : "auto",
-    clipPath: isSmallScreen ? "none" : "polygon(0% 0%, 85% 0%, 100% 100%, 0% 100%)",
-    "&::before": {
-      content: '""',
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background:
-        theme.palette.mode === "light" ? "linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%)" : "linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)",
-    },
-  };
-
   return (
-    <StyledContainer maxWidth={false} disableGutters sx={containerStyle}>
-      <Grid
-        container
+    <StyledContainer maxWidth={false} disableGutters>
+      {/* Main Layout using Box instead of Grid */}
+      <Box
         sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
           minHeight: "100vh",
           overflow: "hidden",
           position: "relative",
         }}
       >
-        <Grid item xs={12} md={8} sx={backgroundStyle}>
+        {/* Left side with background image */}
+        <Box
+          sx={{
+            flex: { xs: "1", md: "0 0 66.666%" },
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            position: "relative",
+            minHeight: isSmallScreen ? "30vh" : "auto",
+            clipPath: isSmallScreen ? "none" : "polygon(0% 0%, 85% 0%, 100% 100%, 0% 100%)",
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background:
+                theme.palette.mode === "light"
+                  ? "linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%)"
+                  : "linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)",
+            },
+          }}
+        >
           {!isSmallScreen && (
             <Fade in={animationComplete} timeout={1000}>
               <AnimatedBox
@@ -637,13 +610,12 @@ const LoginPage: React.FC = () => {
               </AnimatedBox>
             </Fade>
           )}
-        </Grid>
+        </Box>
 
-        <Grid
-          item
-          xs={12}
-          md={4}
+        {/* Right side with login form */}
+        <Box
           sx={{
+            flex: { xs: "1", md: "0 0 33.333%" },
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -652,11 +624,11 @@ const LoginPage: React.FC = () => {
             overflow: "hidden",
           }}
         >
-          {/* Visual elements to make the form area more interesting */}
+          {/* Visual elements */}
           <GlowingOrb sx={{ top: "-20px", right: "40px" }} />
           <GlowingOrb color="primary" sx={{ bottom: "10%", left: "10%" }} />
 
-          {/* Hexagon elements to match left side design */}
+          {/* Hexagon elements */}
           <Fade in={true} timeout={1000}>
             <HexagonShape sx={{ top: "19%", right: "15%" }}>
               <HealthAndSafetyIcon sx={{ fontSize: 30 }} />
@@ -693,7 +665,9 @@ const LoginPage: React.FC = () => {
                       justifyContent: "center",
                       mb: 2,
                     }}
-                  ></LogoAnimation>
+                  >
+                    <img src={logo} alt="e-Bios Logo" style={{ maxWidth: "100px" }} />
+                  </LogoAnimation>
 
                   <BrandName variant={isSmallScreen ? "h5" : "h4"} sx={{ mb: 1 }}>
                     e-Bios
@@ -735,67 +709,70 @@ const LoginPage: React.FC = () => {
                     },
                   }}
                 >
-                  <AnimatedInput>
-                    <DropdownSelect
-                      ref={companySelectRef}
-                      label="Select Company"
-                      name="companyID"
-                      value={formState.companyID && formState.companyCode ? `${formState.companyID},${formState.companyCode}` : ""}
-                      options={formState.companies.map((c) => ({
-                        value: c.compIDCompCode,
-                        label: c.compName,
-                      }))}
-                      onChange={(event) => {
-                        const compIDCompCode = event.target.value as string;
-                        const selectedCompany = formState.companies.find((c) => c.compIDCompCode === compIDCompCode);
-                        handleSelectCompany(compIDCompCode, selectedCompany?.compName || "");
-                      }}
-                      size="small"
-                      loading={fieldLoading.company}
-                      aria-label="Company selection"
-                      aria-required="true"
-                    />
-                  </AnimatedInput>
+                  {/* Using Stack for input fields */}
+                  <Stack>
+                    <AnimatedInput>
+                      <DropdownSelect
+                        ref={companySelectRef}
+                        label="Select Company"
+                        name="companyID"
+                        value={formState.companyID && formState.companyCode ? `${formState.companyID},${formState.companyCode}` : ""}
+                        options={formState.companies.map((c) => ({
+                          value: c.compIDCompCode,
+                          label: c.compName,
+                        }))}
+                        onChange={(event) => {
+                          const compIDCompCode = event.target.value as string;
+                          const selectedCompany = formState.companies.find((c) => c.compIDCompCode === compIDCompCode);
+                          handleSelectCompany(compIDCompCode, selectedCompany?.compName || "");
+                        }}
+                        size="small"
+                        loading={fieldLoading.company}
+                        aria-label="Company selection"
+                        aria-required="true"
+                      />
+                    </AnimatedInput>
 
-                  <AnimatedInput>
-                    <FloatingLabelTextBox
-                      ref={usernameInputRef}
-                      ControlID="username"
-                      title="Username"
-                      value={formState.userName}
-                      onChange={(e) => setFormState((prev) => ({ ...prev, userName: e.target.value }))}
-                      size="small"
-                      isMandatory
-                      loading={fieldLoading.username}
-                      aria-label="Username input"
-                      aria-required="true"
-                    />
-                  </AnimatedInput>
+                    <AnimatedInput>
+                      <FloatingLabelTextBox
+                        ref={usernameInputRef}
+                        ControlID="username"
+                        title="Username"
+                        value={formState.userName}
+                        onChange={(e) => setFormState((prev) => ({ ...prev, userName: e.target.value }))}
+                        size="small"
+                        isMandatory
+                        loading={fieldLoading.username}
+                        aria-label="Username input"
+                        aria-required="true"
+                      />
+                    </AnimatedInput>
 
-                  <AnimatedInput>
-                    <FloatingLabelTextBox
-                      ref={passwordInputRef}
-                      ControlID="password"
-                      title="Password"
-                      type={showPassword ? "text" : "password"}
-                      value={formState.password}
-                      onChange={(e) => setFormState((prev) => ({ ...prev, password: e.target.value }))}
-                      size="small"
-                      isMandatory
-                      loading={fieldLoading.password}
-                      aria-label="Password input"
-                      aria-required="true"
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton aria-label="toggle password visibility" onClick={() => setShowPassword((prev) => !prev)} edge="end" size="small">
-                              {showPassword ? <VisibilityOff /> : <Visibility />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </AnimatedInput>
+                    <AnimatedInput>
+                      <FloatingLabelTextBox
+                        ref={passwordInputRef}
+                        ControlID="password"
+                        title="Password"
+                        type={showPassword ? "text" : "password"}
+                        value={formState.password}
+                        onChange={(e) => setFormState((prev) => ({ ...prev, password: e.target.value }))}
+                        size="small"
+                        isMandatory
+                        loading={fieldLoading.password}
+                        aria-label="Password input"
+                        aria-required="true"
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton aria-label="toggle password visibility" onClick={() => setShowPassword((prev) => !prev)} edge="end" size="small">
+                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    </AnimatedInput>
+                  </Stack>
 
                   <Box sx={{ textAlign: "right", mb: 2 }}>
                     <StyledRouterLink to="/ForgotPasswordPage">Forgot password?</StyledRouterLink>
@@ -823,8 +800,8 @@ const LoginPage: React.FC = () => {
               </Box>
             </FormWrapper>
           </Grow>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </StyledContainer>
   );
 };

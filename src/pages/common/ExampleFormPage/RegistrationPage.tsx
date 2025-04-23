@@ -14,14 +14,14 @@ import { PatientService } from "@/services/PatientAdministrationServices/Registr
 import { showAlert } from "@/utils/Common/showAlert";
 import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
-import PatientSearch from "../../CommonPage/AdvanceSearch/PatientSearch";
+import PatientSearch from "../../patientAdministration/CommonPage/AdvanceSearch/PatientSearch";
 import CustomAccordion from "@/components/Accordion/CustomAccordion";
-import PersonalDetails from "../SubPage/PersonalDetails";
-import ContactDetails from "../SubPage/ContactDetails";
-import VisitDetails from "../SubPage/VisitDetails";
-import MembershipScheme from "../SubPage/MembershipScheme";
-import NextOfKinPage from "../SubPage/NextOfKinPage";
-import InsurancePage from "../SubPage/InsurancePage";
+import PersonalDetails from "../../patientAdministration/RegistrationPage/SubPage/PersonalDetails";
+import ContactDetails from "../../patientAdministration/RegistrationPage/SubPage/ContactDetails";
+import VisitDetails from "../../patientAdministration/RegistrationPage/SubPage/VisitDetails";
+import MembershipScheme from "../../patientAdministration/RegistrationPage/SubPage/MembershipScheme";
+import NextOfKinPage from "../../patientAdministration/RegistrationPage/SubPage/NextOfKinPage";
+import InsurancePage from "../../patientAdministration/RegistrationPage/SubPage/InsurancePage";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 const RegistrationPage: React.FC = () => {

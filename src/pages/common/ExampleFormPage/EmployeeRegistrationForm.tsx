@@ -1,7 +1,7 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Typography, Box, Paper, Grid } from "@mui/material";
+import { Button, Typography, Box, Paper, Grid, Stack } from "@mui/material";
 
 // Import components
 import FormSectionContainer from "./FormSection";
@@ -11,13 +11,11 @@ import { EmployeeFormData, employeeSchema } from "./type";
 import EmploymentInfoSection from "./EmploymentInfoSection";
 import PreferencesSection from "./PreferencesSection";
 
-// Import types and schema
-
 const EmployeeRegistrationForm: React.FC = () => {
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
   } = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
@@ -57,11 +55,6 @@ const EmployeeRegistrationForm: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("Form submitted successfully:", data);
 
-      // Here you would typically:
-      // 1. Send data to your API
-      // 2. Show success message
-      // 3. Redirect or reset form
-
       alert("Employee registration successful!");
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -70,13 +63,13 @@ const EmployeeRegistrationForm: React.FC = () => {
   };
 
   return (
-    <Paper elevation={3} sx={{ maxWidth: 1200, mx: "auto", p: 2 }}>
-      <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ mb: 3 }}>
+    <Paper elevation={3} sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
+      <Typography variant="h4" component="h1" align="center" sx={{ mb: 4 }}>
         Employee Registration Form
       </Typography>
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-        <Grid container spacing={3}>
+        <Stack spacing={4}>
           {/* Personal Information Section */}
           <FormSectionContainer title="Personal Information">
             <PersonalInfoSection control={control} />
@@ -98,12 +91,12 @@ const EmployeeRegistrationForm: React.FC = () => {
           </FormSectionContainer>
 
           {/* Submit Button */}
-          <Grid item xs={12} sx={{ mt: 3, textAlign: "center" }}>
+          <Box sx={{ textAlign: "center", mt: 2 }}>
             <Button type="submit" variant="contained" color="primary" size="large" disabled={isSubmitting} sx={{ minWidth: 200 }}>
               {isSubmitting ? "Submitting..." : "Register Employee"}
             </Button>
-          </Grid>
-        </Grid>
+          </Box>
+        </Stack>
       </Box>
     </Paper>
   );

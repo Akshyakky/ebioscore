@@ -1,6 +1,6 @@
 import LoginPage from "../pages/common/LoginPage/LoginPage";
 import DashboardPage from "../pages/common/DashboardPage/DashboardPage";
-import RegistrationPage from "../pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
+import RegistrationPage from "../pages/common/ExampleFormPage/RegistrationPage";
 import RevisitPage from "../pages/patientAdministration/RevisitPage/MainPage/RevisitPage";
 import RoutineReportsPA from "../pages/patientAdministration/RoutineReportsPage/MainPage/RoutineReportsPAPage";
 import ListOfReportsPage from "../pages/routineReports/MainPage/ListOfReportsPage";
@@ -47,7 +47,7 @@ import IndentProductPage from "@/pages/inventoryManagement/IndentProduct/MainPag
 import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
 import { Navigate } from "react-router-dom";
 import AlertPage from "@/pages/common/AlertManagerPage/MainPage/Alertpage";
-import EmployeeRegistrationForm from "@/pages/patientAdministration/RegistrationPage/MainPage/EmployeeRegistrationForm";
+import EmployeeRegistrationForm from "@/pages/common/ExampleFormPage/EmployeeRegistrationForm";
 
 interface RouteConfig {
   path: string;
