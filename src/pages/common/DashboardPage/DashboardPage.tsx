@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Container,
@@ -14,7 +14,6 @@ import {
   Button,
   Chip,
   Tooltip,
-  SelectChangeEvent,
   Tab,
   Tabs,
   MenuItem,
@@ -36,13 +35,17 @@ import {
   DonutLarge as DonutIcon,
   TableChart as TableIcon,
 } from "@mui/icons-material";
-import { endOfMonth, endOfWeek, endOfYear, startOfMonth, startOfWeek, startOfYear } from "date-fns";
+import { endOfMonth, endOfWeek, endOfYear, startOfMonth, startOfWeek, startOfYear, format, parse } from "date-fns";
 import CustomButton from "@/components/Button/CustomButton";
-import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import { useLoading } from "@/context/LoadingContext";
 import { DashBoardService } from "@/services/DashboardServices/DashBoardService";
 import { useAppSelector } from "@/store/hooks";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import { useForm } from "react-hook-form";
+import dayjs from "dayjs";
+
+// Define the date format constant to ensure consistency
+const DATE_FORMAT = "DD/MM/YYYY";
 
 // Define the interface for the count data
 interface CountData {
@@ -205,15 +208,74 @@ const generateTrendData = (category: string, days: number) => {
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
 
+// Form type for date range
+type DateRangeFormValues = {
+  fromDate: string;
+  toDate: string;
+  dateRangeOption: string;
+};
+
 const DashboardPage: React.FC = () => {
   const theme = useTheme();
   const today = new Date();
+
+  // Set default date range to current month in DD/MM/YYYY format
+  const defaultFromDate = dayjs(startOfMonth(today)).format(DATE_FORMAT);
+  const defaultToDate = dayjs(endOfMonth(today)).format(DATE_FORMAT);
+
   const [dateRange, setDateRange] = useState({
-    fromDate: setStartOfDay(today),
-    toDate: setStartOfDay(today),
+    fromDate: formatDateForAPI(defaultFromDate),
+    toDate: formatDateForAPI(defaultToDate),
   });
-  const [selectedOption, setSelectedOption] = useState("TD");
+
+  // React Hook Form setup
+  const { control, setValue, watch } = useForm<DateRangeFormValues>({
+    defaultValues: {
+      fromDate: defaultFromDate,
+      toDate: defaultToDate,
+      dateRangeOption: "TM", // Default to This Month
+    },
+  });
+
+  // Function to format date from DD/MM/YYYY to YYYY-MM-DD for API
+  function formatDateForAPI(dateString: string): string {
+    if (!dateString) return "";
+
+    // Parse the DD/MM/YYYY format into a Date object
+    const parts = dateString.split("/");
+    if (parts.length !== 3) return "";
+
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed in JavaScript Date
+    const year = parseInt(parts[2], 10);
+
+    const date = new Date(year, month, day);
+    return date.toISOString().split("T")[0]; // Returns YYYY-MM-DD
+  }
+
+  // Watch form values to update dateRange state
+  const fromDateWatch = watch("fromDate");
+  const toDateWatch = watch("toDate");
+  const dateRangeOptionWatch = watch("dateRangeOption");
+
+  useEffect(() => {
+    setDateRange({
+      fromDate: formatDateForAPI(fromDateWatch),
+      toDate: formatDateForAPI(toDateWatch),
+    });
+  }, [fromDateWatch, toDateWatch]);
+
+  // Update selectedOption when dropdown value changes
+  useEffect(() => {
+    if (dateRangeOptionWatch) {
+      setSelectedOption(dateRangeOptionWatch);
+      handleDateRangeChange(dateRangeOptionWatch);
+    }
+  }, [dateRangeOptionWatch]);
+
+  const [selectedOption, setSelectedOption] = useState("TM"); // Default to This Month
   const [counts, setCounts] = useState<Record<string, CountData>>({});
+  const [filteredCounts, setFilteredCounts] = useState<Record<string, CountData>>({});
   const [showCounts, setShowCounts] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "chart" | "table">("cards");
@@ -221,6 +283,8 @@ const DashboardPage: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [bookmarkAnchorEl, setBookmarkAnchorEl] = useState<null | HTMLElement>(null);
+  const [showPersonalOnly, setShowPersonalOnly] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const userInfo = useAppSelector((state) => state.auth);
   const { setLoading } = useLoading();
@@ -236,13 +300,22 @@ const DashboardPage: React.FC = () => {
   }
 
   useEffect(() => {
-    if (new Date(dateRange.fromDate) > new Date(dateRange.toDate)) {
-      setDateRange((prev) => ({
-        ...prev,
-        fromDate: prev.toDate, // Reset fromDate to toDate if it's after toDate
-      }));
+    // Validate date range - ensure fromDate is not after toDate
+    if (fromDateWatch && toDateWatch) {
+      const fromParts = fromDateWatch.split("/");
+      const toParts = toDateWatch.split("/");
+
+      if (fromParts.length === 3 && toParts.length === 3) {
+        const fromDate = new Date(parseInt(fromParts[2], 10), parseInt(fromParts[1], 10) - 1, parseInt(fromParts[0], 10));
+
+        const toDate = new Date(parseInt(toParts[2], 10), parseInt(toParts[1], 10) - 1, parseInt(toParts[0], 10));
+
+        if (fromDate > toDate) {
+          setValue("toDate", fromDateWatch);
+        }
+      }
     }
-  }, [dateRange.fromDate, dateRange.toDate]);
+  }, [fromDateWatch, toDateWatch, setValue]);
 
   useEffect(() => {
     if (selectedCategory) {
@@ -251,56 +324,76 @@ const DashboardPage: React.FC = () => {
     }
   }, [selectedCategory]);
 
-  const handleSelect = (event: SelectChangeEvent<unknown>) => {
-    const selectedValue = event.target.value as string;
-    setSelectedOption(selectedValue);
+  // Effect to apply filters
+  useEffect(() => {
+    if (Object.keys(counts).length > 0) {
+      let filtered = { ...counts };
+
+      // Apply category filter if any categories are selected
+      if (selectedCategories.length > 0) {
+        filtered = Object.entries(filtered)
+          .filter(([key]) => selectedCategories.includes(key.toLowerCase()))
+          .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+      }
+
+      setFilteredCounts(filtered);
+    }
+  }, [counts, selectedCategories, showPersonalOnly]);
+
+  const handleDateRangeChange = (selectedValue: string) => {
     const today = new Date();
     let from, to;
 
-    switch (event.target.value) {
+    switch (selectedValue) {
       case "TD": // Today
-        from = setStartOfDay(new Date(today));
-        to = setEndOfDay(new Date(today));
+        from = dayjs(today).format(DATE_FORMAT);
+        to = dayjs(today).format(DATE_FORMAT);
         break;
       case "YD": // Yesterday
-        from = setStartOfDay(new Date(today.setDate(today.getDate() - 1)));
-        to = setEndOfDay(new Date(today.setDate(today.getDate())));
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        from = dayjs(yesterday).format(DATE_FORMAT);
+        to = dayjs(yesterday).format(DATE_FORMAT);
         break;
       case "TW": // This Week
-        from = setStartOfDay(startOfWeek(today));
-        to = setEndOfDay(endOfWeek(today));
+        from = dayjs(startOfWeek(today)).format(DATE_FORMAT);
+        to = dayjs(endOfWeek(today)).format(DATE_FORMAT);
         break;
       case "LW": // Last Week
-        from = setStartOfDay(startOfWeek(new Date(today.setDate(today.getDate() - 7))));
-        to = setEndOfDay(endOfWeek(new Date(today.setDate(today.getDate()))));
+        const lastWeekStart = new Date(today);
+        lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+        from = dayjs(startOfWeek(lastWeekStart)).format(DATE_FORMAT);
+        to = dayjs(endOfWeek(lastWeekStart)).format(DATE_FORMAT);
         break;
       case "TM": // This Month
-        from = setStartOfDay(startOfMonth(today));
-        to = setEndOfDay(endOfMonth(today));
+        from = dayjs(startOfMonth(today)).format(DATE_FORMAT);
+        to = dayjs(endOfMonth(today)).format(DATE_FORMAT);
         break;
       case "LM": // Last Month
-        from = setStartOfDay(startOfMonth(new Date(today.setMonth(today.getMonth() - 1))));
-        to = setEndOfDay(endOfMonth(new Date(today.setMonth(today.getMonth()))));
+        const lastMonth = new Date(today);
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+        from = dayjs(startOfMonth(lastMonth)).format(DATE_FORMAT);
+        to = dayjs(endOfMonth(lastMonth)).format(DATE_FORMAT);
         break;
       case "TY": // This Year
-        from = setStartOfDay(startOfYear(today));
-        to = setEndOfDay(endOfYear(today));
+        from = dayjs(startOfYear(today)).format(DATE_FORMAT);
+        to = dayjs(endOfYear(today)).format(DATE_FORMAT);
         break;
       case "LY": // Last Year
-        from = setStartOfDay(startOfYear(new Date(today.setFullYear(today.getFullYear() - 1))));
-        to = setEndOfDay(endOfYear(new Date(today.setFullYear(today.getFullYear()))));
+        const lastYear = new Date(today);
+        lastYear.setFullYear(lastYear.getFullYear() - 1);
+        from = dayjs(startOfYear(lastYear)).format(DATE_FORMAT);
+        to = dayjs(endOfYear(lastYear)).format(DATE_FORMAT);
         break;
       case "DT": // Date Range
         return; // The user will pick the dates
       default:
-        from = setStartOfDay(new Date(today));
-        to = setEndOfDay(new Date(today));
+        from = dayjs(startOfMonth(today)).format(DATE_FORMAT);
+        to = dayjs(endOfMonth(today)).format(DATE_FORMAT);
     }
 
-    setDateRange({
-      fromDate: from,
-      toDate: to,
-    });
+    setValue("fromDate", from);
+    setValue("toDate", to);
   };
 
   const fetchData = async () => {
@@ -320,6 +413,8 @@ const DashboardPage: React.FC = () => {
         "TransferPayDetail",
         "AdvanceCollection",
       ];
+      const newCounts: Record<string, CountData> = {};
+
       for (const category of categories) {
         const myCountResult = await DashBoardService.fetchCount(`Get${category}Userwise`, dateRange);
         const overallCountResult = await DashBoardService.fetchCount(`Get${category}`, dateRange);
@@ -327,40 +422,20 @@ const DashboardPage: React.FC = () => {
         const isMyCountAvailable = !myCountResult.unauthorized && !myCountResult.error;
         const isOverallCountAvailable = !overallCountResult.unauthorized && !overallCountResult.error;
 
-        setCounts((prevCounts) => ({
-          ...prevCounts,
-          [category.toLowerCase()]: {
-            myCount: isMyCountAvailable ? myCountResult.count : 0,
-            overallCount: isOverallCountAvailable ? overallCountResult.count : 0,
-          },
-        }));
+        newCounts[category.toLowerCase()] = {
+          myCount: isMyCountAvailable ? myCountResult.count : 0,
+          overallCount: isOverallCountAvailable ? overallCountResult.count : 0,
+        };
       }
+
+      setCounts(newCounts);
+      setFilteredCounts(newCounts);
     } catch (error) {
       console.error("Error in fetchData", error);
     } finally {
       setLoading(false);
       setShowCounts(true);
     }
-  };
-
-  const handleDateRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    setDateRange((prevDateRange) => {
-      const newDateRange = { ...prevDateRange, [name]: value };
-
-      // Validation to ensure "To Date" cannot be earlier than "From Date"
-      if (new Date(newDateRange.fromDate) > new Date(newDateRange.toDate)) {
-        // If the "From Date" is greater than the "To Date", adjust the "To Date"
-        if (name === "fromDate") {
-          newDateRange.toDate = value;
-        } else if (name === "toDate") {
-          newDateRange.fromDate = value;
-        }
-      }
-
-      return newDateRange;
-    });
   };
 
   const handleShowButtonClick = async () => {
@@ -396,6 +471,22 @@ const DashboardPage: React.FC = () => {
     setViewMode(mode);
   };
 
+  // New function to toggle personal only filter
+  const handleTogglePersonalOnly = () => {
+    setShowPersonalOnly(!showPersonalOnly);
+  };
+
+  // New function to handle all categories selection
+  const handleAllCategoriesClick = () => {
+    // If all categories are already selected, clear the selection
+    if (selectedCategories.length === 0) {
+      setSelectedCategories(Object.keys(counts).map((key) => key.toLowerCase()));
+    } else {
+      setSelectedCategories([]);
+    }
+  };
+
+  // Options for the date range dropdown formatted for EnhancedFormField
   const dateRangeOptions = [
     { value: "TD", label: "Today" },
     { value: "YD", label: "Yesterday" },
@@ -408,21 +499,22 @@ const DashboardPage: React.FC = () => {
     { value: "DT", label: "Date Range" },
   ];
 
-  // Calculate summary statistics
+  // Calculate summary statistics based on filtered counts
   const getTotalPersonalCounts = () => {
-    return Object.values(counts).reduce((sum, item) => sum + item.myCount, 0);
+    return Object.values(filteredCounts).reduce((sum, item) => sum + item.myCount, 0);
   };
 
   const getTotalOverallCounts = () => {
-    return Object.values(counts).reduce((sum, item) => sum + item.overallCount, 0);
+    return Object.values(filteredCounts).reduce((sum, item) => sum + item.overallCount, 0);
   };
 
   const getHighestCategory = () => {
-    if (Object.keys(counts).length === 0) return null;
+    if (Object.keys(filteredCounts).length === 0) return null;
 
-    return Object.entries(counts).reduce(
+    return Object.entries(filteredCounts).reduce(
       (highest, [key, value]) => {
-        return value.overallCount > highest.count ? { key, count: value.overallCount } : highest;
+        const countValue = showPersonalOnly ? value.myCount : value.overallCount;
+        return countValue > highest.count ? { key, count: countValue } : highest;
       },
       { key: "", count: 0 }
     );
@@ -430,27 +522,41 @@ const DashboardPage: React.FC = () => {
 
   // Create data for summary charts
   const getPieChartData = () => {
-    return Object.entries(counts).map(([key, value]) => ({
+    return Object.entries(filteredCounts).map(([key, value]) => ({
       name: titleMapping[key.toLowerCase()]?.title || key,
-      value: value.overallCount,
+      value: showPersonalOnly ? value.myCount : value.overallCount,
     }));
   };
 
   // Format date range for display
   const getFormattedDateRange = () => {
-    const fromDate = new Date(dateRange.fromDate);
-    const toDate = new Date(dateRange.toDate);
-
-    if (fromDate.toDateString() === toDate.toDateString()) {
-      return fromDate.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+    // The dates are already in DD/MM/YYYY format in the form state
+    if (fromDateWatch === toDateWatch) {
+      return fromDateWatch;
     }
-
-    return `${fromDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${toDate.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })}`;
+    return `${fromDateWatch} - ${toDateWatch}`;
   };
+
+  // Get counts to display based on filters
+  const getDisplayCounts = useMemo(() => {
+    if (showPersonalOnly) {
+      // When "Show personal only" is active, modify the displayed counts
+      return Object.entries(filteredCounts).reduce((acc, [key, value]) => {
+        acc[key] = {
+          myCount: value.myCount,
+          overallCount: value.myCount, // Show personal count as overall count
+        };
+        return acc;
+      }, {} as Record<string, CountData>);
+    }
+    return filteredCounts;
+  }, [filteredCounts, showPersonalOnly]);
+
+  // Run fetchData when component mounts with default month range
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Container maxWidth={false}>
@@ -501,34 +607,25 @@ const DashboardPage: React.FC = () => {
         </Typography>
         <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2, alignItems: { sm: "center" } }}>
           <Box sx={{ flex: "1 1 auto", maxWidth: { xs: "100%", sm: "25%" } }}>
-            <DropdownSelect label="Select date range" name="dateRange" value={selectedOption} options={dateRangeOptions} onChange={handleSelect} size="small" />
+            <FormField
+              name="dateRangeOption"
+              control={control}
+              type="select"
+              label="Select date range"
+              variant="outlined"
+              size="small"
+              options={dateRangeOptions}
+              defaultValue={selectedOption}
+            />
           </Box>
 
           {selectedOption === "DT" && (
             <>
               <Box sx={{ flex: "1 1 auto", maxWidth: { xs: "100%", sm: "25%" } }}>
-                <FloatingLabelTextBox
-                  ControlID="fromDate"
-                  title="From"
-                  type="date"
-                  size="small"
-                  value={dateRange.fromDate}
-                  onChange={handleDateRangeChange}
-                  name="fromDate"
-                  ariaLabel="From Date"
-                />
+                <FormField name="fromDate" control={control} type="datepicker" label="From Date" variant="outlined" size="small" required />
               </Box>
               <Box sx={{ flex: "1 1 auto", maxWidth: { xs: "100%", sm: "25%" } }}>
-                <FloatingLabelTextBox
-                  ControlID="toDate"
-                  title="To"
-                  type="date"
-                  size="small"
-                  value={dateRange.toDate}
-                  onChange={handleDateRangeChange}
-                  name="toDate"
-                  ariaLabel="To Date"
-                />
+                <FormField name="toDate" control={control} type="datepicker" label="To Date" variant="outlined" size="small" required />
               </Box>
             </>
           )}
@@ -654,6 +751,7 @@ const DashboardPage: React.FC = () => {
                   width: 36,
                   height: 36,
                   mr: 2,
+                  mb: 0,
                 }}
               >
                 {React.createElement(titleMapping[selectedCategory.toLowerCase()]?.icon || PersonIcon, {
@@ -754,8 +852,14 @@ const DashboardPage: React.FC = () => {
               )}
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <FilterChip label="All Categories" variant="outlined" color="primary" onDelete={() => {}} />
-              <FilterChip label="Show personal only" variant="outlined" color="default" />
+              <FilterChip
+                label="All Categories"
+                variant="outlined"
+                color={selectedCategories.length > 0 ? "primary" : "default"}
+                onClick={handleAllCategoriesClick}
+                onDelete={selectedCategories.length > 0 ? handleAllCategoriesClick : undefined}
+              />
+              <FilterChip label="Show personal only" variant="outlined" color={showPersonalOnly ? "primary" : "default"} onClick={handleTogglePersonalOnly} />
             </Box>
           </Box>
 
@@ -768,7 +872,7 @@ const DashboardPage: React.FC = () => {
                 gap: 3,
               }}
             >
-              {Object.entries(counts).map(([key, countData]) => {
+              {Object.entries(getDisplayCounts).map(([key, countData]) => {
                 const mappingKey = key.toLowerCase();
                 const mappingInfo = titleMapping[mappingKey] || {
                   title: key,
@@ -825,15 +929,17 @@ const DashboardPage: React.FC = () => {
                               {countData.myCount}
                             </CountBadge>
 
-                            <CountBadge
-                              sx={{
-                                bgcolor: alpha(theme.palette.secondary.main, 0.1),
-                                color: theme.palette.secondary.main,
-                              }}
-                            >
-                              <GroupIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                              {countData.overallCount}
-                            </CountBadge>
+                            {!showPersonalOnly && (
+                              <CountBadge
+                                sx={{
+                                  bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                                  color: theme.palette.secondary.main,
+                                }}
+                              >
+                                <GroupIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                                {countData.overallCount}
+                              </CountBadge>
+                            )}
                           </Box>
 
                           <Tooltip title="View details">
@@ -864,12 +970,12 @@ const DashboardPage: React.FC = () => {
                   Comparative Analysis
                 </Typography>
                 <Box sx={{ height: 400 }}>
-                  {/* <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={Object.entries(counts).map(([key, data]) => ({
+                      data={Object.entries(getDisplayCounts).map(([key, data]) => ({
                         name: titleMapping[key.toLowerCase()]?.title || key,
                         personal: data.myCount,
-                        overall: data.overallCount,
+                        overall: showPersonalOnly ? 0 : data.overallCount,
                       }))}
                       margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
                     >
@@ -891,9 +997,9 @@ const DashboardPage: React.FC = () => {
                       <RechartsTooltip />
                       <Legend />
                       <Bar dataKey="personal" name="Personal" fill={theme.palette.primary.main} />
-                      <Bar dataKey="overall" name="Overall" fill={theme.palette.secondary.main} />
+                      {!showPersonalOnly && <Bar dataKey="overall" name="Overall" fill={theme.palette.secondary.main} />}
                     </BarChart>
-                  </ResponsiveContainer> */}
+                  </ResponsiveContainer>
                 </Box>
               </CardContent>
             </StyledCard>
@@ -928,15 +1034,17 @@ const DashboardPage: React.FC = () => {
                         >
                           Personal Count
                         </th>
-                        <th
-                          style={{
-                            padding: theme.spacing(1.5),
-                            textAlign: "center",
-                            borderBottom: `1px solid ${theme.palette.divider}`,
-                          }}
-                        >
-                          Overall Count
-                        </th>
+                        {!showPersonalOnly && (
+                          <th
+                            style={{
+                              padding: theme.spacing(1.5),
+                              textAlign: "center",
+                              borderBottom: `1px solid ${theme.palette.divider}`,
+                            }}
+                          >
+                            Overall Count
+                          </th>
+                        )}
                         <th
                           style={{
                             padding: theme.spacing(1.5),
@@ -958,15 +1066,24 @@ const DashboardPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(counts).map(([key, data]) => {
+                      {Object.entries(getDisplayCounts).map(([key, data]) => {
                         const percentage = data.overallCount > 0 ? ((data.myCount / data.overallCount) * 100).toFixed(1) : "0";
 
                         return (
                           <tr
                             key={key}
-                            // style={{
-                            //   "&:hover": { backgroundColor: alpha(theme.palette.primary.main, 0.04) },
-                            // }}
+                            style={{
+                              backgroundColor: "transparent",
+                              transition: "background-color 0.2s",
+                              cursor: "pointer",
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.backgroundColor = alpha(theme.palette.primary.main, 0.04);
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.backgroundColor = "transparent";
+                            }}
+                            onClick={() => handleCategoryClick(key)}
                           >
                             <td
                               style={{
@@ -1009,23 +1126,25 @@ const DashboardPage: React.FC = () => {
                                 {data.myCount}
                               </Typography>
                             </td>
-                            <td
-                              style={{
-                                padding: theme.spacing(1.5),
-                                textAlign: "center",
-                                borderBottom: `1px solid ${theme.palette.divider}`,
-                              }}
-                            >
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  fontWeight: 600,
-                                  color: theme.palette.secondary.main,
+                            {!showPersonalOnly && (
+                              <td
+                                style={{
+                                  padding: theme.spacing(1.5),
+                                  textAlign: "center",
+                                  borderBottom: `1px solid ${theme.palette.divider}`,
                                 }}
                               >
-                                {data.overallCount}
-                              </Typography>
-                            </td>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontWeight: 600,
+                                    color: theme.palette.secondary.main,
+                                  }}
+                                >
+                                  {data.overallCount}
+                                </Typography>
+                              </td>
+                            )}
                             <td
                               style={{
                                 padding: theme.spacing(1.5),
@@ -1042,7 +1161,13 @@ const DashboardPage: React.FC = () => {
                                 borderBottom: `1px solid ${theme.palette.divider}`,
                               }}
                             >
-                              <IconButton size="small" onClick={() => handleCategoryClick(key)}>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCategoryClick(key);
+                                }}
+                              >
                                 <VisibilityIcon fontSize="small" />
                               </IconButton>
                             </td>

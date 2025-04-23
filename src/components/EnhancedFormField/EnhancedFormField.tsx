@@ -30,6 +30,9 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import dayjs, { Dayjs } from "dayjs";
 
+// Define the date format constant
+const DATE_FORMAT = "DD/MM/YYYY";
+
 // Define option type for select, radio, checkbox, etc.
 export interface OptionType {
   value: string | number | boolean;
@@ -125,6 +128,7 @@ type DatePickerTypeProps = {
   type: "datepicker" | "datetimepicker";
   minDate?: Dayjs;
   maxDate?: Dayjs;
+  format?: string;
 };
 
 type FileTypeProps = {
@@ -205,6 +209,14 @@ const FormField = <TFieldValues extends FieldValues>({
 
   const getInputPropsObj = (): any => {
     return (rest as any).InputProps || {};
+  };
+
+  // Get date format from props or use default
+  const getDateFormat = (): string => {
+    if (isDatePicker(type) || isDateTimePicker(type)) {
+      return (rest as any).format || DATE_FORMAT;
+    }
+    return DATE_FORMAT;
   };
 
   // Other getter functions similar to your original component
@@ -557,17 +569,21 @@ const FormField = <TFieldValues extends FieldValues>({
     // Date pickers
     if (isDatePicker(type) || isDateTimePicker(type)) {
       const PickerComponent = isDatePicker(type) ? DatePicker : DateTimePicker;
+      const dateFormat = getDateFormat();
 
       return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <PickerComponent
             label={label}
-            value={field.value ? dayjs(field.value) : null}
+            value={field.value ? dayjs(field.value, dateFormat) : null}
             onChange={(newValue) => {
-              field.onChange(newValue);
-              externalOnChange?.(newValue);
+              // Format date as DD/MM/YYYY
+              const formattedDate = newValue ? newValue.format(dateFormat) : null;
+              field.onChange(formattedDate);
+              externalOnChange?.(formattedDate);
             }}
             disabled={disabled}
+            format={dateFormat}
             slotProps={{
               textField: {
                 variant,
