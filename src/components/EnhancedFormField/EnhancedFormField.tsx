@@ -578,7 +578,7 @@ const FormField = <TFieldValues extends FieldValues>({
             value={field.value ? dayjs(field.value, dateFormat) : null}
             onChange={(newValue) => {
               // Format date as DD/MM/YYYY
-              const formattedDate = newValue ? newValue.format(dateFormat) : null;
+              const formattedDate = newValue && dayjs.isDayjs(newValue) ? newValue.format(dateFormat) : null;
               field.onChange(formattedDate);
               externalOnChange?.(formattedDate);
             }}

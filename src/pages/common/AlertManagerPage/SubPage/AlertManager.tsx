@@ -1,8 +1,11 @@
+// src/pages/common/AlertManagerPage/SubPage/AlertManager.tsx (modified)
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Paper, Button, IconButton, Tooltip } from "@mui/material";
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
+import { Box, Typography, Paper, Button } from "@mui/material";
+import { Add as AddIcon } from "@mui/icons-material";
 import PatientSearch from "./PatientSearch";
 import AlertForm from "./AlertForm";
+import PatientDemographicsCard from "./PatientDemographicsCard"; // New import
+import PatientDemographicsForm from "./PatientDemographicsForm"; // New import
 import { useLoading } from "@/context/LoadingContext";
 import { AlertDto } from "@/interfaces/Common/AlertManager";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
@@ -15,9 +18,11 @@ const AlertManager: React.FC = () => {
   const { setLoading } = useLoading();
   const [selectedPatient, setSelectedPatient] = useState<{ pChartID: number; pChartCode: string; fullName: string } | null>(null);
   const [alerts, setAlerts] = useState<AlertDto[]>([]);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isAlertFormOpen, setIsAlertFormOpen] = useState(false);
+  const [isDemoFormOpen, setIsDemoFormOpen] = useState(false); // New state
   const [currentAlert, setCurrentAlert] = useState<AlertDto | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [refreshDemographics, setRefreshDemographics] = useState(0); // Track when to refresh demographics
 
   // Fetch alerts when a patient is selected
   useEffect(() => {
@@ -62,13 +67,13 @@ const AlertManager: React.FC = () => {
 
     setCurrentAlert(newAlert as AlertDto);
     setIsEditMode(false);
-    setIsFormOpen(true);
+    setIsAlertFormOpen(true);
   };
 
   const handleEditAlert = (alert: AlertDto) => {
     setCurrentAlert(alert);
     setIsEditMode(true);
-    setIsFormOpen(true);
+    setIsAlertFormOpen(true);
   };
 
   const handleDeleteAlert = async (alert: AlertDto) => {
@@ -77,7 +82,7 @@ const AlertManager: React.FC = () => {
     if (confirmed) {
       try {
         setLoading(true);
-        const isSuccess = await baseAlertService.updateActiveStatus(alert.oPIPAlertID, true); //felete pass false else true
+        const isSuccess = await baseAlertService.updateActiveStatus(alert.oPIPAlertID, true);
 
         if (isSuccess) {
           setAlerts((prev) => prev.filter((a) => a.oPIPAlertID !== alert.oPIPAlertID));
@@ -106,7 +111,7 @@ const AlertManager: React.FC = () => {
         }
 
         notifySuccess(`Alert ${isEditMode ? "updated" : "created"} successfully`);
-        setIsFormOpen(false);
+        setIsAlertFormOpen(false);
       } else {
         notifyError(result.errorMessage || `Failed to ${isEditMode ? "update" : "create"} alert`);
       }
@@ -116,6 +121,22 @@ const AlertManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // New handler for editing demographics
+  const handleEditDemographics = () => {
+    if (!selectedPatient) {
+      notifyWarning("Please select a patient first");
+      return;
+    }
+
+    setIsDemoFormOpen(true);
+  };
+
+  // Handler for when demographics are saved
+  const handleDemographicsSaved = () => {
+    // Trigger a refresh of the demographics display
+    setRefreshDemographics((prev) => prev + 1);
   };
 
   const notifyWarning = (message: string) => {
@@ -136,29 +157,43 @@ const AlertManager: React.FC = () => {
       </Paper>
 
       {selectedPatient && (
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-            <Typography variant="h6">
-              Alerts for {selectedPatient.fullName} ({selectedPatient.pChartCode})
-            </Typography>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddAlert}>
-              Add Alert
-            </Button>
-          </Box>
+        <>
+          {/* New Patient Demographics Card Component */}
+          <PatientDemographicsCard
+            pChartID={selectedPatient.pChartID}
+            onEditClick={handleEditDemographics}
+            key={refreshDemographics} // Force refresh when demographics are updated
+          />
 
-          <AlertGrid alerts={alerts} onEditAlert={handleEditAlert} onDeleteAlert={handleDeleteAlert} />
-        </Paper>
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+              <Typography variant="h6">
+                Alerts for {selectedPatient.fullName} ({selectedPatient.pChartCode})
+              </Typography>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddAlert}>
+                Add Alert
+              </Button>
+            </Box>
+
+            <AlertGrid alerts={alerts} onEditAlert={handleEditAlert} onDeleteAlert={handleDeleteAlert} />
+          </Paper>
+        </>
       )}
 
-      {isFormOpen && currentAlert && (
+      {isAlertFormOpen && currentAlert && (
         <AlertForm
-          open={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
+          open={isAlertFormOpen}
+          onClose={() => setIsAlertFormOpen(false)}
           alert={currentAlert}
           isEditMode={isEditMode}
           onSubmit={handleFormSubmit}
           patientName={selectedPatient?.fullName || ""}
         />
+      )}
+
+      {/* New Patient Demographics Form Dialog */}
+      {isDemoFormOpen && selectedPatient && (
+        <PatientDemographicsForm open={isDemoFormOpen} onClose={() => setIsDemoFormOpen(false)} pChartID={selectedPatient.pChartID} onSaved={handleDemographicsSaved} />
       )}
     </Box>
   );
