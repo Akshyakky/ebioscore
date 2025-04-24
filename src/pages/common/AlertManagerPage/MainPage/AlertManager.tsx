@@ -1,7 +1,7 @@
-// src/pages/common/AlertManagerPage/MainPage/AlertManager.tsx
+// src/pages/common/AlertManagerPage/MainPage/EnhancedAlertManager.tsx
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Paper, Button, Grid, Card, Divider } from "@mui/material";
-import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
+import { Box, Typography, Paper, Grid, Card, Divider } from "@mui/material";
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Save as SaveIcon, Clear as ClearIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 import PatientSearch from "../SubPage/PatientSearch";
 import AlertForm from "../SubPage/AlertForm";
 import { useLoading } from "@/context/LoadingContext";
@@ -13,9 +13,12 @@ import { showAlert } from "@/utils/Common/showAlert";
 import AlertGrid from "../SubPage/AlertGrid";
 import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import PatientDemographicsForm from "../SubPage/PatientDemographicsForm";
+import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
+import CustomButton from "@/components/Button/CustomButton";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 
-// Improved compact version of AlertManager
-const AlertManager: React.FC = () => {
+// Enhanced version of Alert Manager with improved UI and confirmation dialogs
+const EnhancedAlertManager: React.FC = () => {
   const { setLoading } = useLoading();
   const [selectedPatient, setSelectedPatient] = useState<{ pChartID: number; pChartCode: string; fullName: string } | null>(null);
   const [patientDemographics, setPatientDemographics] = useState<any>(null);
@@ -25,6 +28,15 @@ const AlertManager: React.FC = () => {
   const [currentAlert, setCurrentAlert] = useState<AlertDto | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [refreshDemographics, setRefreshDemographics] = useState(0);
+
+  // Confirmation dialog states
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmDialogProps, setConfirmDialogProps] = useState({
+    title: "",
+    message: "",
+    type: "warning" as "warning" | "error" | "info" | "success",
+    onConfirm: () => {},
+  });
 
   // Fetch alerts when a patient is selected
   useEffect(() => {
@@ -75,7 +87,12 @@ const AlertManager: React.FC = () => {
 
   const handleAddAlert = () => {
     if (!selectedPatient) {
-      notifyWarning("Please select a patient first");
+      showConfirmDialog({
+        title: "Patient Required",
+        message: "Please select a patient before adding an alert.",
+        type: "info",
+        onConfirm: () => {},
+      });
       return;
     }
 
@@ -98,24 +115,29 @@ const AlertManager: React.FC = () => {
     setIsAlertFormOpen(true);
   };
 
-  const handleDeleteAlert = async (alert: AlertDto) => {
-    const confirmed = await showAlert("Delete Alert", "Are you sure you want to delete this alert?", "warning", true);
+  const handleDeleteAlert = (alert: AlertDto) => {
+    showConfirmDialog({
+      title: "Delete Alert",
+      message: "Are you sure you want to delete this alert? This action cannot be undone.",
+      type: "error",
+      onConfirm: () => confirmDeleteAlert(alert),
+    });
+  };
 
-    if (confirmed) {
-      try {
-        setLoading(true);
-        const isSuccess = await baseAlertService.updateActiveStatus(alert.oPIPAlertID, true);
+  const confirmDeleteAlert = async (alert: AlertDto) => {
+    try {
+      setLoading(true);
+      const isSuccess = await baseAlertService.updateActiveStatus(alert.oPIPAlertID, true);
 
-        if (isSuccess) {
-          setAlerts((prev) => prev.filter((a) => a.oPIPAlertID !== alert.oPIPAlertID));
-          notifySuccess("Alert deleted successfully");
-        }
-      } catch (error) {
-        console.error("Error deleting alert:", error);
-        notifyError("Failed to delete alert");
-      } finally {
-        setLoading(false);
+      if (isSuccess) {
+        setAlerts((prev) => prev.filter((a) => a.oPIPAlertID !== alert.oPIPAlertID));
+        notifySuccess("Alert deleted successfully");
       }
+    } catch (error) {
+      console.error("Error deleting alert:", error);
+      notifyError("Failed to delete alert");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -147,7 +169,12 @@ const AlertManager: React.FC = () => {
 
   const handleEditDemographics = () => {
     if (!selectedPatient) {
-      notifyWarning("Please select a patient first");
+      showConfirmDialog({
+        title: "Patient Required",
+        message: "Please select a patient first.",
+        type: "info",
+        onConfirm: () => {},
+      });
       return;
     }
 
@@ -158,8 +185,22 @@ const AlertManager: React.FC = () => {
     setRefreshDemographics((prev) => prev + 1);
   };
 
-  const notifyWarning = (message: string) => {
-    showAlert("Warning", message, "warning");
+  const handleRefreshData = () => {
+    if (selectedPatient) {
+      fetchPatientAlerts(selectedPatient.pChartID);
+      fetchPatientDemographics(selectedPatient.pChartID);
+      notifySuccess("Data refreshed successfully");
+    }
+  };
+
+  const showConfirmDialog = ({ title, message, type, onConfirm }: { title: string; message: string; type: "warning" | "error" | "info" | "success"; onConfirm: () => void }) => {
+    setConfirmDialogProps({
+      title,
+      message,
+      type,
+      onConfirm,
+    });
+    setConfirmDialogOpen(true);
   };
 
   // Render demographics information
@@ -248,9 +289,10 @@ const AlertManager: React.FC = () => {
   return (
     <Box sx={{ p: 2 }}>
       {/* Page Header */}
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-        Alert Manager
-      </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Typography variant="h4">Alert Manager</Typography>
+        <CustomButton variant="outlined" color="primary" text="Refresh Data" icon={RefreshIcon} onClick={handleRefreshData} disabled={!selectedPatient} />
+      </Box>
 
       {/* Patient Search & Demographics - Combined Section */}
       <Paper sx={{ p: 2, mb: 3 }}>
@@ -267,11 +309,7 @@ const AlertManager: React.FC = () => {
           <Grid size={{ xs: 12, md: 8 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
               <Typography variant="h6">Patient Demographics</Typography>
-              {patientDemographics && (
-                <Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={handleEditDemographics}>
-                  Edit
-                </Button>
-              )}
+              {patientDemographics && <CustomButton variant="outlined" size="small" icon={EditIcon} text="Edit Demographics" onClick={handleEditDemographics} />}
             </Box>
             {selectedPatient ? (
               renderDemographics()
@@ -291,9 +329,18 @@ const AlertManager: React.FC = () => {
             <Typography variant="h6">
               Alerts for {selectedPatient.fullName} ({selectedPatient.pChartCode})
             </Typography>
-            <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={handleAddAlert} size="medium">
-              Add Alert
-            </Button>
+
+            <ActionButtonGroup
+              buttons={[
+                {
+                  text: "Add Alert",
+                  icon: AddIcon,
+                  color: "primary",
+                  variant: "contained",
+                  onClick: handleAddAlert,
+                },
+              ]}
+            />
           </Box>
 
           <AlertGrid alerts={alerts} onEditAlert={handleEditAlert} onDeleteAlert={handleDeleteAlert} />
@@ -316,8 +363,18 @@ const AlertManager: React.FC = () => {
       {isDemoFormOpen && selectedPatient && patientDemographics && (
         <PatientDemographicsForm open={isDemoFormOpen} onClose={() => setIsDemoFormOpen(false)} pChartID={selectedPatient.pChartID} onSaved={handleDemographicsSaved} />
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={confirmDialogProps.onConfirm}
+        title={confirmDialogProps.title}
+        message={confirmDialogProps.message}
+        type={confirmDialogProps.type}
+      />
     </Box>
   );
 };
 
-export default AlertManager;
+export default EnhancedAlertManager;
