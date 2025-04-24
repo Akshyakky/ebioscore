@@ -7,7 +7,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import AdvancedGrid, { ColumnConfig } from "@/components/AdvancedGrid/AdvancedGrid";
 import RichTextEditor from "@/components/RichTextEditor/CkEditor";
-import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { LCompTemplateDto, LComponentDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { useAppSelector } from "@/store/hooks";
 import { useServerDate } from "@/hooks/Common/useServerDate";

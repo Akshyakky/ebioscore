@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Container } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useState } from "react";
-import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptunitListDto";
+import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
 import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
 import DeptUnitListDetails from "../SubPage/DeptUnitListDetails";
 import DeptUnitListSearch from "../SubPage/DeptunitListSearch";

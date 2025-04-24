@@ -108,7 +108,7 @@
     "@types/react-dom": "^19.1.2",
     "@types/react-draft-wysiwyg": "^1.13.8",
     "@types/react-pdf": "^7.0.0",
-    "@vitejs/plugin-react": "^4.4.0",
+    "@vitejs/plugin-react": "^4.4.1",
     "rollup-plugin-visualizer": "^5.14.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",

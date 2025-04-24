@@ -1,45 +1,22 @@
-// src/pages/inventoryManagement/MedicationListPage/MainPage/MedicationListPage.tsx
-import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
-import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
-import { Search } from "@mui/icons-material";
-import { Box, Container } from "@mui/material";
-import React, { useState } from "react";
+// src/pages/clinicalManagement/MedicationList/MainPage/MedicationListPage.tsx
+import React from "react";
+import { MedicalEntityPage } from "../../Components/MedicalEntityPage/MedicalEntityPage";
 import MedicationListDetails from "../SubPage/MedicationDetails";
 import MedicationListSearch from "../SubPage/MedicationListSearch";
+import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
 
 const MedicationListPage: React.FC = () => {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<MedicationListDto | undefined>(undefined);
-
-  const handleAdvancedSearch = () => {
-    setIsSearchOpen(true);
-  };
-
-  const handleCloseSearch = () => {
-    setIsSearchOpen(false);
-  };
-
-  const handleSelect = (data: MedicationListDto) => {
-    setSelectedData(data);
-  };
-
-  const actionButtons: ButtonProps[] = [
-    {
-      variant: "contained",
-      icon: Search,
-      text: "Advanced Search",
-      onClick: handleAdvancedSearch,
-    },
-  ];
-
   return (
-    <Container maxWidth={false}>
-      <Box sx={{ marginBottom: 2 }}>
-        <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
-      </Box>
-      <MedicationListDetails selectedData={selectedData} />
-      <MedicationListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
-    </Container>
+    <MedicalEntityPage<MedicationListDto>
+      title="Medication List"
+      DetailComponent={MedicationListDetails}
+      SearchComponent={MedicationListSearch}
+      additionalButtons={
+        [
+          // You can add additional action buttons here if needed
+        ]
+      }
+    />
   );
 };
 

@@ -1,73 +1,46 @@
-import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
+// src/pages/clinicalManagement/ProcedureList/SubPage/ProcedureListSearch.tsx
+import React from "react";
+import { MedicalEntitySearch } from "../../Components/MedicalEntitySearch/MedicalEntitySearch";
 import { OTProcedureListDto } from "@/interfaces/ClinicalManagement/ProcedureListDto";
-import { createEntityService } from "@/utils/Common/serviceFactory";
-import { showAlert } from "@/utils/Common/showAlert";
-import React, { useCallback, useMemo } from "react";
+
 interface ProcedureSearchProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (diagnosis: OTProcedureListDto) => void;
+  onSelect: (data: OTProcedureListDto) => void;
 }
+
 const ProcedureSearch: React.FC<ProcedureSearchProps> = ({ open, onClose, onSelect }) => {
-  const procedireService = useMemo(() => createEntityService<OTProcedureListDto>("ProcedureList", "clinicalManagementURL"), []);
+  const columns = [
+    { key: "procedureCode", header: "Procedure Code", visible: true, sortable: true },
+    { key: "procedureName", header: "Procedure Name", visible: true, sortable: true },
+    { key: "procedureNameLong", header: "Procedure Long Name", visible: true, sortable: true },
+    { key: "procType", header: "Procedure Type", visible: true, sortable: true },
+  ];
 
-  const fetchItems = useCallback(async () => {
-    try {
-      const result = await procedireService.getAll();
-      return result.success ? result.data : [];
-    } catch (error) {
-      console.error("Error fetching ICD details:", error);
-      showAlert("Error", "Failed to fetch ICD details.", "error");
-      return [];
-    }
-  }, [procedireService]);
-
-  const updateActiveStatus = useCallback(
-    async (id: number, status: boolean) => {
-      try {
-        const result = await procedireService.updateActiveStatus(id, status);
-        if (result) {
-          showAlert("Success", "Status updated successfully.", "success");
-        }
-        return result;
-      } catch (error) {
-        console.error("Error updating ICD detail active status:", error);
-        showAlert("Error", "Failed to update status.", "error");
-        return false;
-      }
-    },
-    [procedireService]
-  );
-
-  const getItemId = useCallback((item: OTProcedureListDto) => item.procedureID, []);
-  const getItemActiveStatus = useCallback((item: OTProcedureListDto) => item.rActiveYN === "Y", []);
-
-  const columns = useMemo(
-    () => [
-      { key: "serialNumber", header: "Sl.No", visible: true, sortable: true },
-      { key: "procedureCode", header: "Procedure Code", visible: true },
-      { key: "procedureName", header: "Procedure Name", visible: true },
-      { key: "procedureNameLong", header: "Procedure Long Name", visible: true },
-      { key: "procType", header: "Procedure Type", visible: true },
-    ],
-    []
-  );
+  // Custom filter function to search across multiple fields
+  const customFilter = (item: OTProcedureListDto, searchValue: string) => {
+    const searchLower = searchValue.toLowerCase();
+    return (
+      !!(item.procedureCode && item.procedureCode.toLowerCase().includes(searchLower)) ||
+      !!(item.procedureName && item.procedureName.toLowerCase().includes(searchLower)) ||
+      !!(item.procedureNameLong && item.procedureNameLong.toLowerCase().includes(searchLower))
+    );
+  };
 
   return (
-    <GenericAdvanceSearch
+    <MedicalEntitySearch
       open={open}
       onClose={onClose}
       onSelect={onSelect}
       title="PROCEDURE LIST"
-      fetchItems={fetchItems}
-      updateActiveStatus={updateActiveStatus}
+      entityName="ProcedureList"
+      serviceUrl="clinicalManagementURL"
       columns={columns}
-      getItemId={getItemId}
-      getItemActiveStatus={getItemActiveStatus}
+      getItemId={(item: OTProcedureListDto) => item.procedureID}
       searchPlaceholder="Enter Procedure code or name"
-      isActionVisible={true}
-      isEditButtonVisible={true}
       isStatusVisible={true}
+      isActionVisible={true}
+      customFilter={customFilter}
     />
   );
 };

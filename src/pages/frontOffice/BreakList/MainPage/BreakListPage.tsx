@@ -1,5 +1,5 @@
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
-import { BreakListDto } from "@/interfaces/frontOffice/BreakListData";
+import { BreakListDto } from "@/interfaces/FrontOffice/BreakListData";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Search } from "@mui/icons-material";
 import { Box, Container } from "@mui/material";

@@ -4,7 +4,7 @@ import FormField from "@/components/FormField/FormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/context/LoadingContext";
 import useDayjs from "@/hooks/Common/useDateTime";
-import { AppointBookingDto } from "@/interfaces/frontOffice/AppointBookingDto";
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
 import { Close, Print } from "@mui/icons-material";
 import { Box, debounce, Grid, Pagination } from "@mui/material";

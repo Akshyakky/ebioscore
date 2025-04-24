@@ -1,40 +1,19 @@
-import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
-import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
-import { medicationGenericService } from "@/services/ClinicalManagementServices/clinicalManagementService";
+// src/pages/clinicalManagement/MedicationGeneric/SubPage/MedicationGenericSearch.tsx
 import React from "react";
+import { MedicalEntitySearch } from "../../Components/MedicalEntitySearch/MedicalEntitySearch";
+import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
 
-interface MedicationGemericSearchProps {
+interface MedicationGenericSearchProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (diagnosis: MedicationGenericDto) => void;
+  onSelect: (data: MedicationGenericDto) => void;
 }
 
-const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, onClose, onSelect }) => {
-  const fetchItems = async () => {
-    try {
-      const items = await medicationGenericService.getAll();
-      return items.data || [];
-    } catch (error) {
-      return [];
-    }
-  };
-
-  const updateActiveStatus = async (id: number, status: boolean) => {
-    try {
-      return await medicationGenericService.updateActiveStatus(id, status);
-    } catch (error) {
-      return false;
-    }
-  };
-
-  const getItemId = (item: MedicationGenericDto) => item.mGenID;
-  const getItemActiveStatus = (item: MedicationGenericDto) => item.rActiveYN === "Y";
-
+const MedicationGenericSearch: React.FC<MedicationGenericSearchProps> = ({ open, onClose, onSelect }) => {
   const columns = [
-    { key: "serialNumber", header: "Sl.No", visible: true },
-    { key: "mGenCode", header: "Generic Code", visible: true },
-    { key: "mGenName", header: "Generic Name", visible: true },
-    { key: "mSnomedCode", header: "Snomed Code", visible: true },
+    { key: "mGenCode", header: "Generic Code", visible: true, sortable: true },
+    { key: "mGenName", header: "Generic Name", visible: true, sortable: true },
+    { key: "mSnomedCode", header: "Snomed Code", visible: true, sortable: true },
     {
       key: "defaultYN",
       header: "Default",
@@ -50,17 +29,15 @@ const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, 
   ];
 
   return (
-    <GenericAdvanceSearch
-      isEditButtonVisible={true}
+    <MedicalEntitySearch
       open={open}
       onClose={onClose}
       onSelect={onSelect}
       title="MEDICATION GENERIC LIST"
-      fetchItems={fetchItems}
-      updateActiveStatus={updateActiveStatus}
+      entityName="MedicationGeneric"
+      serviceUrl="clinicalManagementURL"
       columns={columns}
-      getItemId={getItemId}
-      getItemActiveStatus={getItemActiveStatus}
+      getItemId={(item: MedicationGenericDto) => item.mGenID}
       searchPlaceholder="Enter Medication Generic code or name"
       isStatusVisible={(item: MedicationGenericDto) => item.modifyYN === "Y"}
       isActionVisible={(item: MedicationGenericDto) => item.modifyYN === "Y"}
@@ -68,4 +45,4 @@ const MedicationGenricSearch: React.FC<MedicationGemericSearchProps> = ({ open, 
   );
 };
 
-export default React.memo(MedicationGenricSearch);
+export default React.memo(MedicationGenericSearch);

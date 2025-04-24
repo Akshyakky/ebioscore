@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
-import { ReasonListData } from "@/interfaces/frontOffice/ReasonListData";
+import { ReasonListData } from "@/interfaces/FrontOffice/ReasonListData";
 import { Box, Container } from "@mui/material";
 import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
 import ReasonDetails from "../SubPage/ReasonDetails";

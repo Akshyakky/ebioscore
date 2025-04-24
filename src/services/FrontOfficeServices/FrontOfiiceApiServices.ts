@@ -2,10 +2,10 @@
 //   "BreakList",
 //   "frontOffice"
 
-import { BreakConSuspendData } from "@/interfaces/frontOffice/BreakConSuspendData";
-import { BreakConDetailData } from "@/interfaces/frontOffice/BreakListData";
-import { ReasonListData } from "@/interfaces/frontOffice/ReasonListData";
-import { ResourceListData } from "@/interfaces/frontOffice/ResourceListData";
+import { BreakConSuspendData } from "@/interfaces/FrontOffice/BreakConSuspendData";
+import { BreakConDetailData } from "@/interfaces/FrontOffice/BreakListData";
+import { ReasonListData } from "@/interfaces/FrontOffice/ReasonListData";
+import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 
 // );

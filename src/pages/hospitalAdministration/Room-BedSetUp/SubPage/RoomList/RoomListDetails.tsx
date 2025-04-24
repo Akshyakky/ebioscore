@@ -5,7 +5,6 @@ import SaveIcon from "@mui/icons-material/Save";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useAppSelector } from "@/store/hooks";
-import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import { useLoading } from "@/context/LoadingContext";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import useDropdownChange from "@/hooks/useDropdownChange";
@@ -15,6 +14,7 @@ import CustomButton from "@/components/Button/CustomButton";
 import CustomGrid from "@/components/CustomGrid/CustomGrid";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import FormField from "@/components/FormField/FormField";
+import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 
 interface RoomListDetailsProps {
   roomLists: RoomListDto[];

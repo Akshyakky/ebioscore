@@ -4,10 +4,11 @@ import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "@/services/CommonApiService";
 import { BaseDto, GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
 
-export function createEntityService<T extends BaseDto>(entityName: string, apiKey: keyof typeof APIConfig): GenericEntityService<T> {
+export function createEntityService<T extends BaseDto>(entityName: string, apiKey: string | keyof typeof APIConfig): GenericEntityService<T> {
+  const validKey = apiKey in APIConfig ? (apiKey as keyof typeof APIConfig) : "commonURL";
   return new GenericEntityService<T>(
     new CommonApiService({
-      baseURL: APIConfig[apiKey],
+      baseURL: APIConfig[validKey],
     }),
     entityName
   );

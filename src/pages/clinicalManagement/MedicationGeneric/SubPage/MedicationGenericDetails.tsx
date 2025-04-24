@@ -1,256 +1,108 @@
-import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
-import FormField from "@/components/FormField/FormField";
-import { useLoading } from "@/context/LoadingContext";
+// src/pages/clinicalManagement/MedicationGeneric/SubPage/MedicationGenericDetails.tsx
+import React from "react";
+import { MedicalEntityForm } from "../../Components/MedicalEntityForm/MedicalEntityForm";
 import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
-import { medicationGenericService } from "@/services/ClinicalManagementServices/clinicalManagementService";
-import { useAppSelector } from "@/store/hooks";
-import { createEntityService } from "@/utils/Common/serviceFactory";
-import { showAlert } from "@/utils/Common/showAlert";
-import { Grid, Paper, Typography } from "@mui/material";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import SaveIcon from "@mui/icons-material/Save";
-import DeleteIcon from "@mui/icons-material/Delete";
 
 interface MedicationGenericDetailsProps {
   selectedData?: MedicationGenericDto;
 }
+
 const MedicationGenericDetails: React.FC<MedicationGenericDetailsProps> = ({ selectedData }) => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
-  const [formState, setFormState] = useState<MedicationGenericDto>(() => ({
+  const initialFormState: MedicationGenericDto = {
     mGenID: 0,
     mGenCode: "",
     mGenName: "",
     modifyYN: "Y",
     defaultYN: "N",
     rActiveYN: "Y",
-    compID: compID ?? 0,
-    compCode: compCode ?? "",
-    compName: compName ?? "",
+    compID: 0,
+    compCode: "",
+    compName: "",
     transferYN: "N",
     rNotes: "",
     mSnomedCode: "",
-  }));
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  };
 
-  const { setLoading } = useLoading();
-
-  const MedicationGenericDetailsService = useMemo(() => createEntityService<MedicationGenericDto>("MedicationGeneric", "clinicalManagementURL"), []);
-
-  const handleClear = useCallback(async () => {
-    setLoading(true);
-    try {
-      const nextCode = await MedicationGenericDetailsService.getNextCode("MEDG", 5);
-      setFormState({
-        mGenID: 0,
-        mGenCode: nextCode.data,
-        mGenName: "",
-        modifyYN: "Y",
-        defaultYN: "N",
-        rActiveYN: "Y",
-        compID: compID ?? 0,
-        compCode: compCode ?? "",
-        compName: compName ?? "",
-        rNotes: "",
-        transferYN: "N",
-        mSnomedCode: "",
-      });
-      setIsSubmitted(false);
-      setIsEditing(false);
-    } catch (error) {
-      showAlert("Error", "Failed to fetch the next Medication Generic Code.", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [compID, compCode, compName, MedicationGenericDetails]);
-
-  useEffect(() => {
-    if (selectedData) {
-      setFormState(selectedData);
-      setIsEditing(true);
-    } else {
-      handleClear();
-    }
-  }, [selectedData, handleClear]);
-
-  const handleInputChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const { name, value } = e.target;
-      if (name === "defaultYN" && value === "Y") {
-        try {
-          const existingDefault = await MedicationGenericDetailsService.find("defaultYN='Y'");
-
-          if (existingDefault.data.length > 0) {
-            const confirmed = await new Promise<boolean>((resolve) => {
-              showAlert(
-                "Confirmation",
-                `There are other entries set as default. Setting '${formState.mGenName}' as the new default will remove default status from other entries. Continue?`,
-                "warning",
-                {
-                  showConfirmButton: true,
-                  showCancelButton: true,
-                  confirmButtonText: "Yes",
-                  cancelButtonText: "No",
-                  onConfirm: () => resolve(true),
-                  onCancel: () => resolve(false),
-                }
-              );
-            });
-
-            if (!confirmed) {
-              return;
-            }
-            const updatedRecords = existingDefault.data.map((record: MedicationGenericDto) => ({
-              ...record,
-              defaultYN: "N",
-            }));
-
-            await Promise.all(updatedRecords.map((record: MedicationGenericDto) => MedicationGenericDetailsService.save(record)));
-          }
-          setFormState((prev) => ({
-            ...prev,
-            [name]: value,
-          }));
-        } catch (error) {
-          showAlert("Error", "Failed to update default status.", "error");
-        }
-      } else {
-        setFormState((prev) => ({
-          ...prev,
-          [name]: value,
-        }));
-      }
+  const formFields = [
+    {
+      name: "mGenCode",
+      label: "Medication Generic Code",
+      type: "text" as const,
+      placeholder: "Enter Medication Generic code",
+      isMandatory: true,
+      gridWidth: 4,
     },
-    [formState.mGenName, MedicationGenericDetailsService]
-  );
+    {
+      name: "mGenName",
+      label: "Medication Generic Name",
+      type: "text" as const,
+      placeholder: "Enter Medication Generic name",
+      isMandatory: true,
+      gridWidth: 4,
+    },
+    {
+      name: "mSnomedCode",
+      label: "Snomed Code",
+      type: "text" as const,
+      placeholder: "Enter Snomed code",
+      isMandatory: false,
+      gridWidth: 4,
+    },
+    {
+      name: "rNotes",
+      label: "Notes",
+      type: "textarea" as const,
+      placeholder: "Notes",
+      maxLength: 4000,
+      gridWidth: 12,
+    },
+    {
+      name: "defaultYN",
+      label: "Default",
+      type: "radio" as const,
+      options: [
+        { label: "Yes", value: "Y" },
+        { label: "No", value: "N" },
+      ],
+      gridWidth: 4,
+    },
+    {
+      name: "modifyYN",
+      label: "Modify",
+      type: "radio" as const,
+      options: [
+        { label: "Yes", value: "Y" },
+        { label: "No", value: "N" },
+      ],
+      gridWidth: 4,
+    },
+    {
+      name: "rActiveYN",
+      label: "Active",
+      type: "switch" as const,
+      gridWidth: 4,
+    },
+  ];
 
-  const handleSave = useCallback(async () => {
-    setIsSubmitted(true);
-    if (!formState.mGenCode || !formState.mGenCode.trim() || !formState.mGenName) {
-      showAlert("Error", "Medication Form Code and Name are mandatory.", "error");
-      return;
+  const validateForm = (formData: MedicationGenericDto): string | null => {
+    if (!formData.mGenCode || !formData.mGenCode.trim() || !formData.mGenName) {
+      return "Medication Generic Code and Name are mandatory.";
     }
-
-    setLoading(true);
-
-    try {
-      await medicationGenericService.save({ ...formState });
-      showAlert("Success", "Medication Form saved successfully!", "success", {
-        onConfirm: handleClear,
-      });
-    } catch (error) {
-      showAlert("Error", "An unexpected error occurred while saving.", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [formState, medicationGenericService, setLoading, handleClear]);
+    return null;
+  };
 
   return (
-    <Paper variant="elevation" sx={{ padding: 2 }}>
-      <Typography variant="h6" id="procedure-details-header">
-        MEDICATION GENERIC DETAILS
-      </Typography>
-      <Grid container spacing={2}>
-        <FormField
-          type="text"
-          label="Medication Generic Code"
-          value={formState.mGenCode}
-          onChange={handleInputChange}
-          name="mGenCode"
-          ControlID="genCode"
-          placeholder="Enter Medication Generic code"
-          isMandatory={true}
-          size="small"
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="text"
-          label="Medication Generic Name"
-          value={formState.mGenName}
-          onChange={handleInputChange}
-          name="mGenName"
-          ControlID="genName"
-          placeholder="Enter Medication Generic name"
-          isMandatory={true}
-          size="small"
-          isSubmitted={isSubmitted}
-        />
-        <FormField
-          type="text"
-          label="Snomed Code"
-          value={formState.mSnomedCode}
-          onChange={handleInputChange}
-          name="mSnomedCode"
-          ControlID="snomedCode"
-          placeholder="Enter Snomed code"
-          isMandatory={false}
-          size="small"
-          isSubmitted={isSubmitted}
-        />
-      </Grid>
-      <Grid container spacing={2}>
-        <FormField
-          type="textarea"
-          label="Notes"
-          value={formState.rNotes || ""}
-          onChange={handleInputChange}
-          name="rNotes"
-          ControlID="rNotes"
-          placeholder="Notes"
-          maxLength={4000}
-        />
-      </Grid>
-      <Grid container spacing={2}>
-        <FormField
-          type="radio"
-          label="Default"
-          value={formState.defaultYN}
-          onChange={handleInputChange}
-          name="defaultYN"
-          ControlID="defaultYN"
-          options={[
-            { label: "Yes", value: "Y" },
-            { label: "No", value: "N" },
-          ]}
-          size="small"
-          inline
-        />
-        <FormField
-          type="radio"
-          label="Modify"
-          value={formState.modifyYN}
-          onChange={handleInputChange}
-          name="modifyYN"
-          ControlID="modifyYN"
-          options={[
-            { label: "Yes", value: "Y" },
-            { label: "No", value: "N" },
-          ]}
-          size="small"
-          inline
-        />
-
-        <Grid item xs={12} md={3}>
-          <FormField
-            type="switch"
-            label={formState.rActiveYN === "Y" ? "Active" : "Hidden"}
-            value={formState.rActiveYN}
-            checked={formState.rActiveYN === "Y"}
-            onChange={(event) =>
-              setFormState((prev) => ({
-                ...prev,
-                rActiveYN: event.target.checked ? "Y" : "N",
-              }))
-            }
-            name="rActiveYN"
-            ControlID="rActiveYN"
-            size="medium"
-          />
-        </Grid>
-      </Grid>
-
-      <FormSaveClearButton clearText="Clear" saveText={isEditing ? "Update" : "Save"} onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
-    </Paper>
+    <MedicalEntityForm
+      title="MEDICATION GENERIC DETAILS"
+      entityName="MedicationGeneric"
+      codePrefix="MEDG"
+      codeLength={5}
+      selectedData={selectedData}
+      initialFormState={initialFormState}
+      formFields={formFields}
+      serviceUrl="clinicalManagementURL"
+      validateForm={validateForm}
+    />
   );
 };
 

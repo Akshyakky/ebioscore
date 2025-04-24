@@ -1,5 +1,5 @@
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
-import { ResourceListData } from "@/interfaces/frontOffice/ResourceListData";
+import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import React from "react";
 

@@ -1,7 +1,7 @@
 import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
 import { store } from "@/store";
-import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 
 const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });

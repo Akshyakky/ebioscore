@@ -7,7 +7,7 @@ import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
-import { AppointBookingDto } from "@/interfaces/frontOffice/AppointBookingDto";
+import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import PatientDemographics from "@/pages/patientAdministration/CommonPage/Demograph/PatientDemographics";
 import { AppModifyListService } from "@/services/CommonServices/AppModifyListService";

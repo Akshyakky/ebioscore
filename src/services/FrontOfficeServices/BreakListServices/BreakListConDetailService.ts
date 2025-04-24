@@ -1,6 +1,6 @@
 import { APIConfig } from "@/apiConfig";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { BreakConDetailData } from "@/interfaces/frontOffice/BreakListData";
+import { BreakConDetailData } from "@/interfaces/FrontOffice/BreakListData";
 import { CommonApiService } from "@/services/CommonApiService";
 import { store } from "@/store";
 

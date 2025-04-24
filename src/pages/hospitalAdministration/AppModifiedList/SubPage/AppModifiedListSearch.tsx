@@ -1,6 +1,6 @@
 import React from "react";
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
-import { AppModifiedMast } from "@/interfaces/HospitalAdministration/AppModifiedlistDto";
+import { AppModifiedMast } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { appModifiedMastService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 
 interface AppModifiedMastSearchProps {

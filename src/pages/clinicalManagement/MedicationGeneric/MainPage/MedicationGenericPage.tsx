@@ -1,41 +1,23 @@
-import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
-import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
-import { Search } from "@mui/icons-material";
-import { Box, Container } from "@mui/material";
-import React, { useCallback, useMemo, useState } from "react";
+// src/pages/clinicalManagement/MedicationGeneric/MainPage/MedicationGenericPage.tsx
+import React from "react";
+import { MedicalEntityPage } from "../../Components/MedicalEntityPage/MedicalEntityPage";
 import MedicationGenericDetails from "../SubPage/MedicationGenericDetails";
 import MedicationGenericSearch from "../SubPage/MedicationGenericSearch";
+import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
+
 const MedicationGenericPage: React.FC = () => {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<MedicationGenericDto | undefined>(undefined);
-
-  const handleAdvancedSearch = useCallback(() => setIsSearchOpen(true), []);
-  const handleCloseSearch = useCallback(() => setIsSearchOpen(false), []);
-  const handleSelect = useCallback((data: MedicationGenericDto) => {
-    setSelectedData(data);
-    setIsSearchOpen(false);
-  }, []);
-
-  const actionButtons: ButtonProps[] = useMemo(
-    () => [
-      {
-        variant: "contained",
-        icon: Search,
-        text: "Advanced Search",
-        onClick: handleAdvancedSearch,
-      },
-    ],
-    [handleAdvancedSearch]
-  );
-
   return (
-    <Container maxWidth={false}>
-      <Box sx={{ marginBottom: 2 }}>
-        <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
-      </Box>
-      <MedicationGenericDetails selectedData={selectedData} />
-      <MedicationGenericSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
-    </Container>
+    <MedicalEntityPage<MedicationGenericDto>
+      title="Medication Generic"
+      DetailComponent={MedicationGenericDetails}
+      SearchComponent={MedicationGenericSearch}
+      additionalButtons={
+        [
+          // You can add additional action buttons here if needed
+        ]
+      }
+    />
   );
 };
+
 export default React.memo(MedicationGenericPage);

@@ -1,40 +1,19 @@
-import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
-import { MedicationDosageDto } from "@/interfaces/ClinicalManagement/MedicationDosageDto";
-import { medicationDosageService } from "@/services/ClinicalManagementServices/clinicalManagementService";
+// src/pages/clinicalManagement/MedicationDosage/SubPage/MedicationDosageSearch.tsx
 import React from "react";
+import { MedicalEntitySearch } from "../../Components/MedicalEntitySearch/MedicalEntitySearch";
+import { MedicationDosageDto } from "@/interfaces/ClinicalManagement/MedicationDosageDto";
 
 interface MedicationDosageSearchProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (MedicationDosage: MedicationDosageDto) => void;
+  onSelect: (data: MedicationDosageDto) => void;
 }
 
 const MedicationDosageSearch: React.FC<MedicationDosageSearchProps> = ({ open, onClose, onSelect }) => {
-  const fetchItems = async () => {
-    try {
-      const items = await medicationDosageService.getAll();
-      return items.data || [];
-    } catch (error) {
-      return [];
-    }
-  };
-
-  const updateActiveStatus = async (id: number, status: boolean) => {
-    try {
-      return await medicationDosageService.updateActiveStatus(id, status);
-    } catch (error) {
-      return false;
-    }
-  };
-
-  const getItemId = (item: MedicationDosageDto) => item.mDId;
-  const getItemActiveStatus = (item: MedicationDosageDto) => item.rActiveYN === "Y";
-
   const columns = [
-    { key: "serialNumber", header: "Sl.No", visible: true },
-    { key: "mDCode", header: "Medication Dosage Code", visible: true },
-    { key: "mDSnomedCode", header: "Medication Dosage Snomed Code", visible: true },
-    { key: "mDName", header: "Medication Dosage Name", visible: true },
+    { key: "mDCode", header: "Medication Dosage Code", visible: true, sortable: true },
+    { key: "mDSnomedCode", header: "Medication Dosage Snomed Code", visible: true, sortable: true },
+    { key: "mDName", header: "Medication Dosage Name", visible: true, sortable: true },
     {
       key: "modifyYN",
       header: "Modifiable",
@@ -51,21 +30,20 @@ const MedicationDosageSearch: React.FC<MedicationDosageSearchProps> = ({ open, o
   ];
 
   return (
-    <GenericAdvanceSearch
-      isEditButtonVisible={true}
+    <MedicalEntitySearch
       open={open}
       onClose={onClose}
       onSelect={onSelect}
       title="MEDICATION DOSAGE"
-      fetchItems={fetchItems}
-      updateActiveStatus={updateActiveStatus}
+      entityName="MedicationDosage"
+      serviceUrl="clinicalManagementURL"
       columns={columns}
-      getItemId={getItemId}
-      getItemActiveStatus={getItemActiveStatus}
-      searchPlaceholder="Enter medication Dosage code or text"
+      getItemId={(item: MedicationDosageDto) => item.mDId}
+      searchPlaceholder="Enter medication dosage code or name"
       isStatusVisible={(item: MedicationDosageDto) => item.modifyYN === "Y"}
       isActionVisible={(item: MedicationDosageDto) => item.modifyYN === "Y"}
     />
   );
 };
+
 export default MedicationDosageSearch;

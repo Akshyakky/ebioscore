@@ -1,8 +1,8 @@
 import CustomButton from "@/components/Button/CustomButton";
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 import { useLoading } from "@/context/LoadingContext";
-import { BreakConSuspendData } from "@/interfaces/frontOffice/BreakConSuspendData";
-import { BreakConDetailData, BreakListData } from "@/interfaces/frontOffice/BreakListData";
+import { BreakConSuspendData } from "@/interfaces/FrontOffice/BreakConSuspendData";
+import { BreakConDetailData, BreakListData } from "@/interfaces/FrontOffice/BreakListData";
 import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
 import { BreakListService } from "@/services/FrontOfficeServices/BreakListServices/BreakListService";
 import { breakConDetailsService, breakConSuspendService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
