@@ -45,24 +45,24 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
     const packPrice = currentRow.packPrice || 0;
     const baseTotal = requiredPack * packPrice;
 
+    // Apply discount calculations
     if (field === "discAmt") {
-      // If user entered discount amount, update percentage
       currentRow.discPercentageAmt = baseTotal ? (value / baseTotal) * 100 : 0;
     } else if (field === "discPercentageAmt") {
-      // If user entered discount %, update discount amount
       currentRow.discAmt = baseTotal ? (baseTotal * value) / 100 : 0;
     }
 
-    // Recalculate tax values
-    const taxableAmt = baseTotal - (currentRow.discAmt || 0);
-    const cgstTaxAmt = (taxableAmt * (currentRow.cgstPerValue || 0)) / 100;
-    const sgstTaxAmt = (taxableAmt * (currentRow.sgstPerValue || 0)) / 100;
+    const discount = currentRow.discAmt || 0;
+    const taxableAmt = baseTotal - discount;
 
-    // Update calculated fields
+    const gstPercent = currentRow.cgstPerValue || 0;
+    const gstAmount = (taxableAmt * gstPercent) / 100;
+
+    // Update fields
     currentRow.taxableAmt = taxableAmt;
-    currentRow.cgstTaxAmt = cgstTaxAmt;
-    currentRow.sgstTaxAmt = sgstTaxAmt;
-    currentRow.itemTotal = taxableAmt + cgstTaxAmt + sgstTaxAmt;
+    currentRow.cgstTaxAmt = gstAmount;
+    currentRow.sgstTaxAmt = 0; // No SGST used in image logic
+    currentRow.itemTotal = taxableAmt + gstAmount;
 
     updatedData[rowIndex] = currentRow;
     setGridData(updatedData);
