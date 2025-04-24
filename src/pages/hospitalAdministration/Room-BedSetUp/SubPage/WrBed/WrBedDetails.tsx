@@ -368,8 +368,8 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
             label="Bed Category"
             name="wCatID"
             value={formData.wbCatID || 0}
-            onChange={handleDropdownChange(["wbCatID"], ["wbCatName"], dropdownValues.bedCategory)}
-            options={dropdownValues.bedCategory}
+            onChange={handleDropdownChange(["wbCatID"], ["wbCatName"], dropdownValues.bedCategory || [])}
+            options={dropdownValues.bedCategory || []}
             ControlID="wCatID"
             gridProps={{ xs: 12 }}
           />
@@ -378,8 +378,8 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
             label="Service Type"
             name="bchID"
             value={formData.bchID || ""}
-            onChange={handleDropdownChange(["bchID"], ["bchName"], dropdownValues.service)}
-            options={dropdownValues.service}
+            onChange={handleDropdownChange(["bchID"], ["bchName"], dropdownValues.service || [])}
+            options={dropdownValues.service || []}
             ControlID="bchID"
             gridProps={{ xs: 12 }}
           />

@@ -2,7 +2,7 @@ import { Box, Container } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import Search from "@mui/icons-material/Search";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
-import { PurchaseOrderDetailDto, PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { PurchaseOrderDetailDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
@@ -10,8 +10,8 @@ import { Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
 import PurchaseOrderHeader from "../SubPage/PurchaseOrderHeader";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import PurchaseOrderGrid from "../SubPage/PurchaseOrderGrid";
-import { purchaseOrderMastService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
+import PurchaseOrderFooter from "../SubPage/PurchaseOrderFooter";
 
 const PurchaseOrderPage: React.FC = () => {
   const initialPOMastDto: PurchaseOrderMastDto = {
@@ -44,13 +44,10 @@ const PurchaseOrderPage: React.FC = () => {
     netSGSTTaxAmt: 0,
     totalTaxableAmt: 0,
     rActiveYN: "",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "",
     rNotes: "",
   };
-
+  const [gridData, setGridData] = useState<any[]>([]);
   const [selectedData, setSelectedData] = useState<PurchaseOrderMastDto>(initialPOMastDto);
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect, requireDepartmentSelection } = useDepartmentSelection({
     isDialogOpen: true,
@@ -59,9 +56,73 @@ const PurchaseOrderPage: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductListDto | undefined>(undefined);
   const [pODetailDto, setPODetailDto] = useState<PurchaseOrderDetailDto>();
+  const [totDiscAmtPer, setTotDiscAmtPer] = useState<number>(0);
+  const [isDiscPercentage, setIsDiscPercentage] = useState<boolean>(false);
+
+  const handleApplyDiscount = () => {
+    const updatedData = gridData.map((row) => {
+      const requiredPack = row.requiredPack || 0;
+      const packPrice = row.packPrice || 0;
+      const baseTotal = requiredPack * packPrice;
+
+      let discAmt = 0;
+      let discPercentageAmt = 0;
+
+      if (isDiscPercentage) {
+        discPercentageAmt = totDiscAmtPer;
+        discAmt = baseTotal ? (baseTotal * totDiscAmtPer) / 100 : 0;
+      } else {
+        discAmt = totDiscAmtPer;
+        discPercentageAmt = baseTotal ? (totDiscAmtPer / baseTotal) * 100 : 0;
+      }
+
+      const taxableAmt = baseTotal - discAmt;
+      const cgstTaxAmt = (taxableAmt * (row.cgstPerValue || 0)) / 100;
+      const sgstTaxAmt = (taxableAmt * (row.sgstPerValue || 0)) / 100;
+
+      return {
+        ...row,
+        discAmt,
+        discPercentageAmt,
+        taxableAmt,
+        cgstTaxAmt,
+        sgstTaxAmt,
+        itemTotal: taxableAmt + cgstTaxAmt + sgstTaxAmt,
+      };
+    });
+
+    setGridData(updatedData);
+    recalculateTotals(updatedData);
+  };
+
+  const handleApprovedByChange = (id: number, name: string) => {
+    setSelectedData((prev) => ({
+      ...prev,
+      pOApprovedID: id,
+      pOApprovedBy: name,
+    }));
+  };
+  const handleRemarksChange = (value: string) => {
+    setSelectedData((prev) => ({
+      ...prev,
+      rNotes: value,
+    }));
+  };
+  const handleFinalizeToggle = (isFinalized: boolean) => {
+    setSelectedData((prev) => ({
+      ...prev,
+      pOApprovedYN: isFinalized ? "Y" : "N",
+    }));
+  };
+
   const handleSelectedProduct = (product: ProductListDto) => {
     console.log("Selected product:", product);
+
     setSelectedProduct(product);
+  };
+  const handleProductsGrid = (gridItems: any) => {
+    setGridData(gridItems);
+    recalculateTotals(gridItems);
   };
 
   const handleAdvancedSearch = () => {
@@ -144,9 +205,6 @@ const PurchaseOrderPage: React.FC = () => {
         sgstPerValue: selectedProduct.sgstPerValue,
         sgstTaxAmt: 0,
         taxableAmt: selectedProduct.defaultPrice ?? 0,
-        compID: selectedProduct.compID,
-        compCode: selectedProduct.compCode,
-        compName: selectedProduct.compName,
         transferYN: selectedProduct.transferYN,
         rNotes: selectedProduct.rNotes,
       };
@@ -174,14 +232,153 @@ const PurchaseOrderPage: React.FC = () => {
 
   const handleClear = () => {
     setSelectedData(initialPOMastDto);
+    setGridData([]);
+    setTotDiscAmtPer(0);
     setIsSubmitted(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSubmitted(true);
-    if (!selectedData.fromDeptID && !selectedData.pODate && !selectedData.supplierID) {
+
+    // Validate required fields
+    if (!selectedData.fromDeptID || !selectedData.pODate || !selectedData.supplierID) {
       return;
     }
+
+    // Check if there are any products in the grid
+    if (gridData.length === 0) {
+      return;
+    }
+
+    try {
+      // Calculate totals for the purchase order
+      const totalAmt = gridData.reduce((sum, item) => sum + item.itemTotal, 0);
+      const totalTaxableAmt = gridData.reduce((sum, item) => sum + item.taxableAmt, 0);
+      const netCGSTTaxAmt = gridData.reduce((sum, item) => sum + item.cgstTaxAmt, 0);
+      const netSGSTTaxAmt = gridData.reduce((sum, item) => sum + item.sgstTaxAmt, 0);
+      const taxAmt = netCGSTTaxAmt + netSGSTTaxAmt;
+
+      const netAmt = totalAmt - (selectedData.discAmt || 0) + taxAmt - (selectedData.coinAdjAmt || 0);
+
+      let purchaseOrderData: purchaseOrderSaveDto = {
+        purchaseOrderMastDto: {
+          ...selectedData,
+          totalAmt,
+          taxAmt,
+          netAmt: totalAmt - (selectedData.discAmt || 0) + taxAmt,
+          netCGSTTaxAmt,
+          netSGSTTaxAmt,
+          totalTaxableAmt,
+          pOStatusCode: "PENDING",
+          pOStatus: "Pending",
+          rActiveYN: "Y",
+          compID: 1,
+          compCode: "TEST",
+          compName: "TEST",
+          auGrpID: 18,
+          catDesc: "catDesc",
+          catValue: "catValue",
+          pOApprovedID: 5,
+          pOApprovedBy: "pOApprovedBy",
+          supplierName: "supplierName",
+          pOType: "pOType",
+          pOTypeValue: "pOTe",
+        },
+        purchaseOrderDetailDto: gridData.map((row) => ({
+          pODetID: row.pODetID || 0,
+          pOID: row.pOID || 0,
+          indentID: row.indentID || 0,
+          indentDetID: row.indentDetID || 0,
+          productID: row.productID,
+          productCode: row.productCode,
+          productName: row.productName,
+          catValue: row.catValue,
+          catDesc: row.catDesc,
+          pGrpID: row.pGrpID,
+          pGrpName: row.pGrpName,
+          pSGrpID: row.pSGrpID,
+          pSGrpName: row.pSGrpName,
+          pUnitID: row.pUnitID,
+          pUnitName: row.pUnitName,
+          pPkgID: row.pPkgID,
+          pPkgName: row.pPkgName,
+          unitPack: row.unitPack,
+          requiredUnitQty: row.requiredUnitQty,
+          requiredPack: row.requiredPack || 0,
+          packPrice: row.packPrice || 0,
+          sellingPrice: row.sellingPrice || 0,
+          pOYN: "Y",
+          grnDetID: row.grnDetID || 0,
+          receivedQty: row.receivedQty || 0,
+          manufacturerID: row.manufacturerID,
+          manufacturerCode: row.manufacturerCode,
+          manufacturerName: row.manufacturerName,
+          discAmt: row.discAmt || 0,
+          discPercentageAmt: row.discPercentageAmt || 0,
+          freeQty: row.freeQty || 0,
+          isFreeItemYN: row.isFreeItemYN || "N",
+          mfID: row.mfID,
+          mfName: row.mfName,
+          netAmount: row.netAmount || 0,
+          pODetStatusCode: "PENDING",
+          taxAmt: (row.cgstTaxAmt || 0) + (row.sgstTaxAmt || 0),
+          taxModeCode: row.taxModeCode,
+          taxModeDescription: row.taxModeDescription,
+          taxModeID: row.taxModeID,
+          taxAfterDiscOnMrp: row.taxAfterDiscOnMrp || "N",
+          taxAfterDiscYN: row.taxAfterDiscYN || "N",
+          taxOnFreeItemYN: row.taxOnFreeItemYN || "N",
+          taxOnMrpYN: row.taxOnMrpYN || "N",
+          taxOnUnitPrice: row.taxOnUnitPrice || "Y",
+          totAmt: row.itemTotal || 0,
+          cgstPerValue: row.cgstPerValue || 0,
+          cgstTaxAmt: row.cgstTaxAmt || 0,
+          sgstPerValue: row.sgstPerValue || 0,
+          sgstTaxAmt: row.sgstTaxAmt || 0,
+          taxableAmt: row.taxableAmt || 0,
+          transferYN: row.transferYN || "N",
+          rNotes: row.rNotes || "",
+          compID: 1,
+          compCode: "TEST",
+          compName: "TEST",
+        })),
+      };
+
+      console.log("Submitting purchase order:", purchaseOrderData);
+      purchaseOrderData.purchaseOrderMastDto.pODate = "2025-05-05";
+      purchaseOrderData.purchaseOrderMastDto.pOApprovedYN = "Y";
+      purchaseOrderData.purchaseOrderMastDto.transferYN = "Y";
+      try {
+        const response = purchaseOrderMastServices.savePurchaseOrder(purchaseOrderData);
+        console.log(response);
+      } catch (error) {}
+    } catch (error) {
+      console.error("Error saving purchase order:", error);
+      // showAlert("error", "An error occurred while saving the purchase order", "error");
+    }
+  };
+  useEffect(() => {
+    console.log(selectedData);
+  }, [selectedData]);
+
+  const recalculateTotals = (updatedGrid: any[]) => {
+    const totalAmt = updatedGrid.reduce((sum, item) => sum + (item.itemTotal || 0), 0);
+    const totalTaxableAmt = updatedGrid.reduce((sum, item) => sum + (item.taxableAmt || 0), 0);
+    const netCGSTTaxAmt = updatedGrid.reduce((sum, item) => sum + (item.cgstTaxAmt || 0), 0);
+    const netSGSTTaxAmt = updatedGrid.reduce((sum, item) => sum + (item.sgstTaxAmt || 0), 0);
+    const taxAmt = netCGSTTaxAmt + netSGSTTaxAmt;
+
+    const netAmt = totalAmt - (selectedData.discAmt || 0) + taxAmt - (selectedData.coinAdjAmt || 0);
+
+    setSelectedData((prev) => ({
+      ...prev,
+      totalAmt,
+      taxAmt,
+      netCGSTTaxAmt,
+      netSGSTTaxAmt,
+      totalTaxableAmt,
+      netAmt,
+    }));
   };
 
   return (
@@ -198,7 +395,19 @@ const PurchaseOrderPage: React.FC = () => {
             isSubmitted={isSubmitted}
             handleSelectedProduct={handleSelectedProduct}
           />
-          <PurchaseOrderGrid poDetailDto={pODetailDto} />
+          <PurchaseOrderGrid poDetailDto={pODetailDto} handleProductsGrid={handleProductsGrid} />
+          <PurchaseOrderFooter
+            totDiscAmtPer={totDiscAmtPer}
+            setTotDiscAmtPer={setTotDiscAmtPer}
+            isDiscPercentage={isDiscPercentage}
+            setIsDiscPercentage={setIsDiscPercentage}
+            handleApplyDiscount={handleApplyDiscount}
+            handleApprovedByChange={handleApprovedByChange}
+            handleRemarksChange={handleRemarksChange}
+            handleFinalizeToggle={handleFinalizeToggle}
+            purchaseOrderMastData={selectedData}
+          />
+
           <Box sx={{ mt: 4 }}>
             <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
           </Box>

@@ -3,23 +3,25 @@ import React, { useEffect, useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import FormField from "@/components/FormField/FormField";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface PurchaseOrderGridProps {
   poDetailDto?: PurchaseOrderDetailDto;
+  handleProductsGrid: (data: any) => void;
 }
 
 interface GridRowData extends PurchaseOrderDetailDto {
   itemTotal: number;
 }
 
-const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto }) => {
+const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, handleProductsGrid }) => {
   const [gridData, setGridData] = useState<GridRowData[]>([]);
-
+  const dropdownValues = useDropdownValues(["taxType"]);
   useEffect(() => {
     if (poDetailDto) {
       const productExists = gridData.some((item) => item.productID === poDetailDto.productID);
       if (!productExists) {
-        const itemTotal = (poDetailDto.requiredPack || 0) * (poDetailDto.packPrice || 0) - (poDetailDto.disc || 0);
+        const itemTotal = (poDetailDto.requiredPack || 0) * (poDetailDto.packPrice || 0) - (poDetailDto.discAmt || 0);
 
         const newRow: GridRowData = {
           ...poDetailDto,
@@ -37,21 +39,42 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto }) =>
 
   const handleCellChange = (value: number, rowIndex: number, field: keyof GridRowData) => {
     const updatedData = [...gridData];
-    updatedData[rowIndex] = {
-      ...updatedData[rowIndex],
-      [field]: value,
-    };
+    const currentRow = { ...updatedData[rowIndex], [field]: value };
 
-    // Update itemTotal if any related field is updated
-    const { requiredPack = 0, packPrice = 0, disc = 0 } = updatedData[rowIndex];
-    updatedData[rowIndex].itemTotal = requiredPack * packPrice - disc;
+    const requiredPack = currentRow.requiredPack || 0;
+    const packPrice = currentRow.packPrice || 0;
+    const baseTotal = requiredPack * packPrice;
 
+    // Apply discount calculations
+    if (field === "discAmt") {
+      currentRow.discPercentageAmt = baseTotal ? (value / baseTotal) * 100 : 0;
+    } else if (field === "discPercentageAmt") {
+      currentRow.discAmt = baseTotal ? (baseTotal * value) / 100 : 0;
+    }
+
+    const discount = currentRow.discAmt || 0;
+    const taxableAmt = baseTotal - discount;
+
+    const gstPercent = currentRow.cgstPerValue || 0;
+    const gstAmount = (taxableAmt * gstPercent) / 100;
+
+    // Update fields
+    currentRow.taxableAmt = taxableAmt;
+    currentRow.cgstTaxAmt = gstAmount;
+    currentRow.sgstTaxAmt = 0; // No SGST used in image logic
+    currentRow.itemTotal = taxableAmt + gstAmount;
+
+    updatedData[rowIndex] = currentRow;
     setGridData(updatedData);
   };
 
+  useEffect(() => {
+    handleProductsGrid(gridData);
+  }, [gridData]);
+  console.log("row.cgstPerValue Data", poDetailDto);
   return (
     <Paper sx={{ mt: 2 }}>
-      <TableContainer>
+      <TableContainer sx={{ minHeight: 300 }}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -129,37 +152,43 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto }) =>
                 <TableCell align="right">
                   <FormField
                     type="number"
-                    value={row.disc || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "disc")}
+                    value={row.discAmt || 0}
+                    onChange={(e) => handleCellChange(Number(e.target.value), index, "discAmt")}
                     label=""
-                    name="disc"
-                    ControlID={`disc_${row.productID}`}
+                    name="discAmt"
+                    ControlID={`discAmt_${row.productID}`}
                   />
                 </TableCell>
 
                 <TableCell align="right">
                   <FormField
                     type="number"
-                    value={row.discPercentage || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "discPercentage")}
+                    value={row.discPercentageAmt || 0}
+                    onChange={(e) => handleCellChange(Number(e.target.value), index, "discPercentageAmt")}
                     label=""
-                    name="discPercentage"
-                    ControlID={`discPercentage_${row.productID}`}
+                    name="discPercentageAmt"
+                    ControlID={`discPercentageAmt_${row.productID}`}
                   />
                 </TableCell>
 
                 <TableCell align="right">
                   <FormField
-                    type="number"
-                    value={row.taxPercentage || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "taxPercentage")}
+                    type="select"
+                    value={dropdownValues.taxType?.find((tax) => Number(tax.label) === Number(row.cgstPerValue))?.value || ""}
+                    onChange={(e) => {
+                      const selectedTax = dropdownValues.taxType?.find((tax) => Number(tax.value) === Number(e.target.value));
+                      const selectedRate = Number(selectedTax?.label || 0);
+
+                      handleCellChange(selectedRate, index, "cgstPerValue");
+                    }}
+                    options={dropdownValues.taxType || []}
                     label=""
-                    name="taxPercentage"
-                    ControlID={`taxPercentage_${row.productID}`}
+                    name="gstPercent"
+                    ControlID={`gstPercent_${row.productID}`}
                   />
                 </TableCell>
 
-                <TableCell align="right">{row.reorderLevel || 0}</TableCell>
+                <TableCell align="right">{row.rOL || 0}</TableCell>
 
                 <TableCell align="right">{row.itemTotal.toFixed(2)}</TableCell>
 

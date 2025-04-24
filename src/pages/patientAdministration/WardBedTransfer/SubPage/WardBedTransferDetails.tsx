@@ -106,7 +106,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
   const handleWardChange = useCallback(
     (e: SelectChangeEvent<string>) => {
       const wardId = Number(e.target.value);
-      const selectedWard = dropdownValues.roomGroup.find((option) => Number(option.value) === wardId);
+      const selectedWard = dropdownValues.roomGroup?.find((option) => Number(option.value) === wardId);
 
       if (selectedWard) {
         setFormState((prev) => ({
@@ -130,7 +130,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
   const handleRoomChange = useCallback(
     (e: SelectChangeEvent<string>) => {
       const roomId = Number(e.target.value);
-      const selectedRoom = roomOptions.find((option) => Number(option.value) === roomId);
+      const selectedRoom = roomOptions?.find((option) => Number(option.value) === roomId);
 
       if (selectedRoom) {
         setFormState((prev) => ({
@@ -151,7 +151,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
   const handleBedChange = useCallback(
     (e: SelectChangeEvent<string>) => {
       const bedId = Number(e.target.value);
-      const selectedBed = bedOptions.find((option) => option.value === bedId.toString());
+      const selectedBed = bedOptions?.find((option) => option.value === bedId.toString());
 
       if (selectedBed) {
         setFormState((prev) => ({
@@ -167,11 +167,11 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
   const handlePhysicianChange = useCallback(
     (event: SelectChangeEvent<string>) => {
       const physicianValue = event.target.value;
-      const selectedPhysician = dropdownValues.attendingPhy.find((phy) => phy.value === physicianValue);
+      const selectedPhysician = dropdownValues.attendingPhy?.find((phy) => phy.value === physicianValue);
 
       if (selectedPhysician) {
         const [physicianName, specialty] = selectedPhysician.label.split("|").map((s) => s.trim());
-        const specialtyOption = dropdownValues.speciality.find((opt) => opt.label.trim() === specialty);
+        const specialtyOption = dropdownValues.speciality?.find((opt) => opt.label.trim() === specialty);
 
         setFormState((prev) => ({
           ...prev,
@@ -420,7 +420,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
             onChange={handleWardChange}
             name="rGrpID"
             ControlID="rGrpID"
-            options={dropdownValues.roomGroup}
+            options={dropdownValues.roomGroup || []}
             isMandatory
             size="small"
             gridProps={{ xs: 12, sm: 6, md: 4 }}
@@ -510,7 +510,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
             onChange={handlePhysicianChange}
             name="treatPhyID"
             ControlID="treatPhyID"
-            options={dropdownValues.attendingPhy}
+            options={dropdownValues.attendingPhy || []}
             size="small"
             gridProps={{ xs: 12, sm: 6, md: 3 }}
           />

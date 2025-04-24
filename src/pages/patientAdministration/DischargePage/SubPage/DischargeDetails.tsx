@@ -68,11 +68,11 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
   const handlePhysicianChange = useCallback(
     (event: SelectChangeEvent<string>) => {
       const physicianValue = event.target.value;
-      const selectedPhysician = dropdownValues.attendingPhy.find((phy) => phy.value === physicianValue);
+      const selectedPhysician = dropdownValues.attendingPhy?.find((phy) => phy.value === physicianValue);
 
       if (selectedPhysician) {
         const [physicianName, specialty] = selectedPhysician.label.split("|").map((s) => s.trim());
-        const specialtyOption = dropdownValues.speciality.find((opt) => opt.label.trim() === specialty);
+        const specialtyOption = dropdownValues.speciality?.find((opt) => opt.label.trim() === specialty);
 
         setFormState((prev) => ({
           ...prev,
@@ -96,7 +96,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
   const handleSituationChange = useCallback(
     (event: SelectChangeEvent<string>) => {
       const situation = event.target.value;
-      const selectedSituation = dropdownValues.dischargeSituation.find((opt) => opt.value === situation);
+      const selectedSituation = dropdownValues.dischargeSituation?.find((opt) => opt.value === situation);
 
       setFormState((prev) => ({
         ...prev,
@@ -292,7 +292,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
           onChange={handlePhysicianChange}
           name="dischgPhyID"
           ControlID="dischgPhyID"
-          options={dropdownValues.attendingPhy}
+          options={dropdownValues.attendingPhy || []}
           isMandatory
           size="small"
           gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -310,7 +310,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
           }
           name="faculty"
           ControlID="faculty"
-          options={dropdownValues.speciality}
+          options={dropdownValues.speciality || []}
           isMandatory
           disabled={Boolean(formState.dischgPhyID)}
           size="small"
@@ -324,7 +324,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
           onChange={handleStatusChange}
           name="dischgStatus"
           ControlID="dischgStatus"
-          options={dropdownValues.dischargeStatus}
+          options={dropdownValues.dischargeStatus || []}
           isMandatory
           size="small"
           gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -338,7 +338,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
           onChange={handleSituationChange}
           name="situation"
           ControlID="situation"
-          options={dropdownValues.dischargeSituation}
+          options={dropdownValues.dischargeSituation || []}
           size="small"
           gridProps={{ xs: 12, sm: 6, md: 3 }}
         />
@@ -350,7 +350,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
           onChange={handleDeliveryTypeChange}
           name="deliveryType"
           ControlID="deliveryType"
-          options={dropdownValues.deliveryType}
+          options={dropdownValues.deliveryType || []}
           size="small"
           gridProps={{ xs: 12, sm: 6, md: 3 }}
         />

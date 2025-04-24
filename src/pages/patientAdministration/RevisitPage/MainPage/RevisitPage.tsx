@@ -291,8 +291,8 @@ const RevisitPage: React.FC = () => {
                 value={revisitFormData.pTypeID}
                 name="pTypeID"
                 ControlID="PIC"
-                options={dropdownValues.pic}
-                onChange={handleDropdownChange(["pTypeID"], ["pTypeName"], dropdownValues.pic)}
+                options={dropdownValues.pic || []}
+                onChange={handleDropdownChange(["pTypeID"], ["pTypeName"], dropdownValues.pic || [])}
                 isMandatory={true}
                 isSubmitted={isSubmitted}
                 errorMessage={formErrors.pTypeID}
@@ -322,7 +322,7 @@ const RevisitPage: React.FC = () => {
                   name="deptID"
                   ControlID="Department"
                   options={DepartmentDropdownValues}
-                  onChange={handleDropdownChange(["deptID"], ["deptName"], dropdownValues.department)}
+                  onChange={handleDropdownChange(["deptID"], ["deptName"], dropdownValues.department || [])}
                   isMandatory={true}
                   isSubmitted={isSubmitted}
                   errorMessage={formErrors.deptID}

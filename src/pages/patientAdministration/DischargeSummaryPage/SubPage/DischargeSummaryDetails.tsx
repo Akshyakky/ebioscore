@@ -157,11 +157,11 @@ const DischargeSummaryDetails: React.FC<DischargeSummaryDetailsProps> = ({ onCle
   const handlePhysicianChange = useCallback(
     (event: SelectChangeEvent<string>) => {
       const physicianValue = event.target.value;
-      const selectedPhysician = dropdownValues.attendingPhy.find((phy) => phy.value === physicianValue);
+      const selectedPhysician = dropdownValues.attendingPhy?.find((phy) => phy.value === physicianValue);
 
       if (selectedPhysician) {
         const [physicianName, specialty] = selectedPhysician.label.split("|").map((s) => s.trim());
-        const specialtyOption = dropdownValues.speciality.find((opt) => opt.label.trim() === specialty);
+        const specialtyOption = dropdownValues.speciality?.find((opt) => opt.label.trim() === specialty);
 
         setFormState((prev) => ({
           ...prev,
@@ -294,7 +294,7 @@ const DischargeSummaryDetails: React.FC<DischargeSummaryDetailsProps> = ({ onCle
           onChange={handlePhysicianChange}
           name="dischgPhyID"
           ControlID="dischgPhyID"
-          options={dropdownValues.attendingPhy}
+          options={dropdownValues.attendingPhy || []}
           isMandatory
           size="small"
           gridProps={{ xs: 12, sm: 6, md: 3 }}
@@ -311,7 +311,7 @@ const DischargeSummaryDetails: React.FC<DischargeSummaryDetailsProps> = ({ onCle
           }
           name="faculty"
           ControlID="faculty"
-          options={dropdownValues.speciality}
+          options={dropdownValues.speciality || []}
           isMandatory
           disabled={Boolean(formState.dischgPhyID)}
           size="small"

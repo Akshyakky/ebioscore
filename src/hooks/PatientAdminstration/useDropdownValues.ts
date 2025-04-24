@@ -27,6 +27,7 @@ import { componentEntryTypeService, templategroupService } from "@/services/Labo
 import { appSubModuleService, appUserModuleService } from "@/services/SecurityManagementServices/securityManagementServices";
 import { serviceTypeService } from "@/services/BillingServices/BillingGenericService";
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
+import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
 
 export type DropdownType =
   | "pic"

@@ -458,9 +458,9 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({ onChang
               name="consultantRole"
               ControlID="consultantRole"
               value={selectedRole?.value || ""}
-              options={dropdownValues.consultantRole}
+              options={dropdownValues.consultantRole || []}
               onChange={(e) => {
-                const selected = dropdownValues.consultantRole.find((role) => role.value === e.target.value);
+                const selected = dropdownValues.consultantRole?.find((role) => role.value === e.target.value);
                 setSelectedRole(selected || null);
               }}
               gridProps={{ xs: 6 }}

@@ -337,14 +337,14 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
           if (chargeDetailsResponse?.success && chargeDetailsResponse.data) {
             const chargeDetails: ChargeDetailsDto = chargeDetailsResponse.data;
 
-            const picName = dropdownValues.pic.find((pic) => Number(pic.value) === chargeDetails.chargeDetails?.[0]?.pTypeID)?.label || "";
-            const wardCategoryName = dropdownValues.bedCategory.find((category) => Number(category.value) === chargeDetails.chargeDetails?.[0]?.wCatID)?.label || "";
-            const facultyNames = dropdownValues.speciality.find((speciality) => Number(speciality.value) === chargeDetails.chargeFaculties?.[0]?.aSubID)?.label || "";
+            const picName = dropdownValues.pic?.find((pic) => Number(pic.value) === chargeDetails.chargeDetails?.[0]?.pTypeID)?.label || "";
+            const wardCategoryName = dropdownValues.bedCategory?.find((category) => Number(category.value) === chargeDetails.chargeDetails?.[0]?.wCatID)?.label || "";
+            const facultyNames = dropdownValues.speciality?.find((speciality) => Number(speciality.value) === chargeDetails.chargeFaculties?.[0]?.aSubID)?.label || "";
 
-            const mergedGridData = dropdownValues.pic.map((pic) => {
+            const mergedGridData = dropdownValues.pic?.map((pic) => {
               const savedDetails = chargeDetails.chargeDetails.filter((detail) => detail.pTypeID === Number(pic.value));
               const rowData: GridData = { picName: pic.label };
-              dropdownValues.bedCategory.forEach((category) => {
+              dropdownValues.bedCategory?.forEach((category) => {
                 const matchingDetail = savedDetails.find((detail) => detail.wCatID === Number(category.value));
                 rowData[`${category.label}_drAmt`] = matchingDetail?.dcValue?.toFixed(2) || "0.00";
                 rowData[`${category.label}_hospAmt`] = matchingDetail?.hcValue?.toFixed(2) || "0.00";
@@ -379,7 +379,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
             setSelectedPicIds([picName]);
             setSelectedWardCategoryIds([wardCategoryName]);
             setSelectedFacultyIds([facultyNames]);
-            setGridData(mergedGridData);
+            setGridData(mergedGridData || []);
           }
         }
       }
@@ -406,7 +406,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         const savedDetails = editData.chargeDetails?.filter((detail) => detail.pTypeID === Number(pic.value)) || [];
         const rowData: GridData = { picName: pic.label };
 
-        dropdownValues.bedCategory.forEach((category) => {
+        dropdownValues.bedCategory?.forEach((category) => {
           const matchingDetail = savedDetails.find((detail) => detail.wCatID === Number(category.value));
           rowData[`${category.label}_drAmt`] = matchingDetail?.dcValue?.toFixed(2) || "0.00";
           rowData[`${category.label}_hospAmt`] = matchingDetail?.hcValue?.toFixed(2) || "0.00";
@@ -462,7 +462,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     (event: SelectChangeEvent<string[]>) => {
       const value = event.target.value as string[];
       const selectedNames = value
-        .map((val) => dropdownValues.speciality.find((opt) => opt.value === val)?.label || "")
+        .map((val) => dropdownValues.speciality?.find((opt) => opt.value === val)?.label || "")
         .filter(Boolean)
         .join(", ");
       setSelectedFacultyIds(value);

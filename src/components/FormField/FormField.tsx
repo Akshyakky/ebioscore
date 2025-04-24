@@ -366,7 +366,7 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
             {...commonProps}
             label={selectProps.isMandatory ? `${label} *` : label}
             value={value}
-            options={selectProps.options}
+            options={selectProps?.options || []}
             onChange={selectProps.onChange}
             defaultText={selectProps.defaultText}
             clearable={selectProps.clearable}

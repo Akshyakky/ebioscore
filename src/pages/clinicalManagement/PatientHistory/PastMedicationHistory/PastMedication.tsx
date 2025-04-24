@@ -159,7 +159,7 @@ const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipC
             label="Dosage"
             value={item.mdID?.toString() || ""}
             onChange={(e) => handleInputChange(rowIndex, "mdID", Number(e.target.value))}
-            options={dropdownValues.medicationDosage}
+            options={dropdownValues.medicationDosage || []}
             ControlID={`dosage-${rowIndex}`}
             name={`dosage-${rowIndex}`}
             size="small"
@@ -179,7 +179,7 @@ const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipC
             label="Frequency"
             value={item.mFrqID?.toString() || ""}
             onChange={(e) => handleInputChange(rowIndex, "mFrqID", Number(e.target.value))}
-            options={dropdownValues.medicationFrequency}
+            options={dropdownValues.medicationFrequency || []}
             ControlID={`frequency-${rowIndex}`}
             name={`frequency-${rowIndex}`}
             size="small"
@@ -199,7 +199,7 @@ const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipC
             label="Instruction"
             value={item.mInsID?.toString() || ""}
             onChange={(e) => handleInputChange(rowIndex, "mInsID", Number(e.target.value))}
-            options={dropdownValues.medicationInstruction}
+            options={dropdownValues.medicationInstruction || []}
             ControlID={`instruction-${rowIndex}`}
             name={`instruction-${rowIndex}`}
             size="small"

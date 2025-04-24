@@ -24,9 +24,11 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
   const handleProductSelect = useCallback(async (selectedProductString: string) => {
     const [selectedProductCode] = selectedProductString.split(" - ");
     const selectedProduct = productOptions.find((product) => product.productCode === selectedProductCode);
+    console.log(selectedProduct);
     if (selectedProduct) {
-      console.log("Selected Prod");
+      console.log("Selected Prod", selectedProduct);
       handleSelectedProduct(selectedProduct);
+      setProductName("");
     }
   }, []);
   useEffect(() => {
@@ -40,16 +42,45 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
         }
       };
       const fetchProducts = async () => {
-        const response = await productListService.getAll();
-        const productList: ProductListDto[] = response.data;
-        const activeProducts = productList.filter((product) => product.rActiveYN === "Y");
-        setProductOptions(activeProducts);
+        try {
+          const response = await productListService.getAll();
+          console.log("Raw product response:", response);
+
+          const productList = Array.isArray(response.data) ? response.data : [];
+          const activeProducts = productList.filter((product) => product.rActiveYN === "Y");
+          console.log("Active products:", activeProducts);
+          setProductOptions(activeProducts);
+        } catch (error) {
+          console.error("Error fetching products:", error);
+          showAlert("error", "Failed to fetch products", "error");
+        }
       };
       fetchPOCode(purchaseOrderData.fromDeptName.substring(0, 3).toUpperCase());
       fetchProducts();
       onFormChange("pODate", new Date().toLocaleDateString("en-GB"));
     }
   }, [purchaseOrderData?.fromDeptID]);
+
+  const fetchProductSuggestions = useCallback(
+    async (searchTerm: string) => {
+      if (searchTerm.trim() === "") {
+        return productOptions.map((item) => `${item.productCode} - ${item.productName}`);
+      }
+
+      if (!searchTerm.trim()) return [];
+
+      try {
+        return productOptions
+          .filter((item) => item.productCode?.toLowerCase().includes(searchTerm.toLowerCase()) || item.productName?.toLowerCase().includes(searchTerm.toLowerCase()))
+          .map((item) => `${item.productCode} - ${item.productName}`);
+      } catch (error) {
+        console.error("Error fetching product suggestions:", error);
+        return [];
+      }
+    },
+    [productOptions]
+  );
+
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Grid container spacing={2}>
@@ -90,12 +121,12 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
           <FormField
             type="select"
             label="Supplier Name"
-            value={purchaseOrderData?.supplierName || ""}
-            onChange={(e) => onFormChange("supplierName", e.target.value)}
+            value={purchaseOrderData?.supplierID || ""}
+            onChange={(e) => onFormChange("supplierID", e.target.value)}
             isSubmitted={isSubmitted}
-            name="supplierName"
-            ControlID="supplierName"
-            options={dropdownValues.department}
+            name="supplierID"
+            ControlID="supplierID"
+            options={dropdownValues.department || []}
             isMandatory
             gridProps={{ sm: 12 }}
           />
@@ -135,7 +166,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
             placeholder="Add product to the grid"
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
-            suggestions={productOptions.map((product) => `${product.productCode} - ${product.productName}`)}
+            fetchSuggestions={fetchProductSuggestions}
             onSelectSuggestion={handleProductSelect}
             gridProps={{ xs: 12 }}
           />
