@@ -208,7 +208,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
   const dialogContent = (
     <Box>
       <Grid container spacing={2}>
-        <Grid item xs={12} md={12} lg={12}>
+        <Grid size={{ sm: 12, md: 12, lg: 12 }}>
           {renderFormField("text", "pChartCode", "UHID", [], true, true, { xs: 12 })}
           {renderFormField("select", "pTitleVal", "Title", dropdownValues.title, true, false, { xs: 12 })}
           {renderFormField("select", "pGenderVal", "Gender", dropdownValues.gender, true, false, { xs: 12 })}
@@ -259,17 +259,17 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
       >
         <CardContent sx={{ padding: "8px !important" }}>
           <Grid container spacing={1} alignItems="center">
-            <Grid item>
+            <Grid>
               <Avatar sx={{ width: 40, height: 40, bgcolor: theme.palette.primary.main }}>
                 <PersonOutline />
               </Avatar>
             </Grid>
-            <Grid item xs>
+            <Grid>
               <Typography variant="subtitle1" component="div" sx={{ fontWeight: "bold", color: theme.palette.text.primary }}>
                 {patientDetails?.patientName}
               </Typography>
               <Grid container spacing={1} alignItems="center">
-                <Grid item>
+                <Grid>
                   <Chip
                     icon={<PersonOutline fontSize="small" />}
                     label={patientDetails?.gender}
@@ -284,7 +284,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
                     }}
                   />
                 </Grid>
-                <Grid item>
+                <Grid>
                   <Chip
                     icon={<CalendarToday fontSize="small" />}
                     label={patientDetails?.dateOfBirthOrAge}
@@ -300,7 +300,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
                   />
                 </Grid>
                 {patientDetails?.pBldGrp && (
-                  <Grid item>
+                  <Grid>
                     <Chip
                       icon={<LocalHospital fontSize="small" />}
                       label={`Blood: ${patientDetails.pBldGrp}`}
@@ -318,7 +318,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
                 )}
               </Grid>
             </Grid>
-            <Grid item>
+            <Grid>
               <Tooltip title="Edit Patient Details" placement="top" arrow>
                 <IconButton
                   onClick={handleClickOpen}

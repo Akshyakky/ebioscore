@@ -286,7 +286,6 @@ const DashboardPage: React.FC = () => {
   const [showPersonalOnly, setShowPersonalOnly] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const userInfo = useAppSelector((state) => state.auth);
   const { setLoading } = useLoading();
 
   function setStartOfDay(date: Date) {

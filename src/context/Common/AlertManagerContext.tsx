@@ -70,7 +70,6 @@ export const AlertManagerProvider: React.FC<{ children: ReactNode }> = ({ childr
         rActiveYN: "Y",
         oPVID: 0,
         pChartCode,
-        payID: 0,
       };
     },
     [userID, userName, formatISO]

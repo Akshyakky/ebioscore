@@ -48,6 +48,7 @@ import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
 import { Navigate } from "react-router-dom";
 import AlertPage from "@/pages/common/AlertManagerPage/MainPage/Alertpage";
 import EmployeeRegistrationForm from "@/pages/common/ExampleFormPage/EmployeeRegistrationForm";
+import AlertManager from "@/pages/common/AlertManagerPage/SubPage/AlertManager";
 
 interface RouteConfig {
   path: string;
@@ -76,7 +77,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/DepartmentListPage", component: DepartmentListPage, protected: true, providers: [UserListSearchProvider] },
   { path: "/ServiceGroupsListPage", component: ServiceGroupsListPage, protected: true },
   { path: "/PaymentTypesPage", component: PaymentTypesPage, protected: true },
-  { path: "/AlertPage", component: AlertPage, protected: true, providers: [PatientSearchProvider] },
+  { path: "/AlertPage", component: AlertManager, protected: true, providers: [PatientSearchProvider] },
   { path: "/WardCategoryPage", component: WardCategoryPage, protected: true },
   { path: "/BedSetUpPage", component: BedSetUpPage, protected: true },
   { path: "/DeptUnitListPage", component: DeptUnitListPage, protected: true },

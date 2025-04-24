@@ -2,16 +2,17 @@ import { defineConfig } from "vite";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
 import viteCompression from "vite-plugin-compression";
-import react from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react-swc";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react({
-      babel: {
-        plugins: [["@babel/plugin-transform-react-jsx", { optimize: true }]],
-      },
-    }),
+    react(),
+    // react({
+    //   babel: {
+    //     plugins: [["@babel/plugin-transform-react-jsx", { optimize: true }]],
+    //   },
+    // }),
     visualizer({
       filename: "build/eBiosCoreApp/stats.html",
       open: false,
@@ -75,27 +76,27 @@ export default defineConfig({
       },
     },
   },
-  optimizeDeps: {
-    include: [
-      "react",
-      "react-dom",
-      "react-router-dom",
-      "react-redux",
-      "@reduxjs/toolkit",
-      "yup",
-      "axios",
-      "lodash",
-      "@mui/material",
-      "@mui/icons-material",
-      "@mui/lab",
-      "@mui/x-date-pickers",
-    ],
-    exclude: ["@mui/icons-material/esm"],
-    force: true,
-    esbuildOptions: {
-      target: "esnext",
-    },
-  },
+  // optimizeDeps: {
+  //   include: [
+  //     "react",
+  //     "react-dom",
+  //     "react-router-dom",
+  //     "react-redux",
+  //     "@reduxjs/toolkit",
+  //     "yup",
+  //     "axios",
+  //     "lodash",
+  //     "@mui/material",
+  //     "@mui/icons-material",
+  //     "@mui/lab",
+  //     "@mui/x-date-pickers",
+  //   ],
+  //   exclude: ["@mui/icons-material/esm"],
+  //   force: true,
+  //   esbuildOptions: {
+  //     target: "esnext",
+  //   },
+  // },
   server: {
     port: 3000,
     host: true,
