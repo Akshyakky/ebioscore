@@ -1,5 +1,5 @@
-// src/pages/patientAdministration/commonPage/patient/PatientDemographics/PatientDemographics.tsx
-import React from "react";
+// src/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics.tsx
+import React, { useEffect } from "react";
 import { PatientDemographicsProps } from "./PatientDemographicsProps";
 import { PatientDemographicsCard } from "./PatientDemographicsCard";
 import { usePatientDemographics } from "@/hooks/PatientAdminstration/patient/usePatientDemographics";
@@ -44,16 +44,19 @@ export const PatientDemographics: React.FC<PatientDemographicsProps> = ({
     }
   };
 
+  // Force empty state message when no patient is selected
+  const effectiveEmptyStateMessage = pChartID === null ? "Please select a patient to view demographics" : emptyStateMessage;
+
   return (
     <PatientDemographicsCard
       demographicsData={data}
       isLoading={isLoading}
-      showEditButton={showEditButton}
-      showRefreshButton={showRefreshButton}
+      showEditButton={showEditButton && !!pChartID}
+      showRefreshButton={showRefreshButton && !!pChartID}
       onEditClick={onEditClick}
       onRefreshClick={handleRefresh}
       variant={variant}
-      emptyStateMessage={emptyStateMessage}
+      emptyStateMessage={effectiveEmptyStateMessage}
       className={className}
     />
   );

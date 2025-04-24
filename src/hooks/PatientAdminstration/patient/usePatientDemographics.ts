@@ -1,7 +1,7 @@
-// src/hooks/patient/PatientAdministration/usePatientDemographics.ts
+// src/hooks/PatientAdminstration/patient/usePatientDemographics.ts
 import { useState, useEffect, useCallback } from "react";
 import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
-import { PatientDemographicsData } from "../../../interfaces/PatientAdministration/Patient/PatientDemographics.interface";
+import { PatientDemographicsData } from "@/interfaces/PatientAdministration/Patient/PatientDemographics.interface";
 
 interface UsePatientDemographicsProps {
   pChartID?: number | null;
@@ -60,16 +60,23 @@ export const usePatientDemographics = ({ pChartID = null, autoFetch = true }: Us
     [currentPatientId]
   );
 
-  // Fetch demographics when patient ID changes
+  // Effect to handle changes to pChartID including when it becomes null
   useEffect(() => {
-    if (pChartID !== currentPatientId) {
-      setCurrentPatientId(pChartID);
+    // When pChartID changes, update currentPatientId
+    setCurrentPatientId(pChartID);
+
+    // Explicitly clear demographics when pChartID is null or undefined
+    if (pChartID === null || pChartID === undefined) {
+      setDemographics(null);
+      setError(null);
+      return;
     }
 
+    // Fetch demographics when pChartID is valid and autoFetch is true
     if (autoFetch && pChartID) {
       fetchDemographics(pChartID);
     }
-  }, [pChartID, autoFetch, currentPatientId, fetchDemographics]);
+  }, [pChartID, autoFetch, fetchDemographics]);
 
   const refresh = useCallback(async () => {
     await fetchDemographics();
