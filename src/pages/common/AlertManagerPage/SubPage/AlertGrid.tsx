@@ -1,3 +1,4 @@
+// src/pages/common/AlertManagerPage/SubPage/AlertGrid.tsx
 import React, { useMemo } from "react";
 import { Box, Typography, IconButton, Chip } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
@@ -13,19 +14,24 @@ interface AlertGridProps {
 
 const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAlert }) => {
   interface AlertGridColumn extends Column<AlertDto> {
-    render?: (item: AlertDto) => React.ReactNode;
+    render?: (item: AlertDto, rowIndex: number, columnIndex: number) => React.ReactNode;
     formatter?: (value: any) => string;
   }
 
   const columns = useMemo<AlertGridColumn[]>(
     () => [
       {
-        key: "oPIPAlertID",
-        header: "Alert ID",
+        key: "rowNumber",
+        header: "#",
         visible: true,
-        sortable: true,
-        filterable: true,
-        width: 100,
+        sortable: false,
+        filterable: false,
+        width: 60,
+        render: (_, rowIndex) => (
+          <Typography variant="body2" align="center">
+            {rowIndex + 1}
+          </Typography>
+        ),
       },
       {
         key: "category",
@@ -33,8 +39,12 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        width: 150,
-        render: (item: AlertDto) => <Chip label={item.category || "N/A"} color={getCategoryColor(item.category)} size="small" />,
+        width: 130,
+        render: (item: AlertDto) => (
+          <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+            <Chip label={item.category || "N/A"} color={getCategoryColor(item.category)} size="small" sx={{ minWidth: "90px", justifyContent: "center" }} />
+          </Box>
+        ),
       },
       {
         key: "alertDescription",
@@ -42,7 +52,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        width: 300,
+        minWidth: 300,
       },
       {
         key: "oPIPDate",
@@ -50,7 +60,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        width: 150,
+        width: 120,
         formatter: (value: string) => format(new Date(value), "dd/MM/yyyy"),
       },
       {
@@ -59,7 +69,12 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        width: 100,
+        width: 80,
+        render: (item: AlertDto) => (
+          <Typography variant="body2" align="center">
+            {item.patOPIPYN === "O" ? "Outpatient" : item.patOPIPYN === "I" ? "Inpatient" : item.patOPIPYN || "N/A"}
+          </Typography>
+        ),
       },
       {
         key: "actions",
@@ -67,7 +82,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: false,
         filterable: false,
-        width: 120,
+        width: 110,
         render: (item: AlertDto) => (
           <Box sx={{ display: "flex", justifyContent: "center" }}>
             <IconButton
@@ -77,6 +92,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
                 e.stopPropagation();
                 onEditAlert(item);
               }}
+              sx={{ mx: 0.5 }}
             >
               <EditIcon fontSize="small" />
             </IconButton>
@@ -87,6 +103,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
                 e.stopPropagation();
                 onDeleteAlert(item);
               }}
+              sx={{ mx: 0.5 }}
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
@@ -135,6 +152,10 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
           exportFileName="patient_alerts"
           emptyStateMessage="No alerts found for this patient"
           initialSortBy={{ field: "oPIPDate" as any, direction: "desc" }}
+          gridStyle={{
+            borderRadius: "4px",
+            overflow: "hidden",
+          }}
         />
       )}
     </Box>
