@@ -2,17 +2,17 @@
 import React, { useState, useEffect } from "react";
 import { Box, Typography, Paper, Button } from "@mui/material";
 import { Add as AddIcon } from "@mui/icons-material";
-import PatientSearch from "./PatientSearch";
-import AlertForm from "./AlertForm";
-import PatientDemographicsCard from "./PatientDemographicsCard"; // New import
-import PatientDemographicsForm from "./PatientDemographicsForm"; // New import
+import PatientSearch from "../SubPage/PatientSearch";
+import AlertForm from "../SubPage/AlertForm";
+import PatientDemographicsCard from "../SubPage/PatientDemographicsCard"; // New import
+import PatientDemographicsForm from "../SubPage/PatientDemographicsForm"; // New import
 import { useLoading } from "@/context/LoadingContext";
 import { AlertDto } from "@/interfaces/Common/AlertManager";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 import { alertService, baseAlertService } from "@/services/CommonServices/CommonModelServices";
 import { showAlert } from "@/utils/Common/showAlert";
-import AlertGrid from "./AlertGrid";
+import AlertGrid from "../SubPage/AlertGrid";
 
 const AlertManager: React.FC = () => {
   const { setLoading } = useLoading();
