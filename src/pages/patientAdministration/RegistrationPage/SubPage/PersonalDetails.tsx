@@ -36,7 +36,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
   const [dialogCategory, setDialogCategory] = useState<string>("");
 
   const handleTitleChange = (selectedTitleValue: string) => {
-    const selectedTitleOption = dropdownValues.title.find((t) => t.value === selectedTitleValue);
+    const selectedTitleOption = dropdownValues.title?.find((t) => t.value === selectedTitleValue);
     const selectedTitleLabel = selectedTitleOption?.label?.trim().toUpperCase() || "";
     const titleToGenderMap: { [key: string]: string } = {
       MR: "M",
@@ -52,7 +52,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
     };
 
     const genderCode = titleToGenderMap[selectedTitleLabel] || "";
-    const genderOption = dropdownValues.gender.find((g) =>
+    const genderOption = dropdownValues.gender?.find((g) =>
       genderCode === "M" ? g.label?.toLowerCase() === "male" : genderCode === "F" ? g.label?.toLowerCase() === "female" : false
     );
     setFormData((prevFormData) => ({
@@ -305,8 +305,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         name="PIC"
         ControlID="PIC"
         value={formData.patRegisters.pTypeID !== undefined && formData.patRegisters.pTypeID !== 0 ? formData.patRegisters.pTypeID.toString() : ""}
-        options={dropdownValues.pic}
-        onChange={handleDropdownChange(["patRegisters", "pTypeID"], ["patRegisters", "pTypeName"], dropdownValues.pic)}
+        options={dropdownValues.pic || []}
+        onChange={handleDropdownChange(["patRegisters", "pTypeID"], ["patRegisters", "pTypeName"], dropdownValues.pic || [])}
         isMandatory={true}
         isSubmitted={isSubmitted}
       />
@@ -336,7 +336,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         name="pTitleVal"
         ControlID="Title"
         value={formData.patRegisters.pTitleVal || ""}
-        options={dropdownValues.title}
+        options={dropdownValues.title || []}
         onChange={(e) => handleTitleChange(e.target.value)}
         isMandatory={true}
         isSubmitted={isSubmitted}
@@ -389,8 +389,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         name="pGenderVal"
         ControlID="Gender"
         value={formData.patRegisters.pGenderVal || ""}
-        options={dropdownValues.gender}
-        onChange={handleDropdownChange(["patRegisters", "pGenderVal"], ["patRegisters", "pGender"], dropdownValues.gender)}
+        options={dropdownValues.gender || []}
+        onChange={handleDropdownChange(["patRegisters", "pGenderVal"], ["patRegisters", "pGender"], dropdownValues.gender || [])}
         isMandatory={true}
         isSubmitted={isSubmitted}
       />
@@ -435,8 +435,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
             name="pAgeDescriptionVal"
             ControlID="AgeUnit"
             value={formData.patOverview.pAgeDescriptionVal}
-            options={dropdownValues.ageUnit}
-            onChange={handleDropdownChange(["patOverview", "pAgeDescriptionVal"], ["patOverview", "pAgeDescription"], dropdownValues.ageUnit)}
+            options={dropdownValues.ageUnit || []}
+            onChange={handleDropdownChange(["patOverview", "pAgeDescriptionVal"], ["patOverview", "pAgeDescription"], dropdownValues.ageUnit || [])}
             gridProps={{ xs: 12, md: 1 }}
           />
         </>
@@ -476,8 +476,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         name="pAddCountryVal"
         ControlID="Nationality"
         value={formData.patAddress.pAddCountryVal || dropdownValues.nationality}
-        options={dropdownValues.nationality}
-        onChange={handleDropdownChange(["patAddress", "pAddCountryVal"], ["patAddress", "pAddCountry"], dropdownValues.nationality)}
+        options={dropdownValues.nationality || []}
+        onChange={handleDropdownChange(["patAddress", "pAddCountryVal"], ["patAddress", "pAddCountry"], dropdownValues.nationality || [])}
         isSubmitted={isSubmitted}
         gridProps={{ xs: 12, sm: 6, md: 3 }}
         showAddButton={true}

@@ -158,7 +158,7 @@ const ChargeDoctorSharePerShare: React.FC<ChargeDoctorSharePerShareProps> = ({ o
             name="attendingPhysicianId"
             ControlID="AttendingPhysician"
             value={selectedPhysician}
-            options={dropdownValues.attendingPhy}
+            options={dropdownValues.attendingPhy || []}
             onChange={handlePhysicianChange}
             defaultText="Select an attending physician"
           />

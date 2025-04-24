@@ -129,8 +129,8 @@ const DeptUnitListDetails: React.FC<DeptUnitListDetailsProps> = ({ editData }) =
           label="Department"
           name="deptID"
           value={formState.deptID.toString()}
-          onChange={handleDropdownChange(["deptID"], ["deptName"], dropdownValues.department)}
-          options={dropdownValues.department}
+          onChange={handleDropdownChange(["deptID"], ["deptName"], dropdownValues.department || [])}
+          options={dropdownValues.department || []}
           ControlID="deptID"
           isMandatory={true}
         />

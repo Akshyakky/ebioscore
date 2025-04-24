@@ -111,7 +111,7 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
 
   const handleWardChange = (e: SelectChangeEvent<string>) => {
     const wardId = Number(e.target.value);
-    const selectedWard = dropdownValues.roomGroup.find((option) => Number(option.value) === wardId);
+    const selectedWard = dropdownValues.roomGroup?.find((option) => Number(option.value) === wardId);
 
     if (selectedWard) {
       onChange("wrBedDetailsDto", {
@@ -169,7 +169,7 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
         name="admissionType"
         value={formData.ipAdmissionDetailsDto.admissionType || ""}
         onChange={(e) => onChange("ipAdmissionDetailsDto", { ...formData.ipAdmissionDetailsDto, admissionType: e.target.value })}
-        options={dropdownValues.admissionType}
+        options={dropdownValues.admissionType || []}
         ControlID="admissionType"
         gridProps={{ xs: 12, sm: 6, md: 3 }}
       />
@@ -179,8 +179,8 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
         label="Case Type"
         name="caseType"
         value={formData.ipAdmissionDto.caseTypeCode || ""}
-        onChange={onDropdownChange(["ipAdmissionDto", "caseTypeCode"], ["ipAdmissionDto", "caseTypeName"], dropdownValues.caseType)}
-        options={dropdownValues.caseType}
+        onChange={onDropdownChange(["ipAdmissionDto", "caseTypeCode"], ["ipAdmissionDto", "caseTypeName"], dropdownValues.caseType || [])}
+        options={dropdownValues.caseType || []}
         ControlID="caseType"
         gridProps={{ xs: 12, sm: 6, md: 3 }}
       />
@@ -221,8 +221,8 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
         label="Primary Introducing Source"
         name="PrimaryIntroducingSource"
         value={formData.ipAdmissionDto.primaryReferralSourceId || ""}
-        onChange={onDropdownChange(["ipAdmissionDto", "primaryReferralSourceId"], ["ipAdmissionDto", "primaryReferralSourceName"], dropdownValues.primaryIntroducingSource)}
-        options={dropdownValues.primaryIntroducingSource}
+        onChange={onDropdownChange(["ipAdmissionDto", "primaryReferralSourceId"], ["ipAdmissionDto", "primaryReferralSourceName"], dropdownValues.primaryIntroducingSource || [])}
+        options={dropdownValues.primaryIntroducingSource || []}
         ControlID="primaryIntroducingSource"
         gridProps={{ xs: 12, sm: 6, md: 3 }}
       />
@@ -232,8 +232,8 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
         label="Department"
         name="Department"
         value={formData.ipAdmissionDto.deptID || ""}
-        onChange={onDropdownChange(["ipAdmissionDto", "deptID"], ["ipAdmissionDto", "deptName"], dropdownValues.department)}
-        options={dropdownValues.department}
+        onChange={onDropdownChange(["ipAdmissionDto", "deptID"], ["ipAdmissionDto", "deptName"], dropdownValues.department || [])}
+        options={dropdownValues.department || []}
         ControlID="department"
         gridProps={{ xs: 12, sm: 6, md: 3 }}
       />
@@ -244,7 +244,7 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
         name="Unit"
         value={formData.ipAdmissionDto.dulId || ""}
         onChange={(e) => onChange("ipAdmissionDto", { ...formData.ipAdmissionDto, dulId: Number(e.target.value) })}
-        options={dropdownValues.unit}
+        options={dropdownValues.unit || []}
         ControlID="unit"
         gridProps={{ xs: 12, sm: 6, md: 3 }}
       />
@@ -260,10 +260,10 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
             ...formData.ipAdmissionDto,
             attendingPhysicianId: physicianId,
             specialityID: specialityId,
-            attendingPhysicianName: dropdownValues.attendingPhy.find((option) => option.value === e.target.value)?.label || "",
+            attendingPhysicianName: dropdownValues.attendingPhy?.find((option) => option.value === e.target.value)?.label || "",
           });
         }}
-        options={dropdownValues.attendingPhy}
+        options={dropdownValues.attendingPhy || []}
         ControlID="attendingPhysician"
         gridProps={{ xs: 12, sm: 6, md: 3 }}
       />
@@ -274,7 +274,7 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
         name="PIC"
         value={formData.ipAdmissionDto.pTypeID || ""}
         onChange={(e) => onChange("ipAdmissionDto", { ...formData.ipAdmissionDto, pTypeID: Number(e.target.value) })}
-        options={dropdownValues.pic}
+        options={dropdownValues.pic || []}
         ControlID="pic"
         gridProps={{ xs: 12, sm: 6, md: 3 }}
       />
@@ -285,7 +285,7 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
         name="patNokID"
         value={formData.ipAdmissionDto.patNokID || 0}
         onChange={(e) => onChange("ipAdmissionDto", { ...formData.ipAdmissionDto, patNokID: Number(e.target.value) })}
-        options={dropdownValues.attendingPhy}
+        options={dropdownValues.attendingPhy || []}
         ControlID="patNokID"
         gridProps={{ xs: 12, sm: 6, md: 3 }}
       />
@@ -307,7 +307,7 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
         name="rGrpID"
         value={formData.wrBedDetailsDto.rGrpID?.toString() || ""}
         onChange={handleWardChange}
-        options={dropdownValues.roomGroup}
+        options={dropdownValues.roomGroup || []}
         ControlID="rGrpID"
         gridProps={{ xs: 12, sm: 6, md: 3 }}
       />

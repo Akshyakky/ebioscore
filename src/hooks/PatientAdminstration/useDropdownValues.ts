@@ -88,7 +88,6 @@ export type DropdownType =
   | "sampleType"
   | "chargeType"
   | "serviceType"
-  | "taxType"
   | "employeeRoom";
 
 // Structure for tracking each dropdown's state

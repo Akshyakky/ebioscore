@@ -174,14 +174,14 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
                 <TableCell align="right">
                   <FormField
                     type="select"
-                    value={dropdownValues.taxType.find((tax) => Number(tax.label) === Number(row.cgstPerValue))?.value || ""}
+                    value={dropdownValues.taxType?.find((tax) => Number(tax.label) === Number(row.cgstPerValue))?.value || ""}
                     onChange={(e) => {
-                      const selectedTax = dropdownValues.taxType.find((tax) => Number(tax.value) === Number(e.target.value));
+                      const selectedTax = dropdownValues.taxType?.find((tax) => Number(tax.value) === Number(e.target.value));
                       const selectedRate = Number(selectedTax?.label || 0);
 
                       handleCellChange(selectedRate, index, "cgstPerValue");
                     }}
-                    options={dropdownValues.taxType}
+                    options={dropdownValues.taxType || []}
                     label=""
                     name="gstPercent"
                     ControlID={`gstPercent_${row.productID}`}

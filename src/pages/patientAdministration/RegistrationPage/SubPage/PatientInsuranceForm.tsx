@@ -181,8 +181,8 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
         name="insurID"
         ControlID="Insurance"
         value={insuranceForm.insurID === 0 ? "" : insuranceForm.insurID.toString()}
-        options={dropdownValues.insurance}
-        onChange={handleDropdownChange(["insurID"], ["insurName"], dropdownValues.insurance)}
+        options={dropdownValues.insurance || []}
+        onChange={handleDropdownChange(["insurID"], ["insurName"], dropdownValues.insurance || [])}
         isMandatory={true}
         isSubmitted={isSubmitted}
         gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
@@ -249,8 +249,8 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
         name="relationVal"
         ControlID="Relationship"
         value={insuranceForm.relationVal || dropdownValues.relation}
-        options={dropdownValues.relation}
-        onChange={handleDropdownChange(["relationVal"], ["relation"], dropdownValues.relation)}
+        options={dropdownValues.relation || []}
+        onChange={handleDropdownChange(["relationVal"], ["relation"], dropdownValues.relation || [])}
         gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
         showAddButton={true}
         onAddClick={() => handleAddField("RELATION")}
@@ -261,8 +261,8 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
         name="coveredVal"
         ControlID="CoveredFor"
         value={String(insuranceForm.coveredVal)}
-        options={dropdownValues.coverFor}
-        onChange={handleDropdownChange(["coveredVal"], ["coveredFor"], dropdownValues.coverFor)}
+        options={dropdownValues.coverFor || []}
+        onChange={handleDropdownChange(["coveredVal"], ["coveredFor"], dropdownValues.coverFor || [])}
         gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
       />
       <FormField

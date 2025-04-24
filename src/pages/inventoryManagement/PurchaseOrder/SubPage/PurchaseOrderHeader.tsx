@@ -126,7 +126,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
             isSubmitted={isSubmitted}
             name="supplierID"
             ControlID="supplierID"
-            options={dropdownValues.department}
+            options={dropdownValues.department || []}
             isMandatory
             gridProps={{ sm: 12 }}
           />

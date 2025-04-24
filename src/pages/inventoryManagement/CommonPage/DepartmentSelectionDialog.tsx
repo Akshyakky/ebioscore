@@ -42,7 +42,7 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
       setSelectedDeptId(deptId);
 
       // Find the department name from the selected ID
-      const selectedDept = dropdownValues.department.find((dept) => parseInt(dept.value) === deptId);
+      const selectedDept = dropdownValues.department?.find((dept) => parseInt(dept.value) === deptId);
       if (selectedDept) {
         setDeptName(selectedDept.label);
       }
@@ -80,7 +80,7 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
         name="departmentId"
         ControlID="Department"
         value={selectedDeptId === 0 ? "" : String(selectedDeptId)}
-        options={dropdownValues.department}
+        options={dropdownValues.department || []}
         onChange={handleDropdownChange}
         isMandatory={true}
         isSubmitted={isSubmitted}

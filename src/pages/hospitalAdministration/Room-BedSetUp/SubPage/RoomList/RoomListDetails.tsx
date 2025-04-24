@@ -306,7 +306,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
             name="rgrpID"
             value={formData.rgrpID?.toString() || ""}
             onChange={(e) => handleRoomGroupChange("rgrpID", e.target.value)}
-            options={dropdownValues.roomGroup}
+            options={dropdownValues.roomGroup || []}
             ControlID="rgrpID"
             gridProps={{ xs: 12 }}
           />
@@ -316,8 +316,8 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
             label="Location"
             name="rLocation"
             value={formData.rLocation || ""}
-            onChange={handleDropdownChange(["rLocationID"], ["rLocation"], dropdownValues.floor)}
-            options={dropdownValues.floor}
+            onChange={handleDropdownChange(["rLocationID"], ["rLocation"], dropdownValues.floor || [])}
+            options={dropdownValues.floor || []}
             ControlID="rLocation"
             gridProps={{ xs: 12 }}
           />
@@ -326,8 +326,8 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
             label="Unit "
             name="dulID"
             value={formData.dulID || ""}
-            onChange={handleDropdownChange(["dulID"], ["unitDesc"], dropdownValues.unit)}
-            options={dropdownValues.unit}
+            onChange={handleDropdownChange(["dulID"], ["unitDesc"], dropdownValues.unit || [])}
+            options={dropdownValues.unit || []}
             ControlID="dulID"
             gridProps={{ xs: 12 }}
           />
