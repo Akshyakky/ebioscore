@@ -1,7 +1,7 @@
 // src/pages/common/AlertManagerPage/MainPage/EnhancedAlertManager.tsx
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Paper, Grid, Card, Divider } from "@mui/material";
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Save as SaveIcon, Clear as ClearIcon, Refresh as RefreshIcon } from "@mui/icons-material";
+import { Box, Typography, Paper, Grid, Divider } from "@mui/material";
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Refresh as RefreshIcon, Clear as ClearIcon } from "@mui/icons-material";
 import PatientSearch from "../SubPage/PatientSearch";
 import AlertForm from "../SubPage/AlertForm";
 import { useLoading } from "@/context/LoadingContext";
@@ -9,7 +9,6 @@ import { AlertDto } from "@/interfaces/Common/AlertManager";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 import { alertService, baseAlertService } from "@/services/CommonServices/CommonModelServices";
-import { showAlert } from "@/utils/Common/showAlert";
 import AlertGrid from "../SubPage/AlertGrid";
 import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import PatientDemographicsForm from "../SubPage/PatientDemographicsForm";
@@ -17,8 +16,7 @@ import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
 import CustomButton from "@/components/Button/CustomButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 
-// Enhanced version of Alert Manager with improved UI and confirmation dialogs
-const EnhancedAlertManager: React.FC = () => {
+const AlertManager: React.FC = () => {
   const { setLoading } = useLoading();
   const [selectedPatient, setSelectedPatient] = useState<{ pChartID: number; pChartCode: string; fullName: string } | null>(null);
   const [patientDemographics, setPatientDemographics] = useState<any>(null);
@@ -28,8 +26,8 @@ const EnhancedAlertManager: React.FC = () => {
   const [currentAlert, setCurrentAlert] = useState<AlertDto | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [refreshDemographics, setRefreshDemographics] = useState(0);
+  const [clearSearchTrigger, setClearSearchTrigger] = useState(0);
 
-  // Confirmation dialog states
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmDialogProps, setConfirmDialogProps] = useState({
     title: "",
@@ -38,7 +36,6 @@ const EnhancedAlertManager: React.FC = () => {
     onConfirm: () => {},
   });
 
-  // Fetch alerts when a patient is selected
   useEffect(() => {
     if (selectedPatient) {
       fetchPatientAlerts(selectedPatient.pChartID);
@@ -85,6 +82,25 @@ const EnhancedAlertManager: React.FC = () => {
     }
   };
 
+  const handleClearPatient = () => {
+    showConfirmDialog({
+      title: "Clear Patient Selection",
+      message: "Are you sure you want to clear the current patient selection?",
+      type: "warning",
+      onConfirm: () => {
+        setSelectedPatient(null);
+        setClearSearchTrigger((prev) => prev + 1);
+        notifySuccess("Patient selection cleared");
+      },
+    });
+  };
+
+  const handleDirectClearPatient = () => {
+    setSelectedPatient(null);
+    setClearSearchTrigger((prev) => prev + 1);
+    notifySuccess("Patient selection cleared");
+  };
+
   const handleAddAlert = () => {
     if (!selectedPatient) {
       showConfirmDialog({
@@ -96,7 +112,6 @@ const EnhancedAlertManager: React.FC = () => {
       return;
     }
 
-    // Create empty alert with patient info
     const newAlert: Partial<AlertDto> = {
       pChartID: selectedPatient.pChartID,
       pChartCode: selectedPatient.pChartCode,
@@ -203,7 +218,6 @@ const EnhancedAlertManager: React.FC = () => {
     setConfirmDialogOpen(true);
   };
 
-  // Render demographics information
   const renderDemographics = () => {
     if (!patientDemographics) return null;
 
@@ -288,10 +302,13 @@ const EnhancedAlertManager: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      {/* Page Header */}
+      {/* Page Header with Action Buttons */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Typography variant="h4">Alert Manager</Typography>
-        <CustomButton variant="outlined" color="primary" text="Refresh Data" icon={RefreshIcon} onClick={handleRefreshData} disabled={!selectedPatient} />
+        <Box sx={{ display: "flex", gap: 2 }}>
+          {selectedPatient && <CustomButton variant="outlined" color="error" text="Clear Patient" icon={ClearIcon} onClick={handleClearPatient} />}
+          <CustomButton variant="outlined" color="primary" text="Refresh Data" icon={RefreshIcon} onClick={handleRefreshData} disabled={!selectedPatient} />
+        </Box>
       </Box>
 
       {/* Patient Search & Demographics - Combined Section */}
@@ -299,10 +316,14 @@ const EnhancedAlertManager: React.FC = () => {
         <Grid container spacing={2}>
           {/* Left side - Patient Search */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Patient Search
-            </Typography>
-            <PatientSearch onPatientSelect={setSelectedPatient} />
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+              <Box sx={{ flexGrow: 1 }}>
+                <Typography variant="h6" gutterBottom>
+                  Patient Search
+                </Typography>
+                <PatientSearch onPatientSelect={setSelectedPatient} clearTrigger={clearSearchTrigger} />
+              </Box>
+            </Box>
           </Grid>
 
           {/* Right side - Patient Demographics */}
@@ -377,4 +398,4 @@ const EnhancedAlertManager: React.FC = () => {
   );
 };
 
-export default EnhancedAlertManager;
+export default AlertManager;

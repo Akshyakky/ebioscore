@@ -10,14 +10,15 @@ interface PatientOption {
   plName: string;
   pAddPhone1?: string;
   pDob?: Date;
-  fullName: string; // Derived field
+  fullName: string;
 }
 
 interface PatientSearchProps {
   onPatientSelect: (patient: { pChartID: number; pChartCode: string; fullName: string } | null) => void;
+  clearTrigger?: number;
 }
 
-const PatientSearch: React.FC<PatientSearchProps> = ({ onPatientSelect }) => {
+const PatientSearch: React.FC<PatientSearchProps> = ({ onPatientSelect, clearTrigger = 0 }) => {
   const [inputValue, setInputValue] = useState<string>("");
   const [options, setOptions] = useState<PatientOption[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -36,7 +37,6 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ onPatientSelect }) => {
         const response = await RegistrationService.searchPatients(searchTerm);
 
         if (response.success && response.data) {
-          // Format the patient data for display
           const patientOptions: PatientOption[] = response.data.map((patient: any) => ({
             pChartID: patient.pChartID,
             pChartCode: patient.pChartCode,
@@ -69,6 +69,13 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ onPatientSelect }) => {
     };
   }, [inputValue, debouncedSearch]);
 
+  useEffect(() => {
+    if (clearTrigger > 0) {
+      setSelectedPatient(null);
+      setInputValue("");
+    }
+  }, [clearTrigger]);
+
   const handlePatientSelect = (patient: PatientOption | null) => {
     setSelectedPatient(patient);
 
@@ -89,6 +96,7 @@ const PatientSearch: React.FC<PatientSearchProps> = ({ onPatientSelect }) => {
       options={options}
       loading={loading}
       value={selectedPatient}
+      inputValue={inputValue}
       onChange={(_, newValue) => handlePatientSelect(newValue)}
       onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
       getOptionLabel={(option) => option.fullName || ""}
