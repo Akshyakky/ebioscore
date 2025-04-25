@@ -1,6 +1,6 @@
 // src/pages/common/AlertManagerPage/SubPage/AlertForm.tsx
 import React from "react";
-import { Button, Box, Typography, Grid, Divider } from "@mui/material";
+import { Box, Typography, Grid, Divider } from "@mui/material";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -22,11 +22,12 @@ interface AlertFormProps {
 }
 
 const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode, onSubmit, patientName }) => {
-  // Define the schema using Zod
+  // Define the schema using Zod, matching backend validator
   const alertSchema = z.object({
     category: z.string().min(1, { message: "Category is required" }),
-    alertDescription: z.string().min(1, { message: "Alert description is required" }),
-    rActiveYN: z.string().min(1, { message: "Active status is required" }),
+    alertDescription: z.string().min(1, { message: "Alert description is required" }).max(4000, { message: "Alert description cannot exceed 4000 characters" }),
+    rActiveYN: z.enum(["Y", "N"], { message: "Active status must be Y or N" }),
+    oPIPDate: z.date({ message: "Date is required" }),
   });
 
   // Derive the type from the schema
@@ -38,15 +39,24 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
     formState: { errors, isValid, isDirty },
     reset,
   } = useForm<AlertFormFields>({
-    defaultValues: alert,
+    defaultValues: {
+      category: alert.category || "",
+      alertDescription: alert.alertDescription || "",
+      rActiveYN: alert.rActiveYN || "Y",
+      oPIPDate: alert.oPIPDate || new Date(),
+    },
     resolver: zodResolver(alertSchema),
     mode: "onChange",
   });
 
   const processSubmit: SubmitHandler<AlertFormFields> = (data) => {
-    // Sanitize inputs and submit
+    // Sanitize inputs and merge with existing alert data
     const sanitizedData = sanitizeFormData(data);
-    onSubmit(sanitizedData as AlertDto);
+    const updatedAlert: AlertDto = {
+      ...alert,
+      ...sanitizedData,
+    };
+    onSubmit(updatedAlert);
   };
 
   const handleCancel = () => {
@@ -150,6 +160,10 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
                   size="small"
                   fullWidth
                 />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField name="oPIPDate" control={control} label="Alert Date" type="datepicker" required size="small" fullWidth />
               </Grid>
 
               <Grid size={{ xs: 12 }}>

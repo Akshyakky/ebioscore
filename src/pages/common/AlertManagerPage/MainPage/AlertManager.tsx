@@ -18,8 +18,6 @@ import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientDemographicsForm } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographicsForm/PatientDemographicsForm";
 
-// Import the reusable patient components
-
 const AlertManager: React.FC = () => {
   const { setLoading } = useLoading();
   const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
@@ -51,10 +49,18 @@ const AlertManager: React.FC = () => {
   const fetchPatientAlerts = async (pChartID: number) => {
     try {
       setLoading(true);
+      // Use alertService only for GetAlertBypChartID
       const result: OperationResult<AlertDto[]> = await alertService.GetAlertBypChartID(pChartID);
 
       if (result.success) {
-        setAlerts(result.data || []);
+        // Ensure dates are properly converted from strings to Date objects
+        const processedAlerts =
+          result.data?.map((alert) => ({
+            ...alert,
+            oPIPDate: alert.oPIPDate ? new Date(alert.oPIPDate) : new Date(),
+          })) || [];
+
+        setAlerts(processedAlerts);
       } else {
         notifyError(result.errorMessage || "Failed to fetch alerts");
       }
@@ -90,11 +96,18 @@ const AlertManager: React.FC = () => {
       return;
     }
 
+    // Initialize with the correct data types matching the backend DTO
     const newAlert: Partial<AlertDto> = {
       pChartID: selectedPatient.pChartID,
       pChartCode: selectedPatient.pChartCode,
-      rActiveYN: "Y",
-      oPIPDate: new Date(),
+      rActiveYN: "Y", // This should be a character, not string
+      oPIPDate: new Date(), // Initialize with current date
+      patOPIPYN: "O", // Default to outpatient
+      oPIPNo: 0,
+      oPVID: 0,
+      oPIPCaseNo: 0,
+      oldPChartID: 0,
+      transferYN: "N",
     };
 
     setCurrentAlert(newAlert as AlertDto);
@@ -103,7 +116,13 @@ const AlertManager: React.FC = () => {
   };
 
   const handleEditAlert = (alert: AlertDto) => {
-    setCurrentAlert(alert);
+    // Ensure the date is properly converted to a Date object
+    const alertWithDateObject = {
+      ...alert,
+      oPIPDate: alert.oPIPDate instanceof Date ? alert.oPIPDate : new Date(alert.oPIPDate),
+    };
+
+    setCurrentAlert(alertWithDateObject);
     setIsEditMode(true);
     setIsAlertFormOpen(true);
   };
@@ -120,7 +139,8 @@ const AlertManager: React.FC = () => {
   const confirmDeleteAlert = async (alert: AlertDto) => {
     try {
       setLoading(true);
-      const isSuccess = await baseAlertService.updateActiveStatus(alert.oPIPAlertID, true);
+      // Use baseAlertService for updateActiveStatus
+      const isSuccess = await baseAlertService.updateActiveStatus(alert.oPIPAlertID, false);
 
       if (isSuccess) {
         setAlerts((prev) => prev.filter((a) => a.oPIPAlertID !== alert.oPIPAlertID));
@@ -138,13 +158,27 @@ const AlertManager: React.FC = () => {
     try {
       setLoading(true);
 
-      const result = isEditMode ? await baseAlertService.save(formData) : await baseAlertService.save(formData);
+      // Ensure the date is in the correct format before sending to the backend
+      const formattedData = {
+        ...formData,
+        // Make sure oPIPDate is a proper Date object
+        oPIPDate: formData.oPIPDate instanceof Date ? formData.oPIPDate : new Date(formData.oPIPDate),
+      };
+
+      // Use baseAlertService for both create and update operations
+      const result = await baseAlertService.save(formattedData);
 
       if (result.success && result.data) {
+        // Ensure the returned date is a Date object
+        const newAlert = {
+          ...result.data,
+          oPIPDate: new Date(result.data.oPIPDate),
+        };
+
         if (isEditMode) {
-          setAlerts((prev) => prev.map((a) => (a.oPIPAlertID === formData.oPIPAlertID ? result.data : a)));
+          setAlerts((prev) => prev.map((a) => (a.oPIPAlertID === formData.oPIPAlertID ? newAlert : a)));
         } else {
-          setAlerts((prev) => [...prev, result.data]);
+          setAlerts((prev) => [...prev, newAlert]);
         }
 
         notifySuccess(`Alert ${isEditMode ? "updated" : "created"} successfully`);

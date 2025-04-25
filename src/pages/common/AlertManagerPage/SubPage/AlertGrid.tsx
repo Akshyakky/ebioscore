@@ -2,7 +2,7 @@
 import React, { useMemo } from "react";
 import { Box, Typography, IconButton, Chip } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { AlertDto } from "@/interfaces/Common/AlertManager";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 
@@ -17,6 +17,17 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
     render?: (item: AlertDto, rowIndex: number, columnIndex: number) => React.ReactNode;
     formatter?: (value: any) => string;
   }
+
+  // Safely format date values
+  const formatDate = (dateValue: Date | string): string => {
+    try {
+      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+      return isValid(date) ? format(date, "dd/MM/yyyy") : "Invalid Date";
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return "Invalid Date";
+    }
+  };
 
   const columns = useMemo<AlertGridColumn[]>(
     () => [
@@ -61,7 +72,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         sortable: true,
         filterable: true,
         width: 120,
-        formatter: (value: string) => format(new Date(value), "dd/MM/yyyy"),
+        render: (item: AlertDto) => <Typography variant="body2">{formatDate(item.oPIPDate)}</Typography>,
       },
       {
         key: "patOPIPYN",
@@ -74,6 +85,22 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
           <Typography variant="body2" align="center">
             {item.patOPIPYN === "O" ? "Outpatient" : item.patOPIPYN === "I" ? "Inpatient" : item.patOPIPYN || "N/A"}
           </Typography>
+        ),
+      },
+      {
+        key: "rActiveYN",
+        header: "Status",
+        visible: true,
+        sortable: true,
+        filterable: true,
+        width: 90,
+        render: (item: AlertDto) => (
+          <Chip
+            label={item.rActiveYN === "Y" ? "Active" : "Inactive"}
+            color={item.rActiveYN === "Y" ? "success" : "default"}
+            size="small"
+            sx={{ minWidth: "70px", justifyContent: "center" }}
+          />
         ),
       },
       {
