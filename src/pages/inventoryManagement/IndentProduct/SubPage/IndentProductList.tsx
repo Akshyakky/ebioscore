@@ -1,134 +1,143 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Grid, Paper, SelectChangeEvent, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Grid, Paper, Typography } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-
+import { useForm } from "react-hook-form";
 import { useAppSelector } from "@/store/hooks";
 import { useLoading } from "@/context/LoadingContext";
 import { showAlert } from "@/utils/Common/showAlert";
 import { indentProductService } from "@/services/InventoryManagementService/inventoryManagementService";
-
-import FormField from "@/components/FormField/FormField";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import { IndentSaveRequestDto } from "@/interfaces/InventoryManagement/IndentProductDto";
+import DepartmentInfoChange from "../../CommonPage/DepartmentInfoChange";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
+import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
+import dayjs from "dayjs";
 
-const IndentProductListDetails: React.FC = () => {
-  const [formState, setFormState] = useState<IndentSaveRequestDto>({
-    IndentMaster: {
-      indentID: 0,
-      indentCode: "",
-      indentType: "Department Indent",
-      indentDate: new Date().toISOString().split("T")[0],
-      fromDeptID: undefined,
-      fromDeptName: "",
-      toDeptID: undefined,
-      toDeptName: "",
-      rActiveYN: "Y",
-      compID: 0,
-      compCode: "",
-      compName: "",
-      transferYN: "N",
-      remarks: "",
-    },
-    IndentDetails: [],
-  });
+interface IndentProductDetailsProps {
+  selectedData?: IndentSaveRequestDto | null;
+  selectedDeptId: number;
+  selectedDeptName: string;
+  handleDepartmentChange: () => void;
+}
 
+const IndentProductDetails: React.FC<IndentProductDetailsProps> = ({ selectedData, selectedDeptId, selectedDeptName, handleDepartmentChange }) => {
+  const { control, setValue, watch, reset, handleSubmit } = useForm<IndentSaveRequestDto>();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const { setLoading } = useLoading();
+  const dropdownValues = useDropdownValues(["department", "departmentIndent"]);
+  const { fetchPatientSuggestions } = usePatientAutocomplete();
+  const uhidInputRef = useRef<HTMLInputElement>(null);
 
-  const handleClear = useCallback(async () => {
+  // Watch values to update dependent fields
+  const indentType = watch("IndentMaster.indentType");
+  const fromDeptID = watch("IndentMaster.fromDeptID");
+  const toDeptID = watch("IndentMaster.toDeptID");
+
+  // Process department options
+  const departmentList = dropdownValues.department || [];
+  const toDepartmentOptions = departmentList
+    .filter((d: any) => d?.isStoreYN === "Y" && parseInt(d.value) !== fromDeptID)
+    .map((dept: any) => ({ value: parseInt(dept.value), label: dept.label }));
+
+  const fromDepartmentOptions = departmentList.filter((d: any) => parseInt(d.value) !== toDeptID).map((dept: any) => ({ value: parseInt(dept.value), label: dept.label }));
+
+  // Process indent type options
+  const indentTypeOptions = (dropdownValues.departmentIndent || []).map((type: any) => ({ value: type.value, label: type.label }));
+
+  const initializeForm = useCallback(async () => {
     setLoading(true);
     try {
-      debugger;
-      // Remove debugger statement from production code
-      // debugger;
-
       const nextCode = await indentProductService.getNextCode("IND", 3);
-      console.log("Next Code Response:", nextCode); // Log the response for debugging
 
-      // Check if the response has data before using it
-      if (nextCode && nextCode.data) {
-        debugger;
-        setFormState({
-          IndentMaster: {
-            indentID: 0,
-            indentCode: nextCode.data,
-            indentType: "Department Indent", // Set a default value
-            indentDate: new Date().toISOString().split("T")[0],
-            fromDeptID: undefined,
-            fromDeptName: "",
-            toDeptID: undefined,
-            toDeptName: "",
-            rActiveYN: "Y",
-            compID: compID || 0,
-            compCode: compCode || "",
-            compName: compName || "",
-            transferYN: "N",
-            remarks: "",
-          },
-          IndentDetails: [],
-        });
-        setIsSubmitted(false);
-      } else {
-        // Handle when response doesn't have expected data
-        throw new Error("Invalid response format");
-      }
-    } catch (error) {
-      console.error("Error fetching next indent code:", error);
-      // More specific error message based on the error type
-      const errorMessage = error === "Network Error" ? "Cannot connect to the server. Please check your network connection." : "Failed to generate next indent code.";
-      showAlert("Error", errorMessage, "error");
-
-      // Set a temporary code if we can't get one from the server
-      setFormState((prev) => ({
-        ...prev,
+      const defaultValues = {
         IndentMaster: {
-          ...prev.IndentMaster,
-          indentCode: "IND-TEMP",
+          indentID: 0,
+          indentCode: nextCode.data,
+          indentType: "Department Indent",
+          indentDate: dayjs().format("DD/MM/YYYY"),
+          fromDeptID: selectedDeptId,
+          fromDeptName: selectedDeptName,
+          toDeptID: 0,
+          toDeptName: "",
+          rActiveYN: "Y",
+          compID: compID || 0,
+          compCode: compCode || "",
+          compName: compName || "",
+          transferYN: "N",
+          remarks: "",
+          pChartCode: "",
+          pChartID: 0,
         },
-      }));
+        IndentDetails: [],
+      };
+
+      reset(defaultValues);
+      setIsSubmitted(false);
+    } catch (error) {
+      showAlert("Error", "Failed to fetch the next Indent Code.", "error");
     } finally {
       setLoading(false);
     }
-  }, [compID, compCode, compName, setLoading]);
+  }, [selectedDeptId, selectedDeptName, compID, compCode, compName, reset, setLoading]);
+
   useEffect(() => {
-    handleClear();
-  }, [handleClear]);
+    if (selectedData) {
+      // Format date for the form field
+      const formattedData = {
+        ...selectedData,
+        IndentMaster: {
+          ...selectedData.IndentMaster,
+          indentDate: dayjs(selectedData.IndentMaster.indentDate).format("DD/MM/YYYY"),
+        },
+      };
+      reset(formattedData);
+    } else {
+      initializeForm();
+    }
+  }, [selectedData, initializeForm, reset]);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormState((prev) => ({
-      ...prev,
-      IndentMaster: {
-        ...prev.IndentMaster,
-        [name]: value,
-      },
-    }));
-  }, []);
+  const handlePatientSelection = (suggestion: string) => {
+    const pChartCode = suggestion.split("|")[0].trim();
+    const pChartID = extractNumbers(pChartCode)[0] || 0;
 
-  const handleSelectChange = useCallback((event: SelectChangeEvent<string>) => {
-    const { name, value } = event.target;
-    setFormState((prev) => ({
-      ...prev,
-      IndentMaster: {
-        ...prev.IndentMaster,
-        [name]: value,
-      },
-    }));
-  }, []);
+    setValue("IndentMaster.pChartCode", pChartCode);
+    setValue("IndentMaster.pChartID", pChartID);
+  };
 
-  const handleSave = async () => {
+  const handleToDepartmentChange = (value: any) => {
+    const deptId = typeof value === "string" ? parseInt(value) : value;
+    const selectedDept = departmentList.find((d: any) => parseInt(d.value) === deptId);
+    const deptName = selectedDept?.label || "";
+
+    setValue("IndentMaster.toDeptID", deptId);
+    setValue("IndentMaster.toDeptName", deptName);
+  };
+
+  const onSubmit = async (data: IndentSaveRequestDto) => {
     setIsSubmitted(true);
-    if (!formState.IndentMaster.indentType || !formState.IndentMaster.indentCode) {
+
+    if (!data.IndentMaster.indentType || !data.IndentMaster.indentCode) {
       showAlert("Error", "Indent Type and Indent Code are required.", "error");
       return;
     }
 
+    // Format date back to ISO format for API
+    const formattedData = {
+      ...data,
+      IndentMaster: {
+        ...data.IndentMaster,
+        indentDate: dayjs(data.IndentMaster.indentDate, "DD/MM/YYYY").format("YYYY-MM-DD"),
+      },
+    };
+
     setLoading(true);
     try {
-      await indentProductService.save(formState);
-      showAlert("Success", "Indent saved successfully.", "success", { onConfirm: handleClear });
+      await indentProductService.save(formattedData);
+      showAlert("Success", "Indent saved successfully.", "success", { onConfirm: initializeForm });
     } catch (error) {
       showAlert("Error", "Failed to save indent.", "error");
     } finally {
@@ -142,41 +151,53 @@ const IndentProductListDetails: React.FC = () => {
         Indent Product Entry
       </Typography>
 
-      <Grid container spacing={2}>
-        <FormField
-          type="select"
-          label="Indent Type"
-          value={formState.IndentMaster.indentType}
-          onChange={handleSelectChange}
-          name="indentType"
-          ControlID="indentType"
-          options={[{ label: "Department Indent", value: "Department Indent" }]}
-          isMandatory
-          isSubmitted={isSubmitted}
-        />
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <DepartmentInfoChange deptName={selectedDeptName || "Select Department"} handleChangeClick={handleDepartmentChange} />
+          </Grid>
 
-        <FormField
-          type="text"
-          label="Indent Code"
-          value={formState.IndentMaster.indentCode}
-          name="indentCode"
-          ControlID="indentCode"
-          disabled
-          isMandatory
-          isSubmitted={isSubmitted}
-          onChange={() => {}}
-        />
+          <Grid size={{ xs: 12, md: 3 }}>
+            <FormField name="IndentMaster.indentType" control={control} type="select" label="Indent Type" required options={indentTypeOptions} />
+          </Grid>
 
-        <FormField type="date" label="Date" value={formState.IndentMaster.indentDate} onChange={handleInputChange} name="indentDate" ControlID="indentDate" />
-        <FormField type="text" label="From Dept" value={formState.IndentMaster.fromDeptName} onChange={handleInputChange} name="fromDeptName" ControlID="fromDeptName" disabled />
-        <FormField type="text" label="To Department" value={formState.IndentMaster.toDeptName} onChange={handleInputChange} name="toDeptName" ControlID="toDeptName" />
-        <FormField type="text" label="Product Search" value={""} onChange={() => {}} name="productSearch" ControlID="productSearch" placeholder="Search product..." />
-        <FormField type="text" label="Department" value={formState.IndentMaster.fromDeptName || ""} name="fromDeptName" ControlID="fromDeptName" disabled onChange={() => {}} />
-      </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <FormField name="IndentMaster.indentCode" control={control} type="text" label="Indent Code" disabled required />
+          </Grid>
 
-      <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
+          <Grid size={{ xs: 12, md: 3 }}>
+            <FormField name="IndentMaster.indentDate" control={control} type="datepicker" label="Date" disabled />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 3 }}>
+            <FormField name="IndentMaster.fromDeptID" control={control} type="select" label="From Dept" options={fromDepartmentOptions} disabled />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 3 }}>
+            <FormField
+              name="IndentMaster.toDeptID"
+              control={control}
+              type="select"
+              label="To Department"
+              options={toDepartmentOptions}
+              required
+              onChange={handleToDepartmentChange}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormField name="productSearch" control={control} type="text" label="Product Search" placeholder="Search product..." defaultValue="" />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormField name="IndentMaster.remarks" control={control} type="textarea" label="Remarks" rows={3} />
+          </Grid>
+        </Grid>
+
+        <FormSaveClearButton clearText="Clear" saveText="Save" onClear={initializeForm} onSave={handleSubmit(onSubmit)} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
+      </form>
     </Paper>
   );
 };
 
-export default IndentProductListDetails;
+export default IndentProductDetails;

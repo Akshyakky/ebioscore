@@ -1,6 +1,5 @@
 import React, { forwardRef, useMemo, memo, useState, useCallback } from "react";
 import { Box, Grid, Theme, SelectChangeEvent, InputAdornment, IconButton } from "@mui/material";
-import { GridProps } from "@mui/material/Grid";
 import { TextFieldProps } from "@mui/material/TextField";
 import { SxProps, useTheme } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
@@ -83,7 +82,7 @@ interface BaseFormFieldProps {
   fullWidth?: boolean;
   rows?: number;
   isSubmitted?: boolean;
-  gridProps?: GridProps;
+  gridProps?: any;
   InputProps?: TextFieldProps["InputProps"];
   InputLabelProps?: TextFieldProps["InputLabelProps"];
   onBlur?: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
@@ -531,7 +530,7 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
   }, [showAddButton, onAddClick, name, styles.addButton, styles.addIcon]);
 
   return (
-    <Grid item {...gridProps} className={className}>
+    <Grid size={{ ...gridProps }} className={className}>
       <Box sx={styles.fieldContainer}>
         {renderField}
         {addButton}

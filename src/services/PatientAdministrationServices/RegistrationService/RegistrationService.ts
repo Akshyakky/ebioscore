@@ -19,8 +19,8 @@ export const getLatestUHID = async (endpoint: string): Promise<string> => {
   return apiService.get<string>(`Registration/${endpoint}`, getToken());
 };
 
-export const searchPatients = async (endpoint: string, searchTerm: string): Promise<{ data: any[]; success: boolean }> => {
-  return apiService.get<{ data: any[]; success: boolean }>(`Registration/${endpoint}`, getToken(), { searchTerm });
+export const searchPatients = async (searchTerm: string): Promise<{ data: any[]; success: boolean }> => {
+  return apiService.get<{ data: any[]; success: boolean }>(`Registration/PatientAutocompleteSearch`, getToken(), { searchTerm });
 };
 
 export const searchPatientDetails = async (searchTerm: string): Promise<OperationResult<PatientRegistrationDto[]>> => {

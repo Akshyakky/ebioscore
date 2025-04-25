@@ -1,3 +1,4 @@
+// src/interfaces/Common/AlertManager.ts
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
 export interface AlertDto extends BaseDto {
@@ -5,12 +6,13 @@ export interface AlertDto extends BaseDto {
   oPIPNo: number;
   oPVID: number;
   pChartID: number;
+  pChartCode?: string;
   oPIPCaseNo: number;
-  patOPIPYN: string;
+  patOPIPYN: "O" | "I" | string;
   oPIPDate: Date;
   alertDescription: string;
-  rActiveYN: string;
+  rActiveYN: "Y" | "N";
   category: string;
   oldPChartID: number;
-  pChartCode: string;
+  transferYN: "Y" | "N";
 }

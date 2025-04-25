@@ -16,7 +16,7 @@ interface VisitDetailsProps {
 const VisitDetails: React.FC<VisitDetailsProps> = ({ formData, setFormData, isSubmitted, isEditMode = false }) => {
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
-  const dropdownValues = useDropdownValues(["department", "attendingPhy", "primaryIntroducingSource"]);
+  const { ...dropdownValues } = useDropdownValues(["department", "attendingPhy", "primaryIntroducingSource"]);
 
   const visitOptions = useMemo(
     () => [

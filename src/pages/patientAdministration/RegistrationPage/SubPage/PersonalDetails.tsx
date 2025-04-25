@@ -24,7 +24,7 @@ interface PersonalDetailsProps {
 }
 
 const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData, isSubmitted, onPatientSelect, isEditMode = false }) => {
-  const { refreshDropdownValues, ...dropdownValues } = useDropdownValues(["pic", "title", "gender", "ageUnit", "nationality"]);
+  const { refreshDropdownValues, isLoading, hasError, ...dropdownValues } = useDropdownValues(["pic", "title", "gender", "ageUnit", "nationality"]);
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
   const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
   const { fetchLatestUHID } = useRegistrationUtils();
@@ -479,6 +479,8 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
         options={dropdownValues.nationality || []}
         onChange={handleDropdownChange(["patAddress", "pAddCountryVal"], ["patAddress", "pAddCountry"], dropdownValues.nationality || [])}
         isSubmitted={isSubmitted}
+        disabled={isLoading("nationality")}
+        helperText={hasError("nationality") ? "Failed to load options" : undefined}
         gridProps={{ xs: 12, sm: 6, md: 3 }}
         showAddButton={true}
         onAddClick={() => handleAddField("NATIONALITY")}

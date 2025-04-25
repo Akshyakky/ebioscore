@@ -10,7 +10,7 @@ export const usePatientAutocomplete = () => {
     }
 
     try {
-      const results = await RegistrationService.searchPatients("PatientAutocompleteSearch", input);
+      const results = await RegistrationService.searchPatients(input);
       return results.data.map((result) => `${result.pChartCode} | ${result.pfName} ${result.plName} | ${formatDate(result.pDob)} | ${result.pAddPhone1}`);
     } catch (error) {
       return [];

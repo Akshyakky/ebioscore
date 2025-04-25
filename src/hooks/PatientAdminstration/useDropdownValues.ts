@@ -88,7 +88,8 @@ export type DropdownType =
   | "sampleType"
   | "chargeType"
   | "serviceType"
-  | "employeeRoom";
+  | "employeeRoom"
+  | "departmentIndent";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -435,6 +436,10 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       chargeType: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CHARGETYPE");
+        return response;
+      },
+      departmentIndent: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DEPARTMENTINDENT");
         return response;
       },
     }),

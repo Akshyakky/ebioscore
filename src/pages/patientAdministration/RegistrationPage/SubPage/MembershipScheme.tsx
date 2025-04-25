@@ -13,7 +13,7 @@ interface MembershipSchemeProps {
 
 const MembershipScheme: React.FC<MembershipSchemeProps> = ({ formData, setFormData }) => {
   const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
-  const dropdownValues = useDropdownValues(["membershipScheme"]);
+  const { ...dropdownValues } = useDropdownValues(["membershipScheme"]);
   const serverDate = useServerDate();
 
   const handleDateChange = useCallback(
