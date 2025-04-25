@@ -89,6 +89,7 @@ export interface PurchaseOrderDetailDto extends BaseDto {
   taxableAmt?: number;
   transferYN: string;
   rNotes?: string;
+  gstPerValue?: number;
 }
 
 export interface purchaseOrderSaveDto {

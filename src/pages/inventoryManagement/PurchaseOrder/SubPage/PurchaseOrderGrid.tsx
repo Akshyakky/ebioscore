@@ -4,6 +4,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { showAlert } from "@/utils/Common/showAlert";
 
 interface PurchaseOrderGridProps {
   poDetailDto?: PurchaseOrderDetailDto;
@@ -12,20 +13,49 @@ interface PurchaseOrderGridProps {
 
 interface GridRowData extends PurchaseOrderDetailDto {
   itemTotal: number;
+  requiredUnitQty?: number;
 }
 
 const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, handleProductsGrid }) => {
   const [gridData, setGridData] = useState<GridRowData[]>([]);
   const dropdownValues = useDropdownValues(["taxType"]);
+
   useEffect(() => {
     if (poDetailDto) {
       const productExists = gridData.some((item) => item.productID === poDetailDto.productID);
       if (!productExists) {
-        const itemTotal = (poDetailDto.requiredPack || 0) * (poDetailDto.packPrice || 0) - (poDetailDto.discAmt || 0);
+        // Initialize with values from poDetailDto
+        const unitPack = poDetailDto.unitPack || 1;
+        const requiredPack = poDetailDto.requiredPack || 1;
+        const packPrice = poDetailDto.packPrice || 0;
+        const discAmt = poDetailDto.discAmt || 0;
+
+        // Calculate required unit quantity
+        const requiredUnitQty = requiredPack * unitPack;
+
+        // Calculate item total
+        const itemTotal = packPrice * requiredPack - discAmt;
+
+        // Calculate discount percentage
+        const totalPrice = packPrice * requiredPack;
+        const discPercentageAmt = totalPrice > 0 ? (discAmt / totalPrice) * 100 : 0;
+
+        // Calculate tax amounts based on CGSt and SGST percentages
+        const cgstPerValue = poDetailDto.cgstPerValue || 0;
+        const sgstPerValue = poDetailDto.sgstPerValue || 0;
+        const taxableAmount = totalPrice - discAmt;
+        const cgstTaxAmt = (taxableAmount * cgstPerValue) / 100;
+        const sgstTaxAmt = (taxableAmount * sgstPerValue) / 100;
 
         const newRow: GridRowData = {
           ...poDetailDto,
+          requiredUnitQty,
+          requiredPack,
           itemTotal,
+          discPercentageAmt,
+          cgstTaxAmt,
+          sgstTaxAmt,
+          taxableAmt: taxableAmount,
         };
 
         setGridData((prevData) => [...prevData, newRow]);
@@ -39,39 +69,64 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
 
   const handleCellChange = (value: number, rowIndex: number, field: keyof GridRowData) => {
     const updatedData = [...gridData];
-    const currentRow = { ...updatedData[rowIndex], [field]: value };
-
+    const currentRow = { ...updatedData[rowIndex] };
+    console.log("Current Row", currentRow);
+    currentRow[field] = value;
+    if (field === "discPercentageAmt" && value > 100) {
+      showAlert("error", "Discount percentage cannot exceed 100%", "error");
+      currentRow[field] = 0;
+      handleCellChange(0, rowIndex, "discPercentageAmt");
+      return;
+    } else if (field === "discAmt") {
+      const totalPackPrice = (currentRow.packPrice || 0) * (currentRow.requiredPack || 0);
+      if (value > totalPackPrice) {
+        showAlert("error", "Discount amount cannot exceed pack price", "error");
+        handleCellChange(0, rowIndex, "discAmt");
+        return;
+      }
+    }
     const requiredPack = currentRow.requiredPack || 0;
+    const unitPack = currentRow.unitPack || 1;
     const packPrice = currentRow.packPrice || 0;
-    const baseTotal = requiredPack * packPrice;
 
-    // Apply discount calculations
-    if (field === "discAmt") {
-      currentRow.discPercentageAmt = baseTotal ? (value / baseTotal) * 100 : 0;
-    } else if (field === "discPercentageAmt") {
-      currentRow.discAmt = baseTotal ? (baseTotal * value) / 100 : 0;
+    currentRow.requiredUnitQty = requiredPack * unitPack;
+
+    const totalPrice = packPrice * requiredPack;
+
+    if (field === "discPercentageAmt") {
+      currentRow.discAmt = (totalPrice * value) / 100;
+    } else if (field === "discAmt") {
+      currentRow.discPercentageAmt = totalPrice > 0 ? (value / totalPrice) * 100 : 0;
     }
 
-    const discount = currentRow.discAmt || 0;
-    const taxableAmt = baseTotal - discount;
+    if (field === "gstPerValue") {
+      currentRow.cgstPerValue = value / 2;
+      currentRow.sgstPerValue = value / 2;
+    }
 
-    const gstPercent = currentRow.cgstPerValue || 0;
-    const gstAmount = (taxableAmt * gstPercent) / 100;
+    const discAmt = currentRow.discAmt || 0;
+    const taxableAmount = totalPrice - discAmt;
 
-    // Update fields
-    currentRow.taxableAmt = taxableAmt;
-    currentRow.cgstTaxAmt = gstAmount;
-    currentRow.sgstTaxAmt = 0; // No SGST used in image logic
-    currentRow.itemTotal = taxableAmt + gstAmount;
+    currentRow.taxableAmt = taxableAmount;
+    currentRow.cgstTaxAmt = (totalPrice * (currentRow.cgstPerValue || 0)) / 100;
+    currentRow.sgstTaxAmt = (totalPrice * (currentRow.sgstPerValue || 0)) / 100;
 
+    // currentRow.itemTotal = taxableAmount + currentRow.cgstTaxAmt + currentRow.sgstTaxAmt;
+    const gstTaxAmt = (totalPrice * (currentRow.gstPerValue || 0)) / 100;
+    currentRow.itemTotal = totalPrice - discAmt + gstTaxAmt;
     updatedData[rowIndex] = currentRow;
+
+    // ✅ Set state
     setGridData(updatedData);
+
+    // ✅ Recalculate totals immediately
+    handleProductsGrid(updatedData);
   };
 
   useEffect(() => {
     handleProductsGrid(gridData);
-  }, [gridData]);
-  console.log("row.cgstPerValue Data", poDetailDto);
+  }, [gridData, handleProductsGrid]);
+
   return (
     <Paper sx={{ mt: 2 }}>
       <TableContainer sx={{ minHeight: 300 }}>
@@ -114,16 +169,16 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
                   />
                 </TableCell>
 
-                <TableCell align="right">{row.requiredUnitQty}</TableCell>
+                <TableCell align="right">{row.requiredUnitQty || 0}</TableCell>
 
                 <TableCell align="right">
                   <FormField
                     type="number"
-                    value={row.unitQuantity || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "unitQuantity")}
+                    value={row.unitPack || 0}
+                    onChange={(e) => handleCellChange(Number(e.target.value), index, "unitPack")}
                     label=""
-                    name=""
-                    ControlID={`unitQuantity_${row.productID}`}
+                    name="unitPack"
+                    ControlID={`unitPack_${row.productID}`}
                   />
                 </TableCell>
 
@@ -174,12 +229,12 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
                 <TableCell align="right">
                   <FormField
                     type="select"
-                    value={dropdownValues.taxType?.find((tax) => Number(tax.label) === Number(row.cgstPerValue))?.value || ""}
+                    value={dropdownValues.taxType?.find((tax) => Number(tax.label) === Number(row.gstPerValue))?.value || ""}
                     onChange={(e) => {
                       const selectedTax = dropdownValues.taxType?.find((tax) => Number(tax.value) === Number(e.target.value));
                       const selectedRate = Number(selectedTax?.label || 0);
 
-                      handleCellChange(selectedRate, index, "cgstPerValue");
+                      handleCellChange(selectedRate, index, "gstPerValue");
                     }}
                     options={dropdownValues.taxType || []}
                     label=""
