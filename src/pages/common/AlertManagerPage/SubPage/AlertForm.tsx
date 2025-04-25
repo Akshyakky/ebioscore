@@ -1,11 +1,12 @@
 // src/pages/common/AlertManagerPage/SubPage/AlertForm.tsx
 import React from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Grid, Divider, IconButton } from "@mui/material";
-import { Close as CloseIcon } from "@mui/icons-material";
+import { Box, Typography, Grid, Divider } from "@mui/material";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import CustomButton from "@/components/Button/CustomButton";
 import { AlertDto } from "@/interfaces/Common/AlertManager";
 import { sanitizeFormData } from "@/utils/Common/sanitizeInput";
 import { z } from "zod";
@@ -21,11 +22,12 @@ interface AlertFormProps {
 }
 
 const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode, onSubmit, patientName }) => {
-  // Define the schema using Zod
+  // Define the schema using Zod, matching backend validator
   const alertSchema = z.object({
     category: z.string().min(1, { message: "Category is required" }),
-    alertDescription: z.string().min(1, { message: "Alert description is required" }),
-    rActiveYN: z.string().min(1, { message: "Active status is required" }),
+    alertDescription: z.string().min(1, { message: "Alert description is required" }).max(4000, { message: "Alert description cannot exceed 4000 characters" }),
+    rActiveYN: z.enum(["Y", "N"], { message: "Active status must be Y or N" }),
+    oPIPDate: z.date({ message: "Date is required" }),
   });
 
   // Derive the type from the schema
@@ -37,15 +39,24 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
     formState: { errors, isValid, isDirty },
     reset,
   } = useForm<AlertFormFields>({
-    defaultValues: alert,
+    defaultValues: {
+      category: alert.category || "",
+      alertDescription: alert.alertDescription || "",
+      rActiveYN: alert.rActiveYN || "Y",
+      oPIPDate: alert.oPIPDate || new Date(),
+    },
     resolver: zodResolver(alertSchema),
     mode: "onChange",
   });
 
   const processSubmit: SubmitHandler<AlertFormFields> = (data) => {
-    // Sanitize inputs and submit
+    // Sanitize inputs and merge with existing alert data
     const sanitizedData = sanitizeFormData(data);
-    onSubmit(sanitizedData as AlertDto);
+    const updatedAlert: AlertDto = {
+      ...alert,
+      ...sanitizedData,
+    };
+    onSubmit(updatedAlert);
   };
 
   const handleCancel = () => {
@@ -64,117 +75,114 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
     { value: "Other", label: "Other" },
   ];
 
+  // Define dialog actions
+  const dialogActions = (
+    <>
+      <CustomButton variant="outlined" text="Cancel" onClick={handleCancel} color="inherit" size="medium" />
+      <CustomButton
+        variant="contained"
+        text={isEditMode ? "Update Alert" : "Save Alert"}
+        onClick={handleSubmit(processSubmit)}
+        color="primary"
+        size="medium"
+        disabled={!isDirty || !isValid}
+      />
+    </>
+  );
+
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Dialog
+      <GenericDialog
         open={open}
         onClose={handleCancel}
+        title={isEditMode ? "Edit Alert" : "Add New Alert"}
         maxWidth="md"
         fullWidth
-        PaperProps={{
-          sx: { borderRadius: "8px" },
+        showCloseButton
+        actions={dialogActions}
+        disableBackdropClick
+        titleSx={{
+          bgcolor: isEditMode ? "primary.light" : "primary.main",
+          color: "white",
         }}
       >
-        <DialogTitle
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            bgcolor: isEditMode ? "primary.light" : "primary.main",
-            color: "white",
-            py: 1.5,
-          }}
-        >
-          <Typography variant="h6">{isEditMode ? "Edit Alert" : "Add New Alert"}</Typography>
-          <IconButton size="small" onClick={handleCancel} sx={{ color: "white" }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+        <Box component="form" sx={{ mt: 1 }}>
+          {/* Patient Information Section */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" color="primary" gutterBottom fontWeight="medium">
+              Patient Information
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
 
-        <DialogContent sx={{ pt: 3 }}>
-          <Box component="form" sx={{ mt: 1 }}>
-            {/* Patient Information Section */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle1" color="primary" gutterBottom fontWeight="medium">
-                Patient Information
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Patient Name
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {patientName}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    UHID
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {alert.pChartCode}
-                  </Typography>
-                </Grid>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Patient Name
+                </Typography>
+                <Typography variant="body1" fontWeight="medium">
+                  {patientName}
+                </Typography>
               </Grid>
-            </Box>
-
-            {/* Alert Details Section */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle1" color="primary" gutterBottom fontWeight="medium">
-                Alert Details
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-
-              <Grid container spacing={3}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="category" control={control} label="Category" type="select" options={categories} required size="small" fullWidth />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField
-                    name="rActiveYN"
-                    control={control}
-                    label="Status"
-                    type="select"
-                    options={[
-                      { value: "Y", label: "Active" },
-                      { value: "N", label: "Inactive" },
-                    ]}
-                    required
-                    size="small"
-                    fullWidth
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12 }}>
-                  <FormField
-                    name="alertDescription"
-                    control={control}
-                    label="Alert Description"
-                    type="textarea"
-                    rows={4}
-                    required
-                    size="small"
-                    fullWidth
-                    placeholder="Enter detailed alert description..."
-                  />
-                </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body2" color="text.secondary">
+                  UHID
+                </Typography>
+                <Typography variant="body1" fontWeight="medium">
+                  {alert.pChartCode}
+                </Typography>
               </Grid>
-            </Box>
+            </Grid>
           </Box>
-        </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 3, pt: 1 }}>
-          <Button onClick={handleCancel} variant="outlined" color="inherit" size="medium">
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit(processSubmit)} variant="contained" color="primary" size="medium" disabled={!isDirty || !isValid}>
-            {isEditMode ? "Update Alert" : "Save Alert"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          {/* Alert Details Section */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" color="primary" gutterBottom fontWeight="medium">
+              Alert Details
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField name="category" control={control} label="Category" type="select" options={categories} required size="small" fullWidth />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField
+                  name="rActiveYN"
+                  control={control}
+                  label="Status"
+                  type="select"
+                  options={[
+                    { value: "Y", label: "Active" },
+                    { value: "N", label: "Inactive" },
+                  ]}
+                  required
+                  size="small"
+                  fullWidth
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormField name="oPIPDate" control={control} label="Alert Date" type="datepicker" required size="small" fullWidth />
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <FormField
+                  name="alertDescription"
+                  control={control}
+                  label="Alert Description"
+                  type="textarea"
+                  rows={4}
+                  required
+                  size="small"
+                  fullWidth
+                  placeholder="Enter detailed alert description..."
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </Box>
+      </GenericDialog>
     </LocalizationProvider>
   );
 };

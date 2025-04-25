@@ -32,16 +32,24 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
     { value: "2", label: "Dr. Sneha Rao" },
     { value: "3", label: "Mr. Kiran Patil" },
   ];
+
+  // Format currency values
+  const formatCurrency = (value: string | number) => {
+    const numValue = typeof value === "string" ? parseFloat(value) : value;
+    return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
+  };
+
   const infoItem = (label: string, value: string | number) => (
     <Stack direction="column" spacing={1} alignItems="center" sx={{ minWidth: 140 }}>
       <Typography color="primary" fontWeight="bold">
         {label}
       </Typography>
       <Typography color="primary" fontWeight="bold">
-        ₹ {Number(value).toFixed(2)}
+        ₹ {formatCurrency(value)}
       </Typography>
     </Stack>
   );
+
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Grid container spacing={2} alignItems="center">
@@ -53,7 +61,6 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
               label={`Total Disc in ${isDiscPercentage ? "Percentage [%]" : "Amount"}`}
               value={totDiscAmtPer}
               onChange={(e) => setTotDiscAmtPer(Number(e.target.value))}
-              isSubmitted={false}
               name="totDiscAmtPer"
               ControlID="totDiscAmtPer"
               sx={{ minWidth: 180 }}
@@ -106,7 +113,7 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
         <Grid item xs={12} sm={6}>
           <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" mt={2} flexWrap="wrap">
             {infoItem("Items Total", purchaseOrderMastData.totalAmt || "0.00")}
-            {infoItem("Tax Amount", purchaseOrderMastData.totalTaxableAmt || "0.00")}
+            {infoItem("Tax Amount", purchaseOrderMastData.taxAmt || "0.00")}
             {infoItem("Disc Amt", purchaseOrderMastData.discAmt || "0.00")}
             {infoItem("Coin Adjustment", purchaseOrderMastData.coinAdjAmt || "0.00")}
             {infoItem("Net Amt", purchaseOrderMastData.netAmt || "0.00")}
@@ -117,7 +124,7 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
             type="textarea"
             label="Remarks"
             ControlID="rNotes"
-            value={purchaseOrderMastData.rNotes}
+            value={purchaseOrderMastData.rNotes || ""}
             name="rNotes"
             onChange={(e) => {
               handleRemarksChange(e.target.value);

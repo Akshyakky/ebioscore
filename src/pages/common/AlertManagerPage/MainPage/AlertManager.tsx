@@ -1,49 +1,66 @@
 // src/pages/common/AlertManagerPage/MainPage/AlertManager.tsx
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Paper, Button, Grid, Card, Divider } from "@mui/material";
-import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
-import PatientSearch from "../SubPage/PatientSearch";
-import AlertForm from "../SubPage/AlertForm";
+import { Box, Typography, Paper, Grid } from "@mui/material";
+import { Add as AddIcon, Refresh as RefreshIcon, Clear as ClearIcon } from "@mui/icons-material";
 import { useLoading } from "@/context/LoadingContext";
 import { AlertDto } from "@/interfaces/Common/AlertManager";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 import { alertService, baseAlertService } from "@/services/CommonServices/CommonModelServices";
-import { showAlert } from "@/utils/Common/showAlert";
 import AlertGrid from "../SubPage/AlertGrid";
-import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
-import PatientDemographicsForm from "../SubPage/PatientDemographicsForm";
+import AlertForm from "../SubPage/AlertForm";
+import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
+import CustomButton from "@/components/Button/CustomButton";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { PatientDemographicsData } from "@/interfaces/PatientAdministration/Patient/PatientDemographics.interface";
+import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch";
+import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
+import { PatientDemographicsForm } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographicsForm/PatientDemographicsForm";
 
-// Improved compact version of AlertManager
 const AlertManager: React.FC = () => {
   const { setLoading } = useLoading();
-  const [selectedPatient, setSelectedPatient] = useState<{ pChartID: number; pChartCode: string; fullName: string } | null>(null);
-  const [patientDemographics, setPatientDemographics] = useState<any>(null);
+  const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
   const [alerts, setAlerts] = useState<AlertDto[]>([]);
   const [isAlertFormOpen, setIsAlertFormOpen] = useState(false);
   const [isDemoFormOpen, setIsDemoFormOpen] = useState(false);
   const [currentAlert, setCurrentAlert] = useState<AlertDto | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [refreshDemographics, setRefreshDemographics] = useState(0);
+  const [clearSearchTrigger, setClearSearchTrigger] = useState(0);
 
-  // Fetch alerts when a patient is selected
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmDialogProps, setConfirmDialogProps] = useState({
+    title: "",
+    message: "",
+    type: "warning" as "warning" | "error" | "info" | "success",
+    onConfirm: () => {},
+  });
+
+  // Fetch patient alerts when selected patient changes
   useEffect(() => {
     if (selectedPatient) {
       fetchPatientAlerts(selectedPatient.pChartID);
-      fetchPatientDemographics(selectedPatient.pChartID);
     } else {
       setAlerts([]);
-      setPatientDemographics(null);
     }
   }, [selectedPatient, refreshDemographics]);
 
   const fetchPatientAlerts = async (pChartID: number) => {
     try {
       setLoading(true);
+      // Use alertService only for GetAlertBypChartID
       const result: OperationResult<AlertDto[]> = await alertService.GetAlertBypChartID(pChartID);
 
       if (result.success) {
-        setAlerts(result.data || []);
+        // Ensure dates are properly converted from strings to Date objects
+        const processedAlerts =
+          result.data?.map((alert) => ({
+            ...alert,
+            oPIPDate: alert.oPIPDate ? new Date(alert.oPIPDate) : new Date(),
+          })) || [];
+
+        setAlerts(processedAlerts);
       } else {
         notifyError(result.errorMessage || "Failed to fetch alerts");
       }
@@ -55,36 +72,42 @@ const AlertManager: React.FC = () => {
     }
   };
 
-  const fetchPatientDemographics = async (pChartID: number) => {
-    try {
-      setLoading(true);
-      const result = await RegistrationService.PatientDemoGraph(pChartID);
-
-      if (result.success && result.data) {
-        setPatientDemographics(result.data);
-      } else {
-        notifyError(result.errorMessage || "Failed to fetch patient demographics");
-      }
-    } catch (error) {
-      console.error("Error fetching patient demographics:", error);
-      notifyError("An error occurred while fetching patient demographics");
-    } finally {
-      setLoading(false);
-    }
+  const handleClearPatient = () => {
+    showConfirmDialog({
+      title: "Clear Patient Selection",
+      message: "Are you sure you want to clear the current patient selection?",
+      type: "warning",
+      onConfirm: () => {
+        setSelectedPatient(null);
+        setClearSearchTrigger((prev) => prev + 1);
+        notifySuccess("Patient selection cleared");
+      },
+    });
   };
 
   const handleAddAlert = () => {
     if (!selectedPatient) {
-      notifyWarning("Please select a patient first");
+      showConfirmDialog({
+        title: "Patient Required",
+        message: "Please select a patient before adding an alert.",
+        type: "info",
+        onConfirm: () => {},
+      });
       return;
     }
 
-    // Create empty alert with patient info
+    // Initialize with the correct data types matching the backend DTO
     const newAlert: Partial<AlertDto> = {
       pChartID: selectedPatient.pChartID,
       pChartCode: selectedPatient.pChartCode,
-      rActiveYN: "Y",
-      oPIPDate: new Date(),
+      rActiveYN: "Y", // This should be a character, not string
+      oPIPDate: new Date(), // Initialize with current date
+      patOPIPYN: "O", // Default to outpatient
+      oPIPNo: 0,
+      oPVID: 0,
+      oPIPCaseNo: 0,
+      oldPChartID: 0,
+      transferYN: "N",
     };
 
     setCurrentAlert(newAlert as AlertDto);
@@ -93,29 +116,41 @@ const AlertManager: React.FC = () => {
   };
 
   const handleEditAlert = (alert: AlertDto) => {
-    setCurrentAlert(alert);
+    // Ensure the date is properly converted to a Date object
+    const alertWithDateObject = {
+      ...alert,
+      oPIPDate: alert.oPIPDate instanceof Date ? alert.oPIPDate : new Date(alert.oPIPDate),
+    };
+
+    setCurrentAlert(alertWithDateObject);
     setIsEditMode(true);
     setIsAlertFormOpen(true);
   };
 
-  const handleDeleteAlert = async (alert: AlertDto) => {
-    const confirmed = await showAlert("Delete Alert", "Are you sure you want to delete this alert?", "warning", true);
+  const handleDeleteAlert = (alert: AlertDto) => {
+    showConfirmDialog({
+      title: "Delete Alert",
+      message: "Are you sure you want to delete this alert? This action cannot be undone.",
+      type: "error",
+      onConfirm: () => confirmDeleteAlert(alert),
+    });
+  };
 
-    if (confirmed) {
-      try {
-        setLoading(true);
-        const isSuccess = await baseAlertService.updateActiveStatus(alert.oPIPAlertID, true);
+  const confirmDeleteAlert = async (alert: AlertDto) => {
+    try {
+      setLoading(true);
+      // Use baseAlertService for updateActiveStatus
+      const isSuccess = await baseAlertService.updateActiveStatus(alert.oPIPAlertID, false);
 
-        if (isSuccess) {
-          setAlerts((prev) => prev.filter((a) => a.oPIPAlertID !== alert.oPIPAlertID));
-          notifySuccess("Alert deleted successfully");
-        }
-      } catch (error) {
-        console.error("Error deleting alert:", error);
-        notifyError("Failed to delete alert");
-      } finally {
-        setLoading(false);
+      if (isSuccess) {
+        setAlerts((prev) => prev.filter((a) => a.oPIPAlertID !== alert.oPIPAlertID));
+        notifySuccess("Alert deleted successfully");
       }
+    } catch (error) {
+      console.error("Error deleting alert:", error);
+      notifyError("Failed to delete alert");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -123,13 +158,27 @@ const AlertManager: React.FC = () => {
     try {
       setLoading(true);
 
-      const result = isEditMode ? await baseAlertService.save(formData) : await baseAlertService.save(formData);
+      // Ensure the date is in the correct format before sending to the backend
+      const formattedData = {
+        ...formData,
+        // Make sure oPIPDate is a proper Date object
+        oPIPDate: formData.oPIPDate instanceof Date ? formData.oPIPDate : new Date(formData.oPIPDate),
+      };
+
+      // Use baseAlertService for both create and update operations
+      const result = await baseAlertService.save(formattedData);
 
       if (result.success && result.data) {
+        // Ensure the returned date is a Date object
+        const newAlert = {
+          ...result.data,
+          oPIPDate: new Date(result.data.oPIPDate),
+        };
+
         if (isEditMode) {
-          setAlerts((prev) => prev.map((a) => (a.oPIPAlertID === formData.oPIPAlertID ? result.data : a)));
+          setAlerts((prev) => prev.map((a) => (a.oPIPAlertID === formData.oPIPAlertID ? newAlert : a)));
         } else {
-          setAlerts((prev) => [...prev, result.data]);
+          setAlerts((prev) => [...prev, newAlert]);
         }
 
         notifySuccess(`Alert ${isEditMode ? "updated" : "created"} successfully`);
@@ -147,139 +196,79 @@ const AlertManager: React.FC = () => {
 
   const handleEditDemographics = () => {
     if (!selectedPatient) {
-      notifyWarning("Please select a patient first");
+      showConfirmDialog({
+        title: "Patient Required",
+        message: "Please select a patient first.",
+        type: "info",
+        onConfirm: () => {},
+      });
       return;
     }
 
     setIsDemoFormOpen(true);
   };
 
-  const handleDemographicsSaved = () => {
+  const handleRefreshData = () => {
+    if (selectedPatient) {
+      fetchPatientAlerts(selectedPatient.pChartID);
+      setRefreshDemographics((prev) => prev + 1);
+      notifySuccess("Data refreshed successfully");
+    }
+  };
+
+  const handleDemographicsSaved = (data: PatientDemographicsData) => {
     setRefreshDemographics((prev) => prev + 1);
+    notifySuccess("Patient demographics updated successfully");
   };
 
-  const notifyWarning = (message: string) => {
-    showAlert("Warning", message, "warning");
-  };
-
-  // Render demographics information
-  const renderDemographics = () => {
-    if (!patientDemographics) return null;
-
-    const demographics = patientDemographics;
-
-    return (
-      <Grid container spacing={2} sx={{ mt: 0 }}>
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            Patient Name
-          </Typography>
-          <Typography variant="body1" fontWeight="medium">
-            {demographics.patientName || "N/A"}
-          </Typography>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            UHID
-          </Typography>
-          <Typography variant="body1" fontWeight="medium">
-            {demographics.pChartCode || "N/A"}
-          </Typography>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            Gender
-          </Typography>
-          <Typography variant="body1" fontWeight="medium">
-            {demographics.gender || "N/A"}
-          </Typography>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            DOB
-          </Typography>
-          <Typography variant="body1" fontWeight="medium">
-            {demographics.dateOfBirthOrAge || "N/A"}
-          </Typography>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            Blood Group
-          </Typography>
-          <Typography variant="body1" fontWeight="medium">
-            {demographics.pBldGrp || "N/A"}
-          </Typography>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            Mobile
-          </Typography>
-          <Typography variant="body1" fontWeight="medium">
-            {demographics.mobileNumber || "N/A"}
-          </Typography>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            Patient Type
-          </Typography>
-          <Typography variant="body1" fontWeight="medium">
-            {demographics.patientType || "N/A"}
-          </Typography>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            Payment Source
-          </Typography>
-          <Typography variant="body1" fontWeight="medium">
-            {demographics.patientPaymentSource || "N/A"}
-          </Typography>
-        </Grid>
-      </Grid>
-    );
+  const showConfirmDialog = ({ title, message, type, onConfirm }: { title: string; message: string; type: "warning" | "error" | "info" | "success"; onConfirm: () => void }) => {
+    setConfirmDialogProps({
+      title,
+      message,
+      type,
+      onConfirm,
+    });
+    setConfirmDialogOpen(true);
   };
 
   return (
     <Box sx={{ p: 2 }}>
-      {/* Page Header */}
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-        Alert Manager
-      </Typography>
+      {/* Page Header with Action Buttons */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Typography variant="h4">Alert Manager</Typography>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          {selectedPatient && <CustomButton variant="outlined" color="error" text="Clear Patient" icon={ClearIcon} onClick={handleClearPatient} />}
+          <CustomButton variant="outlined" color="primary" text="Refresh Data" icon={RefreshIcon} onClick={handleRefreshData} disabled={!selectedPatient} />
+        </Box>
+      </Box>
 
       {/* Patient Search & Demographics - Combined Section */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2}>
           {/* Left side - Patient Search */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Patient Search
-            </Typography>
-            <PatientSearch onPatientSelect={setSelectedPatient} />
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+              <Box sx={{ flexGrow: 1 }}>
+                <Typography variant="h6" gutterBottom>
+                  Patient Search
+                </Typography>
+                {/* Use the reusable PatientSearch component */}
+                <PatientSearch onPatientSelect={setSelectedPatient} clearTrigger={clearSearchTrigger} placeholder="Enter name, UHID or phone number" />
+              </Box>
+            </Box>
           </Grid>
 
           {/* Right side - Patient Demographics */}
           <Grid size={{ xs: 12, md: 8 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-              <Typography variant="h6">Patient Demographics</Typography>
-              {patientDemographics && (
-                <Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={handleEditDemographics}>
-                  Edit
-                </Button>
-              )}
-            </Box>
-            {selectedPatient ? (
-              renderDemographics()
-            ) : (
-              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
-                Please select a patient to view demographics
-              </Typography>
-            )}
+            {/* Use the reusable PatientDemographics component */}
+            <PatientDemographics
+              pChartID={selectedPatient?.pChartID}
+              showEditButton={!!selectedPatient}
+              onEditClick={handleEditDemographics}
+              showRefreshButton={false} // We have a global refresh button
+              variant="detailed"
+              emptyStateMessage={selectedPatient ? "No demographics information available for this patient." : "Please select a patient to view demographics"}
+            />
           </Grid>
         </Grid>
       </Paper>
@@ -291,9 +280,18 @@ const AlertManager: React.FC = () => {
             <Typography variant="h6">
               Alerts for {selectedPatient.fullName} ({selectedPatient.pChartCode})
             </Typography>
-            <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={handleAddAlert} size="medium">
-              Add Alert
-            </Button>
+
+            <ActionButtonGroup
+              buttons={[
+                {
+                  text: "Add Alert",
+                  icon: AddIcon,
+                  color: "primary",
+                  variant: "contained",
+                  onClick: handleAddAlert,
+                },
+              ]}
+            />
           </Box>
 
           <AlertGrid alerts={alerts} onEditAlert={handleEditAlert} onDeleteAlert={handleDeleteAlert} />
@@ -312,10 +310,27 @@ const AlertManager: React.FC = () => {
         />
       )}
 
-      {/* Patient Demographics Form Dialog */}
-      {isDemoFormOpen && selectedPatient && patientDemographics && (
-        <PatientDemographicsForm open={isDemoFormOpen} onClose={() => setIsDemoFormOpen(false)} pChartID={selectedPatient.pChartID} onSaved={handleDemographicsSaved} />
+      {/* Patient Demographics Form Dialog - Using the reusable component */}
+      {isDemoFormOpen && selectedPatient && (
+        <PatientDemographicsForm
+          open={isDemoFormOpen}
+          onClose={() => setIsDemoFormOpen(false)}
+          pChartID={selectedPatient.pChartID}
+          onSaved={handleDemographicsSaved}
+          title="Edit Patient Demographics"
+          confirmUnsavedChanges={true}
+        />
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={confirmDialogProps.onConfirm}
+        title={confirmDialogProps.title}
+        message={confirmDialogProps.message}
+        type={confirmDialogProps.type}
+      />
     </Box>
   );
 };

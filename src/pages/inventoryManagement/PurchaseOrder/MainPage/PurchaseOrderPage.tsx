@@ -60,39 +60,80 @@ const PurchaseOrderPage: React.FC = () => {
   const [isDiscPercentage, setIsDiscPercentage] = useState<boolean>(false);
 
   const handleApplyDiscount = () => {
-    const updatedData = gridData.map((row) => {
-      const requiredPack = row.requiredPack || 0;
-      const packPrice = row.packPrice || 0;
-      const baseTotal = requiredPack * packPrice;
+    if (gridData.length === 0) return;
 
-      let discAmt = 0;
-      let discPercentageAmt = 0;
+    // Create a copy of the grid data
+    const updatedGridData = [...gridData];
 
-      if (isDiscPercentage) {
-        discPercentageAmt = totDiscAmtPer;
-        discAmt = baseTotal ? (baseTotal * totDiscAmtPer) / 100 : 0;
-      } else {
-        discAmt = totDiscAmtPer;
-        discPercentageAmt = baseTotal ? (totDiscAmtPer / baseTotal) * 100 : 0;
+    if (isDiscPercentage) {
+      // Apply percentage discount to each item
+      updatedGridData.forEach((item, index) => {
+        const packPrice = item.packPrice || 0;
+        const requiredPack = item.requiredPack || 0;
+        const totalPrice = packPrice * requiredPack;
+
+        // Calculate discount amount based on percentage
+        const discAmt = (totalPrice * totDiscAmtPer) / 100;
+
+        // Update the item with new discount values
+        updatedGridData[index] = {
+          ...item,
+          discAmt,
+          discPercentageAmt: totDiscAmtPer,
+          itemTotal: totalPrice - discAmt,
+        };
+      });
+    } else {
+      // Apply fixed amount discount proportionally to each item
+      // Calculate total value of all items
+      const totalItemsValue = updatedGridData.reduce((sum, item) => {
+        const packPrice = item.packPrice || 0;
+        const requiredPack = item.requiredPack || 0;
+        return sum + packPrice * requiredPack;
+      }, 0);
+
+      if (totalItemsValue > 0) {
+        // Distribute discount proportionally
+        updatedGridData.forEach((item, index) => {
+          const packPrice = item.packPrice || 0;
+          const requiredPack = item.requiredPack || 0;
+          const totalPrice = packPrice * requiredPack;
+
+          // Calculate this item's share of the total discount
+          const proportion = totalPrice / totalItemsValue;
+          const discAmt = totDiscAmtPer * proportion;
+
+          // Calculate discount percentage for this item
+          const discPercentageAmt = totalPrice > 0 ? (discAmt / totalPrice) * 100 : 0;
+
+          // Update the item with new discount values
+          updatedGridData[index] = {
+            ...item,
+            discAmt,
+            discPercentageAmt,
+            itemTotal: totalPrice - discAmt,
+          };
+        });
       }
+    }
 
-      const taxableAmt = baseTotal - discAmt;
-      const cgstTaxAmt = (taxableAmt * (row.cgstPerValue || 0)) / 100;
-      const sgstTaxAmt = (taxableAmt * (row.sgstPerValue || 0)) / 100;
+    // Update grid data state
+    setGridData(updatedGridData);
 
-      return {
-        ...row,
-        discAmt,
-        discPercentageAmt,
-        taxableAmt,
-        cgstTaxAmt,
-        sgstTaxAmt,
-        itemTotal: taxableAmt + cgstTaxAmt + sgstTaxAmt,
-      };
-    });
-
-    setGridData(updatedData);
-    recalculateTotals(updatedData);
+    // Recalculate totals based on updated grid data
+    recalculateTotals(updatedGridData);
+  };
+  const handleCoinAdjustmentChange = (value: number) => {
+    if (selectedData.coinAdjAmt !== value) {
+      setSelectedData((prev) => {
+        const netAmount = (prev.totalAmt || 0) + (prev.taxAmt || 0) - (prev.discAmt || 0) + value;
+        return {
+          ...prev,
+          coinAdjAmt: value,
+          netAmt: netAmount,
+        };
+      });
+    }
   };
 
   const handleApprovedByChange = (id: number, name: string) => {
@@ -207,6 +248,7 @@ const PurchaseOrderPage: React.FC = () => {
         taxableAmt: selectedProduct.defaultPrice ?? 0,
         transferYN: selectedProduct.transferYN,
         rNotes: selectedProduct.rNotes,
+        gstPerValue: (selectedProduct.sgstPerValue || 0) + (selectedProduct.cgstPerValue || 0),
       };
 
       setPODetailDto(detailDto);
@@ -251,24 +293,9 @@ const PurchaseOrderPage: React.FC = () => {
     }
 
     try {
-      // Calculate totals for the purchase order
-      const totalAmt = gridData.reduce((sum, item) => sum + item.itemTotal, 0);
-      const totalTaxableAmt = gridData.reduce((sum, item) => sum + item.taxableAmt, 0);
-      const netCGSTTaxAmt = gridData.reduce((sum, item) => sum + item.cgstTaxAmt, 0);
-      const netSGSTTaxAmt = gridData.reduce((sum, item) => sum + item.sgstTaxAmt, 0);
-      const taxAmt = netCGSTTaxAmt + netSGSTTaxAmt;
-
-      const netAmt = totalAmt - (selectedData.discAmt || 0) + taxAmt - (selectedData.coinAdjAmt || 0);
-
       let purchaseOrderData: purchaseOrderSaveDto = {
         purchaseOrderMastDto: {
           ...selectedData,
-          totalAmt,
-          taxAmt,
-          netAmt: totalAmt - (selectedData.discAmt || 0) + taxAmt,
-          netCGSTTaxAmt,
-          netSGSTTaxAmt,
-          totalTaxableAmt,
           pOStatusCode: "PENDING",
           pOStatus: "Pending",
           rActiveYN: "Y",
@@ -358,27 +385,39 @@ const PurchaseOrderPage: React.FC = () => {
     }
   };
   useEffect(() => {
-    console.log(selectedData);
+    console.log(selectedData, "purchaseOrderData");
   }, [selectedData]);
 
   const recalculateTotals = (updatedGrid: any[]) => {
-    const totalAmt = updatedGrid.reduce((sum, item) => sum + (item.itemTotal || 0), 0);
+    const itemsTotal = updatedGrid.reduce((sum, item) => sum + (item.packPrice || 0), 0);
+    const totalDiscAmt = updatedGrid.reduce((sum, item) => sum + (item.discAmt || 0), 0);
+    const totalCGSTTaxAmt = updatedGrid.reduce((sum, item) => sum + (item.cgstTaxAmt || 0), 0);
+    const totalSGSTTaxAmt = updatedGrid.reduce((sum, item) => sum + (item.sgstTaxAmt || 0), 0);
+    const totalTaxAmt = totalCGSTTaxAmt + totalSGSTTaxAmt;
     const totalTaxableAmt = updatedGrid.reduce((sum, item) => sum + (item.taxableAmt || 0), 0);
-    const netCGSTTaxAmt = updatedGrid.reduce((sum, item) => sum + (item.cgstTaxAmt || 0), 0);
-    const netSGSTTaxAmt = updatedGrid.reduce((sum, item) => sum + (item.sgstTaxAmt || 0), 0);
-    const taxAmt = netCGSTTaxAmt + netSGSTTaxAmt;
+    const netAmount = itemsTotal + (selectedData.coinAdjAmt || 0) - totalDiscAmt + totalTaxAmt;
 
-    const netAmt = totalAmt - (selectedData.discAmt || 0) + taxAmt - (selectedData.coinAdjAmt || 0);
+    const isSame =
+      selectedData.totalAmt === itemsTotal &&
+      selectedData.discAmt === totalDiscAmt &&
+      selectedData.taxAmt === totalTaxAmt &&
+      selectedData.netCGSTTaxAmt === totalCGSTTaxAmt &&
+      selectedData.netSGSTTaxAmt === totalSGSTTaxAmt &&
+      selectedData.totalTaxableAmt === totalTaxableAmt &&
+      selectedData.netAmt === netAmount;
 
-    setSelectedData((prev) => ({
-      ...prev,
-      totalAmt,
-      taxAmt,
-      netCGSTTaxAmt,
-      netSGSTTaxAmt,
-      totalTaxableAmt,
-      netAmt,
-    }));
+    if (!isSame) {
+      setSelectedData((prev) => ({
+        ...prev,
+        totalAmt: itemsTotal,
+        discAmt: totalDiscAmt,
+        taxAmt: totalTaxAmt,
+        netCGSTTaxAmt: totalCGSTTaxAmt,
+        netSGSTTaxAmt: totalSGSTTaxAmt,
+        totalTaxableAmt,
+        netAmt: netAmount,
+      }));
+    }
   };
 
   return (
