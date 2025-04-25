@@ -84,93 +84,81 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <DepartmentInfoChange deptName={purchaseOrderData?.fromDeptName || "Select Department"} handleChangeClick={handleDepartmentChange} />
         </Grid>
       </Grid>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={4} lg={3} xl={2}>
-          <FormField
-            type="text"
-            label="Purchase Order Code"
-            value={purchaseOrderData?.pOCode || ""}
-            onChange={(e) => onFormChange("pOCode", e.target.value)}
-            isSubmitted={isSubmitted}
-            name="pOCode"
-            ControlID="pOCode"
-            isMandatory
-            disabled
-            gridProps={{ sm: 12 }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={3} xl={2}>
-          <FormField
-            type="text"
-            label="Date"
-            value={purchaseOrderData?.pODate || ""}
-            onChange={(e) => onFormChange("pODate", e.target.value)}
-            isSubmitted={isSubmitted}
-            name="pODate"
-            ControlID="pODate"
-            isMandatory
-            disabled
-            gridProps={{ sm: 12 }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={3} xl={2}>
-          <FormField
-            type="select"
-            label="Supplier Name"
-            value={purchaseOrderData?.supplierID || ""}
-            onChange={(e) => onFormChange("supplierID", e.target.value)}
-            isSubmitted={isSubmitted}
-            name="supplierID"
-            ControlID="supplierID"
-            options={dropdownValues.department || []}
-            isMandatory
-            gridProps={{ sm: 12 }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={3} xl={2}>
-          <FormField
-            type="text"
-            label="Sanction No"
-            value={purchaseOrderData?.pOSActionNo || ""}
-            onChange={(e) => onFormChange("pOSActionNo", e.target.value)}
-            isSubmitted={isSubmitted}
-            name="pOSActionNo"
-            ControlID="pOSActionNo"
-            gridProps={{ sm: 12 }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4} lg={3} xl={2}>
-          <FormField
-            type="text"
-            label="Approved No"
-            value={purchaseOrderData?.pOApprovedNo || ""}
-            onChange={(e) => onFormChange("pOApprovedNo", e.target.value)}
-            isSubmitted={isSubmitted}
-            name="pOApprovedNo"
-            ControlID="pOApprovedNo"
-            gridProps={{ sm: 12 }}
-          />
-        </Grid>
+        <FormField
+          type="text"
+          label="Purchase Order Code"
+          value={purchaseOrderData?.pOCode || ""}
+          onChange={(e) => onFormChange("pOCode", e.target.value)}
+          isSubmitted={isSubmitted}
+          name="pOCode"
+          ControlID="pOCode"
+          isMandatory
+          disabled
+          gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
+        />
+        <FormField
+          type="text"
+          label="Date"
+          value={purchaseOrderData?.pODate || ""}
+          onChange={(e) => onFormChange("pODate", e.target.value)}
+          isSubmitted={isSubmitted}
+          name="pODate"
+          ControlID="pODate"
+          isMandatory
+          disabled
+          gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
+        />
+        <FormField
+          type="select"
+          label="Supplier Name"
+          value={purchaseOrderData?.supplierID || ""}
+          onChange={(e) => onFormChange("supplierID", e.target.value)}
+          isSubmitted={isSubmitted}
+          name="supplierID"
+          ControlID="supplierID"
+          options={dropdownValues.department || []}
+          isMandatory
+          gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
+        />
+        <FormField
+          type="text"
+          label="Sanction No"
+          value={purchaseOrderData?.pOSActionNo || ""}
+          onChange={(e) => onFormChange("pOSActionNo", e.target.value)}
+          isSubmitted={isSubmitted}
+          name="pOSActionNo"
+          ControlID="pOSActionNo"
+          gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
+        />
+        <FormField
+          type="text"
+          label="Approved No"
+          value={purchaseOrderData?.pOApprovedNo || ""}
+          onChange={(e) => onFormChange("pOApprovedNo", e.target.value)}
+          isSubmitted={isSubmitted}
+          name="pOApprovedNo"
+          ControlID="pOApprovedNo"
+          gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
+        />
       </Grid>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={4}>
-          <FormField
-            ControlID="productName"
-            label="Search Product"
-            name="productCode"
-            type="autocomplete"
-            placeholder="Add product to the grid"
-            value={productName}
-            onChange={(e) => setProductName(e.target.value)}
-            fetchSuggestions={fetchProductSuggestions}
-            onSelectSuggestion={handleProductSelect}
-            gridProps={{ xs: 12 }}
-          />
-        </Grid>
+        <FormField
+          ControlID="productName"
+          label="Search Product"
+          name="productCode"
+          type="autocomplete"
+          placeholder="Add product to the grid"
+          value={productName}
+          onChange={(e) => setProductName(e.target.value)}
+          fetchSuggestions={fetchProductSuggestions}
+          onSelectSuggestion={handleProductSelect}
+          gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
+        />
       </Grid>
     </Paper>
   );

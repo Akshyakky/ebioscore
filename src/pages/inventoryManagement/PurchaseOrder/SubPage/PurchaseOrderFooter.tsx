@@ -52,88 +52,82 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
-      <Grid container spacing={2} alignItems="center">
+      <Grid container spacing={2} alignContent={"center"} justifyContent={"center"}>
         {/* Left Section: Discount Area */}
-        <Grid item xs={12} sm={6}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <FormField
-              type="number"
-              label={`Total Disc in ${isDiscPercentage ? "Percentage [%]" : "Amount"}`}
-              value={totDiscAmtPer}
-              onChange={(e) => setTotDiscAmtPer(Number(e.target.value))}
-              name="totDiscAmtPer"
-              ControlID="totDiscAmtPer"
-              sx={{ minWidth: 180 }}
-            />
-            <FormField
-              type="switch"
-              label=""
-              name="totDiscAmtPerSwitch"
-              ControlID="totDiscAmtPerSwitch"
-              value={isDiscPercentage}
-              checked={isDiscPercentage}
-              onChange={() => setIsDiscPercentage(!isDiscPercentage)}
-            />
-            <Button variant="contained" onClick={handleApplyDiscount}>
-              Apply
-            </Button>
-          </Stack>
+        <FormField
+          type="number"
+          label={`Total Disc in ${isDiscPercentage ? "Percentage [%]" : "Amount"}`}
+          value={totDiscAmtPer}
+          onChange={(e) => setTotDiscAmtPer(Number(e.target.value))}
+          name="totDiscAmtPer"
+          ControlID="totDiscAmtPer"
+          gridProps={{ xs: 6, sm: 3, md: 2 }}
+        />
+        <FormField
+          type="switch"
+          label=""
+          name="totDiscAmtPerSwitch"
+          ControlID="totDiscAmtPerSwitch"
+          value={isDiscPercentage}
+          checked={isDiscPercentage}
+          onChange={() => setIsDiscPercentage(!isDiscPercentage)}
+          gridProps={{ xs: 2, sm: 1, md: 1 }}
+        />
+        <Grid size={{ xs: 1, sm: 2, md: 1 }}>
+          <Button variant="contained" onClick={handleApplyDiscount}>
+            Apply
+          </Button>
         </Grid>
 
         {/* Right Section: Finalize & Dropdown */}
-        <Grid item xs={12} sm={6}>
-          <Stack direction="row" spacing={2} justifyContent="flex-end" alignItems="center">
-            <FormField
-              type="switch"
-              label="Finalize PO"
-              name="finalizePO"
-              ControlID="finalizePO"
-              value={purchaseOrderMastData.pOApprovedYN}
-              checked={purchaseOrderMastData.pOApprovedYN === "Y"}
-              onChange={(e) => handleFinalizeToggle(e.target.checked)}
-            />
-            <FormField
-              type="select"
-              label="Approved By"
-              value={purchaseOrderMastData.pOApprovedID}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                const selected = approvedByOptions.find((opt) => Number(opt.value) === value);
-                if (selected) {
-                  handleApprovedByChange(value, selected.label);
-                }
-              }}
-              name="approvedBy"
-              ControlID="approvedBy"
-              options={approvedByOptions}
-              gridProps={{ sm: 6 }}
-            />
-          </Stack>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" mt={2} flexWrap="wrap">
-            {infoItem("Items Total", purchaseOrderMastData.totalAmt || "0.00")}
-            {infoItem("Tax Amount", purchaseOrderMastData.taxAmt || "0.00")}
-            {infoItem("Disc Amt", purchaseOrderMastData.discAmt || "0.00")}
-            {infoItem("Coin Adjustment", purchaseOrderMastData.coinAdjAmt || "0.00")}
-            {infoItem("Net Amt", purchaseOrderMastData.netAmt || "0.00")}
-          </Stack>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <FormField
-            type="textarea"
-            label="Remarks"
-            ControlID="rNotes"
-            value={purchaseOrderMastData.rNotes || ""}
-            name="rNotes"
-            onChange={(e) => {
-              handleRemarksChange(e.target.value);
-            }}
-            gridProps={{ xs: 12 }}
-            maxLength={250}
-            rows={1}
-          />
-        </Grid>
+        <FormField
+          type="switch"
+          label="Finalize PO"
+          name="finalizePO"
+          ControlID="finalizePO"
+          value={purchaseOrderMastData.pOApprovedYN}
+          checked={purchaseOrderMastData.pOApprovedYN === "Y"}
+          onChange={(e) => handleFinalizeToggle(e.target.checked)}
+          gridProps={{ xs: 6, sm: 4, md: 2 }}
+        />
+        <FormField
+          type="select"
+          label="Approved By"
+          value={purchaseOrderMastData.pOApprovedID}
+          onChange={(e) => {
+            const value = Number(e.target.value);
+            const selected = approvedByOptions.find((opt) => Number(opt.value) === value);
+            if (selected) {
+              handleApprovedByChange(value, selected.label);
+            }
+          }}
+          name="approvedBy"
+          ControlID="approvedBy"
+          options={approvedByOptions}
+          gridProps={{ xs: 6, sm: 4, md: 2 }}
+        />
+      </Grid>
+      <Grid container spacing={2}>
+        <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" mt={2} flexWrap="wrap">
+          {infoItem("Items Total", purchaseOrderMastData.totalAmt || "0.00")}
+          {infoItem("Tax Amount", purchaseOrderMastData.taxAmt || "0.00")}
+          {infoItem("Disc Amt", purchaseOrderMastData.discAmt || "0.00")}
+          {infoItem("Coin Adjustment", purchaseOrderMastData.coinAdjAmt || "0.00")}
+          {infoItem("Net Amt", purchaseOrderMastData.netAmt || "0.00")}
+        </Stack>
+        <FormField
+          type="textarea"
+          label="Remarks"
+          ControlID="rNotes"
+          value={purchaseOrderMastData.rNotes || ""}
+          name="rNotes"
+          onChange={(e) => {
+            handleRemarksChange(e.target.value);
+          }}
+          maxLength={250}
+          rows={1}
+          gridProps={{ xs: 12, sm: 6 }}
+        />
       </Grid>
     </Paper>
   );

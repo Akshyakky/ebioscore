@@ -1,8 +1,8 @@
 import { Box, Container } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Search from "@mui/icons-material/Search";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
-import { PurchaseOrderDetailDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { GridRowData, PurchaseOrderDetailDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
@@ -12,6 +12,7 @@ import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto"
 import PurchaseOrderGrid from "../SubPage/PurchaseOrderGrid";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
 import PurchaseOrderFooter from "../SubPage/PurchaseOrderFooter";
+import PurchaseOrderSearch from "../SubPage/PurchaseOrderSearch";
 
 const PurchaseOrderPage: React.FC = () => {
   const initialPOMastDto: PurchaseOrderMastDto = {
@@ -47,7 +48,7 @@ const PurchaseOrderPage: React.FC = () => {
     transferYN: "",
     rNotes: "",
   };
-  const [gridData, setGridData] = useState<any[]>([]);
+  const [gridData, setGridData] = useState<GridRowData[]>([]);
   const [selectedData, setSelectedData] = useState<PurchaseOrderMastDto>(initialPOMastDto);
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect, requireDepartmentSelection } = useDepartmentSelection({
     isDialogOpen: true,
@@ -64,7 +65,6 @@ const PurchaseOrderPage: React.FC = () => {
 
     // Create a copy of the grid data
     const updatedGridData = [...gridData];
-
     if (isDiscPercentage) {
       // Apply percentage discount to each item
       updatedGridData.forEach((item, index) => {
@@ -119,10 +119,13 @@ const PurchaseOrderPage: React.FC = () => {
 
     // Update grid data state
     setGridData(updatedGridData);
-
-    // Recalculate totals based on updated grid data
-    recalculateTotals(updatedGridData);
   };
+
+  useEffect(() => {
+    if (gridData) {
+      console.log("Grid data updated:", gridData);
+    }
+  }, [gridData]);
   const handleCoinAdjustmentChange = (value: number) => {
     if (selectedData.coinAdjAmt !== value) {
       setSelectedData((prev) => {
@@ -161,9 +164,8 @@ const PurchaseOrderPage: React.FC = () => {
 
     setSelectedProduct(product);
   };
-  const handleProductsGrid = (gridItems: any) => {
+  const handleProductsGrid = (gridItems: GridRowData[]) => {
     setGridData(gridItems);
-    recalculateTotals(gridItems);
   };
 
   const handleAdvancedSearch = () => {
@@ -419,7 +421,29 @@ const PurchaseOrderPage: React.FC = () => {
       }));
     }
   };
+  const handleCloseSearch = useCallback(() => {
+    setIsSearchOpen(false);
+  }, []);
 
+  const handleSelect = useCallback((data: PurchaseOrderMastDto) => {
+    console.log(data);
+    setSelectedData(data);
+  }, []);
+
+  useEffect(() => {
+    if (selectedData.pOID > 0) {
+      const fetchPOProductDetails = async () => {
+        const response = await purchaseOrderMastServices.getPurchaseOrderDetailsByPOID(selectedData.pOID);
+        console.log("PO Product Details:", response);
+        if (response.success && response.data) {
+          setGridData(response.data);
+        } else {
+          setGridData([]);
+        }
+      };
+      fetchPOProductDetails();
+    }
+  }, [selectedData.pOID]);
   return (
     <>
       {deptId > 0 && (
@@ -446,7 +470,7 @@ const PurchaseOrderPage: React.FC = () => {
             handleFinalizeToggle={handleFinalizeToggle}
             purchaseOrderMastData={selectedData}
           />
-
+          <PurchaseOrderSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
           <Box sx={{ mt: 4 }}>
             <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
           </Box>

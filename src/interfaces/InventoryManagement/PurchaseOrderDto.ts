@@ -96,3 +96,8 @@ export interface purchaseOrderSaveDto {
   purchaseOrderMastDto: PurchaseOrderMastDto;
   purchaseOrderDetailDto: PurchaseOrderDetailDto[];
 }
+
+export interface GridRowData extends PurchaseOrderDetailDto {
+  itemTotal: number;
+  requiredUnitQty?: number;
+}

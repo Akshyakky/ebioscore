@@ -1,7 +1,7 @@
 import { Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { GridRowData, PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { showAlert } from "@/utils/Common/showAlert";
@@ -9,11 +9,6 @@ import { showAlert } from "@/utils/Common/showAlert";
 interface PurchaseOrderGridProps {
   poDetailDto?: PurchaseOrderDetailDto;
   handleProductsGrid: (data: any) => void;
-}
-
-interface GridRowData extends PurchaseOrderDetailDto {
-  itemTotal: number;
-  requiredUnitQty?: number;
 }
 
 const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, handleProductsGrid }) => {
