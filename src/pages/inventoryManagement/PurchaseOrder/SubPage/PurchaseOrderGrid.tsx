@@ -75,20 +75,19 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
     const updatedData = [...gridData];
     const currentRow = { ...updatedData[rowIndex] };
     console.log("Current Row", currentRow);
-    currentRow[field] = value;
     if (field === "discPercentageAmt" && value > 100) {
       showAlert("error", "Discount percentage cannot exceed 100%", "error");
-      currentRow[field] = 0;
-      handleCellChange(0, rowIndex, "discPercentageAmt");
+      value = 0;
       return;
     } else if (field === "discAmt") {
       const totalPackPrice = (currentRow.packPrice || 0) * (currentRow.requiredPack || 0);
       if (value > totalPackPrice) {
         showAlert("error", "Discount amount cannot exceed pack price", "error");
-        handleCellChange(0, rowIndex, "discAmt");
+        value = 0;
         return;
       }
     }
+    currentRow[field] = value;
     const requiredPack = currentRow.requiredPack || 0;
     const unitPack = currentRow.unitPack || 1;
     const packPrice = currentRow.packPrice || 0;

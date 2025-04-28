@@ -9,13 +9,17 @@ interface PurchaseOrderSearchProps {
   open: boolean;
   onClose: () => void;
   onSelect: (purchaseOrderMastDto: PurchaseOrderMastDto) => void;
+  departmentId: number;
 }
 
-const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose, onSelect }) => {
+const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose, onSelect, departmentId }) => {
   const fetchItems = useCallback(async () => {
     try {
       const result = await purchaseOrderMastService.getAll();
-      return result.success ? result.data : [];
+      let items = result.success ? result.data : [];
+      items = items.filter((item: PurchaseOrderMastDto) => item.fromDeptID == departmentId);
+      console.log("Items:", items, departmentId);
+      return items;
     } catch (error) {
       console.error("Error fetching:", error);
       showAlert("Error", "Failed", "error");

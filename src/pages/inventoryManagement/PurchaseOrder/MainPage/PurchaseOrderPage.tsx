@@ -1,5 +1,5 @@
 import { Box, Container } from "@mui/material";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { use, useCallback, useEffect, useState } from "react";
 import Search from "@mui/icons-material/Search";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import { GridRowData, PurchaseOrderDetailDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
@@ -13,6 +13,7 @@ import PurchaseOrderGrid from "../SubPage/PurchaseOrderGrid";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
 import PurchaseOrderFooter from "../SubPage/PurchaseOrderFooter";
 import PurchaseOrderSearch from "../SubPage/PurchaseOrderSearch";
+import { showAlert } from "@/utils/Common/showAlert";
 
 const PurchaseOrderPage: React.FC = () => {
   const initialPOMastDto: PurchaseOrderMastDto = {
@@ -368,9 +369,12 @@ const PurchaseOrderPage: React.FC = () => {
       try {
         const response = purchaseOrderMastServices.savePurchaseOrder(purchaseOrderData);
         console.log(response);
+        showAlert("success", "Purchase Order saved successfully", "success");
+        handleClear();
       } catch (error) {}
     } catch (error) {
       console.error("Error saving purchase order:", error);
+      showAlert("error", "Failed to save purchase order", "error");
     }
   };
   useEffect(() => {
@@ -426,10 +430,11 @@ const PurchaseOrderPage: React.FC = () => {
           console.log("PO Details API response:", response);
 
           if (response.success && response.data) {
-            const gridItems = response.data.map((item: any) => ({
+            const gridItems: GridRowData[] = response.data.map((item: GridRowData) => ({
               ...item,
               itemTotal: (item.packPrice || 0) * (item.requiredPack || 0) - (item.discAmt || 0) + (item.cgstTaxAmt || 0) + (item.sgstTaxAmt || 0),
               requiredUnitQty: (item.unitPack || 1) * (item.requiredPack || 0),
+              gstPerValue: (item.sgstPerValue || 0) + (item.cgstPerValue || 0),
             }));
 
             console.log("Setting grid data with:", gridItems);
@@ -455,6 +460,10 @@ const PurchaseOrderPage: React.FC = () => {
 
     return packPrice * requiredPack - discAmt + cgstTaxAmt + sgstTaxAmt;
   };
+
+  useEffect(() => {
+    recalculateTotals(gridData);
+  }, [gridData]);
   return (
     <>
       {deptId > 0 && (
@@ -481,7 +490,7 @@ const PurchaseOrderPage: React.FC = () => {
             handleFinalizeToggle={handleFinalizeToggle}
             purchaseOrderMastData={selectedData}
           />
-          <PurchaseOrderSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
+          <PurchaseOrderSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} departmentId={deptId} />
           <Box sx={{ mt: 4 }}>
             <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
           </Box>
