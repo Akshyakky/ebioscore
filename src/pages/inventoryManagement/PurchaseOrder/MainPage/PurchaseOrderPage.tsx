@@ -63,19 +63,15 @@ const PurchaseOrderPage: React.FC = () => {
   const handleApplyDiscount = () => {
     if (gridData.length === 0) return;
 
-    // Create a copy of the grid data
     const updatedGridData = [...gridData];
     if (isDiscPercentage) {
-      // Apply percentage discount to each item
       updatedGridData.forEach((item, index) => {
         const packPrice = item.packPrice || 0;
         const requiredPack = item.requiredPack || 0;
         const totalPrice = packPrice * requiredPack;
 
-        // Calculate discount amount based on percentage
         const discAmt = (totalPrice * totDiscAmtPer) / 100;
 
-        // Update the item with new discount values
         updatedGridData[index] = {
           ...item,
           discAmt,
@@ -84,8 +80,6 @@ const PurchaseOrderPage: React.FC = () => {
         };
       });
     } else {
-      // Apply fixed amount discount proportionally to each item
-      // Calculate total value of all items
       const totalItemsValue = updatedGridData.reduce((sum, item) => {
         const packPrice = item.packPrice || 0;
         const requiredPack = item.requiredPack || 0;
@@ -93,20 +87,16 @@ const PurchaseOrderPage: React.FC = () => {
       }, 0);
 
       if (totalItemsValue > 0) {
-        // Distribute discount proportionally
         updatedGridData.forEach((item, index) => {
           const packPrice = item.packPrice || 0;
           const requiredPack = item.requiredPack || 0;
           const totalPrice = packPrice * requiredPack;
 
-          // Calculate this item's share of the total discount
           const proportion = totalPrice / totalItemsValue;
           const discAmt = totDiscAmtPer * proportion;
 
-          // Calculate discount percentage for this item
           const discPercentageAmt = totalPrice > 0 ? (discAmt / totalPrice) * 100 : 0;
 
-          // Update the item with new discount values
           updatedGridData[index] = {
             ...item,
             discAmt,
@@ -117,7 +107,6 @@ const PurchaseOrderPage: React.FC = () => {
       }
     }
 
-    // Update grid data state
     setGridData(updatedGridData);
   };
 
@@ -276,9 +265,9 @@ const PurchaseOrderPage: React.FC = () => {
 
   const handleClear = () => {
     setSelectedData(initialPOMastDto);
-    setGridData([]);
     setTotDiscAmtPer(0);
     setIsSubmitted(false);
+    setGridData([]);
   };
 
   const handleSave = async () => {
@@ -289,7 +278,6 @@ const PurchaseOrderPage: React.FC = () => {
       return;
     }
 
-    // Check if there are any products in the grid
     if (gridData.length === 0) {
       return;
     }
@@ -383,7 +371,6 @@ const PurchaseOrderPage: React.FC = () => {
       } catch (error) {}
     } catch (error) {
       console.error("Error saving purchase order:", error);
-      // showAlert("error", "An error occurred while saving the purchase order", "error");
     }
   };
   useEffect(() => {
@@ -426,24 +413,48 @@ const PurchaseOrderPage: React.FC = () => {
   }, []);
 
   const handleSelect = useCallback((data: PurchaseOrderMastDto) => {
-    console.log(data);
+    console.log("Selected PO:", data);
     setSelectedData(data);
   }, []);
 
   useEffect(() => {
     if (selectedData.pOID > 0) {
       const fetchPOProductDetails = async () => {
-        const response = await purchaseOrderMastServices.getPurchaseOrderDetailsByPOID(selectedData.pOID);
-        console.log("PO Product Details:", response);
-        if (response.success && response.data) {
-          setGridData(response.data);
-        } else {
-          setGridData([]);
+        try {
+          console.log("Fetching details for POID:", selectedData.pOID);
+          const response = await purchaseOrderMastServices.getPurchaseOrderDetailsByPOID(selectedData.pOID);
+          console.log("PO Details API response:", response);
+
+          if (response.success && response.data) {
+            const gridItems = response.data.map((item: any) => ({
+              ...item,
+              itemTotal: (item.packPrice || 0) * (item.requiredPack || 0) - (item.discAmt || 0) + (item.cgstTaxAmt || 0) + (item.sgstTaxAmt || 0),
+              requiredUnitQty: (item.unitPack || 1) * (item.requiredPack || 0),
+            }));
+
+            console.log("Setting grid data with:", gridItems);
+            setGridData(gridItems);
+          } else {
+            console.log("No data found or response error - NOT clearing grid");
+          }
+        } catch (error) {
+          console.error("Error fetching details:", error);
         }
       };
+
       fetchPOProductDetails();
     }
   }, [selectedData.pOID]);
+
+  const calculateItemTotal = (item: any) => {
+    const packPrice = item.packPrice || 0;
+    const requiredPack = item.requiredPack || 0;
+    const discAmt = item.discAmt || 0;
+    const cgstTaxAmt = item.cgstTaxAmt || 0;
+    const sgstTaxAmt = item.sgstTaxAmt || 0;
+
+    return packPrice * requiredPack - discAmt + cgstTaxAmt + sgstTaxAmt;
+  };
   return (
     <>
       {deptId > 0 && (
@@ -458,7 +469,7 @@ const PurchaseOrderPage: React.FC = () => {
             isSubmitted={isSubmitted}
             handleSelectedProduct={handleSelectedProduct}
           />
-          <PurchaseOrderGrid poDetailDto={pODetailDto} handleProductsGrid={handleProductsGrid} />
+          <PurchaseOrderGrid poDetailDto={pODetailDto} handleProductsGrid={handleProductsGrid} initialGridData={gridData} />
           <PurchaseOrderFooter
             totDiscAmtPer={totDiscAmtPer}
             setTotDiscAmtPer={setTotDiscAmtPer}
