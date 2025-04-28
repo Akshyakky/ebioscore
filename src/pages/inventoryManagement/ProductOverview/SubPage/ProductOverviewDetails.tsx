@@ -211,7 +211,6 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({ selectedD
   );
 
   const handleProductSelect = useCallback(async (selectedProductString: string) => {
-    // Extract the selected product code from the suggestion string.
     const [selectedProductCode] = selectedProductString.split(" - ");
     setFormState((prevState) => ({
       ...prevState,
@@ -221,16 +220,13 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({ selectedD
     try {
       const response = await productListService.getAll();
       if (response.success && response.data) {
-        // Filter for the product with the matching product code and map the result.
         const selectedProductDetails = response.data
           .filter((product: any) => product.productCode === selectedProductCode)
-          // Use aliasing to destructure mfName as MFName.
           .map(({ serialNumber, mfName: MFName, ...rest }: any) => ({
             ...rest,
             MFName,
           }));
 
-        // Proceed only if we got details for the selected product.
         if (selectedProductDetails.length > 0) {
           setFormState((prevState) => ({
             ...prevState,
@@ -279,8 +275,8 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({ selectedD
         PRODUCT OVERVIEW DETAILS
       </Typography>
 
-      <Grid item container justifyContent="space-between" alignItems="center" sx={{ width: "100%" }}>
-        <Grid item xs={12} md={3}>
+      <Grid container justifyContent="space-between" alignItems="center" size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <FormField
             ControlID="productCode"
             label="Product Code"
@@ -302,7 +298,7 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({ selectedD
             gridProps={{ xs: 12 }}
           />
         </Grid>
-        <Grid item>
+        <Grid size={{ xs: 12, md: 3 }}>
           <CustomButton
             onClick={onChangeDepartment}
             text={selectedData?.department || "Not Selected"}
@@ -321,11 +317,7 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({ selectedD
       </Grid>
 
       <Grid container spacing={2}>
-        {Array.isArray(selectedProductData) && selectedProductData.length > 0 && (
-          <Grid item xs={12}>
-            <CustomGrid columns={columns} data={selectedProductData} />
-          </Grid>
-        )}
+        {Array.isArray(selectedProductData) && selectedProductData.length > 0 && <CustomGrid columns={columns} data={selectedProductData} />}
       </Grid>
       <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
 

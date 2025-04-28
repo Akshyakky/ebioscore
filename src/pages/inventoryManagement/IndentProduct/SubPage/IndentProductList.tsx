@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Grid, Paper, Typography } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
@@ -12,8 +12,6 @@ import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import { IndentSaveRequestDto } from "@/interfaces/InventoryManagement/IndentProductDto";
 import DepartmentInfoChange from "../../CommonPage/DepartmentInfoChange";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
-import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
 import dayjs from "dayjs";
 
 interface IndentProductDetailsProps {
@@ -25,34 +23,22 @@ interface IndentProductDetailsProps {
 
 const IndentProductDetails: React.FC<IndentProductDetailsProps> = ({ selectedData, selectedDeptId, selectedDeptName, handleDepartmentChange }) => {
   const { control, setValue, watch, reset, handleSubmit } = useForm<IndentSaveRequestDto>();
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [, setIsSubmitted] = useState(false);
   const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const { setLoading } = useLoading();
   const dropdownValues = useDropdownValues(["department", "departmentIndent"]);
-  const { fetchPatientSuggestions } = usePatientAutocomplete();
-  const uhidInputRef = useRef<HTMLInputElement>(null);
-
-  // Watch values to update dependent fields
-  const indentType = watch("IndentMaster.indentType");
   const fromDeptID = watch("IndentMaster.fromDeptID");
-  const toDeptID = watch("IndentMaster.toDeptID");
-
-  // Process department options
   const departmentList = dropdownValues.department || [];
   const toDepartmentOptions = departmentList
     .filter((d: any) => d?.isStoreYN === "Y" && parseInt(d.value) !== fromDeptID)
     .map((dept: any) => ({ value: parseInt(dept.value), label: dept.label }));
 
-  const fromDepartmentOptions = departmentList.filter((d: any) => parseInt(d.value) !== toDeptID).map((dept: any) => ({ value: parseInt(dept.value), label: dept.label }));
-
-  // Process indent type options
   const indentTypeOptions = (dropdownValues.departmentIndent || []).map((type: any) => ({ value: type.value, label: type.label }));
 
   const initializeForm = useCallback(async () => {
     setLoading(true);
     try {
       const nextCode = await indentProductService.getNextCode("IND", 3);
-
       const defaultValues = {
         IndentMaster: {
           indentID: 0,
@@ -86,7 +72,6 @@ const IndentProductDetails: React.FC<IndentProductDetailsProps> = ({ selectedDat
 
   useEffect(() => {
     if (selectedData) {
-      // Format date for the form field
       const formattedData = {
         ...selectedData,
         IndentMaster: {
@@ -100,19 +85,10 @@ const IndentProductDetails: React.FC<IndentProductDetailsProps> = ({ selectedDat
     }
   }, [selectedData, initializeForm, reset]);
 
-  const handlePatientSelection = (suggestion: string) => {
-    const pChartCode = suggestion.split("|")[0].trim();
-    const pChartID = extractNumbers(pChartCode)[0] || 0;
-
-    setValue("IndentMaster.pChartCode", pChartCode);
-    setValue("IndentMaster.pChartID", pChartID);
-  };
-
   const handleToDepartmentChange = (value: any) => {
     const deptId = typeof value === "string" ? parseInt(value) : value;
     const selectedDept = departmentList.find((d: any) => parseInt(d.value) === deptId);
     const deptName = selectedDept?.label || "";
-
     setValue("IndentMaster.toDeptID", deptId);
     setValue("IndentMaster.toDeptName", deptName);
   };
@@ -125,7 +101,6 @@ const IndentProductDetails: React.FC<IndentProductDetailsProps> = ({ selectedDat
       return;
     }
 
-    // Format date back to ISO format for API
     const formattedData = {
       ...data,
       IndentMaster: {
@@ -153,24 +128,23 @@ const IndentProductDetails: React.FC<IndentProductDetailsProps> = ({ selectedDat
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 3 }}>
+          <Grid size={{ xs: 12 }}>
             <DepartmentInfoChange deptName={selectedDeptName || "Select Department"} handleChangeClick={handleDepartmentChange} />
           </Grid>
 
           <Grid size={{ xs: 12, md: 3 }}>
-            <FormField name="IndentMaster.indentType" control={control} type="select" label="Indent Type" required options={indentTypeOptions} />
+            <FormField name="IndentMaster.indentType" control={control} type="select" label="Indent Type" required options={indentTypeOptions} size="small" />
           </Grid>
 
           <Grid size={{ xs: 12, md: 3 }}>
-            <FormField name="IndentMaster.indentCode" control={control} type="text" label="Indent Code" disabled required />
+            <FormField name="IndentMaster.indentCode" control={control} type="text" label="Indent Code" disabled required size="small" />
           </Grid>
 
           <Grid size={{ xs: 12, md: 3 }}>
-            <FormField name="IndentMaster.indentDate" control={control} type="datepicker" label="Date" disabled />
+            <FormField name="IndentMaster.indentDate" control={control} type="datepicker" label="Date" disabled size="small" />
           </Grid>
-
           <Grid size={{ xs: 12, md: 3 }}>
-            <FormField name="IndentMaster.fromDeptID" control={control} type="select" label="From Dept" options={fromDepartmentOptions} disabled />
+            <FormField name="IndentMaster.fromDeptName" control={control} type="text" label="From Dept" disabled defaultValue={selectedDeptName} size="small" />
           </Grid>
 
           <Grid size={{ xs: 12, md: 3 }}>
@@ -182,15 +156,12 @@ const IndentProductDetails: React.FC<IndentProductDetailsProps> = ({ selectedDat
               options={toDepartmentOptions}
               required
               onChange={handleToDepartmentChange}
+              size="small"
             />
           </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormField name="productSearch" control={control} type="text" label="Product Search" placeholder="Search product..." defaultValue="" />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormField name="IndentMaster.remarks" control={control} type="textarea" label="Remarks" rows={3} />
+          <Grid size={{ xs: 12, md: 3 }}>
+            <FormField name="productSearch" control={control} type="text" label="Product Search" placeholder="Search product..." defaultValue="" size="small" />
           </Grid>
         </Grid>
 

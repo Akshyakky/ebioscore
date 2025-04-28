@@ -4,7 +4,8 @@ import Search from "@mui/icons-material/Search";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import IndentProductListDetails from "../SubPage/IndentProductList";
-import { IndentSaveRequestDto } from "@/interfaces/InventoryManagement/IndentProductDto";
+import { IndentDetailDto, IndentSaveRequestDto } from "@/interfaces/InventoryManagement/IndentProductDto";
+import IndentProductGrid from "../SubPage/IndentProdctDetails";
 
 const IndentProductPage: React.FC = () => {
   const [deptId, setDeptId] = useState(0);
@@ -13,6 +14,7 @@ const IndentProductPage: React.FC = () => {
   const [isDepartmentSelected, setIsDepartmentSelected] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<IndentSaveRequestDto | null>(null);
+  const [indentDetails, setIndentDetails] = useState<IndentDetailDto[]>([]);
 
   const handleDepartmentSelect = (id: number, name: string) => {
     setDeptId(id);
@@ -57,6 +59,12 @@ const IndentProductPage: React.FC = () => {
           </Box>
 
           <IndentProductListDetails selectedData={selectedData} selectedDeptId={deptId} selectedDeptName={deptName} handleDepartmentChange={handleOpenDialog} />
+          <IndentProductGrid
+            data={indentDetails}
+            unitOptions={[]} // No static data, will load dynamically later
+            packageOptions={[]}
+            onChange={setIndentDetails}
+          />
         </Container>
       )}
 
