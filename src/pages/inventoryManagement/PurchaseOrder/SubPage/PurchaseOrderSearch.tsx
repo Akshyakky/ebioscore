@@ -17,7 +17,7 @@ const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose
     try {
       const result = await purchaseOrderMastService.getAll();
       let items = result.success ? result.data : [];
-      items = items.filter((item: PurchaseOrderMastDto) => item.fromDeptID == departmentId);
+      items = items.filter((item: PurchaseOrderMastDto) => item.fromDeptID === departmentId);
       console.log("Items:", items, departmentId);
       return items;
     } catch (error) {
@@ -25,7 +25,7 @@ const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose
       showAlert("Error", "Failed", "error");
       return [];
     }
-  }, [purchaseOrderMastService]);
+  }, [purchaseOrderMastService, departmentId]);
 
   const updateActiveStatus = useCallback(
     async (id: number, status: boolean) => {
