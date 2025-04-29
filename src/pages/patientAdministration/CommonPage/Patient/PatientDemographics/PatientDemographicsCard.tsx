@@ -2,10 +2,10 @@
 import React from "react";
 import { Box, Typography, Paper, Button, Skeleton, Grid } from "@mui/material";
 import { Edit as EditIcon, Refresh as RefreshIcon } from "@mui/icons-material";
-import { PatientDemographicsData } from "@/interfaces/PatientAdministration/Patient/PatientDemographics.interface";
+import { PatientDemographicDetails } from "@/interfaces/PatientAdministration/registrationFormData";
 
 interface PatientDemographicsCardProps {
-  demographicsData: PatientDemographicsData | null;
+  demographicsData: PatientDemographicDetails | null;
   isLoading: boolean;
   showEditButton: boolean;
   showRefreshButton: boolean;

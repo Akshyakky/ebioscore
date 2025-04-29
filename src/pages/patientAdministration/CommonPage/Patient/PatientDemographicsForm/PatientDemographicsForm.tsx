@@ -10,7 +10,7 @@ import { sanitizeFormData } from "@/utils/Common/sanitizeInput";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
 import { PatientDemographicsFormProps } from "./PatientDemographicsFormProps";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import { PatientDemographicsData } from "@/interfaces/PatientAdministration/Patient/PatientDemographics.interface";
+import { PatientDemoGraph } from "@/interfaces/PatientAdministration/patientDemoGraph";
 
 /**
  * Reusable patient demographics form component
@@ -33,15 +33,27 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
   const loading = externalLoading !== undefined ? externalLoading : isLoading;
 
   // Dropdown lists required for this form
-  const requiredDropdowns: DropdownType[] = ["title", "gender", "bloodGroup", "country", "city", "area"];
-  const { title: titleOptions, gender, bloodGroup, country, city, area, isLoading: isLoadingDropdowns } = useDropdownValues(requiredDropdowns);
+  const requiredDropdowns: DropdownType[] = ["title", "gender", "bloodGroup", "country", "city", "area", "payment"];
+  const { title: titleOptions, gender, bloodGroup, country, city, area, payment: paymentSourceOptions, isLoading: isLoadingDropdowns } = useDropdownValues(requiredDropdowns);
 
   const {
     control,
     handleSubmit,
     reset,
-    formState: { errors, isDirty, isValid },
-  } = useForm<PatientDemographicsData>();
+    setValue,
+    formState: { isDirty, isValid },
+  } = useForm<PatientDemoGraph>();
+
+  const updateDropdownValues = (fieldName: string, fieldValueName: string, selectedValue: any, options: any[] | undefined) => {
+    if (!options) return;
+
+    const selectedOption = options.find((option) => option.value === selectedValue || option.label === selectedValue);
+
+    if (selectedOption) {
+      setValue(fieldName as any, selectedOption.label);
+      setValue(fieldValueName as any, selectedOption.value);
+    }
+  };
 
   // Function to fetch patient data
   const fetchPatientDetails = useCallback(async () => {
@@ -67,7 +79,6 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
     }
   }, [pChartID, open, reset, onClose]);
 
-  // Fetch patient data when component mounts or pChartID changes
   useEffect(() => {
     if (initialData) {
       reset(initialData);
@@ -77,7 +88,7 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
   }, [pChartID, open, initialData, reset, fetchPatientDetails]);
 
   // Form submission handler
-  const onSubmit = async (data: PatientDemographicsData) => {
+  const onSubmit = async (data: PatientDemoGraph) => {
     try {
       setIsLoading(true);
       // Sanitize form data
@@ -112,7 +123,7 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
   };
 
   // Define which fields to show based on displayFields prop
-  const shouldShowField = (fieldName: keyof PatientDemographicsData): boolean => {
+  const shouldShowField = (fieldName: keyof PatientDemoGraph): boolean => {
     if (!displayFields) return true;
     return displayFields.includes(fieldName);
   };
@@ -145,7 +156,18 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
               {/* Title */}
               {shouldShowField("pTitle") && (
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="pTitle" control={control} label="Title" type="select" options={titleOptions || []} required size="small" />
+                  <FormField
+                    name="pTitle"
+                    control={control}
+                    label="Title"
+                    type="select"
+                    options={titleOptions || []}
+                    required
+                    size="small"
+                    onChange={(selectedValue) => {
+                      updateDropdownValues("pTitle", "pTitleVal", selectedValue, titleOptions);
+                    }}
+                  />
                 </Grid>
               )}
 
@@ -173,7 +195,41 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
               {/* Gender */}
               {shouldShowField("pGender") && (
                 <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="pGender" control={control} label="Gender" type="select" options={gender || []} required size="small" />
+                  <FormField
+                    name="pGender"
+                    control={control}
+                    label="Gender"
+                    type="select"
+                    options={gender || []}
+                    required
+                    size="small"
+                    onChange={(selectedValue) => {
+                      updateDropdownValues("pGender", "pGenderVal", selectedValue, gender);
+                    }}
+                  />
+                </Grid>
+              )}
+
+              {/* Patient Type / Payment Source */}
+              {shouldShowField("pTypeName") && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormField
+                    name="pTypeName"
+                    control={control}
+                    label="Payment Source"
+                    type="select"
+                    options={paymentSourceOptions || []}
+                    required
+                    size="small"
+                    onChange={(selectedValue) => {
+                      const selectedOption = paymentSourceOptions?.find((option) => option.value === selectedValue || option.label === selectedValue);
+
+                      if (selectedOption) {
+                        setValue("pTypeID", Number(selectedOption.value));
+                        setValue("pTypeName", selectedOption.label);
+                      }
+                    }}
+                  />
                 </Grid>
               )}
 

@@ -13,10 +13,10 @@ import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
 import CustomButton from "@/components/Button/CustomButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
-import { PatientDemographicsData } from "@/interfaces/PatientAdministration/Patient/PatientDemographics.interface";
-import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch";
+import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientDemographicsForm } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographicsForm/PatientDemographicsForm";
+import { PatientDemoGraph } from "@/interfaces/PatientAdministration/patientDemoGraph";
 
 const AlertManager: React.FC = () => {
   const { setLoading } = useLoading();
@@ -205,7 +205,7 @@ const AlertManager: React.FC = () => {
     }
   };
 
-  const handleDemographicsSaved = (data: PatientDemographicsData) => {
+  const handleDemographicsSaved = (data: PatientDemoGraph) => {
     setRefreshDemographics((prev) => prev + 1);
     notifySuccess("Patient demographics updated successfully");
   };

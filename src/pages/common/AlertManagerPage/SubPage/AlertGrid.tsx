@@ -18,17 +18,6 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
     formatter?: (value: any) => string;
   }
 
-  // Safely format date values
-  const formatDate = (dateValue: Date | string): string => {
-    try {
-      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
-      return isValid(date) ? format(date, "dd/MM/yyyy") : "Invalid Date";
-    } catch (error) {
-      console.error("Date formatting error:", error);
-      return "Invalid Date";
-    }
-  };
-
   const columns = useMemo<AlertGridColumn[]>(
     () => [
       {
@@ -37,6 +26,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: false,
         filterable: false,
+        align: "center",
         render: (_, rowIndex) => (
           <Typography variant="body2" align="center">
             {rowIndex + 1}
@@ -49,8 +39,9 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
+        align: "center",
         render: (item: AlertDto) => (
-          <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
             <Chip label={item.category || "N/A"} color={getCategoryColor(item.category)} size="small" sx={{ minWidth: "90px", justifyContent: "center" }} />
           </Box>
         ),
@@ -61,6 +52,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
+        align: "left",
       },
       {
         key: "oPIPDate",
@@ -68,6 +60,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
+        align: "center",
       },
       {
         key: "patOPIPYN",
@@ -75,6 +68,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
+        align: "center",
         render: (item: AlertDto) => (
           <Typography variant="body2" align="center">
             {item.patOPIPYN === "O" ? "Outpatient" : item.patOPIPYN === "I" ? "Inpatient" : item.patOPIPYN || "N/A"}
@@ -87,6 +81,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
+        align: "center",
         render: (item: AlertDto) => (
           <Chip
             label={item.rActiveYN === "Y" ? "Active" : "Inactive"}
@@ -102,6 +97,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: false,
         filterable: false,
+        align: "center",
         render: (item: AlertDto) => (
           <Box sx={{ display: "flex", justifyContent: "center" }}>
             <IconButton

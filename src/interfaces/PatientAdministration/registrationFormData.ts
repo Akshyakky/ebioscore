@@ -35,4 +35,5 @@ export interface PatientDemographicDetails {
   patientType: string;
   patientPaymentSource: string;
   pBldGrp: string;
+  mobileNumber: string;
 }

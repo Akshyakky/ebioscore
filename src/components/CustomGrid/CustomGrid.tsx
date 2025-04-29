@@ -52,6 +52,7 @@ export interface Column<T> {
   resizable?: boolean;
   cellStyle?: React.CSSProperties;
   headerStyle?: React.CSSProperties;
+  align?: "left" | "center" | "right";
 }
 
 export interface CustomGridProps<T> {
@@ -432,7 +433,7 @@ const CustomGrid = <T extends Record<string, any>>({
 
       {/* Main Grid */}
       <StyledTableContainer sx={{ maxHeight, minHeight }} ref={virtualScrollRef}>
-        <Table ref={tableRef} stickyHeader size="small" sx={{ tableLayout: "fixed" }}>
+        <Table ref={tableRef} stickyHeader size="small" sx={{ tableLayout: "auto" }}>
           <StyledTableHead>
             <TableRow>
               {expandableRows && <TableCell padding="none" width={48} align="center" />}
@@ -467,7 +468,7 @@ const CustomGrid = <T extends Record<string, any>>({
                 .map((column) => (
                   <TableCell
                     key={column.key}
-                    align={column.key === "edit" ? "center" : "left"}
+                    align={column.align || "left"}
                     style={{
                       width: column.width,
                       minWidth: column.minWidth,
@@ -476,7 +477,7 @@ const CustomGrid = <T extends Record<string, any>>({
                       ...column.headerStyle,
                     }}
                   >
-                    <Box display="flex" alignItems="center" justifyContent={column.key === "edit" ? "center" : "flex-start"}>
+                    <Box display="flex" alignItems="center" justifyContent={column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start"}>
                       {column.sortable ? (
                         <StyledTableSortLabel active={orderBy === column.key} direction={orderBy === column.key ? order : "asc"} onClick={() => handleSort(column.key as keyof T)}>
                           {column.header}
@@ -583,9 +584,9 @@ const CustomGrid = <T extends Record<string, any>>({
                         .map((column, columnIndex) => (
                           <TableCell
                             key={`${rowIndex}-${column.key}`}
+                            align={column.align || "left"}
                             style={{
                               overflow: "hidden",
-                              whiteSpace: "nowrap",
                               textOverflow: "ellipsis",
                               ...column.cellStyle,
                               ...customCellStyle?.(item, column),
