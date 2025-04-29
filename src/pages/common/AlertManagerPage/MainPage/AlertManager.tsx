@@ -53,14 +53,7 @@ const AlertManager: React.FC = () => {
       const result: OperationResult<AlertDto[]> = await alertService.GetAlertBypChartID(pChartID);
 
       if (result.success) {
-        // Ensure dates are properly converted from strings to Date objects
-        const processedAlerts =
-          result.data?.map((alert) => ({
-            ...alert,
-            oPIPDate: alert.oPIPDate ? new Date(alert.oPIPDate) : new Date(),
-          })) || [];
-
-        setAlerts(processedAlerts);
+        setAlerts(result.data || []);
       } else {
         notifyError(result.errorMessage || "Failed to fetch alerts");
       }
@@ -100,9 +93,9 @@ const AlertManager: React.FC = () => {
     const newAlert: Partial<AlertDto> = {
       pChartID: selectedPatient.pChartID,
       pChartCode: selectedPatient.pChartCode,
-      rActiveYN: "Y", // This should be a character, not string
-      oPIPDate: new Date(), // Initialize with current date
-      patOPIPYN: "O", // Default to outpatient
+      rActiveYN: "Y",
+      oPIPDate: new Date(),
+      patOPIPYN: "O",
       oPIPNo: 0,
       oPVID: 0,
       oPIPCaseNo: 0,
@@ -119,7 +112,6 @@ const AlertManager: React.FC = () => {
     // Ensure the date is properly converted to a Date object
     const alertWithDateObject = {
       ...alert,
-      oPIPDate: alert.oPIPDate instanceof Date ? alert.oPIPDate : new Date(alert.oPIPDate),
     };
 
     setCurrentAlert(alertWithDateObject);
@@ -161,8 +153,6 @@ const AlertManager: React.FC = () => {
       // Ensure the date is in the correct format before sending to the backend
       const formattedData = {
         ...formData,
-        // Make sure oPIPDate is a proper Date object
-        oPIPDate: formData.oPIPDate instanceof Date ? formData.oPIPDate : new Date(formData.oPIPDate),
       };
 
       // Use baseAlertService for both create and update operations
@@ -172,7 +162,6 @@ const AlertManager: React.FC = () => {
         // Ensure the returned date is a Date object
         const newAlert = {
           ...result.data,
-          oPIPDate: new Date(result.data.oPIPDate),
         };
 
         if (isEditMode) {

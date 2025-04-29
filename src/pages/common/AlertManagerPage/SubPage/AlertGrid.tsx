@@ -72,7 +72,6 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         sortable: true,
         filterable: true,
         width: 120,
-        render: (item: AlertDto) => <Typography variant="body2">{formatDate(item.oPIPDate)}</Typography>,
       },
       {
         key: "patOPIPYN",

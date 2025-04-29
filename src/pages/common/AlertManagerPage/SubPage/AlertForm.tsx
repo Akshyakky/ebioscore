@@ -36,7 +36,7 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid, isDirty },
+    formState: { isValid, isDirty },
     reset,
   } = useForm<AlertFormFields>({
     defaultValues: {
