@@ -11,7 +11,6 @@ import { AlertDto } from "@/interfaces/Common/AlertManager";
 import { sanitizeFormData } from "@/utils/Common/sanitizeInput";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import dayjs from "dayjs";
 
 interface AlertFormProps {
   open: boolean;
@@ -20,9 +19,10 @@ interface AlertFormProps {
   isEditMode: boolean;
   onSubmit: (formData: AlertDto) => void;
   patientName: string;
+  pChartCode: string;
 }
 
-const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode, onSubmit, patientName }) => {
+const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode, onSubmit, patientName, pChartCode }) => {
   // Define the schema using Zod, matching backend validator
   const alertSchema = z.object({
     category: z.string().min(1, { message: "Category is required" }),
@@ -148,7 +148,7 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
                   UHID
                 </Typography>
                 <Typography variant="body1" fontWeight="medium">
-                  {alert.pChartCode}
+                  {pChartCode}
                 </Typography>
               </Grid>
             </Grid>

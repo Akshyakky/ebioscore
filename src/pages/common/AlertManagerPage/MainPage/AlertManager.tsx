@@ -238,9 +238,6 @@ const AlertManager: React.FC = () => {
           <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
               <Box sx={{ flexGrow: 1 }}>
-                <Typography variant="h6" gutterBottom>
-                  Patient Search
-                </Typography>
                 {/* Use the reusable PatientSearch component */}
                 <PatientSearch onPatientSelect={setSelectedPatient} clearTrigger={clearSearchTrigger} placeholder="Enter name, UHID or phone number" />
               </Box>
@@ -296,6 +293,7 @@ const AlertManager: React.FC = () => {
           isEditMode={isEditMode}
           onSubmit={handleFormSubmit}
           patientName={selectedPatient?.fullName || ""}
+          pChartCode={selectedPatient?.pChartCode || ""}
         />
       )}
 
