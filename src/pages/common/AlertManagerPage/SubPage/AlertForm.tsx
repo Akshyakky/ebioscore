@@ -2,7 +2,7 @@
 import React from "react";
 import { Box, Typography, Grid, Divider } from "@mui/material";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"; // Changed to match FormField
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
@@ -11,6 +11,7 @@ import { AlertDto } from "@/interfaces/Common/AlertManager";
 import { sanitizeFormData } from "@/utils/Common/sanitizeInput";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import dayjs from "dayjs";
 
 interface AlertFormProps {
   open: boolean;
@@ -33,6 +34,23 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
   // Derive the type from the schema
   type AlertFormFields = z.infer<typeof alertSchema>;
 
+  // Ensure we have a valid Date object for the default value
+  const getInitialDate = () => {
+    if (!alert.oPIPDate) return new Date();
+
+    // Handle different input formats
+    if (alert.oPIPDate instanceof Date) return alert.oPIPDate;
+
+    try {
+      // Try to convert string to Date
+      const dateObj = new Date(alert.oPIPDate);
+      return isNaN(dateObj.getTime()) ? new Date() : dateObj;
+    } catch (e) {
+      console.error("Error parsing date:", e);
+      return new Date();
+    }
+  };
+
   const {
     control,
     handleSubmit,
@@ -43,7 +61,7 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
       category: alert.category || "",
       alertDescription: alert.alertDescription || "",
       rActiveYN: alert.rActiveYN || "Y",
-      oPIPDate: alert.oPIPDate || new Date(),
+      oPIPDate: getInitialDate(),
     },
     resolver: zodResolver(alertSchema),
     mode: "onChange",
@@ -55,6 +73,8 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
     const updatedAlert: AlertDto = {
       ...alert,
       ...sanitizedData,
+      // Ensure oPIPDate is properly converted to Date
+      oPIPDate: data.oPIPDate instanceof Date ? data.oPIPDate : new Date(data.oPIPDate),
     };
     onSubmit(updatedAlert);
   };
@@ -91,7 +111,7 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
   );
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
       <GenericDialog
         open={open}
         onClose={handleCancel}

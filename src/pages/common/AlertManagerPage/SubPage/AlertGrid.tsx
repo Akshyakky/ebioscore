@@ -37,7 +37,6 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: false,
         filterable: false,
-        width: 60,
         render: (_, rowIndex) => (
           <Typography variant="body2" align="center">
             {rowIndex + 1}
@@ -50,7 +49,6 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        width: 130,
         render: (item: AlertDto) => (
           <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
             <Chip label={item.category || "N/A"} color={getCategoryColor(item.category)} size="small" sx={{ minWidth: "90px", justifyContent: "center" }} />
@@ -63,7 +61,6 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        minWidth: 300,
       },
       {
         key: "oPIPDate",
@@ -71,7 +68,6 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        width: 120,
       },
       {
         key: "patOPIPYN",
@@ -79,7 +75,6 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        width: 80,
         render: (item: AlertDto) => (
           <Typography variant="body2" align="center">
             {item.patOPIPYN === "O" ? "Outpatient" : item.patOPIPYN === "I" ? "Inpatient" : item.patOPIPYN || "N/A"}
@@ -92,7 +87,6 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        width: 90,
         render: (item: AlertDto) => (
           <Chip
             label={item.rActiveYN === "Y" ? "Active" : "Inactive"}
@@ -108,7 +102,6 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: false,
         filterable: false,
-        width: 110,
         render: (item: AlertDto) => (
           <Box sx={{ display: "flex", justifyContent: "center" }}>
             <IconButton

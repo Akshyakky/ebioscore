@@ -575,12 +575,12 @@ const FormField = <TFieldValues extends FieldValues>({
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <PickerComponent
             label={label}
-            value={field.value ? dayjs(field.value, dateFormat) : null}
+            value={field.value ? (typeof field.value === "string" ? dayjs(field.value, dateFormat) : dayjs(field.value)) : null}
             onChange={(newValue) => {
-              // Format date as DD/MM/YYYY
-              const formattedDate = newValue && dayjs.isDayjs(newValue) ? newValue.format(dateFormat) : null;
-              field.onChange(formattedDate);
-              externalOnChange?.(formattedDate);
+              // Return actual Date object instead of formatted string
+              const dateValue = newValue && dayjs.isDayjs(newValue) ? newValue.toDate() : null;
+              field.onChange(dateValue);
+              externalOnChange?.(dateValue);
             }}
             disabled={disabled}
             format={dateFormat}
