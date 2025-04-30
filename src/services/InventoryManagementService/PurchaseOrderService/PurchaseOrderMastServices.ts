@@ -24,8 +24,8 @@ class PurchaseOrderMastServices extends GenericEntityService<PurchaseOrderMastDt
   async savePurchaseOrder(purchaseOrderData: purchaseOrderSaveDto): Promise<OperationResult<any[]>> {
     return this.apiService.post<OperationResult<any[]>>(`${this.baseEndpoint}/SavePurchaseOrder`, purchaseOrderData, this.getToken());
   }
-  async getPurchaseOrderDetailsByPOID(pOId: number): Promise<OperationResult<any>> {
-    return this.apiService.get<OperationResult<any>>(`${this.baseEndpoint}/GetPurchaseOrderDetailsByPOID?pOID=${pOId}`, this.getToken());
+  async getPurchaseOrderDetailsByPOID(pOId: number): Promise<OperationResult<PurchaseOrderDetailDto[]>> {
+    return this.apiService.get<OperationResult<PurchaseOrderDetailDto[]>>(`${this.baseEndpoint}/GetPurchaseOrderDetailsByPOID?pOID=${pOId}`, this.getToken());
   }
 }
 

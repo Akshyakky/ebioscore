@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import { Box, Container } from "@mui/material";
 import PurchaseOrderHeader from "../SubPage/PurchaseOrderHeader";
-import { Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
+import { Delete as DeleteIcon, Save as SaveIcon, Search } from "@mui/icons-material";
 import { useDispatch } from "react-redux";
 import { setDepartmentInfo, setPurchaseOrderMastData, resetPurchaseOrderState } from "@/store/features/purchaseOrder/purchaseOrderSlice";
 import { AppDispatch } from "@/store";
@@ -14,6 +14,7 @@ import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import PurchaseOrderGrid from "../SubPage/PurchaseOrderGrid";
 import PurchaseOrderFooter from "../SubPage/PurchaseOrderFooter";
 import PurchaseOrderSearch from "../SubPage/PurchaseOrderSearch";
+import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 
 const PurchaseOrderPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -30,7 +31,6 @@ const PurchaseOrderPage: React.FC = () => {
   }, []);
 
   const handleSelect = useCallback((data: PurchaseOrderMastDto) => {
-    dispatch(resetPurchaseOrderState());
     dispatch(setPurchaseOrderMastData(data));
   }, []);
 
@@ -63,10 +63,28 @@ const PurchaseOrderPage: React.FC = () => {
   const handleSave = () => {
     console.log("Save button clicked");
   };
+  const handleAdvancedSearch = () => {
+    requireDepartmentSelection(() => {
+      setIsSearchOpen(true);
+    });
+  };
+
+  const actionButtons: ButtonProps[] = [
+    {
+      variant: "contained",
+      icon: Search,
+      text: "Advanced Search",
+      onClick: handleAdvancedSearch,
+    },
+  ];
+
   return (
     <>
       {deptId > 0 && (
         <Container maxWidth={false}>
+          <Box sx={{ marginBottom: 2 }}>
+            <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
+          </Box>
           <PurchaseOrderHeader handleDepartmentChange={handleDepartmentChange} />
           <PurchaseOrderGrid />
           <PurchaseOrderFooter />

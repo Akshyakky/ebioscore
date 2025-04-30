@@ -22,7 +22,6 @@ const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose
       const result = await purchaseOrderMastService.getAll();
       let items = result.success ? result.data : [];
       items = items.filter((item: PurchaseOrderMastDto) => item.fromDeptID === departmentId);
-      console.log("Items:", items, departmentId);
       return items;
     } catch (error) {
       console.error("Error fetching:", error);

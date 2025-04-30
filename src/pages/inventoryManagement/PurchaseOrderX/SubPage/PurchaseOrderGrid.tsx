@@ -1,6 +1,6 @@
 import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { initialPOMastDto, PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
 import { RootState } from "@/store";
 import { IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
@@ -17,10 +17,28 @@ const PurchaseOrderGrid: React.FC = () => {
   const dropdownValues = useDropdownValues(["taxType"]);
   const selectedProduct = useSelector((state: RootState) => state.purchaseOrder.selectedProduct) ?? null;
   const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
+  const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
+  const { pOID } = purchaseOrderMastData;
   const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
+
   useEffect(() => {
-    console.log("purchaseOrderDetails:", purchaseOrderDetails);
-  }, [purchaseOrderDetails]);
+    console.log("pOID:", pOID);
+    if (pOID > 0) {
+      const fetchPOProductDetails = async () => {
+        const response: OperationResult<PurchaseOrderDetailDto[]> = await purchaseOrderMastServices.getPurchaseOrderDetailsByPOID(pOID);
+        if (response.success && response.data) {
+          const purchaseOrderDetailDtos: PurchaseOrderDetailDto[] = response.data.map((item) => {
+            item.gstPerValue = (item.cgstPerValue || 0) + (item.sgstPerValue || 0);
+            return item;
+          });
+          dispatch(updateAllPurchaseOrderDetails(purchaseOrderDetailDtos));
+        } else {
+          showAlert("error", "Failed to fetch PO Product details", "error");
+        }
+      };
+      fetchPOProductDetails();
+    }
+  }, [pOID]);
 
   const { departmentId } = departmentInfo;
   const dispatch = useDispatch<AppDispatch>();
