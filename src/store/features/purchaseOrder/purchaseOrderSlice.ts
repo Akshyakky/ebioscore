@@ -39,6 +39,9 @@ const purchaseOrderState = createSlice({
         state.purchaseOrderDetails[index] = action.payload;
       }
     },
+    updateAllPurchaseOrderDetails(state, action: PayloadAction<PurchaseOrderDetailDto[]>) {
+      state.purchaseOrderDetails = action.payload;
+    },
     removePurchaseOrderDetail(state, action: PayloadAction<number>) {
       state.purchaseOrderDetails = state.purchaseOrderDetails.filter((item) => item.productID !== action.payload);
     },
@@ -61,5 +64,6 @@ export const {
   removePurchaseOrderDetail,
   resetPurchaseOrderDetails,
   setSelectedProduct,
+  updateAllPurchaseOrderDetails,
 } = purchaseOrderState.actions;
 export default purchaseOrderState.reducer;

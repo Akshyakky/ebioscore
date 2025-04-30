@@ -10,7 +10,7 @@ import { useSelector } from "react-redux";
 //
 import { AppDispatch } from "@/store";
 import { useDispatch } from "react-redux";
-import { addPurchaseOrderDetail, removePurchaseOrderDetail } from "@/store/features/purchaseOrder/purchaseOrderSlice";
+import { addPurchaseOrderDetail, removePurchaseOrderDetail, updateAllPurchaseOrderDetails } from "@/store/features/purchaseOrder/purchaseOrderSlice";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Delete as DeleteIcon } from "@mui/icons-material";
@@ -50,7 +50,57 @@ const PurchaseOrderGrid: React.FC = () => {
     dispatch(removePurchaseOrderDetail(productId));
   };
 
-  const handleCellChange = (value: number, rowIndex: number, field: string) => {};
+  const handleCellChange = (value: number, rowIndex: number, field: keyof PurchaseOrderDetailDto) => {
+    const updatedData = [...purchaseOrderDetails];
+    const currentRow = { ...updatedData[rowIndex] };
+
+    if (field === "discPercentageAmt" && value > 100) {
+      showAlert("error", "Discount percentage cannot exceed 100%", "error");
+      return;
+    }
+
+    if (field === "discAmt") {
+      const totalPackPrice = (currentRow.packPrice || 0) * (currentRow.requiredPack || 0);
+      if (value > totalPackPrice) {
+        showAlert("error", "Discount amount cannot exceed pack price", "error");
+        return;
+      }
+    }
+
+    currentRow[field] = value;
+
+    const requiredPack = currentRow.requiredPack || 0;
+    const unitPack = currentRow.unitPack || 1;
+    const packPrice = currentRow.packPrice || 0;
+
+    currentRow.requiredUnitQty = requiredPack * unitPack;
+    const totalPrice = packPrice * requiredPack;
+
+    if (field === "discPercentageAmt") {
+      currentRow.discAmt = (totalPrice * value) / 100;
+    } else if (field === "discAmt") {
+      currentRow.discPercentageAmt = totalPrice > 0 ? (value / totalPrice) * 100 : 0;
+    }
+
+    if (field === "gstPerValue") {
+      currentRow.cgstPerValue = value / 2;
+      currentRow.sgstPerValue = value / 2;
+    }
+
+    const discAmt = currentRow.discAmt || 0;
+    const taxableAmount = totalPrice - discAmt;
+    currentRow.taxableAmt = taxableAmount;
+
+    currentRow.cgstTaxAmt = (taxableAmount * (currentRow.cgstPerValue || 0)) / 100;
+    currentRow.sgstTaxAmt = (taxableAmount * (currentRow.sgstPerValue || 0)) / 100;
+
+    const gstTaxAmt = (taxableAmount * (currentRow.gstPerValue || 0)) / 100;
+    currentRow.totAmt = taxableAmount + gstTaxAmt;
+
+    updatedData[rowIndex] = currentRow;
+
+    dispatch(updateAllPurchaseOrderDetails(updatedData));
+  };
 
   return (
     <Paper sx={{ mt: 2 }}>
