@@ -1,5 +1,5 @@
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import { Box, Container } from "@mui/material";
 import PurchaseOrderHeader from "../SubPage/PurchaseOrderHeader";
@@ -13,6 +13,7 @@ import { initialPOMastDto, PurchaseOrderMastDto } from "@/interfaces/InventoryMa
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import PurchaseOrderGrid from "../SubPage/PurchaseOrderGrid";
 import PurchaseOrderFooter from "../SubPage/PurchaseOrderFooter";
+import PurchaseOrderSearch from "../SubPage/PurchaseOrderSearch";
 
 const PurchaseOrderPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -22,6 +23,16 @@ const PurchaseOrderPage: React.FC = () => {
   });
   const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
   const { departmentId } = departmentInfo;
+
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const handleCloseSearch = useCallback(() => {
+    setIsSearchOpen(false);
+  }, []);
+
+  const handleSelect = useCallback((data: PurchaseOrderMastDto) => {
+    dispatch(resetPurchaseOrderState());
+    dispatch(setPurchaseOrderMastData(data));
+  }, []);
 
   useEffect(() => {
     if (isDepartmentSelected) {
@@ -59,6 +70,7 @@ const PurchaseOrderPage: React.FC = () => {
           <PurchaseOrderHeader handleDepartmentChange={handleDepartmentChange} />
           <PurchaseOrderGrid />
           <PurchaseOrderFooter />
+          <PurchaseOrderSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
           <Box sx={{ mt: 4 }}>
             {departmentId > 0 && <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />}
           </Box>
