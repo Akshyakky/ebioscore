@@ -7,8 +7,7 @@ const initialState: PurchaseOrderState = {
   purchaseOrderMastData: null,
   purchaseOrderDetails: [],
   selectedProduct: null,
-  totDiscAmtPer: 0,
-  isDiscPercentage: false,
+  discountFooter: { totDiscAmtPer: 0, isDiscPercentage: false },
 };
 
 const purchaseOrderState = createSlice({
@@ -47,11 +46,8 @@ const purchaseOrderState = createSlice({
     setSelectedProduct(state, action: PayloadAction<ProductListDto | null>) {
       state.selectedProduct = action.payload;
     },
-    setTotDiscAmtPer(state, action: PayloadAction<number>) {
-      state.totDiscAmtPer = action.payload;
-    },
-    setIsDiscPercentage(state, action: PayloadAction<boolean>) {
-      state.isDiscPercentage = action.payload;
+    setDiscountFooterField(state, action: PayloadAction<{ field: keyof PurchaseOrderState["discountFooter"]; value: any }>) {
+      state.discountFooter[action.payload.field] = action.payload.value;
     },
   },
 });
@@ -66,7 +62,6 @@ export const {
   resetPurchaseOrderDetails,
   setSelectedProduct,
   updateAllPurchaseOrderDetails,
-  setTotDiscAmtPer,
-  setIsDiscPercentage,
+  setDiscountFooterField,
 } = purchaseOrderState.actions;
 export default purchaseOrderState.reducer;
