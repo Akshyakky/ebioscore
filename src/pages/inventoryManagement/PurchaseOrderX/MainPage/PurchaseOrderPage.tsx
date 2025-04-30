@@ -6,14 +6,21 @@ import PurchaseOrderHeader from "../SubPage/PurchaseOrderHeader";
 import { Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
 //
 import { useDispatch } from "react-redux";
-import { setDepartmentInfo, setPurchaseOrderMastData, updatePurchaseOrderMastField, resetPurchaseOrderState } from "@/store/features/purchaseOrder/purchaseOrderSlice";
+import {
+  setDepartmentInfo,
+  setPurchaseOrderMastData,
+  updatePurchaseOrderMastField,
+  resetPurchaseOrderState,
+  updateAllPurchaseOrderDetails,
+} from "@/store/features/purchaseOrder/purchaseOrderSlice";
 import { AppDispatch } from "@/store";
 //
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-import { initialPOMastDto, PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { initialPOMastDto, PurchaseOrderDetailDto, PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import PurchaseOrderGrid from "../SubPage/PurchaseOrderGrid";
+import PurchaseOrderFooter from "../SubPage/PurchaseOrderFooter";
 
 const PurchaseOrderPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -22,9 +29,12 @@ const PurchaseOrderPage: React.FC = () => {
     isDialogOpen: true,
   });
   const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
+  const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
   const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
   const { departmentId, departmentName } = departmentInfo;
 
+  const [totDiscAmtPer, setTotDiscAmtPer] = useState<number>(0);
+  const [isDiscPercentage, setIsDiscPercentage] = useState<boolean>(false);
   useEffect(() => {
     return () => {
       dispatch(resetPurchaseOrderState());
@@ -58,12 +68,97 @@ const PurchaseOrderPage: React.FC = () => {
     console.log("Save button clicked");
   };
 
+  const handleApplyDiscount = () => {
+    if (purchaseOrderDetails.length === 0) return;
+
+    const updatedGridData = [...purchaseOrderDetails];
+    if (isDiscPercentage) {
+      updatedGridData.forEach((item, index) => {
+        const packPrice = item.packPrice || 0;
+        const requiredPack = item.requiredPack || 0;
+        const totalPrice = packPrice * requiredPack;
+
+        const discAmt = (totalPrice * totDiscAmtPer) / 100;
+
+        updatedGridData[index] = {
+          ...item,
+          discAmt,
+          discPercentageAmt: totDiscAmtPer,
+          totAmt: totalPrice - discAmt,
+        };
+      });
+    } else {
+      const totalItemsValue = updatedGridData.reduce((sum, item) => {
+        const packPrice = item.packPrice || 0;
+        const requiredPack = item.requiredPack || 0;
+        return sum + packPrice * requiredPack;
+      }, 0);
+
+      if (totalItemsValue > 0) {
+        updatedGridData.forEach((item, index) => {
+          const packPrice = item.packPrice || 0;
+          const requiredPack = item.requiredPack || 0;
+          const totalPrice = packPrice * requiredPack;
+
+          const proportion = totalPrice / totalItemsValue;
+          const discAmt = totDiscAmtPer * proportion;
+
+          const discPercentageAmt = totalPrice > 0 ? (discAmt / totalPrice) * 100 : 0;
+
+          updatedGridData[index] = {
+            ...item,
+            discAmt,
+            discPercentageAmt,
+            totAmt: totalPrice - discAmt,
+          };
+        });
+      }
+    }
+    dispatch(updateAllPurchaseOrderDetails(updatedGridData));
+  };
+  const recalculateFooterAmounts = (details: PurchaseOrderDetailDto[]) => {
+    let totalAmt = 0;
+    let discAmt = 0;
+    let taxAmt = 0;
+    let netAmt = 0;
+
+    details.forEach((item) => {
+      const packPrice = item.packPrice || 0;
+      const requiredPack = item.requiredPack || 0;
+      const itemTotalPrice = packPrice * requiredPack;
+      const itemDisc = item.discAmt || 0;
+      const itemCGST = item.cgstTaxAmt || 0;
+      const itemSGST = item.sgstTaxAmt || 0;
+
+      totalAmt += itemTotalPrice;
+      discAmt += itemDisc;
+      taxAmt += itemCGST + itemSGST;
+      netAmt += itemTotalPrice - itemDisc + itemCGST + itemSGST;
+    });
+
+    dispatch(updatePurchaseOrderMastField({ field: "totalAmt", value: totalAmt }));
+    dispatch(updatePurchaseOrderMastField({ field: "discAmt", value: discAmt }));
+    dispatch(updatePurchaseOrderMastField({ field: "taxAmt", value: taxAmt }));
+    dispatch(updatePurchaseOrderMastField({ field: "netAmt", value: netAmt }));
+  };
+
+  useEffect(() => {
+    recalculateFooterAmounts(purchaseOrderDetails);
+  }, [purchaseOrderDetails]);
+
   return (
     <>
       {deptId > 0 && (
         <Container maxWidth={false}>
           <PurchaseOrderHeader handleDepartmentChange={handleDepartmentChange} />
           <PurchaseOrderGrid />
+          <PurchaseOrderFooter
+            totDiscAmtPer={totDiscAmtPer}
+            setTotDiscAmtPer={setTotDiscAmtPer}
+            isDiscPercentage={isDiscPercentage}
+            setIsDiscPercentage={setIsDiscPercentage}
+            handleApplyDiscount={handleApplyDiscount}
+          />
           <Box sx={{ mt: 4 }}>
             {departmentId > 0 && <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />}
           </Box>
