@@ -144,6 +144,8 @@ export interface PurchaseOrderState {
   purchaseOrderMastData: PurchaseOrderMastDto | null;
   purchaseOrderDetails: PurchaseOrderDetailDto[];
   selectedProduct: ProductListDto | null;
+  totDiscAmtPer?: number;
+  isDiscPercentage?: boolean;
 }
 
 export interface PurchaseOrderHeaderProps {

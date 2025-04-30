@@ -7,6 +7,8 @@ const initialState: PurchaseOrderState = {
   purchaseOrderMastData: null,
   purchaseOrderDetails: [],
   selectedProduct: null,
+  totDiscAmtPer: 0,
+  isDiscPercentage: false,
 };
 
 const purchaseOrderState = createSlice({
@@ -33,12 +35,6 @@ const purchaseOrderState = createSlice({
     addPurchaseOrderDetail(state, action: PayloadAction<PurchaseOrderDetailDto>) {
       state.purchaseOrderDetails.push(action.payload);
     },
-    updatePurchaseOrderDetail(state, action: PayloadAction<PurchaseOrderDetailDto>) {
-      const index = state.purchaseOrderDetails.findIndex((item) => item.pODetID === action.payload.pODetID);
-      if (index >= 0) {
-        state.purchaseOrderDetails[index] = action.payload;
-      }
-    },
     updateAllPurchaseOrderDetails(state, action: PayloadAction<PurchaseOrderDetailDto[]>) {
       state.purchaseOrderDetails = action.payload;
     },
@@ -51,6 +47,12 @@ const purchaseOrderState = createSlice({
     setSelectedProduct(state, action: PayloadAction<ProductListDto | null>) {
       state.selectedProduct = action.payload;
     },
+    setTotDiscAmtPer(state, action: PayloadAction<number>) {
+      state.totDiscAmtPer = action.payload;
+    },
+    setIsDiscPercentage(state, action: PayloadAction<boolean>) {
+      state.isDiscPercentage = action.payload;
+    },
   },
 });
 
@@ -60,10 +62,11 @@ export const {
   updatePurchaseOrderMastField,
   resetPurchaseOrderState,
   addPurchaseOrderDetail,
-  updatePurchaseOrderDetail,
   removePurchaseOrderDetail,
   resetPurchaseOrderDetails,
   setSelectedProduct,
   updateAllPurchaseOrderDetails,
+  setTotDiscAmtPer,
+  setIsDiscPercentage,
 } = purchaseOrderState.actions;
 export default purchaseOrderState.reducer;
