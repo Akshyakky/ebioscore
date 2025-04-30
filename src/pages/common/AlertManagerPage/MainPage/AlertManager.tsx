@@ -250,8 +250,8 @@ const AlertManager: React.FC = () => {
             <PatientDemographics
               pChartID={selectedPatient?.pChartID}
               showEditButton={!!selectedPatient}
+              showRefreshButton={!!selectedPatient}
               onEditClick={handleEditDemographics}
-              showRefreshButton={false} // We have a global refresh button
               variant="detailed"
               emptyStateMessage={selectedPatient ? "No demographics information available for this patient." : "Please select a patient to view demographics"}
             />

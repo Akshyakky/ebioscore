@@ -28,7 +28,10 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
     category: z.string().min(1, { message: "Category is required" }),
     alertDescription: z.string().min(1, { message: "Alert description is required" }).max(4000, { message: "Alert description cannot exceed 4000 characters" }),
     rActiveYN: z.enum(["Y", "N"], { message: "Active status must be Y or N" }),
-    oPIPDate: z.date({ message: "Date is required" }),
+    oPIPDate: z
+      .union([z.string(), z.date()])
+      .optional()
+      .transform((val) => (val ? new Date(val) : val)),
   });
 
   // Derive the type from the schema
@@ -73,8 +76,7 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
     const updatedAlert: AlertDto = {
       ...alert,
       ...sanitizedData,
-      // Ensure oPIPDate is properly converted to Date
-      oPIPDate: data.oPIPDate instanceof Date ? data.oPIPDate : new Date(data.oPIPDate),
+      oPIPDate: data.oPIPDate ? new Date(data.oPIPDate) : alert.oPIPDate,
     };
     onSubmit(updatedAlert);
   };
@@ -166,7 +168,7 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
                 <FormField name="category" control={control} label="Category" type="select" options={categories} required size="small" fullWidth />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
+              {/* <Grid size={{ xs: 12, sm: 6 }}>
                 <FormField
                   name="rActiveYN"
                   control={control}
@@ -180,7 +182,7 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
                   size="small"
                   fullWidth
                 />
-              </Grid>
+              </Grid> */}
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormField name="oPIPDate" control={control} label="Alert Date" type="datepicker" required size="small" fullWidth />

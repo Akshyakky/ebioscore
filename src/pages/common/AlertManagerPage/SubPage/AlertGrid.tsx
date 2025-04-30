@@ -106,7 +106,10 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
                 e.stopPropagation();
                 onEditAlert(item);
               }}
-              sx={{ mx: 0.5 }}
+              sx={{
+                bgcolor: "rgba(25, 118, 210, 0.08)",
+                "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+              }}
             >
               <EditIcon fontSize="small" />
             </IconButton>
@@ -117,7 +120,10 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
                 e.stopPropagation();
                 onDeleteAlert(item);
               }}
-              sx={{ mx: 0.5 }}
+              sx={{
+                bgcolor: "rgba(25, 118, 210, 0.08)",
+                "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+              }}
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
@@ -162,9 +168,11 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
           data={alerts}
           maxHeight="500px"
           pagination={true}
+          pageSize={10}
           showExportCSV={true}
           exportFileName="patient_alerts"
           emptyStateMessage="No alerts found for this patient"
+          virtualScroll={false}
           initialSortBy={{ field: "oPIPDate" as any, direction: "desc" }}
           gridStyle={{
             borderRadius: "4px",

@@ -98,7 +98,6 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
       const result = await PatientDemoGraphService.savePatientDemographics(sanitizedData);
 
       if (result.success) {
-        notifySuccess("Patient demographics updated successfully");
         if (onSaved) {
           onSaved(sanitizedData);
         }
@@ -181,9 +180,16 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
         )}
 
         {/* Date of Birth */}
-        {shouldShowField("dob") && (
+        {shouldShowField("pDob") && (
           <Grid size={{ xs: 12, sm: 6 }}>
-            <FormField name="dob" control={control} label="Date of Birth" type="datepicker" required size="small" />
+            <FormField name="pDob" control={control} label="Date of Birth" type="datepicker" required size="small" />
+          </Grid>
+        )}
+
+        {/* Registration Date (non-editable) */}
+        {shouldShowField("pRegDate") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="pRegDate" control={control} label="Registration Date" type="datepicker" disabled size="small" />
           </Grid>
         )}
 
@@ -235,6 +241,13 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
           </Grid>
         )}
 
+        {/* Primary Referral Source (non-editable) */}
+        {shouldShowField("PrimaryReferralSourceName") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="PrimaryReferralSourceName" control={control} label="Referral Source" type="text" disabled size="small" />
+          </Grid>
+        )}
+
         {/* Phone Number */}
         {shouldShowField("pAddPhone1") && (
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -278,16 +291,23 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
         )}
 
         {/* ID Document Type */}
-        {shouldShowField("indentityType") && (
+        {/* {shouldShowField("indentityType") && (
           <Grid size={{ xs: 12, sm: 6 }}>
             <FormField name="indentityType" control={control} label="ID Document Type" type="text" size="small" />
           </Grid>
-        )}
+        )} */}
 
         {/* ID Document Number */}
         {shouldShowField("indentityValue") && (
           <Grid size={{ xs: 12, sm: 6 }}>
             <FormField name="indentityValue" control={control} label="ID Document Number" type="text" size="small" />
+          </Grid>
+        )}
+
+        {/* International ID/Passport ID */}
+        {shouldShowField("intIdPsprt") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="intIdPsprt" control={control} label="Int. ID/Passport ID" type="text" size="small" />
           </Grid>
         )}
       </Grid>

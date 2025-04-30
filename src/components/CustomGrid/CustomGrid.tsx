@@ -289,16 +289,23 @@ const CustomGrid = <T extends Record<string, any>>({
 
   // Virtual Scroll Implementation
   const virtualScrollData = useMemo(() => {
-    if (!virtualScroll) return processedData;
+    if (pagination && !virtualScroll) {
+      const startIndex = page * rowsPerPage;
+      const endIndex = startIndex + rowsPerPage;
+      return processedData.slice(startIndex, endIndex);
+    }
 
-    const rowHeight = 48; // Adjust based on your row height
-    const containerHeight = virtualScrollRef.current?.clientHeight || 0;
-    const visibleRows = Math.ceil(containerHeight / rowHeight);
-    const startIndex = Math.max(0, page * rowsPerPage);
-    const endIndex = Math.min(startIndex + visibleRows + 3, processedData.length);
+    if (virtualScroll) {
+      const rowHeight = 48;
+      const containerHeight = virtualScrollRef.current?.clientHeight || 0;
+      const visibleRows = Math.ceil(containerHeight / rowHeight);
+      const startIndex = Math.max(0, page * rowsPerPage);
+      const endIndex = Math.min(startIndex + visibleRows + 3, processedData.length);
+      return processedData.slice(startIndex, endIndex);
+    }
 
-    return processedData.slice(startIndex, endIndex);
-  }, [processedData, virtualScroll, page, rowsPerPage]);
+    return processedData;
+  }, [processedData, virtualScroll, page, rowsPerPage, pagination]);
 
   // Event Handlers
   const handleSort = useCallback(
