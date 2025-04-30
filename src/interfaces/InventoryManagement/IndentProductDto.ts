@@ -44,10 +44,10 @@ export interface IndentDetailDto extends BaseDto {
   expiryYN?: string;
   ppkgID?: number;
   psGrpID?: number;
-  pUnitID?: number;
+  pUnitID?: string;
   pUnitName?: string;
   unitPack?: number;
-  requiredQty?: number;
+  requiredQty: number;
   requiredUnitQty?: number;
   poNo?: number;
   deptIssualYN: string;

@@ -1,4 +1,5 @@
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
+import { ProductListDto } from "./ProductListDto";
 
 export interface PurchaseOrderMastDto extends BaseDto {
   pOID: number;
@@ -97,7 +98,59 @@ export interface purchaseOrderSaveDto {
   purchaseOrderDetailDto: PurchaseOrderDetailDto[];
 }
 
-export interface GridRowData extends PurchaseOrderDetailDto {
-  itemTotal: number;
-  requiredUnitQty?: number;
+export interface GridRowData extends PurchaseOrderDetailDto {}
+
+export const initialPOMastDto: PurchaseOrderMastDto = {
+  pOID: 0,
+  supplierID: 0,
+  supplierName: "",
+  fromDeptID: 0,
+  fromDeptName: "",
+  pODate: "",
+  auGrpID: 0,
+  catDesc: "",
+  catValue: "",
+  coinAdjAmt: 0,
+  discAmt: 0,
+  netAmt: 0,
+  pOAcknowledgement: "",
+  pOApprovedBy: "",
+  pOApprovedID: 0,
+  pOApprovedNo: "",
+  pOApprovedYN: "N",
+  pOCode: "",
+  pOSActionNo: "",
+  pOTypeValue: "",
+  pOType: "",
+  taxAmt: 0,
+  totalAmt: 0,
+  pOStatusCode: "",
+  pOStatus: "",
+  netCGSTTaxAmt: 0,
+  netSGSTTaxAmt: 0,
+  totalTaxableAmt: 0,
+  rActiveYN: "Y",
+  transferYN: "Y",
+  rNotes: "",
+};
+
+export interface DepartmentInfo {
+  departmentId: number;
+  departmentName: string;
+}
+export interface DiscountFooterProps {
+  totDiscAmtPer?: number;
+  isDiscPercentage?: boolean;
+}
+
+export interface PurchaseOrderState {
+  departmentInfo: DepartmentInfo | null;
+  purchaseOrderMastData: PurchaseOrderMastDto | null;
+  purchaseOrderDetails: PurchaseOrderDetailDto[];
+  selectedProduct: ProductListDto | null;
+  discountFooter: DiscountFooterProps;
+}
+
+export interface PurchaseOrderHeaderProps {
+  handleDepartmentChange: () => void;
 }
