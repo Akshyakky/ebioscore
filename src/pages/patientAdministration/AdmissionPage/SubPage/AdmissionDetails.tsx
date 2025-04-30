@@ -159,7 +159,7 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
         }}
         gridProps={{ xs: 12, md: 3, lg: 3 }}
       />
-      <Grid item xs={12} sm={6} md={9} lg={9} xl={9}>
+      <Grid size={{ xs: 12, sm: 6, md: 9, lg: 9, xl: 9 }}>
         <PatientDemographics pChartID={formData.ipAdmissionDto.pChartID || 0} />
       </Grid>
 

@@ -124,27 +124,24 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
       if (selectedPicIds.length === 0) {
         handlePicChange({ target: { value: uniquePicIds } } as any);
       }
-      const groupedByPIC = editData.chargeDetails.reduce(
-        (acc, detail) => {
-          const picName = dropdownValues.pic?.find((p) => Number(p.value) === detail.pTypeID)?.label || "";
+      const groupedByPIC = editData.chargeDetails.reduce((acc, detail) => {
+        const picName = dropdownValues.pic?.find((p) => Number(p.value) === detail.pTypeID)?.label || "";
 
-          if (!acc[picName]) {
-            acc[picName] = {};
-          }
-          const wardCategory = dropdownValues.bedCategory?.find((cat) => Number(cat.value) === detail.wCatID);
-          if (wardCategory) {
-            const categoryLabel = wardCategory.label;
-            const drAmt = detail.dcValue || 0;
-            const hospAmt = detail.hcValue || 0;
-            const totAmt = drAmt + hospAmt;
-            acc[picName][`${categoryLabel}_drAmt`] = drAmt.toFixed(2);
-            acc[picName][`${categoryLabel}_hospAmt`] = hospAmt.toFixed(2);
-            acc[picName][`${categoryLabel}_totAmt`] = totAmt.toFixed(2);
-          }
-          return acc;
-        },
-        {} as Record<string, any>
-      );
+        if (!acc[picName]) {
+          acc[picName] = {};
+        }
+        const wardCategory = dropdownValues.bedCategory?.find((cat) => Number(cat.value) === detail.wCatID);
+        if (wardCategory) {
+          const categoryLabel = wardCategory.label;
+          const drAmt = detail.dcValue || 0;
+          const hospAmt = detail.hcValue || 0;
+          const totAmt = drAmt + hospAmt;
+          acc[picName][`${categoryLabel}_drAmt`] = drAmt.toFixed(2);
+          acc[picName][`${categoryLabel}_hospAmt`] = hospAmt.toFixed(2);
+          acc[picName][`${categoryLabel}_totAmt`] = totAmt.toFixed(2);
+        }
+        return acc;
+      }, {} as Record<string, any>);
 
       const transformedData = Object.entries(groupedByPIC).map(([picName, values]) => ({
         picName,
@@ -414,7 +411,7 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
   return (
     <>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Grid container spacing={2}>
             <FormField
               type="multiselect"
@@ -438,10 +435,10 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
               isMandatory
               isSubmitted={isSubmitted}
             />
-            <Grid item sx={{ mt: 2 }}>
+            <Grid size="grow" sx={{ mt: 2 }}>
               <Typography variant="body1">Percentage</Typography>
             </Grid>
-            <Grid item sx={{ mt: 2 }}>
+            <Grid size="grow" sx={{ mt: 2 }}>
               <FormField
                 type="switch"
                 label=""
@@ -453,7 +450,7 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
                 value={formData.chargeInfo.percentage === "Y"}
               />
             </Grid>
-            <Grid item sx={{ mt: 2, ml: -2 }}>
+            <Grid size="grow" sx={{ mt: 2, ml: -2 }}>
               <Typography variant="body1">Amount</Typography>
             </Grid>
             <FormField
@@ -511,7 +508,7 @@ export const ChargeConfigDetails: React.FC<ChargeConfigDetailsProps> = ({
               ControlID="amountType"
               sx={{ ml: 4 }}
             />
-            <Grid item sx={{ mt: 2 }}>
+            <Grid size="grow" sx={{ mt: 2 }}>
               <Box display="flex" gap={2}>
                 <CustomButton variant="contained" onClick={handleViewButtonClick} text="View" size="small" />
                 <CustomButton variant="contained" onClick={handleApplyButtonClick} text="Apply" size="small" />

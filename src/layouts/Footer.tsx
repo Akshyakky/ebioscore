@@ -66,7 +66,7 @@ const Footer: React.FC = () => {
         {/* Main footer content */}
         <Grid container spacing={2} justifyContent="space-between" alignItems="flex-start">
           {/* Copyright and company info */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ mb: { xs: 2, md: 0 } }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
                 <BusinessOutlinedIcon
@@ -97,7 +97,7 @@ const Footer: React.FC = () => {
 
           {/* Quick links */}
           {!isMobile && (
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box sx={{ mb: { xs: 2, md: 0 } }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
                   Quick Links
@@ -122,7 +122,7 @@ const Footer: React.FC = () => {
 
           {/* Additional info/links for desktop view */}
           {!isTablet && (
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
                   Contact

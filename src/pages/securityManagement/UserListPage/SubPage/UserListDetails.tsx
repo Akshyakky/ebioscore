@@ -261,8 +261,8 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
         <Typography variant="h5">User List</Typography>
         <section>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={12} md={6}>
-              <Grid item xs={12}>
+            <Grid size={{ xs: 12, sm: 12, md: 6 }}>
+              <Grid size={{ xs: 12 }}>
                 <FormField
                   type="select"
                   label="Select Category"
@@ -278,7 +278,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                   gridProps={{ xs: 12, sm: 12, md: 8 }}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <FormField
                   type="select"
                   label="Select User"
@@ -294,7 +294,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                   gridProps={{ xs: 12, sm: 12, md: 8 }}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <FormField
                   type="text"
                   label="Username"
@@ -308,7 +308,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                 />
               </Grid>
               {Boolean(userForm.appID) && (
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <FormField
                     type="switch"
                     label="New Password"
@@ -323,7 +323,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
               )}
               {newPassword && (
                 <>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <FormField
                       type="password"
                       label="Password"
@@ -337,7 +337,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                     />
                   </Grid>
 
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <FormField
                       type="password"
                       label="Confirm Password"
@@ -352,7 +352,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                   </Grid>
                 </>
               )}
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <FormField
                   type="select"
                   label="Select Company"
@@ -369,8 +369,8 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                 />
               </Grid>
             </Grid>
-            <Grid item xs={12} sm={12} md={6}>
-              <Grid item xs={12}>
+            <Grid size={{ xs: 12, sm: 12, md: 6 }}>
+              <Grid size={{ xs: 12 }}>
                 <FormField
                   type="switch"
                   label="Super User"
@@ -382,7 +382,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                   gridProps={{ xs: 12 }}
                 />
               </Grid>
-              <Grid item xs={12} marginTop={2}>
+              <Grid size={{ xs: 12 }} marginTop={2}>
                 {!userForm.digSignPath ? (
                   <FormField
                     type="file"
@@ -408,7 +408,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                   </ImageList>
                 )}
               </Grid>
-              <Grid item xs={12} sm={12} md={6}>
+              <Grid size={{ xs: 12, sm: 12, md: 6 }}>
                 <FormField
                   type="select"
                   label="Select Profile"
@@ -424,7 +424,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                 />
               </Grid>
               {userForm.profileID > 0 && (
-                <Grid item xs={12} sm={12} md={6}>
+                <Grid size={{ xs: 12, sm: 12, md: 6 }}>
                   <Button onClick={handleViewProfilePermissions}>View Profile Permissions</Button>
                   <Button color="secondary" onClick={handleModifyProfilePermissions}>
                     Modify Profile Permissions
@@ -432,12 +432,12 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
                 </Grid>
               )}
             </Grid>
-            <Grid item xs={6} sx={{ textAlign: isMobile ? "center" : "left" }}>
+            <Grid size={{ xs: 6 }} sx={{ textAlign: isMobile ? "center" : "left" }}>
               <Button variant="contained" color="error" onClick={handleClear}>
                 Clear
               </Button>
             </Grid>
-            <Grid item xs={6} sx={{ textAlign: isMobile ? "center" : "right" }}>
+            <Grid size={{ xs: 6 }} sx={{ textAlign: isMobile ? "center" : "right" }}>
               <Button variant="contained" color="success" onClick={handleSaveUser}>
                 Save
               </Button>
@@ -448,10 +448,10 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
       {permissionView && (
         <Paper variant="outlined" sx={{ padding: 2, marginTop: 2, borderRadius: 2, boxShadow: theme.shadows[10] }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6} lg={4} xl={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 9, lg: 4, xl: 3 }}>
               <PermissionManager mode="user" details={userForm} title="Module Permissions" type="M" useMainModules={true} useSubModules={true} />
             </Grid>
-            <Grid item xs={12} md={6} lg={4} xl={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 9, lg: 4, xl: 3 }}>
               <PermissionManager mode="user" details={userForm} title="Report Permissions" type="R" useMainModules={true} useSubModules={false} />
             </Grid>
           </Grid>

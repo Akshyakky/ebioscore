@@ -38,7 +38,7 @@ const AppModifiedListPage: React.FC = () => {
         />
       </Box>
       <Grid container spacing={1}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Typography variant="h6" gutterBottom>
             App Modified Details
           </Typography>

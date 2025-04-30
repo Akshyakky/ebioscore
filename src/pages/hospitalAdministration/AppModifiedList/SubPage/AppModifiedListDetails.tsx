@@ -309,7 +309,7 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
   return (
     <>
       <Grid container justifyContent="space-between" alignItems="center" spacing={2} sx={{ marginBottom: 2 }}>
-        <Grid item xs={12} sm={12} md={12}>
+        <Grid size={{ xs: 12, sm: 12, md: 12 }}>
           <FormField
             type="select"
             label="Category"
@@ -323,7 +323,7 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
             fullWidth
           />
         </Grid>
-        <Grid item xs={12} sm={12} md={12} container justifyContent="space-between" alignItems="center">
+        <Grid size={{ xs: 12, sm: 12, md: 12 }} container justifyContent="space-between" alignItems="center">
           <CustomButton icon={AddIcon} text="Add Category" onClick={() => setIsCategoryDialogOpen(true)} variant="contained" sx={{ float: "left" }} />
           <CustomButton icon={AddIcon} text="Add Field" onClick={handleAddField} variant="contained" sx={{ float: "right" }} disabled={selectedMasterId === 0} />
         </Grid>

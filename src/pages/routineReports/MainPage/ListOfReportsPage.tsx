@@ -60,7 +60,7 @@ const ListOfReportsPage: React.FC<ListOfReportsPageProps> = () => {
             </Typography>
             <Box mb={2}>
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <FloatingLabelTextBox
                     ControlID="searchReports"
                     title="Search Reports"
@@ -73,7 +73,7 @@ const ListOfReportsPage: React.FC<ListOfReportsPageProps> = () => {
               </Grid>
             </Box>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <CustomGrid<RoutineReports> columns={columns} data={filteredReports} maxHeight="600px" searchTerm={searchTerm} />
               </Grid>
             </Grid>

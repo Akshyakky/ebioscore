@@ -180,7 +180,7 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
   const dialogContent = (
     <>
       <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <FloatingLabelTextBox
             ControlID="SearchWaitingPatient"
             title="Search"
@@ -190,7 +190,7 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
             size="small"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <DropdownSelect
             label="Select Date Range"
             name="dateRange"
