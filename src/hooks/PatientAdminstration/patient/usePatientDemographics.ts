@@ -1,7 +1,7 @@
 // src/hooks/PatientAdminstration/patient/usePatientDemographics.ts
 import { useState, useEffect, useCallback } from "react";
 import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
-import { PatientDemographicsData } from "@/interfaces/PatientAdministration/Patient/PatientDemographics.interface";
+import { PatientDemographicDetails } from "@/interfaces/PatientAdministration/registrationFormData";
 
 interface UsePatientDemographicsProps {
   pChartID?: number | null;
@@ -9,7 +9,7 @@ interface UsePatientDemographicsProps {
 }
 
 interface UsePatientDemographicsResult {
-  demographics: PatientDemographicsData | null;
+  demographics: PatientDemographicDetails | null;
   isLoading: boolean;
   error: string | null;
   fetchDemographics: (id?: number) => Promise<void>;
@@ -22,7 +22,7 @@ interface UsePatientDemographicsResult {
  * @param autoFetch - Whether to automatically fetch data when pChartID changes
  */
 export const usePatientDemographics = ({ pChartID = null, autoFetch = true }: UsePatientDemographicsProps = {}): UsePatientDemographicsResult => {
-  const [demographics, setDemographics] = useState<PatientDemographicsData | null>(null);
+  const [demographics, setDemographics] = useState<PatientDemographicDetails | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPatientId, setCurrentPatientId] = useState<number | null>(pChartID);

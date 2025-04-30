@@ -606,6 +606,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
     [key in DropdownType]?: DropdownOption[];
   } & {
     isLoading: (type?: DropdownType) => boolean;
+    isLoadingAny: boolean;
     hasError: (type?: DropdownType) => boolean;
     getError: (type: DropdownType) => string | null;
     isStale: (type: DropdownType) => boolean;
@@ -623,6 +624,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
   return {
     ...dropdownValues,
     isLoading: (type?: DropdownType) => (type ? dropdownStates[type]?.isLoading || false : requiredDropdowns.some((t) => dropdownStates[t]?.isLoading)),
+    isLoadingAny: requiredDropdowns.some((t) => dropdownStates[t]?.isLoading),
     hasError: (type?: DropdownType) => (type ? !!dropdownStates[type]?.error : requiredDropdowns.some((t) => !!dropdownStates[t]?.error)),
     getError: (type: DropdownType) => dropdownStates[type]?.error || null,
     isStale: (type: DropdownType) => isDataStale(type),

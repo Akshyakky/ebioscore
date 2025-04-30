@@ -5,7 +5,7 @@ export interface PatientDemoGraph {
   pTitle: string;
   pfName: string;
   plName: string;
-  dob: Date;
+  pDob: Date;
   pGender: string;
   pGenderVal: string;
   pBldGrp: string;

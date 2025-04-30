@@ -5,34 +5,35 @@ import viteCompression from "vite-plugin-compression";
 import react from "@vitejs/plugin-react-swc";
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
+    //mode === "development" && componentTagger(),
     // react({
     //   babel: {
     //     plugins: [["@babel/plugin-transform-react-jsx", { optimize: true }]],
     //   },
     // }),
-    visualizer({
-      filename: "build/eBiosCoreApp/stats.html",
-      open: false,
-      gzipSize: true,
-      template: "treemap",
-    }),
-    viteCompression({
-      verbose: false,
-      algorithm: "gzip",
-      ext: ".gz",
-      filter: (file) => /\.(js|css|html|svg)$/.test(file),
-      threshold: 1024,
-    }),
-  ],
+    // visualizer({
+    //   filename: "build/eBiosCoreApp/stats.html",
+    //   open: false,
+    //   gzipSize: true,
+    //   template: "treemap",
+    // }),
+    // viteCompression({
+    //   verbose: false,
+    //   algorithm: "gzip",
+    //   ext: ".gz",
+    //   filter: (file) => /\.(js|css|html|svg)$/.test(file),
+    //   threshold: 1024,
+    // }),
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
     // Remove explicit DevExtreme dedupe to avoid loading issues
-    dedupe: ["react", "react-dom", "@mui/material"],
+    //dedupe: ["react", "react-dom", "@mui/material"],
   },
   build: {
     outDir: "build/eBiosCoreApp",
@@ -111,7 +112,7 @@ export default defineConfig({
       strict: false,
     },
     middlewareMode: false,
-    force: true,
+    // force: true,
   },
-  cacheDir: "node_modules/.vite",
-});
+  // cacheDir: "node_modules/.vite",
+}));

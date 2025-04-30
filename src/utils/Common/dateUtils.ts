@@ -6,7 +6,7 @@ export function formatDate(isoString: string): string {
 }
 
 export const formatDt = (date: Date): string => {
-  return format(date, "yyyy-MM-dd");
+  return format(date, "dd/MM/yyyy");
 };
 // src/utils/Common/dateUtils.ts
 

@@ -2,7 +2,6 @@
 import React, { useMemo } from "react";
 import { Box, Typography, IconButton, Chip } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import { format, isValid } from "date-fns";
 import { AlertDto } from "@/interfaces/Common/AlertManager";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 
@@ -18,17 +17,6 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
     formatter?: (value: any) => string;
   }
 
-  // Safely format date values
-  const formatDate = (dateValue: Date | string): string => {
-    try {
-      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
-      return isValid(date) ? format(date, "dd/MM/yyyy") : "Invalid Date";
-    } catch (error) {
-      console.error("Date formatting error:", error);
-      return "Invalid Date";
-    }
-  };
-
   const columns = useMemo<AlertGridColumn[]>(
     () => [
       {
@@ -37,7 +25,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: false,
         filterable: false,
-        width: 60,
+        align: "center",
         render: (_, rowIndex) => (
           <Typography variant="body2" align="center">
             {rowIndex + 1}
@@ -50,9 +38,9 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        width: 130,
+        align: "center",
         render: (item: AlertDto) => (
-          <Box sx={{ display: "flex", justifyContent: "flex-start" }}>
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
             <Chip label={item.category || "N/A"} color={getCategoryColor(item.category)} size="small" sx={{ minWidth: "90px", justifyContent: "center" }} />
           </Box>
         ),
@@ -63,7 +51,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        minWidth: 300,
+        align: "left",
       },
       {
         key: "oPIPDate",
@@ -71,8 +59,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        width: 120,
-        render: (item: AlertDto) => <Typography variant="body2">{formatDate(item.oPIPDate)}</Typography>,
+        align: "center",
       },
       {
         key: "patOPIPYN",
@@ -80,7 +67,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        width: 80,
+        align: "center",
         render: (item: AlertDto) => (
           <Typography variant="body2" align="center">
             {item.patOPIPYN === "O" ? "Outpatient" : item.patOPIPYN === "I" ? "Inpatient" : item.patOPIPYN || "N/A"}
@@ -93,7 +80,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: true,
         filterable: true,
-        width: 90,
+        align: "center",
         render: (item: AlertDto) => (
           <Chip
             label={item.rActiveYN === "Y" ? "Active" : "Inactive"}
@@ -109,7 +96,7 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
         visible: true,
         sortable: false,
         filterable: false,
-        width: 110,
+        align: "center",
         render: (item: AlertDto) => (
           <Box sx={{ display: "flex", justifyContent: "center" }}>
             <IconButton
@@ -119,7 +106,10 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
                 e.stopPropagation();
                 onEditAlert(item);
               }}
-              sx={{ mx: 0.5 }}
+              sx={{
+                bgcolor: "rgba(25, 118, 210, 0.08)",
+                "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+              }}
             >
               <EditIcon fontSize="small" />
             </IconButton>
@@ -130,7 +120,10 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
                 e.stopPropagation();
                 onDeleteAlert(item);
               }}
-              sx={{ mx: 0.5 }}
+              sx={{
+                bgcolor: "rgba(25, 118, 210, 0.08)",
+                "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+              }}
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
@@ -175,9 +168,11 @@ const AlertGrid: React.FC<AlertGridProps> = ({ alerts, onEditAlert, onDeleteAler
           data={alerts}
           maxHeight="500px"
           pagination={true}
+          pageSize={10}
           showExportCSV={true}
           exportFileName="patient_alerts"
           emptyStateMessage="No alerts found for this patient"
+          virtualScroll={false}
           initialSortBy={{ field: "oPIPDate" as any, direction: "desc" }}
           gridStyle={{
             borderRadius: "4px",

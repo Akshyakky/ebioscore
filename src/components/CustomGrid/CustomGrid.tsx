@@ -52,6 +52,7 @@ export interface Column<T> {
   resizable?: boolean;
   cellStyle?: React.CSSProperties;
   headerStyle?: React.CSSProperties;
+  align?: "left" | "center" | "right";
 }
 
 export interface CustomGridProps<T> {
@@ -288,16 +289,23 @@ const CustomGrid = <T extends Record<string, any>>({
 
   // Virtual Scroll Implementation
   const virtualScrollData = useMemo(() => {
-    if (!virtualScroll) return processedData;
+    if (pagination && !virtualScroll) {
+      const startIndex = page * rowsPerPage;
+      const endIndex = startIndex + rowsPerPage;
+      return processedData.slice(startIndex, endIndex);
+    }
 
-    const rowHeight = 48; // Adjust based on your row height
-    const containerHeight = virtualScrollRef.current?.clientHeight || 0;
-    const visibleRows = Math.ceil(containerHeight / rowHeight);
-    const startIndex = Math.max(0, page * rowsPerPage);
-    const endIndex = Math.min(startIndex + visibleRows + 3, processedData.length);
+    if (virtualScroll) {
+      const rowHeight = 48;
+      const containerHeight = virtualScrollRef.current?.clientHeight || 0;
+      const visibleRows = Math.ceil(containerHeight / rowHeight);
+      const startIndex = Math.max(0, page * rowsPerPage);
+      const endIndex = Math.min(startIndex + visibleRows + 3, processedData.length);
+      return processedData.slice(startIndex, endIndex);
+    }
 
-    return processedData.slice(startIndex, endIndex);
-  }, [processedData, virtualScroll, page, rowsPerPage]);
+    return processedData;
+  }, [processedData, virtualScroll, page, rowsPerPage, pagination]);
 
   // Event Handlers
   const handleSort = useCallback(
@@ -432,7 +440,7 @@ const CustomGrid = <T extends Record<string, any>>({
 
       {/* Main Grid */}
       <StyledTableContainer sx={{ maxHeight, minHeight }} ref={virtualScrollRef}>
-        <Table ref={tableRef} stickyHeader size="small" sx={{ tableLayout: "fixed" }}>
+        <Table ref={tableRef} stickyHeader size="small" sx={{ tableLayout: "auto" }}>
           <StyledTableHead>
             <TableRow>
               {expandableRows && <TableCell padding="none" width={48} align="center" />}
@@ -467,7 +475,7 @@ const CustomGrid = <T extends Record<string, any>>({
                 .map((column) => (
                   <TableCell
                     key={column.key}
-                    align={column.key === "edit" ? "center" : "left"}
+                    align={column.align || "left"}
                     style={{
                       width: column.width,
                       minWidth: column.minWidth,
@@ -476,7 +484,7 @@ const CustomGrid = <T extends Record<string, any>>({
                       ...column.headerStyle,
                     }}
                   >
-                    <Box display="flex" alignItems="center" justifyContent={column.key === "edit" ? "center" : "flex-start"}>
+                    <Box display="flex" alignItems="center" justifyContent={column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start"}>
                       {column.sortable ? (
                         <StyledTableSortLabel active={orderBy === column.key} direction={orderBy === column.key ? order : "asc"} onClick={() => handleSort(column.key as keyof T)}>
                           {column.header}
@@ -583,9 +591,9 @@ const CustomGrid = <T extends Record<string, any>>({
                         .map((column, columnIndex) => (
                           <TableCell
                             key={`${rowIndex}-${column.key}`}
+                            align={column.align || "left"}
                             style={{
                               overflow: "hidden",
-                              whiteSpace: "nowrap",
                               textOverflow: "ellipsis",
                               ...column.cellStyle,
                               ...customCellStyle?.(item, column),

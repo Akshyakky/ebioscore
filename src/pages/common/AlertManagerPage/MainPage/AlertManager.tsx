@@ -13,10 +13,10 @@ import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
 import CustomButton from "@/components/Button/CustomButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
-import { PatientDemographicsData } from "@/interfaces/PatientAdministration/Patient/PatientDemographics.interface";
-import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch";
+import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientDemographicsForm } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographicsForm/PatientDemographicsForm";
+import { PatientDemoGraph } from "@/interfaces/PatientAdministration/patientDemoGraph";
 
 const AlertManager: React.FC = () => {
   const { setLoading } = useLoading();
@@ -53,14 +53,7 @@ const AlertManager: React.FC = () => {
       const result: OperationResult<AlertDto[]> = await alertService.GetAlertBypChartID(pChartID);
 
       if (result.success) {
-        // Ensure dates are properly converted from strings to Date objects
-        const processedAlerts =
-          result.data?.map((alert) => ({
-            ...alert,
-            oPIPDate: alert.oPIPDate ? new Date(alert.oPIPDate) : new Date(),
-          })) || [];
-
-        setAlerts(processedAlerts);
+        setAlerts(result.data || []);
       } else {
         notifyError(result.errorMessage || "Failed to fetch alerts");
       }
@@ -100,9 +93,9 @@ const AlertManager: React.FC = () => {
     const newAlert: Partial<AlertDto> = {
       pChartID: selectedPatient.pChartID,
       pChartCode: selectedPatient.pChartCode,
-      rActiveYN: "Y", // This should be a character, not string
-      oPIPDate: new Date(), // Initialize with current date
-      patOPIPYN: "O", // Default to outpatient
+      rActiveYN: "Y",
+      oPIPDate: new Date(),
+      patOPIPYN: "O",
       oPIPNo: 0,
       oPVID: 0,
       oPIPCaseNo: 0,
@@ -119,7 +112,6 @@ const AlertManager: React.FC = () => {
     // Ensure the date is properly converted to a Date object
     const alertWithDateObject = {
       ...alert,
-      oPIPDate: alert.oPIPDate instanceof Date ? alert.oPIPDate : new Date(alert.oPIPDate),
     };
 
     setCurrentAlert(alertWithDateObject);
@@ -161,8 +153,6 @@ const AlertManager: React.FC = () => {
       // Ensure the date is in the correct format before sending to the backend
       const formattedData = {
         ...formData,
-        // Make sure oPIPDate is a proper Date object
-        oPIPDate: formData.oPIPDate instanceof Date ? formData.oPIPDate : new Date(formData.oPIPDate),
       };
 
       // Use baseAlertService for both create and update operations
@@ -172,7 +162,6 @@ const AlertManager: React.FC = () => {
         // Ensure the returned date is a Date object
         const newAlert = {
           ...result.data,
-          oPIPDate: new Date(result.data.oPIPDate),
         };
 
         if (isEditMode) {
@@ -216,7 +205,7 @@ const AlertManager: React.FC = () => {
     }
   };
 
-  const handleDemographicsSaved = (data: PatientDemographicsData) => {
+  const handleDemographicsSaved = (data: PatientDemoGraph) => {
     setRefreshDemographics((prev) => prev + 1);
     notifySuccess("Patient demographics updated successfully");
   };
@@ -249,9 +238,6 @@ const AlertManager: React.FC = () => {
           <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
               <Box sx={{ flexGrow: 1 }}>
-                <Typography variant="h6" gutterBottom>
-                  Patient Search
-                </Typography>
                 {/* Use the reusable PatientSearch component */}
                 <PatientSearch onPatientSelect={setSelectedPatient} clearTrigger={clearSearchTrigger} placeholder="Enter name, UHID or phone number" />
               </Box>
@@ -264,8 +250,8 @@ const AlertManager: React.FC = () => {
             <PatientDemographics
               pChartID={selectedPatient?.pChartID}
               showEditButton={!!selectedPatient}
+              showRefreshButton={!!selectedPatient}
               onEditClick={handleEditDemographics}
-              showRefreshButton={false} // We have a global refresh button
               variant="detailed"
               emptyStateMessage={selectedPatient ? "No demographics information available for this patient." : "Please select a patient to view demographics"}
             />
@@ -307,6 +293,7 @@ const AlertManager: React.FC = () => {
           isEditMode={isEditMode}
           onSubmit={handleFormSubmit}
           patientName={selectedPatient?.fullName || ""}
+          pChartCode={selectedPatient?.pChartCode || ""}
         />
       )}
 

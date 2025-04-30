@@ -375,6 +375,7 @@ const FormField = <TFieldValues extends FieldValues>({
     }
 
     // Select field
+    // Select field
     if (isSelect(type)) {
       const options = getOptions();
       const multiple = getMultiple();
@@ -389,27 +390,55 @@ const FormField = <TFieldValues extends FieldValues>({
             multiple={multiple}
             label={label}
             onChange={(e: SelectChangeEvent<unknown>) => {
-              field.onChange(e);
-              externalOnChange?.(e);
+              // Get the selected value from the event
+              const selectedValue = e.target.value;
+
+              // Find the matching option - first try by value, then by label
+              const selectedOption = options.find((opt) => String(opt.value) === String(selectedValue)) || options.find((opt) => String(opt.label) === String(selectedValue));
+
+              // If option found, use the label as the field value
+              if (selectedOption) {
+                // Override the default behavior to store the label instead of value
+                field.onChange(selectedOption.label);
+
+                // If external onChange exists, pass both the label and the original value
+                if (externalOnChange) {
+                  externalOnChange({
+                    label: selectedOption.label,
+                    value: selectedOption.value,
+                    originalEvent: e,
+                  });
+                }
+              } else {
+                // Fallback to default behavior
+                field.onChange(e);
+                externalOnChange?.(e);
+              }
             }}
             onBlur={(e: React.FocusEvent<HTMLElement>) => {
               field.onBlur(e);
               externalOnBlur?.(e);
             }}
-            renderValue={
-              multiple
-                ? (selected: any) => (
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                      {(selected as Array<string | number>).map((value) => {
-                        const option = options.find((opt) => opt.value === value) || { value: "", label: "" };
-                        return <Chip key={String(value)} label={option.label || value} size="small" />;
-                      })}
-                    </Box>
-                  )
-                : undefined
-            }
+            renderValue={(selected: any) => {
+              if (multiple) {
+                return (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {(selected as Array<string | number>).map((value) => {
+                      // Try to find by value first, then by label
+                      const option = options.find((opt) => String(opt.value) === String(value)) ||
+                        options.find((opt) => String(opt.label) === String(value)) || { value: "", label: value };
+                      return <Chip key={String(value)} label={option.label || value} size="small" />;
+                    })}
+                  </Box>
+                );
+              }
+
+              // For single select, show the label directly or the value as fallback
+              return selected;
+            }}
           >
             {options.map((option) => (
+              // Use the value for internal processing, but we'll handle display separately
               <MenuItem key={String(option.value)} value={String(option.value)}>
                 {option.label}
               </MenuItem>
@@ -567,6 +596,7 @@ const FormField = <TFieldValues extends FieldValues>({
     }
 
     // Date pickers
+    // Date pickers
     if (isDatePicker(type) || isDateTimePicker(type)) {
       const PickerComponent = isDatePicker(type) ? DatePicker : DateTimePicker;
       const dateFormat = getDateFormat();
@@ -575,12 +605,19 @@ const FormField = <TFieldValues extends FieldValues>({
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <PickerComponent
             label={label}
-            value={field.value ? dayjs(field.value, dateFormat) : null}
+            value={field.value ? (typeof field.value === "string" ? dayjs(field.value) : dayjs(field.value)) : null}
             onChange={(newValue) => {
-              // Format date as DD/MM/YYYY
-              const formattedDate = newValue && dayjs.isDayjs(newValue) ? newValue.format(dateFormat) : null;
-              field.onChange(formattedDate);
-              externalOnChange?.(formattedDate);
+              // Return the date in ISO string format instead of a Date object
+              // This ensures consistent date formatting when sending to the API
+              let formattedValue = null;
+
+              if (newValue && dayjs.isDayjs(newValue)) {
+                // Keep the original ISO format for API compatibility
+                formattedValue = newValue.toISOString();
+              }
+
+              field.onChange(formattedValue);
+              externalOnChange?.(formattedValue);
             }}
             disabled={disabled}
             format={dateFormat}

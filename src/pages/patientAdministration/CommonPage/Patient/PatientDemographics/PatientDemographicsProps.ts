@@ -1,6 +1,6 @@
 // src/pages/patientAdministration/commonPage/patient/PatientDemographics/PatientDemographicsProps.ts
 
-import { PatientDemographicsData } from "@/interfaces/PatientAdministration/Patient/PatientDemographics.interface";
+import { PatientDemographicDetails } from "@/interfaces/PatientAdministration/registrationFormData";
 
 export interface PatientDemographicsProps {
   /**
@@ -11,7 +11,7 @@ export interface PatientDemographicsProps {
   /**
    * Patient demographics data - if provided, will override fetched data
    */
-  demographicsData?: PatientDemographicsData | null;
+  demographicsData?: PatientDemographicDetails | null;
 
   /**
    * Whether to show the edit button
