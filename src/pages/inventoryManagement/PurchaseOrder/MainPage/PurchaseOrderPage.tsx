@@ -33,7 +33,7 @@ const PurchaseOrderPage: React.FC = () => {
     pOApprovedBy: "",
     pOApprovedID: 0,
     pOApprovedNo: "",
-    pOApprovedYN: "",
+    pOApprovedYN: "N",
     pOCode: "",
     pOSActionNo: "",
     pOTypeValue: "",
@@ -45,8 +45,8 @@ const PurchaseOrderPage: React.FC = () => {
     netCGSTTaxAmt: 0,
     netSGSTTaxAmt: 0,
     totalTaxableAmt: 0,
-    rActiveYN: "",
-    transferYN: "",
+    rActiveYN: "Y",
+    transferYN: "Y",
     rNotes: "",
   };
   const [gridData, setGridData] = useState<GridRowData[]>([]);
