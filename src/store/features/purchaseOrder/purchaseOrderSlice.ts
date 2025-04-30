@@ -1,0 +1,69 @@
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
+import { DepartmentInfo, PurchaseOrderDetailDto, PurchaseOrderMastDto, PurchaseOrderState } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+
+const initialState: PurchaseOrderState = {
+  departmentInfo: null,
+  purchaseOrderMastData: null,
+  purchaseOrderDetails: [],
+  selectedProduct: null,
+};
+
+const purchaseOrderState = createSlice({
+  name: "purchaseOrderState",
+  initialState,
+  reducers: {
+    setDepartmentInfo(state, action: PayloadAction<DepartmentInfo>) {
+      state.departmentInfo = action.payload;
+    },
+    setPurchaseOrderMastData(state, action: PayloadAction<PurchaseOrderMastDto>) {
+      state.purchaseOrderMastData = action.payload;
+    },
+    resetPurchaseOrderState(state) {
+      state.departmentInfo = null;
+      state.purchaseOrderMastData = null;
+      state.purchaseOrderDetails = [];
+      state.selectedProduct = null;
+    },
+    updatePurchaseOrderMastField(state, action: PayloadAction<{ field: keyof PurchaseOrderMastDto; value: any }>) {
+      if (state.purchaseOrderMastData) {
+        (state.purchaseOrderMastData[action.payload.field] as any) = action.payload.value;
+      }
+    },
+    addPurchaseOrderDetail(state, action: PayloadAction<PurchaseOrderDetailDto>) {
+      state.purchaseOrderDetails.push(action.payload);
+    },
+    updatePurchaseOrderDetail(state, action: PayloadAction<PurchaseOrderDetailDto>) {
+      const index = state.purchaseOrderDetails.findIndex((item) => item.pODetID === action.payload.pODetID);
+      if (index >= 0) {
+        state.purchaseOrderDetails[index] = action.payload;
+      }
+    },
+    updateAllPurchaseOrderDetails(state, action: PayloadAction<PurchaseOrderDetailDto[]>) {
+      state.purchaseOrderDetails = action.payload;
+    },
+    removePurchaseOrderDetail(state, action: PayloadAction<number>) {
+      state.purchaseOrderDetails = state.purchaseOrderDetails.filter((item) => item.productID !== action.payload);
+    },
+    resetPurchaseOrderDetails(state) {
+      state.purchaseOrderDetails = [];
+    },
+    setSelectedProduct(state, action: PayloadAction<ProductListDto | null>) {
+      state.selectedProduct = action.payload;
+    },
+  },
+});
+
+export const {
+  setDepartmentInfo,
+  setPurchaseOrderMastData,
+  updatePurchaseOrderMastField,
+  resetPurchaseOrderState,
+  addPurchaseOrderDetail,
+  updatePurchaseOrderDetail,
+  removePurchaseOrderDetail,
+  resetPurchaseOrderDetails,
+  setSelectedProduct,
+  updateAllPurchaseOrderDetails,
+} = purchaseOrderState.actions;
+export default purchaseOrderState.reducer;
