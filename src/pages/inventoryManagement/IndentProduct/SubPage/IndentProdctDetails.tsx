@@ -1,103 +1,191 @@
-import React, { useState, useCallback } from "react";
-import { TextField, Select, MenuItem, useTheme, Box } from "@mui/material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+// src/components/InventoryManagement/IndentProductGrid.tsx
+import React, { useEffect, useMemo } from "react";
+import { Select, MenuItem, TextField, IconButton } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { IndentDetailDto } from "@/interfaces/InventoryManagement/IndentProductDto";
+import CustomGrid from "@/components/CustomGrid/CustomGrid";
+
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface Props {
-  data: IndentDetailDto[];
-  unitOptions: { value: number; label: string }[];
-  packageOptions: { value: number; label: string }[];
-  onChange: (updatedList: IndentDetailDto[]) => void;
+  gridData: IndentDetailDto[];
+  handleCellValueChange: (rowIndex: number, field: keyof IndentDetailDto, value: any) => void;
+  handleDelete: (item: IndentDetailDto) => void;
+  packageOptions: { value: string; label: string }[];
+  supplierOptions: { value: string; label: string }[];
+  productOptions: { value: string; label: string }[];
 }
 
-const IndentProductGrid: React.FC<Props> = ({ data, unitOptions, packageOptions, onChange }) => {
-  const [gridData, setGridData] = useState<IndentDetailDto[]>(data);
-  const theme = useTheme();
+const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, handleDelete, packageOptions, supplierOptions, productOptions }) => {
+  // const dropdownValues = useDropdownValues(["productUnit"]);
 
-  const handleInputChange = useCallback(
-    (index: number, field: keyof IndentDetailDto, value: any) => {
-      const updatedList = [...gridData];
-      updatedList[index] = { ...updatedList[index], [field]: value };
-      setGridData(updatedList);
-      onChange(updatedList);
-    },
-    [gridData, onChange]
+  // const productUnitOptions = useMemo(() => {
+  //   debugger;
+  //   return (
+  //     dropdownValues?.productUnit?.map((option) => ({
+  //       label: option.label,
+  //       value: option.value.toString(),
+  //     })) || []
+  //   );
+  // }, [dropdownValues?.productUnit]);
+
+  const columns = useMemo(
+    () => [
+      { key: "location", header: "Location", visible: true, width: 120, minWidth: 120 },
+      { key: "productName", header: "Product Name", visible: true, width: 180, minWidth: 180 },
+      { key: "hsnCode", header: "HSN Code", visible: true, width: 100, minWidth: 100 },
+      { key: "manufacturerName", header: "Manufacturer", visible: true, width: 150, minWidth: 150 },
+      {
+        key: "requiredQty",
+        header: "Required Qty",
+        visible: true,
+        width: 110,
+        minWidth: 110,
+        render: (item: IndentDetailDto, rowIndex: number) => (
+          <TextField
+            size="small"
+            type="number"
+            value={item.requiredQty || ""}
+            onChange={(e) => handleCellValueChange(rowIndex, "requiredQty", parseFloat(e.target.value) || 0)}
+            sx={{ width: "100%" }}
+            inputProps={{ style: { textAlign: "right" } }}
+          />
+        ),
+      },
+      {
+        key: "netValue",
+        header: "Net Value",
+        visible: true,
+        width: 100,
+        minWidth: 100,
+        render: (item: IndentDetailDto, rowIndex: number) => (
+          <TextField
+            size="small"
+            type="number"
+            value={item.netValue || ""}
+            onChange={(e) => handleCellValueChange(rowIndex, "netValue", parseFloat(e.target.value) || 0)}
+            sx={{ width: "100%" }}
+            inputProps={{ style: { textAlign: "right" } }}
+          />
+        ),
+      },
+
+      {
+        key: "units",
+        header: "Units",
+        visible: true,
+        width: 150,
+        minWidth: 150,
+        render: (item: IndentDetailDto, rowIndex: number) => (
+          <Select
+            size="small"
+            value={item.units || ""}
+            onChange={(e) => handleCellValueChange(rowIndex, "units", e.target.value)}
+            sx={{ width: "100%" }}
+            displayEmpty
+            renderValue={(selected) => {
+              if (!selected) return "Select an Option";
+              const selectedStr = String(selected);
+              const opt = productOptions.find((o) => String(o.value) === selectedStr);
+              return opt ? opt.label : selectedStr;
+            }}
+          >
+            {productOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        ),
+      },
+
+      {
+        key: "package",
+        header: "Package",
+        visible: true,
+        width: 150,
+        minWidth: 150,
+        render: (item: IndentDetailDto, rowIndex: number) => (
+          <Select
+            size="small"
+            value={item.package || ""}
+            onChange={(e) => handleCellValueChange(rowIndex, "package", e.target.value)}
+            sx={{ width: "100%" }}
+            displayEmpty
+            renderValue={(selected) => {
+              if (!selected) return "Select an Option";
+              const selectedStr = String(selected);
+              const opt = packageOptions.find((o) => String(o.value) === selectedStr);
+              return opt ? opt.label : selectedStr;
+            }}
+          >
+            {packageOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        ),
+      },
+      { key: "groupName", header: "Group Name", visible: true, width: 120, minWidth: 120 },
+      { key: "maxLevelUnits", header: "Maximum Level Units", visible: true, width: 150, minWidth: 150 },
+      { key: "minLevelUnits", header: "Minimum Level Units", visible: true, width: 150, minWidth: 150 },
+      { key: "stockLevel", header: "Stock Level", visible: true, width: 100, minWidth: 100 },
+      { key: "baseUnit", header: "Base Unit", visible: true, width: 100, minWidth: 100 },
+      { key: "leadTime", header: "Lead Time", visible: true, width: 100, minWidth: 100 },
+      { key: "qoh", header: "QOH [Units]", visible: true, width: 120, minWidth: 120 },
+      { key: "average", header: "Average", visible: true, width: 100, minWidth: 100 },
+      { key: "averageDemand", header: "Average Demand", visible: true, width: 130, minWidth: 130 },
+      {
+        key: "supplierName",
+        header: "Supplier Name",
+        visible: true,
+        width: 150,
+        minWidth: 150,
+        render: (item: IndentDetailDto, rowIndex: number) => (
+          <Select
+            size="small"
+            value={item.supplierName || ""}
+            onChange={(e) => handleCellValueChange(rowIndex, "supplierName", e.target.value)}
+            sx={{ width: "100%" }}
+            displayEmpty
+            renderValue={(selected) => (selected ? selected : "Select an Option")}
+          >
+            {supplierOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        ),
+      },
+      { key: "rol", header: "ROL", visible: true, width: 80, minWidth: 80 },
+      { key: "roq", header: "ROQ", visible: true, width: 80, minWidth: 80 },
+      {
+        key: "delete",
+        header: "Delete",
+        visible: true,
+        width: 70,
+        minWidth: 70,
+        render: (item: IndentDetailDto) => (
+          <IconButton size="small" color="error" onClick={() => handleDelete(item)}>
+            <DeleteIcon />
+          </IconButton>
+        ),
+      },
+    ],
+    [packageOptions, supplierOptions, handleCellValueChange, handleDelete, productOptions]
   );
 
-  const columns: Column<IndentDetailDto>[] = [
-    { key: "productName", header: "Product Name", visible: true },
-    { key: "hsnCode", header: "HSN Code", visible: true },
-    { key: "manufacturerName", header: "Manufacturer", visible: true },
-    {
-      key: "requiredQty",
-      header: "Required Qty",
-      visible: true,
-      render: (row, rowIndex) => (
-        <TextField fullWidth value={row.requiredQty ?? ""} size="small" type="number" onChange={(e) => handleInputChange(rowIndex, "requiredQty", parseFloat(e.target.value))} />
-      ),
-    },
-    {
-      key: "requiredUnitQty",
-      header: "Net Value",
-      visible: true,
-      render: (row, rowIndex) => (
-        <TextField
-          fullWidth
-          value={row.requiredUnitQty ?? ""}
-          size="small"
-          type="number"
-          onChange={(e) => handleInputChange(rowIndex, "requiredUnitQty", parseFloat(e.target.value))}
-        />
-      ),
-    },
-    {
-      key: "unitPack",
-      header: "Units/Package",
-      visible: true,
-      render: (row, rowIndex) => (
-        <TextField fullWidth value={row.unitPack ?? ""} size="small" type="number" onChange={(e) => handleInputChange(rowIndex, "unitPack", parseInt(e.target.value))} />
-      ),
-    },
-    {
-      key: "pUnitID",
-      header: "Units",
-      visible: true,
-      render: (row, rowIndex) => (
-        <Select fullWidth value={row.pUnitID ?? ""} size="small" onChange={(e) => handleInputChange(rowIndex, "pUnitID", e.target.value)}>
-          {unitOptions.map((opt) => (
-            <MenuItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </MenuItem>
-          ))}
-        </Select>
-      ),
-    },
-    {
-      key: "ppkgID",
-      header: "Package",
-      visible: true,
-      render: (row, rowIndex) => (
-        <Select fullWidth value={row.ppkgID ?? ""} size="small" onChange={(e) => handleInputChange(rowIndex, "ppkgID", e.target.value)}>
-          {packageOptions.map((opt) => (
-            <MenuItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </MenuItem>
-          ))}
-        </Select>
-      ),
-    },
-    { key: "pGrpName", header: "Group Name", visible: true },
-    { key: "stockLevel", header: "Stock Level", visible: true },
-    { key: "baseUnit", header: "Base Unit", visible: true },
-    { key: "leadTime", header: "Lead Time", visible: true },
-    { key: "qoh", header: "QOH [Units]", visible: true },
-    { key: "average", header: "Average", visible: true },
-  ];
-
   return (
-    <Box sx={{ overflowX: "auto", width: "100%", backgroundColor: theme.palette.background.paper, borderRadius: 2, boxShadow: 1 }}>
-      <CustomGrid columns={columns} data={gridData} pagination={true} />
-    </Box>
+    <CustomGrid
+      columns={columns}
+      data={gridData}
+      pagination
+      maxHeight="400px"
+      emptyStateMessage="No products added yet. Use the search above to add products."
+      gridStyle={{ minWidth: "100%" }}
+    />
   );
 };
 

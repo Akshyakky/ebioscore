@@ -1,0 +1,73 @@
+// src/interfaces/InventoryManagement/Product/ProductSearch.interface.ts
+
+export interface ProductOption {
+  productID: number;
+  productCode?: string;
+  productName: string;
+  productCategory?: string;
+  productLocation?: string;
+  rActiveYN: string;
+}
+
+export interface ProductSearchResult {
+  productID: number;
+  productCode?: string;
+  catValue: string;
+  pGrpID?: number;
+  productLocation?: string;
+  prescription: string;
+  expiry: string;
+  sellable: string;
+  taxable: string;
+  mFID?: number;
+  mGenID?: number;
+  leadTime?: number;
+  leadTimeDesc?: string;
+  rOL?: number;
+  pUnitID?: number;
+  pUnitName?: string;
+  pPackageID?: number;
+  unitPack?: number;
+  defaultPrice?: number;
+  psGrpID?: number;
+  taxID?: number;
+  taxCode?: string;
+  taxName?: string;
+  manufacturerID?: number;
+  manufacturerCode?: string;
+  manufacturerName?: string;
+  pLocationID: number;
+  pLocationCode?: string;
+  pLocationName?: string;
+  auGrpID?: number;
+  barcode?: string;
+  baseUnit?: number;
+  chargableYN: string;
+  chargePercentage?: number;
+  isAssetYN: string;
+  issueUnit?: number;
+  productDiscount?: number;
+  supplierStatus: string;
+  vedCode: string;
+  abcCode: string;
+  catDescription?: string;
+  MFName?: string;
+  manufacturerGenericName?: string;
+  productGroupName?: string;
+  productPackageName?: string;
+  productName?: string;
+  productNotes?: string;
+  psGroupName?: string;
+  serialNumber?: string;
+  hsnCODE?: string;
+  gstPerValue?: number;
+  cgstPerValue?: number;
+  sgstPerValue?: number;
+  universalCode?: number;
+  rActiveYN: string;
+  compID: number;
+  compCode: string;
+  compName: string;
+  transferYN: string;
+  rNotes?: string;
+}
