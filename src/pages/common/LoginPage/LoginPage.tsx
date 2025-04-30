@@ -409,8 +409,20 @@ const LoginPage: React.FC = () => {
     }
   }, [checkDateValidity]);
 
+  const handleSelectCompany = useCallback((CompIDCompCode: string, compName: string) => {
+    const [compID, compCode] = CompIDCompCode.split(",");
+    setFormState((prev) => ({
+      ...prev,
+      companyID: compID || "0",
+      companyCode: compCode || "",
+      errorMessage: !compID || !compCode ? "Please select a company" : "",
+    }));
+  }, []);
+
   useEffect(() => {
     const fetchCompanies = async () => {
+      setFieldLoading((prev) => ({ ...prev, company: true }));
+
       try {
         const companyData = await CompanyService.getCompanies();
         setFormState((prev) => ({ ...prev, companies: companyData }));
@@ -423,12 +435,14 @@ const LoginPage: React.FC = () => {
           ...prev,
           errorMessage: "Failed to load companies.",
         }));
+      } finally {
+        setFieldLoading((prev) => ({ ...prev, company: false }));
       }
     };
 
     fetchCompanies();
     checkExpiryDates();
-  }, [checkExpiryDates]);
+  }, [checkExpiryDates, handleSelectCompany]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
@@ -514,16 +528,6 @@ const LoginPage: React.FC = () => {
     },
     [formState, checkRateLimit, selectedCompanyName, dispatch, navigate]
   );
-
-  const handleSelectCompany = useCallback((CompIDCompCode: string, compName: string) => {
-    const [compID, compCode] = CompIDCompCode.split(",");
-    setFormState((prev) => ({
-      ...prev,
-      companyID: compID || "0",
-      companyCode: compCode || "",
-      errorMessage: !compID || !compCode ? "Please select a company" : "",
-    }));
-  }, []);
 
   return (
     <StyledContainer maxWidth={false} disableGutters>

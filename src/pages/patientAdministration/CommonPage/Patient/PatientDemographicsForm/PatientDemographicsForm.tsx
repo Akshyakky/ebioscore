@@ -1,6 +1,6 @@
 // src/components/Patient/PatientDemographicsForm/PatientDemographicsForm.tsx
 import React, { useEffect, useState, useCallback } from "react";
-import { Box, Grid, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import { Box, Grid, Typography } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { PatientDemoGraphService } from "@/services/PatientAdministrationServices/RegistrationService/PatientDemoGraphService";
 import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
@@ -11,6 +11,7 @@ import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/us
 import { PatientDemographicsFormProps } from "./PatientDemographicsFormProps";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { PatientDemoGraph } from "@/interfaces/PatientAdministration/patientDemoGraph";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 
 /**
  * Reusable patient demographics form component
@@ -128,182 +129,199 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
     return displayFields.includes(fieldName);
   };
 
+  // Dialog actions
+  const dialogActions = (
+    <>
+      <CustomButton variant="outlined" text="Cancel" onClick={handleDialogClose} color="inherit" size="medium" disabled={loading} />
+      <CustomButton variant="contained" text="Save Changes" onClick={handleSubmit(onSubmit)} color="primary" size="medium" disabled={!isDirty || !isValid || loading} />
+    </>
+  );
+
+  // Form content that will be passed as children to GenericDialog
+  const formContent = (
+    <Box component="form" sx={{ mt: 2 }}>
+      <Grid container spacing={2}>
+        {/* Patient ID (Read-only) */}
+        {shouldShowField("pChartCode") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="pChartCode" control={control} label="UHID" type="text" required disabled size="small" />
+          </Grid>
+        )}
+
+        {/* Title */}
+        {shouldShowField("pTitle") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField
+              name="pTitle"
+              control={control}
+              label="Title"
+              type="select"
+              options={titleOptions || []}
+              required
+              size="small"
+              onChange={(selectedValue) => {
+                updateDropdownValues("pTitle", "pTitleVal", selectedValue, titleOptions);
+              }}
+            />
+          </Grid>
+        )}
+
+        {/* First Name */}
+        {shouldShowField("pfName") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="pfName" control={control} label="First Name" type="text" required size="small" />
+          </Grid>
+        )}
+
+        {/* Last Name */}
+        {shouldShowField("plName") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="plName" control={control} label="Last Name" type="text" required size="small" />
+          </Grid>
+        )}
+
+        {/* Date of Birth */}
+        {shouldShowField("dob") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="dob" control={control} label="Date of Birth" type="datepicker" required size="small" />
+          </Grid>
+        )}
+
+        {/* Gender */}
+        {shouldShowField("pGender") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField
+              name="pGender"
+              control={control}
+              label="Gender"
+              type="select"
+              options={gender || []}
+              required
+              size="small"
+              onChange={(selectedValue) => {
+                updateDropdownValues("pGender", "pGenderVal", selectedValue, gender);
+              }}
+            />
+          </Grid>
+        )}
+
+        {/* Patient Type / Payment Source */}
+        {shouldShowField("pTypeName") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField
+              name="pTypeName"
+              control={control}
+              label="Payment Source"
+              type="select"
+              options={paymentSourceOptions || []}
+              required
+              size="small"
+              onChange={(selectedValue) => {
+                const selectedOption = paymentSourceOptions?.find((option) => option.value === selectedValue || option.label === selectedValue);
+
+                if (selectedOption) {
+                  setValue("pTypeID", Number(selectedOption.value));
+                  setValue("pTypeName", selectedOption.label);
+                }
+              }}
+            />
+          </Grid>
+        )}
+
+        {/* Blood Group */}
+        {shouldShowField("pBldGrp") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="pBldGrp" control={control} label="Blood Group" type="select" options={bloodGroup || []} size="small" />
+          </Grid>
+        )}
+
+        {/* Phone Number */}
+        {shouldShowField("pAddPhone1") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="pAddPhone1" control={control} label="Phone Number" type="text" required size="small" />
+          </Grid>
+        )}
+
+        {/* Email */}
+        {shouldShowField("pAddEmail") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="pAddEmail" control={control} label="Email" type="text" size="small" />
+          </Grid>
+        )}
+
+        {/* Street Address */}
+        {shouldShowField("pAddStreet") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="pAddStreet" control={control} label="Street Address" type="text" size="small" />
+          </Grid>
+        )}
+
+        {/* Area */}
+        {shouldShowField("patArea") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="patArea" control={control} label="Area" type="select" options={area || []} size="small" />
+          </Grid>
+        )}
+
+        {/* City */}
+        {shouldShowField("pAddCity") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="pAddCity" control={control} label="City" type="select" options={city || []} size="small" />
+          </Grid>
+        )}
+
+        {/* Country */}
+        {shouldShowField("pAddActualCountry") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="pAddActualCountry" control={control} label="Country" type="select" options={country || []} size="small" />
+          </Grid>
+        )}
+
+        {/* ID Document Type */}
+        {shouldShowField("indentityType") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="indentityType" control={control} label="ID Document Type" type="text" size="small" />
+          </Grid>
+        )}
+
+        {/* ID Document Number */}
+        {shouldShowField("indentityValue") && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField name="indentityValue" control={control} label="ID Document Number" type="text" size="small" />
+          </Grid>
+        )}
+      </Grid>
+    </Box>
+  );
+
   return (
     <>
-      <Dialog
+      <GenericDialog
         open={open}
         onClose={handleDialogClose}
+        title={title}
         maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 1,
-          },
+        fullWidth={true}
+        showCloseButton={true}
+        actions={dialogActions}
+        disableBackdropClick={true}
+        disableEscapeKeyDown={true}
+        dialogContentSx={{
+          minHeight: "500px",
+          maxHeight: "70vh",
+          overflowY: "auto",
         }}
+        titleSx={{ bgcolor: "primary.main", color: "white", py: 1.5 }}
+        actionsSx={{ px: 3, py: 2 }}
       >
-        <DialogTitle sx={{ bgcolor: "primary.main", color: "white", py: 1.5 }}>{title}</DialogTitle>
-
-        <DialogContent dividers>
-          <Box component="form" sx={{ mt: 2 }}>
-            <Grid container spacing={2}>
-              {/* Patient ID (Read-only) */}
-              {shouldShowField("pChartCode") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="pChartCode" control={control} label="UHID" type="text" required disabled size="small" />
-                </Grid>
-              )}
-
-              {/* Title */}
-              {shouldShowField("pTitle") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField
-                    name="pTitle"
-                    control={control}
-                    label="Title"
-                    type="select"
-                    options={titleOptions || []}
-                    required
-                    size="small"
-                    onChange={(selectedValue) => {
-                      updateDropdownValues("pTitle", "pTitleVal", selectedValue, titleOptions);
-                    }}
-                  />
-                </Grid>
-              )}
-
-              {/* First Name */}
-              {shouldShowField("pfName") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="pfName" control={control} label="First Name" type="text" required size="small" />
-                </Grid>
-              )}
-
-              {/* Last Name */}
-              {shouldShowField("plName") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="plName" control={control} label="Last Name" type="text" required size="small" />
-                </Grid>
-              )}
-
-              {/* Date of Birth */}
-              {shouldShowField("dob") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="dob" control={control} label="Date of Birth" type="datepicker" required size="small" />
-                </Grid>
-              )}
-
-              {/* Gender */}
-              {shouldShowField("pGender") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField
-                    name="pGender"
-                    control={control}
-                    label="Gender"
-                    type="select"
-                    options={gender || []}
-                    required
-                    size="small"
-                    onChange={(selectedValue) => {
-                      updateDropdownValues("pGender", "pGenderVal", selectedValue, gender);
-                    }}
-                  />
-                </Grid>
-              )}
-
-              {/* Patient Type / Payment Source */}
-              {shouldShowField("pTypeName") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField
-                    name="pTypeName"
-                    control={control}
-                    label="Payment Source"
-                    type="select"
-                    options={paymentSourceOptions || []}
-                    required
-                    size="small"
-                    onChange={(selectedValue) => {
-                      const selectedOption = paymentSourceOptions?.find((option) => option.value === selectedValue || option.label === selectedValue);
-
-                      if (selectedOption) {
-                        setValue("pTypeID", Number(selectedOption.value));
-                        setValue("pTypeName", selectedOption.label);
-                      }
-                    }}
-                  />
-                </Grid>
-              )}
-
-              {/* Blood Group */}
-              {shouldShowField("pBldGrp") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="pBldGrp" control={control} label="Blood Group" type="select" options={bloodGroup || []} size="small" />
-                </Grid>
-              )}
-
-              {/* Phone Number */}
-              {shouldShowField("pAddPhone1") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="pAddPhone1" control={control} label="Phone Number" type="text" required size="small" />
-                </Grid>
-              )}
-
-              {/* Email */}
-              {shouldShowField("pAddEmail") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="pAddEmail" control={control} label="Email" type="text" size="small" />
-                </Grid>
-              )}
-
-              {/* Street Address */}
-              {shouldShowField("pAddStreet") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="pAddStreet" control={control} label="Street Address" type="text" size="small" />
-                </Grid>
-              )}
-
-              {/* Area */}
-              {shouldShowField("patArea") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="patArea" control={control} label="Area" type="select" options={area || []} size="small" />
-                </Grid>
-              )}
-
-              {/* City */}
-              {shouldShowField("pAddCity") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="pAddCity" control={control} label="City" type="select" options={city || []} size="small" />
-                </Grid>
-              )}
-
-              {/* Country */}
-              {shouldShowField("pAddActualCountry") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="pAddActualCountry" control={control} label="Country" type="select" options={country || []} size="small" />
-                </Grid>
-              )}
-
-              {/* ID Document Type */}
-              {shouldShowField("indentityType") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="indentityType" control={control} label="ID Document Type" type="text" size="small" />
-                </Grid>
-              )}
-
-              {/* ID Document Number */}
-              {shouldShowField("indentityValue") && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormField name="indentityValue" control={control} label="ID Document Number" type="text" size="small" />
-                </Grid>
-              )}
-            </Grid>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+            <Typography>Loading...</Typography>
           </Box>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <CustomButton variant="outlined" text="Cancel" onClick={handleDialogClose} color="inherit" size="medium" disabled={loading} />
-          <CustomButton variant="contained" text="Save Changes" onClick={handleSubmit(onSubmit)} color="primary" size="medium" disabled={!isDirty || !isValid || loading} />
-        </DialogActions>
-      </Dialog>
+        ) : (
+          formContent
+        )}
+      </GenericDialog>
 
       {/* Confirmation Dialog */}
       <ConfirmationDialog
