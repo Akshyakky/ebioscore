@@ -80,7 +80,15 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
           <Select
             size="small"
             value={item.units || ""}
-            onChange={(e) => handleCellValueChange(rowIndex, "units", e.target.value)}
+            onChange={(e) => {
+              const unitValue = e.target.value;
+              const unit = productOptions.find((opt) => opt.value === unitValue);
+              if (unit) {
+                handleCellValueChange(rowIndex, "pUnitID", unit.value); // Save the unit ID
+                handleCellValueChange(rowIndex, "pUnitName", unit.label); // Save the unit label
+              }
+              handleCellValueChange(rowIndex, "units", unitValue); // Update the selected unit
+            }}
             sx={{ width: "100%" }}
             displayEmpty
             renderValue={(selected) => {
@@ -98,7 +106,6 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
           </Select>
         ),
       },
-
       {
         key: "package",
         header: "Package",
@@ -146,7 +153,9 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
           <Select
             size="small"
             value={item.supplierName || ""}
-            onChange={(e) => handleCellValueChange(rowIndex, "supplierName", e.target.value)}
+            onChange={(e) => {
+              handleCellValueChange(rowIndex, "supplierName", e.target.value); // Save supplier name
+            }}
             sx={{ width: "100%" }}
             displayEmpty
             renderValue={(selected) => (selected ? selected : "Select an Option")}
@@ -159,7 +168,7 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
           </Select>
         ),
       },
-      { key: "rol", header: "ROL", visible: true, width: 80, minWidth: 80 },
+
       { key: "roq", header: "ROQ", visible: true, width: 80, minWidth: 80 },
       {
         key: "delete",
