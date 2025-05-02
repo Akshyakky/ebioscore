@@ -34,7 +34,7 @@ const ContactListSwitches: React.FC<ContactListSwitchesProps> = ({ switchStates,
   return (
     <Grid container spacing={2} alignItems="flex-start">
       {switches.map((switchItem) => (
-        <Grid item xs={12} sm={3} md={2} key={switchItem.name}>
+        <Grid size={{ xs: 12, sm: 3, md: 2 }} key={switchItem.name}>
           <CustomSwitch
             label={switchItem.label}
             size="medium"

@@ -211,7 +211,7 @@ export const SurgicalHistory: React.FC<SurgicalHistoryProps> = ({ pChartID, opip
             ControlID="opipPshNotes"
             placeholder="Enter any additional notes or observations"
           />
-          <Grid item md={9}>
+          <Grid size={{ md: 9 }}>
             <Box
               sx={{
                 mt: 2,
@@ -240,7 +240,7 @@ export const SurgicalHistory: React.FC<SurgicalHistoryProps> = ({ pChartID, opip
       </Paper>
 
       <Grid container spacing={2}>
-        <Grid item md={9}>
+        <Grid size={{ md: 9 }}>
           <CustomGrid columns={columns} data={historyList} maxHeight="400px" minHeight="200px" />
         </Grid>
       </Grid>

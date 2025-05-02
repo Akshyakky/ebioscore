@@ -69,13 +69,13 @@ const PatientVisitHistory: React.FC<PatientVisitHistoryProps> = ({ pChartID }) =
   return (
     <section aria-labelledby="patient-history-header">
       <Grid container justifyContent="space-between" alignItems="center">
-        <Grid item>
+        <Grid size="grow">
           <Typography variant="h6" id="patient-history-header">
             Patient History
           </Typography>
         </Grid>
         <Grid container justifyContent="space-between">
-          <Grid item xs={12} sm={12} lg={12} xl={12}>
+          <Grid size={{ xs: 12, sm: 12, md: 12, lg: 12, xl: 12 }}>
             <CustomGrid columns={gridPatientHistoryColumns} data={patientHistoryData} />
           </Grid>
         </Grid>

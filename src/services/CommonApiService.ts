@@ -49,12 +49,12 @@ export class CommonApiService {
       "Content-Type": "application/json",
       Accept: "application/json",
       "Time-Zone": this.timeZone,
-      "X-Request-ID": crypto.randomUUID ? crypto.randomUUID() : self.crypto.randomUUID(),
-      //"X-Request-ID": this.generateUUID(),
+      //"X-Request-ID": crypto.randomUUID ? crypto.randomUUID() : self.crypto.randomUUID(),
+      "X-Request-ID": this.generateUUID(),
       "X-Request-Timestamp": new Date().toISOString(),
       // Prevent MIME type sniffing
       "X-Content-Type-Options": "nosniff",
-      // Prevent clickjacking
+      // Prevent clickjackingx
       "X-Frame-Options": "DENY",
       // Enable strict XSS protection
       "X-XSS-Protection": "1; mode=block",

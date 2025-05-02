@@ -138,12 +138,17 @@ export interface DepartmentInfo {
   departmentId: number;
   departmentName: string;
 }
+export interface DiscountFooterProps {
+  totDiscAmtPer?: number;
+  isDiscPercentage?: boolean;
+}
 
 export interface PurchaseOrderState {
   departmentInfo: DepartmentInfo | null;
   purchaseOrderMastData: PurchaseOrderMastDto | null;
   purchaseOrderDetails: PurchaseOrderDetailDto[];
   selectedProduct: ProductListDto | null;
+  discountFooter: DiscountFooterProps;
 }
 
 export interface PurchaseOrderHeaderProps {

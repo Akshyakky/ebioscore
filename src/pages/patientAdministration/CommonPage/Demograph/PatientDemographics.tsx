@@ -32,7 +32,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
     pTitle: "",
     pfName: "",
     plName: "",
-    dob: serverDate,
+    pDob: serverDate,
     pGender: "",
     pGenderVal: "",
     pBldGrp: "",
@@ -85,7 +85,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
       if (response.success && response.data) {
         setPatientDemoGraph({
           ...response.data,
-          dob: response.data.dob,
+          pDob: response.data.pDob,
           pRegDate: response.data.pRegDate,
         });
       } else {
@@ -114,7 +114,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
     if (!patientDemoGraph.pTitleVal) error.pTitleVal = "Title is required";
     if (!patientDemoGraph.pfName) error.pfName = "First Name is required";
     if (!patientDemoGraph.plName) error.plName = "Last Name is required";
-    if (!patientDemoGraph.dob) error.dob = "Date of Birth is required";
+    if (!patientDemoGraph.pDob) error.dob = "Date of Birth is required";
     if (!patientDemoGraph.pGenderVal) error.pGenderVal = "Gender is required";
     if (!patientDemoGraph.indentityValue) error.indentityValue = "Identity No is required";
     if (!patientDemoGraph.pAddPhone1) error.pAddPhone1 = "Mobile No is required";
@@ -148,7 +148,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
   const handleInputChange = useCallback(
     (name: keyof PatientDemoGraph, value: string | number | Date | null) => {
       setPatientDemoGraph((prev) => {
-        if (name === "dob" || name === "pRegDate") {
+        if (name === "pDob" || name === "pRegDate") {
           return { ...prev, [name]: value ? value : serverDate };
         }
         return { ...prev, [name]: value };
@@ -214,7 +214,7 @@ const PatientDemographics: React.FC<PatientDemographicsProps> = ({ pChartID }) =
           {renderFormField("select", "pGenderVal", "Gender", dropdownValues.gender, true, false, { xs: 12 })}
           {renderFormField("text", "pfName", "First Name", [], true, false, { xs: 12 })}
           {renderFormField("text", "plName", "Last Name", [], true, false, { xs: 12 })}
-          {renderFormField("datepicker", "dob", "Date of Birth", [], true, false, { xs: 12 })}
+          {renderFormField("datepicker", "pDob", "Date of Birth", [], true, false, { xs: 12 })}
           {renderFormField("select", "pBldGrp", "Blood Group", dropdownValues.bloodGroup, false, false, { xs: 12 })}
           {renderFormField("select", "pTypeID", "Payment Source [PIC]", dropdownValues.pic, true, false, { xs: 12 })}
           {renderFormField("datepicker", "pRegDate", "Registration Date", [], true, true, { xs: 12 })}

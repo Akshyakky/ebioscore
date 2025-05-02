@@ -1,9 +1,9 @@
-// src/pages/patientAdministration/commonPage/patient/PatientSearch.tsx
 import React, { useEffect } from "react";
 import { TextField, Autocomplete, Box, CircularProgress, Typography } from "@mui/material";
 import { PatientSearchProps } from "./PatientSearchProps";
 import { PatientOption } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { usePatientSearch } from "@/hooks/PatientAdminstration/patient/usePatientSearch";
+import { formatDt } from "@/utils/Common/dateUtils";
 
 /**
  * Reusable patient search component with autocomplete
@@ -37,7 +37,6 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
   // Handle patient selection and propagate to parent
   const handlePatientSelect = (patient: PatientOption | null) => {
     setSelectedPatient(patient);
-
     if (patient) {
       onPatientSelect({
         pChartID: patient.pChartID,
@@ -58,8 +57,11 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
       inputValue={inputValue}
       onChange={(_, newValue) => handlePatientSelect(newValue)}
       onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
-      getOptionLabel={(option) => option.fullName || ""}
+      getOptionLabel={(option) => `${option.fullName} (${option.pChartCode})`}
       isOptionEqualToValue={(option, value) => option.pChartID === value.pChartID}
+      filterOptions={(options, state) => {
+        return options;
+      }}
       renderInput={(params) => (
         <TextField
           {...params}
@@ -86,7 +88,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {option.pAddPhone1 ? `Phone: ${option.pAddPhone1}` : ""}
-              {option.pDob ? ` • DOB: ${new Date(option.pDob).toLocaleDateString()}` : ""}
+              {option.pDob ? ` • DOB: ${formatDt(option.pDob)}` : ""}
             </Typography>
           </Box>
         </li>

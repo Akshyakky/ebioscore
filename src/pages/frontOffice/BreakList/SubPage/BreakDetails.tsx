@@ -496,7 +496,7 @@ const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
             minDate={formState.bLStartDate}
           />
           <FormField type="textarea" label="Repeat" name="bLFrqDesc" value={formState.bLFrqDesc} onChange={handleInputChange} ControlID="Repeat" readOnly={true} />
-          <Grid item xs={12} sm={6} md={3} mt={2}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ mt: 2 }}>
             <CustomButton variant="contained" text="Change" icon={ChangeCircleIcon} size="small" color="secondary" onClick={() => setOpenFrequencyDialog(true)} />
           </Grid>
         </Grid>
@@ -517,7 +517,7 @@ const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
           />
         </Grid>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             {(selectedOption === "resource" || selectedOption === "physician") && (
               <CustomGrid columns={columns} data={selectedOption === "resource" ? resourceData : consultantData} maxHeight="300px" minHeight="300px" searchTerm="" />
             )}

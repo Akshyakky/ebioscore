@@ -11,15 +11,25 @@ export interface PatientDemographicsData {
   patientPaymentSource?: string;
   pfName?: string;
   plName?: string;
+  pTitleVal: string;
   pTitle?: string;
   pGender?: string;
+  pGenderVal: string;
   dob?: Date | string;
   pAddPhone1?: string;
   pAddEmail?: string;
   pAddStreet?: string;
   patArea?: string;
+  patAreaVal: string;
   pAddCity?: string;
+  pAddCityVal: string;
   pAddActualCountry?: string;
+  pAddActualCountryVal: string;
   indentityType?: string;
   indentityValue?: string;
+  pTypeID: number;
+  pTypeName: string;
+  pRegDate: Date;
+  intIdPsprt: string;
+  PrimaryReferralSourceName: string;
 }

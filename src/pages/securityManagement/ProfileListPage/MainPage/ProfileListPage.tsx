@@ -50,10 +50,10 @@ const ProfileListPage: React.FC = () => {
         <ProfileListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} profileMastService={profileMastService} />
         {selectedData && (
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6} lg={4} xl={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 6, lg: 4, xl: 3 }}>
               <PermissionManager mode="profile" details={selectedData} title="Module Permissions" type="M" useMainModules={true} useSubModules={true} />
             </Grid>
-            <Grid item xs={12} md={6} lg={4} xl={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 6, lg: 4, xl: 3 }}>
               <PermissionManager mode="profile" details={selectedData} title="Report Permissions" type="R" useMainModules={true} useSubModules={false} />
             </Grid>
           </Grid>

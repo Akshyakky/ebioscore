@@ -36,13 +36,13 @@ const ComponentDetailsSection: React.FC<ComponentDetailsSectionProps> = ({
   return (
     <Box sx={{ mb: 4 }}>
       <Grid container spacing={4}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <CustomButton variant="contained" color="primary" icon={AddIcon} onClick={onAddComponent} size="small">
             Add Component
           </CustomButton>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 3, maxHeight: "75vh", overflow: "auto", borderRadius: 3 }}>
             <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
               Component Library
@@ -116,7 +116,7 @@ const ComponentDetailsSection: React.FC<ComponentDetailsSectionProps> = ({
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Slide direction="left" in={!!selectedComponent && selectedComponent.rActiveYN !== "N"} timeout={400}>
             <Paper sx={{ p: 3, borderRadius: 3, minHeight: "60vh" }}>
               {selectedComponent ? (
@@ -126,11 +126,11 @@ const ComponentDetailsSection: React.FC<ComponentDetailsSectionProps> = ({
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
                   <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                       <Typography variant="subtitle2">Type:</Typography>
                       <Typography>{getEntryTypeName(selectedComponent.lCentID)}</Typography>
                     </Grid>
-                    <Grid item xs={6}>
+                    <Grid size={{ xs: 6 }}>
                       <Typography variant="subtitle2">Code:</Typography>
                       <Typography>{selectedComponent.compOCodeCD}</Typography>
                     </Grid>

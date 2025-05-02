@@ -100,12 +100,12 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
   return (
     <>
       <Grid container justifyContent="space-between" alignItems="center">
-        <Grid item>
+        <Grid size="grow">
           <Typography variant="h6" id="insurance-details-header">
             Insurance Details
           </Typography>
         </Grid>
-        <Grid item>
+        <Grid size="grow">
           <CustomButton text="Add Insurance Details" onClick={handleOpenInsurancePopup} icon={AddIcon} color="primary" variant="text" />
         </Grid>
       </Grid>

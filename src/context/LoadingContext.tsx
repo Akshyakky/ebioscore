@@ -7,9 +7,8 @@ interface LoadingContextType {
 }
 
 const LoadingContext = createContext<LoadingContextType>(null!);
-// Define the type for the props of LoadingProvider
 interface LoadingProviderProps {
-  children: ReactNode; // This can also be React.ReactNode
+  children: ReactNode;
 }
 export const useLoading = () => useContext(LoadingContext);
 

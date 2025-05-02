@@ -7,6 +7,7 @@ const initialState: PurchaseOrderState = {
   purchaseOrderMastData: null,
   purchaseOrderDetails: [],
   selectedProduct: null,
+  discountFooter: { totDiscAmtPer: 0, isDiscPercentage: false },
 };
 
 const purchaseOrderState = createSlice({
@@ -33,12 +34,6 @@ const purchaseOrderState = createSlice({
     addPurchaseOrderDetail(state, action: PayloadAction<PurchaseOrderDetailDto>) {
       state.purchaseOrderDetails.push(action.payload);
     },
-    updatePurchaseOrderDetail(state, action: PayloadAction<PurchaseOrderDetailDto>) {
-      const index = state.purchaseOrderDetails.findIndex((item) => item.pODetID === action.payload.pODetID);
-      if (index >= 0) {
-        state.purchaseOrderDetails[index] = action.payload;
-      }
-    },
     updateAllPurchaseOrderDetails(state, action: PayloadAction<PurchaseOrderDetailDto[]>) {
       state.purchaseOrderDetails = action.payload;
     },
@@ -51,6 +46,9 @@ const purchaseOrderState = createSlice({
     setSelectedProduct(state, action: PayloadAction<ProductListDto | null>) {
       state.selectedProduct = action.payload;
     },
+    setDiscountFooterField(state, action: PayloadAction<{ field: keyof PurchaseOrderState["discountFooter"]; value: any }>) {
+      state.discountFooter[action.payload.field] = action.payload.value;
+    },
   },
 });
 
@@ -60,10 +58,10 @@ export const {
   updatePurchaseOrderMastField,
   resetPurchaseOrderState,
   addPurchaseOrderDetail,
-  updatePurchaseOrderDetail,
   removePurchaseOrderDetail,
   resetPurchaseOrderDetails,
   setSelectedProduct,
   updateAllPurchaseOrderDetails,
+  setDiscountFooterField,
 } = purchaseOrderState.actions;
 export default purchaseOrderState.reducer;

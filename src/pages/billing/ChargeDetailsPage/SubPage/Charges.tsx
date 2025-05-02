@@ -35,7 +35,7 @@ const ChargeBasicDetails: React.FC<ChargeBasicDetailsProps> = ({
   if (!formData?.chargeInfo) return null;
   return (
     <Grid container spacing={2}>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Grid container spacing={2}>
           <FormField
             ControlID="chargeCode"

@@ -1,6 +1,5 @@
 // src/pages/patientAdministration/commonPage/patient/Patient/PatientDemographicsForm/PatientDemographicsFormProps.ts
-
-import { PatientDemographicsData } from "@/interfaces/PatientAdministration/Patient/PatientDemographics.interface";
+import { PatientDemoGraph } from "@/interfaces/PatientAdministration/patientDemoGraph";
 
 export interface PatientDemographicsFormProps {
   /**
@@ -21,12 +20,12 @@ export interface PatientDemographicsFormProps {
   /**
    * Callback when data is saved successfully
    */
-  onSaved?: (data: PatientDemographicsData) => void;
+  onSaved?: (data: PatientDemoGraph) => void;
 
   /**
    * Initial form data (optional) - if provided, will override fetched data
    */
-  initialData?: PatientDemographicsData;
+  initialData?: PatientDemoGraph;
 
   /**
    * Dialog title
@@ -49,5 +48,5 @@ export interface PatientDemographicsFormProps {
    * Fields to display in the form
    * @default All fields
    */
-  displayFields?: Array<keyof PatientDemographicsData>;
+  displayFields?: Array<keyof PatientDemoGraph>;
 }
