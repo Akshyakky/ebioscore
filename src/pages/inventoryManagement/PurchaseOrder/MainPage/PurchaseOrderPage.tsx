@@ -66,6 +66,13 @@ const PurchaseOrderPage: React.FC = () => {
     closeDialog();
   };
 
+  useEffect(() => {
+    console.log("Purchase Order Mast Data:", purchaseOrderMastData);
+  }, [purchaseOrderMastData]);
+  useEffect(() => {
+    console.log("Purchase Order Detail Data:", purchaseOrderDetails);
+  }, [purchaseOrderDetails]);
+
   const handleSave = () => {
     setIsSubmitted(true);
     // Validate required fields
@@ -76,25 +83,22 @@ const PurchaseOrderPage: React.FC = () => {
     if (purchaseOrderDetails.length === 0) {
       return;
     }
+    console.log("Saving purchase order Mast data:", purchaseOrderMastData);
+    console.log("Saving purchase order Detail data:", purchaseOrderDetails);
+
+    const finalizedPO = purchaseOrderMastData.pOApprovedYN === "Y";
     try {
       let purchaseOrderData: purchaseOrderSaveDto = {
         purchaseOrderMastDto: {
           ...purchaseOrderMastData,
-          pOStatusCode: "PENDING",
-          pOStatus: "Pending",
+          pOStatusCode: finalizedPO ? "CMP" : "PND",
+          pOStatus: finalizedPO ? "Completed" : "Pending",
           rActiveYN: "Y",
-          compID: 1,
-          compCode: "TEST",
-          compName: "TEST",
           auGrpID: 18,
-          catDesc: "catDesc",
-          catValue: "catValue",
-          pOApprovedID: 5,
-          pOApprovedBy: "pOApprovedBy",
-          pOApprovedNo: "pOApprovedNo",
-          supplierName: "supplierName",
-          pOType: "pOType",
-          pOTypeValue: "pOTe",
+          catDesc: "REVENUE",
+          catValue: "MEDI",
+          pOType: "Revenue Purchase Order",
+          pOTypeValue: "RVPO",
         },
         purchaseOrderDetailDto: purchaseOrderDetails.map((row) => ({
           pODetID: row.pODetID || 0,
@@ -118,8 +122,7 @@ const PurchaseOrderPage: React.FC = () => {
           requiredUnitQty: row.requiredUnitQty,
           receivedQty: row.receivedQty || 0,
           packPrice: row.packPrice || 0,
-          sellingPrice: row.sellingPrice || 0,
-          pOYN: "Y",
+          pOYN: finalizedPO ? "Y" : "N",
           grnDetID: row.grnDetID || 0,
           manufacturerID: row.manufacturerID,
           manufacturerCode: row.manufacturerCode,
@@ -131,7 +134,7 @@ const PurchaseOrderPage: React.FC = () => {
           mfID: row.mfID,
           mfName: row.mfName,
           netAmount: row.netAmount || 0,
-          pODetStatusCode: "PENDING",
+          pODetStatusCode: finalizedPO ? "CMP" : "PND",
           taxAmt: (row.cgstTaxAmt || 0) + (row.sgstTaxAmt || 0),
           taxModeCode: row.taxModeCode,
           taxModeDescription: row.taxModeDescription,
@@ -149,9 +152,6 @@ const PurchaseOrderPage: React.FC = () => {
           taxableAmt: row.taxableAmt || 0,
           transferYN: row.transferYN || "N",
           rNotes: row.rNotes || "",
-          compID: 1,
-          compCode: "TEST",
-          compName: "TEST",
         })),
       };
 

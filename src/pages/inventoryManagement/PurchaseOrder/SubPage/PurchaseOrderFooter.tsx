@@ -14,6 +14,7 @@ const PurchaseOrderFooter: React.FC = () => {
   const { totDiscAmtPer, isDiscPercentage } = discountFooter ?? ({} as DiscountFooterProps);
 
   const { pOApprovedYN, pOApprovedID, pOApprovedNo, pOApprovedBy, totalAmt, taxAmt, discAmt, coinAdjAmt, netAmt, rNotes } = purchaseOrderMastData;
+  const disabled = pOApprovedYN === "Y";
   const approvedByOptions = [
     { value: "1", label: "Dr. Arjun Kumar" },
     { value: "2", label: "Dr. Sneha Rao" },
@@ -88,7 +89,7 @@ const PurchaseOrderFooter: React.FC = () => {
             ...item,
             discAmt,
             discPercentageAmt,
-            totAmt: totalPrice - discAmt,
+            netAmount: totalPrice - discAmt,
           };
         });
       }
@@ -97,29 +98,17 @@ const PurchaseOrderFooter: React.FC = () => {
   };
 
   const recalculateFooterAmounts = (details: PurchaseOrderDetailDto[]) => {
-    let totalAmt = 0;
-    let discAmt = 0;
-    let taxAmt = 0;
-    let netAmt = 0;
+    const itemsTotal = details.reduce((sum, item) => sum + (item.packPrice || 0) * (item.receivedQty || 0), 0);
+    const totalDiscAmt = details.reduce((sum, item) => sum + (item.discAmt || 0), 0);
+    const totalCGSTTaxAmt = details.reduce((sum, item) => sum + (item.cgstTaxAmt || 0), 0);
+    const totalSGSTTaxAmt = details.reduce((sum, item) => sum + (item.sgstTaxAmt || 0), 0);
+    const totalTaxAmt = totalCGSTTaxAmt + totalSGSTTaxAmt;
+    const netAmount = itemsTotal + (purchaseOrderMastData.coinAdjAmt || 0) - totalDiscAmt + totalTaxAmt;
 
-    details.forEach((item) => {
-      const packPrice = item.packPrice || 0;
-      const requiredPack = item.requiredPack || 0;
-      const itemTotalPrice = packPrice * requiredPack;
-      const itemDisc = item.discAmt || 0;
-      const itemCGST = item.cgstTaxAmt || 0;
-      const itemSGST = item.sgstTaxAmt || 0;
-
-      totalAmt += itemTotalPrice;
-      discAmt += itemDisc;
-      taxAmt += itemCGST + itemSGST;
-      netAmt += itemTotalPrice - itemDisc + itemCGST + itemSGST;
-    });
-
-    dispatch(updatePurchaseOrderMastField({ field: "totalAmt", value: totalAmt }));
-    dispatch(updatePurchaseOrderMastField({ field: "discAmt", value: discAmt }));
-    dispatch(updatePurchaseOrderMastField({ field: "taxAmt", value: taxAmt }));
-    dispatch(updatePurchaseOrderMastField({ field: "netAmt", value: netAmt }));
+    dispatch(updatePurchaseOrderMastField({ field: "totalAmt", value: itemsTotal }));
+    dispatch(updatePurchaseOrderMastField({ field: "discAmt", value: totalDiscAmt }));
+    dispatch(updatePurchaseOrderMastField({ field: "taxAmt", value: totalTaxAmt }));
+    dispatch(updatePurchaseOrderMastField({ field: "netAmt", value: netAmount }));
   };
 
   useEffect(() => {
@@ -136,6 +125,7 @@ const PurchaseOrderFooter: React.FC = () => {
           onChange={(e) => dispatch(setDiscountFooterField({ field: "totDiscAmtPer", value: Number(e.target.value) }))}
           name="totDiscAmtPer"
           ControlID="totDiscAmtPer"
+          disabled={disabled}
           gridProps={{ xs: 6, sm: 3, md: 2 }}
         />
         <FormField
@@ -146,10 +136,11 @@ const PurchaseOrderFooter: React.FC = () => {
           value={isDiscPercentage || false}
           checked={isDiscPercentage || false}
           onChange={() => dispatch(setDiscountFooterField({ field: "isDiscPercentage", value: !isDiscPercentage }))}
+          disabled={disabled}
           gridProps={{ xs: 2, sm: 1, md: 1 }}
         />
         <Grid size={{ xs: 1, sm: 2, md: 1 }}>
-          <Button variant="contained" onClick={handleApplyDiscount}>
+          <Button variant="contained" onClick={handleApplyDiscount} disabled={disabled}>
             Apply
           </Button>
         </Grid>
@@ -162,6 +153,7 @@ const PurchaseOrderFooter: React.FC = () => {
           value={pOApprovedYN}
           checked={pOApprovedYN === "Y"}
           onChange={(e) => handleFinalizeToggle(e.target.checked)}
+          disabled={disabled}
           gridProps={{ xs: 6, sm: 4, md: 2 }}
         />
         <FormField
@@ -178,6 +170,7 @@ const PurchaseOrderFooter: React.FC = () => {
           name="approvedBy"
           ControlID="approvedBy"
           options={approvedByOptions}
+          disabled={disabled}
           gridProps={{ xs: 6, sm: 4, md: 2 }}
         />
       </Grid>
@@ -200,6 +193,7 @@ const PurchaseOrderFooter: React.FC = () => {
           }}
           maxLength={250}
           rows={1}
+          disabled={disabled}
           gridProps={{ xs: 12, sm: 6 }}
         />
       </Grid>

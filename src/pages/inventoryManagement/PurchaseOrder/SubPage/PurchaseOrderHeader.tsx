@@ -21,8 +21,8 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
   const { departmentId, departmentName } = departmentInfo;
 
   const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
-  const { pOCode, pODate, supplierID, pOSActionNo, pOApprovedNo } = purchaseOrderMastData;
-
+  const { pOCode, pODate, supplierID, pOSActionNo, pOApprovedNo, pOApprovedYN } = purchaseOrderMastData;
+  const disabled = pOApprovedYN === "Y";
   const [productOptions, setProductOptions] = useState<ProductListDto[]>([]);
   const [productName, setProductName] = useState<string>("");
 
@@ -135,12 +135,18 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
           label="Supplier Name"
           value={supplierID}
           onChange={(e) => {
+            const value = Number(e.target.value);
+            const selected = dropdownValues?.department?.find((opt) => Number(opt.value) === value);
+            if (selected) {
+              dispatch(updatePurchaseOrderMastField({ field: "supplierName", value: selected.label }));
+            }
             dispatch(updatePurchaseOrderMastField({ field: "supplierID", value: e.target.value }));
           }}
           name="supplierID"
           ControlID="supplierID"
           options={dropdownValues.department || []}
           isMandatory
+          disabled={disabled}
           gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
         />
         <FormField
@@ -152,6 +158,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
           }}
           name="pOSActionNo"
           ControlID="pOSActionNo"
+          disabled={disabled}
           gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
         />
         <FormField
@@ -163,6 +170,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
           }}
           name="pOApprovedNo"
           ControlID="pOApprovedNo"
+          disabled={disabled}
           gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
         />
       </Grid>
@@ -177,6 +185,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
           onChange={(e) => setProductName(e.target.value)}
           fetchSuggestions={fetchProductSuggestions}
           onSelectSuggestion={handleProductSelect}
+          disabled={disabled}
           gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
         />
       </Grid>

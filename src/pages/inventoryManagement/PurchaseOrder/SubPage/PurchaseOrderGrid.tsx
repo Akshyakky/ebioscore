@@ -18,7 +18,8 @@ const PurchaseOrderGrid: React.FC = () => {
   const selectedProduct = useSelector((state: RootState) => state.purchaseOrder.selectedProduct) ?? null;
   const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
   const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
-  const { pOID } = purchaseOrderMastData;
+  const { pOID, pOApprovedYN } = purchaseOrderMastData;
+  const disabled = pOApprovedYN === "Y";
   const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
   const { departmentId } = departmentInfo;
   const dispatch = useDispatch<AppDispatch>();
@@ -42,7 +43,7 @@ const PurchaseOrderGrid: React.FC = () => {
   }, [pOID]);
 
   useEffect(() => {
-    if (selectedProduct) {
+    if (selectedProduct && !disabled) {
       const fetchPOProductDetails = async () => {
         const response: OperationResult<PurchaseOrderDetailDto> = await purchaseOrderMastServices.getPOProductDetails(selectedProduct.productCode || "", departmentId);
         const purchaseOrderdetailDto: PurchaseOrderDetailDto | undefined = response.data;
@@ -82,11 +83,11 @@ const PurchaseOrderGrid: React.FC = () => {
     }
 
     currentRow[field] = value;
-
     const receivedQty = currentRow.receivedQty || 0;
     const unitPack = currentRow.unitPack || 1;
     const packPrice = currentRow.packPrice || 0;
-
+    const totAmt = currentRow.totAmt || 0;
+    const gstPerValue = currentRow.gstPerValue || 0;
     currentRow.requiredUnitQty = receivedQty * unitPack;
     const totalPrice = packPrice * receivedQty;
 
@@ -103,14 +104,14 @@ const PurchaseOrderGrid: React.FC = () => {
 
     const discAmt = currentRow.discAmt || 0;
     const taxableAmount = totalPrice - discAmt;
-    currentRow.taxableAmt = taxableAmount;
 
-    currentRow.cgstTaxAmt = (taxableAmount * (currentRow.cgstPerValue || 0)) / 100;
-    currentRow.sgstTaxAmt = (taxableAmount * (currentRow.sgstPerValue || 0)) / 100;
-
-    const gstTaxAmt = (taxableAmount * (currentRow.gstPerValue || 0)) / 100;
-    currentRow.totAmt = taxableAmount + gstTaxAmt;
-
+    currentRow.cgstTaxAmt = (totalPrice * (currentRow.cgstPerValue || 0)) / 100 || 0;
+    currentRow.sgstTaxAmt = (totalPrice * (currentRow.sgstPerValue || 0)) / 100 || 0;
+    currentRow.gstPerValue = (currentRow.cgstPerValue || 0) + (currentRow.sgstPerValue || 0);
+    const gstTaxAmt = (totalPrice * (currentRow.gstPerValue || 0)) / 100;
+    currentRow.netAmount = totalPrice + gstTaxAmt - discAmt;
+    currentRow.mrpAbdated = (totAmt * 100) / (gstPerValue + 100);
+    currentRow.taxAmtOnMrp = (totAmt * receivedQty * gstTaxAmt) / 100;
     updatedData[rowIndex] = currentRow;
 
     dispatch(updateAllPurchaseOrderDetails(updatedData));
@@ -154,6 +155,7 @@ const PurchaseOrderGrid: React.FC = () => {
                     onChange={(e) => handleCellChange(Number(e.target.value), index, "receivedQty")}
                     label=""
                     name="receivedQty"
+                    disabled={disabled}
                     ControlID={`receivedQty_${row.productID}`}
                   />
                 </TableCell>
@@ -167,6 +169,7 @@ const PurchaseOrderGrid: React.FC = () => {
                     onChange={(e) => handleCellChange(Number(e.target.value), index, "unitPack")}
                     label=""
                     name="unitPack"
+                    disabled={disabled}
                     ControlID={`unitPack_${row.productID}`}
                   />
                 </TableCell>
@@ -178,6 +181,7 @@ const PurchaseOrderGrid: React.FC = () => {
                     onChange={(e) => handleCellChange(Number(e.target.value), index, "packPrice")}
                     label=""
                     name="packPrice"
+                    disabled={disabled}
                     ControlID={`packPrice_${row.productID}`}
                   />
                 </TableCell>
@@ -185,11 +189,12 @@ const PurchaseOrderGrid: React.FC = () => {
                 <TableCell align="right">
                   <FormField
                     type="number"
-                    value={row.sellingPrice || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "sellingPrice")}
+                    value={row.totAmt || 0}
+                    onChange={(e) => handleCellChange(Number(e.target.value), index, "totAmt")}
                     label=""
-                    name="sellingPrice"
-                    ControlID={`sellingPrice_${row.productID}`}
+                    name="totAmt"
+                    disabled={disabled}
+                    ControlID={`totAmt_${row.productID}`}
                   />
                 </TableCell>
 
@@ -200,6 +205,7 @@ const PurchaseOrderGrid: React.FC = () => {
                     onChange={(e) => handleCellChange(Number(e.target.value), index, "discAmt")}
                     label=""
                     name="discAmt"
+                    disabled={disabled}
                     ControlID={`discAmt_${row.productID}`}
                   />
                 </TableCell>
@@ -211,6 +217,7 @@ const PurchaseOrderGrid: React.FC = () => {
                     onChange={(e) => handleCellChange(Number(e.target.value), index, "discPercentageAmt")}
                     label=""
                     name="discPercentageAmt"
+                    disabled={disabled}
                     ControlID={`discPercentageAmt_${row.productID}`}
                   />
                 </TableCell>
@@ -228,13 +235,14 @@ const PurchaseOrderGrid: React.FC = () => {
                     options={dropdownValues.taxType || []}
                     label=""
                     name="gstPercent"
+                    disabled={disabled}
                     ControlID={`gstPercent_${row.productID}`}
                   />
                 </TableCell>
 
                 <TableCell align="right">{row.rOL || 0}</TableCell>
 
-                <TableCell align="right">{row.totAmt.toFixed(2)}</TableCell>
+                <TableCell align="right">{row.netAmount?.toFixed(2)}</TableCell>
 
                 <TableCell align="center">
                   <IconButton size="small" onClick={() => handleDeleteRow(row.productID)}>
