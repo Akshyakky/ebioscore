@@ -89,7 +89,7 @@ const StyledNavLink = styled(NavLink)(({ theme }) => ({
 const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
   borderRadius: "8px",
   margin: "4px 8px",
-  padding: "10px 16px",
+  padding: "8px 16px",
   transition: "all 0.2s ease",
   "&:hover": {
     backgroundColor: alpha(theme.palette.primary.main, 0.06),
@@ -155,7 +155,7 @@ const SubModuleItem = memo(({ subModule, handleSubModuleClick, theme }: { subMod
       handleSubModuleClick(subModule.link);
     }}
   >
-    <StyledListItemButton sx={{ pl: 4 }}>
+    <StyledListItemButton sx={{ pl: 2 }}>
       <ListItemIcon>
         <Icon icon={subModule.iCon} style={{ fontSize: "20px", color: theme.palette.text.secondary }} />
       </ListItemIcon>
@@ -384,7 +384,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
           sx={{
             pt: 1,
             overflowY: "auto",
-            height: "calc(100vh - 180px)",
+            height: "calc(100vh - 140px)",
             "&::-webkit-scrollbar": {
               width: "6px",
             },
@@ -441,8 +441,8 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
                 timeout={300}
                 unmountOnExit
                 sx={{
-                  borderLeft: `1px dashed ${alpha(theme.palette.primary.main, 0.3)}`,
-                  ml: 3,
+                  borderLeft: `1px dashed ${alpha(theme.palette.primary.main, 0.5)}`,
+                  ml: 1,
                   mt: 0.5,
                   mb: 0.5,
                 }}
