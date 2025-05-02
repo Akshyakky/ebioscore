@@ -1,42 +1,53 @@
-import FormField from "@/components/FormField/FormField";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { Grid, Paper } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
 import DepartmentInfoChange from "../../CommonPage/DepartmentInfoChange";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import FormField from "@/components/FormField/FormField";
+import { initialPOMastDto, PurchaseOrderHeaderProps } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { AppDispatch } from "@/store";
+import { useDispatch } from "react-redux";
+import { updatePurchaseOrderMastField, setSelectedProduct } from "@/store/features/purchaseOrder/purchaseOrderSlice";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
-import { showAlert } from "@/utils/Common/showAlert";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
+import { showAlert } from "@/utils/Common/showAlert";
 import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
 
-interface PurchaseOrderHeaderProps {
-  purchaseOrderData?: PurchaseOrderMastDto;
-  handleDepartmentChange: () => void;
-  onFormChange: (fieldName: keyof PurchaseOrderMastDto, value: any) => void;
-  isSubmitted: boolean;
-  handleSelectedProduct: (product: ProductListDto) => void;
-}
-const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrderData, handleDepartmentChange, onFormChange, handleSelectedProduct, isSubmitted }) => {
+const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartmentChange }) => {
+  const dispatch = useDispatch<AppDispatch>();
   const dropdownValues = useDropdownValues(["department"]);
+  const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
+  const { departmentId, departmentName } = departmentInfo;
+
+  const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
+  const { pOCode, pODate, supplierID, pOSActionNo, pOApprovedNo } = purchaseOrderMastData;
+
   const [productOptions, setProductOptions] = useState<ProductListDto[]>([]);
   const [productName, setProductName] = useState<string>("");
 
-  const handleProductSelect = useCallback(async (selectedProductString: string) => {
-    const [selectedProductCode] = selectedProductString.split(" - ");
-    const selectedProduct = productOptions.find((product) => product.productCode === selectedProductCode);
-    console.log(selectedProduct);
-    if (selectedProduct) {
-      console.log("Selected Prod", selectedProduct);
-      handleSelectedProduct(selectedProduct);
-      setProductName("");
-    }
-  }, []);
+  const handleProductSelect = useCallback(
+    (selectedProductString: string) => {
+      if (departmentId === 0) {
+        showAlert("Please select a department first", "", "warning");
+        return;
+      }
+      const [selectedProductCode] = selectedProductString.split(" - ");
+      const selectedProduct = productOptions.find((product) => product.productCode === selectedProductCode);
+
+      if (selectedProduct) {
+        dispatch(setSelectedProduct(selectedProduct));
+      }
+    },
+    [productOptions, dispatch]
+  );
+
   useEffect(() => {
-    if (purchaseOrderData?.fromDeptName) {
+    if (departmentId > 0) {
       const fetchPOCode = async (deptName: string) => {
         const response = await purchaseOrderMastServices.getPOCode(deptName);
         if (response.success && response.data) {
-          onFormChange("pOCode", response.data);
+          dispatch(updatePurchaseOrderMastField({ field: "pOCode", value: response.data }));
         } else {
           showAlert("error", "Failed to fetch PO Code", "error");
         }
@@ -55,11 +66,11 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
           showAlert("error", "Failed to fetch products", "error");
         }
       };
-      fetchPOCode(purchaseOrderData.fromDeptName.substring(0, 3).toUpperCase());
+      fetchPOCode(departmentName.substring(0, 3).toUpperCase());
       fetchProducts();
-      onFormChange("pODate", new Date().toLocaleDateString("en-GB"));
+      dispatch(updatePurchaseOrderMastField({ field: "pODate", value: new Date().toLocaleDateString("en-GB") }));
     }
-  }, [purchaseOrderData?.fromDeptID]);
+  }, [departmentId]);
 
   const fetchProductSuggestions = useCallback(
     async (searchTerm: string) => {
@@ -81,20 +92,25 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
     [productOptions]
   );
 
+  useEffect(() => {
+    console.log("Department  changed:", departmentInfo);
+  }, [departmentInfo]);
+
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12 }}>
-          <DepartmentInfoChange deptName={purchaseOrderData?.fromDeptName || "Select Department"} handleChangeClick={handleDepartmentChange} />
+          <DepartmentInfoChange deptName={departmentName || "Select Department"} handleChangeClick={handleDepartmentChange} />
         </Grid>
       </Grid>
       <Grid container spacing={2}>
         <FormField
           type="text"
           label="Purchase Order Code"
-          value={purchaseOrderData?.pOCode || ""}
-          onChange={(e) => onFormChange("pOCode", e.target.value)}
-          isSubmitted={isSubmitted}
+          value={pOCode}
+          onChange={(e) => {
+            dispatch(updatePurchaseOrderMastField({ field: "pOCode", value: e.target.value }));
+          }}
           name="pOCode"
           ControlID="pOCode"
           isMandatory
@@ -104,9 +120,10 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
         <FormField
           type="text"
           label="Date"
-          value={purchaseOrderData?.pODate || ""}
-          onChange={(e) => onFormChange("pODate", e.target.value)}
-          isSubmitted={isSubmitted}
+          value={pODate}
+          onChange={(e) => {
+            dispatch(updatePurchaseOrderMastField({ field: "pODate", value: e.target.value }));
+          }}
           name="pODate"
           ControlID="pODate"
           isMandatory
@@ -116,9 +133,10 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
         <FormField
           type="select"
           label="Supplier Name"
-          value={purchaseOrderData?.supplierID || ""}
-          onChange={(e) => onFormChange("supplierID", e.target.value)}
-          isSubmitted={isSubmitted}
+          value={supplierID}
+          onChange={(e) => {
+            dispatch(updatePurchaseOrderMastField({ field: "supplierID", value: e.target.value }));
+          }}
           name="supplierID"
           ControlID="supplierID"
           options={dropdownValues.department || []}
@@ -128,9 +146,10 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
         <FormField
           type="text"
           label="Sanction No"
-          value={purchaseOrderData?.pOSActionNo || ""}
-          onChange={(e) => onFormChange("pOSActionNo", e.target.value)}
-          isSubmitted={isSubmitted}
+          value={pOSActionNo}
+          onChange={(e) => {
+            dispatch(updatePurchaseOrderMastField({ field: "pOSActionNo", value: e.target.value }));
+          }}
           name="pOSActionNo"
           ControlID="pOSActionNo"
           gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
@@ -138,9 +157,10 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ purchaseOrder
         <FormField
           type="text"
           label="Approved No"
-          value={purchaseOrderData?.pOApprovedNo || ""}
-          onChange={(e) => onFormChange("pOApprovedNo", e.target.value)}
-          isSubmitted={isSubmitted}
+          value={pOApprovedNo}
+          onChange={(e) => {
+            dispatch(updatePurchaseOrderMastField({ field: "pOApprovedNo", value: e.target.value }));
+          }}
           name="pOApprovedNo"
           ControlID="pOApprovedNo"
           gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}

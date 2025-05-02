@@ -1,24 +1,27 @@
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 import { PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { purchaseOrderMastService } from "@/services/InventoryManagementService/inventoryManagementService";
+import { RootState } from "@/store";
 import { showAlert } from "@/utils/Common/showAlert";
 
 import React, { useCallback } from "react";
+import { useSelector } from "react-redux";
 
 interface PurchaseOrderSearchProps {
   open: boolean;
   onClose: () => void;
   onSelect: (purchaseOrderMastDto: PurchaseOrderMastDto) => void;
-  departmentId: number;
 }
 
-const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose, onSelect, departmentId }) => {
+const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose, onSelect }) => {
+  const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
+  const { departmentId } = departmentInfo;
+
   const fetchItems = useCallback(async () => {
     try {
       const result = await purchaseOrderMastService.getAll();
       let items = result.success ? result.data : [];
       items = items.filter((item: PurchaseOrderMastDto) => item.fromDeptID === departmentId);
-      console.log("Items:", items, departmentId);
       return items;
     } catch (error) {
       console.error("Error fetching:", error);

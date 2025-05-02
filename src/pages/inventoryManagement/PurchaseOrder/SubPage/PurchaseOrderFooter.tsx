@@ -1,39 +1,24 @@
 import FormField from "@/components/FormField/FormField";
-import { PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { DiscountFooterProps, initialPOMastDto, PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { AppDispatch, RootState } from "@/store";
+import { setDiscountFooterField, updateAllPurchaseOrderDetails, updatePurchaseOrderMastField } from "@/store/features/purchaseOrder/purchaseOrderSlice";
 import { Button, Grid, Paper, Stack, Typography } from "@mui/material";
-import React from "react";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
-// Props
-interface PurchaseOrderFooterProps {
-  totDiscAmtPer: number;
-  setTotDiscAmtPer: (value: number) => void;
-  isDiscPercentage: boolean;
-  setIsDiscPercentage: (value: boolean) => void;
-  handleApplyDiscount: () => void;
-  handleApprovedByChange: (id: number, name: string) => void;
-  handleRemarksChange: (value: string) => void;
-  handleFinalizeToggle: (value: boolean) => void;
-  purchaseOrderMastData: PurchaseOrderMastDto;
-}
+const PurchaseOrderFooter: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
+  const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
+  const discountFooter = useSelector((state: RootState) => state.purchaseOrder.discountFooter) ?? ({} as DiscountFooterProps);
+  const { totDiscAmtPer, isDiscPercentage } = discountFooter ?? ({} as DiscountFooterProps);
 
-const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
-  totDiscAmtPer,
-  setTotDiscAmtPer,
-  isDiscPercentage,
-  setIsDiscPercentage,
-  handleApplyDiscount,
-  handleApprovedByChange,
-  handleRemarksChange,
-  handleFinalizeToggle,
-  purchaseOrderMastData,
-}) => {
+  const { pOApprovedYN, pOApprovedID, pOApprovedNo, pOApprovedBy, totalAmt, taxAmt, discAmt, coinAdjAmt, netAmt, rNotes } = purchaseOrderMastData;
   const approvedByOptions = [
     { value: "1", label: "Dr. Arjun Kumar" },
     { value: "2", label: "Dr. Sneha Rao" },
     { value: "3", label: "Mr. Kiran Patil" },
   ];
-
-  // Format currency values
   const formatCurrency = (value: string | number) => {
     const numValue = typeof value === "string" ? parseFloat(value) : value;
     return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
@@ -49,16 +34,106 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
       </Typography>
     </Stack>
   );
+  const handleApprovedByChange = (id: number, name: string) => {
+    dispatch(updatePurchaseOrderMastField({ field: "pOApprovedID", value: id }));
+    dispatch(updatePurchaseOrderMastField({ field: "pOApprovedBy", value: name }));
+  };
+  const handleRemarksChange = (value: string) => {
+    dispatch(updatePurchaseOrderMastField({ field: "rNotes", value: value }));
+  };
+  const handleFinalizeToggle = (isFinalized: boolean) => {
+    dispatch(updatePurchaseOrderMastField({ field: "pOApprovedYN", value: isFinalized ? "Y" : "N" }));
+    dispatch(updatePurchaseOrderMastField({ field: "pOApprovedNo", value: isFinalized ? pOApprovedNo : "" }));
+    dispatch(updatePurchaseOrderMastField({ field: "pOApprovedBy", value: isFinalized ? pOApprovedBy : "" }));
+  };
+
+  const handleApplyDiscount = () => {
+    if (purchaseOrderDetails.length === 0) return;
+    const totalDiscAmtOrPer = totDiscAmtPer || 0;
+    const updatedGridData = [...purchaseOrderDetails];
+    if (isDiscPercentage) {
+      updatedGridData.forEach((item, index) => {
+        const packPrice = item.packPrice || 0;
+        const requiredPack = item.requiredPack || 0;
+        const totalPrice = packPrice * requiredPack;
+
+        const discAmt = (totalPrice * totalDiscAmtOrPer) / 100;
+
+        updatedGridData[index] = {
+          ...item,
+          discAmt,
+          discPercentageAmt: totalDiscAmtOrPer,
+          totAmt: totalPrice - discAmt,
+        };
+      });
+    } else {
+      const totalItemsValue = updatedGridData.reduce((sum, item) => {
+        const packPrice = item.packPrice || 0;
+        const requiredPack = item.requiredPack || 0;
+        return sum + packPrice * requiredPack;
+      }, 0);
+
+      if (totalItemsValue > 0) {
+        updatedGridData.forEach((item, index) => {
+          const packPrice = item.packPrice || 0;
+          const requiredPack = item.requiredPack || 0;
+          const totalPrice = packPrice * requiredPack;
+
+          const proportion = totalPrice / totalItemsValue;
+          const discAmt = totalDiscAmtOrPer * proportion;
+
+          const discPercentageAmt = totalPrice > 0 ? (discAmt / totalPrice) * 100 : 0;
+
+          updatedGridData[index] = {
+            ...item,
+            discAmt,
+            discPercentageAmt,
+            totAmt: totalPrice - discAmt,
+          };
+        });
+      }
+    }
+    dispatch(updateAllPurchaseOrderDetails(updatedGridData));
+  };
+
+  const recalculateFooterAmounts = (details: PurchaseOrderDetailDto[]) => {
+    let totalAmt = 0;
+    let discAmt = 0;
+    let taxAmt = 0;
+    let netAmt = 0;
+
+    details.forEach((item) => {
+      const packPrice = item.packPrice || 0;
+      const requiredPack = item.requiredPack || 0;
+      const itemTotalPrice = packPrice * requiredPack;
+      const itemDisc = item.discAmt || 0;
+      const itemCGST = item.cgstTaxAmt || 0;
+      const itemSGST = item.sgstTaxAmt || 0;
+
+      totalAmt += itemTotalPrice;
+      discAmt += itemDisc;
+      taxAmt += itemCGST + itemSGST;
+      netAmt += itemTotalPrice - itemDisc + itemCGST + itemSGST;
+    });
+
+    dispatch(updatePurchaseOrderMastField({ field: "totalAmt", value: totalAmt }));
+    dispatch(updatePurchaseOrderMastField({ field: "discAmt", value: discAmt }));
+    dispatch(updatePurchaseOrderMastField({ field: "taxAmt", value: taxAmt }));
+    dispatch(updatePurchaseOrderMastField({ field: "netAmt", value: netAmt }));
+  };
+
+  useEffect(() => {
+    recalculateFooterAmounts(purchaseOrderDetails);
+  }, [purchaseOrderDetails]);
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Grid container spacing={2} alignContent={"center"} justifyContent={"center"}>
-        {/* Left Section: Discount Area */}
         <FormField
           type="number"
           label={`Total Disc in ${isDiscPercentage ? "Percentage [%]" : "Amount"}`}
           value={totDiscAmtPer}
-          onChange={(e) => setTotDiscAmtPer(Number(e.target.value))}
+          onChange={(e) => dispatch(setDiscountFooterField({ field: "totDiscAmtPer", value: Number(e.target.value) }))}
           name="totDiscAmtPer"
           ControlID="totDiscAmtPer"
           gridProps={{ xs: 6, sm: 3, md: 2 }}
@@ -68,9 +143,9 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
           label=""
           name="totDiscAmtPerSwitch"
           ControlID="totDiscAmtPerSwitch"
-          value={isDiscPercentage}
-          checked={isDiscPercentage}
-          onChange={() => setIsDiscPercentage(!isDiscPercentage)}
+          value={isDiscPercentage || false}
+          checked={isDiscPercentage || false}
+          onChange={() => dispatch(setDiscountFooterField({ field: "isDiscPercentage", value: !isDiscPercentage }))}
           gridProps={{ xs: 2, sm: 1, md: 1 }}
         />
         <Grid size={{ xs: 1, sm: 2, md: 1 }}>
@@ -79,21 +154,20 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
           </Button>
         </Grid>
 
-        {/* Right Section: Finalize & Dropdown */}
         <FormField
           type="switch"
           label="Finalize PO"
           name="finalizePO"
           ControlID="finalizePO"
-          value={purchaseOrderMastData.pOApprovedYN}
-          checked={purchaseOrderMastData.pOApprovedYN === "Y"}
+          value={pOApprovedYN}
+          checked={pOApprovedYN === "Y"}
           onChange={(e) => handleFinalizeToggle(e.target.checked)}
           gridProps={{ xs: 6, sm: 4, md: 2 }}
         />
         <FormField
           type="select"
           label="Approved By"
-          value={purchaseOrderMastData.pOApprovedID}
+          value={pOApprovedID}
           onChange={(e) => {
             const value = Number(e.target.value);
             const selected = approvedByOptions.find((opt) => Number(opt.value) === value);
@@ -109,17 +183,17 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({
       </Grid>
       <Grid container spacing={2}>
         <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" mt={2} flexWrap="wrap">
-          {infoItem("Items Total", purchaseOrderMastData.totalAmt || "0.00")}
-          {infoItem("Tax Amount", purchaseOrderMastData.taxAmt || "0.00")}
-          {infoItem("Disc Amt", purchaseOrderMastData.discAmt || "0.00")}
-          {infoItem("Coin Adjustment", purchaseOrderMastData.coinAdjAmt || "0.00")}
-          {infoItem("Net Amt", purchaseOrderMastData.netAmt || "0.00")}
+          {infoItem("Items Total", totalAmt || "0.00")}
+          {infoItem("Tax Amount", taxAmt || "0.00")}
+          {infoItem("Disc Amt", discAmt || "0.00")}
+          {infoItem("Coin Adjustment", coinAdjAmt || "0.00")}
+          {infoItem("Net Amt", netAmt || "0.00")}
         </Stack>
         <FormField
           type="textarea"
           label="Remarks"
           ControlID="rNotes"
-          value={purchaseOrderMastData.rNotes || ""}
+          value={rNotes || ""}
           name="rNotes"
           onChange={(e) => {
             handleRemarksChange(e.target.value);

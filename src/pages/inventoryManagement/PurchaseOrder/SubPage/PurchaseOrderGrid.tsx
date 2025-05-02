@@ -1,100 +1,94 @@
-import { Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { GridRowData, PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { initialPOMastDto, PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
+import { RootState } from "@/store";
+import { IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import React, { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { AppDispatch } from "@/store";
+import { useDispatch } from "react-redux";
+import { addPurchaseOrderDetail, removePurchaseOrderDetail, updateAllPurchaseOrderDetails } from "@/store/features/purchaseOrder/purchaseOrderSlice";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { showAlert } from "@/utils/Common/showAlert";
-
-interface PurchaseOrderGridProps {
-  poDetailDto?: PurchaseOrderDetailDto;
-  handleProductsGrid: (data: GridRowData[]) => void;
-  initialGridData?: GridRowData[];
-}
-
-const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, handleProductsGrid, initialGridData = [] }) => {
-  const [gridData, setGridData] = useState<GridRowData[]>([]);
+import { Delete as DeleteIcon } from "@mui/icons-material";
+//
+const PurchaseOrderGrid: React.FC = () => {
   const dropdownValues = useDropdownValues(["taxType"]);
-  useEffect(() => {
-    console.log("Grid component received new props or state:", {
-      poDetailDto,
-      currentGridData: gridData,
-    });
-  }, [poDetailDto, gridData]);
+  const selectedProduct = useSelector((state: RootState) => state.purchaseOrder.selectedProduct) ?? null;
+  const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
+  const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
+  const { pOID } = purchaseOrderMastData;
+  const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
+  const { departmentId } = departmentInfo;
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    if (initialGridData && initialGridData.length > 0) {
-      console.log("Updating grid data from initialGridData:", initialGridData);
-      setGridData(initialGridData);
+    if (pOID > 0) {
+      const fetchPOProductDetails = async () => {
+        const response: OperationResult<PurchaseOrderDetailDto[]> = await purchaseOrderMastServices.getPurchaseOrderDetailsByPOID(pOID);
+        if (response.success && response.data) {
+          const purchaseOrderDetailDtos: PurchaseOrderDetailDto[] = response.data.map((item) => {
+            item.gstPerValue = (item.cgstPerValue || 0) + (item.sgstPerValue || 0);
+            return item;
+          });
+          dispatch(updateAllPurchaseOrderDetails(purchaseOrderDetailDtos));
+        } else {
+          showAlert("error", "Failed to fetch PO Product details", "error");
+        }
+      };
+      fetchPOProductDetails();
     }
-  }, [initialGridData]);
+  }, [pOID]);
 
   useEffect(() => {
-    if (poDetailDto && poDetailDto.productID) {
-      const productExists = gridData.some((item) => item.productID === poDetailDto.productID);
-      if (!productExists) {
-        const unitPack = poDetailDto.unitPack || 1;
-        const requiredPack = poDetailDto.requiredPack || 1;
-        const packPrice = poDetailDto.packPrice || 0;
-        const discAmt = poDetailDto.discAmt || 0;
-
-        const requiredUnitQty = requiredPack * unitPack;
-
-        const itemTotal = packPrice * requiredPack - discAmt;
-
-        const totalPrice = packPrice * requiredPack;
-        const discPercentageAmt = totalPrice > 0 ? (discAmt / totalPrice) * 100 : 0;
-
-        const cgstPerValue = poDetailDto.cgstPerValue || 0;
-        const sgstPerValue = poDetailDto.sgstPerValue || 0;
-        const taxableAmount = totalPrice - discAmt;
-        const cgstTaxAmt = (taxableAmount * cgstPerValue) / 100;
-        const sgstTaxAmt = (taxableAmount * sgstPerValue) / 100;
-
-        const newRow: GridRowData = {
-          ...poDetailDto,
-          requiredUnitQty,
-          requiredPack,
-          itemTotal,
-          discPercentageAmt,
-          cgstTaxAmt,
-          sgstTaxAmt,
-          taxableAmt: taxableAmount,
-        };
-
-        setGridData((prevData) => [...prevData, newRow]);
-      }
+    if (selectedProduct) {
+      const fetchPOProductDetails = async () => {
+        const response: OperationResult<PurchaseOrderDetailDto> = await purchaseOrderMastServices.getPOProductDetails(selectedProduct.productCode || "", departmentId);
+        const purchaseOrderdetailDto: PurchaseOrderDetailDto | undefined = response.data;
+        if (purchaseOrderdetailDto) {
+          const productExist = purchaseOrderDetails.find((item) => item.productID === purchaseOrderdetailDto.productID);
+          if (productExist) {
+            showAlert("Product already exists in the grid", "", "warning");
+            return;
+          }
+          purchaseOrderdetailDto.gstPerValue = (purchaseOrderdetailDto.cgstPerValue || 0) + (purchaseOrderdetailDto.sgstPerValue || 0);
+          dispatch(addPurchaseOrderDetail(purchaseOrderdetailDto));
+        }
+      };
+      fetchPOProductDetails();
     }
-  }, [poDetailDto]);
+  }, [selectedProduct]);
 
   const handleDeleteRow = (productId: number) => {
-    setGridData((prevData) => prevData.filter((item) => item.productID !== productId));
+    dispatch(removePurchaseOrderDetail(productId));
   };
 
-  const handleCellChange = (value: number, rowIndex: number, field: keyof GridRowData) => {
-    const updatedData = [...gridData];
+  const handleCellChange = (value: number, rowIndex: number, field: keyof PurchaseOrderDetailDto) => {
+    const updatedData = [...purchaseOrderDetails];
     const currentRow = { ...updatedData[rowIndex] };
-    console.log("Current Row", currentRow);
+
     if (field === "discPercentageAmt" && value > 100) {
       showAlert("error", "Discount percentage cannot exceed 100%", "error");
-      value = 0;
       return;
-    } else if (field === "discAmt") {
-      const totalPackPrice = (currentRow.packPrice || 0) * (currentRow.requiredPack || 0);
+    }
+
+    if (field === "discAmt") {
+      const totalPackPrice = (currentRow.packPrice || 0) * (currentRow.receivedQty || 0);
       if (value > totalPackPrice) {
         showAlert("error", "Discount amount cannot exceed pack price", "error");
-        value = 0;
         return;
       }
     }
+
     currentRow[field] = value;
-    const requiredPack = currentRow.requiredPack || 0;
+
+    const receivedQty = currentRow.receivedQty || 0;
     const unitPack = currentRow.unitPack || 1;
     const packPrice = currentRow.packPrice || 0;
 
-    currentRow.requiredUnitQty = requiredPack * unitPack;
-
-    const totalPrice = packPrice * requiredPack;
+    currentRow.requiredUnitQty = receivedQty * unitPack;
+    const totalPrice = packPrice * receivedQty;
 
     if (field === "discPercentageAmt") {
       currentRow.discAmt = (totalPrice * value) / 100;
@@ -109,23 +103,18 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
 
     const discAmt = currentRow.discAmt || 0;
     const taxableAmount = totalPrice - discAmt;
-
     currentRow.taxableAmt = taxableAmount;
-    currentRow.cgstTaxAmt = (totalPrice * (currentRow.cgstPerValue || 0)) / 100;
-    currentRow.sgstTaxAmt = (totalPrice * (currentRow.sgstPerValue || 0)) / 100;
 
-    const gstTaxAmt = (totalPrice * (currentRow.gstPerValue || 0)) / 100;
-    currentRow.itemTotal = totalPrice - discAmt + gstTaxAmt;
+    currentRow.cgstTaxAmt = (taxableAmount * (currentRow.cgstPerValue || 0)) / 100;
+    currentRow.sgstTaxAmt = (taxableAmount * (currentRow.sgstPerValue || 0)) / 100;
+
+    const gstTaxAmt = (taxableAmount * (currentRow.gstPerValue || 0)) / 100;
+    currentRow.totAmt = taxableAmount + gstTaxAmt;
+
     updatedData[rowIndex] = currentRow;
 
-    setGridData(updatedData);
-
-    handleProductsGrid(updatedData);
+    dispatch(updateAllPurchaseOrderDetails(updatedData));
   };
-
-  useEffect(() => {
-    handleProductsGrid(gridData);
-  }, [gridData, handleProductsGrid]);
 
   return (
     <Paper sx={{ mt: 2 }}>
@@ -151,7 +140,7 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
             </TableRow>
           </TableHead>
           <TableBody>
-            {gridData.map((row: GridRowData, index) => (
+            {purchaseOrderDetails.map((row: PurchaseOrderDetailDto, index) => (
               <TableRow key={row.productID}>
                 <TableCell align="center">{index + 1}</TableCell>
                 <TableCell>{row.productName}</TableCell>
@@ -161,11 +150,11 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
                 <TableCell align="right">
                   <FormField
                     type="number"
-                    value={row.requiredPack || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "requiredPack")}
+                    value={row.receivedQty || 0}
+                    onChange={(e) => handleCellChange(Number(e.target.value), index, "receivedQty")}
                     label=""
-                    name="requiredPack"
-                    ControlID={`requiredPack_${row.productID}`}
+                    name="receivedQty"
+                    ControlID={`receivedQty_${row.productID}`}
                   />
                 </TableCell>
 
@@ -245,7 +234,7 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ poDetailDto, hand
 
                 <TableCell align="right">{row.rOL || 0}</TableCell>
 
-                <TableCell align="right">{row.itemTotal.toFixed(2)}</TableCell>
+                <TableCell align="right">{row.totAmt.toFixed(2)}</TableCell>
 
                 <TableCell align="center">
                   <IconButton size="small" onClick={() => handleDeleteRow(row.productID)}>
