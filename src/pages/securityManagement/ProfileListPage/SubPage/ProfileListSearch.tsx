@@ -16,7 +16,7 @@ const ProfileListSearch: React.FC<ProfileListSearchProps> = ({ open, onClose, on
   const fetchItems = useCallback(async () => {
     try {
       const result = await profileMastService.getAll();
-      return result.success ? result.data : [];
+      return result.success ? result.data ?? [] : [];
     } catch (error) {
       console.error("Error fetching Profile:", error);
       showAlert("Error", "Failed to Profile.", "error");

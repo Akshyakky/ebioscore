@@ -27,9 +27,9 @@ const ProductOverviewSearch: React.FC<ProductOverviewSearchProps> = ({ open, onC
 
   const fetchItems = async (deptID: number) => {
     try {
-      const items = await productOverviewService.getAll();
-      // Filter products by selected department ID
-      const filteredProducts = items.data.filter((product: ProductOverviewDto) => product.deptID === deptID);
+      const result = await productOverviewService.getAll();
+      const items = result.success ? result.data ?? [] : [];
+      const filteredProducts = items.filter((product: ProductOverviewDto) => product.deptID === deptID);
       return filteredProducts || [];
     } catch (error) {
       console.error("Error fetching products:", error);
