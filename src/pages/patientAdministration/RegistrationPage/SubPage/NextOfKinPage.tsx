@@ -45,7 +45,6 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
 
   const handleDeleteKin = useCallback(
     async (kin: PatNokDetailsDto) => {
-      debugger;
       try {
         const updatedKin = {
           ...kin,

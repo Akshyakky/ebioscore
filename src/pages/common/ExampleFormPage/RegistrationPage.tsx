@@ -217,7 +217,6 @@ const RegistrationPage: React.FC = () => {
   }, [formData]);
 
   const handleSave = useCallback(async () => {
-    debugger;
     setIsSubmitted(true);
     if (!validateFormData()) {
       notifyWarning("Please fill all mandatory fields.");

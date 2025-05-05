@@ -23,7 +23,6 @@ const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose
   }, [chargeDetailsService]);
 
   //   try {
-  //     debugger;
   //     const result: any = await chargeDetailsService.getAll();
   //     if (result.success && result.data) {
   //       const chargelistDatas: any = result.data.map((item: ChargeDetailsDto) => item.chargeInfo);

@@ -175,7 +175,6 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
   };
 
   const handleCellValueChange = (rowIndex: number, field: keyof IndentDetailDto, value: any) => {
-    debugger;
     setGridData((prev) => {
       const newData = [...prev];
       newData[rowIndex] = { ...newData[rowIndex], [field]: value };
@@ -211,7 +210,6 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
 
     setLoading(true);
     try {
-      debugger;
       await indentProductService.save(payload);
       showAlert("Success", "Indent saved successfully.", "success", {
         onConfirm: initializeForm,
