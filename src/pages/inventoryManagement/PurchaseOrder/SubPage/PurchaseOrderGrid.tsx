@@ -8,7 +8,12 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { AppDispatch } from "@/store";
 import { useDispatch } from "react-redux";
-import { addPurchaseOrderDetail, removePurchaseOrderDetail, updateAllPurchaseOrderDetails } from "@/store/features/purchaseOrder/purchaseOrderSlice";
+import {
+  addPurchaseOrderDetail,
+  removePurchaseOrderDetail,
+  removePurchaseOrderDetailByPOID,
+  updateAllPurchaseOrderDetails,
+} from "@/store/features/purchaseOrder/purchaseOrderSlice";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Delete as DeleteIcon } from "@mui/icons-material";
@@ -56,8 +61,12 @@ const PurchaseOrderGrid: React.FC = () => {
         if (purchaseOrderdetailDto) {
           const productExist = purchaseOrderDetails.find((item) => item.productID === purchaseOrderdetailDto.productID);
           if (productExist) {
-            showAlert("Product already exists in the grid", "", "warning");
-            return;
+            if (productExist.rActiveYN === "Y") {
+              showAlert("Product already exists in the grid", "", "warning");
+              setLoading(false);
+              return;
+            }
+            dispatch(removePurchaseOrderDetailByPOID(productExist.pODetID));
           }
           purchaseOrderdetailDto.gstPerValue = (purchaseOrderdetailDto.cgstPerValue || 0) + (purchaseOrderdetailDto.sgstPerValue || 0);
           dispatch(addPurchaseOrderDetail(purchaseOrderdetailDto));
@@ -68,8 +77,25 @@ const PurchaseOrderGrid: React.FC = () => {
     }
   }, [selectedProduct]);
 
-  const handleDeleteRow = (productId: number) => {
-    dispatch(removePurchaseOrderDetail(productId));
+  const handleDeleteRow = async (productId: number, pODetID: number) => {
+    const confirmDelete = await showAlert("Confirm Delete", "Are you sure you want to delete this item?", "warning", true);
+    if (!confirmDelete) {
+      return;
+    }
+    setLoading(true);
+    if (pOID === 0) {
+      dispatch(removePurchaseOrderDetail(productId));
+    } else {
+      const updatedPODetailRActiveN = purchaseOrderDetails.map((item) => {
+        if (item.pODetID === pODetID) {
+          return { ...item, rActiveYN: "N" };
+        }
+        return item;
+      });
+      console.log("Updated Purchase Order Details:", updatedPODetailRActiveN);
+      dispatch(updateAllPurchaseOrderDetails(updatedPODetailRActiveN));
+    }
+    setLoading(false);
   };
 
   const handleCellChange = (value: number, rowIndex: number, field: keyof PurchaseOrderDetailDto) => {
@@ -150,116 +176,118 @@ const PurchaseOrderGrid: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {purchaseOrderDetails.map((row: PurchaseOrderDetailDto, index) => (
-              <TableRow key={row.productID}>
-                <TableCell align="center">{index + 1}</TableCell>
-                <TableCell>{row.productName}</TableCell>
-                <TableCell>{row.manufacturerName}</TableCell>
-                <TableCell align="right">{row.stock || 0}</TableCell>
+            {purchaseOrderDetails
+              .filter((row) => row.rActiveYN !== "N")
+              .map((row: PurchaseOrderDetailDto, index) => (
+                <TableRow key={row.productID}>
+                  <TableCell align="center">{index + 1}</TableCell>
+                  <TableCell>{row.productName}</TableCell>
+                  <TableCell>{row.manufacturerName}</TableCell>
+                  <TableCell align="right">{row.stock || 0}</TableCell>
 
-                <TableCell align="right">
-                  <FormField
-                    type="number"
-                    value={row.receivedQty || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "receivedQty")}
-                    label=""
-                    name="receivedQty"
-                    disabled={disabled}
-                    ControlID={`receivedQty_${row.productID}`}
-                  />
-                </TableCell>
+                  <TableCell align="right">
+                    <FormField
+                      type="number"
+                      value={row.receivedQty || 0}
+                      onChange={(e) => handleCellChange(Number(e.target.value), index, "receivedQty")}
+                      label=""
+                      name="receivedQty"
+                      disabled={disabled}
+                      ControlID={`receivedQty_${row.productID}`}
+                    />
+                  </TableCell>
 
-                <TableCell align="right">{row.requiredUnitQty || 0}</TableCell>
+                  <TableCell align="right">{row.requiredUnitQty || 0}</TableCell>
 
-                <TableCell align="right">
-                  <FormField
-                    type="number"
-                    value={row.unitPack || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "unitPack")}
-                    label=""
-                    name="unitPack"
-                    disabled={disabled}
-                    ControlID={`unitPack_${row.productID}`}
-                  />
-                </TableCell>
+                  <TableCell align="right">
+                    <FormField
+                      type="number"
+                      value={row.unitPack || 0}
+                      onChange={(e) => handleCellChange(Number(e.target.value), index, "unitPack")}
+                      label=""
+                      name="unitPack"
+                      disabled={disabled}
+                      ControlID={`unitPack_${row.productID}`}
+                    />
+                  </TableCell>
 
-                <TableCell align="right">
-                  <FormField
-                    type="number"
-                    value={row.packPrice || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "packPrice")}
-                    label=""
-                    name="packPrice"
-                    disabled={disabled}
-                    ControlID={`packPrice_${row.productID}`}
-                  />
-                </TableCell>
+                  <TableCell align="right">
+                    <FormField
+                      type="number"
+                      value={row.packPrice || 0}
+                      onChange={(e) => handleCellChange(Number(e.target.value), index, "packPrice")}
+                      label=""
+                      name="packPrice"
+                      disabled={disabled}
+                      ControlID={`packPrice_${row.productID}`}
+                    />
+                  </TableCell>
 
-                <TableCell align="right">
-                  <FormField
-                    type="number"
-                    value={row.totAmt || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "totAmt")}
-                    label=""
-                    name="totAmt"
-                    disabled={disabled}
-                    ControlID={`totAmt_${row.productID}`}
-                  />
-                </TableCell>
+                  <TableCell align="right">
+                    <FormField
+                      type="number"
+                      value={row.totAmt || 0}
+                      onChange={(e) => handleCellChange(Number(e.target.value), index, "totAmt")}
+                      label=""
+                      name="totAmt"
+                      disabled={disabled}
+                      ControlID={`totAmt_${row.productID}`}
+                    />
+                  </TableCell>
 
-                <TableCell align="right">
-                  <FormField
-                    type="number"
-                    value={row.discAmt || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "discAmt")}
-                    label=""
-                    name="discAmt"
-                    disabled={disabled}
-                    ControlID={`discAmt_${row.productID}`}
-                  />
-                </TableCell>
+                  <TableCell align="right">
+                    <FormField
+                      type="number"
+                      value={row.discAmt || 0}
+                      onChange={(e) => handleCellChange(Number(e.target.value), index, "discAmt")}
+                      label=""
+                      name="discAmt"
+                      disabled={disabled}
+                      ControlID={`discAmt_${row.productID}`}
+                    />
+                  </TableCell>
 
-                <TableCell align="right">
-                  <FormField
-                    type="number"
-                    value={row.discPercentageAmt || 0}
-                    onChange={(e) => handleCellChange(Number(e.target.value), index, "discPercentageAmt")}
-                    label=""
-                    name="discPercentageAmt"
-                    disabled={disabled}
-                    ControlID={`discPercentageAmt_${row.productID}`}
-                  />
-                </TableCell>
+                  <TableCell align="right">
+                    <FormField
+                      type="number"
+                      value={row.discPercentageAmt || 0}
+                      onChange={(e) => handleCellChange(Number(e.target.value), index, "discPercentageAmt")}
+                      label=""
+                      name="discPercentageAmt"
+                      disabled={disabled}
+                      ControlID={`discPercentageAmt_${row.productID}`}
+                    />
+                  </TableCell>
 
-                <TableCell align="right">
-                  <FormField
-                    type="select"
-                    value={dropdownValues.taxType?.find((tax) => Number(tax.label) === Number(row.gstPerValue))?.value || ""}
-                    onChange={(e) => {
-                      const selectedTax = dropdownValues.taxType?.find((tax) => Number(tax.value) === Number(e.target.value));
-                      const selectedRate = Number(selectedTax?.label || 0);
+                  <TableCell align="right">
+                    <FormField
+                      type="select"
+                      value={dropdownValues.taxType?.find((tax) => Number(tax.label) === Number(row.gstPerValue))?.value || ""}
+                      onChange={(e) => {
+                        const selectedTax = dropdownValues.taxType?.find((tax) => Number(tax.value) === Number(e.target.value));
+                        const selectedRate = Number(selectedTax?.label || 0);
 
-                      handleCellChange(selectedRate, index, "gstPerValue");
-                    }}
-                    options={dropdownValues.taxType || []}
-                    label=""
-                    name="gstPercent"
-                    disabled={disabled}
-                    ControlID={`gstPercent_${row.productID}`}
-                  />
-                </TableCell>
+                        handleCellChange(selectedRate, index, "gstPerValue");
+                      }}
+                      options={dropdownValues.taxType || []}
+                      label=""
+                      name="gstPercent"
+                      disabled={disabled}
+                      ControlID={`gstPercent_${row.productID}`}
+                    />
+                  </TableCell>
 
-                <TableCell align="right">{row.rOL || 0}</TableCell>
+                  <TableCell align="right">{row.rOL || 0}</TableCell>
 
-                <TableCell align="right">{row.netAmount?.toFixed(2)}</TableCell>
+                  <TableCell align="right">{row.netAmount?.toFixed(2)}</TableCell>
 
-                <TableCell align="center">
-                  <IconButton size="small" onClick={() => handleDeleteRow(row.productID)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
+                  <TableCell align="center">
+                    <IconButton size="small" onClick={() => handleDeleteRow(row.productID, row.pODetID)}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
             {isLoading && (
               <TableRow>
                 <TableCell colSpan={15} align="center">

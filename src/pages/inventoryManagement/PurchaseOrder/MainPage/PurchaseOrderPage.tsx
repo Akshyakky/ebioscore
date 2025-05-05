@@ -35,6 +35,7 @@ const PurchaseOrderPage: React.FC = () => {
   }, []);
 
   const handleSelect = useCallback((data: PurchaseOrderMastDto) => {
+    data.pODate = new Date(data.pODate).toLocaleDateString("en-GB");
     dispatch(setPurchaseOrderMastData(data));
   }, []);
 
