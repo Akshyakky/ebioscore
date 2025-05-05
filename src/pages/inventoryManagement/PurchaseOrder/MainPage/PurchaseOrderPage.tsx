@@ -35,7 +35,6 @@ const PurchaseOrderPage: React.FC = () => {
   }, []);
 
   const handleSelect = useCallback((data: PurchaseOrderMastDto) => {
-    data.pODate = new Date(data.pODate).toLocaleDateString("en-GB");
     dispatch(setPurchaseOrderMastData(data));
   }, []);
 
@@ -99,7 +98,7 @@ const PurchaseOrderPage: React.FC = () => {
           catValue: "MEDI",
           pOType: "Revenue Purchase Order",
           pOTypeValue: "RVPO",
-          pODate: "2025-05-02T00:00:00.000Z",
+          pODate: formaPODateIsoString(purchaseOrderMastData.pODate),
         },
         purchaseOrderDetailDto: purchaseOrderDetails.map((row) => ({
           pODetID: row.pODetID || 0,

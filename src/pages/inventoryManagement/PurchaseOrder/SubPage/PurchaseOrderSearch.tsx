@@ -22,6 +22,10 @@ const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose
       const result = await purchaseOrderMastService.getAll();
       let items = result.success ? result.data : [];
       items = items.filter((item: PurchaseOrderMastDto) => item.fromDeptID === departmentId);
+      items = items.map((item: PurchaseOrderMastDto) => {
+        item.pODate = new Date(item.pODate).toLocaleDateString("en-GB");
+        return item;
+      });
       return items;
     } catch (error) {
       console.error("Error fetching:", error);
