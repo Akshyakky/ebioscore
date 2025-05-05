@@ -117,8 +117,8 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
       setLoading(true);
       const productListResponse = await productListService.getAll();
       const productOverviewResponse = await productOverviewService.getAll();
-      const productFromList = productListResponse.data.find((product: ProductListDto) => product.productID === productID);
-      const productFromOverview = productOverviewResponse.data.find((overview: ProductOverviewDto) => overview.productID === productID);
+      const productFromList = productListResponse.data?.find((product: ProductListDto) => product.productID === productID) ?? null;
+      const productFromOverview = productOverviewResponse.data?.find((overview: ProductOverviewDto) => overview.productID === productID) ?? null;
       if (!productFromList || !productFromOverview) {
         showAlert("Warning", "Product data not found.", "warning");
         return;

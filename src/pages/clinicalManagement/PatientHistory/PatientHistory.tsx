@@ -318,12 +318,12 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
 
         const defaultAllergyState = getDefaultAllergyState(pChartID, opipNo, opipCaseNo);
 
-        const newHistoryState = {
-          familyHistory: familyResponse.success ? familyResponse.data : [],
-          socialHistory: socialResponse.success ? socialResponse.data : [],
-          medicalHistory: medicalResponse.success ? medicalResponse.data : [],
-          reviewOfSystem: rosResponse.success ? rosResponse.data : [],
-          surgicalHistory: surgicalResponse.success ? surgicalResponse.data : [],
+        const newHistoryState: HistoryState = {
+          familyHistory: familyResponse.success && familyResponse.data ? familyResponse.data : [],
+          socialHistory: socialResponse.success && socialResponse.data ? socialResponse.data : [],
+          medicalHistory: medicalResponse.success && medicalResponse.data ? medicalResponse.data : [],
+          reviewOfSystem: rosResponse.success && rosResponse.data ? rosResponse.data : [],
+          surgicalHistory: surgicalResponse.success && surgicalResponse.data ? surgicalResponse.data : [],
           pastMedications: pastMedicationResponse || {
             opipPastMedID: 0,
             opipNo,
@@ -339,6 +339,7 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
             compName: compName ?? "",
             transferYN: "N",
             rNotes: "",
+            oldPChartID: 0,
           },
           allergies: allergyResponse.success && allergyResponse.data ? allergyResponse.data : defaultAllergyState,
         };

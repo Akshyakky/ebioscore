@@ -65,7 +65,7 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
     setError(null);
     try {
       const response = await appModifiedListService.getAll();
-      const allFields = response.data || response;
+      const allFields = Array.isArray(response.data) ? response.data : [];
       const templateGroupFields = allFields
         .filter((field: AppModifyFieldDto) => field.amlField === "TEMPLATEGROUP" && field.rActiveYN === "Y")
         .map(
@@ -91,7 +91,7 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
             group.templates = compTemplates.filter((template) => template.tGroupID === group.amlID);
           });
 
-          const firstGroupWithTemplate = templateGroupFields.find((group: LCompTemplateDto) => group.templates.length > 0);
+          const firstGroupWithTemplate = templateGroupFields.find((group: TemplateGroup) => group.templates.length > 0);
 
           if (firstGroupWithTemplate) {
             setSelectedTemplateGroupId(firstGroupWithTemplate.amlID);

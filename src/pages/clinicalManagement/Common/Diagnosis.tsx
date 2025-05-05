@@ -21,7 +21,7 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, a
     async (input: string) => {
       try {
         const response = await icdDetailService.find(`iCDDCode.contains("${input}") or iCDDName.contains("${input}")`);
-        return response.data.map((icd: DiagnosisDetailDto) => `${icd.icddCode} - ${icd.icddName}`);
+        return (response.data ?? []).map((icd: DiagnosisDetailDto) => `${icd.icddCode} - ${icd.icddName}`);
       } catch (error) {
         console.error("Error fetching ICD suggestions:", error);
         return [];

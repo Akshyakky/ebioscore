@@ -89,7 +89,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
     };
     const fetchProfiles = async () => {
       const response = await profileMastService.getAll();
-      const profiles: ProfileMastDto[] = response.data;
+      const profiles: ProfileMastDto[] = response.data || [];
       const activeProfiles: ProfileMastDto[] = profiles.filter((profile: ProfileMastDto) => profile.rActiveYN === "Y");
       console.log("activeProfiles", activeProfiles);
       const profilesDropdownOptions: any[] = activeProfiles.map((profile: ProfileMastDto) => ({

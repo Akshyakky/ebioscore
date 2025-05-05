@@ -94,7 +94,7 @@ export function useMedicalEntityForm<T extends BaseDto>({
         try {
           const existingDefaults = await entityService.find("defaultYN='Y'");
 
-          if (existingDefaults.data.length > 0) {
+          if ((existingDefaults.data ?? []).length > 0) {
             // Get display name based on entity type
             let displayName = "this item";
             if ("name" in formState) {
@@ -128,7 +128,7 @@ export function useMedicalEntityForm<T extends BaseDto>({
             if (!confirmed) return;
 
             // Update all existing defaults to non-default
-            const updates = existingDefaults.data.map((item: T) => ({
+            const updates = (existingDefaults.data ?? []).map((item: T) => ({
               ...item,
               defaultYN: "N",
             }));

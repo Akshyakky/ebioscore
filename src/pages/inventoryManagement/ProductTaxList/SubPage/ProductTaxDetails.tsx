@@ -47,7 +47,7 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ selectedD
       const nextCode = await productTaxService.getNextCode("TAX", 3);
       setFormState({
         pTaxID: 0,
-        pTaxCode: nextCode.data,
+        pTaxCode: nextCode.data || "",
         pTaxName: "",
         pTaxAmt: 0,
         pTaxDescription: "",

@@ -45,7 +45,7 @@ export function MedicalEntitySearch<T extends BaseDto>({
   const fetchItems = useCallback(async () => {
     try {
       const result = await entityService.getAll();
-      return result.success ? result.data : [];
+      return result.success && result.data ? result.data : [];
     } catch (error) {
       console.error(`Error fetching ${entityName} details:`, error);
       showAlert("Error", `Failed to fetch ${entityName} details.`, "error");

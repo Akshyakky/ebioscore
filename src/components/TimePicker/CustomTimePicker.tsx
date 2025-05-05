@@ -84,14 +84,15 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
 }) => {
   const controlId = useMemo(() => `time${ControlID}`, [ControlID]);
 
-  const handleChange = (newValue: Dayjs | null) => {
+  const handleChange = (newValue: Dayjs | Date | null, context: any) => {
     if (!newValue) {
       onChange(null);
       return;
     }
 
     try {
-      const date = newValue.tz(timezone).toDate();
+      const dayjsValue = dayjs.isDayjs(newValue) ? newValue : dayjs(newValue);
+      const date = dayjsValue.tz(timezone).toDate();
       onChange(date);
       onError?.(null);
     } catch (error) {
@@ -116,8 +117,9 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
 
   const shouldDisableTimeSlot = useMemo(() => {
     if (!shouldDisableTime) return undefined;
-    return (value: Dayjs, view: TimeView): boolean => {
-      return shouldDisableTime(value.toDate());
+    return (value: Date | Dayjs, view: TimeView): boolean => {
+      const dayjsValue = dayjs.isDayjs(value) ? value : dayjs(value);
+      return shouldDisableTime(dayjsValue.toDate());
     };
   }, [shouldDisableTime]);
 
@@ -141,7 +143,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
           minutesStep={minutesStep}
           closeOnSelect={!showToolbar}
           skipDisabled
-          onAccept={(date) => onAccept?.(date?.toDate() || null)}
+          onAccept={(date) => onAccept?.(dayjs.isDayjs(date) ? date.toDate() : date || null)}
           onError={(error) => onError?.(error)}
           onOpen={onOpen}
           onClose={onClose}
