@@ -13,8 +13,8 @@ const PurchaseOrderFooter: React.FC = () => {
   const discountFooter = useSelector((state: RootState) => state.purchaseOrder.discountFooter) ?? ({} as DiscountFooterProps);
   const { totDiscAmtPer, isDiscPercentage } = discountFooter ?? ({} as DiscountFooterProps);
 
-  const { pOApprovedYN, pOApprovedID, pOApprovedNo, pOApprovedBy, totalAmt, taxAmt, discAmt, coinAdjAmt, netAmt, rNotes } = purchaseOrderMastData;
-  const disabled = pOApprovedYN === "Y";
+  const { pOID, pOApprovedYN, pOApprovedID, pOApprovedNo, pOApprovedBy, totalAmt, taxAmt, discAmt, coinAdjAmt, netAmt, rNotes } = purchaseOrderMastData;
+  const disabled = pOApprovedYN === "Y" && pOID > 0;
   const approvedByOptions = [
     { value: "1", label: "Dr. Arjun Kumar" },
     { value: "2", label: "Dr. Sneha Rao" },

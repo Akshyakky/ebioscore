@@ -69,8 +69,8 @@ export interface PurchaseOrderDetailDto extends BaseDto {
   taxAfterDiscYN: string;
   taxAmtOnMrp?: number;
   taxAmt?: number;
-  taxModeCode?: string;
-  taxModeDescription?: string;
+  taxModeCode: string;
+  taxModeDescription: string;
   taxModeID?: number;
   taxOnFreeItemYN: string;
   taxOnMrpYN: string;
@@ -82,7 +82,7 @@ export interface PurchaseOrderDetailDto extends BaseDto {
   pPkgName?: string;
   productName?: string;
   pSGrpName?: string;
-  hsnCode?: string;
+  hsnCode: string;
   cgstPerValue?: number;
   cgstTaxAmt?: number;
   sgstPerValue?: number;
@@ -93,7 +93,7 @@ export interface PurchaseOrderDetailDto extends BaseDto {
   gstPerValue?: number;
 }
 
-export interface purchaseOrderSaveDto {
+export interface purchaseOrderSaveDto extends BaseDto {
   purchaseOrderMastDto: PurchaseOrderMastDto;
   purchaseOrderDetailDto: PurchaseOrderDetailDto[];
 }

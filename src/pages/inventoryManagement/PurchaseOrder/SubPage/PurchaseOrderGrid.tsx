@@ -1,10 +1,10 @@
 import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { initialPOMastDto, PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { initialPOMastDto, PurchaseOrderDetailDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
 import { RootState } from "@/store";
 import { IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { AppDispatch } from "@/store";
 import { useDispatch } from "react-redux";
@@ -12,6 +12,7 @@ import { addPurchaseOrderDetail, removePurchaseOrderDetail, updateAllPurchaseOrd
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Delete as DeleteIcon } from "@mui/icons-material";
+import { Loader } from "lucide-react";
 //
 const PurchaseOrderGrid: React.FC = () => {
   const dropdownValues = useDropdownValues(["taxType"]);
@@ -19,17 +20,20 @@ const PurchaseOrderGrid: React.FC = () => {
   const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
   const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
   const { pOID, pOApprovedYN } = purchaseOrderMastData;
-  const disabled = pOApprovedYN === "Y";
+  const disabled = pOApprovedYN === "Y" && pOID > 0;
   const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
   const { departmentId } = departmentInfo;
-  const dispatch = useDispatch<AppDispatch>();
 
+  const [isLoading, setLoading] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
   useEffect(() => {
     if (pOID > 0) {
-      const fetchPOProductDetails = async () => {
-        const response: OperationResult<PurchaseOrderDetailDto[]> = await purchaseOrderMastServices.getPurchaseOrderDetailsByPOID(pOID);
+      const fetchPODetails = async () => {
+        setLoading(true);
+        const response: OperationResult<purchaseOrderSaveDto> = await purchaseOrderMastServices.getPurchaseOrderDetailsByPOID(pOID);
         if (response.success && response.data) {
-          const purchaseOrderDetailDtos: PurchaseOrderDetailDto[] = response.data.map((item) => {
+          const purchaseOrderDetailsData = response.data.purchaseOrderDetailDto;
+          const purchaseOrderDetailDtos: PurchaseOrderDetailDto[] = purchaseOrderDetailsData.map((item) => {
             item.gstPerValue = (item.cgstPerValue || 0) + (item.sgstPerValue || 0);
             return item;
           });
@@ -37,14 +41,16 @@ const PurchaseOrderGrid: React.FC = () => {
         } else {
           showAlert("error", "Failed to fetch PO Product details", "error");
         }
+        setLoading(false);
       };
-      fetchPOProductDetails();
+      fetchPODetails();
     }
   }, [pOID]);
 
   useEffect(() => {
     if (selectedProduct && !disabled) {
       const fetchPOProductDetails = async () => {
+        setLoading(true);
         const response: OperationResult<PurchaseOrderDetailDto> = await purchaseOrderMastServices.getPOProductDetails(selectedProduct.productCode || "", departmentId);
         const purchaseOrderdetailDto: PurchaseOrderDetailDto | undefined = response.data;
         if (purchaseOrderdetailDto) {
@@ -56,6 +62,7 @@ const PurchaseOrderGrid: React.FC = () => {
           purchaseOrderdetailDto.gstPerValue = (purchaseOrderdetailDto.cgstPerValue || 0) + (purchaseOrderdetailDto.sgstPerValue || 0);
           dispatch(addPurchaseOrderDetail(purchaseOrderdetailDto));
         }
+        setLoading(false);
       };
       fetchPOProductDetails();
     }
@@ -112,6 +119,8 @@ const PurchaseOrderGrid: React.FC = () => {
     currentRow.netAmount = totalPrice + gstTaxAmt - discAmt;
     currentRow.mrpAbdated = (totAmt * 100) / (gstPerValue + 100);
     currentRow.taxAmtOnMrp = (totAmt * receivedQty * gstTaxAmt) / 100;
+    currentRow.taxAfterDiscOnMrp = "N";
+    currentRow.taxAfterDiscYN = "N";
     updatedData[rowIndex] = currentRow;
 
     dispatch(updateAllPurchaseOrderDetails(updatedData));
@@ -251,6 +260,13 @@ const PurchaseOrderGrid: React.FC = () => {
                 </TableCell>
               </TableRow>
             ))}
+            {isLoading && (
+              <TableRow>
+                <TableCell colSpan={15} align="center">
+                  <Loader size={24} className="animate-spin" />
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>

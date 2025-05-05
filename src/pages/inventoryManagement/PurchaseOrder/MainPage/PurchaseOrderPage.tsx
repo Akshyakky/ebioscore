@@ -15,8 +15,8 @@ import PurchaseOrderGrid from "../SubPage/PurchaseOrderGrid";
 import PurchaseOrderFooter from "../SubPage/PurchaseOrderFooter";
 import PurchaseOrderSearch from "../SubPage/PurchaseOrderSearch";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
-import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
 import { showAlert } from "@/utils/Common/showAlert";
+import { purchaseOrderService } from "@/services/InventoryManagementService/inventoryManagementService";
 
 const PurchaseOrderPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -75,20 +75,19 @@ const PurchaseOrderPage: React.FC = () => {
 
   const handleSave = () => {
     setIsSubmitted(true);
+    const { pOApprovedYN, fromDeptID, pODate, supplierID } = purchaseOrderMastData;
     // Validate required fields
-    if (!purchaseOrderMastData.fromDeptID || !purchaseOrderMastData.pODate || !purchaseOrderMastData.supplierID) {
+    if (!fromDeptID || !pODate || !supplierID) {
       return;
     }
 
     if (purchaseOrderDetails.length === 0) {
       return;
     }
-    console.log("Saving purchase order Mast data:", purchaseOrderMastData);
-    console.log("Saving purchase order Detail data:", purchaseOrderDetails);
 
-    const finalizedPO = purchaseOrderMastData.pOApprovedYN === "Y";
+    const finalizedPO = pOApprovedYN === "Y";
     try {
-      let purchaseOrderData: purchaseOrderSaveDto = {
+      const purchaseOrderData: purchaseOrderSaveDto = {
         purchaseOrderMastDto: {
           ...purchaseOrderMastData,
           pOStatusCode: finalizedPO ? "CMP" : "PND",
@@ -99,6 +98,7 @@ const PurchaseOrderPage: React.FC = () => {
           catValue: "MEDI",
           pOType: "Revenue Purchase Order",
           pOTypeValue: "RVPO",
+          pODate: "2025-05-02T00:00:00.000Z",
         },
         purchaseOrderDetailDto: purchaseOrderDetails.map((row) => ({
           pODetID: row.pODetID || 0,
@@ -136,34 +136,34 @@ const PurchaseOrderPage: React.FC = () => {
           netAmount: row.netAmount || 0,
           pODetStatusCode: finalizedPO ? "CMP" : "PND",
           taxAmt: (row.cgstTaxAmt || 0) + (row.sgstTaxAmt || 0),
-          taxModeCode: row.taxModeCode,
-          taxModeDescription: row.taxModeDescription,
+          taxModeCode: row.taxModeCode || "TAX0",
+          taxModeDescription: row.taxModeDescription || "TAX0",
           taxModeID: row.taxModeID,
           taxAfterDiscOnMrp: row.taxAfterDiscOnMrp || "N",
           taxAfterDiscYN: row.taxAfterDiscYN || "N",
           taxOnFreeItemYN: row.taxOnFreeItemYN || "N",
           taxOnMrpYN: row.taxOnMrpYN || "N",
-          taxOnUnitPrice: row.taxOnUnitPrice || "Y",
+          taxOnUnitPrice: "Y",
           totAmt: row.totAmt || 0,
           cgstPerValue: row.cgstPerValue || 0,
           cgstTaxAmt: row.cgstTaxAmt || 0,
           sgstPerValue: row.sgstPerValue || 0,
           sgstTaxAmt: row.sgstTaxAmt || 0,
           taxableAmt: row.taxableAmt || 0,
-          transferYN: row.transferYN || "N",
+          transferYN: "Y",
+          rActiveYN: "Y",
           rNotes: row.rNotes || "",
+          hsnCode: "test",
         })),
       };
-
-      console.log("Submitting purchase order:", purchaseOrderData);
-      purchaseOrderData.purchaseOrderMastDto.pODate = "2025-05-05";
-      purchaseOrderData.purchaseOrderMastDto.pOApprovedYN = "Y";
-      purchaseOrderData.purchaseOrderMastDto.transferYN = "Y";
       try {
-        const response = purchaseOrderMastServices.savePurchaseOrder(purchaseOrderData);
-        console.log(response);
-        showAlert("Saved", "Purchase Order saved successfully", "success");
-        handleClear();
+        const response: any = purchaseOrderService.save(purchaseOrderData);
+        if (response.success) {
+          showAlert("Saved", "Purchase Order saved successfully", "success");
+          handleClear();
+        } else {
+          showAlert("error", "Failed to save purchase order", "error");
+        }
       } catch (error) {}
     } catch (error) {
       console.error("Error saving purchase order:", error);
@@ -176,7 +176,11 @@ const PurchaseOrderPage: React.FC = () => {
       setIsSearchOpen(true);
     });
   };
-
+  const formaPODateIsoString = (PODatestring: string) => {
+    const [day, month, year] = PODatestring.split("/");
+    const date = new Date(`${year}-${month}-${day}T00:00:00Z`);
+    return date.toISOString();
+  };
   const actionButtons: ButtonProps[] = [
     {
       variant: "contained",

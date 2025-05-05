@@ -21,8 +21,8 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
   const { departmentId, departmentName } = departmentInfo;
 
   const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
-  const { pOCode, pODate, supplierID, pOSActionNo, pOApprovedNo, pOApprovedYN } = purchaseOrderMastData;
-  const disabled = pOApprovedYN === "Y";
+  const { pOID, pOCode, pODate, supplierID, pOSActionNo, pOApprovedNo, pOApprovedYN } = purchaseOrderMastData;
+  const disabled = pOApprovedYN === "Y" && pOID > 0;
   const [productOptions, setProductOptions] = useState<ProductListDto[]>([]);
   const [productName, setProductName] = useState<string>("");
 
@@ -41,32 +41,31 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
     },
     [productOptions, dispatch]
   );
+  const fetchPOCode = async (departmentId: number) => {
+    const response = await purchaseOrderMastServices.getPOCode(departmentId);
+    if (response.success && response.data) {
+      dispatch(updatePurchaseOrderMastField({ field: "pOCode", value: response.data }));
+    } else {
+      showAlert("error", "Failed to fetch PO Code", "error");
+    }
+  };
+  const fetchProducts = async () => {
+    try {
+      const response = await productListService.getAll();
+      console.log("Raw product response:", response);
 
+      const productList = Array.isArray(response.data) ? response.data : [];
+      const activeProducts = productList.filter((product) => product.rActiveYN === "Y");
+      console.log("Active products:", activeProducts);
+      setProductOptions(activeProducts);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      showAlert("error", "Failed to fetch products", "error");
+    }
+  };
   useEffect(() => {
     if (departmentId > 0) {
-      const fetchPOCode = async (deptName: string) => {
-        const response = await purchaseOrderMastServices.getPOCode(deptName);
-        if (response.success && response.data) {
-          dispatch(updatePurchaseOrderMastField({ field: "pOCode", value: response.data }));
-        } else {
-          showAlert("error", "Failed to fetch PO Code", "error");
-        }
-      };
-      const fetchProducts = async () => {
-        try {
-          const response = await productListService.getAll();
-          console.log("Raw product response:", response);
-
-          const productList = Array.isArray(response.data) ? response.data : [];
-          const activeProducts = productList.filter((product) => product.rActiveYN === "Y");
-          console.log("Active products:", activeProducts);
-          setProductOptions(activeProducts);
-        } catch (error) {
-          console.error("Error fetching products:", error);
-          showAlert("error", "Failed to fetch products", "error");
-        }
-      };
-      fetchPOCode(departmentName.substring(0, 3).toUpperCase());
+      fetchPOCode(departmentId);
       fetchProducts();
       dispatch(updatePurchaseOrderMastField({ field: "pODate", value: new Date().toLocaleDateString("en-GB") }));
     }
