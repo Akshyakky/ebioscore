@@ -51,7 +51,7 @@ const useProduct = (): UseProductReturn => {
       setLoading(false);
       setGlobalLoading(false);
     }
-  }, []);
+  }, [setGlobalLoading]);
 
   // Fetch product by ID
   const fetchProductById = useCallback(

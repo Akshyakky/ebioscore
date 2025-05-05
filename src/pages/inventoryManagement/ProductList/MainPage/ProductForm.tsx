@@ -152,18 +152,18 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       // Convert form data to ProductListDto
       const productData: ProductListDto = {
         ...data,
-        prescription: data.prescription || "N", // Ensure prescription has a default value
-        expiry: data.expiry || "N", // Ensure expiry has a default value
-        sellable: data.sellable || "Y", // Ensure sellable has a default value
-        taxable: data.taxable || "Y", // Ensure taxable has a default value
-        chargableYN: data.chargableYN || "N", // Ensure chargableYN has a default value
-        isAssetYN: data.isAssetYN || "N", // Ensure isAssetYN has a default value
-        vedCode: data.vedCode || "", // Ensure vedCode has a default value
-        abcCode: data.abcCode || "", // Ensure abcCode has a default value
+        prescription: data.prescription || "N",
+        expiry: data.expiry || "N",
+        sellable: data.sellable || "Y",
+        taxable: data.taxable || "Y",
+        chargableYN: data.chargableYN || "N",
+        isAssetYN: data.isAssetYN || "N",
+        vedCode: data.vedCode || "",
+        abcCode: data.abcCode || "",
         productID: data.productID || 0,
-        pLocationID: data.pLocationID || 0, // Ensure pLocationID has a default value
-        rActiveYN: data.rActiveYN || "N", // Ensure rActiveYN has a default value
-        transferYN: data.transferYN || "N", // Ensure transferYN has a default value
+        pLocationID: data.pLocationID || 0,
+        rActiveYN: data.rActiveYN || "N",
+        transferYN: data.transferYN || "N",
         supplierStatus: product?.supplierStatus || "A",
       };
 
@@ -403,6 +403,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                   label: tax.label,
                 })) || []
               }
+              size="small"
             />
           </Grid>
 
@@ -478,7 +479,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
             />
           </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }}>
+          {/* <Grid size={{ xs: 12, md: 6 }}>
             <FormField
               name="transferYN"
               control={control}
@@ -491,7 +492,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
               ]}
               size="small"
             />
-          </Grid>
+          </Grid> */}
 
           <Grid size={{ xs: 12, md: 6 }}>
             <FormField name="rOL" control={control} label="Reorder Level" type="number" disabled={viewOnly} size="small" />

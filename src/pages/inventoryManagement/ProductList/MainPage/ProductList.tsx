@@ -66,7 +66,7 @@ const ProductList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setLoading]);
 
   // Handle search input changes
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
