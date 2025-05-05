@@ -40,7 +40,8 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
     const fetchServices = async () => {
       try {
         const response = await chargeDetailsService.getAll();
-        const options = response.data.map((item: any) => ({
+        const item = response.success ? response.data ?? [] : [];
+        const options = item.map((item: any) => ({
           value: item.chargeCode,
           label: `${item.chargeCode} - ${item.chargeDesc}`,
         }));

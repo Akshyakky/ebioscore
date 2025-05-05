@@ -22,22 +22,6 @@ const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose
     }
   }, [chargeDetailsService]);
 
-  //   try {
-  //     const result: any = await chargeDetailsService.getAll();
-  //     if (result.success && result.data) {
-  //       const chargelistDatas: any = result.data.map((item: ChargeDetailsDto) => item.chargeInfo);
-  //       console.log("Fetching items...", chargelistDatas);
-  //       return chargelistDatas;
-  //     } else {
-  //       return [];
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching User:", error);
-  //     showAlert("Error", "Failed to User.", "error");
-  //     return [];
-  //   }
-  // }, [chargeDetailsService]);
-
   const updateActiveStatus = useCallback(
     async (id: number, status: boolean) => {
       try {

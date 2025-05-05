@@ -27,7 +27,7 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
   const fetchRooms = useCallback(async (wardId: number) => {
     try {
       const response = await roomListService.getAll();
-      const filteredRooms = response.data.filter((room: any) => room.rgrpID === wardId);
+      const filteredRooms = (response.data ?? []).filter((room: any) => room.rgrpID === wardId);
       const roomOptions = filteredRooms.map((room: any) => ({
         value: room.rlID.toString(),
         label: room.rName,
@@ -41,7 +41,7 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
   const fetchBeds = useCallback(async (roomId: number) => {
     try {
       const response = await wrBedService.getAll();
-      const filteredBeds = response.data.filter((bed: any) => bed.rlID === roomId);
+      const filteredBeds = (response.data ?? []).filter((bed: any) => bed.rlID === roomId);
       const bedOptions = filteredBeds.map((bed: any) => ({
         value: bed.bedID.toString(),
         label: bed.bedName,

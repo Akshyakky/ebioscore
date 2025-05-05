@@ -64,7 +64,7 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
     setLoading(true);
     try {
       const response: any = await appModifiedMastService.getAll();
-      if (response && Array.isArray(response.data)) {
+      if (response && response.data) {
         const validItems = response.data.filter((item: AppModifiedMast) => item.rActiveYN === "Y");
         setMasterList(validItems);
         const categoryOptionsData = validItems.map((item: AppModifiedMast) => ({
