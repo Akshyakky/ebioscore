@@ -73,7 +73,7 @@ const PurchaseOrderPage: React.FC = () => {
     console.log("Purchase Order Detail Data:", purchaseOrderDetails);
   }, [purchaseOrderDetails]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSubmitted(true);
     const { pOApprovedYN, fromDeptID, pODate, supplierID } = purchaseOrderMastData;
     // Validate required fields
@@ -157,7 +157,8 @@ const PurchaseOrderPage: React.FC = () => {
         })),
       };
       try {
-        const response: any = purchaseOrderService.save(purchaseOrderData);
+        const response: any = await purchaseOrderService.save(purchaseOrderData);
+        console.log("Save response:", response);
         if (response.success) {
           showAlert("Saved", "Purchase Order saved successfully", "success");
           handleClear();

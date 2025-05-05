@@ -118,61 +118,66 @@ const PurchaseOrderFooter: React.FC = () => {
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Grid container spacing={2} alignContent={"center"} justifyContent={"center"}>
-        <FormField
-          type="number"
-          label={`Total Disc in ${isDiscPercentage ? "Percentage [%]" : "Amount"}`}
-          value={totDiscAmtPer}
-          onChange={(e) => dispatch(setDiscountFooterField({ field: "totDiscAmtPer", value: Number(e.target.value) }))}
-          name="totDiscAmtPer"
-          ControlID="totDiscAmtPer"
-          disabled={disabled}
-          gridProps={{ xs: 6, sm: 3, md: 2 }}
-        />
-        <FormField
-          type="switch"
-          label=""
-          name="totDiscAmtPerSwitch"
-          ControlID="totDiscAmtPerSwitch"
-          value={isDiscPercentage || false}
-          checked={isDiscPercentage || false}
-          onChange={() => dispatch(setDiscountFooterField({ field: "isDiscPercentage", value: !isDiscPercentage }))}
-          disabled={disabled}
-          gridProps={{ xs: 2, sm: 1, md: 1 }}
-        />
-        <Grid size={{ xs: 1, sm: 2, md: 1 }}>
-          <Button variant="contained" onClick={handleApplyDiscount} disabled={disabled}>
-            Apply
-          </Button>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <FormField
+              type="switch"
+              label=""
+              name="totDiscAmtPerSwitch"
+              ControlID="totDiscAmtPerSwitch"
+              value={isDiscPercentage || false}
+              checked={isDiscPercentage || false}
+              onChange={() => dispatch(setDiscountFooterField({ field: "isDiscPercentage", value: !isDiscPercentage }))}
+              disabled={disabled}
+              gridProps={{ xs: 2, sm: 1, md: 1 }}
+            />
+            <FormField
+              type="number"
+              label={`Total Disc in ${isDiscPercentage ? "Percentage [%]" : "Amount"}`}
+              value={totDiscAmtPer}
+              onChange={(e) => dispatch(setDiscountFooterField({ field: "totDiscAmtPer", value: Number(e.target.value) }))}
+              name="totDiscAmtPer"
+              ControlID="totDiscAmtPer"
+              disabled={disabled}
+              gridProps={{ xs: 4 }}
+            />
+            <Button variant="contained" onClick={handleApplyDiscount} disabled={disabled}>
+              Apply
+            </Button>
+          </Stack>
         </Grid>
-
-        <FormField
-          type="switch"
-          label="Finalize PO"
-          name="finalizePO"
-          ControlID="finalizePO"
-          value={pOApprovedYN}
-          checked={pOApprovedYN === "Y"}
-          onChange={(e) => handleFinalizeToggle(e.target.checked)}
-          disabled={disabled}
-          gridProps={{ xs: 6, sm: 4, md: 2 }}
-        />
-        <FormField
-          type="select"
-          label="Approved By"
-          value={pOApprovedID}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            const selected = approvedByOptions.find((opt) => Number(opt.value) === value);
-            if (selected) {
-              handleApprovedByChange(value, selected.label);
-            }
-          }}
-          name="approvedBy"
-          ControlID="approvedBy"
-          options={approvedByOptions}
-          disabled={disabled}
-          gridProps={{ xs: 6, sm: 4, md: 2 }}
-        />
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <FormField
+              type="switch"
+              label="Finalize PO"
+              name="finalizePO"
+              ControlID="finalizePO"
+              value={pOApprovedYN}
+              checked={pOApprovedYN === "Y"}
+              onChange={(e) => handleFinalizeToggle(e.target.checked)}
+              disabled={disabled}
+              gridProps={{ xs: 3 }}
+            />
+            <FormField
+              type="select"
+              label="Approved By"
+              value={pOApprovedID}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                const selected = approvedByOptions.find((opt) => Number(opt.value) === value);
+                if (selected) {
+                  handleApprovedByChange(value, selected.label);
+                }
+              }}
+              name="approvedBy"
+              ControlID="approvedBy"
+              options={approvedByOptions}
+              disabled={disabled}
+              gridProps={{ xs: 6 }}
+            />
+          </Stack>
+        </Grid>
       </Grid>
       <Grid container spacing={2}>
         <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" mt={2} flexWrap="wrap">
