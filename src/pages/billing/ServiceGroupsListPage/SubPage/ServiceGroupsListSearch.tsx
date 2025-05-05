@@ -17,7 +17,7 @@ const ServiceGroupsListSearch: React.FC<ServiceGroupsListSearchProps> = ({ open,
 
   const updateActiveStatus = async (id: number, status: boolean) => {
     const result = await serviceGroupService.updateActiveStatus(id, status);
-    return result;
+    return result.success;
   };
 
   const columns = [

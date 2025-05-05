@@ -12,12 +12,7 @@ interface ProfileListSearchProps {
   profileMastService: ReturnType<typeof createEntityService<ProfileMastDto>>;
 }
 
-const ProfileListSearch: React.FC<ProfileListSearchProps> = ({
-  open,
-  onClose,
-  onSelect,
-  profileMastService,
-}) => {
+const ProfileListSearch: React.FC<ProfileListSearchProps> = ({ open, onClose, onSelect, profileMastService }) => {
   const fetchItems = useCallback(async () => {
     try {
       const result = await profileMastService.getAll();
@@ -36,7 +31,7 @@ const ProfileListSearch: React.FC<ProfileListSearchProps> = ({
         if (result) {
           showAlert("Success", "Status updated successfully.", "success");
         }
-        return result;
+        return result.success;
       } catch (error) {
         console.error("Error updating Profile active status:", error);
         showAlert("Error", "Failed to update status.", "error");

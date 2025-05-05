@@ -42,10 +42,10 @@ const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose
     async (id: number, status: boolean) => {
       try {
         const result = await chargeDetailsService.updateActiveStatus(id, status);
-        if (result) {
+        if (result.success) {
           showAlert("Success", "Status updated successfully.", "success");
         }
-        return result;
+        return result.success;
       } catch (error) {
         console.error("Error updating User active status:", error);
         showAlert("Error", "Failed to update user status.", "error");

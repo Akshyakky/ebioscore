@@ -17,7 +17,7 @@ const ComponentEntryTypeSearch: React.FC<ComponentEntryTypeSearchProps> = ({ ope
 
   const updateActiveStatus = async (id: number, status: boolean) => {
     const result = await componentEntryTypeService.updateActiveStatus(id, status);
-    return result;
+    return result.success;
   };
 
   const columns = [

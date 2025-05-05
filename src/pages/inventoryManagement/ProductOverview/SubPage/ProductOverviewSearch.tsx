@@ -39,7 +39,8 @@ const ProductOverviewSearch: React.FC<ProductOverviewSearchProps> = ({ open, onC
 
   const updateActiveStatus = async (id: number, status: boolean) => {
     try {
-      return await productOverviewService.updateActiveStatus(id, status);
+      const result = await productOverviewService.updateActiveStatus(id, status);
+      return result.success;
     } catch (error) {
       console.error("Error updating product status:", error);
       return false;

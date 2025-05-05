@@ -60,7 +60,7 @@ export function MedicalEntitySearch<T extends BaseDto>({
         if (result) {
           showAlert("Success", "Status updated successfully.", "success");
         }
-        return result;
+        return result.success;
       } catch (error) {
         console.error(`Error updating ${entityName} active status:`, error);
         showAlert("Error", "Failed to update status.", "error");

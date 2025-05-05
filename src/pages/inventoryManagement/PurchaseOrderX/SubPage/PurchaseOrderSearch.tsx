@@ -38,7 +38,7 @@ const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose
         if (result) {
           showAlert("Success", "Status updated successfully.", "success");
         }
-        return result;
+        return result.success;
       } catch (error) {
         console.error("Error updating active status:", error);
         showAlert("Error", "Failed to update status.", "error");
