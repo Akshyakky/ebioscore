@@ -266,7 +266,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       open={open}
       onClose={() => onClose()}
       title={dialogTitle}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       showCloseButton
       disableBackdropClick={!viewOnly}

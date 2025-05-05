@@ -20,6 +20,8 @@ import ProductForm from "./ProductForm";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { showAlert } from "@/utils/Common/showAlert";
 import { useLoading } from "@/context/LoadingContext";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import DropdownSelect from "@/components/DropDown/DropdownSelect";
 
 const productService = new ProductListService();
 
@@ -44,6 +46,11 @@ const ProductList: React.FC = () => {
 
   // Load dropdown values
   const { productCategory, productGroup } = useDropdownValues(["productCategory", "productGroup"]);
+
+  const status = [
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+  ];
 
   // Fetch products on component mount
   useEffect(() => {
@@ -365,22 +372,17 @@ const ProductList: React.FC = () => {
       {isFormOpen && <ProductForm open={isFormOpen} onClose={handleFormClose} product={selectedProduct} viewOnly={isViewMode} />}
 
       {/* Delete Confirmation Dialog */}
-      <GenericDialog
+      <ConfirmationDialog
         open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
         title="Confirm Delete"
+        message={`Are you sure you want to delete the product "${selectedProduct?.productName}"?`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="error"
         maxWidth="xs"
-        fullWidth
-        showCloseButton
-        actions={
-          <>
-            <CustomButton text="Cancel" onClick={() => setIsDeleteConfirmOpen(false)} variant="outlined" color="primary" />
-            <CustomButton text="Delete" onClick={handleConfirmDelete} variant="contained" color="error" />
-          </>
-        }
-      >
-        <Typography>Are you sure you want to delete the product "{selectedProduct?.productName}"?</Typography>
-      </GenericDialog>
+      />
 
       {/* Filter Dialog */}
       <GenericDialog
@@ -398,59 +400,45 @@ const ProductList: React.FC = () => {
         }
       >
         <Stack spacing={2} sx={{ pt: 1 }}>
-          <TextField
-            select
+          <DropdownSelect
             label="Category"
-            fullWidth
-            size="small"
+            name="category"
             value={filters.category}
+            options={
+              productCategory?.map((option) => ({
+                value: option.value.toString(),
+                label: option.label,
+              })) || []
+            }
             onChange={(e) => handleFilterChange("category", e.target.value)}
-            SelectProps={{
-              native: true,
-            }}
-          >
-            <option value="">All Categories</option>
-            {productCategory?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </TextField>
+            size="small"
+            defaultText="All Categories"
+          />
 
-          <TextField
-            select
+          <DropdownSelect
             label="Product Group"
-            fullWidth
-            size="small"
+            name="ProductGroup"
             value={filters.productGroup}
+            options={
+              productGroup?.map((option) => ({
+                value: option.value.toString(),
+                label: option.label,
+              })) || []
+            }
             onChange={(e) => handleFilterChange("productGroup", e.target.value)}
-            SelectProps={{
-              native: true,
-            }}
-          >
-            <option value="">All Groups</option>
-            {productGroup?.map((option) => (
-              <option key={option.value} value={option.value.toString()}>
-                {option.label}
-              </option>
-            ))}
-          </TextField>
-
-          <TextField
-            select
-            label="Status"
-            fullWidth
             size="small"
+            defaultText="All Product Group"
+          />
+
+          <DropdownSelect
+            label="Status"
+            name="Status"
             value={filters.status}
+            options={status}
             onChange={(e) => handleFilterChange("status", e.target.value)}
-            SelectProps={{
-              native: true,
-            }}
-          >
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </TextField>
+            size="small"
+            defaultText="All Records"
+          />
         </Stack>
       </GenericDialog>
     </Box>
