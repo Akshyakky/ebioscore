@@ -250,13 +250,37 @@ const ProductList: React.FC = () => {
       width: 170,
       render: (item) => (
         <Stack direction="row" spacing={1}>
-          <IconButton size="small" color="primary" onClick={() => handleView(item)}>
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => handleView(item)}
+            sx={{
+              bgcolor: "rgba(25, 118, 210, 0.08)",
+              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+            }}
+          >
             <VisibilityIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" color="info" onClick={() => handleEdit(item)}>
+          <IconButton
+            size="small"
+            color="info"
+            onClick={() => handleEdit(item)}
+            sx={{
+              bgcolor: "rgba(25, 118, 210, 0.08)",
+              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+            }}
+          >
             <EditIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" color="error" onClick={() => handleDeleteClick(item)}>
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => handleDeleteClick(item)}
+            sx={{
+              bgcolor: "rgba(25, 118, 210, 0.08)",
+              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+            }}
+          >
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Stack>
