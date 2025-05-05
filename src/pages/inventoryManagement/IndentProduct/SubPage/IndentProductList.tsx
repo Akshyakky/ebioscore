@@ -12,7 +12,7 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import DepartmentInfoChange from "../../CommonPage/DepartmentInfoChange";
 import { ProductSearch } from "../../CommonPage/Product/ProductSearchForm";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
 import { IndentDetailDto, IndentSaveRequestDto } from "@/interfaces/InventoryManagement/IndentProductDto";
 import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
@@ -55,9 +55,20 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
     { value: "3", label: "unit 3" },
   ]);
 
-  const dropdownValues = useDropdownValues(["department", "departmentIndent"]);
-  const departmentList = dropdownValues.department || [];
-  const indentTypeOptions = (dropdownValues.departmentIndent || []).map((d: any) => ({ value: d.value, label: d.label }));
+  const requiredDropdowns: DropdownType[] = ["department", "departmentIndent"];
+
+  const { department, departmentIndent } = useDropdownValues(requiredDropdowns);
+
+  const updateDropdownValues = (fieldName: string, fieldValueName: string, selectedValue: any, options: any[] | undefined) => {
+    if (!options) return;
+
+    const selectedOption = options.find((option) => option.value === selectedValue.label || option.label === selectedValue.label);
+
+    if (selectedOption) {
+      setValue(fieldName as any, selectedOption.label);
+      setValue(fieldValueName as any, selectedOption.value);
+    }
+  };
 
   const initializeForm = useCallback(async () => {
     setLoading(true);
@@ -110,23 +121,56 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
   }, [selectedData, initializeForm, reset, setValue]);
 
   const handleToDepartmentChange = (val: any) => {
-    const deptId = typeof val === "object" && val.target ? parseInt(val.target.value) : parseInt(val);
-    if (isNaN(deptId)) {
-      showAlert("Error", "Invalid department ID", "error");
-      return;
-    }
-    const dept = departmentList.find((d: any) => parseInt(d.value) === deptId);
-    if (dept) {
-      setValue("IndentMaster.toDeptID", deptId);
-      setValue("IndentMaster.toDeptName", dept.label ?? "");
-    } else {
-      showAlert("Error", "Department not found", "error");
+    try {
+      debugger;
+      // Handle different formats of input value
+      let deptId: string | number = "";
+
+      if (typeof val === "object" && val !== null) {
+        // Handle event objects from form controls
+        if (val.target && val.target.value !== undefined) {
+          deptId = val.target.value;
+        } else if (val.value !== undefined) {
+          // Handle dropdown objects with value property
+          deptId = val.value;
+        }
+      } else {
+        // Handle direct value assignment
+        deptId = val;
+      }
+
+      // Convert to number if possible
+      const numericDeptId = Number(deptId);
+
+      if (isNaN(numericDeptId)) {
+        console.error("Invalid department ID format:", deptId);
+        showAlert("Warning", "Please select a valid department", "warning");
+        return;
+      }
+
+      // Find the department from the options
+      const dept = department?.find((d: any) => {
+        // Compare both as numbers to avoid string/number mismatch
+        const deptOptionValue = Number(d.value);
+        return deptOptionValue === numericDeptId;
+      });
+
+      if (dept) {
+        setValue("IndentMaster.toDeptID", numericDeptId);
+        setValue("IndentMaster.toDeptName", dept.label ?? "");
+      } else {
+        console.error("Department not found for ID:", numericDeptId);
+        console.log("Available departments:", department);
+        showAlert("Warning", "Selected department not found in the options. Please select a valid department.", "warning");
+      }
+    } catch (error) {
+      console.error("Error in handleToDepartmentChange:", error);
+      showAlert("Error", "An error occurred while processing department selection. Please try again.", "error");
     }
   };
 
   const fetchProductDetails = async (productID: number, basicInfo: ProductSearchResult) => {
     try {
-      debugger;
       setLoading(true);
       const productRes = await productListService.getById(productID);
       const product: ProductListDto = productRes.data;
@@ -175,6 +219,7 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
         compCode: compCode ?? "",
         compName: compName ?? "",
       };
+
       const updatedGrid = [...gridData, newRow];
       setGridData(updatedGrid);
       setValue("IndentDetails", updatedGrid);
@@ -209,26 +254,13 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
   };
 
   const onSubmit = async (data: IndentSaveRequestDto) => {
-    debugger;
     if (!data.IndentMaster.indentType || !data.IndentMaster.indentCode || !data.IndentMaster.toDeptID) {
       showAlert("Error", "Indent Type, Indent Code, and To Department are required.", "error");
       return;
     }
-    let toDeptID: number;
-    if (typeof data.IndentMaster.toDeptID === "string") {
-      toDeptID = parseInt(data.IndentMaster.toDeptID);
-    } else if (data.IndentMaster.toDeptID && typeof data.IndentMaster.toDeptID === "object" && "target" in data.IndentMaster.toDeptID) {
-      const targetValue = (data.IndentMaster.toDeptID as unknown as { target: { value: string } })?.target?.value;
-      toDeptID = targetValue ? parseInt(String(targetValue)) : 0;
-    } else {
-      toDeptID = Number(data.IndentMaster.toDeptID || 0);
-    }
 
-    if (isNaN(toDeptID)) {
-      showAlert("Error", "Invalid To Department ID", "error");
-      return;
-    }
     const validIndentDetails = gridData.filter((detail) => detail.productID);
+
     const payload: IndentSaveRequestDto = {
       ...data,
       compID: compID ?? 0,
@@ -237,7 +269,6 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
       compName: compName ?? "",
       IndentMaster: {
         ...data.IndentMaster,
-        toDeptID: toDeptID,
         indentDate: dayjs(data.IndentMaster.indentDate, "DD/MM/YYYY").format("YYYY-MM-DD"),
       },
       IndentDetails: validIndentDetails,
@@ -247,7 +278,7 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
     setLoading(true);
     try {
       const result = await indentProductServices.saveIndentWithDetails(payload);
-      if (result && result.success) {
+      if (result?.success) {
         showAlert("Success", "Indent saved successfully.", "success", {
           onConfirm: initializeForm,
         });
@@ -262,9 +293,8 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
     }
   };
 
-  const toDepartmentOptions = departmentList
-    .filter((d: any) => d?.isStoreYN === "Y" && parseInt(d.value) !== selectedDeptId)
-    .map((d: any) => ({ value: parseInt(d.value), label: d.label }));
+  // Filter for departments that have isStoreYN="Y"
+  const toDepartmentOptions = (department || []).filter((d: any) => d.isStoreYN === "Y");
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -278,7 +308,7 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
             <DepartmentInfoChange deptName={selectedDeptName || "Select Department"} handleChangeClick={handleDepartmentChange} />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <FormField name="IndentMaster.indentType" control={control} type="select" label="Indent Type" required options={indentTypeOptions} size="small" />
+            <FormField name="IndentMaster.indentType" control={control} type="select" label="Indent Type" required options={departmentIndent || []} size="small" />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <FormField name="IndentMaster.indentCode" control={control} type="text" label="Indent Code" disabled required size="small" />
@@ -291,7 +321,7 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
               label="Date"
               disabled
               size="small"
-              onChange={(date) => setValue("IndentMaster.indentDate", dayjs(date).format("YYYY-MM-DD"))} // Handle change if needed
+              onChange={(date) => setValue("IndentMaster.indentDate", dayjs(date).format("YYYY-MM-DD"))}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
@@ -309,6 +339,7 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
               size="small"
             />
           </Grid>
+
           <Grid size={{ xs: 12, md: 3 }}>
             <ProductSearch onProductSelect={handleProductSelect} label="Search Product" placeholder="Search product..." />
           </Grid>
