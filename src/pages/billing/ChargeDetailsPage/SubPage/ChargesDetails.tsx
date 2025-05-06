@@ -329,18 +329,14 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       if (allChargesResponse?.success && allChargesResponse.data) {
         const allCharges = allChargesResponse.data as ChargeDetailsDto[];
         const matchingCharge = allCharges.find((charge: ChargeDetailsDto) => charge.chargeInfo?.chargeCode === selectedCode);
-
         if (matchingCharge?.chargeInfo?.chargeID) {
           const chargeID = matchingCharge.chargeInfo.chargeID;
           const chargeDetailsResponse = await chargeDetailsService.getAllByID(chargeID);
-
           if (chargeDetailsResponse?.success && chargeDetailsResponse.data) {
             const chargeDetails: ChargeDetailsDto = chargeDetailsResponse.data;
-
             const picName = dropdownValues.pic?.find((pic) => Number(pic.value) === chargeDetails.chargeDetails?.[0]?.pTypeID)?.label || "";
             const wardCategoryName = dropdownValues.bedCategory?.find((category) => Number(category.value) === chargeDetails.chargeDetails?.[0]?.wCatID)?.label || "";
             const facultyNames = dropdownValues.speciality?.find((speciality) => Number(speciality.value) === chargeDetails.chargeFaculties?.[0]?.aSubID)?.label || "";
-
             const mergedGridData = dropdownValues.pic?.map((pic) => {
               const savedDetails = chargeDetails.chargeDetails.filter((detail) => detail.pTypeID === Number(pic.value));
               const rowData: GridData = { picName: pic.label };
@@ -369,13 +365,11 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
               })),
               chargeDoctorSharePerShare: chargeDetails.doctorSharePerShare && Array.isArray(chargeDetails.doctorSharePerShare) ? chargeDetails.doctorSharePerShare : [], // Set to empty array if undefined or null
             }));
-
             if (chargeDetails.doctorSharePerShare && Array.isArray(chargeDetails.doctorSharePerShare)) {
               setDoctorShareData(chargeDetails.doctorSharePerShare);
             } else {
               setDoctorShareData([]);
             }
-
             setSelectedPicIds([picName]);
             setSelectedWardCategoryIds([wardCategoryName]);
             setSelectedFacultyIds([facultyNames]);
@@ -395,31 +389,24 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     debugger;
     if (editData && dropdownValues.pic && dropdownValues.bedCategory && dropdownValues.service && dropdownValues.speciality && Array.isArray(editData.chargeDetails)) {
       const picName = dropdownValues.pic.find((pic) => Number(pic.value) === editData.chargeDetails?.[0]?.pTypeID)?.label || "";
-
       const wardCategoryName = dropdownValues.bedCategory.find((category) => Number(category.value) === editData.chargeDetails?.[0]?.wCatID)?.label || "";
-
       const serviceGroupName = dropdownValues.service.find((service) => Number(service.value) === editData.chargeInfo?.sGrpID)?.label || "";
-
       const facultyNames = dropdownValues.speciality.find((speciality) => Number(speciality.value) === editData.chargeFaculties?.[0]?.aSubID)?.label || "";
-
       const mergedGridData = dropdownValues.pic.map((pic) => {
         const savedDetails = editData.chargeDetails?.filter((detail) => detail.pTypeID === Number(pic.value)) || [];
         const rowData: GridData = { picName: pic.label };
-
         dropdownValues.bedCategory?.forEach((category) => {
           const matchingDetail = savedDetails.find((detail) => detail.wCatID === Number(category.value));
           rowData[`${category.label}_drAmt`] = matchingDetail?.dcValue?.toFixed(2) || "0.00";
           rowData[`${category.label}_hospAmt`] = matchingDetail?.hcValue?.toFixed(2) || "0.00";
           rowData[`${category.label}_totAmt`] = ((matchingDetail?.dcValue || 0) + (matchingDetail?.hcValue || 0)).toFixed(2);
         });
-
         return rowData;
       });
 
       setSelectedPicIds([picName]);
       setSelectedWardCategoryIds([wardCategoryName]);
       setSelectedFacultyIds([facultyNames]);
-
       setFormData((prev) => ({
         ...prev,
         chargeInfo: {
