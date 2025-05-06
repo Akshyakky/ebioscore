@@ -26,6 +26,7 @@ const PurchaseOrderPage: React.FC = () => {
   });
   const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
   const { departmentId } = departmentInfo;
+
   const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
   const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -63,15 +64,9 @@ const PurchaseOrderPage: React.FC = () => {
 
   const handleClear = () => {
     dispatch(resetPurchaseOrderState());
-    closeDialog();
+    handleDepartmentSelect(0, "");
+    openDialog();
   };
-
-  useEffect(() => {
-    console.log("Purchase Order Mast Data:", purchaseOrderMastData);
-  }, [purchaseOrderMastData]);
-  useEffect(() => {
-    console.log("Purchase Order Detail Data:", purchaseOrderDetails);
-  }, [purchaseOrderDetails]);
 
   const handleSave = async () => {
     setIsSubmitted(true);
@@ -193,7 +188,7 @@ const PurchaseOrderPage: React.FC = () => {
 
   return (
     <>
-      {deptId > 0 && (
+      {departmentId > 0 && (
         <Container maxWidth={false}>
           <Box sx={{ marginBottom: 2 }}>
             <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
