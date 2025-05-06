@@ -20,7 +20,7 @@ const ProfilePermissionsModifyModal: React.FC<ProfilePermissionsModifyModalProps
     if (open && profileId > 0) {
       const fetchProfile = async () => {
         const result = await profileMastService.getById(profileId);
-        setProfileName(result.data.profileName);
+        setProfileName(result.data?.profileName ?? "");
       };
       fetchProfile();
     }

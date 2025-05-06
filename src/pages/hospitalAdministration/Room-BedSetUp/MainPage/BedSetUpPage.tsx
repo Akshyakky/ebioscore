@@ -28,7 +28,7 @@ const BedSetUpPage: React.FC = () => {
   const fetchRoomGroups = async () => {
     const response = await roomGroupService.getAll();
     if (response.success) {
-      setRoomGroups(response.data.filter((group: RoomGroupDto) => group.rActiveYN === "Y"));
+      setRoomGroups((response.data ?? []).filter((group: RoomGroupDto) => group.rActiveYN === "Y"));
     }
   };
 

@@ -19,6 +19,7 @@ import { Alert, alpha, Box, Button, CircularProgress, Container, Stack, IconButt
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import logo from "../../../assets/images/eBios.png";
 import backgroundImage from "/src/assets/images/LoginCoverImage.jpg";
+import { useLoading } from "@/context/LoadingContext";
 
 // Styled Components with enhanced animations and effects
 const AnimatedBox = styled(Box)`
@@ -293,6 +294,7 @@ const initialFormState: LoginFormState = {
 };
 
 const LoginPage: React.FC = () => {
+  const { setLoading } = useLoading();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -421,7 +423,7 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     const fetchCompanies = async () => {
-      setFieldLoading((prev) => ({ ...prev, company: true }));
+      setLoading(true);
 
       try {
         const companyData = await CompanyService.getCompanies();
@@ -436,13 +438,13 @@ const LoginPage: React.FC = () => {
           errorMessage: "Failed to load companies.",
         }));
       } finally {
-        setFieldLoading((prev) => ({ ...prev, company: false }));
+        setLoading(false);
       }
     };
 
     fetchCompanies();
     checkExpiryDates();
-  }, [checkExpiryDates, handleSelectCompany]);
+  }, [checkExpiryDates, handleSelectCompany, setLoading]);
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {

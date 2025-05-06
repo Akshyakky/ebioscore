@@ -20,17 +20,8 @@ const AppModifiedMastSearch: React.FC<AppModifiedMastSearchProps> = ({ open, onC
   };
 
   const updateActiveStatus = async (id: number, status: boolean): Promise<boolean> => {
-    try {
-      const categoryToUpdate = await appModifiedMastService.getById(id);
-      if (categoryToUpdate) {
-        categoryToUpdate.rActiveYN = status ? "Y" : "N";
-        await appModifiedMastService.save(categoryToUpdate);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      return false;
-    }
+    const result = await appModifiedMastService.updateActiveStatus(id, status);
+    return result.success;
   };
 
   const getItemId = (item: AppModifiedMast) => item.fieldID;

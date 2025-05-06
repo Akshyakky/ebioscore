@@ -56,7 +56,7 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
         <DateTimePicker
           label={title}
           value={value ? dayjs(value) : null}
-          onChange={(newValue) => onChange(newValue ? newValue.toDate() : null)}
+          onChange={(newValue) => onChange(dayjs.isDayjs(newValue) ? newValue.toDate() : null)}
           disabled={disabled || readOnly}
           minDateTime={minDateTime ? dayjs(minDateTime) : undefined}
           maxDateTime={maxDateTime ? dayjs(maxDateTime) : undefined}

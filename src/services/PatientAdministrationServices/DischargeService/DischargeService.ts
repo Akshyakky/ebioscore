@@ -24,7 +24,8 @@ class DischargeService extends GenericEntityService<IpDischargeDto> {
    */
   async getDischargeByAdmissionId(admitId: number): Promise<IpDischargeDto | null> {
     const predicate = `admitID==${admitId}`;
-    return await this.firstOrDefault(predicate);
+    const result = await this.firstOrDefault(predicate);
+    return result?.data || null;
   }
 
   /**
@@ -32,7 +33,8 @@ class DischargeService extends GenericEntityService<IpDischargeDto> {
    */
   async getDischargeByPatientChartId(pChartId: number): Promise<IpDischargeDto | null> {
     const predicate = `pChartID==${pChartId}`;
-    return await this.firstOrDefault(predicate);
+    const result = await this.firstOrDefault(predicate);
+    return result?.data || null;
   }
 
   /**
@@ -40,7 +42,8 @@ class DischargeService extends GenericEntityService<IpDischargeDto> {
    */
   async checkDischargeExists(admitId: number): Promise<boolean> {
     const predicate = `admitID==${admitId}`;
-    return await this.any(predicate);
+    const result = await this.any(predicate);
+    return result.data ?? false;
   }
 
   /**

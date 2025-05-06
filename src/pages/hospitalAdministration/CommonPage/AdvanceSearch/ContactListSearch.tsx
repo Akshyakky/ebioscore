@@ -31,7 +31,7 @@ const ContactListSearch: React.FC<ContactListSearchProps> = ({ open, onClose, on
         if (result) {
           showAlert("Success", "Status updated successfully.", "success");
         }
-        return result;
+        return result.success;
       } catch (error) {
         console.error("Error updating User active status:", error);
         showAlert("Error", "Failed to update user status.", "error");

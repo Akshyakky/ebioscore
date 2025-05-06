@@ -17,7 +17,7 @@ const ResourceListSearch: React.FC<ResourceListSearchProps> = ({ open, onClose, 
 
   const updateActiveStatus = async (id: number, status: boolean) => {
     const result = await resourceListService.updateActiveStatus(id, status);
-    return result;
+    return result.success;
   };
 
   const columns = [

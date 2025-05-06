@@ -14,7 +14,7 @@ const PaymentTypesSearch: React.FC<PaymentTypesSearchProps> = ({ open, onClose, 
 
   const updateActiveStatus = async (id: number, status: boolean) => {
     const result = await paymentTypeService.updateActiveStatus(id, status);
-    return result;
+    return result.success;
   };
 
   const getItemId = (item: BPayTypeDto) => item.payID;

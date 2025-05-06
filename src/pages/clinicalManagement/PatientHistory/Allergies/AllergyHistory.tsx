@@ -62,7 +62,7 @@ const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipC
     async (input: string) => {
       try {
         const response = await medicationListService.find(`medText.contains("${input}") or mGenName.contains("${input}")`);
-        return response.data.map((med: MedicationListDto) => `${med.medText} - ${med.mGenName} (${med.mfName})`);
+        return (response.data ?? []).map((med: MedicationListDto) => `${med.medText} - ${med.mGenName} (${med.mfName})`);
       } catch (error) {
         console.error("Error fetching medication suggestions:", error);
         return [];
@@ -84,12 +84,12 @@ const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipC
 
         const medicationResponse = await medicationListService.find(`medText.equals("${medText}")`);
 
-        if (!medicationResponse.success || !medicationResponse.data.length) {
+        if (!medicationResponse.success || !(medicationResponse.data ?? []).length) {
           showAlert("Error", "Medication not found", "error");
           return;
         }
 
-        const medication = medicationResponse.data[0];
+        const medication = (medicationResponse.data ?? [])[0];
         const newDetail: OPIPHistAllergyDetailDto = {
           opipAlgDetailId: 0,
           opipAlgId: formState.opIPHistAllergyMastDto.opipAlgId || 0,

@@ -386,7 +386,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
   };
 
   useEffect(() => {
-    debugger;
     if (editData && dropdownValues.pic && dropdownValues.bedCategory && dropdownValues.service && dropdownValues.speciality && Array.isArray(editData.chargeDetails)) {
       const picName = dropdownValues.pic.find((pic) => Number(pic.value) === editData.chargeDetails?.[0]?.pTypeID)?.label || "";
       const wardCategoryName = dropdownValues.bedCategory.find((category) => Number(category.value) === editData.chargeDetails?.[0]?.wCatID)?.label || "";

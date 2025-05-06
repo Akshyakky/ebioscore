@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Grid, Typography, Paper, Box, useTheme } from "@mui/material";
 import FormField from "@/components/FormField/FormField";
-import CustomButton from "@/components/Button/CustomButton";
 import SpecialGrid from "@/components/SpecialGrid/SpecialGrid";
 import { LComponentDto } from "@/interfaces/Laboratory/LInvMastDto";
 
@@ -16,7 +15,6 @@ interface PrintPreferencesProps {
 }
 
 const PrintPreferences: React.FC<PrintPreferencesProps> = ({ componentsList, reportTitle, subTitle, onReportTitleChange, onSubTitleChange, onClear, onUpdateComponentOrder }) => {
-  const theme = useTheme();
   const [orderedComponents, setOrderedComponents] = useState<LComponentDto[]>(componentsList);
 
   useEffect(() => {

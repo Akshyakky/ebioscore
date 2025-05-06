@@ -1,5 +1,5 @@
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
-import { DepartmentInfo, PurchaseOrderDetailDto, PurchaseOrderMastDto, PurchaseOrderState } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { DepartmentInfo, initialPOMastDto, PurchaseOrderDetailDto, PurchaseOrderMastDto, PurchaseOrderState } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState: PurchaseOrderState = {
@@ -22,9 +22,10 @@ const purchaseOrderState = createSlice({
     },
     resetPurchaseOrderState(state) {
       state.departmentInfo = null;
-      state.purchaseOrderMastData = null;
+      state.purchaseOrderMastData = initialPOMastDto;
       state.purchaseOrderDetails = [];
       state.selectedProduct = null;
+      state.discountFooter = { totDiscAmtPer: 0, isDiscPercentage: false };
     },
     updatePurchaseOrderMastField(state, action: PayloadAction<{ field: keyof PurchaseOrderMastDto; value: any }>) {
       if (state.purchaseOrderMastData) {
@@ -39,6 +40,9 @@ const purchaseOrderState = createSlice({
     },
     removePurchaseOrderDetail(state, action: PayloadAction<number>) {
       state.purchaseOrderDetails = state.purchaseOrderDetails.filter((item) => item.productID !== action.payload);
+    },
+    removePurchaseOrderDetailByPOID(state, action: PayloadAction<number>) {
+      state.purchaseOrderDetails = state.purchaseOrderDetails.filter((item) => item.pODetID !== action.payload);
     },
     resetPurchaseOrderDetails(state) {
       state.purchaseOrderDetails = [];
@@ -59,6 +63,7 @@ export const {
   resetPurchaseOrderState,
   addPurchaseOrderDetail,
   removePurchaseOrderDetail,
+  removePurchaseOrderDetailByPOID,
   resetPurchaseOrderDetails,
   setSelectedProduct,
   updateAllPurchaseOrderDetails,

@@ -21,7 +21,8 @@ const ProductTaxListSearch: React.FC<ProductTaxListSearchProps> = ({ open, onClo
 
   const updateActiveStatus = async (id: number, status: boolean) => {
     try {
-      return await productTaxService.updateActiveStatus(id, status);
+      const result = await productTaxService.updateActiveStatus(id, status);
+      return result.success;
     } catch (error) {
       console.error("Error updating product tax active status:", error);
       return false;

@@ -25,7 +25,6 @@ const ChargeDetailsPage: React.FC = () => {
     }
   }, [selectedData]);
   const handleSelect = async (item: any) => {
-    debugger;
     try {
       if (!item?.chargeID) {
         showAlert("Error", "Invalid item selected.", "error");

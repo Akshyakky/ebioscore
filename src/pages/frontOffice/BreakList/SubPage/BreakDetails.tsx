@@ -123,12 +123,12 @@ const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
       });
       if (typeof breakListData.bLID === "number" && breakListData.bLID > 0) {
         const conDetailsResult = await breakConDetailsService.getAll();
-        const filteredConDetails = conDetailsResult.data.filter((bcd: any) => bcd.bLID === breakListData.bLID);
+        const filteredConDetails = (conDetailsResult.data ?? []).filter((bcd: any) => bcd.bLID === breakListData.bLID);
 
         if (filteredConDetails.length > 0) {
           setBreakConDetails(filteredConDetails);
           const selectedHPLIDs = filteredConDetails.map((detail: BreakConDetailData) => detail.hPLID);
-          setSelectedItems(selectedHPLIDs);
+          setSelectedItems(selectedHPLIDs.filter((id): id is number => id !== null));
           const isPhysician = breakListData.isPhyResYN === "Y";
           setSelectedOption(isPhysician ? "physician" : "resource");
           if (isPhysician) {

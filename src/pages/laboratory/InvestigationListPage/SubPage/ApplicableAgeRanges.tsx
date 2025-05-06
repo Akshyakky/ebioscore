@@ -112,7 +112,6 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({
   };
 
   const handleSave = async () => {
-    debugger;
     if (!editAgeRange.carName?.trim()) {
       showAlert("warning", "Field 'Applicable For' cannot be blank.", "warning");
       return;

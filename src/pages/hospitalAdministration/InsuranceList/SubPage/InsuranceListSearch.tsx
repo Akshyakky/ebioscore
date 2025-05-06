@@ -13,7 +13,7 @@ const InsuranceListSearch: React.FC<InsuranceListSearchProps> = ({ open, onClose
   const fetchItems = () => insuranceListService.getAll().then((result) => result.data || []);
   const updateActiveStatus = async (id: number, status: boolean) => {
     const result = await insuranceListService.updateActiveStatus(id, status);
-    return result;
+    return result.success;
   };
 
   const getItemId = (item: InsuranceListDto) => item.insurID;

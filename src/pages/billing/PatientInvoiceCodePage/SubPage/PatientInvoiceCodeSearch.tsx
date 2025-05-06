@@ -14,7 +14,7 @@ const PatientInvoiceCodeSearch: React.FC<PatientInvoiceCodeSearchProps> = ({ ope
 
   const updateActiveStatus = async (id: number, status: boolean) => {
     const result = await patientInvioceService.updateActiveStatus(id, status);
-    return result;
+    return result.success;
   };
 
   const getItemId = (item: BPatTypeDto) => item.pTypeID;
