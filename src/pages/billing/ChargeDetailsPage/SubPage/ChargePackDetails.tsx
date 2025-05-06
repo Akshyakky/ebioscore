@@ -40,7 +40,8 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
     const fetchServices = async () => {
       try {
         const response = await chargeDetailsService.getAll();
-        const options = response.data.map((item: any) => ({
+        const item = response.success ? response.data ?? [] : [];
+        const options = item.map((item: any) => ({
           value: item.chargeCode,
           label: `${item.chargeCode} - ${item.chargeDesc}`,
         }));
@@ -263,7 +264,7 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
       <Typography variant="h6">Package Details</Typography>
 
       <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <FormField
             type="multiselect"
             label="Service List"
@@ -277,7 +278,7 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
         </Grid>
 
         {gridData.length > 0 && (
-          <Grid item xs={12} sx={{ mt: 2 }}>
+          <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
             <Box
               sx={{
                 border: "1px solidrgb(10, 9, 9)",
@@ -323,10 +324,10 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
             ]}
           />
 
-          <Grid item sx={{ mt: 3 }}>
+          <Grid size="grow" sx={{ mt: 3 }}>
             <Typography variant="body1">Percentage</Typography>
           </Grid>
-          <Grid item sx={{ mt: 3 }}>
+          <Grid size="grow" sx={{ mt: 3 }}>
             <FormField
               type="switch"
               label=""
@@ -338,10 +339,10 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
               value={isPercentage}
             />
           </Grid>
-          <Grid item sx={{ mt: 3, ml: -2 }}>
+          <Grid size="grow" sx={{ mt: 3, ml: -2 }}>
             <Typography variant="body1">Amount</Typography>
           </Grid>
-          <Grid item xs={12} sm={3}>
+          <Grid size={{ xs: 12, sm: 3 }}>
             <FormField
               type="number"
               label=""
@@ -353,7 +354,7 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
               size="small"
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <CustomButton variant="contained" color="primary" onClick={applyAdjustment} text="Apply Adjustment" />
           </Grid>
         </Grid>

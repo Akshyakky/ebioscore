@@ -18,7 +18,7 @@ const ReasonListSearch: React.FC<ReasonListSearchProps> = ({ open, onClose, onSe
 
   const updateActiveStatus = async (id: number, status: boolean) => {
     const result = await reasonListService.updateActiveStatus(id, status);
-    return result;
+    return result.success;
   };
 
   const columns = [

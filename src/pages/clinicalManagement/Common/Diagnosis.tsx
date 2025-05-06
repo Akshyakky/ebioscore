@@ -21,7 +21,7 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, a
     async (input: string) => {
       try {
         const response = await icdDetailService.find(`iCDDCode.contains("${input}") or iCDDName.contains("${input}")`);
-        return response.data.map((icd: DiagnosisDetailDto) => `${icd.icddCode} - ${icd.icddName}`);
+        return (response.data ?? []).map((icd: DiagnosisDetailDto) => `${icd.icddCode} - ${icd.icddName}`);
       } catch (error) {
         console.error("Error fetching ICD suggestions:", error);
         return [];
@@ -126,7 +126,7 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, a
         Diagnoses
       </Typography>
       <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <FormField
             type="autocomplete"
             label="Search ICD"
@@ -139,7 +139,7 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, a
             placeholder="Search by ICD code or name"
           />
         </Grid>
-        <Grid item xs={6}>
+        <Grid size={{ xs: 6 }}>
           <CustomButton
             variant="contained"
             color="primary"
@@ -149,7 +149,7 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, a
             sx={{ width: "100%" }}
           />
         </Grid>
-        <Grid item xs={6}>
+        <Grid size={{ xs: 6 }}>
           <CustomButton
             variant="contained"
             color="primary"
@@ -159,11 +159,11 @@ const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, a
             sx={{ width: "100%" }}
           />
         </Grid>
-        <Grid item xs={6}>
+        <Grid size={{ xs: 6 }}>
           <Typography variant="subtitle1">Primary Diagnoses</Typography>
           <CustomGrid columns={primaryColumns} data={primaryDiagnoses} pagination={false} maxHeight="300px" />
         </Grid>
-        <Grid item xs={6}>
+        <Grid size={{ xs: 6 }}>
           <Typography variant="subtitle1">Associated Diagnoses</Typography>
           <CustomGrid columns={associatedColumns} data={associatedDiagnoses} pagination={false} maxHeight="300px" />
         </Grid>

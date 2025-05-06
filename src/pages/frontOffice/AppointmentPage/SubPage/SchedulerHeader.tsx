@@ -137,7 +137,7 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = React.memo(({ onRefresh,
   return (
     <Box>
       <Grid container alignItems="center" justifyContent="space-between">
-        <Grid item xs={12} sm={8} md={6}>
+        <Grid size={{ xs: 12, sm: 8, md: 6 }}>
           <Box display="flex" alignItems="center">
             <AutocompleteTextBox
               key={searchType}
@@ -183,7 +183,7 @@ const SchedulerHeader: React.FC<SchedulerHeaderProps> = React.memo(({ onRefresh,
           </Box>
         </Grid>
 
-        <Grid item xs={12} sm={4} md={6}>
+        <Grid size={{ xs: 12, sm: 4, md: 6 }}>
           <Box display="flex" justifyContent="flex-end" alignItems="center">
             <Tooltip title="Refresh">
               <IconButton onClick={onRefresh} sx={{ ml: 1 }}>

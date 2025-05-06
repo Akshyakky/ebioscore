@@ -30,7 +30,7 @@ const UserListSearch: React.FC<UserListSearchProps> = ({ open, onClose, onSelect
         if (result) {
           showAlert("Success", "Status updated successfully.", "success");
         }
-        return result;
+        return result.success;
       } catch (error) {
         console.error("Error updating User active status:", error);
         showAlert("Error", "Failed to update user status.", "error");

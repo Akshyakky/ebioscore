@@ -125,7 +125,7 @@ export function MedicalEntityForm<T extends BaseDto>({
         try {
           const existingDefault = await entityService.find("defaultYN='Y'");
 
-          if (existingDefault.data.length > 0) {
+          if (existingDefault.data && existingDefault.data.length > 0) {
             const entityNameField =
               "mFName" in formState
                 ? formState.mFName

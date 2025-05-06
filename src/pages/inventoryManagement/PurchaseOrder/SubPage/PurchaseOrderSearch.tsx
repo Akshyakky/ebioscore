@@ -20,7 +20,7 @@ const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose
   const fetchItems = useCallback(async () => {
     try {
       const result = await purchaseOrderMastService.getAll();
-      let items = result.success ? result.data : [];
+      let items = result.success ? result.data ?? [] : [];
       items = items.filter((item: PurchaseOrderMastDto) => item.fromDeptID === departmentId);
       items = items.map((item: PurchaseOrderMastDto) => {
         item.pODate = new Date(item.pODate).toLocaleDateString("en-GB");
@@ -41,7 +41,7 @@ const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose
         if (result) {
           showAlert("Success", "Status updated successfully.", "success");
         }
-        return result;
+        return result.success;
       } catch (error) {
         console.error("Error updating active status:", error);
         showAlert("Error", "Failed to update status.", "error");

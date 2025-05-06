@@ -40,7 +40,6 @@ export interface IndentDetailDto extends BaseDto {
   productCode?: string;
   catValue?: string;
   pGrpID?: number;
-  rOL?: number;
   expiryYN?: string;
   ppkgID?: number;
   psGrpID?: number;
@@ -72,4 +71,21 @@ export interface IndentDetailDto extends BaseDto {
   tax?: number;
   cgstPerValue?: number;
   sgstPerValue?: number;
+  stockLevel?: number; // New Field
+  qoh?: number; // New Field
+  average?: number; // New Field
+  reOrderLevel?: number; // New Field
+  minLevelUnits?: number; // New Field
+  maxLevelUnits?: number; // New Field
+  location?: string; // New Field
+  netValue?: number; // New Field
+  unitsPackage?: number; // New Field
+  units?: string; // New Field
+  package?: string; // New Field
+  groupName?: string; // New Field
+  baseUnit?: number; // New Field
+  leadTime?: number; // New Field
+  averageDemand?: number; // New Field
+  rol?: number; // New Field
+  roq?: number; // New Field
 }

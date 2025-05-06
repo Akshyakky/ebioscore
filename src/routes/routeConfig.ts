@@ -48,7 +48,8 @@ import { Navigate } from "react-router-dom";
 import EmployeeRegistrationForm from "@/pages/common/ExampleFormPage/EmployeeRegistrationForm";
 import AlertManager from "@/pages/common/AlertManagerPage/MainPage/AlertManager";
 import GRNPage from "@/pages/inventoryManagement/GRN/MainPage/GRNPage";
-import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
+import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrderX/MainPage/PurchaseOrderPage";
+import LogModule from "@/pages/common/LogViewerPage/LogModule";
 
 interface RouteConfig {
   path: string;
@@ -104,6 +105,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/ForgotPasswordPage", component: ForgotPasswordPage, protected: false },
   { path: "/IndentProductPage", component: IndentProductPage, protected: true },
   { path: "/EmployeeRegistrationForm", component: EmployeeRegistrationForm, protected: true },
+  { path: "/LogModulePage", component: LogModule, protected: true },
   // 404 Not Found route - must be placed last to catch all unmatched routes
   { path: "*", component: NotFoundPage, protected: false },
 ];

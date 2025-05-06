@@ -221,7 +221,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
         />
 
         {/* Patient Demographics */}
-        <Grid item xs={12} sm={6} md={9} lg={9} xl={9}>
+        <Grid size={{ xs: 12, sm: 6, md: 9, lg: 9, xl: 9 }}>
           <PatientDemographics pChartID={formState.pChartID} />
         </Grid>
 

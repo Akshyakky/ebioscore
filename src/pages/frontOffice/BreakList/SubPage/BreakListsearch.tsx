@@ -63,7 +63,8 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
         const breakSuspendResult = await breakConSuspendService.getAll();
         if (breakConDetailsResult.success && breakConDetailsResult.data) {
           const breakConDetails = breakConDetailsResult.data;
-          const breakSuspendData = breakSuspendResult.success ? breakSuspendResult.data : [];
+
+          const breakSuspendData = breakSuspendResult.success ? breakSuspendResult.data ?? [] : [];
           const mergedData = breakListData.map((breakItem: BreakListData) => {
             const conDetails = breakConDetails.find((con: BreakConDetailData) => con.bLID === breakItem.bLID);
             const suspendDetails = breakSuspendData.find((sus: any) => sus.bLID === breakItem.bLID);

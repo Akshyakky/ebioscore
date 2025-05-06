@@ -162,12 +162,12 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
     setLoading(true);
     try {
       const response = await roomListService.save(formData);
-      if (response.success) {
+      if (response && response.success && response.data) {
         showAlert("Success", formData.rlID ? "Room updated successfully" : "Room added successfully", "success");
         setIsDialogOpen(false);
         const savedRoom = await roomListService.getById(response.data.rlID);
 
-        if (savedRoom.success) {
+        if (savedRoom && savedRoom.data) {
           const updatedRoom = savedRoom.data;
           await fetchDepartmentDetails(updatedRoom.rgrpID);
 

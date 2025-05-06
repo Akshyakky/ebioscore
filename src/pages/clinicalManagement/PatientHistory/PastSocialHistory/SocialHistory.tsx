@@ -7,7 +7,7 @@ import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
 import { useAppSelector } from "@/store/hooks";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
-import { Box, Grid, Grid2, IconButton, Paper, Tooltip, Typography } from "@mui/material";
+import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
@@ -217,7 +217,7 @@ export const SocialHistory: React.FC<SocialHistoryProps> = ({ pChartID, opipNo, 
             placeholder="Enter frequency, duration, or other relevant details"
             rows={3}
           />
-          <Grid item md={9}>
+          <Grid size={{ md: 9 }}>
             <Box
               sx={{
                 mt: 2,
@@ -260,7 +260,7 @@ export const SocialHistory: React.FC<SocialHistoryProps> = ({ pChartID, opipNo, 
       </Paper>
 
       <Grid container spacing={2}>
-        <Grid item md={9}>
+        <Grid size={{ md: 9 }}>
           <CustomGrid columns={columns} data={historyList} maxHeight="400px" minHeight="200px" />
         </Grid>
       </Grid>

@@ -76,7 +76,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
   const fetchRooms = useCallback(async (wardId: number) => {
     try {
       const response = await roomListService.getAll();
-      const filteredRooms = response.data.filter((room: any) => room.rgrpID === wardId);
+      const filteredRooms = (response.data ?? []).filter((room: any) => room.rgrpID === wardId);
       const roomOptions = filteredRooms.map((room: any) => ({
         value: room.rlID.toString(),
         label: room.rName,
@@ -91,7 +91,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
   const fetchBeds = useCallback(async (roomId: number) => {
     try {
       const response = await wrBedService.getAll();
-      const filteredBeds = response.data.filter((bed: any) => bed.rlID === roomId && !bed.isOccupied);
+      const filteredBeds = (response.data ?? []).filter((bed: any) => bed.rlID === roomId && !bed.isOccupied);
       const bedOptions = filteredBeds.map((bed: any) => ({
         value: bed.bedID.toString(),
         label: bed.bedName,
@@ -378,7 +378,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
             gridProps={{ xs: 12, md: 3 }}
           />
 
-          <Grid item xs={12} md={9}>
+          <Grid size={{ xs: 12, md: 9 }}>
             <PatientDemographics pChartID={formState.pChartID} />
           </Grid>
         </Grid>
@@ -454,7 +454,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
             gridProps={{ xs: 12, sm: 6, md: 4 }}
           />
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Box sx={{ display: "flex", justifyContent: "flex-start", mt: 2 }}>
               <CustomButton variant="outlined" text="Select Bed from Ward View" onClick={handleOpenBedSelection} icon={BedViewIcon} color="primary" sx={{ borderRadius: 1 }} />
             </Box>

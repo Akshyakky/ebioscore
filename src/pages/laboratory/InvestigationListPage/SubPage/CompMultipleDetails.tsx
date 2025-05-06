@@ -216,17 +216,17 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
         </Box>
       ) : (
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormField type="text" label="New Value" name="newValue" value={newValue} onChange={handleChange} ControlID="newValue" />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CustomButton variant="contained" color="primary" onClick={handleAddValue} sx={{ mt: 1 }}>
               {editIndex !== null ? "Update Value" : "Add Value"}
             </CustomButton>
           </Grid>
 
           {valuesList.length > 0 && (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 Saved Values:
               </Typography>

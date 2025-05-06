@@ -28,7 +28,7 @@ const BedSetUpPage: React.FC = () => {
   const fetchRoomGroups = async () => {
     const response = await roomGroupService.getAll();
     if (response.success) {
-      setRoomGroups(response.data.filter((group: RoomGroupDto) => group.rActiveYN === "Y"));
+      setRoomGroups((response.data ?? []).filter((group: RoomGroupDto) => group.rActiveYN === "Y"));
     }
   };
 
@@ -71,7 +71,7 @@ const BedSetUpPage: React.FC = () => {
 
   return (
     <Grid container spacing={1}>
-      <Grid item xs={12} md={4} lg={4}>
+      <Grid size={{ xs: 12, md: 4, lg: 4 }}>
         <Paper elevation={3} sx={{ height: "100%", p: 1 }}>
           <Typography variant="h6" gutterBottom>
             Room Group Details
@@ -82,7 +82,7 @@ const BedSetUpPage: React.FC = () => {
           </Suspense>
         </Paper>
       </Grid>
-      <Grid item xs={12} md={4} lg={4}>
+      <Grid size={{ xs: 12, md: 4, lg: 4 }}>
         <Paper elevation={3} sx={{ height: "100%", p: 1 }}>
           <Typography variant="h6" gutterBottom>
             Room List Details
@@ -93,7 +93,7 @@ const BedSetUpPage: React.FC = () => {
           </Suspense>
         </Paper>
       </Grid>
-      <Grid item xs={12} md={4} lg={4}>
+      <Grid size={{ xs: 12, md: 4, lg: 4 }}>
         <Paper elevation={3} sx={{ height: "100%", p: 1 }}>
           <Typography variant="h6" gutterBottom>
             Bed Details

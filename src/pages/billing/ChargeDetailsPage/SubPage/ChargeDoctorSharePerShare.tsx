@@ -151,7 +151,7 @@ const ChargeDoctorSharePerShare: React.FC<ChargeDoctorSharePerShareProps> = ({ o
       </Typography>
 
       <Grid container spacing={2}>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <FormField
             type="select"
             label="Attending Physician"
@@ -165,7 +165,7 @@ const ChargeDoctorSharePerShare: React.FC<ChargeDoctorSharePerShareProps> = ({ o
         </Grid>
 
         {gridData.length > 0 && (
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <AdvancedGrid data={gridData} columns={columns} onRowChange={handleRowChange} />
           </Grid>
         )}

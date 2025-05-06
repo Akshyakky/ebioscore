@@ -179,7 +179,7 @@ const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ show,
   const dialogContent = (
     <Box>
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <FloatingLabelTextBox
             title="Search Investigations"
             value={searchTerm}

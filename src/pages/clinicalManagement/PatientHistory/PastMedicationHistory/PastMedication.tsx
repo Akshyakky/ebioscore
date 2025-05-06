@@ -63,7 +63,7 @@ const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipC
     async (input: string) => {
       try {
         const response = await medicationListService.find(`medText.contains("${input}") or mGenName.contains("${input}")`);
-        return response.data.map((med: MedicationListDto) => `${med.medText} - ${med.mGenName}`);
+        return (response.data ?? []).map((med: MedicationListDto) => `${med.medText} - ${med.mGenName}`);
       } catch (error) {
         console.error("Error fetching medication suggestions:", error);
         return [];

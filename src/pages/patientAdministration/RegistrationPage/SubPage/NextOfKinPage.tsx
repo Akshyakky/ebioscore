@@ -45,7 +45,6 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
 
   const handleDeleteKin = useCallback(
     async (kin: PatNokDetailsDto) => {
-      debugger;
       try {
         const updatedKin = {
           ...kin,
@@ -144,12 +143,12 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
   return (
     <>
       <Grid container justifyContent="space-between" alignItems="center">
-        <Grid item>
+        <Grid size="grow">
           <Typography variant="h6" id="nok-details-header">
             Next Of Kin
           </Typography>
         </Grid>
-        <Grid item>
+        <Grid size="grow">
           <CustomButton text="Add Next Of Kin" onClick={handleOpenKinPopup} icon={AddIcon} color="primary" variant="text" />
         </Grid>
       </Grid>

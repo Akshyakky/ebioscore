@@ -14,7 +14,7 @@ const ProductListSearch: React.FC<ProductListSearchProps> = ({ open, onClose, on
 
   const updateActiveStatus = async (id: number, status: boolean) => {
     const result = await productListService.updateActiveStatus(id, status);
-    return result;
+    return result.success;
   };
 
   const getItemId = (item: ProductListDto) => item.productID;

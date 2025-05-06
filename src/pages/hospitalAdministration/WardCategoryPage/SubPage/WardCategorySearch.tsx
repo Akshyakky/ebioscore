@@ -14,7 +14,7 @@ const WardCategorySearch: React.FC<WardCategorySearchProps> = ({ open, onClose, 
 
   const updateActiveStatus = async (id: number, status: boolean) => {
     const result = await wardCategoryService.updateActiveStatus(id, status);
-    return result;
+    return result.success;
   };
 
   const getItemId = (item: WardCategoryDto) => item.wCatID;

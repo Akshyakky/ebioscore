@@ -4,7 +4,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import PrintIcon from "@mui/icons-material/Print";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { useAppSelector } from "@/store/hooks";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { investigationDto, LCompMultipleDto, LCompAgeRangeDto, LInvMastDto, LCompTemplateDto, LComponentDto, InvestigationFormErrors } from "@/interfaces/Laboratory/LInvMastDto";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
@@ -128,7 +127,6 @@ const InvestigationListPage: React.FC<Props> = () => {
   // 3) Actually save (upsert) the Investigation with components
   const handleSave = async () => {
     try {
-      debugger;
       setIsSubmitted(true);
 
       // -- Validate top-level fields
@@ -277,7 +275,6 @@ const InvestigationListPage: React.FC<Props> = () => {
     }
 
     try {
-      debugger;
       setIsLoading(true);
 
       const allInvestigationsResponse = await investigationlistService.getAll();
@@ -337,7 +334,6 @@ const InvestigationListPage: React.FC<Props> = () => {
   };
 
   const handleEditComponent = (component: LComponentDto) => {
-    debugger;
     const isUnsaved = component.compoID !== 0 && unsavedComponents.some((c) => c.compoID === component.compoID);
     const compWithNestedData: LComponentDto = {
       ...component,

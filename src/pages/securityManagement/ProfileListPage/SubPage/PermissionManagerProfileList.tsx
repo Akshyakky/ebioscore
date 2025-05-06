@@ -61,7 +61,7 @@ const PermissionsList: React.FC<PermissionsListProps> = ({
 }) => {
   return (
     <Grid container spacing={2}>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         {permissions && permissions.length > 0 && (
           <FormField
             type="switch"
@@ -79,7 +79,7 @@ const PermissionsList: React.FC<PermissionsListProps> = ({
         )}
       </Grid>
       {permissions.map((permission: ProfileDetailDto) => (
-        <Grid item xs={12} key={permission.accessID}>
+        <Grid size={{ xs: 12 }} key={permission.accessID}>
           <FormField
             type="switch"
             label={permission.accessName}
@@ -240,13 +240,13 @@ const PermissionManagerProfileList: React.FC<PermissionManagerProfileListProps> 
 
   return (
     <Grid container spacing={3}>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Typography variant="h3">{title}</Typography>
       </Grid>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Grid container spacing={2}>
           {useMainModules && (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <DropdownList
                 options={mainModules}
                 handleChange={handleMainModuleChange}
@@ -258,7 +258,7 @@ const PermissionManagerProfileList: React.FC<PermissionManagerProfileListProps> 
             </Grid>
           )}
           {useSubModules && (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <DropdownList
                 options={subModules}
                 handleChange={handleSubModuleChange}
@@ -271,7 +271,7 @@ const PermissionManagerProfileList: React.FC<PermissionManagerProfileListProps> 
           )}
         </Grid>
       </Grid>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <PermissionsList
           permissions={permissions}
           selectedPermissions={selectedItems}

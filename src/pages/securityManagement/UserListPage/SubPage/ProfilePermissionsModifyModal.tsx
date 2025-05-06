@@ -20,7 +20,7 @@ const ProfilePermissionsModifyModal: React.FC<ProfilePermissionsModifyModalProps
     if (open && profileId > 0) {
       const fetchProfile = async () => {
         const result = await profileMastService.getById(profileId);
-        setProfileName(result.data.profileName);
+        setProfileName(result.data?.profileName ?? "");
       };
       fetchProfile();
     }
@@ -41,7 +41,7 @@ const ProfilePermissionsModifyModal: React.FC<ProfilePermissionsModifyModalProps
       dialogContentSx={{ maxHeight: "70vh" }}
     >
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6} lg={6} xl={6}>
+        <Grid size={{ xs: 12, sm: 6, md: 9, lg: 9, xl: 6 }}>
           <PermissionManager
             mode="profile"
             details={{ profileID: profileId, profileName: profileName } as ProfileMastDto}
@@ -51,7 +51,7 @@ const ProfilePermissionsModifyModal: React.FC<ProfilePermissionsModifyModalProps
             useSubModules={true}
           />
         </Grid>
-        <Grid item xs={12} md={6} lg={6} xl={6}>
+        <Grid size={{ xs: 12, sm: 6, md: 9, lg: 9, xl: 6 }}>
           <PermissionManager
             mode="profile"
             details={{ profileID: profileId, profileName: profileName } as ProfileMastDto}

@@ -3,7 +3,6 @@ import { format, toZonedTime } from "date-fns-tz";
 import { handleError } from "./CommonServices/HandlerError";
 import { RequestQueueManager } from "./RequestQueueManager";
 import CryptoJS from "crypto-js";
-import { OperationResult } from "@/interfaces/Common/OperationResult";
 
 export interface ApiConfig {
   baseURL: string;
@@ -49,12 +48,12 @@ export class CommonApiService {
       "Content-Type": "application/json",
       Accept: "application/json",
       "Time-Zone": this.timeZone,
-      "X-Request-ID": crypto.randomUUID ? crypto.randomUUID() : self.crypto.randomUUID(),
-      //"X-Request-ID": this.generateUUID(),
+      //"X-Request-ID": crypto.randomUUID ? crypto.randomUUID() : self.crypto.randomUUID(),
+      "X-Request-ID": this.generateUUID(),
       "X-Request-Timestamp": new Date().toISOString(),
       // Prevent MIME type sniffing
       "X-Content-Type-Options": "nosniff",
-      // Prevent clickjacking
+      // Prevent clickjackingx
       "X-Frame-Options": "DENY",
       // Enable strict XSS protection
       "X-XSS-Protection": "1; mode=block",
@@ -152,8 +151,8 @@ export class CommonApiService {
     return this.makeRequest<T>("put", endpoint, data, token, additionalHeaders);
   }
 
-  public async delete<T>(endpoint: string, token?: string, additionalHeaders?: Record<string, string>): Promise<T> {
-    return this.makeRequest<T>("delete", endpoint, undefined, token, additionalHeaders);
+  public async delete<T>(endpoint: string, token?: string, data?: unknown, additionalHeaders?: Record<string, string>): Promise<T> {
+    return this.makeRequest<T>("delete", endpoint, data, token, additionalHeaders);
   }
 
   public async getBlob(endpoint: string, token?: string, params?: Record<string, unknown>, additionalHeaders?: Record<string, string>): Promise<Blob> {

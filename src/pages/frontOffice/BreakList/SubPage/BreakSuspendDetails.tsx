@@ -81,7 +81,7 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
   }, [breakData, suspendData, compID, compCode, compName, setLoading, onClose]);
 
   const renderDateField = (id: string, title: string, value: Date | string | undefined, onChange?: (value: Date) => void) => (
-    <Grid item xs={12} md={6}>
+    <Grid size={{ xs: 12, md: 6 }}>
       <FloatingLabelTextBox
         ControlID={id}
         title={title}
@@ -126,7 +126,7 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
           {renderDateField("BreakEndDate", "Break End Date", breakData?.blEndDate)}
           {renderDateField("SuspendStartDate", "Suspend Start Date", suspendData.bCSStartDate, (date) => handleInputChange("bCSStartDate", date))}
           {renderDateField("SuspendEndDate", "Suspend End Date", suspendData.bCSEndDate, (date) => handleInputChange("bCSEndDate", date))}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextArea
               label="Notes"
               name="notes"
