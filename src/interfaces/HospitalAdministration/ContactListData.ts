@@ -19,9 +19,6 @@ export interface ContactMastData {
   allergicToMedicine?: string;
   aPHYRMID: number;
   aPhyRoomName?: string;
-  compID: number;
-  compCode?: string;
-  compName?: string;
   deptID: number;
   deptName?: string;
   designation?: string;
@@ -56,9 +53,6 @@ export interface ContactAddressData {
   cAddPSSID?: string;
   rNotes: string;
   rActiveYN: string;
-  compID: number;
-  compCode?: string;
-  compName?: string;
   cAddCity?: string;
   cAddCountry?: string;
   cAddEmail?: string;
@@ -78,9 +72,6 @@ export interface ContactDetailsData {
   conType: string;
   rNotes: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
 }
 

@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import { useAppSelector } from "@/store/hooks";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import useDayjs from "@/hooks/Common/useDateTime";
 import { ContactListData, ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
 import { useLoading } from "@/context/LoadingContext";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
@@ -11,12 +10,11 @@ import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButton
 import { Box, Container, Paper } from "@mui/material";
 import ContactListForm from "../SubPage/ContactListForm";
 import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch";
-
+import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
+const contactService = new ContactService();
 const ContactListPage: React.FC = () => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
   const [selectedData, setSelectedData] = useState<ContactMastData | undefined>(undefined);
   const serverDate = useServerDate();
-  const { formatDateYMD, formatDateTime } = useDayjs();
 
   const getInitialContactListState = useMemo(() => {
     return {
@@ -35,9 +33,6 @@ const ContactListPage: React.FC = () => {
         consValue: "",
         conEmpYN: "N",
         rActiveYN: "Y",
-        compID: compID!,
-        compCode: compCode!,
-        compName: compName!,
         rNotes: "",
         conEmpStatus: "",
         allergicToAllergence: "",
@@ -75,9 +70,6 @@ const ContactListPage: React.FC = () => {
         cAddMail: "N",
         cAddPostCode: "",
         cAddPSSID: "",
-        compID: compID!,
-        compCode: compCode!,
-        compName: compName!,
         cAddCity: "",
         cAddCountry: "",
         cAddEmail: "",
@@ -93,7 +85,7 @@ const ContactListPage: React.FC = () => {
       },
       contactDetailsDto: [],
     };
-  }, [compID, compCode, compName]);
+  }, []);
 
   const [contactList, setContactList] = useState<ContactListData>(getInitialContactListState);
 
@@ -159,7 +151,7 @@ const ContactListPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const result = await ContactListService.saveContactList(contactList);
+      const result = await contactService.saveContactList(contactList);
       if (result.success) {
         showAlert("Notification", "Contact list saved successfully", "success", {
           onConfirm: () => {

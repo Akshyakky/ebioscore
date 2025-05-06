@@ -91,7 +91,7 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
           const selectedCategory = masterList.find((master) => master.fieldID === amlID);
           if (selectedCategory) {
             const filteredFields = fieldsData.filter((field) => {
-              return field.amlField === selectedCategory.fieldCode && field.rActiveYN === "Y";
+              return field.amlField.toLocaleUpperCase() === selectedCategory.fieldCode.toLocaleUpperCase() && field.rActiveYN === "Y";
             });
             setFieldsList(filteredFields);
             if (callback) callback();
