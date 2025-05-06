@@ -67,6 +67,7 @@ const PurchaseOrderPage: React.FC = () => {
     dispatch(resetPurchaseOrderState());
     handleDepartmentSelect(0, "");
     openDialog();
+    setIsSubmitted(false);
   };
 
   const handleSave = async () => {
@@ -74,18 +75,26 @@ const PurchaseOrderPage: React.FC = () => {
     const { pOApprovedYN, fromDeptID, pODate, supplierID } = purchaseOrderMastData;
 
     if (!fromDeptID || !pODate || !supplierID) {
+      showAlert("", "Please fill all mandatory fields", "error");
       return;
     }
 
     if (purchaseOrderDetails.length === 0) {
+      showAlert("", "Please add at least one product", "error");
       return;
     }
 
     const finalizedPO = pOApprovedYN === "Y";
+    if (finalizedPO && purchaseOrderMastData.pOApprovedID === 0) {
+      showAlert("error", "Please select an approved by", "error");
+      return;
+    }
     try {
       const purchaseOrderData: purchaseOrderSaveDto = {
         purchaseOrderMastDto: {
           ...purchaseOrderMastData,
+          pOApprovedBy: finalizedPO ? purchaseOrderMastData.pOApprovedBy : "",
+          pOApprovedID: finalizedPO ? purchaseOrderMastData.pOApprovedID : 0,
           pOStatusCode: finalizedPO ? "CMP" : "PND",
           pOStatus: finalizedPO ? "Completed" : "Pending",
           rActiveYN: "Y",
@@ -152,14 +161,18 @@ const PurchaseOrderPage: React.FC = () => {
           hsnCode: "test",
         })),
       };
-      console.log("Save purchaseOrderData:", purchaseOrderData);
 
+      if (purchaseOrderDetails.some((po) => po.receivedQty === 0)) {
+        showAlert("error", "Received Qty should not be 0", "error");
+        return;
+      }
+      console.log("Save purchaseOrderData:", purchaseOrderData);
       try {
         const response: any = await purchaseOrderService.save(purchaseOrderData);
         console.log("Save response:", response);
         if (response.success) {
           showAlert("Saved", "Purchase Order saved successfully", "success");
-          // handleClear();
+          handleClear();
         } else {
           showAlert("", "Failed to save purchase order", "error");
         }

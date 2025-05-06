@@ -44,8 +44,7 @@ const PurchaseOrderFooter: React.FC = () => {
   };
   const handleFinalizeToggle = (isFinalized: boolean) => {
     dispatch(updatePurchaseOrderMastField({ field: "pOApprovedYN", value: isFinalized ? "Y" : "N" }));
-    dispatch(updatePurchaseOrderMastField({ field: "pOApprovedNo", value: isFinalized ? pOApprovedNo : "" }));
-    dispatch(updatePurchaseOrderMastField({ field: "pOApprovedBy", value: isFinalized ? pOApprovedBy : "" }));
+    dispatch(updatePurchaseOrderMastField({ field: "pOYN", value: isFinalized ? "Y" : "N" }));
   };
 
   const handleApplyDiscount = () => {
@@ -174,6 +173,7 @@ const PurchaseOrderFooter: React.FC = () => {
               ControlID="approvedBy"
               options={approvedByOptions}
               disabled={disabled}
+              isMandatory={pOApprovedYN === "Y"}
               gridProps={{ xs: 6 }}
             />
           </Stack>
