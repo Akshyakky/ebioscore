@@ -103,14 +103,14 @@ const PurchaseOrderGrid: React.FC = () => {
     const currentRow = { ...updatedData[rowIndex] };
 
     if (field === "discPercentageAmt" && value > 100) {
-      showAlert("error", "Discount percentage cannot exceed 100%", "error");
+      showAlert("", "Discount percentage cannot exceed 100%", "warning");
       return;
     }
 
     if (field === "discAmt") {
       const totalPackPrice = (currentRow.unitPrice || 0) * (currentRow.receivedQty || 0);
       if (value > totalPackPrice) {
-        showAlert("error", "Discount amount cannot exceed pack price", "error");
+        showAlert("", "Discount amount cannot exceed pack price", "warning");
         return;
       }
     }

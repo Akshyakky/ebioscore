@@ -55,8 +55,8 @@ const PurchaseOrderFooter: React.FC = () => {
     if (isDiscPercentage) {
       updatedGridData.forEach((item, index) => {
         const unitPrice = item.unitPrice || 0;
-        const requiredPack = item.requiredPack || 0;
-        const totalPrice = unitPrice * requiredPack;
+        const receivedQty = item.receivedQty || 0;
+        const totalPrice = unitPrice * receivedQty;
 
         const discAmt = (totalPrice * totalDiscAmtOrPer) / 100;
 
@@ -70,15 +70,15 @@ const PurchaseOrderFooter: React.FC = () => {
     } else {
       const totalItemsValue = updatedGridData.reduce((sum, item) => {
         const unitPrice = item.unitPrice || 0;
-        const requiredPack = item.requiredPack || 0;
-        return sum + unitPrice * requiredPack;
+        const receivedQty = item.receivedQty || 0;
+        return sum + unitPrice * receivedQty;
       }, 0);
 
       if (totalItemsValue > 0) {
         updatedGridData.forEach((item, index) => {
           const unitPrice = item.unitPrice || 0;
-          const requiredPack = item.requiredPack || 0;
-          const totalPrice = unitPrice * requiredPack;
+          const receivedQty = item.receivedQty || 0;
+          const totalPrice = unitPrice * receivedQty;
 
           const proportion = totalPrice / totalItemsValue;
           const discAmt = totalDiscAmtOrPer * proportion;
