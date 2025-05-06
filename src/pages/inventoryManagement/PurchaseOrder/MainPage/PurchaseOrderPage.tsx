@@ -36,6 +36,7 @@ const PurchaseOrderPage: React.FC = () => {
   }, []);
 
   const handleSelect = useCallback((data: PurchaseOrderMastDto) => {
+    console.log("Selected data:", data);
     dispatch(setPurchaseOrderMastData(data));
   }, []);
 
@@ -71,7 +72,7 @@ const PurchaseOrderPage: React.FC = () => {
   const handleSave = async () => {
     setIsSubmitted(true);
     const { pOApprovedYN, fromDeptID, pODate, supplierID } = purchaseOrderMastData;
-    // Validate required fields
+
     if (!fromDeptID || !pODate || !supplierID) {
       return;
     }
@@ -100,40 +101,40 @@ const PurchaseOrderPage: React.FC = () => {
           pOID: row.pOID || 0,
           indentID: row.indentID || 0,
           indentDetID: row.indentDetID || 0,
-          productID: row.productID,
-          productCode: row.productCode,
-          productName: row.productName,
-          catValue: row.catValue,
-          catDesc: row.catDesc,
-          pGrpID: row.pGrpID,
-          pGrpName: row.pGrpName,
-          pSGrpID: row.pSGrpID,
-          pSGrpName: row.pSGrpName,
-          pUnitID: row.pUnitID,
-          pUnitName: row.pUnitName,
-          pPkgID: row.pPkgID,
-          pPkgName: row.pPkgName,
-          unitPack: row.unitPack,
-          requiredUnitQty: row.requiredUnitQty,
+          productID: row.productID || 0,
+          productCode: row.productCode || "",
+          productName: row.productName || "",
+          catValue: row.catValue || "",
+          catDesc: row.catDesc || "",
+          pGrpID: row.pGrpID || 0,
+          pGrpName: row.pGrpName || "",
+          pSGrpID: row.pSGrpID || 0,
+          pSGrpName: row.pSGrpName || "",
+          pUnitID: row.pUnitID || 0,
+          pUnitName: row.pUnitName || "",
+          pPkgID: row.pPkgID || 0,
+          pPkgName: row.pPkgName || "",
+          unitPack: row.unitPack || 0,
+          requiredUnitQty: row.requiredUnitQty || 0,
           receivedQty: row.receivedQty || 0,
-          packPrice: row.packPrice || 0,
+          unitPrice: row.unitPrice || 0,
           pOYN: finalizedPO ? "Y" : "N",
           grnDetID: row.grnDetID || 0,
-          manufacturerID: row.manufacturerID,
-          manufacturerCode: row.manufacturerCode,
-          manufacturerName: row.manufacturerName,
+          manufacturerID: row.manufacturerID || 0,
+          manufacturerCode: row.manufacturerCode || "",
+          manufacturerName: row.manufacturerName || "",
           discAmt: row.discAmt || 0,
           discPercentageAmt: row.discPercentageAmt || 0,
           freeQty: row.freeQty || 0,
           isFreeItemYN: row.isFreeItemYN || "N",
-          mfID: row.mfID,
-          mfName: row.mfName,
+          mfID: row.mfID || 0,
+          mfName: row.mfName || "",
           netAmount: row.netAmount || 0,
           pODetStatusCode: finalizedPO ? "CMP" : "PND",
           taxAmt: (row.cgstTaxAmt || 0) + (row.sgstTaxAmt || 0),
           taxModeCode: row.taxModeCode || "TAX0",
           taxModeDescription: row.taxModeDescription || "TAX0",
-          taxModeID: row.taxModeID,
+          taxModeID: row.taxModeID || 0,
           taxAfterDiscOnMrp: row.taxAfterDiscOnMrp || "N",
           taxAfterDiscYN: row.taxAfterDiscYN || "N",
           taxOnFreeItemYN: row.taxOnFreeItemYN || "N",
@@ -151,19 +152,22 @@ const PurchaseOrderPage: React.FC = () => {
           hsnCode: "test",
         })),
       };
+      console.log("Save purchaseOrderData:", purchaseOrderData);
+
       try {
         const response: any = await purchaseOrderService.save(purchaseOrderData);
         console.log("Save response:", response);
         if (response.success) {
           showAlert("Saved", "Purchase Order saved successfully", "success");
-          handleClear();
+          // handleClear();
         } else {
-          showAlert("error", "Failed to save purchase order", "error");
+          showAlert("", "Failed to save purchase order", "error");
         }
-      } catch (error) {}
+      } catch (error) {
+        showAlert("", "Failed to save purchase order", "error");
+      }
     } catch (error) {
       console.error("Error saving purchase order:", error);
-      showAlert("error", "Failed to save purchase order", "error");
     }
   };
 

@@ -91,6 +91,7 @@ export interface PurchaseOrderDetailDto extends BaseDto {
   transferYN: string;
   rNotes?: string;
   gstPerValue?: number;
+  unitPrice?: number;
 }
 
 export interface purchaseOrderSaveDto extends BaseDto {

@@ -52,11 +52,9 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
   const fetchProducts = async () => {
     try {
       const response = await productListService.getAll();
-      console.log("Raw product response:", response);
 
       const productList = Array.isArray(response.data) ? response.data : [];
       const activeProducts = productList.filter((product) => product.rActiveYN === "Y");
-      console.log("Active products:", activeProducts);
       setProductOptions(activeProducts);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -90,10 +88,6 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
     },
     [productOptions]
   );
-
-  useEffect(() => {
-    console.log("Department  changed:", departmentInfo);
-  }, [departmentInfo]);
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>

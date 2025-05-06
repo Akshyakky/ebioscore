@@ -54,9 +54,9 @@ const PurchaseOrderFooter: React.FC = () => {
     const updatedGridData = [...purchaseOrderDetails];
     if (isDiscPercentage) {
       updatedGridData.forEach((item, index) => {
-        const packPrice = item.packPrice || 0;
+        const unitPrice = item.unitPrice || 0;
         const requiredPack = item.requiredPack || 0;
-        const totalPrice = packPrice * requiredPack;
+        const totalPrice = unitPrice * requiredPack;
 
         const discAmt = (totalPrice * totalDiscAmtOrPer) / 100;
 
@@ -69,16 +69,16 @@ const PurchaseOrderFooter: React.FC = () => {
       });
     } else {
       const totalItemsValue = updatedGridData.reduce((sum, item) => {
-        const packPrice = item.packPrice || 0;
+        const unitPrice = item.unitPrice || 0;
         const requiredPack = item.requiredPack || 0;
-        return sum + packPrice * requiredPack;
+        return sum + unitPrice * requiredPack;
       }, 0);
 
       if (totalItemsValue > 0) {
         updatedGridData.forEach((item, index) => {
-          const packPrice = item.packPrice || 0;
+          const unitPrice = item.unitPrice || 0;
           const requiredPack = item.requiredPack || 0;
-          const totalPrice = packPrice * requiredPack;
+          const totalPrice = unitPrice * requiredPack;
 
           const proportion = totalPrice / totalItemsValue;
           const discAmt = totalDiscAmtOrPer * proportion;
@@ -98,7 +98,7 @@ const PurchaseOrderFooter: React.FC = () => {
   };
 
   const recalculateFooterAmounts = (details: PurchaseOrderDetailDto[]) => {
-    const itemsTotal = details.reduce((sum, item) => sum + (item.packPrice || 0) * (item.receivedQty || 0), 0);
+    const itemsTotal = details.reduce((sum, item) => sum + (item.unitPrice || 0) * (item.receivedQty || 0), 0);
     const totalDiscAmt = details.reduce((sum, item) => sum + (item.discAmt || 0), 0);
     const totalCGSTTaxAmt = details.reduce((sum, item) => sum + (item.cgstTaxAmt || 0), 0);
     const totalSGSTTaxAmt = details.reduce((sum, item) => sum + (item.sgstTaxAmt || 0), 0);
