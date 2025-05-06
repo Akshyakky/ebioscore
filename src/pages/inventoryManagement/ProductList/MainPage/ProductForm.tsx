@@ -3,7 +3,6 @@ import { Box, Grid, Typography, Divider, Switch, FormControlLabel } from "@mui/m
 import { Save as SaveIcon, Cancel as CancelIcon } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
-import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,6 +12,7 @@ import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto"
 import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import CustomButton from "@/components/Button/CustomButton";
+import SmartButton from "@/components/Button/SmartButton";
 
 interface ProductFormProps {
   open: boolean;
@@ -80,7 +80,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
     handleSubmit,
     setValue,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
@@ -189,6 +189,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
     if (product) {
       // If editing, reset to original values
       reset({
+        // Reset values remain the same
         productID: product.productID,
         productCode: product.productCode || "",
         productName: product.productName || "",
@@ -261,6 +262,30 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
   // Dialog title based on mode
   const dialogTitle = viewOnly ? "View Product" : product ? "Edit Product" : "Add Product";
 
+  // Define dialog action buttons based on mode
+  const dialogActions = viewOnly ? (
+    <CustomButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
+  ) : (
+    <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+      <CustomButton text="Cancel" onClick={() => onClose()} variant="outlined" color="inherit" sx={{ mr: 1 }} />
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <CustomButton text="Reset" onClick={handleClear} variant="outlined" color="error" icon={CancelIcon} />
+        <SmartButton
+          text="Save Product"
+          onClick={handleSubmit(onSubmit)}
+          variant="contained"
+          color="primary"
+          icon={SaveIcon}
+          asynchronous={true}
+          showLoadingIndicator={true}
+          loadingText="Saving..."
+          successText="Saved!"
+          disabled={isSaving}
+        />
+      </Box>
+    </Box>
+  );
+
   return (
     <GenericDialog
       open={open}
@@ -271,9 +296,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       showCloseButton
       disableBackdropClick={!viewOnly}
       disableEscapeKeyDown={!viewOnly}
-      actions={viewOnly ? <CustomButton text="Close" onClick={() => onClose()} variant="contained" color="primary" /> : null}
+      actions={dialogActions}
     >
-      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <Box component="form" noValidate>
         <Grid container spacing={3}>
           {/* Product Status */}
           <Grid size={{ xs: 12 }} display="flex" justifyContent="flex-end">
@@ -626,21 +651,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
             <FormField name="productNotes" control={control} label="Notes" type="textarea" disabled={viewOnly} rows={4} size="small" />
           </Grid>
         </Grid>
-
-        {/* Action buttons */}
-        {!viewOnly && (
-          <FormSaveClearButton
-            clearText="Reset"
-            saveText="Save Product"
-            onClear={handleClear}
-            onSave={handleSubmit(onSubmit)}
-            clearIcon={CancelIcon}
-            saveIcon={SaveIcon}
-            clearColor="error"
-            saveColor="primary"
-            isLoading={isSaving}
-          />
-        )}
       </Box>
     </GenericDialog>
   );
