@@ -150,6 +150,7 @@ export interface PurchaseOrderState {
   purchaseOrderDetails: PurchaseOrderDetailDto[];
   selectedProduct: ProductListDto | null;
   discountFooter: DiscountFooterProps;
+  disableApprovedFields: boolean;
 }
 
 export interface PurchaseOrderHeaderProps {

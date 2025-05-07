@@ -5,11 +5,11 @@ import { Box, Container } from "@mui/material";
 import PurchaseOrderHeader from "../SubPage/PurchaseOrderHeader";
 import { Delete as DeleteIcon, Save as SaveIcon, Search } from "@mui/icons-material";
 import { useDispatch } from "react-redux";
-import { setDepartmentInfo, setPurchaseOrderMastData, resetPurchaseOrderState } from "@/store/features/purchaseOrder/purchaseOrderSlice";
+import { setDepartmentInfo, setPurchaseOrderMastData, resetPurchaseOrderState, setDisableApprovedFields } from "@/store/features/purchaseOrder/purchaseOrderSlice";
 import { AppDispatch } from "@/store";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-import { initialPOMastDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { initialPOMastDto, PurchaseOrderDetailDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import PurchaseOrderGrid from "../SubPage/PurchaseOrderGrid";
 import PurchaseOrderFooter from "../SubPage/PurchaseOrderFooter";
@@ -28,7 +28,9 @@ const PurchaseOrderPage: React.FC = () => {
   const { departmentId } = departmentInfo;
 
   const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
+  const { pOID, pOApprovedYN, fromDeptID, pODate, supplierID } = purchaseOrderMastData;
   const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
+  const approvedDisable = useSelector((state: RootState) => state.purchaseOrder.disableApprovedFields) ?? false;
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const handleCloseSearch = useCallback(() => {
@@ -38,6 +40,8 @@ const PurchaseOrderPage: React.FC = () => {
   const handleSelect = useCallback((data: PurchaseOrderMastDto) => {
     console.log("Selected data:", data);
     dispatch(setPurchaseOrderMastData(data));
+    const isApproved = data.pOApprovedYN === "Y" && data.pOID > 0;
+    dispatch(setDisableApprovedFields(isApproved));
   }, []);
 
   useEffect(() => {
@@ -72,7 +76,6 @@ const PurchaseOrderPage: React.FC = () => {
 
   const handleSave = async () => {
     setIsSubmitted(true);
-    const { pOApprovedYN, fromDeptID, pODate, supplierID } = purchaseOrderMastData;
 
     if (!fromDeptID || !pODate || !supplierID) {
       showAlert("", "Please fill all mandatory fields", "error");
@@ -156,16 +159,25 @@ const PurchaseOrderPage: React.FC = () => {
           sgstTaxAmt: row.sgstTaxAmt || 0,
           taxableAmt: row.taxableAmt || 0,
           transferYN: "Y",
-          rActiveYN: "Y",
+          rActiveYN: row.rActiveYN || "Y",
           rNotes: row.rNotes || "",
           hsnCode: "test",
         })),
       };
-
-      if (purchaseOrderDetails.some((po) => po.receivedQty === 0)) {
-        showAlert("error", "Received Qty should not be 0", "error");
-        return;
+      //Grid fields validation
+      const fieldChecks: { key: keyof PurchaseOrderDetailDto; label: string }[] = [
+        { key: "receivedQty", label: "Required Pack" },
+        { key: "unitPack", label: "Units/Pack" },
+        { key: "unitPrice", label: "Unit Price" },
+        { key: "totAmt", label: "Selling Price" },
+      ];
+      for (const { key, label } of fieldChecks) {
+        if (purchaseOrderDetails.some((item) => !item[key] || item[key] <= 0)) {
+          showAlert("", `${label} should not be 0`, "warning");
+          return;
+        }
       }
+
       console.log("Save purchaseOrderData:", purchaseOrderData);
       try {
         const response: any = await purchaseOrderService.save(purchaseOrderData);
@@ -207,9 +219,11 @@ const PurchaseOrderPage: React.FC = () => {
     <>
       {departmentId > 0 && (
         <Container maxWidth={false}>
-          <Box sx={{ marginBottom: 2 }}>
-            <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
-          </Box>
+          {pOID === 0 && (
+            <Box sx={{ marginBottom: 2 }}>
+              <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
+            </Box>
+          )}
           <PurchaseOrderHeader handleDepartmentChange={handleDepartmentChange} />
           <PurchaseOrderGrid />
           <PurchaseOrderFooter />
