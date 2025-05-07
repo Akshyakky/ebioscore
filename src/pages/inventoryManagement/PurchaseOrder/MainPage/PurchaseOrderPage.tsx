@@ -159,7 +159,7 @@ const PurchaseOrderPage: React.FC = () => {
           sgstTaxAmt: row.sgstTaxAmt || 0,
           taxableAmt: row.taxableAmt || 0,
           transferYN: "Y",
-          rActiveYN: "Y",
+          rActiveYN: row.rActiveYN || "Y",
           rNotes: row.rNotes || "",
           hsnCode: "test",
         })),

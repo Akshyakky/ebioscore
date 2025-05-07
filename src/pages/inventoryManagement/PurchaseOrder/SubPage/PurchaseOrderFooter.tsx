@@ -5,7 +5,7 @@ import { AppDispatch, RootState } from "@/store";
 import { setDiscountFooterField, updateAllPurchaseOrderDetails, updatePurchaseOrderMastField } from "@/store/features/purchaseOrder/purchaseOrderSlice";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Check, History } from "@mui/icons-material";
-import { Grid, Paper, Stack, Typography } from "@mui/material";
+import { Box, FormControl, Grid, Paper, Stack, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import PurchaseOrderImportDialog from "./PurchaseOrderImportDialog";
@@ -145,76 +145,84 @@ const PurchaseOrderFooter: React.FC = () => {
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Grid container spacing={2} alignContent={"center"} justifyContent={"center"}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <FormField
-              type="switch"
-              label=""
-              name="totDiscAmtPerSwitch"
-              ControlID="totDiscAmtPerSwitch"
-              value={isDiscPercentage || false}
-              checked={isDiscPercentage || false}
-              onChange={() => dispatch(setDiscountFooterField({ field: "isDiscPercentage", value: !isDiscPercentage }))}
-              disabled={approvedDisable}
-              gridProps={{ xs: 2, sm: 1, md: 1 }}
-            />
-            <FormField
-              type="number"
-              label={`Total Disc in ${isDiscPercentage ? "Percentage [%]" : "Amount"}`}
-              value={totDiscAmtPer}
-              onChange={(e) => dispatch(setDiscountFooterField({ field: "totDiscAmtPer", value: Number(e.target.value) }))}
-              name="totDiscAmtPer"
-              ControlID="totDiscAmtPer"
-              disabled={approvedDisable}
-              gridProps={{ xs: 4 }}
-            />
-            <CustomButton onClick={handleApplyDiscount} text={"Apply"} variant="contained" icon={Check} size="medium" color="primary" disabled={approvedDisable} />
-            {fromDeptID > 0 && supplierID > 0 && pOID === 0 && (
-              <CustomButton
-                onClick={() => {
-                  setImportPODialogOpen(true);
-                }}
-                text={"Import previous"}
-                variant="contained"
-                icon={History}
-                size="medium"
-                color="info"
+          <Box sx={{ mt: 3, ml: 5 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <FormControl>
+                <FormField
+                  type="switch"
+                  label=""
+                  name="totDiscAmtPerSwitch"
+                  ControlID="totDiscAmtPerSwitch"
+                  value={isDiscPercentage || false}
+                  checked={isDiscPercentage || false}
+                  onChange={() => dispatch(setDiscountFooterField({ field: "isDiscPercentage", value: !isDiscPercentage }))}
+                  disabled={approvedDisable}
+                  gridProps={{ xs: 2, sm: 1, md: 1 }}
+                />
+              </FormControl>
+              <FormField
+                type="number"
+                label={`Total Disc in ${isDiscPercentage ? "Percentage [%]" : "Amount"}`}
+                value={totDiscAmtPer}
+                onChange={(e) => dispatch(setDiscountFooterField({ field: "totDiscAmtPer", value: Number(e.target.value) }))}
+                name="totDiscAmtPer"
+                ControlID="totDiscAmtPer"
                 disabled={approvedDisable}
+                gridProps={{ xs: 4 }}
               />
-            )}
-          </Stack>
+              <CustomButton onClick={handleApplyDiscount} text={"Apply"} variant="contained" icon={Check} size="medium" color="primary" disabled={approvedDisable} />
+              {fromDeptID > 0 && supplierID > 0 && pOID === 0 && (
+                <CustomButton
+                  onClick={() => {
+                    setImportPODialogOpen(true);
+                  }}
+                  text={"Import previous"}
+                  variant="contained"
+                  icon={History}
+                  size="medium"
+                  color="info"
+                  disabled={approvedDisable}
+                />
+              )}
+            </Stack>
+          </Box>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <FormField
-              type="switch"
-              label="Finalize"
-              name="finalizePO"
-              ControlID="finalizePO"
-              value={pOApprovedYN}
-              checked={pOApprovedYN === "Y"}
-              onChange={(e) => handleFinalizeToggle(e.target.checked)}
-              disabled={approvedDisable}
-              gridProps={{ xs: 3 }}
-            />
-            <FormField
-              type="select"
-              label="Approved By"
-              value={pOApprovedID}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                const selected = approvedByOptions.find((opt) => Number(opt.value) === value);
-                if (selected) {
-                  handleApprovedByChange(value, selected.label);
-                }
-              }}
-              name="approvedBy"
-              ControlID="approvedBy"
-              options={approvedByOptions}
-              disabled={approvedDisable}
-              isMandatory={pOApprovedYN === "Y"}
-              gridProps={{ xs: 6 }}
-            />
-          </Stack>
+          <Box sx={{ mt: 3, ml: 5 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <FormControl>
+                <FormField
+                  type="switch"
+                  label="Finalize"
+                  name="finalizePO"
+                  ControlID="finalizePO"
+                  value={pOApprovedYN}
+                  checked={pOApprovedYN === "Y"}
+                  onChange={(e) => handleFinalizeToggle(e.target.checked)}
+                  disabled={approvedDisable}
+                  gridProps={{ xs: 3 }}
+                />
+              </FormControl>
+              <FormField
+                type="select"
+                label="Approved By"
+                value={pOApprovedID}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  const selected = approvedByOptions.find((opt) => Number(opt.value) === value);
+                  if (selected) {
+                    handleApprovedByChange(value, selected.label);
+                  }
+                }}
+                name="approvedBy"
+                ControlID="approvedBy"
+                options={approvedByOptions}
+                disabled={approvedDisable}
+                isMandatory={pOApprovedYN === "Y"}
+                gridProps={{ xs: 6 }}
+              />
+            </Stack>
+          </Box>
         </Grid>
       </Grid>
       <Grid container spacing={2}>
@@ -240,6 +248,7 @@ const PurchaseOrderFooter: React.FC = () => {
           gridProps={{ xs: 12, sm: 6 }}
         />
       </Grid>
+
       <PurchaseOrderImportDialog open={importPODialogOpen} onClose={() => setImportPODialogOpen(false)} />
     </Paper>
   );
