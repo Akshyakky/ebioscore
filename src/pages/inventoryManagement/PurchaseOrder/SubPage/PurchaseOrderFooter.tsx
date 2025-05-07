@@ -1,20 +1,23 @@
+import CustomButton from "@/components/Button/CustomButton";
 import FormField from "@/components/FormField/FormField";
 import { DiscountFooterProps, initialPOMastDto, PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { AppDispatch, RootState } from "@/store";
 import { setDiscountFooterField, updateAllPurchaseOrderDetails, updatePurchaseOrderMastField } from "@/store/features/purchaseOrder/purchaseOrderSlice";
 import { showAlert } from "@/utils/Common/showAlert";
-import { Button, Grid, Paper, Stack, Typography } from "@mui/material";
-import React, { useEffect } from "react";
+import { Check, History } from "@mui/icons-material";
+import { Grid, Paper, Stack, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import PurchaseOrderImportDialog from "./PurchaseOrderImportDialog";
 
 const PurchaseOrderFooter: React.FC = () => {
+  const [importPODialogOpen, setImportPODialogOpen] = useState<boolean>(false);
   const dispatch = useDispatch<AppDispatch>();
   const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
   const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
   const discountFooter = useSelector((state: RootState) => state.purchaseOrder.discountFooter) ?? ({} as DiscountFooterProps);
   const { totDiscAmtPer, isDiscPercentage } = discountFooter ?? ({} as DiscountFooterProps);
-
-  const { pOID, pOApprovedYN, pOApprovedID, pOApprovedNo, pOApprovedBy, totalAmt, taxAmt, discAmt, coinAdjAmt, netAmt, rNotes } = purchaseOrderMastData;
+  const { pOID, pOApprovedYN, pOApprovedID, totalAmt, taxAmt, discAmt, coinAdjAmt, netAmt, rNotes, supplierID, fromDeptID } = purchaseOrderMastData;
   const disabled = pOApprovedYN === "Y" && pOID > 0;
   const approvedByOptions = [
     { value: "1", label: "Dr. Arjun Kumar" },
@@ -164,9 +167,20 @@ const PurchaseOrderFooter: React.FC = () => {
               disabled={disabled}
               gridProps={{ xs: 4 }}
             />
-            <Button variant="contained" onClick={handleApplyDiscount} disabled={disabled}>
-              Apply
-            </Button>
+            <CustomButton onClick={handleApplyDiscount} text={"Apply"} variant="contained" icon={Check} size="medium" color="primary" disabled={disabled} />
+            {fromDeptID > 0 && supplierID > 0 && (
+              <CustomButton
+                onClick={() => {
+                  setImportPODialogOpen(true);
+                }}
+                text={"Import from previous PO"}
+                variant="contained"
+                icon={History}
+                size="medium"
+                color="info"
+                disabled={false}
+              />
+            )}
           </Stack>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
@@ -226,6 +240,7 @@ const PurchaseOrderFooter: React.FC = () => {
           gridProps={{ xs: 12, sm: 6 }}
         />
       </Grid>
+      <PurchaseOrderImportDialog open={importPODialogOpen} onClose={() => setImportPODialogOpen(false)} supplierID={supplierID} fromDeptID={fromDeptID} />
     </Paper>
   );
 };
