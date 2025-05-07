@@ -168,19 +168,21 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
         />
       </Grid>
       <Grid container spacing={2}>
-        <FormField
-          ControlID="productName"
-          label="Search Product"
-          name="productCode"
-          type="autocomplete"
-          placeholder="Add product to the grid"
-          value={productName}
-          onChange={(e) => setProductName(e.target.value)}
-          fetchSuggestions={fetchProductSuggestions}
-          onSelectSuggestion={handleProductSelect}
-          disabled={approvedDisable}
-          gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
-        />
+        {!approvedDisable && (
+          <FormField
+            ControlID="productName"
+            label="Search Product"
+            name="productCode"
+            type="autocomplete"
+            placeholder="Add product to the grid"
+            value={productName}
+            onChange={(e) => setProductName(e.target.value)}
+            fetchSuggestions={fetchProductSuggestions}
+            onSelectSuggestion={handleProductSelect}
+            disabled={approvedDisable}
+            gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
+          />
+        )}
       </Grid>
     </Paper>
   );

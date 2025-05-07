@@ -17,7 +17,7 @@ const PurchaseOrderFooter: React.FC = () => {
   const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
   const discountFooter = useSelector((state: RootState) => state.purchaseOrder.discountFooter) ?? ({} as DiscountFooterProps);
   const { totDiscAmtPer, isDiscPercentage } = discountFooter ?? ({} as DiscountFooterProps);
-  const { pOApprovedYN, pOApprovedID, totalAmt, taxAmt, discAmt, coinAdjAmt, netAmt, rNotes, supplierID, fromDeptID } = purchaseOrderMastData;
+  const { pOID, pOApprovedYN, pOApprovedID, totalAmt, taxAmt, discAmt, coinAdjAmt, netAmt, rNotes, supplierID, fromDeptID } = purchaseOrderMastData;
   const approvedDisable = useSelector((state: RootState) => state.purchaseOrder.disableApprovedFields) ?? false;
   const approvedByOptions = [
     { value: "1", label: "Dr. Arjun Kumar" },
@@ -168,7 +168,7 @@ const PurchaseOrderFooter: React.FC = () => {
               gridProps={{ xs: 4 }}
             />
             <CustomButton onClick={handleApplyDiscount} text={"Apply"} variant="contained" icon={Check} size="medium" color="primary" disabled={approvedDisable} />
-            {fromDeptID > 0 && supplierID > 0 && (
+            {fromDeptID > 0 && supplierID > 0 && pOID === 0 && (
               <CustomButton
                 onClick={() => {
                   setImportPODialogOpen(true);

@@ -285,7 +285,7 @@ const PurchaseOrderGrid: React.FC = () => {
                     <TableCell align="right">{row.netAmount?.toFixed(2)}</TableCell>
 
                     <TableCell align="center">
-                      <IconButton size="small" onClick={() => handleDeleteRow(row.productID, row.pODetID)}>
+                      <IconButton disabled={approvedDisable} size="small" onClick={() => handleDeleteRow(row.productID, row.pODetID)}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>

@@ -5,7 +5,7 @@ import { initialPOMastDto, PurchaseOrderDetailDto, PurchaseOrderMastDto, purchas
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Stack, Collapse, CircularProgress, Typography } from "@mui/material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
-import { ArrowDownwardTwoTone, History } from "@mui/icons-material";
+import { ArrowDownwardTwoTone, ArrowUpwardTwoTone, History } from "@mui/icons-material";
 import CustomButton from "@/components/Button/CustomButton";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
@@ -77,7 +77,6 @@ const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ o
     await togglePODetails(importPOID);
     const prevPODetails = poMastBySupplier.find((po) => po.pOID === importPOID)?.details;
     if (!prevPODetails) return;
-
     const updatedPODetails = prevPODetails.map((poDetail) => ({
       ...poDetail,
       pOID: 0,
@@ -95,6 +94,7 @@ const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ o
       netAmount: 0,
       totAmt: 0,
       taxAmt: 0,
+      gstPerValue: (poDetail.cgstPerValue || 0) + (poDetail.sgstPerValue || 0),
     }));
 
     dispatch(updateAllPurchaseOrderDetails(updatedPODetails));
@@ -128,7 +128,14 @@ const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ o
                     <TableCell>{po.pODate}</TableCell>
                     <TableCell>{po.supplierName}</TableCell>
                     <TableCell>
-                      <CustomButton onClick={() => togglePODetails(po.pOID)} text={""} variant="text" icon={ArrowDownwardTwoTone} size="small" color="primary" />
+                      <CustomButton
+                        onClick={() => togglePODetails(po.pOID)}
+                        text={""}
+                        variant="text"
+                        icon={expandedPOID === po.pOID ? ArrowUpwardTwoTone : ArrowDownwardTwoTone}
+                        size="small"
+                        color="primary"
+                      />
                       <CustomButton onClick={() => handleImportPrevPO(po.pOID)} text={"Import"} variant="contained" icon={History} size="medium" color="primary" />
                     </TableCell>
                   </TableRow>
