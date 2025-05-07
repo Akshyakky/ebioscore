@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Grid, Typography, Box, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from "@mui/material";
 import { Edit } from "@mui/icons-material";
 import Close from "@mui/icons-material/Close";
@@ -8,17 +8,7 @@ import CustomButton from "../Button/CustomButton";
 import CustomSwitch from "../Checkbox/ColorSwitch";
 import FormField from "../FormField/FormField";
 import GenericDialog from "./GenericDialog";
-
-// Define date filter types enum
-export enum DateFilterType {
-  All = 0,
-  Today = 1,
-  Yesterday = 2,
-  ThisWeek = 3,
-  ThisMonth = 4,
-  ThisYear = 5,
-  DateRange = 6,
-}
+import { DateFilterType } from "@/interfaces/Common/FilterDto";
 
 type ExtendedItem<T> = T & {
   serialNumber: number;
@@ -43,11 +33,13 @@ interface CommonSearchDialogProps<T> {
   onSelect: (item: T) => void;
   title: string;
   fetchItems: () => Promise<T[]>;
+  items?: T[]; // Add this prop to directly pass items
   updateActiveStatus: (id: number, status: boolean) => Promise<boolean>;
   columns: Column<T>[];
   getItemId: (item: T) => number;
   getItemActiveStatus: (item: T) => boolean;
   searchPlaceholder: string;
+  onSearchChange?: (value: string) => void;
   onSearch?: (searchQuery: string) => void;
   dialogProps?: {
     maxWidth?: "xs" | "sm" | "md" | "lg" | "xl";
@@ -70,6 +62,7 @@ interface CommonSearchDialogProps<T> {
     onDateFilterChange?: (filterType: DateFilterType) => void;
     onDateRangeChange?: (startDate: Date | null, endDate: Date | null) => void;
   };
+  onEdit?: (item: T) => void;
 }
 
 function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
@@ -78,12 +71,14 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
   onSelect,
   title,
   fetchItems,
+  items, // Use the passed items directly if available
   updateActiveStatus,
   columns: originalColumns,
   getItemId,
   getItemActiveStatus,
   searchPlaceholder,
   onSearch,
+  onSearchChange,
   dialogProps,
   isEditButtonVisible = false,
   isStatusVisible = false,
@@ -97,6 +92,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
   filterConfigs = [],
   onFilterChange,
   dateFilterOptions,
+  onEdit,
 }: CommonSearchDialogProps<T>) {
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -111,10 +107,9 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
 
+  // Effect to initialize filter values when component opens
   useEffect(() => {
     if (open) {
-      fetchAllItems();
-
       // Initialize filter values with defaults
       const initialFilterValues = filterConfigs.reduce((acc, config) => {
         acc[config.name] = config.defaultValue !== undefined ? config.defaultValue : "";
@@ -122,6 +117,11 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
       }, {} as { [key: string]: string | number });
 
       setFilterValues(initialFilterValues);
+
+      // If we don't have items passed directly, fetch them
+      if (!items) {
+        fetchAllItems();
+      }
     } else {
       setSearchTerm("");
       setDataLoaded(false);
@@ -129,6 +129,31 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
       resetFilters();
     }
   }, [open]);
+
+  // Update search results when items prop changes
+  useEffect(() => {
+    if (items && Array.isArray(items)) {
+      console.log("Items updated from props:", items);
+      setSearchResults(items);
+
+      // Update switch status for these items
+      const initialSwitchStatus = items.reduce((statusMap, item) => {
+        if (item && getItemId(item)) {
+          statusMap[getItemId(item)] = getItemActiveStatus(item);
+        }
+        return statusMap;
+      }, {} as { [key: number]: boolean });
+
+      setSwitchStatus(initialSwitchStatus);
+      setDataLoaded(true);
+    }
+  }, [items, getItemId, getItemActiveStatus]);
+
+  const handleEditClick = (item: T) => {
+    if (onEdit) {
+      onEdit(item);
+    }
+  };
 
   const resetFilters = () => {
     const initialFilterValues = filterConfigs.reduce((acc, config) => {
@@ -146,15 +171,16 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
     setIsLoading(true);
     setDataLoaded(false);
     try {
-      const items = await fetchItems();
+      const fetchedItems = await fetchItems();
+      console.log("Fetched items:", fetchedItems);
 
-      if (!Array.isArray(items)) {
-        console.error("Fetched items is not an array:", items);
+      if (!Array.isArray(fetchedItems)) {
+        console.error("Fetched items is not an array:", fetchedItems);
         setSearchResults([]);
         return;
       }
 
-      const initialSwitchStatus = items.reduce((statusMap, item) => {
+      const initialSwitchStatus = fetchedItems.reduce((statusMap, item) => {
         if (item && getItemId(item)) {
           statusMap[getItemId(item)] = getItemActiveStatus(item);
         }
@@ -162,7 +188,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
       }, {} as { [key: number]: boolean });
 
       setSwitchStatus(initialSwitchStatus);
-      setSearchResults(items);
+      setSearchResults(fetchedItems);
       setDataLoaded(true);
     } catch (error) {
       console.error("Error fetching items:", error);
@@ -172,43 +198,46 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
     }
   };
 
-  const handleEditAndClose = (rowIndex: number) => {
-    if (!dataLoaded) {
-      console.error("Data not yet loaded");
-      return;
-    }
+  const handleEditAndClose = useCallback(
+    (rowIndex: number) => {
+      if (!dataLoaded) {
+        console.error("Data not yet loaded");
+        return;
+      }
 
-    if (!Array.isArray(searchResults) || searchResults.length === 0) {
-      console.error("No search results available");
-      return;
-    }
+      if (!Array.isArray(searchResults) || searchResults.length === 0) {
+        console.error("No search results available");
+        return;
+      }
 
-    if (rowIndex < 0 || rowIndex >= searchResults.length) {
-      console.error(`Invalid row index: ${rowIndex}. Available rows: ${searchResults.length}`);
-      return;
-    }
+      if (rowIndex < 0 || rowIndex >= searchResults.length) {
+        console.error(`Invalid row index: ${rowIndex}. Available rows: ${searchResults.length}`);
+        return;
+      }
 
-    const item = searchResults[rowIndex];
-    if (!item) {
-      console.error("Item not found at index:", rowIndex);
-      return;
-    }
+      const item = searchResults[rowIndex];
+      if (!item) {
+        console.error("Item not found at index:", rowIndex);
+        return;
+      }
 
-    if (!getItemId(item)) {
-      console.error("Selected item is missing ID:", item);
-      return;
-    }
+      if (!getItemId(item)) {
+        console.error("Selected item is missing ID:", item);
+        return;
+      }
 
-    onClose();
-    onSelect(item);
-  };
+      onClose();
+      onSelect(item);
+    },
+    [searchResults, dataLoaded, onClose, onSelect, getItemId]
+  );
 
   const handleSwitchChange = async (item: ExtendedItem<T>, checked: boolean) => {
     try {
       const success = await updateActiveStatus(getItemId(item), checked);
       if (success) {
         setSwitchStatus((prev) => ({ ...prev, [getItemId(item)]: checked }));
-        fetchAllItems();
+        setSearchResults((prev) => prev.map((row) => (getItemId(row) === getItemId(item) ? { ...row, rActiveYN: checked ? "Y" : "N" } : row)));
       }
     } catch (error) {
       console.error("Error updating status:", error);
@@ -218,7 +247,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
   const dataWithIndex: ExtendedItem<T>[] = searchResults.map((item, index) => ({
     ...item,
     serialNumber: index + 1,
-    Status: switchStatus[getItemId(item)] ? "Active" : "Hidden",
+    Status: item.rActiveYN === "Y" ? "Active" : "Hidden",
   }));
 
   const enhancedColumns = React.useMemo(() => {
@@ -228,10 +257,8 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
           header: "Edit",
           visible: true,
           sortable: false,
-          render: (item: ExtendedItem<T>, rowIndex: number) => {
-            const canEdit = (item.modifyYN === "Y" || user?.adminYN === "Y" || item.modifyYN === undefined) && isEditButtonVisible;
-
-            return canEdit ? <CustomButton text="Edit" onClick={() => handleEditAndClose(rowIndex)} icon={Edit} size="small" disabled={isLoading || !dataLoaded} /> : null;
+          render: (item: ExtendedItem<T>) => {
+            return <CustomButton text="Edit" onClick={() => handleEditClick(item)} icon={Edit} size="small" disabled={isLoading || !dataLoaded} />;
           },
         }
       : null;
@@ -279,7 +306,19 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
     return [...(editColumn ? [editColumn] : []), ...convertedColumns, ...(statusColumn ? [statusColumn] : []), ...(actionColumn ? [actionColumn] : [])] as Column<
       ExtendedItem<T>
     >[];
-  }, [isEditButtonVisible, isStatusVisible, isActionVisible, originalColumns, switchStatus, searchResults, isLoading]);
+  }, [
+    isEditButtonVisible,
+    isStatusVisible,
+    isActionVisible,
+    originalColumns,
+    switchStatus,
+    searchResults,
+    isLoading,
+    dataLoaded,
+    user?.adminYN,
+    handleEditAndClose,
+    handleSwitchChange,
+  ]);
 
   const handleDialogClose = () => {
     setSearchTerm("");
@@ -289,6 +328,9 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
   const handleSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSearchTerm = event.target.value;
     setSearchTerm(newSearchTerm);
+    if (onSearchChange) {
+      onSearchChange(newSearchTerm);
+    }
     if (onSearch) {
       onSearch(newSearchTerm);
     }
@@ -296,6 +338,8 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
   const handleFilterChange = (filterName: string, event: SelectChangeEvent) => {
     const value = event.target.value;
+    console.log(`Filter changed in component: ${filterName} = ${value}`);
+
     setFilterValues((prev) => ({ ...prev, [filterName]: value }));
 
     if (onFilterChange) {
@@ -305,6 +349,8 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
   const handleDateFilterChange = (event: SelectChangeEvent) => {
     const value = Number(event.target.value);
+    console.log(`Date filter changed in component: ${value}`);
+
     setDateFilter(value as DateFilterType);
 
     if (dateFilterOptions?.onDateFilterChange) {
@@ -319,8 +365,13 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
       setEndDate(date);
     }
 
-    if (dateFilterOptions?.onDateRangeChange && startDate && endDate) {
-      dateFilterOptions.onDateRangeChange(startDate, endDate);
+    // Only call the callback when both dates are set
+    if (dateFilterOptions?.onDateRangeChange) {
+      if (type === "start" && endDate) {
+        dateFilterOptions.onDateRangeChange(date, endDate);
+      } else if (type === "end" && startDate) {
+        dateFilterOptions.onDateRangeChange(startDate, date);
+      }
     }
   };
 
@@ -330,10 +381,16 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
     return (
       <Grid container spacing={2} mb={2}>
         {filterConfigs.map((config) => (
-          <Grid size={{ xs: 12, md: 3 }}>
+          <Grid size={{ xs: 12, md: 3 }} key={config.name}>
             <FormControl fullWidth size="small">
-              <InputLabel>{config.label}</InputLabel>
-              <Select label={config.label} value={filterValues[config.name]?.toString() || ""} onChange={(e) => handleFilterChange(config.name, e)}>
+              <InputLabel id={`${config.name}-label`}>{config.label}</InputLabel>
+              <Select
+                labelId={`${config.name}-label`}
+                id={`${config.name}-select`}
+                label={config.label}
+                value={filterValues[config.name]?.toString() || ""}
+                onChange={(e) => handleFilterChange(config.name, e)}
+              >
                 {config.options.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
                     {option.label}
@@ -347,8 +404,8 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
         {dateFilterOptions?.showDateFilter && (
           <Grid size={{ xs: 12, md: 3 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>Date Filter</InputLabel>
-              <Select label="Date Filter" value={dateFilter.toString()} onChange={handleDateFilterChange}>
+              <InputLabel id="date-filter-label">Date Filter</InputLabel>
+              <Select labelId="date-filter-label" id="date-filter-select" label="Date Filter" value={dateFilter.toString()} onChange={handleDateFilterChange}>
                 <MenuItem value={DateFilterType.All}>All</MenuItem>
                 <MenuItem value={DateFilterType.Today}>Today</MenuItem>
                 <MenuItem value={DateFilterType.Yesterday}>Yesterday</MenuItem>
@@ -399,21 +456,23 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
     <>
       <Box>
         <Grid container mb={2}>
-          <FormField
-            type="search"
-            label="Search"
-            value={searchTerm}
-            onChange={handleSearchInputChange}
-            name="search"
-            ControlID="SearchField"
-            placeholder={searchPlaceholder}
-            InputProps={{
-              type: "search",
-            }}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
+          <Grid size={{ xs: 12 }}>
+            <FormField
+              type="search"
+              label="Search"
+              value={searchTerm}
+              onChange={handleSearchInputChange}
+              name="search"
+              ControlID="SearchField"
+              placeholder={searchPlaceholder}
+              InputProps={{
+                type: "search",
+              }}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </Grid>
         </Grid>
 
         {renderFilters()}

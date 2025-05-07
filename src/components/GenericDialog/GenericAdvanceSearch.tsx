@@ -89,6 +89,7 @@ function GenericAdvanceSearch<T extends Record<string, any>>({
       }
 
       const initialSwitchStatus = items.reduce((statusMap, item) => {
+        debugger;
         if (item && getItemId(item)) {
           statusMap[getItemId(item)] = getItemActiveStatus(item);
         }
