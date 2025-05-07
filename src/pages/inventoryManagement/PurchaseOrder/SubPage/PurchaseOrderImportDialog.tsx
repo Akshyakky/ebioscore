@@ -1,28 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { purchaseOrderMastService } from "@/services/InventoryManagementService/inventoryManagementService";
-import { PurchaseOrderDetailDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { initialPOMastDto, PurchaseOrderDetailDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Stack, Collapse, CircularProgress, Typography } from "@mui/material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
 import { ArrowDownwardTwoTone, History } from "@mui/icons-material";
 import CustomButton from "@/components/Button/CustomButton";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store";
 import { updateAllPurchaseOrderDetails } from "@/store/features/purchaseOrder/purchaseOrderSlice";
 
 interface PurchaseOrderImportDialogProps {
   open: boolean;
   onClose: () => void;
-  supplierID: number;
-  fromDeptID: number;
 }
 
 type PurchaseOrderWithDetails = PurchaseOrderMastDto & {
   details: PurchaseOrderDetailDto[];
 };
 
-const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ open, onClose, supplierID, fromDeptID }) => {
+const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ open, onClose }) => {
+  const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
+  const { fromDeptID, supplierID } = purchaseOrderMastData;
   const [poMastBySupplier, setPOMastBySupplier] = useState<PurchaseOrderWithDetails[]>([]);
   const [expandedPOID, setExpandedPOID] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(false);

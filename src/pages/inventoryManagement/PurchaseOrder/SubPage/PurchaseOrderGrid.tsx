@@ -24,8 +24,8 @@ const PurchaseOrderGrid: React.FC = () => {
   const selectedProduct = useSelector((state: RootState) => state.purchaseOrder.selectedProduct) ?? null;
   const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
   const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
-  const { pOID, pOApprovedYN } = purchaseOrderMastData;
-  const disabled = pOApprovedYN === "Y" && pOID > 0;
+  const { pOID } = purchaseOrderMastData;
+  const approvedDisable = useSelector((state: RootState) => state.purchaseOrder.disableApprovedFields) ?? false;
   const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
   const { departmentId } = departmentInfo;
 
@@ -54,7 +54,7 @@ const PurchaseOrderGrid: React.FC = () => {
   }, [pOID]);
 
   useEffect(() => {
-    if (selectedProduct && !disabled) {
+    if (selectedProduct && !approvedDisable) {
       const fetchPOProductDetails = async () => {
         setLoading(true);
         const response: OperationResult<PurchaseOrderDetailDto> = await purchaseOrderMastServices.getPOProductDetails(selectedProduct.productCode || "", departmentId);
@@ -193,7 +193,7 @@ const PurchaseOrderGrid: React.FC = () => {
                         onChange={(e) => handleCellChange(Number(e.target.value), index, "receivedQty")}
                         label=""
                         name="receivedQty"
-                        disabled={disabled}
+                        disabled={approvedDisable}
                         ControlID={`receivedQty_${row.productID}`}
                       />
                     </TableCell>
@@ -209,7 +209,7 @@ const PurchaseOrderGrid: React.FC = () => {
                         onChange={(e) => handleCellChange(Number(e.target.value), index, "unitPack")}
                         label=""
                         name="unitPack"
-                        disabled={disabled}
+                        disabled={approvedDisable}
                         ControlID={`unitPack_${row.productID}`}
                       />
                     </TableCell>
@@ -221,7 +221,7 @@ const PurchaseOrderGrid: React.FC = () => {
                         onChange={(e) => handleCellChange(Number(e.target.value), index, "unitPrice")}
                         label=""
                         name="unitPrice"
-                        disabled={disabled}
+                        disabled={approvedDisable}
                         ControlID={`unitPrice_${row.productID}`}
                       />
                     </TableCell>
@@ -233,7 +233,7 @@ const PurchaseOrderGrid: React.FC = () => {
                         onChange={(e) => handleCellChange(Number(e.target.value), index, "totAmt")}
                         label=""
                         name="totAmt"
-                        disabled={disabled}
+                        disabled={approvedDisable}
                         ControlID={`totAmt_${row.productID}`}
                       />
                     </TableCell>
@@ -245,7 +245,7 @@ const PurchaseOrderGrid: React.FC = () => {
                         onChange={(e) => handleCellChange(Number(e.target.value), index, "discAmt")}
                         label=""
                         name="discAmt"
-                        disabled={disabled}
+                        disabled={approvedDisable}
                         ControlID={`discAmt_${row.productID}`}
                       />
                     </TableCell>
@@ -257,7 +257,7 @@ const PurchaseOrderGrid: React.FC = () => {
                         onChange={(e) => handleCellChange(Number(e.target.value), index, "discPercentageAmt")}
                         label=""
                         name="discPercentageAmt"
-                        disabled={disabled}
+                        disabled={approvedDisable}
                         ControlID={`discPercentageAmt_${row.productID}`}
                       />
                     </TableCell>
@@ -275,7 +275,7 @@ const PurchaseOrderGrid: React.FC = () => {
                         options={dropdownValues.taxType || []}
                         label=""
                         name="gstPercent"
-                        disabled={disabled}
+                        disabled={approvedDisable}
                         ControlID={`gstPercent_${row.productID}`}
                       />
                     </TableCell>

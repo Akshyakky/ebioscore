@@ -17,8 +17,8 @@ const PurchaseOrderFooter: React.FC = () => {
   const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
   const discountFooter = useSelector((state: RootState) => state.purchaseOrder.discountFooter) ?? ({} as DiscountFooterProps);
   const { totDiscAmtPer, isDiscPercentage } = discountFooter ?? ({} as DiscountFooterProps);
-  const { pOID, pOApprovedYN, pOApprovedID, totalAmt, taxAmt, discAmt, coinAdjAmt, netAmt, rNotes, supplierID, fromDeptID } = purchaseOrderMastData;
-  const disabled = pOApprovedYN === "Y" && pOID > 0;
+  const { pOApprovedYN, pOApprovedID, totalAmt, taxAmt, discAmt, coinAdjAmt, netAmt, rNotes, supplierID, fromDeptID } = purchaseOrderMastData;
+  const approvedDisable = useSelector((state: RootState) => state.purchaseOrder.disableApprovedFields) ?? false;
   const approvedByOptions = [
     { value: "1", label: "Dr. Arjun Kumar" },
     { value: "2", label: "Dr. Sneha Rao" },
@@ -154,7 +154,7 @@ const PurchaseOrderFooter: React.FC = () => {
               value={isDiscPercentage || false}
               checked={isDiscPercentage || false}
               onChange={() => dispatch(setDiscountFooterField({ field: "isDiscPercentage", value: !isDiscPercentage }))}
-              disabled={disabled}
+              disabled={approvedDisable}
               gridProps={{ xs: 2, sm: 1, md: 1 }}
             />
             <FormField
@@ -164,21 +164,21 @@ const PurchaseOrderFooter: React.FC = () => {
               onChange={(e) => dispatch(setDiscountFooterField({ field: "totDiscAmtPer", value: Number(e.target.value) }))}
               name="totDiscAmtPer"
               ControlID="totDiscAmtPer"
-              disabled={disabled}
+              disabled={approvedDisable}
               gridProps={{ xs: 4 }}
             />
-            <CustomButton onClick={handleApplyDiscount} text={"Apply"} variant="contained" icon={Check} size="medium" color="primary" disabled={disabled} />
+            <CustomButton onClick={handleApplyDiscount} text={"Apply"} variant="contained" icon={Check} size="medium" color="primary" disabled={approvedDisable} />
             {fromDeptID > 0 && supplierID > 0 && (
               <CustomButton
                 onClick={() => {
                   setImportPODialogOpen(true);
                 }}
-                text={"Import from previous PO"}
+                text={"Import previous"}
                 variant="contained"
                 icon={History}
                 size="medium"
                 color="info"
-                disabled={false}
+                disabled={approvedDisable}
               />
             )}
           </Stack>
@@ -187,13 +187,13 @@ const PurchaseOrderFooter: React.FC = () => {
           <Stack direction="row" spacing={2} alignItems="center">
             <FormField
               type="switch"
-              label="Finalize PO"
+              label="Finalize"
               name="finalizePO"
               ControlID="finalizePO"
               value={pOApprovedYN}
               checked={pOApprovedYN === "Y"}
               onChange={(e) => handleFinalizeToggle(e.target.checked)}
-              disabled={disabled}
+              disabled={approvedDisable}
               gridProps={{ xs: 3 }}
             />
             <FormField
@@ -210,7 +210,7 @@ const PurchaseOrderFooter: React.FC = () => {
               name="approvedBy"
               ControlID="approvedBy"
               options={approvedByOptions}
-              disabled={disabled}
+              disabled={approvedDisable}
               isMandatory={pOApprovedYN === "Y"}
               gridProps={{ xs: 6 }}
             />
@@ -236,11 +236,11 @@ const PurchaseOrderFooter: React.FC = () => {
           }}
           maxLength={250}
           rows={1}
-          disabled={disabled}
+          disabled={approvedDisable}
           gridProps={{ xs: 12, sm: 6 }}
         />
       </Grid>
-      <PurchaseOrderImportDialog open={importPODialogOpen} onClose={() => setImportPODialogOpen(false)} supplierID={supplierID} fromDeptID={fromDeptID} />
+      <PurchaseOrderImportDialog open={importPODialogOpen} onClose={() => setImportPODialogOpen(false)} />
     </Paper>
   );
 };

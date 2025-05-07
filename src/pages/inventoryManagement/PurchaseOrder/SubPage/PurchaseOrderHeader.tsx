@@ -21,8 +21,8 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
   const { departmentId, departmentName } = departmentInfo;
 
   const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
-  const { pOID, pOCode, pODate, supplierID, pOSActionNo, pOApprovedNo, pOApprovedYN } = purchaseOrderMastData;
-  const disabled = pOApprovedYN === "Y" && pOID > 0;
+  const { pOCode, pODate, supplierID, pOSActionNo, pOApprovedNo } = purchaseOrderMastData;
+  const approvedDisable = useSelector((state: RootState) => state.purchaseOrder.disableApprovedFields) ?? false;
   const [productOptions, setProductOptions] = useState<ProductListDto[]>([]);
   const [productName, setProductName] = useState<string>("");
 
@@ -139,7 +139,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
           ControlID="supplierID"
           options={dropdownValues.department || []}
           isMandatory
-          disabled={disabled}
+          disabled={approvedDisable}
           gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
         />
         <FormField
@@ -151,7 +151,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
           }}
           name="pOSActionNo"
           ControlID="pOSActionNo"
-          disabled={disabled}
+          disabled={approvedDisable}
           gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
         />
         <FormField
@@ -163,7 +163,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
           }}
           name="pOApprovedNo"
           ControlID="pOApprovedNo"
-          disabled={disabled}
+          disabled={approvedDisable}
           gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
         />
       </Grid>
@@ -178,7 +178,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
           onChange={(e) => setProductName(e.target.value)}
           fetchSuggestions={fetchProductSuggestions}
           onSelectSuggestion={handleProductSelect}
-          disabled={disabled}
+          disabled={approvedDisable}
           gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
         />
       </Grid>
