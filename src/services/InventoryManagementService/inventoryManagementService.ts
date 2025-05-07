@@ -13,5 +13,7 @@ export const productUnitService = createEntityService<ProductUnitDto>("ProductUn
 export const productTaxService = createEntityService<ProductTaxListDto>("ProductTaxList", "inventoryManagementURL");
 export const productOverviewService = createEntityService<ProductOverviewDto>("ProductOverview", "inventoryManagementURL");
 export const purchaseOrderMastService = createEntityService<PurchaseOrderMastDto>("PurchaseOrderMast", "inventoryManagementURL");
+export const indentProductDetailService = createEntityService<IndentSaveRequestDto>("IndentDetail", "inventoryManagementURL");
+export const indentProductMastService = createEntityService<IndentSaveRequestDto>("IndentMast", "inventoryManagementURL");
 export const purchaseOrderService = createEntityService<purchaseOrderSaveDto>("PurchaseOrder", "inventoryManagementURL");
 export const indentProductService = createEntityService<IndentSaveRequestDto>("IndentProduct", "inventoryManagementURL");

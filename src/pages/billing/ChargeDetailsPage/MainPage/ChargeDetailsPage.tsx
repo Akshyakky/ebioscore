@@ -22,7 +22,6 @@ const ChargeDetailsPage: React.FC = () => {
 
   useEffect(() => {
     if (selectedData) {
-      console.log("Selected Data:", selectedData);
     }
   }, [selectedData]);
   const handleSelect = async (item: any) => {

@@ -36,6 +36,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
 
   // Handle product selection and propagate to parent
   const handleProductSelect = (product: ProductOption | null) => {
+    debugger;
     setSelectedProduct(product);
 
     if (product) {

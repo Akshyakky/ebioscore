@@ -142,6 +142,7 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
       { key: "qoh", header: "QOH [Units]", visible: true, width: 120, minWidth: 120 },
       { key: "average", header: "Average", visible: true, width: 100, minWidth: 100 },
       { key: "averageDemand", header: "Average Demand", visible: true, width: 130, minWidth: 130 },
+
       {
         key: "supplierName",
         header: "Supplier Name",
@@ -152,12 +153,15 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
           <Select
             size="small"
             value={item.supplierName || ""}
-            onChange={(e) => {
-              handleCellValueChange(rowIndex, "supplierName", e.target.value); // Save supplier name
-            }}
+            onChange={(e) => handleCellValueChange(rowIndex, "supplierName", e.target.value)}
             sx={{ width: "100%" }}
             displayEmpty
-            renderValue={(selected) => (selected ? selected : "Select an Option")}
+            renderValue={(selected) => {
+              if (!selected) return "Select an Option";
+              const selectedStr = String(selected);
+              const opt = supplierOptions.find((o) => String(o.value) === selectedStr);
+              return opt ? opt.label : selectedStr;
+            }}
           >
             {supplierOptions.map((option) => (
               <MenuItem key={option.value} value={option.value}>
