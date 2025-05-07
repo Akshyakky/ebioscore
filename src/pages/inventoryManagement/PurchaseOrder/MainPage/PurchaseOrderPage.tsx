@@ -9,7 +9,7 @@ import { setDepartmentInfo, setPurchaseOrderMastData, resetPurchaseOrderState } 
 import { AppDispatch } from "@/store";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
-import { initialPOMastDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { initialPOMastDto, PurchaseOrderDetailDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import PurchaseOrderGrid from "../SubPage/PurchaseOrderGrid";
 import PurchaseOrderFooter from "../SubPage/PurchaseOrderFooter";
@@ -161,11 +161,20 @@ const PurchaseOrderPage: React.FC = () => {
           hsnCode: "test",
         })),
       };
-
-      if (purchaseOrderDetails.some((po) => po.receivedQty === 0)) {
-        showAlert("error", "Received Qty should not be 0", "error");
-        return;
+      //Grid fields validation
+      const fieldChecks: { key: keyof PurchaseOrderDetailDto; label: string }[] = [
+        { key: "receivedQty", label: "Required Pack" },
+        { key: "unitPack", label: "Units/Pack" },
+        { key: "unitPrice", label: "Unit Price" },
+        { key: "totAmt", label: "Selling Price" },
+      ];
+      for (const { key, label } of fieldChecks) {
+        if (purchaseOrderDetails.some((item) => !item[key] || item[key] <= 0)) {
+          showAlert("", `${label} should not be 0`, "warning");
+          return;
+        }
       }
+
       console.log("Save purchaseOrderData:", purchaseOrderData);
       try {
         const response: any = await purchaseOrderService.save(purchaseOrderData);

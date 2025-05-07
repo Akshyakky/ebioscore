@@ -6,7 +6,7 @@ import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxLi
 import { PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 
-export const productListService = createEntityService<ProductListDto>("ProductList", "inventoryManagementURL");
+export const productListService = createEntityService<ProductListDto>("ProductMaster", "inventoryManagementURL");
 export const productSubGroupService = createEntityService<ProductSubGroupDto>("ProductSubGroup", "inventoryManagementURL");
 export const productGroupService = createEntityService<ProductGroupDto>("ProductGroup", "inventoryManagementURL");
 export const productUnitService = createEntityService<ProductUnitDto>("ProductUnit", "inventoryManagementURL");

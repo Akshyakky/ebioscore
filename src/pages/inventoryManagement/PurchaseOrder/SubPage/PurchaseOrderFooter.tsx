@@ -2,6 +2,7 @@ import FormField from "@/components/FormField/FormField";
 import { DiscountFooterProps, initialPOMastDto, PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { AppDispatch, RootState } from "@/store";
 import { setDiscountFooterField, updateAllPurchaseOrderDetails, updatePurchaseOrderMastField } from "@/store/features/purchaseOrder/purchaseOrderSlice";
+import { showAlert } from "@/utils/Common/showAlert";
 import { Button, Grid, Paper, Stack, Typography } from "@mui/material";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -51,6 +52,25 @@ const PurchaseOrderFooter: React.FC = () => {
     if (purchaseOrderDetails.length === 0) return;
     const totalDiscAmtOrPer = totDiscAmtPer || 0;
     const updatedGridData = [...purchaseOrderDetails];
+
+    // Calculate the total value of all items
+    const totalItemsValue = updatedGridData.reduce((sum, item) => {
+      const unitPrice = item.unitPrice || 0;
+      const receivedQty = item.receivedQty || 0;
+      return sum + unitPrice * receivedQty;
+    }, 0);
+
+    // Validation: Check if total discount exceeds total value
+    if (isDiscPercentage && totalDiscAmtOrPer > 100) {
+      showAlert("", "Discount percentage cannot exceed 100%", "warning");
+      return;
+    }
+
+    if (!isDiscPercentage && totalDiscAmtOrPer > totalItemsValue) {
+      showAlert("", "Discount amount cannot exceed total value of items", "warning");
+      return;
+    }
+
     if (isDiscPercentage) {
       updatedGridData.forEach((item, index) => {
         const unitPrice = item.unitPrice || 0;
@@ -58,21 +78,19 @@ const PurchaseOrderFooter: React.FC = () => {
         const totalPrice = unitPrice * receivedQty;
 
         const discAmt = (totalPrice * totalDiscAmtOrPer) / 100;
+        if (discAmt > totalPrice) {
+          showAlert("", "Discount amount cannot exceed item value", "warning");
+          return;
+        }
 
         updatedGridData[index] = {
           ...item,
           discAmt,
           discPercentageAmt: totalDiscAmtOrPer,
-          totAmt: totalPrice - discAmt,
+          totAmt: totalPrice - discAmt < 0 ? 0 : totalPrice - discAmt,
         };
       });
     } else {
-      const totalItemsValue = updatedGridData.reduce((sum, item) => {
-        const unitPrice = item.unitPrice || 0;
-        const receivedQty = item.receivedQty || 0;
-        return sum + unitPrice * receivedQty;
-      }, 0);
-
       if (totalItemsValue > 0) {
         updatedGridData.forEach((item, index) => {
           const unitPrice = item.unitPrice || 0;
@@ -82,17 +100,23 @@ const PurchaseOrderFooter: React.FC = () => {
           const proportion = totalPrice / totalItemsValue;
           const discAmt = totalDiscAmtOrPer * proportion;
 
+          if (discAmt > totalPrice) {
+            showAlert("", "Discount amount cannot exceed item value", "warning");
+            return;
+          }
+
           const discPercentageAmt = totalPrice > 0 ? (discAmt / totalPrice) * 100 : 0;
 
           updatedGridData[index] = {
             ...item,
             discAmt,
             discPercentageAmt,
-            netAmount: totalPrice - discAmt,
+            netAmount: totalPrice - discAmt < 0 ? 0 : totalPrice - discAmt,
           };
         });
       }
     }
+
     dispatch(updateAllPurchaseOrderDetails(updatedGridData));
   };
 
