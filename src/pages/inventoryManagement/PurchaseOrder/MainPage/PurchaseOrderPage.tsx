@@ -161,7 +161,7 @@ const PurchaseOrderPage: React.FC = () => {
           transferYN: "Y",
           rActiveYN: row.rActiveYN || "Y",
           rNotes: row.rNotes || "",
-          hsnCode: "test",
+          hsnCode: row.hsnCode || "",
         })),
       };
       //Grid fields validation

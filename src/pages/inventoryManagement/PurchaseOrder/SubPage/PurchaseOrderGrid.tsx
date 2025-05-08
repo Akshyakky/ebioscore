@@ -12,6 +12,7 @@ import {
   addPurchaseOrderDetail,
   removePurchaseOrderDetail,
   removePurchaseOrderDetailByPOID,
+  setSelectedProduct,
   updateAllPurchaseOrderDetails,
 } from "@/store/features/purchaseOrder/purchaseOrderSlice";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
@@ -95,6 +96,7 @@ const PurchaseOrderGrid: React.FC = () => {
       });
       dispatch(updateAllPurchaseOrderDetails(updatedPODetailRActiveN));
     }
+    dispatch(setSelectedProduct(null));
     setLoading(false);
   };
 
