@@ -10,26 +10,23 @@ interface IndentProductFooterProps {
 }
 
 const IndentProductFooter: React.FC<IndentProductFooterProps> = ({ setValue, control, getValues }) => {
-  const handleFinalizeToggle = (isFinalized: boolean) => {
-    setValue("IndentMaster.indentApprovedYN", isFinalized ? "Y" : "N");
-    showAlert("Success", `Indent Finalized: ${isFinalized ? "Yes" : "No"}`, "success");
-  };
-  const handleRemarksChange = (value: string) => {
-    setValue("IndentMaster.remarks", value);
-  };
+  const handleToggleChange = (field: string, isChecked: boolean, message: string) => {
+    const value = isChecked ? "Y" : "N";
+    setValue(`IndentMaster.${field}`, value);
+    if (field === "rActiveYN") {
+      const indentDetails = getValues("IndentDetails");
+      if (indentDetails?.length) {
+        setValue(
+          "IndentDetails",
+          indentDetails.map((detail: any) => ({
+            ...detail,
+            rActiveYN: value,
+          }))
+        );
+      }
+    }
 
-  const handleHideToggle = (isHidden: boolean) => {
-    const updatedRActiveYN = isHidden ? "N" : "Y";
-    setValue("IndentMaster.rActiveYN", updatedRActiveYN);
-    const indentDetails = getValues("IndentDetails");
-    const updatedIndentDetails = indentDetails.map((detail: any) => ({
-      ...detail,
-      rActiveYN: updatedRActiveYN,
-    }));
-
-    setValue("IndentDetails", updatedIndentDetails);
-
-    showAlert("Success", `Hide Indent: ${isHidden ? "Yes" : "No"}`, "success");
+    showAlert("Success", `${message}: ${isChecked ? "Yes" : "No"}`, "success");
   };
 
   useEffect(() => {
@@ -44,28 +41,41 @@ const IndentProductFooter: React.FC<IndentProductFooterProps> = ({ setValue, con
         Indent Product Footer
       </Typography>
 
-      <form>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <FormField name="IndentMaster.remarks" control={control} label="Remarks" type="textarea" size="small" rows={3} onChange={(e) => handleRemarksChange(e.target.value)} />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 3 }}>
-            <FormField name="IndentMaster.hide" control={control} label="Hide Indent" type="checkbox" onChange={(e) => handleHideToggle(e.target.checked)} size="small" />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 3 }}>
-            <FormField
-              name="IndentMaster.finalizeIndent"
-              control={control}
-              label="Finalize Indent"
-              type="checkbox"
-              onChange={(e) => handleFinalizeToggle(e.target.checked)}
-              size="small"
-            />
-          </Grid>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <FormField
+            name="IndentMaster.remarks"
+            control={control}
+            label="Remarks"
+            type="textarea"
+            size="small"
+            rows={3}
+            onChange={(e) => setValue("IndentMaster.remarks", e.target.value)}
+          />
         </Grid>
-      </form>
+
+        <Grid size={{ xs: 12, md: 3 }}>
+          <FormField
+            name="IndentMaster.hide"
+            control={control}
+            label="Hide Indent"
+            type="checkbox"
+            onChange={(e) => handleToggleChange("rActiveYN", !e.target.checked, "Hide Indent")}
+            size="small"
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 3 }}>
+          <FormField
+            name="IndentMaster.finalizeIndent"
+            control={control}
+            label="Finalize Indent"
+            type="checkbox"
+            onChange={(e) => handleToggleChange("indentApprovedYN", e.target.checked, "Indent Finalized")}
+            size="small"
+          />
+        </Grid>
+      </Grid>
     </Paper>
   );
 };

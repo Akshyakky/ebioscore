@@ -7,6 +7,7 @@ import { indentProductServices } from "@/services/InventoryManagementService/ind
 import { DateFilterType, FilterDto } from "@/interfaces/Common/FilterDto";
 import { showAlert } from "@/utils/Common/showAlert";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
+import { indentProductMastService } from "@/services/InventoryManagementService/inventoryManagementService";
 
 interface IndentSearchDialogProps {
   open: boolean;
@@ -15,25 +16,29 @@ interface IndentSearchDialogProps {
 }
 
 const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, onSelect }) => {
-  // Define your column configuration
-
   const [statusOptions, setStatusOptions] = useState<{ label: string; value: string }[]>([]);
   const [filterConfigs, setFilterConfigs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [indents, setIndents] = useState<IndentMastDto[]>([]);
-  const [selectedIndent, setSelectedIndent] = useState<IndentMastDto | null>(null);
-  const [indentType, setIndentType] = useState<string>("Department Indent");
-  const [status, setStatus] = useState<string>(""); // initially empty, will be set from fetched options
-  const [sortByDate, setSortByDate] = useState<string>("Descending");
+  const [indentType, setIndentType] = useState<string>("");
+  const [statusOpt, setStatusOpt] = useState<string>("");
+  const [sortByDate, setSortByDate] = useState<string>("desc");
   const [dateFilter, setDateFilter] = useState<DateFilterType>(DateFilterType.All);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [searchValue, setSearchValue] = useState<string>("");
+  const [forceRefresh, setForceRefresh] = useState<number>(0);
+
   const requiredDropdowns: DropdownType[] = ["statusFilter", "department", "departmentIndent"];
   const { departmentIndent } = useDropdownValues(requiredDropdowns);
+
   const sortOptions = [
-    { value: "asc", label: " Ascending" },
-    { value: "desc", label: "Desceinding" },
+    { value: "asc", label: "Ascending" },
+    { value: "desc", label: "Descending" },
   ];
-  const [filterDto] = useState<FilterDto>({
-    dateFilter: DateFilterType.All, // <-- use enum value
+
+  const [filterDto, setFilterDto] = useState<FilterDto>({
+    dateFilter: DateFilterType.All,
     startDate: null,
     endDate: null,
     statusFilter: "",
@@ -52,9 +57,8 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
         }));
         const fullOptions = [{ value: "", label: "All" }, ...mapped];
         setStatusOptions(fullOptions);
-
-        const defaultStatusValue = mapped.length > 0 ? mapped[0].value : "";
-        setStatus(defaultStatusValue); // <-- this sets the actual status code like DIPCD
+        const defaultStatusValue = "";
+        setStatusOpt(defaultStatusValue);
 
         setFilterConfigs([
           {
@@ -64,8 +68,8 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
             defaultValue: "",
           },
           {
-            name: "status",
-            label: "Status",
+            name: "statusOpt",
+            label: "Status Option",
             options: fullOptions,
             defaultValue: defaultStatusValue,
           },
@@ -73,137 +77,167 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
             name: "sortByDate",
             label: "Sort By Date",
             options: sortOptions,
-            defaultValue: "asc",
+            defaultValue: sortByDate,
           },
         ]);
       } catch (error) {
-        console.error("Error fetching status options", error);
         setStatusOptions([{ value: "", label: "All" }]);
       }
     };
 
-    fetchStatusOptions();
-  }, [departmentIndent]);
-
-  const handleFilterChange = (filterName: string, value: string | number) => {
-    if (filterName === "status") {
-      setStatus(value as string);
+    if (open) {
+      fetchStatusOptions();
     }
-    if (filterName === "indentType") {
-      setIndentType(value as string);
-    }
-    if (filterName === "sortByDate") {
-      setSortByDate(value as string);
-    }
-  };
+  }, [departmentIndent, open]);
 
   useEffect(() => {
-    if (open) {
-      fetchIndents(); // call when dialog is open and filters change
-    }
-  }, [status, indentType, sortByDate, dateFilter, open]);
+    setFilterDto((prevFilterDto) => ({
+      ...prevFilterDto,
+      dateFilter: Number(dateFilter),
+      startDate,
+      endDate,
+      statusFilter: statusOpt,
+    }));
+  }, [statusOpt, dateFilter, startDate, endDate]);
 
-  // Define your fetch function
   const fetchIndents = useCallback(async (): Promise<IndentMastDto[]> => {
     setLoading(true);
     try {
-      const updatedFilterDto: FilterDto = {
+      const updatedFilterDto = {
         ...filterDto,
-        dateFilter,
-        statusFilter: status,
+        statusFilter: statusOpt,
+        dateFilter: dateFilter,
+        startDate: startDate,
+        endDate: endDate,
       };
 
       const result = await indentProductServices.getAllIndents(updatedFilterDto);
-
       if (result.success && result.data) {
         let fetchedIndents = result.data.items || [];
-
+        if (indentType) {
+          fetchedIndents = fetchedIndents.filter((indent) => indent.indentType === indentType);
+        }
         fetchedIndents = [...fetchedIndents].sort((a, b) => {
           const dateA = new Date(a.indentDate || "").getTime();
           const dateB = new Date(b.indentDate || "").getTime();
           return sortByDate === "asc" ? dateA - dateB : dateB - dateA;
         });
-
-        setIndents(fetchedIndents); // for internal state
-        return fetchedIndents; // for EnhancedGenericAdvanceSearch
+        setIndents(fetchedIndents);
+        return fetchedIndents;
       } else {
         showAlert("Error", result.errorMessage || "Failed to fetch indents", "error");
+        setIndents([]);
         return [];
       }
     } catch (error) {
       showAlert("Error", "An error occurred while fetching indents", "error");
+      setIndents([]);
       return [];
     } finally {
       setLoading(false);
     }
-  }, [status, indentType, sortByDate, dateFilter, filterDto]);
+  }, [filterDto, indentType, statusOpt, dateFilter, startDate, endDate, sortByDate]);
 
-  // Define your status update function
-  const updateIndentStatus = async (id: number, status: boolean): Promise<boolean> => {
+  useEffect(() => {
+    if (open) {
+      fetchIndents();
+    }
+  }, [open, filterDto, indentType, sortByDate, forceRefresh]);
+
+  const handleFilterChange = useCallback((filterName: string, value: string | number) => {
+    switch (filterName) {
+      case "statusOpt":
+        setStatusOpt(value as string);
+        break;
+      case "indentType":
+        setIndentType(value as string);
+        break;
+      case "sortByDate":
+        setSortByDate(value as string);
+        break;
+      default:
+        break;
+    }
+    setForceRefresh((prev) => prev + 1);
+  }, []);
+
+  const handleDateFilterChange = useCallback((filterType: DateFilterType) => {
+    setDateFilter(filterType);
+    setForceRefresh((prev) => prev + 1);
+  }, []);
+
+  const handleDateRangeChange = useCallback((start: Date | null, end: Date | null) => {
+    setStartDate(start);
+    setEndDate(end);
+    setForceRefresh((prev) => prev + 1);
+  }, []);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchValue(value);
+  }, []);
+
+  const updateActiveStatus = useCallback(async (id: number, status: boolean) => {
     try {
-      // Replace with your actual API call
-      await fetch(`/api/indents/${id}/status`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active: status }),
-      });
-      return true;
+      const result = await indentProductMastService.updateActiveStatus(id, status);
+      if (result && result.success) {
+        showAlert("Success", "Status updated successfully.", "success");
+        setIndents((prevIndents) => prevIndents.map((item) => (item.indentID === id ? { ...item, indStatus: status ? "Active" : "Hidden" } : item)));
+        return true;
+      }
+      return false;
     } catch (error) {
-      console.error("Error updating indent status:", error);
+      showAlert("Error", "Failed to update status.", "error");
       return false;
     }
-  };
+  }, []);
 
-  const columns: Column<IndentMastDto>[] = [
-    { key: "indentCode", header: "Indent No", visible: true, sortable: true },
-
-    { key: "fromDeptName", header: "From Department ", visible: true, sortable: true },
-    { key: "toDeptName", header: "To Department ", visible: true, sortable: true },
-
-    {
-      key: "indentDate",
-      header: " Date",
-      visible: true,
-      sortable: true,
-    },
-    { key: "indStatus", header: "Record Status", visible: true, sortable: true },
-    { key: "createdBy", header: "Created BY", visible: true, sortable: true },
-    { key: "indentType", header: "Indent Type", visible: true, sortable: true },
-    { key: "remarks", header: "Remarks", visible: true, sortable: true },
-
-    // Add other columns as needed
-  ];
-
-  // Handle filter changes
-
-  // Handle date filter changes
-  const handleDateFilterChange = (filterType: DateFilterType) => {
-    console.log("Date filter changed to:", filterType);
-    // You can implement additional logic here if needed
-  };
-
-  // Handle date range selection
-  const handleDateRangeChange = (startDate: Date | null, endDate: Date | null) => {
-    console.log("Date range selected:", { startDate, endDate });
-    // You can implement additional logic here if needed
-  };
-
-  // Custom filter function (optional)
   const customIndentFilter = (item: IndentMastDto, searchValue: string): boolean => {
     if (!searchValue) return true;
 
     const searchLower = searchValue.toLowerCase();
     return (
+      item.indentCode?.toLowerCase().includes(searchLower) ||
+      false ||
       item.indentNo?.toLowerCase().includes(searchLower) ||
       false ||
       item.indentType?.toLowerCase().includes(searchLower) ||
       false ||
-      item.status?.toLowerCase().includes(searchLower) ||
+      item.indStatus?.toLowerCase().includes(searchLower) ||
       false ||
-      item.department?.toLowerCase().includes(searchLower) ||
+      item.fromDeptName?.toLowerCase().includes(searchLower) ||
+      false ||
+      item.toDeptName?.toLowerCase().includes(searchLower) ||
+      false ||
+      item.createdBy?.toLowerCase().includes(searchLower) ||
+      false ||
+      item.remarks?.toLowerCase().includes(searchLower) ||
       false
     );
   };
+
+  const getItemId = (item: IndentMastDto) => item.indentID;
+  const getItemActiveStatus = (item: IndentMastDto) => item.rActiveYN === "Y";
+
+  // Handle the edit action to pass the selected indent back to the parent
+  const handleEditClick = (item: IndentMastDto) => {
+    if (item && item.indentID) {
+      onSelect(item);
+    } else {
+      showAlert("Warning", "Invalid indent selected", "warning");
+    }
+  };
+
+  // Table columns configuration
+  const columns: Column<IndentMastDto>[] = [
+    { key: "indentCode", header: "Indent No", visible: true, sortable: true },
+    { key: "fromDeptName", header: "From Department", visible: true, sortable: true },
+    { key: "toDeptName", header: "To Department", visible: true, sortable: true },
+    { key: "indentDate", header: "Date", visible: true, sortable: true },
+    { key: "indStatus", header: "Record Status", visible: true, sortable: true },
+    { key: "createdBy", header: "Created By", visible: true, sortable: true },
+    { key: "indentType", header: "Indent Type", visible: true, sortable: true },
+    { key: "remarks", header: "Remarks", visible: true, sortable: true },
+  ];
 
   return (
     <EnhancedGenericAdvanceSearch
@@ -212,11 +246,13 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
       onSelect={onSelect}
       title="Search Indents"
       fetchItems={fetchIndents}
-      updateActiveStatus={updateIndentStatus}
+      items={indents}
+      updateActiveStatus={updateActiveStatus}
       columns={columns}
-      getItemId={(item: any) => item.id}
-      getItemActiveStatus={(item: any) => item.status === "Active"} // Adjust based on your data structure
+      getItemId={getItemId}
+      getItemActiveStatus={getItemActiveStatus}
       searchPlaceholder="Search by indent no, type, status..."
+      onSearchChange={handleSearchChange}
       isEditButtonVisible={true}
       isStatusVisible={true}
       isActionVisible={true}
@@ -224,13 +260,13 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
       showExportPDF={true}
       pagination={true}
       customFilter={customIndentFilter}
-      // Filter options
       showFilters={true}
       filterConfigs={filterConfigs}
       onFilterChange={handleFilterChange}
+      onEdit={handleEditClick} // Added explicit edit handler
       dateFilterOptions={{
         showDateFilter: true,
-        // onDateFilterChange: handleDateFilterChange,
+        onDateFilterChange: handleDateFilterChange,
         onDateRangeChange: handleDateRangeChange,
       }}
       dialogProps={{
