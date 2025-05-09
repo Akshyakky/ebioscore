@@ -8,6 +8,7 @@ import CustomButton from "@/components/Button/CustomButton";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { showAlert } from "@/utils/Common/showAlert";
 import { useNavigate } from "react-router-dom";
+import { notifySuccess } from "@/utils/Common/toastManager";
 
 interface DepartmentSelectionDialogProps {
   open: boolean;
@@ -41,7 +42,6 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
       const deptId = Number(event.target.value);
       setSelectedDeptId(deptId);
 
-      // Find the department name from the selected ID
       const selectedDept = dropdownValues.department?.find((dept) => parseInt(dept.value) === deptId);
       if (selectedDept) {
         setDeptName(selectedDept.label);
@@ -51,7 +51,7 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
   );
 
   const handleClose = useCallback(async () => {
-    if (requireSelection && selectedDeptId === 0) {
+    if (requireSelection) {
       const isSelectDept = await showAlert("Warning", "Please select a department before closing.", "warning", true);
       if (isSelectDept) return;
       navigate(-1);
@@ -64,13 +64,13 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
       showAlert("Warning", "Please select a department to continue.", "warning");
     } else {
       onSelectDepartment(selectedDeptId, deptName);
-      showAlert("Success", "Department selected successfully!", "success");
+      notifySuccess("Department selected successfully!");
       onClose();
     }
   }, [selectedDeptId, deptName, onSelectDepartment, onClose]);
 
   return (
-    <GenericDialog open={open} onClose={handleClose} title={dialogTitle} maxWidth="sm">
+    <GenericDialog open={open} onClose={handleClose} title={dialogTitle} maxWidth="sm" disableBackdropClick={true}>
       <Typography variant="h6" gutterBottom>
         Please select a department
       </Typography>

@@ -1,11 +1,9 @@
 // src/components/InventoryManagement/IndentProductGrid.tsx
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import { Select, MenuItem, TextField, IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { IndentDetailDto } from "@/interfaces/InventoryManagement/IndentProductDto";
 import CustomGrid from "@/components/CustomGrid/CustomGrid";
-
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface Props {
   gridData: IndentDetailDto[];
@@ -17,16 +15,48 @@ interface Props {
 }
 
 const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, handleDelete, packageOptions, supplierOptions, productOptions }) => {
-  // const dropdownValues = useDropdownValues(["productUnit"]);
+  const renderNumberField = (item: IndentDetailDto, rowIndex: number, field: keyof IndentDetailDto) => (
+    <TextField
+      size="small"
+      type="number"
+      value={item[field] || ""}
+      onChange={(e) => handleCellValueChange(rowIndex, field, parseFloat(e.target.value) || 0)}
+      sx={{ width: "100%" }}
+      inputProps={{ style: { textAlign: "right" } }}
+    />
+  );
 
-  // const productUnitOptions = useMemo(() => {
-  //   return (
-  //     dropdownValues?.productUnit?.map((option) => ({
-  //       label: option.label,
-  //       value: option.value.toString(),
-  //     })) || []
-  //   );
-  // }, [dropdownValues?.productUnit]);
+  const renderSelect = (
+    item: IndentDetailDto,
+    rowIndex: number,
+    field: keyof IndentDetailDto,
+    options: { value: string; label: string }[],
+    additionalHandler?: (value: string) => void
+  ) => (
+    <Select
+      size="small"
+      value={item[field] || ""}
+      onChange={(e) => {
+        const value = e.target.value;
+        handleCellValueChange(rowIndex, field, value);
+        if (additionalHandler) additionalHandler(value as string);
+      }}
+      sx={{ width: "100%" }}
+      displayEmpty
+      renderValue={(selected) => {
+        if (!selected) return "Select an Option";
+        const selectedStr = String(selected);
+        const opt = options.find((o) => String(o.value) === selectedStr);
+        return opt ? opt.label : selectedStr;
+      }}
+    >
+      {options.map((option) => (
+        <MenuItem key={option.value} value={option.value}>
+          {option.label}
+        </MenuItem>
+      ))}
+    </Select>
+  );
 
   const columns = useMemo(
     () => [
@@ -40,16 +70,7 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
         visible: true,
         width: 110,
         minWidth: 110,
-        render: (item: IndentDetailDto, rowIndex: number) => (
-          <TextField
-            size="small"
-            type="number"
-            value={item.requiredQty || ""}
-            onChange={(e) => handleCellValueChange(rowIndex, "requiredQty", parseFloat(e.target.value) || 0)}
-            sx={{ width: "100%" }}
-            inputProps={{ style: { textAlign: "right" } }}
-          />
-        ),
+        render: (item: IndentDetailDto, rowIndex: number) => renderNumberField(item, rowIndex, "requiredQty"),
       },
       {
         key: "netValue",
@@ -57,18 +78,8 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
         visible: true,
         width: 100,
         minWidth: 100,
-        render: (item: IndentDetailDto, rowIndex: number) => (
-          <TextField
-            size="small"
-            type="number"
-            value={item.netValue || ""}
-            onChange={(e) => handleCellValueChange(rowIndex, "netValue", parseFloat(e.target.value) || 0)}
-            sx={{ width: "100%" }}
-            inputProps={{ style: { textAlign: "right" } }}
-          />
-        ),
+        render: (item: IndentDetailDto, rowIndex: number) => renderNumberField(item, rowIndex, "netValue"),
       },
-
       {
         key: "units",
         header: "Units",
@@ -83,10 +94,10 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
               const unitValue = e.target.value;
               const unit = productOptions.find((opt) => opt.value === unitValue);
               if (unit) {
-                handleCellValueChange(rowIndex, "pUnitID", unit.value); // Save the unit ID
-                handleCellValueChange(rowIndex, "pUnitName", unit.label); // Save the unit label
+                handleCellValueChange(rowIndex, "pUnitID", unit.value);
+                handleCellValueChange(rowIndex, "pUnitName", unit.label);
               }
-              handleCellValueChange(rowIndex, "units", unitValue); // Update the selected unit
+              handleCellValueChange(rowIndex, "units", unitValue);
             }}
             sx={{ width: "100%" }}
             displayEmpty
@@ -111,27 +122,7 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
         visible: true,
         width: 150,
         minWidth: 150,
-        render: (item: IndentDetailDto, rowIndex: number) => (
-          <Select
-            size="small"
-            value={item.package || ""}
-            onChange={(e) => handleCellValueChange(rowIndex, "package", e.target.value)}
-            sx={{ width: "100%" }}
-            displayEmpty
-            renderValue={(selected) => {
-              if (!selected) return "Select an Option";
-              const selectedStr = String(selected);
-              const opt = packageOptions.find((o) => String(o.value) === selectedStr);
-              return opt ? opt.label : selectedStr;
-            }}
-          >
-            {packageOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        ),
+        render: (item: IndentDetailDto, rowIndex: number) => renderSelect(item, rowIndex, "package", packageOptions),
       },
       { key: "groupName", header: "Group Name", visible: true, width: 120, minWidth: 120 },
       { key: "maxLevelUnits", header: "Maximum Level Units", visible: true, width: 150, minWidth: 150 },
@@ -148,26 +139,8 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
         visible: true,
         width: 150,
         minWidth: 150,
-        render: (item: IndentDetailDto, rowIndex: number) => (
-          <Select
-            size="small"
-            value={item.supplierName || ""}
-            onChange={(e) => {
-              handleCellValueChange(rowIndex, "supplierName", e.target.value); // Save supplier name
-            }}
-            sx={{ width: "100%" }}
-            displayEmpty
-            renderValue={(selected) => (selected ? selected : "Select an Option")}
-          >
-            {supplierOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        ),
+        render: (item: IndentDetailDto, rowIndex: number) => renderSelect(item, rowIndex, "supplierName", supplierOptions),
       },
-
       { key: "roq", header: "ROQ", visible: true, width: 80, minWidth: 80 },
       {
         key: "delete",
@@ -182,7 +155,7 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
         ),
       },
     ],
-    [packageOptions, supplierOptions, handleCellValueChange, handleDelete, productOptions]
+    [packageOptions, supplierOptions, productOptions, handleCellValueChange, handleDelete]
   );
 
   return (

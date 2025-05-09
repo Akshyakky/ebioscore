@@ -48,7 +48,7 @@ import { Navigate } from "react-router-dom";
 import EmployeeRegistrationForm from "@/pages/common/ExampleFormPage/EmployeeRegistrationForm";
 import AlertManager from "@/pages/common/AlertManagerPage/MainPage/AlertManager";
 import GRNPage from "@/pages/inventoryManagement/GRN/MainPage/GRNPage";
-import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrderX/MainPage/PurchaseOrderPage";
+import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
 import LogModule from "@/pages/common/LogViewerPage/LogModule";
 import ProductList from "@/pages/inventoryManagement/ProductList/MainPage/ProductList";
 

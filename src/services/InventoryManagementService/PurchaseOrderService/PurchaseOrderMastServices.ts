@@ -9,23 +9,17 @@ class PurchaseOrderMastServices extends GenericEntityService<PurchaseOrderMastDt
       new CommonApiService({
         baseURL: APIConfig.inventoryManagementURL,
       }),
-      "PurchaseOrderMast"
+      "PurchaseOrder"
     );
   }
-  async getPOCode(departmentName: string): Promise<OperationResult<string>> {
-    return this.apiService.get<OperationResult<string>>(`${this.baseEndpoint}/GeneratePurchaseOrderCode?departmentName=${departmentName}`, this.getToken());
+  async getPOCode(departmentId: number): Promise<OperationResult<string>> {
+    return this.apiService.get<OperationResult<string>>(`${this.baseEndpoint}/GeneratePurchaseOrderCode?departmentId=${departmentId}`, this.getToken());
   }
   async getPOProductDetails(productCode: string, deptId: number, barcode: boolean = false): Promise<OperationResult<PurchaseOrderDetailDto>> {
-    return this.apiService.get<OperationResult<PurchaseOrderDetailDto>>(
-      `${this.baseEndpoint}/GetPOProductDetails?productCode=${productCode}&deptId=${deptId}&barcode=${barcode}`,
-      this.getToken()
-    );
+    return this.apiService.get<OperationResult<PurchaseOrderDetailDto>>(`${this.baseEndpoint}/GetPOProductDetailsByProductCode?productCode=${productCode}`, this.getToken());
   }
-  async savePurchaseOrder(purchaseOrderData: purchaseOrderSaveDto): Promise<OperationResult<any[]>> {
-    return this.apiService.post<OperationResult<any[]>>(`${this.baseEndpoint}/SavePurchaseOrder`, purchaseOrderData, this.getToken());
-  }
-  async getPurchaseOrderDetailsByPOID(pOId: number): Promise<OperationResult<any>> {
-    return this.apiService.get<OperationResult<any>>(`${this.baseEndpoint}/GetPurchaseOrderDetailsByPOID?pOID=${pOId}`, this.getToken());
+  async getPurchaseOrderDetailsByPOID(pOId: number): Promise<OperationResult<purchaseOrderSaveDto>> {
+    return this.apiService.get<OperationResult<purchaseOrderSaveDto>>(`${this.baseEndpoint}/GetPurchaseOrderDetailsByPOID?pOID=${pOId}`, this.getToken());
   }
 }
 
