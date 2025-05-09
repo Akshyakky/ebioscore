@@ -49,6 +49,7 @@ import EmployeeRegistrationForm from "@/pages/common/ExampleFormPage/EmployeeReg
 import AlertManager from "@/pages/common/AlertManagerPage/MainPage/AlertManager";
 import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
 import LogModule from "@/pages/common/LogViewerPage/LogModule";
+import ProductList from "@/pages/inventoryManagement/ProductList/MainPage/ProductList";
 import GRNPage from "@/pages/inventoryManagement/GRN/MainPage/GRNPage";
 
 interface RouteConfig {
@@ -83,7 +84,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/BedSetUpPage", component: BedSetUpPage, protected: true },
   { path: "/DeptUnitListPage", component: DeptUnitListPage, protected: true },
   { path: "/InsuranceListPage", component: InsuranceListPage, protected: true },
-  { path: "/ProductListPage", component: ProductListPage, protected: true },
+  { path: "/ProductListPage", component: ProductList, protected: true },
   { path: "/ProductTaxListPage", component: ProductTaxListPage, protected: true },
   { path: "/ProductOverviewPage", component: ProductOverviewPage, protected: true },
   { path: "/ManageBedPage", component: ManageBedPage, protected: true },

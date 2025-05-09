@@ -49,17 +49,6 @@ const generateContactCode = async (prefix: string, padLength: number = 5): Promi
   }
 };
 
-// Save the contact list data
-const saveContactList = async (contactListDto: ContactListData): Promise<OperationResult<ContactListData>> => {
-  try {
-    const response = await apiService.post<OperationResult<ContactListData>>("ContactList/SaveContactList", contactListDto, getToken());
-    return response;
-  } catch (error) {
-    console.error("Error saving contact list:", error);
-    throw new Error("Failed to save contact list");
-  }
-};
-
 // Search for contact list details based on a search term
 const searchContactListDetails = async (searchTerm: string): Promise<{ data: any[]; success: boolean }> => {
   try {
@@ -90,8 +79,7 @@ const fetchContactDetails = async (conID: number): Promise<ContactListData> => {
 // Export the service methods to be used in other parts of the application
 export const ContactListService = {
   fetchActiveSpecialties,
-  saveContactList,
   searchContactListDetails,
   fetchContactDetails,
-  generateContactCode, // This will be used to generate contact codes
+  generateContactCode,
 };

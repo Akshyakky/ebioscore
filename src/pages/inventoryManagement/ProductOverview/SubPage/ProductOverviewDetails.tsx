@@ -10,7 +10,6 @@ import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOver
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { productListService, productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { showAlert } from "@/utils/Common/showAlert";
-import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import CustomButton from "@/components/Button/CustomButton";
 import FormField from "@/components/FormField/FormField";
