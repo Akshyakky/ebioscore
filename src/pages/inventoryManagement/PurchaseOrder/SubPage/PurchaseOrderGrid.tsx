@@ -22,6 +22,7 @@ import { Loader } from "lucide-react";
 
 const PurchaseOrderGrid: React.FC = () => {
   const dropdownValues = useDropdownValues(["taxType"]);
+
   const selectedProduct = useSelector((state: RootState) => state.purchaseOrder.selectedProduct) ?? null;
   const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
   const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
@@ -154,6 +155,34 @@ const PurchaseOrderGrid: React.FC = () => {
     dispatch(updateAllPurchaseOrderDetails(updatedData));
   };
 
+  const renderEditableNumberField = (row: PurchaseOrderDetailDto, field: string, index: number) => (
+    <FormField
+      type="number"
+      value={row[field] || 0}
+      onChange={(e) => handleCellChange(Number(e.target.value), index, field)}
+      label=""
+      name={field}
+      disabled={approvedDisable}
+      ControlID={`${field}_${row.productID}`}
+    />
+  );
+  const tableHeaderNames = [
+    "#",
+    "Product",
+    "Manufacturer",
+    "QOH[Units]",
+    "Required Pack",
+    "Required Unit Qty",
+    "Units/Pack",
+    "Pack Price",
+    "Selling Price",
+    "Disc",
+    "Disc[%]",
+    "GST[%]",
+    "ROL",
+    "Item Total",
+    "Delete",
+  ];
   return (
     <Paper sx={{ mt: 2, overflowX: "auto" }}>
       <Box sx={{ minWidth: 1200 }}>
@@ -161,21 +190,9 @@ const PurchaseOrderGrid: React.FC = () => {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell align="center">#</TableCell>
-                <TableCell>Product Name</TableCell>
-                <TableCell>Manufacturer</TableCell>
-                <TableCell align="right">QOH[Units]</TableCell>
-                <TableCell align="right">Required Pack</TableCell>
-                <TableCell align="right">Required Unit Qty</TableCell>
-                <TableCell align="right">Units/Pack</TableCell>
-                <TableCell align="right">Pack Price</TableCell>
-                <TableCell align="right">Selling Price</TableCell>
-                <TableCell align="right">Disc</TableCell>
-                <TableCell align="right">Disc[%]</TableCell>
-                <TableCell align="right">GST[%]</TableCell>
-                <TableCell align="right">ROL</TableCell>
-                <TableCell align="right">Item Total</TableCell>
-                <TableCell align="center">Delete</TableCell>
+                {tableHeaderNames.map((header) => (
+                  <TableCell align="center">{header}</TableCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -187,83 +204,27 @@ const PurchaseOrderGrid: React.FC = () => {
                     <TableCell>{row.productName}</TableCell>
                     <TableCell>{row.manufacturerName}</TableCell>
                     <TableCell align="right">{row.stock || 0}</TableCell>
-
                     <TableCell align="right" sx={{ minWidth: 150 }}>
-                      <FormField
-                        type="number"
-                        value={row.receivedQty || 0}
-                        onChange={(e) => handleCellChange(Number(e.target.value), index, "receivedQty")}
-                        label=""
-                        name="receivedQty"
-                        disabled={approvedDisable}
-                        ControlID={`receivedQty_${row.productID}`}
-                      />
+                      {renderEditableNumberField(row, "receivedQty", index)}
                     </TableCell>
-
                     <TableCell align="right" sx={{ minWidth: 150 }}>
                       {row.requiredUnitQty || 0}
                     </TableCell>
-
                     <TableCell align="right" sx={{ minWidth: 150 }}>
-                      <FormField
-                        type="number"
-                        value={row.unitPack || 0}
-                        onChange={(e) => handleCellChange(Number(e.target.value), index, "unitPack")}
-                        label=""
-                        name="unitPack"
-                        disabled={approvedDisable}
-                        ControlID={`unitPack_${row.productID}`}
-                      />
+                      {renderEditableNumberField(row, "unitPack", index)}
                     </TableCell>
-
                     <TableCell align="right" sx={{ minWidth: 150 }}>
-                      <FormField
-                        type="number"
-                        value={row.unitPrice || 0}
-                        onChange={(e) => handleCellChange(Number(e.target.value), index, "unitPrice")}
-                        label=""
-                        name="unitPrice"
-                        disabled={approvedDisable}
-                        ControlID={`unitPrice_${row.productID}`}
-                      />
+                      {renderEditableNumberField(row, "unitPrice", index)}
                     </TableCell>
-
                     <TableCell align="right" sx={{ minWidth: 150 }}>
-                      <FormField
-                        type="number"
-                        value={row.totAmt || 0}
-                        onChange={(e) => handleCellChange(Number(e.target.value), index, "totAmt")}
-                        label=""
-                        name="totAmt"
-                        disabled={approvedDisable}
-                        ControlID={`totAmt_${row.productID}`}
-                      />
+                      {renderEditableNumberField(row, "totAmt", index)}
                     </TableCell>
-
                     <TableCell align="right" sx={{ minWidth: 150 }}>
-                      <FormField
-                        type="number"
-                        value={row.discAmt || 0}
-                        onChange={(e) => handleCellChange(Number(e.target.value), index, "discAmt")}
-                        label=""
-                        name="discAmt"
-                        disabled={approvedDisable}
-                        ControlID={`discAmt_${row.productID}`}
-                      />
+                      {renderEditableNumberField(row, "discAmt", index)}
                     </TableCell>
-
                     <TableCell align="right" sx={{ minWidth: 150 }}>
-                      <FormField
-                        type="number"
-                        value={row.discPercentageAmt || 0}
-                        onChange={(e) => handleCellChange(Number(e.target.value), index, "discPercentageAmt")}
-                        label=""
-                        name="discPercentageAmt"
-                        disabled={approvedDisable}
-                        ControlID={`discPercentageAmt_${row.productID}`}
-                      />
+                      {renderEditableNumberField(row, "discPercentageAmt", index)}
                     </TableCell>
-
                     <TableCell align="right" sx={{ minWidth: 150 }}>
                       <FormField
                         type="select"
@@ -281,11 +242,8 @@ const PurchaseOrderGrid: React.FC = () => {
                         ControlID={`gstPercent_${row.productID}`}
                       />
                     </TableCell>
-
                     <TableCell align="right">{row.rOL || 0}</TableCell>
-
                     <TableCell align="right">{row.netAmount?.toFixed(2)}</TableCell>
-
                     <TableCell align="center">
                       <IconButton disabled={approvedDisable} size="small" onClick={() => handleDeleteRow(row.productID, row.pODetID)}>
                         <DeleteIcon fontSize="small" />
