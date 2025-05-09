@@ -80,14 +80,3 @@ export interface ContactListData {
   contactAddressDto: ContactAddressData;
   contactDetailsDto: ContactDetailsData[];
 }
-
-export interface ContactListSearchResult {
-  conID: number;
-  conCode: string;
-  conName: string;
-  conCat: string;
-  deptName: string;
-  conEmpYN: string;
-  refferalYN: string;
-  rActiveYN: string;
-}
