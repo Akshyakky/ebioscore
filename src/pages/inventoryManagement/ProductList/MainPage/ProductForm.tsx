@@ -152,18 +152,29 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       // Convert form data to ProductListDto
       const productData: ProductListDto = {
         ...data,
+        productID: data.productID || 0,
         prescription: data.prescription || "N",
         expiry: data.expiry || "N",
         sellable: data.sellable || "Y",
         taxable: data.taxable || "Y",
         chargableYN: data.chargableYN || "N",
         isAssetYN: data.isAssetYN || "N",
+        transferYN: data.transferYN || "N",
+        pGrpID: data.pGrpID || 0,
+        pUnitID: data.pUnitID || 0,
+        defaultPrice: data.defaultPrice || 0,
+        taxID: data.taxID || 0,
+        mFID: data.mFID || 0,
+        mGenID: data.mGenID || 0,
+        leadTime: data.leadTime || 0,
+        psGrpID: data.psGrpID || 0,
+        rOL: data.rOL || 0,
+        manufacturerID: data.manufacturerID || 0,
+        pLocationID: data.pLocationID || 0,
+        chargePercentage: data.chargePercentage || 0,
         vedCode: data.vedCode || "",
         abcCode: data.abcCode || "",
-        productID: data.productID || 0,
-        pLocationID: data.pLocationID || 0,
         rActiveYN: data.rActiveYN || "N",
-        transferYN: data.transferYN || "N",
         supplierStatus: product?.supplierStatus || "A",
       };
 
@@ -189,7 +200,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
     if (product) {
       // If editing, reset to original values
       reset({
-        // Reset values remain the same
         productID: product.productID,
         productCode: product.productCode || "",
         productName: product.productName || "",
@@ -332,6 +342,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
               type="select"
               required
               disabled={viewOnly}
+              placeholder="Select a category"
               options={
                 productCategory?.map((cat) => ({
                   value: cat.value.toString(),
@@ -350,6 +361,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
               type="select"
               required
               disabled={viewOnly}
+              placeholder="Select a product group"
               options={
                 productGroup?.map((group) => ({
                   value: group.value,
@@ -367,6 +379,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
               label="Product Sub Group"
               type="select"
               disabled={viewOnly}
+              placeholder="Select a sub group"
               options={
                 productSubGroup?.map((group) => ({
                   value: group.value,
@@ -385,6 +398,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
               type="select"
               required
               disabled={viewOnly}
+              placeholder="Select Unit"
               options={
                 productUnit?.map((unit) => ({
                   value: unit.value,
@@ -412,7 +426,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormField name="defaultPrice" control={control} label="Price" type="number" required disabled={viewOnly} size="small" />
+            <FormField name="defaultPrice" control={control} label="Price" type="number" required disabled={viewOnly} size="small" placeholder="Enter price" />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -422,6 +436,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
               label="Tax"
               type="select"
               disabled={viewOnly}
+              placeholder="Select Tax"
               options={
                 taxType?.map((tax) => ({
                   value: tax.value,
@@ -463,7 +478,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormField name="chargePercentage" control={control} label="Charge Percentage" type="number" disabled={viewOnly} size="small" />
+            <FormField name="chargePercentage" control={control} label="Charge Percentage" type="number" disabled={viewOnly} size="small" placeholder="Enter percentage" />
           </Grid>
 
           {/* Inventory Settings Section */}
@@ -504,27 +519,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
             />
           </Grid>
 
-          {/* <Grid size={{ xs: 12, md: 6 }}>
-            <FormField
-              name="transferYN"
-              control={control}
-              label="Transferable"
-              type="select"
-              disabled={viewOnly}
-              options={[
-                { value: "Y", label: "Yes" },
-                { value: "N", label: "No" },
-              ]}
-              size="small"
-            />
-          </Grid> */}
-
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormField name="rOL" control={control} label="Reorder Level" type="number" disabled={viewOnly} size="small" />
+            <FormField name="rOL" control={control} label="Reorder Level" type="number" disabled={viewOnly} size="small" placeholder="Enter reorder level" />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormField name="leadTime" control={control} label="Lead Time (Days)" type="number" disabled={viewOnly} size="small" />
+            <FormField name="leadTime" control={control} label="Lead Time (Days)" type="number" disabled={viewOnly} size="small" placeholder="Enter lead time" />
           </Grid>
 
           {/* Medication Information Section */}
@@ -572,6 +572,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
               label="Medication Form"
               type="select"
               disabled={viewOnly}
+              placeholder="Select Medication Form"
               options={
                 medicationForm?.map((form) => ({
                   value: form.value,
@@ -589,6 +590,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
               label="Medication Generic"
               type="select"
               disabled={viewOnly}
+              placeholder="Select Medication Generic"
               options={
                 medicationGeneric?.map((generic) => ({
                   value: generic.value,
@@ -614,6 +616,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
               label="VED Code"
               type="select"
               disabled={viewOnly}
+              placeholder="Select VED Code"
               options={[
                 { value: "V", label: "Vital" },
                 { value: "E", label: "Essential" },
@@ -630,6 +633,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
               label="ABC Code"
               type="select"
               disabled={viewOnly}
+              placeholder="Select ABC Code"
               options={[
                 { value: "A", label: "A Class" },
                 { value: "B", label: "B Class" },
@@ -648,7 +652,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
           </Grid>
 
           <Grid size={{ xs: 12 }}>
-            <FormField name="productNotes" control={control} label="Notes" type="textarea" disabled={viewOnly} rows={4} size="small" />
+            <FormField
+              name="productNotes"
+              control={control}
+              label="Notes"
+              type="textarea"
+              disabled={viewOnly}
+              rows={4}
+              size="small"
+              placeholder="Enter any additional notes about the product"
+            />
           </Grid>
         </Grid>
       </Box>
