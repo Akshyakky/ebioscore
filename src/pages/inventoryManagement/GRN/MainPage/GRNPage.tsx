@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import { setDepartmentInfo } from "@/store/features/grn/grnSlice";
+import { GRNService } from "@/services/InventoryManagementService/GRNService/GRNService";
 
 const GRNPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -20,7 +21,9 @@ const GRNPage: React.FC = () => {
     console.log("handleDepartmentChange");
     openDialog();
   };
-
+  const fetchGRNMast = async () => {
+    // const response = await GRNService.
+  };
   useEffect(() => {
     if (isDepartmentSelected) {
       dispatch(setDepartmentInfo({ departmentId: deptId, departmentName: deptName }));
