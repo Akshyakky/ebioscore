@@ -75,6 +75,10 @@ const PurchaseOrderPage: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (approvedDisable) {
+      return;
+    }
+
     setIsSubmitted(true);
 
     if (!fromDeptID || !pODate || !supplierID) {

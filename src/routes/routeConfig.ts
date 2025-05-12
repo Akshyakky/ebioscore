@@ -45,10 +45,10 @@ import IndentProductPage from "@/pages/inventoryManagement/IndentProduct/MainPag
 import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
 import EmployeeRegistrationForm from "@/pages/common/ExampleFormPage/EmployeeRegistrationForm";
 import AlertManager from "@/pages/common/AlertManagerPage/MainPage/AlertManager";
-import GRNPage from "@/pages/inventoryManagement/GRN/MainPage/GRNPage";
 import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
 import LogModule from "@/pages/common/LogViewerPage/LogModule";
 import ProductList from "@/pages/inventoryManagement/ProductList/MainPage/ProductList";
+import GRNPage from "@/pages/inventoryManagement/GRN/MainPage/GRNPage";
 
 interface RouteConfig {
   path: string;

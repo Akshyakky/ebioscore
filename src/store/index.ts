@@ -6,11 +6,13 @@ import { combineReducers } from "redux";
 import authReducer from "./features/auth/authSlice";
 import admissionSearchReducer from "./features/admission/admissionSearch/admissionSearchSlice";
 import purchaseOrderReducer from "./features/purchaseOrder/purchaseOrderSlice";
+import GRNReducer from "./features/grn/grnSlice";
 
 const rootReducer = combineReducers({
   auth: authReducer,
   admissionSearch: admissionSearchReducer,
   purchaseOrder: purchaseOrderReducer,
+  grn: GRNReducer,
 });
 
 const persistConfig = {
@@ -29,6 +31,7 @@ export const store = configureStore({
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
     }),
+  devTools: true,
 });
 
 export const persistor = persistStore(store);
