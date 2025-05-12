@@ -151,7 +151,6 @@ export type FormFieldProps<TFieldValues extends FieldValues> = FormFieldCommonPr
 /**
  * FormField - A comprehensive form field component for Material UI v7
  * Integrates with React Hook Form and Material UI
- * Includes improved handling of default values to avoid displaying "0" values
  */
 const FormField = <TFieldValues extends FieldValues>({
   name,
@@ -273,14 +272,6 @@ const FormField = <TFieldValues extends FieldValues>({
     return true;
   };
 
-  // Helper function to check if a value is empty or zero
-  const isEmptyOrZero = (value: any): boolean => {
-    if (value === null || value === undefined || value === "") return true;
-    if (typeof value === "number" && value === 0) return true;
-    if (typeof value === "string" && (value.trim() === "" || value === "0")) return true;
-    return false;
-  };
-
   // Main render function for Controller
   const renderField = ({ field, fieldState }: { field: any; fieldState: { error?: { message?: string } } }) => {
     const { error } = fieldState;
@@ -311,14 +302,10 @@ const FormField = <TFieldValues extends FieldValues>({
 
     // Handle text fields (input, email, number, etc.)
     if (isTextField(type) && type !== "password") {
-      // For number fields, don't show "0" but show empty field instead
-      const displayValue = type === "number" && isEmptyOrZero(field.value) ? "" : field.value;
-
       return (
         <TextField
           {...commonProps}
           {...field}
-          value={displayValue}
           type={type}
           inputProps={{
             ...getInputProps(),
@@ -397,9 +384,6 @@ const FormField = <TFieldValues extends FieldValues>({
       const options = getOptions();
       const multiple = getMultiple();
 
-      // Don't display field value if it's 0 or empty
-      const hasValidValue = !isEmptyOrZero(field.value);
-
       return (
         <FormControl error={!!errorMessage} disabled={disabled} fullWidth={fullWidth} required={required} variant={variant} size={size}>
           <InputLabel id={`${name}-label`}>{label}</InputLabel>
@@ -409,17 +393,17 @@ const FormField = <TFieldValues extends FieldValues>({
             id={`field-${name}`}
             multiple={multiple}
             label={label}
-            displayEmpty
-            value={hasValidValue ? field.value : ""}
+            value={field.value === 0 || field.value === "0" || field.value === null || field.value === undefined ? "" : field.value}
+            displayEmpty={!!placeholder}
             onChange={(e: SelectChangeEvent<unknown>) => {
               // Get the selected value from the event
               const selectedValue = e.target.value;
 
-              // Check if it's an empty selection
+              // If empty string is selected, this indicates returning to placeholder
               if (selectedValue === "") {
-                field.onChange("");
+                field.onChange(null);
                 if (externalOnChange) {
-                  externalOnChange("");
+                  externalOnChange(null);
                 }
                 return;
               }
@@ -451,8 +435,8 @@ const FormField = <TFieldValues extends FieldValues>({
               externalOnBlur?.(e);
             }}
             renderValue={(selected: any) => {
-              if (isEmptyOrZero(selected)) {
-                return <em>{placeholder || `Select ${label}`}</em>;
+              if (selected === "" || selected === null || selected === undefined) {
+                return <em>{placeholder || " "}</em>;
               }
 
               if (multiple) {
@@ -468,23 +452,20 @@ const FormField = <TFieldValues extends FieldValues>({
 
               // Show label based on selected value
               const option = options.find((opt) => String(opt.value) === String(selected));
-              return option ? option.label : selected;
+              return option ? option.label : selected === 0 ? placeholder || " " : selected;
             }}
           >
-            {/* Add an empty option for placeholder */}
-            <MenuItem value="" disabled={required}>
-              <em>{placeholder || `Select ${label}`}</em>
-            </MenuItem>
-
-            {options.map(
-              (option) =>
-                // Skip rendering options with value of 0 if label is also "0"
-                (String(option.value) !== "0" || option.label !== "0") && (
-                  <MenuItem key={String(option.value)} value={String(option.value)}>
-                    {option.label}
-                  </MenuItem>
-                )
+            {placeholder && (
+              <MenuItem value="0" disabled={required}>
+                <em>{placeholder}</em>
+              </MenuItem>
             )}
+            {options.map((option) => (
+              // Use the value for internal processing, but we'll handle display separately
+              <MenuItem key={String(option.value)} value={String(option.value)}>
+                {option.label}
+              </MenuItem>
+            ))}
           </Select>
           {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
         </FormControl>
@@ -496,20 +477,17 @@ const FormField = <TFieldValues extends FieldValues>({
       const options = getOptions();
       const multiple = isMultiSelect(type) || getMultiple();
 
-      // Filter out options with value 0 and label "0"
-      const filteredOptions = options.filter((option) => !(String(option.value) === "0" && option.label === "0"));
-
       return (
         <Autocomplete
           {...field}
           multiple={multiple}
           id={`field-${name}`}
-          options={filteredOptions}
+          options={options}
           getOptionLabel={(option: any) => {
             if (typeof option === "object" && option !== null) {
               return option.label || "";
             }
-            const foundOption = filteredOptions.find((opt) => opt.value === option);
+            const foundOption = options.find((opt) => opt.value === option);
             return foundOption ? foundOption.label : String(option);
           }}
           isOptionEqualToValue={(option, value) => {
@@ -518,7 +496,7 @@ const FormField = <TFieldValues extends FieldValues>({
             }
             return (option as OptionType).value === value;
           }}
-          value={isEmptyOrZero(field.value) ? (multiple ? [] : null) : field.value}
+          value={field.value || (multiple ? [] : null)}
           disabled={disabled}
           onChange={(_, newValue) => {
             if (multiple) {
@@ -540,7 +518,6 @@ const FormField = <TFieldValues extends FieldValues>({
               helperText={errorMessage || helperText}
               required={required}
               size={size}
-              placeholder={placeholder || `Select ${label}`}
               InputLabelProps={{
                 shrink: field.value ? true : undefined,
               }}
@@ -555,9 +532,6 @@ const FormField = <TFieldValues extends FieldValues>({
       const options = getOptions();
       const row = getRow();
 
-      // Filter out options with value 0 and label "0"
-      const filteredOptions = options.filter((option) => !(String(option.value) === "0" && option.label === "0"));
-
       return (
         <FormControl component="fieldset" error={!!errorMessage} disabled={disabled} required={required} fullWidth={fullWidth}>
           <FormLabel component="legend">{label}</FormLabel>
@@ -570,9 +544,8 @@ const FormField = <TFieldValues extends FieldValues>({
               externalOnChange?.(e);
             }}
             row={row}
-            value={isEmptyOrZero(field.value) ? "" : field.value}
           >
-            {filteredOptions.map((option) => (
+            {options.map((option) => (
               <FormControlLabel key={String(option.value)} value={option.value} control={<Radio size={size} />} label={option.label} />
             ))}
           </RadioGroup>
@@ -586,16 +559,13 @@ const FormField = <TFieldValues extends FieldValues>({
       const options = getOptions();
       const row = getRow();
 
-      // Filter out options with value 0 and label "0"
-      const filteredOptions = options.filter((option) => !(String(option.value) === "0" && option.label === "0"));
-
-      if (filteredOptions.length > 0) {
+      if (options.length > 0) {
         // Multiple checkboxes
         return (
           <FormControl component="fieldset" error={!!errorMessage} disabled={disabled} required={required} fullWidth={fullWidth}>
             <FormLabel component="legend">{label}</FormLabel>
             <FormGroup row={row}>
-              {filteredOptions.map((option) => {
+              {options.map((option) => {
                 const isChecked = Array.isArray(field.value) ? field.value.includes(option.value) : false;
 
                 return (
@@ -649,6 +619,7 @@ const FormField = <TFieldValues extends FieldValues>({
     }
 
     // Date pickers
+    // Date pickers
     if (isDatePicker(type) || isDateTimePicker(type)) {
       const PickerComponent = isDatePicker(type) ? DatePicker : DateTimePicker;
       const dateFormat = getDateFormat();
@@ -681,7 +652,6 @@ const FormField = <TFieldValues extends FieldValues>({
                 error: !!errorMessage,
                 helperText: errorMessage || helperText,
                 size,
-                placeholder: placeholder || `Select ${label}`,
                 InputLabelProps: {
                   shrink: true,
                 },
@@ -727,7 +697,7 @@ const FormField = <TFieldValues extends FieldValues>({
       );
     }
 
-    // Switch component
+    // In the FormField component
     if (type === "switch") {
       return (
         <FormControl fullWidth={fullWidth} required={required} variant={variant} size={size}>
