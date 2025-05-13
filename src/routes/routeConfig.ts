@@ -6,7 +6,6 @@ import RoutineReportsPA from "../pages/patientAdministration/RoutineReportsPage/
 import ListOfReportsPage from "../pages/routineReports/MainPage/ListOfReportsPage";
 import { PatientSearchProvider } from "../context/PatientSearchContext";
 import ContactListPage from "../pages/hospitalAdministration/ContactListPage/MainPage/ContactListPage";
-import { ContactListSearchProvider } from "../context/hospitalAdministration/ContactListSearchContext";
 import ProfileListPage from "../pages/securityManagement/ProfileListPage/MainPage/ProfileListPage";
 import { ProfileListSearchProvider } from "../context/SecurityManagement/ProfileListSearchContext";
 import AdmissionPage from "../pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
@@ -44,12 +43,12 @@ import ComponentEntryTypePage from "@/pages/laboratory/ComponentEntryType/MainPa
 import ForgotPasswordPage from "@/pages/common/ForgotPasswordPage/ForgotPasswordPage";
 import IndentProductPage from "@/pages/inventoryManagement/IndentProduct/MainPage/IndentProductPage";
 import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
-import { Navigate } from "react-router-dom";
 import EmployeeRegistrationForm from "@/pages/common/ExampleFormPage/EmployeeRegistrationForm";
 import AlertManager from "@/pages/common/AlertManagerPage/MainPage/AlertManager";
-import GRNPage from "@/pages/inventoryManagement/GRN/MainPage/GRNPage";
 import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
 import LogModule from "@/pages/common/LogViewerPage/LogModule";
+import ProductList from "@/pages/inventoryManagement/ProductList/MainPage/ProductList";
+import GRNPage from "@/pages/inventoryManagement/GRN/MainPage/GRNPage";
 
 interface RouteConfig {
   path: string;
@@ -66,7 +65,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/revisitpage", component: RevisitPage, protected: true, providers: [PatientSearchProvider] },
   { path: "/routinereportspa", component: RoutineReportsPA, protected: true },
   { path: "/listofreportspage", component: ListOfReportsPage, protected: true },
-  { path: "/contactlistpage", component: ContactListPage, protected: true, providers: [ContactListSearchProvider] },
+  { path: "/contactlistpage", component: ContactListPage, protected: true },
   { path: "/userlistpage", component: UserListPage, protected: true, providers: [UserListSearchProvider] },
   { path: "/profilelistpage", component: ProfileListPage, protected: true, providers: [ProfileListSearchProvider] },
   { path: "/admissionpage", component: AdmissionPage, protected: true, providers: [PatientSearchProvider] },
@@ -83,7 +82,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/BedSetUpPage", component: BedSetUpPage, protected: true },
   { path: "/DeptUnitListPage", component: DeptUnitListPage, protected: true },
   { path: "/InsuranceListPage", component: InsuranceListPage, protected: true },
-  { path: "/ProductListPage", component: ProductListPage, protected: true },
+  { path: "/ProductListPage", component: ProductList, protected: true },
   { path: "/ProductTaxListPage", component: ProductTaxListPage, protected: true },
   { path: "/ProductOverviewPage", component: ProductOverviewPage, protected: true },
   { path: "/ManageBedPage", component: ManageBedPage, protected: true },

@@ -135,7 +135,6 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    console.log(value);
     setContactList((prev) => {
       if (name === "conCode") {
         return {

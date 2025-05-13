@@ -75,6 +75,10 @@ const PurchaseOrderPage: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (approvedDisable) {
+      return;
+    }
+
     setIsSubmitted(true);
 
     if (!fromDeptID || !pODate || !supplierID) {
@@ -161,7 +165,7 @@ const PurchaseOrderPage: React.FC = () => {
           transferYN: "Y",
           rActiveYN: row.rActiveYN || "Y",
           rNotes: row.rNotes || "",
-          hsnCode: "test",
+          hsnCode: row.hsnCode || "",
         })),
       };
       //Grid fields validation

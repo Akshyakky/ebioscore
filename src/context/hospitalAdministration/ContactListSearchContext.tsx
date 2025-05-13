@@ -1,12 +1,11 @@
 import { createContext, useState } from "react";
 import React from "react";
-import { ContactListSearchResult } from "@/interfaces/HospitalAdministration/ContactListData";
 import { useLoading } from "../LoadingContext";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { notifyError } from "@/utils/Common/toastManager";
 
 interface ContactListSearchContextProps {
-  searchResults: ContactListSearchResult[];
+  searchResults: any[];
   performSearch: (searchTerm: string) => Promise<void>;
 }
 
@@ -20,7 +19,7 @@ interface ContextListSearchProviderProps {
 }
 
 export const ContactListSearchProvider = ({ children }: ContextListSearchProviderProps) => {
-  const [searchResults, setSearchResults] = useState<ContactListSearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const { setLoading } = useLoading();
   const performSearch = async (searchterm: string): Promise<void> => {
     setLoading(true);

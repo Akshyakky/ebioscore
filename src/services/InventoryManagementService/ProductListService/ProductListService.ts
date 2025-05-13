@@ -1,32 +1,25 @@
-import { APIConfig } from "@/apiConfig";
-import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
+import { APIConfig } from "@/apiConfig";
+import { GenericEntityService, OperationResult } from "@/services/GenericEntityService/GenericEntityService";
 import { CommonApiService } from "@/services/CommonApiService";
-import { store } from "@/store";
 
-const apiService = new CommonApiService({
-  baseURL: APIConfig.inventoryManagementURL,
-});
-const getToken = () => store.getState().auth.token!;
-export const saveProductList = async (productListDto: ProductListDto): Promise<OperationResult<ProductListDto>> => {
-  return apiService.post<OperationResult<ProductListDto>>("ProductList/SaveProductList", productListDto, getToken());
-};
+export class ProductListService extends GenericEntityService<ProductListDto> {
+  constructor() {
+    const apiService = new CommonApiService({
+      baseURL: APIConfig.inventoryManagementURL,
+    });
+    super(apiService, "ProductMaster");
+  }
 
-export const getAllProductList = async (): Promise<OperationResult<ProductListDto[]>> => {
-  return apiService.get<OperationResult<ProductListDto[]>>("ProductList/GetAllProductList", getToken());
-};
+  async getNextProductCode(): Promise<OperationResult<string>> {
+    return this.apiService.get<OperationResult<string>>(`${this.baseEndpoint}/GetNextProductCode`, this.getToken());
+  }
 
-export const getProductListById = async (productID: number): Promise<OperationResult<ProductListDto>> => {
-  return apiService.get<OperationResult<ProductListDto>>(`ProductList/GetProductListById/${productID}`, getToken());
-};
+  async getByProductCode(productCode: string): Promise<OperationResult<ProductListDto>> {
+    return this.apiService.get<OperationResult<ProductListDto>>(`${this.baseEndpoint}/GetByProductCode/${encodeURIComponent(productCode)}`, this.getToken());
+  }
 
-export const updateProductListActiveStatus = async (productID: number, rActive: boolean): Promise<OperationResult<boolean>> => {
-  return apiService.put<OperationResult<boolean>>(`ProductList/UpdateProductListActiveStatus/${productID}`, rActive, getToken());
-};
-
-export const ProductListService = {
-  saveProductList,
-  getAllProductList,
-  getProductListById,
-  updateProductListActiveStatus,
-};
+  async getByProductName(productName: string): Promise<OperationResult<ProductListDto[]>> {
+    return this.apiService.get<OperationResult<ProductListDto[]>>(`${this.baseEndpoint}/GetByProductName/${encodeURIComponent(productName)}`, this.getToken());
+  }
+}

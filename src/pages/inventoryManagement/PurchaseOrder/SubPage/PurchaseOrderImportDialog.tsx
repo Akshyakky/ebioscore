@@ -107,10 +107,9 @@ const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ o
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>PO Code</TableCell>
-              <TableCell>PO Date</TableCell>
-              <TableCell>Supplier Name</TableCell>
-              <TableCell>Action</TableCell>
+              {["PO Code", "PO Date", "Supplier Name", "Action"].map((header) => (
+                <TableCell>{header}</TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -150,11 +149,9 @@ const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ o
                           <Table size="small">
                             <TableHead>
                               <TableRow>
-                                <TableCell>Sl. No</TableCell>
-                                <TableCell>Product Name</TableCell>
-                                <TableCell>Qty</TableCell>
-                                <TableCell>Pack Price</TableCell>
-                                <TableCell>Selling Price</TableCell>
+                                {["Sl. No", "Product Name", "Qty", "Pack Price", "Selling Price"].map((header) => (
+                                  <TableCell>{header}</TableCell>
+                                ))}
                               </TableRow>
                             </TableHead>
                             <TableBody>
