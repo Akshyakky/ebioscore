@@ -229,12 +229,11 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
         rNotes: product.rNotes ?? "",
         units: product.issueUnit ? String(product.issueUnit) : "",
         unitsPackage: product.unitPack ?? 1,
-        deptIssualYN: "N", // Default value
+        deptIssualYN: "N",
         indentDetStatusCode: "N",
         transferYN: product.transferYN ?? "N",
       };
 
-      // Update grid data with the new row
       const updatedGrid = [...gridData, newRow];
       setGridData(updatedGrid);
       setValue("IndentDetails", updatedGrid);
