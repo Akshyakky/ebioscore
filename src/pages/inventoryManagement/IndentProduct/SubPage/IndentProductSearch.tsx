@@ -8,6 +8,7 @@ import { DateFilterType, FilterDto } from "@/interfaces/Common/FilterDto";
 import { showAlert } from "@/utils/Common/showAlert";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
 import { indentProductMastService } from "@/services/InventoryManagementService/inventoryManagementService";
+import dayjs from "dayjs";
 
 interface IndentSearchDialogProps {
   open: boolean;
@@ -238,7 +239,16 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
     { key: "indentCode", header: "Indent No", visible: true, sortable: true },
     { key: "fromDeptName", header: "From Department", visible: true, sortable: true },
     { key: "toDeptName", header: "To Department", visible: true, sortable: true },
-    { key: "indentDate", header: "Date", visible: true, sortable: true },
+    {
+      key: "indentDate",
+      header: "Date",
+      visible: true,
+      sortable: true,
+      render: (item: IndentMastDto) =>
+        item.indentDate
+          ? dayjs(item.indentDate).format("DD/ MM/ YYYY") // → 13/ 05/ 2025
+          : "",
+    },
     { key: "indStatus", header: "Record Status", visible: true, sortable: true },
     { key: "createdBy", header: "Created By", visible: true, sortable: true },
     { key: "indentType", header: "Indent Type", visible: true, sortable: true },
@@ -275,14 +285,14 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
         onDateFilterChange: handleDateFilterChange,
         onDateRangeChange: handleDateRangeChange,
       }}
-      dialogProps={{
-        maxWidth: "lg",
-        fullWidth: true,
-        dialogContentSx: {
-          minHeight: "600px",
-          maxHeight: "600px",
-        },
-      }}
+      // dialogProps={{
+      //   maxWidth: "lg",
+      //   fullWidth: true,
+      //   dialogContentSx: {
+      //     minHeight: "600px",
+      //     maxHeight: "600px",
+      //   },
+      // }}
     />
   );
 };

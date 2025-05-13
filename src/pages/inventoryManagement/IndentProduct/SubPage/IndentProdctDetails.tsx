@@ -3,6 +3,7 @@ import { Select, MenuItem, TextField, IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { IndentDetailDto } from "@/interfaces/InventoryManagement/IndentProductDto";
 import CustomGrid from "@/components/CustomGrid/CustomGrid";
+import { DisabledVisible, DisabledVisibleOutlined } from "@mui/icons-material";
 
 interface Props {
   gridData: IndentDetailDto[];
@@ -23,6 +24,10 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
       sx={{ width: "100%" }}
       inputProps={{ style: { textAlign: "right" } }}
     />
+  );
+
+  const renderDisabledNumberField = (item: IndentDetailDto, rowIndex: number, field: keyof IndentDetailDto) => (
+    <TextField size="small" type="number" value={item[field] ?? 0} disabled sx={{ width: "100%" }} inputProps={{ style: { textAlign: "right" } }} />
   );
 
   const renderSelect = (
@@ -66,10 +71,19 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
 
   const columns = useMemo(
     () => [
-      { key: "location", header: "Location", visible: true, width: 120, minWidth: 120 },
+      {
+        key: "supplierName",
+        header: "Supplier Name",
+        visible: true,
+        width: 150,
+        minWidth: 150,
+        render: (item: IndentDetailDto, rowIndex: number) => renderSelect(item, rowIndex, "supplierName", supplierOptions, "supplier"),
+      },
       { key: "productName", header: "Product Name", visible: true, width: 180, minWidth: 180 },
       { key: "hsnCode", header: "HSN Code", visible: true, width: 100, minWidth: 100 },
+      { key: "location", header: "Location", visible: true, width: 120, minWidth: 120 },
       { key: "manufacturerName", header: "Manufacturer", visible: true, width: 150, minWidth: 150 },
+
       {
         key: "requiredQty",
         header: "Required Qty",
@@ -78,13 +92,22 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
         minWidth: 110,
         render: (item: IndentDetailDto, rowIndex: number) => renderNumberField(item, rowIndex, "requiredQty"),
       },
+
       {
-        key: "unitsPackage",
+        key: "netValue",
+        header: "Net Value",
+        visible: true,
+        width: 110,
+        minWidth: 110,
+        render: (item: IndentDetailDto, rowIndex: number) => renderDisabledNumberField(item, rowIndex, "netValue"),
+      },
+      {
+        key: "requiredUnitQty",
         header: "Units/Package",
         visible: true,
         width: 100,
         minWidth: 100,
-        render: (item: IndentDetailDto, rowIndex: number) => renderNumberField(item, rowIndex, "unitsPackage"),
+        render: (item: IndentDetailDto, rowIndex: number) => renderNumberField(item, rowIndex, "requiredUnitQty"),
       },
       {
         key: "units",
@@ -136,16 +159,7 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
       { key: "baseUnit", header: "Base Unit", visible: true, width: 100, minWidth: 100 },
       { key: "leadTime", header: "Lead Time", visible: true, width: 100, minWidth: 100 },
       { key: "qoh", header: "QOH [Units]", visible: true, width: 120, minWidth: 120 },
-      { key: "average", header: "Average", visible: true, width: 100, minWidth: 100 },
       { key: "averageDemand", header: "Average Demand", visible: true, width: 130, minWidth: 130 },
-      {
-        key: "supplierName",
-        header: "Supplier Name",
-        visible: true,
-        width: 150,
-        minWidth: 150,
-        render: (item: IndentDetailDto, rowIndex: number) => renderSelect(item, rowIndex, "supplierName", supplierOptions, "supplier"),
-      },
       { key: "roq", header: "ROQ", visible: true, width: 80, minWidth: 80 },
       {
         key: "delete",

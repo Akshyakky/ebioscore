@@ -10,6 +10,7 @@ import FormField from "../FormField/FormField";
 import GenericDialog from "./GenericDialog";
 import { DateFilterType } from "@/interfaces/Common/FilterDto";
 import { debug } from "console";
+import dayjs from "dayjs";
 
 type ExtendedItem<T> = T & {
   serialNumber: number;
@@ -123,7 +124,6 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
   }, [open]);
 
   useEffect(() => {
-    debugger;
     if (items && Array.isArray(items)) {
       setSearchResults(items);
       const initialSwitchStatus = items.reduce((statusMap, item) => {
@@ -159,8 +159,6 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
     setDataLoaded(false);
     try {
       const fetchedItems = await fetchItems();
-      console.log("Fetched items:", fetchedItems);
-
       if (!Array.isArray(fetchedItems)) {
         console.error("Fetched items is not an array:", fetchedItems);
         setSearchResults([]);
@@ -221,15 +219,9 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
   const handleSwitchChange = async (item: ExtendedItem<T>, checked: boolean) => {
     try {
-      debugger;
-      // Toggle the status from the current state
       const newStatus = checked ? "Y" : "N"; // Update to 'Y' if checked, else 'N'
-
-      // Update the status in the backend or perform the action
-      const success = await updateActiveStatus(getItemId(item), newStatus === "Y"); // Pass boolean for status change
-
+      const success = await updateActiveStatus(getItemId(item), newStatus === "Y");
       if (success) {
-        // Update the local state after the backend has successfully updated
         setSwitchStatus((prev) => ({ ...prev, [getItemId(item)]: checked }));
         setSearchResults((prev) => prev.map((row) => (getItemId(row) === getItemId(item) ? { ...row, rActiveYN: newStatus } : row)));
       }
@@ -264,11 +256,8 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
           visible: true,
           sortable: false,
           render: (item: ExtendedItem<T>) => {
-            // Check if the item is active based on rActiveYN or default to true
             const isItemActive = item.rActiveYN === "Y" || item.rActiveYN === undefined;
-            const shouldBeVisible = (typeof isStatusVisible === "function" ? isStatusVisible(item) : isStatusVisible) && isItemActive;
-
-            return shouldBeVisible ? <Typography variant="body2">{isItemActive ? "Active" : "Hidden"}</Typography> : null;
+            return isStatusVisible && isItemActive ? <Typography variant="body2">{isItemActive ? "Active" : "Hidden"}</Typography> : null;
           },
         }
       : null;
@@ -280,16 +269,14 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
           visible: true,
           sortable: false,
           render: (item: ExtendedItem<T>) => {
-            // Check if the item is active based on rActiveYN or default to true
             const isItemActive = item.rActiveYN === "Y" || item.rActiveYN === undefined;
-            const shouldBeVisible = (typeof isActionVisible === "function" ? isActionVisible(item) : isActionVisible) && isItemActive;
-
-            return shouldBeVisible ? (
+            return isActionVisible && isItemActive ? (
               <CustomSwitch size="small" color="secondary" checked={isItemActive} onChange={(event) => handleSwitchChange(item, event.target.checked)} disabled={isLoading} />
             ) : null;
           },
         }
       : null;
+
     const convertedColumns: Column<ExtendedItem<T>>[] = originalColumns.map((col) => ({
       ...col,
       key: col.key as keyof ExtendedItem<T> & string,
@@ -331,10 +318,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
   const handleFilterChange = (filterName: string, event: SelectChangeEvent) => {
     const value = event.target.value;
-    console.log(`Filter changed in component: ${filterName} = ${value}`);
-
     setFilterValues((prev) => ({ ...prev, [filterName]: value }));
-
     if (onFilterChange) {
       onFilterChange(filterName, value);
     }
@@ -342,10 +326,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
   const handleDateFilterChange = (event: SelectChangeEvent) => {
     const value = Number(event.target.value);
-    console.log(`Date filter changed in component: ${value}`);
-
     setDateFilter(value as DateFilterType);
-
     if (dateFilterOptions?.onDateFilterChange) {
       dateFilterOptions.onDateFilterChange(value as DateFilterType);
     }
@@ -357,13 +338,8 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
     } else {
       setEndDate(date);
     }
-
     if (dateFilterOptions?.onDateRangeChange) {
-      if (type === "start" && endDate) {
-        dateFilterOptions.onDateRangeChange(date, endDate);
-      } else if (type === "end" && startDate) {
-        dateFilterOptions.onDateRangeChange(startDate, date);
-      }
+      dateFilterOptions.onDateRangeChange(startDate, endDate);
     }
   };
 
@@ -374,7 +350,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
       <Grid container spacing={2} mb={2}>
         {filterConfigs.map((config) => (
           <Grid size={{ xs: 12, md: 3 }} key={config.name}>
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth>
               <InputLabel id={`${config.name}-label`}>{config.label}</InputLabel>
               <Select
                 labelId={`${config.name}-label`}
@@ -395,7 +371,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
         {dateFilterOptions?.showDateFilter && (
           <Grid size={{ xs: 12, md: 3 }}>
-            <FormControl fullWidth size="small">
+            <FormControl fullWidth>
               <InputLabel id="date-filter-label">Date Filter</InputLabel>
               <Select labelId="date-filter-label" id="date-filter-select" label="Date Filter" value={dateFilter.toString()} onChange={handleDateFilterChange}>
                 <MenuItem value={DateFilterType.All}>All</MenuItem>
@@ -412,7 +388,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
         {dateFilter === DateFilterType.DateRange && (
           <>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <FormField
                 type="date"
                 label="Start Date"
@@ -423,9 +399,18 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
                 InputLabelProps={{
                   shrink: true,
                 }}
+                // sx={{
+                //   backgroundColor: "white",
+                //   borderRadius: "4px",
+                //   width: "100%",
+                //   "& .MuiInputBase-root": {
+                //     padding: "8px 12px", // Adjust padding for the date picker
+                //   },
+                // }}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+
+            <Grid size={{ xs: 12, md: 8 }}>
               <FormField
                 type="date"
                 label="End Date"
@@ -436,6 +421,14 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
                 InputLabelProps={{
                   shrink: true,
                 }}
+                // sx={{
+                //   backgroundColor: "white",
+                //   borderRadius: "4px",
+                //   width: "100%",
+                //   "& .MuiInputBase-root": {
+                //     padding: "8px 12px", // Adjust padding for the date picker
+                //   },
+                // }}
               />
             </Grid>
           </>
@@ -456,7 +449,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
               onChange={handleSearchInputChange}
               name="search"
               ControlID="SearchField"
-              placeholder={searchPlaceholder}
+              placeholder="Search..."
               InputProps={{
                 type: "search",
               }}
