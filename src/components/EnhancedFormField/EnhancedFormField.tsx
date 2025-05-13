@@ -380,6 +380,7 @@ const FormField = <TFieldValues extends FieldValues>({
     }
 
     // Select field
+    // Select field
     if (isSelect(type)) {
       const options = getOptions();
       const multiple = getMultiple();
@@ -393,20 +394,9 @@ const FormField = <TFieldValues extends FieldValues>({
             id={`field-${name}`}
             multiple={multiple}
             label={label}
-            value={field.value === 0 || field.value === "0" || field.value === null || field.value === undefined ? "" : field.value}
-            displayEmpty={!!placeholder}
             onChange={(e: SelectChangeEvent<unknown>) => {
               // Get the selected value from the event
               const selectedValue = e.target.value;
-
-              // If empty string is selected, this indicates returning to placeholder
-              if (selectedValue === "") {
-                field.onChange(null);
-                if (externalOnChange) {
-                  externalOnChange(null);
-                }
-                return;
-              }
 
               // Find the matching option - first try by value, then by label
               const selectedOption = options.find((opt) => String(opt.value) === String(selectedValue)) || options.find((opt) => String(opt.label) === String(selectedValue));
@@ -435,10 +425,6 @@ const FormField = <TFieldValues extends FieldValues>({
               externalOnBlur?.(e);
             }}
             renderValue={(selected: any) => {
-              if (selected === "" || selected === null || selected === undefined) {
-                return <em>{placeholder || " "}</em>;
-              }
-
               if (multiple) {
                 return (
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
@@ -450,16 +436,10 @@ const FormField = <TFieldValues extends FieldValues>({
                 );
               }
 
-              // Show label based on selected value
-              const option = options.find((opt) => String(opt.value) === String(selected));
-              return option ? option.label : selected === 0 ? placeholder || " " : selected;
+              // ✅ Fix: Show label based on selected value
+              return options.find((opt) => String(opt.value) === String(selected))?.label ?? selected;
             }}
           >
-            {placeholder && (
-              <MenuItem value="0" disabled={required}>
-                <em>{placeholder}</em>
-              </MenuItem>
-            )}
             {options.map((option) => (
               // Use the value for internal processing, but we'll handle display separately
               <MenuItem key={String(option.value)} value={String(option.value)}>
