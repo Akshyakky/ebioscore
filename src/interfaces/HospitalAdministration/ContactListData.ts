@@ -80,3 +80,9 @@ export interface ContactListData {
   contactAddressDto: ContactAddressData;
   contactDetailsDto: ContactDetailsData[];
 }
+export interface ContactDropdownData {
+  conID: number;
+  conCode: string;
+  conName: string;
+  conCategory: string;
+}

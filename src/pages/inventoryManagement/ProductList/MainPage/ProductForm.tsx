@@ -64,7 +64,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
   const [activeStatus, setActiveStatus] = useState(product?.rActiveYN === "Y");
 
   // Load dropdown values
-  const { productCategory, productGroup, productUnit, taxType, medicationForm, medicationGeneric, productSubGroup } = useDropdownValues([
+  const { productCategory, productGroup, productUnit, taxType, medicationForm, medicationGeneric, productSubGroup, manufacturer } = useDropdownValues([
     "productCategory",
     "productGroup",
     "productUnit",
@@ -72,6 +72,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
     "medicationForm",
     "medicationGeneric",
     "productSubGroup",
+    "manufacturer",
   ]);
 
   // Initialize form with default values or product values
@@ -399,7 +400,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
               type="select"
               required
               disabled={viewOnly}
-              placeholder="Select Unit"
+              placeholder="Select a unit"
               options={
                 productUnit?.map((unit) => ({
                   value: unit.value,
@@ -407,6 +408,25 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                 })) || []
               }
               size="small"
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormField
+              name="manufacturerID"
+              control={control}
+              label="Manufacturer"
+              type="select"
+              disabled={viewOnly}
+              placeholder="Select a manufacturer"
+              options={
+                manufacturer?.map((mfr) => ({
+                  value: mfr.value,
+                  label: mfr.label,
+                })) || []
+              }
+              size="small"
+              clearable={true}
             />
           </Grid>
 

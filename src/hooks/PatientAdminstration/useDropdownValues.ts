@@ -27,7 +27,7 @@ import { componentEntryTypeService, templategroupService } from "@/services/Labo
 import { appSubModuleService, appUserModuleService } from "@/services/SecurityManagementServices/securityManagementServices";
 import { serviceTypeService } from "@/services/BillingServices/BillingGenericService";
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
-import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
+import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
 
 export type DropdownType =
   | "pic"
@@ -90,7 +90,8 @@ export type DropdownType =
   | "serviceType"
   | "employeeRoom"
   | "departmentIndent"
-  | "statusFilter";
+  | "statusFilter"
+  | "manufacturer";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -447,6 +448,17 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       departmentIndent: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DEPARTMENTINDENT");
         return response;
+      },
+      manufacturer: async () => {
+        const contactService = new ContactService();
+        const response = await contactService.getContactsForDropdown("MANUFACTURER", "", false);
+        if (response.success && response.data) {
+          return response.data.map((item) => ({
+            value: item.conID,
+            label: item.conName,
+          }));
+        }
+        return [];
       },
     }),
     []
