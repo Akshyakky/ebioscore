@@ -45,23 +45,11 @@ const IndentProductFooter: React.FC<IndentProductFooterProps> = ({ setValue, con
         </Grid>
 
         <Grid size={{ xs: 12, md: 3 }}>
-          <FormField
-            name="IndentMaster.rActiveYN"
-            control={control}
-            label="Hide Indent"
-            type="switch"
-            onChange={handleRActiveToggle} // This is responsible for toggling the value
-          />
+          <FormField name="IndentMaster.rActiveYN" control={control} label="Hide Indent" type="switch" onChange={handleRActiveToggle} />
         </Grid>
 
         <Grid size={{ xs: 12, md: 3 }}>
-          <FormField
-            name="IndentMaster.indentApprovedYN"
-            control={control}
-            label="Finalize Indent"
-            type="switch"
-            onChange={handleIndentApprovedToggle} // This is responsible for toggling the value
-          />
+          <FormField name="IndentMaster.indentApprovedYN" control={control} label="Finalize Indent" type="switch" onChange={handleIndentApprovedToggle} />
         </Grid>
       </Grid>
     </Paper>

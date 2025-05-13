@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState } from "react";
 import { Box, Container } from "@mui/material";
 import Search from "@mui/icons-material/Search";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
@@ -9,7 +9,7 @@ import { indentProductServices } from "@/services/InventoryManagementService/ind
 import { showAlert } from "@/utils/Common/showAlert";
 import { useLoading } from "@/context/LoadingContext";
 import dayjs from "dayjs";
-import { indentProductDetailService, productListService, productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
+import { productListService, productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
 import IndentProductDetails from "../SubPage/IndentProductList";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
@@ -19,7 +19,7 @@ const IndentProductPage: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<IndentSaveRequestDto | null>(null);
-  const [indentDetails, setIndentDetails] = useState<IndentDetailDto[]>([]);
+  const [, setIndentDetails] = useState<IndentDetailDto[]>([]);
   const { setLoading } = useLoading();
 
   const handleDepartmentSelect = useCallback((id: number, name: string) => {
@@ -35,51 +35,30 @@ const IndentProductPage: React.FC = () => {
     setIsSearchOpen(false);
   };
 
-  const handleCreateNew = () => {
-    setSelectedData(null); // Clear any selected indent to start fresh
-  };
-
   const onIndentDetailsChange = (updatedDetails: IndentDetailDto[]) => {
     setIndentDetails(updatedDetails);
   };
 
-  // Function to fetch the complete indent data when an indent is selected for editing
-  // Inside fetchIndentDetails function
-  // Function to fetch the complete indent data when an indent is selected for editing
-  // Function to fetch the complete indent data when an indent is selected for editing
   const fetchIndentDetails = useCallback(
     async (indentId: number) => {
       try {
         setLoading(true);
-
-        // Fetch master and detail data using a single service call
         const response = await indentProductServices.getIndentById(indentId);
-
-        // Check if the request was successful
         if (!response.success || !response.data) {
           showAlert("Error", response.errorMessage || "Failed to fetch indent details", "error");
           return null;
         }
 
-        // Destructure master and detail data
         const { indentMaster, indentDetails } = response.data;
-
-        // Log the indentMaster to see what we're getting
-        console.log("Indent Master received:", indentMaster);
-        console.log("Indent Details received:", indentDetails);
-
-        // Fetch complete product details for each product in the details
         const completeDetails = await Promise.all(
           (indentDetails || []).map(async (detail: any) => {
             const productRes = await productListService.getById(detail.productID);
             const productOverviewRes = await productOverviewService.getAll();
             const product: ProductListDto = productRes.data ?? ({} as ProductListDto);
             const productOverview = productOverviewRes.data?.find((p: ProductOverviewDto) => p.productID === detail.productID);
-
-            // Important: Preserve the original indentDetID to ensure we update instead of insert
             return {
               ...detail,
-              indentDetID: detail.indentDetID, // Preserve the existing ID
+              indentDetID: detail.indentDetID,
               baseUnit: product.baseUnit ?? null,
               package: product.productPackageName ?? null,
               groupName: product.productGroupName ?? null,
@@ -105,21 +84,17 @@ const IndentProductPage: React.FC = () => {
           })
         );
 
-        // Create the complete indent data
         const indentData: IndentSaveRequestDto = {
-          id: indentMaster?.indentID || 0, // Preserve the master ID
+          id: indentMaster?.indentID || 0,
           rActiveYN: indentMaster?.rActiveYN || "Y",
           IndentMaster: {
             ...indentMaster,
             indentDate: indentMaster?.indentDate ? dayjs(indentMaster.indentDate).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
-            rNotes: indentMaster?.rNotes || "", // Ensure rNotes is properly mapped
+            rNotes: indentMaster?.rNotes || "",
           },
           IndentDetails: completeDetails,
         };
 
-        console.log("Indent data prepared:", indentData);
-
-        // Set the state with the fetched data
         setSelectedData(indentData);
         setIndentDetails(completeDetails);
         return indentData;
@@ -139,10 +114,8 @@ const IndentProductPage: React.FC = () => {
       showAlert("Warning", "Invalid indent selected", "warning");
       return;
     }
-
-    // Fetch the complete indent details for editing
     await fetchIndentDetails(indentMastDto.indentID);
-    setIsSearchOpen(false); // Close the search dialog after selection
+    setIsSearchOpen(false);
   };
 
   const actionButtons: ButtonProps[] = [
@@ -180,7 +153,6 @@ const IndentProductPage: React.FC = () => {
         requireSelection
       />
 
-      {/* Indent Search Dialog */}
       <IndentSearchDialog open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleIndentSelect} />
     </>
   );

@@ -24,6 +24,7 @@ import { appModifiedListService } from "@/services/HospitalAdministrationService
 import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import CustomButton from "@/components/Button/CustomButton";
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
+import { useProductSearch } from "@/hooks/InventoryManagement/Product/useProductSearch";
 
 interface Props {
   selectedData?: IndentSaveRequestDto | null;
@@ -35,13 +36,14 @@ interface Props {
 
 const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, selectedDeptName, handleDepartmentChange, onIndentDetailsChange }) => {
   const { control, setValue, reset, handleSubmit, getValues, watch } = useForm<IndentSaveRequestDto>();
-  const { compID, compCode, compName, userID } = useAppSelector((s) => s.auth);
+  const { compID, compCode, compName } = useAppSelector((s) => s.auth);
   const { setLoading } = useLoading();
   const [gridData, setGridData] = useState<IndentDetailDto[]>([]);
   const initializedRef = useRef(false);
   const [selectedIndentType, setSelectedIndentType] = useState<string>("");
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [clearSearchTrigger, setClearSearchTrigger] = useState(0);
+  const { setInputValue, setSelectedProduct } = useProductSearch({ minSearchLength: 2 });
 
   const packageOptions = [
     { value: "1", label: "Package 1" },
@@ -62,7 +64,7 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
   ];
 
   const requiredDropdowns: DropdownType[] = ["statusFilter", "department", "departmentIndent"];
-  const { statusFilter, department, departmentIndent } = useDropdownValues(requiredDropdowns);
+  const { department, departmentIndent } = useDropdownValues(requiredDropdowns);
 
   const initializeForm = useCallback(async () => {
     if (initializedRef.current) return;
@@ -86,7 +88,7 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
           toDeptID: "",
           toDeptName: "",
           rActiveYN: "Y",
-          indentApprovedYN: "N",
+          indentApprovedYN: "Y",
           rNotes: "",
           compID: 0,
           compCode: "",
@@ -128,12 +130,11 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
 
   useEffect(() => {
     if (selectedData) {
-      // ► code and label come from two different fields
       const indentTypeValue = selectedData.IndentMaster.indentTypeValue || "";
       const indentTypeName = selectedData.IndentMaster.indentType || "";
 
-      setValue("IndentMaster.indentTypeValue", indentTypeValue); // CODE
-      setValue("IndentMaster.indentType", indentTypeName); // NAME
+      setValue("IndentMaster.indentTypeValue", indentTypeValue);
+      setValue("IndentMaster.indentType", indentTypeName);
       setSelectedIndentType(indentTypeValue);
 
       setValue("IndentMaster.indentCode", selectedData.IndentMaster.indentCode || "");
@@ -261,19 +262,37 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
 
   const handleProductSelect = async (product: ProductSearchResult | null) => {
     if (!product) return;
-    await fetchProductDetails(product.productID, product);
+    const existingProduct = gridData.find((item) => item.productID === product.productID);
+    if (existingProduct) {
+      await showAlert("Duplicate Product", "This product is already in the grid. Are you sure you want to add it again?", "warning", {
+        showConfirmButton: true,
+        showCancelButton: true,
+        confirmButtonText: "Yes, Add it",
+        cancelButtonText: "No, Cancel",
+        onConfirm: async () => {
+          await fetchProductDetails(product.productID, product);
+          setInputValue("");
+          setSelectedProduct(null);
+        },
+        onCancel: () => {
+          console.log("Product addition canceled");
+          setInputValue("");
+          setSelectedProduct(null);
+        },
+      });
+    } else {
+      await fetchProductDetails(product.productID, product);
+      setInputValue("");
+      setSelectedProduct(null);
+    }
   };
 
-  /** When a patient is picked / cleared from PatientSearch */
   const handlePatientSelect = (patient: { pChartID: number; pChartCode: string } | null) => {
     setSelectedPatient(patient);
-
     if (patient) {
-      /* save to the form — these map directly to IndentMaster */
       setValue("IndentMaster.pChartID", patient.pChartID);
       setValue("IndentMaster.pChartCode", patient.pChartCode);
     } else {
-      /* cleared */
       setValue("IndentMaster.pChartID", 0);
       setValue("IndentMaster.pChartCode", "");
     }
@@ -296,11 +315,16 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
   };
 
   const handleDelete = (item: IndentDetailDto) => {
-    setGridData((prev) => {
-      const newData = prev.map((row) => (row === item ? { ...row, rActiveYN: "N" } : row));
-      setValue("IndentDetails", newData);
-      onIndentDetailsChange(newData);
-      return newData.filter((r) => r.rActiveYN !== "N");
+    showAlert("Confirm Deletion", "Are you sure you want to delete this product?", "warning", {
+      onConfirm: () => {
+        setGridData((prev) => {
+          const newData = prev.filter((row) => row !== item);
+          setValue("IndentDetails", newData);
+          onIndentDetailsChange(newData);
+          return newData;
+        });
+      },
+      onCancel: () => {},
     });
   };
 
@@ -349,8 +373,8 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
         showAlert("Success", "Indent saved successfully.", "success", {
           onConfirm: () => {
             initializedRef.current = false;
-            setSelectedPatient(null); // clear patient card
-            setClearSearchTrigger((p) => p + 1); // tell PatientSearch to clear the box
+            setSelectedPatient(null);
+            setClearSearchTrigger((p) => p + 1);
             initializeForm();
           },
         });
@@ -470,6 +494,8 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
               label="Search Product"
               placeholder="Search product..."
               initialSelection={gridData.length > 0 ? convertToProductOption(gridData[0]) : null}
+              setInputValue={setInputValue}
+              setSelectedProduct={setSelectedProduct}
             />
           </Grid>
         </Grid>

@@ -17,9 +17,9 @@ interface IndentSearchDialogProps {
 }
 
 const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, onSelect }) => {
-  const [statusOptions, setStatusOptions] = useState<{ label: string; value: string }[]>([]);
+  const [, setStatusOptions] = useState<{ label: string; value: string }[]>([]);
   const [filterConfigs, setFilterConfigs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [indents, setIndents] = useState<IndentMastDto[]>([]);
   const [indentType, setIndentType] = useState<string>("");
   const [statusOpt, setStatusOpt] = useState<string>("");
@@ -27,9 +27,8 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
   const [dateFilter, setDateFilter] = useState<DateFilterType>(DateFilterType.All);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [searchValue, setSearchValue] = useState<string>("");
+  const [, setSearchValue] = useState<string>("");
   const [forceRefresh, setForceRefresh] = useState<number>(0);
-
   const requiredDropdowns: DropdownType[] = ["statusFilter", "department", "departmentIndent"];
   const { departmentIndent } = useDropdownValues(requiredDropdowns);
 
@@ -244,10 +243,7 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
       header: "Date",
       visible: true,
       sortable: true,
-      render: (item: IndentMastDto) =>
-        item.indentDate
-          ? dayjs(item.indentDate).format("DD/ MM/ YYYY") // → 13/ 05/ 2025
-          : "",
+      render: (item: IndentMastDto) => (item.indentDate ? <span style={{ whiteSpace: "nowrap" }}>{dayjs(item.indentDate).format("DD/MM/YYYY")}</span> : ""),
     },
     { key: "indStatus", header: "Record Status", visible: true, sortable: true },
     { key: "createdBy", header: "Created By", visible: true, sortable: true },

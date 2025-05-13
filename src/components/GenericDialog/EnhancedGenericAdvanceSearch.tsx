@@ -9,8 +9,6 @@ import CustomSwitch from "../Checkbox/ColorSwitch";
 import FormField from "../FormField/FormField";
 import GenericDialog from "./GenericDialog";
 import { DateFilterType } from "@/interfaces/Common/FilterDto";
-import { debug } from "console";
-import dayjs from "dayjs";
 
 type ExtendedItem<T> = T & {
   serialNumber: number;
@@ -75,7 +73,6 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
   items,
   updateActiveStatus,
   columns: originalColumns,
-  searchPlaceholder,
   onSearch,
   onSearchChange,
   dialogProps,
@@ -219,7 +216,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
   const handleSwitchChange = async (item: ExtendedItem<T>, checked: boolean) => {
     try {
-      const newStatus = checked ? "Y" : "N"; // Update to 'Y' if checked, else 'N'
+      const newStatus = checked ? "Y" : "N";
       const success = await updateActiveStatus(getItemId(item), newStatus === "Y");
       if (success) {
         setSwitchStatus((prev) => ({ ...prev, [getItemId(item)]: checked }));
@@ -350,7 +347,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
       <Grid container spacing={2} mb={2}>
         {filterConfigs.map((config) => (
           <Grid size={{ xs: 12, md: 3 }} key={config.name}>
-            <FormControl fullWidth>
+            <FormControl fullWidth size="small">
               <InputLabel id={`${config.name}-label`}>{config.label}</InputLabel>
               <Select
                 labelId={`${config.name}-label`}
@@ -371,7 +368,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
         {dateFilterOptions?.showDateFilter && (
           <Grid size={{ xs: 12, md: 3 }}>
-            <FormControl fullWidth>
+            <FormControl fullWidth size="small">
               <InputLabel id="date-filter-label">Date Filter</InputLabel>
               <Select labelId="date-filter-label" id="date-filter-select" label="Date Filter" value={dateFilter.toString()} onChange={handleDateFilterChange}>
                 <MenuItem value={DateFilterType.All}>All</MenuItem>
@@ -399,14 +396,6 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
                 InputLabelProps={{
                   shrink: true,
                 }}
-                // sx={{
-                //   backgroundColor: "white",
-                //   borderRadius: "4px",
-                //   width: "100%",
-                //   "& .MuiInputBase-root": {
-                //     padding: "8px 12px", // Adjust padding for the date picker
-                //   },
-                // }}
               />
             </Grid>
 
@@ -421,14 +410,6 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
                 InputLabelProps={{
                   shrink: true,
                 }}
-                // sx={{
-                //   backgroundColor: "white",
-                //   borderRadius: "4px",
-                //   width: "100%",
-                //   "& .MuiInputBase-root": {
-                //     padding: "8px 12px", // Adjust padding for the date picker
-                //   },
-                // }}
               />
             </Grid>
           </>
