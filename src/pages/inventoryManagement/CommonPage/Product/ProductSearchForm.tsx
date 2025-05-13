@@ -27,16 +27,16 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     }
   }, [clearTrigger, clearSearch]);
 
-  // Handle initial selection if provided
+  // Handle initial selection if provided - only once when component mounts
   useEffect(() => {
     if (initialSelection && !selectedProduct) {
       setSelectedProduct(initialSelection);
     }
-  }, [initialSelection, selectedProduct, setSelectedProduct]);
+  }, [initialSelection]); // Remove selectedProduct and setSelectedProduct from dependencies
 
   // Handle product selection and propagate to parent
   const handleProductSelect = (product: ProductOption | null) => {
-    debugger;
+    // Remove debugger statement
     setSelectedProduct(product);
 
     if (product) {
@@ -62,6 +62,11 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
         rActiveYN: product.rActiveYN || "", // Mapping rActiveYN to rActiveYN
         // Add other required properties of ProductSearchResult here
       });
+
+      // Clear selection after sending to parent
+      setTimeout(() => {
+        clearSearch();
+      }, 100);
     } else {
       onProductSelect(null);
     }

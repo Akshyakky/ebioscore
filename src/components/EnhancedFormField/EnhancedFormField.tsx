@@ -21,6 +21,7 @@ import {
   FormGroup,
   SelectChangeEvent,
   TextFieldProps,
+  Switch,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
@@ -29,6 +30,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import dayjs, { Dayjs } from "dayjs";
+import CustomSwitch from "../Checkbox/ColorSwitch";
 
 // Define the date format constant
 const DATE_FORMAT = "DD/MM/YYYY";
@@ -56,7 +58,8 @@ export type FieldType =
   | "checkbox"
   | "datepicker"
   | "datetimepicker"
-  | "file";
+  | "file"
+  | "switch";
 
 // Common props for all field types
 interface FormFieldCommonProps<TFieldValues extends FieldValues> {
@@ -139,9 +142,13 @@ type FileTypeProps = {
   InputProps?: Partial<TextFieldProps["InputProps"]>;
 };
 
+type SwitchTypeProps = {
+  type: "switch";
+};
+
 // Combine all possible props using discriminated union
 export type FormFieldProps<TFieldValues extends FieldValues> = FormFieldCommonProps<TFieldValues> &
-  (TextFieldTypeProps | TextareaTypeProps | SelectTypeProps | AutocompleteTypeProps | RadioTypeProps | CheckboxTypeProps | DatePickerTypeProps | FileTypeProps);
+  (TextFieldTypeProps | TextareaTypeProps | SelectTypeProps | AutocompleteTypeProps | RadioTypeProps | CheckboxTypeProps | DatePickerTypeProps | FileTypeProps | SwitchTypeProps);
 
 /**
  * FormField - A comprehensive form field component for Material UI v7
@@ -399,7 +406,7 @@ const FormField = <TFieldValues extends FieldValues>({
               // If option found, use the label as the field value
               if (selectedOption) {
                 // Override the default behavior to store the label instead of value
-                field.onChange(selectedOption.label);
+                field.onChange(selectedOption.value);
 
                 // If external onChange exists, pass both the label and the original value
                 if (externalOnChange) {
@@ -424,17 +431,15 @@ const FormField = <TFieldValues extends FieldValues>({
                 return (
                   <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                     {(selected as Array<string | number>).map((value) => {
-                      // Try to find by value first, then by label
-                      const option = options.find((opt) => String(opt.value) === String(value)) ||
-                        options.find((opt) => String(opt.label) === String(value)) || { value: "", label: value };
-                      return <Chip key={String(value)} label={option.label || value} size="small" />;
+                      const option = options.find((opt) => String(opt.value) === String(value));
+                      return <Chip key={String(value)} label={option?.label ?? value} size="small" />;
                     })}
                   </Box>
                 );
               }
 
-              // For single select, show the label directly or the value as fallback
-              return selected;
+              // ✅ Fix: Show label based on selected value
+              return options.find((opt) => String(opt.value) === String(selected))?.label ?? selected;
             }}
           >
             {options.map((option) => (
@@ -671,6 +676,34 @@ const FormField = <TFieldValues extends FieldValues>({
             externalOnBlur?.(e);
           }}
         />
+      );
+    }
+
+    // In the FormField component
+    if (type === "switch") {
+      return (
+        <FormControl fullWidth={fullWidth} required={required} variant={variant} size={size}>
+          <FormControlLabel
+            control={
+              <Controller
+                name={name}
+                control={control}
+                render={({ field }) => (
+                  <CustomSwitch
+                    checked={field.value === "N"} // Switch ON if field.value is "N"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      const checked = event.target.checked; // Extract checked value from event
+                      field.onChange(checked ? "N" : "Y"); // Set "N" when checked (ON), "Y" when unchecked (OFF)
+                      externalOnChange?.(checked ? "N" : "Y"); // Call external onChange if provided
+                    }}
+                  />
+                )}
+              />
+            }
+            label={label} // The label will be handled here, no need to pass it to CustomSwitch
+          />
+          {helperText && <FormHelperText>{helperText}</FormHelperText>}
+        </FormControl>
       );
     }
 

@@ -1,4 +1,3 @@
-// src/components/InventoryManagement/IndentProductGrid.tsx
 import React, { useMemo } from "react";
 import { Select, MenuItem, TextField, IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -31,15 +30,22 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
     rowIndex: number,
     field: keyof IndentDetailDto,
     options: { value: string; label: string }[],
-    additionalHandler?: (value: string) => void
+    type: "package" | "supplier" = "package"
   ) => (
     <Select
       size="small"
-      value={item[field] || ""}
+      value={type === "package" ? item.ppkgID || "" : item.supplierID || ""}
       onChange={(e) => {
         const value = e.target.value;
-        handleCellValueChange(rowIndex, field, value);
-        if (additionalHandler) additionalHandler(value as string);
+        const selectedOption = options.find((opt) => opt.value === value);
+
+        if (type === "package") {
+          handleCellValueChange(rowIndex, "ppkgID", selectedOption?.value || "");
+          handleCellValueChange(rowIndex, "ppkgName", selectedOption?.label || "");
+        } else if (type === "supplier") {
+          handleCellValueChange(rowIndex, "supplierID", selectedOption?.value || "");
+          handleCellValueChange(rowIndex, "supplierName", selectedOption?.label || "");
+        }
       }}
       sx={{ width: "100%" }}
       displayEmpty
@@ -73,12 +79,12 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
         render: (item: IndentDetailDto, rowIndex: number) => renderNumberField(item, rowIndex, "requiredQty"),
       },
       {
-        key: "netValue",
-        header: "Net Value",
+        key: "unitsPackage",
+        header: "Units/Package",
         visible: true,
         width: 100,
         minWidth: 100,
-        render: (item: IndentDetailDto, rowIndex: number) => renderNumberField(item, rowIndex, "netValue"),
+        render: (item: IndentDetailDto, rowIndex: number) => renderNumberField(item, rowIndex, "unitsPackage"),
       },
       {
         key: "units",
@@ -89,7 +95,7 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
         render: (item: IndentDetailDto, rowIndex: number) => (
           <Select
             size="small"
-            value={item.units || ""}
+            value={item.pUnitID || ""}
             onChange={(e) => {
               const unitValue = e.target.value;
               const unit = productOptions.find((opt) => opt.value === unitValue);
@@ -97,7 +103,6 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
                 handleCellValueChange(rowIndex, "pUnitID", unit.value);
                 handleCellValueChange(rowIndex, "pUnitName", unit.label);
               }
-              handleCellValueChange(rowIndex, "units", unitValue);
             }}
             sx={{ width: "100%" }}
             displayEmpty
@@ -122,7 +127,7 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
         visible: true,
         width: 150,
         minWidth: 150,
-        render: (item: IndentDetailDto, rowIndex: number) => renderSelect(item, rowIndex, "package", packageOptions),
+        render: (item: IndentDetailDto, rowIndex: number) => renderSelect(item, rowIndex, "ppkgID", packageOptions, "package"),
       },
       { key: "groupName", header: "Group Name", visible: true, width: 120, minWidth: 120 },
       { key: "maxLevelUnits", header: "Maximum Level Units", visible: true, width: 150, minWidth: 150 },
@@ -139,7 +144,7 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
         visible: true,
         width: 150,
         minWidth: 150,
-        render: (item: IndentDetailDto, rowIndex: number) => renderSelect(item, rowIndex, "supplierName", supplierOptions),
+        render: (item: IndentDetailDto, rowIndex: number) => renderSelect(item, rowIndex, "supplierName", supplierOptions, "supplier"),
       },
       { key: "roq", header: "ROQ", visible: true, width: 80, minWidth: 80 },
       {

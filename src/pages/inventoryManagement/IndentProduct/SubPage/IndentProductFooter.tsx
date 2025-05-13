@@ -1,78 +1,66 @@
 import React, { useEffect } from "react";
-import { Grid, Paper, Typography } from "@mui/material";
+import { Grid, Paper } from "@mui/material";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
-import { showAlert } from "@/utils/Common/showAlert";
 
 interface IndentProductFooterProps {
   setValue: any;
   control: any;
   getValues: any;
+  watch: any;
 }
 
-const IndentProductFooter: React.FC<IndentProductFooterProps> = ({ setValue, control, getValues }) => {
-  const handleToggleChange = (field: string, isChecked: boolean, message: string) => {
-    const value = isChecked ? "Y" : "N";
-    setValue(`IndentMaster.${field}`, value);
-    if (field === "rActiveYN") {
-      const indentDetails = getValues("IndentDetails");
-      if (indentDetails?.length) {
-        setValue(
-          "IndentDetails",
-          indentDetails.map((detail: any) => ({
-            ...detail,
-            rActiveYN: value,
-          }))
-        );
-      }
-    }
+const IndentProductFooter: React.FC<IndentProductFooterProps> = ({ setValue, control, getValues, watch }) => {
+  const rActiveYN = watch("IndentMaster.rActiveYN");
+  const indentApprovedYN = watch("IndentMaster.indentApprovedYN");
 
-    showAlert("Success", `${message}: ${isChecked ? "Yes" : "No"}`, "success");
+  const handleRActiveToggle = () => {
+    const newValue = rActiveYN === "Y" ? "N" : "Y";
+    setValue("IndentMaster.rActiveYN", newValue);
+
+    const details = getValues("IndentDetails") ?? [];
+    setValue(
+      "IndentDetails",
+      details.map((d: any) => ({ ...d, rActiveYN: newValue }))
+    );
+  };
+
+  const handleIndentApprovedToggle = (event: any) => {
+    const newValue = event.target.checked ? "N" : "Y";
+    setValue("IndentMaster.indentApprovedYN", newValue);
   };
 
   useEffect(() => {
-    setValue("IndentMaster.indentApprovedYN", "N");
-    setValue("IndentMaster.rActiveYN", "Y");
-    setValue("IndentMaster.remarks", "");
-  }, [setValue]);
+    console.log("Current values:", {
+      rNotes: getValues("IndentMaster.rNotes"),
+      rActiveYN: getValues("IndentMaster.rActiveYN"),
+      indentApprovedYN: getValues("IndentMaster.indentApprovedYN"),
+    });
+  }, [getValues, rActiveYN, indentApprovedYN]);
 
   return (
     <Paper variant="outlined" sx={{ padding: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Indent Product Footer
-      </Typography>
-
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 3 }}>
-          <FormField
-            name="IndentMaster.remarks"
-            control={control}
-            label="Remarks"
-            type="textarea"
-            size="small"
-            rows={3}
-            onChange={(e) => setValue("IndentMaster.remarks", e.target.value)}
-          />
+          <FormField name="IndentMaster.rNotes" control={control} label="Remarks" type="textarea" size="small" rows={3} />
         </Grid>
 
         <Grid size={{ xs: 12, md: 3 }}>
           <FormField
-            name="IndentMaster.hide"
+            name="IndentMaster.rActiveYN"
             control={control}
             label="Hide Indent"
-            type="checkbox"
-            onChange={(e) => handleToggleChange("rActiveYN", !e.target.checked, "Hide Indent")}
-            size="small"
+            type="switch"
+            onChange={handleRActiveToggle} // This is responsible for toggling the value
           />
         </Grid>
 
         <Grid size={{ xs: 12, md: 3 }}>
           <FormField
-            name="IndentMaster.finalizeIndent"
+            name="IndentMaster.indentApprovedYN"
             control={control}
             label="Finalize Indent"
-            type="checkbox"
-            onChange={(e) => handleToggleChange("indentApprovedYN", e.target.checked, "Indent Finalized")}
-            size="small"
+            type="switch"
+            onChange={handleIndentApprovedToggle} // This is responsible for toggling the value
           />
         </Grid>
       </Grid>

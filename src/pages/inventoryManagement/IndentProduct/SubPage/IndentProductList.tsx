@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Grid, Paper, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useState, useRef } from "react";
+import { Box, Grid, Paper, Typography } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import { useForm } from "react-hook-form";
@@ -21,6 +21,9 @@ import IndentProductGrid from "./IndentProdctDetails";
 import { indentProductMastService, productListService, productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
 import IndentProductFooter from "./IndentProductFooter";
 import { appModifiedListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
+import CustomButton from "@/components/Button/CustomButton";
+import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 
 interface Props {
   selectedData?: IndentSaveRequestDto | null;
@@ -31,12 +34,15 @@ interface Props {
 }
 
 const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, selectedDeptName, handleDepartmentChange, onIndentDetailsChange }) => {
-  const { control, setValue, reset, handleSubmit, getValues } = useForm<IndentSaveRequestDto>();
+  const { control, setValue, reset, handleSubmit, getValues, watch } = useForm<IndentSaveRequestDto>();
   const { compID, compCode, compName, userID } = useAppSelector((s) => s.auth);
   const { setLoading } = useLoading();
   const [gridData, setGridData] = useState<IndentDetailDto[]>([]);
+  const initializedRef = useRef(false);
+  const [selectedIndentType, setSelectedIndentType] = useState<string>("");
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [clearSearchTrigger, setClearSearchTrigger] = useState(0);
 
-  // Static options could be moved outside the component or to a constants file
   const packageOptions = [
     { value: "1", label: "Package 1" },
     { value: "2", label: "Package 2" },
@@ -59,6 +65,8 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
   const { statusFilter, department, departmentIndent } = useDropdownValues(requiredDropdowns);
 
   const initializeForm = useCallback(async () => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     setLoading(true);
     try {
       const nextCode = await indentProductMastService.getNextCode("IND", 3);
@@ -69,12 +77,14 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
           indentID: 0,
           indentCode: nextCode.data,
           indentType: "",
-          indentDate: dayjs().format("DD/MM/YYYY"),
+          indentDate: dayjs().format("YYYY-MM-DD"),
           fromDeptID: selectedDeptId,
           fromDeptName: selectedDeptName,
-          toDeptID: 0,
+          toDeptID: "",
           toDeptName: "",
           rActiveYN: "Y",
+          indentApprovedYN: "N",
+          rNotes: "",
           compID: 0,
           compCode: "",
           compName: "",
@@ -94,21 +104,43 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
     } finally {
       setLoading(false);
     }
-  }, [selectedDeptId, selectedDeptName, reset, setLoading]);
+  }, [selectedDeptId, selectedDeptName, reset, setLoading, getValues]);
+  useEffect(() => {
+    if (departmentIndent && departmentIndent.length > 0) {
+      console.log("Department indent options:", departmentIndent);
+    }
+  }, [departmentIndent]);
+
+  const handleClearPatient = () => {
+    setSelectedPatient(null);
+    setClearSearchTrigger((prev) => prev + 1);
+    showAlert("Success", "Patient selection cleared", "success");
+  };
 
   useEffect(() => {
     if (selectedData) {
-      setValue("IndentMaster.indentType", selectedData.IndentMaster.indentType || "");
+      const indentType = selectedData.IndentMaster.indentType || "";
+      setValue("IndentMaster.indentType", indentType);
       setValue("IndentMaster.indentCode", selectedData.IndentMaster.indentCode || "");
       setValue("IndentMaster.indentDate", dayjs(selectedData.IndentMaster.indentDate).format("YYYY-MM-DD"));
       setValue("IndentMaster.fromDeptName", selectedData.IndentMaster.fromDeptName || selectedDeptName);
-      setValue("IndentMaster.toDeptID", selectedData.IndentMaster.toDeptID || 0);
+      setValue("IndentMaster.rNotes", selectedData.IndentMaster.rNotes || "");
+      setValue("IndentMaster.rActiveYN", selectedData.IndentMaster.rActiveYN || "Y");
+      setValue("IndentMaster.indentApprovedYN", selectedData.IndentMaster.indentApprovedYN || "N");
+      setSelectedIndentType(indentType);
+      const toDeptID = selectedData.IndentMaster.toDeptID;
+      const stringToDeptID = toDeptID ? String(toDeptID) : "";
+      setValue("IndentMaster.toDeptID", stringToDeptID);
       setValue("IndentMaster.toDeptName", selectedData.IndentMaster.toDeptName || "");
-      setGridData([...selectedData.IndentDetails]);
-    } else {
+      setGridData([...(selectedData.IndentDetails || [])]);
+      initializedRef.current = true;
+      setTimeout(() => {
+        console.log("Current form values:", getValues());
+      }, 100);
+    } else if (!initializedRef.current) {
       initializeForm();
     }
-  }, [selectedData, initializeForm, setValue, selectedDeptName]);
+  }, [selectedData, initializeForm, setValue, selectedDeptName, getValues]);
 
   const handleToDepartmentChange = (val: any) => {
     try {
@@ -116,18 +148,17 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
       if (typeof val === "object" && val !== null) {
         deptId = val.target?.value !== undefined ? val.target.value : val.value !== undefined ? val.value : "";
       } else {
-        deptId = val;
+        deptId = String(val);
       }
-
-      const numericDeptId = Number(deptId);
-      if (isNaN(numericDeptId)) {
-        showAlert("Warning", "Please select a valid department", "warning");
+      if (!deptId) {
+        setValue("IndentMaster.toDeptID", "");
+        setValue("IndentMaster.toDeptName", "");
         return;
       }
 
-      const dept = department?.find((d: any) => Number(d.value) === numericDeptId);
+      const dept = department?.find((d: any) => d.value === deptId);
       if (dept) {
-        setValue("IndentMaster.toDeptID", numericDeptId);
+        setValue("IndentMaster.toDeptID", deptId);
         setValue("IndentMaster.toDeptName", dept.label ?? "");
       } else {
         showAlert("Warning", "Selected department not found in the options. Please select a valid department.", "warning");
@@ -141,35 +172,38 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
     try {
       setLoading(true);
       const [productRes, productOverviewRes] = await Promise.all([productListService.getById(productID), productOverviewService.getAll()]);
-
       const product: ProductListDto = productRes.data ?? ({} as ProductListDto);
       const productOverview = productOverviewRes.data?.find((p: ProductOverviewDto) => p.productID === productID);
-
       if (!product || !productOverview) {
         showAlert("Warning", "Product data not found.", "warning");
         return;
       }
-
+      const indentID = selectedData?.id || 0;
       const newRow: IndentDetailDto = {
         indentDetID: 0,
+        indentID: indentID,
         productID: product.productID,
         productCode: product.productCode ?? "",
         productName: product.productName ?? product.catValue ?? "—",
-        catValue: product.catValue,
+        catValue: product.catValue ?? "",
+        catDesc: product.catDescription ?? "",
         pGrpID: product.pGrpID,
+        pGrpName: product.productGroupName ?? "",
         psGrpID: product.psGrpID,
-        groupName: product.productGroupName ?? "",
-        package: product.productPackageName ?? "",
-        pUnitID: product.pUnitID?.toString() ?? "",
-        pUnitName: product.pUnitName ?? "",
+        psGrpName: product.psGroupName ?? "",
         baseUnit: product.baseUnit ?? 1,
+        package: product.productPackageName ?? "",
+        ppkgID: product.pPackageID ?? 0,
+        ppkgName: product.productPackageName ?? "",
+        pUnitID: "",
+        pUnitName: "",
         hsnCode: product.hsnCODE ?? "",
         manufacturerID: product.manufacturerID,
         manufacturerCode: product.manufacturerCode,
         manufacturerName: product.manufacturerName,
-        mGenID: product.mGenID,
-        supplierName: product.manufacturerName ?? "",
-        location: productOverview.productLocation ?? product.productLocation ?? "",
+        mfName: product.mfName ?? "",
+        supplierID: 0,
+        supplierName: "",
         stockLevel: productOverview.stockLevel ?? 0,
         qoh: productOverview.stockLevel ?? 0,
         average: productOverview.avgDemand ?? 0,
@@ -178,18 +212,29 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
         rol: productOverview.reOrderLevel ?? 0,
         minLevelUnits: productOverview.minLevelUnits ?? 0,
         maxLevelUnits: productOverview.maxLevelUnits ?? 0,
+        location: productOverview.productLocation ?? product.productLocation ?? "",
         requiredQty: 0,
         requiredUnitQty: 0,
         netValue: 0,
-        deptIssualYN: "N",
-        units: product.pUnitID?.toString() ?? "",
-        unitsPackage: 1,
-        roq: 0,
-        compID: compID ?? 0,
-        compCode: compCode ?? "",
-        compName: compName ?? "",
+        leadTime: product.leadTime ?? 0,
+        leadTimeDesc: product.leadTimeDesc ?? "",
+        taxID: product.taxID ?? 0,
+        taxCode: product.taxCode ?? "",
+        sgstPerValue: product.sgstPerValue ?? 0,
+        cgstPerValue: product.cgstPerValue ?? 0,
+        tax: product.gstPerValue ?? 0,
+        rOL: productOverview.reOrderLevel ?? 0,
+        expiryYN: product.expiry ?? "N",
+        rActiveYN: product.rActiveYN ?? "Y",
+        rNotes: product.rNotes ?? "",
+        units: product.issueUnit ? String(product.issueUnit) : "",
+        unitsPackage: product.unitPack ?? 1,
+        deptIssualYN: "N", // Default value
+        indentDetStatusCode: "N",
+        transferYN: product.transferYN ?? "N",
       };
 
+      // Update grid data with the new row
       const updatedGrid = [...gridData, newRow];
       setGridData(updatedGrid);
       setValue("IndentDetails", updatedGrid);
@@ -201,16 +246,29 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
     }
   };
 
-  const handleProductSelect = (product: ProductSearchResult | null) => {
-    if (product) fetchProductDetails(product.productID, product);
+  const handleProductSelect = async (product: ProductSearchResult | null) => {
+    if (!product) return;
+    const existingProductIndex = gridData.findIndex((item) => item.productID === product.productID);
+    if (existingProductIndex >= 0) {
+      showAlert("Warning", "This product is already in the indent list. Please modify the existing entry instead.", "warning");
+      return;
+    }
+
+    await fetchProductDetails(product.productID, product);
   };
 
   const handleCellValueChange = (rowIndex: number, field: keyof IndentDetailDto, value: any) => {
     setGridData((prev) => {
       const newData = [...prev];
+      // Preserve all existing properties, especially indentDetID, while updating the specified field
       newData[rowIndex] = { ...newData[rowIndex], [field]: value };
       setValue("IndentDetails", newData);
       onIndentDetailsChange(newData);
+
+      // Log the updated details to confirm ID is preserved
+      console.log(`Updated row ${rowIndex}, field ${String(field)} to ${value}`);
+      console.log(`Row now has indentDetID: ${newData[rowIndex].indentDetID}`);
+
       return newData;
     });
   };
@@ -233,25 +291,41 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
       showAlert("Error", "Indent Details cannot be empty or incomplete.", "error");
       return;
     }
-
+    const isoDate = dayjs(data.IndentMaster.indentDate, "YYYY-MM-DD", true);
+    if (!isoDate.isValid()) {
+      showAlert("Error", "Indent Date is invalid.", "error");
+      return;
+    }
+    const isUpdate = selectedData?.id > 0;
+    const indentID = isUpdate ? selectedData?.id : 0;
     const payload: IndentSaveRequestDto = {
-      ...data,
+      id: indentID,
       compID: compID ?? 0,
       compCode: compCode ?? "",
       compName: compName ?? "",
       IndentMaster: {
         ...data.IndentMaster,
-        indentDate: dayjs(data.IndentMaster.indentDate, "DD/MM/YYYY").format("YYYY-MM-DD"),
+        indentID: indentID,
+        toDeptID: data.IndentMaster.toDeptID ? Number(data.IndentMaster.toDeptID) : 0,
+        indentDate: isoDate.toISOString(),
       },
-      IndentDetails: validIndentDetails,
+      IndentDetails: validIndentDetails.map((detail) => ({
+        ...detail,
+        indentID: indentID,
+      })),
     };
+
+    console.log("Payload being sent to API:", payload);
 
     setLoading(true);
     try {
       const result = await indentProductServices.saveIndent(payload);
       if (result?.success) {
         showAlert("Success", "Indent saved successfully.", "success", {
-          onConfirm: initializeForm,
+          onConfirm: () => {
+            initializedRef.current = false;
+            initializeForm();
+          },
         });
       } else {
         showAlert("Error", `Failed to save indent: ${result?.errorMessage || "Unknown error"}`, "error");
@@ -292,9 +366,27 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
               type="select"
               label="Indent Type"
               required
-              options={departmentIndent || []}
+              options={(departmentIndent ?? []).map((item) => ({
+                value: item.value,
+                label: item.label,
+              }))}
               size="small"
               defaultValue={selectedData?.IndentMaster?.indentType || ""}
+              onChange={(event) => {
+                console.log("Raw indent type onChange event:", event);
+                let value;
+                if (typeof event === "string") {
+                  value = event;
+                } else if (event && typeof event === "object") {
+                  value = event.target?.value || event.value;
+                }
+                console.log("Extracted value:", value);
+                if (value) {
+                  setSelectedIndentType(value);
+                  setValue("IndentMaster.indentType", value);
+                  console.log("Updated selectedIndentType to:", value);
+                }
+              }}
             />
           </Grid>
 
@@ -319,8 +411,8 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
               label="Date"
               disabled
               size="small"
-              defaultValue={selectedData?.IndentMaster?.indentDate ? dayjs(selectedData.IndentMaster.indentDate).format("YYYY-MM-DD") : ""}
-              onChange={(date) => setValue("IndentMaster.indentDate", dayjs(date).format("YYYY-MM-DD"))}
+              defaultValue={selectedData?.IndentMaster?.indentDate ? dayjs(selectedData.IndentMaster.indentDate).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD")}
+              onChange={(date) => setValue("IndentMaster.indentDate", dayjs(date).isValid() ? dayjs(date).format("YYYY-MM-DD") : "")}
             />
           </Grid>
 
@@ -337,7 +429,7 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
               options={toDepartmentOptions}
               required
               size="small"
-              defaultValue={selectedData?.IndentMaster?.toDeptID || ""}
+              defaultValue={selectedData?.IndentMaster?.toDeptID ? String(selectedData.IndentMaster.toDeptID) : ""}
               onChange={handleToDepartmentChange}
             />
           </Grid>
@@ -351,6 +443,35 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
             />
           </Grid>
         </Grid>
+        <Grid container spacing={2} sx={{ mt: 2 }}>
+          {(selectedIndentType === "departmentIndent01" || selectedIndentType === "Patient Indent") && (
+            <>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <PatientSearch onPatientSelect={setSelectedPatient} clearTrigger={clearSearchTrigger} placeholder="Enter name, UHID or phone number" />
+                  </Box>
+                  <CustomButton variant="outlined" color="error" size="small" text="Clear" icon={DeleteIcon} onClick={handleClearPatient} />
+                </Box>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 8 }}>
+                {selectedPatient ? (
+                  <PatientDemographics
+                    pChartID={selectedPatient.pChartID}
+                    showEditButton={true}
+                    showRefreshButton={true}
+                    onEditClick={() => showAlert("Info", "Edit patient clicked", "info")}
+                    variant="detailed"
+                    emptyStateMessage="No demographics information available"
+                  />
+                ) : (
+                  <Typography variant="body1">Select a patient to view demographics.</Typography>
+                )}
+              </Grid>
+            </>
+          )}
+        </Grid>
 
         <IndentProductGrid
           gridData={gridData}
@@ -361,9 +482,19 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
           productOptions={productOptions}
         />
 
-        <IndentProductFooter setValue={setValue} control={control} getValues={getValues} />
+        <IndentProductFooter setValue={setValue} control={control} getValues={getValues} watch={watch} />
 
-        <FormSaveClearButton clearText="Clear" saveText="Save" onClear={initializeForm} onSave={handleSubmit(onSubmit)} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
+        <FormSaveClearButton
+          clearText="Clear"
+          saveText="Save"
+          onClear={() => {
+            initializedRef.current = false;
+            initializeForm();
+          }}
+          onSave={handleSubmit(onSubmit)}
+          clearIcon={DeleteIcon}
+          saveIcon={SaveIcon}
+        />
       </form>
     </Paper>
   );

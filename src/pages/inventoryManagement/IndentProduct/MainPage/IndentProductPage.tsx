@@ -4,13 +4,15 @@ import Search from "@mui/icons-material/Search";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
 import { IndentDetailDto, IndentMastDto, IndentSaveRequestDto } from "@/interfaces/InventoryManagement/IndentProductDto";
-import IndentProductDetails from "../SubPage/IndentProductList";
 import IndentSearchDialog from "../SubPage/IndentProductSearch";
 import { indentProductServices } from "@/services/InventoryManagementService/indentProductService/IndentProductService";
 import { showAlert } from "@/utils/Common/showAlert";
 import { useLoading } from "@/context/LoadingContext";
 import dayjs from "dayjs";
-import { indentProductDetailService } from "@/services/InventoryManagementService/inventoryManagementService";
+import { indentProductDetailService, productListService, productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
+import IndentProductDetails from "../SubPage/IndentProductList";
+import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
+import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 
 const IndentProductPage: React.FC = () => {
   const [department, setDepartment] = useState({ id: 0, name: "" });
@@ -43,50 +45,83 @@ const IndentProductPage: React.FC = () => {
 
   // Function to fetch the complete indent data when an indent is selected for editing
   // Inside fetchIndentDetails function
+  // Function to fetch the complete indent data when an indent is selected for editing
+  // Function to fetch the complete indent data when an indent is selected for editing
   const fetchIndentDetails = useCallback(
     async (indentId: number) => {
       try {
         setLoading(true);
 
-        // Fetch master and detail data in parallel
-        const [masterResult, detailsResult] = await Promise.all([indentProductServices.getIndentById(indentId), indentProductDetailService.getById(indentId)]);
+        // Fetch master and detail data using a single service call
+        const response = await indentProductServices.getIndentById(indentId);
 
-        if (!masterResult.success || !masterResult.data) {
-          showAlert("Error", masterResult.errorMessage || "Failed to fetch indent details", "error");
+        // Check if the request was successful
+        if (!response.success || !response.data) {
+          showAlert("Error", response.errorMessage || "Failed to fetch indent details", "error");
           return null;
         }
 
-        // Process details data
-        const details = Array.isArray(detailsResult.data) ? detailsResult.data : detailsResult.data ? [detailsResult.data] : [];
+        // Destructure master and detail data
+        const { indentMaster, indentDetails } = response.data;
 
-        // Format details array
-        const formattedDetails = details.map((detail: any) => ({
-          indentDetID: detail.indentDetID || 0,
-          productID: detail.productID || 0,
-          productName: detail.productName || "",
-          productCode: detail.productCode || "",
-          requiredQty: detail.requiredQty || 0,
-          deptIssualYN: detail.deptIssualYN || "N",
-          supplierName: detail.supplierName || "",
-          pUnitName: detail.pUnitName || "",
-          catValue: detail.catValue || "",
-          hsnCode: detail.hsnCode || "",
-          ...detail, // Include any other properties
-        }));
+        // Log the indentMaster to see what we're getting
+        console.log("Indent Master received:", indentMaster);
+        console.log("Indent Details received:", indentDetails);
+
+        // Fetch complete product details for each product in the details
+        const completeDetails = await Promise.all(
+          (indentDetails || []).map(async (detail: any) => {
+            const productRes = await productListService.getById(detail.productID);
+            const productOverviewRes = await productOverviewService.getAll();
+            const product: ProductListDto = productRes.data ?? ({} as ProductListDto);
+            const productOverview = productOverviewRes.data?.find((p: ProductOverviewDto) => p.productID === detail.productID);
+
+            // Important: Preserve the original indentDetID to ensure we update instead of insert
+            return {
+              ...detail,
+              indentDetID: detail.indentDetID, // Preserve the existing ID
+              baseUnit: product.baseUnit ?? null,
+              package: product.productPackageName ?? null,
+              groupName: product.productGroupName ?? null,
+              ppkgID: product.pPackageID ?? null,
+              stockLevel: productOverview?.stockLevel ?? null,
+              qoh: productOverview?.stockLevel ?? null,
+              average: productOverview?.avgDemand ?? null,
+              averageDemand: productOverview?.avgDemand ?? null,
+              reOrderLevel: productOverview?.reOrderLevel ?? null,
+              rol: productOverview?.reOrderLevel ?? null,
+              minLevelUnits: productOverview?.minLevelUnits ?? null,
+              maxLevelUnits: productOverview?.maxLevelUnits ?? null,
+              leadTime: product.leadTime ?? null,
+              location: productOverview?.productLocation ?? product.productLocation ?? null,
+              unitsPackage: product.unitPack ?? null,
+              units: product.issueUnit ? String(product.issueUnit) : null,
+              taxID: product.taxID ?? null,
+              taxCode: product.taxCode ?? null,
+              sgstPerValue: product.sgstPerValue ?? null,
+              cgstPerValue: product.cgstPerValue ?? null,
+              tax: product.gstPerValue ?? null,
+            };
+          })
+        );
 
         // Create the complete indent data
         const indentData: IndentSaveRequestDto = {
-          id: masterResult.data.indentMaster?.indentID || 0,
-          rActiveYN: masterResult.data.indentMaster?.rActiveYN || "Y",
+          id: indentMaster?.indentID || 0, // Preserve the master ID
+          rActiveYN: indentMaster?.rActiveYN || "Y",
           IndentMaster: {
-            ...masterResult.data.indentMaster,
-            indentDate: masterResult.data.indentMaster?.indentDate ? dayjs(masterResult.data.indentMaster.indentDate).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
+            ...indentMaster,
+            indentDate: indentMaster?.indentDate ? dayjs(indentMaster.indentDate).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
+            rNotes: indentMaster?.rNotes || "", // Ensure rNotes is properly mapped
           },
-          IndentDetails: formattedDetails,
+          IndentDetails: completeDetails,
         };
 
+        console.log("Indent data prepared:", indentData);
+
+        // Set the state with the fetched data
         setSelectedData(indentData);
-        setIndentDetails(formattedDetails);
+        setIndentDetails(completeDetails);
         return indentData;
       } catch (error) {
         console.error("Error fetching indent details:", error);
