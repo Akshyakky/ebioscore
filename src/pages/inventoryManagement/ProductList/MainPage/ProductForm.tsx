@@ -350,6 +350,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                 })) || []
               }
               size="small"
+              clearable={true}
             />
           </Grid>
 

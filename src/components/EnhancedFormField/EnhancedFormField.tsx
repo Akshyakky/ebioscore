@@ -1,4 +1,4 @@
-import React, { useState, ReactNode } from "react";
+import React, { useState, ReactNode, forwardRef, useMemo } from "react";
 import { Controller, Control, FieldValues, Path } from "react-hook-form";
 import {
   TextField,
@@ -20,6 +20,8 @@ import {
   FormGroup,
   SelectChangeEvent,
   TextFieldProps,
+  CircularProgress,
+  useTheme,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
@@ -27,6 +29,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import ClearIcon from "@mui/icons-material/Clear";
 import dayjs, { Dayjs } from "dayjs";
 import CustomSwitch from "../Checkbox/ColorSwitch";
 
@@ -76,6 +79,12 @@ interface FormFieldCommonProps<TFieldValues extends FieldValues> {
   onBlur?: (event: React.FocusEvent<HTMLElement>) => void;
   adornment?: ReactNode;
   adornmentPosition?: "start" | "end";
+  // New props for dropdown functionality
+  isSubmitted?: boolean;
+  clearable?: boolean;
+  onClear?: () => void;
+  loading?: boolean;
+  defaultText?: string;
 }
 
 // Type guards for other props based on field type
@@ -152,522 +161,603 @@ export type FormFieldProps<TFieldValues extends FieldValues> = FormFieldCommonPr
  * FormField - A comprehensive form field component for Material UI v7
  * Integrates with React Hook Form and Material UI
  */
-const FormField = <TFieldValues extends FieldValues>({
-  name,
-  control,
-  label,
-  type = "text",
-  required = false,
-  disabled = false,
-  fullWidth = true,
-  placeholder = "",
-  helperText = "",
-  variant = "outlined",
-  size = "medium",
-  defaultValue,
-  onChange: externalOnChange,
-  onBlur: externalOnBlur,
-  adornment,
-  adornmentPosition = "end",
-  ...rest
-}: FormFieldProps<TFieldValues>) => {
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [fileError, setFileError] = useState<string>("");
-
-  // Type guards for checking field types
-  const isTextField = (type: FieldType): type is TextFieldTypeProps["type"] => ["text", "email", "password", "number", "search", "tel", "url"].includes(type);
-  const isTextArea = (type: FieldType): boolean => type === "textarea";
-  const isSelect = (type: FieldType): boolean => type === "select";
-  const isMultiSelect = (type: FieldType): boolean => type === "multiselect";
-  const isAutocomplete = (type: FieldType): boolean => type === "autocomplete";
-  const isRadio = (type: FieldType): boolean => type === "radio";
-  const isCheckbox = (type: FieldType): boolean => type === "checkbox";
-  const isDatePicker = (type: FieldType): boolean => type === "datepicker";
-  const isDateTimePicker = (type: FieldType): boolean => type === "datetimepicker";
-  const isFileInput = (type: FieldType): boolean => type === "file";
-
-  // Helper functions to access properties based on field type
-  const getOptions = (): OptionType[] => {
-    if (isSelect(type) || isMultiSelect(type) || isAutocomplete(type) || isRadio(type) || isCheckbox(type)) {
-      return (rest as any).options || [];
-    }
-    return [];
-  };
-
-  const getMultiple = (): boolean => {
-    if (isSelect(type) || isMultiSelect(type) || isAutocomplete(type)) {
-      return (rest as any).multiple || false;
-    }
-    return false;
-  };
-
-  const getRows = (): number => {
-    if (isTextArea(type)) {
-      return (rest as any).rows || 4;
-    }
-    return 4;
-  };
-
-  const getInputProps = (): any => {
-    return (rest as any).inputProps || {};
-  };
-
-  const getInputPropsObj = (): any => {
-    return (rest as any).InputProps || {};
-  };
-
-  // Get date format from props or use default
-  const getDateFormat = (): string => {
-    if (isDatePicker(type) || isDateTimePicker(type)) {
-      return (rest as any).format || DATE_FORMAT;
-    }
-    return DATE_FORMAT;
-  };
-
-  // Other getter functions similar to your original component
-  const getMin = (): number | undefined => (isTextField(type) && type === "number" ? (rest as any).min : undefined);
-
-  const getMax = (): number | undefined => (isTextField(type) && type === "number" ? (rest as any).max : undefined);
-
-  const getStep = (): number | undefined => (isTextField(type) && type === "number" ? (rest as any).step : undefined);
-
-  const getAccept = (): string | undefined => (isFileInput(type) ? (rest as any).accept : undefined);
-
-  const getMaxSize = (): number | undefined => (isFileInput(type) ? (rest as any).maxSize : undefined);
-
-  const getRow = (): boolean => (isRadio(type) || isCheckbox(type) ? (rest as any).row || false : false);
-
-  // Toggle password visibility
-  const handleClickShowPassword = (): void => {
-    setShowPassword(!showPassword);
-  };
-
-  // Validate file uploads
-  const validateFile = (file: File | null): boolean => {
-    if (!file) return true;
-
-    const maxSize = getMaxSize();
-    const accept = getAccept();
-
-    if (maxSize && file.size > maxSize) {
-      const sizeMB = Math.round(maxSize / 1048576);
-      setFileError(`File size should not exceed ${sizeMB} MB`);
-      return false;
-    }
-
-    if (accept) {
-      const acceptedTypes = accept.split(",").map((type) => type.trim());
-      const fileType = file.type;
-      const fileExtension = `.${file.name.split(".").pop()}`;
-
-      const isValidType = acceptedTypes.some((type) => type === fileType || type === fileExtension || (type.includes("/*") && fileType.startsWith(type.replace("/*", "/"))));
-
-      if (!isValidType) {
-        setFileError(`File type not supported. Accepted types: ${accept}`);
-        return false;
-      }
-    }
-
-    setFileError("");
-    return true;
-  };
-
-  // Main render function for Controller
-  const renderField = ({ field, fieldState }: { field: any; fieldState: { error?: { message?: string } } }) => {
-    const { error } = fieldState;
-    const errorMessage = error?.message || fileError;
-
-    // Common props for text-based fields
-    const commonProps = {
-      id: `field-${name}`,
+const FormField = forwardRef<any, FormFieldProps<any>>(
+  <TFieldValues extends FieldValues>(
+    {
+      name,
+      control,
       label,
-      error: !!errorMessage,
-      helperText: errorMessage || helperText,
-      disabled,
-      fullWidth,
-      required,
-      placeholder,
-      size,
-      variant,
-      InputProps: {
-        ...getInputPropsObj(),
-        ...(adornment && {
-          [adornmentPosition === "start" ? "startAdornment" : "endAdornment"]: <InputAdornment position={adornmentPosition}>{adornment}</InputAdornment>,
-        }),
-      },
-      inputProps: {
-        ...getInputProps(),
-      },
+      type = "text",
+      required = false,
+      disabled = false,
+      fullWidth = true,
+      placeholder = "",
+      helperText = "",
+      variant = "outlined",
+      size = "medium",
+      defaultValue,
+      onChange: externalOnChange,
+      onBlur: externalOnBlur,
+      adornment,
+      adornmentPosition = "end",
+      isSubmitted = false,
+      clearable = false,
+      onClear,
+      loading = false,
+      defaultText,
+      ...rest
+    }: FormFieldProps<TFieldValues>,
+    ref: React.Ref<any>
+  ) => {
+    const theme = useTheme();
+    const [showPassword, setShowPassword] = useState<boolean>(false);
+    const [fileError, setFileError] = useState<string>("");
+
+    // Type guards for checking field types
+    const isTextField = (type: FieldType): type is TextFieldTypeProps["type"] => ["text", "email", "password", "number", "search", "tel", "url"].includes(type);
+    const isTextArea = (type: FieldType): boolean => type === "textarea";
+    const isSelect = (type: FieldType): boolean => type === "select";
+    const isMultiSelect = (type: FieldType): boolean => type === "multiselect";
+    const isAutocomplete = (type: FieldType): boolean => type === "autocomplete";
+    const isRadio = (type: FieldType): boolean => type === "radio";
+    const isCheckbox = (type: FieldType): boolean => type === "checkbox";
+    const isDatePicker = (type: FieldType): boolean => type === "datepicker";
+    const isDateTimePicker = (type: FieldType): boolean => type === "datetimepicker";
+    const isFileInput = (type: FieldType): boolean => type === "file";
+
+    // Helper functions to access properties based on field type
+    const getOptions = (): OptionType[] => {
+      if (isSelect(type) || isMultiSelect(type) || isAutocomplete(type) || isRadio(type) || isCheckbox(type)) {
+        return (rest as any).options || [];
+      }
+      return [];
     };
 
-    // Handle text fields (input, email, number, etc.)
-    if (isTextField(type) && type !== "password") {
-      return (
-        <TextField
-          {...commonProps}
-          {...field}
-          type={type}
-          inputProps={{
-            ...getInputProps(),
-            ...(type === "number" && {
-              min: getMin(),
-              max: getMax(),
-              step: getStep(),
-            }),
-          }}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            field.onChange(e);
-            externalOnChange?.(e);
-          }}
-          onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-            field.onBlur(e);
-            externalOnBlur?.(e);
-          }}
-          InputLabelProps={{
-            shrink: field.value ? true : undefined,
-          }}
-        />
-      );
-    }
+    const getMultiple = (): boolean => {
+      if (isSelect(type) || isMultiSelect(type) || isAutocomplete(type)) {
+        return (rest as any).multiple || false;
+      }
+      return false;
+    };
 
-    // Password field with visibility toggle
-    if (isTextField(type) && type === "password") {
-      return (
-        <TextField
-          {...commonProps}
-          {...field}
-          type={showPassword ? "text" : "password"}
-          InputProps={{
-            ...getInputPropsObj(),
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} edge="end">
-                  {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            field.onChange(e);
-            externalOnChange?.(e);
-          }}
-          onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-            field.onBlur(e);
-            externalOnBlur?.(e);
-          }}
-        />
-      );
-    }
+    const getRows = (): number => {
+      if (isTextArea(type)) {
+        return (rest as any).rows || 4;
+      }
+      return 4;
+    };
 
-    // Textarea
-    if (isTextArea(type)) {
-      return (
-        <TextField
-          {...commonProps}
-          {...field}
-          multiline
-          rows={getRows()}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            field.onChange(e);
-            externalOnChange?.(e);
-          }}
-          onBlur={(e: React.FocusEvent<HTMLTextAreaElement>) => {
-            field.onBlur(e);
-            externalOnBlur?.(e);
-          }}
-        />
-      );
-    }
+    const getInputProps = (): any => {
+      return (rest as any).inputProps || {};
+    };
 
-    // Select field
-    // Select field
-    if (isSelect(type)) {
-      const options = getOptions();
-      const multiple = getMultiple();
+    const getInputPropsObj = (): any => {
+      return (rest as any).InputProps || {};
+    };
 
-      return (
-        <FormControl error={!!errorMessage} disabled={disabled} fullWidth={fullWidth} required={required} variant={variant} size={size}>
-          <InputLabel id={`${name}-label`}>{label}</InputLabel>
-          <Select
+    // Get date format from props or use default
+    const getDateFormat = (): string => {
+      if (isDatePicker(type) || isDateTimePicker(type)) {
+        return (rest as any).format || DATE_FORMAT;
+      }
+      return DATE_FORMAT;
+    };
+
+    // Other getter functions similar to your original component
+    const getMin = (): number | undefined => (isTextField(type) && type === "number" ? (rest as any).min : undefined);
+
+    const getMax = (): number | undefined => (isTextField(type) && type === "number" ? (rest as any).max : undefined);
+
+    const getStep = (): number | undefined => (isTextField(type) && type === "number" ? (rest as any).step : undefined);
+
+    const getAccept = (): string | undefined => (isFileInput(type) ? (rest as any).accept : undefined);
+
+    const getMaxSize = (): number | undefined => (isFileInput(type) ? (rest as any).maxSize : undefined);
+
+    const getRow = (): boolean => (isRadio(type) || isCheckbox(type) ? (rest as any).row || false : false);
+
+    // Toggle password visibility
+    const handleClickShowPassword = (): void => {
+      setShowPassword(!showPassword);
+    };
+
+    // Validate file uploads
+    const validateFile = (file: File | null): boolean => {
+      if (!file) return true;
+
+      const maxSize = getMaxSize();
+      const accept = getAccept();
+
+      if (maxSize && file.size > maxSize) {
+        const sizeMB = Math.round(maxSize / 1048576);
+        setFileError(`File size should not exceed ${sizeMB} MB`);
+        return false;
+      }
+
+      if (accept) {
+        const acceptedTypes = accept.split(",").map((type) => type.trim());
+        const fileType = file.type;
+        const fileExtension = `.${file.name.split(".").pop()}`;
+
+        const isValidType = acceptedTypes.some((type) => type === fileType || type === fileExtension || (type.includes("/*") && fileType.startsWith(type.replace("/*", "/"))));
+
+        if (!isValidType) {
+          setFileError(`File type not supported. Accepted types: ${accept}`);
+          return false;
+        }
+      }
+
+      setFileError("");
+      return true;
+    };
+
+    // Main render function for Controller
+    const renderField = ({ field, fieldState }: { field: any; fieldState: { error?: { message?: string } } }) => {
+      const { error } = fieldState;
+      const errorMessage = error?.message || fileError;
+
+      // Common props for text-based fields
+      const commonProps = {
+        id: `field-${name}`,
+        label,
+        error: !!errorMessage,
+        helperText: errorMessage || helperText,
+        disabled,
+        fullWidth,
+        required,
+        placeholder,
+        size,
+        variant,
+        InputProps: {
+          ...getInputPropsObj(),
+          ...(adornment && {
+            [adornmentPosition === "start" ? "startAdornment" : "endAdornment"]: <InputAdornment position={adornmentPosition}>{adornment}</InputAdornment>,
+          }),
+        },
+        inputProps: {
+          ...getInputProps(),
+        },
+      };
+
+      // Handle text fields (input, email, number, etc.)
+      if (isTextField(type) && type !== "password") {
+        return (
+          <TextField
+            {...commonProps}
             {...field}
-            labelId={`${name}-label`}
-            id={`field-${name}`}
-            multiple={multiple}
-            label={label}
-            onChange={(e: SelectChangeEvent<unknown>) => {
-              // Get the selected value from the event
-              const selectedValue = e.target.value;
-
-              // Find the matching option - first try by value, then by label
-              const selectedOption = options.find((opt) => String(opt.value) === String(selectedValue)) || options.find((opt) => String(opt.label) === String(selectedValue));
-
-              // If option found, use the label as the field value
-              if (selectedOption) {
-                // Override the default behavior to store the label instead of value
-                field.onChange(selectedOption.value);
-
-                // If external onChange exists, pass both the label and the original value
-                if (externalOnChange) {
-                  externalOnChange({
-                    label: selectedOption.label,
-                    value: selectedOption.value,
-                    originalEvent: e,
-                  });
-                }
-              } else {
-                // Fallback to default behavior
-                field.onChange(e);
-                externalOnChange?.(e);
-              }
+            type={type}
+            inputProps={{
+              ...getInputProps(),
+              ...(type === "number" && {
+                min: getMin(),
+                max: getMax(),
+                step: getStep(),
+              }),
             }}
-            onBlur={(e: React.FocusEvent<HTMLElement>) => {
-              field.onBlur(e);
-              externalOnBlur?.(e);
-            }}
-            renderValue={(selected: any) => {
-              if (multiple) {
-                return (
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                    {(selected as Array<string | number>).map((value) => {
-                      const option = options.find((opt) => String(opt.value) === String(value));
-                      return <Chip key={String(value)} label={option?.label ?? value} size="small" />;
-                    })}
-                  </Box>
-                );
-              }
-
-              // ✅ Fix: Show label based on selected value
-              return options.find((opt) => String(opt.value) === String(selected))?.label ?? selected;
-            }}
-          >
-            {options.map((option) => (
-              // Use the value for internal processing, but we'll handle display separately
-              <MenuItem key={String(option.value)} value={String(option.value)}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-          {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
-        </FormControl>
-      );
-    }
-
-    // Autocomplete with multiselect support
-    if (isMultiSelect(type) || isAutocomplete(type)) {
-      const options = getOptions();
-      const multiple = isMultiSelect(type) || getMultiple();
-
-      return (
-        <Autocomplete
-          {...field}
-          multiple={multiple}
-          id={`field-${name}`}
-          options={options}
-          getOptionLabel={(option: any) => {
-            if (typeof option === "object" && option !== null) {
-              return option.label || "";
-            }
-            const foundOption = options.find((opt) => opt.value === option);
-            return foundOption ? foundOption.label : String(option);
-          }}
-          isOptionEqualToValue={(option, value) => {
-            if (typeof value === "object" && value !== null) {
-              return (option as OptionType).value === (value as OptionType).value;
-            }
-            return (option as OptionType).value === value;
-          }}
-          value={field.value || (multiple ? [] : null)}
-          disabled={disabled}
-          onChange={(_, newValue) => {
-            if (multiple) {
-              const values = (newValue as Array<any>).map((item: any) => (typeof item === "object" ? item.value : item));
-              field.onChange(values);
-              externalOnChange?.(values);
-            } else {
-              const value = newValue ? (typeof newValue === "object" && "value" in newValue ? (newValue as OptionType).value : newValue) : null;
-              field.onChange(value);
-              externalOnChange?.(value);
-            }
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label={label}
-              variant={variant}
-              error={!!errorMessage}
-              helperText={errorMessage || helperText}
-              required={required}
-              size={size}
-              InputLabelProps={{
-                shrink: field.value ? true : undefined,
-              }}
-            />
-          )}
-        />
-      );
-    }
-
-    // Radio group
-    if (isRadio(type)) {
-      const options = getOptions();
-      const row = getRow();
-
-      return (
-        <FormControl component="fieldset" error={!!errorMessage} disabled={disabled} required={required} fullWidth={fullWidth}>
-          <FormLabel component="legend">{label}</FormLabel>
-          <RadioGroup
-            {...field}
-            aria-label={String(name)}
-            name={String(name)}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               field.onChange(e);
               externalOnChange?.(e);
             }}
-            row={row}
-          >
-            {options.map((option) => (
-              <FormControlLabel key={String(option.value)} value={option.value} control={<Radio size={size} />} label={option.label} />
-            ))}
-          </RadioGroup>
-          {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
-        </FormControl>
-      );
-    }
+            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+              field.onBlur(e);
+              externalOnBlur?.(e);
+            }}
+            InputLabelProps={{
+              shrink: field.value ? true : undefined,
+            }}
+          />
+        );
+      }
 
-    // Checkbox group or single checkbox
-    if (isCheckbox(type)) {
-      const options = getOptions();
-      const row = getRow();
+      // Password field with visibility toggle
+      if (isTextField(type) && type === "password") {
+        return (
+          <TextField
+            {...commonProps}
+            {...field}
+            type={showPassword ? "text" : "password"}
+            InputProps={{
+              ...getInputPropsObj(),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} edge="end">
+                    {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              field.onChange(e);
+              externalOnChange?.(e);
+            }}
+            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+              field.onBlur(e);
+              externalOnBlur?.(e);
+            }}
+          />
+        );
+      }
 
-      if (options.length > 0) {
-        // Multiple checkboxes
+      // Textarea
+      if (isTextArea(type)) {
+        return (
+          <TextField
+            {...commonProps}
+            {...field}
+            multiline
+            rows={getRows()}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+              field.onChange(e);
+              externalOnChange?.(e);
+            }}
+            onBlur={(e: React.FocusEvent<HTMLTextAreaElement>) => {
+              field.onBlur(e);
+              externalOnBlur?.(e);
+            }}
+          />
+        );
+      }
+
+      // Enhanced Select field similar to DropdownSelect
+      if (isSelect(type)) {
+        const options = getOptions();
+        const multiple = getMultiple();
+
+        // Check for empty value state for error handling
+        const isEmptyValue = useMemo(() => field.value === "" || field.value === "0", [field.value]);
+
+        // Enhanced error handling with isSubmitted check (similar to DropdownSelect)
+        const hasError = required && isSubmitted && isEmptyValue;
+
+        // Get display value similar to DropdownSelect
+        const displayValue = useMemo(() => {
+          if (!options) return "";
+          const selectedOption = options.find((option) => String(option.value) === String(field.value) || option.label === field.value);
+          return selectedOption ? selectedOption.value : "";
+        }, [field.value, options]);
+
+        // Show loading state if options are not available
+        if (!options || (loading && !options.length)) {
+          return <CircularProgress size={24} />;
+        }
+
+        return (
+          <FormControl variant={variant} size={size} fullWidth={fullWidth} error={hasError || !!errorMessage} required={required} disabled={disabled} ref={ref}>
+            <InputLabel id={`${name}-label`} htmlFor={`field-${name}`}>
+              {label}
+            </InputLabel>
+            <Select
+              {...field}
+              labelId={`${name}-label`}
+              id={`field-${name}`}
+              value={displayValue}
+              multiple={multiple}
+              label={label}
+              onChange={(e: SelectChangeEvent<unknown>) => {
+                const selectedValue = e.target.value;
+                const selectedOption = options.find((opt) => String(opt.value) === String(selectedValue));
+
+                if (selectedOption) {
+                  field.onChange(selectedOption.value);
+                  if (externalOnChange) {
+                    externalOnChange({
+                      label: selectedOption.label,
+                      value: selectedOption.value,
+                      originalEvent: e,
+                    });
+                  }
+                } else {
+                  field.onChange(e);
+                  externalOnChange?.(e);
+                }
+              }}
+              onBlur={(e: React.FocusEvent<HTMLElement>) => {
+                field.onBlur(e);
+                externalOnBlur?.(e);
+              }}
+              // Add clearable endAdornment similar to DropdownSelect
+              endAdornment={
+                clearable && field.value ? (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="clear selection"
+                      onClick={() => {
+                        field.onChange("");
+                        onClear?.();
+                      }}
+                      edge="end"
+                      size="small"
+                      sx={{
+                        padding: "2px",
+                        margin: "8px",
+                        "&:hover": {
+                          backgroundColor: theme.palette.action.hover,
+                          color: theme.palette.text.primary,
+                        },
+                      }}
+                    >
+                      <ClearIcon sx={{ fontSize: "18px" }} />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null
+              }
+              renderValue={(selected: any) => {
+                if (multiple) {
+                  return (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {(selected as Array<string | number>).map((value) => {
+                        const option = options.find((opt) => String(opt.value) === String(value));
+                        return <Chip key={String(value)} label={option?.label ?? value} size="small" />;
+                      })}
+                    </Box>
+                  );
+                }
+                return options.find((opt) => String(opt.value) === String(selected))?.label ?? selected;
+              }}
+            >
+              <MenuItem value="">{defaultText || `Select ${label}`}</MenuItem>
+              {options.map((option) => (
+                <MenuItem key={String(option.value)} value={String(option.value)}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+            {(hasError || errorMessage || helperText) && <FormHelperText>{hasError ? `${label} is required.` : errorMessage || helperText}</FormHelperText>}
+          </FormControl>
+        );
+      }
+
+      // Autocomplete with multiselect support
+      if (isMultiSelect(type) || isAutocomplete(type)) {
+        const options = getOptions();
+        const multiple = isMultiSelect(type) || getMultiple();
+
+        return (
+          <Autocomplete
+            {...field}
+            multiple={multiple}
+            id={`field-${name}`}
+            options={options}
+            getOptionLabel={(option: any) => {
+              if (typeof option === "object" && option !== null) {
+                return option.label || "";
+              }
+              const foundOption = options.find((opt) => opt.value === option);
+              return foundOption ? foundOption.label : String(option);
+            }}
+            isOptionEqualToValue={(option, value) => {
+              if (typeof value === "object" && value !== null) {
+                return (option as OptionType).value === (value as OptionType).value;
+              }
+              return (option as OptionType).value === value;
+            }}
+            value={field.value || (multiple ? [] : null)}
+            disabled={disabled}
+            onChange={(_, newValue) => {
+              if (multiple) {
+                const values = (newValue as Array<any>).map((item: any) => (typeof item === "object" ? item.value : item));
+                field.onChange(values);
+                externalOnChange?.(values);
+              } else {
+                const value = newValue ? (typeof newValue === "object" && "value" in newValue ? (newValue as OptionType).value : newValue) : null;
+                field.onChange(value);
+                externalOnChange?.(value);
+              }
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={label}
+                variant={variant}
+                error={!!errorMessage}
+                helperText={errorMessage || helperText}
+                required={required}
+                size={size}
+                InputLabelProps={{
+                  shrink: field.value ? true : undefined,
+                }}
+              />
+            )}
+          />
+        );
+      }
+
+      // Radio group
+      if (isRadio(type)) {
+        const options = getOptions();
+        const row = getRow();
+
         return (
           <FormControl component="fieldset" error={!!errorMessage} disabled={disabled} required={required} fullWidth={fullWidth}>
             <FormLabel component="legend">{label}</FormLabel>
-            <FormGroup row={row}>
-              {options.map((option) => {
-                const isChecked = Array.isArray(field.value) ? field.value.includes(option.value) : false;
-
-                return (
-                  <FormControlLabel
-                    key={String(option.value)}
-                    control={
-                      <Checkbox
-                        checked={isChecked}
-                        onChange={(e) => {
-                          let newValue = [...(field.value || [])];
-                          if (e.target.checked) {
-                            newValue.push(option.value);
-                          } else {
-                            newValue = newValue.filter((val) => val !== option.value);
-                          }
-                          field.onChange(newValue);
-                          externalOnChange?.(newValue);
-                        }}
-                        size={size}
-                      />
-                    }
-                    label={option.label}
-                  />
-                );
-              })}
-            </FormGroup>
+            <RadioGroup
+              {...field}
+              aria-label={String(name)}
+              name={String(name)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                field.onChange(e);
+                externalOnChange?.(e);
+              }}
+              row={row}
+            >
+              {options.map((option) => (
+                <FormControlLabel key={String(option.value)} value={option.value} control={<Radio size={size} />} label={option.label} />
+              ))}
+            </RadioGroup>
             {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
           </FormControl>
         );
       }
 
-      // Single checkbox
-      return (
-        <FormControl error={!!errorMessage} disabled={disabled} required={required} fullWidth={fullWidth}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={field.value || false}
-                onChange={(e) => {
-                  field.onChange(e.target.checked);
-                  externalOnChange?.(e.target.checked);
-                }}
-                size={size}
-              />
-            }
-            label={label}
-          />
-          {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
-        </FormControl>
-      );
-    }
+      // Checkbox group or single checkbox
+      if (isCheckbox(type)) {
+        const options = getOptions();
+        const row = getRow();
 
-    // Date pickers
-    // Date pickers
-    if (isDatePicker(type) || isDateTimePicker(type)) {
-      const PickerComponent = isDatePicker(type) ? DatePicker : DateTimePicker;
-      const dateFormat = getDateFormat();
+        if (options.length > 0) {
+          // Multiple checkboxes
+          return (
+            <FormControl component="fieldset" error={!!errorMessage} disabled={disabled} required={required} fullWidth={fullWidth}>
+              <FormLabel component="legend">{label}</FormLabel>
+              <FormGroup row={row}>
+                {options.map((option) => {
+                  const isChecked = Array.isArray(field.value) ? field.value.includes(option.value) : false;
 
-      return (
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <PickerComponent
-            label={label}
-            value={field.value ? (typeof field.value === "string" ? dayjs(field.value) : dayjs(field.value)) : null}
-            onChange={(newValue) => {
-              // Return the date in ISO string format instead of a Date object
-              // This ensures consistent date formatting when sending to the API
-              let formattedValue = null;
+                  return (
+                    <FormControlLabel
+                      key={String(option.value)}
+                      control={
+                        <Checkbox
+                          checked={isChecked}
+                          onChange={(e) => {
+                            let newValue = [...(field.value || [])];
+                            if (e.target.checked) {
+                              newValue.push(option.value);
+                            } else {
+                              newValue = newValue.filter((val) => val !== option.value);
+                            }
+                            field.onChange(newValue);
+                            externalOnChange?.(newValue);
+                          }}
+                          size={size}
+                        />
+                      }
+                      label={option.label}
+                    />
+                  );
+                })}
+              </FormGroup>
+              {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
+            </FormControl>
+          );
+        }
 
-              if (newValue && dayjs.isDayjs(newValue)) {
-                // Keep the original ISO format for API compatibility
-                formattedValue = newValue.toISOString();
+        // Single checkbox
+        return (
+          <FormControl error={!!errorMessage} disabled={disabled} required={required} fullWidth={fullWidth}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={field.value || false}
+                  onChange={(e) => {
+                    field.onChange(e.target.checked);
+                    externalOnChange?.(e.target.checked);
+                  }}
+                  size={size}
+                />
               }
+              label={label}
+            />
+            {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
+          </FormControl>
+        );
+      }
 
-              field.onChange(formattedValue);
-              externalOnChange?.(formattedValue);
-            }}
-            disabled={disabled}
-            format={dateFormat}
-            slotProps={{
-              textField: {
-                variant,
-                fullWidth,
-                required,
-                error: !!errorMessage,
-                helperText: errorMessage || helperText,
-                size,
-                InputLabelProps: {
-                  shrink: true,
+      // Date pickers
+      if (isDatePicker(type) || isDateTimePicker(type)) {
+        const PickerComponent = isDatePicker(type) ? DatePicker : DateTimePicker;
+        const dateFormat = getDateFormat();
+
+        return (
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <PickerComponent
+              label={label}
+              value={field.value ? (typeof field.value === "string" ? dayjs(field.value) : dayjs(field.value)) : null}
+              onChange={(newValue) => {
+                let formattedValue = null;
+
+                if (newValue && dayjs.isDayjs(newValue)) {
+                  formattedValue = newValue.toISOString();
+                }
+
+                field.onChange(formattedValue);
+                externalOnChange?.(formattedValue);
+              }}
+              disabled={disabled}
+              format={dateFormat}
+              slotProps={{
+                textField: {
+                  variant,
+                  fullWidth,
+                  required,
+                  error: !!errorMessage,
+                  helperText: errorMessage || helperText,
+                  size,
+                  InputLabelProps: {
+                    shrink: true,
+                  },
                 },
-              },
+              }}
+            />
+          </LocalizationProvider>
+        );
+      }
+
+      // File input
+      if (isFileInput(type)) {
+        const accept = getAccept();
+
+        return (
+          <TextField
+            {...commonProps}
+            type="file"
+            InputLabelProps={{
+              shrink: true,
+            }}
+            inputProps={{
+              ...getInputProps(),
+              accept,
+            }}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const file = e.target.files?.[0] || null;
+              const isValid = validateFile(file);
+              if (isValid) {
+                field.onChange(file);
+                externalOnChange?.(file);
+              } else {
+                e.target.value = "";
+                field.onChange(null);
+                externalOnChange?.(null);
+              }
+            }}
+            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+              field.onBlur(e);
+              externalOnBlur?.(e);
             }}
           />
-        </LocalizationProvider>
-      );
-    }
+        );
+      }
 
-    // File input
-    if (isFileInput(type)) {
-      const accept = getAccept();
+      // Switch component
+      if (type === "switch") {
+        return (
+          <FormControl fullWidth={fullWidth} required={required} variant={variant} size={size}>
+            <FormControlLabel
+              control={
+                <CustomSwitch
+                  checked={field.value === "N"}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    const checked = event.target.checked;
+                    field.onChange(checked ? "N" : "Y");
+                    externalOnChange?.(checked ? "N" : "Y");
+                  }}
+                />
+              }
+              label={label}
+            />
+            {helperText && <FormHelperText>{helperText}</FormHelperText>}
+          </FormControl>
+        );
+      }
 
+      // Default text field as fallback
       return (
         <TextField
           {...commonProps}
-          type="file"
-          InputLabelProps={{
-            shrink: true,
-          }}
-          inputProps={{
-            ...getInputProps(),
-            accept,
-          }}
+          {...field}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            const file = e.target.files?.[0] || null;
-            const isValid = validateFile(file);
-            if (isValid) {
-              field.onChange(file);
-              externalOnChange?.(file);
-            } else {
-              e.target.value = "";
-              field.onChange(null);
-              externalOnChange?.(null);
-            }
+            field.onChange(e);
+            externalOnChange?.(e);
           }}
           onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
             field.onBlur(e);
@@ -675,54 +765,12 @@ const FormField = <TFieldValues extends FieldValues>({
           }}
         />
       );
-    }
+    };
 
-    // In the FormField component
-    if (type === "switch") {
-      return (
-        <FormControl fullWidth={fullWidth} required={required} variant={variant} size={size}>
-          <FormControlLabel
-            control={
-              <Controller
-                name={name}
-                control={control}
-                render={({ field }) => (
-                  <CustomSwitch
-                    checked={field.value === "N"} // Switch ON if field.value is "N"
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      const checked = event.target.checked; // Extract checked value from event
-                      field.onChange(checked ? "N" : "Y"); // Set "N" when checked (ON), "Y" when unchecked (OFF)
-                      externalOnChange?.(checked ? "N" : "Y"); // Call external onChange if provided
-                    }}
-                  />
-                )}
-              />
-            }
-            label={label} // The label will be handled here, no need to pass it to CustomSwitch
-          />
-          {helperText && <FormHelperText>{helperText}</FormHelperText>}
-        </FormControl>
-      );
-    }
+    return <Controller name={name} control={control} defaultValue={defaultValue} render={renderField} />;
+  }
+);
 
-    // Default text field as fallback
-    return (
-      <TextField
-        {...commonProps}
-        {...field}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          field.onChange(e);
-          externalOnChange?.(e);
-        }}
-        onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-          field.onBlur(e);
-          externalOnBlur?.(e);
-        }}
-      />
-    );
-  };
-
-  return <Controller name={name} control={control} defaultValue={defaultValue} render={renderField} />;
-};
+FormField.displayName = "FormField";
 
 export default FormField;
