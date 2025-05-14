@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Control, UseFieldArrayAppend, UseFieldArrayRemove, UseFieldArrayUpdate, UseFormSetValue } from "react-hook-form";
+import { Control, UseFieldArrayAppend, UseFieldArrayRemove, UseFieldArrayUpdate, UseFormSetValue, useWatch } from "react-hook-form";
 import { Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 import { Delete as DeleteIcon } from "@mui/icons-material";
 import { Loader } from "lucide-react";
@@ -18,16 +18,30 @@ interface PurchaseOrderGridProps {
   remove: UseFieldArrayRemove;
   update: UseFieldArrayUpdate<any, "purchaseOrderDetails">;
   approvedDisable: boolean;
-  setValue: UseFormSetValue<any>; // Add setValue
+  setValue: UseFormSetValue<any>;
 }
 
 const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, append, remove, update, approvedDisable, setValue }) => {
   const dropdownValues = useDropdownValues(["taxType"]);
   const [isLoading, setLoading] = useState(false);
-  const [gridKey, setGridKey] = useState(0); // Force re-render
-  const selectedProduct = control._formValues.selectedProduct;
-  const departmentId = control._formValues.purchaseOrderMast.fromDeptID;
-  const pOID = control._formValues.purchaseOrderMast.pOID;
+  const [gridKey, setGridKey] = useState(0);
+
+  // Use useWatch instead of accessing control._formValues directly
+  const selectedProduct = useWatch({
+    control,
+    name: "selectedProduct",
+  });
+
+  const departmentId = useWatch({
+    control,
+    name: "purchaseOrderMast.fromDeptID",
+  });
+
+  const pOID = useWatch({
+    control,
+    name: "purchaseOrderMast.pOID",
+  });
+
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     open: boolean;
     index: number | null;
@@ -39,7 +53,7 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
     if (response.success && response.data) {
       const purchaseOrderDetailsData = response.data.purchaseOrderDetailDto.map((item) => ({
         ...item,
-        id: `${item.productID}-${Date.now()}`, // Add unique ID
+        id: `${item.productID}-${Date.now()}`,
         gstPerValue: (item.cgstPerValue || 0) + (item.sgstPerValue || 0),
       }));
       purchaseOrderDetailsData.forEach((item, index) => update(index, item));
@@ -60,12 +74,15 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
   }, [fields]);
 
   useEffect(() => {
+    console.log("Selected Product changed:", selectedProduct);
     console.log("Approved Disable:", approvedDisable);
     console.log("Department ID:", departmentId);
+
     if (!departmentId) {
       showAlert("Please select a department", "", "warning");
       return;
     }
+
     if (selectedProduct && !approvedDisable) {
       const fetchPOProductDetails = async () => {
         setLoading(true);
@@ -73,43 +90,52 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
           console.log("Fetching product details for:", selectedProduct.productCode);
           const response: OperationResult<PurchaseOrderDetailDto> = await purchaseOrderMastServices.getPOProductDetails(selectedProduct.productCode || "", departmentId);
 
-          // Replace purchaseOrderMastServices.getPOProductDetails with mockResponse
           console.log("API Response:", response);
           if (!response.success || !response.data) {
             showAlert("Error", "Failed to fetch product details", "error");
             setLoading(false);
             return;
           }
+
           const purchaseOrderdetailDto = {
             ...response.data,
-            id: `${response.data.productID}-${Date.now()}`, // Unique ID
+            id: `${response.data.productID}-${Date.now()}`,
             gstPerValue: (response.data.cgstPerValue || 0) + (response.data.sgstPerValue || 0),
-            receivedQty: response.data.receivedQty ?? 0, // Default to 0
-            unitPack: response.data.unitPack ?? 1, // Default to 1
-            unitPrice: response.data.unitPrice ?? 0, // Default to 0
-            totAmt: response.data.totAmt ?? 0, // Default to 0
-            discAmt: response.data.discAmt ?? 0, // Default to 0
-            discPercentageAmt: response.data.discPercentageAmt ?? 0, // Default to 0
-            cgstTaxAmt: response.data.cgstTaxAmt ?? 0, // Default to 0
-            sgstTaxAmt: response.data.sgstTaxAmt ?? 0, // Default to 0
-            netAmount: response.data.netAmount ?? 0, // Default to 0
-            rActiveYN: response.data.rActiveYN || "Y", // Default to "Y"
+            receivedQty: response.data.receivedQty ?? 0,
+            unitPack: response.data.unitPack ?? 1,
+            unitPrice: response.data.unitPrice ?? 0,
+            totAmt: response.data.totAmt ?? 0,
+            discAmt: response.data.discAmt ?? 0,
+            discPercentageAmt: response.data.discPercentageAmt ?? 0,
+            cgstTaxAmt: response.data.cgstTaxAmt ?? 0,
+            sgstTaxAmt: response.data.sgstTaxAmt ?? 0,
+            netAmount: response.data.netAmount ?? 0,
+            rActiveYN: response.data.rActiveYN || "Y",
           };
+
           console.log("Purchase Order Detail:", purchaseOrderdetailDto);
+
           const productExist = fields.find((item) => item.productID === purchaseOrderdetailDto.productID && item.rActiveYN === "Y");
           if (productExist) {
             showAlert("Product already exists in the grid", "", "warning");
             setLoading(false);
             return;
           }
+
           if (fields.some((item) => item.productID === purchaseOrderdetailDto.productID && item.rActiveYN === "N")) {
             const index = fields.findIndex((item) => item.productID === purchaseOrderdetailDto.productID);
             remove(index);
           }
+
           console.log("Appending product:", purchaseOrderdetailDto);
           append(purchaseOrderdetailDto);
-          setValue("selectedProduct", null);
-          console.log("Selected Product after clear:", control._formValues.selectedProduct);
+
+          // Clear the selected product after a brief delay
+          setTimeout(() => {
+            setValue("selectedProduct", null);
+            console.log("Selected Product cleared");
+          }, 100);
+
           setGridKey((prev) => {
             console.log("Updating gridKey:", prev + 1);
             return prev + 1;
@@ -123,7 +149,8 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
       };
       fetchPOProductDetails();
     }
-  }, [selectedProduct, approvedDisable, append, remove, departmentId, setValue]);
+  }, [selectedProduct, approvedDisable, append, remove, departmentId, setValue, fields]);
+
   const handleDeleteClick = (index: number) => {
     setDeleteConfirmation({ open: true, index });
   };
