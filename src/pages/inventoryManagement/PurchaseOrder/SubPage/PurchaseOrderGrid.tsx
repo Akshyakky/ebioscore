@@ -166,6 +166,7 @@ const PurchaseOrderGrid: React.FC = () => {
       ControlID={`${field}_${row.productID}`}
     />
   );
+
   const tableHeaderNames = [
     "#",
     "Product",
@@ -225,6 +226,7 @@ const PurchaseOrderGrid: React.FC = () => {
                     <TableCell align="right" sx={{ minWidth: 150 }}>
                       {renderEditableNumberField(row, "discPercentageAmt", index)}
                     </TableCell>
+
                     <TableCell align="right" sx={{ minWidth: 150 }}>
                       <FormField
                         type="select"

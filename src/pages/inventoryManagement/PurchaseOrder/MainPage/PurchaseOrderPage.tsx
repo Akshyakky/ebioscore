@@ -37,13 +37,6 @@ const PurchaseOrderPage: React.FC = () => {
     setIsSearchOpen(false);
   }, []);
 
-  const handleSelect = useCallback((data: PurchaseOrderMastDto) => {
-    console.log("Selected data:", data);
-    dispatch(setPurchaseOrderMastData(data));
-    const isApproved = data.pOApprovedYN === "Y" && data.pOID > 0;
-    dispatch(setDisableApprovedFields(isApproved));
-  }, []);
-
   useEffect(() => {
     if (isDepartmentSelected) {
       dispatch(setDepartmentInfo({ departmentId: deptId, departmentName: deptName }));
@@ -112,7 +105,7 @@ const PurchaseOrderPage: React.FC = () => {
           pOTypeValue: "RVPO",
           pODate: formaPODateIsoString(purchaseOrderMastData.pODate),
         },
-        purchaseOrderDetailDto: purchaseOrderDetails.map((row) => ({
+        purchaseOrderDetailDto: purchaseOrderDetails.map((row : PurchaseOrderDetailDto) => ({
           pODetID: row.pODetID || 0,
           pOID: row.pOID || 0,
           indentID: row.indentID || 0,
@@ -231,9 +224,9 @@ const PurchaseOrderPage: React.FC = () => {
           <PurchaseOrderHeader handleDepartmentChange={handleDepartmentChange} />
           <PurchaseOrderGrid />
           <PurchaseOrderFooter />
-          <PurchaseOrderSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
+          <PurchaseOrderSearch open={isSearchOpen} onClose={handleCloseSearch} />
           <Box sx={{ mt: 4 }}>
-            {departmentId > 0 && <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />}
+            <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
           </Box>
         </Container>
       )}

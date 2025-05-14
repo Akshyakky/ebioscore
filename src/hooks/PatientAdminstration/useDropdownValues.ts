@@ -90,6 +90,7 @@ export type DropdownType =
   | "serviceType"
   | "employeeRoom"
   | "departmentIndent"
+  | "grnType"
   | "statusFilter";
 
 // Structure for tracking each dropdown's state
@@ -446,6 +447,10 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       departmentIndent: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DEPARTMENTINDENT");
+        return response;
+      },
+      grnType: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "GRNTYPE");
         return response;
       },
     }),

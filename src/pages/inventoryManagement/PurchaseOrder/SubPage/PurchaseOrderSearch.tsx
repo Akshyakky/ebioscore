@@ -1,21 +1,29 @@
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 import { PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { purchaseOrderMastService } from "@/services/InventoryManagementService/inventoryManagementService";
-import { RootState } from "@/store";
+import { AppDispatch, RootState } from "@/store";
+import { setDisableApprovedFields, setPurchaseOrderMastData } from "@/store/features/purchaseOrder/purchaseOrderSlice";
 import { showAlert } from "@/utils/Common/showAlert";
 
 import React, { useCallback } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 interface PurchaseOrderSearchProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (purchaseOrderMastDto: PurchaseOrderMastDto) => void;
 }
 
-const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose, onSelect }) => {
+const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose }) => {
+  const dispatch = useDispatch<AppDispatch>();
   const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
   const { departmentId } = departmentInfo;
+
+  const onSelect = useCallback((data: PurchaseOrderMastDto) => {
+    console.log("Selected data:", data);
+    dispatch(setPurchaseOrderMastData(data));
+    const isApproved = data.pOApprovedYN === "Y" && data.pOID > 0;
+    dispatch(setDisableApprovedFields(isApproved));
+  }, []);
 
   const fetchItems = useCallback(async () => {
     try {

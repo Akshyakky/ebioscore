@@ -49,6 +49,7 @@ export interface GRNDetailDto extends BaseDto {
   pGrpName?: string;
   productID: number;
   productCode?: string;
+  productName?: string;
   catValue: string;
   mfID?: number;
   pUnitID?: number;
@@ -95,7 +96,6 @@ export interface GRNDetailDto extends BaseDto {
   catDesc?: string;
   mfName?: string;
   pkgName?: string;
-  productName?: string;
   psGrpName?: string;
   refNo?: string;
   hsnCode?: string;
@@ -105,9 +105,61 @@ export interface GRNDetailDto extends BaseDto {
   sgstTaxAmt?: number;
   taxableAmt?: number;
   defaultPrice: number;
+  //
+  _recievedQty: number;
+  _serialNo: number;
+  _pastReceivedPack: number;
+  _unitPrice: number;
+  _sellingUnitPrice: number;
 }
 
 export interface GRNDto {
   gRNMastDto: GRNMastDto;
   gRNDetailsDto: GRNDetailDto[];
 }
+
+export const initialMastData: GRNMastDto = {
+  grnID: 0,
+  deptID: 0,
+  deptName: "",
+  grnDate: new Date().toISOString(),
+  invoiceNo: "",
+  invDate: new Date().toISOString(),
+  supplrID: 0,
+  supplrName: "",
+  tot: 0,
+  disc: 0,
+  netTot: 0,
+  auGrpID: 18,
+  balanceAmt: 0,
+  catDesc: "REVENUE",
+  catValue: "MEDI",
+  coinAdj: 0,
+  dcNo: ".",
+  discPercentageYN: "N",
+  grnApprovedBy: "",
+  grnApprovedID: 0,
+  grnApprovedYN: "Y",
+  grnStatusCode: "COMP",
+  grnStatus: "Completed",
+  otherAmt: 0,
+  poCoinAdjAmt: 0,
+  poDate: new Date().toISOString(),
+  poDiscAmt: 0,
+  poID: 0,
+  poNo: "",
+  poTotalAmt: 0,
+  taxAmt: 0,
+  transDeptID: 0,
+  transDeptName: "",
+  grnCode: "",
+  grnType: "INV",
+  totalTaxableAmt: 0,
+  netCGSTTaxAmt: 0,
+  netSGSTTaxAmt: 0,
+  grnDetails: [],
+  rActiveYN: "Y",
+  transferYN: "N",
+  rNotes: null,
+  pODate: new Date().toISOString(),
+};

@@ -1,5 +1,5 @@
 import { Grid, Paper } from "@mui/material";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import DepartmentInfoChange from "../../CommonPage/DepartmentInfoChange";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
@@ -9,10 +9,10 @@ import { AppDispatch } from "@/store";
 import { useDispatch } from "react-redux";
 import { updatePurchaseOrderMastField, setSelectedProduct } from "@/store/features/purchaseOrder/purchaseOrderSlice";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
 import { showAlert } from "@/utils/Common/showAlert";
-import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
+import { ProductSearch } from "../../CommonPage/Product/ProductSearchForm";
+import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
 
 const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartmentChange }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -23,24 +23,18 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
   const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
   const { pOCode, pODate, supplierID, pOSActionNo, pOApprovedNo } = purchaseOrderMastData;
   const approvedDisable = useSelector((state: RootState) => state.purchaseOrder.disableApprovedFields) ?? false;
-  const [productOptions, setProductOptions] = useState<ProductListDto[]>([]);
-  const [productName, setProductName] = useState<string>("");
 
   const handleProductSelect = useCallback(
-    (selectedProductString: string) => {
+    (product: ProductSearchResult | null) => {
       if (departmentId === 0) {
         showAlert("Please select a department first", "", "warning");
         return;
       }
-      const [selectedProductCode] = selectedProductString.split(" - ");
-      const selectedProduct = productOptions.find((product) => product.productCode === selectedProductCode);
-
-      if (selectedProduct) {
-        dispatch(setSelectedProduct(selectedProduct));
-      }
+      if (product) dispatch(setSelectedProduct(product));
     },
-    [productOptions, dispatch]
+    [dispatch]
   );
+
   const fetchPOCode = async (departmentId: number) => {
     const response = await purchaseOrderMastServices.getPOCode(departmentId);
     if (response.success && response.data) {
@@ -49,45 +43,13 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
       showAlert("error", "Failed to fetch PO Code", "error");
     }
   };
-  const fetchProducts = async () => {
-    try {
-      const response = await productListService.getAll();
 
-      const productList = Array.isArray(response.data) ? response.data : [];
-      const activeProducts = productList.filter((product) => product.rActiveYN === "Y");
-      setProductOptions(activeProducts);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      showAlert("error", "Failed to fetch products", "error");
-    }
-  };
   useEffect(() => {
     if (departmentId > 0) {
       fetchPOCode(departmentId);
-      fetchProducts();
       dispatch(updatePurchaseOrderMastField({ field: "pODate", value: new Date().toLocaleDateString("en-GB") }));
     }
   }, [departmentId]);
-
-  const fetchProductSuggestions = useCallback(
-    async (searchTerm: string) => {
-      if (searchTerm.trim() === "") {
-        return productOptions.map((item) => `${item.productCode} - ${item.productName}`);
-      }
-
-      if (!searchTerm.trim()) return [];
-
-      try {
-        return productOptions
-          .filter((item) => item.productCode?.toLowerCase().includes(searchTerm.toLowerCase()) || item.productName?.toLowerCase().includes(searchTerm.toLowerCase()))
-          .map((item) => `${item.productCode} - ${item.productName}`);
-      } catch (error) {
-        console.error("Error fetching product suggestions:", error);
-        return [];
-      }
-    },
-    [productOptions]
-  );
 
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
@@ -168,7 +130,11 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
         />
       </Grid>
       <Grid container spacing={2}>
-        {!approvedDisable && (
+        <Grid size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 3 }}>
+          <ProductSearch onProductSelect={handleProductSelect} label="Search Product" placeholder="Search product..." initialSelection={null} />
+        </Grid>
+
+        {/* {!approvedDisable && (
           <FormField
             ControlID="productName"
             label="Search Product"
@@ -182,7 +148,7 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderProps> = ({ handleDepartm
             disabled={approvedDisable}
             gridProps={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2 }}
           />
-        )}
+        )} */}
       </Grid>
     </Paper>
   );
