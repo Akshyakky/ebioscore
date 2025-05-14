@@ -207,7 +207,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
       placeholder = "",
       helperText = "",
       variant = "outlined",
-      size = "medium",
+      size = "small",
       defaultValue,
       onChange: externalOnChange,
       onBlur: externalOnBlur,

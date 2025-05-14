@@ -1,5 +1,6 @@
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { ProductListDto } from "./ProductListDto";
+import { ProductSearchResult } from "./Product/ProductSearch.interfacr";
 
 export interface PurchaseOrderMastDto extends BaseDto {
   pOID: number;
@@ -18,7 +19,7 @@ export interface PurchaseOrderMastDto extends BaseDto {
   pOApprovedBy?: string;
   pOApprovedID?: number;
   pOApprovedNo?: string;
-  pOApprovedYN: string;
+  pOApprovedYN: "Y" | "N";
   pOCode?: string;
   pOSActionNo?: string;
   pOTypeValue?: string;
@@ -27,12 +28,13 @@ export interface PurchaseOrderMastDto extends BaseDto {
   totalAmt?: number;
   pOStatusCode?: string;
   pOStatus?: string;
-  netCGSTTaxAmt: number;
+  netCGSTTaxAmt?: number;
   netSGSTTaxAmt?: number;
   totalTaxableAmt?: number;
-  rActiveYN: string;
-  transferYN: string;
+  rActiveYN: "Y" | "N";
+  transferYN: "Y" | "N";
   rNotes?: string;
+  disableApprovedFields?: boolean;
 }
 
 export interface PurchaseOrderDetailDto extends BaseDto {
@@ -99,7 +101,11 @@ export interface purchaseOrderSaveDto extends BaseDto {
   purchaseOrderDetailDto: PurchaseOrderDetailDto[];
 }
 
-export interface GridRowData extends PurchaseOrderDetailDto {}
+export interface PurchaseOrderFormData {
+  purchaseOrderMast: PurchaseOrderMastDto;
+  purchaseOrderDetails: PurchaseOrderDetailDto[];
+  selectedProduct?: ProductSearchResult | null;
+}
 
 export const initialPOMastDto: PurchaseOrderMastDto = {
   pOID: 0,
@@ -134,7 +140,6 @@ export const initialPOMastDto: PurchaseOrderMastDto = {
   transferYN: "Y",
   rNotes: "",
 };
-
 export interface DepartmentInfo {
   departmentId: number;
   departmentName: string;
