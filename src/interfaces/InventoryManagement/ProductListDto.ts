@@ -43,7 +43,7 @@ export interface ProductListDto extends BaseDto {
   abcCode: string;
   catDescription?: string;
   MFName?: string;
-  manufacturerGenericName?: string;
+  medicationGenericName?: string;
   productGroupName?: string;
   productPackageName?: string;
   productName?: string;

@@ -23,8 +23,8 @@ const fetchAppModifyList = async (endpoint: string, fieldCode: string): Promise<
     return response.map((item) => ({
       value: item.amlCode,
       label: item.amlName,
-      defaultYn: item.defaultYn,
-      id: item.amlId,
+      defaultYn: item.defaultYN,
+      id: item.amlID,
       code: item.amlCode,
     }));
   } catch (error) {
