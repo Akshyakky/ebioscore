@@ -22,6 +22,8 @@ import {
   TextFieldProps,
   CircularProgress,
   useTheme,
+  Switch,
+  styled, // Added Switch import
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
@@ -31,7 +33,36 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ClearIcon from "@mui/icons-material/Clear";
 import dayjs, { Dayjs } from "dayjs";
-import CustomSwitch from "../Checkbox/ColorSwitch";
+
+const ColorSwitch = styled(Switch, {
+  shouldForwardProp: (prop) => prop !== "switchColor",
+})<{ switchColor?: string }>(({ theme, switchColor }) => ({
+  "& .MuiSwitch-switchBase": {
+    color: "#fff",
+    "&.Mui-checked": {
+      color: "#fff",
+      "& + .MuiSwitch-track": {
+        backgroundColor: switchColor || theme.palette.primary.main,
+      },
+      "&:hover": {
+        backgroundColor: switchColor ? `${switchColor}B2` : `${theme.palette.primary.main}B2`,
+      },
+    },
+    "&.Mui-disabled": {
+      "& + .MuiSwitch-track": {
+        opacity: theme.palette.mode === "light" ? 0.7 : 0.3,
+      },
+      "&.Mui-checked": {
+        "& + .MuiSwitch-track": {
+          backgroundColor: theme.palette.mode === "light" ? "#E9E9EA" : "#39393D",
+        },
+      },
+    },
+  },
+  "& .MuiSwitch-track": {
+    backgroundColor: "#ccc",
+  },
+}));
 
 // Define the date format constant
 const DATE_FORMAT = "DD/MM/YYYY";
@@ -151,6 +182,8 @@ type FileTypeProps = {
 
 type SwitchTypeProps = {
   type: "switch";
+  color?: "primary" | "secondary" | "error" | "info" | "success" | "warning";
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 };
 
 // Combine all possible props using discriminated union
@@ -204,6 +237,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
     const isDatePicker = (type: FieldType): boolean => type === "datepicker";
     const isDateTimePicker = (type: FieldType): boolean => type === "datetimepicker";
     const isFileInput = (type: FieldType): boolean => type === "file";
+    const isSwitch = (type: FieldType): boolean => type === "switch";
 
     // Helper functions to access properties based on field type
     const getOptions = (): OptionType[] => {
@@ -255,6 +289,8 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
     const getMaxSize = (): number | undefined => (isFileInput(type) ? (rest as any).maxSize : undefined);
 
     const getRow = (): boolean => (isRadio(type) || isCheckbox(type) ? (rest as any).row || false : false);
+
+    const getSwitchColor = (): SwitchTypeProps["color"] => (isSwitch(type) ? (rest as any).color || "primary" : "primary");
 
     // Toggle password visibility
     const handleClickShowPassword = (): void => {
@@ -729,23 +765,78 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
       }
 
       // Switch component
-      if (type === "switch") {
+      if (isSwitch(type)) {
+        const switchColor = getSwitchColor();
+
+        // Handle Y/N values properly
+        const isChecked = field.value === "Y" || field.value === true;
+
         return (
-          <FormControl fullWidth={fullWidth} required={required} variant={variant} size={size}>
+          <FormControl
+            error={!!errorMessage}
+            disabled={disabled}
+            required={required}
+            fullWidth={fullWidth}
+            sx={{
+              // Improve spacing and alignment
+              "& .MuiFormControlLabel-root": {
+                alignItems: "center",
+                gap: 1,
+                margin: 0,
+              },
+              "& .MuiFormControlLabel-label": {
+                fontSize: size === "small" ? "0.875rem" : "1rem",
+                fontWeight: 500,
+                color: disabled ? "text.disabled" : "text.primary",
+              },
+            }}
+          >
             <FormControlLabel
               control={
-                <CustomSwitch
-                  checked={field.value === "N"}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    const checked = event.target.checked;
-                    field.onChange(checked ? "N" : "Y");
-                    externalOnChange?.(checked ? "N" : "Y");
+                <ColorSwitch
+                  checked={isChecked}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    // Convert boolean to Y/N string
+                    const newValue = e.target.checked ? "Y" : "N";
+                    field.onChange(newValue);
+                    externalOnChange?.(newValue);
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLElement>) => {
+                    field.onBlur(e);
+                    externalOnBlur?.(e);
+                  }}
+                  color={switchColor}
+                  size={size}
+                  disabled={disabled}
+                  inputProps={{
+                    ...getInputProps(),
+                    "aria-describedby": errorMessage ? `${name}-helper-text` : undefined,
+                  }}
+                  sx={{
+                    "& .MuiSwitch-thumb": {
+                      color: disabled ? "#BDBDBD" : "#fff",
+                    },
+                    "& .MuiSwitch-switchBase:not(.Mui-checked)": {
+                      color: disabled ? "#BDBDBD" : "#ccc",
+                    },
                   }}
                 />
               }
               label={label}
+              labelPlacement="end"
             />
-            {helperText && <FormHelperText>{helperText}</FormHelperText>}
+            {(errorMessage || helperText) && (
+              <FormHelperText
+                id={`${name}-helper-text`}
+                sx={{
+                  marginTop: 0.5,
+                  marginLeft: 0,
+                  fontSize: size === "small" ? "0.75rem" : "0.875rem",
+                }}
+              >
+                {errorMessage || helperText}
+              </FormHelperText>
+            )}
           </FormControl>
         );
       }

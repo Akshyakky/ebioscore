@@ -20,10 +20,8 @@ export interface ProductOverviewDto extends BaseDto {
   defaultYN: string;
   isAutoIndentYN: string;
   productLocation?: string;
+  pLocationID?: number;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
 }

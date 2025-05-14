@@ -21,17 +21,15 @@ const ProductOverviewPage: React.FC = () => {
     defaultYN: "N",
     isAutoIndentYN: "N",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "N",
+    pLocationID: 0,
   });
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect, requireDepartmentSelection } = useDepartmentSelection({
     isDialogOpen: true,
   });
-  const isSubmitted = false;
+
   const handleDepartmentChange = useCallback(() => {
     openDialog();
   }, [openDialog]);

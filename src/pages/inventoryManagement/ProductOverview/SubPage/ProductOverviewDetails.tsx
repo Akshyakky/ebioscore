@@ -47,14 +47,11 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({ selectedD
     isAutoIndentYN: "N",
     productLocation: "",
     rActiveYN: "Y",
-    compID: user.compID || 0,
-    compCode: "",
-    compName: "",
+    pLocationID: 0,
     transferYN: "N",
     rNotes: "",
   });
 
-  const [productOptions, setProductOptions] = useState<ProductListDto[]>([]);
   const [, setIsLoading] = useState(false);
   const [selectedProductData, setSelectedProductData] = useState<ProductListDto[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -111,9 +108,7 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({ selectedD
       isAutoIndentYN: "N",
       productLocation: "",
       rActiveYN: "Y",
-      compID: user.compID || 0,
-      compCode: "",
-      compName: "",
+      pLocationID: 0,
       transferYN: "N",
       rNotes: "",
     });
@@ -135,7 +130,7 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({ selectedD
         reOrderLevel: formState.reOrderLevel || 0,
         avgDemand: formState.avgDemand || 0,
         stockLevel: formState.stockLevel || 0,
-        compID: user.compID || 0,
+        pLocationID: formState.pLocationID || 0,
       };
 
       await productOverviewService.save(productOverview);
@@ -197,17 +192,6 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({ selectedD
       return [];
     }
   }, []);
-
-  const debouncedFetchSuggestions = useCallback(debounce(fetchProductSuggestions, 300), [fetchProductSuggestions]);
-
-  const handleProductCodeChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setFormState((prevState) => ({ ...prevState, productCode: value }));
-      debouncedFetchSuggestions(value);
-    },
-    [debouncedFetchSuggestions]
-  );
 
   const handleProductSelect = useCallback(async (selectedProductString: string) => {
     const [selectedProductCode] = selectedProductString.split(" - ");

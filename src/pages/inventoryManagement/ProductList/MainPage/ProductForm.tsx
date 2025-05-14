@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Grid, Typography, Divider, Switch, FormControlLabel } from "@mui/material";
+import { Box, Grid, Typography, Divider } from "@mui/material";
 import { Save as SaveIcon, Cancel as CancelIcon } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
@@ -23,25 +23,25 @@ interface ProductFormProps {
 
 // Define the validation schema
 const productSchema = z.object({
-  productID: z.number().optional(),
+  productID: z.coerce.number().optional(),
   productCode: z.string().min(1, "Product code is required"),
   productName: z.string().min(1, "Product name is required"),
   catValue: z.string().min(1, "Category is required"),
-  pGrpID: z.number().min(1, "Product group is required"),
-  pUnitID: z.number().min(1, "Product unit is required"),
-  defaultPrice: z.number().min(0, "Price cannot be negative"),
-  taxID: z.number().optional(),
+  pGrpID: z.coerce.number().min(1, "Product group is required"),
+  pUnitID: z.coerce.number().min(1, "Product unit is required"),
+  defaultPrice: z.coerce.number().min(0, "Price cannot be negative"),
+  taxID: z.coerce.number().optional(),
   prescription: z.string().optional(),
   expiry: z.string().optional(),
   sellable: z.string().optional(),
   taxable: z.string().optional(),
-  mFID: z.number().optional(),
-  mGenID: z.number().optional(),
-  leadTime: z.number().optional(),
-  psGrpID: z.number().optional(),
-  rOL: z.number().optional(),
-  manufacturerID: z.number().optional(),
-  pLocationID: z.number().optional(),
+  mFID: z.coerce.number().optional(),
+  mGenID: z.coerce.number().optional(),
+  leadTime: z.coerce.number().optional(),
+  psGrpID: z.coerce.number().optional(),
+  rOL: z.coerce.number().optional(),
+  manufacturerID: z.coerce.number().optional(),
+  pLocationID: z.coerce.number().optional(),
   rActiveYN: z.string().optional(),
   productNotes: z.string().optional(),
   vedCode: z.string().optional(),
@@ -49,7 +49,7 @@ const productSchema = z.object({
   hsnCODE: z.string().optional(),
   barcode: z.string().optional(),
   chargableYN: z.string().optional(),
-  chargePercentage: z.number().optional(),
+  chargePercentage: z.coerce.number().optional(),
   isAssetYN: z.string().optional(),
   transferYN: z.string().optional(),
 });
@@ -61,7 +61,6 @@ const productService = new ProductListService();
 const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewOnly = false }) => {
   const { setLoading } = useLoading();
   const [isSaving, setIsSaving] = useState(false);
-  const [activeStatus, setActiveStatus] = useState(product?.rActiveYN === "Y");
 
   // Load dropdown values
   const { productCategory, productGroup, productUnit, taxType, medicationForm, medicationGeneric, productSubGroup, manufacturer } = useDropdownValues([
@@ -147,9 +146,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       setIsSaving(true);
       setLoading(true);
 
-      // Update active status
-      data.rActiveYN = activeStatus ? "Y" : "N";
-
       // Convert form data to ProductListDto
       const productData: ProductListDto = {
         ...data,
@@ -231,7 +227,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
         isAssetYN: product.isAssetYN || "N",
         transferYN: product.transferYN || "N",
       });
-      setActiveStatus(product.rActiveYN === "Y");
     } else {
       // If adding new, reset to defaults
       reset({
@@ -265,7 +260,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
         isAssetYN: "N",
         transferYN: "N",
       });
-      setActiveStatus(true);
       generateProductCode();
     }
   };
@@ -309,14 +303,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       disableEscapeKeyDown={!viewOnly}
       actions={dialogActions}
     >
-      <Box component="form" noValidate>
+      <Box component="form" noValidate sx={{ p: 1 }}>
         <Grid container spacing={3}>
           {/* Product Status */}
           <Grid size={{ xs: 12 }} display="flex" justifyContent="flex-end">
-            <FormControlLabel
-              control={<Switch checked={activeStatus} onChange={(e) => setActiveStatus(e.target.checked)} disabled={viewOnly} />}
-              label={activeStatus ? "Active" : "Inactive"}
-            />
+            <FormField name="rActiveYN" control={control} label="Status" type="switch" disabled={viewOnly} size="small" fullWidth />
           </Grid>
 
           {/* Basic Information Section */}
@@ -328,11 +319,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormField name="productCode" control={control} label="Product Code" type="text" required disabled={viewOnly || !!product} size="small" />
+            <FormField name="productCode" control={control} label="Product Code" type="text" required disabled={viewOnly || !!product} size="small" fullWidth />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormField name="productName" control={control} label="Product Name" type="text" required disabled={viewOnly} size="small" />
+            <FormField name="productName" control={control} label="Product Name" type="text" required disabled={viewOnly} size="small" fullWidth />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -469,33 +460,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormField
-              name="taxable"
-              control={control}
-              label="Taxable"
-              type="select"
-              disabled={viewOnly}
-              options={[
-                { value: "Y", label: "Yes" },
-                { value: "N", label: "No" },
-              ]}
-              size="small"
-            />
+            <FormField name="taxable" control={control} label="Taxable" type="switch" disabled={viewOnly} size="small" />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormField
-              name="chargableYN"
-              control={control}
-              label="Chargeable"
-              type="select"
-              disabled={viewOnly}
-              options={[
-                { value: "Y", label: "Yes" },
-                { value: "N", label: "No" },
-              ]}
-              size="small"
-            />
+            <FormField name="chargableYN" control={control} label="Chargeable" type="switch" disabled={viewOnly} size="small" />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -511,33 +480,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormField
-              name="sellable"
-              control={control}
-              label="Sellable"
-              type="select"
-              disabled={viewOnly}
-              options={[
-                { value: "Y", label: "Yes" },
-                { value: "N", label: "No" },
-              ]}
-              size="small"
-            />
+            <FormField name="sellable" control={control} label="Sellable" type="switch" disabled={viewOnly} size="small" />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormField
-              name="isAssetYN"
-              control={control}
-              label="Is Asset"
-              type="select"
-              disabled={viewOnly}
-              options={[
-                { value: "Y", label: "Yes" },
-                { value: "N", label: "No" },
-              ]}
-              size="small"
-            />
+            <FormField name="isAssetYN" control={control} label="Is Asset" type="switch" disabled={viewOnly} size="small" />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -557,33 +504,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormField
-              name="prescription"
-              control={control}
-              label="Requires Prescription"
-              type="select"
-              disabled={viewOnly}
-              options={[
-                { value: "Y", label: "Yes" },
-                { value: "N", label: "No" },
-              ]}
-              size="small"
-            />
+            <FormField name="prescription" control={control} label="Requires Prescription" type="switch" disabled={viewOnly} size="small" />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormField
-              name="expiry"
-              control={control}
-              label="Has Expiry"
-              type="select"
-              disabled={viewOnly}
-              options={[
-                { value: "Y", label: "Yes" },
-                { value: "N", label: "No" },
-              ]}
-              size="small"
-            />
+            <FormField name="expiry" control={control} label="Has Expiry" type="switch" disabled={viewOnly} size="small" />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>

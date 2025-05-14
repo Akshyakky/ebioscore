@@ -91,7 +91,8 @@ export type DropdownType =
   | "employeeRoom"
   | "departmentIndent"
   | "statusFilter"
-  | "manufacturer";
+  | "manufacturer"
+  | "productLocation";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -192,7 +193,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return response;
       },
       category: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CATEGORY");
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CONCATEGORY");
         return response;
       },
       employeeStatus: async () => {
@@ -423,7 +424,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         }));
       },
       mainGroup: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "MAINMODULE");
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "INVMAINGROUP");
         return response;
       },
       subTitle: async () => {
@@ -459,6 +460,10 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           }));
         }
         return [];
+      },
+      productLocation: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "PRODUCTLOCATION");
+        return response;
       },
     }),
     []
