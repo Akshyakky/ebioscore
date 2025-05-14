@@ -12,22 +12,28 @@ class IndentProductService extends GenericEntityService<IndentSaveRequestDto> {
       new CommonApiService({
         baseURL: APIConfig.inventoryManagementURL,
       }),
-      "Indent" // Updated service name
+      "Indent"
     );
   }
 
-  // Corrected endpoint for saving indent with details
   async saveIndent(IndentData: IndentSaveRequestDto): Promise<OperationResult<any[]>> {
-    return this.apiService.post<OperationResult<any[]>>(`${this.baseEndpoint}/Save`, IndentData, this.getToken()); // Corrected Save endpoint
+    if (IndentData.IndentDetails) {
+      IndentData.IndentDetails = IndentData.IndentDetails.map((detail) => {
+        if (IndentData.id > 0) {
+          detail.indentDetID = detail.indentDetID || 0;
+        }
+        return detail;
+      });
+    }
+
+    return this.apiService.post<OperationResult<any[]>>(`${this.baseEndpoint}/Save`, IndentData, this.getToken());
   }
 
-  // Corrected endpoint for getting indent by ID
   async getIndentById(indentId: number): Promise<OperationResult<any>> {
-    return this.apiService.get<OperationResult<any>>(`${this.baseEndpoint}/GetById/${indentId}`, this.getToken()); // Corrected Get endpoint
+    return this.apiService.get<OperationResult<any>>(`${this.baseEndpoint}/GetById/${indentId}`, this.getToken());
   }
 
   async getAllIndents(filterDto: FilterDto): Promise<OperationResult<PaginatedList<IndentMastDto>>> {
-    // Convert filterDto to query parameters
     const params = new URLSearchParams();
     params.append("dateFilter", filterDto.dateFilter.toString());
     if (filterDto.startDate) {
@@ -41,8 +47,6 @@ class IndentProductService extends GenericEntityService<IndentSaveRequestDto> {
     }
     params.append("pageIndex", filterDto.pageIndex.toString());
     params.append("pageSize", filterDto.pageSize.toString());
-
-    // Use GET request with query parameters instead of POST with body
     return this.apiService.get<OperationResult<PaginatedList<IndentMastDto>>>(`${this.baseEndpoint}/GetAll?${params.toString()}`, this.getToken());
   }
 }

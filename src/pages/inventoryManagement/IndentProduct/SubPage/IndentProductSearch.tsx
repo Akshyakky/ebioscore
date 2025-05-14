@@ -8,6 +8,7 @@ import { DateFilterType, FilterDto } from "@/interfaces/Common/FilterDto";
 import { showAlert } from "@/utils/Common/showAlert";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
 import { indentProductMastService } from "@/services/InventoryManagementService/inventoryManagementService";
+import dayjs from "dayjs";
 
 interface IndentSearchDialogProps {
   open: boolean;
@@ -16,9 +17,9 @@ interface IndentSearchDialogProps {
 }
 
 const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, onSelect }) => {
-  const [statusOptions, setStatusOptions] = useState<{ label: string; value: string }[]>([]);
+  const [, setStatusOptions] = useState<{ label: string; value: string }[]>([]);
   const [filterConfigs, setFilterConfigs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [indents, setIndents] = useState<IndentMastDto[]>([]);
   const [indentType, setIndentType] = useState<string>("");
   const [statusOpt, setStatusOpt] = useState<string>("");
@@ -26,9 +27,8 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
   const [dateFilter, setDateFilter] = useState<DateFilterType>(DateFilterType.All);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [searchValue, setSearchValue] = useState<string>("");
+  const [, setSearchValue] = useState<string>("");
   const [forceRefresh, setForceRefresh] = useState<number>(0);
-
   const requiredDropdowns: DropdownType[] = ["statusFilter", "department", "departmentIndent"];
   const { departmentIndent } = useDropdownValues(requiredDropdowns);
 
@@ -176,19 +176,30 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
     setSearchValue(value);
   }, []);
 
-  const updateActiveStatus = useCallback(async (id: number, status: boolean) => {
+  const getItemId = useCallback((item: IndentMastDto) => {
+    console.log("getItemId called with item:", item);
+    return item.indentID || 0;
+  }, []);
+
+  const updateActiveStatus = async (id: number, currentStatus: any) => {
     try {
-      const result = await indentProductMastService.updateActiveStatus(id, status);
-      if (result && result.success) {
-        showAlert("Success", "Status updated successfully.", "success");
-        setIndents((prevIndents) => prevIndents.map((item) => (item.indentID === id ? { ...item, indStatus: status ? "Active" : "Hidden" } : item)));
-        return true;
+      const newStatus = currentStatus === "Y" ? "N" : "Y";
+      const result = await indentProductMastService.updateActiveStatus(id, newStatus === "Y");
+      if (result.success) {
+        showAlert("Success", `Status updated to ${newStatus === "N" ? "Active" : "Inactive"}`, "success");
+        setForceRefresh((prev) => prev + 1);
+      } else {
+        showAlert("Error", result.errorMessage || "Failed to update status", "error");
       }
-      return false;
+      return result.success;
     } catch (error) {
-      showAlert("Error", "Failed to update status.", "error");
+      showAlert("Error", "An error occurred while updating status", "error");
       return false;
     }
+  };
+
+  const getItemActiveStatus = useCallback((item: IndentMastDto) => {
+    return item.rActiveYN === undefined || item.rActiveYN === "Y";
   }, []);
 
   const customIndentFilter = (item: IndentMastDto, searchValue: string): boolean => {
@@ -215,10 +226,6 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
     );
   };
 
-  const getItemId = (item: IndentMastDto) => item.indentID;
-  const getItemActiveStatus = (item: IndentMastDto) => item.rActiveYN === "Y";
-
-  // Handle the edit action to pass the selected indent back to the parent
   const handleEditClick = (item: IndentMastDto) => {
     if (item && item.indentID) {
       onSelect(item);
@@ -227,12 +234,17 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
     }
   };
 
-  // Table columns configuration
   const columns: Column<IndentMastDto>[] = [
     { key: "indentCode", header: "Indent No", visible: true, sortable: true },
     { key: "fromDeptName", header: "From Department", visible: true, sortable: true },
     { key: "toDeptName", header: "To Department", visible: true, sortable: true },
-    { key: "indentDate", header: "Date", visible: true, sortable: true },
+    {
+      key: "indentDate",
+      header: "Date",
+      visible: true,
+      sortable: true,
+      render: (item: IndentMastDto) => (item.indentDate ? <span style={{ whiteSpace: "nowrap" }}>{dayjs(item.indentDate).format("DD/MM/YYYY")}</span> : ""),
+    },
     { key: "indStatus", header: "Record Status", visible: true, sortable: true },
     { key: "createdBy", header: "Created By", visible: true, sortable: true },
     { key: "indentType", header: "Indent Type", visible: true, sortable: true },
@@ -263,20 +275,20 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
       showFilters={true}
       filterConfigs={filterConfigs}
       onFilterChange={handleFilterChange}
-      onEdit={handleEditClick} // Added explicit edit handler
+      onEdit={handleEditClick}
       dateFilterOptions={{
         showDateFilter: true,
         onDateFilterChange: handleDateFilterChange,
         onDateRangeChange: handleDateRangeChange,
       }}
-      dialogProps={{
-        maxWidth: "lg",
-        fullWidth: true,
-        dialogContentSx: {
-          minHeight: "600px",
-          maxHeight: "600px",
-        },
-      }}
+      // dialogProps={{
+      //   maxWidth: "lg",
+      //   fullWidth: true,
+      //   dialogContentSx: {
+      //     minHeight: "600px",
+      //     maxHeight: "600px",
+      //   },
+      // }}
     />
   );
 };

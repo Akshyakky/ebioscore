@@ -88,7 +88,7 @@ const StyledNavLink = styled(NavLink)(({ theme }) => ({
 // Enhanced ListItemButton with better hover effects
 const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
   borderRadius: "8px",
-  margin: "4px 8px",
+  margin: "2px 4px",
   padding: "8px 16px",
   transition: "all 0.2s ease",
   "&:hover": {
@@ -155,7 +155,7 @@ const SubModuleItem = memo(({ subModule, handleSubModuleClick, theme }: { subMod
       handleSubModuleClick(subModule.link);
     }}
   >
-    <StyledListItemButton sx={{ pl: 2 }}>
+    <StyledListItemButton sx={{ pl: 3 }}>
       <ListItemIcon>
         <Icon icon={subModule.iCon} style={{ fontSize: "20px", color: theme.palette.text.secondary }} />
       </ListItemIcon>
@@ -355,7 +355,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
       <StyledDrawer variant={isSmallScreen ? "temporary" : "persistent"} anchor="left" open={open} onClose={handleDrawerClose} isSmallScreen={isSmallScreen}>
         <Box
           sx={{
-            padding: 0.9,
+            padding: 0.7,
             borderBottom: `1px solid ${theme.palette.divider}`,
             transition: "padding 0.2s ease",
             ...(isSearchFocused && {}),

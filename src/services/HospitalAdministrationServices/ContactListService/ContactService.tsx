@@ -1,5 +1,5 @@
 import { APIConfig } from "@/apiConfig";
-import { ContactListData, ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
+import { ContactDropdownData, ContactListData, ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
 import { GenericEntityService, OperationResult, PaginatedList } from "@/services/GenericEntityService/GenericEntityService";
 import { CommonApiService } from "@/services/CommonApiService";
 
@@ -57,5 +57,21 @@ export class ContactService extends GenericEntityService<ContactMastData> {
    */
   async generateContactCode(): Promise<OperationResult<string>> {
     return this.apiService.get<OperationResult<string>>(`${this.baseEndpoint}/GenerateContactCode`, this.getToken());
+  }
+
+  /**
+   * Gets contacts for dropdown based on category (e.g., Manufacturer, Physician, Supplier)
+   * @param category - The contact category to filter by (Manufacturer, Physician, Supplier, etc.)
+   * @param searchText - Optional search text for filtering results
+   * @param useCompanyFilter - Whether to filter by current company (default: true)
+   */
+  async getContactsForDropdown(category: string, searchText?: string, useCompanyFilter: boolean = true): Promise<OperationResult<ContactDropdownData[]>> {
+    const params = new URLSearchParams({
+      category,
+      useCompanyFilter: useCompanyFilter.toString(),
+      ...(searchText && { searchText }),
+    });
+
+    return this.apiService.get<OperationResult<ContactDropdownData[]>>(`${this.baseEndpoint}/GetContactsForDropdown?${params.toString()}`, this.getToken());
   }
 }

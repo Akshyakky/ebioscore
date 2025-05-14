@@ -10,7 +10,7 @@ export interface IndentMastDto extends BaseDto {
   fromDeptID?: number;
   fromDeptName?: string;
   pChartID?: number;
-  toDeptID?: number;
+  toDeptID: number | string;
   toDeptName?: string;
   indentDate?: string;
   auGrpID?: number;
@@ -29,7 +29,6 @@ export interface IndentMastDto extends BaseDto {
   transferYN?: string;
   indStatusCode?: string;
   indStatus?: string;
-  remarks?: string;
   oldPChartID?: number;
 }
 

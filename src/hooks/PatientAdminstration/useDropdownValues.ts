@@ -27,7 +27,7 @@ import { componentEntryTypeService, templategroupService } from "@/services/Labo
 import { appSubModuleService, appUserModuleService } from "@/services/SecurityManagementServices/securityManagementServices";
 import { serviceTypeService } from "@/services/BillingServices/BillingGenericService";
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
-import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
+import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
 
 export type DropdownType =
   | "pic"
@@ -90,6 +90,9 @@ export type DropdownType =
   | "serviceType"
   | "employeeRoom"
   | "departmentIndent"
+  | "statusFilter"
+  | "manufacturer"
+  | "productLocation"
   | "grnType"
   | "statusFilter";
 
@@ -192,7 +195,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return response;
       },
       category: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CATEGORY");
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CONCATEGORY");
         return response;
       },
       employeeStatus: async () => {
@@ -423,7 +426,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         }));
       },
       mainGroup: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "MAINMODULE");
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "INVMAINGROUP");
         return response;
       },
       subTitle: async () => {
@@ -447,6 +450,21 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       departmentIndent: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DEPARTMENTINDENT");
+        return response;
+      },
+      manufacturer: async () => {
+        const contactService = new ContactService();
+        const response = await contactService.getContactsForDropdown("MANUFACTURER", "", false);
+        if (response.success && response.data) {
+          return response.data.map((item) => ({
+            value: item.conID,
+            label: item.conName,
+          }));
+        }
+        return [];
+      },
+      productLocation: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "PRODUCTLOCATION");
         return response;
       },
       grnType: async () => {

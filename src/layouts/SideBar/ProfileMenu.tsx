@@ -1,32 +1,11 @@
 import React, { useState } from "react";
-import {
-  Menu,
-  MenuItem,
-  Divider,
-  Box,
-  Typography,
-  Avatar,
-  ListItemIcon,
-  Tooltip,
-  alpha,
-  useTheme,
-  Button,
-  styled,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-} from "@mui/material";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import { Menu, MenuItem, Divider, Box, Typography, Avatar, ListItemIcon, Tooltip, alpha, useTheme, Button, styled } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import HomeIcon from "@mui/icons-material/Home";
 import PersonIcon from "@mui/icons-material/Person";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import SecurityIcon from "@mui/icons-material/Security";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 import { useNavigate } from "react-router-dom";
 import { handleError } from "@/services/CommonServices/HandlerError";
@@ -35,7 +14,7 @@ import { selectUser } from "@/store/features/auth/selectors";
 import AuthService from "@/services/AuthService/AuthService";
 import { logout } from "@/store/features/auth/authSlice";
 import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
-import CustomButton from "@/components/Button/CustomButton";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 
 // Enhanced styled components for better visual
 const ProfileButton = styled(Button)(({ theme }) => ({
@@ -129,8 +108,6 @@ const ProfileMenu: React.FC = () => {
 
   // Confirmed logout
   const handleConfirmLogout = async () => {
-    setLogoutDialogOpen(false);
-
     if (user?.token) {
       try {
         const result = await AuthService.logout(user.token);
@@ -308,46 +285,18 @@ const ProfileMenu: React.FC = () => {
         </MenuItemWithIcon>
       </Menu>
 
-      {/* Logout Confirmation Dialog */}
-      <Dialog
+      {/* Logout Confirmation Dialog using ConfirmationDialog component */}
+      <ConfirmationDialog
         open={logoutDialogOpen}
         onClose={handleCancelLogout}
-        aria-labelledby="logout-dialog-title"
-        aria-describedby="logout-dialog-description"
-        PaperProps={{
-          elevation: 3,
-          sx: {
-            borderRadius: 2,
-            maxWidth: 400,
-          },
-        }}
-      >
-        <DialogTitle
-          id="logout-dialog-title"
-          sx={{
-            pb: 1,
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            color: theme.palette.error.main,
-          }}
-        >
-          <WarningAmberIcon color="error" /> Confirm Logout
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="logout-dialog-description" sx={{ color: theme.palette.text.primary }}>
-            Are you sure you want to log out? Any unsaved changes will be lost.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleCancelLogout} variant="outlined" sx={{ minWidth: 100 }}>
-            Cancel
-          </Button>
-          <Button onClick={handleConfirmLogout} variant="contained" color="error" sx={{ minWidth: 100 }}>
-            Logout
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleConfirmLogout}
+        title="Confirm Logout"
+        message="Are you sure you want to log out? Any unsaved changes will be lost."
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="error"
+        maxWidth="sm"
+      />
     </div>
   );
 };

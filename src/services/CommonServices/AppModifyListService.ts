@@ -10,7 +10,7 @@ const getToken = () => store.getState().auth.token!;
 export const appModifyFieldService = createEntityService<AppModifyFieldDto>("AppModify", "commonURL");
 interface AppModifyList {
   id: number;
-  value: string;
+  value: number | string;
   label: string;
   defaultYn: string;
 }
