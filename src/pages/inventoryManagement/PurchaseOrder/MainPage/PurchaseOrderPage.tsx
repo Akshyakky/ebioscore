@@ -1,85 +1,93 @@
-import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
 import React, { useCallback, useEffect, useState } from "react";
-import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
+import { useForm, useFieldArray, SubmitHandler } from "react-hook-form";
 import { Box, Container } from "@mui/material";
-import PurchaseOrderHeader from "../SubPage/PurchaseOrderHeader";
 import { Delete as DeleteIcon, Save as SaveIcon, Search } from "@mui/icons-material";
-import { useDispatch } from "react-redux";
-import { setDepartmentInfo, setPurchaseOrderMastData, resetPurchaseOrderState, setDisableApprovedFields } from "@/store/features/purchaseOrder/purchaseOrderSlice";
-import { AppDispatch } from "@/store";
-import { useSelector } from "react-redux";
-import { RootState } from "@/store";
-import { initialPOMastDto, PurchaseOrderDetailDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
-import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
+import useDepartmentSelection from "@/hooks/InventoryManagement/useDepartmentSelection";
+import PurchaseOrderHeader from "../SubPage/PurchaseOrderHeader";
 import PurchaseOrderGrid from "../SubPage/PurchaseOrderGrid";
 import PurchaseOrderFooter from "../SubPage/PurchaseOrderFooter";
 import PurchaseOrderSearch from "../SubPage/PurchaseOrderSearch";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
+import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import { showAlert } from "@/utils/Common/showAlert";
 import { purchaseOrderService } from "@/services/InventoryManagementService/inventoryManagementService";
+import { initialPOMastDto, PurchaseOrderDetailDto, PurchaseOrderFormData, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 
 const PurchaseOrderPage: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect, requireDepartmentSelection } = useDepartmentSelection({
     isDialogOpen: true,
   });
-  const departmentInfo = useSelector((state: RootState) => state.purchaseOrder.departmentInfo) ?? { departmentId: 0, departmentName: "" };
-  const { departmentId } = departmentInfo;
-
-  const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
-  const { pOID, pOApprovedYN, fromDeptID, pODate, supplierID } = purchaseOrderMastData;
-  const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
-  const approvedDisable = useSelector((state: RootState) => state.purchaseOrder.disableApprovedFields) ?? false;
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const { control, handleSubmit, reset, setValue, watch } = useForm<PurchaseOrderFormData>({
+    defaultValues: {
+      purchaseOrderMast: { ...initialPOMastDto, fromDeptID: deptId, fromDeptName: deptName },
+      purchaseOrderDetails: [],
+      selectedProduct: null,
+    },
+    mode: "onChange",
+  });
+
+  const {
+    fields: purchaseOrderDetails,
+    append,
+    remove,
+    update,
+  } = useFieldArray({
+    control,
+    name: "purchaseOrderDetails",
+    keyName: "id", // Use id for unique key
+  });
+
+  const departmentId = watch("purchaseOrderMast.fromDeptID");
+  const pOID = watch("purchaseOrderMast.pOID");
+  const pOApprovedYN = watch("purchaseOrderMast.pOApprovedYN");
+  const approvedDisable = watch("purchaseOrderMast.disableApprovedFields") || false;
+
+  useEffect(() => {
+    if (isDepartmentSelected) {
+      setValue("purchaseOrderMast.fromDeptID", deptId);
+      setValue("purchaseOrderMast.fromDeptName", deptName);
+    }
+  }, [deptId, deptName, isDepartmentSelected, setValue]);
+
+  useEffect(() => {
+    return () => {
+      reset();
+    };
+  }, [reset]);
+
   const handleCloseSearch = useCallback(() => {
     setIsSearchOpen(false);
   }, []);
 
-  const handleSelect = useCallback((data: PurchaseOrderMastDto) => {
-    console.log("Selected data:", data);
-    dispatch(setPurchaseOrderMastData(data));
-    const isApproved = data.pOApprovedYN === "Y" && data.pOID > 0;
-    dispatch(setDisableApprovedFields(isApproved));
-  }, []);
-
-  useEffect(() => {
-    if (isDepartmentSelected) {
-      dispatch(setDepartmentInfo({ departmentId: deptId, departmentName: deptName }));
-      dispatch(
-        setPurchaseOrderMastData({
-          ...initialPOMastDto,
-          fromDeptID: deptId,
-          fromDeptName: deptName,
-        } as PurchaseOrderMastDto)
-      );
-    }
-  }, [deptId, deptName, isDepartmentSelected]);
-
-  const handleDepartmentChange = () => {
-    openDialog();
-  };
-
-  useEffect(() => {
-    return () => {
-      dispatch(resetPurchaseOrderState());
-    };
-  }, []);
-
   const handleClear = () => {
-    dispatch(resetPurchaseOrderState());
+    reset({
+      purchaseOrderMast: { ...initialPOMastDto, fromDeptID: 0, fromDeptName: "" },
+      purchaseOrderDetails: [],
+      selectedProduct: null,
+    });
     handleDepartmentSelect(0, "");
     openDialog();
     setIsSubmitted(false);
   };
 
-  const handleSave = async () => {
+  const formaPODateIsoString = (PODatestring: string) => {
+    const [day, month, year] = PODatestring.split("/");
+    const date = new Date(`${year}-${month}-${day}T00:00:00Z`);
+    return date.toISOString();
+  };
+
+  const handleSave: SubmitHandler<PurchaseOrderFormData> = async (data) => {
     if (approvedDisable) {
       return;
     }
 
     setIsSubmitted(true);
+
+    const { purchaseOrderMast, purchaseOrderDetails } = data;
+    const { fromDeptID, pODate, supplierID } = purchaseOrderMast;
 
     if (!fromDeptID || !pODate || !supplierID) {
       showAlert("", "Please fill all mandatory fields", "error");
@@ -92,16 +100,31 @@ const PurchaseOrderPage: React.FC = () => {
     }
 
     const finalizedPO = pOApprovedYN === "Y";
-    if (finalizedPO && purchaseOrderMastData.pOApprovedID === 0) {
+    if (finalizedPO && purchaseOrderMast.pOApprovedID === 0) {
       showAlert("error", "Please select an approved by", "error");
       return;
     }
+
+    const fieldChecks: { key: keyof PurchaseOrderDetailDto; label: string }[] = [
+      { key: "receivedQty", label: "Required Pack" },
+      { key: "unitPack", label: "Units/Pack" },
+      { key: "unitPrice", label: "Unit Price" },
+      { key: "totAmt", label: "Selling Price" },
+    ];
+
+    for (const { key, label } of fieldChecks) {
+      if (purchaseOrderDetails.some((item) => !item[key] || item[key] <= 0)) {
+        showAlert("", `${label} should not be 0`, "warning");
+        return;
+      }
+    }
+
     try {
       const purchaseOrderData: purchaseOrderSaveDto = {
         purchaseOrderMastDto: {
-          ...purchaseOrderMastData,
-          pOApprovedBy: finalizedPO ? purchaseOrderMastData.pOApprovedBy : "",
-          pOApprovedID: finalizedPO ? purchaseOrderMastData.pOApprovedID : 0,
+          ...purchaseOrderMast,
+          pOApprovedBy: finalizedPO ? purchaseOrderMast.pOApprovedBy : "",
+          pOApprovedID: finalizedPO ? purchaseOrderMast.pOApprovedID : 0,
           pOStatusCode: finalizedPO ? "CMP" : "PND",
           pOStatus: finalizedPO ? "Completed" : "Pending",
           rActiveYN: "Y",
@@ -110,93 +133,29 @@ const PurchaseOrderPage: React.FC = () => {
           catValue: "MEDI",
           pOType: "Revenue Purchase Order",
           pOTypeValue: "RVPO",
-          pODate: formaPODateIsoString(purchaseOrderMastData.pODate),
+          pODate: formaPODateIsoString(purchaseOrderMast.pODate),
         },
-        purchaseOrderDetailDto: purchaseOrderDetails.map((row) => ({
-          pODetID: row.pODetID || 0,
-          pOID: row.pOID || 0,
-          indentID: row.indentID || 0,
-          indentDetID: row.indentDetID || 0,
-          productID: row.productID || 0,
-          productCode: row.productCode || "",
-          productName: row.productName || "",
-          catValue: row.catValue || "",
-          catDesc: row.catDesc || "",
-          pGrpID: row.pGrpID || 0,
-          pGrpName: row.pGrpName || "",
-          pSGrpID: row.pSGrpID || 0,
-          pSGrpName: row.pSGrpName || "",
-          pUnitID: row.pUnitID || 0,
-          pUnitName: row.pUnitName || "",
-          pPkgID: row.pPkgID || 0,
-          pPkgName: row.pPkgName || "",
-          unitPack: row.unitPack || 0,
-          requiredUnitQty: row.requiredUnitQty || 0,
-          receivedQty: row.receivedQty || 0,
-          unitPrice: row.unitPrice || 0,
+        purchaseOrderDetailDto: purchaseOrderDetails.map((row: PurchaseOrderDetailDto) => ({
+          ...row,
           pOYN: finalizedPO ? "Y" : "N",
-          grnDetID: row.grnDetID || 0,
-          manufacturerID: row.manufacturerID || 0,
-          manufacturerCode: row.manufacturerCode || "",
-          manufacturerName: row.manufacturerName || "",
-          discAmt: row.discAmt || 0,
-          discPercentageAmt: row.discPercentageAmt || 0,
-          freeQty: row.freeQty || 0,
-          isFreeItemYN: row.isFreeItemYN || "N",
-          mfID: row.mfID || 0,
-          mfName: row.mfName || "",
-          netAmount: row.netAmount || 0,
           pODetStatusCode: finalizedPO ? "CMP" : "PND",
           taxAmt: (row.cgstTaxAmt || 0) + (row.sgstTaxAmt || 0),
-          taxModeCode: row.taxModeCode || "TAX0",
-          taxModeDescription: row.taxModeDescription || "TAX0",
-          taxModeID: row.taxModeID || 0,
-          taxAfterDiscOnMrp: row.taxAfterDiscOnMrp || "N",
-          taxAfterDiscYN: row.taxAfterDiscYN || "N",
-          taxOnFreeItemYN: row.taxOnFreeItemYN || "N",
-          taxOnMrpYN: row.taxOnMrpYN || "N",
           taxOnUnitPrice: "Y",
-          totAmt: row.totAmt || 0,
-          cgstPerValue: row.cgstPerValue || 0,
-          cgstTaxAmt: row.cgstTaxAmt || 0,
-          sgstPerValue: row.sgstPerValue || 0,
-          sgstTaxAmt: row.sgstTaxAmt || 0,
-          taxableAmt: row.taxableAmt || 0,
           transferYN: "Y",
           rActiveYN: row.rActiveYN || "Y",
-          rNotes: row.rNotes || "",
-          hsnCode: row.hsnCode || "",
         })),
       };
-      //Grid fields validation
-      const fieldChecks: { key: keyof PurchaseOrderDetailDto; label: string }[] = [
-        { key: "receivedQty", label: "Required Pack" },
-        { key: "unitPack", label: "Units/Pack" },
-        { key: "unitPrice", label: "Unit Price" },
-        { key: "totAmt", label: "Selling Price" },
-      ];
-      for (const { key, label } of fieldChecks) {
-        if (purchaseOrderDetails.some((item) => !item[key] || item[key] <= 0)) {
-          showAlert("", `${label} should not be 0`, "warning");
-          return;
-        }
-      }
 
-      console.log("Save purchaseOrderData:", purchaseOrderData);
-      try {
-        const response: any = await purchaseOrderService.save(purchaseOrderData);
-        console.log("Save response:", response);
-        if (response.success) {
-          showAlert("Saved", "Purchase Order saved successfully", "success");
-          handleClear();
-        } else {
-          showAlert("", "Failed to save purchase order", "error");
-        }
-      } catch (error) {
+      const response = await purchaseOrderService.save(purchaseOrderData);
+      if (response.success) {
+        showAlert("Saved", "Purchase Order saved successfully", "success");
+        handleClear();
+      } else {
         showAlert("", "Failed to save purchase order", "error");
       }
     } catch (error) {
       console.error("Error saving purchase order:", error);
+      showAlert("", "Failed to save purchase order", "error");
     }
   };
 
@@ -205,11 +164,7 @@ const PurchaseOrderPage: React.FC = () => {
       setIsSearchOpen(true);
     });
   };
-  const formaPODateIsoString = (PODatestring: string) => {
-    const [day, month, year] = PODatestring.split("/");
-    const date = new Date(`${year}-${month}-${day}T00:00:00Z`);
-    return date.toISOString();
-  };
+
   const actionButtons: ButtonProps[] = [
     {
       variant: "contained",
@@ -219,22 +174,38 @@ const PurchaseOrderPage: React.FC = () => {
     },
   ];
 
+  const handleDepartmentChange = () => {
+    openDialog();
+  };
+
   return (
     <>
       {departmentId > 0 && (
         <Container maxWidth={false}>
-          {pOID === 0 && (
-            <Box sx={{ marginBottom: 2 }}>
-              <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
-            </Box>
+          {departmentId > 0 && (
+            <>
+              {pOID === 0 && (
+                <Box sx={{ marginBottom: 2 }}>
+                  <ActionButtonGroup buttons={actionButtons} orientation="horizontal" />
+                </Box>
+              )}
+              <PurchaseOrderHeader control={control} setValue={setValue} handleDepartmentChange={handleDepartmentChange} />
+              <PurchaseOrderGrid
+                control={control}
+                fields={purchaseOrderDetails}
+                append={append}
+                remove={remove}
+                update={update}
+                approvedDisable={approvedDisable}
+                setValue={setValue} // Pass setValue
+              />
+              <PurchaseOrderFooter control={control} setValue={setValue} watch={watch} />
+              <PurchaseOrderSearch open={isSearchOpen} onClose={handleCloseSearch} control={control} setValue={setValue} />
+              <Box sx={{ mt: 4 }}>
+                <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSubmit(handleSave)} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
+              </Box>
+            </>
           )}
-          <PurchaseOrderHeader handleDepartmentChange={handleDepartmentChange} />
-          <PurchaseOrderGrid />
-          <PurchaseOrderFooter />
-          <PurchaseOrderSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
-          <Box sx={{ mt: 4 }}>
-            {departmentId > 0 && <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />}
-          </Box>
         </Container>
       )}
       <DepartmentSelectionDialog open={isDialogOpen} onClose={closeDialog} onSelectDepartment={handleDepartmentSelect} initialDeptId={departmentId ?? 0} requireSelection={true} />

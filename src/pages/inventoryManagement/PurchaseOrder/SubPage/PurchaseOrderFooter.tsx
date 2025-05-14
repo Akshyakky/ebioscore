@@ -1,29 +1,35 @@
-import CustomButton from "@/components/Button/CustomButton";
-import FormField from "@/components/FormField/FormField";
-import { DiscountFooterProps, initialPOMastDto, PurchaseOrderDetailDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
-import { AppDispatch, RootState } from "@/store";
-import { setDiscountFooterField, updateAllPurchaseOrderDetails, updatePurchaseOrderMastField } from "@/store/features/purchaseOrder/purchaseOrderSlice";
-import { showAlert } from "@/utils/Common/showAlert";
-import { Check, History } from "@mui/icons-material";
-import { Box, FormControl, Grid, Paper, Stack, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { Control, useFieldArray, UseFormSetValue, UseFormWatch } from "react-hook-form";
+import { Box, FormControl, Grid, Paper, Stack, Typography } from "@mui/material";
+import { Check, History } from "@mui/icons-material";
+import CustomButton from "@/components/Button/CustomButton";
+import { showAlert } from "@/utils/Common/showAlert";
 import PurchaseOrderImportDialog from "./PurchaseOrderImportDialog";
+import { PurchaseOrderDetailDto, PurchaseOrderFormData } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 
-const PurchaseOrderFooter: React.FC = () => {
+interface PurchaseOrderFooterProps {
+  control: Control<PurchaseOrderFormData>;
+  setValue: UseFormSetValue<PurchaseOrderFormData>;
+  watch: UseFormWatch<PurchaseOrderFormData>;
+}
+
+const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({ control, setValue, watch }) => {
   const [importPODialogOpen, setImportPODialogOpen] = useState<boolean>(false);
-  const dispatch = useDispatch<AppDispatch>();
-  const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
-  const purchaseOrderDetails = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderDetails) ?? [];
-  const discountFooter = useSelector((state: RootState) => state.purchaseOrder.discountFooter) ?? ({} as DiscountFooterProps);
-  const { totDiscAmtPer, isDiscPercentage } = discountFooter ?? ({} as DiscountFooterProps);
-  const { pOID, pOApprovedYN, pOApprovedID, totalAmt, taxAmt, discAmt, coinAdjAmt, netAmt, rNotes, supplierID, fromDeptID } = purchaseOrderMastData;
-  const approvedDisable = useSelector((state: RootState) => state.purchaseOrder.disableApprovedFields) ?? false;
+  const { fields, update } = useFieldArray({
+    control,
+    name: "purchaseOrderDetails",
+  });
+  const purchaseOrderDetails = watch("purchaseOrderDetails");
+  const { totDiscAmtPer, isDiscPercentage } = watch("purchaseOrderMast.discountFooter") || {};
+  const { pOID, pOApprovedYN, pOApprovedID, totalAmt, taxAmt, discAmt, coinAdjAmt, netAmt, rNotes, supplierID, fromDeptID, disableApprovedFields } = watch("purchaseOrderMast");
+  const approvedDisable = disableApprovedFields || false;
   const approvedByOptions = [
     { value: "1", label: "Dr. Arjun Kumar" },
     { value: "2", label: "Dr. Sneha Rao" },
     { value: "3", label: "Mr. Kiran Patil" },
   ];
+
   const formatCurrency = (value: string | number) => {
     const numValue = typeof value === "string" ? parseFloat(value) : value;
     return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
@@ -39,17 +45,6 @@ const PurchaseOrderFooter: React.FC = () => {
       </Typography>
     </Stack>
   );
-  const handleApprovedByChange = (id: number, name: string) => {
-    dispatch(updatePurchaseOrderMastField({ field: "pOApprovedID", value: id }));
-    dispatch(updatePurchaseOrderMastField({ field: "pOApprovedBy", value: name }));
-  };
-  const handleRemarksChange = (value: string) => {
-    dispatch(updatePurchaseOrderMastField({ field: "rNotes", value: value }));
-  };
-  const handleFinalizeToggle = (isFinalized: boolean) => {
-    dispatch(updatePurchaseOrderMastField({ field: "pOApprovedYN", value: isFinalized ? "Y" : "N" }));
-    dispatch(updatePurchaseOrderMastField({ field: "pOYN", value: isFinalized ? "Y" : "N" }));
-  };
 
   const handleApplyDiscount = () => {
     if (purchaseOrderDetails.length === 0) return;
@@ -120,7 +115,7 @@ const PurchaseOrderFooter: React.FC = () => {
       }
     }
 
-    dispatch(updateAllPurchaseOrderDetails(updatedGridData));
+    updatedGridData.forEach((item, index) => update(index, item));
   };
 
   const recalculateFooterAmounts = (details: PurchaseOrderDetailDto[]) => {
@@ -129,103 +124,108 @@ const PurchaseOrderFooter: React.FC = () => {
     const totalCGSTTaxAmt = details.reduce((sum, item) => sum + (item.cgstTaxAmt || 0), 0);
     const totalSGSTTaxAmt = details.reduce((sum, item) => sum + (item.sgstTaxAmt || 0), 0);
     const totalTaxAmt = totalCGSTTaxAmt + totalSGSTTaxAmt;
-    const netAmount = itemsTotal + (purchaseOrderMastData.coinAdjAmt || 0) - totalDiscAmt + totalTaxAmt;
+    const netAmount = itemsTotal + (coinAdjAmt || 0) - totalDiscAmt + totalTaxAmt;
 
-    dispatch(updatePurchaseOrderMastField({ field: "totalAmt", value: itemsTotal }));
-    dispatch(updatePurchaseOrderMastField({ field: "discAmt", value: totalDiscAmt }));
-    dispatch(updatePurchaseOrderMastField({ field: "taxAmt", value: totalTaxAmt }));
-    dispatch(updatePurchaseOrderMastField({ field: "netAmt", value: netAmount }));
+    setValue("purchaseOrderMast.totalAmt", itemsTotal);
+    setValue("purchaseOrderMast.discAmt", totalDiscAmt);
+    setValue("purchaseOrderMast.taxAmt", totalTaxAmt);
+    setValue("purchaseOrderMast.netAmt", netAmount);
   };
 
   useEffect(() => {
     recalculateFooterAmounts(purchaseOrderDetails);
-  }, [purchaseOrderDetails]);
-
+  }, [purchaseOrderDetails, coinAdjAmt, setValue]);
+  console.log(purchaseOrderDetails);
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
-      <Grid container spacing={2} alignContent={"center"} justifyContent={"center"}>
-        <Grid size={{ xs: 12, md: 6 }}>
+      <Grid container spacing={2} alignContent="center" justifyContent="center">
+        <Grid size={{ xs: 12, md: 5 }}>
           <Box sx={{ mt: 3, ml: 5 }}>
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={2} alignItems="center">
               <FormControl>
                 <FormField
+                  control={control}
                   type="switch"
                   label=""
-                  name="totDiscAmtPerSwitch"
-                  ControlID="totDiscAmtPerSwitch"
-                  value={isDiscPercentage || false}
-                  checked={isDiscPercentage || false}
-                  onChange={() => dispatch(setDiscountFooterField({ field: "isDiscPercentage", value: !isDiscPercentage }))}
+                  name="purchaseOrderMast.discountFooter.isDiscPercentage"
                   disabled={approvedDisable}
-                  gridProps={{ xs: 2, sm: 1, md: 1 }}
+                  onChange={(value) => {
+                    setValue("purchaseOrderMast.discountFooter.isDiscPercentage", value === "Y");
+                    return value;
+                  }}
                 />
               </FormControl>
               <FormField
+                control={control}
                 type="number"
                 label={`Total Disc in ${isDiscPercentage ? "Percentage [%]" : "Amount"}`}
-                value={totDiscAmtPer}
-                onChange={(e) => dispatch(setDiscountFooterField({ field: "totDiscAmtPer", value: Number(e.target.value) }))}
-                name="totDiscAmtPer"
-                ControlID="totDiscAmtPer"
+                name="purchaseOrderMast.discountFooter.totDiscAmtPer"
                 disabled={approvedDisable}
-                gridProps={{ xs: 4 }}
               />
-              <CustomButton onClick={handleApplyDiscount} text={"Apply"} variant="contained" icon={Check} size="medium" color="primary" disabled={approvedDisable} />
+              <CustomButton
+                onClick={handleApplyDiscount}
+                text="Apply"
+                variant="contained"
+                icon={Check}
+                size="medium"
+                color="primary"
+                disabled={approvedDisable}
+                sx={{ minWidth: 100 }}
+              />
               {fromDeptID > 0 && supplierID > 0 && pOID === 0 && (
                 <CustomButton
-                  onClick={() => {
-                    setImportPODialogOpen(true);
-                  }}
-                  text={"Import previous"}
+                  onClick={() => setImportPODialogOpen(true)}
+                  text="Import previous"
                   variant="contained"
                   icon={History}
                   size="medium"
                   color="info"
                   disabled={approvedDisable}
+                  sx={{ minWidth: 200 }}
                 />
               )}
             </Stack>
           </Box>
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Box sx={{ mt: 3, ml: 5 }}>
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={5} alignItems="center">
               <FormControl>
                 <FormField
+                  control={control}
                   type="switch"
                   label="Finalize"
-                  name="finalizePO"
-                  ControlID="finalizePO"
-                  value={pOApprovedYN}
-                  checked={pOApprovedYN === "Y"}
-                  onChange={(e) => handleFinalizeToggle(e.target.checked)}
+                  name="purchaseOrderMast.pOApprovedYN"
                   disabled={approvedDisable}
-                  gridProps={{ xs: 3 }}
+                  onChange={(value) => {
+                    const isFinalized = value === "Y";
+                    setValue("purchaseOrderMast.pOApprovedYN", isFinalized ? "Y" : "N");
+                    setValue("purchaseOrderMast.pOYN", isFinalized ? "Y" : "N");
+                    return value;
+                  }}
                 />
               </FormControl>
               <FormField
+                control={control}
                 type="select"
                 label="Approved By"
-                value={pOApprovedID}
-                onChange={(e) => {
-                  const value = Number(e.target.value);
-                  const selected = approvedByOptions.find((opt) => Number(opt.value) === value);
-                  if (selected) {
-                    handleApprovedByChange(value, selected.label);
-                  }
-                }}
-                name="approvedBy"
-                ControlID="approvedBy"
+                name="purchaseOrderMast.pOApprovedID"
                 options={approvedByOptions}
                 disabled={approvedDisable}
-                isMandatory={pOApprovedYN === "Y"}
-                gridProps={{ xs: 6 }}
+                required={pOApprovedYN === "Y"}
+                onChange={(value) => {
+                  const selected = approvedByOptions.find((opt) => Number(opt.value) === Number(value));
+                  if (selected) {
+                    setValue("purchaseOrderMast.pOApprovedBy", selected.label);
+                  }
+                  return value;
+                }}
               />
             </Stack>
           </Box>
         </Grid>
       </Grid>
-      <Grid container spacing={2}>
+      <Grid container spacing={2} marginTop={2}>
         <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" mt={2} flexWrap="wrap">
           {infoItem("Items Total", totalAmt || "0.00")}
           {infoItem("Tax Amount", taxAmt || "0.00")}
@@ -233,23 +233,11 @@ const PurchaseOrderFooter: React.FC = () => {
           {infoItem("Coin Adjustment", coinAdjAmt || "0.00")}
           {infoItem("Net Amt", netAmt || "0.00")}
         </Stack>
-        <FormField
-          type="textarea"
-          label="Remarks"
-          ControlID="rNotes"
-          value={rNotes || ""}
-          name="rNotes"
-          onChange={(e) => {
-            handleRemarksChange(e.target.value);
-          }}
-          maxLength={250}
-          rows={1}
-          disabled={approvedDisable}
-          gridProps={{ xs: 12, sm: 6 }}
-        />
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <FormField control={control} type="textarea" label="Remarks" name="purchaseOrderMast.rNotes" rows={1} disabled={approvedDisable} />
+        </Grid>
       </Grid>
-
-      <PurchaseOrderImportDialog open={importPODialogOpen} onClose={() => setImportPODialogOpen(false)} />
+      <PurchaseOrderImportDialog open={importPODialogOpen} onClose={() => setImportPODialogOpen(false)} control={control} setValue={setValue} />
     </Paper>
   );
 };

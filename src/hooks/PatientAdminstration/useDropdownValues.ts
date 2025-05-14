@@ -92,7 +92,9 @@ export type DropdownType =
   | "departmentIndent"
   | "statusFilter"
   | "manufacturer"
-  | "productLocation";
+  | "productLocation"
+  | "grnType"
+  | "statusFilter";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -465,6 +467,10 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       productLocation: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "PRODUCTLOCATION");
+        return response;
+      },
+      grnType: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "GRNTYPE");
         return response;
       },
     }),

@@ -1,36 +1,41 @@
 import React, { useEffect, useState } from "react";
+import { Control, UseFormSetValue, useFieldArray } from "react-hook-form";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { purchaseOrderMastService } from "@/services/InventoryManagementService/inventoryManagementService";
-import { initialPOMastDto, PurchaseOrderDetailDto, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Stack, Collapse, CircularProgress, Typography } from "@mui/material";
+import { PurchaseOrderDetailDto, PurchaseOrderFormData, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Stack, Collapse, CircularProgress } from "@mui/material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
 import { ArrowDownwardTwoTone, ArrowUpwardTwoTone, History } from "@mui/icons-material";
 import CustomButton from "@/components/Button/CustomButton";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store";
-import { updateAllPurchaseOrderDetails } from "@/store/features/purchaseOrder/purchaseOrderSlice";
 
 interface PurchaseOrderImportDialogProps {
   open: boolean;
   onClose: () => void;
+  control: Control<PurchaseOrderFormData>;
+  setValue: UseFormSetValue<PurchaseOrderFormData>;
 }
 
 type PurchaseOrderWithDetails = PurchaseOrderMastDto & {
   details: PurchaseOrderDetailDto[];
 };
 
-const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ open, onClose }) => {
-  const purchaseOrderMastData = useSelector((state: RootState) => state.purchaseOrder.purchaseOrderMastData) ?? initialPOMastDto;
-  const { fromDeptID, supplierID } = purchaseOrderMastData;
+const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ open, onClose, control, setValue }) => {
   const [poMastBySupplier, setPOMastBySupplier] = useState<PurchaseOrderWithDetails[]>([]);
   const [expandedPOID, setExpandedPOID] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const dispatch = useDispatch<AppDispatch>();
+
+  const { fields: purchaseOrderDetails, append } = useFieldArray({
+    control,
+    name: "purchaseOrderDetails",
+  });
+
+  const fromDeptID = control._formValues.purchaseOrderMast.fromDeptID;
+  const supplierID = control._formValues.purchaseOrderMast.supplierID;
 
   useEffect(() => {
     if (open) fetchPOMastData();
-  }, [open]);
+  }, [open, fromDeptID, supplierID]);
 
   const fetchPOMastData = async () => {
     try {
@@ -77,6 +82,7 @@ const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ o
     await togglePODetails(importPOID);
     const prevPODetails = poMastBySupplier.find((po) => po.pOID === importPOID)?.details;
     if (!prevPODetails) return;
+
     const updatedPODetails = prevPODetails.map((poDetail) => ({
       ...poDetail,
       pOID: 0,
@@ -97,7 +103,10 @@ const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ o
       gstPerValue: (poDetail.cgstPerValue || 0) + (poDetail.sgstPerValue || 0),
     }));
 
-    dispatch(updateAllPurchaseOrderDetails(updatedPODetails));
+    // Clear existing details and append new ones
+    setValue("purchaseOrderDetails", []);
+    updatedPODetails.forEach((detail) => append(detail));
+
     onClose();
   };
 
@@ -108,7 +117,7 @@ const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ o
           <TableHead>
             <TableRow>
               {["PO Code", "PO Date", "Supplier Name", "Action"].map((header) => (
-                <TableCell>{header}</TableCell>
+                <TableCell key={header}>{header}</TableCell>
               ))}
             </TableRow>
           </TableHead>
@@ -129,13 +138,13 @@ const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ o
                     <TableCell>
                       <CustomButton
                         onClick={() => togglePODetails(po.pOID)}
-                        text={""}
+                        text=""
                         variant="text"
                         icon={expandedPOID === po.pOID ? ArrowUpwardTwoTone : ArrowDownwardTwoTone}
                         size="small"
                         color="primary"
                       />
-                      <CustomButton onClick={() => handleImportPrevPO(po.pOID)} text={"Import"} variant="contained" icon={History} size="medium" color="primary" />
+                      <CustomButton onClick={() => handleImportPrevPO(po.pOID)} text="Import" variant="contained" icon={History} size="medium" color="primary" />
                     </TableCell>
                   </TableRow>
                   <TableRow>
@@ -150,7 +159,7 @@ const PurchaseOrderImportDialog: React.FC<PurchaseOrderImportDialogProps> = ({ o
                             <TableHead>
                               <TableRow>
                                 {["Sl. No", "Product Name", "Qty", "Pack Price", "Selling Price"].map((header) => (
-                                  <TableCell>{header}</TableCell>
+                                  <TableCell key={header}>{header}</TableCell>
                                 ))}
                               </TableRow>
                             </TableHead>
