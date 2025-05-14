@@ -92,6 +92,8 @@ export type FieldType =
   | "datetimepicker"
   | "file"
   | "switch";
+  | "file"
+  | "switch";
 
 // Common props for all field types
 interface FormFieldCommonProps<TFieldValues extends FieldValues> {
@@ -188,6 +190,7 @@ type SwitchTypeProps = {
 
 // Combine all possible props using discriminated union
 export type FormFieldProps<TFieldValues extends FieldValues> = FormFieldCommonProps<TFieldValues> &
+  (TextFieldTypeProps | TextareaTypeProps | SelectTypeProps | AutocompleteTypeProps | RadioTypeProps | CheckboxTypeProps | DatePickerTypeProps | FileTypeProps | SwitchTypeProps);
   (TextFieldTypeProps | TextareaTypeProps | SelectTypeProps | AutocompleteTypeProps | RadioTypeProps | CheckboxTypeProps | DatePickerTypeProps | FileTypeProps | SwitchTypeProps);
 
 /**

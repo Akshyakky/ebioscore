@@ -1,13 +1,10 @@
-// src/pages/inventoryManagement/commonPage/product/ProductSearch.tsx
+// ProductSearch.tsx
 import React, { useEffect } from "react";
 import { TextField, Autocomplete, Box, CircularProgress, Typography } from "@mui/material";
 import { ProductSearchProps } from "./ProductSearchProps";
 import { ProductOption } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
 import { useProductSearch } from "@/hooks/InventoryManagement/Product/useProductSearch";
 
-/**
- * Reusable product search component with autocomplete
- */
 export const ProductSearch: React.FC<ProductSearchProps> = ({
   onProductSelect,
   clearTrigger = 0,
@@ -17,52 +14,65 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   disabled = false,
   initialSelection = null,
   className,
+  setInputValue,
+  setSelectedProduct,
 }) => {
-  const { inputValue, setInputValue, options, loading, selectedProduct, setSelectedProduct, clearSearch } = useProductSearch({ minSearchLength });
+  const {
+    inputValue,
+    setInputValue: hookSetInputValue,
+    options,
+    loading,
+    selectedProduct,
+    setSelectedProduct: hookSetSelectedProduct,
+    clearSearch,
+  } = useProductSearch({ minSearchLength });
 
-  // Handle external clear trigger
   useEffect(() => {
     if (clearTrigger > 0) {
       clearSearch();
     }
   }, [clearTrigger, clearSearch]);
 
-  // Handle initial selection if provided
   useEffect(() => {
     if (initialSelection && !selectedProduct) {
-      setSelectedProduct(initialSelection);
+      setSelectedProduct?.(initialSelection);
     }
-  }, [initialSelection, selectedProduct, setSelectedProduct]);
+  }, [initialSelection]);
 
-  // Handle product selection and propagate to parent
   const handleProductSelect = (product: ProductOption | null) => {
-    setSelectedProduct(product);
+    setSelectedProduct?.(product);
 
     if (product) {
       onProductSelect({
         productID: product.productID,
         productCode: product.productCode,
         productName: product.productName,
-        catValue: product.productCategory || "", // Mapping productCategory to catValue
-        prescription: "", // Default value as it's not present in ProductOption
-        expiry: "", // Default value as it's not present in ProductOption
-        sellable: "", // Default value as it's not present in ProductOption
-        taxable: "", // Default value as it's required in ProductSearchResult
-        pLocationID: 0, // Default value as it's required in ProductSearchResult
-        chargableYN: "", // Default value as it's required in ProductSearchResult
-        isAssetYN: "", // Default value as it's required in ProductSearchResult
-        supplierStatus: product.rActiveYN, // Mapping rActiveYN to supplierStatus
-        vedCode: "", // Default value as it's required in ProductSearchResult
-        abcCode: "", // Default value as it's required in ProductSearchResult
-        compID: 0, // Default value as it's required in ProductSearchResult
-        compCode: "", // Default value as it's required in ProductSearchResult
-        compName: "", // Default value as it's required in ProductSearchResult
-        transferYN: "", // Default value as it's required in ProductSearchResult
-        rActiveYN: product.rActiveYN || "", // Mapping rActiveYN to rActiveYN
-        // Add other required properties of ProductSearchResult here
+        catValue: product.productCategory || "",
+        prescription: "",
+        expiry: "",
+        sellable: "",
+        taxable: "",
+        pLocationID: 0,
+        chargableYN: "",
+        isAssetYN: "",
+        supplierStatus: product.rActiveYN,
+        vedCode: "",
+        abcCode: "",
+        compID: 0,
+        compCode: "",
+        compName: "",
+        transferYN: "",
+        rActiveYN: product.rActiveYN || "",
       });
+      setTimeout(() => {
+        setInputValue?.("");
+        setSelectedProduct?.(null);
+        clearSearch();
+      }, 100);
     } else {
       onProductSelect(null);
+      setInputValue?.("");
+      setSelectedProduct?.(null);
     }
   };
 
@@ -74,7 +84,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
       value={selectedProduct}
       inputValue={inputValue}
       onChange={(_, newValue) => handleProductSelect(newValue)}
-      onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
+      onInputChange={(_, newInputValue) => hookSetInputValue(newInputValue)}
       getOptionLabel={(option) => option.productName || ""}
       isOptionEqualToValue={(option, value) => option.productID === value.productID}
       renderInput={(params) => (

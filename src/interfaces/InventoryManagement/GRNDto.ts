@@ -106,3 +106,8 @@ export interface GRNDetailDto extends BaseDto {
   taxableAmt?: number;
   defaultPrice: number;
 }
+
+export interface GRNDto {
+  gRNMastDto: GRNMastDto;
+  gRNDetailsDto: GRNDetailDto[];
+}

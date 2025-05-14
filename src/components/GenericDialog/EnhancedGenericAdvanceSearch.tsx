@@ -33,7 +33,7 @@ interface CommonSearchDialogProps<T> {
   onSelect: (item: T) => void;
   title: string;
   fetchItems: () => Promise<T[]>;
-  items?: T[]; // Add this prop to directly pass items
+  items?: T[];
   updateActiveStatus: (id: number, status: boolean) => Promise<boolean>;
   columns: Column<T>[];
   getItemId: (item: T) => number;
@@ -53,7 +53,6 @@ interface CommonSearchDialogProps<T> {
   showExportPDF?: boolean;
   pagination?: boolean;
   customFilter?: (item: T, searchValue: string) => boolean;
-  // New filter props
   showFilters?: boolean;
   filterConfigs?: FilterConfig[];
   onFilterChange?: (filterName: string, value: string | number) => void;
@@ -71,12 +70,9 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
   onSelect,
   title,
   fetchItems,
-  items, // Use the passed items directly if available
+  items,
   updateActiveStatus,
   columns: originalColumns,
-  getItemId,
-  getItemActiveStatus,
-  searchPlaceholder,
   onSearch,
   onSearchChange,
   dialogProps,
@@ -87,12 +83,13 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
   showExportPDF = false,
   pagination = false,
   customFilter,
-  // Filter related props
   showFilters = false,
   filterConfigs = [],
   onFilterChange,
   dateFilterOptions,
   onEdit,
+  getItemId,
+  getItemActiveStatus,
 }: CommonSearchDialogProps<T>) {
   const [switchStatus, setSwitchStatus] = useState<{ [key: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -101,46 +98,33 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
   const [dataLoaded, setDataLoaded] = useState(false);
   const user = useAppSelector((state) => state.auth);
 
-  // Filter states
   const [filterValues, setFilterValues] = useState<{ [key: string]: string | number }>({});
   const [dateFilter, setDateFilter] = useState<DateFilterType>(DateFilterType.All);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
 
-  // Effect to initialize filter values when component opens
   useEffect(() => {
     if (open) {
-      // Initialize filter values with defaults
       const initialFilterValues = filterConfigs.reduce((acc, config) => {
         acc[config.name] = config.defaultValue !== undefined ? config.defaultValue : "";
         return acc;
       }, {} as { [key: string]: string | number });
-
       setFilterValues(initialFilterValues);
-
-      // If we don't have items passed directly, fetch them
       if (!items) {
         fetchAllItems();
       }
     } else {
       setSearchTerm("");
       setDataLoaded(false);
-      // Reset filters when dialog closes
       resetFilters();
     }
   }, [open]);
 
-  // Update search results when items prop changes
   useEffect(() => {
     if (items && Array.isArray(items)) {
-      console.log("Items updated from props:", items);
       setSearchResults(items);
-
-      // Update switch status for these items
       const initialSwitchStatus = items.reduce((statusMap, item) => {
-        if (item && getItemId(item)) {
-          statusMap[getItemId(item)] = getItemActiveStatus(item);
-        }
+        statusMap[getItemId(item)] = getItemActiveStatus(item);
         return statusMap;
       }, {} as { [key: number]: boolean });
 
@@ -172,8 +156,6 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
     setDataLoaded(false);
     try {
       const fetchedItems = await fetchItems();
-      console.log("Fetched items:", fetchedItems);
-
       if (!Array.isArray(fetchedItems)) {
         console.error("Fetched items is not an array:", fetchedItems);
         setSearchResults([]);
@@ -234,10 +216,11 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
   const handleSwitchChange = async (item: ExtendedItem<T>, checked: boolean) => {
     try {
-      const success = await updateActiveStatus(getItemId(item), checked);
+      const newStatus = checked ? "Y" : "N";
+      const success = await updateActiveStatus(getItemId(item), newStatus === "Y");
       if (success) {
         setSwitchStatus((prev) => ({ ...prev, [getItemId(item)]: checked }));
-        setSearchResults((prev) => prev.map((row) => (getItemId(row) === getItemId(item) ? { ...row, rActiveYN: checked ? "Y" : "N" } : row)));
+        setSearchResults((prev) => prev.map((row) => (getItemId(row) === getItemId(item) ? { ...row, rActiveYN: newStatus } : row)));
       }
     } catch (error) {
       console.error("Error updating status:", error);
@@ -270,8 +253,8 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
           visible: true,
           sortable: false,
           render: (item: ExtendedItem<T>) => {
-            const shouldBeVisible = (typeof isStatusVisible === "function" && isStatusVisible(item)) || item.modifyYN === undefined;
-            return shouldBeVisible ? <Typography variant="body2">{switchStatus[getItemId(item)] ? "Active" : "Hidden"}</Typography> : null;
+            const isItemActive = item.rActiveYN === "Y" || item.rActiveYN === undefined;
+            return isStatusVisible && isItemActive ? <Typography variant="body2">{isItemActive ? "Active" : "Hidden"}</Typography> : null;
           },
         }
       : null;
@@ -283,15 +266,9 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
           visible: true,
           sortable: false,
           render: (item: ExtendedItem<T>) => {
-            const shouldBeVisible = (typeof isActionVisible === "function" && isActionVisible(item)) || item.modifyYN === undefined;
-            return shouldBeVisible ? (
-              <CustomSwitch
-                size="small"
-                color="secondary"
-                checked={switchStatus[getItemId(item)] ?? false}
-                onChange={(event) => handleSwitchChange(item, event.target.checked)}
-                disabled={isLoading}
-              />
+            const isItemActive = item.rActiveYN === "Y" || item.rActiveYN === undefined;
+            return isActionVisible && isItemActive ? (
+              <CustomSwitch size="small" color="secondary" checked={isItemActive} onChange={(event) => handleSwitchChange(item, event.target.checked)} disabled={isLoading} />
             ) : null;
           },
         }
@@ -338,10 +315,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
   const handleFilterChange = (filterName: string, event: SelectChangeEvent) => {
     const value = event.target.value;
-    console.log(`Filter changed in component: ${filterName} = ${value}`);
-
     setFilterValues((prev) => ({ ...prev, [filterName]: value }));
-
     if (onFilterChange) {
       onFilterChange(filterName, value);
     }
@@ -349,10 +323,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
   const handleDateFilterChange = (event: SelectChangeEvent) => {
     const value = Number(event.target.value);
-    console.log(`Date filter changed in component: ${value}`);
-
     setDateFilter(value as DateFilterType);
-
     if (dateFilterOptions?.onDateFilterChange) {
       dateFilterOptions.onDateFilterChange(value as DateFilterType);
     }
@@ -364,14 +335,8 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
     } else {
       setEndDate(date);
     }
-
-    // Only call the callback when both dates are set
     if (dateFilterOptions?.onDateRangeChange) {
-      if (type === "start" && endDate) {
-        dateFilterOptions.onDateRangeChange(date, endDate);
-      } else if (type === "end" && startDate) {
-        dateFilterOptions.onDateRangeChange(startDate, date);
-      }
+      dateFilterOptions.onDateRangeChange(startDate, endDate);
     }
   };
 
@@ -420,7 +385,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
 
         {dateFilter === DateFilterType.DateRange && (
           <>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <FormField
                 type="date"
                 label="Start Date"
@@ -433,7 +398,8 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
                 }}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+
+            <Grid size={{ xs: 12, md: 8 }}>
               <FormField
                 type="date"
                 label="End Date"
@@ -464,7 +430,7 @@ function EnhancedGenericAdvanceSearch<T extends Record<string, any>>({
               onChange={handleSearchInputChange}
               name="search"
               ControlID="SearchField"
-              placeholder={searchPlaceholder}
+              placeholder="Search..."
               InputProps={{
                 type: "search",
               }}
