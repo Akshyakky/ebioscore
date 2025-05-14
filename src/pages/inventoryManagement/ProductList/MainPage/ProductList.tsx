@@ -43,7 +43,13 @@ const ProductList: React.FC = () => {
     productGroup: "",
     status: "",
   });
-
+  const [showStats, setShowStats] = useState(false);
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    activeProducts: 0,
+    inactiveProducts: 0,
+    lowStockProducts: 0,
+  });
   // Load dropdown values
   const { productCategory, productGroup } = useDropdownValues(["productCategory", "productGroup"]);
 
@@ -159,6 +165,23 @@ const ProductList: React.FC = () => {
     });
   };
 
+  // Calculate statistics
+  const calculateStats = useCallback(() => {
+    const activeCount = products.filter((p) => p.rActiveYN === "Y").length;
+    const lowStockCount = products.filter((p) => (p.rOL || 0) > 0).length;
+
+    setStats({
+      totalProducts: products.length,
+      activeProducts: activeCount,
+      inactiveProducts: products.length - activeCount,
+      lowStockProducts: lowStockCount,
+    });
+  }, [products]);
+
+  useEffect(() => {
+    calculateStats();
+  }, [products, calculateStats]);
+
   // Filter products based on search term and filters
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -178,6 +201,36 @@ const ProductList: React.FC = () => {
       return matchesSearch && matchesCategory && matchesGroup && matchesStatus;
     });
   }, [products, searchTerm, filters]);
+
+  // Render statistics dashboard
+  const renderStatsDashboard = () => (
+    <Paper sx={{ p: 2, mb: 2 }}>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <Typography variant="h6">Total Products</Typography>
+          <Typography variant="h4">{stats.totalProducts}</Typography>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <Typography variant="h6">Active Products</Typography>
+          <Typography variant="h4" color="success.main">
+            {stats.activeProducts}
+          </Typography>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <Typography variant="h6">Inactive Products</Typography>
+          <Typography variant="h4" color="error.main">
+            {stats.inactiveProducts}
+          </Typography>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <Typography variant="h6">Low Stock</Typography>
+          <Typography variant="h4" color="warning.main">
+            {stats.lowStockProducts}
+          </Typography>
+        </Grid>
+      </Grid>
+    </Paper>
+  );
 
   // Define grid columns
   const columns: Column<ProductListDto>[] = [
@@ -297,6 +350,13 @@ const ProductList: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
+      {/* Toggle Stats Dashboard */}
+      <Box sx={{ mb: 2 }}>
+        <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
+      </Box>
+
+      {/* Stats Dashboard */}
+      {showStats && renderStatsDashboard()}
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} alignItems="center" justifyContent="space-between">
           <Grid size={{ xs: 12, md: 8 }}>

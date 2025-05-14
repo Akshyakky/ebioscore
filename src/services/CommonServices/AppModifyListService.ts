@@ -13,6 +13,7 @@ interface AppModifyList {
   value: number | string;
   label: string;
   defaultYn: string;
+  code: string;
 }
 
 const fetchAppModifyList = async (endpoint: string, fieldCode: string): Promise<AppModifyList[]> => {
@@ -24,6 +25,7 @@ const fetchAppModifyList = async (endpoint: string, fieldCode: string): Promise<
       label: item.amlName,
       defaultYn: item.defaultYn,
       id: item.amlId,
+      code: item.amlCode,
     }));
   } catch (error) {
     console.log(`Error fetching ${fieldCode} values:`, error);

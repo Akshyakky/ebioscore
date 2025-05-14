@@ -323,6 +323,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return (response.data || []).map((item: any) => ({
           value: item.pTaxID || 0,
           label: item.pTaxAmt || "",
+          code: item.pTaxCode || "",
         }));
       },
       consultantRole: async () => {
@@ -457,6 +458,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           return response.data.map((item) => ({
             value: item.conID,
             label: item.conName,
+            code: item.conCode,
           }));
         }
         return [];

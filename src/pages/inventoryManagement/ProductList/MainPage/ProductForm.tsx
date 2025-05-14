@@ -52,6 +52,10 @@ const productSchema = z.object({
   chargePercentage: z.coerce.number().optional(),
   isAssetYN: z.string().optional(),
   transferYN: z.string().optional(),
+  unitPack: z.coerce.number().optional(),
+  baseUnit: z.coerce.number().optional(),
+  pPackageID: z.coerce.number().optional(),
+  issueUnit: z.coerce.number().optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -113,6 +117,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       chargePercentage: product?.chargePercentage || 0,
       isAssetYN: product?.isAssetYN || "N",
       transferYN: product?.transferYN || "N",
+      unitPack: product?.unitPack || 0,
+      baseUnit: product?.baseUnit || 0,
+      pPackageID: product?.pPackageID || 0,
+      issueUnit: product?.issueUnit || 0,
     },
   });
 
@@ -146,6 +154,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       setIsSaving(true);
       setLoading(true);
 
+      // Get selected dropdown items' labels
+      const selectedUnit = productUnit?.find((unit) => Number(unit.value) === data.pUnitID);
+      const selectedTax = taxType?.find((tax) => Number(tax.value) === data.taxID);
+      const selectedManufacturer = manufacturer?.find((mfr) => Number(mfr.value) === data.manufacturerID);
+      const selectedProductGroup = productGroup?.find((group) => Number(group.value) === data.pGrpID);
+      const selectedProductSubGroup = productSubGroup?.find((group) => Number(group.value) === data.psGrpID);
+      const selectedMedicationForm = medicationForm?.find((form) => Number(form.value) === data.mFID);
+      const selectedMedicationGeneric = medicationGeneric?.find((generic) => Number(generic.value) === data.mGenID);
+      const selectedCatDescription = productCategory?.find((category) => category.value === data.catValue);
+
       // Convert form data to ProductListDto
       const productData: ProductListDto = {
         ...data,
@@ -173,6 +191,21 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
         abcCode: data.abcCode || "",
         rActiveYN: data.rActiveYN || "N",
         supplierStatus: product?.supplierStatus || "A",
+        unitPack: data.unitPack || 0,
+        baseUnit: data.baseUnit || 0,
+        pPackageID: data.pPackageID || 0,
+        issueUnit: data.issueUnit || 0,
+        // Add dropdown text values
+        pUnitName: selectedUnit?.label || "",
+        taxName: selectedTax?.label.toString() || "",
+        taxCode: selectedTax?.code || "",
+        manufacturerName: selectedManufacturer?.label || "",
+        manufacturerCode: selectedManufacturer?.code || "",
+        productGroupName: selectedProductGroup?.label || "",
+        psGroupName: selectedProductSubGroup?.label || "",
+        MFName: selectedMedicationForm?.label || "",
+        manufacturerGenericName: selectedMedicationGeneric?.label || "",
+        catDescription: selectedCatDescription?.label || "",
       };
 
       const response = await productService.save(productData);
@@ -226,6 +259,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
         chargePercentage: product.chargePercentage || 0,
         isAssetYN: product.isAssetYN || "N",
         transferYN: product.transferYN || "N",
+        unitPack: product.unitPack || 0,
+        baseUnit: product.baseUnit || 0,
+        pPackageID: product.pPackageID || 0,
+        issueUnit: product.issueUnit || 0,
       });
     } else {
       // If adding new, reset to defaults
@@ -259,6 +296,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
         chargePercentage: 0,
         isAssetYN: "N",
         transferYN: "N",
+        unitPack: 0,
+        baseUnit: 0,
+        pPackageID: 0,
+        issueUnit: 0,
       });
       generateProductCode();
     }
@@ -385,25 +426,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
 
           <Grid size={{ xs: 12, md: 6 }}>
             <FormField
-              name="pUnitID"
-              control={control}
-              label="Unit"
-              type="select"
-              required
-              disabled={viewOnly}
-              placeholder="Select a unit"
-              options={
-                productUnit?.map((unit) => ({
-                  value: unit.value,
-                  label: unit.label,
-                })) || []
-              }
-              size="small"
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormField
               name="manufacturerID"
               control={control}
               label="Manufacturer"
@@ -485,6 +507,51 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
 
           <Grid size={{ xs: 12, md: 6 }}>
             <FormField name="isAssetYN" control={control} label="Is Asset" type="switch" disabled={viewOnly} size="small" />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormField name="unitPack" control={control} label="Issue Unit" type="number" disabled={viewOnly} size="small" placeholder="Enter unit pack" />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormField
+              name="pUnitID"
+              control={control}
+              label="Issue Unit (UOM)"
+              type="select"
+              required
+              disabled={viewOnly}
+              placeholder="Issue Unit (UOM)"
+              options={
+                productUnit?.map((unit) => ({
+                  value: unit.value,
+                  label: unit.label,
+                })) || []
+              }
+              size="small"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormField name="baseUnit" control={control} label="Base Unit" type="number" disabled={viewOnly} size="small" placeholder="Enter base unit" />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormField
+              name="pPackageID"
+              control={control}
+              label="Base Unit (UOM)"
+              type="select"
+              required
+              disabled={viewOnly}
+              placeholder="Select base unit"
+              options={
+                productUnit?.map((unit) => ({
+                  value: unit.value,
+                  label: unit.label,
+                })) || []
+              }
+              size="small"
+            />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>

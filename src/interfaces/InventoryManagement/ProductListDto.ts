@@ -27,7 +27,7 @@ export interface ProductListDto extends BaseDto {
   manufacturerID?: number;
   manufacturerCode?: string;
   manufacturerName?: string;
-  pLocationID: number;
+  pLocationID?: number;
   pLocationCode?: string;
   pLocationName?: string;
   auGrpID?: number;
