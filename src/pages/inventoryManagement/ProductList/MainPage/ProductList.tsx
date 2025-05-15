@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -11,24 +11,21 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
-import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import CustomButton from "@/components/Button/CustomButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import SmartButton from "@/components/Button/SmartButton";
 import ProductForm from "./ProductForm";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { showAlert } from "@/utils/Common/showAlert";
-import { useLoading } from "@/context/LoadingContext";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
-
-const productService = new ProductListService();
+import { debounce } from "@/utils/Common/debounceUtils";
+import { useProductsQuery, useDeleteProductMutation } from "@/hooks/InventoryManagement/useProductQuery";
 
 const ProductList: React.FC = () => {
-  const { setLoading } = useLoading();
-  const [products, setProducts] = useState<ProductListDto[]>([]);
+  // State management
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedProduct, setSelectedProduct] = useState<ProductListDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
@@ -44,12 +41,12 @@ const ProductList: React.FC = () => {
     status: "",
   });
   const [showStats, setShowStats] = useState(false);
-  const [stats, setStats] = useState({
-    totalProducts: 0,
-    activeProducts: 0,
-    inactiveProducts: 0,
-    lowStockProducts: 0,
-  });
+
+  // React Query hooks
+  const { data: products, isLoading, error, refetch, isFetching } = useProductsQuery();
+
+  const deleteProductMutation = useDeleteProductMutation();
+
   // Load dropdown values
   const { productCategory, productGroup } = useDropdownValues(["productCategory", "productGroup"]);
 
@@ -58,136 +55,136 @@ const ProductList: React.FC = () => {
     { value: "inactive", label: "Inactive" },
   ];
 
-  // Fetch products on component mount
+  // Debounced search implementation
+  const debouncedSearch = useMemo(() => debounce((value: string) => setDebouncedSearchTerm(value), 300), []);
+
+  // Cleanup debounce on unmount
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
-  // Fetch all products
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await productService.getAll();
-      if (response.success && response.data) {
-        setProducts(response.data);
-      } else {
-        showAlert("Error", "Failed to fetch products", "error");
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      showAlert("Error", "Failed to fetch products", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading]);
-
-  // Handle search input changes
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-  };
+  // Handle search input changes with debounce
+  const handleSearchChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      setSearchTerm(value);
+      debouncedSearch(value);
+    },
+    [debouncedSearch]
+  );
 
   // Clear search
-  const handleClearSearch = () => {
+  const handleClearSearch = useCallback(() => {
     setSearchTerm("");
-  };
+    setDebouncedSearchTerm("");
+    debouncedSearch.cancel();
+  }, [debouncedSearch]);
+
+  // Handle refresh
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   // Open form dialog for creating new product
-  const handleAddNew = () => {
+  const handleAddNew = useCallback(() => {
     setSelectedProduct(null);
     setIsViewMode(false);
     setIsFormOpen(true);
-  };
+  }, []);
 
   // Open form dialog for editing existing product
-  const handleEdit = (product: ProductListDto) => {
+  const handleEdit = useCallback((product: ProductListDto) => {
     setSelectedProduct(product);
     setIsViewMode(false);
     setIsFormOpen(true);
-  };
+  }, []);
 
   // Open form dialog for viewing product details
-  const handleView = (product: ProductListDto) => {
+  const handleView = useCallback((product: ProductListDto) => {
     setSelectedProduct(product);
     setIsViewMode(true);
     setIsFormOpen(true);
-  };
+  }, []);
 
   // Open confirm dialog for deleting a product
-  const handleDeleteClick = (product: ProductListDto) => {
+  const handleDeleteClick = useCallback((product: ProductListDto) => {
     setSelectedProduct(product);
     setIsDeleteConfirmOpen(true);
-  };
+  }, []);
 
   // Confirm and execute product deletion
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!selectedProduct) return;
 
     try {
-      setLoading(true);
-      const response = await productService.delete(selectedProduct.productID, true);
-      if (response.success) {
-        showAlert("Success", "Product deleted successfully", "success");
-        fetchProducts();
-      } else {
-        showAlert("Error", response.errorMessage || "Failed to delete product", "error");
-      }
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      showAlert("Error", "Failed to delete product", "error");
-    } finally {
-      setLoading(false);
+      await deleteProductMutation.mutateAsync({
+        id: selectedProduct.productID,
+        softDelete: true,
+      });
       setIsDeleteConfirmOpen(false);
+    } catch (error) {
+      // Error handling is done in the mutation
+      console.error("Delete operation failed:", error);
     }
-  };
+  }, [selectedProduct, deleteProductMutation]);
 
   // Close product form dialog
-  const handleFormClose = (refreshData?: boolean) => {
+  const handleFormClose = useCallback((refreshData?: boolean) => {
     setIsFormOpen(false);
-    if (refreshData) {
-      fetchProducts();
-    }
-  };
+    // React Query will automatically refresh data when mutations succeed
+    // No need to manually refetch
+  }, []);
 
   // Handle filter changes
-  const handleFilterChange = (field: keyof typeof filters, value: string) => {
+  const handleFilterChange = useCallback((field: keyof typeof filters, value: string) => {
     setFilters((prev) => ({
       ...prev,
       [field]: value,
     }));
-  };
+  }, []);
 
   // Clear all filters
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setFilters({
       category: "",
       productGroup: "",
       status: "",
     });
-  };
+  }, []);
 
-  // Calculate statistics
-  const calculateStats = useCallback(() => {
+  // Calculate statistics with memoization
+  const stats = useMemo(() => {
+    if (!products)
+      return {
+        totalProducts: 0,
+        activeProducts: 0,
+        inactiveProducts: 0,
+        lowStockProducts: 0,
+      };
+
     const activeCount = products.filter((p) => p.rActiveYN === "Y").length;
     const lowStockCount = products.filter((p) => (p.rOL || 0) > 0).length;
 
-    setStats({
+    return {
       totalProducts: products.length,
       activeProducts: activeCount,
       inactiveProducts: products.length - activeCount,
       lowStockProducts: lowStockCount,
-    });
+    };
   }, [products]);
 
-  useEffect(() => {
-    calculateStats();
-  }, [products, calculateStats]);
-
-  // Filter products based on search term and filters
+  // Filter products with debounced search and filters
   const filteredProducts = useMemo(() => {
+    if (!products) return [];
+
     return products.filter((product) => {
-      // Search term filter
+      // Search term filter (using debounced search)
       const matchesSearch =
-        searchTerm === "" || product.productName?.toLowerCase().includes(searchTerm.toLowerCase()) || product.productCode?.toLowerCase().includes(searchTerm.toLowerCase());
+        debouncedSearchTerm === "" ||
+        product.productName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        product.productCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
       // Category filter
       const matchesCategory = filters.category === "" || product.catValue === filters.category;
@@ -200,7 +197,7 @@ const ProductList: React.FC = () => {
 
       return matchesSearch && matchesCategory && matchesGroup && matchesStatus;
     });
-  }, [products, searchTerm, filters]);
+  }, [products, debouncedSearchTerm, filters]);
 
   // Render statistics dashboard
   const renderStatsDashboard = () => (
@@ -348,6 +345,18 @@ const ProductList: React.FC = () => {
     },
   ];
 
+  // Show error state
+  if (error) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography color="error" variant="h6">
+          Error loading products: {error.message}
+        </Typography>
+        <CustomButton text="Retry" onClick={handleRefresh} variant="contained" color="primary" />
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 2 }}>
       {/* Toggle Stats Dashboard */}
@@ -357,6 +366,7 @@ const ProductList: React.FC = () => {
 
       {/* Stats Dashboard */}
       {showStats && renderStatsDashboard()}
+
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} alignItems="center" justifyContent="space-between">
           <Grid size={{ xs: 12, md: 8 }}>
@@ -366,7 +376,16 @@ const ProductList: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
             <Stack direction="row" spacing={1}>
-              <SmartButton text="Refresh" icon={RefreshIcon} onClick={fetchProducts} color="info" variant="outlined" size="small" />
+              <SmartButton
+                text="Refresh"
+                icon={RefreshIcon}
+                onClick={handleRefresh}
+                color="info"
+                variant="outlined"
+                size="small"
+                disabled={isFetching}
+                loadingText="Refreshing..."
+              />
               <SmartButton text="Add Product" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
             </Stack>
           </Grid>
@@ -425,6 +444,7 @@ const ProductList: React.FC = () => {
           emptyStateMessage="No products found"
           showColumnCustomization
           initialSortBy={{ field: "productName", direction: "asc" }}
+          loading={isLoading || isFetching}
         />
       </Paper>
 

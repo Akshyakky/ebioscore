@@ -23,7 +23,6 @@ import WardCategoryPage from "../pages/hospitalAdministration/WardCategoryPage/M
 import BedSetUpPage from "../pages/hospitalAdministration/Room-BedSetUp/MainPage/BedSetUpPage";
 import DeptUnitListPage from "../pages/hospitalAdministration/DeptUnitList/MainPage/DeptUnitListPage";
 import InsuranceListPage from "../pages/hospitalAdministration/InsuranceList/MainPage/InsuranceListPage";
-import ProductListPage from "../pages/inventoryManagement/ProductList/MainPage/ProductListPage";
 import ProductTaxListPage from "../pages/inventoryManagement/ProductTaxList/MainPage/ProductTaxListPage";
 import ProductOverviewPage from "../pages/inventoryManagement/ProductOverview/MainPage/ProductOverviewPage";
 import ManageBedPage from "../pages/patientAdministration/ManageBed/MainPage/ManageBedPage";
@@ -49,6 +48,7 @@ import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPag
 import LogModule from "@/pages/common/LogViewerPage/LogModule";
 import ProductList from "@/pages/inventoryManagement/ProductList/MainPage/ProductList";
 import GRNPage from "@/pages/inventoryManagement/GRN/MainPage/GRNPage";
+import ProductTransaction from "@/pages/inventoryManagement/ProductTransaction/ProductTransaction";
 
 interface RouteConfig {
   path: string;
@@ -105,6 +105,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/IndentProductPage", component: IndentProductPage, protected: true },
   { path: "/EmployeeRegistrationForm", component: EmployeeRegistrationForm, protected: true },
   { path: "/LogModulePage", component: LogModule, protected: true },
+  { path: "/ProductTransaction", component: ProductTransaction, protected: true },
   // 404 Not Found route - must be placed last to catch all unmatched routes
   { path: "*", component: NotFoundPage, protected: false },
 ];

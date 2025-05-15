@@ -79,6 +79,7 @@ const RouteNotFoundBoundary: React.FC<RouteNotFoundBoundaryProps> = ({ children 
       "/IndentProductPage",
       "/LogModulePage",
       "/GRNPage",
+      "/ProductTransaction",
       "/",
     ];
 
