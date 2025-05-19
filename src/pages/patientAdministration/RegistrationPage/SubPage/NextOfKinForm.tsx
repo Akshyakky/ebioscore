@@ -2,23 +2,26 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Grid } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
+import { useForm, FormProvider } from "react-hook-form";
 import { useAppSelector } from "@/store/hooks";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
-import useDropdownChange from "@/hooks/useDropdownChange";
-import useRadioButtonChange from "@/hooks/useRadioButtonChange";
 import { useLoading } from "@/context/LoadingContext";
 import { showAlert } from "@/utils/Common/showAlert";
 import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
 import { PatientService } from "@/services/PatientAdministrationServices/RegistrationService/PatientService";
-import FormField from "@/components/FormField/FormField";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 import CustomButton from "@/components/Button/CustomButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { notifyError, notifyWarning } from "@/utils/Common/toastManager";
+
+// Import Zod schema and form hook
+import { useZodForm } from "@/hooks/Common/useZodForm";
+import ZodFormField from "@/components/ZodFormField/ZodFormField";
+import { patNokDetailsSchema } from "../MainPage/PatientRegistrationScheme";
 
 interface NextOfKinFormProps {
   show: boolean;
@@ -27,14 +30,16 @@ interface NextOfKinFormProps {
   editData?: PatNokDetailsDto | null;
 }
 
-const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handleSave, editData }) => {
+const NextOfKinFormWithZod: React.FC<NextOfKinFormProps> = ({ show, handleClose, handleSave, editData }) => {
   const userInfo = useAppSelector((state) => state.auth);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const serverDate = useServerDate();
   const { refreshDropdownValues, ...dropdownValues } = useDropdownValues(["title", "relation", "area", "city", "country", "nationality"]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
+  const { setLoading } = useLoading();
+
+  // Initialize form with Zod validation
   const nextOfKinInitialFormState: PatNokDetailsDto = useMemo(
     () => ({
       ID: 0,
@@ -77,33 +82,28 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
     }),
     [userInfo, serverDate]
   );
-  const [nextOfkinData, setNextOfKinData] = useState<PatNokDetailsDto>(nextOfKinInitialFormState);
-  const { handleDropdownChange } = useDropdownChange<PatNokDetailsDto>(setNextOfKinData);
-  const { handleRadioButtonChange } = useRadioButtonChange<PatNokDetailsDto>(setNextOfKinData);
-  const { setLoading } = useLoading();
+
+  // Set up form with Zod validation
+  const methods = useZodForm(patNokDetailsSchema, {
+    defaultValues: nextOfKinInitialFormState,
+    mode: "onBlur",
+  });
+
+  const { handleSubmit, reset, setValue, watch, formState } = methods;
+  const { errors } = formState;
+
+  // Watch for reg status changes
+  const regStatusVal = watch("pNokRegStatusVal");
+
+  // Reset form to initial state
   const resetNextOfKinFormData = useCallback(() => {
-    setNextOfKinData(nextOfKinInitialFormState);
-  }, [nextOfKinInitialFormState]);
+    reset(nextOfKinInitialFormState);
+  }, [reset, nextOfKinInitialFormState]);
 
-  const onFieldAddedOrUpdated = () => {
-    if (dialogCategory) {
-      const dropdownMap: Record<string, DropdownType> = {
-        CITY: "city",
-        AREA: "area",
-        COUNTRY: "country",
-        NATIONALITY: "nationality",
-        RELATION: "relation",
-      };
-      const dropdownType = dropdownMap[dialogCategory];
-      if (dropdownType) {
-        refreshDropdownValues(dropdownType);
-      }
-    }
-  };
-
+  // Initialize form with edit data when provided
   useEffect(() => {
     if (editData) {
-      setNextOfKinData({
+      reset({
         ...nextOfKinInitialFormState,
         ...editData,
         pNokDob: editData.pNokDob || serverDate,
@@ -112,124 +112,79 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
     } else {
       resetNextOfKinFormData();
     }
-  }, [editData, nextOfKinInitialFormState, serverDate, resetNextOfKinFormData]);
+  }, [editData, nextOfKinInitialFormState, serverDate, resetNextOfKinFormData, reset]);
 
-  const validateFormData = (): boolean => {
-    const { pNokTitleVal, pNokFName, pNokLName, pNokRelNameVal, pAddPhone1, pNokPChartCode, pNokRegStatusVal, pNokPChartID } = nextOfkinData;
-
-    let isValid = true;
-
-    if (!pNokTitleVal || !pNokFName.trim() || !pNokLName.trim() || !pNokRelNameVal || !pAddPhone1.trim()) {
-      // notifyError("Please fill all mandatory fields.");
-      isValid = false;
-    }
-
-    // If Registered is selected, enforce UHID selection
-    if (pNokRegStatusVal === "Y") {
-      if (!pNokPChartCode.trim() || !pNokPChartID || pNokPChartID <= 0) {
-        notifyError("Please select registered data.");
-        isValid = false;
+  // Handle form submission
+  const onSubmit = useCallback(
+    async (data: PatNokDetailsDto) => {
+      setLoading(true);
+      try {
+        await handleSave(data);
+        showAlert("Success", "The Kin Details Saved successfully", "success");
+        resetNextOfKinFormData();
+        handleClose();
+      } catch (error) {
+        showAlert("Error", "Failed to save Kin details. Please try again.", "error");
+      } finally {
+        setLoading(false);
       }
-    }
+    },
+    [handleSave, handleClose, resetNextOfKinFormData, setLoading]
+  );
 
-    return isValid;
-  };
-
-  const handleSubmit = useCallback(async () => {
-    setIsSubmitted(true);
-
-    if (!validateFormData()) {
-      notifyWarning("Please fill all mandatory fields.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await handleSave(nextOfkinData);
-      showAlert("Success", "The Kin Details Saved successfully", "success");
-      resetNextOfKinFormData();
-      handleClose();
-    } catch (error) {
-      showAlert("Error", "Failed to save Kin details. Please try again.", "error");
-    } finally {
-      setLoading(false);
-      setIsSubmitted(false); // optional: reset if dialog closes or refreshes
-    }
-  }, [nextOfkinData, handleSave, handleClose, resetNextOfKinFormData, setLoading]);
-
+  // Clean up and close
   const handleCloseWithClear = useCallback(() => {
-    setIsSubmitted(false);
     resetNextOfKinFormData();
     handleClose();
   }, [resetNextOfKinFormData, handleClose]);
 
-  const regOptions = useMemo(
-    () => [
-      { value: "Y", label: "Registered" },
-      { value: "N", label: "Non Registered" },
-    ],
-    []
-  );
+  // Radio options
+  const regOptions = [
+    { value: "Y", label: "Registered" },
+    { value: "N", label: "Non Registered" },
+  ];
 
-  const handleTextChange = useCallback(
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setNextOfKinData((prev) => ({
-        ...prev,
-        [field]: e.target.value,
-      }));
-    },
-    []
-  );
-
+  // Handle patient selection from autocomplete
   const handlePatientSelect = useCallback(
     async (selectedSuggestion: string) => {
       setLoading(true);
       try {
         const pChartID = extractNumbers(selectedSuggestion)[0] || null;
         if (pChartID) {
-          setNextOfKinData((prev) => ({
-            ...prev,
-            pNokPChartCode: selectedSuggestion.split("|")[0].trim(),
-            pNokPChartID: pChartID,
-          }));
+          setValue("pNokPChartCode", selectedSuggestion.split("|")[0].trim());
+          setValue("pNokPChartID", pChartID);
 
           const response = await PatientService.getPatientDetails(pChartID);
           if (response.success && response.data) {
             const patientDetails = response.data;
-            setNextOfKinData((prev) => ({
-              ...prev,
-              pNokFName: patientDetails.patRegisters.pFName || "",
-              pNokMName: patientDetails.patRegisters.pMName || "",
-              pNokLName: patientDetails.patRegisters.pLName || "",
-              pNokTitleVal: patientDetails.patRegisters.pTitle || "",
-              pNokDob: patientDetails.patRegisters.pDob ? new Date(patientDetails.patRegisters.pDob) : serverDate,
-              pNokRelNameVal: patientDetails.patRegisters.pTypeName || "",
-              pNokStreet: patientDetails.patAddress.pAddStreet || "",
-              pNokAreaVal: patientDetails.patAddress.patAreaVal || "",
-              pNokCityVal: patientDetails.patAddress.pAddCityVal || "",
-              pNokActualCountryVal: patientDetails.patAddress.pAddActualCountryVal || "",
-              pNokPostcode: patientDetails.patAddress.pAddPostcode || "",
-              pAddPhone1: patientDetails.patAddress.pAddPhone1 || "",
-              pNokCountryVal: patientDetails.patAddress.pAddActualCountryVal || "",
-              pNokPssnID: patientDetails.patRegisters.intIdPsprt || "",
-            }));
+
+            // Update form with patient details
+            setValue("pNokFName", patientDetails.patRegisters.pFName || "");
+            setValue("pNokMName", patientDetails.patRegisters.pMName || "");
+            setValue("pNokLName", patientDetails.patRegisters.pLName || "");
+            setValue("pNokTitleVal", patientDetails.patRegisters.pTitle || "");
+            setValue("pNokDob", patientDetails.patRegisters.pDob ? new Date(patientDetails.patRegisters.pDob) : serverDate);
+            setValue("pNokRelNameVal", patientDetails.patRegisters.pTypeName || "");
+            setValue("pNokStreet", patientDetails.patAddress.pAddStreet || "");
+            setValue("pNokAreaVal", patientDetails.patAddress.patAreaVal || "");
+            setValue("pNokCityVal", patientDetails.patAddress.pAddCityVal || "");
+            setValue("pNokActualCountryVal", patientDetails.patAddress.pAddActualCountryVal || "");
+            setValue("pNokPostcode", patientDetails.patAddress.pAddPostcode || "");
+            setValue("pAddPhone1", patientDetails.patAddress.pAddPhone1 || "");
+            setValue("pNokCountryVal", patientDetails.patAddress.pAddActualCountryVal || "");
+            setValue("pNokPssnID", patientDetails.patRegisters.intIdPsprt || "");
           }
         }
       } catch (error) {
+        notifyError("Failed to load patient details");
       } finally {
         setLoading(false);
       }
     },
-    [setLoading, serverDate]
+    [setLoading, serverDate, setValue]
   );
 
-  const handleDateChange = useCallback((date: Date | null) => {
-    setNextOfKinData((prev) => ({
-      ...prev,
-      pNokDob: date ? date : serverDate,
-    }));
-  }, []);
-
+  // Handle modified field dialog
   const [, setFormDataDialog] = useState<AppModifyFieldDto>({
     amlID: 0,
     amlName: "",
@@ -268,211 +223,188 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
     setIsFieldDialogOpen(false);
   };
 
+  const onFieldAddedOrUpdated = () => {
+    if (dialogCategory) {
+      const dropdownMap: Record<string, DropdownType> = {
+        CITY: "city",
+        AREA: "area",
+        COUNTRY: "country",
+        NATIONALITY: "nationality",
+        RELATION: "relation",
+      };
+      const dropdownType = dropdownMap[dialogCategory];
+      if (dropdownType) {
+        refreshDropdownValues(dropdownType);
+      }
+    }
+  };
+
+  // Form content
   const dialogContent = (
-    <Grid container spacing={2}>
-      <FormField
-        type="radio"
-        label="NOK Type"
-        name="RegOrNonReg"
-        ControlID="RegOrNonReg"
-        value={nextOfkinData.pNokRegStatusVal}
-        options={regOptions}
-        onChange={handleRadioButtonChange(["pNokRegStatusVal"], ["pNokRegStatus"], regOptions)}
-        inline={true}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-      />
-      {nextOfkinData.pNokRegStatusVal === "Y" && (
-        <FormField
-          type="autocomplete"
-          label="UHID"
-          name="pNokPChartCode"
-          ControlID="UHID"
-          value={nextOfkinData.pNokPChartCode || ""}
-          onChange={(e) =>
-            setNextOfKinData((prev) => ({
-              ...prev,
-              pNokPChartCode: e.target.value,
-              pNokPChartID: 0, // Invalidate the selection unless properly selected from suggestion
-            }))
-          }
-          fetchSuggestions={fetchPatientSuggestions}
-          onSelectSuggestion={handlePatientSelect}
-          isSubmitted={isSubmitted}
-          isMandatory
-          placeholder="Search through UHID, Name, DOB, Phone No...."
+    <FormProvider {...methods}>
+      <Grid container spacing={2}>
+        <ZodFormField
+          name="pNokRegStatusVal"
+          control={methods.control}
+          type="radio"
+          label="NOK Type"
+          options={regOptions}
+          inline={true}
+          errors={errors}
           gridProps={{ xs: 12, sm: 6, md: 4 }}
+          onChange={(val) => {
+            const selectedOption = regOptions.find((opt) => opt.value === val);
+            if (selectedOption) {
+              setValue("pNokRegStatus", selectedOption.label);
+            }
+          }}
         />
-      )}
 
-      <FormField
-        type="select"
-        label="Title"
-        name="pNokTitleVal"
-        ControlID="Title"
-        value={String(nextOfkinData.pNokTitleVal)}
-        options={dropdownValues.title || []}
-        onChange={handleDropdownChange(["pNokTitleVal"], ["pNokTitle"], dropdownValues.title || [])}
-        isMandatory={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-      />
+        {regStatusVal === "Y" && (
+          <ZodFormField
+            name="pNokPChartCode"
+            control={methods.control}
+            type="autocomplete"
+            label="UHID"
+            placeholder="Search through UHID, Name, DOB, Phone No...."
+            isMandatory
+            errors={errors}
+            gridProps={{ xs: 12, sm: 6, md: 4 }}
+            fetchSuggestions={fetchPatientSuggestions}
+            onSelectSuggestion={handlePatientSelect}
+            onChange={(e) => {
+              setValue("pNokPChartCode", e.target.value);
+              setValue("pNokPChartID", 0); // Invalidate selection
+            }}
+          />
+        )}
 
-      <FormField
-        type="text"
-        label="First Name"
-        name="pNokFName"
-        ControlID="FirstName"
-        value={nextOfkinData.pNokFName}
-        onChange={handleTextChange("pNokFName")}
-        isMandatory={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-      />
+        <ZodFormField
+          name="pNokTitleVal"
+          control={methods.control}
+          type="select"
+          label="Title"
+          options={dropdownValues.title || []}
+          isMandatory
+          errors={errors}
+          gridProps={{ xs: 12, sm: 6, md: 4 }}
+          onChange={(val) => {
+            const selectedOption = dropdownValues.title?.find((opt) => opt.value === val);
+            if (selectedOption) {
+              setValue("pNokTitle", selectedOption.label);
+            }
+          }}
+        />
 
-      <FormField
-        type="text"
-        label="Last Name"
-        name="pNokLName"
-        ControlID="LastName"
-        value={nextOfkinData.pNokLName}
-        onChange={handleTextChange("pNokLName")}
-        isMandatory={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-      />
+        <ZodFormField name="pNokFName" control={methods.control} type="text" label="First Name" isMandatory errors={errors} gridProps={{ xs: 12, sm: 6, md: 4 }} />
 
-      <FormField
-        type="select"
-        label="Relationship"
-        name="pNokRelNameVal"
-        ControlID="Relationship"
-        value={nextOfkinData.pNokRelNameVal || dropdownValues.relation}
-        options={dropdownValues.relation || []}
-        onChange={handleDropdownChange(["pNokRelNameVal"], ["pNokRelName"], dropdownValues.relation || [])}
-        isMandatory={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-        showAddButton={true}
-        onAddClick={() => handleAddField("RELATION")}
-      />
+        <ZodFormField name="pNokLName" control={methods.control} type="text" label="Last Name" isMandatory errors={errors} gridProps={{ xs: 12, sm: 6, md: 4 }} />
 
-      <FormField
-        type="datepicker"
-        label="Birth Date"
-        name="pNokDob"
-        ControlID="BirthDate"
-        value={nextOfkinData.pNokDob}
-        onChange={handleDateChange}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-      />
+        <ZodFormField
+          name="pNokRelNameVal"
+          control={methods.control}
+          type="select"
+          label="Relationship"
+          options={dropdownValues.relation || []}
+          isMandatory
+          errors={errors}
+          gridProps={{ xs: 12, sm: 6, md: 4 }}
+          showAddButton={true}
+          onAddClick={() => handleAddField("RELATION")}
+          onChange={(val) => {
+            const selectedOption = dropdownValues.relation?.find((opt) => opt.value === val);
+            if (selectedOption) {
+              setValue("pNokRelName", selectedOption.label);
+            }
+          }}
+        />
 
-      <FormField
-        type="text"
-        label="Mobile No"
-        name="pAddPhone1"
-        ControlID="MobileNo"
-        value={nextOfkinData.pAddPhone1}
-        onChange={handleTextChange("pAddPhone1")}
-        maxLength={20}
-        isMandatory={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-      />
+        <ZodFormField name="pNokDob" control={methods.control} type="datepicker" label="Birth Date" errors={errors} gridProps={{ xs: 12, sm: 6, md: 4 }} />
 
-      <FormField
-        type="text"
-        label="Address"
-        name="pNokStreet"
-        ControlID="Address"
-        value={nextOfkinData.pNokStreet}
-        onChange={handleTextChange("pNokStreet")}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-      />
-      <FormField
-        type="select"
-        label="Area"
-        name="pNokAreaVal"
-        ControlID="Area"
-        value={nextOfkinData.pNokAreaVal || dropdownValues.area}
-        options={dropdownValues.area || []}
-        onChange={handleDropdownChange(["pNokAreaVal"], ["pNokArea"], dropdownValues.area || [])}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-        showAddButton={true}
-        onAddClick={() => handleAddField("AREA")}
-      />
-      <FormField
-        type="select"
-        label="City"
-        name="pNokCityVal"
-        ControlID="City"
-        value={nextOfkinData.pNokCityVal || dropdownValues.city}
-        options={dropdownValues.city || []}
-        onChange={handleDropdownChange(["pNokCityVal"], ["pNokCity"], dropdownValues.city || [])}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-        showAddButton={true}
-        onAddClick={() => handleAddField("CITY")}
-      />
-      <FormField
-        type="select"
-        label="Country"
-        name="pNokActualCountryVal"
-        ControlID="Country"
-        value={nextOfkinData.pNokActualCountry}
-        options={dropdownValues.country || []}
-        onChange={handleDropdownChange(["pNokActualCountryVal"], ["pNokActualCountry"], dropdownValues.country || [])}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-        showAddButton={true}
-        onAddClick={() => handleAddField("COUNTRY")}
-      />
+        <ZodFormField name="pAddPhone1" control={methods.control} type="text" label="Mobile No" maxLength={20} isMandatory errors={errors} gridProps={{ xs: 12, sm: 6, md: 4 }} />
 
-      <FormField
-        type="text"
-        label="Post Code"
-        name="pNokPostcode"
-        ControlID="PostCode"
-        value={nextOfkinData.pNokPostcode}
-        onChange={handleTextChange("pNokPostcode")}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-      />
-      <FormField
-        type="text"
-        label="Land Line No"
-        name="pAddPhone3"
-        ControlID="LandLineNo"
-        value={nextOfkinData.pAddPhone3}
-        onChange={handleTextChange("pAddPhone3")}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-      />
-      <FormField
-        type="select"
-        label="Nationality"
-        name="pNokCountryVal"
-        ControlID="Nationality"
-        value={nextOfkinData.pNokCountryVal || dropdownValues.nationality}
-        options={dropdownValues.nationality || []}
-        onChange={handleDropdownChange(["pNokCountryVal"], ["pNokCountry"], dropdownValues.country || [])}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-        showAddButton={true}
-        onAddClick={() => handleAddField("NATIONALITY")}
-      />
-      <FormField
-        type="text"
-        label="Passport No"
-        name="pNokPssnID"
-        ControlID="PassportNo"
-        value={nextOfkinData.pNokPssnID}
-        onChange={handleTextChange("pNokPssnID")}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-      />
-      <FormField
-        type="text"
-        label="Work Phone No"
-        name="pAddPhone2"
-        ControlID="WorkPhoneNo"
-        value={nextOfkinData.pAddPhone2}
-        onChange={handleTextChange("pAddPhone2")}
-        gridProps={{ xs: 12, sm: 6, md: 4 }}
-      />
+        <ZodFormField name="pNokStreet" control={methods.control} type="text" label="Address" errors={errors} gridProps={{ xs: 12, sm: 6, md: 4 }} />
+
+        <ZodFormField
+          name="pNokAreaVal"
+          control={methods.control}
+          type="select"
+          label="Area"
+          options={dropdownValues.area || []}
+          errors={errors}
+          gridProps={{ xs: 12, sm: 6, md: 4 }}
+          showAddButton={true}
+          onAddClick={() => handleAddField("AREA")}
+          onChange={(val) => {
+            const selectedOption = dropdownValues.area?.find((opt) => opt.value === val);
+            if (selectedOption) {
+              setValue("pNokArea", selectedOption.label);
+            }
+          }}
+        />
+
+        <ZodFormField
+          name="pNokCityVal"
+          control={methods.control}
+          type="select"
+          label="City"
+          options={dropdownValues.city || []}
+          errors={errors}
+          gridProps={{ xs: 12, sm: 6, md: 4 }}
+          showAddButton={true}
+          onAddClick={() => handleAddField("CITY")}
+          onChange={(val) => {
+            const selectedOption = dropdownValues.city?.find((opt) => opt.value === val);
+            if (selectedOption) {
+              setValue("pNokCity", selectedOption.label);
+            }
+          }}
+        />
+
+        <ZodFormField
+          name="pNokActualCountryVal"
+          control={methods.control}
+          type="select"
+          label="Country"
+          options={dropdownValues.country || []}
+          errors={errors}
+          gridProps={{ xs: 12, sm: 6, md: 4 }}
+          showAddButton={true}
+          onAddClick={() => handleAddField("COUNTRY")}
+          onChange={(val) => {
+            const selectedOption = dropdownValues.country?.find((opt) => opt.value === val);
+            if (selectedOption) {
+              setValue("pNokActualCountry", selectedOption.label);
+            }
+          }}
+        />
+
+        <ZodFormField name="pNokPostcode" control={methods.control} type="text" label="Post Code" errors={errors} gridProps={{ xs: 12, sm: 6, md: 4 }} />
+
+        <ZodFormField name="pAddPhone3" control={methods.control} type="text" label="Land Line No" errors={errors} gridProps={{ xs: 12, sm: 6, md: 4 }} />
+
+        <ZodFormField
+          name="pNokCountryVal"
+          control={methods.control}
+          type="select"
+          label="Nationality"
+          options={dropdownValues.nationality || []}
+          errors={errors}
+          gridProps={{ xs: 12, sm: 6, md: 4 }}
+          showAddButton={true}
+          onAddClick={() => handleAddField("NATIONALITY")}
+          onChange={(val) => {
+            const selectedOption = dropdownValues.nationality?.find((opt) => opt.value === val);
+            if (selectedOption) {
+              setValue("pNokCountry", selectedOption.label);
+            }
+          }}
+        />
+
+        <ZodFormField name="pNokPssnID" control={methods.control} type="text" label="Passport No" errors={errors} gridProps={{ xs: 12, sm: 6, md: 4 }} />
+
+        <ZodFormField name="pAddPhone2" control={methods.control} type="text" label="Work Phone No" errors={errors} gridProps={{ xs: 12, sm: 6, md: 4 }} />
+      </Grid>
 
       <ModifiedFieldDialog
         open={isFieldDialogOpen}
@@ -481,13 +413,14 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
         onFieldAddedOrUpdated={onFieldAddedOrUpdated}
         isFieldCodeDisabled={true}
       />
-    </Grid>
+    </FormProvider>
   );
 
+  // Dialog action buttons
   const dialogActions = (
     <>
       <CustomButton variant="contained" size="medium" onClick={handleCloseWithClear} text="Close" color="secondary" icon={CloseIcon} ariaLabel="Close" />
-      <CustomButton icon={SaveIcon} variant="contained" size="medium" text="Save" color="success" onClick={handleSubmit} ariaLabel="Save Nok" />
+      <CustomButton icon={SaveIcon} variant="contained" size="medium" text="Save" color="success" onClick={handleSubmit(onSubmit)} ariaLabel="Save Nok" />
     </>
   );
 
@@ -507,4 +440,4 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
   );
 };
 
-export default React.memo(NextOfKinForm);
+export default React.memo(NextOfKinFormWithZod);

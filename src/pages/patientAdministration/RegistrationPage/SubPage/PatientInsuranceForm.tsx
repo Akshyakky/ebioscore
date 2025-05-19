@@ -8,12 +8,17 @@ import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceD
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
 import useDayjs from "@/hooks/Common/useDateTime";
-import useDropdownChange from "@/hooks/useDropdownChange";
-import FormField from "@/components/FormField/FormField";
-import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
+import { useForm, FormProvider } from "react-hook-form";
+import { useLoading } from "@/context/LoadingContext";
 import CustomButton from "@/components/Button/CustomButton";
 import { notifyWarning } from "@/utils/Common/toastManager";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
+
+// Import Zod schema and form hook
+import { useZodForm } from "@/hooks/Common/useZodForm";
+import ZodFormField from "@/components/ZodFormField/ZodFormField";
+import { insuranceSchema } from "../MainPage/PatientRegistrationScheme";
 
 interface PatientInsuranceFormProps {
   show: boolean;
@@ -22,14 +27,16 @@ interface PatientInsuranceFormProps {
   editData?: OPIPInsurancesDto | null;
 }
 
-const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handleClose, handleSave, editData }) => {
+const PatientInsuranceFormWithZod: React.FC<PatientInsuranceFormProps> = ({ show, handleClose, handleSave, editData }) => {
   const userInfo = useAppSelector((state) => state.auth);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const serverDate = useServerDate();
   const { formatDate, formatDateYMD } = useDayjs();
   const { refreshDropdownValues, ...dropdownValues } = useDropdownValues(["insurance", "relation", "coverFor"]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
+  const { setLoading } = useLoading();
+
+  // Initialize the insurance form state with default values
   const insuranceFormInitialState: OPIPInsurancesDto = useMemo(
     () => ({
       ID: 0,
@@ -64,16 +71,37 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
       coveredVal: "",
       coveredFor: "",
     }),
-    [userInfo, formatDate]
+    [userInfo, serverDate]
   );
 
-  const [insuranceForm, setInsuranceForm] = useState<OPIPInsurancesDto>(insuranceFormInitialState);
-  const { handleDropdownChange } = useDropdownChange<OPIPInsurancesDto>(setInsuranceForm);
+  // Set up form with Zod validation
+  const methods = useZodForm(insuranceSchema, {
+    defaultValues: insuranceFormInitialState,
+    mode: "onBlur",
+  });
 
+  const { handleSubmit, reset, setValue, formState } = methods;
+  const { errors } = formState;
+
+  // Reset form to initial state
   const resetInsuranceFormData = useCallback(() => {
-    setInsuranceForm(insuranceFormInitialState);
-  }, [insuranceFormInitialState]);
+    reset(insuranceFormInitialState);
+  }, [reset, insuranceFormInitialState]);
 
+  // Initialize form with edit data when provided
+  useEffect(() => {
+    if (editData) {
+      reset({
+        ...editData,
+        policyStartDt: editData.policyStartDt,
+        policyEndDt: editData.policyEndDt,
+      });
+    } else {
+      resetInsuranceFormData();
+    }
+  }, [editData, resetInsuranceFormData, reset]);
+
+  // Handle field dialog updates
   const onFieldAddedOrUpdated = () => {
     if (dialogCategory) {
       const dropdownMap: Record<string, DropdownType> = {
@@ -86,55 +114,41 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
     }
   };
 
-  useEffect(() => {
-    if (editData) {
-      setInsuranceForm({
-        ...editData,
-        policyStartDt: editData.policyStartDt,
-        policyEndDt: editData.policyEndDt,
-      });
-    }
-  }, [editData]);
+  // Handle form submission
+  const onSubmit = useCallback(
+    (data: OPIPInsurancesDto) => {
+      setLoading(true);
+      try {
+        if (!data.policyNumber?.trim()) {
+          notifyWarning("Policy Number is required.");
+          return;
+        }
 
-  const handleSubmit = useCallback(() => {
-    setIsSubmitted(true);
-    if (!insuranceForm.policyNumber?.trim()) {
-      notifyWarning("Policy Number is required.");
-      return;
-    }
-    if (insuranceForm.insurName.trim()) {
-      handleSave(insuranceForm);
-      resetInsuranceFormData();
-      handleClose();
-      setIsSubmitted(false);
-    }
-  }, [insuranceForm, handleSave, resetInsuranceFormData, handleClose]);
+        handleSave(data);
+        resetInsuranceFormData();
+        handleClose();
+      } finally {
+        setLoading(false);
+      }
+    },
+    [handleSave, resetInsuranceFormData, handleClose, setLoading]
+  );
+
+  // Close form without saving
   const handleCloseWithClear = useCallback(() => {
     resetInsuranceFormData();
     handleClose();
-    setIsSubmitted(false);
   }, [resetInsuranceFormData, handleClose]);
 
-  const handleTextChange = useCallback(
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setInsuranceForm((prev) => ({
-        ...prev,
-        [field]: e.target.value,
-      }));
-    },
-    []
-  );
-
+  // Handle date changes
   const handleDateChange = useCallback(
     (field: string) => (date: Date | null) => {
-      setInsuranceForm((prev) => ({
-        ...prev,
-        [field]: date ? formatDateYMD(date) : "",
-      }));
+      setValue(field as any, date ? formatDateYMD(date) : "", { shouldValidate: true });
     },
-    [formatDateYMD]
+    [setValue, formatDateYMD]
   );
 
+  // Handle modified field dialog
   const [, setFormDataDialog] = useState<AppModifyFieldDto>({
     amlID: 0,
     amlName: "",
@@ -173,143 +187,107 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
     setIsFieldDialogOpen(false);
   };
 
+  // Form content
   const dialogContent = (
-    <Grid container spacing={2}>
-      <FormField
-        type="select"
-        label="Insurance"
-        name="insurID"
-        ControlID="Insurance"
-        value={insuranceForm.insurID === 0 ? "" : insuranceForm.insurID.toString()}
-        options={dropdownValues.insurance || []}
-        onChange={handleDropdownChange(["insurID"], ["insurName"], dropdownValues.insurance || [])}
-        isMandatory={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Policy Holder"
-        name="policyHolder"
-        ControlID="PolicyHolder"
-        value={insuranceForm.policyHolder}
-        onChange={handleTextChange("policyHolder")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Policy Number"
-        name="policyNumber"
-        ControlID="PolicyNumber"
-        value={insuranceForm.policyNumber}
-        onChange={handleTextChange("policyNumber")}
-        isMandatory={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Group Number"
-        name="groupNumber"
-        ControlID="GroupNumber"
-        value={insuranceForm.groupNumber}
-        onChange={handleTextChange("groupNumber")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="datepicker"
-        label="Policy Start Date"
-        name="policyStartDt"
-        ControlID="PolicyStartDate"
-        value={insuranceForm.policyStartDt ? new Date(insuranceForm.policyStartDt) : null}
-        onChange={handleDateChange("policyStartDt")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="datepicker"
-        label="Policy End Date"
-        name="policyEndDt"
-        ControlID="PolicyEndDate"
-        value={insuranceForm.policyEndDt ? new Date(insuranceForm.policyEndDt) : null}
-        onChange={handleDateChange("policyEndDt")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Guarantor"
-        name="guarantor"
-        ControlID="Guarantor"
-        value={insuranceForm.guarantor}
-        onChange={handleTextChange("guarantor")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="select"
-        label="Relationship"
-        name="relationVal"
-        ControlID="Relationship"
-        value={insuranceForm.relationVal || dropdownValues.relation}
-        options={dropdownValues.relation || []}
-        onChange={handleDropdownChange(["relationVal"], ["relation"], dropdownValues.relation || [])}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-        showAddButton={true}
-        onAddClick={() => handleAddField("RELATION")}
-      />
-      <FormField
-        type="select"
-        label="Covered For"
-        name="coveredVal"
-        ControlID="CoveredFor"
-        value={String(insuranceForm.coveredVal)}
-        options={dropdownValues.coverFor || []}
-        onChange={handleDropdownChange(["coveredVal"], ["coveredFor"], dropdownValues.coverFor || [])}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Address 1"
-        name="address1"
-        ControlID="Address1"
-        value={insuranceForm.address1}
-        onChange={handleTextChange("address1")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Address 2"
-        name="address2"
-        ControlID="Address2"
-        value={insuranceForm.address2}
-        onChange={handleTextChange("address2")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Phone 1"
-        name="phone1"
-        ControlID="Phone1"
-        value={insuranceForm.phone1}
-        onChange={handleTextChange("phone1")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Phone 2"
-        name="phone2"
-        ControlID="Phone2"
-        value={insuranceForm.phone2}
-        onChange={handleTextChange("phone2")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Remarks"
-        name="rNotes"
-        ControlID="Remarks"
-        value={insuranceForm.rNotes}
-        onChange={handleTextChange("rNotes")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
+    <FormProvider {...methods}>
+      <Grid container spacing={2}>
+        <ZodFormField
+          name="insurID"
+          control={methods.control}
+          type="select"
+          label="Insurance"
+          options={dropdownValues.insurance || []}
+          isMandatory={true}
+          errors={errors}
+          gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+          onChange={(val) => {
+            const selectedOption = dropdownValues.insurance?.find((opt) => opt.value === val);
+            if (selectedOption) {
+              setValue("insurName", selectedOption.label, { shouldValidate: true });
+            }
+          }}
+        />
+
+        <ZodFormField name="policyHolder" control={methods.control} type="text" label="Policy Holder" errors={errors} gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }} />
+
+        <ZodFormField
+          name="policyNumber"
+          control={methods.control}
+          type="text"
+          label="Policy Number"
+          isMandatory={true}
+          errors={errors}
+          gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+        />
+
+        <ZodFormField name="groupNumber" control={methods.control} type="text" label="Group Number" errors={errors} gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }} />
+
+        <ZodFormField
+          name="policyStartDt"
+          control={methods.control}
+          type="datepicker"
+          label="Policy Start Date"
+          errors={errors}
+          gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+          onChange={handleDateChange("policyStartDt")}
+        />
+
+        <ZodFormField
+          name="policyEndDt"
+          control={methods.control}
+          type="datepicker"
+          label="Policy End Date"
+          errors={errors}
+          gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+          onChange={handleDateChange("policyEndDt")}
+        />
+
+        <ZodFormField name="guarantor" control={methods.control} type="text" label="Guarantor" errors={errors} gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }} />
+
+        <ZodFormField
+          name="relationVal"
+          control={methods.control}
+          type="select"
+          label="Relationship"
+          options={dropdownValues.relation || []}
+          errors={errors}
+          gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+          showAddButton={true}
+          onAddClick={() => handleAddField("RELATION")}
+          onChange={(val) => {
+            const selectedOption = dropdownValues.relation?.find((opt) => opt.value === val);
+            if (selectedOption) {
+              setValue("relation", selectedOption.label, { shouldValidate: true });
+            }
+          }}
+        />
+
+        <ZodFormField
+          name="coveredVal"
+          control={methods.control}
+          type="select"
+          label="Covered For"
+          options={dropdownValues.coverFor || []}
+          errors={errors}
+          gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+          onChange={(val) => {
+            const selectedOption = dropdownValues.coverFor?.find((opt) => opt.value === val);
+            if (selectedOption) {
+              setValue("coveredFor", selectedOption.label, { shouldValidate: true });
+            }
+          }}
+        />
+
+        <ZodFormField name="address1" control={methods.control} type="text" label="Address 1" errors={errors} gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }} />
+
+        <ZodFormField name="address2" control={methods.control} type="text" label="Address 2" errors={errors} gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }} />
+
+        <ZodFormField name="phone1" control={methods.control} type="text" label="Phone 1" errors={errors} gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }} />
+
+        <ZodFormField name="phone2" control={methods.control} type="text" label="Phone 2" errors={errors} gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }} />
+
+        <ZodFormField name="rNotes" control={methods.control} type="text" label="Remarks" errors={errors} gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }} />
+      </Grid>
 
       <ModifiedFieldDialog
         open={isFieldDialogOpen}
@@ -318,13 +296,14 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
         onFieldAddedOrUpdated={onFieldAddedOrUpdated}
         isFieldCodeDisabled={true}
       />
-    </Grid>
+    </FormProvider>
   );
 
+  // Dialog action buttons
   const dialogActions = (
     <>
       <CustomButton text="Close" icon={CloseIcon} variant="contained" size="medium" color="secondary" onClick={handleCloseWithClear} />
-      <CustomButton text="Save" icon={SaveIcon} variant="contained" size="medium" color="success" onClick={handleSubmit} />
+      <CustomButton text="Save" icon={SaveIcon} variant="contained" size="medium" color="success" onClick={handleSubmit(onSubmit)} />
     </>
   );
 
@@ -335,4 +314,4 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
   );
 };
 
-export default React.memo(PatientInsuranceForm);
+export default React.memo(PatientInsuranceFormWithZod);

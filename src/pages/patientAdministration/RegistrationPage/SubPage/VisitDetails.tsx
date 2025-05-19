@@ -1,95 +1,119 @@
-import FormField from "@/components/FormField/FormField";
-import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import useDropdownChange from "@/hooks/useDropdownChange";
-import useRadioButtonChange from "@/hooks/useRadioButtonChange";
+import React from "react";
+import { Grid } from "@mui/material";
+import { useFormContext, useWatch } from "react-hook-form";
 import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
-import React, { useMemo } from "react";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
+import ZodFormField from "@/components/ZodFormField/ZodFormField";
 
 interface VisitDetailsProps {
-  formData: PatientRegistrationDto;
-  setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
-  isSubmitted: boolean;
   isEditMode: boolean;
 }
 
-const VisitDetails: React.FC<VisitDetailsProps> = ({ formData, setFormData, isSubmitted, isEditMode = false }) => {
-  const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
-  const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
+const VisitDetails: React.FC<VisitDetailsProps> = ({ isEditMode = false }) => {
+  // Access form context
+  const { control, formState, setValue } = useFormContext<PatientRegistrationDto>();
+  const { errors } = formState;
+
+  // Watch for visit type to conditionally render fields
+  const visitTypeVal = useWatch({ control, name: "opvisits.visitTypeVal" });
+
+  // Load dropdown values
   const { ...dropdownValues } = useDropdownValues(["department", "attendingPhy", "primaryIntroducingSource"]);
 
-  const visitOptions = useMemo(
-    () => [
-      { value: "H", label: "Hospital" },
-      { value: "P", label: "Physician" },
-      { value: "N", label: "None" },
-    ],
-    []
-  );
+  // Visit type options
+  const visitOptions = [
+    { value: "H", label: "Hospital" },
+    { value: "P", label: "Physician" },
+    { value: "N", label: "None" },
+  ];
 
-  const isHospitalVisit = formData.opvisits.visitTypeVal === "H";
-  const isPhysicianVisit = formData.opvisits.visitTypeVal === "P";
+  // Determine which fields to show based on visit type
+  const isHospitalVisit = visitTypeVal === "H";
+  const isPhysicianVisit = visitTypeVal === "P";
 
+  // If in edit mode, don't render the component
   if (isEditMode) {
     return null;
   }
 
   return (
     <FormSectionWrapper title="Visit Details" spacing={1}>
-      <FormField
-        type="radio"
-        label="Visit To"
-        name="visitDetails"
-        ControlID="visitDetails"
-        value={formData.opvisits.visitTypeVal}
-        options={visitOptions}
-        onChange={handleRadioButtonChange(["opvisits", "visitTypeVal"], ["opvisits", "visitType"], visitOptions)}
-        inline={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ xs: 12, sm: 6, md: 3 }}
-      />
-      {isHospitalVisit && (
-        <FormField
-          type="select"
-          label="Department"
-          name="Department"
-          ControlID="Department"
-          value={formData.patRegisters.deptID === 0 ? "" : String(formData.patRegisters.deptID)}
-          options={dropdownValues.department || []}
-          onChange={handleDropdownChange(["patRegisters", "deptID"], ["patRegisters", "deptName"], dropdownValues.department || [])}
-          isSubmitted={isSubmitted}
-          isMandatory={isHospitalVisit}
+      <Grid container spacing={2}>
+        <ZodFormField
+          name="opvisits.visitTypeVal"
+          control={control}
+          type="radio"
+          label="Visit To"
+          options={visitOptions}
+          inline={true}
+          errors={errors}
           gridProps={{ xs: 12, sm: 6, md: 3 }}
+          onChange={(val) => {
+            const selectedOption = visitOptions.find((opt) => opt.value === val);
+            if (selectedOption) {
+              setValue("opvisits.visitType", selectedOption.label, { shouldValidate: true });
+            }
+          }}
         />
-      )}
-      {isPhysicianVisit && (
-        <FormField
-          type="select"
-          label="Attending Physician"
-          name="attendingPhysicianId"
-          ControlID="AttendingPhysician"
-          value={formData.patRegisters.attendingPhysicianId === 0 ? null : formData.patRegisters.attendingPhysicianId}
-          options={dropdownValues.attendingPhy || []}
-          onChange={handleDropdownChange(["patRegisters", "attendingPhysicianId"], ["patRegisters", "attendingPhysicianName"], dropdownValues.attendingPhy || [])}
-          isSubmitted={isSubmitted}
-          isMandatory={isPhysicianVisit}
-          gridProps={{ xs: 12, sm: 6, md: 3 }}
-        />
-      )}
-      {(isPhysicianVisit || isHospitalVisit) && (
-        <FormField
-          type="select"
-          label="Primary Introducing Source"
-          name="primaryReferralSourceId"
-          ControlID="PrimaryIntroducingSource"
-          value={formData.patRegisters.primaryReferralSourceId === 0 ? "" : String(formData.patRegisters.primaryReferralSourceId)}
-          options={dropdownValues.primaryIntroducingSource || []}
-          onChange={handleDropdownChange(["patRegisters", "primaryReferralSourceId"], ["patRegisters", "primaryReferralSourceName"], dropdownValues.primaryIntroducingSource || [])}
-          isSubmitted={isSubmitted}
-          isMandatory={isPhysicianVisit || isHospitalVisit}
-          gridProps={{ xs: 12, sm: 6, md: 3 }}
-        />
-      )}
+
+        {isHospitalVisit && (
+          <ZodFormField
+            name="patRegisters.deptID"
+            control={control}
+            type="select"
+            label="Department"
+            options={dropdownValues.department || []}
+            isMandatory={isHospitalVisit}
+            errors={errors}
+            gridProps={{ xs: 12, sm: 6, md: 3 }}
+            onChange={(val) => {
+              const selectedOption = dropdownValues.department?.find((opt) => opt.value === val);
+              if (selectedOption) {
+                setValue("patRegisters.deptName", selectedOption.label, { shouldValidate: true });
+              }
+            }}
+          />
+        )}
+
+        {isPhysicianVisit && (
+          <ZodFormField
+            name="patRegisters.attendingPhysicianId"
+            control={control}
+            type="select"
+            label="Attending Physician"
+            options={dropdownValues.attendingPhy || []}
+            isMandatory={isPhysicianVisit}
+            errors={errors}
+            gridProps={{ xs: 12, sm: 6, md: 3 }}
+            onChange={(val) => {
+              const selectedOption = dropdownValues.attendingPhy?.find((opt) => opt.value === val);
+              if (selectedOption) {
+                setValue("patRegisters.attendingPhysicianName", selectedOption.label, { shouldValidate: true });
+              }
+            }}
+          />
+        )}
+
+        {(isPhysicianVisit || isHospitalVisit) && (
+          <ZodFormField
+            name="patRegisters.primaryReferralSourceId"
+            control={control}
+            type="select"
+            label="Primary Introducing Source"
+            options={dropdownValues.primaryIntroducingSource || []}
+            isMandatory={isPhysicianVisit || isHospitalVisit}
+            errors={errors}
+            gridProps={{ xs: 12, sm: 6, md: 3 }}
+            onChange={(val) => {
+              const selectedOption = dropdownValues.primaryIntroducingSource?.find((opt) => opt.value === val);
+              if (selectedOption) {
+                setValue("patRegisters.primaryReferralSourceName", selectedOption.label, { shouldValidate: true });
+              }
+            }}
+          />
+        )}
+      </Grid>
     </FormSectionWrapper>
   );
 };
