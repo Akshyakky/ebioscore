@@ -3,7 +3,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import { useLoading } from "@/context/LoadingContext";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import { useAppSelector } from "@/store/hooks";
+
 import { showAlert } from "@/utils/Common/showAlert";
 import { Grid, Paper, Typography } from "@mui/material";
 import FormField from "@/components/FormField/FormField";
@@ -29,7 +29,7 @@ const ComponentEntryTypeDetails: React.FC<{ editData?: LComponentEntryTypeDto }>
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
 
   useEffect(() => {
     if (editData) {

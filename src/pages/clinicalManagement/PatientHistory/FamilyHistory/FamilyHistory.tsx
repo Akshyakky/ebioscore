@@ -1,7 +1,6 @@
 // src/pages/clinicalManagement/patientHistory/FamilyHistory.tsx
 import React, { useCallback, useMemo, useState } from "react";
 
-import { useAppSelector } from "@/store/hooks";
 import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
 import { useLoading } from "@/context/LoadingContext";
 import { createEntityService } from "@/utils/Common/serviceFactory";
@@ -26,7 +25,7 @@ interface FamilyHistoryProps {
 }
 
 export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
 
   const initialFormState: OPIPHistFHDto = useMemo(
     () => ({

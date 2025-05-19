@@ -2,7 +2,6 @@
 import { Company } from "@/types/Common/Company.type";
 import { useAppDispatch } from "@/store/hooks";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
-import { useTheme } from "@/context/Common/ThemeContext";
 import { ClientParameterService } from "@/services/CommonServices/ClientParameterService";
 import { CompanyService } from "@/services/CommonServices/CompanyService";
 import AuthService from "@/services/AuthService/AuthService";
@@ -15,7 +14,7 @@ import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
-import { Alert, alpha, Box, Button, CircularProgress, Container, Stack, IconButton, InputAdornment, styled, Typography, useMediaQuery, Fade, Grow } from "@mui/material";
+import { Alert, alpha, Box, Button, CircularProgress, Container, Stack, IconButton, InputAdornment, styled, Typography, useMediaQuery, Fade, Grow, useTheme } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import logo from "../../../assets/images/eBios.png";
 import backgroundImage from "/src/assets/images/LoginCoverImage.jpg";
@@ -297,7 +296,7 @@ const LoginPage: React.FC = () => {
   const { setLoading } = useLoading();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { theme } = useTheme();
+  const theme = useTheme();
   const [formState, setFormState] = React.useState<LoginFormState>(initialFormState);
   const [showPassword, setShowPassword] = useState(false);
   const [animationComplete, setAnimationComplete] = useState(false);

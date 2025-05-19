@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Grid, Paper, Typography } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { useAppSelector } from "@/store/hooks";
+
 import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
 import { useLoading } from "@/context/LoadingContext";
 import useDropdownChange from "@/hooks/useDropdownChange";
@@ -28,7 +28,7 @@ const DeptUnitListDetails: React.FC<DeptUnitListDetailsProps> = ({ editData }) =
     rNotes: "",
     transferYN: "N",
   });
-  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   const { setLoading } = useLoading();
   const { handleDropdownChange } = useDropdownChange(setFormState);
   const dropdownValues = useDropdownValues(["department"]);

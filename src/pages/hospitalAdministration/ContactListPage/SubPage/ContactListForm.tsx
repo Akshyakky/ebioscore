@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useMemo, useCallback, forwardRef, useImperativeHandle, useEffect } from "react";
 import { Grid, SelectChangeEvent, Typography } from "@mui/material";
-import { useAppSelector } from "@/store/hooks";
+
 import useDropdownChange from "@/hooks/useDropdownChange";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
@@ -35,7 +35,7 @@ interface ContactListFormProps {
 }
 
 const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormProps>(({ contactList, setContactList, switchStates, setSwitchStates, onSave, onClear }, ref) => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { handleDropdownChange } = useDropdownChange<ContactListData>(setContactList);
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);

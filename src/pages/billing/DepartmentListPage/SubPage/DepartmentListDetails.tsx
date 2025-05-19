@@ -6,7 +6,7 @@ import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import { departmentService } from "@/services/CommonServices/CommonModelServices";
-import { useAppSelector } from "@/store/hooks";
+
 import { showAlert } from "@/utils/Common/showAlert";
 import { Grid, Paper, SelectChangeEvent, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
@@ -19,7 +19,7 @@ interface DepartmentListDetailsProps {
 }
 
 const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData }) => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [formData, setFormData] = useState<DepartmentDto>({
     deptID: 0,
     deptCode: "",

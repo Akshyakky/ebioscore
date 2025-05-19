@@ -4,7 +4,7 @@ import { Box, Grid, SelectChangeEvent } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { MeetingRoom as BedViewIcon } from "@mui/icons-material";
 import SaveIcon from "@mui/icons-material/Save";
-import { useAppSelector } from "@/store/hooks";
+
 import { WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { BedTransferRequestDto } from "@/interfaces/PatientAdministration/BedTransferRequestDto";
@@ -32,7 +32,7 @@ interface WardBedTransferDetailsProps {
 }
 
 const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBedTransferDetailsProps>(({ selectedAdmission, onAdmissionSelect, onClear }, ref) => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [formState, setFormState] = useState<BedTransferRequestDto>({
     admitID: 0,
     pChartID: 0,

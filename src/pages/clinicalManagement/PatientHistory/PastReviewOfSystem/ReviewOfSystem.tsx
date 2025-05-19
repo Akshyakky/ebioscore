@@ -4,7 +4,7 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import FormField from "@/components/FormField/FormField";
 import { useLoading } from "@/context/LoadingContext";
 import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
-import { useAppSelector } from "@/store/hooks";
+
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
@@ -25,7 +25,7 @@ interface ReviewOfSystemProps {
 }
 
 export const ReviewOfSystem: React.FC<ReviewOfSystemProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const initialFormState: OPIPHistROSDto = {
     opipRosID: 0,
     opipNo: opipNo,

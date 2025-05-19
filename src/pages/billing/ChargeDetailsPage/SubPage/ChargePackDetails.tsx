@@ -4,7 +4,7 @@ import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { BChargeDetailsDto, BChargePackDto } from "@/interfaces/Billing/BChargeDetails";
 import { chargeDetailsService } from "@/services/BillingServices/chargeDetailsService";
-import { useAppSelector } from "@/store/hooks";
+
 import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Grid, SelectChangeEvent, Typography } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
@@ -26,7 +26,7 @@ interface GridData {
 
 const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreakYN, onChargePackagesChange, onGridDataChange }) => {
   const [gridData, setGridData] = useState<GridData[]>([]);
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [adjustmentAmount, setAdjustmentAmount] = useState<number>(0);
   const [isPercentage, setIsPercentage] = useState<boolean>(true);
   const [adjustmentType, setAdjustmentType] = useState<"increase" | "decrease" | "none">("none");

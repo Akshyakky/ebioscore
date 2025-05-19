@@ -8,7 +8,6 @@ import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetai
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
-import useFieldsList from "@/components/FieldsList/UseFieldsList";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useRadioButtonChange from "@/hooks/useRadioButtonChange";
 import { useLoading } from "@/context/LoadingContext";

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from "react";
 import { BChargeDetailsDto, BChargePackDto, BDoctorSharePerShare, ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
-import { useAppSelector } from "@/store/hooks";
+
 import { useState } from "react";
 import { useLoading } from "@/context/LoadingContext";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
@@ -24,7 +24,7 @@ interface GridData {
   [key: string]: any;
 }
 const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");
   const [gridData, setGridData] = useState<GridData[]>([]);
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);

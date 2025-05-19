@@ -3,7 +3,6 @@ import { Grid, Paper, Typography } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 
-import { useAppSelector } from "@/store/hooks";
 import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
 import { useLoading } from "@/context/LoadingContext";
 import { productTaxService } from "@/services/InventoryManagementService/inventoryManagementService";
@@ -30,7 +29,7 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ selectedD
     rNotes: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const { setLoading } = useLoading();
 
   useEffect(() => {

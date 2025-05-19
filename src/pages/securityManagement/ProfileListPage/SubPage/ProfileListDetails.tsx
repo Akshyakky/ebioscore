@@ -1,6 +1,6 @@
 import { Grid, Paper, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useAppSelector } from "@/store/hooks";
+
 import { useLoading } from "@/context/LoadingContext";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { showAlert } from "@/utils/Common/showAlert";
@@ -17,7 +17,7 @@ interface ProfileListDetailsProps {
 }
 const ProfileDetails: React.FC<ProfileListDetailsProps> = ({ editData, profileMastService, isClear }) => {
   const { setLoading } = useLoading();
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [profileId, setProfileId] = useState<number>(0);
   const [profileCode, setProfileCode] = useState<string>("");

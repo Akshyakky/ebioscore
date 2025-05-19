@@ -69,7 +69,7 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({ onChang
 
         setCityOptions(
           cityValues.map((item) => ({
-            value: item.value,
+            value: String(item.value),
             label: item.label,
           }))
         );

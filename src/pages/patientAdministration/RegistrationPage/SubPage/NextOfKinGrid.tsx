@@ -1,11 +1,19 @@
 import React, { useMemo, useCallback } from "react";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
 import useDayjs from "@/hooks/Common/useDateTime";
 import { PatientService } from "@/services/PatientAdministrationServices/RegistrationService/PatientService";
 import CustomButton from "@/components/Button/CustomButton";
-import CustomGrid from "@/components/CustomGrid/CustomGrid";
+
+// Define column interface for type safety
+interface Column<T> {
+  key: string;
+  header: string;
+  visible?: boolean;
+  render?: (row: T) => React.ReactNode;
+}
 
 interface NextOfKinGridProps {
   kinData: PatNokDetailsDto[];
@@ -76,10 +84,82 @@ const NextOfKinGrid: React.FC<NextOfKinGridProps> = ({ kinData, onEdit, onDelete
         render: (row: PatNokDetailsDto) => <CustomButton size="small" onClick={() => onDelete(row)} icon={DeleteIcon} color="error" />,
       },
     ],
-    [handleEdit, onDelete]
+    [handleEdit, onDelete, formatDate]
   );
 
-  return <CustomGrid columns={gridKinColumns} data={kinData} />;
+  // Filter visible columns
+  const visibleColumns = gridKinColumns.filter((column) => column.visible !== false);
+
+  // Function to render cell content safely with appropriate typing
+  const renderCellContent = (row: PatNokDetailsDto, column: Column<PatNokDetailsDto>): React.ReactNode => {
+    if (column.render) {
+      return column.render(row);
+    }
+
+    // Get the raw value using the column key
+    const value = row[column.key as keyof PatNokDetailsDto];
+
+    // Handle different value types appropriately
+    if (value === undefined || value === null) {
+      return "";
+    }
+
+    // Convert Date objects to string
+    if (value instanceof Date) {
+      return formatDate(value);
+    }
+
+    // Return value as string for safe rendering
+    return String(value);
+  };
+
+  return (
+    <TableContainer component={Paper}>
+      <Table size="small" aria-label="next of kin table">
+        <TableHead>
+          <TableRow>
+            {visibleColumns.map((column) => (
+              <TableCell
+                key={column.key}
+                sx={{
+                  fontWeight: "bold",
+                  whiteSpace: "nowrap",
+                  backgroundColor: "#f5f5f5",
+                }}
+              >
+                {column.header}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {kinData.length > 0 ? (
+            kinData.map((row, rowIndex) => (
+              <TableRow key={row.pNokID || `row-${rowIndex}`} hover sx={{ "&:nth-of-type(odd)": { backgroundColor: "#fafafa" } }}>
+                {visibleColumns.map((column) => (
+                  <TableCell
+                    key={`${row.pNokID || rowIndex}-${column.key}`}
+                    sx={{
+                      padding: "8px 16px",
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    {renderCellContent(row, column)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={visibleColumns.length} align="center">
+                No next of kin data available
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
 };
 
 export default React.memo(NextOfKinGrid);

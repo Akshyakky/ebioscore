@@ -7,7 +7,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import FormField from "@/components/FormField/FormField";
 import { showAlert } from "@/utils/Common/showAlert";
-import { useAppSelector } from "@/store/hooks";
+
 import { useServerDate } from "@/hooks/Common/useServerDate";
 
 import AdvancedGrid, { ColumnConfig } from "@/components/AdvancedGrid/AdvancedGrid";
@@ -34,7 +34,7 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({
   onDeleteAgeRanges,
   indexID,
 }) => {
-  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   const serverDate = useServerDate();
 
   // Local states

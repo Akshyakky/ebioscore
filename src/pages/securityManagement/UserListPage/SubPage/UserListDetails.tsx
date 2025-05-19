@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
 import { useLoading } from "@/context/LoadingContext";
-import { useAppSelector } from "@/store/hooks";
+
 import { CompanyService } from "@/services/CommonServices/CompanyService";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { ConstantValues } from "@/services/CommonServices/ConstantValuesService";
@@ -25,7 +25,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const profileMastService = useMemo(() => createEntityService<ProfileMastDto>("ProfileMast", "securityManagementURL"), []);
   const userList = useMemo(() => createEntityService<UserListDto>("AppUser", "securityManagementURL"), []);
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isProfileModifyModalOpen, setIsProfileModifyModalOpen] = useState<boolean>(false);
   const [permissionView, setPermissionView] = useState<boolean>(false);

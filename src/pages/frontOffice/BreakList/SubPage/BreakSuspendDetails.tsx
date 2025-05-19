@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import Close from "@mui/icons-material/Close";
 import { BreakConSuspendData } from "@/interfaces/FrontOffice/BreakConSuspendData";
 import { useLoading } from "@/context/LoadingContext";
-import { useAppSelector } from "@/store/hooks";
+
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { showAlert } from "@/utils/Common/showAlert";
@@ -25,7 +25,7 @@ interface BreakSuspendDetailsProps {
 const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose, breakData }) => {
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
 
   const [suspendData, setSuspendData] = useState<Partial<BreakConSuspendData>>({
     bCSStartDate: serverDate,

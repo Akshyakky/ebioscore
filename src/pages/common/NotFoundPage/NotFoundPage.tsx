@@ -1,7 +1,6 @@
 import React from "react";
-import { Box, Button, Container, Paper, Typography, styled } from "@mui/material";
+import { Box, Button, Container, Paper, Typography, styled, useTheme } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "@/context/Common/ThemeContext";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import HomeIcon from "@mui/icons-material/Home";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -73,7 +72,6 @@ const StyledButton = styled(Button)(({ theme }) => ({
 
 const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const isAuthenticated = useAppSelector((state) => !!state.auth.token);
 
   const handleGoBack = () => {

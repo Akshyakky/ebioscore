@@ -4,7 +4,7 @@ import FormField from "../../../../components/FormField/FormField";
 import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
-import { useAppSelector } from "@/store/hooks";
+
 import { IpDischargeDetailsDto } from "@/interfaces/PatientAdministration/IpDischargeDetailDto";
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
@@ -66,7 +66,7 @@ const initialState = (compID?: number, compCode?: string, compName?: string): Ip
 });
 
 const DischargeSummaryDetails: React.FC<DischargeSummaryDetailsProps> = ({ onClear, selectedAdmission, onAdmissionSelect }) => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [formState, setFormState] = useState<IpDischargeDetailsDto>(() => initialState(compID || 0, compCode || "", compName || ""));
   // const { control, setValue } = useForm<IpDischargeDetailsDto>({
   //   defaultValues: initialState(compID || 0, compCode || "", compName || ""),

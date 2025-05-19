@@ -5,7 +5,7 @@ import { ReasonListData } from "@/interfaces/FrontOffice/ReasonListData";
 import { useLoading } from "@/context/LoadingContext";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
-import { useAppSelector } from "@/store/hooks";
+
 import { reasonListService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { notifyError } from "@/utils/Common/toastManager";
 import { showAlert } from "@/utils/Common/showAlert";
@@ -26,7 +26,7 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   const [resourceList, setResourceList] = useState<ResourceListData[]>([]);
 
   useEffect(() => {

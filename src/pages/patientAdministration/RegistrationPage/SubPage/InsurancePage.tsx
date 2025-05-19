@@ -29,9 +29,7 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
       });
 
       const results = await Promise.all(saveOperations);
-    } catch (error) {
-      console.error("Error saving insurance details:", error);
-    }
+    } catch (error) {}
   };
 
   const handleEditInsurance = (insurance: OPIPInsurancesDto) => {
@@ -74,9 +72,7 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
         }));
         setGridInsuranceData(formattedData);
       }
-    } catch (error) {
-      console.error("Error fetching insurance data:", error);
-    }
+    } catch (error) {}
   }, [pChartID]);
 
   useEffect(() => {

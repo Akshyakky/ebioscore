@@ -4,7 +4,6 @@ import { useLoading } from "@/context/LoadingContext";
 import { showAlert } from "@/utils/Common/showAlert";
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { createEntityService } from "@/utils/Common/serviceFactory";
-import { useAppSelector } from "@/store/hooks";
 
 interface UseMedicalEntityFormParams<T extends BaseDto> {
   entityName: string;
@@ -27,7 +26,7 @@ export function useMedicalEntityForm<T extends BaseDto>({
   onSaved,
   validateForm,
 }: UseMedicalEntityFormParams<T>) {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [formState, setFormState] = useState<T>(initialState);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isEditing, setIsEditing] = useState(false);

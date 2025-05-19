@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Paper, Typography, Grid } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useAppSelector } from "@/store/hooks";
+
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
@@ -47,7 +47,7 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
   const { setLoading } = useLoading();
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
 
   useEffect(() => {
     if (editData) {

@@ -5,7 +5,7 @@ import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
 import { PastMedicationDetailDto, PastMedicationDto } from "@/interfaces/ClinicalManagement/PastMedicationDto";
-import { useAppSelector } from "@/store/hooks";
+
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Grid, Paper, Typography } from "@mui/material";
@@ -24,7 +24,7 @@ interface PastMedicationProps {
 }
 
 const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipCaseNo, medicationData, onMedicationChange }) => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const dropdownValues = useDropdownValues(["medicationForm", "medicationDosage", "medicationFrequency", "medicationInstruction"]);
 
   const [selectedMedication, setSelectedMedication] = useState<string>("");

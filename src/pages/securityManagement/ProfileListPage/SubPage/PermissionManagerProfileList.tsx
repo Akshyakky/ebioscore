@@ -6,8 +6,6 @@ import { ProfileDetailDto } from "@/interfaces/SecurityManagement/ProfileListDat
 import { profileListService } from "@/services/SecurityManagementServices/ProfileListServices";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
-import { useAppSelector } from "@/store/hooks";
-import { RootState } from "@/store";
 
 interface DropdownListProps {
   options: DropdownOption[];
@@ -114,7 +112,7 @@ const PermissionManagerProfileList: React.FC<PermissionManagerProfileListProps> 
   const [mainId, setMainId] = useState<number>(0);
   const [subId, setSubId] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { compID, compCode, compName } = useAppSelector((state: RootState) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [isSelectAll, setIsSelectAll] = useState<boolean>(false);
   const dropdownValues = useDropdownValues(["mainModules", "subModules"]);
 

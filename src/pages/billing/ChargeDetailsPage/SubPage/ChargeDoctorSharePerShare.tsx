@@ -2,7 +2,7 @@ import AdvancedGrid, { ColumnConfig } from "@/components/AdvancedGrid/AdvancedGr
 import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { BDoctorSharePerShare } from "@/interfaces/Billing/BChargeDetails";
-import { useAppSelector } from "@/store/hooks";
+
 import { Box, Grid, SelectChangeEvent, Typography } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import React from "react";
@@ -29,7 +29,7 @@ const ChargeDoctorSharePerShare: React.FC<ChargeDoctorSharePerShareProps> = ({ o
   const [selectedPhysician, setSelectedPhysician] = useState<string>("");
   const [columns, setColumns] = useState<ColumnConfig[]>([]);
   const dropdownValues = useDropdownValues(["attendingPhy"]);
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
 
   useEffect(() => {
     const baseColumns: ColumnConfig[] = [

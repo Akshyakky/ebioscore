@@ -10,7 +10,6 @@ import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
 import { PastMedicationDto } from "@/interfaces/ClinicalManagement/PastMedicationDto";
 import { allergyService } from "@/services/ClinicalManagementServices/allergyService";
 import { pastMedicationService } from "@/services/ClinicalManagementServices/pastMedicationService";
-import { useAppSelector } from "@/store/hooks";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { Box, Paper, Tab, Tabs } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
@@ -41,7 +40,7 @@ interface PatientHistoryProps {
 }
 export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo, opipCaseNo, shouldClear = false, onHistoryChange }) => {
   const [tabValue, setTabValue] = useState(0);
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [historyState, setHistoryState] = useState<HistoryState>({
     familyHistory: [],
     socialHistory: [],

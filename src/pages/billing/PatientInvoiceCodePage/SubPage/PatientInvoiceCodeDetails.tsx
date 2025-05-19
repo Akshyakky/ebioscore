@@ -4,7 +4,7 @@ import { useLoading } from "@/context/LoadingContext";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { BPatTypeDto } from "@/interfaces/Billing/BPatTypeDto";
 import { patientInvioceService } from "@/services/BillingServices/BillingGenericService";
-import { useAppSelector } from "@/store/hooks";
+
 import { showAlert } from "@/utils/Common/showAlert";
 import { Grid, Paper, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
@@ -23,7 +23,7 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({ editD
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
 
-  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
 
   useEffect(() => {
     if (editData) {

@@ -8,11 +8,9 @@ import useRegistrationUtils from "@/utils/PatientAdministration/RegistrationUtil
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDayjs from "@/hooks/Common/useDateTime";
-import useFieldsList from "@/components/FieldsList/UseFieldsList";
 import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
 import FormField from "@/components/FormField/FormField";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
-import { showAlert } from "@/utils/Common/showAlert";
 import { notifyWarning } from "@/utils/Common/toastManager";
 
 interface PersonalDetailsProps {

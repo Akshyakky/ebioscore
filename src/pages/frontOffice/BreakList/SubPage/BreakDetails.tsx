@@ -3,7 +3,6 @@ import Save from "@mui/icons-material/Save";
 import Delete from "@mui/icons-material/Delete";
 import { useLoading } from "@/context/LoadingContext";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import { useAppSelector } from "@/store/hooks";
 import { BreakConDetailData, BreakListData } from "@/interfaces/FrontOffice/BreakListData";
 import BreakFrequencyDetails, { FrequencyData } from "./BreakFrequencyDetails";
 import { BreakListService } from "@/services/FrontOfficeServices/BreakListServices/BreakListService";
@@ -41,7 +40,7 @@ const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
   const serverDate = useServerDate();
 
   // Destructure from useAppSelector for user details
-  const { compID, compCode, compName, userID, userName } = useAppSelector((state: any) => state.auth);
+  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
 
   const [isSubmitted] = useState(false);
   const [isOneDay, setIsOneDay] = useState(false);

@@ -14,7 +14,6 @@ import SurgeryIcon from "@mui/icons-material/LocalHospital";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import HealingIcon from "@mui/icons-material/Healing";
 import ClearIcon from "@mui/icons-material/Clear";
-import { useAppSelector } from "@/store/hooks";
 
 interface SurgicalHistoryProps {
   pChartID: number;
@@ -25,7 +24,7 @@ interface SurgicalHistoryProps {
 }
 
 export const SurgicalHistory: React.FC<SurgicalHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const initialFormState: OPIPHistPSHDto = {
     opipPshID: 0,
     opipNo: opipNo,

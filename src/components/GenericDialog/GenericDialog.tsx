@@ -28,7 +28,6 @@ interface GenericDialogProps {
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   "& .MuiDialog-paper": {
     borderRadius: theme.shape.borderRadius,
-    backgroundColor: theme.palette.background.paper,
   },
   zIndex: 1300,
 }));
@@ -36,29 +35,23 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
 const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
   padding: theme.spacing(1, 3),
   borderBottom: `1px solid ${theme.palette.divider}`,
-  backgroundColor: theme.palette.mode === "dark" ? theme.palette.background.paper : theme.palette.primary.main,
-  color: theme.palette.mode === "dark" ? theme.palette.text.primary : theme.palette.primary.contrastText,
 }));
 
 const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
   padding: theme.spacing(1, 3),
   overflowX: "hidden",
-  backgroundColor: theme.palette.background.paper,
   position: "relative",
 }));
 
 const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
   padding: theme.spacing(1, 3),
   borderTop: `1px solid ${theme.palette.divider}`,
-  backgroundColor: theme.palette.background.paper,
 }));
 
 const ScrollIndicator = styled(Box)(({ theme }) => ({
   position: "absolute",
   right: theme.spacing(1),
   zIndex: 1,
-  backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
   borderRadius: "50%",
   width: 40,
   height: 40,
@@ -69,7 +62,6 @@ const ScrollIndicator = styled(Box)(({ theme }) => ({
   transition: "opacity 0.3s ease",
   //boxShadow: theme.shadows[4],
   "&:hover": {
-    backgroundColor: theme.palette.primary.dark,
     transform: "scale(1.1)",
   },
 }));
@@ -169,7 +161,6 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
               onClick={onClose}
               aria-label="close dialog"
               sx={{
-                color: theme.palette.mode === "dark" ? theme.palette.text.secondary : theme.palette.primary.contrastText,
                 "&:hover": {
                   color: theme.palette.mode === "dark" ? theme.palette.text.primary : theme.palette.primary.light,
                 },

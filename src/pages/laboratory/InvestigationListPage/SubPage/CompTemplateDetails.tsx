@@ -9,7 +9,7 @@ import AdvancedGrid, { ColumnConfig } from "@/components/AdvancedGrid/AdvancedGr
 import RichTextEditor from "@/components/RichTextEditor/CkEditor";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { LCompTemplateDto, LComponentDto } from "@/interfaces/Laboratory/LInvMastDto";
-import { useAppSelector } from "@/store/hooks";
+
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { appModifiedListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
@@ -29,7 +29,7 @@ interface LCompTemplateDetailsProps {
 }
 
 const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemplate, selectedComponent, indexID }) => {
-  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   const serverDate = useServerDate();
   const [searchTerm, setSearchTerm] = useState("");
   const [editorValue, setEditorValue] = useState("");

@@ -5,7 +5,7 @@ import { useServerDate } from "@/hooks/Common/useServerDate";
 import { DeptUserDto } from "@/interfaces/Billing/DeptUserDto";
 import { UserListData } from "@/interfaces/SecurityManagement/UserListData";
 import { DeptUserListService } from "@/services/BillingServices/DeptUserListService";
-import { useAppSelector } from "@/store/hooks";
+
 import { showAlert } from "@/utils/Common/showAlert";
 import React, { useContext, useEffect, useState } from "react";
 import DeptUsersList from "./DeptUsersList";
@@ -23,7 +23,7 @@ export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({ deptId, deptNa
   const [deptUsers, setDeptUsers] = useState<DeptUserDto[]>([]);
   const { fetchAllUsers } = useContext(UserListSearchContext);
   const serverDate = useServerDate();
-  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   //
   const [isDUSearchOpen, setIsDUSearchOpen] = useState(false);
 

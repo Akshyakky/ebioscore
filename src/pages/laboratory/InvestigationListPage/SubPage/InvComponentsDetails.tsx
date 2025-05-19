@@ -4,7 +4,7 @@ import FormField from "@/components/FormField/FormField";
 import CustomButton from "@/components/Button/CustomButton";
 import { ComponentFormErrors, LCompAgeRangeDto, LCompMultipleDto, LComponentDto, LCompTemplateDto } from "@/interfaces/Laboratory/LInvMastDto";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { useAppSelector } from "@/store/hooks";
+
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { notifyWarning } from "@/utils/Common/toastManager";
 import ApplicableAgeRangeTable from "./ApplicableAgeRanges";
@@ -37,7 +37,7 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
   setUnsavedComponents,
   handleCloseDialog,
 }) => {
-  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   const serverDate = useServerDate();
   const [isDeltaValueDisabled, setIsDeltaValueDisabled] = useState(false);
 

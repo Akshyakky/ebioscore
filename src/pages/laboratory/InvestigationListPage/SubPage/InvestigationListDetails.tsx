@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Paper, Typography, Grid } from "@mui/material";
 import { LInvMastDto } from "@/interfaces/Laboratory/LInvMastDto";
 import FormField from "@/components/FormField/FormField";
-import { useAppSelector } from "@/store/hooks";
+
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { debounce } from "lodash";
@@ -20,7 +20,7 @@ interface InvestigationListDetailsProps {
 
 const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onUpdate, investigationData, shouldReset, onCodeSelect, isSubmitted }) => {
   const dropdownValues = useDropdownValues(["investigationType", "sampleType", "service"]);
-  const { compID, compCode, compName, userID, userName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   const serverDate = useServerDate();
 
   const [formState, setFormState] = useState<LInvMastDto>({

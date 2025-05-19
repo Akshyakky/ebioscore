@@ -8,7 +8,7 @@ import { profileListService } from "@/services/SecurityManagementServices/Profil
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 import { ProfileDetailDto, ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { UserListDto, UserListPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
-import { useAppSelector } from "@/store/hooks";
+
 import { RootState } from "@/store";
 import { Add, Book, Cancel, Delete, Edit, FileUpload, Lock, Print, Save } from "@mui/icons-material";
 import IconSwitch from "@/components/Switch/IconSwitch";
@@ -148,7 +148,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSelectAll, setIsSelectAll] = useState<boolean>(false);
 
-  const { compID, compCode, compName } = useAppSelector((state: RootState) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const dropdownValues = useDropdownValues(["mainModules", "subModules"]);
 
   useEffect(() => {

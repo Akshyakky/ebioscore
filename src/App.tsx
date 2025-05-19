@@ -1,14 +1,11 @@
 import React, { ReactNode, useMemo } from "react";
-import "./App.css";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Provider as ReduxProvider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { LoadingProvider } from "./context/LoadingContext";
-import { ThemeProvider } from "./context/Common/ThemeContext";
 import { ToastContainer } from "react-toastify";
 import { Box, Button, Typography, Container, CircularProgress } from "@mui/material";
 import { Refresh } from "@mui/icons-material";
-import "react-toastify/dist/ReactToastify.css";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
 import ProtectedRoute from "./components/ProtectedRoute";
 import routeConfig from "./routes/routeConfig";
@@ -90,30 +87,28 @@ const App: React.FC = () => {
       <PersistGate loading={<PersistLoadingFallback />} persistor={persistor}>
         <ErrorBoundary onError={handleAppError} fallback={<ErrorFallback />}>
           <QueryProvider>
-            <ThemeProvider>
-              <LoadingProvider>
-                <Router>
-                  <GlobalSpinner delay={500} color="secondary" size={50} />
-                  <ToastContainer
-                    position="top-right"
-                    autoClose={1500}
-                    hideProgressBar={false}
-                    newestOnTop={false}
-                    closeOnClick
-                    rtl={false}
-                    pauseOnFocusLoss
-                    draggable
-                    pauseOnHover
-                  />
-                  <RouteNotFoundBoundary>
-                    <Routes>
-                      {memoizedRoutes}
-                      <Route path="/" element={<Navigate replace to="/login" />} />
-                    </Routes>
-                  </RouteNotFoundBoundary>
-                </Router>
-              </LoadingProvider>
-            </ThemeProvider>
+            <LoadingProvider>
+              <Router>
+                <GlobalSpinner delay={500} color="secondary" size={50} />
+                <ToastContainer
+                  position="top-right"
+                  autoClose={1500}
+                  hideProgressBar={false}
+                  newestOnTop={false}
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                />
+                <RouteNotFoundBoundary>
+                  <Routes>
+                    {memoizedRoutes}
+                    <Route path="/" element={<Navigate replace to="/login" />} />
+                  </Routes>
+                </RouteNotFoundBoundary>
+              </Router>
+            </LoadingProvider>
           </QueryProvider>
         </ErrorBoundary>
       </PersistGate>

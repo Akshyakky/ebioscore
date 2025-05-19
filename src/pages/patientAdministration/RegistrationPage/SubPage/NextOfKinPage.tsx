@@ -31,9 +31,7 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
         });
 
         const results = await Promise.all(saveOperations);
-      } catch (error) {
-        console.error("An error occurred while saving Next Of Kin details:", error);
-      }
+      } catch (error) {}
     },
     [gridKinData]
   );
@@ -59,7 +57,6 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
           showAlert("Error", "Failed to deactivate Next of Kin record", "error");
         }
       } catch (error) {
-        console.error("Error deactivating Next Of Kin:", error);
         showAlert("Error", "An error occurred while deactivating the record", "error");
       }
     },
@@ -106,9 +103,7 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
           }));
         setGridKinData(formattedData);
       }
-    } catch (error) {
-      console.error("Error fetching Next Of Kin data:", error);
-    }
+    } catch (error) {}
   }, [pChartID]);
 
   useEffect(() => {

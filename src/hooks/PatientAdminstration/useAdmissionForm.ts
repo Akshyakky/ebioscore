@@ -1,10 +1,9 @@
 // src/hooks/useAdmissionForm.ts
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { useAppSelector } from "@/store/hooks";
+
 import { AdmissionDto, IPAdmissionDetailsDto, IPAdmissionDto, WrBedDetailsDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { AssocDiagnosisDetailDto, DiagnosisDetailDto, DiagnosisDto } from "@/interfaces/ClinicalManagement/DiagnosisDto";
 import { useCompanyDetails } from "../Common/useCompanyDetails";
-import { RootState } from "@/store";
 import { PatientHistory } from "@/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
 import { useLoading } from "@/context/LoadingContext";
 import { createEntityService } from "@/utils/Common/serviceFactory";
@@ -77,7 +76,7 @@ const initialFormState: AdmissionDto = {
 
 const useAdmissionForm = (): UseAdmissionFormReturn => {
   const companyDetails = useCompanyDetails();
-  const { compID, compCode, compName } = useAppSelector((state: RootState) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [formData, setFormData] = useState<AdmissionDto>(initialFormState);
   const [primaryDiagnoses, setPrimaryDiagnoses] = useState<DiagnosisDetailDto[]>([]);
   const [associatedDiagnoses, setAssociatedDiagnoses] = useState<AssocDiagnosisDetailDto[]>([]);

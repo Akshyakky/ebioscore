@@ -6,7 +6,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Folder as FolderIcon, FolderOpen as FolderOpenIcon } from "@mui/icons-material";
-import { useAppSelector } from "@/store/hooks";
+
 import { useLoading } from "@/context/LoadingContext";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
@@ -27,7 +27,7 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups, fetchRo
   const { setLoading } = useLoading();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
   const [roomGroupHierarchy, setRoomGroupHierarchy] = useState<RoomGroupDto[]>([]);
   const [formData, setFormData] = useState<RoomGroupDto>({

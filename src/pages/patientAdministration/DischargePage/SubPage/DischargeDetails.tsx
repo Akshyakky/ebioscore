@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import { Grid, SelectChangeEvent } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { useAppSelector } from "@/store/hooks";
+
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDto";
 import { useLoading } from "@/context/LoadingContext";
@@ -57,7 +57,7 @@ const initialState = (compID?: number, compCode?: string, compName?: string): Ip
 });
 
 const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, onAdmissionSelect, onClear }) => {
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [formState, setFormState] = useState<IpDischargeDto>(() => initialState(compID || 0, compCode || "", compName || ""));
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { setLoading } = useLoading();

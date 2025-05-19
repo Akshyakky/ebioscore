@@ -35,7 +35,6 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import ProfileMenu from "./ProfileMenu";
 import { notifyError } from "../../utils/Common/toastManager";
 import { MaterialUISwitch } from "../../components/Switch/MaterialUISwitch";
-import { useTheme as useCustomTheme } from "../../context/Common/ThemeContext";
 import "./SideBar.css";
 import moduleService, { ModuleDto, SubModuleDto } from "@/services/CommonServices/ModuleService";
 
@@ -175,7 +174,6 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
-  const { isDarkMode, toggleTheme } = useCustomTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
   const handleSubModuleClick = useCallback(
@@ -334,21 +332,10 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
             </IconButton>
           </Tooltip>
 
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            fontWeight="bold"
-            sx={{
-              background: isDarkMode ? `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})` : "inherit",
-              WebkitBackgroundClip: isDarkMode ? "text" : "unset",
-              WebkitTextFillColor: isDarkMode ? "transparent" : "inherit",
-            }}
-          >
+          <Typography variant="h6" noWrap component="div" fontWeight="bold">
             {pageTitle}
           </Typography>
           <Box flexGrow={1} />
-          <MaterialUISwitch checked={isDarkMode} onChange={toggleTheme} />
           <ProfileMenu />
         </Toolbar>
       </AppBar>

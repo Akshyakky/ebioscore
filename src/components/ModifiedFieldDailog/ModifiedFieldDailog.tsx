@@ -8,7 +8,6 @@ import FormField from "../FormField/FormField";
 import { appModifiedListService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { showAlert } from "../../utils/Common/showAlert";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
-import { useAppSelector } from "@/store/hooks";
 
 interface ModifiedFieldDialogProps {
   open: boolean;
@@ -43,7 +42,7 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
     ...initialFormData,
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { compID, compCode, compName } = useAppSelector((state) => state.auth);
+  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   useEffect(() => {
     if (open) {
       setFormData((prev) => {
