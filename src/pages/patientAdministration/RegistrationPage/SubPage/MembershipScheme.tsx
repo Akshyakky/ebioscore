@@ -1,58 +1,55 @@
-import React, { useCallback } from "react";
-import { Grid } from "@mui/material";
-import { useFormContext } from "react-hook-form";
-import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { useServerDate } from "@/hooks/Common/useServerDate";
+import FormField from "@/components/FormField/FormField";
 import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
-import ZodFormField from "@/components/ZodFormField/ZodFormField";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import React, { useCallback } from "react";
 
-const MembershipScheme: React.FC = () => {
-  // Access form context
-  const { control, formState, setValue } = useFormContext<PatientRegistrationDto>();
-  const { errors } = formState;
+interface MembershipSchemeProps {
+  formData: PatientRegistrationDto;
+  setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
+}
 
-  // Load dropdown values and server date
+const MembershipScheme: React.FC<MembershipSchemeProps> = ({ formData, setFormData }) => {
+  const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
   const { ...dropdownValues } = useDropdownValues(["membershipScheme"]);
   const serverDate = useServerDate();
 
-  // Handle date change
   const handleDateChange = useCallback(
     (date: Date | null) => {
-      setValue("patRegisters.patMemSchemeExpiryDate", date ? date : serverDate, { shouldValidate: true });
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        patRegisters: {
+          ...prevFormData.patRegisters,
+          patMemSchemeExpiryDate: date ? date : serverDate,
+        },
+      }));
     },
-    [setValue, serverDate]
+    [setFormData]
   );
 
   return (
     <FormSectionWrapper title="Membership Scheme" spacing={1}>
-      <Grid container spacing={2}>
-        <ZodFormField
-          name="patRegisters.patMemID"
-          control={control}
-          type="select"
-          label="Membership Scheme"
-          options={dropdownValues.membershipScheme || []}
-          errors={errors}
-          gridProps={{ xs: 12, sm: 6, md: 3 }}
-          onChange={(val) => {
-            const selectedOption = dropdownValues.membershipScheme?.find((opt) => opt.value === val);
-            if (selectedOption) {
-              setValue("patRegisters.patMemName", selectedOption.label, { shouldValidate: true });
-            }
-          }}
-        />
-
-        <ZodFormField
-          name="patRegisters.patMemSchemeExpiryDate"
-          control={control}
-          type="datepicker"
-          label="Membership Expiry Date"
-          errors={errors}
-          gridProps={{ xs: 12, sm: 6, md: 3 }}
-          onChange={handleDateChange}
-        />
-      </Grid>
+      <FormField
+        type="select"
+        label="Membership Scheme"
+        name="MembershipScheme"
+        ControlID="MembershipScheme"
+        value={formData.patRegisters.patMemID === 0 ? "" : String(formData.patRegisters.patMemID)}
+        options={dropdownValues.membershipScheme || []}
+        onChange={handleDropdownChange(["patRegisters", "patMemID"], ["patRegisters", "patMemName"], dropdownValues.membershipScheme || [])}
+        gridProps={{ xs: 12, sm: 6, md: 3 }}
+      />
+      <FormField
+        type="datepicker"
+        label="Membership Expiry Date"
+        name="MembeshipExpDate"
+        ControlID="MembeshipExpDate"
+        value={formData.patRegisters.patMemSchemeExpiryDate}
+        onChange={handleDateChange}
+        gridProps={{ xs: 12, sm: 6, md: 3 }}
+      />
     </FormSectionWrapper>
   );
 };

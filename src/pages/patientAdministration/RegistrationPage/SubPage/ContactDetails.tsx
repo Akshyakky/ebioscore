@@ -1,24 +1,27 @@
-import React, { useState, useCallback } from "react";
-import { Grid } from "@mui/material";
-import { useFormContext, useWatch } from "react-hook-form";
+import React, { useMemo, useCallback, useState } from "react";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import useDropdownChange from "@/hooks/useDropdownChange";
+import useRadioButtonChange from "@/hooks/useRadioButtonChange";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
+import useFieldsList from "@/components/FieldsList/UseFieldsList";
 import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
+import FormField from "@/components/FormField/FormField";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
-import ZodFormField from "@/components/ZodFormField/ZodFormField";
+interface ContactDetailsProps {
+  formData: PatientRegistrationDto;
+  setFormData: React.Dispatch<React.SetStateAction<PatientRegistrationDto>>;
+  isSubmitted: boolean;
+}
 
-const ContactDetails: React.FC = () => {
-  // Access form context
-  const { control, formState, setValue } = useFormContext<PatientRegistrationDto>();
-  const { errors } = formState;
-
-  // Dropdown values
+const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, isSubmitted }) => {
+  const { handleDropdownChange } = useDropdownChange<PatientRegistrationDto>(setFormData);
+  const { handleRadioButtonChange } = useRadioButtonChange<PatientRegistrationDto>(setFormData);
   const { refreshDropdownValues, ...dropdownValues } = useDropdownValues(["area", "city", "country", "company"]);
 
-  // State for modified field dialog
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
+
   const [, setFormDataDialog] = useState<AppModifyFieldDto>({
     amlID: 0,
     amlName: "",
@@ -34,18 +37,22 @@ const ContactDetails: React.FC = () => {
     transferYN: "Y",
   });
 
-  // Options for radio selections
-  const smsOptions = [
-    { value: "Y", label: "Yes" },
-    { value: "N", label: "No" },
-  ];
+  const smsOptions = useMemo(
+    () => [
+      { value: "Y", label: "Yes" },
+      { value: "N", label: "No" },
+    ],
+    []
+  );
 
-  const emailOptions = [
-    { value: "Y", label: "Yes" },
-    { value: "N", label: "No" },
-  ];
+  const emailOptions = useMemo(
+    () => [
+      { value: "Y", label: "Yes" },
+      { value: "N", label: "No" },
+    ],
+    []
+  );
 
-  // Handlers
   const handleAddField = (category: string) => {
     setDialogCategory(category);
     setFormDataDialog({
@@ -69,6 +76,19 @@ const ContactDetails: React.FC = () => {
     setIsFieldDialogOpen(false);
   };
 
+  const handleTextChange = useCallback(
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        patAddress: {
+          ...prevFormData.patAddress,
+          [field]: e.target.value,
+        },
+      }));
+    },
+    [setFormData]
+  );
+
   const onFieldAddedOrUpdated = () => {
     if (dialogCategory) {
       const dropdownMap: Record<string, DropdownType> = {
@@ -85,117 +105,113 @@ const ContactDetails: React.FC = () => {
   };
 
   return (
-    <FormSectionWrapper title="Contact Details" spacing={1}>
-      <Grid container spacing={2}>
-        <ZodFormField name="patAddress.pAddStreet" control={control} type="text" label="Address" errors={errors} />
-
-        <ZodFormField
-          name="patAddress.patAreaVal"
-          control={control}
+    <>
+      <FormSectionWrapper title="Contact Details" spacing={1}>
+        <FormField
+          type="text"
+          label="Address"
+          name="pAddStreet"
+          ControlID="Address"
+          value={formData.patAddress.pAddStreet || ""}
+          onChange={handleTextChange("pAddStreet")}
+          isSubmitted={isSubmitted}
+        />
+        <FormField
           type="select"
           label="Area"
+          name="patAreaVal"
+          ControlID="Area"
+          value={formData.patAddress.patAreaVal || dropdownValues.area || ""}
           options={dropdownValues.area || []}
-          errors={errors}
+          onChange={handleDropdownChange(["patAddress", "patAreaVal"], ["patAddress", "patArea"], dropdownValues.area || [])}
+          isSubmitted={isSubmitted}
           showAddButton={true}
           onAddClick={() => handleAddField("AREA")}
-          onChange={(val) => {
-            const selectedOption = dropdownValues.area?.find((opt) => opt.value === val);
-            if (selectedOption) {
-              setValue("patAddress.patArea", selectedOption.label, { shouldValidate: true });
-            }
-          }}
         />
 
-        <ZodFormField
-          name="patAddress.pAddCityVal"
-          control={control}
+        <FormField
           type="select"
-          label="City"
+          label="City "
+          name="City"
+          ControlID="City"
+          value={formData.patAddress.pAddCityVal || dropdownValues.city || ""}
           options={dropdownValues.city || []}
-          errors={errors}
+          onChange={handleDropdownChange(["patAddress", "pAddCityVal"], ["patAddress", "pAddCity"], dropdownValues.city || [])}
+          isSubmitted={isSubmitted}
           gridProps={{ xs: 12, sm: 6, md: 3 }}
-          showAddButton={true}
           onAddClick={() => handleAddField("CITY")}
-          onChange={(val) => {
-            const selectedOption = dropdownValues.city?.find((opt) => opt.value === val);
-            if (selectedOption) {
-              setValue("patAddress.pAddCity", selectedOption.label, { shouldValidate: true });
-            }
-          }}
+          showAddButton={true}
         />
 
-        <ZodFormField
-          name="patAddress.pAddActualCountryVal"
-          control={control}
+        <FormField
           type="select"
           label="Country"
+          name="pAddActualCountryVal"
+          ControlID="Country"
+          value={formData.patAddress.pAddActualCountryVal || dropdownValues.country || ""}
           options={dropdownValues.country || []}
-          errors={errors}
+          onChange={handleDropdownChange(["patAddress", "pAddActualCountryVal"], ["patAddress", "pAddActualCountry"], dropdownValues.country || [])}
+          isSubmitted={isSubmitted}
           showAddButton={true}
           onAddClick={() => handleAddField("COUNTRY")}
-          onChange={(val) => {
-            const selectedOption = dropdownValues.country?.find((opt) => opt.value === val);
-            if (selectedOption) {
-              setValue("patAddress.pAddActualCountry", selectedOption.label, { shouldValidate: true });
-            }
-          }}
         />
 
-        <ZodFormField name="patAddress.pAddPostcode" control={control} type="text" label="Post Code" errors={errors} />
-
-        <ZodFormField name="patAddress.pAddEmail" control={control} type="email" label="Email" errors={errors} />
-
-        <ZodFormField
-          name="patRegisters.patCompNameVal"
-          control={control}
+        <FormField
+          type="text"
+          label="Post Code"
+          name="pAddPostcode"
+          ControlID="PostCode"
+          value={formData.patAddress.pAddPostcode || ""}
+          onChange={handleTextChange("pAddPostcode")}
+          isSubmitted={isSubmitted}
+        />
+        <FormField
+          type="email"
+          label="Email"
+          name="pAddEmail"
+          ControlID="Email"
+          value={formData.patAddress.pAddEmail || ""}
+          onChange={handleTextChange("pAddEmail")}
+          isSubmitted={isSubmitted}
+        />
+        <FormField
           type="select"
           label="Company"
+          name="patCompNameVal"
+          ControlID="Company"
+          value={formData.patRegisters.patCompNameVal || dropdownValues.company || ""}
           options={dropdownValues.company || []}
-          errors={errors}
+          onChange={handleDropdownChange(["patRegisters", "patCompNameVal"], ["patRegisters", "patCompName"], dropdownValues.company || [])}
+          isSubmitted={isSubmitted}
           showAddButton={true}
           onAddClick={() => handleAddField("COMPANY")}
-          onChange={(val) => {
-            const selectedOption = dropdownValues.company?.find((opt) => opt.value === val);
-            if (selectedOption) {
-              setValue("patRegisters.patCompName", selectedOption.label, { shouldValidate: true });
-            }
-          }}
         />
 
-        <ZodFormField
-          name="patAddress.pAddSMSVal"
-          control={control}
+        <FormField
           type="radio"
           label="Receive SMS"
+          name="pAddSMSVal"
+          ControlID="receiveSMS"
+          value={formData.patAddress.pAddSMSVal || ""}
           options={smsOptions}
+          onChange={handleRadioButtonChange(["patAddress", "pAddSMSVal"], ["patAddress", "pAddSMS"], smsOptions)}
           inline={true}
-          errors={errors}
+          isSubmitted={isSubmitted}
           gridProps={{ xs: 12, md: 1.5 }}
-          onChange={(val) => {
-            const selectedOption = smsOptions.find((opt) => opt.value === val);
-            if (selectedOption) {
-              setValue("patAddress.pAddSMS", selectedOption.label, { shouldValidate: true });
-            }
-          }}
         />
-
-        <ZodFormField
-          name="patAddress.pAddMailVal"
-          control={control}
+        <FormField
           type="radio"
           label="Receive Email"
+          name="pAddMailVal"
+          ControlID="receiveEmail"
+          value={formData.patAddress.pAddMailVal || ""}
           options={emailOptions}
+          onChange={handleRadioButtonChange(["patAddress", "pAddMailVal"], ["patAddress", "pAddMail"], emailOptions)}
           inline={true}
-          errors={errors}
+          isSubmitted={isSubmitted}
           gridProps={{ xs: 12, md: 1.5 }}
-          onChange={(val) => {
-            const selectedOption = emailOptions.find((opt) => opt.value === val);
-            if (selectedOption) {
-              setValue("patAddress.pAddMail", selectedOption.label, { shouldValidate: true });
-            }
-          }}
         />
-      </Grid>
+      </FormSectionWrapper>
 
       <ModifiedFieldDialog
         open={isFieldDialogOpen}
@@ -204,7 +220,7 @@ const ContactDetails: React.FC = () => {
         isFieldCodeDisabled={true}
         onFieldAddedOrUpdated={onFieldAddedOrUpdated}
       />
-    </FormSectionWrapper>
+    </>
   );
 };
 
