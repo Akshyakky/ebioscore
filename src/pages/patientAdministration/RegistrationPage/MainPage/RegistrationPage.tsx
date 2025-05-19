@@ -148,7 +148,7 @@ const RegistrationPage: React.FC = () => {
         visitType: "Hospital",
       },
     }),
-    [formatDate]
+    [serverDate]
   );
 
   const [formData, setFormData] = useState<PatientRegistrationDto>(() => initializeFormData(userInfo));

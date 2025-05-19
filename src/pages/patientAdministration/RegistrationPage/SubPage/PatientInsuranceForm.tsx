@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useForm } from "react-hook-form";
 import { Grid } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
+import AddIcon from "@mui/icons-material/Add";
 import { useAppSelector } from "@/store/hooks";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
 import useDayjs from "@/hooks/Common/useDateTime";
-import useDropdownChange from "@/hooks/useDropdownChange";
-import FormField from "@/components/FormField/FormField";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 import CustomButton from "@/components/Button/CustomButton";
 import { notifyWarning } from "@/utils/Common/toastManager";
@@ -22,14 +23,15 @@ interface PatientInsuranceFormProps {
   editData?: OPIPInsurancesDto | null;
 }
 
-const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handleClose, handleSave, editData }) => {
+const EnhancedPatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handleClose, handleSave, editData }) => {
   const userInfo = useAppSelector((state) => state.auth);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const serverDate = useServerDate();
-  const { formatDate, formatDateYMD } = useDayjs();
+  const { formatDateYMD } = useDayjs();
   const { refreshDropdownValues, ...dropdownValues } = useDropdownValues(["insurance", "relation", "coverFor"]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
+
+  // Initial form state
   const insuranceFormInitialState: OPIPInsurancesDto = useMemo(
     () => ({
       ID: 0,
@@ -64,77 +66,111 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
       coveredVal: "",
       coveredFor: "",
     }),
-    [userInfo, formatDate]
+    [userInfo, serverDate]
   );
 
-  const [insuranceForm, setInsuranceForm] = useState<OPIPInsurancesDto>(insuranceFormInitialState);
-  const { handleDropdownChange } = useDropdownChange<OPIPInsurancesDto>(setInsuranceForm);
+  // React Hook Form setup
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<OPIPInsurancesDto>({
+    defaultValues: insuranceFormInitialState,
+    mode: "onBlur",
+  });
 
-  const resetInsuranceFormData = useCallback(() => {
-    setInsuranceForm(insuranceFormInitialState);
-  }, [insuranceFormInitialState]);
-
-  const onFieldAddedOrUpdated = () => {
-    if (dialogCategory) {
-      const dropdownMap: Record<string, DropdownType> = {
-        RELATION: "relation",
-      };
-      const dropdownType = dropdownMap[dialogCategory];
-      if (dropdownType) {
-        refreshDropdownValues(dropdownType);
-      }
-    }
-  };
-
+  // Reset form when editData changes
   useEffect(() => {
     if (editData) {
-      setInsuranceForm({
+      // Format dates properly
+      reset({
         ...editData,
-        policyStartDt: editData.policyStartDt,
-        policyEndDt: editData.policyEndDt,
+        policyStartDt: editData.policyStartDt ? new Date(editData.policyStartDt) : serverDate,
+        policyEndDt: editData.policyEndDt ? new Date(editData.policyEndDt) : serverDate,
       });
+    } else {
+      reset(insuranceFormInitialState);
     }
-  }, [editData]);
+  }, [editData, insuranceFormInitialState, reset, serverDate]);
 
-  const handleSubmit = useCallback(() => {
-    setIsSubmitted(true);
-    if (!insuranceForm.policyNumber?.trim()) {
+  // Form validation
+  const validateFormData = (data: OPIPInsurancesDto): boolean => {
+    if (!data.policyNumber?.trim()) {
       notifyWarning("Policy Number is required.");
-      return;
+      return false;
     }
-    if (insuranceForm.insurName.trim()) {
-      handleSave(insuranceForm);
-      resetInsuranceFormData();
+
+    if (!data.insurName?.trim()) {
+      notifyWarning("Insurance is required.");
+      return false;
+    }
+
+    return true;
+  };
+
+  // Form submission handler
+  const onSubmit = useCallback(
+    (data: OPIPInsurancesDto) => {
+      if (!validateFormData(data)) {
+        return;
+      }
+
+      // Format dates for API submission
+      const formattedData = {
+        ...data,
+        policyStartDt: data.policyStartDt instanceof Date ? data.policyStartDt : new Date(data.policyStartDt),
+        policyEndDt: data.policyEndDt instanceof Date ? data.policyEndDt : new Date(data.policyEndDt),
+      };
+
+      handleSave(formattedData);
+      reset(insuranceFormInitialState);
       handleClose();
-      setIsSubmitted(false);
-    }
-  }, [insuranceForm, handleSave, resetInsuranceFormData, handleClose]);
+    },
+    [handleSave, reset, insuranceFormInitialState, handleClose]
+  );
+
+  // Close and clear form
   const handleCloseWithClear = useCallback(() => {
-    resetInsuranceFormData();
+    reset(insuranceFormInitialState);
     handleClose();
-    setIsSubmitted(false);
-  }, [resetInsuranceFormData, handleClose]);
+  }, [reset, insuranceFormInitialState, handleClose]);
 
-  const handleTextChange = useCallback(
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setInsuranceForm((prev) => ({
-        ...prev,
-        [field]: e.target.value,
-      }));
+  // Handle insurance dropdown change
+  const handleInsuranceChange = useCallback(
+    (value: any) => {
+      const selectedOption = dropdownValues.insurance?.find((option) => option.value === value);
+      if (selectedOption) {
+        setValue("insurName", selectedOption.label);
+      }
     },
-    []
+    [dropdownValues.insurance, setValue]
   );
 
-  const handleDateChange = useCallback(
-    (field: string) => (date: Date | null) => {
-      setInsuranceForm((prev) => ({
-        ...prev,
-        [field]: date ? formatDateYMD(date) : "",
-      }));
+  // Handle relation dropdown change
+  const handleRelationChange = useCallback(
+    (value: any) => {
+      const selectedOption = dropdownValues.relation?.find((option) => option.value === value);
+      if (selectedOption) {
+        setValue("relation", selectedOption.label);
+      }
     },
-    [formatDateYMD]
+    [dropdownValues.relation, setValue]
   );
 
+  // Handle covered for dropdown change
+  const handleCoveredForChange = useCallback(
+    (value: any) => {
+      const selectedOption = dropdownValues.coverFor?.find((option) => option.value === value);
+      if (selectedOption) {
+        setValue("coveredFor", selectedOption.label);
+      }
+    },
+    [dropdownValues.coverFor, setValue]
+  );
+
+  // Field dialog handlers
   const [, setFormDataDialog] = useState<AppModifyFieldDto>({
     amlID: 0,
     amlName: "",
@@ -173,143 +209,93 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
     setIsFieldDialogOpen(false);
   };
 
+  const onFieldAddedOrUpdated = () => {
+    if (dialogCategory) {
+      const dropdownMap: Record<string, DropdownType> = {
+        RELATION: "relation",
+      };
+      const dropdownType = dropdownMap[dialogCategory];
+      if (dropdownType) {
+        refreshDropdownValues(dropdownType);
+      }
+    }
+  };
+
+  // Dialog content
   const dialogContent = (
     <Grid container spacing={2}>
       <FormField
         type="select"
-        label="Insurance"
         name="insurID"
-        ControlID="Insurance"
-        value={insuranceForm.insurID === 0 ? "" : insuranceForm.insurID.toString()}
+        control={control}
+        label="Insurance"
         options={dropdownValues.insurance || []}
-        onChange={handleDropdownChange(["insurID"], ["insurName"], dropdownValues.insurance || [])}
-        isMandatory={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+        required={true}
+        fullWidth={true}
+        size="small"
+        onChange={handleInsuranceChange}
       />
-      <FormField
-        type="text"
-        label="Policy Holder"
-        name="policyHolder"
-        ControlID="PolicyHolder"
-        value={insuranceForm.policyHolder}
-        onChange={handleTextChange("policyHolder")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Policy Number"
-        name="policyNumber"
-        ControlID="PolicyNumber"
-        value={insuranceForm.policyNumber}
-        onChange={handleTextChange("policyNumber")}
-        isMandatory={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Group Number"
-        name="groupNumber"
-        ControlID="GroupNumber"
-        value={insuranceForm.groupNumber}
-        onChange={handleTextChange("groupNumber")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="datepicker"
-        label="Policy Start Date"
-        name="policyStartDt"
-        ControlID="PolicyStartDate"
-        value={insuranceForm.policyStartDt ? new Date(insuranceForm.policyStartDt) : null}
-        onChange={handleDateChange("policyStartDt")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="datepicker"
-        label="Policy End Date"
-        name="policyEndDt"
-        ControlID="PolicyEndDate"
-        value={insuranceForm.policyEndDt ? new Date(insuranceForm.policyEndDt) : null}
-        onChange={handleDateChange("policyEndDt")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Guarantor"
-        name="guarantor"
-        ControlID="Guarantor"
-        value={insuranceForm.guarantor}
-        onChange={handleTextChange("guarantor")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
+
+      <FormField type="text" name="policyHolder" control={control} label="Policy Holder" fullWidth={true} size="small" />
+
+      <FormField type="text" name="policyNumber" control={control} label="Policy Number" required={true} fullWidth={true} size="small" />
+
+      <FormField type="text" name="groupNumber" control={control} label="Group Number" fullWidth={true} size="small" />
+
+      <FormField type="datepicker" name="policyStartDt" control={control} label="Policy Start Date" fullWidth={true} size="small" />
+
+      <FormField type="datepicker" name="policyEndDt" control={control} label="Policy End Date" fullWidth={true} size="small" />
+
+      <FormField type="text" name="guarantor" control={control} label="Guarantor" fullWidth={true} size="small" />
+
       <FormField
         type="select"
-        label="Relationship"
         name="relationVal"
-        ControlID="Relationship"
-        value={insuranceForm.relationVal || dropdownValues.relation}
+        control={control}
+        label="Relationship"
         options={dropdownValues.relation || []}
-        onChange={handleDropdownChange(["relationVal"], ["relation"], dropdownValues.relation || [])}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-        showAddButton={true}
-        onAddClick={() => handleAddField("RELATION")}
+        fullWidth={true}
+        size="small"
+        onChange={handleRelationChange}
+        adornment={<CustomButton text="" icon={AddIcon} onClick={() => handleAddField("RELATION")} size="small" />}
       />
+
       <FormField
         type="select"
-        label="Covered For"
         name="coveredVal"
-        ControlID="CoveredFor"
-        value={String(insuranceForm.coveredVal)}
+        control={control}
+        label="Covered For"
         options={dropdownValues.coverFor || []}
-        onChange={handleDropdownChange(["coveredVal"], ["coveredFor"], dropdownValues.coverFor || [])}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
+        fullWidth={true}
+        size="small"
+        onChange={handleCoveredForChange}
       />
-      <FormField
-        type="text"
-        label="Address 1"
-        name="address1"
-        ControlID="Address1"
-        value={insuranceForm.address1}
-        onChange={handleTextChange("address1")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Address 2"
-        name="address2"
-        ControlID="Address2"
-        value={insuranceForm.address2}
-        onChange={handleTextChange("address2")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Phone 1"
-        name="phone1"
-        ControlID="Phone1"
-        value={insuranceForm.phone1}
-        onChange={handleTextChange("phone1")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Phone 2"
-        name="phone2"
-        ControlID="Phone2"
-        value={insuranceForm.phone2}
-        onChange={handleTextChange("phone2")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
-      <FormField
-        type="text"
-        label="Remarks"
-        name="rNotes"
-        ControlID="Remarks"
-        value={insuranceForm.rNotes}
-        onChange={handleTextChange("rNotes")}
-        gridProps={{ md: 3, lg: 3, sm: 12, xs: 12, xl: 3 }}
-      />
+
+      <FormField type="text" name="address1" control={control} label="Address 1" fullWidth={true} size="small" />
+
+      <FormField type="text" name="address2" control={control} label="Address 2" fullWidth={true} size="small" />
+
+      <FormField type="text" name="phone1" control={control} label="Phone 1" fullWidth={true} size="small" />
+
+      <FormField type="text" name="phone2" control={control} label="Phone 2" fullWidth={true} size="small" />
+
+      <FormField type="text" name="rNotes" control={control} label="Remarks" fullWidth={true} size="small" />
+    </Grid>
+  );
+
+  // Dialog actions
+  const dialogActions = (
+    <>
+      <CustomButton text="Close" icon={CloseIcon} variant="contained" size="medium" color="secondary" onClick={handleCloseWithClear} />
+      <CustomButton text="Save" icon={SaveIcon} variant="contained" size="medium" color="success" onClick={handleSubmit(onSubmit)} />
+    </>
+  );
+
+  return (
+    <>
+      <GenericDialog open={show} onClose={handleCloseWithClear} title="Patient Insurance" maxWidth="lg" fullWidth actions={dialogActions} dialogContentSx={{ p: 2 }}>
+        {dialogContent}
+      </GenericDialog>
 
       <ModifiedFieldDialog
         open={isFieldDialogOpen}
@@ -318,21 +304,8 @@ const PatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handl
         onFieldAddedOrUpdated={onFieldAddedOrUpdated}
         isFieldCodeDisabled={true}
       />
-    </Grid>
-  );
-
-  const dialogActions = (
-    <>
-      <CustomButton text="Close" icon={CloseIcon} variant="contained" size="medium" color="secondary" onClick={handleCloseWithClear} />
-      <CustomButton text="Save" icon={SaveIcon} variant="contained" size="medium" color="success" onClick={handleSubmit} />
     </>
-  );
-
-  return (
-    <GenericDialog open={show} onClose={handleCloseWithClear} title="Patient Insurance" maxWidth="lg" fullWidth actions={dialogActions} dialogContentSx={{ p: 2 }}>
-      {dialogContent}
-    </GenericDialog>
   );
 };
 
-export default React.memo(PatientInsuranceForm);
+export default React.memo(EnhancedPatientInsuranceForm);

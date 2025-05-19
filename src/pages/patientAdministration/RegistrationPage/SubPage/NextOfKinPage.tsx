@@ -4,24 +4,26 @@ import AddIcon from "@mui/icons-material/Add";
 import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
 import { PatNokService } from "@/services/PatientAdministrationServices/RegistrationService/PatNokService";
 import { showAlert } from "@/utils/Common/showAlert";
-import NextOfKinForm from "./NextOfKinForm";
 import NextOfKinGrid from "./NextOfKinGrid";
 import CustomButton from "@/components/Button/CustomButton";
+import NextOfKinForm from "./NextOfKinForm";
 
 interface NextOfKinPageProps {
   pChartID: number;
   shouldClearData: boolean;
 }
 
-const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = ({ pChartID, shouldClearData }, ref) => {
+const EnhancedNextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = ({ pChartID, shouldClearData }, ref) => {
   const [showKinPopup, setShowKinPopup] = useState(false);
   const [editingKinData, setEditingKinData] = useState<PatNokDetailsDto | undefined>(undefined);
   const [gridKinData, setGridKinData] = useState<PatNokDetailsDto[]>([]);
 
+  // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     saveKinDetails,
   }));
 
+  // Save all next of kin records
   const saveKinDetails = useCallback(
     async (pChartID: number) => {
       try {
@@ -30,17 +32,23 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
           return PatNokService.saveNokDetails(kinData);
         });
 
-        const results = await Promise.all(saveOperations);
-      } catch (error) {}
+        await Promise.all(saveOperations);
+        return true;
+      } catch (error) {
+        console.error("Error saving next of kin details:", error);
+        return false;
+      }
     },
     [gridKinData]
   );
 
+  // Edit handler
   const handleEditKin = useCallback((kin: PatNokDetailsDto) => {
     setEditingKinData(kin);
     setShowKinPopup(true);
   }, []);
 
+  // Delete handler
   const handleDeleteKin = useCallback(
     async (kin: PatNokDetailsDto) => {
       try {
@@ -63,11 +71,13 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
     [pChartID]
   );
 
+  // Generate temporary ID for new records
   const generateNewId = useCallback(<T extends { ID: number }>(data: T[]): number => {
     const maxId = data.reduce((max, item) => (item.ID > max ? item.ID : max), 0);
     return maxId + 1;
   }, []);
 
+  // Save handler
   const handleSaveKin = useCallback(
     (kinDetails: PatNokDetailsDto) => {
       const kinWithDefaults = {
@@ -90,6 +100,7 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
     [generateNewId]
   );
 
+  // Fetch existing kin data when pChartID changes
   const fetchKinData = useCallback(async () => {
     if (!pChartID) return;
     try {
@@ -103,20 +114,26 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
           }));
         setGridKinData(formattedData);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error fetching next of kin details:", error);
+    }
   }, [pChartID]);
 
+  // Fetch data when pChartID changes
   useEffect(() => {
     fetchKinData();
   }, [fetchKinData]);
 
+  // Clear data when requested
   useEffect(() => {
     if (shouldClearData) {
       setGridKinData([]);
     }
   }, [shouldClearData]);
 
+  // Popup handlers
   const handleOpenKinPopup = useCallback(() => {
+    setEditingKinData(undefined); // Clear editing data to ensure we're adding a new record
     setShowKinPopup(true);
   }, []);
 
@@ -125,6 +142,7 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
     setEditingKinData(undefined);
   }, []);
 
+  // Memoized components to prevent unnecessary re-renders
   const memoizedNextOfKinForm = useMemo(
     () => <NextOfKinForm show={showKinPopup} handleClose={handleCloseKinPopup} handleSave={handleSaveKin} editData={editingKinData} />,
     [showKinPopup, handleCloseKinPopup, handleSaveKin, editingKinData]
@@ -153,4 +171,4 @@ const NextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = (
   );
 };
 
-export default forwardRef(NextOfKinPage);
+export default forwardRef(EnhancedNextOfKinPage);
