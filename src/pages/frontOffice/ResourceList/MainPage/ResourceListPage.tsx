@@ -16,24 +16,21 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
-import ResourceListForm from "./ResourceListForm";
-import { useResourceList } from "../hooks/useResourceList";
+import ResourceListForm from "../Form/ResourceListForm";
+import { useResourceList } from "@/hooks/FrontOffice/useResourceList";
 import { showAlert } from "@/utils/Common/showAlert";
 import { debounce } from "@/utils/Common/debounceUtils";
-
 
 const statusOptions = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
 ];
 
-
 const resourceTypeOptions = [
   { value: "all", label: "All Types" },
   { value: "ot", label: "OT" },
   { value: "non-ot", label: "Non-OT" },
 ];
-
 
 const validationOptions = [
   { value: "all", label: "All" },
@@ -42,7 +39,6 @@ const validationOptions = [
 ];
 
 const ResourceListPage: React.FC = () => {
-  
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedResource, setSelectedResource] = useState<ResourceListData | null>(null);
@@ -52,10 +48,8 @@ const ResourceListPage: React.FC = () => {
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
 
-  
   const { resourceList, isLoading, error, fetchResourceList, createResource, updateResource, deleteResource, updateResourceStatus, getNextCode } = useResourceList();
 
-  
   const [filters, setFilters] = useState<{
     status: string;
     resourceType: string;
@@ -70,63 +64,53 @@ const ResourceListPage: React.FC = () => {
     document.title = "Resource List Management";
   }, []);
 
-  
   const debouncedSearch = useMemo(() => debounce((value: string) => setDebouncedSearchTerm(value), 300), []);
 
-  
   useEffect(() => {
     return () => {
       debouncedSearch.cancel();
     };
   }, [debouncedSearch]);
 
-  
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setSearchTerm(value);
     debouncedSearch(value);
   };
 
-  
   const handleClearSearch = () => {
     setSearchTerm("");
     setDebouncedSearchTerm("");
     debouncedSearch.cancel();
   };
 
-  
   const handleRefresh = () => {
     fetchResourceList();
   };
 
-  
   const handleAddNew = () => {
     setSelectedResource(null);
     setIsViewMode(false);
     setIsFormOpen(true);
   };
 
-  
   const handleEdit = (resource: ResourceListData) => {
     setSelectedResource(resource);
     setIsViewMode(false);
     setIsFormOpen(true);
   };
 
-  
   const handleView = (resource: ResourceListData) => {
     setSelectedResource(resource);
     setIsViewMode(true);
     setIsFormOpen(true);
   };
 
-  
   const handleDeleteClick = (resource: ResourceListData) => {
     setSelectedResource(resource);
     setIsDeleteConfirmOpen(true);
   };
 
-  
   const handleConfirmDelete = async () => {
     if (!selectedResource) return;
 
@@ -146,7 +130,6 @@ const ResourceListPage: React.FC = () => {
     }
   };
 
-  
   const handleFormClose = (refreshData?: boolean) => {
     setIsFormOpen(false);
     if (refreshData) {
@@ -154,7 +137,6 @@ const ResourceListPage: React.FC = () => {
     }
   };
 
-  
   const handleFilterChange = (field: keyof typeof filters, value: string) => {
     setFilters((prev) => ({
       ...prev,
@@ -162,7 +144,6 @@ const ResourceListPage: React.FC = () => {
     }));
   };
 
-  
   const handleClearFilters = () => {
     setFilters({
       status: "",
@@ -171,7 +152,6 @@ const ResourceListPage: React.FC = () => {
     });
   };
 
-  
   const stats = useMemo(() => {
     if (!resourceList.length) {
       return {
@@ -196,29 +176,24 @@ const ResourceListPage: React.FC = () => {
     };
   }, [resourceList]);
 
-  
   const filteredResources = useMemo(() => {
     if (!resourceList.length) return [];
 
     return resourceList.filter((resource) => {
-      
       const matchesSearch =
         debouncedSearchTerm === "" ||
         resource.rLName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         resource.rLCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         resource.rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
-      
       const matchesStatus = filters.status === "" || (filters.status === "active" && resource.rActiveYN === "Y") || (filters.status === "inactive" && resource.rActiveYN === "N");
 
-      
       const matchesType =
         filters.resourceType === "" ||
         filters.resourceType === "all" ||
         (filters.resourceType === "ot" && resource.rLOtYN === "Y") ||
         (filters.resourceType === "non-ot" && resource.rLOtYN === "N");
 
-      
       const matchesValidation =
         filters.validation === "" ||
         filters.validation === "all" ||
@@ -229,7 +204,6 @@ const ResourceListPage: React.FC = () => {
     });
   }, [resourceList, debouncedSearchTerm, filters]);
 
-  
   const handleStatusChange = async (resource: ResourceListData, status: boolean) => {
     try {
       await updateResourceStatus(resource.rLID, status);
@@ -239,7 +213,6 @@ const ResourceListPage: React.FC = () => {
     }
   };
 
-  
   const renderStatsDashboard = () => (
     <Paper sx={{ p: 2, mb: 2 }}>
       <Grid container spacing={2}>
@@ -275,7 +248,6 @@ const ResourceListPage: React.FC = () => {
     </Paper>
   );
 
-  
   const columns: Column<ResourceListData>[] = [
     {
       key: "rLCode",
@@ -376,7 +348,6 @@ const ResourceListPage: React.FC = () => {
     },
   ];
 
-  
   if (error) {
     return (
       <Box sx={{ p: 2 }}>

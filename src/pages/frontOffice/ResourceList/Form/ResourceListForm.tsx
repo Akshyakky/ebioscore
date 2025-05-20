@@ -11,7 +11,7 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/context/LoadingContext";
 import { showAlert } from "@/utils/Common/showAlert";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
-import { useResourceList } from "../hooks/useResourceList";
+import { useResourceList } from "../../../../hooks/FrontOffice/useResourceList";
 
 interface ResourceListFormProps {
   open: boolean;
@@ -67,10 +67,9 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
 
   const rActiveYN = useWatch({ control, name: "rActiveYN" });
 
-  
   const generateResourceCode = async () => {
     if (!isAddMode) return;
-    
+
     try {
       setIsGeneratingCode(true);
       const nextCode = await getNextCode("RES", 3);
@@ -86,7 +85,6 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
     }
   };
 
-  
   useEffect(() => {
     if (initialData) {
       reset(initialData as ResourceListFormData);
@@ -105,7 +103,6 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
       setIsSaving(true);
       setLoading(true);
 
-      
       const resourceData: ResourceListData = {
         rLID: data.rLID,
         rLCode: data.rLCode,
@@ -117,14 +114,11 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
         transferYN: data.transferYN || "N",
       };
 
-      
       const response = await resourceListService.save(resourceData);
-      
+
       if (response.success) {
-        
         showAlert("Success", isAddMode ? "Resource created successfully" : "Resource updated successfully", "success");
 
-        
         onClose(true);
       } else {
         throw new Error(response.errorMessage || "Failed to save resource");
@@ -145,7 +139,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
       if (window.confirm("Are you sure you want to reset the form? All unsaved changes will be lost.")) {
         reset(initialData ? (initialData as ResourceListFormData) : defaultValues);
         setFormError(null);
-        
+
         if (isAddMode) {
           generateResourceCode();
         }
@@ -153,7 +147,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
     } else {
       reset(initialData ? (initialData as ResourceListFormData) : defaultValues);
       setFormError(null);
-      
+
       if (isAddMode) {
         generateResourceCode();
       }
@@ -193,7 +187,6 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
     </Box>
   );
 
-  
   const handleRefreshCode = () => {
     if (isAddMode) {
       generateResourceCode();
@@ -221,7 +214,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
 
         <Grid container spacing={3}>
           {/* Status Toggle - Prominent Position */}
-           <Grid size={{sm:12}}>
+          <Grid size={{ sm: 12 }}>
             <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
               <Typography variant="body2" color="text.secondary">
                 Status:
@@ -231,7 +224,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
           </Grid>
 
           {/* Basic Information Section */}
-          <Grid size={{sm:12}}>
+          <Grid size={{ sm: 12 }}>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" gutterBottom>
@@ -240,38 +233,32 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
-                   <Grid size={{sm:12, md:6}}>
-                    <FormField 
-                      name="rLCode" 
-                      control={control} 
-                      label="Resource Code" 
-                      type="text" 
-                      required 
-                      disabled={viewOnly || (!isAddMode)} 
-                      size="small" 
+                  <Grid size={{ sm: 12, md: 6 }}>
+                    <FormField
+                      name="rLCode"
+                      control={control}
+                      label="Resource Code"
+                      type="text"
+                      required
+                      disabled={viewOnly || !isAddMode}
+                      size="small"
                       fullWidth
                       InputProps={{
-                        endAdornment: isAddMode && !viewOnly ? (
-                          <InputAdornment position="end">
-                            {isGeneratingCode ? (
-                              <CircularProgress size={20} />
-                            ) : (
-                              <SmartButton
-                                icon={Refresh}
-                                variant="text"
-                                size="small"
-                                onClick={handleRefreshCode}
-                                tooltip="Generate new code"
-                                sx={{ minWidth: 'unset' }}
-                              />
-                            )}
-                          </InputAdornment>
-                        ) : null,
+                        endAdornment:
+                          isAddMode && !viewOnly ? (
+                            <InputAdornment position="end">
+                              {isGeneratingCode ? (
+                                <CircularProgress size={20} />
+                              ) : (
+                                <SmartButton icon={Refresh} variant="text" size="small" onClick={handleRefreshCode} tooltip="Generate new code" sx={{ minWidth: "unset" }} />
+                              )}
+                            </InputAdornment>
+                          ) : null,
                       }}
                     />
                   </Grid>
 
-                   <Grid size={{sm:12, md:6}}>
+                  <Grid size={{ sm: 12, md: 6 }}>
                     <FormField name="rLName" control={control} label="Resource Name" type="text" required disabled={viewOnly} size="small" fullWidth />
                   </Grid>
                 </Grid>
@@ -280,7 +267,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
           </Grid>
 
           {/* Settings Section */}
-           <Grid size={{sm:12}}>
+          <Grid size={{ sm: 12 }}>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" gutterBottom>
@@ -289,11 +276,11 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
-                   <Grid size={{sm:12, md:6}}>
+                  <Grid size={{ sm: 12, md: 6 }}>
                     <FormField name="rLValidateYN" control={control} label="Validate" type="switch" disabled={viewOnly} size="small" />
                   </Grid>
 
-                   <Grid size={{sm:12, md:6}}>
+                  <Grid size={{ sm: 12, md: 6 }}>
                     <FormField name="rLOtYN" control={control} label="OT" type="switch" disabled={viewOnly} size="small" />
                   </Grid>
                 </Grid>
@@ -302,7 +289,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
           </Grid>
 
           {/* Notes Section */}
-           <Grid size={{sm:12}}>
+          <Grid size={{ sm: 12 }}>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" gutterBottom>
@@ -311,7 +298,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
-                   <Grid size={{sm:12}}>
+                  <Grid size={{ sm: 12 }}>
                     <FormField
                       name="rNotes"
                       control={control}

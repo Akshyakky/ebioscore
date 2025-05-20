@@ -25,24 +25,27 @@ export const useResourceList = () => {
     }
   }, [setLoading]);
 
-  const getResourceById = useCallback(async (id: number) => {
-    try {
-      setLoading(true);
-      const result = await resourceListService.getById(id);
-      if (result.success && result.data) {
-        return result.data;
-      } else {
-        setError(result.errorMessage || "Failed to fetch resource");
+  const getResourceById = useCallback(
+    async (id: number) => {
+      try {
+        setLoading(true);
+        const result = await resourceListService.getById(id);
+        if (result.success && result.data) {
+          return result.data;
+        } else {
+          setError(result.errorMessage || "Failed to fetch resource");
+          return null;
+        }
+      } catch (err) {
+        console.error("Error fetching resource:", err);
+        setError("An unexpected error occurred while fetching resource");
         return null;
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error fetching resource:", err);
-      setError("An unexpected error occurred while fetching resource");
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [setLoading]);
+    },
+    [setLoading]
+  );
 
   const createResource = useCallback(
     async (resource: ResourceListData) => {
