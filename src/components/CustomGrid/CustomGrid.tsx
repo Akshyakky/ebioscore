@@ -6,6 +6,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Typography,
 } from "@mui/material";
 
 export interface ColumnFilter {
@@ -141,7 +142,7 @@ const CustomGrid = <T extends Record<string, any>>({
                 style={column.headerStyle}
                 align={column.align || "left"}
               >
-                {column.header}
+               <Typography>{column.header}</Typography> 
               </TableCell>
             ))}
           </TableRow>
