@@ -29,7 +29,7 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const uhidRef = useRef<HTMLInputElement>(null);
   const serverDate = useServerDate();
-  const { diff, date: currentDate, formatDateYMD } = useDayjs();
+  const { diff } = useDayjs();
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
 
@@ -222,9 +222,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
     modifyYN: "N",
     rNotes: "",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "Y",
   });
 
@@ -239,9 +236,6 @@ const PersonalDetails: React.FC<PersonalDetailsProps> = ({ formData, setFormData
       modifyYN: "N",
       rNotes: "",
       rActiveYN: "Y",
-      compID: 0,
-      compCode: "",
-      compName: "",
       transferYN: "Y",
     });
     setIsFieldDialogOpen(true);

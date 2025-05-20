@@ -72,9 +72,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
       pNokState: "",
       pNokStreet: "",
       rActiveYN: "Y",
-      compID: userInfo.compID ?? 0,
-      compCode: userInfo.compCode ?? "",
-      compName: userInfo.compName ?? "",
       rNotes: "",
       transferYN: "N",
     }),
@@ -216,9 +213,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
     modifyYN: "N",
     rNotes: "",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "Y",
   });
 
@@ -233,9 +227,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ show, handleClose, handle
       modifyYN: "N",
       rNotes: "",
       rActiveYN: "Y",
-      compID: 0,
-      compCode: "",
-      compName: "",
       transferYN: "Y",
     });
     setIsFieldDialogOpen(true);

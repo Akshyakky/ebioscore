@@ -31,9 +31,6 @@ export interface PatNokDetailsDto {
   pNokState?: string;
   pNokStreet?: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   rNotes: string;
   transferYN: string;
 }

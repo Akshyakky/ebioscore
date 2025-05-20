@@ -26,7 +26,6 @@ interface PatientInsuranceFormProps {
 const EnhancedPatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ show, handleClose, handleSave, editData }) => {
   const userInfo = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
-  const { formatDateYMD } = useDayjs();
   const { refreshDropdownValues, ...dropdownValues } = useDropdownValues(["insurance", "relation", "coverFor"]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
@@ -54,9 +53,6 @@ const EnhancedPatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ sho
       phone2: "",
       rActiveYN: "Y",
       rNotes: "",
-      compID: userInfo.compID ?? 0,
-      compCode: userInfo.compCode ?? "",
-      compName: userInfo.compName ?? "",
       insurStatusCode: "",
       insurStatusName: "",
       pChartCode: "",
@@ -180,9 +176,6 @@ const EnhancedPatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ sho
     modifyYN: "N",
     rNotes: "",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "Y",
   });
 
@@ -197,9 +190,6 @@ const EnhancedPatientInsuranceForm: React.FC<PatientInsuranceFormProps> = ({ sho
       modifyYN: "N",
       rNotes: "",
       rActiveYN: "Y",
-      compID: 0,
-      compCode: "",
-      compName: "",
       transferYN: "Y",
     });
     setIsFieldDialogOpen(true);

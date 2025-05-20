@@ -8,9 +8,6 @@ export interface AppModifyFieldDto extends BaseDto {
   defaultYN: string;
   modifyYN: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string | null;
 }
@@ -21,9 +18,6 @@ export interface AppModifiedMast extends BaseDto {
   fieldName: string;
   auGrpID: number;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string | null;
 }

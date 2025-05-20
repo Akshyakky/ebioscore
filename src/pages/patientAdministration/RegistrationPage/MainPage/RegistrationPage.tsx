@@ -1,11 +1,9 @@
-import React, { useContext, useEffect, useState, useCallback, useRef, useMemo } from "react";
+import React, { useContext, useState, useCallback, useMemo } from "react";
 import { Container, Box } from "@mui/material";
 import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
-import { useAppSelector } from "@/store/hooks";
 import { RegistrationFormErrors } from "@/interfaces/PatientAdministration/registrationFormData";
 import { useLoading } from "@/context/LoadingContext";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import useDayjs from "@/hooks/Common/useDateTime";
 import useRegistrationUtils from "@/utils/PatientAdministration/RegistrationUtils";
 import { PatientSearchContext } from "@/context/PatientSearchContext";
 import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
@@ -20,29 +18,20 @@ import PersonalDetails from "../SubPage/PersonalDetails";
 import ContactDetails from "../SubPage/ContactDetails";
 import VisitDetails from "../SubPage/VisitDetails";
 import MembershipScheme from "../SubPage/MembershipScheme";
-import NextOfKinPage from "../SubPage/NextOfKinPage";
-import InsurancePage from "../SubPage/InsurancePage";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 const RegistrationPage: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formErrors, setFormErrors] = useState<RegistrationFormErrors>({});
   const { setLoading } = useLoading();
-  const userInfo = useAppSelector((state) => state.auth);
   const [showPatientSearch, setShowPatientSearch] = useState(false);
-  const [selectedPChartID, setSelectedPChartID] = useState<number>(0);
-  const [shouldClearInsuranceData, setShouldClearInsuranceData] = useState(false);
-  const [shouldClearKinData, setShouldClearKinData] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const nextOfKinPageRef = useRef<any>(null);
-  const insurancePageRef = useRef<any>(null);
   const serverDate = useServerDate();
-  const { formatDate } = useDayjs();
   const { fetchLatestUHID } = useRegistrationUtils();
   const { performSearch } = useContext(PatientSearchContext);
 
   const initializeFormData = useCallback(
-    (userInfo: any): PatientRegistrationDto => ({
+    (): PatientRegistrationDto => ({
       patRegisters: {
         pChartID: 0,
         pChartCode: "",
@@ -60,9 +49,6 @@ const RegistrationPage: React.FC = () => {
         pBldGrp: "",
         rActiveYN: "Y",
         rNotes: "",
-        compID: userInfo.compID ?? 0,
-        compCode: userInfo.compCode ?? "",
-        compName: userInfo.compName ?? "",
         pFhName: "",
         pTypeID: 0,
         pTypeCode: "",
@@ -151,25 +137,13 @@ const RegistrationPage: React.FC = () => {
     [serverDate]
   );
 
-  const [formData, setFormData] = useState<PatientRegistrationDto>(() => initializeFormData(userInfo));
-
-  useEffect(() => {
-    if (shouldClearInsuranceData) {
-      setShouldClearInsuranceData(false);
-    }
-    if (shouldClearKinData) {
-      setShouldClearKinData(false);
-    }
-  }, [shouldClearInsuranceData, shouldClearKinData]);
+  const [formData, setFormData] = useState<PatientRegistrationDto>(() => initializeFormData());
 
   const handleClear = useCallback(() => {
     setIsSubmitted(false);
     setFormErrors({});
-    setFormData(initializeFormData(userInfo));
-    setShouldClearInsuranceData(true);
-    setShouldClearKinData(true);
+    setFormData(initializeFormData());
     setIsEditMode(false);
-    setSelectedPChartID(0);
     fetchLatestUHID().then((latestUHID) => {
       if (latestUHID) {
         setFormData((prev) => ({
@@ -182,7 +156,7 @@ const RegistrationPage: React.FC = () => {
       }
     });
     window.scrollTo(0, 0);
-  }, [userInfo, initializeFormData, fetchLatestUHID]);
+  }, [fetchLatestUHID]);
 
   const validateFormData = useCallback(() => {
     const errors: RegistrationFormErrors = {};
@@ -233,7 +207,6 @@ const RegistrationPage: React.FC = () => {
       }
     }
 
-    // 🎯 Convert Age to DOB if selected
     if (formData.patRegisters.pDobOrAge === "Age") {
       const { pAgeNumber, pAgeDescriptionVal } = formData.patOverview;
       const today = new Date();
@@ -259,22 +232,6 @@ const RegistrationPage: React.FC = () => {
         const pChartID = response.data;
         let hasErrors = false;
         const actionText = isEditMode ? "updated" : "saved";
-
-        if (nextOfKinPageRef.current) {
-          try {
-            await nextOfKinPageRef.current.saveKinDetails(pChartID);
-          } catch (error) {
-            hasErrors = true;
-          }
-        }
-
-        if (insurancePageRef.current) {
-          try {
-            await insurancePageRef.current.saveInsuranceDetails(pChartID);
-          } catch (error) {
-            hasErrors = true;
-          }
-        }
 
         if (hasErrors) {
           showAlert("Warning", `Patient registration ${actionText}, but there were issues saving additional details. Please check and try saving them again.`, "warning", {
@@ -303,7 +260,6 @@ const RegistrationPage: React.FC = () => {
       const pChartID = numbersArray.length > 0 ? numbersArray[0] : null;
       if (pChartID) {
         await fetchPatientDetailsAndUpdateForm(pChartID);
-        setSelectedPChartID(pChartID);
       }
     } finally {
       setLoading(false);
@@ -368,10 +324,10 @@ const RegistrationPage: React.FC = () => {
           <MembershipScheme formData={formData} setFormData={setFormData} />
         </CustomAccordion>
         <CustomAccordion title="Next of Kin" defaultExpanded>
-          <NextOfKinPage ref={nextOfKinPageRef} pChartID={selectedPChartID} shouldClearData={shouldClearKinData} />
+          //Need next of kin here
         </CustomAccordion>
         <CustomAccordion title="Insurance Details" defaultExpanded>
-          <InsurancePage ref={insurancePageRef} pChartID={selectedPChartID} shouldClearData={shouldClearInsuranceData} />
+          //Need patient insurance
         </CustomAccordion>
       </Container>
       <FormSaveClearButton clearText="Clear" saveText={isEditMode ? "Update" : "Save"} onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />

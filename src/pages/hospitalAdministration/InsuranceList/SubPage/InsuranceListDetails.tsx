@@ -137,9 +137,6 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
     modifyYN: "N",
     rNotes: "",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "Y",
   });
 

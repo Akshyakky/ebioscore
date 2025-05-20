@@ -35,9 +35,6 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
     modifyYN: "N",
     rNotes: "",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "Y",
     ...initialFormData,
   });
