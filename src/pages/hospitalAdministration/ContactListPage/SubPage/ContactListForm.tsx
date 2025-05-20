@@ -235,9 +235,6 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
     modifyYN: "N",
     rNotes: "",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "Y",
   });
 

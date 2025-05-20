@@ -4,7 +4,6 @@ import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/Patie
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useRadioButtonChange from "@/hooks/useRadioButtonChange";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
-import useFieldsList from "@/components/FieldsList/UseFieldsList";
 import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
 import FormField from "@/components/FormField/FormField";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
@@ -31,9 +30,6 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, 
     modifyYN: "N",
     rNotes: "",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "Y",
   });
 
@@ -64,9 +60,6 @@ const ContactDetails: React.FC<ContactDetailsProps> = ({ formData, setFormData, 
       modifyYN: "N",
       rNotes: "",
       rActiveYN: "Y",
-      compID: 0,
-      compCode: "",
-      compName: "",
       transferYN: "Y",
     });
     setIsFieldDialogOpen(true);

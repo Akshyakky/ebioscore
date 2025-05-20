@@ -49,9 +49,6 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
     modifyYN: "N",
     rNotes: "",
     rActiveYN: "Y",
-    compID: compID || 0,
-    compCode: compCode || "",
-    compName: compName || "",
     transferYN: "Y",
   });
   useEffect(() => {

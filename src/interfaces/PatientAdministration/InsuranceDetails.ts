@@ -30,9 +30,6 @@ export interface OPIPInsurancesDto {
   phone2?: string;
   rActiveYN: string;
   rNotes?: string;
-  compID?: number;
-  compCode?: string;
-  compName?: string;
   insurStatusCode?: string;
   insurStatusName?: string;
   pChartCode?: string;
