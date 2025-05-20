@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+// src/hooks/FrontOffice/useResourceList.ts
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { useLoading } from "@/context/LoadingContext";
@@ -7,10 +8,15 @@ export const useResourceList = () => {
   const [resourceList, setResourceList] = useState<ResourceListData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { isLoading, setLoading } = useLoading();
+  const initialFetchDone = useRef(false);
 
   const fetchResourceList = useCallback(async () => {
-    try {
+    if (setLoading) {
       setLoading(true);
+    }
+    setError(null);
+
+    try {
       const result = await resourceListService.getAll();
       if (result.success && result.data) {
         setResourceList(result.data);
@@ -21,9 +27,18 @@ export const useResourceList = () => {
       console.error("Error fetching resources:", err);
       setError("An unexpected error occurred while fetching resources");
     } finally {
-      setLoading(false);
+      if (setLoading) {
+        setLoading(false);
+      }
     }
-  }, [setLoading]);
+  }, []);
+
+  useEffect(() => {
+    if (!initialFetchDone.current) {
+      fetchResourceList();
+      initialFetchDone.current = true;
+    }
+  }, [fetchResourceList]);
 
   const getResourceById = useCallback(
     async (id: number) => {
@@ -53,6 +68,7 @@ export const useResourceList = () => {
         setLoading(true);
         const result = await resourceListService.save(resource);
         if (result.success) {
+          // Fetch the updated list after creating a resource
           await fetchResourceList();
           return true;
         } else {
@@ -76,6 +92,7 @@ export const useResourceList = () => {
         setLoading(true);
         const result = await resourceListService.save(resource);
         if (result.success) {
+          // Fetch the updated list after updating a resource
           await fetchResourceList();
           return true;
         } else {
@@ -99,6 +116,7 @@ export const useResourceList = () => {
         setLoading(true);
         const result = await resourceListService.delete(id);
         if (result.success) {
+          // Fetch the updated list after deleting a resource
           await fetchResourceList();
           return true;
         } else {
@@ -122,6 +140,7 @@ export const useResourceList = () => {
         setLoading(true);
         const result = await resourceListService.updateActiveStatus(id, active);
         if (result.success) {
+          // Fetch the updated list after updating resource status
           await fetchResourceList();
           return true;
         } else {
@@ -160,10 +179,6 @@ export const useResourceList = () => {
     },
     [setLoading]
   );
-
-  useEffect(() => {
-    fetchResourceList();
-  }, [fetchResourceList]);
 
   return {
     resourceList,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -47,8 +47,9 @@ const ResourceListPage: React.FC = () => {
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const { resourceList, isLoading, error, fetchResourceList, createResource, updateResource, deleteResource, updateResourceStatus, getNextCode } = useResourceList();
+  const { resourceList, isLoading, error, fetchResourceList, deleteResource } = useResourceList();
 
   const [filters, setFilters] = useState<{
     status: string;
@@ -64,6 +65,10 @@ const ResourceListPage: React.FC = () => {
     document.title = "Resource List Management";
   }, []);
 
+  const handleRefresh = useCallback(() => {
+    fetchResourceList();
+  }, [fetchResourceList]);
+
   const debouncedSearch = useMemo(() => debounce((value: string) => setDebouncedSearchTerm(value), 300), []);
 
   useEffect(() => {
@@ -72,46 +77,45 @@ const ResourceListPage: React.FC = () => {
     };
   }, [debouncedSearch]);
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setSearchTerm(value);
-    debouncedSearch(value);
-  };
+  const handleSearchChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      setSearchTerm(value);
+      debouncedSearch(value);
+    },
+    [debouncedSearch]
+  );
 
-  const handleClearSearch = () => {
+  const handleClearSearch = useCallback(() => {
     setSearchTerm("");
     setDebouncedSearchTerm("");
     debouncedSearch.cancel();
-  };
+  }, [debouncedSearch]);
 
-  const handleRefresh = () => {
-    fetchResourceList();
-  };
-
-  const handleAddNew = () => {
+  const handleAddNew = useCallback(() => {
     setSelectedResource(null);
     setIsViewMode(false);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleEdit = (resource: ResourceListData) => {
+  const handleEdit = useCallback((resource: ResourceListData) => {
     setSelectedResource(resource);
     setIsViewMode(false);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleView = (resource: ResourceListData) => {
+  const handleView = useCallback((resource: ResourceListData) => {
     setSelectedResource(resource);
     setIsViewMode(true);
     setIsFormOpen(true);
-  };
+  }, []);
 
-  const handleDeleteClick = (resource: ResourceListData) => {
+  const handleDeleteClick = useCallback((resource: ResourceListData) => {
     setSelectedResource(resource);
     setIsDeleteConfirmOpen(true);
-  };
+  }, []);
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!selectedResource) return;
 
     try {
@@ -128,29 +132,32 @@ const ResourceListPage: React.FC = () => {
     } finally {
       setIsDeleteConfirmOpen(false);
     }
-  };
+  }, [selectedResource, deleteResource]);
 
-  const handleFormClose = (refreshData?: boolean) => {
-    setIsFormOpen(false);
-    if (refreshData) {
-      handleRefresh();
-    }
-  };
+  const handleFormClose = useCallback(
+    (refreshData?: boolean) => {
+      setIsFormOpen(false);
+      if (refreshData) {
+        handleRefresh();
+      }
+    },
+    [handleRefresh]
+  );
 
-  const handleFilterChange = (field: keyof typeof filters, value: string) => {
+  const handleFilterChange = useCallback((field: keyof typeof filters, value: string) => {
     setFilters((prev) => ({
       ...prev,
       [field]: value,
     }));
-  };
+  }, []);
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setFilters({
       status: "",
       resourceType: "",
       validation: "",
     });
-  };
+  }, []);
 
   const stats = useMemo(() => {
     if (!resourceList.length) {
@@ -203,15 +210,6 @@ const ResourceListPage: React.FC = () => {
       return matchesSearch && matchesStatus && matchesType && matchesValidation;
     });
   }, [resourceList, debouncedSearchTerm, filters]);
-
-  const handleStatusChange = async (resource: ResourceListData, status: boolean) => {
-    try {
-      await updateResourceStatus(resource.rLID, status);
-      showAlert("Success", "Resource status updated successfully", "success");
-    } catch (error) {
-      showAlert("Error", "Failed to update resource status", "error");
-    }
-  };
 
   const renderStatsDashboard = () => (
     <Paper sx={{ p: 2, mb: 2 }}>
@@ -376,7 +374,7 @@ const ResourceListPage: React.FC = () => {
               Resource List
             </Typography>
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }} display="flex" justifyContent="flex-end">
+          <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
             <Stack direction="row" spacing={1}>
               <SmartButton
                 text="Refresh"
@@ -419,7 +417,7 @@ const ResourceListPage: React.FC = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }} display="flex" justifyContent="flex-end">
+          <Grid size={{ xs: 12, md: 6 }} display="flex" justifyContent="flex-end">
             <Box display="flex" alignItems="center" gap={1}>
               {(filters.status || filters.resourceType || filters.validation) && (
                 <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
