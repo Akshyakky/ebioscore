@@ -5,7 +5,7 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import * as z from "zod";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";

@@ -10,13 +10,13 @@ import { ProfileListSearchProvider } from "../context/SecurityManagement/Profile
 import AdmissionPage from "../pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
 import { UserListSearchProvider } from "../context/SecurityManagement/UserListSearchContext";
 import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
-import ResourceListPage from "../pages/frontOffice/ResourceList/MainPage/ResourceListPage";
-import ReasonListPage from "../pages/frontOffice/ReasonList/MainPage/ReasonListPage";
+//import ReasonListPage from "../pages/frontOffice/ReasonList/MainPage/ReasonListPage";
+//import ResourceListPage from "../pages/frontOffice/ResourceList/MainPage/ResourceListPage";
 import BreakListPage from "../pages/frontOffice/BreakList/MainPage/BreakListPage";
 import AppointmentPage from "../pages/frontOffice/AppointmentPage/MainPage/AppointmentPage";
-import PatientInvoiceCodePage from "../pages/billing/PatientInvoiceCodePage/MainPage/PatientInvoiceCodePage";
+//import PatientInvoiceCodePage from "../pages/billing/PatientInvoiceCodePage/MainPage/PatientInvoiceCodePage";
 import DepartmentListPage from "../pages/billing/DepartmentListPage/MainPage/DepartmentListPage";
-import PaymentTypesPage from "../pages/billing/PaymentTypesPage/MainPage/PaymentTypesPage";
+//import PaymentTypesPage from "../pages/billing/PaymentTypesPage/MainPage/PaymentTypesPage";
 import ServiceGroupsListPage from "../pages/billing/ServiceGroupsListPage/MainPage/ServiceGroupsListPage";
 import WardCategoryPage from "../pages/hospitalAdministration/WardCategoryPage/MainPage/WardCategoryPage";
 import BedSetUpPage from "../pages/hospitalAdministration/Room-BedSetUp/MainPage/BedSetUpPage";
@@ -41,11 +41,10 @@ import ComponentEntryTypePage from "@/pages/laboratory/ComponentEntryType/MainPa
 import ForgotPasswordPage from "@/pages/common/ForgotPasswordPage/ForgotPasswordPage";
 import IndentProductPage from "@/pages/inventoryManagement/IndentProduct/MainPage/IndentProductPage";
 import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
-import EmployeeRegistrationForm from "@/pages/common/ExampleFormPage/EmployeeRegistrationForm";
-import AlertManager from "@/pages/common/AlertManagerPage/MainPage/AlertManager";
+//import AlertManager from "@/pages/common/AlertManagerPage/MainPage/AlertManager";
 import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
 import LogModule from "@/pages/common/LogViewerPage/LogModule";
-import ProductList from "@/pages/inventoryManagement/ProductList/MainPage/ProductList";
+//import ProductList from "@/pages/inventoryManagement/ProductList/MainPage/ProductList";
 import ProductTransaction from "@/pages/inventoryManagement/ProductTransaction/ProductTransaction";
 import RegistrationPage from "@/pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
 interface RouteConfig {
@@ -67,20 +66,20 @@ const routeConfig: RouteConfig[] = [
   { path: "/userlistpage", component: UserListPage, protected: true, providers: [UserListSearchProvider] },
   { path: "/profilelistpage", component: ProfileListPage, protected: true, providers: [ProfileListSearchProvider] },
   { path: "/admissionpage", component: AdmissionPage, protected: true, providers: [PatientSearchProvider] },
-  { path: "/ResourceListPage", component: ResourceListPage, protected: true },
-  { path: "/ReasonListPage", component: ReasonListPage, protected: true },
+  //{ path: "/ReasonListPage", component: ReasonListPage, protected: true },
+  //{ path: "/ResourceListPage", component: ResourceListPage, protected: true },
   { path: "/BreakListPage", component: BreakListPage, protected: true },
   { path: "/Appointmentpage", component: AppointmentPage, protected: true },
-  { path: "/PatientInvoiceCodePage", component: PatientInvoiceCodePage, protected: true },
+  //{ path: "/PatientInvoiceCodePage", component: PatientInvoiceCodePage, protected: true },
   { path: "/DepartmentListPage", component: DepartmentListPage, protected: true, providers: [UserListSearchProvider] },
   { path: "/ServiceGroupsListPage", component: ServiceGroupsListPage, protected: true },
-  { path: "/PaymentTypesPage", component: PaymentTypesPage, protected: true },
-  { path: "/AlertPage", component: AlertManager, protected: true, providers: [PatientSearchProvider] },
+  //{ path: "/PaymentTypesPage", component: PaymentTypesPage, protected: true },
+  //{ path: "/AlertPage", component: AlertManager, protected: true, providers: [PatientSearchProvider] },
   { path: "/WardCategoryPage", component: WardCategoryPage, protected: true },
   { path: "/BedSetUpPage", component: BedSetUpPage, protected: true },
   { path: "/DeptUnitListPage", component: DeptUnitListPage, protected: true },
   { path: "/InsuranceListPage", component: InsuranceListPage, protected: true },
-  { path: "/ProductListPage", component: ProductList, protected: true },
+  //{ path: "/ProductListPage", component: ProductList, protected: true },
   { path: "/ProductTaxListPage", component: ProductTaxListPage, protected: true },
   { path: "/ProductOverviewPage", component: ProductOverviewPage, protected: true },
   { path: "/ManageBedPage", component: ManageBedPage, protected: true },
@@ -100,7 +99,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/PurchaseOrderPage", component: PurchaseOrderPage, protected: true },
   { path: "/ForgotPasswordPage", component: ForgotPasswordPage, protected: false },
   { path: "/IndentProductPage", component: IndentProductPage, protected: true },
-  { path: "/EmployeeRegistrationForm", component: EmployeeRegistrationForm, protected: true },
+  //{ path: "/EmployeeRegistrationForm", component: EmployeeRegistrationForm, protected: true },
   { path: "/LogModulePage", component: LogModule, protected: true },
   { path: "/ProductTransaction", component: ProductTransaction, protected: true },
   // 404 Not Found route - must be placed last to catch all unmatched routes

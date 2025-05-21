@@ -9,7 +9,7 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
 import { AlertDto } from "@/interfaces/Common/AlertManager";
 import { sanitizeFormData } from "@/utils/Common/sanitizeInput";
-import { z } from "zod";
+import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 interface AlertFormProps {
