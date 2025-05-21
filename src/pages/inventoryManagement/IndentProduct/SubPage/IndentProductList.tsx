@@ -36,7 +36,6 @@ interface Props {
 
 const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, selectedDeptName, handleDepartmentChange, onIndentDetailsChange }) => {
   const { control, setValue, reset, handleSubmit, getValues, watch } = useForm<IndentSaveRequestDto>();
-  const { compID, compCode, compName } = useAppSelector((s) => s.auth);
   const { setLoading } = useLoading();
   const [gridData, setGridData] = useState<IndentDetailDto[]>([]);
   const initializedRef = useRef(false);
@@ -90,9 +89,6 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
           rActiveYN: "Y",
           indentApprovedYN: "Y",
           rNotes: "",
-          compID: 0,
-          compCode: "",
-          compName: "",
           transferYN: "N",
           remarks: "",
           pChartID: 0,
@@ -348,9 +344,6 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
     const indentID = isUpdate ? selectedData?.id : 0;
     const payload: IndentSaveRequestDto = {
       id: indentID,
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
       IndentMaster: {
         ...data.IndentMaster,
         indentID: indentID,

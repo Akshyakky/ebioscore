@@ -23,7 +23,7 @@ interface DischargeDetailsProps {
   onClear?: () => void;
 }
 
-const initialState = (compID?: number, compCode?: string, compName?: string): IpDischargeDto => ({
+const initialState = (): IpDischargeDto => ({
   dischgID: 0,
   pChartID: 0,
   admitID: 0,
@@ -49,16 +49,12 @@ const initialState = (compID?: number, compCode?: string, compName?: string): Ip
   defineSituation: "",
   situation: "",
   rActiveYN: "Y",
-  compID: compID || 0,
-  compCode: compCode || "",
-  compName: compName || "",
   transferYN: "N",
   rNotes: "",
 });
 
 const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, onAdmissionSelect, onClear }) => {
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
-  const [formState, setFormState] = useState<IpDischargeDto>(() => initialState(compID || 0, compCode || "", compName || ""));
+  const [formState, setFormState] = useState<IpDischargeDto>(() => initialState());
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { setLoading } = useLoading();
   const { fetchPatientSuggestions } = usePatientAutocomplete();
@@ -115,10 +111,10 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
   }, []);
 
   const handleClear = useCallback(() => {
-    setFormState(initialState(compID || 0, compCode || "", compName || ""));
+    setFormState(initialState());
     setIsSubmitted(false);
     onClear?.();
-  }, [compID, compCode, compName, onClear]);
+  }, [onClear]);
 
   const handlePatientSelect = useCallback(
     async (pChartID: number | null) => {

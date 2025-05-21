@@ -34,9 +34,6 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({
   onDeleteAgeRanges,
   indexID,
 }) => {
-  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
-  const serverDate = useServerDate();
-
   // Local states
   const [updatedAgeRanges, setUpdatedAgeRanges] = useState<LCompAgeRangeDto[]>(ageRanges);
   const [selectedRows, setSelectedRows] = useState<number[]>([]); // IDs of selected rows
@@ -66,17 +63,8 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({
       cappName: "",
       cappOrder: 0,
       rActiveYN: "Y",
-      compID: compID ?? 1,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
       transferYN: "N",
       rNotes: "",
-      rCreatedID: userID ?? 0,
-      rCreatedBy: userName ?? "",
-      rModifiedID: userID ?? 0,
-      rModifiedBy: userName ?? "",
-      rCreatedOn: serverDate ?? new Date(),
-      rModifiedOn: serverDate ?? new Date(),
     };
   }
 
@@ -93,9 +81,6 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({
       carAgeValue: `${src.carStart}-${src.carEnd} ${src.carAgeType}`,
       carSexValue: src.carSex,
       rActiveYN: "Y",
-      rModifiedOn: serverDate ?? new Date(),
-      rModifiedID: userID ?? 0,
-      rModifiedBy: userName ?? "",
     };
   }
 

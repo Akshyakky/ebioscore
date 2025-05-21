@@ -22,14 +22,9 @@ const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ edi
     labServiceYN: "N",
     isTherapyYN: "N",
     prnSGrpOrder: 1,
-    compID: user.compID || 0,
-    compCode: user.compCode || "",
-    compName: user.compName || "",
   });
 
   const { setLoading } = useLoading();
-  const serverDate = useServerDate();
-  const { userID, userName } = user;
 
   useEffect(() => {
     if (editData) {
@@ -51,21 +46,12 @@ const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ edi
       modifyYN: "N",
       defaultYN: "N",
       rActiveYN: formState.rActiveYN,
-      rCreatedID: userID || 0,
-      rCreatedOn: serverDate || new Date(),
-      rCreatedBy: userName || "",
-      rModifiedID: userID || 0,
-      rModifiedOn: serverDate || new Date(),
-      rModifiedBy: userName || "",
       rNotes: formState.rNotes,
       prnSGrpOrder: 1,
       labServiceYN: formState.labServiceYN,
       isTherapyYN: formState.isTherapyYN,
-      compID: user.compID || 0,
-      compCode: user.compCode || "",
-      compName: user.compName || "",
     }),
-    [formState, editData, userID, userName, serverDate]
+    [formState, editData]
   );
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -109,9 +95,6 @@ const ServiceGroupsListDetails: React.FC<{ editData?: BServiceGrpDto }> = ({ edi
       labServiceYN: "N",
       isTherapyYN: "N",
       prnSGrpOrder: 1,
-      compID: user.compID || 0,
-      compCode: user.compCode || "",
-      compName: user.compName || "",
     });
   }, []);
 

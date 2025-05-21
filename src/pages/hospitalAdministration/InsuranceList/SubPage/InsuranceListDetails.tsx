@@ -34,9 +34,6 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
     inCategory: "",
     rActiveYN: "Y",
     rNotes: "",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "Y",
   });
 
@@ -47,7 +44,6 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
   const { setLoading } = useLoading();
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
 
   useEffect(() => {
     if (editData) {
@@ -113,13 +109,10 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
       inCategory: "",
       rActiveYN: "Y",
       rNotes: "",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
       transferYN: "Y",
     });
     setIsSubmitted(false);
-  }, [compID, compCode, compName]);
+  }, []);
 
   const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setFormState((prev) => ({
@@ -151,9 +144,6 @@ const InsuranceDetails: React.FC<{ editData?: InsuranceListDto }> = ({ editData 
       modifyYN: "N",
       rNotes: "",
       rActiveYN: "Y",
-      compID: 0,
-      compCode: "",
-      compName: "",
       transferYN: "Y",
     });
     setIsFieldDialogOpen(true);

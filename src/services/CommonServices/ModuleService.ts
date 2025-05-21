@@ -2,7 +2,7 @@ import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
 import { store } from "@/store";
 
-const apiService = new CommonApiService({ baseURL: APIConfig.moduleURL });
+const apiService = new CommonApiService({ baseURL: APIConfig.commonURL });
 
 // Function to get the token from the store
 const getToken = () => store.getState().auth.token!;
@@ -31,7 +31,7 @@ export interface ReportPermissionDto {
 const moduleService = {
   getActiveModules: async (userID: number): Promise<ModuleDto[]> => {
     try {
-      return await apiService.get<ModuleDto[]>("GetModules", getToken(), {
+      return await apiService.get<ModuleDto[]>("module/GetModules", getToken(), {
         userID,
       });
     } catch (error) {
@@ -42,7 +42,7 @@ const moduleService = {
 
   getActiveSubModules: async (userID: number): Promise<SubModuleDto[]> => {
     try {
-      return await apiService.get<SubModuleDto[]>("GetSubModules", getToken(), {
+      return await apiService.get<SubModuleDto[]>("module/GetSubModules", getToken(), {
         userID,
       });
     } catch (error) {

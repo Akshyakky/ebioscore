@@ -4,7 +4,7 @@ import { Company } from "@/types/Common/Company.type";
 
 // Create API configuration
 const apiConfig: ApiConfig = {
-  baseURL: APIConfig.moduleURL,
+  baseURL: APIConfig.commonURL,
 };
 
 // Initialize the CommonApiService with our configuration
@@ -18,7 +18,7 @@ const getCompanies = async (): Promise<Company[]> => {
   try {
     // Using the CommonApiService to make the request
     // Note: No token is needed as this is called from the login page
-    const response = await apiService.get<Company[]>("GetCompanies");
+    const response = await apiService.get<Company[]>("company/GetCompanies");
     return response;
   } catch (error) {
     // The CommonApiService already handles basic error logging

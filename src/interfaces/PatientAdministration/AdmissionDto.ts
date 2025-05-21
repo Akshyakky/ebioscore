@@ -39,8 +39,6 @@ export interface IPAdmissionDto extends RecordFieldsWithPhysician {
   pTypeID: number;
   pTypeName: string;
   patNokID: number;
-  compCode: string;
-  compName: string;
 }
 
 export interface IPAdmissionDetailsDto extends RecordFields {
@@ -79,8 +77,6 @@ export interface IPAdmissionDetailsDto extends RecordFields {
   treatingPhySpecialty?: string;
   treatingSpecialtyID?: number;
   oldPChartID: number;
-  compCode: string;
-  compName: string;
 }
 
 export interface WrBedDetailsDto extends RecordFields {
@@ -109,8 +105,6 @@ export interface WrBedDetailsDto extends RecordFields {
   isChildYN?: "Y" | "N";
   isBoApplicableYN?: "Y" | "N";
   oldPChartID?: number;
-  compCode: string;
-  compName: string;
 }
 
 export interface AdmissionDto extends BaseDto {

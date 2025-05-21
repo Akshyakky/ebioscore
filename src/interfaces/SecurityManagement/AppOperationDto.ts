@@ -8,7 +8,4 @@ export interface AppOperationDto extends BaseDto {
   langType: string;
   transferYN: string;
   rNotes: string;
-  compID: number;
-  compCode: string;
-  compName: string;
 }

@@ -22,14 +22,10 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ selectedD
     pTaxAmt: 0,
     pTaxDescription: "",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "N",
     rNotes: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const { setLoading } = useLoading();
 
   useEffect(() => {
@@ -51,9 +47,6 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ selectedD
         pTaxAmt: 0,
         pTaxDescription: "",
         rActiveYN: "Y",
-        compID: compID || 0,
-        compCode: compCode || "",
-        compName: compName || "",
         transferYN: "N",
         rNotes: "",
       });
@@ -63,7 +56,7 @@ const ProductTaxListDetails: React.FC<ProductTaxListDetailsProps> = ({ selectedD
     } finally {
       setLoading(false);
     }
-  }, [compID, compCode, compName]);
+  }, []);
 
   useEffect(() => {
     if (!selectedData) {

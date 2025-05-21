@@ -9,13 +9,4 @@ export interface DeptUserDto {
   appUserName: string;
   appCode: string;
   transferYN: string;
-  rCreatedID: number;
-  rCreatedOn: Date;
-  rCreatedBy: string;
-  rModifiedID: number;
-  rModifiedOn: Date;
-  rModifiedBy: string;
-  compID: number;
-  compCode: string;
-  compName: string;
 }

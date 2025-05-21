@@ -25,8 +25,6 @@ interface FamilyHistoryProps {
 }
 
 export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
-
   const initialFormState: OPIPHistFHDto = useMemo(
     () => ({
       opipFHID: 0,
@@ -40,13 +38,10 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
       opipFHNotes: "",
       oldPChartID: 0,
       rActiveYN: "Y",
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
       transferYN: "N",
       rNotes: "",
     }),
-    [pChartID, opipNo, opipCaseNo, compID, compCode, compName]
+    [pChartID, opipNo, opipCaseNo]
   );
 
   const [formState, setFormState] = useState<OPIPHistFHDto>(initialFormState);

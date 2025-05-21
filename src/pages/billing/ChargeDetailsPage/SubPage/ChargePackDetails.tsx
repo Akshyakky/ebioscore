@@ -26,7 +26,6 @@ interface GridData {
 
 const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreakYN, onChargePackagesChange, onGridDataChange }) => {
   const [gridData, setGridData] = useState<GridData[]>([]);
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [adjustmentAmount, setAdjustmentAmount] = useState<number>(0);
   const [isPercentage, setIsPercentage] = useState<boolean>(true);
   const [adjustmentType, setAdjustmentType] = useState<"increase" | "decrease" | "none">("none");
@@ -190,9 +189,6 @@ const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreak
         DcValue: parseFloat(row[`${dropdownValues.bedCategory?.[0]?.label}_drAmt`] || "0"),
         hcValue: parseFloat(row[`${dropdownValues.bedCategory?.[0]?.label}_hospAmt`] || "0"),
         chValue: parseFloat(row[`${dropdownValues.bedCategory?.[0]?.label}_totAmt`] || "0"),
-        compID: compID || 0,
-        compCode: compCode || "",
-        compName: compName || "",
         transferYN: "Y",
         rActiveYN: "Y",
         rNotes: "",

@@ -41,17 +41,6 @@ interface UseAdmissionFormReturn {
   updatePatientHistory: (historyData: any) => void;
 }
 
-// const getCompanyDetails = () => {
-//   const { compID, compCode, compName } = useAppSelector((state: RootState) => state.auth);
-//   return {
-//     compID: compID || 0,
-//     compCode: compCode || "",
-//     compName: compName || "",
-//     rActiveYN: "Y",
-//     transferYN: "N",
-//   };
-// };
-
 const initialFormState: AdmissionDto = {
   ipAdmissionDto: {
     admitDate: new Date(),
@@ -75,8 +64,6 @@ const initialFormState: AdmissionDto = {
 };
 
 const useAdmissionForm = (): UseAdmissionFormReturn => {
-  const companyDetails = useCompanyDetails();
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [formData, setFormData] = useState<AdmissionDto>(initialFormState);
   const [primaryDiagnoses, setPrimaryDiagnoses] = useState<DiagnosisDetailDto[]>([]);
   const [associatedDiagnoses, setAssociatedDiagnoses] = useState<AssocDiagnosisDetailDto[]>([]);
@@ -99,9 +86,6 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
       opipDate: new Date(),
       details: [],
       rActiveYN: "Y",
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
       transferYN: "N",
       rNotes: "",
       oldPChartID: 0,
@@ -116,9 +100,6 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
         patOpip: "I",
         opipDate: new Date(),
         rActiveYN: "Y",
-        compID: compID ?? 0,
-        compCode: compCode ?? "",
-        compName: compName ?? "",
         transferYN: "N",
         rNotes: "",
         oldPChartID: 0,
@@ -229,9 +210,6 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
         opipDate: new Date(),
         details: [],
         rActiveYN: "Y",
-        compID: compID ?? 0,
-        compCode: compCode ?? "",
-        compName: compName ?? "",
         transferYN: "N",
         rNotes: "",
         oldPChartID: 0,
@@ -246,9 +224,6 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
           patOpip: "I",
           opipDate: new Date(),
           rActiveYN: "Y",
-          compID: compID ?? 0,
-          compCode: compCode ?? "",
-          compName: compName ?? "",
           transferYN: "N",
           rNotes: "",
           oldPChartID: 0,
@@ -262,19 +237,13 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
       insurancePageRef.current.handleClear();
     }
     fetchAdmitCode();
-  }, [compID, compCode, compName, fetchAdmitCode]);
+  }, [fetchAdmitCode]);
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     if (!validateForm()) return false;
 
     try {
       setLoading(true);
-      formData.ipAdmissionDto.compCode = "KVG";
-      formData.ipAdmissionDetailsDto.compCode = "KVG";
-      formData.wrBedDetailsDto.compCode = "KVG";
-      formData.ipAdmissionDto.compName = "KVG Medical College";
-      formData.ipAdmissionDetailsDto.compName = "KVG Medical College";
-      formData.wrBedDetailsDto.compName = "KVG Medical College";
       // Save admission first
       const admissionResult = await extendedAdmissionService.admitPatient(formData);
       if (!admissionResult.success) {
@@ -312,9 +281,6 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
             lcddsgId: diag.lcddsgId,
             lcddsgName: diag.lcddsgName,
             rActiveYN: "Y",
-            compID: formData.ipAdmissionDto.compID,
-            compCode: formData.ipAdmissionDto.compCode,
-            compName: formData.ipAdmissionDto.compName,
             transferYN: "N",
             rNotes: "",
           })),
@@ -331,16 +297,10 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
             lcddsgId: diag.lcddsgId,
             lcddsgName: diag.lcddsgName,
             rActiveYN: "Y",
-            compID: formData.ipAdmissionDto.compID,
-            compCode: formData.ipAdmissionDto.compCode,
-            compName: formData.ipAdmissionDto.compName,
             transferYN: "N",
             rNotes: "",
           })),
           rActiveYN: "Y",
-          compID: formData.ipAdmissionDto.compID,
-          compCode: formData.ipAdmissionDto.compCode,
-          compName: formData.ipAdmissionDto.compName,
           transferYN: "N",
           rNotes: "",
         };
@@ -550,9 +510,6 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
             opipDate: new Date(),
             details: [],
             rActiveYN: "Y",
-            compID: compID ?? 0,
-            compCode: compCode ?? "",
-            compName: compName ?? "",
             transferYN: "N",
             rNotes: "",
             oldPChartID: 0,
@@ -567,9 +524,6 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
               patOpip: "I",
               opipDate: new Date(),
               rActiveYN: "Y",
-              compID: compID ?? 0,
-              compCode: compCode ?? "",
-              compName: compName ?? "",
               transferYN: "N",
               rNotes: "",
               oldPChartID: 0,
@@ -643,9 +597,6 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
               opipDate: new Date(),
               details: [],
               rActiveYN: "Y",
-              compID: compID ?? 0,
-              compCode: compCode ?? "",
-              compName: compName ?? "",
               transferYN: "N",
               rNotes: "",
               oldPChartID: 0,
@@ -731,7 +682,7 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
         setLoading(false);
       }
     },
-    [setPrimaryDiagnoses, setAssociatedDiagnoses, fhService, shService, pmhService, rosService, pshService, pastMedService, compID, compCode, compName]
+    [setPrimaryDiagnoses, setAssociatedDiagnoses, fhService, shService, pmhService, rosService, pshService, pastMedService]
   );
 
   const handleBedSelect = useCallback((bed: any) => {

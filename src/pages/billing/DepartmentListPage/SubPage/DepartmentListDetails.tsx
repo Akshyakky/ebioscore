@@ -18,7 +18,6 @@ interface DepartmentListDetailsProps {
 }
 
 const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData }) => {
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [formData, setFormData] = useState<DepartmentDto>({
     deptID: 0,
     deptCode: "",
@@ -38,9 +37,6 @@ const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData 
     superSpecialityYN: "N",
     rActiveYN: "Y",
     transferYN: "N",
-    compID: compID ?? 0,
-    compCode: compCode ?? "",
-    compName: compName ?? "",
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -114,9 +110,6 @@ const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData 
       superSpecialityYN: "N",
       rActiveYN: "Y",
       transferYN: "N",
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
     });
     setIsSubmitted(false);
   }, []);

@@ -65,9 +65,6 @@ export interface ProductSearchResult {
   sgstPerValue?: number;
   universalCode?: number;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
 }

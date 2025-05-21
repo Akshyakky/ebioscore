@@ -26,9 +26,6 @@ export interface IpDischargeDto extends BaseDto {
   defineSituation?: string;
   situation?: string;
   rActiveYN: "Y" | "N";
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: "Y" | "N";
   rNotes?: string;
 }

@@ -7,9 +7,6 @@ export interface ProductGroupDto extends BaseDto {
   modifyYN: string;
   defaultYN: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
 }
@@ -21,9 +18,6 @@ export interface ProductUnitDto extends BaseDto {
   modifyYN: string;
   defaultYN: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
 }
@@ -35,9 +29,6 @@ export interface ProductSubGroupDto extends BaseDto {
   modifyYN: string;
   defaultYN: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
 }

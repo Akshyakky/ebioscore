@@ -55,9 +55,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
         noOfBeds: 0,
         rActiveYN: "Y",
         rgrpID: 0,
-        compID: user.compID || 0,
-        compCode: user.compCode || "",
-        compName: user.compName || "",
         transferYN: "Y",
         rLocation: "",
         rLocationID: 0,
@@ -78,9 +75,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
       noOfBeds: 0,
       rActiveYN: "Y",
       rgrpID: 0,
-      compID: user?.compID || 0,
-      compCode: user?.compCode || "",
-      compName: user?.compName || "",
       transferYN: "Y",
       rLocation: "",
       rLocationID: 0,
@@ -92,28 +86,6 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
     setDialogTitle("Add Room");
     setIsDialogOpen(true);
   }, [user]);
-
-  // function getInitialFormData(): RoomListDto {
-  //   return {
-  //     rlID: 0,
-  //     rlCode: "",
-  //     rNotes: "",
-  //     rName: "",
-  //     noOfBeds: 0,
-  //     rActiveYN: "Y",
-  //     rgrpID: 0,
-  //     compID: user.compID || 0,
-  //     compCode: user.compCode || "",
-  //     compName: user.compName || "",
-  //     transferYN: "Y",
-  //     rLocation: "",
-  //     rLocationID: 0,
-  //     deptName: "",
-  //     deptID: 0,
-  //     dulID: 0,
-  //     unitDesc: "",
-  //   };
-  // }
 
   useEffect(() => {
     dropdownValues.roomGroup = updatedRoomGroups

@@ -24,7 +24,6 @@ interface SurgicalHistoryProps {
 }
 
 export const SurgicalHistory: React.FC<SurgicalHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const initialFormState: OPIPHistPSHDto = {
     opipPshID: 0,
     opipNo: opipNo,
@@ -37,9 +36,6 @@ export const SurgicalHistory: React.FC<SurgicalHistoryProps> = ({ pChartID, opip
     opipPshNotes: "",
     oldPChartID: 0,
     rActiveYN: "Y",
-    compID: compID ?? 0,
-    compCode: compCode ?? "",
-    compName: compName ?? "",
     transferYN: "N",
     rNotes: "",
   };

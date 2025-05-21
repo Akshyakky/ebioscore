@@ -17,9 +17,6 @@ export interface BedTransferRequestDto {
   treatingSpecialtyID: number;
   treatingPhySpecialty: string;
   // Audit Fields
-  compID: number;
-  compCode: string;
-  compName: string;
   reasonForTransfer: string;
   transferDate: string;
   rNotes: string;

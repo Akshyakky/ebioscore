@@ -47,9 +47,6 @@ export interface AppointBookingDto extends BaseDto {
   abTitle?: string;
   cancelReason?: string;
   city?: string;
-  compID?: number;
-  compCode?: string;
-  compName?: string;
   dob: Date;
   email?: string;
   pChartCompID?: number;

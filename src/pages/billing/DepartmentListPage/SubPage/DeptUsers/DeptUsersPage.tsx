@@ -1,7 +1,6 @@
 import CustomButton from "@/components/Button/CustomButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { UserListSearchContext } from "@/context/SecurityManagement/UserListSearchContext";
-import { useServerDate } from "@/hooks/Common/useServerDate";
 import { DeptUserDto } from "@/interfaces/Billing/DeptUserDto";
 import { UserListData } from "@/interfaces/SecurityManagement/UserListData";
 import { DeptUserListService } from "@/services/BillingServices/DeptUserListService";
@@ -22,8 +21,6 @@ interface DeptUsersListPageProps {
 export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({ deptId, deptName, openDialog, handleCloseDialog }) => {
   const [deptUsers, setDeptUsers] = useState<DeptUserDto[]>([]);
   const { fetchAllUsers } = useContext(UserListSearchContext);
-  const serverDate = useServerDate();
-  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   //
   const [isDUSearchOpen, setIsDUSearchOpen] = useState(false);
 
@@ -47,15 +44,6 @@ export const DeptUsersPage: React.FC<DeptUsersListPageProps> = ({ deptId, deptNa
       allowPMYN: "N",
       transferYN: "N",
       rNotes: "",
-      rCreatedID: userID || 0,
-      rCreatedOn: serverDate,
-      rCreatedBy: userName || "",
-      rModifiedID: userID || 0,
-      rModifiedOn: serverDate,
-      rModifiedBy: userName || "",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
     };
 
     if (deptUsers.filter((deptUser) => deptUser.deptID == deptId && newDeptUser.appID === 50).length === 0) {

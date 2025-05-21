@@ -14,16 +14,8 @@ export interface UserListDto extends BaseDto {
   appUAccess?: string;
   profileID: number;
   rActiveYN: string;
-  rCreatedOn: string;
-  rCreatedID: number;
-  rCreatedBy: string;
-  rModifiedOn: string;
-  rModifiedID: number;
   rModifiedBy: string;
   rNotes?: string;
-  compCode: string;
-  compID?: number;
-  compName: string;
   transferYN?: string;
 }
 
@@ -43,9 +35,6 @@ export interface UserListData {
   appUcatCode: string;
   appUcatType: string;
   adminUserYN: string;
-  compCode: string;
-  compID?: number;
-  compName: string;
   conCompId?: number;
   digSignPath: string;
   transferYN?: string;
@@ -89,9 +78,6 @@ export interface UserPermissionDto {
   rModifiedBy: string;
   rModifiedOn: string;
   rNotes: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   profileID: number;
   operationID?: number;
   profDetID?: number;

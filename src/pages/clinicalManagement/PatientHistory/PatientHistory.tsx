@@ -40,7 +40,6 @@ interface PatientHistoryProps {
 }
 export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo, opipCaseNo, shouldClear = false, onHistoryChange }) => {
   const [tabValue, setTabValue] = useState(0);
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [historyState, setHistoryState] = useState<HistoryState>({
     familyHistory: [],
     socialHistory: [],
@@ -57,9 +56,6 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
       opipDate: new Date(),
       details: [],
       rActiveYN: "Y",
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
       transferYN: "N",
       rNotes: "",
       oldPChartID: 0,
@@ -74,9 +70,6 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
         patOpip: "I",
         opipDate: new Date(),
         rActiveYN: "Y",
-        compID: compID ?? 0,
-        compCode: compCode ?? "",
-        compName: compName ?? "",
         transferYN: "N",
         rNotes: "",
         oldPChartID: 0,
@@ -94,9 +87,6 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
       patOpip: "I",
       opipDate: new Date(),
       rActiveYN: "Y",
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
       transferYN: "N",
       rNotes: "",
       oldPChartID: 0,
@@ -268,9 +258,6 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
           opipDate: new Date(),
           details: [],
           rActiveYN: "Y",
-          compID: compID ?? 0,
-          compCode: compCode ?? "",
-          compName: compName ?? "",
           rNotes: "",
           oldPChartID: 0,
           transferYN: "N",
@@ -285,9 +272,6 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
             patOpip: "I",
             opipDate: new Date(),
             rActiveYN: "Y",
-            compID: compID ?? 0,
-            compCode: compCode ?? "",
-            compName: compName ?? "",
             transferYN: "N",
             rNotes: "",
             oldPChartID: 0,
@@ -333,9 +317,6 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
             opipDate: new Date(),
             details: [],
             rActiveYN: "Y",
-            compID: compID ?? 0,
-            compCode: compCode ?? "",
-            compName: compName ?? "",
             transferYN: "N",
             rNotes: "",
             oldPChartID: 0,
@@ -353,7 +334,7 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
     };
 
     fetchHistoryData();
-  }, [pChartID, opipNo, opipCaseNo, shouldClear, onHistoryChange, compID, compCode, compName]);
+  }, [pChartID, opipNo, opipCaseNo, shouldClear, onHistoryChange]);
 
   return (
     <Box sx={{ width: "100%" }}>

@@ -32,7 +32,6 @@ interface WardBedTransferDetailsProps {
 }
 
 const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBedTransferDetailsProps>(({ selectedAdmission, onAdmissionSelect, onClear }, ref) => {
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [formState, setFormState] = useState<BedTransferRequestDto>({
     admitID: 0,
     pChartID: 0,
@@ -47,9 +46,6 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
     treatPhyName: "",
     treatingSpecialtyID: 0,
     treatingPhySpecialty: "",
-    compID: compID || 0,
-    compCode: compCode || "",
-    compName: compName || "",
     reasonForTransfer: "",
     transferDate: new Date().toISOString(),
     rNotes: "",
@@ -241,9 +237,6 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
       treatPhyName: "",
       treatingSpecialtyID: 0,
       treatingPhySpecialty: "",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
       reasonForTransfer: "",
       transferDate: new Date().toISOString(),
       rNotes: "",
@@ -252,7 +245,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
     setRoomOptions([]);
     setBedOptions([]);
     onClear?.();
-  }, [compID, compCode, compName, onClear]);
+  }, [onClear]);
 
   const validateTransfer = useCallback(async () => {
     if (!selectedAdmission?.wrBedDetailsDto?.bedID || !formState.bedID || !formState.admitID) {

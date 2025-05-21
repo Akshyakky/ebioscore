@@ -19,12 +19,6 @@ export interface LInvMastDto extends BaseDto {
   invPrintOrder: number;
   deptID: number;
   deptName?: string;
-  rCreatedOn: Date;
-  rCreatedID: number;
-  rCreatedBy?: string;
-  rModifiedOn: Date;
-  rModifiedID: number;
-  rModifiedBy?: string;
   bchID: number;
   invCode?: string;
   invType?: string;
@@ -35,9 +29,6 @@ export interface LInvMastDto extends BaseDto {
   invShortName?: string;
   methods?: string;
   coopLabs?: string;
-  compID?: number;
-  compCode?: string;
-  compName?: string;
   transferYN?: string;
   rActiveYN: string;
 }
@@ -69,9 +60,6 @@ export interface LComponentDto extends BaseDto {
   cNHSGreekNameCD?: string;
   cShortNameCD?: string;
   rActiveYN: string;
-  compID: number;
-  compCode?: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
   indexID?: number;
@@ -84,16 +72,8 @@ export interface LComponentEntryTypeDto extends BaseDto {
   lCentType: string;
   langType: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
-  rCreatedOn?: Date;
-  rModifiedOn?: Date;
-  rModifiedBy?: string;
-  rCreatedIdNr?: number;
-  rModifiedId?: number;
 }
 
 export interface LCompMultipleDto extends BaseDto {
@@ -102,16 +82,8 @@ export interface LCompMultipleDto extends BaseDto {
   compOID?: number;
   defaultYN?: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
-  rCreatedOn?: Date;
-  rModifiedOn?: Date;
-  rModifiedBy?: string;
-  rCreatedIdNr?: number;
-  rModifiedId?: number;
   invID?: number;
   indexID?: number;
 }
@@ -129,16 +101,8 @@ export interface LCompAgeRangeDto extends BaseDto {
   cappName: string;
   cappOrder?: number;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
-  rCreatedOn?: Date;
-  rModifiedOn?: Date;
-  rModifiedBy?: string;
-  rCreatedIdNr?: number;
-  rModifiedId?: number;
   indexID?: number;
 }
 
@@ -150,16 +114,8 @@ export interface LCompTemplateDto extends BaseDto {
   isBlankYN?: string;
   compOID?: number;
   rActiveYN: string;
-  compID: number;
-  compCode?: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
-  rCreatedOn?: Date;
-  rModifiedOn?: Date;
-  rModifiedBy?: string;
-  rCreatedId?: number;
-  rModifiedId?: number;
   invID?: number;
   indexID?: number;
 }

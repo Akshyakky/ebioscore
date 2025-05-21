@@ -7,9 +7,6 @@ export interface ProductTaxListDto extends BaseDto {
   pTaxAmt?: number;
   pTaxDescription?: string;
   rActiveYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
   rNotes?: string;
 }

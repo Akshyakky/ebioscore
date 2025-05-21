@@ -6,6 +6,5 @@ export interface WardCategoryDto extends BaseDto {
   wCatName: string;
   rActiveYN: string;
   rNotes?: string;
-  compID?: number;
   transferYN?: string;
 }

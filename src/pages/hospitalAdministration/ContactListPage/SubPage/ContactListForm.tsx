@@ -35,7 +35,6 @@ interface ContactListFormProps {
 }
 
 const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormProps>(({ contactList, setContactList, switchStates, setSwitchStates, onSave, onClear }, ref) => {
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { handleDropdownChange } = useDropdownChange<ContactListData>(setContactList);
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
@@ -79,9 +78,6 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
         contactDetailsDto: selectedValues.map((val) => ({
           facID: parseInt(val),
           facName: dropdownValues.speciality?.find((opt) => opt.value === val)?.label || "",
-          compID: compID!,
-          compCode: compCode!,
-          compName: compName!,
           transferYN: "N",
           cdID: 0,
           conID: prev.contactMastDto.conID,
@@ -95,7 +91,7 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
         },
       }));
     },
-    [dropdownValues.speciality, compID, compCode, compName, setContactList]
+    [dropdownValues.speciality, setContactList]
   );
 
   const handleCategoryChange = useCallback(
@@ -249,9 +245,6 @@ const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormPro
       modifyYN: "N",
       rNotes: "",
       rActiveYN: "Y",
-      compID: 0,
-      compCode: "",
-      compName: "",
       transferYN: "Y",
     });
     setIsFieldDialogOpen(true);

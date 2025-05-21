@@ -27,7 +27,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups, fetchRo
   const { setLoading } = useLoading();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
   const [roomGroupHierarchy, setRoomGroupHierarchy] = useState<RoomGroupDto[]>([]);
   const [formData, setFormData] = useState<RoomGroupDto>({
@@ -43,9 +42,6 @@ const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups, fetchRo
     deptID: 0,
     transferYN: "Y",
     rGrpTypeValue: "",
-    compID: compID ?? 0,
-    compCode: compCode ?? "",
-    compName: compName ?? "",
   });
 
   const { handleDropdownChange } = useDropdownChange<RoomGroupDto>(setFormData);

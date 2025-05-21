@@ -28,7 +28,6 @@ const DeptUnitListDetails: React.FC<DeptUnitListDetailsProps> = ({ editData }) =
     rNotes: "",
     transferYN: "N",
   });
-  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   const { setLoading } = useLoading();
   const { handleDropdownChange } = useDropdownChange(setFormState);
   const dropdownValues = useDropdownValues(["department"]);
@@ -49,7 +48,7 @@ const DeptUnitListDetails: React.FC<DeptUnitListDetailsProps> = ({ editData }) =
     } else {
       handleClear();
     }
-  }, [editData, compID, compCode, compName, userID, userName]);
+  }, [editData]);
 
   const handleClear = useCallback(() => {
     setFormState({
@@ -75,10 +74,7 @@ const DeptUnitListDetails: React.FC<DeptUnitListDetailsProps> = ({ editData }) =
       rmCompID: formState.rmCompID,
       rActiveYN: formState.rActiveYN,
       rNotes: formState.rNotes,
-      compID: compID || 0,
       transferYN: formState.transferYN,
-      compCode: compCode || "",
-      compName: compName || "",
     }),
     [formState]
   );

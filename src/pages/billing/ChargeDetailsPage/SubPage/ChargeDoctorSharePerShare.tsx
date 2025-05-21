@@ -29,7 +29,6 @@ const ChargeDoctorSharePerShare: React.FC<ChargeDoctorSharePerShareProps> = ({ o
   const [selectedPhysician, setSelectedPhysician] = useState<string>("");
   const [columns, setColumns] = useState<ColumnConfig[]>([]);
   const dropdownValues = useDropdownValues(["attendingPhy"]);
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
 
   useEffect(() => {
     const baseColumns: ColumnConfig[] = [
@@ -89,9 +88,6 @@ const ChargeDoctorSharePerShare: React.FC<ChargeDoctorSharePerShareProps> = ({ o
           conID: consultantId,
           doctorShare: 0,
           hospShare: 100,
-          compID: compID || 0,
-          compCode: compCode || "",
-          compName: compName || "",
           rActiveYN: "Y",
           transferYN: "N",
           rNotes: "",
@@ -130,9 +126,6 @@ const ChargeDoctorSharePerShare: React.FC<ChargeDoctorSharePerShareProps> = ({ o
         conID: row.conID,
         doctorShare: row.docShare,
         hospShare: row.hospShare,
-        compID: compID || 0,
-        compCode: compCode || "",
-        compName: compName || "",
         rActiveYN: "Y",
         transferYN: "N",
         rNotes: "",
@@ -141,7 +134,7 @@ const ChargeDoctorSharePerShare: React.FC<ChargeDoctorSharePerShareProps> = ({ o
 
       onGridDataChange(doctorShareData);
     },
-    [compID, compCode, compName, onGridDataChange]
+    [onGridDataChange]
   );
 
   return (

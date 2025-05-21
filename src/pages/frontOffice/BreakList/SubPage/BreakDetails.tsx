@@ -40,7 +40,6 @@ const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
   const serverDate = useServerDate();
 
   // Destructure from useAppSelector for user details
-  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
 
   const [isSubmitted] = useState(false);
   const [isOneDay, setIsOneDay] = useState(false);
@@ -59,9 +58,6 @@ const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
     rActiveYN: "Y",
     rNotes: "",
     isPhyResYN: "Y",
-    compID: compID || 0,
-    compCode: compCode || "",
-    compName: compName || "",
     transferYN: "N",
   });
 
@@ -301,9 +297,6 @@ const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
             hPLID: itemID,
             rActiveYN: "Y",
             rNotes: "",
-            compID: compID,
-            compCode: compCode,
-            compName: compName,
             transferYN: "N",
           };
 
@@ -345,9 +338,6 @@ const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
       rActiveYN: "Y",
       rNotes: "",
       isPhyResYN: "Y",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
       transferYN: "N",
     });
     setBreakConDetails([]);
