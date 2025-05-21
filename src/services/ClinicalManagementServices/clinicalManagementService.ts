@@ -6,6 +6,7 @@ import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/Medication
 import { MedicationInstructionDto } from "@/interfaces/ClinicalManagement/MedicationInstructionDto";
 import { MedicationRouteDto } from "@/interfaces/ClinicalManagement/MedicationRouteDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
+import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
 
 export const medicationRouteService = createEntityService<MedicationRouteDto>("MedicationRoute", "clinicalManagementURL");
 export const medicationFormService = createEntityService<MedicationFormDto>("MedicationForm", "clinicalManagementURL");
@@ -15,3 +16,4 @@ export const consultantRoleService = createEntityService<ConsultantRoleDto>("Con
 export const medicationDosageService = createEntityService<MedicationDosageDto>("MedicationDosage", "clinicalManagementURL");
 export const medicationFrequencyService = createEntityService<MedicationFrequencyDto>("MedicationFrequency", "clinicalManagementURL");
 export const medicationInstructionService = createEntityService<MedicationInstructionDto>("MedicationInstruction", "clinicalManagementURL");
+export const medicationListService = createEntityService<MedicationListDto>("MedicationList", "clinicalManagementURL");
