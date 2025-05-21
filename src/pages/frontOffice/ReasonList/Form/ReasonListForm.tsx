@@ -3,54 +3,61 @@ import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornmen
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
+import { ReasonListData } from "@/interfaces/FrontOffice/ReasonListData";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
-import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
-import { useResourceList } from "../hooks/useResourceList";
+import { reasonListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+import { useReasonList } from "../hooks/useReasonList";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
-interface ResourceListFormProps {
+interface ReasonListFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
-  initialData: ResourceListData | null;
+  initialData: ReasonListData | null;
   viewOnly?: boolean;
 }
 
 const schema = z.object({
-  rLID: z.number(),
-  rLCode: z.string().nonempty("Resource code is required"),
-  rLName: z.string().nonempty("Resource name is required"),
-  rLValidateYN: z.string().nonempty("Validation status is required"),
-  rLOtYN: z.string().nonempty("OT status is required"),
+  arlID: z.number(),
+  arlCode: z.string().nonempty("Reason code is required"),
+  arlName: z.string().nonempty("Reason name is required"),
+  arlDuration: z.any(),
+  arlDurDesc: z.string().optional(),
+  arlColor: z.number().min(0, "Color must be a positive number"),
   rActiveYN: z.string(),
   rNotes: z.string().nullable().optional(),
   transferYN: z.string().optional(),
+  rlID: z.number().optional(),
+  rlName: z.string().optional(),
 });
 
-type ResourceListFormData = z.infer<typeof schema>;
+type ReasonListFormData = z.infer<typeof schema>;
 
-const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
+const ReasonListForm: React.FC<ReasonListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode } = useResourceList();
+  const { getNextCode } = useReasonList();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
-
+  const { resourceList } = useDropdownValues(["resourceList"]);
   const isAddMode = !initialData;
 
-  const defaultValues: ResourceListFormData = {
-    rLID: 0,
-    rLCode: "",
-    rLName: "",
-    rLValidateYN: "N",
-    rLOtYN: "N",
+  const defaultValues: ReasonListFormData = {
+    arlID: 0,
+    arlCode: "",
+    arlName: "",
+    arlDuration: 0,
+    arlDurDesc: "",
+    arlColor: 1,
     rActiveYN: "Y",
     rNotes: "",
     transferYN: "N",
+    rlID: 0,
+    rlName: "",
   };
 
   const {
@@ -59,7 +66,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
     reset,
     setValue,
     formState: { errors, isDirty, isValid },
-  } = useForm<ResourceListFormData>({
+  } = useForm<ReasonListFormData>({
     defaultValues,
     resolver: zodResolver(schema),
     mode: "onChange",
@@ -67,19 +74,19 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
 
   const rActiveYN = useWatch({ control, name: "rActiveYN" });
 
-  const generateResourceCode = async () => {
+  const generateReasonCode = async () => {
     if (!isAddMode) return;
 
     try {
       setIsGeneratingCode(true);
-      const nextCode = await getNextCode("RES", 3);
+      const nextCode = await getNextCode("RSN", 3);
       if (nextCode) {
-        setValue("rLCode", nextCode, { shouldValidate: true, shouldDirty: true });
+        setValue("arlCode", nextCode, { shouldValidate: true, shouldDirty: true });
       } else {
-        showAlert("Warning", "Failed to generate resource code", "warning");
+        showAlert("Warning", "Failed to generate reason code", "warning");
       }
     } catch (error) {
-      console.error("Error generating resource code:", error);
+      console.error("Error generating reason code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -87,14 +94,14 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
 
   useEffect(() => {
     if (initialData) {
-      reset(initialData as ResourceListFormData);
+      reset(initialData as ReasonListFormData);
     } else {
       reset(defaultValues);
-      generateResourceCode();
+      generateReasonCode();
     }
   }, [initialData, reset]);
 
-  const onSubmit = async (data: ResourceListFormData) => {
+  const onSubmit = async (data: ReasonListFormData) => {
     if (viewOnly) return;
 
     setFormError(null);
@@ -103,29 +110,31 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
       setIsSaving(true);
       setLoading(true);
 
-      const resourceData: ResourceListData = {
-        rLID: data.rLID,
-        rLCode: data.rLCode,
-        rLName: data.rLName,
-        rLValidateYN: data.rLValidateYN,
-        rLOtYN: data.rLOtYN,
+      const reasonData: ReasonListData = {
+        arlID: data.arlID,
+        arlCode: data.arlCode,
+        arlName: data.arlName,
+        arlDuration: Number(data.arlDuration),
+        arlDurDesc: data.arlDurDesc || "",
+        arlColor: data.arlColor,
         rActiveYN: data.rActiveYN || "Y",
-        rNotes: data.rNotes,
+        rNotes: data.rNotes || "",
         transferYN: data.transferYN || "N",
+        rlID: data.rlID || 0,
+        rlName: data.rlName || "",
       };
 
-      const response = await resourceListService.save(resourceData);
+      const response = await reasonListService.save(reasonData);
 
       if (response.success) {
-        showAlert("Success", isAddMode ? "Resource created successfully" : "Resource updated successfully", "success");
-
+        showAlert("Success", isAddMode ? "Reason created successfully" : "Reason updated successfully", "success");
         onClose(true);
       } else {
-        throw new Error(response.errorMessage || "Failed to save resource");
+        throw new Error(response.errorMessage || "Failed to save reason");
       }
     } catch (error) {
-      console.error("Error saving resource:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to save resource";
+      console.error("Error saving reason:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to save reason";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
     } finally {
@@ -137,24 +146,24 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
   const handleReset = () => {
     if (isDirty) {
       if (window.confirm("Are you sure you want to reset the form? All unsaved changes will be lost.")) {
-        reset(initialData ? (initialData as ResourceListFormData) : defaultValues);
+        reset(initialData ? (initialData as ReasonListFormData) : defaultValues);
         setFormError(null);
 
         if (isAddMode) {
-          generateResourceCode();
+          generateReasonCode();
         }
       }
     } else {
-      reset(initialData ? (initialData as ResourceListFormData) : defaultValues);
+      reset(initialData ? (initialData as ReasonListFormData) : defaultValues);
       setFormError(null);
 
       if (isAddMode) {
-        generateResourceCode();
+        generateReasonCode();
       }
     }
   };
 
-  const dialogTitle = viewOnly ? "View Resource Details" : isAddMode ? "Create New Resource" : `Edit Resource - ${initialData?.rLName}`;
+  const dialogTitle = viewOnly ? "View Reason Details" : isAddMode ? "Create New Reason" : `Edit Reason - ${initialData?.arlName}`;
 
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
@@ -172,7 +181,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? "Create Resource" : "Update Resource"}
+          text={isAddMode ? "Create Reason" : "Update Reason"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
@@ -189,7 +198,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
 
   const handleRefreshCode = () => {
     if (isAddMode) {
-      generateResourceCode();
+      generateReasonCode();
     }
   };
 
@@ -235,9 +244,9 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
                 <Grid container spacing={2}>
                   <Grid size={{ sm: 12, md: 6 }}>
                     <FormField
-                      name="rLCode"
+                      name="arlCode"
                       control={control}
-                      label="Resource Code"
+                      label="Reason Code"
                       type="text"
                       required
                       disabled={viewOnly || !isAddMode}
@@ -259,7 +268,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="rLName" control={control} label="Resource Name" type="text" required disabled={viewOnly} size="small" fullWidth />
+                    <FormField name="arlName" control={control} label="Reason Name" type="text" required disabled={viewOnly} size="small" fullWidth />
                   </Grid>
                 </Grid>
               </CardContent>
@@ -271,17 +280,42 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Resource Settings
+                  Reason Settings
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="rLValidateYN" control={control} label="Validate" type="switch" disabled={viewOnly} size="small" />
+                    <FormField name="arlDuration" control={control} label="Duration (minutes)" type="number" required disabled={viewOnly} size="small" inputProps={{ min: 0 }} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="rLOtYN" control={control} label="OT" type="switch" disabled={viewOnly} size="small" />
+                    <FormField
+                      name="arlDurDesc"
+                      control={control}
+                      label="Duration Description"
+                      type="text"
+                      disabled={viewOnly}
+                      size="small"
+                      fullWidth
+                      placeholder="E.g., Short, Medium, Long"
+                    />
+                  </Grid>
+                  <Grid size={{ sm: 12, md: 6 }}>
+                    <FormField
+                      name="rlID"
+                      control={control}
+                      label="Associated Resource"
+                      type="select"
+                      disabled={viewOnly}
+                      size="small"
+                      options={resourceList}
+                      fullWidth
+                      onChange={(value) => {
+                        const selectedResource = resourceList?.find((resource) => Number(resource.value) === Number(value.value));
+                        setValue("rlName", selectedResource.label);
+                      }}
+                    />
                   </Grid>
                 </Grid>
               </CardContent>
@@ -308,7 +342,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
                       size="small"
                       fullWidth
                       rows={4}
-                      placeholder="Enter any additional information about this resource"
+                      placeholder="Enter any additional information about this reason"
                     />
                   </Grid>
                 </Grid>
@@ -321,4 +355,4 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
   );
 };
 
-export default ResourceListForm;
+export default ReasonListForm;

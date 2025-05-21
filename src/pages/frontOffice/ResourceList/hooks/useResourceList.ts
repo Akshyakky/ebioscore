@@ -1,4 +1,3 @@
-// src/hooks/FrontOffice/useResourceList.ts
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";

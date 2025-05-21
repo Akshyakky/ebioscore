@@ -3,53 +3,64 @@ import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornmen
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
+import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
-import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
-import { useResourceList } from "../hooks/useResourceList";
+import { usePaymentTypes } from "../hooks/usePaymentTypes";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { paymentTypeService } from "@/services/BillingServices/BillingGenericService";
 
-interface ResourceListFormProps {
+interface PaymentTypesFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
-  initialData: ResourceListData | null;
+  initialData: BPayTypeDto | null;
   viewOnly?: boolean;
 }
 
 const schema = z.object({
-  rLID: z.number(),
-  rLCode: z.string().nonempty("Resource code is required"),
-  rLName: z.string().nonempty("Resource name is required"),
-  rLValidateYN: z.string().nonempty("Validation status is required"),
-  rLOtYN: z.string().nonempty("OT status is required"),
-  rActiveYN: z.string(),
+  payID: z.number(),
+  payCode: z.string().nonempty("Payment code is required"),
+  payName: z.string().nonempty("Payment name is required"),
+  payMode: z.string().nonempty("Payment mode is required"),
+  bankCharge: z.any(),
   rNotes: z.string().nullable().optional(),
+  rActiveYN: z.string(),
   transferYN: z.string().optional(),
 });
 
-type ResourceListFormData = z.infer<typeof schema>;
+type PaymentTypesFormData = z.infer<typeof schema>;
 
-const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
+const paymentModeOptions = [
+  { value: "CASH", label: "Cash" },
+  { value: "CARD", label: "Card" },
+  { value: "CHECK", label: "Check" },
+  { value: "TRANSFER", label: "Bank Transfer" },
+  { value: "MOBILE", label: "Mobile Payment" },
+  { value: "ONLINE", label: "Online Payment" },
+  { value: "OTHER", label: "Other" },
+];
+
+const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode } = useResourceList();
+  const { getNextCode } = usePaymentTypes();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
 
   const isAddMode = !initialData;
 
-  const defaultValues: ResourceListFormData = {
-    rLID: 0,
-    rLCode: "",
-    rLName: "",
-    rLValidateYN: "N",
-    rLOtYN: "N",
-    rActiveYN: "Y",
+  const defaultValues: PaymentTypesFormData = {
+    payID: 0,
+    payCode: "",
+    payName: "",
+    payMode: "CASH",
+    bankCharge: 0,
     rNotes: "",
+    rActiveYN: "Y",
     transferYN: "N",
   };
 
@@ -59,27 +70,28 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
     reset,
     setValue,
     formState: { errors, isDirty, isValid },
-  } = useForm<ResourceListFormData>({
+  } = useForm<PaymentTypesFormData>({
     defaultValues,
     resolver: zodResolver(schema),
     mode: "onChange",
   });
 
   const rActiveYN = useWatch({ control, name: "rActiveYN" });
+  const payMode = useWatch({ control, name: "payMode" });
 
-  const generateResourceCode = async () => {
+  const generatePaymentCode = async () => {
     if (!isAddMode) return;
 
     try {
       setIsGeneratingCode(true);
-      const nextCode = await getNextCode("RES", 3);
+      const nextCode = await getNextCode("PAY", 3);
       if (nextCode) {
-        setValue("rLCode", nextCode, { shouldValidate: true, shouldDirty: true });
+        setValue("payCode", nextCode, { shouldValidate: true, shouldDirty: true });
       } else {
-        showAlert("Warning", "Failed to generate resource code", "warning");
+        showAlert("Warning", "Failed to generate payment code", "warning");
       }
     } catch (error) {
-      console.error("Error generating resource code:", error);
+      console.error("Error generating payment code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -87,14 +99,14 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
 
   useEffect(() => {
     if (initialData) {
-      reset(initialData as ResourceListFormData);
+      reset(initialData as PaymentTypesFormData);
     } else {
       reset(defaultValues);
-      generateResourceCode();
+      generatePaymentCode();
     }
   }, [initialData, reset]);
 
-  const onSubmit = async (data: ResourceListFormData) => {
+  const onSubmit = async (data: PaymentTypesFormData) => {
     if (viewOnly) return;
 
     setFormError(null);
@@ -103,29 +115,28 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
       setIsSaving(true);
       setLoading(true);
 
-      const resourceData: ResourceListData = {
-        rLID: data.rLID,
-        rLCode: data.rLCode,
-        rLName: data.rLName,
-        rLValidateYN: data.rLValidateYN,
-        rLOtYN: data.rLOtYN,
+      const paymentData: BPayTypeDto = {
+        payID: data.payID,
+        payCode: data.payCode,
+        payName: data.payName,
+        payMode: data.payMode,
+        bankCharge: data.bankCharge,
+        rNotes: data.rNotes || "",
         rActiveYN: data.rActiveYN || "Y",
-        rNotes: data.rNotes,
         transferYN: data.transferYN || "N",
       };
 
-      const response = await resourceListService.save(resourceData);
+      const response = await paymentTypeService.save(paymentData);
 
       if (response.success) {
-        showAlert("Success", isAddMode ? "Resource created successfully" : "Resource updated successfully", "success");
-
+        showAlert("Success", isAddMode ? "Payment type created successfully" : "Payment type updated successfully", "success");
         onClose(true);
       } else {
-        throw new Error(response.errorMessage || "Failed to save resource");
+        throw new Error(response.errorMessage || "Failed to save payment type");
       }
     } catch (error) {
-      console.error("Error saving resource:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to save resource";
+      console.error("Error saving payment type:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to save payment type";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
     } finally {
@@ -137,24 +148,24 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
   const handleReset = () => {
     if (isDirty) {
       if (window.confirm("Are you sure you want to reset the form? All unsaved changes will be lost.")) {
-        reset(initialData ? (initialData as ResourceListFormData) : defaultValues);
+        reset(initialData ? (initialData as PaymentTypesFormData) : defaultValues);
         setFormError(null);
 
         if (isAddMode) {
-          generateResourceCode();
+          generatePaymentCode();
         }
       }
     } else {
-      reset(initialData ? (initialData as ResourceListFormData) : defaultValues);
+      reset(initialData ? (initialData as PaymentTypesFormData) : defaultValues);
       setFormError(null);
 
       if (isAddMode) {
-        generateResourceCode();
+        generatePaymentCode();
       }
     }
   };
 
-  const dialogTitle = viewOnly ? "View Resource Details" : isAddMode ? "Create New Resource" : `Edit Resource - ${initialData?.rLName}`;
+  const dialogTitle = viewOnly ? "View Payment Type Details" : isAddMode ? "Create New Payment Type" : `Edit Payment Type - ${initialData?.payName}`;
 
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
@@ -172,7 +183,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? "Create Resource" : "Update Resource"}
+          text={isAddMode ? "Create Payment Type" : "Update Payment Type"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
@@ -189,7 +200,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
 
   const handleRefreshCode = () => {
     if (isAddMode) {
-      generateResourceCode();
+      generatePaymentCode();
     }
   };
 
@@ -235,9 +246,9 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
                 <Grid container spacing={2}>
                   <Grid size={{ sm: 12, md: 6 }}>
                     <FormField
-                      name="rLCode"
+                      name="payCode"
                       control={control}
-                      label="Resource Code"
+                      label="Payment Code"
                       type="text"
                       required
                       disabled={viewOnly || !isAddMode}
@@ -259,7 +270,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="rLName" control={control} label="Resource Name" type="text" required disabled={viewOnly} size="small" fullWidth />
+                    <FormField name="payName" control={control} label="Payment Name" type="text" required disabled={viewOnly} size="small" fullWidth />
                   </Grid>
                 </Grid>
               </CardContent>
@@ -271,17 +282,37 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Resource Settings
+                  Payment Settings
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="rLValidateYN" control={control} label="Validate" type="switch" disabled={viewOnly} size="small" />
+                    <FormField
+                      name="payMode"
+                      control={control}
+                      label="Payment Mode"
+                      type="select"
+                      required
+                      disabled={viewOnly}
+                      size="small"
+                      options={paymentModeOptions}
+                      fullWidth
+                    />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="rLOtYN" control={control} label="OT" type="switch" disabled={viewOnly} size="small" />
+                    <FormField
+                      name="bankCharge"
+                      control={control}
+                      label="Bank Charge (%)"
+                      type="number"
+                      required
+                      disabled={viewOnly}
+                      size="small"
+                      inputProps={{ min: 0, step: 0.01 }}
+                      fullWidth
+                    />
                   </Grid>
                 </Grid>
               </CardContent>
@@ -308,7 +339,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
                       size="small"
                       fullWidth
                       rows={4}
-                      placeholder="Enter any additional information about this resource"
+                      placeholder="Enter any additional information about this payment type"
                     />
                   </Grid>
                 </Grid>
@@ -321,4 +352,4 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
   );
 };
 
-export default ResourceListForm;
+export default PaymentTypesForm;
