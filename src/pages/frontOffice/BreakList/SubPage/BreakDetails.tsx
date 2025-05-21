@@ -179,7 +179,7 @@ const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value, type } = e.target;
-      let updatedState = { ...formState };
+      const updatedState = { ...formState };
 
       if (name === "bLStartTime" || name === "bLEndTime") {
         // Time picker handling is now managed by the onChange prop directly

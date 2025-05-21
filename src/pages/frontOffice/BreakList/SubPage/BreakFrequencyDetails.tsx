@@ -119,7 +119,7 @@ const BreakFrequencyDetails: React.FC<BreakFrequencyDetailsProps> = ({ open, onC
           name="interval"
           value={interval}
           onChange={(e) => {
-            let value = e.target.value;
+            const value = e.target.value;
             if (value === "") {
               handleChange("interval", "");
             } else {

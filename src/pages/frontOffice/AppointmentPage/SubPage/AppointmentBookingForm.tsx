@@ -88,7 +88,7 @@ const AppointmentBookingForm: React.FC<AppointmentBookingFormProps> = ({ onChang
         onChange("abDuration", 15);
         return;
       }
-      let numericValue = parseInt(inputValue, 10);
+      const numericValue = parseInt(inputValue, 10);
       if (isNaN(numericValue)) {
         onChange("abDuration", 15);
         return;

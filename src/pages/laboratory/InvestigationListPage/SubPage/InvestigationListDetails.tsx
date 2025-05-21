@@ -5,9 +5,9 @@ import FormField from "@/components/FormField/FormField";
 
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { debounce } from "lodash";
 import { SelectChangeEvent } from "@mui/material";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
+import { debounce } from "@/utils/Common/debounceUtils";
 
 interface InvestigationListDetailsProps {
   onUpdate: (data: LInvMastDto) => void;
