@@ -1,4 +1,3 @@
-// src/pages/clinicalManagement/MedicationDosage/hooks/useMedicationDosage.ts
 import { createEntityHook } from "@/hooks/Common/useGenericEntity";
 import { MedicationDosageDto } from "@/interfaces/ClinicalManagement/MedicationDosageDto";
 import { medicationDosageService } from "@/services/ClinicalManagementServices/clinicalManagementService";
