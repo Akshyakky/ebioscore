@@ -454,20 +454,7 @@ const ResourceListPage: React.FC = () => {
       </Paper>
 
       <Paper sx={{ p: 2 }}>
-        <CustomGrid
-          columns={columns}
-          data={filteredResources}
-          pagination
-          pageSize={10}
-          maxHeight="calc(100vh - 280px)"
-          showExportCSV
-          showExportPDF
-          exportFileName="resource-list"
-          emptyStateMessage="No resources found"
-          showColumnCustomization
-          initialSortBy={{ field: "rLName", direction: "asc" }}
-          loading={isLoading}
-        />
+        <CustomGrid columns={columns} data={filteredResources} maxHeight="calc(100vh - 280px)" emptyStateMessage="No resources found" loading={isLoading} />
       </Paper>
 
       {isFormOpen && <ResourceListForm open={isFormOpen} onClose={handleFormClose} initialData={selectedResource} viewOnly={isViewMode} />}
