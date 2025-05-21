@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
-import { createEntityService } from "@/utils/Common/serviceFactory";
+import { paymentTypeService } from "@/services/BillingServices/BillingGenericService";
 
 export const usePaymentTypes = () => {
-  const paymentTypesListService = createEntityService<BPayTypeDto>("PaymentTypes", "Billing");
   const [paymentTypesList, setPaymentTypesList] = useState<BPayTypeDto[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { isLoading, setLoading } = useLoading();
@@ -17,7 +16,7 @@ export const usePaymentTypes = () => {
     setError(null);
 
     try {
-      const result = await paymentTypesListService.getAll();
+      const result = await paymentTypeService.getAll();
       if (result.success && result.data) {
         setPaymentTypesList(result.data);
       } else {
@@ -44,7 +43,7 @@ export const usePaymentTypes = () => {
     async (id: number) => {
       try {
         setLoading(true);
-        const result = await paymentTypesListService.getById(id);
+        const result = await paymentTypeService.getById(id);
         if (result.success && result.data) {
           return result.data;
         } else {
@@ -66,7 +65,7 @@ export const usePaymentTypes = () => {
     async (paymentType: BPayTypeDto) => {
       try {
         setLoading(true);
-        const result = await paymentTypesListService.save(paymentType);
+        const result = await paymentTypeService.save(paymentType);
         if (result.success) {
           await fetchPaymentTypesList();
           return true;
@@ -89,7 +88,7 @@ export const usePaymentTypes = () => {
     async (paymentType: BPayTypeDto) => {
       try {
         setLoading(true);
-        const result = await paymentTypesListService.save(paymentType);
+        const result = await paymentTypeService.save(paymentType);
         if (result.success) {
           await fetchPaymentTypesList();
           return true;
@@ -112,7 +111,7 @@ export const usePaymentTypes = () => {
     async (id: number) => {
       try {
         setLoading(true);
-        const result = await paymentTypesListService.delete(id);
+        const result = await paymentTypeService.delete(id);
         if (result.success) {
           await fetchPaymentTypesList();
           return true;
@@ -135,7 +134,7 @@ export const usePaymentTypes = () => {
     async (id: number, active: boolean) => {
       try {
         setLoading(true);
-        const result = await paymentTypesListService.updateActiveStatus(id, active);
+        const result = await paymentTypeService.updateActiveStatus(id, active);
         if (result.success) {
           await fetchPaymentTypesList();
           return true;
@@ -158,7 +157,7 @@ export const usePaymentTypes = () => {
     async (prefix: string = "RES", padLength: number = 3) => {
       try {
         setLoading(true);
-        const result = await paymentTypesListService.getNextCode(prefix, padLength);
+        const result = await paymentTypeService.getNextCode(prefix, padLength);
         if (result.success && result.data) {
           return result.data;
         } else {
