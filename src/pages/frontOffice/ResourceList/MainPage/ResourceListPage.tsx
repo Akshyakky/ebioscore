@@ -6,13 +6,11 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
-  FilterList as FilterIcon,
   Visibility as VisibilityIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
@@ -45,9 +43,7 @@ const ResourceListPage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
-  const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const { resourceList, isLoading, error, fetchResourceList, deleteResource } = useResourceList();
 
@@ -359,12 +355,10 @@ const ResourceListPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      {/* Toggle Stats Dashboard */}
       <Box sx={{ mb: 2 }}>
         <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
       </Box>
 
-      {/* Stats Dashboard */}
       {showStats && renderStatsDashboard()}
 
       <Paper sx={{ p: 2, mb: 2 }}>
@@ -392,8 +386,7 @@ const ResourceListPage: React.FC = () => {
             </Stack>
           </Grid>
 
-          {/* Search and Filter Row */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
               placeholder="Search by code or name"
@@ -417,22 +410,49 @@ const ResourceListPage: React.FC = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }} display="flex" justifyContent="flex-end">
-            <Box display="flex" alignItems="center" gap={1}>
-              {(filters.status || filters.resourceType || filters.validation) && (
-                <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
-              )}
-              <Tooltip title="Filter Resources">
-                <IconButton onClick={() => setFilterOpen(true)}>
-                  <FilterIcon />
-                </IconButton>
-              </Tooltip>
-            </Box>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Tooltip title="Filter Resources">
+              <Stack direction="row" spacing={2} sx={{ pt: 1 }}>
+                <DropdownSelect
+                  label="Status"
+                  name="status"
+                  value={filters.status}
+                  options={statusOptions}
+                  onChange={(e) => handleFilterChange("status", e.target.value)}
+                  size="small"
+                  defaultText="All Status"
+                />
+
+                <DropdownSelect
+                  label="Resource Type"
+                  name="resourceType"
+                  value={filters.resourceType}
+                  options={resourceTypeOptions}
+                  onChange={(e) => handleFilterChange("resourceType", e.target.value)}
+                  size="small"
+                  defaultText="All Types"
+                />
+
+                <DropdownSelect
+                  label="Validation"
+                  name="validation"
+                  value={filters.validation}
+                  options={validationOptions}
+                  onChange={(e) => handleFilterChange("validation", e.target.value)}
+                  size="small"
+                  defaultText="All"
+                />
+                <Box display="flex" alignItems="center" gap={1}>
+                  {(filters.status || filters.resourceType || filters.validation) && (
+                    <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
+                  )}
+                </Box>
+              </Stack>
+            </Tooltip>
           </Grid>
         </Grid>
       </Paper>
 
-      {/* Resources Grid */}
       <Paper sx={{ p: 2 }}>
         <CustomGrid
           columns={columns}
@@ -450,10 +470,8 @@ const ResourceListPage: React.FC = () => {
         />
       </Paper>
 
-      {/* Resource Form Dialog */}
       {isFormOpen && <ResourceListForm open={isFormOpen} onClose={handleFormClose} initialData={selectedResource} viewOnly={isViewMode} />}
 
-      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
@@ -465,54 +483,6 @@ const ResourceListPage: React.FC = () => {
         type="error"
         maxWidth="xs"
       />
-
-      {/* Filter Dialog */}
-      <GenericDialog
-        open={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        title="Filter Resources"
-        maxWidth="xs"
-        fullWidth
-        showCloseButton
-        actions={
-          <>
-            <SmartButton text="Clear Filters" onClick={handleClearFilters} variant="outlined" color="error" />
-            <SmartButton text="Apply" onClick={() => setFilterOpen(false)} variant="contained" color="primary" />
-          </>
-        }
-      >
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          <DropdownSelect
-            label="Status"
-            name="status"
-            value={filters.status}
-            options={statusOptions}
-            onChange={(e) => handleFilterChange("status", e.target.value)}
-            size="small"
-            defaultText="All Status"
-          />
-
-          <DropdownSelect
-            label="Resource Type"
-            name="resourceType"
-            value={filters.resourceType}
-            options={resourceTypeOptions}
-            onChange={(e) => handleFilterChange("resourceType", e.target.value)}
-            size="small"
-            defaultText="All Types"
-          />
-
-          <DropdownSelect
-            label="Validation"
-            name="validation"
-            value={filters.validation}
-            options={validationOptions}
-            onChange={(e) => handleFilterChange("validation", e.target.value)}
-            size="small"
-            defaultText="All"
-          />
-        </Stack>
-      </GenericDialog>
     </Box>
   );
 };
