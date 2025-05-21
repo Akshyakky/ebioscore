@@ -1,6 +1,6 @@
 import { createContext, useState } from "react";
 import React from "react";
-import { useLoading } from "../LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { notifyError } from "@/utils/Common/toastManager";
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Box, useTheme, Fab, Tooltip, Paper, Typography, Button, CircularProgress, Alert, Snackbar, Zoom, useMediaQuery } from "@mui/material";
 import { selectUser } from "@/store/features/auth/selectors";
 import { useAppSelector } from "@/store/hooks";
@@ -19,8 +19,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [scrolled, setScrolled] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Calculate effective user ID for admin permissions
   const effectiveUserID = useMemo(() => {
@@ -37,7 +37,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   }, []);
 
   // Handle scroll events to show/hide back to top button
-  React.useEffect(() => {
+  useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 300) {
         setScrolled(true);

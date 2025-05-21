@@ -3,7 +3,7 @@ import { Typography, Box, Tooltip, TextField, useTheme, useMediaQuery } from "@m
 import { Refresh as RefreshIcon, Search as SearchIcon, Hotel as BedIcon } from "@mui/icons-material";
 import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import useDebounce from "@/hooks/Common/useDebounce";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { roomGroupService, roomListService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import CustomTreeView, { TreeNodeType } from "@/components/TreeView/CustomTreeView";
 import CustomButton from "@/components/Button/CustomButton";
@@ -60,13 +60,10 @@ const ManageBedDetails: React.FC<ManageBedDetailsProps> = ({ onBedSelect, isSele
         setRoomList(roomListResult.data || []);
       }
       if (bedsResult.success) {
-        const bedsByRoomMap = bedsResult.data?.reduce(
-          (acc: { [key: number]: WrBedDto[] }, bed: WrBedDto) => {
-            acc[bed.rlID] = [...(acc[bed.rlID] || []), bed];
-            return acc;
-          },
-          {} as { [key: number]: WrBedDto[] }
-        );
+        const bedsByRoomMap = bedsResult.data?.reduce((acc: { [key: number]: WrBedDto[] }, bed: WrBedDto) => {
+          acc[bed.rlID] = [...(acc[bed.rlID] || []), bed];
+          return acc;
+        }, {} as { [key: number]: WrBedDto[] });
         setBedsByRoom(bedsByRoomMap || {});
       }
     } catch (error) {

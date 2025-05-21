@@ -4,7 +4,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 
 import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { DeptUnitListService } from "@/services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";

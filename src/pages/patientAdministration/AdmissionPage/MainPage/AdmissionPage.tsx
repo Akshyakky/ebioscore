@@ -1,10 +1,9 @@
 //src/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage.tsx
-//src/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage.tsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Container, Box } from "@mui/material";
 import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon, MeetingRoom as MeetingRoomIcon } from "@mui/icons-material";
 import useAdmissionForm from "@/hooks/PatientAdminstration/useAdmissionForm";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";

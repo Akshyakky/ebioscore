@@ -4,7 +4,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 
 import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { productTaxService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { showAlert } from "@/utils/Common/showAlert";
 import FormField from "@/components/FormField/FormField";

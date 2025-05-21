@@ -1,6 +1,5 @@
 import LoginPage from "../pages/common/LoginPage/LoginPage";
 import DashboardPage from "../pages/common/DashboardPage/DashboardPage";
-import RegistrationPage from "../pages/common/ExampleFormPage/RegistrationPage";
 import RevisitPage from "../pages/patientAdministration/RevisitPage/MainPage/RevisitPage";
 import RoutineReportsPA from "../pages/patientAdministration/RoutineReportsPage/MainPage/RoutineReportsPAPage";
 import ListOfReportsPage from "../pages/routineReports/MainPage/ListOfReportsPage";
@@ -47,9 +46,8 @@ import AlertManager from "@/pages/common/AlertManagerPage/MainPage/AlertManager"
 import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
 import LogModule from "@/pages/common/LogViewerPage/LogModule";
 import ProductList from "@/pages/inventoryManagement/ProductList/MainPage/ProductList";
-import GRNPage from "@/pages/inventoryManagement/GRN/MainPage/GRNPage";
 import ProductTransaction from "@/pages/inventoryManagement/ProductTransaction/ProductTransaction";
-
+import RegistrationPage from "@/pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
 interface RouteConfig {
   path: string;
   component: React.ComponentType<any>;
@@ -100,7 +98,6 @@ const routeConfig: RouteConfig[] = [
   { path: "/InvestigationListPage", component: InvestigationListPage, protected: true },
   { path: "/ComponentEntryTypePage", component: ComponentEntryTypePage, protected: true },
   { path: "/PurchaseOrderPage", component: PurchaseOrderPage, protected: true },
-  { path: "/GRNPage", component: GRNPage, protected: true },
   { path: "/ForgotPasswordPage", component: ForgotPasswordPage, protected: false },
   { path: "/IndentProductPage", component: IndentProductPage, protected: true },
   { path: "/EmployeeRegistrationForm", component: EmployeeRegistrationForm, protected: true },

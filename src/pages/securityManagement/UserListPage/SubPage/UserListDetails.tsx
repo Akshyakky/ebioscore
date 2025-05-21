@@ -4,7 +4,7 @@ import { Box, Button, Grid, ImageList, ImageListItem, Paper, SelectChangeEvent, 
 import React, { useEffect, useMemo, useState } from "react";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 import { CompanyService } from "@/services/CommonServices/CompanyService";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";

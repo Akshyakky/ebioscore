@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Save from "@mui/icons-material/Save";
 import Delete from "@mui/icons-material/Delete";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { BreakConDetailData, BreakListData } from "@/interfaces/FrontOffice/BreakListData";
 import BreakFrequencyDetails, { FrequencyData } from "./BreakFrequencyDetails";

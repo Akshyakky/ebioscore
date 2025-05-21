@@ -2,7 +2,7 @@
 import CustomButton from "@/components/Button/CustomButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import FormField from "@/components/FormField/FormField";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
 
 import { createEntityService } from "@/utils/Common/serviceFactory";

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, SelectChangeEvent, Tooltip, Typography, useTheme } from "@mui/material";
 import { PersonOutline, Edit, CalendarToday, LocalHospital, Close, Save } from "@mui/icons-material";
 import { PatientDemographicDetails } from "@/interfaces/PatientAdministration/registrationFormData";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { PatientDemoGraph, PatientDemoGraphError } from "@/interfaces/PatientAdministration/patientDemoGraph";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";

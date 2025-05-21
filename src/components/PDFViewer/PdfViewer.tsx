@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogActions, DialogContent, Typography, Box } from "@mui/material";
 import CustomButton from "../Button/CustomButton";
 import CancelIcon from "@mui/icons-material/Cancel";
-import { useLoading } from "../../context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface PdfViewerProps {
   pdfUrl: string;

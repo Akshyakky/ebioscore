@@ -1,174 +1,169 @@
-import React, { useState, useEffect, forwardRef, useImperativeHandle, useCallback, useMemo } from "react";
-import { Grid, Typography } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
+import React, { useState, useEffect, useCallback } from "react";
+import { Box, Typography, Button } from "@mui/material";
+import { Add as AddIcon } from "@mui/icons-material";
+import NextOfKinForm from "./NextOfKinForm";
 import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
 import { PatNokService } from "@/services/PatientAdministrationServices/RegistrationService/PatNokService";
-import { showAlert } from "@/utils/Common/showAlert";
-import NextOfKinGrid from "./NextOfKinGrid";
-import CustomButton from "@/components/Button/CustomButton";
-import NextOfKinForm from "./NextOfKinForm";
+import { useLoading } from "@/hooks/Common/useLoading";
+import { notifySuccess, notifyError, notifyWarning } from "@/utils/Common/toastManager";
+import NextOfKinList from "./NextOfKinList";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 
 interface NextOfKinPageProps {
   pChartID: number;
-  shouldClearData: boolean;
+  pChartCode: string;
 }
 
-const EnhancedNextOfKinPage: React.ForwardRefRenderFunction<any, NextOfKinPageProps> = ({ pChartID, shouldClearData }, ref) => {
-  const [showKinPopup, setShowKinPopup] = useState(false);
-  const [editingKinData, setEditingKinData] = useState<PatNokDetailsDto | undefined>(undefined);
-  const [gridKinData, setGridKinData] = useState<PatNokDetailsDto[]>([]);
+const NextOfKinPage: React.FC<NextOfKinPageProps> = ({ pChartID, pChartCode }) => {
+  const [nokList, setNokList] = useState<PatNokDetailsDto[]>([]);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [selectedNok, setSelectedNok] = useState<PatNokDetailsDto | null>(null);
+  const { isLoading, setLoading } = useLoading();
 
-  // Expose methods to parent component
-  useImperativeHandle(ref, () => ({
-    saveKinDetails,
-  }));
-
-  // Save all next of kin records
-  const saveKinDetails = useCallback(
-    async (pChartID: number) => {
-      try {
-        const saveOperations = gridKinData.map((kin) => {
-          const kinData = { ...kin, pChartID: pChartID };
-          return PatNokService.saveNokDetails(kinData);
-        });
-
-        await Promise.all(saveOperations);
-        return true;
-      } catch (error) {
-        console.error("Error saving next of kin details:", error);
-        return false;
-      }
-    },
-    [gridKinData]
-  );
-
-  // Edit handler
-  const handleEditKin = useCallback((kin: PatNokDetailsDto) => {
-    setEditingKinData(kin);
-    setShowKinPopup(true);
-  }, []);
-
-  // Delete handler
-  const handleDeleteKin = useCallback(
-    async (kin: PatNokDetailsDto) => {
-      try {
-        const updatedKin = {
-          ...kin,
-          pChartID: pChartID,
-          rActiveYN: "N",
-        };
-        const result = await PatNokService.saveNokDetails(updatedKin);
-        if (result.success) {
-          setGridKinData((prevData) => prevData.filter((item) => item.pNokID !== kin.pNokID));
-          showAlert("Success", "Next of Kin record deactivated successfully", "success");
-        } else {
-          showAlert("Error", "Failed to deactivate Next of Kin record", "error");
-        }
-      } catch (error) {
-        showAlert("Error", "An error occurred while deactivating the record", "error");
-      }
-    },
-    [pChartID]
-  );
-
-  // Generate temporary ID for new records
-  const generateNewId = useCallback(<T extends { ID: number }>(data: T[]): number => {
-    const maxId = data.reduce((max, item) => (item.ID > max ? item.ID : max), 0);
-    return maxId + 1;
-  }, []);
-
-  // Save handler
-  const handleSaveKin = useCallback(
-    (kinDetails: PatNokDetailsDto) => {
-      const kinWithDefaults = {
-        ...kinDetails,
-        rActiveYN: "Y",
-      };
-
-      setGridKinData((prevData) => {
-        if (!kinWithDefaults.pNokID && !kinWithDefaults.ID) {
-          return [...prevData, { ...kinWithDefaults, ID: generateNewId(prevData) }];
-        }
-        if (!kinWithDefaults.pNokID) {
-          return prevData.map((item) => (item.ID === kinWithDefaults.ID ? kinWithDefaults : item));
-        }
-        return prevData.map((item) => (item.pNokID === kinWithDefaults.pNokID ? kinWithDefaults : item));
-      });
-      setShowKinPopup(false);
-      showAlert("Success", "The Kin Details Saved successfully", "success");
-    },
-    [generateNewId]
-  );
-
-  // Fetch existing kin data when pChartID changes
-  const fetchKinData = useCallback(async () => {
+  const fetchNokData = useCallback(async () => {
     if (!pChartID) return;
+
     try {
-      const kinDetails = await PatNokService.getNokDetailsByPChartID(pChartID);
-      if (kinDetails.success && kinDetails.data) {
-        const formattedData = kinDetails.data
-          .filter((kin) => kin.rActiveYN === "Y")
-          .map((kin) => ({
-            ...kin,
-            pNokDob: kin.pNokDob,
-          }));
-        setGridKinData(formattedData);
+      setLoading(true);
+      const response = await PatNokService.getNokDetailsByPChartID(pChartID);
+
+      if (response.success && response.data) {
+        setNokList(response.data);
+      } else if (response.errorMessage) {
+        notifyWarning(response.errorMessage);
       }
     } catch (error) {
-      console.error("Error fetching next of kin details:", error);
+      console.error("Error fetching next of kin data:", error);
+      notifyError("Failed to load next of kin information");
+    } finally {
+      setLoading(false);
     }
   }, [pChartID]);
 
-  // Fetch data when pChartID changes
   useEffect(() => {
-    fetchKinData();
-  }, [fetchKinData]);
+    fetchNokData();
+  }, [fetchNokData]);
 
-  // Clear data when requested
-  useEffect(() => {
-    if (shouldClearData) {
-      setGridKinData([]);
+  const handleAddNew = () => {
+    setSelectedNok(null);
+    setFormDialogOpen(true);
+  };
+
+  const handleEdit = (item: PatNokDetailsDto) => {
+    setSelectedNok(item);
+    setFormDialogOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setFormDialogOpen(false);
+    setSelectedNok(null);
+  };
+
+  const handleSave = async (data: PatNokDetailsDto) => {
+    try {
+      setLoading(true);
+
+      // Ensure pChartID is set
+      const nokData = {
+        ...data,
+        pChartID: pChartID,
+        pNokPChartCode: pChartCode,
+        rActiveYN: "Y",
+      };
+
+      const response = await PatNokService.saveNokDetails(nokData);
+
+      if (response.success) {
+        notifySuccess(selectedNok ? "Next of kin updated successfully" : "Next of kin added successfully");
+        await fetchNokData();
+        setFormDialogOpen(false);
+        setSelectedNok(null);
+      } else {
+        notifyError(response.errorMessage || "Failed to save next of kin information");
+      }
+    } catch (error) {
+      console.error("Error saving next of kin:", error);
+      notifyError("An error occurred while saving next of kin information");
+    } finally {
+      setLoading(false);
     }
-  }, [shouldClearData]);
+  };
 
-  // Popup handlers
-  const handleOpenKinPopup = useCallback(() => {
-    setEditingKinData(undefined); // Clear editing data to ensure we're adding a new record
-    setShowKinPopup(true);
-  }, []);
+  const handleDelete = async (nokId: number) => {
+    try {
+      setLoading(true);
 
-  const handleCloseKinPopup = useCallback(() => {
-    setShowKinPopup(false);
-    setEditingKinData(undefined);
-  }, []);
+      // Find the NOK record
+      const nokToUpdate = nokList.find((nok) => nok.pNokID === nokId);
 
-  // Memoized components to prevent unnecessary re-renders
-  const memoizedNextOfKinForm = useMemo(
-    () => <NextOfKinForm show={showKinPopup} handleClose={handleCloseKinPopup} handleSave={handleSaveKin} editData={editingKinData} />,
-    [showKinPopup, handleCloseKinPopup, handleSaveKin, editingKinData]
-  );
+      if (!nokToUpdate) {
+        notifyError("Record not found");
+        return;
+      }
 
-  const memoizedNextOfKinGrid = useMemo(
-    () => <NextOfKinGrid kinData={gridKinData} onEdit={handleEditKin} onDelete={handleDeleteKin} />,
-    [gridKinData, handleEditKin, handleDeleteKin]
-  );
+      // Update the record to set it as inactive
+      const updatedNok = {
+        ...nokToUpdate,
+        rActiveYN: "N",
+      };
+
+      const response = await PatNokService.saveNokDetails(updatedNok);
+
+      if (response.success) {
+        notifySuccess("Next of kin removed successfully");
+        await fetchNokData();
+      } else {
+        notifyError(response.errorMessage || "Failed to remove next of kin");
+      }
+    } catch (error) {
+      console.error("Error deleting next of kin:", error);
+      notifyError("An error occurred while removing next of kin");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Guard for invalid pChartID
+  if (!pChartID) {
+    return (
+      <Box sx={{ p: 2, textAlign: "center" }}>
+        <Typography variant="body1">Patient information is required to add next of kin details.</Typography>
+      </Box>
+    );
+  }
 
   return (
-    <>
-      <Grid container justifyContent="space-between" alignItems="center">
-        <Grid size="grow">
-          <Typography variant="h6" id="nok-details-header">
-            Next Of Kin
-          </Typography>
-        </Grid>
-        <Grid size="grow">
-          <CustomButton text="Add Next Of Kin" onClick={handleOpenKinPopup} icon={AddIcon} color="primary" variant="text" />
-        </Grid>
-      </Grid>
-      {memoizedNextOfKinForm}
-      {memoizedNextOfKinGrid}
-    </>
+    <Box sx={{ p: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <Typography variant="h6">Next of Kin Information</Typography>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNew} size="small">
+          Add New
+        </Button>
+      </Box>
+
+      <NextOfKinList data={nokList.filter((nok) => nok.rActiveYN === "Y")} onEdit={handleEdit} onDelete={handleDelete} loading={isLoading} />
+
+      {/* Form in modal dialog */}
+      <GenericDialog
+        open={formDialogOpen}
+        onClose={handleCloseForm}
+        title={selectedNok ? "Edit Next of Kin" : "Add Next of Kin"}
+        maxWidth="lg"
+        fullWidth
+        showCloseButton={true}
+        disableBackdropClick={true}
+      >
+        <NextOfKinForm onSave={handleSave} onCancel={handleCloseForm} initialData={selectedNok} pChartID={pChartID} pChartCode={pChartCode} />
+      </GenericDialog>
+    </Box>
   );
 };
 
-export default forwardRef(EnhancedNextOfKinPage);
+export default NextOfKinPage;

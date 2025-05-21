@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Grid, SelectChangeEvent } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
-import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 
@@ -17,6 +16,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import { useForm, Controller } from "react-hook-form";
 import { dischargeSummaryService } from "@/services/PatientAdministrationServices/patientAdministrationService";
+import { useLoading } from "@/hooks/Common/useLoading";
 interface DischargeSummaryDetailsProps {
   onClear?: () => void;
   selectedAdmission?: AdmissionDto;

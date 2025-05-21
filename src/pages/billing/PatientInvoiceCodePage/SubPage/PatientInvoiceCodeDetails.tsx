@@ -1,6 +1,6 @@
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import FormField from "@/components/FormField/FormField";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { BPatTypeDto } from "@/interfaces/Billing/BPatTypeDto";
 import { patientInvioceService } from "@/services/BillingServices/BillingGenericService";

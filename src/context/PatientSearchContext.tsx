@@ -1,5 +1,5 @@
 import React, { createContext, useState, useCallback } from "react";
-import { useLoading } from "./LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { RootState } from "@/store";
 import { useAppSelector } from "@/store/hooks";
 import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";

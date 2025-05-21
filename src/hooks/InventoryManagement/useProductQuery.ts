@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
 import { showAlert } from "@/utils/Common/showAlert";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 const productService = new ProductListService();
 

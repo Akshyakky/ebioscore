@@ -2,7 +2,7 @@ import React, { useContext, useState, useCallback, useMemo } from "react";
 import { Container, Box } from "@mui/material";
 import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
 import { RegistrationFormErrors } from "@/interfaces/PatientAdministration/registrationFormData";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useRegistrationUtils from "@/utils/PatientAdministration/RegistrationUtils";
 import { PatientSearchContext } from "@/context/PatientSearchContext";
@@ -19,6 +19,7 @@ import ContactDetails from "../SubPage/ContactDetails";
 import VisitDetails from "../SubPage/VisitDetails";
 import MembershipScheme from "../SubPage/MembershipScheme";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import NextOfKinPage from "../SubPage/NextOfKinPage";
 
 const RegistrationPage: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -324,11 +325,13 @@ const RegistrationPage: React.FC = () => {
           <MembershipScheme formData={formData} setFormData={setFormData} />
         </CustomAccordion>
         <CustomAccordion title="Next of Kin" defaultExpanded>
-          //Need next of kin here
+          <NextOfKinPage pChartID={formData.patRegisters.pChartID} pChartCode={formData.patRegisters.pChartCode} />
         </CustomAccordion>
+        {/* 
         <CustomAccordion title="Insurance Details" defaultExpanded>
-          //Need patient insurance
+         Need insurance details here          
         </CustomAccordion>
+         */}
       </Container>
       <FormSaveClearButton clearText="Clear" saveText={isEditMode ? "Update" : "Save"} onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
     </>

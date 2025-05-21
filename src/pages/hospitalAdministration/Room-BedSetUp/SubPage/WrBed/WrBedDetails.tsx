@@ -9,7 +9,7 @@ import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Folder as F
 import { useAppSelector } from "@/store/hooks";
 import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import React from "react";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { roomListService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";

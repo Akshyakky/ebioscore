@@ -7,7 +7,7 @@ import { IndentDetailDto, IndentMastDto, IndentSaveRequestDto } from "@/interfac
 import IndentSearchDialog from "../SubPage/IndentProductSearch";
 import { indentProductServices } from "@/services/InventoryManagementService/indentProductService/IndentProductService";
 import { showAlert } from "@/utils/Common/showAlert";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import dayjs from "dayjs";
 import { productListService, productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
 import IndentProductDetails from "../SubPage/IndentProductList";

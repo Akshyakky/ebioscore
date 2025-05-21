@@ -9,7 +9,7 @@ import { WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { BedTransferRequestDto } from "@/interfaces/PatientAdministration/BedTransferRequestDto";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { roomListService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";

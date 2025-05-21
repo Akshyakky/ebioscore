@@ -1,6 +1,6 @@
 import CustomButton from "@/components/Button/CustomButton";
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { BreakConSuspendData } from "@/interfaces/FrontOffice/BreakConSuspendData";
 import { BreakConDetailData, BreakListData } from "@/interfaces/FrontOffice/BreakListData";
 import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";

@@ -5,7 +5,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useAppSelector } from "@/store/hooks";
 import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
 import { wardCategoryService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import FormField from "@/components/FormField/FormField";

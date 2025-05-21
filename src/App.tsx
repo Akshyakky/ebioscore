@@ -2,7 +2,6 @@ import React, { ReactNode, useMemo } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Provider as ReduxProvider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
-import { LoadingProvider } from "./context/LoadingContext";
 import { ToastContainer } from "react-toastify";
 import { Box, Button, Typography, Container, CircularProgress } from "@mui/material";
 import { Refresh } from "@mui/icons-material";
@@ -87,28 +86,16 @@ const App: React.FC = () => {
       <PersistGate loading={<PersistLoadingFallback />} persistor={persistor}>
         <ErrorBoundary onError={handleAppError} fallback={<ErrorFallback />}>
           <QueryProvider>
-            <LoadingProvider>
-              <Router>
-                <GlobalSpinner delay={500} color="secondary" size={50} />
-                <ToastContainer
-                  position="top-right"
-                  autoClose={1500}
-                  hideProgressBar={false}
-                  newestOnTop={false}
-                  closeOnClick
-                  rtl={false}
-                  pauseOnFocusLoss
-                  draggable
-                  pauseOnHover
-                />
-                <RouteNotFoundBoundary>
-                  <Routes>
-                    {memoizedRoutes}
-                    <Route path="/" element={<Navigate replace to="/login" />} />
-                  </Routes>
-                </RouteNotFoundBoundary>
-              </Router>
-            </LoadingProvider>
+            <Router>
+              <GlobalSpinner delay={500} color="secondary" size={50} />
+              <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+              <RouteNotFoundBoundary>
+                <Routes>
+                  {memoizedRoutes}
+                  <Route path="/" element={<Navigate replace to="/login" />} />
+                </Routes>
+              </RouteNotFoundBoundary>
+            </Router>
           </QueryProvider>
         </ErrorBoundary>
       </PersistGate>

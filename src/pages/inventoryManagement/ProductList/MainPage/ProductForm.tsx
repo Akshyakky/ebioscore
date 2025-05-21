@@ -6,7 +6,7 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
@@ -218,8 +218,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       const productData: ProductListDto = {
         ...data,
         productID: data.productID || 0,
-        vedCode: data.vedCode || "", // Add default empty string for vedCode
-        abcCode: data.abcCode || "", // Add default empty string for abcCode
+        catValue: data.catValue || "",
+        supplierStatus: data.supplierStatus || "A",
+        vedCode: data.vedCode || "",
+        abcCode: data.abcCode || "",
         // Normalize Y/N values
         prescription: data.prescription === "Y" ? "Y" : "N",
         expiry: data.expiry === "Y" ? "Y" : "N",

@@ -3,13 +3,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Grid, Paper, Typography, SelectChangeEvent } from "@mui/material";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import FormField from "@/components/FormField/FormField";
-import { useLoading } from "@/context/LoadingContext";
-import { useAppSelector } from "@/store/hooks";
 import { showAlert } from "@/utils/Common/showAlert";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { createEntityService } from "@/utils/Common/serviceFactory";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface MedicalEntityFormProps<T extends BaseDto> {
   title: string;

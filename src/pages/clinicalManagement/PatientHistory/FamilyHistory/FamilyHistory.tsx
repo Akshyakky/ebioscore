@@ -2,7 +2,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 
 import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";

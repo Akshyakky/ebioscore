@@ -5,14 +5,12 @@ import storage from "redux-persist/lib/storage/session";
 import { combineReducers } from "redux";
 import authReducer from "./features/auth/authSlice";
 import admissionSearchReducer from "./features/admission/admissionSearch/admissionSearchSlice";
-import purchaseOrderReducer from "./features/purchaseOrder/purchaseOrderSlice";
-import GRNReducer from "./features/grn/grnSlice";
+import loadingReducer from "./features/ui/loadingSlice";
 
 const rootReducer = combineReducers({
   auth: authReducer,
   admissionSearch: admissionSearchReducer,
-  purchaseOrder: purchaseOrderReducer,
-  grn: GRNReducer,
+  loading: loadingReducer,
 });
 
 const persistConfig = {

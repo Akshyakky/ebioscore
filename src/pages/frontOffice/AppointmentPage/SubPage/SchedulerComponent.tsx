@@ -1,4 +1,3 @@
-import { useLoading } from "@/context/LoadingContext";
 import useDayjs from "@/hooks/Common/useDateTime";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { useAppointments } from "@/hooks/FrontOffice/useAppointments";
@@ -9,6 +8,7 @@ import { Box, useTheme } from "@mui/material";
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { dxSchedulerAppointment } from "devextreme/ui/scheduler";
 import { Scheduler, Resource } from "devextreme-react/scheduler";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 const views: Array<"day" | "week" | "workWeek" | "month"> = ["day", "week", "workWeek", "month"];
 

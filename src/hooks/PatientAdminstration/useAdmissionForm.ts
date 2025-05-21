@@ -5,7 +5,7 @@ import { AdmissionDto, IPAdmissionDetailsDto, IPAdmissionDto, WrBedDetailsDto } 
 import { AssocDiagnosisDetailDto, DiagnosisDetailDto, DiagnosisDto } from "@/interfaces/ClinicalManagement/DiagnosisDto";
 import { useCompanyDetails } from "../Common/useCompanyDetails";
 import { PatientHistory } from "@/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
 import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";

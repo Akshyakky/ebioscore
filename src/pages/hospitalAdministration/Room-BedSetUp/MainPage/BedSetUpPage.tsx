@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, lazy, Suspense, useEffect } from "react";
 import { Grid, Paper, Typography, Divider } from "@mui/material";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { roomGroupService, roomListService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import Loader from "@/components/Loader/SkeletonLoader";
 import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";

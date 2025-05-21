@@ -5,7 +5,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useAppSelector } from "@/store/hooks";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import { showAlert } from "@/utils/Common/showAlert";

@@ -1,6 +1,6 @@
 import React from "react";
 import { Loader2 } from "lucide-react";
-import { useLoading } from "../../context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface LoaderProps {
   type?: "skeleton" | "spinner";

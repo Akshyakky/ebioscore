@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 export const useResourceList = () => {
   const [resourceList, setResourceList] = useState<ResourceListData[]>([]);
