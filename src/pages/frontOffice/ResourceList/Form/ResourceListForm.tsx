@@ -11,7 +11,7 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
-import { useResourceList } from "../../../../hooks/FrontOffice/useResourceList";
+import { useResourceList } from "../hooks/useResourceList";
 
 interface ResourceListFormProps {
   open: boolean;

@@ -15,7 +15,7 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import ResourceListForm from "../Form/ResourceListForm";
-import { useResourceList } from "@/hooks/FrontOffice/useResourceList";
+import { useResourceList } from "@/pages/frontOffice/ResourceList/hooks/useResourceList";
 import { showAlert } from "@/utils/Common/showAlert";
 import { debounce } from "@/utils/Common/debounceUtils";
 

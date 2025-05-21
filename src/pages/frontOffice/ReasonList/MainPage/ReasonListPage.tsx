@@ -1,45 +1,38 @@
-import React, { useState } from "react";
-import SearchIcon from "@mui/icons-material/Search";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
+import {
+  Search as SearchIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Refresh as RefreshIcon,
+  Visibility as VisibilityIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import SmartButton from "@/components/Button/SmartButton";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { ReasonListData } from "@/interfaces/FrontOffice/ReasonListData";
-import { Box, Container } from "@mui/material";
-import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
-import ReasonDetails from "../SubPage/ReasonDetails";
-import ReasonListSearch from "../SubPage/ReasonListSearch";
-
+import ReasonListForm from "../Form/ReasonListForm";
+import { showAlert } from "@/utils/Common/showAlert";
+import { debounce } from "@/utils/Common/debounceUtils";
+import { useReasonList } from "../hooks/useReasonList";
+const statusOptions = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+];
 const ReasonListPage: React.FC = () => {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState<ReasonListData | undefined>(undefined);
-  const handleAdvancedSearch = () => {
-    setIsSearchOpen(true);
-  };
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
+  const [selectedReason, setSelectedReason] = useState<ReasonListData | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
+  const [isViewMode, setIsViewMode] = useState<boolean>(false);
+  const [showStats, setShowStats] = useState(false);
 
-  const handleCloseSearch = () => {
-    setIsSearchOpen(false);
-  };
-
-  const handleSelect = (data: ReasonListData) => {
-    setSelectedData(data);
-  };
-
-  return (
-    <Container maxWidth={false}>
-      <Box sx={{ marginBottom: 2 }}>
-        <ActionButtonGroup
-          buttons={[
-            {
-              variant: "contained",
-              size: "medium",
-              icon: SearchIcon,
-              text: "Advanced Search",
-              onClick: handleAdvancedSearch,
-            },
-          ]}
-        />
-      </Box>
-      <ReasonDetails editData={selectedData} />
-      <ReasonListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
-    </Container>
-  );
+  const { reasonList, isLoading, error, fetchReasonList, deleteReason } = useReasonList();
+  return <></>;
 };
 
 export default ReasonListPage;
