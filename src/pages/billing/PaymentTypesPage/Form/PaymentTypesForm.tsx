@@ -11,8 +11,6 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
 import { usePaymentTypes } from "../hooks/usePaymentTypes";
-import { createEntityService } from "@/utils/Common/serviceFactory";
-import { paymentTypeService } from "@/services/BillingServices/BillingGenericService";
 
 interface PaymentTypesFormProps {
   open: boolean;
@@ -46,7 +44,7 @@ const paymentModeOptions = [
 
 const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode } = usePaymentTypes();
+  const { getNextCode, savePaymentType } = usePaymentTypes();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
@@ -126,7 +124,7 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
         transferYN: data.transferYN || "N",
       };
 
-      const response = await paymentTypeService.save(paymentData);
+      const response = await savePaymentType(paymentData);
 
       if (response.success) {
         showAlert("Success", isAddMode ? "Payment type created successfully" : "Payment type updated successfully", "success");

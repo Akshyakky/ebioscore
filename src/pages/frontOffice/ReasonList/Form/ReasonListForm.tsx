@@ -10,7 +10,6 @@ import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
-import { reasonListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { useReasonList } from "../hooks/useReasonList";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
@@ -39,7 +38,7 @@ type ReasonListFormData = z.infer<typeof schema>;
 
 const ReasonListForm: React.FC<ReasonListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode } = useReasonList();
+  const { getNextCode, saveReason } = useReasonList();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
@@ -124,7 +123,7 @@ const ReasonListForm: React.FC<ReasonListFormProps> = ({ open, onClose, initialD
         rlName: data.rlName || "",
       };
 
-      const response = await reasonListService.save(reasonData);
+      const response = await saveReason(reasonData);
 
       if (response.success) {
         showAlert("Success", isAddMode ? "Reason created successfully" : "Reason updated successfully", "success");
