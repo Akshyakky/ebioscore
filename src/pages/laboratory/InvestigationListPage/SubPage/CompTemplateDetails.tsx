@@ -29,7 +29,6 @@ interface LCompTemplateDetailsProps {
 }
 
 const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemplate, selectedComponent, indexID }) => {
-  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   const serverDate = useServerDate();
   const [searchTerm, setSearchTerm] = useState("");
   const [editorValue, setEditorValue] = useState("");
@@ -116,9 +115,6 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
       modifyYN: "N",
       rNotes: "",
       rActiveYN: "Y",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
       transferYN: "Y",
     });
     setIsFieldDialogOpen(true);
@@ -171,17 +167,9 @@ const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemp
       indexID,
       compOID: selectedComponent.compoID,
       invID: selectedComponent.invID,
-      compCode: selectedComponent.compCode,
       rActiveYN: "Y",
-      compID: compID || 0,
-      compName: compName || "",
       transferYN: "N",
       rNotes: "",
-      rCreatedOn: serverDate || new Date(),
-      rModifiedOn: serverDate || new Date(),
-      rModifiedBy: userName || "",
-      rModifiedId: userID || 0,
-      rCreatedId: userID || 0,
     };
     onUpdateTemplate(newTemplate);
     showAlert("success", "Template added successfully", "success");

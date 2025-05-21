@@ -62,7 +62,6 @@ const ProductOverviewDetail: React.FC<ProductOverviewDetailProps> = ({ selectedD
     if (selectedData?.pvID) {
       setFormState({
         ...selectedData,
-        compID: user.compID || 0,
       });
       setDialogOpen(true);
     } else {

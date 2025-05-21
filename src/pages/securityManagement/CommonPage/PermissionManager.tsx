@@ -148,7 +148,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSelectAll, setIsSelectAll] = useState<boolean>(false);
 
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
+  const [{ compID }] = useState({ compID: 1 });
   const dropdownValues = useDropdownValues(["mainModules", "subModules"]);
 
   useEffect(() => {
@@ -210,9 +210,6 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
           profileID: (details as ProfileMastDto).profileID,
           profileName: (details as ProfileMastDto).profileName,
           rActiveYN: updatedItems.includes(permission.accessID) ? "Y" : "N",
-          compID: compID || 0,
-          compCode: compCode || "",
-          compName: compName || "",
           rNotes: "",
           transferYN: "Y",
         }));
@@ -220,9 +217,6 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
         updatedPermissions = (permissions as UserListPermissionDto[]).map((permission) => ({
           ...permission,
           allowAccess: updatedItems.includes(permission.accessID) ? "Y" : "N",
-          compID: compID || 0,
-          compCode: compCode,
-          compName: compName,
           rNotes: "",
           transferYN: "Y",
         }));
@@ -245,9 +239,6 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
             appUName: (details as UserListDto).appUserName,
             allowYN: permission.allowAccess,
             profileID: 0,
-            compID: compID || 0,
-            compCode: compCode,
-            compName: compName,
             rNotes: "",
             transferYN: "Y",
             rActiveYN: "Y",
@@ -260,9 +251,6 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
             appID: (details as UserListDto).appID,
             allowYN: permission.allowAccess,
             profileID: 0,
-            compID: compID || 0,
-            compCode: compCode,
-            compName: compName,
             rNotes: "",
             transferYN: "Y",
             rActiveYN: "Y",
@@ -299,9 +287,6 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
         profileID: (details as ProfileMastDto).profileID,
         profileName: (details as ProfileMastDto).profileName,
         rActiveYN: selectAllChecked ? "Y" : "N",
-        compID: compID || 0,
-        compCode: compCode || "",
-        compName: compName || "",
         rNotes: "",
         transferYN: "Y",
       }));
@@ -315,9 +300,6 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
           appUName: (details as UserListDto).appUserName,
           allowYN: selectAllChecked ? "Y" : "N",
           profileID: 0,
-          compID: compID || 0,
-          compCode: compCode,
-          compName: compName,
           rNotes: "",
           transferYN: "Y",
           rActiveYN: "Y",
@@ -330,9 +312,6 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
           appID: (details as UserListDto).appID,
           allowYN: selectAllChecked ? "Y" : "N",
           profileID: 0,
-          compID: compID || 0,
-          compCode: compCode,
-          compName: compName,
           rNotes: "",
           transferYN: "Y",
           rActiveYN: "Y",

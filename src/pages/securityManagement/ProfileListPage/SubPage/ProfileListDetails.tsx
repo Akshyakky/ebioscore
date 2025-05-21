@@ -17,7 +17,6 @@ interface ProfileListDetailsProps {
 }
 const ProfileDetails: React.FC<ProfileListDetailsProps> = ({ editData, profileMastService, isClear }) => {
   const { setLoading } = useLoading();
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [profileId, setProfileId] = useState<number>(0);
   const [profileCode, setProfileCode] = useState<string>("");
@@ -52,9 +51,6 @@ const ProfileDetails: React.FC<ProfileListDetailsProps> = ({ editData, profileMa
       profileName: profileName,
       rActiveYN: rActiveYN,
       rNotes: rNotes,
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
       transferYN: "N",
     };
     try {

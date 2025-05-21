@@ -25,8 +25,6 @@ interface SocialHistoryProps {
 }
 
 export const SocialHistory: React.FC<SocialHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
-
   const initialFormState: OPIPHistSHDto = useMemo(
     () => ({
       opipSHID: 0,
@@ -40,13 +38,10 @@ export const SocialHistory: React.FC<SocialHistoryProps> = ({ pChartID, opipNo, 
       opipSHNotes: "",
       oldPChartID: 0,
       rActiveYN: "Y",
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
       transferYN: "N",
       rNotes: "",
     }),
-    [pChartID, opipNo, opipCaseNo, compID, compCode, compName]
+    [pChartID, opipNo, opipCaseNo]
   );
 
   const [formState, setFormState] = useState<OPIPHistSHDto>(initialFormState);

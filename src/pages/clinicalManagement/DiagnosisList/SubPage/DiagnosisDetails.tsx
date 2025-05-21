@@ -16,9 +16,6 @@ const DiagnosisDetails: React.FC<DiagnosisDetailsProps> = ({ selectedData }) => 
     icddVer: "",
     icddNameGreek: "",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
     rNotes: "",
     transferYN: "N",
   };

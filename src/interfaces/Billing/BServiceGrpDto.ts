@@ -7,12 +7,6 @@ export interface BServiceGrpDto extends BaseDto {
   modifyYN: string;
   defaultYN: string;
   rActiveYN: string;
-  rCreatedID: number;
-  rCreatedOn: Date;
-  rCreatedBy: string;
-  rModifiedID: number;
-  rModifiedOn: Date;
-  rModifiedBy: string;
   rNotes: string;
   prnSGrpOrder: number;
   labServiceYN: string;

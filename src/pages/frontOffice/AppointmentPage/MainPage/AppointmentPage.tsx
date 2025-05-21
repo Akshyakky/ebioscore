@@ -19,7 +19,6 @@ import SaveIcon from "@mui/icons-material/Save";
 import { reasonListService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 
 const AppointmentPage: React.FC = () => {
-  const user = useAppSelector((state) => state.auth);
   const serverDate = useServerDate();
   const { add } = useDayjs(serverDate);
   const endTime = add(15, "minute", serverDate).toDate(); // Convert Dayjs to Date
@@ -56,9 +55,6 @@ const AppointmentPage: React.FC = () => {
       pssnId: "",
       intIdPsprt: "",
       rNotes: "",
-      compID: user.compID ?? 0,
-      compCode: user.compCode ?? "",
-      compName: user.compName ?? "",
     }),
     [serverDate, add]
   );

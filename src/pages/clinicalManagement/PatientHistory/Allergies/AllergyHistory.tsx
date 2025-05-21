@@ -23,7 +23,6 @@ interface AllergyHistoryProps {
 }
 
 const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const medicationListService = useMemo(() => createEntityService<MedicationListDto>("MedicationList", "clinicalManagementURL"), []);
 
   const initialAllergyState: AllergyDto = useMemo(
@@ -37,16 +36,13 @@ const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipC
         patOpip: "I",
         opipDate: new Date(),
         rActiveYN: "Y",
-        compID: compID ?? 0,
-        compCode: compCode ?? "",
-        compName: compName ?? "",
         transferYN: "N",
         rNotes: "",
         oldPChartID: 0,
       },
       allergyDetails: [],
     }),
-    [pChartID, opipNo, opipCaseNo, compID, compCode, compName]
+    [pChartID, opipNo, opipCaseNo]
   );
 
   const [formState, setFormState] = useState<AllergyDto>(historyList || initialAllergyState);
@@ -100,9 +96,6 @@ const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipC
           mGenId: medication.mGenID,
           mGenName: medication.mGenName,
           rActiveYN: "Y",
-          compID: formState.opIPHistAllergyMastDto.compID,
-          compCode: formState.opIPHistAllergyMastDto.compCode,
-          compName: formState.opIPHistAllergyMastDto.compName,
           transferYN: "N",
           rNotes: "",
         };

@@ -23,9 +23,6 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({ editData })
     bankCharge: 0,
     rNotes: "",
     rActiveYN: "Y",
-    compID: user.compID || 0,
-    compCode: user.compCode || "",
-    compName: user.compName || "",
   });
 
   const { handleDropdownChange } = useDropdownChange(setFormState);
@@ -44,9 +41,6 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({ editData })
         bankCharge: editData.bankCharge || 0,
         rNotes: editData.rNotes || "",
         rActiveYN: editData.rActiveYN || "Y",
-        compID: user.compID || 0,
-        compCode: user.compCode || "",
-        compName: user.compName || "",
       });
     } else {
       handleClear();
@@ -62,16 +56,7 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({ editData })
       bankCharge: formState.bankCharge,
       rNotes: formState.rNotes,
       rActiveYN: formState.rActiveYN,
-      compID: user.compID || 0,
-      compCode: user.compCode || "",
-      compName: user.compName || "",
       transferYN: "N",
-      rCreatedID: user.userID || 0,
-      rCreatedOn: serverDate || new Date(),
-      rCreatedBy: user.userName || "",
-      rModifiedID: user.userID || 0,
-      rModifiedOn: serverDate || new Date(),
-      rModifiedBy: user.userName || "",
     }),
     [formState, editData, serverDate]
   );
@@ -117,11 +102,8 @@ const PaymentTypesDetails: React.FC<{ editData?: BPayTypeDto }> = ({ editData })
       bankCharge: 0,
       rNotes: "",
       rActiveYN: "Y",
-      compID: user.compID || 0,
-      compCode: user.compCode || "",
-      compName: user.compName || "",
     });
-  }, [user]);
+  }, []);
 
   const handleActiveToggle = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setFormState((prev) => ({

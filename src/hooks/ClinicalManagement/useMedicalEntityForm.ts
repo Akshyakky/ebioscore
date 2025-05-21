@@ -26,7 +26,6 @@ export function useMedicalEntityForm<T extends BaseDto>({
   onSaved,
   validateForm,
 }: UseMedicalEntityFormParams<T>) {
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [formState, setFormState] = useState<T>(initialState);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -42,9 +41,6 @@ export function useMedicalEntityForm<T extends BaseDto>({
       // Create a new state with next code
       const newState = {
         ...initialState,
-        compID: compID ?? 0,
-        compCode: compCode ?? "",
-        compName: compName ?? "",
       } as T;
 
       // Set code field based on entity
@@ -61,7 +57,7 @@ export function useMedicalEntityForm<T extends BaseDto>({
     } finally {
       setLoading(false);
     }
-  }, [compID, compCode, compName, entityService, initialState, codePrefix, codeLength]);
+  }, [entityService, initialState, codePrefix, codeLength]);
 
   // Initialize form or set from selected data
   useEffect(() => {

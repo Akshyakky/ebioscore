@@ -14,8 +14,5 @@ export interface BreakConSuspendData extends BaseDto {
   rModifiedID: number;
   rModifiedBy: string;
   rNotes: string;
-  compCode: string;
-  compID: number;
-  compName: string;
   transferYN: string;
 }

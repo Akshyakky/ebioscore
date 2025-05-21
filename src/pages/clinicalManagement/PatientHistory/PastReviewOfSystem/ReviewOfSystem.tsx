@@ -25,7 +25,6 @@ interface ReviewOfSystemProps {
 }
 
 export const ReviewOfSystem: React.FC<ReviewOfSystemProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const initialFormState: OPIPHistROSDto = {
     opipRosID: 0,
     opipNo: opipNo,
@@ -38,9 +37,6 @@ export const ReviewOfSystem: React.FC<ReviewOfSystemProps> = ({ pChartID, opipNo
     opipRosNotes: "",
     oldPChartID: 0,
     rActiveYN: "Y",
-    compID: compID ?? 0,
-    compCode: compCode ?? "",
-    compName: compName ?? "",
     transferYN: "N",
     rNotes: "",
   };

@@ -20,7 +20,6 @@ interface InvestigationListDetailsProps {
 
 const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onUpdate, investigationData, shouldReset, onCodeSelect, isSubmitted }) => {
   const dropdownValues = useDropdownValues(["investigationType", "sampleType", "service"]);
-  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   const serverDate = useServerDate();
 
   const [formState, setFormState] = useState<LInvMastDto>({
@@ -44,15 +43,6 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
     invShortName: "",
     methods: "",
     coopLabs: "",
-    compID: compID || 0,
-    compCode: compCode || "",
-    compName: compName || "",
-    rModifiedID: userID || 0,
-    rModifiedBy: userName || "",
-    rCreatedID: userID || 0,
-    rCreatedBy: userName || "",
-    rCreatedOn: serverDate || new Date(),
-    rModifiedOn: serverDate || new Date(),
     transferYN: "Y",
     rActiveYN: "Y",
     lComponentsDto: [
@@ -81,16 +71,10 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
         ...prevState,
         ...investigationData,
         invType: String(investigationData.invType || ""),
-        compID: investigationData.compID || compID || 0,
-        compCode: investigationData.compCode || compCode || "",
-        compName: investigationData.compName || compName || "",
-        rModifiedID: userID || 0,
-        rModifiedBy: userName || "",
-        rModifiedOn: serverDate || new Date(),
         investigationDto: investigationData.investigationDto || {},
       }));
     }
-  }, [investigationData, compID, compCode, compName, userID, userName, serverDate]);
+  }, [investigationData]);
 
   const fetchInvestigationCodeSuggestions = useCallback(async (searchTerm: string) => {
     if (!searchTerm.trim()) return [];
@@ -141,12 +125,6 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
         invPrintOrder: 0,
         deptID: 0,
         deptName: "",
-        rCreatedOn: serverDate || new Date(),
-        rModifiedOn: serverDate || new Date(),
-        rCreatedID: 0,
-        rCreatedBy: "",
-        rModifiedID: 0,
-        rModifiedBy: "",
         bchID: 0,
         invCode: "",
         invType: "",
@@ -159,9 +137,6 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
         coopLabs: "",
         transferYN: "Y",
         rActiveYN: "Y",
-        compID: compID || 0,
-        compCode: compCode || "",
-        compName: compName || "",
         lComponentsDto: [
           {
             mGrpID: 0,
@@ -173,7 +148,7 @@ const InvestigationListDetails: React.FC<InvestigationListDetailsProps> = ({ onU
       setFormState(initialState);
       onUpdate(initialState);
     }
-  }, [shouldReset, compID, compCode, compName, serverDate, onUpdate]);
+  }, [shouldReset, serverDate, onUpdate]);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

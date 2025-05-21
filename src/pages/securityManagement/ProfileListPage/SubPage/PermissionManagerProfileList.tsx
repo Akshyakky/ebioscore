@@ -112,7 +112,7 @@ const PermissionManagerProfileList: React.FC<PermissionManagerProfileListProps> 
   const [mainId, setMainId] = useState<number>(0);
   const [subId, setSubId] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
+  const [{ compID }] = useState({ compID: 1 });
   const [isSelectAll, setIsSelectAll] = useState<boolean>(false);
   const dropdownValues = useDropdownValues(["mainModules", "subModules"]);
 
@@ -160,9 +160,6 @@ const PermissionManagerProfileList: React.FC<PermissionManagerProfileListProps> 
         profileID: profileId,
         profileName: profileName,
         rActiveYN: updatedItems.includes(permission.accessID) ? "Y" : "N",
-        compID: compID || 0,
-        compCode: compCode || "",
-        compName: compName || "",
         rNotes: "",
         transferYN: "Y",
       }));
@@ -194,9 +191,6 @@ const PermissionManagerProfileList: React.FC<PermissionManagerProfileListProps> 
       profileID: profileId,
       profileName: profileName,
       rActiveYN: selectAllChecked ? "Y" : "N",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
       rNotes: "",
       transferYN: "Y",
     }));

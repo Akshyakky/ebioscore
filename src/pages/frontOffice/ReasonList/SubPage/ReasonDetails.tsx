@@ -26,7 +26,6 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   const [resourceList, setResourceList] = useState<ResourceListData[]>([]);
 
   useEffect(() => {
@@ -64,23 +63,14 @@ const ReasonDetails: React.FC<{ editData?: ReasonListData }> = ({ editData }) =>
       arlName: formState.arlName,
       rNotes: formState.rNotes,
       rActiveYN: formState.rActiveYN,
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
       transferYN: "N",
-      rCreatedID: userID || 0,
-      rCreatedOn: serverDate || new Date(),
-      rCreatedBy: userName || "",
-      rModifiedID: userID || 0,
-      rModifiedOn: serverDate || new Date(),
-      rModifiedBy: userName || "",
       arlDuration: formState.arlDuration,
       arlDurDesc: "",
       arlColor: 0,
       rlName: "",
       rlID: formState.rlID || 0,
     }),
-    [formState, editData, compID, compCode, compName, userID, userName, serverDate]
+    [formState, editData]
   );
 
   useEffect(() => {

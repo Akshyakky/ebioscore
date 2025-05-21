@@ -37,7 +37,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
   setUnsavedComponents,
   handleCloseDialog,
 }) => {
-  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
   const serverDate = useServerDate();
   const [isDeltaValueDisabled, setIsDeltaValueDisabled] = useState(false);
 
@@ -61,18 +60,9 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
     compOrder: 0,
     cNHSEnglishNameCD: "",
     deltaValPercent: undefined,
-    compCode: "",
-    compName: "",
     invNameCD: "",
     lCentNameCD: "",
     lCentTypeCD: "",
-    compID: compID || 1,
-    rModifiedID: userID || 0,
-    rModifiedBy: userName || "",
-    rCreatedID: userID || 0,
-    rCreatedBy: userName || "",
-    rCreatedOn: serverDate || new Date(),
-    rModifiedOn: serverDate || new Date(),
   });
 
   const [formComp, setFormComp] = useState<LCompMultipleDto>({
@@ -80,15 +70,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
     cmValues: "",
     compOID: 0,
     defaultYN: "Y",
-    compID: compID || 1,
-    compCode: compCode || "",
-    compName: compName || "",
-    rModifiedID: userID || 0,
-    rModifiedBy: userName || "",
-    rCreatedID: userID || 0,
-    rCreatedBy: userName || "",
-    rCreatedOn: serverDate || new Date(),
-    rModifiedOn: serverDate || new Date(),
     rActiveYN: "Y",
     transferYN: "N",
     rNotes: "",
@@ -129,11 +110,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
     setFormState(() => ({
       ...selectedComponent,
       mGrpID: selectedComponent.mGrpID || 0,
-      compID: compID || 1,
-      rModifiedID: userID || 0,
-      rModifiedBy: userName || "",
-      rCreatedID: userID || 0,
-      rCreatedBy: userName || "",
       rCreatedOn: selectedComponent.rCreatedOn || serverDate || new Date(),
       rModifiedOn: selectedComponent.rModifiedOn || serverDate || new Date(),
     }));
@@ -152,9 +128,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
       // Clear the input field.
       setFormComp((prev) => ({
         ...prev,
-        compID: compID || 1,
-        compCode: compCode || "",
-        compName: compName || "",
         cmValues: "",
       }));
     }
@@ -384,17 +357,8 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
       cShortNameCD: "",
       cNHSEnglishNameCD: "",
       deltaValPercent: undefined,
-      compID: compID || 1,
-      compCode: compCode || "",
-      compName: compName || "",
       lCentNameCD: "",
       lCentTypeCD: "",
-      rModifiedID: userID || 0,
-      rModifiedBy: userName || "",
-      rCreatedID: userID || 0,
-      rCreatedBy: userName || "",
-      rCreatedOn: serverDate || new Date(),
-      rModifiedOn: serverDate || new Date(),
     });
     setFormComp((prev) => ({
       ...prev,
@@ -514,7 +478,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
       {selectedLCentID === 5 && (
         <CompMultipleDetails
           key={formState.compoID}
-          compName={selectedComponent?.compoNameCD || ""}
           compoID={formState.compoID || 0}
           invID={selectedComponent?.invID || 0}
           selectedValue={selectedComponent?.selectedValue || ""}
@@ -547,7 +510,6 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
             ...formState,
             compoID: formState.compoID,
             invID: formState.invID,
-            compCode: formState.compOCodeCD,
           }}
         />
       )}

@@ -59,9 +59,6 @@ const RevisitPage: React.FC = () => {
     pTypeID: 0,
     pTypeCode: "",
     pTypeName: "",
-    compID: userInfo.compID !== null ? userInfo.compID : 0,
-    compCode: userInfo.compCode !== null ? userInfo.compCode : "",
-    compName: userInfo.compName !== null ? userInfo.compName : "",
     crossConsultation: "N",
     deptID: 0,
     deptName: "",
@@ -136,7 +133,7 @@ const RevisitPage: React.FC = () => {
         });
       }
     },
-    [compID, selectedPChartID]
+    [selectedPChartID]
   );
 
   const handlePatientSelect = useCallback(async (selectedSuggestion: string) => {

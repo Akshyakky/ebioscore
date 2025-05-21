@@ -18,8 +18,5 @@ export interface InsuranceListDto extends BaseDto {
   inCategory?: string;
   rActiveYN: string;
   rNotes?: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
 }

@@ -14,11 +14,8 @@ interface MultipleValue {
 }
 
 interface CompMultipleDetailsProps {
-  compName: string;
   compoID?: number; // the unique ID for the component; must be updated with the new value from the backend
   invID?: number;
-  compID?: number;
-  compCode?: string;
   onUpdateCompMultiple: (multipleData: LCompMultipleDto) => void;
   indexID: number; // <-- ADD THIS
   selectedValue: string;
@@ -28,18 +25,7 @@ interface CompMultipleDetailsProps {
   onMultipleListChange?: (list: LCompMultipleDto[]) => void;
 }
 
-const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
-  setFormComp,
-  compName,
-  compoID,
-  invID,
-  compID,
-  compCode,
-  onUpdateCompMultiple,
-  existingChoices,
-  onMultipleListChange,
-  indexID,
-}) => {
+const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, compoID, invID, onUpdateCompMultiple, existingChoices, onMultipleListChange, indexID }) => {
   const [multipleState, setMultipleState] = useState<{
     newValue: string;
     valuesList: MultipleValue[];
@@ -112,9 +98,6 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
       invID,
       indexID, // <-- PASS THE CORRECT INDEX ID
       rActiveYN: "Y",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName,
       transferYN: "N",
       rModifiedOn: new Date(),
     }));
@@ -148,9 +131,6 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
       cmValues: newValue.trim(),
       indexID, // <-- ADD HERE TOO
       rActiveYN: "Y",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName,
       transferYN: "N",
       rModifiedOn: new Date(),
     };
@@ -186,9 +166,6 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({
         compoID: compoID || 0,
         invID,
         rActiveYN: "N",
-        compID: compID || 0,
-        compCode: compCode || "",
-        compName,
         transferYN: "N",
       });
     }

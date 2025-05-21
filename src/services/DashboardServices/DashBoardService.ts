@@ -2,7 +2,7 @@ import { APIConfig } from "@/apiConfig";
 import { CommonApiService } from "../CommonApiService";
 import { store } from "@/store";
 
-const apiService = new CommonApiService({ baseURL: APIConfig.dashBoardURL });
+const apiService = new CommonApiService({ baseURL: APIConfig.commonURL });
 
 // Function to get the token from the store
 const getToken = () => store.getState().auth.token!;
@@ -25,7 +25,7 @@ const fetchCount = async (endpoint: string, dateRange: DateRange): Promise<Fetch
       toDate: dateRange.toDate,
     };
 
-    const response = await apiService.get<number>(endpoint, getToken(), params);
+    const response = await apiService.get<number>(`dashboard/${endpoint}`, getToken(), params);
     return { count: response, unauthorized: false, error: false };
   } catch (error) {
     if (error instanceof Error && error.message.includes("401")) {

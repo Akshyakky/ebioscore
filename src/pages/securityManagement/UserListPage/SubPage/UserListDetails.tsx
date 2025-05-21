@@ -25,7 +25,6 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const profileMastService = useMemo(() => createEntityService<ProfileMastDto>("ProfileMast", "securityManagementURL"), []);
   const userList = useMemo(() => createEntityService<UserListDto>("AppUser", "securityManagementURL"), []);
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isProfileModifyModalOpen, setIsProfileModifyModalOpen] = useState<boolean>(false);
   const [permissionView, setPermissionView] = useState<boolean>(false);
@@ -51,9 +50,6 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
     rModifiedID: 0,
     rModifiedBy: "",
     rNotes: "",
-    compCode: compCode || "",
-    compID: compID || 0,
-    compName: compName || "",
     transferYN: "N",
     confirmPassword: "",
   };
@@ -209,9 +205,6 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
       const response = await userList.save({
         ...userForm,
         profileID: userForm.profileID || 0,
-        compID: compID || 0,
-        compCode: compCode || "",
-        compName: compName || "",
       });
       if (response.success) {
         showAlert("Success", "User saved successfully!", "success", {

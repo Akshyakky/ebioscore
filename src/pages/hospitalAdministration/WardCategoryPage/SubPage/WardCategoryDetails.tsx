@@ -12,7 +12,6 @@ import FormField from "@/components/FormField/FormField";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 
 const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editData }) => {
-  const user = useAppSelector((state) => state.auth);
   const [formState, setFormState] = useState<WardCategoryDto>({
     isSubmitted: false,
     wCatID: 0,
@@ -21,13 +20,9 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
     rNotes: "",
     rActiveYN: "Y",
     transferYN: "Y",
-    compID: user.compID || 0,
-    compCode: "",
-    compName: "",
   });
 
   const { setLoading } = useLoading();
-  const { compID } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (editData) {
@@ -38,7 +33,6 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
         rNotes: editData.rNotes || "",
         rActiveYN: editData.rActiveYN || "Y",
         transferYN: "Y",
-        compID: 1,
         wCatID: editData.wCatID,
       });
     } else {
@@ -53,12 +47,9 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
       wCatName: formState.wCatName,
       rNotes: formState.rNotes,
       rActiveYN: formState.rActiveYN,
-      compID: user.compID || 0,
-      compCode: user.compCode || "",
-      compName: user.compName || "",
       transferYN: "Y",
     }),
-    [formState, editData, compID]
+    [formState, editData]
   );
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -99,7 +90,6 @@ const WardCategoryDetails: React.FC<{ editData?: WardCategoryDto }> = ({ editDat
       rNotes: "",
       rActiveYN: "Y",
       transferYN: "Y",
-      compID: 0,
       wCatID: 0,
     });
   }, []);

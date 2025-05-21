@@ -45,9 +45,6 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
         bedName: "",
         rlID: 0,
         rActiveYN: "Y",
-        compID: user.compID || 0,
-        compCode: user.compCode || "",
-        compName: user.compName || "",
         transferYN: "Y",
         blockBedYN: "N",
         wbCatID: 0,
@@ -77,33 +74,27 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
     }));
   }, []);
 
-  const handleAdd = useCallback(
-    (isSubGroup: boolean = false, parentGroup?: WrBedDto) => {
-      // Initialize formData based on user directly here instead of calling getInitialFormData()
-      const newFormData: WrBedDto = {
-        bchID: 0,
-        bedID: 0,
-        bedName: "",
-        rlID: 0,
-        rActiveYN: "Y",
-        compID: user.compID || 0,
-        compCode: user.compCode || "",
-        compName: user.compName || "",
-        transferYN: "Y",
-        blockBedYN: "N",
-        wbCatID: 0,
-        key: isSubGroup ? parentGroup?.bedID || 0 : 0,
-        bedStatusValue: "AVLBL",
-        bedStatus: "Available",
-        rgrpID: 0,
-      };
+  const handleAdd = useCallback((isSubGroup: boolean = false, parentGroup?: WrBedDto) => {
+    // Initialize formData based on user directly here instead of calling getInitialFormData()
+    const newFormData: WrBedDto = {
+      bchID: 0,
+      bedID: 0,
+      bedName: "",
+      rlID: 0,
+      rActiveYN: "Y",
+      transferYN: "Y",
+      blockBedYN: "N",
+      wbCatID: 0,
+      key: isSubGroup ? parentGroup?.bedID || 0 : 0,
+      bedStatusValue: "AVLBL",
+      bedStatus: "Available",
+      rgrpID: 0,
+    };
 
-      setFormData(newFormData);
-      setDialogTitle(isSubGroup ? "Add Cradle" : "Add Bed");
-      setIsDialogOpen(true);
-    },
-    [user]
-  ); // Make sure `user` is included in the dependency array
+    setFormData(newFormData);
+    setDialogTitle(isSubGroup ? "Add Cradle" : "Add Bed");
+    setIsDialogOpen(true);
+  }, []); // Make sure `user` is included in the dependency array
 
   const handleAddDialogSubmit = useCallback(async () => {
     setLoading(true);
@@ -113,9 +104,6 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
         wbCatID: formData.wbCatID ? parseInt(formData.wbCatID.toString(), 10) : undefined,
         bchID: formData.bchID ? parseInt(formData.bchID.toString(), 10) : undefined,
         bedStatus: formData.bedStatus || "",
-        compID: user.compID || 0,
-        compCode: user.compCode || "",
-        compName: user.compName || "",
         key: parseInt(formData.key.toString(), 10),
       };
 

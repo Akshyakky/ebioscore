@@ -56,15 +56,7 @@ class DischargeService extends GenericEntityService<IpDischargeDto> {
   /**
    * Initialize a new discharge DTO with default values
    */
-  initializeDischargeDto(
-    admitId: number,
-    pChartId: number,
-    companyDetails: {
-      compID: number;
-      compCode: string;
-      compName: string;
-    }
-  ): IpDischargeDto {
+  initializeDischargeDto(admitId: number, pChartId: number): IpDischargeDto {
     const currentDate = new Date();
     return {
       dischgID: 0,
@@ -92,9 +84,6 @@ class DischargeService extends GenericEntityService<IpDischargeDto> {
       defineSituation: "",
       situation: "",
       rActiveYN: "Y",
-      compID: companyDetails.compID,
-      compCode: companyDetails.compCode,
-      compName: companyDetails.compName,
       transferYN: "N",
       rNotes: "",
     };

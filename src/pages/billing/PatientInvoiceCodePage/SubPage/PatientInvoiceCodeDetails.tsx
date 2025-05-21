@@ -21,9 +21,6 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({ editD
   });
 
   const { setLoading } = useLoading();
-  const serverDate = useServerDate();
-
-  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
 
   useEffect(() => {
     if (editData) {
@@ -46,19 +43,10 @@ const PatientInvoiceCodeDetails: React.FC<{ editData?: BPatTypeDto }> = ({ editD
       pTypeName: formState.pTypeName,
       rNotes: formState.rNotes,
       rActiveYN: formState.rActiveYN,
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
       isInsuranceYN: "N",
       transferYN: "N",
-      rCreatedID: userID || 0,
-      rCreatedOn: serverDate || new Date(),
-      rCreatedBy: userName || "",
-      rModifiedID: userID || 0,
-      rModifiedOn: serverDate || new Date(),
-      rModifiedBy: userName || "",
     }),
-    [formState, editData, compID, compCode, compName, userID, userName, serverDate]
+    [formState, editData]
   );
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

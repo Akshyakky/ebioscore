@@ -18,8 +18,5 @@ export interface DepartmentDto extends BaseDto {
   isStoreYN: string;
   autoConsumptionYN: string;
   dischargeNoteYN: string;
-  compID: number;
-  compCode: string;
-  compName: string;
   transferYN: string;
 }

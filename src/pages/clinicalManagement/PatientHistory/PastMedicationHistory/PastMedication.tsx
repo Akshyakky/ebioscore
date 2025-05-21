@@ -24,7 +24,6 @@ interface PastMedicationProps {
 }
 
 const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipCaseNo, medicationData, onMedicationChange }) => {
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const dropdownValues = useDropdownValues(["medicationForm", "medicationDosage", "medicationFrequency", "medicationInstruction"]);
 
   const [selectedMedication, setSelectedMedication] = useState<string>("");
@@ -41,14 +40,11 @@ const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipC
       opipDate: new Date(),
       details: [],
       rActiveYN: "Y",
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
       transferYN: "N",
       rNotes: "",
       oldPChartID: 0,
     }),
-    [pChartID, opipNo, opipCaseNo, compID, compCode, compName]
+    [pChartID, opipNo, opipCaseNo]
   );
 
   const [formState, setFormState] = useState<PastMedicationDto>(medicationData || initialMedicationState);
@@ -101,9 +97,6 @@ const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipC
         fromDate: new Date(),
         toDate: new Date(),
         rActiveYN: "Y",
-        compID,
-        compCode,
-        compName,
         transferYN: "N",
         rNotes: "",
       };
@@ -116,7 +109,7 @@ const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipC
       onMedicationChange(updatedState);
       setSelectedMedication("");
     },
-    [formState, compID, compCode, compName, onMedicationChange]
+    [formState, onMedicationChange]
   );
 
   const handleInputChange = useCallback(

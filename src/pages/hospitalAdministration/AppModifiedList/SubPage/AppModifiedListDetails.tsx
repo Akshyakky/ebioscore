@@ -44,9 +44,6 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
     fieldName: "",
     auGrpID: 0,
     rActiveYN: "Y",
-    compID: user.compID || 0,
-    compCode: user.compCode || "",
-    compName: user.compName || "",
     transferYN: "Y",
     rNotes: null,
   });
@@ -137,9 +134,6 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
             fieldName: "",
             auGrpID: 0,
             rActiveYN: "Y",
-            compID: user.compID || 0,
-            compCode: user.compCode || "",
-            compName: user.compName || "",
             transferYN: "Y",
             rNotes: null,
           });
@@ -181,9 +175,6 @@ const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedDat
       fieldName: "",
       auGrpID: 0,
       rActiveYN: "Y",
-      compID: user.compID || 0,
-      compCode: user.compCode || "",
-      compName: user.compName || "",
       transferYN: "Y",
       rNotes: null,
     });

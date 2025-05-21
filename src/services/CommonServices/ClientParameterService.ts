@@ -3,7 +3,7 @@ import { APIConfig } from "@/apiConfig";
 
 // Create API configuration
 const apiConfig: ApiConfig = {
-  baseURL: APIConfig.moduleURL,
+  baseURL: APIConfig.commonURL,
 };
 
 // Initialize the CommonApiService with our configuration
@@ -19,7 +19,7 @@ const getClientParameter = async (clientCode: string): Promise<any> => {
   try {
     // Using the CommonApiService to make the request with params
     const response = await apiService.get<any>(
-      "GetClientParameter",
+      "module/GetClientParameter",
       undefined, // No token required for this endpoint
       { ClientCode: clientCode }
     );

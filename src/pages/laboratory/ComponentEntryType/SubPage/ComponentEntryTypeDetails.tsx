@@ -20,16 +20,12 @@ const ComponentEntryTypeDetails: React.FC<{ editData?: LComponentEntryTypeDto }>
     lCentType: "",
     langType: "",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
     transferYN: "N",
     rNotes: "",
   });
 
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
 
   useEffect(() => {
     if (editData) {
@@ -41,9 +37,6 @@ const ComponentEntryTypeDetails: React.FC<{ editData?: LComponentEntryTypeDto }>
         lCentType: editData.lCentType || "",
         langType: editData.langType || "",
         rActiveYN: editData.rActiveYN || "Y",
-        compID: editData.compID || 0,
-        compCode: editData.compCode || "",
-        compName: editData.compName || "",
         transferYN: editData.transferYN || "N",
         rNotes: editData.rNotes || "",
       });
@@ -61,9 +54,6 @@ const ComponentEntryTypeDetails: React.FC<{ editData?: LComponentEntryTypeDto }>
       lCentType: "",
       langType: "",
       rActiveYN: "Y",
-      compID: 0,
-      compCode: "",
-      compName: "",
       transferYN: "N",
       rNotes: "",
     });
@@ -77,19 +67,10 @@ const ComponentEntryTypeDetails: React.FC<{ editData?: LComponentEntryTypeDto }>
       lCentType: formState.lCentType,
       langType: "English",
       rActiveYN: formState.rActiveYN,
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
       transferYN: formState.transferYN,
       rNotes: formState.rNotes,
-      rCreatedID: userID || 0,
-      rCreatedOn: serverDate || new Date(),
-      rCreatedBy: userName || "",
-      rModifiedID: userID || 0,
-      rModifiedOn: serverDate || new Date(),
-      rModifiedBy: userName || "",
     };
-  }, [formState, compID, compCode, compName, userID, userName, serverDate]);
+  }, [formState]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

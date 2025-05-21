@@ -23,7 +23,6 @@ interface GridData {
   [key: string]: any;
 }
 const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");
   const [gridData, setGridData] = useState<GridData[]>([]);
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
@@ -32,10 +31,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     {
       isSubmitted: false,
       rActiveYN: "Y",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
-      transferYN: "Y",
+      transferYN: "N",
       rNotes: "",
       chDetID: 0,
       chargeID: editData?.chargeInfo?.chargeID || 0,
@@ -52,10 +48,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     {
       isSubmitted: false,
       rActiveYN: "Y",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
-      transferYN: "Y",
+      transferYN: "N",
       rNotes: "",
       chaliasID: 0,
       chargeID: editData?.chargeInfo?.chargeID || 0,
@@ -76,9 +69,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       rActiveYN: "Y",
       transferYN: "N",
       rNotes: "",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
     },
   ];
 
@@ -93,9 +83,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       DcValue: 0,
       hcValue: 0,
       chValue: 0,
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
     },
   ];
 
@@ -103,9 +90,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     chargeInfo: {
       isSubmitted: false,
       rActiveYN: editData?.chargeInfo?.rActiveYN || "Y",
-      compID: editData?.chargeInfo?.compID || compID || 0,
-      compCode: editData?.chargeInfo?.compCode || compCode || "",
-      compName: editData?.chargeInfo?.compName || compName || "",
       transferYN: editData?.chargeInfo?.transferYN || "Y",
       rNotes: editData?.chargeInfo?.rNotes || "",
       chargeID: editData?.chargeInfo?.chargeID || 0,
@@ -188,9 +172,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       chValue: pkg.chValue || 0,
       chargeRevise: pkg.chargeRevise || "defaultRevise",
       chargeStatus: pkg.chargeStatus || "Y",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
       rActiveYN: "Y",
       transferYN: "N",
       rNotes: pkg.rNotes || "",
@@ -215,9 +196,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       rActiveYN: "Y",
       transferYN: "N",
       rNotes: "",
-      compID: compID || 0,
-      compCode: compCode || "",
-      compName: compName || "",
     };
     setChargePackages((prev) => {
       const existingIndex = prev.findIndex((pkg) => pkg.chargeID === chargePackage.chargeID);
@@ -301,9 +279,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       doctorSharePerShare: updatedRows.map((row) => ({
         ...row,
         chargeID: prev.chargeInfo.chargeID || 0,
-        compID: prev.chargeInfo.compID || 0,
-        compCode: prev.chargeInfo.compCode || "",
-        compName: prev.chargeInfo.compName || "",
       })),
     }));
   }, []);
@@ -552,9 +527,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
         chargeDesc: alias.aliasName || "",
         chargeDescLang: alias.aliasName || "",
         rActiveYN: "Y",
-        compID: formData.chargeInfo.compID || 0,
-        compCode: formData.chargeInfo.compCode || "",
-        compName: formData.chargeInfo.compName || "",
         transferYN: "N",
         rNotes: "",
       }));
@@ -580,9 +552,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
           conID: share.conID,
           doctorShare: share.doctorShare,
           hospShare: share.hospShare,
-          compID: compID || 0,
-          compCode: compCode || "",
-          compName: compName || "",
           rActiveYN: "Y",
           transferYN: "N",
           rNotes: "",
@@ -674,9 +643,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     setFormData({
       chargeInfo: {
         rActiveYN: "Y",
-        compID: compID || 0,
-        compCode: compCode || "",
-        compName: compName || "",
         transferYN: "Y",
         rNotes: "",
         chargeID: 0,
@@ -701,9 +667,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       chargeDetails: [
         {
           rActiveYN: "Y",
-          compID: compID ?? 0,
-          compCode: compCode ?? "",
-          compName: compName ?? "",
           transferYN: "Y",
           rNotes: "",
           chDetID: 0,
@@ -717,9 +680,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
       chargeAliases: [
         {
           rActiveYN: "Y",
-          compID: compID ?? 0,
-          compCode: compCode ?? "",
-          compName: compName ?? "",
           transferYN: "Y",
           rNotes: "",
           chaliasID: 0,
@@ -736,9 +696,6 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
           aSubID: 0,
           rActiveYN: "Y",
           rNotes: "",
-          compID: formData.chargeInfo.compID,
-          compCode: formData.chargeInfo.compCode,
-          compName: formData.chargeInfo.compName,
           transferYN: "Y",
         },
       ],
@@ -754,7 +711,7 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
 
     setIsSubmitted(false);
     setSelectedTab("ServiceCharges");
-  }, [compID, compCode, compName]);
+  }, []);
 
   return (
     <Paper variant="elevation" sx={{ padding: 2, mt: 2 }}>

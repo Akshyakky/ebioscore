@@ -39,7 +39,6 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
     ...initialFormData,
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [{ compID, compCode, compName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College" });
   useEffect(() => {
     if (open) {
       setFormData((prev) => {
@@ -48,9 +47,6 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
             ...prev,
             amlField: selectedCategoryCode,
             ...initialFormData,
-            compID: compID || 0,
-            compCode: compCode || "",
-            compName: compName || "",
           };
         }
         return prev;

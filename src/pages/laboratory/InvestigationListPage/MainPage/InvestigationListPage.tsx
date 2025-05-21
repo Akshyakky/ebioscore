@@ -20,11 +20,7 @@ import PrintPreferences from "../SubPage/PrintPreference";
 import LComponentDetails from "../SubPage/InvComponentsDetails";
 import ComponentDetailsSection from "../SubPage/ComponentDetailsSection";
 
-interface Props {
-  compID: number;
-  compCode: string;
-  compName: string;
-}
+interface Props {}
 
 const InvestigationListPage: React.FC<Props> = () => {
   const dropdownValues = useDropdownValues(["entryType"]);
@@ -72,8 +68,8 @@ const InvestigationListPage: React.FC<Props> = () => {
     components.map((comp) => ({
       ...comp,
       multipleChoices: multiples.filter((mc) => mc.compOID === comp.compoID),
-      ageRanges: ages.filter((ar) => ar.compoID === comp.compoID || ar.cappID === comp.compoID || ar.compID === comp.compID),
-      templates: templates.filter((tpl) => tpl.compoID === comp.compoID || tpl.compID === comp.compID || tpl.compCode === comp.compCode),
+      ageRanges: ages.filter((ar) => ar.compoID === comp.compoID || ar.cappID === comp.compoID),
+      templates: templates.filter((tpl) => tpl.compoID === comp.compoID),
     }));
 
   // 1) Searching/Selecting an existing Investigation
@@ -183,10 +179,7 @@ const InvestigationListPage: React.FC<Props> = () => {
                 ...mc,
                 cmID: mc.cmID || 0,
                 compoID: comp.compoID || 0,
-                compID: comp.compID,
                 invID: comp.invID,
-                compCode: comp.compCode,
-                compName: comp.compoNameCD,
               }))
           );
         }
@@ -201,10 +194,7 @@ const InvestigationListPage: React.FC<Props> = () => {
                 carID: ar.carID || 0,
                 cappID: 0,
                 compoID: comp.compoID || 0,
-                compID: comp.compID,
                 invID: comp.invID,
-                compCode: comp.compCode,
-                compName: comp.compoNameCD,
               }))
           );
         }
@@ -218,10 +208,7 @@ const InvestigationListPage: React.FC<Props> = () => {
                 ...tpl,
                 cTID: tpl.cTID || 0,
                 compoID: comp.compoID || 0,
-                compID: comp.compID,
                 invID: comp.invID,
-                compCode: comp.compCode,
-                compName: comp.compoNameCD,
               }))
           );
         }

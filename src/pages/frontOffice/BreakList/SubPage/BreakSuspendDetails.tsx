@@ -24,7 +24,6 @@ interface BreakSuspendDetailsProps {
 const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose, breakData }) => {
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
-  const [{ compID, compCode, compName, userID, userName }, setCompData] = useState({ compID: 1, compCode: "KVG", compName: "KVG Medical College", userID: 0, userName: "Akshay" });
 
   const [suspendData, setSuspendData] = useState<Partial<BreakConSuspendData>>({
     bCSStartDate: serverDate,
@@ -55,9 +54,6 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
       ...suspendData,
       bCSStartDate: new Date(suspendData.bCSStartDate as Date),
       bCSEndDate: new Date(suspendData.bCSEndDate as Date),
-      compID: compID ?? 0,
-      compCode: compCode ?? "",
-      compName: compName ?? "",
       rActiveYN: "N",
     };
 
@@ -77,7 +73,7 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
     } finally {
       setLoading(false);
     }
-  }, [breakData, suspendData, compID, compCode, compName, setLoading, onClose]);
+  }, [breakData, suspendData, setLoading, onClose]);
 
   const renderDateField = (id: string, title: string, value: Date | string | undefined, onChange?: (value: Date) => void) => (
     <Grid size={{ xs: 12, md: 6 }}>

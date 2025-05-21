@@ -75,9 +75,6 @@ export const ProductSearch = forwardRef<ProductSearchRef, ProductSearchProps>(
           supplierStatus: product.rActiveYN,
           vedCode: "",
           abcCode: "",
-          compID: 0,
-          compCode: "",
-          compName: "",
           transferYN: "",
           rActiveYN: product.rActiveYN || "",
         });

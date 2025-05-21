@@ -32,9 +32,6 @@ const MedicationListDetails: React.FC<MedicationListDetailsProps> = ({ selectedD
     productID: 0,
     calcQtyYN: "N",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
   });
 
   // Process dropdown options after they're loaded
@@ -61,9 +58,6 @@ const MedicationListDetails: React.FC<MedicationListDetailsProps> = ({ selectedD
     productID: null,
     calcQtyYN: "N",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
   };
 
   // Custom handlers for select changes to update both ID and Name fields

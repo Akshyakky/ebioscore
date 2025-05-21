@@ -25,9 +25,6 @@ const ProcedureListDetails: React.FC<ProcedureListDetailsProps> = ({ selectedDat
     chargeID: 0,
     procType: "",
     rActiveYN: "Y",
-    compID: 0,
-    compCode: "",
-    compName: "",
     rNotes: "",
     transferYN: "N",
   };
