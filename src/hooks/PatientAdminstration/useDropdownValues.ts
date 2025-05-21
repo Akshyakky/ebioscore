@@ -28,6 +28,8 @@ import { appSubModuleService, appUserModuleService } from "@/services/SecurityMa
 import { serviceTypeService } from "@/services/BillingServices/BillingGenericService";
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
+import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 
 export type DropdownType =
   | "pic"
@@ -94,7 +96,7 @@ export type DropdownType =
   | "manufacturer"
   | "productLocation"
   | "grnType"
-  | "statusFilter";
+  | "resourceList";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -472,6 +474,14 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       grnType: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "GRNTYPE");
         return response;
+      },
+      resourceList: async () => {
+        const response = await resourceListService.getAll();
+        return (response.data || []).map((item: ResourceListData) => ({
+          value: item.rLID || 0,
+          label: item.rLName || "",
+          ...item,
+        }));
       },
     }),
     []
