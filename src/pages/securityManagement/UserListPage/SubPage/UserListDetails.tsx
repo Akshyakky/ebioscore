@@ -112,7 +112,7 @@ const UserListDetails: React.FC<UserListProps> = ({ selectedUser, handleClearPag
 
   useEffect(() => {
     const fetchUsersWithoutCredentials = async () => {
-      if (Boolean(userForm.appID)) {
+      if (userForm.appID) {
         const userNameDropdownData: DropdownOption[] = [
           {
             value: `${userForm.conID.toString()}|${userForm.appUserName}`,

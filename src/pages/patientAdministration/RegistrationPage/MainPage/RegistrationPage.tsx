@@ -231,7 +231,7 @@ const RegistrationPage: React.FC = () => {
       const response = await PatientService.savePatient(formData);
       if (response.success && response.data) {
         const pChartID = response.data;
-        let hasErrors = false;
+        const hasErrors = false;
         const actionText = isEditMode ? "updated" : "saved";
 
         if (hasErrors) {

@@ -112,7 +112,7 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
     }
 
     const isEdit = editIndex !== null && editIndex >= 0;
-    let updatedValues = [...valuesList];
+    const updatedValues = [...valuesList];
     let currentCMID = 0;
 
     if (isEdit) {
