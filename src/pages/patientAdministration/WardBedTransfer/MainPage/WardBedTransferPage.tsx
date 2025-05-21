@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useRef } from "react";
 import { Container, Box } from "@mui/material";
 import { Search } from "@mui/icons-material";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
 import { showAlert } from "@/utils/Common/showAlert";

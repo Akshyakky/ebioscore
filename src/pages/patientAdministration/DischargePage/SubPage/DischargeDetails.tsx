@@ -5,7 +5,7 @@ import SaveIcon from "@mui/icons-material/Save";
 
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDto";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";

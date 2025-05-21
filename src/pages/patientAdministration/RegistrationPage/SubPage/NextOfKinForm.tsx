@@ -7,7 +7,7 @@ import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField"
 import CustomButton from "@/components/Button/CustomButton";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import SmartButton from "@/components/Button/SmartButton";
 
 interface NextOfKinFormProps {

@@ -1,6 +1,6 @@
 import { BreakListData } from "@/interfaces/FrontOffice/BreakListData";
 import React, { createContext, useState } from "react";
-import { useLoading } from "../LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { useAppSelector } from "@/store/hooks";
 import { RootState } from "@/store";
 import { BreakListService } from "@/services/FrontOfficeServices/BreakListServices/BreakListService";

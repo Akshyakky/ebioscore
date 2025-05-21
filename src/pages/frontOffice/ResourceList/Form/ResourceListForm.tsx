@@ -8,7 +8,7 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { useResourceList } from "../../../../hooks/FrontOffice/useResourceList";

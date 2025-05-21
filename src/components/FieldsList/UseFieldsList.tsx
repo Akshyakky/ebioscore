@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { DropdownOption } from "../FormField/FormField";
-import { useLoading } from "@/context/LoadingContext";
 import { appModifiedListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { showAlert } from "@/utils/Common/showAlert";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface FieldsListState {
   fieldsList: Record<string, DropdownOption[]>;

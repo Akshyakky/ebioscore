@@ -7,7 +7,7 @@ import CustomButton from "@/components/Button/CustomButton";
 import PatientInsuranceForm from "./PatientInsuranceForm";
 import PatientInsuranceGrid from "./PatientInsuranceGrid";
 import { showAlert } from "@/utils/Common/showAlert";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface InsurancePageProps {
   pChartID: number;

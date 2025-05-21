@@ -7,7 +7,7 @@ import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifi
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import useFieldsList from "@/components/FieldsList/UseFieldsList";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
 import { insuranceListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import FormField from "@/components/FormField/FormField";

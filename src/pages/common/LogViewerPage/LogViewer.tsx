@@ -28,7 +28,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import InfoIcon from "@mui/icons-material/Info";
 import CloseIcon from "@mui/icons-material/Close";
 import { AppLogEntry } from "@/interfaces/Common/AppLogEntry";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import { format } from "date-fns";
 import { LogService } from "@/services/CommonServices/LogService";

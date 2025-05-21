@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import CircularProgress from "@mui/material/CircularProgress";
-import { useLoading } from "../../context/LoadingContext";
 import { Box } from "@mui/material";
 import styles from "./GlobalSpinner.module.css";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface GlobalSpinnerProps {
   delay?: number;

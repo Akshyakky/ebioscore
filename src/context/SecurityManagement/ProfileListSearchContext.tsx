@@ -1,6 +1,6 @@
 import { ProfileListSearchResult } from "@/interfaces/SecurityManagement/ProfileListData";
 import React, { createContext, useCallback } from "react";
-import { useLoading } from "../LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { notifyError } from "@/utils/Common/toastManager";
 
 interface ProfileListSearchContextProps {

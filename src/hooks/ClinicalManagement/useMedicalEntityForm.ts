@@ -1,6 +1,6 @@
 // src/hooks/useMedicalEntityForm.ts
 import { useState, useCallback, useEffect } from "react";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { createEntityService } from "@/utils/Common/serviceFactory";

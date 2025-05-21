@@ -3,7 +3,7 @@ import { Button, Typography, List, ListItem, ListItemText, Divider, Accordion, A
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { profileListService } from "@/services/SecurityManagementServices/ProfileListServices";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { ProfileModulesDto } from "@/interfaces/SecurityManagement/ProfileListData";
 

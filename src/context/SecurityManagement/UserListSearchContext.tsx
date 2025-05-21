@@ -1,6 +1,6 @@
-import { UserListData, UserListDto } from "@/interfaces/SecurityManagement/UserListData";
+import { UserListData } from "@/interfaces/SecurityManagement/UserListData";
 import React, { createContext, useEffect, useCallback } from "react";
-import { useLoading } from "../LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 
 interface UserListSearchContextProps {

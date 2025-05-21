@@ -1,8 +1,7 @@
 import CustomButton from "@/components/Button/CustomButton";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
 import FormField from "@/components/FormField/FormField";
-import { useLoading } from "@/context/LoadingContext";
-import { useServerDate } from "@/hooks/Common/useServerDate";
+import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import { departmentService } from "@/services/CommonServices/CommonModelServices";
@@ -48,7 +47,6 @@ const DepartmentListDetails: React.FC<DepartmentListDetailsProps> = ({ editData 
   const [openDialog, setOpenDialog] = useState(false);
 
   const { setLoading } = useLoading();
-  const serverDate = useServerDate();
   const dropdownValues = useDropdownValues(["departmentTypes"]);
 
   const isEditMode = formData.deptID > 0;

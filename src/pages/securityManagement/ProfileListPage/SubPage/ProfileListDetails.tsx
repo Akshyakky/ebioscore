@@ -1,7 +1,7 @@
 import { Grid, Paper, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { showAlert } from "@/utils/Common/showAlert";
 import FormField from "@/components/FormField/FormField";

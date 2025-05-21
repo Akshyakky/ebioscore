@@ -2,7 +2,7 @@ import React, { useContext, useState, useCallback, useMemo } from "react";
 import { Container, Box } from "@mui/material";
 import { Search as SearchIcon, Print as PrintIcon, Delete as DeleteIcon, Save as SaveIcon } from "@mui/icons-material";
 import { RegistrationFormErrors } from "@/interfaces/PatientAdministration/registrationFormData";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useRegistrationUtils from "@/utils/PatientAdministration/RegistrationUtils";
 import { PatientSearchContext } from "@/context/PatientSearchContext";

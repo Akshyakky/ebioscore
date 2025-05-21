@@ -1,4 +1,4 @@
-// src/pages/common/LoginPage/LoginPage.tsx
+// LoginPage.tsx - Fixed Version
 import { Company } from "@/types/Common/Company.type";
 import { useAppDispatch } from "@/store/hooks";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
@@ -18,7 +18,7 @@ import { Alert, alpha, Box, Button, CircularProgress, Container, Stack, IconButt
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import logo from "../../../assets/images/eBios.png";
 import backgroundImage from "/src/assets/images/LoginCoverImage.jpg";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 // Styled Components with enhanced animations and effects
 const AnimatedBox = styled(Box)`
@@ -297,7 +297,7 @@ const LoginPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const theme = useTheme();
-  const [formState, setFormState] = React.useState<LoginFormState>(initialFormState);
+  const [formState, setFormState] = useState<LoginFormState>(initialFormState);
   const [showPassword, setShowPassword] = useState(false);
   const [animationComplete, setAnimationComplete] = useState(false);
 
@@ -319,7 +319,7 @@ const LoginPage: React.FC = () => {
     password: false,
   });
 
-  // Animation timing effect
+  // Animation timing effect - no dependencies that change
   useEffect(() => {
     const timer = setTimeout(() => {
       setAnimationComplete(true);
@@ -327,14 +327,13 @@ const LoginPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Keyboard navigation - no state dependencies
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Tab") {
         const focusableElements = [companySelectRef.current, usernameInputRef.current, passwordInputRef.current, submitButtonRef.current].filter(Boolean);
 
-        // Cast the document.activeElement to HTMLElement
         const activeElement = document.activeElement as HTMLElement | null;
-
         if (!activeElement) return;
 
         const currentIndex = focusableElements.findIndex((el) => el instanceof HTMLElement && el.isEqualNode(activeElement));
@@ -355,6 +354,7 @@ const LoginPage: React.FC = () => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Check rate limit - no state updates inside
   const checkRateLimit = useCallback(() => {
     const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes
     const MAX_ATTEMPTS = 3;
@@ -365,171 +365,221 @@ const LoginPage: React.FC = () => {
         const remainingTime = Math.ceil((loginAttempts.lockoutEndTime.getTime() - now.getTime()) / 1000);
         return `Account locked. Try again in ${remainingTime} seconds.`;
       }
-      setLoginAttempts((prev) => ({ ...prev, isLocked: false, count: 0 }));
+      // We'll handle the reset outside this function
+      return null;
     }
     return null;
-  }, [loginAttempts]);
+  }, [loginAttempts.isLocked, loginAttempts.lockoutEndTime]);
 
   // Responsive breakpoints
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const isMediumScreen = useMediaQuery(theme.breakpoints.between("sm", "md"));
 
+  // Simple computed value
   const selectedCompanyName = useMemo(() => {
     const selectedCompany = formState.companies.find((c) => c.compIDCompCode === `${formState.companyID},${formState.companyCode}`);
     return selectedCompany?.compName || "Select Company";
   }, [formState.companyID, formState.companyCode, formState.companies]);
 
-  const checkDateValidity = useCallback((dateString: string): number => {
+  // Pure function, no dependencies
+  const checkDateValidity = (dateString: string): number => {
     const [day, month, year] = dateString.split("/").map(Number);
     const today = new Date();
     const targetDate = new Date(year, month - 1, day);
     const differenceInTime = targetDate.getTime() - today.getTime();
     return differenceInTime / (1000 * 3600 * 24);
-  }, []);
+  };
 
-  const checkExpiryDates = useCallback(async () => {
-    try {
-      const [amcDetails, licenseDetails] = await Promise.all([ClientParameterService.getClientParameter("AMCSUP"), ClientParameterService.getClientParameter("CINLIC")]);
-
-      const amcDaysRemaining = checkDateValidity(amcDetails[0].clParValue);
-      const licenseDaysRemaining = checkDateValidity(licenseDetails[0].clParValue);
-
-      setFormState((prev) => ({
-        ...prev,
-        licenseDaysRemaining,
-        amcExpiryMessage: amcDaysRemaining <= 30 ? `Your AMC support will expire in ${Math.ceil(amcDaysRemaining)} day(s)` : "",
-        licenseExpiryMessage:
-          licenseDaysRemaining < 0
-            ? "Cannot log in. Your License has expired"
-            : licenseDaysRemaining <= 30
-            ? `Your License will expire in ${Math.ceil(licenseDaysRemaining)} day(s)`
-            : "",
-      }));
-    } catch (error) {
-      console.error("Failed to fetch client parameters:", error);
-    }
-  }, [checkDateValidity]);
-
-  const handleSelectCompany = useCallback((CompIDCompCode: string, compName: string) => {
-    const [compID, compCode] = CompIDCompCode.split(",");
+  // Handle company selection - event handler
+  const handleSelectCompany = (compIDCompCode: string, compName: string) => {
+    const [compID, compCode] = compIDCompCode.split(",");
     setFormState((prev) => ({
       ...prev,
       companyID: compID || "0",
       companyCode: compCode || "",
       errorMessage: !compID || !compCode ? "Please select a company" : "",
     }));
-  }, []);
+  };
 
+  // Fetch companies only once on mount
   useEffect(() => {
+    let isMounted = true;
+
     const fetchCompanies = async () => {
       setLoading(true);
 
       try {
         const companyData = await CompanyService.getCompanies();
-        setFormState((prev) => ({ ...prev, companies: companyData }));
-        if (companyData.length === 1) {
-          handleSelectCompany(companyData[0].compIDCompCode, companyData[0].compName);
+
+        if (isMounted) {
+          setFormState((prev) => ({ ...prev, companies: companyData }));
+
+          // Auto-select if only one company
+          if (companyData.length === 1) {
+            const [compID, compCode] = companyData[0].compIDCompCode.split(",");
+            setFormState((prev) => ({
+              ...prev,
+              companyID: compID || "0",
+              companyCode: compCode || "",
+            }));
+          }
         }
       } catch (error) {
         console.error("Fetching companies failed: ", error);
-        setFormState((prev) => ({
-          ...prev,
-          errorMessage: "Failed to load companies.",
-        }));
+        if (isMounted) {
+          setFormState((prev) => ({
+            ...prev,
+            errorMessage: "Failed to load companies.",
+          }));
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
+    // Execute once
     fetchCompanies();
-    checkExpiryDates();
-  }, [checkExpiryDates, handleSelectCompany, setLoading]);
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Only depends on stable references
 
-      const lockoutMessage = checkRateLimit();
-      if (lockoutMessage) {
-        setFormState((prev) => ({ ...prev, errorMessage: lockoutMessage }));
-        return;
-      }
+  // Check expiry dates in a separate effect
+  useEffect(() => {
+    let isMounted = true;
 
-      if (formState.licenseExpiryMessage === "Cannot log in. Your License has expired") {
-        setFormState((prev) => ({
-          ...prev,
-          errorMessage: formState.licenseExpiryMessage,
-        }));
-        return;
-      }
-
-      if (!formState.companyID || !formState.userName || !formState.password) {
-        setFormState((prev) => ({
-          ...prev,
-          errorMessage: !formState.companyID ? "Please select a company." : !formState.userName ? "Username is required." : "Password is required.",
-        }));
-        return;
-      }
-
-      setFieldLoading({ company: true, username: true, password: true });
-      setFormState((prev) => ({ ...prev, isLoggingIn: true, errorMessage: "" }));
-
+    const fetchExpiryDates = async () => {
       try {
-        const tokenResponse = await AuthService.generateToken({
-          UserName: formState.userName,
-          Password: formState.password,
-          CompanyID: parseInt(formState.companyID),
-          CompanyCode: formState.companyCode,
-          CompanyName: selectedCompanyName,
-        });
+        const [amcDetails, licenseDetails] = await Promise.all([ClientParameterService.getClientParameter("AMCSUP"), ClientParameterService.getClientParameter("CINLIC")]);
 
-        if (tokenResponse.token) {
-          const jwtToken = JSON.parse(atob(tokenResponse.token.split(".")[1]));
-          const tokenExpiry = new Date(jwtToken.exp * 1000).getTime();
+        if (isMounted) {
+          const amcDaysRemaining = checkDateValidity(amcDetails[0].clParValue);
+          const licenseDaysRemaining = checkDateValidity(licenseDetails[0].clParValue);
 
-          dispatch(
-            setUserDetails({
-              userID: tokenResponse.user.userID,
-              token: tokenResponse.token,
-              adminYN: tokenResponse.user.adminYN,
-              userName: tokenResponse.user.userName,
-              compID: parseInt(formState.companyID),
-              compCode: formState.companyCode,
-              compName: selectedCompanyName,
-              tokenExpiry,
-            })
-          );
-
-          notifySuccess("Login successful!");
-          navigate("/dashboard");
-        } else {
-          setLoginAttempts((prev) => {
-            const newCount = prev.count + 1;
-            return {
-              count: newCount,
-              lastAttempt: new Date(),
-              isLocked: newCount >= 3,
-              lockoutEndTime: newCount >= 3 ? new Date(Date.now() + 5 * 60 * 1000) : null,
-            };
-          });
           setFormState((prev) => ({
             ...prev,
-            errorMessage: tokenResponse.user.ErrorMessage || "Invalid credentials",
-            isLoggingIn: false,
+            licenseDaysRemaining,
+            amcExpiryMessage: amcDaysRemaining <= 30 ? `Your AMC support will expire in ${Math.ceil(amcDaysRemaining)} day(s)` : "",
+            licenseExpiryMessage:
+              licenseDaysRemaining < 0
+                ? "Cannot log in. Your License has expired"
+                : licenseDaysRemaining <= 30
+                ? `Your License will expire in ${Math.ceil(licenseDaysRemaining)} day(s)`
+                : "",
           }));
         }
       } catch (error) {
-        console.error("Login failed:", error);
+        console.error("Failed to fetch client parameters:", error);
+      }
+    };
+
+    // Execute once
+    fetchExpiryDates();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - run once on mount
+
+  // Form submission - event handler
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const lockoutMessage = checkRateLimit();
+    if (lockoutMessage) {
+      setFormState((prev) => ({ ...prev, errorMessage: lockoutMessage }));
+      return;
+    }
+
+    // Check if the lockout period has ended, reset if needed
+    if (loginAttempts.isLocked && loginAttempts.lockoutEndTime) {
+      const now = new Date();
+      if (now >= loginAttempts.lockoutEndTime) {
+        setLoginAttempts((prev) => ({ ...prev, isLocked: false, count: 0 }));
+      }
+    }
+
+    if (formState.licenseExpiryMessage === "Cannot log in. Your License has expired") {
+      setFormState((prev) => ({
+        ...prev,
+        errorMessage: formState.licenseExpiryMessage,
+      }));
+      return;
+    }
+
+    if (!formState.companyID || !formState.userName || !formState.password) {
+      setFormState((prev) => ({
+        ...prev,
+        errorMessage: !formState.companyID ? "Please select a company." : !formState.userName ? "Username is required." : "Password is required.",
+      }));
+      return;
+    }
+
+    setFieldLoading({ company: true, username: true, password: true });
+    setFormState((prev) => ({ ...prev, isLoggingIn: true, errorMessage: "" }));
+
+    try {
+      const tokenResponse = await AuthService.generateToken({
+        UserName: formState.userName,
+        Password: formState.password,
+        CompanyID: parseInt(formState.companyID),
+        CompanyCode: formState.companyCode,
+        CompanyName: selectedCompanyName,
+      });
+
+      if (tokenResponse.token) {
+        const jwtToken = JSON.parse(atob(tokenResponse.token.split(".")[1]));
+        const tokenExpiry = new Date(jwtToken.exp * 1000).getTime();
+
+        dispatch(
+          setUserDetails({
+            userID: tokenResponse.user.userID,
+            token: tokenResponse.token,
+            adminYN: tokenResponse.user.adminYN,
+            userName: tokenResponse.user.userName,
+            compID: parseInt(formState.companyID),
+            compCode: formState.companyCode,
+            compName: selectedCompanyName,
+            tokenExpiry,
+          })
+        );
+
+        notifySuccess("Login successful!");
+        navigate("/dashboard");
+      } else {
+        setLoginAttempts((prev) => {
+          const newCount = prev.count + 1;
+          return {
+            count: newCount,
+            lastAttempt: new Date(),
+            isLocked: newCount >= 3,
+            lockoutEndTime: newCount >= 3 ? new Date(Date.now() + 5 * 60 * 1000) : null,
+          };
+        });
         setFormState((prev) => ({
           ...prev,
-          errorMessage: "An error occurred during login. Please try again.",
+          errorMessage: tokenResponse.user.ErrorMessage || "Invalid credentials",
           isLoggingIn: false,
         }));
       }
-    },
-    [formState, checkRateLimit, selectedCompanyName, dispatch, navigate]
-  );
+    } catch (error) {
+      console.error("Login failed:", error);
+      setFormState((prev) => ({
+        ...prev,
+        errorMessage: "An error occurred during login. Please try again.",
+        isLoggingIn: false,
+      }));
+    } finally {
+      setFieldLoading({ company: false, username: false, password: false });
+    }
+  };
 
+  // Render JSX (keeping the same rendering logic)
   return (
     <StyledContainer maxWidth={false} disableGutters>
       {/* Main Layout using Box instead of Grid */}

@@ -1,6 +1,5 @@
 // src/pages/clinicalManagement/PatientHistory/PatientHistory.tsx
 
-import { useLoading } from "@/context/LoadingContext";
 import { AllergyDto } from "@/interfaces/ClinicalManagement/AllergyDto";
 import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
 import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
@@ -21,6 +20,7 @@ import PastMedication from "./PastMedicationHistory/PastMedication";
 import ReviewOfSystem from "./PastReviewOfSystem/ReviewOfSystem";
 import SurgicalHistory from "./PastSurgicalHistory/SurgicalHistory";
 import AllergyHistory from "./Allergies/AllergyHistory";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 export interface HistoryState {
   familyHistory: OPIPHistFHDto[];

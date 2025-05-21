@@ -6,7 +6,6 @@ import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid
 import CustomButton from "../../../../components/Button/CustomButton";
 import { OPIPHistPSHDto } from "../../../../interfaces/ClinicalManagement/OPIPHistPSHDto";
 import { createEntityService } from "../../../../utils/Common/serviceFactory";
-import { useLoading } from "../../../../context/LoadingContext";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
@@ -14,6 +13,7 @@ import SurgeryIcon from "@mui/icons-material/LocalHospital";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import HealingIcon from "@mui/icons-material/Healing";
 import ClearIcon from "@mui/icons-material/Clear";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface SurgicalHistoryProps {
   pChartID: number;

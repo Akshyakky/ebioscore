@@ -4,7 +4,7 @@ import { Add as AddIcon } from "@mui/icons-material";
 import NextOfKinForm from "./NextOfKinForm";
 import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
 import { PatNokService } from "@/services/PatientAdministrationServices/RegistrationService/PatNokService";
-import { useLoading } from "@/context/LoadingContext";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { notifySuccess, notifyError, notifyWarning } from "@/utils/Common/toastManager";
 import NextOfKinList from "./NextOfKinList";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
@@ -18,8 +18,7 @@ const NextOfKinPage: React.FC<NextOfKinPageProps> = ({ pChartID, pChartCode }) =
   const [nokList, setNokList] = useState<PatNokDetailsDto[]>([]);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [selectedNok, setSelectedNok] = useState<PatNokDetailsDto | null>(null);
-  const [loading, setLoading] = useState(false);
-  const { setLoading: setGlobalLoading } = useLoading();
+  const { isLoading, setLoading } = useLoading();
 
   const fetchNokData = useCallback(async () => {
     if (!pChartID) return;
@@ -62,7 +61,7 @@ const NextOfKinPage: React.FC<NextOfKinPageProps> = ({ pChartID, pChartCode }) =
 
   const handleSave = async (data: PatNokDetailsDto) => {
     try {
-      setGlobalLoading(true);
+      setLoading(true);
 
       // Ensure pChartID is set
       const nokData = {
@@ -86,13 +85,13 @@ const NextOfKinPage: React.FC<NextOfKinPageProps> = ({ pChartID, pChartCode }) =
       console.error("Error saving next of kin:", error);
       notifyError("An error occurred while saving next of kin information");
     } finally {
-      setGlobalLoading(false);
+      setLoading(false);
     }
   };
 
   const handleDelete = async (nokId: number) => {
     try {
-      setGlobalLoading(true);
+      setLoading(true);
 
       // Find the NOK record
       const nokToUpdate = nokList.find((nok) => nok.pNokID === nokId);
@@ -120,7 +119,7 @@ const NextOfKinPage: React.FC<NextOfKinPageProps> = ({ pChartID, pChartCode }) =
       console.error("Error deleting next of kin:", error);
       notifyError("An error occurred while removing next of kin");
     } finally {
-      setGlobalLoading(false);
+      setLoading(false);
     }
   };
 
@@ -149,7 +148,7 @@ const NextOfKinPage: React.FC<NextOfKinPageProps> = ({ pChartID, pChartCode }) =
         </Button>
       </Box>
 
-      <NextOfKinList data={nokList.filter((nok) => nok.rActiveYN === "Y")} onEdit={handleEdit} onDelete={handleDelete} loading={loading} />
+      <NextOfKinList data={nokList.filter((nok) => nok.rActiveYN === "Y")} onEdit={handleEdit} onDelete={handleDelete} loading={isLoading} />
 
       {/* Form in modal dialog */}
       <GenericDialog
