@@ -7,6 +7,7 @@ import { PatNokService } from "@/services/PatientAdministrationServices/Registra
 import { useLoading } from "@/context/LoadingContext";
 import { notifySuccess, notifyError, notifyWarning } from "@/utils/Common/toastManager";
 import NextOfKinList from "./NextOfKinList";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 
 interface NextOfKinPageProps {
   pChartID: number;
@@ -15,7 +16,7 @@ interface NextOfKinPageProps {
 
 const NextOfKinPage: React.FC<NextOfKinPageProps> = ({ pChartID, pChartCode }) => {
   const [nokList, setNokList] = useState<PatNokDetailsDto[]>([]);
-  const [showForm, setShowForm] = useState(false);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [selectedNok, setSelectedNok] = useState<PatNokDetailsDto | null>(null);
   const [loading, setLoading] = useState(false);
   const { setLoading: setGlobalLoading } = useLoading();
@@ -46,16 +47,16 @@ const NextOfKinPage: React.FC<NextOfKinPageProps> = ({ pChartID, pChartCode }) =
 
   const handleAddNew = () => {
     setSelectedNok(null);
-    setShowForm(true);
+    setFormDialogOpen(true);
   };
 
   const handleEdit = (item: PatNokDetailsDto) => {
     setSelectedNok(item);
-    setShowForm(true);
+    setFormDialogOpen(true);
   };
 
-  const handleCancel = () => {
-    setShowForm(false);
+  const handleCloseForm = () => {
+    setFormDialogOpen(false);
     setSelectedNok(null);
   };
 
@@ -76,7 +77,7 @@ const NextOfKinPage: React.FC<NextOfKinPageProps> = ({ pChartID, pChartCode }) =
       if (response.success) {
         notifySuccess(selectedNok ? "Next of kin updated successfully" : "Next of kin added successfully");
         await fetchNokData();
-        setShowForm(false);
+        setFormDialogOpen(false);
         setSelectedNok(null);
       } else {
         notifyError(response.errorMessage || "Failed to save next of kin information");
@@ -134,31 +135,34 @@ const NextOfKinPage: React.FC<NextOfKinPageProps> = ({ pChartID, pChartCode }) =
 
   return (
     <Box sx={{ p: 2 }}>
-      {!showForm ? (
-        <>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-            }}
-          >
-            <Typography variant="h6">Next of Kin Information</Typography>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNew} size="small">
-              Add New
-            </Button>
-          </Box>
-          <NextOfKinList data={nokList.filter((nok) => nok.rActiveYN === "Y")} onEdit={handleEdit} onDelete={handleDelete} loading={loading} />
-        </>
-      ) : (
-        <>
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h6">{selectedNok ? "Edit Next of Kin" : "Add Next of Kin"}</Typography>
-          </Box>
-          <NextOfKinForm onSave={handleSave} onCancel={handleCancel} initialData={selectedNok} pChartID={pChartID} pChartCode={pChartCode} />
-        </>
-      )}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <Typography variant="h6">Next of Kin Information</Typography>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNew} size="small">
+          Add New
+        </Button>
+      </Box>
+
+      <NextOfKinList data={nokList.filter((nok) => nok.rActiveYN === "Y")} onEdit={handleEdit} onDelete={handleDelete} loading={loading} />
+
+      {/* Form in modal dialog */}
+      <GenericDialog
+        open={formDialogOpen}
+        onClose={handleCloseForm}
+        title={selectedNok ? "Edit Next of Kin" : "Add Next of Kin"}
+        maxWidth="lg"
+        fullWidth
+        showCloseButton={true}
+        disableBackdropClick={true}
+      >
+        <NextOfKinForm onSave={handleSave} onCancel={handleCloseForm} initialData={selectedNok} pChartID={pChartID} pChartCode={pChartCode} />
+      </GenericDialog>
     </Box>
   );
 };
