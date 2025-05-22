@@ -5,7 +5,8 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import HomeIcon from "@mui/icons-material/Home";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useAppSelector } from "@/store/hooks";
-import { RootState } from "@/store"; // Adjust the path based on your project structure
+import { RootState } from "@/store";
+import routeConfig from "@/routes/routeConfig";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -31,58 +32,7 @@ const RouteNotFoundBoundary: React.FC<RouteNotFoundBoundaryProps> = ({ children 
 
   // Check if the current path exists in the available routes
   const isKnownRoute = React.useMemo(() => {
-    // This is a simplified check - in a real app, you might want to check against your actual routes
-    const knownRoutes = [
-      "/login",
-      "/dashboard",
-      "/registrationpage",
-      "/revisitpage",
-      "/routinereportspa",
-      "/listofreportspage",
-      "/contactlistpage",
-      "/userlistpage",
-      "/profilelistpage",
-      "/admissionpage",
-      "/ResourceListPage",
-      "/ReasonListPage",
-      "/BreakListPage",
-      "/Appointmentpage",
-      "/PatientInvoiceCodePage",
-      "/DepartmentListPage",
-      "/ServiceGroupsListPage",
-      "/PaymentTypesPage",
-      "/AlertPage",
-      "/WardCategoryPage",
-      "/BedSetUpPage",
-      "/DeptUnitListPage",
-      "/InsuranceListPage",
-      "/ProductListPage",
-      "/ProductTaxListPage",
-      "/ProductOverviewPage",
-      "/ManageBedPage",
-      "/DiagnosisListPage",
-      "/MedicationListPage",
-      "/MedicationFormPage",
-      "/AppModifiedListPage",
-      "/ChargeDetailsPage",
-      "/DischargePage",
-      "/WardBedTransferPage",
-      "/MedicationFrequencyPage",
-      "/MedicationDosagePage",
-      "/ProcedureListPage",
-      "/MedicationGenericPage",
-      "/InvestigationListPage",
-      "/ComponentEntryTypePage",
-      "/PurchaseOrderPage",
-      "/ForgotPasswordPage",
-      "/EmployeeRegistrationForm",
-      "/IndentProductPage",
-      "/LogModulePage",
-      "/GRNPage",
-      "/ProductTransaction",
-      "/",
-    ];
-
+    const knownRoutes = routeConfig.map((route) => route.path);
     return knownRoutes.some((route) => route.toLowerCase() === location.pathname.toLowerCase());
   }, [location.pathname]);
 

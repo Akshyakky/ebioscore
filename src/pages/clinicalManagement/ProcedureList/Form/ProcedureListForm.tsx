@@ -41,6 +41,7 @@ const ProcedureForm: React.FC<ProcedureFormProps> = ({ open, onClose, initialDat
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const isAddMode = !initialData;
 
   const defaultValues: ProcedureFormData = {
@@ -189,6 +190,23 @@ const ProcedureForm: React.FC<ProcedureFormProps> = ({ open, onClose, initialDat
     setShowResetConfirmation(false);
   };
 
+  const handleCancel = () => {
+    if (isDirty) {
+      setShowCancelConfirmation(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleCancelConfirm = () => {
+    setShowCancelConfirmation(false);
+    onClose();
+  };
+
+  const handleCancelCancel = () => {
+    setShowCancelConfirmation(false);
+  };
+
   const dialogTitle = viewOnly ? "View Procedure Details" : isAddMode ? "Create New Procedure" : `Edit Procedure - ${initialData?.procedureName}`;
 
   const dialogActions = viewOnly ? (
@@ -197,7 +215,7 @@ const ProcedureForm: React.FC<ProcedureFormProps> = ({ open, onClose, initialDat
     <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
       <SmartButton
         text="Cancel"
-        onClick={() => onClose()}
+        onClick={handleCancel}
         variant="outlined"
         color="inherit"
         disabled={isSaving}
@@ -382,6 +400,18 @@ const ProcedureForm: React.FC<ProcedureFormProps> = ({ open, onClose, initialDat
         message="Are you sure you want to reset the form? All unsaved changes will be lost."
         confirmText="Reset"
         cancelText="Cancel"
+        type="warning"
+        maxWidth="sm"
+      />
+
+      <ConfirmationDialog
+        open={showCancelConfirmation}
+        onClose={handleCancelCancel}
+        onConfirm={handleCancelConfirm}
+        title="Unsaved Changes"
+        message="You have unsaved changes. Are you sure you want to cancel?"
+        confirmText="Yes, Cancel"
+        cancelText="Continue Editing"
         type="warning"
         maxWidth="sm"
       />

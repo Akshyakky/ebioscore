@@ -4,113 +4,25 @@ import { useLocation, Link as RouterLink } from "react-router-dom";
 import HomeIcon from "@mui/icons-material/Home";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import routeConfig from "@/routes/routeConfig";
-import { LinkProps as RouterLinkProps } from "react-router-dom";
 import { LinkProps as MuiLinkProps } from "@mui/material/Link";
 
-// Create a mapping of paths to readable names
-const pathMappings: Record<string, string> = {
-  "": "Home",
-  dashboard: "Dashboard",
-  registrationpage: "Registration",
-  revisitpage: "Revisit",
-  routinereportspa: "Routine Reports",
-  listofreportspage: "Report List",
-  contactlistpage: "Contact List",
-  userlistpage: "User List",
-  profilelistpage: "Profile List",
-  admissionpage: "Admission",
-  ResourceListPage: "Resource List",
-  ReasonListPage: "Reason List",
-  BreakListPage: "Break List",
-  Appointmentpage: "Appointments",
-  PatientInvoiceCodePage: "Patient Invoice Code",
-  DepartmentListPage: "Departments",
-  ServiceGroupsListPage: "Service Groups",
-  PaymentTypesPage: "Payment Types",
-  AlertPage: "Alerts",
-  WardCategoryPage: "Ward Categories",
-  BedSetUpPage: "Bed Setup",
-  DeptUnitListPage: "Department Units",
-  InsuranceListPage: "Insurance",
-  ProductListPage: "Products",
-  ProductTaxListPage: "Product Tax",
-  ProductOverviewPage: "Product Overview",
-  ManageBedPage: "Manage Beds",
-  DiagnosisListPage: "Diagnosis List",
-  MedicationListPage: "Medications",
-  MedicationFormPage: "Medication Forms",
-  AppModifiedListPage: "Modified Applications",
-  ChargeDetailsPage: "Charge Details",
-  DischargePage: "Discharge",
-  WardBedTransferPage: "Ward/Bed Transfer",
-  MedicationFrequencyPage: "Medication Frequency",
-  MedicationDosagePage: "Medication Dosage",
-  ProcedureListPage: "Procedures",
-  MedicationGenericPage: "Generic Medications",
-  InvestigationListPage: "Investigations",
-  ComponentEntryTypePage: "Component Entry Types",
-  PurchaseOrderPage: "Purchase Orders",
-};
-
-// Breadcrumb category to determine color/icon
-type BreadcrumbCategory = "admin" | "patient" | "clinical" | "billing" | "inventory" | "default";
-
-// Category mapping for different route types
-const categoryMapping: Record<string, BreadcrumbCategory> = {
-  dashboard: "default",
-  registration: "patient",
-  revisit: "patient",
-  admission: "patient",
-  discharge: "patient",
-  ward: "patient",
-  manageBed: "patient",
-  bedSetUp: "patient",
-  department: "admin",
-  profile: "admin",
-  user: "admin",
-  contact: "admin",
-  insurance: "admin",
-  diagnosis: "clinical",
-  medication: "clinical",
-  procedure: "clinical",
-  investigation: "clinical",
-  invoice: "billing",
-  charge: "billing",
-  payment: "billing",
-  service: "billing",
-  product: "inventory",
-  purchase: "inventory",
-};
-
-const getCategoryForPath = (path: string): BreadcrumbCategory => {
-  const pathLower = path.toLowerCase();
-
-  // Find matching category
-  for (const [key, category] of Object.entries(categoryMapping)) {
-    if (pathLower.includes(key)) {
-      return category;
-    }
-  }
-
-  return "default";
-};
-
-// Create a custom Link component that integrates MUI Link with React Router
+// Custom link component that combines React Router and MUI Link
 interface BreadcrumbLinkProps {
   to: string;
   children: React.ReactNode;
   underline?: MuiLinkProps["underline"];
 }
 
-// Custom link component that combines React Router and MUI Link
 const RouterBreadcrumbLink = React.forwardRef<HTMLAnchorElement, BreadcrumbLinkProps>(({ to, children, underline = "hover", ...props }, ref) => {
+  const theme = useTheme();
+
   return (
     <MuiLink
       component={RouterLink}
       to={to}
       ref={ref}
       underline={underline}
-      sx={(theme) => ({
+      sx={{
         display: "flex",
         alignItems: "center",
         textDecoration: "none",
@@ -121,7 +33,7 @@ const RouterBreadcrumbLink = React.forwardRef<HTMLAnchorElement, BreadcrumbLinkP
           textDecoration: "underline",
           color: theme.palette.primary.main,
         },
-      })}
+      }}
       {...props}
     >
       {children}
@@ -133,32 +45,25 @@ RouterBreadcrumbLink.displayName = "RouterBreadcrumbLink";
 
 const BreadcrumbChip = styled(Chip, {
   shouldForwardProp: (prop) => prop !== "category",
-})<{ category: BreadcrumbCategory }>(({ theme, category }) => {
-  // Different colors based on category
-  const getColorForCategory = () => {
-    switch (category) {
-      case "patient":
-        return theme.palette.primary.main;
-      case "clinical":
-        return theme.palette.info.main;
-      case "billing":
-        return theme.palette.success.main;
-      case "inventory":
-        return theme.palette.warning.main;
-      case "admin":
-        return theme.palette.secondary.main;
-      default:
-        return theme.palette.grey[600];
-    }
+})<{ category: string }>(({ theme, category }) => {
+  const categoryColors = {
+    patient: theme.palette.primary.main,
+    clinical: theme.palette.info.main,
+    billing: theme.palette.success.main,
+    inventory: theme.palette.warning.main,
+    admin: theme.palette.secondary.main,
+    default: theme.palette.grey[600],
   };
+
+  const color = categoryColors[category as keyof typeof categoryColors] || categoryColors.default;
 
   return {
     height: 20,
     fontSize: "0.75rem",
-    backgroundColor: alpha(getColorForCategory(), 0.1),
-    color: getColorForCategory(),
+    backgroundColor: alpha(color, 0.1),
+    color: color,
     fontWeight: 500,
-    border: `1px solid ${alpha(getColorForCategory(), 0.3)}`,
+    border: `1px solid ${alpha(color, 0.3)}`,
     "& .MuiChip-label": {
       padding: "0 8px",
     },
@@ -185,17 +90,16 @@ const BreadcrumbsNavigation: React.FC<BreadcrumbsNavigationProps> = ({ showHome 
       // Find route config entry for additional info
       const routeEntry = routeConfig.find((route) => route.path === url || route.path === url.toLowerCase());
 
-      // Find display name from mapping or use capitalized path
+      // Get display name and category from route metadata or use fallback
       const displayName =
-        pathMappings[value] ||
+        routeEntry?.metadata?.title ||
         value.charAt(0).toUpperCase() +
           value
             .slice(1)
             .replace(/([A-Z])/g, " $1")
             .trim();
 
-      // Determine category for styling
-      const category = getCategoryForPath(value);
+      const category = routeEntry?.metadata?.category || "default";
 
       return {
         path: url,
@@ -208,11 +112,12 @@ const BreadcrumbsNavigation: React.FC<BreadcrumbsNavigationProps> = ({ showHome 
 
     // Add home as first breadcrumb if requested
     if (showHome && pathnames.length > 0) {
+      const homeRoute = routeConfig.find((route) => route.path === "/dashboard");
       crumbs.unshift({
         path: "/dashboard",
         name: "Home",
         active: false,
-        category: "default" as BreadcrumbCategory,
+        category: homeRoute?.metadata?.category || "default",
         isProtected: true,
       });
     }

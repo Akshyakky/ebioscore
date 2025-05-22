@@ -5,10 +5,10 @@ export interface AppModifyFieldDto extends BaseDto {
   amlCode: string;
   amlName: string;
   amlField: string;
-  defaultYN: string;
-  modifyYN: string;
-  rActiveYN: string;
-  transferYN: string;
+  defaultYN: "Y" | "N";
+  modifyYN: "Y" | "N";
+  rActiveYN: "Y" | "N";
+  transferYN: "Y" | "N";
   rNotes?: string | null;
 }
 
@@ -17,7 +17,7 @@ export interface AppModifiedMast extends BaseDto {
   fieldCode: string;
   fieldName: string;
   auGrpID: number;
-  rActiveYN: string;
-  transferYN: string;
+  rActiveYN: "Y" | "N";
+  transferYN: "Y" | "N";
   rNotes?: string | null;
 }

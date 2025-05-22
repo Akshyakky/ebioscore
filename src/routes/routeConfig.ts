@@ -46,61 +46,444 @@ import LogModule from "@/pages/common/LogViewerPage/LogModule";
 import ProductList from "@/pages/inventoryManagement/ProductList/MainPage/ProductList";
 import ProductTransaction from "@/pages/inventoryManagement/ProductTransaction/ProductTransaction";
 import RegistrationPage from "@/pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
+
 interface RouteConfig {
   path: string;
   component: React.ComponentType<any>;
   protected: boolean;
   providers?: React.ComponentType<any>[];
+  metadata?: {
+    title: string;
+    category: "admin" | "patient" | "clinical" | "billing" | "inventory" | "default";
+    icon?: React.ElementType;
+    color?: string;
+  };
 }
 
 const routeConfig: RouteConfig[] = [
   // { path: "/", component: () => <Navigate to="/dashboard" />, protected: true },
-  { path: "/login", component: LoginPage, protected: false },
-  { path: "/dashboard", component: DashboardPage, protected: true },
-  { path: "/registrationpage", component: RegistrationPage, protected: true, providers: [PatientSearchProvider] },
-  { path: "/revisitpage", component: RevisitPage, protected: true, providers: [PatientSearchProvider] },
-  { path: "/contactlistpage", component: ContactListPage, protected: true },
-  { path: "/userlistpage", component: UserListPage, protected: true, providers: [UserListSearchProvider] },
-  { path: "/profilelistpage", component: ProfileListPage, protected: true, providers: [ProfileListSearchProvider] },
-  { path: "/admissionpage", component: AdmissionPage, protected: true, providers: [PatientSearchProvider] },
-  { path: "/ResourceListPage", component: ResourceListPage, protected: true },
-  { path: "/ReasonListPage", component: ReasonListPage, protected: true },
-  { path: "/BreakListPage", component: BreakListPage, protected: true },
-  { path: "/Appointmentpage", component: AppointmentPage, protected: true },
-  { path: "/PatientInvoiceCodePage", component: PatientInvoiceCodePage, protected: true },
-  { path: "/DepartmentListPage", component: DepartmentListPage, protected: true, providers: [UserListSearchProvider] },
-  { path: "/ServiceGroupsListPage", component: ServiceGroupsListPage, protected: true },
-  { path: "/PaymentTypesPage", component: PaymentTypesPage, protected: true },
-  { path: "/AlertPage", component: AlertManager, protected: true, providers: [PatientSearchProvider] },
-  { path: "/WardCategoryPage", component: WardCategoryPage, protected: true },
-  { path: "/BedSetUpPage", component: BedSetUpPage, protected: true },
-  { path: "/DeptUnitListPage", component: DeptUnitListPage, protected: true },
-  { path: "/InsuranceListPage", component: InsuranceListPage, protected: true },
-  { path: "/ProductListPage", component: ProductList, protected: true },
-  { path: "/ProductTaxListPage", component: ProductTaxListPage, protected: true },
-  { path: "/ProductOverviewPage", component: ProductOverviewPage, protected: true },
-  { path: "/ManageBedPage", component: ManageBedPage, protected: true },
-  { path: "/DiagnosisListPage", component: DiagnosisListPage, protected: true },
-  { path: "/MedicationListPage", component: MedicationListPage, protected: true },
-  { path: "/MedicationFormPage", component: MedicationFormPage, protected: true },
-  { path: "/AppModifiedListPage", component: AppModifiedListPage, protected: true },
-  { path: "/ChargeDetailsPage", component: ChargeDetailsPage, protected: true },
-  { path: "/DischargePage", component: DischargePage, protected: true },
-  { path: "/WardBedTransferPage", component: WardBedTransferPage, protected: true },
-  { path: "/MedicationFrequencyPage", component: MedicationFrequencyPage, protected: true },
-  { path: "/MedicationDosagePage", component: MedicationDosagePage, protected: true },
-  { path: "/ProcedureListPage", component: ProcedureListPage, protected: true },
-  { path: "/MedicationGenericPage", component: MedicationGenericPage, protected: true },
-  { path: "/InvestigationListPage", component: InvestigationListPage, protected: true },
-  { path: "/ComponentEntryTypePage", component: ComponentEntryTypePage, protected: true },
-  { path: "/PurchaseOrderPage", component: PurchaseOrderPage, protected: true },
-  { path: "/ForgotPasswordPage", component: ForgotPasswordPage, protected: false },
-  { path: "/IndentProductPage", component: IndentProductPage, protected: true },
-  { path: "/EmployeeRegistrationForm", component: EmployeeRegistrationForm, protected: true },
-  { path: "/LogModulePage", component: LogModule, protected: true },
-  { path: "/ProductTransaction", component: ProductTransaction, protected: true },
+  {
+    path: "/",
+    component: LoginPage, // or use: () => <Navigate to="/login" />
+    protected: false,
+    metadata: {
+      title: "Home",
+      category: "default",
+    },
+  },
+  {
+    path: "/login",
+    component: LoginPage,
+    protected: false,
+    metadata: {
+      title: "Login",
+      category: "default",
+    },
+  },
+  {
+    path: "/dashboard",
+    component: DashboardPage,
+    protected: true,
+    metadata: {
+      title: "Dashboard",
+      category: "default",
+    },
+  },
+  {
+    path: "/registrationpage",
+    component: RegistrationPage,
+    protected: true,
+    providers: [PatientSearchProvider],
+    metadata: {
+      title: "Registration",
+      category: "patient",
+    },
+  },
+  {
+    path: "/revisitpage",
+    component: RevisitPage,
+    protected: true,
+    providers: [PatientSearchProvider],
+    metadata: {
+      title: "Revisit",
+      category: "patient",
+    },
+  },
+  {
+    path: "/contactlistpage",
+    component: ContactListPage,
+    protected: true,
+    metadata: {
+      title: "Contact List",
+      category: "admin",
+    },
+  },
+  {
+    path: "/userlistpage",
+    component: UserListPage,
+    protected: true,
+    providers: [UserListSearchProvider],
+    metadata: {
+      title: "User List",
+      category: "admin",
+    },
+  },
+  {
+    path: "/profilelistpage",
+    component: ProfileListPage,
+    protected: true,
+    providers: [ProfileListSearchProvider],
+    metadata: {
+      title: "Profile List",
+      category: "admin",
+    },
+  },
+  {
+    path: "/admissionpage",
+    component: AdmissionPage,
+    protected: true,
+    providers: [PatientSearchProvider],
+    metadata: {
+      title: "Patient Admission",
+      category: "patient",
+    },
+  },
+  {
+    path: "/ResourceListPage",
+    component: ResourceListPage,
+    protected: true,
+    metadata: {
+      title: "Resource List",
+      category: "default",
+    },
+  },
+  {
+    path: "/ReasonListPage",
+    component: ReasonListPage,
+    protected: true,
+    metadata: {
+      title: "Reason List",
+      category: "default",
+    },
+  },
+  {
+    path: "/BreakListPage",
+    component: BreakListPage,
+    protected: true,
+    metadata: {
+      title: "Break List",
+      category: "default",
+    },
+  },
+  {
+    path: "/Appointmentpage",
+    component: AppointmentPage,
+    protected: true,
+    metadata: {
+      title: "Appointments",
+      category: "default",
+    },
+  },
+  {
+    path: "/PatientInvoiceCodePage",
+    component: PatientInvoiceCodePage,
+    protected: true,
+    metadata: {
+      title: "Patient Invoice Code",
+      category: "billing",
+    },
+  },
+  {
+    path: "/DepartmentListPage",
+    component: DepartmentListPage,
+    protected: true,
+    providers: [UserListSearchProvider],
+    metadata: {
+      title: "Departments",
+      category: "admin",
+    },
+  },
+  {
+    path: "/ServiceGroupsListPage",
+    component: ServiceGroupsListPage,
+    protected: true,
+    metadata: {
+      title: "Service Groups",
+      category: "billing",
+    },
+  },
+  {
+    path: "/PaymentTypesPage",
+    component: PaymentTypesPage,
+    protected: true,
+    metadata: {
+      title: "Payment Types",
+      category: "billing",
+    },
+  },
+  {
+    path: "/AlertPage",
+    component: AlertManager,
+    protected: true,
+    providers: [PatientSearchProvider],
+    metadata: {
+      title: "Alerts",
+      category: "default",
+    },
+  },
+  {
+    path: "/WardCategoryPage",
+    component: WardCategoryPage,
+    protected: true,
+    metadata: {
+      title: "Ward Categories",
+      category: "admin",
+    },
+  },
+  {
+    path: "/BedSetUpPage",
+    component: BedSetUpPage,
+    protected: true,
+    metadata: {
+      title: "Bed Setup",
+      category: "admin",
+    },
+  },
+  {
+    path: "/DeptUnitListPage",
+    component: DeptUnitListPage,
+    protected: true,
+    metadata: {
+      title: "Department Units",
+      category: "admin",
+    },
+  },
+  {
+    path: "/InsuranceListPage",
+    component: InsuranceListPage,
+    protected: true,
+    metadata: {
+      title: "Insurance",
+      category: "admin",
+    },
+  },
+  {
+    path: "/ProductListPage",
+    component: ProductList,
+    protected: true,
+    metadata: {
+      title: "Products",
+      category: "inventory",
+    },
+  },
+  {
+    path: "/ProductTaxListPage",
+    component: ProductTaxListPage,
+    protected: true,
+    metadata: {
+      title: "Product Tax",
+      category: "inventory",
+    },
+  },
+  {
+    path: "/ProductOverviewPage",
+    component: ProductOverviewPage,
+    protected: true,
+    metadata: {
+      title: "Product Overview",
+      category: "inventory",
+    },
+  },
+  {
+    path: "/ManageBedPage",
+    component: ManageBedPage,
+    protected: true,
+    metadata: {
+      title: "Manage Beds",
+      category: "patient",
+    },
+  },
+  {
+    path: "/DiagnosisListPage",
+    component: DiagnosisListPage,
+    protected: true,
+    metadata: {
+      title: "Diagnosis List",
+      category: "clinical",
+    },
+  },
+  {
+    path: "/MedicationListPage",
+    component: MedicationListPage,
+    protected: true,
+    metadata: {
+      title: "Medications",
+      category: "clinical",
+    },
+  },
+  {
+    path: "/MedicationFormPage",
+    component: MedicationFormPage,
+    protected: true,
+    metadata: {
+      title: "Medication Forms",
+      category: "clinical",
+    },
+  },
+  {
+    path: "/AppModifiedListPage",
+    component: AppModifiedListPage,
+    protected: true,
+    metadata: {
+      title: "Modified Applications",
+      category: "admin",
+    },
+  },
+  {
+    path: "/ChargeDetailsPage",
+    component: ChargeDetailsPage,
+    protected: true,
+    metadata: {
+      title: "Charge Details",
+      category: "billing",
+    },
+  },
+  {
+    path: "/DischargePage",
+    component: DischargePage,
+    protected: true,
+    metadata: {
+      title: "Discharge",
+      category: "patient",
+    },
+  },
+  {
+    path: "/WardBedTransferPage",
+    component: WardBedTransferPage,
+    protected: true,
+    metadata: {
+      title: "Ward/Bed Transfer",
+      category: "patient",
+    },
+  },
+  {
+    path: "/MedicationFrequencyPage",
+    component: MedicationFrequencyPage,
+    protected: true,
+    metadata: {
+      title: "Medication Frequency",
+      category: "clinical",
+    },
+  },
+  {
+    path: "/MedicationDosagePage",
+    component: MedicationDosagePage,
+    protected: true,
+    metadata: {
+      title: "Medication Dosage",
+      category: "clinical",
+    },
+  },
+  {
+    path: "/ProcedureListPage",
+    component: ProcedureListPage,
+    protected: true,
+    metadata: {
+      title: "Procedures",
+      category: "clinical",
+    },
+  },
+  {
+    path: "/MedicationGenericPage",
+    component: MedicationGenericPage,
+    protected: true,
+    metadata: {
+      title: "Generic Medications",
+      category: "clinical",
+    },
+  },
+  {
+    path: "/InvestigationListPage",
+    component: InvestigationListPage,
+    protected: true,
+    metadata: {
+      title: "Investigations",
+      category: "clinical",
+    },
+  },
+  {
+    path: "/ComponentEntryTypePage",
+    component: ComponentEntryTypePage,
+    protected: true,
+    metadata: {
+      title: "Component Entry Types",
+      category: "clinical",
+    },
+  },
+  {
+    path: "/PurchaseOrderPage",
+    component: PurchaseOrderPage,
+    protected: true,
+    metadata: {
+      title: "Purchase Orders",
+      category: "inventory",
+    },
+  },
+  {
+    path: "/ForgotPasswordPage",
+    component: ForgotPasswordPage,
+    protected: false,
+    metadata: {
+      title: "Forgot Password",
+      category: "default",
+    },
+  },
+  {
+    path: "/IndentProductPage",
+    component: IndentProductPage,
+    protected: true,
+    metadata: {
+      title: "Indent Product",
+      category: "inventory",
+    },
+  },
+  {
+    path: "/EmployeeRegistrationForm",
+    component: EmployeeRegistrationForm,
+    protected: true,
+    metadata: {
+      title: "Employee Registration",
+      category: "admin",
+    },
+  },
+  {
+    path: "/LogModulePage",
+    component: LogModule,
+    protected: true,
+    metadata: {
+      title: "Log Module",
+      category: "admin",
+    },
+  },
+  {
+    path: "/ProductTransaction",
+    component: ProductTransaction,
+    protected: true,
+    metadata: {
+      title: "Product Transaction",
+      category: "inventory",
+    },
+  },
   // 404 Not Found route - must be placed last to catch all unmatched routes
-  { path: "*", component: NotFoundPage, protected: false },
+  {
+    path: "*",
+    component: NotFoundPage,
+    protected: false,
+    metadata: {
+      title: "Page Not Found",
+      category: "default",
+    },
+  },
 ];
 
 export default routeConfig;

@@ -1,10 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Grid } from "@mui/material";
+import React, { useState, useCallback, useMemo } from "react";
+import { Grid, Box } from "@mui/material";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import GenericDialog from "../GenericDialog/GenericDialog";
-import CustomButton from "../Button/CustomButton";
-import FormField from "../FormField/FormField";
+import SmartButton from "../Button/SmartButton";
+import EnhancedFormField from "../EnhancedFormField/EnhancedFormField";
+import ConfirmationDialog from "../Dialog/ConfirmationDialog";
 import { appModifiedListService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
 import { showAlert } from "../../utils/Common/showAlert";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
@@ -18,6 +22,30 @@ interface ModifiedFieldDialogProps {
   onFieldAddedOrUpdated?: () => void;
 }
 
+// Zod validation schema
+const formSchema = z.object({
+  amlCode: z
+    .string()
+    .min(1, "Field Code is required")
+    .min(3, "Field Code must be at least 3 characters")
+    .max(10, "Field Code cannot exceed 10 characters")
+    .regex(/^[A-Z0-9]+$/, "Field Code must contain only uppercase letters and numbers"),
+  amlName: z.string().min(1, "Field Name is required").min(2, "Field Name must be at least 2 characters").max(100, "Field Name cannot exceed 100 characters").trim(),
+  amlField: z.string().min(1, "Field is required"),
+  defaultYN: z.enum(["Y", "N"], {
+    required_error: "Default selection is required",
+  }),
+  modifyYN: z.enum(["Y", "N"], {
+    required_error: "Modifiable selection is required",
+  }),
+  rNotes: z.string().max(500, "Notes cannot exceed 500 characters").optional().or(z.literal("")),
+  rActiveYN: z.enum(["Y", "N"]),
+  transferYN: z.enum(["Y", "N"]),
+});
+
+// Type inference from Zod schema
+type FormData = z.infer<typeof formSchema>;
+
 const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
   open,
   onClose,
@@ -26,215 +54,291 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
   initialFormData = {},
   onFieldAddedOrUpdated,
 }) => {
-  const [formData, setFormData] = useState<AppModifyFieldDto>({
-    amlID: 0,
-    amlName: "",
-    amlCode: "",
-    amlField: selectedCategoryCode,
-    defaultYN: "N",
-    modifyYN: "N",
-    rNotes: "",
-    rActiveYN: "Y",
-    transferYN: "Y",
-    ...initialFormData,
-  });
   const [isSubmitted, setIsSubmitted] = useState(false);
-  useEffect(() => {
-    if (open) {
-      setFormData((prev) => {
-        if (prev.amlField !== selectedCategoryCode || JSON.stringify(prev) !== JSON.stringify({ ...prev, ...initialFormData })) {
-          return {
-            ...prev,
-            amlField: selectedCategoryCode,
-            ...initialFormData,
-          };
-        }
-        return prev;
-      });
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmDialogConfig, setConfirmDialogConfig] = useState({
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
-      if (!formData.amlCode) {
-        generateFieldCode(selectedCategoryCode);
+  // Memoized default values based on props
+  const defaultValues = useMemo(
+    (): FormData => ({
+      amlCode: initialFormData.amlCode || "",
+      amlName: initialFormData.amlName || "",
+      amlField: selectedCategoryCode,
+      defaultYN: initialFormData.defaultYN || "N",
+      modifyYN: initialFormData.modifyYN || "N",
+      rNotes: initialFormData.rNotes || "",
+      rActiveYN: initialFormData.rActiveYN || "Y",
+      transferYN: initialFormData.transferYN || "Y",
+    }),
+    [initialFormData, selectedCategoryCode]
+  );
+
+  // React Hook Form setup with Zod resolver
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    reset,
+    formState: { errors, isValid },
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    mode: "onChange",
+    defaultValues,
+  });
+
+  const generateFieldCode = useCallback(
+    async (prefix: string) => {
+      try {
+        const response: any = await appModifiedListService.count(`amlField == "${prefix}"`);
+        const fieldsCount = response.data;
+        const nextNumber = fieldsCount + 1;
+        const formattedCounter = nextNumber.toString().padStart(2, "0");
+        const newCode = `${prefix}${formattedCounter}`;
+
+        setValue("amlCode", newCode);
+        return newCode;
+      } catch (error) {
+        showAlert("Error", "An error occurred while generating the field code", "error");
+        return null;
       }
+    },
+    [setValue]
+  );
+
+  // Handle dialog opening - replaces useEffect logic
+  const handleDialogEntered = useCallback(async () => {
+    if (!open) return;
+
+    // Reset form with current default values
+    reset(defaultValues);
+
+    // Generate field code if not provided (for new entries)
+    if (!initialFormData.amlCode && !initialFormData.amlID) {
+      await generateFieldCode(selectedCategoryCode);
     }
-  }, [open, selectedCategoryCode, initialFormData]);
+  }, [open, defaultValues, reset, generateFieldCode, initialFormData.amlCode, initialFormData.amlID, selectedCategoryCode]);
 
-  const generateFieldCode = useCallback(async (prefix: string) => {
-    try {
-      const response: any = await appModifiedListService.count(`amlField == "${prefix}"`);
-      const fieldsCount = response.data;
-      const nextNumber = fieldsCount + 1;
-      const formattedCounter = nextNumber.toString().padStart(2, "0");
-      const newCode = `${prefix}${formattedCounter}`;
-
-      setFormData((prev) => ({
-        ...prev,
-        amlCode: newCode,
-      }));
-      return newCode;
-    } catch (error) {
-      showAlert("Error", "An error occurred while generating the field code", "error");
-      return null;
-    }
-  }, []);
-
-  const handleFormSubmit = async () => {
+  const handleFormSubmit = async (data: FormData): Promise<void> => {
     try {
       setIsSubmitted(true);
 
-      if (!formData.amlName || !formData.amlCode) {
-        return;
-      }
-      if (formData.defaultYN === "Y") {
+      // Check if defaultYN is being set to 'Y' and handle conflicts
+      if (data.defaultYN === "Y") {
         const existingFieldsResponse: any = await appModifiedListService.getAll();
         const fieldsData = existingFieldsResponse.data || existingFieldsResponse;
         const fieldsToUpdate = fieldsData.filter(
-          (field: AppModifyFieldDto) => field.defaultYN === "Y" && field.amlField === selectedCategoryCode && field.amlID !== formData.amlID
+          (field: AppModifyFieldDto) => field.defaultYN === "Y" && field.amlField === selectedCategoryCode && field.amlID !== (initialFormData.amlID || 0)
         );
+
         if (fieldsToUpdate.length > 0) {
-          const confirmed = await new Promise<boolean>((resolve) => {
-            showAlert(
-              "Confirmation",
-              `There are other entries set as default. Setting '${formData.amlName}' as the new default will remove default status from other entries. Continue?`,
-              "warning",
-              {
-                showConfirmButton: true,
-                showCancelButton: true,
-                confirmButtonText: "Yes",
-                cancelButtonText: "No",
-                onConfirm: () => resolve(true),
-                onCancel: () => resolve(false),
-              }
-            );
+          // Show confirmation dialog
+          setConfirmDialogConfig({
+            title: "Confirmation Required",
+            message: `There are other entries set as default. Setting '${data.amlName}' as the new default will remove default status from other entries. Continue?`,
+            onConfirm: async () => {
+              setShowConfirmDialog(false);
+              await saveFieldWithDefaults(data, fieldsToUpdate);
+            },
           });
-
-          if (!confirmed) {
-            return;
-          }
-          for (const field of fieldsToUpdate) {
-            const updatedField = { ...field, defaultYN: "N" };
-            await appModifiedListService.save(updatedField);
-          }
+          setShowConfirmDialog(true);
+          return;
         }
       }
 
-      const response = await appModifiedListService.save(formData);
-      if (response) {
-        showAlert("Success", "Field saved successfully", "success");
-        if (onFieldAddedOrUpdated) {
-          onFieldAddedOrUpdated();
-        }
-        setFormData((prev) => ({
-          ...prev,
-          amlName: "",
-          amlCode: "",
-        }));
-        onClose(true);
-      } else {
-        showAlert("Error", "Failed to save field", "error");
-        onClose(false);
-      }
-      setIsSubmitted(false);
+      // Save without default conflicts
+      await saveField(data);
     } catch (error) {
       console.error("Error saving:", error);
-      onClose(false);
+      showAlert("Error", "An error occurred while saving the field", "error");
+    } finally {
+      setIsSubmitted(false);
     }
   };
 
-  const handleFieldChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const saveFieldWithDefaults = async (data: FormData, fieldsToUpdate: AppModifyFieldDto[]) => {
+    try {
+      // Update existing default fields to 'N'
+      for (const field of fieldsToUpdate) {
+        const updatedField = { ...field, defaultYN: "N" as const };
+        await appModifiedListService.save(updatedField);
+      }
+
+      // Save the new field
+      await saveField(data);
+    } catch (error) {
+      console.error("Error updating default fields:", error);
+      showAlert("Error", "An error occurred while updating default settings", "error");
+    }
   };
 
-  const handleClose = () => {
-    onClose(false);
-    setIsSubmitted(false);
+  const saveField = async (data: FormData) => {
+    try {
+      const fieldData: AppModifyFieldDto = {
+        amlID: initialFormData.amlID || 0,
+        ...(data as AppModifyFieldDto),
+      };
+
+      const response = await appModifiedListService.save(fieldData);
+
+      if (response) {
+        showAlert("Success", "Field saved successfully", "success");
+
+        if (onFieldAddedOrUpdated) {
+          onFieldAddedOrUpdated();
+        }
+
+        handleClose(true);
+      } else {
+        showAlert("Error", "Failed to save field", "error");
+        handleClose(false);
+      }
+    } catch (error) {
+      console.error("Error saving field:", error);
+      showAlert("Error", "Failed to save field", "error");
+      handleClose(false);
+    }
   };
+
+  const handleClose = useCallback(
+    (saved: boolean = false) => {
+      onClose(saved);
+      setIsSubmitted(false);
+      setShowConfirmDialog(false);
+    },
+    [onClose]
+  );
+
+  const handleCancel = useCallback(() => {
+    handleClose(false);
+  }, [handleClose]);
+
+  // Handle dialog opening with proper form initialization
+  const handleDialogOpen = useCallback(() => {
+    if (open) {
+      handleDialogEntered();
+    }
+  }, [open, handleDialogEntered]);
 
   return (
-    <GenericDialog
-      open={open}
-      onClose={handleClose}
-      title={formData.amlID ? "Edit Field" : "Add New Field"}
-      actions={
-        <>
-          <CustomButton onClick={handleClose} icon={DeleteIcon} text="Cancel" variant="contained" color="error" sx={{ marginRight: 2 }} />
-          <CustomButton icon={SaveIcon} text="Save" onClick={handleFormSubmit} variant="contained" color="success" />
-        </>
-      }
-    >
-      <Grid container spacing={2}>
-        <FormField
-          type="text"
-          label="Field Code"
-          name="amlCode"
-          value={formData.amlCode}
-          onChange={(e) => setFormData((prev) => ({ ...prev, amlCode: e.target.value }))}
-          ControlID="amlCode"
-          isMandatory={true}
-          gridProps={{ xs: 12 }}
-          fullWidth
-          // disabled={isFieldCodeDisabled}
-        />
-        <FormField
-          type="text"
-          label="Field Name"
-          name="amlName"
-          value={formData.amlName}
-          onChange={(e) => setFormData((prev) => ({ ...prev, amlName: e.target.value }))}
-          ControlID="amlName"
-          isMandatory={true}
-          isSubmitted={isSubmitted}
-          gridProps={{ xs: 12 }}
-          fullWidth
-        />
-        <FormField
-          type="text"
-          label="Field"
-          name="amlField"
-          value={selectedCategoryCode}
-          onChange={() => {}}
-          disabled={true}
-          ControlID="amlField"
-          isSubmitted={isSubmitted}
-          isMandatory={true}
-          gridProps={{ xs: 12 }}
-          fullWidth
-        />
-      </Grid>
-      <Grid>
-        <FormField
-          type="radio"
-          label="Default"
-          name="defaultYN"
-          value={formData.defaultYN}
-          onChange={handleFieldChange}
-          options={[
-            { value: "Y", label: "Yes" },
-            { value: "N", label: "No" },
-          ]}
-          ControlID="defaultYN"
-          gridProps={{ xs: 12 }}
-          inline={true}
-        />
-        <FormField
-          type="radio"
-          label="Modifiable"
-          name="modifyYN"
-          value={formData.modifyYN}
-          onChange={handleFieldChange}
-          options={[
-            { value: "Y", label: "Yes" },
-            { value: "N", label: "No" },
-          ]}
-          ControlID="modifyYN"
-          gridProps={{ xs: 12 }}
-          inline={true}
-        />
-      </Grid>
-    </GenericDialog>
+    <>
+      <GenericDialog
+        open={open}
+        onClose={() => handleClose(false)}
+        TransitionProps={{
+          onEntered: handleDialogEntered,
+        }}
+        title={initialFormData.amlID ? "Edit Field" : "Add New Field"}
+        maxWidth="sm"
+        actions={
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <SmartButton icon={DeleteIcon} text="Cancel" variant="contained" color="error" onClick={handleCancel} />
+            <SmartButton
+              icon={SaveIcon}
+              text="Save"
+              variant="contained"
+              color="success"
+              asynchronous
+              onAsyncClick={() => handleSubmit(handleFormSubmit)()}
+              loadingText="Saving..."
+              successText="Saved!"
+              showLoadingIndicator
+              showSuccessState
+              successDuration={1500}
+            />
+          </Box>
+        }
+      >
+        <form onSubmit={handleSubmit(handleFormSubmit)}>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12 }}>
+              <EnhancedFormField
+                type="text"
+                name="amlCode"
+                control={control}
+                label="Field Code"
+                required
+                disabled={isFieldCodeDisabled}
+                isSubmitted={isSubmitted}
+                helperText="Field code must be uppercase letters and numbers only"
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <EnhancedFormField
+                type="text"
+                name="amlName"
+                control={control}
+                label="Field Name"
+                required
+                isSubmitted={isSubmitted}
+                helperText="Enter a descriptive name for this field"
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <EnhancedFormField
+                type="text"
+                name="amlField"
+                control={control}
+                label="Field"
+                disabled
+                required
+                isSubmitted={isSubmitted}
+                helperText="This field is automatically set based on the selected category"
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <EnhancedFormField
+                type="radio"
+                name="defaultYN"
+                control={control}
+                label="Default"
+                options={[
+                  { value: "Y", label: "Yes" },
+                  { value: "N", label: "No" },
+                ]}
+                row
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <EnhancedFormField
+                type="radio"
+                name="modifyYN"
+                control={control}
+                label="Modifiable"
+                options={[
+                  { value: "Y", label: "Yes" },
+                  { value: "N", label: "No" },
+                ]}
+                row
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <EnhancedFormField type="textarea" name="rNotes" control={control} label="Notes" rows={3} helperText="Optional notes about this field" />
+            </Grid>
+          </Grid>
+        </form>
+      </GenericDialog>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        open={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={confirmDialogConfig.onConfirm}
+        title={confirmDialogConfig.title}
+        message={confirmDialogConfig.message}
+        type="warning"
+        confirmText="Yes, Continue"
+        cancelText="Cancel"
+      />
+    </>
   );
 };
 

@@ -21,6 +21,9 @@ interface GenericDialogProps {
   closeButtonSx?: SxProps<Theme>;
   fullScreen?: boolean;
   titleVariant?: "h4" | "h5" | "h6";
+  TransitionProps?: {
+    onEntered?: () => void;
+  };
 }
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
@@ -81,6 +84,7 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
   closeButtonSx,
   fullScreen,
   titleVariant = "h6",
+  TransitionProps,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -147,6 +151,7 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
       disableEscapeKeyDown={disableEscapeKeyDown}
       aria-labelledby="dialog-title"
       fullScreen={fullScreen || isMobile}
+      TransitionProps={TransitionProps}
     >
       <StyledDialogTitle sx={titleSx}>
         <Box display="flex" alignItems="center" justifyContent="space-between">

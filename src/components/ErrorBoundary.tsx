@@ -1,12 +1,15 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 import { Box, Button, Paper, Typography, Container } from "@mui/material";
-import { RefreshRounded, BugReport } from "@mui/icons-material";
+import { RefreshRounded, BugReport, ArrowBack } from "@mui/icons-material";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  routePath?: string;
+  showBackButton?: boolean;
 }
 
 interface State {
@@ -89,10 +92,12 @@ class ErrorBoundary extends Component<Props, State> {
           >
             <Box sx={{ mb: 3 }}>
               <Typography variant="h4" color="error" gutterBottom>
-                Oops! Something went wrong
+                {this.props.routePath ? `Error in ${this.props.routePath.replace("/", "")}` : "Oops! Something went wrong"}
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                The application has encountered an unexpected error. Our team has been notified and is working to fix the issue.
+                {this.props.routePath
+                  ? "An error occurred while displaying this page. You can try going back or reloading the page."
+                  : "The application has encountered an unexpected error. Our team has been notified and is working to fix the issue."}
               </Typography>
             </Box>
 
@@ -118,6 +123,11 @@ class ErrorBoundary extends Component<Props, State> {
             </Box>
 
             <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
+              {this.props.showBackButton && (
+                <Button variant="outlined" color="primary" startIcon={<ArrowBack />} onClick={() => window.history.back()}>
+                  Go Back
+                </Button>
+              )}
               <Button variant="contained" color="primary" startIcon={<RefreshRounded />} onClick={this.handleRefresh}>
                 Refresh Page
               </Button>
