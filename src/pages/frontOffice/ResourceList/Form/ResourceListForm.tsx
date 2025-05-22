@@ -10,7 +10,6 @@ import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
-import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { useResourceList } from "../hooks/useResourceList";
 
 interface ResourceListFormProps {
@@ -35,7 +34,7 @@ type ResourceListFormData = z.infer<typeof schema>;
 
 const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode } = useResourceList();
+  const { getNextCode, saveResource } = useResourceList();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
@@ -114,7 +113,7 @@ const ResourceListForm: React.FC<ResourceListFormProps> = ({ open, onClose, init
         transferYN: data.transferYN || "N",
       };
 
-      const response = await resourceListService.save(resourceData);
+      const response = await saveResource(resourceData);
 
       if (response.success) {
         showAlert("Success", isAddMode ? "Resource created successfully" : "Resource updated successfully", "success");

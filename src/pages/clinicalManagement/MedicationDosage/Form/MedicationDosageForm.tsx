@@ -1,82 +1,56 @@
-// src/pages/billing/DepartmentListPage/Form/DepartmentListForm.tsx
 import React, { useState, useEffect } from "react";
 import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress } from "@mui/material";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
+import { MedicationDosageDto } from "@/interfaces/ClinicalManagement/MedicationDosageDto";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
-import { useDepartmentList } from "../hooks/useDepartmentList";
+import { useMedicationDosage } from "../hooks/useMedicationDosage";
 
-interface DepartmentListFormProps {
+interface MedicationDosageFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
-  initialData: DepartmentDto | null;
+  initialData: MedicationDosageDto | null;
   viewOnly?: boolean;
 }
 
 const schema = z.object({
-  deptID: z.number(),
-  deptCode: z.string().nonempty("Department code is required"),
-  deptName: z.string().nonempty("Department name is required"),
-  deptType: z.string().optional(),
-  deptStore: z.string().optional(),
+  mDId: z.number(),
+  mDCode: z.string().nonempty("Medication dosage code is required"),
+  mDName: z.string().nonempty("Medication dosage name is required"),
+  modifyYN: z.string(),
+  defaultYN: z.string(),
   rActiveYN: z.string(),
-  rNotes: z.string().nullable().optional(),
-  deptLocation: z.string().optional(),
-  deptSalesYN: z.string(),
-  deptStorePhYN: z.string(),
-  dlNumber: z.string().optional(),
-  isUnitYN: z.string(),
-  superSpecialityYN: z.string(),
-  unit: z.string().optional(),
-  isStoreYN: z.string(),
-  autoConsumptionYN: z.string(),
-  dischargeNoteYN: z.string(),
   transferYN: z.string().optional(),
+  rNotes: z.string().nullable().optional(),
+  mDSnomedCode: z.string().optional(),
 });
 
-type DepartmentListFormData = z.infer<typeof schema>;
+type MedicationDosageFormData = z.infer<typeof schema>;
 
-const departmentTypeOptions = [
-  { value: "CLINICAL", label: "Clinical" },
-  { value: "NON_CLINICAL", label: "Non-Clinical" },
-  { value: "ADMIN", label: "Administrative" },
-  { value: "SUPPORT", label: "Support" },
-];
-
-const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
+const MedicationDosageForm: React.FC<MedicationDosageFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode, saveDepartment } = useDepartmentList();
+  const { getNextCode, saveMedicationDosage } = useMedicationDosage();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const isAddMode = !initialData;
 
-  const defaultValues: DepartmentListFormData = {
-    deptID: 0,
-    deptCode: "",
-    deptName: "",
-    deptType: "CLINICAL",
-    deptStore: "",
+  const defaultValues: MedicationDosageFormData = {
+    mDId: 0,
+    mDCode: "",
+    mDName: "",
+    modifyYN: "Y",
+    defaultYN: "N",
     rActiveYN: "Y",
-    rNotes: "",
-    deptLocation: "",
-    deptSalesYN: "N",
-    deptStorePhYN: "N",
-    dlNumber: "",
-    isUnitYN: "N",
-    superSpecialityYN: "N",
-    unit: "",
-    isStoreYN: "N",
-    autoConsumptionYN: "N",
-    dischargeNoteYN: "N",
     transferYN: "N",
+    rNotes: "",
+    mDSnomedCode: "",
   };
 
   const {
@@ -84,31 +58,30 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
     handleSubmit,
     reset,
     setValue,
-    watch,
     formState: { errors, isDirty, isValid },
-  } = useForm<DepartmentListFormData>({
+  } = useForm<MedicationDosageFormData>({
     defaultValues,
     resolver: zodResolver(schema),
     mode: "onChange",
   });
 
   const rActiveYN = useWatch({ control, name: "rActiveYN" });
-  const isStoreYN = useWatch({ control, name: "isStoreYN" });
-  const isUnitYN = useWatch({ control, name: "isUnitYN" });
+  const defaultYN = useWatch({ control, name: "defaultYN" });
+  const modifyYN = useWatch({ control, name: "modifyYN" });
 
-  const generateDepartmentCode = async () => {
+  const generateMedicationDosageCode = async () => {
     if (!isAddMode) return;
 
     try {
       setIsGeneratingCode(true);
-      const nextCode = await getNextCode("DEP", 3);
+      const nextCode = await getNextCode("DOS", 3);
       if (nextCode) {
-        setValue("deptCode", nextCode, { shouldValidate: true, shouldDirty: true });
+        setValue("mDCode", nextCode, { shouldValidate: true, shouldDirty: true });
       } else {
-        showAlert("Warning", "Failed to generate department code", "warning");
+        showAlert("Warning", "Failed to generate medication dosage code", "warning");
       }
     } catch (error) {
-      console.error("Error generating department code:", error);
+      console.error("Error generating medication dosage code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -116,14 +89,14 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
 
   useEffect(() => {
     if (initialData) {
-      reset(initialData as DepartmentListFormData);
+      reset(initialData as MedicationDosageFormData);
     } else {
       reset(defaultValues);
-      generateDepartmentCode();
+      generateMedicationDosageCode();
     }
   }, [initialData, reset]);
 
-  const onSubmit = async (data: DepartmentListFormData) => {
+  const onSubmit = async (data: MedicationDosageFormData) => {
     if (viewOnly) return;
 
     setFormError(null);
@@ -132,38 +105,29 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
       setIsSaving(true);
       setLoading(true);
 
-      const departmentData: DepartmentDto = {
-        deptID: data.deptID,
-        deptCode: data.deptCode,
-        deptName: data.deptName,
-        deptType: data.deptType || "",
-        deptStore: data.deptStore || "",
+      const dosageData: MedicationDosageDto = {
+        mDId: data.mDId,
+        mDCode: data.mDCode,
+        mDName: data.mDName,
+        modifyYN: data.modifyYN || "N",
+        defaultYN: data.defaultYN || "N",
         rActiveYN: data.rActiveYN || "Y",
-        rNotes: data.rNotes || "",
-        deptLocation: data.deptLocation || "",
-        deptSalesYN: data.deptSalesYN,
-        deptStorePhYN: data.deptStorePhYN,
-        dlNumber: data.dlNumber || "",
-        isUnitYN: data.isUnitYN,
-        superSpecialityYN: data.superSpecialityYN,
-        unit: data.unit || "",
-        isStoreYN: data.isStoreYN,
-        autoConsumptionYN: data.autoConsumptionYN,
-        dischargeNoteYN: data.dischargeNoteYN,
         transferYN: data.transferYN || "N",
+        rNotes: data.rNotes || "",
+        mDSnomedCode: data.mDSnomedCode || "",
       };
 
-      const response = await saveDepartment(departmentData);
+      const response = await saveMedicationDosage(dosageData);
 
       if (response.success) {
-        showAlert("Success", isAddMode ? "Department created successfully" : "Department updated successfully", "success");
+        showAlert("Success", isAddMode ? "Medication dosage created successfully" : "Medication dosage updated successfully", "success");
         onClose(true);
       } else {
-        throw new Error(response.errorMessage || "Failed to save department");
+        throw new Error(response.errorMessage || "Failed to save medication dosage");
       }
     } catch (error) {
-      console.error("Error saving department:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to save department";
+      console.error("Error saving medication dosage:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to save medication dosage";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
     } finally {
@@ -175,24 +139,24 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
   const handleReset = () => {
     if (isDirty) {
       if (window.confirm("Are you sure you want to reset the form? All unsaved changes will be lost.")) {
-        reset(initialData ? (initialData as DepartmentListFormData) : defaultValues);
+        reset(initialData ? (initialData as MedicationDosageFormData) : defaultValues);
         setFormError(null);
 
         if (isAddMode) {
-          generateDepartmentCode();
+          generateMedicationDosageCode();
         }
       }
     } else {
-      reset(initialData ? (initialData as DepartmentListFormData) : defaultValues);
+      reset(initialData ? (initialData as MedicationDosageFormData) : defaultValues);
       setFormError(null);
 
       if (isAddMode) {
-        generateDepartmentCode();
+        generateMedicationDosageCode();
       }
     }
   };
 
-  const dialogTitle = viewOnly ? "View Department Details" : isAddMode ? "Create New Department" : `Edit Department - ${initialData?.deptName}`;
+  const dialogTitle = viewOnly ? "View Medication Dosage Details" : isAddMode ? "Create New Medication Dosage" : `Edit Medication Dosage - ${initialData?.mDName}`;
 
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
@@ -210,7 +174,7 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? "Create Department" : "Update Department"}
+          text={isAddMode ? "Create Medication Dosage" : "Update Medication Dosage"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
@@ -227,7 +191,7 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
 
   const handleRefreshCode = () => {
     if (isAddMode) {
-      generateDepartmentCode();
+      generateMedicationDosageCode();
     }
   };
 
@@ -273,9 +237,9 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
                 <Grid container spacing={2}>
                   <Grid size={{ sm: 12, md: 6 }}>
                     <FormField
-                      name="deptCode"
+                      name="mDCode"
                       control={control}
-                      label="Department Code"
+                      label="Dosage Code"
                       type="text"
                       required
                       disabled={viewOnly || !isAddMode}
@@ -297,73 +261,33 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="deptName" control={control} label="Department Name" type="text" required disabled={viewOnly} size="small" fullWidth />
+                    <FormField name="mDName" control={control} label="Dosage Name" type="text" required disabled={viewOnly} size="small" fullWidth />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="deptType" control={control} label="Department Type" type="select" disabled={viewOnly} size="small" options={departmentTypeOptions} fullWidth />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="deptLocation" control={control} label="Location" type="text" disabled={viewOnly} size="small" fullWidth />
+                    <FormField name="mDSnomedCode" control={control} label="SNOMED CT Code" type="text" disabled={viewOnly} size="small" fullWidth />
                   </Grid>
                 </Grid>
               </CardContent>
             </Card>
           </Grid>
 
-          {/* Department Settings */}
+          {/* Settings Section */}
           <Grid size={{ sm: 12 }}>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Department Settings
+                  Dosage Settings
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="isUnitYN" control={control} label="Is Unit" type="switch" disabled={viewOnly} size="small" />
+                    <FormField name="defaultYN" control={control} label="Default" type="switch" disabled={viewOnly} size="small" />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="superSpecialityYN" control={control} label="Super Speciality" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  {isUnitYN === "Y" && (
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="unit" control={control} label="Unit" type="text" disabled={viewOnly} size="small" fullWidth />
-                    </Grid>
-                  )}
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="isStoreYN" control={control} label="Is Store" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  {isStoreYN === "Y" && (
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="deptStore" control={control} label="Store Name" type="text" disabled={viewOnly} size="small" fullWidth />
-                    </Grid>
-                  )}
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="deptStorePhYN" control={control} label="Store Pharmacy" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="deptSalesYN" control={control} label="Sales Department" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="autoConsumptionYN" control={control} label="Auto Consumption" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="dischargeNoteYN" control={control} label="Discharge Note" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="dlNumber" control={control} label="DL Number" type="text" disabled={viewOnly} size="small" fullWidth />
+                    <FormField name="modifyYN" control={control} label="Modifiable" type="switch" disabled={viewOnly} size="small" />
                   </Grid>
                 </Grid>
               </CardContent>
@@ -390,7 +314,7 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
                       size="small"
                       fullWidth
                       rows={4}
-                      placeholder="Enter any additional information about this department"
+                      placeholder="Enter any additional information about this medication dosage"
                     />
                   </Grid>
                 </Grid>
@@ -403,4 +327,4 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
   );
 };
 
-export default DepartmentListForm;
+export default MedicationDosageForm;

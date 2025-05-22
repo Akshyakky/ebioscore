@@ -3,63 +3,68 @@ import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornmen
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
+import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
-import { usePaymentTypes } from "../hooks/usePaymentTypes";
+import { useMedicationList } from "../hooks/useMedicationList";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
-interface PaymentTypesFormProps {
+interface MedicationListFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
-  initialData: BPayTypeDto | null;
+  initialData: MedicationListDto | null;
   viewOnly?: boolean;
 }
 
 const schema = z.object({
-  payID: z.number(),
-  payCode: z.string().nonempty("Payment code is required"),
-  payName: z.string().nonempty("Payment name is required"),
-  payMode: z.string().nonempty("Payment mode is required"),
-  bankCharge: z.any(),
-  rNotes: z.string().nullable().optional(),
+  mlID: z.number(),
+  mlCode: z.string().nonempty("Medication code is required"),
+  mGrpID: z.number().min(1, "Medication group is required"),
+  mfID: z.number().min(1, "Manufacturer is required"),
+  mfName: z.string().nonempty("Manufacturer name is required"),
+  medText: z.string().nonempty("Medication name is required"),
+  medText1: z.string().nullable().optional(),
+  mGenID: z.number().min(1, "Generic medication is required"),
+  mGenCode: z.string().nonempty("Generic code is required"),
+  mGenName: z.string().nonempty("Generic name is required"),
+  productID: z.number().nullable().optional(),
+  calcQtyYN: z.string(),
   rActiveYN: z.string(),
-  transferYN: z.string().optional(),
 });
 
-type PaymentTypesFormData = z.infer<typeof schema>;
+type MedicationListFormData = z.infer<typeof schema>;
 
-const paymentModeOptions = [
-  { value: "CASH", label: "Cash" },
-  { value: "CARD", label: "Card" },
-  { value: "CHECK", label: "Check" },
-  { value: "TRANSFER", label: "Bank Transfer" },
-  { value: "MOBILE", label: "Mobile Payment" },
-  { value: "ONLINE", label: "Online Payment" },
-  { value: "OTHER", label: "Other" },
-];
-
-const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
+const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode, savePaymentType } = usePaymentTypes();
+  const { getNextCode, saveMedication } = useMedicationList();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
-
+  // const { medicationGroupList, manufacturerList, medicationGeneric } = useDropdownValues(["medicationGroupList", "manufacturerList", "medicationGeneric"]);
+  const dropdownValues = useDropdownValues(["medicationForm", "medicationGeneric"]);
+  const medicationGroupList = [];
+  const manufacturerList = [];
+  const genericMedicationList = [];
   const isAddMode = !initialData;
 
-  const defaultValues: PaymentTypesFormData = {
-    payID: 0,
-    payCode: "",
-    payName: "",
-    payMode: "CASH",
-    bankCharge: 0,
-    rNotes: "",
+  const defaultValues: MedicationListFormData = {
+    mlID: 0,
+    mlCode: "",
+    mGrpID: 0,
+    mfID: 0,
+    mfName: "",
+    medText: "",
+    medText1: null,
+    mGenID: 0,
+    mGenCode: "",
+    mGenName: "",
+    productID: null,
+    calcQtyYN: "N",
     rActiveYN: "Y",
-    transferYN: "N",
   };
 
   const {
@@ -68,28 +73,28 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
     reset,
     setValue,
     formState: { errors, isDirty, isValid },
-  } = useForm<PaymentTypesFormData>({
+  } = useForm<MedicationListFormData>({
     defaultValues,
     resolver: zodResolver(schema),
     mode: "onChange",
   });
 
   const rActiveYN = useWatch({ control, name: "rActiveYN" });
-  const payMode = useWatch({ control, name: "payMode" });
+  const calcQtyYN = useWatch({ control, name: "calcQtyYN" });
 
-  const generatePaymentCode = async () => {
+  const generateMedicationCode = async () => {
     if (!isAddMode) return;
 
     try {
       setIsGeneratingCode(true);
-      const nextCode = await getNextCode("PAY", 3);
+      const nextCode = await getNextCode("MED", 3);
       if (nextCode) {
-        setValue("payCode", nextCode, { shouldValidate: true, shouldDirty: true });
+        setValue("mlCode", nextCode, { shouldValidate: true, shouldDirty: true });
       } else {
-        showAlert("Warning", "Failed to generate payment code", "warning");
+        showAlert("Warning", "Failed to generate medication code", "warning");
       }
     } catch (error) {
-      console.error("Error generating payment code:", error);
+      console.error("Error generating medication code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -97,14 +102,14 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
 
   useEffect(() => {
     if (initialData) {
-      reset(initialData as PaymentTypesFormData);
+      reset(initialData as MedicationListFormData);
     } else {
       reset(defaultValues);
-      generatePaymentCode();
+      generateMedicationCode();
     }
   }, [initialData, reset]);
 
-  const onSubmit = async (data: PaymentTypesFormData) => {
+  const onSubmit = async (data: MedicationListFormData) => {
     if (viewOnly) return;
 
     setFormError(null);
@@ -113,28 +118,33 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
       setIsSaving(true);
       setLoading(true);
 
-      const paymentData: BPayTypeDto = {
-        payID: data.payID,
-        payCode: data.payCode,
-        payName: data.payName,
-        payMode: data.payMode,
-        bankCharge: data.bankCharge,
-        rNotes: data.rNotes || "",
-        rActiveYN: data.rActiveYN || "Y",
-        transferYN: data.transferYN || "N",
+      const medicationData: MedicationListDto = {
+        mlID: data.mlID,
+        mlCode: data.mlCode,
+        mGrpID: data.mGrpID,
+        mfID: data.mfID,
+        mfName: data.mfName,
+        medText: data.medText,
+        medText1: data.medText1,
+        mGenID: data.mGenID,
+        mGenCode: data.mGenCode,
+        mGenName: data.mGenName,
+        productID: data.productID,
+        calcQtyYN: data.calcQtyYN,
+        rActiveYN: data.rActiveYN,
       };
 
-      const response = await savePaymentType(paymentData);
+      const response = await saveMedication(medicationData);
 
       if (response.success) {
-        showAlert("Success", isAddMode ? "Payment type created successfully" : "Payment type updated successfully", "success");
+        showAlert("Success", isAddMode ? "Medication created successfully" : "Medication updated successfully", "success");
         onClose(true);
       } else {
-        throw new Error(response.errorMessage || "Failed to save payment type");
+        throw new Error(response.errorMessage || "Failed to save medication");
       }
     } catch (error) {
-      console.error("Error saving payment type:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to save payment type";
+      console.error("Error saving medication:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to save medication";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
     } finally {
@@ -146,24 +156,24 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
   const handleReset = () => {
     if (isDirty) {
       if (window.confirm("Are you sure you want to reset the form? All unsaved changes will be lost.")) {
-        reset(initialData ? (initialData as PaymentTypesFormData) : defaultValues);
+        reset(initialData ? (initialData as MedicationListFormData) : defaultValues);
         setFormError(null);
 
         if (isAddMode) {
-          generatePaymentCode();
+          generateMedicationCode();
         }
       }
     } else {
-      reset(initialData ? (initialData as PaymentTypesFormData) : defaultValues);
+      reset(initialData ? (initialData as MedicationListFormData) : defaultValues);
       setFormError(null);
 
       if (isAddMode) {
-        generatePaymentCode();
+        generateMedicationCode();
       }
     }
   };
 
-  const dialogTitle = viewOnly ? "View Payment Type Details" : isAddMode ? "Create New Payment Type" : `Edit Payment Type - ${initialData?.payName}`;
+  const dialogTitle = viewOnly ? "View Medication Details" : isAddMode ? "Create New Medication" : `Edit Medication - ${initialData?.medText}`;
 
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
@@ -181,7 +191,7 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? "Create Payment Type" : "Update Payment Type"}
+          text={isAddMode ? "Create Medication" : "Update Medication"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
@@ -198,7 +208,7 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
 
   const handleRefreshCode = () => {
     if (isAddMode) {
-      generatePaymentCode();
+      generateMedicationCode();
     }
   };
 
@@ -244,9 +254,9 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
                 <Grid container spacing={2}>
                   <Grid size={{ sm: 12, md: 6 }}>
                     <FormField
-                      name="payCode"
+                      name="mlCode"
                       control={control}
-                      label="Payment Code"
+                      label="Medication Code"
                       type="text"
                       required
                       disabled={viewOnly || !isAddMode}
@@ -268,77 +278,84 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="payName" control={control} label="Payment Name" type="text" required disabled={viewOnly} size="small" fullWidth />
+                    <FormField name="medText" control={control} label="Medication Name" type="text" required disabled={viewOnly} size="small" fullWidth />
+                  </Grid>
+
+                  <Grid size={{ sm: 12, md: 6 }}>
+                    <FormField name="medText1" control={control} label="Alternative Name" type="text" disabled={viewOnly} size="small" fullWidth />
                   </Grid>
                 </Grid>
               </CardContent>
             </Card>
           </Grid>
 
-          {/* Settings Section */}
+          {/* Medication Details Section */}
           <Grid size={{ sm: 12 }}>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Payment Settings
+                  Medication Details
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
                   <Grid size={{ sm: 12, md: 6 }}>
                     <FormField
-                      name="payMode"
+                      name="mGrpID"
                       control={control}
-                      label="Payment Mode"
+                      label="Medication Group"
                       type="select"
+                      options={medicationGroupList}
                       required
                       disabled={viewOnly}
                       size="small"
-                      options={paymentModeOptions}
                       fullWidth
                     />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
                     <FormField
-                      name="bankCharge"
+                      name="mfID"
                       control={control}
-                      label="Bank Charge (%)"
-                      type="number"
+                      label="Manufacturer"
+                      type="select"
+                      options={manufacturerList}
                       required
                       disabled={viewOnly}
                       size="small"
-                      inputProps={{ min: 0, step: 0.01 }}
                       fullWidth
+                      onChange={(value) => {
+                        const selectedManufacturer = manufacturerList?.find((manufacturer) => Number(manufacturer.value) === Number(value.value));
+                        if (selectedManufacturer) {
+                          setValue("mfName", selectedManufacturer.label);
+                        }
+                      }}
                     />
                   </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
 
-          {/* Notes Section */}
-          <Grid size={{ sm: 12 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Additional Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid size={{ sm: 12 }}>
+                  <Grid size={{ sm: 12, md: 6 }}>
                     <FormField
-                      name="rNotes"
+                      name="mGenID"
                       control={control}
-                      label="Notes"
-                      type="textarea"
+                      label="Generic Medication"
+                      type="select"
+                      options={genericMedicationList}
+                      required
                       disabled={viewOnly}
                       size="small"
                       fullWidth
-                      rows={4}
-                      placeholder="Enter any additional information about this payment type"
+                      onChange={(value) => {
+                        const selectedGeneric = genericMedicationList?.find((generic) => Number(generic.value) === Number(value.value));
+                        if (selectedGeneric) {
+                          setValue("mGenName", selectedGeneric.label);
+                          setValue("mGenCode", selectedGeneric.code || "");
+                        }
+                      }}
                     />
+                  </Grid>
+
+                  <Grid size={{ sm: 12, md: 6 }}>
+                    <FormField name="calcQtyYN" control={control} label="Calculate Quantity" type="switch" disabled={viewOnly} size="small" />
                   </Grid>
                 </Grid>
               </CardContent>
@@ -350,4 +367,4 @@ const PaymentTypesForm: React.FC<PaymentTypesFormProps> = ({ open, onClose, init
   );
 };
 
-export default PaymentTypesForm;
+export default MedicationListForm;

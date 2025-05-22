@@ -10,7 +10,6 @@ import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
-import { patientInvioceService } from "@/services/BillingServices/BillingGenericService";
 import { usePatientInvoiceCode } from "../hooks/usePatientInvoiceCode";
 
 interface PatientInvoiceCodeFormProps {
@@ -34,7 +33,7 @@ type PatientInvoiceCodeFormData = z.infer<typeof schema>;
 
 const PatientInvoiceCodeForm: React.FC<PatientInvoiceCodeFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode } = usePatientInvoiceCode();
+  const { getNextCode, savePatientInvoice } = usePatientInvoiceCode();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
@@ -112,7 +111,7 @@ const PatientInvoiceCodeForm: React.FC<PatientInvoiceCodeFormProps> = ({ open, o
         transferYN: data.transferYN || "N",
       };
 
-      const response = await patientInvioceService.save(invoiceData);
+      const response = await savePatientInvoice(invoiceData);
 
       if (response.success) {
         showAlert("Success", isAddMode ? "Invoice code created successfully" : "Invoice code updated successfully", "success");

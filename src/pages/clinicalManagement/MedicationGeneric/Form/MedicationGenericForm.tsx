@@ -1,82 +1,56 @@
-// src/pages/billing/DepartmentListPage/Form/DepartmentListForm.tsx
 import React, { useState, useEffect } from "react";
 import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress } from "@mui/material";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
+import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
-import { useDepartmentList } from "../hooks/useDepartmentList";
+import { useMedicationGeneric } from "../hooks/useMedicationGeneric";
 
-interface DepartmentListFormProps {
+interface MedicationGenericFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
-  initialData: DepartmentDto | null;
+  initialData: MedicationGenericDto | null;
   viewOnly?: boolean;
 }
 
 const schema = z.object({
-  deptID: z.number(),
-  deptCode: z.string().nonempty("Department code is required"),
-  deptName: z.string().nonempty("Department name is required"),
-  deptType: z.string().optional(),
-  deptStore: z.string().optional(),
+  mGenID: z.number(),
+  mGenCode: z.string().nonempty("Generic code is required"),
+  mGenName: z.string().nonempty("Generic name is required"),
+  modifyYN: z.string(),
+  defaultYN: z.string(),
   rActiveYN: z.string(),
+  transferYN: z.string(),
   rNotes: z.string().nullable().optional(),
-  deptLocation: z.string().optional(),
-  deptSalesYN: z.string(),
-  deptStorePhYN: z.string(),
-  dlNumber: z.string().optional(),
-  isUnitYN: z.string(),
-  superSpecialityYN: z.string(),
-  unit: z.string().optional(),
-  isStoreYN: z.string(),
-  autoConsumptionYN: z.string(),
-  dischargeNoteYN: z.string(),
-  transferYN: z.string().optional(),
+  mSnomedCode: z.string().nullable().optional(),
 });
 
-type DepartmentListFormData = z.infer<typeof schema>;
+type MedicationGenericFormData = z.infer<typeof schema>;
 
-const departmentTypeOptions = [
-  { value: "CLINICAL", label: "Clinical" },
-  { value: "NON_CLINICAL", label: "Non-Clinical" },
-  { value: "ADMIN", label: "Administrative" },
-  { value: "SUPPORT", label: "Support" },
-];
-
-const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
+const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode, saveDepartment } = useDepartmentList();
+  const { getNextCode, saveMedicationGeneric } = useMedicationGeneric();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const isAddMode = !initialData;
 
-  const defaultValues: DepartmentListFormData = {
-    deptID: 0,
-    deptCode: "",
-    deptName: "",
-    deptType: "CLINICAL",
-    deptStore: "",
+  const defaultValues: MedicationGenericFormData = {
+    mGenID: 0,
+    mGenCode: "",
+    mGenName: "",
+    modifyYN: "Y",
+    defaultYN: "N",
     rActiveYN: "Y",
-    rNotes: "",
-    deptLocation: "",
-    deptSalesYN: "N",
-    deptStorePhYN: "N",
-    dlNumber: "",
-    isUnitYN: "N",
-    superSpecialityYN: "N",
-    unit: "",
-    isStoreYN: "N",
-    autoConsumptionYN: "N",
-    dischargeNoteYN: "N",
     transferYN: "N",
+    rNotes: "",
+    mSnomedCode: "",
   };
 
   const {
@@ -84,31 +58,30 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
     handleSubmit,
     reset,
     setValue,
-    watch,
     formState: { errors, isDirty, isValid },
-  } = useForm<DepartmentListFormData>({
+  } = useForm<MedicationGenericFormData>({
     defaultValues,
     resolver: zodResolver(schema),
     mode: "onChange",
   });
 
   const rActiveYN = useWatch({ control, name: "rActiveYN" });
-  const isStoreYN = useWatch({ control, name: "isStoreYN" });
-  const isUnitYN = useWatch({ control, name: "isUnitYN" });
+  const defaultYN = useWatch({ control, name: "defaultYN" });
+  const modifyYN = useWatch({ control, name: "modifyYN" });
 
-  const generateDepartmentCode = async () => {
+  const generateGenericCode = async () => {
     if (!isAddMode) return;
 
     try {
       setIsGeneratingCode(true);
-      const nextCode = await getNextCode("DEP", 3);
+      const nextCode = await getNextCode("GEN", 3);
       if (nextCode) {
-        setValue("deptCode", nextCode, { shouldValidate: true, shouldDirty: true });
+        setValue("mGenCode", nextCode, { shouldValidate: true, shouldDirty: true });
       } else {
-        showAlert("Warning", "Failed to generate department code", "warning");
+        showAlert("Warning", "Failed to generate generic code", "warning");
       }
     } catch (error) {
-      console.error("Error generating department code:", error);
+      console.error("Error generating generic code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -116,14 +89,14 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
 
   useEffect(() => {
     if (initialData) {
-      reset(initialData as DepartmentListFormData);
+      reset(initialData as MedicationGenericFormData);
     } else {
       reset(defaultValues);
-      generateDepartmentCode();
+      generateGenericCode();
     }
   }, [initialData, reset]);
 
-  const onSubmit = async (data: DepartmentListFormData) => {
+  const onSubmit = async (data: MedicationGenericFormData) => {
     if (viewOnly) return;
 
     setFormError(null);
@@ -132,38 +105,29 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
       setIsSaving(true);
       setLoading(true);
 
-      const departmentData: DepartmentDto = {
-        deptID: data.deptID,
-        deptCode: data.deptCode,
-        deptName: data.deptName,
-        deptType: data.deptType || "",
-        deptStore: data.deptStore || "",
-        rActiveYN: data.rActiveYN || "Y",
+      const genericData: MedicationGenericDto = {
+        mGenID: data.mGenID,
+        mGenCode: data.mGenCode,
+        mGenName: data.mGenName,
+        modifyYN: data.modifyYN,
+        defaultYN: data.defaultYN,
+        rActiveYN: data.rActiveYN,
+        transferYN: data.transferYN,
         rNotes: data.rNotes || "",
-        deptLocation: data.deptLocation || "",
-        deptSalesYN: data.deptSalesYN,
-        deptStorePhYN: data.deptStorePhYN,
-        dlNumber: data.dlNumber || "",
-        isUnitYN: data.isUnitYN,
-        superSpecialityYN: data.superSpecialityYN,
-        unit: data.unit || "",
-        isStoreYN: data.isStoreYN,
-        autoConsumptionYN: data.autoConsumptionYN,
-        dischargeNoteYN: data.dischargeNoteYN,
-        transferYN: data.transferYN || "N",
+        mSnomedCode: data.mSnomedCode || "",
       };
 
-      const response = await saveDepartment(departmentData);
+      const response = await saveMedicationGeneric(genericData);
 
       if (response.success) {
-        showAlert("Success", isAddMode ? "Department created successfully" : "Department updated successfully", "success");
+        showAlert("Success", isAddMode ? "Generic medication created successfully" : "Generic medication updated successfully", "success");
         onClose(true);
       } else {
-        throw new Error(response.errorMessage || "Failed to save department");
+        throw new Error(response.errorMessage || "Failed to save generic medication");
       }
     } catch (error) {
-      console.error("Error saving department:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to save department";
+      console.error("Error saving generic medication:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to save generic medication";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
     } finally {
@@ -175,24 +139,24 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
   const handleReset = () => {
     if (isDirty) {
       if (window.confirm("Are you sure you want to reset the form? All unsaved changes will be lost.")) {
-        reset(initialData ? (initialData as DepartmentListFormData) : defaultValues);
+        reset(initialData ? (initialData as MedicationGenericFormData) : defaultValues);
         setFormError(null);
 
         if (isAddMode) {
-          generateDepartmentCode();
+          generateGenericCode();
         }
       }
     } else {
-      reset(initialData ? (initialData as DepartmentListFormData) : defaultValues);
+      reset(initialData ? (initialData as MedicationGenericFormData) : defaultValues);
       setFormError(null);
 
       if (isAddMode) {
-        generateDepartmentCode();
+        generateGenericCode();
       }
     }
   };
 
-  const dialogTitle = viewOnly ? "View Department Details" : isAddMode ? "Create New Department" : `Edit Department - ${initialData?.deptName}`;
+  const dialogTitle = viewOnly ? "View Generic Medication Details" : isAddMode ? "Create New Generic Medication" : `Edit Generic Medication - ${initialData?.mGenName}`;
 
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
@@ -210,7 +174,7 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? "Create Department" : "Update Department"}
+          text={isAddMode ? "Create Generic Medication" : "Update Generic Medication"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
@@ -227,7 +191,7 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
 
   const handleRefreshCode = () => {
     if (isAddMode) {
-      generateDepartmentCode();
+      generateGenericCode();
     }
   };
 
@@ -273,9 +237,9 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
                 <Grid container spacing={2}>
                   <Grid size={{ sm: 12, md: 6 }}>
                     <FormField
-                      name="deptCode"
+                      name="mGenCode"
                       control={control}
-                      label="Department Code"
+                      label="Generic Code"
                       type="text"
                       required
                       disabled={viewOnly || !isAddMode}
@@ -297,73 +261,33 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="deptName" control={control} label="Department Name" type="text" required disabled={viewOnly} size="small" fullWidth />
+                    <FormField name="mGenName" control={control} label="Generic Name" type="text" required disabled={viewOnly} size="small" fullWidth />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="deptType" control={control} label="Department Type" type="select" disabled={viewOnly} size="small" options={departmentTypeOptions} fullWidth />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="deptLocation" control={control} label="Location" type="text" disabled={viewOnly} size="small" fullWidth />
+                    <FormField name="mSnomedCode" control={control} label="SNOMED Code" type="text" disabled={viewOnly} size="small" fullWidth />
                   </Grid>
                 </Grid>
               </CardContent>
             </Card>
           </Grid>
 
-          {/* Department Settings */}
+          {/* Settings Section */}
           <Grid size={{ sm: 12 }}>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Department Settings
+                  Generic Medication Settings
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="isUnitYN" control={control} label="Is Unit" type="switch" disabled={viewOnly} size="small" />
+                  <Grid size={{ sm: 12, md: 4 }}>
+                    <FormField name="defaultYN" control={control} label="Set as Default" type="switch" disabled={viewOnly} size="small" />
                   </Grid>
 
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="superSpecialityYN" control={control} label="Super Speciality" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  {isUnitYN === "Y" && (
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="unit" control={control} label="Unit" type="text" disabled={viewOnly} size="small" fullWidth />
-                    </Grid>
-                  )}
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="isStoreYN" control={control} label="Is Store" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  {isStoreYN === "Y" && (
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="deptStore" control={control} label="Store Name" type="text" disabled={viewOnly} size="small" fullWidth />
-                    </Grid>
-                  )}
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="deptStorePhYN" control={control} label="Store Pharmacy" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="deptSalesYN" control={control} label="Sales Department" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="autoConsumptionYN" control={control} label="Auto Consumption" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="dischargeNoteYN" control={control} label="Discharge Note" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="dlNumber" control={control} label="DL Number" type="text" disabled={viewOnly} size="small" fullWidth />
+                  <Grid size={{ sm: 12, md: 4 }}>
+                    <FormField name="modifyYN" control={control} label="Allow Modification" type="switch" disabled={viewOnly} size="small" />
                   </Grid>
                 </Grid>
               </CardContent>
@@ -390,7 +314,7 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
                       size="small"
                       fullWidth
                       rows={4}
-                      placeholder="Enter any additional information about this department"
+                      placeholder="Enter any additional information about this generic medication"
                     />
                   </Grid>
                 </Grid>
@@ -403,4 +327,4 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
   );
 };
 
-export default DepartmentListForm;
+export default MedicationGenericForm;
