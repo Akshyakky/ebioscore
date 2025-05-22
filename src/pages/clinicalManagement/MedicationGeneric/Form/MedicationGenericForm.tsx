@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress } from "@mui/material";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
@@ -64,10 +64,6 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
     resolver: zodResolver(schema),
     mode: "onChange",
   });
-
-  const rActiveYN = useWatch({ control, name: "rActiveYN" });
-  const defaultYN = useWatch({ control, name: "defaultYN" });
-  const modifyYN = useWatch({ control, name: "modifyYN" });
 
   const generateGenericCode = async () => {
     if (!isAddMode) return;
@@ -215,7 +211,6 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
         )}
 
         <Grid container spacing={3}>
-          {/* Status Toggle - Prominent Position */}
           <Grid size={{ sm: 12 }}>
             <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
               <Typography variant="body2" color="text.secondary">
@@ -225,7 +220,6 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
             </Box>
           </Grid>
 
-          {/* Basic Information Section */}
           <Grid size={{ sm: 12 }}>
             <Card variant="outlined">
               <CardContent>
@@ -272,7 +266,6 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
             </Card>
           </Grid>
 
-          {/* Settings Section */}
           <Grid size={{ sm: 12 }}>
             <Card variant="outlined">
               <CardContent>
@@ -294,7 +287,6 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
             </Card>
           </Grid>
 
-          {/* Notes Section */}
           <Grid size={{ sm: 12 }}>
             <Card variant="outlined">
               <CardContent>
