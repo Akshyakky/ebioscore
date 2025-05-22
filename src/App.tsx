@@ -13,6 +13,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
 import { QueryProvider } from "./providers/QueryProvider";
 import RouteNotFoundBoundary from "./components/RouteNotFoundBoundary";
+import ThemeProvider from "./providers/ThemeProvider";
 
 // Types
 interface RouteConfig {
@@ -86,16 +87,28 @@ const App: React.FC = () => {
       <PersistGate loading={<PersistLoadingFallback />} persistor={persistor}>
         <ErrorBoundary onError={handleAppError} fallback={<ErrorFallback />}>
           <QueryProvider>
-            <Router>
-              <GlobalSpinner delay={500} color="secondary" size={50} />
-              <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-              <RouteNotFoundBoundary>
-                <Routes>
-                  {memoizedRoutes}
-                  <Route path="/" element={<Navigate replace to="/login" />} />
-                </Routes>
-              </RouteNotFoundBoundary>
-            </Router>
+            <ThemeProvider>
+              <Router>
+                <GlobalSpinner delay={500} color="secondary" size={50} />
+                <ToastContainer
+                  position="top-right"
+                  autoClose={1500}
+                  hideProgressBar={false}
+                  newestOnTop={false}
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                />
+                <RouteNotFoundBoundary>
+                  <Routes>
+                    {memoizedRoutes}
+                    <Route path="/" element={<Navigate replace to="/login" />} />
+                  </Routes>
+                </RouteNotFoundBoundary>
+              </Router>
+            </ThemeProvider>
           </QueryProvider>
         </ErrorBoundary>
       </PersistGate>
