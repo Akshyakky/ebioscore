@@ -21,6 +21,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [scrolled, setScrolled] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
 
   // Calculate effective user ID for admin permissions
   const effectiveUserID = useMemo(() => {
@@ -39,16 +40,17 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   // Handle scroll events to show/hide back to top button
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 300) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+      setScrolled(window.scrollY > 300);
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Handle sidebar state based on screen size
+  useEffect(() => {
+    setIsSidebarOpen(!isMobile);
+  }, [isMobile]);
 
   // Close error notification
   const handleCloseError = () => {
@@ -111,7 +113,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       }}
     >
       <Box sx={{ display: "flex", flex: 1 }}>
-        {userInfo && <SideBar userID={effectiveUserID} token={userInfo.token} />}
+        {userInfo && (
+          <SideBar userID={effectiveUserID} token={userInfo.token} open={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} variant={isMobile ? "temporary" : "permanent"} />
+        )}
         <Box
           component="main"
           sx={{
@@ -159,35 +163,33 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           {/* Include Footer only for Dashboard */}
           {isDashboard && <Footer />}
 
-          {/* Back to top button (visible when scrolled) */}
+          {/* Back to top button */}
           <Zoom in={scrolled}>
-            <Fab
-              color="primary"
-              size="small"
-              aria-label="scroll back to top"
-              onClick={scrollToTop}
-              sx={{
-                position: "fixed",
-                bottom: theme.spacing(8),
-                right: theme.spacing(2),
-                opacity: 0.8,
-                "&:hover": {
-                  opacity: 1,
-                },
-              }}
-            >
-              <ArrowUpwardIcon />
-            </Fab>
+            <Tooltip title="Back to top" placement="left">
+              <Fab
+                color="primary"
+                size="small"
+                onClick={scrollToTop}
+                sx={{
+                  position: "fixed",
+                  bottom: 16,
+                  right: 16,
+                  display: { xs: "none", sm: "flex" },
+                }}
+              >
+                <ArrowUpwardIcon />
+              </Fab>
+            </Tooltip>
           </Zoom>
+
+          {/* Error notification */}
+          <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseError} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
+            <Alert onClose={handleCloseError} severity="error" sx={{ width: "100%" }}>
+              {error}
+            </Alert>
+          </Snackbar>
         </Box>
       </Box>
-
-      {/* Error notification */}
-      <Snackbar open={!!error} autoHideDuration={6000} onClose={handleCloseError} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <Alert onClose={handleCloseError} severity="error" variant="filled" sx={{ width: "100%" }}>
-          {error}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

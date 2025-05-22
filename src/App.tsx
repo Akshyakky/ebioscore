@@ -13,6 +13,9 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
 import { QueryProvider } from "./providers/QueryProvider";
 import RouteNotFoundBoundary from "./components/RouteNotFoundBoundary";
+import { ThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import lightTheme from "./layouts/Themes/LightTheme";
 
 // Types
 interface RouteConfig {
@@ -22,31 +25,47 @@ interface RouteConfig {
   providers?: React.ComponentType<any>[];
 }
 
-// Components
+// Loading fallback for PersistGate
 const PersistLoadingFallback = () => (
   <Box
     sx={{
-      height: "100vh",
       display: "flex",
-      alignItems: "center",
       justifyContent: "center",
+      alignItems: "center",
+      height: "100vh",
+      flexDirection: "column",
+      gap: 2,
     }}
   >
-    <CircularProgress size={60} thickness={4} />
+    <CircularProgress size={40} />
+    <Typography variant="h6" color="text.secondary">
+      Loading Application...
+    </Typography>
   </Box>
 );
 
+// Error fallback component
 const ErrorFallback = () => (
-  <Container maxWidth="sm" sx={{ height: "100vh", display: "flex", alignItems: "center" }}>
-    <Box sx={{ textAlign: "center", width: "100%" }}>
-      <Typography variant="h4" gutterBottom color="error">
-        Application Error
+  <Container maxWidth="md">
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        minHeight: "100vh",
+        textAlign: "center",
+        gap: 2,
+      }}
+    >
+      <Typography variant="h4" color="error" gutterBottom>
+        Something went wrong
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        The application encountered a critical error and needs to be reloaded.
+      <Typography variant="body1" color="text.secondary" paragraph>
+        We apologize for the inconvenience. Please try refreshing the page.
       </Typography>
-      <Button variant="contained" startIcon={<Refresh />} onClick={() => window.location.reload()} size="large">
-        Reload Application
+      <Button variant="contained" startIcon={<Refresh />} onClick={() => window.location.reload()} sx={{ mt: 2 }}>
+        Refresh Page
       </Button>
     </Box>
   </Container>
@@ -56,6 +75,7 @@ const App: React.FC = () => {
   const handleAppError = (error: Error, errorInfo: React.ErrorInfo) => {
     console.error("Critical Application Error:", error);
     console.error("Error Info:", errorInfo);
+    // Add your error reporting service here
   };
 
   const renderRoutes = useMemo(() => {
@@ -82,24 +102,38 @@ const App: React.FC = () => {
   const memoizedRoutes = useMemo(() => renderRoutes(routeConfig), [renderRoutes]);
 
   return (
-    <ReduxProvider store={store}>
-      <PersistGate loading={<PersistLoadingFallback />} persistor={persistor}>
-        <ErrorBoundary onError={handleAppError} fallback={<ErrorFallback />}>
-          <QueryProvider>
-            <Router>
-              <GlobalSpinner delay={500} color="secondary" size={50} />
-              <ToastContainer position="top-right" autoClose={1500} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-              <RouteNotFoundBoundary>
-                <Routes>
-                  {memoizedRoutes}
-                  <Route path="/" element={<Navigate replace to="/login" />} />
-                </Routes>
-              </RouteNotFoundBoundary>
-            </Router>
-          </QueryProvider>
-        </ErrorBoundary>
-      </PersistGate>
-    </ReduxProvider>
+    <ErrorBoundary onError={handleAppError} fallback={<ErrorFallback />}>
+      <ReduxProvider store={store}>
+        <PersistGate loading={<PersistLoadingFallback />} persistor={persistor}>
+          <ThemeProvider theme={lightTheme}>
+            <CssBaseline />
+            <QueryProvider>
+              <Router>
+                <GlobalSpinner delay={500} color="secondary" size={50} />
+                <ToastContainer
+                  position="top-right"
+                  autoClose={3000}
+                  hideProgressBar={false}
+                  newestOnTop
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="colored"
+                />
+                <RouteNotFoundBoundary>
+                  <Routes>
+                    {memoizedRoutes}
+                    <Route path="/" element={<Navigate replace to="/dashboard" />} />
+                  </Routes>
+                </RouteNotFoundBoundary>
+              </Router>
+            </QueryProvider>
+          </ThemeProvider>
+        </PersistGate>
+      </ReduxProvider>
+    </ErrorBoundary>
   );
 };
 
