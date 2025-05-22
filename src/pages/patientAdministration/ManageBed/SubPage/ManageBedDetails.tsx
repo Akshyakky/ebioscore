@@ -25,7 +25,6 @@ const ManageBedDetails: React.FC<ManageBedDetailsProps> = ({ onBedSelect, isSele
   const { isLoading, setLoading } = useLoading();
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     fetchRoomGroups();

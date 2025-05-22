@@ -1,6 +1,6 @@
 import AutocompleteTextBox from "@/components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
 import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
-import { Box, Checkbox, Divider, Grid, IconButton, Menu, MenuItem, Tooltip, Typography, useTheme } from "@mui/material";
+import { Box, Checkbox, Divider, Grid, IconButton, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import AppointmentSearch from "./AppointmentList";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -20,7 +20,6 @@ interface SchedulerHeaderProps {
 }
 
 const SchedulerHeader: React.FC<SchedulerHeaderProps> = React.memo(({ onRefresh, onSearchSelection }) => {
-  const theme = useTheme();
   const [searchType, setSearchType] = useState<"consultant" | "resource">("consultant");
   const [searchValue, setSearchValue] = useState("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);

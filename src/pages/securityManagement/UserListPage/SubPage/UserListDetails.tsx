@@ -1,6 +1,6 @@
 import FormField from "@/components/FormField/FormField";
 import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
-import { Box, Button, Grid, ImageList, ImageListItem, Paper, SelectChangeEvent, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Button, Grid, ImageList, ImageListItem, Paper, SelectChangeEvent, Typography, useMediaQuery, useTheme } from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
@@ -14,7 +14,6 @@ import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData"
 import ProfilePermissionsListModal from "./ProfilePermissionsListModal";
 import ProfilePermissionsModifyModal from "./ProfilePermissionsModifyModal";
 import PermissionManager from "../../CommonPage/PermissionManager";
-import { Company } from "@/types/Common/Company.type";
 interface UserListProps {
   selectedUser?: UserListDto;
   handleClearPage: () => void;

@@ -1,5 +1,5 @@
 import React from "react";
-import { Stack, useMediaQuery, useTheme, Box, CircularProgress } from "@mui/material";
+import { Stack, useMediaQuery, Box, CircularProgress } from "@mui/material";
 import Button from "@mui/material/Button";
 import { SvgIconComponent } from "@mui/icons-material";
 
@@ -32,8 +32,7 @@ const FormSaveClearButton: React.FC<FormSaveClearButtonProps> = ({
   isLoading = false,
   orientation = "horizontal",
 }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery("(max-width:600px)");
   const isVertical = orientation === "vertical";
 
   return (
@@ -43,10 +42,10 @@ const FormSaveClearButton: React.FC<FormSaveClearButtonProps> = ({
         bottom: 0,
         left: 0,
         right: 0,
-        padding: theme.spacing(1),
-        backgroundColor: theme.palette.background.paper,
-        borderTop: `1px solid ${theme.palette.divider}`,
-        zIndex: theme.zIndex.appBar,
+        padding: "8px",
+        backgroundColor: "#fff",
+        borderTop: "1px solid #e0e0e0",
+        zIndex: 1100,
       }}
     >
       <Stack direction={isVertical ? "column" : "row"} spacing={2} justifyContent="space-between">

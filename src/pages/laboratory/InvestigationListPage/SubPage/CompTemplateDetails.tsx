@@ -9,8 +9,6 @@ import AdvancedGrid, { ColumnConfig } from "@/components/AdvancedGrid/AdvancedGr
 import RichTextEditor from "@/components/RichTextEditor/CkEditor";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { LCompTemplateDto, LComponentDto } from "@/interfaces/Laboratory/LInvMastDto";
-
-import { useServerDate } from "@/hooks/Common/useServerDate";
 import { appModifiedListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
 import { showAlert } from "@/utils/Common/showAlert";
@@ -29,7 +27,6 @@ interface LCompTemplateDetailsProps {
 }
 
 const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemplate, selectedComponent, indexID }) => {
-  const serverDate = useServerDate();
   const [searchTerm, setSearchTerm] = useState("");
   const [editorValue, setEditorValue] = useState("");
   const [selectedTemplateGroupId, setSelectedTemplateGroupId] = useState<number | null>(null);

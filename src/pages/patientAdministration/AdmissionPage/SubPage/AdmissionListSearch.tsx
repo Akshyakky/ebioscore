@@ -1,9 +1,9 @@
 import React, { useEffect, useCallback, useMemo, useRef } from "react";
-import { Box, IconButton, InputAdornment, useTheme } from "@mui/material";
+import { Box, IconButton, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import { format } from "date-fns";
-import { selectFilteredAdmissions, selectIsLoading, selectSearchTerm } from "@/store/features/admission/admissionSearch/admissionSelectors";
+import { selectFilteredAdmissions, selectSearchTerm } from "@/store/features/admission/admissionSearch/admissionSelectors";
 import { clearSearch, fetchCurrentAdmissions, resetAdmissionSearch, setSearchTerm } from "@/store/features/admission/admissionSearch/admissionSearchSlice";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -19,12 +19,10 @@ interface AdmissionListSearchProps {
 
 const AdmissionListSearch: React.FC<AdmissionListSearchProps> = ({ open, onClose, onSelect }) => {
   const dispatch = useAppDispatch();
-  const theme = useTheme();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const filteredAdmissions = useAppSelector(selectFilteredAdmissions);
   const searchTerm = useAppSelector(selectSearchTerm);
-  const isLoading = useAppSelector(selectIsLoading);
 
   // Load admissions when dialog opens
   useEffect(() => {
