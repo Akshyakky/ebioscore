@@ -3,8 +3,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typograp
 import CloseIcon from "@mui/icons-material/Close";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import { Theme } from "@mui/material/styles";
-import { styled } from "@mui/system";
+import { styled, Theme } from "@mui/material/styles";
 
 interface GenericDialogProps {
   open: boolean;

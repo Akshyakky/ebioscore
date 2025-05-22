@@ -1,11 +1,11 @@
 import React, { Suspense, useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
-import { Loader } from "lucide-react";
 import { AppModifiedMast } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { Box, Container, Divider, Grid, Typography } from "@mui/material";
 import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
 import AppModifiedDetails from "../SubPage/AppModifiedListDetails";
 import AppModifiedMastSearch from "../SubPage/AppModifiedListSearch";
+import Loader from "@/components/Loader/SkeletonLoader";
 const AppModifiedListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<AppModifiedMast | undefined>(undefined);

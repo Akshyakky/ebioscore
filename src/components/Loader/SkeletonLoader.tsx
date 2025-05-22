@@ -1,6 +1,6 @@
 import React from "react";
-import { Loader2 } from "lucide-react";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { CircularProgress } from "@mui/material";
 
 interface LoaderProps {
   type?: "skeleton" | "spinner";
@@ -24,7 +24,7 @@ const Loader: React.FC<LoaderProps> = ({ type = "spinner", skeletonType = "bar",
 
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
-      <Loader2 size={32} className="animate-spin" />
+      <CircularProgress size={32} className="animate-spin" />
     </div>
   );
 };
@@ -66,7 +66,7 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ type = "bar", width = "
       case "image":
         return (
           <div style={{ ...styles, aspectRatio: "16/9", position: "relative" }}>
-            <Loader2 style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} />
+            <CircularProgress style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} />
           </div>
         );
       case "text":

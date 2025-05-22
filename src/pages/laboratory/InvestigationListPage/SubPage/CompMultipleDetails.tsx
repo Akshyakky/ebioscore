@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, ChangeEvent, Dispatch, SetStateAction } from "react";
 import { Box, Grid, Typography, IconButton, CircularProgress, Grow } from "@mui/material";
-import { Edit, Trash2 } from "lucide-react";
 import FormField from "@/components/FormField/FormField";
 import { showAlert } from "@/utils/Common/showAlert";
 import { LCompMultipleDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
 import CustomButton from "@/components/Button/CustomButton";
+import { Delete, Edit } from "@mui/icons-material";
 
 interface MultipleValue {
   cmID: number;
@@ -223,10 +223,10 @@ const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, 
                     <Typography variant="body2">{item.value}</Typography>
                     <Box>
                       <IconButton size="small" color="primary" onClick={() => handleEditValue(idx)}>
-                        <Edit size={18} />
+                        <Edit />
                       </IconButton>
                       <IconButton size="small" color="error" onClick={() => handleRemoveValue(idx)}>
-                        <Trash2 size={18} />
+                        <Delete />
                       </IconButton>
                     </Box>
                   </Box>

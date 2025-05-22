@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Control, UseFieldArrayAppend, UseFieldArrayRemove, UseFieldArrayUpdate, UseFormSetValue, useWatch } from "react-hook-form";
 import { Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 import { Delete as DeleteIcon } from "@mui/icons-material";
-import { Loader } from "lucide-react";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { PurchaseOrderDetailDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
@@ -10,6 +9,7 @@ import { showAlert } from "@/utils/Common/showAlert";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import Loader from "@/components/Loader/SkeletonLoader";
 
 interface PurchaseOrderGridProps {
   control: Control<any>;
@@ -362,7 +362,7 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
               {isLoading && (
                 <TableRow>
                   <TableCell colSpan={15} align="center">
-                    <Loader size={24} className="animate-spin" />
+                    <Loader type="spinner" />
                   </TableCell>
                 </TableRow>
               )}
