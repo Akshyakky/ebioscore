@@ -1,7 +1,7 @@
 import React, { useRef, useCallback } from "react";
 import { Button, ButtonProps } from "@mui/material";
-import { GetApp as ExportIcon } from "@mui/icons-material";
-import { CSVLink, CSVDownload } from "react-csv";
+import GetAppIcon from "@mui/icons-material/GetApp";
+import { CSVLink } from "react-csv";
 
 // Type definitions
 export interface ExportProps<T> extends Omit<ButtonProps, "onClick"> {
@@ -65,7 +65,7 @@ const ExportCSV = <T extends Record<string, any>>({ data, columns, filename = "e
 
   return (
     <>
-      <Button startIcon={<ExportIcon />} onClick={handleExportClick} {...buttonProps}>
+      <Button startIcon={<GetAppIcon />} onClick={handleExportClick} {...buttonProps}>
         {buttonLabel}
       </Button>
       <CSVLink

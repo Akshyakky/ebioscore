@@ -6,7 +6,9 @@ import { PurchaseOrderDetailDto, PurchaseOrderFormData, PurchaseOrderMastDto, pu
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Stack, Collapse, CircularProgress } from "@mui/material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
-import { ArrowDownwardTwoTone, ArrowUpwardTwoTone, History } from "@mui/icons-material";
+import ArrowDownwardTwoTone from "@mui/icons-material/ArrowDownwardTwoTone";
+import ArrowUpwardTwoTone from "@mui/icons-material/ArrowUpwardTwoTone";
+import History from "@mui/icons-material/History";
 import CustomButton from "@/components/Button/CustomButton";
 
 interface PurchaseOrderImportDialogProps {

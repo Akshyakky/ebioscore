@@ -12,7 +12,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import GroupIcon from "@mui/icons-material/Group";
-import LifestyleIcon from "@mui/icons-material/Accessibility";
+import AccessibilityIcon from "@mui/icons-material/Accessibility";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import ClearIcon from "@mui/icons-material/Clear";
 
@@ -173,7 +173,7 @@ export const SocialHistory: React.FC<SocialHistoryProps> = ({ pChartID, opipNo, 
       >
         <Box display="flex" alignItems="center" mb={2}>
           <GroupIcon color="primary" sx={{ mr: 1 }} />
-          <LifestyleIcon color="primary" sx={{ mr: 1 }} />
+          <AccessibilityIcon color="primary" sx={{ mr: 1 }} />
           <HealthAndSafetyIcon color="primary" sx={{ mr: 1 }} />
           <Typography variant="h6" component="h2">
             Social & Lifestyle History

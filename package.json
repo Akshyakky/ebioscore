@@ -10,7 +10,6 @@
     "@iconify/react": "^6.0.0",
     "@mui/icons-material": "^7.1.0",
     "@mui/material": "^7.1.0",
-    "@mui/system": "^7.1.0",
     "@mui/x-data-grid": "^8.3.1",
     "@mui/x-data-grid-pro": "^8.3.1",
     "@mui/x-date-pickers": "^8.3.1",
@@ -40,7 +39,6 @@
     "globals": "^16.1.0",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
-    "lucide-react": "^0.511.0",
     "react": "^19.1.0",
     "react-csv": "^2.2.2",
     "react-dom": "^19.1.0",
@@ -54,7 +52,7 @@
     "redux-persist": "^6.0.0",
     "sweetalert2": "^11.21.2",
     "sweetalert2-react-content": "^5.1.0",
-    "zod": "^3.25.16"
+    "zod": "^3.25.17"
   },
   "type": "module",
   "scripts": {
@@ -64,7 +62,8 @@
     "type-check": "tsc --noEmit",
     "analyze": "set NODE_ENV=production && vite build --mode analyze",
     "serve": "vite preview",
-    "clean": "rimraf node_modules/.vite"
+    "clean": "rimraf node_modules/.vite",
+    "lint": "eslint . --ext .ts,.tsx --fix"
   },
   "eslintConfig": {
     "extends": [
@@ -88,7 +87,7 @@
     "@types/autosuggest-highlight": "^3.2.3",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^22.15.21",
-    "@types/react": "^19.1.4",
+    "@types/react": "^19.1.5",
     "@types/react-csv": "^1.1.10",
     "@types/react-dom": "^19.1.5",
     "@types/react-draft-wysiwyg": "^1.13.8",

@@ -10,7 +10,7 @@ import { ProfileListSearchProvider } from "../context/SecurityManagement/Profile
 import AdmissionPage from "../pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
 import { UserListSearchProvider } from "../context/SecurityManagement/UserListSearchContext";
 import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
-//import ReasonListPage from "../pages/frontOffice/ReasonList/MainPage/ReasonListPage";
+import ReasonListPage from "../pages/frontOffice/ReasonList/MainPage/ReasonListPage";
 //import ResourceListPage from "../pages/frontOffice/ResourceList/MainPage/ResourceListPage";
 import BreakListPage from "../pages/frontOffice/BreakList/MainPage/BreakListPage";
 import AppointmentPage from "../pages/frontOffice/AppointmentPage/MainPage/AppointmentPage";
@@ -66,7 +66,7 @@ const routeConfig: RouteConfig[] = [
   { path: "/userlistpage", component: UserListPage, protected: true, providers: [UserListSearchProvider] },
   { path: "/profilelistpage", component: ProfileListPage, protected: true, providers: [ProfileListSearchProvider] },
   { path: "/admissionpage", component: AdmissionPage, protected: true, providers: [PatientSearchProvider] },
-  //{ path: "/ReasonListPage", component: ReasonListPage, protected: true },
+  { path: "/ReasonListPage", component: ReasonListPage, protected: true },
   //{ path: "/ResourceListPage", component: ResourceListPage, protected: true },
   { path: "/BreakListPage", component: BreakListPage, protected: true },
   { path: "/Appointmentpage", component: AppointmentPage, protected: true },
