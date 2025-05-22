@@ -1,101 +1,98 @@
 import React, { useState, useEffect } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress } from "@mui/material";
+import { Box, Grid, Typography, Divider, Card, CardContent, Alert } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { MedicationFrequencyDto } from "@/interfaces/ClinicalManagement/MedicationFrequencyDto";
+import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel, Refresh } from "@mui/icons-material";
+import { Save, Cancel } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
-import { useMedicationFrequency } from "../hooks/useMedicationFreequencyForm";
+import { useInsuranceList } from "../hooks/useInsuranceList";
 
-interface MedicationFrequencyFormProps {
+interface InsuranceListFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
-  initialData: MedicationFrequencyDto | null;
+  initialData: InsuranceListDto | null;
   viewOnly?: boolean;
 }
 
 const schema = z.object({
-  mFrqId: z.number(),
-  mFrqCode: z.string().nonempty("Frequency code is required"),
-  mFrqName: z.string().nonempty("Frequency name is required"),
-  modifyYN: z.string(),
-  defaultYN: z.string(),
+  insurID: z.number(),
+  insurCode: z.string().min(1, "Insurance code is required").max(25, "Insurance code must be 25 characters or less"),
+  insurName: z.string().min(1, "Insurance name is required").max(50, "Insurance name must be 50 characters or less"),
+  insurStreet: z.string().max(100, "Street must be 100 characters or less").nullable().optional(),
+  insurStreet1: z.string().max(100, "Street 1 must be 100 characters or less").nullable().optional(),
+  insurCity: z.string().max(50, "City must be 50 characters or less").nullable().optional(),
+  insurState: z.string().max(50, "State must be 50 characters or less").nullable().optional(),
+  insurCountry: z.string().max(50, "Country must be 50 characters or less").nullable().optional(),
+  insurPostCode: z.string().max(20, "Postal code must be 20 characters or less").nullable().optional(),
+  insurContact1: z.string().max(50, "Contact 1 must be 50 characters or less").nullable().optional(),
+  insurContact2: z.string().max(50, "Contact 2 must be 50 characters or less").nullable().optional(),
+  insurPh1: z.string().max(20, "Phone 1 must be 20 characters or less").nullable().optional(),
+  insurPh2: z.string().max(20, "Phone 2 must be 20 characters or less").nullable().optional(),
+  insurEmail: z.string().email("Invalid email format").max(100, "Email must be 100 characters or less").nullable().optional().or(z.literal("")),
+  inCategory: z.string().max(50, "Category must be 50 characters or less").nullable().optional(),
   rActiveYN: z.string(),
+  rNotes: z.string().max(4000, "Notes must be 4000 characters or less").nullable().optional(),
   transferYN: z.string(),
-  rNotes: z.string().nullable().optional(),
-  mFrqSnomedCode: z.string().nullable().optional(),
 });
 
-type MedicationFrequencyFormData = z.infer<typeof schema>;
+type InsuranceListFormData = z.infer<typeof schema>;
 
-const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
+const InsuranceListForm: React.FC<InsuranceListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode, saveMedicationFrequency } = useMedicationFrequency();
+  const { saveInsuranceList } = useInsuranceList();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const isAddMode = !initialData;
 
-  const defaultValues: MedicationFrequencyFormData = {
-    mFrqId: 0,
-    mFrqCode: "",
-    mFrqName: "",
-    modifyYN: "Y",
-    defaultYN: "N",
+  const defaultValues: InsuranceListFormData = {
+    insurID: 0,
+    insurCode: "",
+    insurName: "",
+    insurStreet: "",
+    insurStreet1: "",
+    insurCity: "",
+    insurState: "",
+    insurCountry: "",
+    insurPostCode: "",
+    insurContact1: "",
+    insurContact2: "",
+    insurPh1: "",
+    insurPh2: "",
+    insurEmail: "",
+    inCategory: "",
     rActiveYN: "Y",
-    transferYN: "N",
     rNotes: "",
-    mFrqSnomedCode: "",
+    transferYN: "N",
   };
 
   const {
     control,
     handleSubmit,
     reset,
-    setValue,
     formState: { isDirty, isValid },
-  } = useForm<MedicationFrequencyFormData>({
+  } = useForm<InsuranceListFormData>({
     defaultValues,
     resolver: zodResolver(schema),
     mode: "onChange",
   });
 
-  const generateFrequencyCode = async () => {
-    if (!isAddMode) return;
-
-    try {
-      setIsGeneratingCode(true);
-      const nextCode = await getNextCode("FRQ", 3);
-      if (nextCode) {
-        setValue("mFrqCode", nextCode, { shouldValidate: true, shouldDirty: true });
-      } else {
-        showAlert("Warning", "Failed to generate frequency code", "warning");
-      }
-    } catch (error) {
-      console.error("Error generating frequency code:", error);
-    } finally {
-      setIsGeneratingCode(false);
-    }
-  };
-
   useEffect(() => {
     if (initialData) {
-      reset(initialData as MedicationFrequencyFormData);
+      reset(initialData as InsuranceListFormData);
     } else {
       reset(defaultValues);
-      generateFrequencyCode();
     }
   }, [initialData, reset]);
 
-  const onSubmit = async (data: MedicationFrequencyFormData) => {
+  const onSubmit = async (data: InsuranceListFormData) => {
     if (viewOnly) return;
 
     setFormError(null);
@@ -104,29 +101,38 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
       setIsSaving(true);
       setLoading(true);
 
-      const frequencyData: MedicationFrequencyDto = {
-        mFrqId: data.mFrqId,
-        mFrqCode: data.mFrqCode,
-        mFrqName: data.mFrqName,
-        modifyYN: data.modifyYN,
-        defaultYN: data.defaultYN,
+      const formData: InsuranceListDto = {
+        insurID: data.insurID,
+        insurCode: data.insurCode,
+        insurName: data.insurName,
+        insurStreet: data.insurStreet || "",
+        insurStreet1: data.insurStreet1 || "",
+        insurCity: data.insurCity || "",
+        insurState: data.insurState || "",
+        insurCountry: data.insurCountry || "",
+        insurPostCode: data.insurPostCode || "",
+        insurContact1: data.insurContact1 || "",
+        insurContact2: data.insurContact2 || "",
+        insurPh1: data.insurPh1 || "",
+        insurPh2: data.insurPh2 || "",
+        insurEmail: data.insurEmail || "",
+        inCategory: data.inCategory || "",
         rActiveYN: data.rActiveYN,
-        transferYN: data.transferYN,
         rNotes: data.rNotes || "",
-        mFrqSnomedCode: data.mFrqSnomedCode || "",
+        transferYN: data.transferYN,
       };
 
-      const response = await saveMedicationFrequency(frequencyData);
+      const response = await saveInsuranceList(formData);
 
       if (response.success) {
-        showAlert("Success", isAddMode ? "Medication frequency created successfully" : "Medication frequency updated successfully", "success");
+        showAlert("Success", isAddMode ? "Insurance created successfully" : "Insurance updated successfully", "success");
         onClose(true);
       } else {
-        throw new Error(response.errorMessage || "Failed to save medication frequency");
+        throw new Error(response.errorMessage || "Failed to save insurance");
       }
     } catch (error) {
-      console.error("Error saving medication frequency:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to save medication frequency";
+      console.error("Error saving insurance:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to save insurance";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
     } finally {
@@ -136,12 +142,8 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
   };
 
   const performReset = () => {
-    reset(initialData ? (initialData as MedicationFrequencyFormData) : defaultValues);
+    reset(initialData ? (initialData as InsuranceListFormData) : defaultValues);
     setFormError(null);
-
-    if (isAddMode) {
-      generateFrequencyCode();
-    }
   };
 
   const handleReset = () => {
@@ -178,25 +180,17 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
     setShowCancelConfirmation(false);
   };
 
-  const dialogTitle = viewOnly ? "View Medication Frequency Details" : isAddMode ? "Create New Medication Frequency" : `Edit Medication Frequency - ${initialData?.mFrqName}`;
+  const dialogTitle = viewOnly ? "View Insurance Details" : isAddMode ? "Create New Insurance" : `Edit Insurance - ${initialData?.insurName}`;
 
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
   ) : (
     <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-      <SmartButton
-        text="Cancel"
-        onClick={handleCancel}
-        variant="outlined"
-        color="inherit"
-        disabled={isSaving}
-        confirmBeforeAction={isDirty}
-        confirmationMessage="You have unsaved changes. Are you sure you want to cancel?"
-      />
+      <SmartButton text="Cancel" onClick={handleCancel} variant="outlined" color="inherit" disabled={isSaving} />
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? "Create Medication Frequency" : "Update Medication Frequency"}
+          text={isAddMode ? "Create Insurance" : "Update Insurance"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
@@ -211,19 +205,13 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
     </Box>
   );
 
-  const handleRefreshCode = () => {
-    if (isAddMode) {
-      generateFrequencyCode();
-    }
-  };
-
   return (
     <>
       <GenericDialog
         open={open}
         onClose={() => onClose()}
         title={dialogTitle}
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
         showCloseButton
         disableBackdropClick={!viewOnly && (isDirty || isSaving)}
@@ -257,36 +245,19 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField
-                        name="mFrqCode"
-                        control={control}
-                        label="Frequency Code"
-                        type="text"
-                        required
-                        disabled={viewOnly || !isAddMode}
-                        size="small"
-                        fullWidth
-                        InputProps={{
-                          endAdornment:
-                            isAddMode && !viewOnly ? (
-                              <InputAdornment position="end">
-                                {isGeneratingCode ? (
-                                  <CircularProgress size={20} />
-                                ) : (
-                                  <SmartButton icon={Refresh} variant="text" size="small" onClick={handleRefreshCode} tooltip="Generate new code" sx={{ minWidth: "unset" }} />
-                                )}
-                              </InputAdornment>
-                            ) : null,
-                        }}
-                      />
+                      <FormField name="insurCode" control={control} label="Insurance Code" type="text" required disabled={viewOnly} size="small" fullWidth />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="mFrqName" control={control} label="Frequency Name" type="text" required disabled={viewOnly} size="small" fullWidth />
+                      <FormField name="insurName" control={control} label="Insurance Name" type="text" required disabled={viewOnly} size="small" fullWidth />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="mFrqSnomedCode" control={control} label="SNOMED Code" type="text" disabled={viewOnly} size="small" fullWidth />
+                      <FormField name="inCategory" control={control} label="Category" type="text" disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="insurEmail" control={control} label="Email" type="email" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -297,21 +268,58 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Medication Frequency Settings
+                    Contact Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField name="defaultYN" control={control} label="Set as Default" type="switch" disabled={viewOnly} size="small" />
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="insurContact1" control={control} label="Contact Person 1" type="text" disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="insurContact2" control={control} label="Contact Person 2" type="text" disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="insurPh1" control={control} label="Phone 1" type="text" disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="insurPh2" control={control} label="Phone 2" type="text" disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid size={{ sm: 12 }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Address Information
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+
+                  <Grid container spacing={2}>
+                    <Grid size={{ sm: 12 }}>
+                      <FormField name="insurStreet" control={control} label="Street Address" type="textarea" disabled={viewOnly} size="small" fullWidth rows={2} />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField name="modifyYN" control={control} label="Allow Modification" type="switch" disabled={viewOnly} size="small" />
+                      <FormField name="insurCity" control={control} label="City" type="text" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField name="transferYN" control={control} label="Allow Transfer" type="switch" disabled={viewOnly} size="small" />
+                      <FormField name="insurState" control={control} label="State" type="text" disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <FormField name="insurCountry" control={control} label="Country" type="text" disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="insurPostCode" control={control} label="Postal Code" type="text" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -337,7 +345,7 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
                         size="small"
                         fullWidth
                         rows={4}
-                        placeholder="Enter any additional information about this medication frequency"
+                        placeholder="Enter any additional notes about this insurance provider"
                       />
                     </Grid>
                   </Grid>
@@ -359,6 +367,7 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
         type="warning"
         maxWidth="sm"
       />
+
       <ConfirmationDialog
         open={showCancelConfirmation}
         onClose={handleCancelCancel}
@@ -374,4 +383,4 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
   );
 };
 
-export default MedicationFrequencyForm;
+export default InsuranceListForm;
