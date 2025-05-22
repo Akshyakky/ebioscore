@@ -16,13 +16,13 @@ import {
   CssBaseline,
   InputAdornment,
   ListItemButton,
-  useTheme,
   styled,
   alpha,
   Tooltip,
   useMediaQuery,
   Badge,
   Fade,
+  useTheme,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
@@ -37,6 +37,7 @@ import { notifyError } from "../../utils/Common/toastManager";
 import { MaterialUISwitch } from "../../components/Switch/MaterialUISwitch";
 import "./SideBar.css";
 import moduleService, { ModuleDto, SubModuleDto } from "@/services/CommonServices/ModuleService";
+import { useTheme as useCustomTheme } from "@/providers/ThemeProvider";
 
 interface SideBarProps {
   userID: number | null;
@@ -174,6 +175,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const { mode, toggleTheme } = useCustomTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
   const handleSubModuleClick = useCallback(
@@ -336,6 +338,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
             {pageTitle}
           </Typography>
           <Box flexGrow={1} />
+          <MaterialUISwitch checked={mode === "dark"} onChange={toggleTheme} />
           <ProfileMenu />
         </Toolbar>
       </AppBar>
