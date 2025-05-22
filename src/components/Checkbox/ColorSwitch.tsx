@@ -1,7 +1,7 @@
 import React from "react";
-import Switch, { SwitchProps } from "@mui/material/Switch";
+import Switch from "@mui/material/Switch";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import { styled, useTheme } from "@mui/material/styles";
+import { styled } from "@mui/material";
 
 interface CustomSwitchProps {
   label?: string;
@@ -50,8 +50,6 @@ const CustomSwitch: React.FC<CustomSwitchProps> = ({
   onChange,
   disabled = false, // Added with default value
 }) => {
-  const theme = useTheme();
-
   return (
     <FormControlLabel
       control={

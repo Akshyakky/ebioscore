@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, Box, SxProps, useTheme, useMediaQuery, Fade } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, Box, SxProps, useTheme, useMediaQuery, Fade, styled, Theme } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import { styled, Theme } from "@mui/material/styles";
 
 interface GenericDialogProps {
   open: boolean;

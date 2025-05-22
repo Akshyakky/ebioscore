@@ -18,9 +18,9 @@ import {
   Tabs,
   MenuItem,
   Menu,
+  styled,
 } from "@mui/material";
 import { BarChart, Bar, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { styled } from "@mui/material/styles";
 import {
   Person as PersonIcon,
   Group as GroupIcon,
