@@ -1,8 +1,6 @@
 import LoginPage from "../pages/common/LoginPage/LoginPage";
 import DashboardPage from "../pages/common/DashboardPage/DashboardPage";
 import RevisitPage from "../pages/patientAdministration/RevisitPage/MainPage/RevisitPage";
-import RoutineReportsPA from "../pages/patientAdministration/RoutineReportsPage/MainPage/RoutineReportsPAPage";
-import ListOfReportsPage from "../pages/routineReports/MainPage/ListOfReportsPage";
 import { PatientSearchProvider } from "../context/PatientSearchContext";
 import ContactListPage from "../pages/hospitalAdministration/ContactListPage/MainPage/ContactListPage";
 import ProfileListPage from "../pages/securityManagement/ProfileListPage/MainPage/ProfileListPage";
@@ -61,8 +59,6 @@ const routeConfig: RouteConfig[] = [
   { path: "/dashboard", component: DashboardPage, protected: true },
   { path: "/registrationpage", component: RegistrationPage, protected: true, providers: [PatientSearchProvider] },
   { path: "/revisitpage", component: RevisitPage, protected: true, providers: [PatientSearchProvider] },
-  { path: "/routinereportspa", component: RoutineReportsPA, protected: true },
-  { path: "/listofreportspage", component: ListOfReportsPage, protected: true },
   { path: "/contactlistpage", component: ContactListPage, protected: true },
   { path: "/userlistpage", component: UserListPage, protected: true, providers: [UserListSearchProvider] },
   { path: "/profilelistpage", component: ProfileListPage, protected: true, providers: [ProfileListSearchProvider] },

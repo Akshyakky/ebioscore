@@ -1,7 +1,6 @@
 import { SweetAlertIcon } from "sweetalert2";
 import { createRoot } from "react-dom/client";
 import CustomAlert from "../../components/Alert/CustomAlert";
-import React from "react";
 
 type AlertOptions = {
   showConfirmButton?: boolean;
