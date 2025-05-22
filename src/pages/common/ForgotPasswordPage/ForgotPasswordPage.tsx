@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Card, CardContent, Container, Typography, styled, Button, Alert, useTheme } from "@mui/material";
+import { Box, Card, CardContent, Container, Typography, styled, Button, Alert } from "@mui/material";
 import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EmailIcon from "@mui/icons-material/Email";
@@ -55,7 +55,6 @@ const StyledAlert = styled(Alert)(({ theme }) => ({
 
 const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate();
-  const theme = useTheme();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");

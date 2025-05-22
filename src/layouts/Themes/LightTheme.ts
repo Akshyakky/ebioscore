@@ -1,5 +1,5 @@
 // src/layouts/Themes/LightTheme.ts
-import { createTheme, alpha } from "@mui/material/styles";
+import { createTheme, alpha } from "@mui/material";
 import { DRAWER_WIDTH, LIGHT_COLORS, SHADOWS, TYPOGRAPHY, TRANSITIONS, SHAPE, COMPONENT_CONSTANTS, SPACING_UNIT } from "./themeConstants";
 
 const lightTheme = createTheme({

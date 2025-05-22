@@ -1,6 +1,5 @@
 import React from "react";
-import { Box, Container, Typography, Link, Divider, useTheme, Grid, Stack, IconButton, Tooltip, useMediaQuery } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { Box, Container, Typography, Link, Divider, useTheme, Grid, Stack, IconButton, Tooltip, useMediaQuery, alpha } from "@mui/material";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";

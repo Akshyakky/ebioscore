@@ -1,9 +1,8 @@
 import React from "react";
-import { Stack, Grid } from "@mui/material";
+import { Stack, Grid, styled } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import CustomButton, { CustomButtonProps } from "./CustomButton";
 import { SvgIconComponent } from "@mui/icons-material";
-import { styled } from "@mui/material/styles";
 
 // Styled ButtonGroup component
 const StyledButtonGroup = styled(ButtonGroup)(({ theme }) => ({

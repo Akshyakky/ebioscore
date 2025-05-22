@@ -1,6 +1,5 @@
 // src/layouts/Themes/themeConstants.ts
-import { alpha } from "@mui/material/styles";
-
+import { alpha } from "@mui/material";
 // Layout Constants
 export const DRAWER_WIDTH = 340;
 export const APPBAR_HEIGHT = 64;

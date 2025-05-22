@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo } from "react";
-import { FormControl, InputLabel, Select, MenuItem, FormHelperText, IconButton, InputAdornment, useTheme, CircularProgress } from "@mui/material";
+import { FormControl, InputLabel, Select, MenuItem, FormHelperText, IconButton, InputAdornment, CircularProgress } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
 import ClearIcon from "@mui/icons-material/Clear";
 
@@ -27,7 +27,6 @@ const DropdownSelect = forwardRef<HTMLSelectElement, DropdownSelectProps>(
     { label, name, value, options, onChange, size = "medium", disabled = false, isMandatory = false, defaultText, className, isSubmitted = false, clearable = false, onClear },
     ref
   ) => {
-    const theme = useTheme();
     const isEmptyValue = useMemo(() => value === "" || value === "0", [value]);
     const hasError = isMandatory && isSubmitted && isEmptyValue;
 
@@ -66,10 +65,6 @@ const DropdownSelect = forwardRef<HTMLSelectElement, DropdownSelectProps>(
                   sx={{
                     padding: "2px",
                     margin: "8px",
-                    "&:hover": {
-                      backgroundColor: theme.palette.action.hover,
-                      color: theme.palette.text.primary,
-                    },
                   }}
                 >
                   <ClearIcon sx={{ fontSize: "18px" }} />

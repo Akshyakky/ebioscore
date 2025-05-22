@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Box } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Box, styled } from "@mui/material";
 
 export interface ColumnConfig<T = any> {
   key: string;

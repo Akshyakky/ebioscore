@@ -2,7 +2,7 @@ import React from "react";
 import Button from "@mui/material/Button";
 import { SvgIconComponent } from "@mui/icons-material";
 import clsx from "clsx";
-import { SxProps, Theme } from "@mui/material/styles";
+import { SxProps, Theme } from "@mui/material";
 
 export interface CustomButtonProps {
   variant?: "text" | "outlined" | "contained";

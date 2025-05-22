@@ -1,7 +1,6 @@
 import React, { forwardRef, useMemo, memo, useState, useCallback } from "react";
-import { Box, Grid, Theme, SelectChangeEvent, InputAdornment, IconButton } from "@mui/material";
+import { Box, Grid, Theme, SelectChangeEvent, InputAdornment, IconButton, SxProps } from "@mui/material";
 import { TextFieldProps } from "@mui/material/TextField";
-import { SxProps, useTheme } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 
 // Component imports
@@ -196,7 +195,7 @@ export type FormFieldProps =
   | FileFormFieldProps;
 
 // Custom hook for styles to improve performance
-const useFieldStyles = (theme: Theme) => {
+const useFieldStyles = () => {
   return useMemo(
     () => ({
       fieldContainer: {
@@ -205,7 +204,7 @@ const useFieldStyles = (theme: Theme) => {
         width: "100%",
       },
       addButton: {
-        marginTop: theme.spacing(2),
+        marginTop: "16px",
         minWidth: "32px",
         width: "32px",
         height: "40px",
@@ -214,28 +213,27 @@ const useFieldStyles = (theme: Theme) => {
         transition: "all 0.2s ease-in-out",
         "&:hover": {
           transform: "scale(1.05)",
-          backgroundColor: theme.palette.primary.dark,
+          backgroundColor: "#1976d2",
         },
       },
       addIcon: {
         fontSize: "20px",
       },
       helperText: {
-        marginTop: theme.spacing(0.5),
+        marginTop: "4px",
         fontSize: "0.75rem",
-        color: theme.palette.text.secondary,
+        color: "rgba(0, 0, 0, 0.6)",
       },
       errorText: {
-        color: theme.palette.error.main,
+        color: "#d32f2f",
       },
     }),
-    [theme]
+    []
   );
 };
 
 const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, ref) => {
-  const theme = useTheme();
-  const styles = useFieldStyles(theme);
+  const styles = useFieldStyles();
   const [showPassword, setShowPassword] = useState(false);
 
   const handleTogglePassword = useCallback(() => {

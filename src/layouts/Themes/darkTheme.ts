@@ -1,6 +1,6 @@
 // src/layouts/Themes/darkTheme.ts
-import { createTheme, alpha } from "@mui/material/styles";
 import { DRAWER_WIDTH, DARK_COLORS, SHADOWS, TYPOGRAPHY, TRANSITIONS, SHAPE, COMPONENT_CONSTANTS, SPACING_UNIT } from "./themeConstants";
+import { createTheme, alpha } from "@mui/material";
 
 const darkTheme = createTheme({
   palette: {

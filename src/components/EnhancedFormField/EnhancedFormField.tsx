@@ -21,9 +21,8 @@ import {
   SelectChangeEvent,
   TextFieldProps,
   CircularProgress,
-  useTheme,
   Switch,
-  styled, // Added Switch import
+  styled,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
@@ -33,36 +32,6 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ClearIcon from "@mui/icons-material/Clear";
 import dayjs, { Dayjs } from "dayjs";
-
-const ColorSwitch = styled(Switch, {
-  shouldForwardProp: (prop) => prop !== "switchColor",
-})<{ switchColor?: string }>(({ theme, switchColor }) => ({
-  "& .MuiSwitch-switchBase": {
-    color: "#fff",
-    "&.Mui-checked": {
-      color: "#fff",
-      "& + .MuiSwitch-track": {
-        backgroundColor: switchColor || theme.palette.primary.main,
-      },
-      "&:hover": {
-        backgroundColor: switchColor ? `${switchColor}B2` : `${theme.palette.primary.main}B2`,
-      },
-    },
-    "&.Mui-disabled": {
-      "& + .MuiSwitch-track": {
-        opacity: theme.palette.mode === "light" ? 0.7 : 0.3,
-      },
-      "&.Mui-checked": {
-        "& + .MuiSwitch-track": {
-          backgroundColor: theme.palette.mode === "light" ? "#E9E9EA" : "#39393D",
-        },
-      },
-    },
-  },
-  "& .MuiSwitch-track": {
-    backgroundColor: "#ccc",
-  },
-}));
 
 // Define the date format constant
 const DATE_FORMAT = "DD/MM/YYYY";
@@ -222,7 +191,6 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
     }: FormFieldProps<TFieldValues>,
     ref: React.Ref<any>
   ) => {
-    const theme = useTheme();
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [fileError, setFileError] = useState<string>("");
 
@@ -507,8 +475,8 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
                         padding: "2px",
                         margin: "8px",
                         "&:hover": {
-                          backgroundColor: theme.palette.action.hover,
-                          color: theme.palette.text.primary,
+                          backgroundColor: "rgba(0, 0, 0, 0.04)",
+                          color: "inherit",
                         },
                       }}
                     >
@@ -778,7 +746,6 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
             required={required}
             fullWidth={fullWidth}
             sx={{
-              // Improve spacing and alignment
               "& .MuiFormControlLabel-root": {
                 alignItems: "center",
                 gap: 1,
@@ -793,7 +760,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
           >
             <FormControlLabel
               control={
-                <ColorSwitch
+                <Switch
                   checked={isChecked}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     // Convert boolean to Y/N string
@@ -818,6 +785,9 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
                     },
                     "& .MuiSwitch-switchBase:not(.Mui-checked)": {
                       color: disabled ? "#BDBDBD" : "#ccc",
+                    },
+                    "& .MuiSwitch-track": {
+                      backgroundColor: isChecked ? `${switchColor}.main` : "#ccc",
                     },
                   }}
                 />

@@ -1,6 +1,5 @@
 import React, { useMemo, memo, forwardRef, useCallback } from "react";
-import { FormControl, TextField, FormHelperText, Box, Typography, TextFieldProps } from "@mui/material";
-import { SxProps, Theme } from "@mui/material/styles";
+import { FormControl, TextField, FormHelperText, Box, Typography, TextFieldProps, Theme, SxProps } from "@mui/material";
 
 interface TextAreaProps {
   label?: string;

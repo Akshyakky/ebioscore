@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
-import { FormControl, InputLabel, Select, MenuItem, FormHelperText, OutlinedInput, Checkbox, ListItemText, SelectChangeEvent } from "@mui/material";
-import { styled, useTheme } from "@mui/material/styles";
+import { FormControl, InputLabel, Select, MenuItem, FormHelperText, OutlinedInput, Checkbox, ListItemText, SelectChangeEvent, styled, useTheme } from "@mui/material";
 import { DropdownOption } from "../../interfaces/Common/DropdownOption";
 
 interface MultiSelectDropdownProps {
