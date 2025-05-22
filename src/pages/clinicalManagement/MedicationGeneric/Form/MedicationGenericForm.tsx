@@ -8,6 +8,7 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
 import { useMedicationGeneric } from "../hooks/useMedicationGeneric";
@@ -39,6 +40,8 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const isAddMode = !initialData;
 
   const defaultValues: MedicationGenericFormData = {
@@ -85,7 +88,17 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
 
   useEffect(() => {
     if (initialData) {
-      reset(initialData as MedicationGenericFormData);
+      reset({
+        mGenID: initialData.mGenID,
+        mGenCode: initialData.mGenCode,
+        mGenName: initialData.mGenName,
+        modifyYN: initialData.modifyYN || "Y",
+        defaultYN: initialData.defaultYN || "N",
+        rActiveYN: initialData.rActiveYN || "Y",
+        transferYN: initialData.transferYN || "N",
+        rNotes: initialData.rNotes || "",
+        mSnomedCode: initialData.mSnomedCode || "",
+      });
     } else {
       reset(defaultValues);
       generateGenericCode();
@@ -132,24 +145,61 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
     }
   };
 
+  const performReset = () => {
+    reset(
+      initialData
+        ? {
+            mGenID: initialData.mGenID,
+            mGenCode: initialData.mGenCode,
+            mGenName: initialData.mGenName,
+            modifyYN: initialData.modifyYN || "Y",
+            defaultYN: initialData.defaultYN || "N",
+            rActiveYN: initialData.rActiveYN || "Y",
+            transferYN: initialData.transferYN || "N",
+            rNotes: initialData.rNotes || "",
+            mSnomedCode: initialData.mSnomedCode || "",
+          }
+        : defaultValues
+    );
+    setFormError(null);
+
+    if (isAddMode) {
+      generateGenericCode();
+    }
+  };
+
   const handleReset = () => {
     if (isDirty) {
-      if (window.confirm("Are you sure you want to reset the form? All unsaved changes will be lost.")) {
-        reset(initialData ? (initialData as MedicationGenericFormData) : defaultValues);
-        setFormError(null);
-
-        if (isAddMode) {
-          generateGenericCode();
-        }
-      }
+      setShowResetConfirmation(true);
     } else {
-      reset(initialData ? (initialData as MedicationGenericFormData) : defaultValues);
-      setFormError(null);
-
-      if (isAddMode) {
-        generateGenericCode();
-      }
+      performReset();
     }
+  };
+
+  const handleResetConfirm = () => {
+    performReset();
+    setShowResetConfirmation(false);
+  };
+
+  const handleResetCancel = () => {
+    setShowResetConfirmation(false);
+  };
+
+  const handleCancel = () => {
+    if (isDirty) {
+      setShowCancelConfirmation(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleCancelConfirm = () => {
+    setShowCancelConfirmation(false);
+    onClose();
+  };
+
+  const handleCancelCancel = () => {
+    setShowCancelConfirmation(false);
   };
 
   const dialogTitle = viewOnly ? "View Generic Medication Details" : isAddMode ? "Create New Generic Medication" : `Edit Generic Medication - ${initialData?.mGenName}`;
@@ -160,7 +210,7 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
     <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
       <SmartButton
         text="Cancel"
-        onClick={() => onClose()}
+        onClick={handleCancel}
         variant="outlined"
         color="inherit"
         disabled={isSaving}
@@ -192,130 +242,156 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
   };
 
   return (
-    <GenericDialog
-      open={open}
-      onClose={() => onClose()}
-      title={dialogTitle}
-      maxWidth="md"
-      fullWidth
-      showCloseButton
-      disableBackdropClick={!viewOnly && (isDirty || isSaving)}
-      disableEscapeKeyDown={!viewOnly && (isDirty || isSaving)}
-      actions={dialogActions}
-    >
-      <Box component="form" noValidate sx={{ p: 1 }}>
-        {formError && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError(null)}>
-            {formError}
-          </Alert>
-        )}
+    <>
+      <GenericDialog
+        open={open}
+        onClose={() => onClose()}
+        title={dialogTitle}
+        maxWidth="md"
+        fullWidth
+        showCloseButton
+        disableBackdropClick={!viewOnly && (isDirty || isSaving)}
+        disableEscapeKeyDown={!viewOnly && (isDirty || isSaving)}
+        actions={dialogActions}
+      >
+        <Box component="form" noValidate sx={{ p: 1 }}>
+          {formError && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError(null)}>
+              {formError}
+            </Alert>
+          )}
 
-        <Grid container spacing={3}>
-          <Grid size={{ sm: 12 }}>
-            <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
-              <Typography variant="body2" color="text.secondary">
-                Status:
-              </Typography>
-              <FormField name="rActiveYN" control={control} label="Active" type="switch" disabled={viewOnly} size="small" />
-            </Box>
-          </Grid>
-
-          <Grid size={{ sm: 12 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Basic Information
+          <Grid container spacing={3}>
+            <Grid size={{ sm: 12 }}>
+              <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
+                <Typography variant="body2" color="text.secondary">
+                  Status:
                 </Typography>
-                <Divider sx={{ mb: 2 }} />
+                <FormField name="rActiveYN" control={control} label="Active" type="switch" disabled={viewOnly} size="small" />
+              </Box>
+            </Grid>
 
-                <Grid container spacing={2}>
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField
-                      name="mGenCode"
-                      control={control}
-                      label="Generic Code"
-                      type="text"
-                      required
-                      disabled={viewOnly || !isAddMode}
-                      size="small"
-                      fullWidth
-                      InputProps={{
-                        endAdornment:
-                          isAddMode && !viewOnly ? (
-                            <InputAdornment position="end">
-                              {isGeneratingCode ? (
-                                <CircularProgress size={20} />
-                              ) : (
-                                <SmartButton icon={Refresh} variant="text" size="small" onClick={handleRefreshCode} tooltip="Generate new code" sx={{ minWidth: "unset" }} />
-                              )}
-                            </InputAdornment>
-                          ) : null,
-                      }}
-                    />
-                  </Grid>
+            <Grid size={{ sm: 12 }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Basic Information
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
 
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="mGenName" control={control} label="Generic Name" type="text" required disabled={viewOnly} size="small" fullWidth />
-                  </Grid>
+                  <Grid container spacing={2}>
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField
+                        name="mGenCode"
+                        control={control}
+                        label="Generic Code"
+                        type="text"
+                        required
+                        disabled={viewOnly || !isAddMode}
+                        size="small"
+                        fullWidth
+                        InputProps={{
+                          endAdornment:
+                            isAddMode && !viewOnly ? (
+                              <InputAdornment position="end">
+                                {isGeneratingCode ? (
+                                  <CircularProgress size={20} />
+                                ) : (
+                                  <SmartButton icon={Refresh} variant="text" size="small" onClick={handleRefreshCode} tooltip="Generate new code" sx={{ minWidth: "unset" }} />
+                                )}
+                              </InputAdornment>
+                            ) : null,
+                        }}
+                      />
+                    </Grid>
 
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="mSnomedCode" control={control} label="SNOMED Code" type="text" disabled={viewOnly} size="small" fullWidth />
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="mGenName" control={control} label="Generic Name" type="text" required disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="mSnomedCode" control={control} label="SNOMED Code" type="text" disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
                   </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid size={{ sm: 12 }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Generic Medication Settings
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+
+                  <Grid container spacing={2}>
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <FormField name="defaultYN" control={control} label="Set as Default" type="switch" disabled={viewOnly} size="small" />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <FormField name="modifyYN" control={control} label="Allow Modification" type="switch" disabled={viewOnly} size="small" />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid size={{ sm: 12 }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Additional Information
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+
+                  <Grid container spacing={2}>
+                    <Grid size={{ sm: 12 }}>
+                      <FormField
+                        name="rNotes"
+                        control={control}
+                        label="Notes"
+                        type="textarea"
+                        disabled={viewOnly}
+                        size="small"
+                        fullWidth
+                        rows={4}
+                        placeholder="Enter any additional information about this generic medication"
+                      />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
+        </Box>
+      </GenericDialog>
 
-          <Grid size={{ sm: 12 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Generic Medication Settings
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
+      <ConfirmationDialog
+        open={showResetConfirmation}
+        onClose={handleResetCancel}
+        onConfirm={handleResetConfirm}
+        title="Reset Form"
+        message="Are you sure you want to reset the form? All unsaved changes will be lost."
+        confirmText="Reset"
+        cancelText="Cancel"
+        type="warning"
+        maxWidth="sm"
+      />
 
-                <Grid container spacing={2}>
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="defaultYN" control={control} label="Set as Default" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="modifyYN" control={control} label="Allow Modification" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid size={{ sm: 12 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Additional Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid size={{ sm: 12 }}>
-                    <FormField
-                      name="rNotes"
-                      control={control}
-                      label="Notes"
-                      type="textarea"
-                      disabled={viewOnly}
-                      size="small"
-                      fullWidth
-                      rows={4}
-                      placeholder="Enter any additional information about this generic medication"
-                    />
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Box>
-    </GenericDialog>
+      <ConfirmationDialog
+        open={showCancelConfirmation}
+        onClose={handleCancelCancel}
+        onConfirm={handleCancelConfirm}
+        title="Unsaved Changes"
+        message="You have unsaved changes. Are you sure you want to cancel?"
+        confirmText="Yes, Cancel"
+        cancelText="Continue Editing"
+        type="warning"
+        maxWidth="sm"
+      />
+    </>
   );
 };
 
