@@ -3,13 +3,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { Provider as ReduxProvider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { ToastContainer } from "react-toastify";
-import { Box, Button, Typography, Container, CircularProgress } from "@mui/material";
-import { Refresh } from "@mui/icons-material";
-import RouteErrorBoundary from "./components/RouteErrorBoundary";
+import { Box, CircularProgress } from "@mui/material";
+import ErrorBoundary from "./components/ErrorBoundary";
 import ProtectedRoute from "./components/ProtectedRoute";
 import routeConfig from "./routes/routeConfig";
 import { persistor, store } from "./store";
-import ErrorBoundary from "./components/ErrorBoundary";
 import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
 import { QueryProvider } from "./providers/QueryProvider";
 import RouteNotFoundBoundary from "./components/RouteNotFoundBoundary";
@@ -37,22 +35,6 @@ const PersistLoadingFallback = () => (
   </Box>
 );
 
-const ErrorFallback = () => (
-  <Container maxWidth="sm" sx={{ height: "100vh", display: "flex", alignItems: "center" }}>
-    <Box sx={{ textAlign: "center", width: "100%" }}>
-      <Typography variant="h4" gutterBottom color="error">
-        Application Error
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        The application encountered a critical error and needs to be reloaded.
-      </Typography>
-      <Button variant="contained" startIcon={<Refresh />} onClick={() => window.location.reload()} size="large">
-        Reload Application
-      </Button>
-    </Box>
-  </Container>
-);
-
 const App: React.FC = () => {
   const handleAppError = (error: Error, errorInfo: React.ErrorInfo) => {
     console.error("Critical Application Error:", error);
@@ -66,7 +48,7 @@ const App: React.FC = () => {
           key={path}
           path={path}
           element={
-            <RouteErrorBoundary routePath={path}>
+            <ErrorBoundary routePath={path} showBackButton>
               {isProtected ? (
                 <ProtectedRoute>
                   {providers ? providers.reduceRight<ReactNode>((children, Provider) => <Provider>{children}</Provider>, <Component />) : <Component />}
@@ -74,7 +56,7 @@ const App: React.FC = () => {
               ) : (
                 <Component />
               )}
-            </RouteErrorBoundary>
+            </ErrorBoundary>
           }
         />
       ));
@@ -85,7 +67,7 @@ const App: React.FC = () => {
   return (
     <ReduxProvider store={store}>
       <PersistGate loading={<PersistLoadingFallback />} persistor={persistor}>
-        <ErrorBoundary onError={handleAppError} fallback={<ErrorFallback />}>
+        <ErrorBoundary onError={handleAppError}>
           <QueryProvider>
             <ThemeProvider>
               <Router>
