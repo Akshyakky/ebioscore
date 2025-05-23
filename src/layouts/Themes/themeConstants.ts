@@ -201,7 +201,7 @@ export const SHADOWS = {
 
 // Typography Constants
 export const TYPOGRAPHY = {
-  fontFamily: ["Segoe UI", "Roboto", "Arial", "sans-serif"].join(","),
+  fontFamily: ["Inter", "Segoe UI", "Roboto", "Arial", "sans-serif"].join(","),
   fontSizes: {
     xs: "0.75rem", // 12px
     sm: "0.875rem", // 14px
