@@ -6,6 +6,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@eslint/js": "^9.27.0",
+    "@fontsource/inter": "^5.2.5",
     "@hookform/resolvers": "^5.0.1",
     "@iconify/react": "^6.0.0",
     "@mui/icons-material": "^7.1.0",
@@ -52,6 +53,7 @@
     "redux-persist": "^6.0.0",
     "sweetalert2": "^11.21.2",
     "sweetalert2-react-content": "^5.1.0",
+    "vite-plugin-compression2": "^0.11.0",
     "zod": "^3.24.2"
   },
   "type": "module",
@@ -62,7 +64,13 @@
     "type-check": "tsc --noEmit",
     "analyze": "set NODE_ENV=production && vite build --mode analyze",
     "serve": "vite preview",
-    "clean": "rimraf node_modules/.vite"
+    "clean": "rimraf node_modules/.vite dist",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "eslintConfig": {
     "extends": [
