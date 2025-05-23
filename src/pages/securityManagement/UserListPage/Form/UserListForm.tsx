@@ -30,7 +30,7 @@ interface UserListFormProps {
 const schema = z.object({
   appID: z.number(),
   appCode: z.string().nonempty("Username is required"),
-  appUserName: z.string().nonempty("User name is required"),
+  appUserName: z.string().optional(),
   appGeneralCode: z.string().optional(),
   conID: z.number(),
   appUcatCode: z.string().nonempty("User category is required"),
@@ -495,6 +495,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
                   fullWidth
                   options={companyDropdown}
                   defaultText="Select Company"
+                  onChange={(item) => setValue("conCompId", Number(item.value), { shouldDirty: true })}
                 />
               </Grid>
 
