@@ -1,59 +1,59 @@
 import React, { useState, useEffect } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress } from "@mui/material";
+import { Box, Grid, Typography, Divider, Card, CardContent, Alert } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
+import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel, Refresh } from "@mui/icons-material";
+import { Save, Cancel } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
-import { useMedicationGeneric } from "../hooks/useMedicationGeneric";
+import { useAppModifiedList } from "../hooks/useAppModifiedList";
 
-interface MedicationGenericFormProps {
+interface AppModifiedFieldFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
-  initialData: MedicationGenericDto | null;
+  initialData: AppModifyFieldDto | null;
+  categoryCode: string;
   viewOnly?: boolean;
 }
 
 const schema = z.object({
-  mGenID: z.number(),
-  mGenCode: z.string().nonempty("Generic code is required"),
-  mGenName: z.string().nonempty("Generic name is required"),
-  modifyYN: z.string(),
+  amlID: z.number(),
+  amlCode: z.string().nonempty("Field code is required"),
+  amlName: z.string().nonempty("Field name is required"),
+  amlField: z.string().nonempty("Category field is required"),
   defaultYN: z.string(),
+  modifyYN: z.string(),
   rActiveYN: z.string(),
   transferYN: z.string(),
   rNotes: z.string().nullable().optional(),
-  mSnomedCode: z.string().nullable().optional(),
 });
 
-type MedicationGenericFormData = z.infer<typeof schema>;
+type AppModifiedFieldFormData = z.infer<typeof schema>;
 
-const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
+const AppModifiedFieldForm: React.FC<AppModifiedFieldFormProps> = ({ open, onClose, initialData, categoryCode, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode, saveMedicationGeneric } = useMedicationGeneric();
+  const { saveField } = useAppModifiedList();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const isAddMode = !initialData;
 
-  const defaultValues: MedicationGenericFormData = {
-    mGenID: 0,
-    mGenCode: "",
-    mGenName: "",
-    modifyYN: "Y",
+  const defaultValues: AppModifiedFieldFormData = {
+    amlID: 0,
+    amlCode: "",
+    amlName: "",
+    amlField: categoryCode,
     defaultYN: "N",
+    modifyYN: "Y",
     rActiveYN: "Y",
     transferYN: "N",
     rNotes: "",
-    mSnomedCode: "",
   };
 
   const {
@@ -61,51 +61,28 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isDirty, isValid },
-  } = useForm<MedicationGenericFormData>({
+    formState: { isDirty, isValid },
+  } = useForm<AppModifiedFieldFormData>({
     defaultValues,
     resolver: zodResolver(schema),
     mode: "onChange",
   });
 
-  const generateGenericCode = async () => {
-    if (!isAddMode) return;
-
-    try {
-      setIsGeneratingCode(true);
-      const nextCode = await getNextCode("GEN", 3);
-      if (nextCode) {
-        setValue("mGenCode", nextCode, { shouldValidate: true, shouldDirty: true });
-      } else {
-        showAlert("Warning", "Failed to generate generic code", "warning");
-      }
-    } catch (error) {
-      console.error("Error generating generic code:", error);
-    } finally {
-      setIsGeneratingCode(false);
-    }
-  };
-
   useEffect(() => {
     if (initialData) {
-      reset({
-        mGenID: initialData.mGenID,
-        mGenCode: initialData.mGenCode,
-        mGenName: initialData.mGenName,
-        modifyYN: initialData.modifyYN || "Y",
-        defaultYN: initialData.defaultYN || "N",
-        rActiveYN: initialData.rActiveYN || "Y",
-        transferYN: initialData.transferYN || "N",
-        rNotes: initialData.rNotes || "",
-        mSnomedCode: initialData.mSnomedCode || "",
-      });
+      reset(initialData as AppModifiedFieldFormData);
     } else {
-      reset(defaultValues);
-      generateGenericCode();
+      reset({ ...defaultValues, amlField: categoryCode });
     }
-  }, [initialData, reset]);
+  }, [initialData, categoryCode, reset]);
 
-  const onSubmit = async (data: MedicationGenericFormData) => {
+  useEffect(() => {
+    if (categoryCode) {
+      setValue("amlField", categoryCode, { shouldValidate: true });
+    }
+  }, [categoryCode, setValue]);
+
+  const onSubmit = async (data: AppModifiedFieldFormData) => {
     if (viewOnly) return;
 
     setFormError(null);
@@ -114,29 +91,28 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
       setIsSaving(true);
       setLoading(true);
 
-      const genericData: MedicationGenericDto = {
-        mGenID: data.mGenID,
-        mGenCode: data.mGenCode,
-        mGenName: data.mGenName,
-        modifyYN: data.modifyYN,
+      const formData: AppModifyFieldDto = {
+        amlID: data.amlID,
+        amlCode: data.amlCode,
+        amlName: data.amlName,
+        amlField: data.amlField,
         defaultYN: data.defaultYN,
+        modifyYN: data.modifyYN,
         rActiveYN: data.rActiveYN,
         transferYN: data.transferYN,
-        rNotes: data.rNotes || "",
-        mSnomedCode: data.mSnomedCode || "",
+        rNotes: data.rNotes || null,
       };
 
-      const response = await saveMedicationGeneric(genericData);
+      const response = await saveField(formData);
 
       if (response.success) {
-        showAlert("Success", isAddMode ? "Generic medication created successfully" : "Generic medication updated successfully", "success");
+        showAlert("Success", isAddMode ? "List Details created successfully" : "List Details updated successfully", "success");
         onClose(true);
       } else {
-        throw new Error(response.errorMessage || "Failed to save generic medication");
+        throw new Error(response.errorMessage || "Failed to save List Details");
       }
     } catch (error) {
-      console.error("Error saving generic medication:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to save generic medication";
+      const errorMessage = error instanceof Error ? error.message : "Failed to save List Details";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
     } finally {
@@ -146,26 +122,8 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
   };
 
   const performReset = () => {
-    reset(
-      initialData
-        ? {
-            mGenID: initialData.mGenID,
-            mGenCode: initialData.mGenCode,
-            mGenName: initialData.mGenName,
-            modifyYN: initialData.modifyYN || "Y",
-            defaultYN: initialData.defaultYN || "N",
-            rActiveYN: initialData.rActiveYN || "Y",
-            transferYN: initialData.transferYN || "N",
-            rNotes: initialData.rNotes || "",
-            mSnomedCode: initialData.mSnomedCode || "",
-          }
-        : defaultValues
-    );
+    reset(initialData ? (initialData as AppModifiedFieldFormData) : { ...defaultValues, amlField: categoryCode });
     setFormError(null);
-
-    if (isAddMode) {
-      generateGenericCode();
-    }
   };
 
   const handleReset = () => {
@@ -202,25 +160,17 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
     setShowCancelConfirmation(false);
   };
 
-  const dialogTitle = viewOnly ? "View Generic Medication Details" : isAddMode ? "Create New Generic Medication" : `Edit Generic Medication - ${initialData?.mGenName}`;
+  const dialogTitle = viewOnly ? "View List Details" : isAddMode ? "Create New List Details " : `Edit List Details  - ${initialData?.amlName}`;
 
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
   ) : (
     <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-      <SmartButton
-        text="Cancel"
-        onClick={handleCancel}
-        variant="outlined"
-        color="inherit"
-        disabled={isSaving}
-        confirmBeforeAction={isDirty}
-        confirmationMessage="You have unsaved changes. Are you sure you want to cancel?"
-      />
+      <SmartButton text="Cancel" onClick={handleCancel} variant="outlined" color="inherit" disabled={isSaving} />
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? "Create Generic Medication" : "Update Generic Medication"}
+          text={isAddMode ? "Create List Details " : "Update List Details"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
@@ -234,12 +184,6 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
       </Box>
     </Box>
   );
-
-  const handleRefreshCode = () => {
-    if (isAddMode) {
-      generateGenericCode();
-    }
-  };
 
   return (
     <>
@@ -281,36 +225,25 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="amlCode" control={control} label="Field Code" type="text" required disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="amlName" control={control} label="Field Name" type="text" required disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 6 }}>
                       <FormField
-                        name="mGenCode"
+                        name="amlField"
                         control={control}
-                        label="Generic Code"
+                        label="Category"
                         type="text"
                         required
-                        disabled={viewOnly || !isAddMode}
+                        disabled={true}
                         size="small"
                         fullWidth
-                        InputProps={{
-                          endAdornment:
-                            isAddMode && !viewOnly ? (
-                              <InputAdornment position="end">
-                                {isGeneratingCode ? (
-                                  <CircularProgress size={20} />
-                                ) : (
-                                  <SmartButton icon={Refresh} variant="text" size="small" onClick={handleRefreshCode} tooltip="Generate new code" sx={{ minWidth: "unset" }} />
-                                )}
-                              </InputAdornment>
-                            ) : null,
-                        }}
+                        helperText="This List Details is automatically set based on the selected category"
                       />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="mGenName" control={control} label="Generic Name" type="text" required disabled={viewOnly} size="small" fullWidth />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="mSnomedCode" control={control} label="SNOMED Code" type="text" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -321,16 +254,16 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Generic Medication Settings
+                    List Details Settings
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
-                    <Grid size={{ sm: 12, md: 4 }}>
+                    <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="defaultYN" control={control} label="Set as Default" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
 
-                    <Grid size={{ sm: 12, md: 4 }}>
+                    <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="modifyYN" control={control} label="Allow Modification" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
@@ -357,7 +290,7 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
                         size="small"
                         fullWidth
                         rows={4}
-                        placeholder="Enter any additional information about this generic medication"
+                        placeholder="Enter any additional information about this List Details"
                       />
                     </Grid>
                   </Grid>
@@ -395,4 +328,4 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
   );
 };
 
-export default MedicationGenericForm;
+export default AppModifiedFieldForm;
