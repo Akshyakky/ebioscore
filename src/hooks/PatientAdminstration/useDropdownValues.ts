@@ -10,7 +10,7 @@ import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import { ContactMastService } from "@/services/CommonServices/ContactMastService";
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
-import { DeptUnitListService } from "@/services/HospitalAdministrationServices/DeptUnitListService/DeptUnitListService";
+import { deptUnitListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { roomGroupService, roomListService, wardCategoryService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
 import { productGroupService, productSubGroupService, productTaxService, productUnitService } from "@/services/InventoryManagementService/inventoryManagementService";
@@ -266,7 +266,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return response;
       },
       unit: async () => {
-        const response = await DeptUnitListService.getAllDeptUnitList();
+        const response = await deptUnitListService.getAll();
         return (response.data || []).map((item: any) => ({
           value: item.dulID || 0,
           label: item.unitDesc || "",
