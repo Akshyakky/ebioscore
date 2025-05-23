@@ -208,15 +208,7 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
   ) : (
     <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-      <SmartButton
-        text="Cancel"
-        onClick={handleCancel}
-        variant="outlined"
-        color="inherit"
-        disabled={isSaving}
-        confirmBeforeAction={isDirty}
-        confirmationMessage="You have unsaved changes. Are you sure you want to cancel?"
-      />
+      <SmartButton text="Cancel" onClick={handleCancel} variant="outlined" color="inherit" disabled={isSaving} />
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton

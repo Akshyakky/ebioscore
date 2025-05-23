@@ -1,7 +1,471 @@
-import React from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
+import {
+  Search as SearchIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Refresh as RefreshIcon,
+  Visibility as VisibilityIcon,
+  Close as CloseIcon,
+} from "@mui/icons-material";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import SmartButton from "@/components/Button/SmartButton";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import DropdownSelect from "@/components/DropDown/DropdownSelect";
+import DiagnosisListForm from "../Form/DiagnosisListForm";
+import { useDiagnosisList } from "../hooks/useDiagnosisList";
+import { showAlert } from "@/utils/Common/showAlert";
+import { debounce } from "@/utils/Common/debounceUtils";
+import { IcdDetailDto } from "@/interfaces/ClinicalManagement/IcdDetailDto";
+
+const statusOptions = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+];
+
+const typeOptions = [
+  { value: "standard", label: "Standard" },
+  { value: "custom", label: "Custom" },
+];
+
+const versionOptions = [
+  { value: "icd10", label: "ICD-10" },
+  { value: "icd11", label: "ICD-11" },
+  { value: "custom", label: "Custom" },
+];
 
 const DiagnosisListPage: React.FC = () => {
-  return <></>;
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
+  const [selectedDiagnosis, setSelectedDiagnosis] = useState<IcdDetailDto | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
+  const [isViewMode, setIsViewMode] = useState<boolean>(false);
+  const [showStats, setShowStats] = useState(false);
+
+  const { diagnosisList, isLoading, error, fetchDiagnosisList, deleteDiagnosis } = useDiagnosisList();
+
+  const [filters, setFilters] = useState<{
+    status: string;
+    type: string;
+    version: string;
+  }>({
+    status: "",
+    type: "",
+    version: "",
+  });
+
+  useEffect(() => {
+    document.title = "Diagnosis List Management";
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    fetchDiagnosisList();
+  }, [fetchDiagnosisList]);
+
+  const debouncedSearch = useMemo(() => debounce((value: string) => setDebouncedSearchTerm(value), 300), []);
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  const handleSearchChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      setSearchTerm(value);
+      debouncedSearch(value);
+    },
+    [debouncedSearch]
+  );
+
+  const handleClearSearch = useCallback(() => {
+    setSearchTerm("");
+    setDebouncedSearchTerm("");
+    debouncedSearch.cancel();
+  }, [debouncedSearch]);
+
+  const handleAddNew = useCallback(() => {
+    setSelectedDiagnosis(null);
+    setIsViewMode(false);
+    setIsFormOpen(true);
+  }, []);
+
+  const handleEdit = useCallback((diagnosis: IcdDetailDto) => {
+    setSelectedDiagnosis(diagnosis);
+    setIsViewMode(false);
+    setIsFormOpen(true);
+  }, []);
+
+  const handleView = useCallback((diagnosis: IcdDetailDto) => {
+    setSelectedDiagnosis(diagnosis);
+    setIsViewMode(true);
+    setIsFormOpen(true);
+  }, []);
+
+  const handleDeleteClick = useCallback((diagnosis: IcdDetailDto) => {
+    setSelectedDiagnosis(diagnosis);
+    setIsDeleteConfirmOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!selectedDiagnosis) return;
+
+    try {
+      const success = await deleteDiagnosis(selectedDiagnosis.icddId);
+
+      if (success) {
+        showAlert("Success", "Diagnosis deleted successfully", "success");
+      } else {
+        throw new Error("Failed to delete diagnosis");
+      }
+    } catch (error) {
+      console.error("Delete operation failed:", error);
+      showAlert("Error", "Failed to delete diagnosis", "error");
+    } finally {
+      setIsDeleteConfirmOpen(false);
+    }
+  }, [selectedDiagnosis, deleteDiagnosis]);
+
+  const handleFormClose = useCallback(
+    (refreshData?: boolean) => {
+      setIsFormOpen(false);
+      if (refreshData) {
+        handleRefresh();
+      }
+    },
+    [handleRefresh]
+  );
+
+  const handleFilterChange = useCallback((field: keyof typeof filters, value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setFilters({
+      status: "",
+      type: "",
+      version: "",
+    });
+  }, []);
+
+  // Calculate stats for the dashboard
+  const stats = useMemo(() => {
+    if (!diagnosisList.length) {
+      return {
+        totalDiagnoses: 0,
+        activeDiagnoses: 0,
+        inactiveDiagnoses: 0,
+        customDiagnoses: 0,
+        standardDiagnoses: 0,
+        transferEnabled: 0,
+      };
+    }
+
+    const activeCount = diagnosisList.filter((d) => d.rActiveYN === "Y").length;
+    const customCount = diagnosisList.filter((d) => d.icddCustYN === "Y").length;
+    const transferCount = diagnosisList.filter((d) => d.transferYN === "Y").length;
+
+    return {
+      totalDiagnoses: diagnosisList.length,
+      activeDiagnoses: activeCount,
+      inactiveDiagnoses: diagnosisList.length - activeCount,
+      customDiagnoses: customCount,
+      standardDiagnoses: diagnosisList.length - customCount,
+      transferEnabled: transferCount,
+    };
+  }, [diagnosisList]);
+
+  // Apply filters to the list
+  const filteredDiagnoses = useMemo(() => {
+    if (!diagnosisList.length) return [];
+
+    return diagnosisList.filter((diagnosis) => {
+      const matchesSearch =
+        debouncedSearchTerm === "" ||
+        diagnosis.icddName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        diagnosis.icddCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        diagnosis.icddNameGreek?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        diagnosis.rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+
+      const matchesStatus = filters.status === "" || (filters.status === "active" && diagnosis.rActiveYN === "Y") || (filters.status === "inactive" && diagnosis.rActiveYN === "N");
+
+      const matchesType = filters.type === "" || (filters.type === "custom" && diagnosis.icddCustYN === "Y") || (filters.type === "standard" && diagnosis.icddCustYN === "N");
+
+      const matchesVersion =
+        filters.version === "" ||
+        (filters.version === "icd10" && diagnosis.icddVer?.toLowerCase().includes("10")) ||
+        (filters.version === "icd11" && diagnosis.icddVer?.toLowerCase().includes("11")) ||
+        (filters.version === "custom" && diagnosis.icddCustYN === "Y");
+
+      return matchesSearch && matchesStatus && matchesType && matchesVersion;
+    });
+  }, [diagnosisList, debouncedSearchTerm, filters]);
+
+  const renderStatsDashboard = () => (
+    <Paper sx={{ p: 2, mb: 2 }}>
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, sm: 2 }}>
+          <Typography variant="h6">Total Diagnoses</Typography>
+          <Typography variant="h4">{stats.totalDiagnoses}</Typography>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 2 }}>
+          <Typography variant="h6">Active</Typography>
+          <Typography variant="h4" color="success.main">
+            {stats.activeDiagnoses}
+          </Typography>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 2 }}>
+          <Typography variant="h6">Inactive</Typography>
+          <Typography variant="h4" color="error.main">
+            {stats.inactiveDiagnoses}
+          </Typography>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 2 }}>
+          <Typography variant="h6">Custom</Typography>
+          <Typography variant="h4" color="info.main">
+            {stats.customDiagnoses}
+          </Typography>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 2 }}>
+          <Typography variant="h6">Standard</Typography>
+          <Typography variant="h4" color="warning.main">
+            {stats.standardDiagnoses}
+          </Typography>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 2 }}>
+          <Typography variant="h6">Transfer Enabled</Typography>
+          <Typography variant="h4" color="secondary.main">
+            {stats.transferEnabled}
+          </Typography>
+        </Grid>
+      </Grid>
+    </Paper>
+  );
+
+  const columns: Column<IcdDetailDto>[] = [
+    {
+      key: "icddCode",
+      header: "Code",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 120,
+    },
+    {
+      key: "icddName",
+      header: "Diagnosis Name",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 300,
+    },
+    {
+      key: "icddNameGreek",
+      header: "Greek Name",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 250,
+      formatter: (value: string) => value || "-",
+    },
+    {
+      key: "icddVer",
+      header: "Version",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 100,
+      formatter: (value: string) => value || "-",
+    },
+    {
+      key: "icddCustYN",
+      header: "Type",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 120,
+      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "info" : "default"} label={value === "Y" ? "Custom" : "Standard"} />,
+    },
+    {
+      key: "rActiveYN",
+      header: "Status",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 100,
+      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
+    },
+    {
+      key: "rNotes",
+      header: "Notes",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 300,
+      formatter: (value: any) => (value ? value.substring(0, 50) + (value.length > 50 ? "..." : "") : "-"),
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      visible: true,
+      sortable: false,
+      filterable: false,
+      width: 170,
+      render: (item) => (
+        <Stack direction="row" spacing={1}>
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => handleView(item)}
+            sx={{
+              bgcolor: "rgba(25, 118, 210, 0.08)",
+              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+            }}
+          >
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="info"
+            onClick={() => handleEdit(item)}
+            sx={{
+              bgcolor: "rgba(25, 118, 210, 0.08)",
+              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+            }}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => handleDeleteClick(item)}
+            sx={{
+              bgcolor: "rgba(25, 118, 210, 0.08)",
+              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+            }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Stack>
+      ),
+    },
+  ];
+
+  if (error) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography color="error" variant="h6">
+          Error loading diagnoses: {error}
+        </Typography>
+        <SmartButton text="Retry" onClick={handleRefresh} variant="contained" color="primary" />
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ p: 2 }}>
+      <Box sx={{ mb: 2 }}>
+        <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
+      </Box>
+
+      {showStats && renderStatsDashboard()}
+
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Typography variant="h5" component="h1" gutterBottom>
+              Diagnosis List
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
+            <Stack direction="row" spacing={1}>
+              <SmartButton
+                text="Refresh"
+                icon={RefreshIcon}
+                onClick={handleRefresh}
+                color="info"
+                variant="outlined"
+                size="small"
+                disabled={isLoading}
+                loadingText="Refreshing..."
+                asynchronous={true}
+                showLoadingIndicator={true}
+              />
+              <SmartButton text="Add Diagnosis" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
+            </Stack>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              placeholder="Search by code, name"
+              variant="outlined"
+              size="small"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+                endAdornment: searchTerm && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={handleClearSearch}>
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Tooltip title="Filter Diagnosis List">
+              <Stack direction="row" spacing={2} sx={{ pt: 1 }}>
+                <DropdownSelect
+                  label="Status"
+                  name="status"
+                  value={filters.status}
+                  options={statusOptions}
+                  onChange={(e) => handleFilterChange("status", e.target.value)}
+                  size="small"
+                  defaultText="All Status"
+                />
+
+                <Box display="flex" alignItems="center" gap={1}>
+                  {filters.status && <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />}
+                </Box>
+              </Stack>
+            </Tooltip>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      <Paper sx={{ p: 2 }}>
+        <CustomGrid columns={columns} data={filteredDiagnoses} maxHeight="calc(100vh - 280px)" emptyStateMessage="No diagnosis found" loading={isLoading} />
+      </Paper>
+
+      {isFormOpen && <DiagnosisListForm open={isFormOpen} onClose={handleFormClose} initialData={selectedDiagnosis} viewOnly={isViewMode} />}
+
+      <ConfirmationDialog
+        open={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Confirm Delete"
+        message={`Are you sure you want to delete the diagnosis "${selectedDiagnosis?.arlName}"?`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="error"
+        maxWidth="xs"
+      />
+    </Box>
+  );
 };
 
-export default React.memo(DiagnosisListPage);
+export default DiagnosisListPage;
