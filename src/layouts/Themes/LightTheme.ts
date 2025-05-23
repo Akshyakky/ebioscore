@@ -232,12 +232,12 @@ const lightTheme = createTheme({
         root: {
           backgroundColor: LIGHT_COLORS.primary.main,
           "& .MuiTableCell-head": {
-            color: LIGHT_COLORS.primary.contrastText,
-            fontWeight: TYPOGRAPHY.fontWeights.semibold,
+            color: LIGHT_COLORS.primary.main,
+            fontWeight: TYPOGRAPHY.fontWeights.bold,
             height: COMPONENT_CONSTANTS.table.headerHeight,
             borderBottom: "none",
             "&:not(:last-child)": {
-              borderRight: `1px solid ${alpha(LIGHT_COLORS.primary.contrastText, 0.2)}`,
+              borderRight: `1px solid ${alpha(LIGHT_COLORS.primary.main, 0.2)}`,
             },
           },
         },
