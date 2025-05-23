@@ -1,5 +1,5 @@
 export interface DropdownOption {
-  value: string;
+  value: string | number;
   label: string;
   [key: string]: any;
 }
