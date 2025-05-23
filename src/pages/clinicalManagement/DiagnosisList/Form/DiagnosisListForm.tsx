@@ -21,7 +21,7 @@ interface DiagnosisListFormProps {
 
 const schema = z.object({
   icddId: z.number(),
-  icdmId: z.number().min(1, "ICD Master is required"),
+  icdmId: z.number().nullable().optional(),
   icddCode: z.string().nonempty("Diagnosis code is required"),
   icddName: z.string().nonempty("Diagnosis name is required"),
   icddCustYN: z.string(),
@@ -196,12 +196,7 @@ const DiagnosisListForm: React.FC<DiagnosisListFormProps> = ({ open, onClose, in
     }
   };
 
-  // Mock ICD Master options - replace with actual service call
-  const icdMasterOptions = [
-    { value: 1, label: "ICD-10-CM" },
-    { value: 2, label: "ICD-11" },
-    { value: 3, label: "Custom ICD" },
-  ];
+  const icdMasterOptions = [];
 
   return (
     <GenericDialog
@@ -244,7 +239,7 @@ const DiagnosisListForm: React.FC<DiagnosisListFormProps> = ({ open, onClose, in
 
                 <Grid container spacing={2}>
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="icdmId" control={control} label="ICD Master" type="select" required disabled={viewOnly} size="small" fullWidth options={icdMasterOptions} />
+                    <FormField name="icdmId" control={control} label="ICD Master" type="select" disabled={viewOnly} size="small" fullWidth options={icdMasterOptions} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
