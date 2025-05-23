@@ -14,6 +14,8 @@ interface ImportMetaEnv {
   readonly VITE_INVENTORY_MANAGEMENT_URL: string;
   readonly VITE_LABORATORY_URL: string;
   readonly VITE_API_SECRET: string;
+  readonly VITE_APP_SNOMED_API_URL: string;
+  readonly VITE_APP_SNOMED_API_KEY: string;
   // add more environment variables here...
 }
 
