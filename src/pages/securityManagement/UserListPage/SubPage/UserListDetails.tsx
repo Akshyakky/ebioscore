@@ -5,10 +5,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
 import { useLoading } from "@/hooks/Common/useLoading";
-
-import { CompanyService } from "@/services/CommonServices/CompanyService";
+import { CompanyService } from "@/services/NotGenericPaternServices/CompanyService";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
-import { ConstantValues } from "@/services/CommonServices/ConstantValuesService";
+import { ConstantValues } from "@/services/NotGenericPaternServices/ConstantValuesService";
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import ProfilePermissionsListModal from "./ProfilePermissionsListModal";

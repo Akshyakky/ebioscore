@@ -1,4 +1,3 @@
-import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import { AlertDto } from "@/interfaces/Common/AlertManager";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
@@ -12,7 +11,6 @@ const getToken = () => store.getState().auth.token!;
 
 // Create the base services using the factory
 export const baseAlertService = createEntityService<AlertDto>("Alert", "commonURL");
-export const departmentService = createEntityService<DepartmentDto>("Department", "commonURL");
 
 // Create the alertService with all required methods
 export const alertService = {

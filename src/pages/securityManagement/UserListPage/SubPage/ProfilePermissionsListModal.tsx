@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Button, Typography, List, ListItem, ListItemText, Divider, Accordion, AccordionSummary, AccordionDetails, Box } from "@mui/material";
+import { Button, Typography, List, ListItem, ListItemText, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { profileListService } from "@/services/SecurityManagementServices/ProfileListServices";

@@ -10,7 +10,7 @@ import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { appModifiedListService, appModifiedMastService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Grid, SelectChangeEvent } from "@mui/material";
-import moduleService from "@/services/CommonServices/ModuleService";
+import moduleService from "@/services/NotGenericPaternServices/ModuleService";
 import CustomButton from "@/components/Button/CustomButton";
 import FormField from "@/components/FormField/FormField";
 import CustomGrid from "@/components/CustomGrid/CustomGrid";

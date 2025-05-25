@@ -36,7 +36,7 @@ import ProfileMenu from "./ProfileMenu";
 import { notifyError } from "../../utils/Common/toastManager";
 import { MaterialUISwitch } from "../../components/Switch/MaterialUISwitch";
 import "./SideBar.css";
-import moduleService, { ModuleDto, SubModuleDto } from "@/services/CommonServices/ModuleService";
+import moduleService, { ModuleDto, SubModuleDto } from "@/services/NotGenericPaternServices/ModuleService";
 import { useTheme as useCustomTheme } from "@/providers/ThemeProvider";
 
 interface SideBarProps {

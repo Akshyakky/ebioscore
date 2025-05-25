@@ -14,7 +14,6 @@ export const medicationRouteService = createEntityService<MedicationRouteDto>("M
 export const medicationFormService = createEntityService<MedicationFormDto>("MedicationForm", "clinicalManagementURL");
 export const medicationGenericService = createEntityService<MedicationGenericDto>("MedicationGeneric", "clinicalManagementURL");
 export const consultantRoleService = createEntityService<ConsultantRoleDto>("ConsultantRole", "clinicalManagementURL");
-
 export const medicationDosageService = createEntityService<MedicationDosageDto>("MedicationDosage", "clinicalManagementURL");
 export const medicationFrequencyService = createEntityService<MedicationFrequencyDto>("MedicationFrequency", "clinicalManagementURL");
 export const medicationInstructionService = createEntityService<MedicationInstructionDto>("MedicationInstruction", "clinicalManagementURL");

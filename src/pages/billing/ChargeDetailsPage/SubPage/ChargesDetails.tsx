@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from "react";
 import { BChargeDetailsDto, BChargePackDto, BDoctorSharePerShare, ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
 import { useState } from "react";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { chargeDetailsService } from "@/services/BillingServices/chargeDetailsService";
+import { chargeDetailsService } from "@/services/BillingServices/ChargeDetailsService";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Grid, Paper, SelectChangeEvent, TextField, Typography } from "@mui/material";
 import ChargeBasicDetails from "./Charges";

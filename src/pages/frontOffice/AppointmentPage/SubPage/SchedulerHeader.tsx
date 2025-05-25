@@ -1,5 +1,5 @@
 import AutocompleteTextBox from "@/components/TextBox/AutocompleteTextBox/AutocompleteTextBox";
-import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
+import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { Box, Checkbox, Divider, Grid, IconButton, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import AppointmentSearch from "./AppointmentList";

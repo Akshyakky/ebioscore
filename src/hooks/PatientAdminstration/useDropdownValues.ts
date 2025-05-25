@@ -3,11 +3,11 @@ import { RootState } from "@/store";
 import { useAppSelector } from "@/store/hooks";
 import { showAlert } from "@/utils/Common/showAlert";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
-import { BillingService } from "@/services/BillingServices/BillingService";
-import { AppModifyListService } from "@/services/CommonServices/AppModifyListService";
-import { departmentService } from "@/services/CommonServices/CommonModelServices";
+import { BillingService } from "@/services/NotGenericPaternServices/BillingService";
+import { AppModifyListService } from "@/services/NotGenericPaternServices/AppModifyListService";
+import { departmentListService } from "@/services/CommonServices/CommonGenericServices";
 import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
-import { ContactMastService } from "@/services/CommonServices/ContactMastService";
+import { ContactMastService } from "@/services/NotGenericPaternServices/ContactMastService";
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { deptUnitListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
@@ -226,7 +226,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
 
       department: async () => {
-        const response = await departmentService.getAll();
+        const response = await departmentListService.getAll();
         return (response.data || []).map((item: DepartmentDto) => ({
           value: item.deptID || 0,
           label: item.deptName || "",
