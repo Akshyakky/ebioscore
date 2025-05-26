@@ -4,12 +4,13 @@ import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceL
 import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
+import { useMemo } from "react";
 
-export const roomGroupService = createEntityService<RoomGroupDto>("RoomGroup", "hospitalAdministrations");
-export const roomListService = createEntityService<RoomListDto>("RoomList", "hospitalAdministrations");
-export const wrBedService = createEntityService<WrBedDto>("WrBed", "hospitalAdministrations");
-export const wardCategoryService = createEntityService<WardCategoryDto>("WardCategory", "hospitalAdministrations");
-export const insuranceListService = createEntityService<InsuranceListDto>("InsuranceList", "hospitalAdministrations");
-export const appModifiedListService = createEntityService<AppModifyFieldDto>("AppModifiedList", "hospitalAdministrations");
-export const appModifiedMastService = createEntityService<AppModifiedMast>("AppModifiedMast", "hospitalAdministrations");
-export const deptUnitListService = createEntityService<DeptUnitListDto>("DeptUnitList", "hospitalAdministrations");
+export const roomGroupService = useMemo(() => createEntityService<RoomGroupDto>("RoomGroup", "hospitalAdministrations"), []);
+export const roomListService = useMemo(() => createEntityService<RoomListDto>("RoomList", "hospitalAdministrations"), []);
+export const wrBedService = useMemo(() => createEntityService<WrBedDto>("WrBed", "hospitalAdministrations"), []);
+export const wardCategoryService = useMemo(() => createEntityService<WardCategoryDto>("WardCategory", "hospitalAdministrations"), []);
+export const insuranceListService = useMemo(() => createEntityService<InsuranceListDto>("InsuranceList", "hospitalAdministrations"), []);
+export const appModifiedListService = useMemo(() => createEntityService<AppModifyFieldDto>("AppModifiedList", "hospitalAdministrations"), []);
+export const appModifiedMastService = useMemo(() => createEntityService<AppModifiedMast>("AppModifiedMast", "hospitalAdministrations"), []);
+export const deptUnitListService = useMemo(() => createEntityService<DeptUnitListDto>("DeptUnitList", "hospitalAdministrations"), []);

@@ -15,6 +15,7 @@ import HealingIcon from "@mui/icons-material/Healing";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
 import ClearIcon from "@mui/icons-material/Clear";
+import { pmhService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface PastMedicalHistoryProps {
   pChartID: number;
@@ -44,8 +45,6 @@ export const MedicalHistory: React.FC<PastMedicalHistoryProps> = ({ pChartID, op
   const [formState, setFormState] = useState<OPIPHistPMHDto>(initialFormState);
   const { setLoading } = useLoading();
 
-  const pastMedicalHistoryService = useMemo(() => createEntityService<OPIPHistPMHDto>("OPIPHistPMH", "clinicalManagementURL"), []);
-
   const resetForm = useCallback(() => {
     setFormState({
       ...initialFormState,
@@ -70,7 +69,7 @@ export const MedicalHistory: React.FC<PastMedicalHistoryProps> = ({ pChartID, op
       if (confirmed) {
         setLoading(true);
         try {
-          await pastMedicalHistoryService.updateActiveStatus(item.opippmhId, false);
+          await pmhService.updateActiveStatus(item.opippmhId, false);
           const updatedList = historyList.filter((history) => history.opippmhId !== item.opippmhId);
           onHistoryChange(updatedList);
           showAlert("Success", "Medical history record deleted successfully", "success");
@@ -82,7 +81,7 @@ export const MedicalHistory: React.FC<PastMedicalHistoryProps> = ({ pChartID, op
         }
       }
     },
-    [historyList, onHistoryChange, pastMedicalHistoryService, setLoading]
+    [historyList, onHistoryChange, pmhService]
   );
 
   const columns: Column<OPIPHistPMHDto>[] = useMemo(

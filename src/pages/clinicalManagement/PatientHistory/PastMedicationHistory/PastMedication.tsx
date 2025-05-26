@@ -5,8 +5,6 @@ import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
 import { PastMedicationDetailDto, PastMedicationDto } from "@/interfaces/ClinicalManagement/PastMedicationDto";
-
-import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Grid, Paper, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -14,6 +12,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import MedicationIcon from "@mui/icons-material/Medication";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import LocalPharmacyIcon from "@mui/icons-material/LocalPharmacy";
+import { medicationListService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface PastMedicationProps {
   pChartID: number;
@@ -27,7 +26,6 @@ const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipC
   const dropdownValues = useDropdownValues(["medicationForm", "medicationDosage", "medicationFrequency", "medicationInstruction"]);
 
   const [selectedMedication, setSelectedMedication] = useState<string>("");
-  const medicationListService = useMemo(() => createEntityService<MedicationListDto>("MedicationList", "clinicalManagementURL"), []);
 
   const initialMedicationState = useMemo(
     () => ({

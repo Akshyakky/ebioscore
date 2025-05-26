@@ -9,7 +9,6 @@ import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
 import { PastMedicationDto } from "@/interfaces/ClinicalManagement/PastMedicationDto";
 import { allergyService } from "@/services/ClinicalManagementServices/allergyService";
 import { pastMedicationService } from "@/services/ClinicalManagementServices/pastMedicationService";
-import { createEntityService } from "@/utils/Common/serviceFactory";
 import { Box, Paper, Tab, Tabs } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";
 import { TabPanel } from "./TabPanel";
@@ -21,6 +20,7 @@ import ReviewOfSystem from "./PastReviewOfSystem/ReviewOfSystem";
 import SurgicalHistory from "./PastSurgicalHistory/SurgicalHistory";
 import AllergyHistory from "./Allergies/AllergyHistory";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { fhService, rosService, pmhService, shService, pshService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 export interface HistoryState {
   familyHistory: OPIPHistFHDto[];
@@ -94,11 +94,6 @@ export const PatientHistory: React.FC<PatientHistoryProps> = ({ pChartID, opipNo
     allergyDetails: [],
   });
   const { setLoading } = useLoading();
-  const fhService = createEntityService<OPIPHistFHDto>("OPIPHistFH", "clinicalManagementURL");
-  const shService = createEntityService<OPIPHistSHDto>("OPIPHistSH", "clinicalManagementURL");
-  const pmhService = createEntityService<OPIPHistPMHDto>("OPIPHistPMH", "clinicalManagementURL");
-  const rosService = createEntityService<OPIPHistROSDto>("OPIPHistROS", "clinicalManagementURL");
-  const pshService = createEntityService<OPIPHistPSHDto>("OPIPHistPSH", "clinicalManagementURL");
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);

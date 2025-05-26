@@ -14,11 +14,11 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
 import PermissionManager from "../../CommonPage/PermissionManager";
 import { useUserList } from "../hooks/useUserList";
-import { CompanyService } from "@/services/CommonServices/CompanyService";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import ProfilePermissionsListModal from "../SubPage/ProfilePermissionsListModal";
 import ProfilePermissionsModifyModal from "../SubPage/ProfilePermissionsModifyModal";
-import { createEntityService } from "@/utils/Common/serviceFactory";
+import { profileMastService } from "@/services/SecurityManagementServices/securityManagementServices";
+import { CompanyService } from "@/services/NotGenericPaternServices/CompanyService";
 
 interface UserListFormProps {
   open: boolean;
@@ -63,7 +63,6 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
   const [profileDropdown, setProfileDropdown] = useState<DropdownOption[]>([]);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isProfileModifyModalOpen, setIsProfileModifyModalOpen] = useState<boolean>(false);
-  const profileMastService = React.useMemo(() => createEntityService<ProfileMastDto>("ProfileMast", "securityManagementURL"), []);
 
   const isAddMode = !initialData;
 
@@ -306,7 +305,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
     if (Boolean(watchedData.appID)) {
       const userNameDropdownData: DropdownOption[] = [
         {
-          value: watchedData.conID,
+          value: watchedData.conID.toString(),
           label: watchedData.appUserName,
         },
       ];

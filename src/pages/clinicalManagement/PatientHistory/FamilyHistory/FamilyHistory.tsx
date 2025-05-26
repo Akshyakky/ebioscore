@@ -1,9 +1,7 @@
 // src/pages/clinicalManagement/patientHistory/FamilyHistory.tsx
 import React, { useCallback, useMemo, useState } from "react";
-
 import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
@@ -15,6 +13,7 @@ import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
 import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
 import HistoryIcon from "@mui/icons-material/History";
 import ClearIcon from "@mui/icons-material/Clear";
+import { fhService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface FamilyHistoryProps {
   pChartID: number;
@@ -47,8 +46,6 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
   const [formState, setFormState] = useState<OPIPHistFHDto>(initialFormState);
   const { setLoading } = useLoading();
 
-  const familyHistoryService = useMemo(() => createEntityService<OPIPHistFHDto>("OPIPHistFH", "clinicalManagementURL"), []);
-
   const resetForm = useCallback(() => {
     setFormState({
       ...initialFormState,
@@ -73,7 +70,7 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
       if (confirmed) {
         setLoading(true);
         try {
-          await familyHistoryService.updateActiveStatus(item.opipFHID, false);
+          await fhService.updateActiveStatus(item.opipFHID, false);
           const updatedList = historyList.filter((history) => history.opipFHID !== item.opipFHID);
           onHistoryChange(updatedList);
           showAlert("Success", "Family history record deleted successfully", "success");
@@ -85,7 +82,7 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
         }
       }
     },
-    [historyList, onHistoryChange, familyHistoryService, setLoading]
+    [historyList, onHistoryChange, fhService, setLoading]
   );
 
   const columns: Column<OPIPHistFHDto>[] = useMemo(

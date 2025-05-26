@@ -5,14 +5,15 @@ import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOver
 import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
 import { PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { createEntityService } from "@/utils/Common/serviceFactory";
+import { useMemo } from "react";
 
-export const productListService = createEntityService<ProductListDto>("ProductMaster", "inventoryManagementURL");
-export const productSubGroupService = createEntityService<ProductSubGroupDto>("ProductSubGroup", "inventoryManagementURL");
-export const productGroupService = createEntityService<ProductGroupDto>("ProductGroup", "inventoryManagementURL");
-export const productUnitService = createEntityService<ProductUnitDto>("ProductUnit", "inventoryManagementURL");
-export const productTaxService = createEntityService<ProductTaxListDto>("ProductTaxList", "inventoryManagementURL");
-export const productOverviewService = createEntityService<ProductOverviewDto>("ProductOverview", "inventoryManagementURL");
-export const purchaseOrderMastService = createEntityService<PurchaseOrderMastDto>("PurchaseOrderMast", "inventoryManagementURL");
-export const indentProductMastService = createEntityService<IndentSaveRequestDto>("IndentMast", "inventoryManagementURL");
-export const purchaseOrderService = createEntityService<purchaseOrderSaveDto>("PurchaseOrder", "inventoryManagementURL");
-export const indentProductService = createEntityService<IndentSaveRequestDto>("IndentProduct", "inventoryManagementURL");
+export const productListService = useMemo(() => createEntityService<ProductListDto>("ProductMaster", "inventoryManagementURL"), []);
+export const productSubGroupService = useMemo(() => createEntityService<ProductSubGroupDto>("ProductSubGroup", "inventoryManagementURL"), []);
+export const productGroupService = useMemo(() => createEntityService<ProductGroupDto>("ProductGroup", "inventoryManagementURL"), []);
+export const productUnitService = useMemo(() => createEntityService<ProductUnitDto>("ProductUnit", "inventoryManagementURL"), []);
+export const productTaxService = useMemo(() => createEntityService<ProductTaxListDto>("ProductTaxList", "inventoryManagementURL"), []);
+export const productOverviewService = useMemo(() => createEntityService<ProductOverviewDto>("ProductOverview", "inventoryManagementURL"), []);
+export const purchaseOrderMastService = useMemo(() => createEntityService<PurchaseOrderMastDto>("PurchaseOrderMast", "inventoryManagementURL"), []);
+export const indentProductMastService = useMemo(() => createEntityService<IndentSaveRequestDto>("IndentMast", "inventoryManagementURL"), []);
+export const purchaseOrderService = useMemo(() => createEntityService<purchaseOrderSaveDto>("PurchaseOrder", "inventoryManagementURL"), []);
+export const indentProductService = useMemo(() => createEntityService<IndentSaveRequestDto>("IndentProduct", "inventoryManagementURL"), []);
