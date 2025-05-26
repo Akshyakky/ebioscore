@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, Tabs, Tab, ImageList, ImageListItem, Button } from "@mui/material";
+import { Box, Grid, Typography, Divider, Card, CardContent, Alert, Tabs, Tab, ImageList, ImageListItem, Tooltip } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
-import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel } from "@mui/icons-material";
+import { Save, Cancel, Visibility, Edit } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
@@ -17,7 +16,7 @@ import { useUserList } from "../hooks/useUserList";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import ProfilePermissionsListModal from "../SubPage/ProfilePermissionsListModal";
 import ProfilePermissionsModifyModal from "../SubPage/ProfilePermissionsModifyModal";
-import { profileMastService } from "@/services/SecurityManagementServices/securityManagementServices";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { CompanyService } from "@/services/NotGenericPaternServices/CompanyService";
 
 interface UserListFormProps {
@@ -33,11 +32,11 @@ const schema = z.object({
   appUserName: z.string().optional(),
   appGeneralCode: z.string().optional(),
   conID: z.number(),
-  appUcatCode: z.string().nonempty("User category is required"),
+  appUcatCode: z.string().optional(),
   appUcatType: z.string(),
   adminUserYN: z.string(),
   conCompId: z.number().optional(),
-  digSignPath: z.string().optional(),
+  digSignPath: z.any().optional(),
   appUAccess: z.string().optional(),
   confirmPassword: z.string().optional(),
   profileID: z.number().optional(),
@@ -50,7 +49,7 @@ type UserListFormData = z.infer<typeof schema>;
 
 const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { saveUser, getUsersWithoutCredentials } = useUserList();
+  const { saveUser } = useUserList();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -59,11 +58,9 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
   const [digSignImageName, setDigSignImageName] = useState<string>("");
   const [newPassword, setNewPassword] = useState<boolean>(true);
   const [companyDropdown, setCompanyDropdown] = useState<DropdownOption[]>([]);
-  const [userListDropdown, setUserListDropdown] = useState<DropdownOption[]>([]);
-  const [profileDropdown, setProfileDropdown] = useState<DropdownOption[]>([]);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isProfileModifyModalOpen, setIsProfileModifyModalOpen] = useState<boolean>(false);
-
+  const { usersWithoutLogin, profiles } = useDropdownValues(["usersWithoutLogin", "profiles"]);
   const isAddMode = !initialData;
 
   const defaultValues: UserListFormData = {
@@ -114,27 +111,14 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
         console.error("Fetching companies failed: ", error);
       }
     };
-
-    const fetchProfiles = async () => {
-      const response = await profileMastService.getAll();
-      const profiles: ProfileMastDto[] = response.data || [];
-      const activeProfiles: ProfileMastDto[] = profiles.filter((profile: ProfileMastDto) => profile.rActiveYN === "Y");
-      const profilesDropdownOptions: any[] = activeProfiles.map((profile: ProfileMastDto) => ({
-        value: profile.profileID,
-        label: profile.profileName,
-      }));
-      setProfileDropdown(profilesDropdownOptions);
-    };
-
     fetchCompanies();
-    fetchProfiles();
-  }, [profileMastService]);
+  }, [CompanyService]);
 
   useEffect(() => {
     if (initialData) {
       reset(initialData as UserListFormData);
       setNewPassword(false);
-      setDigSignImageName(initialData.digSignPath ? "Existing signature" : "");
+      setDigSignImageName("");
     } else {
       reset(defaultValues);
       setNewPassword(true);
@@ -249,11 +233,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
     setShowCancelConfirmation(false);
   };
 
-  const handleDigitalSignatureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    const file = files[0];
+  const handleDigitalSignatureChange = (file: File): void => {
     if (file.size > 51200) {
       showAlert(`Image size exceeds 50kb limit (current file size: ${(file.size / 1024).toFixed(1)}kb)`, "Please select an image smaller than 50kb.", "warning");
       return;
@@ -301,28 +281,6 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
   const handleCloseProfileModifyModal = () => {
     setIsProfileModifyModalOpen(false);
   };
-  const fetchUsersWithoutCredentials = async () => {
-    if (Boolean(watchedData.appID)) {
-      const userNameDropdownData: DropdownOption[] = [
-        {
-          value: watchedData.conID.toString(),
-          label: watchedData.appUserName,
-        },
-      ];
-      setUserListDropdown(userNameDropdownData);
-      return;
-    }
-
-    const response: any = await getUsersWithoutCredentials();
-    const usersWithoutCredentials: DropdownOption[] = response.data.map((user: UserListDto) => ({
-      value: user.conID,
-      label: user.appUserName,
-    }));
-    setUserListDropdown(usersWithoutCredentials);
-  };
-  useEffect(() => {
-    fetchUsersWithoutCredentials();
-  }, []);
 
   const dialogTitle = viewOnly ? "View User Details" : isAddMode ? "Create New User" : `Edit User - ${initialData?.appUserName}`;
 
@@ -419,21 +377,23 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
             <Divider sx={{ mb: 2 }} />
 
             <Grid container spacing={2}>
-              <Grid size={{ sm: 12, md: 6 }}>
-                <FormField
-                  name="conID"
-                  control={control}
-                  label="Select User"
-                  type="select"
-                  required
-                  disabled={viewOnly || Boolean(watchedData.appID)}
-                  size="small"
-                  fullWidth
-                  options={userListDropdown}
-                  defaultText="Select User"
-                  onChange={(item) => handleChangeUserName(item)}
-                />
-              </Grid>
+              {isAddMode && (
+                <Grid size={{ sm: 12, md: 6 }}>
+                  <FormField
+                    name="conID"
+                    control={control}
+                    label="Select User"
+                    type="select"
+                    required
+                    disabled={viewOnly || Boolean(watchedData.appID)}
+                    size="small"
+                    fullWidth
+                    options={usersWithoutLogin}
+                    defaultText="Select User"
+                    onChange={(item) => handleChangeUserName(item)}
+                  />
+                </Grid>
+              )}
 
               <Grid size={{ sm: 12, md: 6 }}>
                 <FormField name="appCode" control={control} label="Username" type="text" required disabled={viewOnly} size="small" fullWidth />
@@ -515,7 +475,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
             <Divider sx={{ mb: 2 }} />
 
             <Grid container spacing={2}>
-              <Grid size={{ sm: 12, md: 6 }}>
+              <Grid size={{ xs: 12, sm: 8, md: 6, lg: 4 }}>
                 <FormField
                   name="profileID"
                   control={control}
@@ -524,20 +484,19 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
                   disabled={viewOnly}
                   size="small"
                   fullWidth
-                  options={profileDropdown}
+                  options={profiles.filter((profile) => profile.rActiveYN === "Y")}
                   defaultText="Select Profile"
                 />
               </Grid>
-
               {watchedData.profileID > 0 && (
                 <Grid size={{ sm: 12, md: 6 }}>
                   <Box display="flex" gap={2}>
-                    <Button variant="outlined" onClick={handleViewProfilePermissions} disabled={viewOnly}>
-                      View Profile Permissions
-                    </Button>
-                    <Button variant="outlined" color="secondary" onClick={handleModifyProfilePermissions} disabled={viewOnly}>
-                      Modify Profile Permissions
-                    </Button>
+                    <Tooltip title="View Profile Permissions">
+                      <SmartButton text="View" onClick={handleViewProfilePermissions} variant="outlined" color="primary" icon={Visibility} disabled={viewOnly} />
+                    </Tooltip>
+                    <Tooltip title="Modify Profile Permissions">
+                      <SmartButton text="Modify" onClick={handleModifyProfilePermissions} variant="outlined" color="secondary" icon={Edit} disabled={viewOnly} />
+                    </Tooltip>
                   </Box>
                 </Grid>
               )}
@@ -573,16 +532,15 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
               ) : (
                 <Grid size={{ sm: 12 }}>
                   <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-                    <ImageList sx={{ width: 300 }} cols={1} rowHeight={164}>
+                    <ImageList cols={1}>
                       <ImageListItem>
-                        <img src={watchedData.digSignPath} alt={digSignImageName || "Digital Signature"} loading="lazy" style={{ maxWidth: "100%", maxHeight: "150px" }} />
+                        <img src={watchedData.digSignPath} alt={digSignImageName || "Digital Signature"} loading="lazy" />
                       </ImageListItem>
                     </ImageList>
-                    {!viewOnly && (
-                      <Button variant="contained" color="error" onClick={handleDigSignClear}>
-                        Clear Signature
-                      </Button>
-                    )}
+                    <Typography variant="body2" color="text.secondary">
+                      {digSignImageName}
+                    </Typography>
+                    {!viewOnly && <SmartButton text="Clear" onClick={handleDigSignClear} variant="contained" color="error" icon={Cancel} />}
                   </Box>
                 </Grid>
               )}
