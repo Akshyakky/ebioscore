@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, Box, IconButton, useTheme, useMediaQuery } from "@mui/material";
-import { CheckCircle as SuccessIcon, Error as ErrorIcon, Warning as WarningIcon, Info as InfoIcon, Close as CloseIcon, Print as PrintIcon } from "@mui/icons-material";
+import { Typography, Box, useTheme, Stack } from "@mui/material";
+import { CheckCircle as SuccessIcon, Error as ErrorIcon, Warning as WarningIcon, Info as InfoIcon, Print as PrintIcon } from "@mui/icons-material";
+import GenericDialog from "../GenericDialog/GenericDialog";
+import CustomButton from "../Button/CustomButton";
 
 export type AlertType = "success" | "error" | "warning" | "info" | "question";
 
@@ -42,7 +44,6 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
   onClose,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [open, setOpen] = useState(false);
 
   // Icon and color configuration for different alert types
@@ -87,12 +88,6 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
     }
   };
 
-  const handleBackdropClick = (event: React.MouseEvent, reason: string) => {
-    if (reason === "backdropClick") {
-      handleClose();
-    }
-  };
-
   const handleConfirm = () => {
     setOpen(false);
     if (onConfirm) {
@@ -113,103 +108,96 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
     }
   };
 
+  // Render action buttons using CustomButton
+  const renderActions = () => {
+    const buttons = [];
+
+    if (showPrintButton) {
+      buttons.push(<CustomButton key="print" variant="outlined" color="inherit" icon={PrintIcon} text={printButtonText} onClick={handlePrint} ariaLabel="print" />);
+    }
+
+    if (showCancelButton) {
+      buttons.push(<CustomButton key="cancel" variant="outlined" color="inherit" text={cancelButtonText} onClick={handleCancel} ariaLabel="cancel" />);
+    }
+
+    if (showConfirmButton) {
+      buttons.push(
+        <CustomButton key="confirm" variant="contained" color={buttonColor} text={confirmButtonText} onClick={handleConfirm} ariaLabel="confirm" sx={{ minWidth: 100 }} />
+      );
+    }
+
+    return buttons.length > 0 ? (
+      <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
+        {buttons}
+      </Stack>
+    ) : null;
+  };
+
   return (
-    <Dialog
+    <GenericDialog
       open={open}
-      onClose={handleBackdropClick}
+      onClose={handleClose}
+      title={title || getDefaultTitle(type)}
       maxWidth="sm"
-      fullWidth
-      fullScreen={isMobile}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
-      sx={{
-        "& .MuiDialog-paper": {
-          borderRadius: isMobile ? 0 : 2,
-          minWidth: isMobile ? "100%" : "400px",
-        },
+      fullWidth={true}
+      showCloseButton={showCloseButton}
+      disableBackdropClick={false}
+      disableEscapeKeyDown={false}
+      dialogContentSx={{
+        minHeight: "120px",
+        display: "flex",
+        alignItems: "center",
+      }}
+      actions={renderActions()}
+      actionsSx={{
+        px: 3,
+        pb: 3,
+        pt: 1,
       }}
     >
-      {(title || showCloseButton) && (
-        <DialogTitle
-          id="alert-dialog-title"
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            pb: 1,
-          }}
-        >
-          <Typography variant="h6" component="h2">
-            {title}
-          </Typography>
-          {showCloseButton && (
-            <IconButton edge="end" onClick={handleClose} aria-label="close" sx={{ ml: 1 }}>
-              <CloseIcon />
-            </IconButton>
-          )}
-        </DialogTitle>
-      )}
-
-      <DialogContent sx={{ pt: title ? 1 : 3 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 2,
-            py: 1,
-          }}
-        >
-          <Icon
-            sx={{
-              fontSize: 40,
-              color,
-              flexShrink: 0,
-              mt: 0.5,
-            }}
-          />
-          <Typography
-            id="alert-dialog-description"
-            variant="body1"
-            sx={{
-              mt: 0.5,
-              lineHeight: 1.5,
-              wordBreak: "break-word",
-            }}
-          >
-            {message}
-          </Typography>
-        </Box>
-      </DialogContent>
-
-      <DialogActions
+      <Box
         sx={{
-          px: 3,
-          pb: 3,
-          gap: 1,
-          flexWrap: "wrap",
-          justifyContent: "flex-end",
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 2,
+          py: 2,
+          width: "100%",
         }}
       >
-        {showPrintButton && (
-          <Button startIcon={<PrintIcon />} onClick={handlePrint} color="inherit" variant="outlined" size="medium">
-            {printButtonText}
-          </Button>
-        )}
-
-        {showCancelButton && (
-          <Button onClick={handleCancel} color="inherit" variant="outlined" size="medium">
-            {cancelButtonText}
-          </Button>
-        )}
-
-        {showConfirmButton && (
-          <Button onClick={handleConfirm} color={buttonColor} variant="contained" size="medium" autoFocus>
-            {confirmButtonText}
-          </Button>
-        )}
-      </DialogActions>
-    </Dialog>
+        <Icon
+          sx={{
+            fontSize: 40,
+            color,
+            flexShrink: 0,
+            mt: 0.5,
+          }}
+        />
+        <Typography
+          variant="body1"
+          sx={{
+            mt: 0.5,
+            lineHeight: 1.5,
+            wordBreak: "break-word",
+            flex: 1,
+          }}
+        >
+          {message}
+        </Typography>
+      </Box>
+    </GenericDialog>
   );
+};
+
+// Helper function to provide default titles based on alert type
+const getDefaultTitle = (type: AlertType): string => {
+  const defaultTitles = {
+    success: "Success",
+    error: "Error",
+    warning: "Warning",
+    info: "Information",
+    question: "Confirmation",
+  };
+  return defaultTitles[type];
 };
 
 export default CustomAlert;
