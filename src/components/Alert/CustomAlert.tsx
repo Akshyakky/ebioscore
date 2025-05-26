@@ -127,7 +127,7 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
     }
 
     return buttons.length > 0 ? (
-      <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
+      <Stack direction="row" spacing={1} justifyContent="flex-end">
         {buttons}
       </Stack>
     ) : null;
@@ -143,46 +143,11 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
       showCloseButton={showCloseButton}
       disableBackdropClick={false}
       disableEscapeKeyDown={false}
-      dialogContentSx={{
-        minHeight: "120px",
-        display: "flex",
-        alignItems: "center",
-      }}
       actions={renderActions()}
-      actionsSx={{
-        px: 3,
-        pb: 3,
-        pt: 1,
-      }}
     >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "flex-start",
-          gap: 2,
-          py: 2,
-          width: "100%",
-        }}
-      >
-        <Icon
-          sx={{
-            fontSize: 40,
-            color,
-            flexShrink: 0,
-            mt: 0.5,
-          }}
-        />
-        <Typography
-          variant="body1"
-          sx={{
-            mt: 0.5,
-            lineHeight: 1.5,
-            wordBreak: "break-word",
-            flex: 1,
-          }}
-        >
-          {message}
-        </Typography>
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, py: 2 }}>
+        <Icon sx={{ fontSize: 36, color, flexShrink: 0, mt: 0.5 }} />
+        <Typography variant="body1">{message}</Typography>
       </Box>
     </GenericDialog>
   );
