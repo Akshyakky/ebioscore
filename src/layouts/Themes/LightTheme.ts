@@ -135,9 +135,34 @@ const lightTheme = createTheme({
           color: LIGHT_COLORS.primary.contrastText,
           borderBottom: `1px solid ${LIGHT_COLORS.divider}`,
           padding: COMPONENT_CONSTANTS.dialog.spacing,
-          height: COMPONENT_CONSTANTS.dialog.titleHeight,
+          minHeight: COMPONENT_CONSTANTS.dialog.titleHeight,
           fontSize: TYPOGRAPHY.fontSizes.lg,
           fontWeight: TYPOGRAPHY.fontWeights.semibold,
+          display: "flex",
+          alignItems: "center",
+          // Ensure proper flex container behavior for title content
+          "& .MuiBox-root": {
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          },
+          // Style the typography element
+          "& .MuiTypography-root": {
+            flex: 1,
+            marginRight: SPACING_UNIT,
+            fontSize: "inherit",
+            fontWeight: "inherit",
+            lineHeight: 1.2,
+          },
+          // Style the close button
+          "& .MuiIconButton-root": {
+            color: LIGHT_COLORS.primary.contrastText,
+            padding: SPACING_UNIT / 2,
+            "&:hover": {
+              backgroundColor: alpha(LIGHT_COLORS.primary.contrastText, 0.1),
+            },
+          },
         },
       },
     },
@@ -242,20 +267,36 @@ const lightTheme = createTheme({
         root: {
           backgroundColor: LIGHT_COLORS.background.paper,
           color: LIGHT_COLORS.text.primary,
+          "& .MuiTableHead-root": {
+            backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
+          },
         },
       },
     },
     MuiTableHead: {
       styleOverrides: {
         root: {
-          backgroundColor: LIGHT_COLORS.primary.main,
-          "& .MuiTableCell-head": {
-            color: LIGHT_COLORS.primary.main,
-            fontWeight: TYPOGRAPHY.fontWeights.bold,
+          backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
+          "& .MuiTableCell-root": {
+            backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
+            color: `${LIGHT_COLORS.primary.contrastText} !important`,
+            fontWeight: `${TYPOGRAPHY.fontWeights.semibold} !important`,
             height: COMPONENT_CONSTANTS.table.headerHeight,
-            borderBottom: "none",
+            borderBottom: "none !important",
+            fontSize: `${TYPOGRAPHY.fontSizes.sm} !important`,
             "&:not(:last-child)": {
-              borderRight: `1px solid ${alpha(LIGHT_COLORS.primary.main, 0.2)}`,
+              borderRight: `1px solid ${alpha(LIGHT_COLORS.primary.contrastText, 0.2)} !important`,
+            },
+          },
+          "& .MuiTableCell-head": {
+            backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
+            color: `${LIGHT_COLORS.primary.contrastText} !important`,
+            fontWeight: `${TYPOGRAPHY.fontWeights.semibold} !important`,
+            height: COMPONENT_CONSTANTS.table.headerHeight,
+            borderBottom: "none !important",
+            fontSize: `${TYPOGRAPHY.fontSizes.sm} !important`,
+            "&:not(:last-child)": {
+              borderRight: `1px solid ${alpha(LIGHT_COLORS.primary.contrastText, 0.2)} !important`,
             },
           },
         },

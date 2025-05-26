@@ -109,25 +109,6 @@ const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
   },
 }));
 
-// Specialized dashboard button with distinct styling
-const DashboardListItemButton = styled(ListItemButton)(({ theme }) => ({
-  borderRadius: "8px",
-  margin: "8px",
-  marginBottom: "16px",
-  padding: "12px 16px",
-  backgroundColor: alpha(theme.palette.primary.main, 0.12),
-  borderLeft: `4px solid ${theme.palette.primary.main}`,
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.primary.main, 0.2),
-  },
-  "& .MuiListItemText-primary": {
-    fontWeight: 600,
-  },
-  "& .MuiListItemIcon-root svg": {
-    color: theme.palette.primary.main,
-  },
-}));
-
 // Enhanced search box with animation
 const SearchBox = styled(TextField)(({ theme }) => ({
   "& .MuiOutlinedInput-root": {
