@@ -14,12 +14,12 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
 import PermissionManager from "../../CommonPage/PermissionManager";
 import { useUserList } from "../hooks/useUserList";
-import { CompanyService } from "@/services/CommonServices/CompanyService";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import ProfilePermissionsListModal from "../SubPage/ProfilePermissionsListModal";
 import ProfilePermissionsModifyModal from "../SubPage/ProfilePermissionsModifyModal";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { CompanyService } from "@/services/NotGenericPaternServices/CompanyService";
 
 interface UserListFormProps {
   open: boolean;

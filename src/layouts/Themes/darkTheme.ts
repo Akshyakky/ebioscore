@@ -206,6 +206,23 @@ const darkTheme = createTheme({
           borderRadius: SHAPE.borderRadius,
           fontWeight: TYPOGRAPHY.fontWeights.medium,
           height: COMPONENT_CONSTANTS.button.mediumHeight,
+          "& .MuiSvgIcon-root": {
+            fontSize: 20,
+          },
+        },
+        sizeSmall: {
+          height: COMPONENT_CONSTANTS.button.smallHeight,
+          fontSize: TYPOGRAPHY.fontSizes.xs,
+          "& .MuiSvgIcon-root": {
+            fontSize: 16,
+          },
+        },
+        sizeLarge: {
+          height: COMPONENT_CONSTANTS.button.largeHeight,
+          fontSize: TYPOGRAPHY.fontSizes.md,
+          "& .MuiSvgIcon-root": {
+            fontSize: 24,
+          },
         },
         contained: {
           boxShadow: "none",
@@ -311,6 +328,100 @@ const darkTheme = createTheme({
         standardInfo: {
           backgroundColor: alpha(DARK_COLORS.info.main, 0.12),
           color: DARK_COLORS.info.light,
+        },
+      },
+    },
+    MuiAccordion: {
+      styleOverrides: {
+        root: {
+          boxShadow: `0 2px 8px ${alpha(DARK_COLORS.background.default, 0.3)}`,
+          borderRadius: SHAPE.borderRadius,
+          backgroundColor: DARK_COLORS.background.paper,
+          "&:before": {
+            display: "none",
+          },
+          "&.Mui-expanded": {
+            margin: `${SPACING_UNIT}px 0`,
+          },
+          transition: `box-shadow ${TRANSITIONS.duration.short}ms ${TRANSITIONS.easing.easeInOut}, margin ${TRANSITIONS.duration.short}ms ${TRANSITIONS.easing.easeInOut}`,
+          "&:hover": {
+            boxShadow: `0 4px 12px ${alpha(DARK_COLORS.background.default, 0.5)}`,
+          },
+        },
+      },
+    },
+
+    MuiAccordionSummary: {
+      styleOverrides: {
+        root: {
+          background: `linear-gradient(135deg, ${alpha(DARK_COLORS.primary.main, 0.1)}, ${alpha(DARK_COLORS.primary.main, 0.15)})`,
+          color: DARK_COLORS.primary.light,
+          minHeight: "42px !important",
+          height: "42px",
+          borderRadius: `${SHAPE.borderRadius}px ${SHAPE.borderRadius}px 0 0`,
+          "&.Mui-expanded": {
+            minHeight: "48px",
+          },
+          "&:hover": {
+            background: `linear-gradient(135deg, ${alpha(DARK_COLORS.primary.main, 0.15)}, ${alpha(DARK_COLORS.primary.main, 0.2)})`,
+            color: DARK_COLORS.primary.main,
+          },
+          transition: `background ${TRANSITIONS.duration.shortest}ms ${TRANSITIONS.easing.easeInOut}, color ${TRANSITIONS.duration.shortest}ms ${TRANSITIONS.easing.easeInOut}`,
+          "& .MuiAccordionSummary-expandIconWrapper": {
+            color: DARK_COLORS.primary.light,
+            transition: `transform ${TRANSITIONS.duration.shortest}ms ${TRANSITIONS.easing.easeInOut}, color ${TRANSITIONS.duration.shortest}ms ${TRANSITIONS.easing.easeInOut}`,
+            "&.Mui-expanded": {
+              transform: "rotate(180deg)",
+            },
+          },
+          "&:hover .MuiAccordionSummary-expandIconWrapper": {
+            color: DARK_COLORS.primary.main,
+          },
+        },
+        content: {
+          margin: "12px 0",
+          "& .MuiTypography-root": {
+            fontSize: "1rem",
+            fontWeight: TYPOGRAPHY.fontWeights.semibold,
+            letterSpacing: "0.5px",
+            textTransform: "uppercase",
+            color: "inherit",
+          },
+        },
+      },
+    },
+
+    MuiAccordionDetails: {
+      styleOverrides: {
+        root: {
+          padding: SPACING_UNIT * 2,
+          borderTop: `1px solid ${alpha(DARK_COLORS.divider, 0.5)}`,
+          backgroundColor: alpha(DARK_COLORS.background.dark, 0.6),
+          borderRadius: `0 0 ${SHAPE.borderRadius}px ${SHAPE.borderRadius}px`,
+          color: DARK_COLORS.text.primary,
+        },
+      },
+    },
+    MuiButtonGroup: {
+      styleOverrides: {
+        root: {
+          "& .MuiButtonGroup-grouped:not(:last-of-type)": {
+            borderColor: alpha(DARK_COLORS.primary.main, 0.2),
+          },
+          "& .MuiButton-root": {
+            textTransform: "none",
+            gap: SPACING_UNIT,
+            fontSize: TYPOGRAPHY.fontSizes.sm,
+            fontWeight: TYPOGRAPHY.fontWeights.medium,
+            "& .MuiSvgIcon-root": {
+              fontSize: 20,
+            },
+          },
+        },
+        grouped: {
+          "&:not(:last-of-type)": {
+            borderColor: alpha(DARK_COLORS.primary.main, 0.2),
+          },
         },
       },
     },

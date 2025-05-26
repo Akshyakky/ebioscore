@@ -1,10 +1,9 @@
-import React, { use, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button, Grid } from "@mui/material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { useLoading } from "@/context/LoadingContext";
 import PermissionManager from "../../CommonPage/PermissionManager";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
-import { createEntityService } from "@/utils/Common/serviceFactory";
+import { profileMastService } from "@/services/SecurityManagementServices/securityManagementServices";
 
 interface ProfilePermissionsModifyModalProps {
   profileId: number;
@@ -15,7 +14,7 @@ interface ProfilePermissionsModifyModalProps {
 
 const ProfilePermissionsModifyModal: React.FC<ProfilePermissionsModifyModalProps> = ({ profileId, open, onClose }) => {
   const [profileName, setProfileName] = useState<string>("");
-  const profileMastService = useMemo(() => createEntityService<ProfileMastDto>("ProfileMast", "securityManagementURL"), []);
+
   useEffect(() => {
     if (open && profileId > 0) {
       const fetchProfile = async () => {

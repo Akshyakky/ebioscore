@@ -31,7 +31,7 @@ import { AppLogEntry } from "@/interfaces/Common/AppLogEntry";
 import { useLoading } from "@/hooks/Common/useLoading";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import { format } from "date-fns";
-import { LogService } from "@/services/CommonServices/LogService";
+import { LogService } from "@/services/NotGenericPaternServices/LogService";
 import CustomAccordion from "@/components/Accordion/CustomAccordion";
 
 // Define log levels with their corresponding colors

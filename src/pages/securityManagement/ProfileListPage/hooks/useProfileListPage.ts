@@ -1,8 +1,7 @@
 import { createEntityHook } from "@/hooks/Common/useGenericEntity";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
-import { createEntityService } from "@/utils/Common/serviceFactory";
+import { profileMastService } from "@/services/SecurityManagementServices/securityManagementServices";
 
-const profileMastService = createEntityService<ProfileMastDto>("ProfileMast", "securityManagementURL");
 const useGenericProfileList = createEntityHook<ProfileMastDto>(profileMastService, "profileID");
 
 export const useProfileList = () => {

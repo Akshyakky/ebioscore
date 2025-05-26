@@ -8,8 +8,6 @@ import { profileListService } from "@/services/SecurityManagementServices/Profil
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 import { ProfileDetailDto, ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { UserListDto, UserListPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
-
-import { RootState } from "@/store";
 import { Add, Book, Cancel, Delete, Edit, FileUpload, Lock, Print, Save } from "@mui/icons-material";
 import IconSwitch from "@/components/Switch/IconSwitch";
 import { showAlert } from "@/utils/Common/showAlert";

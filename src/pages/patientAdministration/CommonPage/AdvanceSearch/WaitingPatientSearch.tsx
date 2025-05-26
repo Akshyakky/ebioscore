@@ -3,7 +3,7 @@ import { SelectChangeEvent, Grid } from "@mui/material";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CloseIcon from "@mui/icons-material/Close";
 import { UserState } from "@/store/features/auth/types";
-import { ContactMastService } from "@/services/CommonServices/ContactMastService";
+import { ContactMastService } from "@/services/NotGenericPaternServices/ContactMastService";
 import CustomGrid from "@/components/CustomGrid/CustomGrid";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { DateFilterType } from "@/interfaces/PatientAdministration/revisitFormData";

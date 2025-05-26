@@ -3,10 +3,9 @@ import React, { useState, useCallback } from "react";
 import { Grid, SelectChangeEvent } from "@mui/material";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { roomListService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
-import FormField from "@/components/FormField/FormField";
+import FormField, { DropdownOption } from "@/components/FormField/FormField";
 import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
 import PatientDemographics from "../../CommonPage/Demograph/PatientDemographics";
 
@@ -51,18 +50,6 @@ const AdmissionDetails: React.FC<AdmissionDetailsProps> = ({ formData, onChange,
       console.error("Error fetching beds:", error);
     }
   }, []);
-
-  // useEffect(() => {
-  //     if (formData.WrBedDetailsDto.rGrpID) {
-  //         fetchRooms(formData.WrBedDetailsDto.rGrpID);
-  //     }
-  // }, [formData.WrBedDetailsDto.rGrpID, fetchRooms]);
-
-  // useEffect(() => {
-  //     if (formData.IPAdmissionDetailsDto.rlID) {
-  //         fetchBeds(formData.IPAdmissionDetailsDto.rlID);
-  //     }
-  // }, [formData.IPAdmissionDetailsDto.rlID, fetchBeds]);
 
   const handleBedDropdownChange = (e: SelectChangeEvent<string>) => {
     const bedId = Number(e.target.value);

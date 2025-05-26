@@ -5,7 +5,7 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDayjs from "@/hooks/Common/useDateTime";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
-import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
+import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { Close, Print } from "@mui/icons-material";
 import { Box, debounce, Grid, Pagination } from "@mui/material";
 import React, { useCallback, useEffect, useState } from "react";

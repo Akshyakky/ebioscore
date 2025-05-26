@@ -2,7 +2,7 @@ import useDayjs from "@/hooks/Common/useDateTime";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
-import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
+import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { useAppSelector } from "@/store/hooks";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Container, Paper } from "@mui/material";

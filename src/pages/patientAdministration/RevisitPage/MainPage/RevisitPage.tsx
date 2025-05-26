@@ -13,7 +13,7 @@ import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { OPVisitDto, RevisitFormErrors } from "@/interfaces/PatientAdministration/revisitFormData";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import useDropdownChange from "@/hooks/useDropdownChange";
-import { ContactMastService } from "@/services/CommonServices/ContactMastService";
+import { ContactMastService } from "@/services/NotGenericPaternServices/ContactMastService";
 import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
 import { RevisitService } from "@/services/PatientAdministrationServices/RevisitService/RevisitService";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";

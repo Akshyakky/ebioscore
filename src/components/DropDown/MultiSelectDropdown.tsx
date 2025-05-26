@@ -87,7 +87,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         MenuProps={{
           PaperProps: {
             style: {
-              maxHeight: 300, // 👈 limit dropdown height
+              maxHeight: 300,
               backgroundColor: backgroundColor,
               color: textColor,
             },

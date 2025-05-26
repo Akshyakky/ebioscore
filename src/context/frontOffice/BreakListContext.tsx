@@ -3,7 +3,7 @@ import React, { createContext, useState } from "react";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useAppSelector } from "@/store/hooks";
 import { RootState } from "@/store";
-import { BreakListService } from "@/services/FrontOfficeServices/BreakListServices/BreakListService";
+import { BreakListService } from "@/services/NotGenericPaternServices/BreakListService";
 import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 
 interface BreakListContextProps {
