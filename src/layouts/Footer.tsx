@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Container, Typography, Link, Divider, useTheme, Grid, Stack, IconButton, Tooltip, useMediaQuery, alpha } from "@mui/material";
+import { Box, Container, Typography, Link, Divider, Grid, Stack, IconButton, Tooltip, useMediaQuery, useTheme } from "@mui/material";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -13,32 +13,13 @@ interface FooterLinkProps {
   children: React.ReactNode;
 }
 
-// Enhanced Footer Link component with icons
 const FooterLink: React.FC<FooterLinkProps> = ({ href, icon: Icon, children }) => {
-  const theme = useTheme();
-
   return (
-    <Link
-      href={href}
-      underline="hover"
-      color="inherit"
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        fontSize: "0.875rem",
-        py: 0.5,
-        opacity: 0.85,
-        transition: "all 0.2s ease",
-        "&:hover": {
-          opacity: 1,
-          color: theme.palette.primary.main,
-        },
-      }}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      {Icon && <Icon fontSize="small" sx={{ mr: 1, fontSize: "1rem" }} />}
-      {children}
+    <Link href={href} underline="hover" color="inherit" target="_blank" rel="noopener noreferrer" display="flex" alignItems="center" py={0.5}>
+      {Icon && <Icon fontSize="small" sx={{ mr: 1 }} />}
+      <Typography variant="body2" component="span">
+        {children}
+      </Typography>
     </Link>
   );
 };
@@ -48,45 +29,31 @@ const Footer: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isTablet = useMediaQuery(theme.breakpoints.down("md"));
   const currentYear = new Date().getFullYear();
-  const appVersion = "2.5.1"; // This would ideally come from your environment or config
+  const appVersion = "2.5.1";
 
   return (
-    <Box
-      component="footer"
-      sx={{
-        backgroundColor: theme.palette.mode === "dark" ? theme.palette.background.paper : theme.palette.grey[50],
-        color: theme.palette.text.secondary,
-        borderTop: `1px solid ${theme.palette.divider}`,
-        mt: "auto",
-        py: isMobile ? 2 : 1.5,
-      }}
-    >
+    <Box component="footer" bgcolor="background.paper" color="text.secondary" borderTop={1} borderColor="divider" mt="auto" py={isMobile ? 2 : 1.5}>
       <Container maxWidth="lg">
         {/* Main footer content */}
         <Grid container spacing={2} justifyContent="space-between" alignItems="flex-start">
           {/* Copyright and company info */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Box sx={{ mb: { xs: 2, md: 0 } }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
-                <BusinessOutlinedIcon
-                  sx={{
-                    fontSize: "1rem",
-                    mr: 0.5,
-                    verticalAlign: "text-bottom",
-                    color: theme.palette.primary.main,
-                  }}
-                />
-                Biosoft Health Tech
-              </Typography>
+            <Box mb={{ xs: 2, md: 0 }}>
+              <Box display="flex" alignItems="center" mb={1}>
+                <BusinessOutlinedIcon color="primary" fontSize="small" sx={{ mr: 0.5 }} />
+                <Typography variant="body2" fontWeight="medium">
+                  Biosoft Health Tech Private Ltd.
+                </Typography>
+              </Box>
               <Typography variant="caption" color="text.secondary" paragraph>
-                Electronic Hospital Information System (eHos). Streamlining healthcare management and patient care.
+                Electronic Hospital Information System (eBois). Streamlining healthcare management and patient care.
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+              <Box display="flex" alignItems="center" mt={1}>
                 <Typography variant="caption" color="text.secondary">
                   Version {appVersion}
                 </Typography>
                 <Tooltip title="Latest updates">
-                  <IconButton size="small" color="inherit" sx={{ ml: 1, p: 0.5 }}>
+                  <IconButton size="small" color="inherit">
                     <UpdateIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
@@ -97,8 +64,8 @@ const Footer: React.FC = () => {
           {/* Quick links */}
           {!isMobile && (
             <Grid size={{ xs: 12, md: 4 }}>
-              <Box sx={{ mb: { xs: 2, md: 0 } }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
+              <Box mb={{ xs: 2, md: 0 }}>
+                <Typography variant="body2" color="text.secondary" fontWeight="medium" mb={1}>
                   Quick Links
                 </Typography>
                 <Stack direction={isTablet ? "row" : "column"} spacing={isTablet ? 2 : 0} flexWrap="wrap">
@@ -119,25 +86,18 @@ const Footer: React.FC = () => {
             </Grid>
           )}
 
-          {/* Additional info/links for desktop view */}
+          {/* Contact information */}
           {!isTablet && (
             <Grid size={{ xs: 12, md: 4 }}>
               <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
+                <Typography variant="body2" color="text.secondary" fontWeight="medium" mb={1}>
                   Contact
                 </Typography>
                 <Typography variant="caption" paragraph>
                   For support, please contact your system administrator or IT department.
                 </Typography>
                 <Tooltip title="Visit Biosoft website">
-                  <Link
-                    href="https://www.biosoftltd.com/"
-                    underline="hover"
-                    color="primary"
-                    sx={{ fontWeight: "medium", fontSize: "0.875rem" }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <Link href="https://www.biosoftltd.com/" underline="hover" color="primary" fontWeight="medium" target="_blank" rel="noopener noreferrer">
                     www.biosoftltd.com
                   </Link>
                 </Tooltip>
@@ -146,27 +106,14 @@ const Footer: React.FC = () => {
           )}
         </Grid>
 
-        {/* Copyright bar - always visible */}
-        <Divider sx={{ my: 1.5, borderColor: alpha(theme.palette.divider, 0.5) }} />
+        {/* Copyright bar */}
+        <Divider sx={{ my: 1.5 }} />
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
+        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
           {/* Copyright notice */}
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{
-              fontFamily: theme.typography.fontFamily,
-            }}
-          >
+          <Typography variant="caption" color="text.secondary">
             Copyright © {currentYear}{" "}
-            <Link href="https://www.biosoftltd.com/" underline="hover" color="inherit" sx={{ fontWeight: "medium" }} target="_blank" rel="noopener noreferrer">
+            <Link href="https://www.biosoftltd.com/" underline="hover" color="inherit" fontWeight="medium" target="_blank" rel="noopener noreferrer">
               Biosoft Health Tech Private Ltd.
             </Link>{" "}
             All Rights Reserved.
@@ -174,32 +121,32 @@ const Footer: React.FC = () => {
 
           {/* Mobile view links (condensed) */}
           {isMobile ? (
-            <Box sx={{ display: "flex", gap: 1.5, mt: { xs: 1, sm: 0 } }}>
+            <Box display="flex" gap={1.5} mt={{ xs: 1, sm: 0 }}>
               <Tooltip title="Terms of Service">
-                <IconButton size="small" component={Link} href="/terms" color="inherit" sx={{ p: 0.5 }}>
+                <IconButton size="small" component={Link} href="/terms" color="inherit">
                   <InfoOutlinedIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Privacy Policy">
-                <IconButton size="small" component={Link} href="/privacy" color="inherit" sx={{ p: 0.5 }}>
+                <IconButton size="small" component={Link} href="/privacy" color="inherit">
                   <PrivacyTipOutlinedIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Help">
-                <IconButton size="small" component={Link} href="/help" color="inherit" sx={{ p: 0.5 }}>
+                <IconButton size="small" component={Link} href="/help" color="inherit">
                   <HelpOutlineIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             </Box>
           ) : (
-            // Tablet and Desktop view links
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <Typography variant="caption" component={Link} href="/terms" color="text.secondary" underline="hover" target="_blank" rel="noopener noreferrer">
+            // Desktop view links
+            <Box display="flex" gap={2}>
+              <Link href="/terms" variant="caption" color="text.secondary" underline="hover" target="_blank" rel="noopener noreferrer">
                 Terms of Service
-              </Typography>
-              <Typography variant="caption" component={Link} href="/privacy" color="text.secondary" underline="hover" target="_blank" rel="noopener noreferrer">
+              </Link>
+              <Link href="/privacy" variant="caption" color="text.secondary" underline="hover" target="_blank" rel="noopener noreferrer">
                 Privacy Policy
-              </Typography>
+              </Link>
             </Box>
           )}
         </Box>

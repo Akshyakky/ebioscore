@@ -3,11 +3,11 @@ import { RootState } from "@/store";
 import { useAppSelector } from "@/store/hooks";
 import { showAlert } from "@/utils/Common/showAlert";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
-import { BillingService } from "@/services/BillingServices/BillingService";
-import { AppModifyListService } from "@/services/CommonServices/AppModifyListService";
-import { departmentService } from "@/services/CommonServices/CommonModelServices";
+import { BillingService } from "@/services/NotGenericPaternServices/BillingService";
+import { AppModifyListService } from "@/services/NotGenericPaternServices/AppModifyListService";
+import { departmentListService } from "@/services/CommonServices/CommonGenericServices";
 import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
-import { ContactMastService } from "@/services/CommonServices/ContactMastService";
+import { ContactMastService } from "@/services/NotGenericPaternServices/ContactMastService";
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { deptUnitListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
@@ -24,12 +24,15 @@ import {
 } from "@/services/ClinicalManagementServices/clinicalManagementService";
 import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
 import { componentEntryTypeService, templategroupService } from "@/services/Laboratory/LaboratoryService";
-import { appSubModuleService, appUserModuleService } from "@/services/SecurityManagementServices/securityManagementServices";
+import { appSubModuleService, appUserModuleService, profileMastService } from "@/services/SecurityManagementServices/securityManagementServices";
 import { serviceTypeService } from "@/services/BillingServices/BillingGenericService";
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
+import { useUserList } from "@/pages/securityManagement/UserListPage/hooks/useUserList";
+import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
+import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 
 export type DropdownType =
   | "pic"
@@ -96,7 +99,9 @@ export type DropdownType =
   | "manufacturer"
   | "productLocation"
   | "grnType"
-  | "resourceList";
+  | "resourceList"
+  | "usersWithoutLogin"
+  | "profiles";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -136,7 +141,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
 
   // State to track status of each dropdown
   const [dropdownStates, setDropdownStates] = useState<Record<DropdownType, DropdownState>>({} as Record<DropdownType, DropdownState>);
-
+  const { getUsersWithoutCredentials } = useUserList();
   // Registry of dropdown fetcher functions
   const fetcherRegistry = useMemo<Record<DropdownType, FetcherFunction>>(
     () => ({
@@ -226,7 +231,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
 
       department: async () => {
-        const response = await departmentService.getAll();
+        const response = await departmentListService.getAll();
         return (response.data || []).map((item: DepartmentDto) => ({
           value: item.deptID || 0,
           label: item.deptName || "",
@@ -482,6 +487,23 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           label: item.rLName || "",
           ...item,
         }));
+      },
+      usersWithoutLogin: async () => {
+        const response = await getUsersWithoutCredentials();
+        return response.data.map((user: UserListDto) => ({
+          value: user.conID || 0,
+          label: user.appUserName || "",
+        }));
+      },
+      profiles: async () => {
+        const response = await profileMastService.getAll();
+        const profiles: ProfileMastDto[] = response.data || [];
+        const profilesDropdownOptions: any[] = profiles.map((profile: ProfileMastDto) => ({
+          value: profile.profileID,
+          label: profile.profileName,
+          ...profile,
+        }));
+        return profilesDropdownOptions;
       },
     }),
     []

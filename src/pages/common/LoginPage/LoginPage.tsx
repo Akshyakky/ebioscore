@@ -1,9 +1,8 @@
-// LoginPage.tsx - Fixed Version
 import { Company } from "@/types/Common/Company.type";
 import { useAppDispatch } from "@/store/hooks";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
-import { ClientParameterService } from "@/services/CommonServices/ClientParameterService";
-import { CompanyService } from "@/services/CommonServices/CompanyService";
+import { ClientParameterService } from "@/services/NotGenericPaternServices/ClientParameterService";
+import { CompanyService } from "@/services/NotGenericPaternServices/CompanyService";
 import AuthService from "@/services/AuthService/AuthService";
 import { setUserDetails } from "@/store/features/auth/authSlice";
 import { notifySuccess } from "@/utils/Common/toastManager";

@@ -1,4 +1,5 @@
 import { AppModifiedMast, AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
+import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
 import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
 import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
@@ -8,11 +9,7 @@ export const roomGroupService = createEntityService<RoomGroupDto>("RoomGroup", "
 export const roomListService = createEntityService<RoomListDto>("RoomList", "hospitalAdministrations");
 export const wrBedService = createEntityService<WrBedDto>("WrBed", "hospitalAdministrations");
 export const wardCategoryService = createEntityService<WardCategoryDto>("WardCategory", "hospitalAdministrations");
-
 export const insuranceListService = createEntityService<InsuranceListDto>("InsuranceList", "hospitalAdministrations");
-
 export const appModifiedListService = createEntityService<AppModifyFieldDto>("AppModifiedList", "hospitalAdministrations");
-
 export const appModifiedMastService = createEntityService<AppModifiedMast>("AppModifiedMast", "hospitalAdministrations");
-
-export const deptUnitListService = createEntityService<AppModifiedMast>("DeptUnitList", "hospitalAdministrations");
+export const deptUnitListService = createEntityService<DeptUnitListDto>("DeptUnitList", "hospitalAdministrations");

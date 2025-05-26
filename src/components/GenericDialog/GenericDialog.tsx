@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, Box, SxProps, useTheme, useMediaQuery, Fade, styled, Theme } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, Box, SxProps, useTheme, useMediaQuery, Fade, Theme } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
@@ -25,47 +25,6 @@ interface GenericDialogProps {
     onEntered?: () => void;
   };
 }
-
-const StyledDialog = styled(Dialog)(({ theme }) => ({
-  "& .MuiDialog-paper": {
-    borderRadius: theme.shape.borderRadius,
-  },
-  zIndex: 1300,
-}));
-
-const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
-  padding: theme.spacing(1, 3),
-  borderBottom: `1px solid ${theme.palette.divider}`,
-}));
-
-const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
-  padding: theme.spacing(1, 3),
-  overflowX: "hidden",
-  position: "relative",
-}));
-
-const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
-  padding: theme.spacing(1, 3),
-  borderTop: `1px solid ${theme.palette.divider}`,
-}));
-
-const ScrollIndicator = styled(Box)(({ theme }) => ({
-  position: "absolute",
-  right: theme.spacing(1),
-  zIndex: 1,
-  borderRadius: "50%",
-  width: 40,
-  height: 40,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-  transition: "opacity 0.3s ease",
-  //boxShadow: theme.shadows[4],
-  "&:hover": {
-    transform: "scale(1.1)",
-  },
-}));
 
 const GenericDialog: React.FC<GenericDialogProps> = ({
   open,
@@ -143,7 +102,7 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
   }, [open]);
 
   return (
-    <StyledDialog
+    <Dialog
       open={open}
       onClose={handleClose}
       maxWidth={maxWidth === "xxl" ? false : maxWidth}
@@ -153,71 +112,49 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
       fullScreen={fullScreen || isMobile}
       TransitionProps={TransitionProps}
     >
-      <StyledDialogTitle sx={titleSx}>
+      <DialogTitle sx={titleSx}>
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant={titleVariant} component="h2" id="dialog-title" color={theme.palette.mode === "dark" ? "text.primary" : "inherit"}>
+          <Typography variant={titleVariant} component="h2" id="dialog-title">
             {title}
           </Typography>
           {showCloseButton && (
-            <IconButton
-              edge="end"
-              onClick={onClose}
-              aria-label="close dialog"
-              sx={{
-                "&:hover": {
-                  color: theme.palette.mode === "dark" ? theme.palette.text.primary : theme.palette.primary.light,
-                },
-                ...closeButtonSx,
-              }}
-            >
+            <IconButton edge="end" onClick={onClose} aria-label="close dialog" sx={closeButtonSx}>
               <CloseIcon />
             </IconButton>
           )}
         </Box>
-      </StyledDialogTitle>
-      <StyledDialogContent
+      </DialogTitle>
+
+      <DialogContent
         ref={contentRef}
         dividers
         sx={{
           ...dialogContentSx,
           overflowY: "auto",
           maxHeight: isMobile ? "calc(100vh - 56px)" : "70vh",
-          // Ensure scrollbar is always visible
+          position: "relative",
+          // Enhanced scrollbar styling that works with both themes
           scrollbarWidth: "thin",
           "&::-webkit-scrollbar": {
             width: "8px",
           },
           "&::-webkit-scrollbar-track": {
-            backgroundColor: theme.palette.grey[100],
+            backgroundColor: theme.palette.action.hover,
           },
           "&::-webkit-scrollbar-thumb": {
-            backgroundColor: theme.palette.grey[400],
-            border: "none",
-            borderRadius: "10px",
+            backgroundColor: theme.palette.action.disabled,
+            borderRadius: "4px",
             "&:hover": {
-              backgroundColor: theme.palette.grey[600],
+              backgroundColor: theme.palette.action.active,
             },
           },
         }}
       >
         {children}
+      </DialogContent>
 
-        {/* Scroll Down Indicator */}
-        <Fade in={showScrollDown}>
-          <ScrollIndicator bottom={16} onClick={() => scrollToDirection("down")} aria-label="Scroll down to see more content">
-            <KeyboardArrowDownIcon />
-          </ScrollIndicator>
-        </Fade>
-
-        {/* Scroll Up Indicator */}
-        <Fade in={showScrollUp}>
-          <ScrollIndicator top={16} onClick={() => scrollToDirection("up")} aria-label="Scroll up">
-            <KeyboardArrowUpIcon />
-          </ScrollIndicator>
-        </Fade>
-      </StyledDialogContent>
-      {actions && <StyledDialogActions sx={actionsSx}>{React.Children.toArray(actions)}</StyledDialogActions>}
-    </StyledDialog>
+      {actions && <DialogActions sx={actionsSx}>{React.Children.toArray(actions)}</DialogActions>}
+    </Dialog>
   );
 };
 

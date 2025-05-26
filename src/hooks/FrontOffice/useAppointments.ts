@@ -1,5 +1,5 @@
 import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
+import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useDayjs from "../Common/useDateTime";

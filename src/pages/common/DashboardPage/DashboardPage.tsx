@@ -38,7 +38,7 @@ import {
 import { endOfMonth, endOfWeek, endOfYear, startOfMonth, startOfWeek, startOfYear, format, parse } from "date-fns";
 import CustomButton from "@/components/Button/CustomButton";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { DashBoardService } from "@/services/DashboardServices/DashBoardService";
+import { DashBoardService } from "@/services/NotGenericPaternServices/DashBoardService";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { useForm } from "react-hook-form";
 import dayjs from "dayjs";

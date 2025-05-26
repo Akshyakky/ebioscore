@@ -1,9 +1,9 @@
 import useDayjs from "@/hooks/Common/useDateTime";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { useAppointments } from "@/hooks/FrontOffice/useAppointments";
-import { CommonService } from "@/services/CommonServices/CommonService";
-import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
-import { BreakListService } from "@/services/FrontOfficeServices/BreakListServices/BreakListService";
+import { CommonService } from "@/services/NotGenericPaternServices/CommonService";
+import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
+import { BreakListService } from "@/services/NotGenericPaternServices/BreakListService";
 import { Box, useTheme } from "@mui/material";
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { dxSchedulerAppointment } from "devextreme/ui/scheduler";

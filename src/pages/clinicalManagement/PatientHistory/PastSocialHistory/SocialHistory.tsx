@@ -4,8 +4,6 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import FormField from "@/components/FormField/FormField";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
-
-import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";
@@ -15,6 +13,7 @@ import GroupIcon from "@mui/icons-material/Group";
 import LifestyleIcon from "@mui/icons-material/Accessibility";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import ClearIcon from "@mui/icons-material/Clear";
+import { shService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface SocialHistoryProps {
   pChartID: number;
@@ -47,8 +46,6 @@ export const SocialHistory: React.FC<SocialHistoryProps> = ({ pChartID, opipNo, 
   const [formState, setFormState] = useState<OPIPHistSHDto>(initialFormState);
   const { setLoading } = useLoading();
 
-  const socialHistoryService = useMemo(() => createEntityService<OPIPHistSHDto>("OPIPHistSH", "clinicalManagementURL"), []);
-
   const resetForm = useCallback(() => {
     setFormState({
       ...initialFormState,
@@ -73,7 +70,7 @@ export const SocialHistory: React.FC<SocialHistoryProps> = ({ pChartID, opipNo, 
       if (confirmed) {
         setLoading(true);
         try {
-          await socialHistoryService.updateActiveStatus(item.opipSHID, false);
+          await shService.updateActiveStatus(item.opipSHID, false);
           const updatedList = historyList.filter((history) => history.opipSHID !== item.opipSHID);
           onHistoryChange(updatedList);
           showAlert("Success", "Social history record deleted successfully", "success");
@@ -85,7 +82,7 @@ export const SocialHistory: React.FC<SocialHistoryProps> = ({ pChartID, opipNo, 
         }
       }
     },
-    [historyList, onHistoryChange, socialHistoryService, setLoading]
+    [historyList, onHistoryChange, shService]
   );
 
   const columns: Column<OPIPHistSHDto>[] = useMemo(

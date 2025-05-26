@@ -2,7 +2,7 @@ import CustomButton from "@/components/Button/CustomButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import FormField from "@/components/FormField/FormField";
 import { AssocDiagnosisDetailDto, DiagnosisDetailDto } from "@/interfaces/ClinicalManagement/DiagnosisDto";
-import { createEntityService } from "@/utils/Common/serviceFactory";
+import { icdDetailService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Grid, Paper, Typography } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";
@@ -14,7 +14,6 @@ interface DiagnosisSectionProps {
 }
 
 const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, associatedDiagnoses, onPrimaryDiagnosesChange, onAssociatedDiagnosesChange }) => {
-  const icdDetailService = useMemo(() => createEntityService<DiagnosisDetailDto>("IcdDetail", "clinicalManagementURL"), []);
   const [searchTerm, setSearchTerm] = useState("");
 
   const fetchIcdSuggestions = useCallback(

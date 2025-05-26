@@ -86,6 +86,42 @@ const lightTheme = createTheme({
           height: "100%",
           backgroundColor: LIGHT_COLORS.background.default,
         },
+        // Global scrollbar styles for light theme
+        "*::-webkit-scrollbar": {
+          width: "8px",
+          height: "8px",
+        },
+        "*::-webkit-scrollbar-track": {
+          background: LIGHT_COLORS.grey[100],
+          borderRadius: "4px",
+        },
+        "*::-webkit-scrollbar-thumb": {
+          background: LIGHT_COLORS.grey[400],
+          borderRadius: "4px",
+          border: `2px solid ${LIGHT_COLORS.grey[100]}`,
+          transition: "background-color 0.2s ease",
+        },
+        "*::-webkit-scrollbar-thumb:hover": {
+          background: LIGHT_COLORS.primary.main,
+        },
+        "*::-webkit-scrollbar-corner": {
+          background: LIGHT_COLORS.grey[100],
+        },
+        // Sidebar specific scrollbar (thinner)
+        ".sidebar-scroll::-webkit-scrollbar": {
+          width: "6px",
+        },
+        ".sidebar-scroll::-webkit-scrollbar-track": {
+          background: "transparent",
+        },
+        ".sidebar-scroll::-webkit-scrollbar-thumb": {
+          background: LIGHT_COLORS.grey[300],
+          borderRadius: "3px",
+          border: "none",
+        },
+        ".sidebar-scroll::-webkit-scrollbar-thumb:hover": {
+          background: LIGHT_COLORS.primary.main,
+        },
       },
     },
     MuiDrawer: {
@@ -134,10 +170,32 @@ const lightTheme = createTheme({
           backgroundColor: LIGHT_COLORS.primary.main,
           color: LIGHT_COLORS.primary.contrastText,
           borderBottom: `1px solid ${LIGHT_COLORS.divider}`,
-          padding: COMPONENT_CONSTANTS.dialog.spacing,
-          height: COMPONENT_CONSTANTS.dialog.titleHeight,
+          padding: `${SPACING_UNIT}px ${COMPONENT_CONSTANTS.dialog.spacing}px`,
+          minHeight: COMPONENT_CONSTANTS.dialog.titleHeight,
           fontSize: TYPOGRAPHY.fontSizes.lg,
           fontWeight: TYPOGRAPHY.fontWeights.semibold,
+          display: "flex",
+          alignItems: "center",
+          "& .MuiBox-root": {
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          },
+          "& .MuiTypography-root": {
+            flex: 1,
+            marginRight: SPACING_UNIT,
+            fontSize: "inherit",
+            fontWeight: "inherit",
+            lineHeight: 1.2,
+          },
+          "& .MuiIconButton-root": {
+            color: LIGHT_COLORS.primary.contrastText,
+            padding: SPACING_UNIT / 2,
+            "&:hover": {
+              backgroundColor: alpha(LIGHT_COLORS.primary.contrastText, 0.1),
+            },
+          },
         },
       },
     },
@@ -196,6 +254,23 @@ const lightTheme = createTheme({
           borderRadius: SHAPE.borderRadius,
           fontWeight: TYPOGRAPHY.fontWeights.medium,
           height: COMPONENT_CONSTANTS.button.mediumHeight,
+          "& .MuiSvgIcon-root": {
+            fontSize: 20,
+          },
+        },
+        sizeSmall: {
+          height: COMPONENT_CONSTANTS.button.smallHeight,
+          fontSize: TYPOGRAPHY.fontSizes.xs,
+          "& .MuiSvgIcon-root": {
+            fontSize: 16,
+          },
+        },
+        sizeLarge: {
+          height: COMPONENT_CONSTANTS.button.largeHeight,
+          fontSize: TYPOGRAPHY.fontSizes.md,
+          "& .MuiSvgIcon-root": {
+            fontSize: 24,
+          },
         },
         contained: {
           boxShadow: "none",
@@ -224,20 +299,36 @@ const lightTheme = createTheme({
         root: {
           backgroundColor: LIGHT_COLORS.background.paper,
           color: LIGHT_COLORS.text.primary,
+          "& .MuiTableHead-root": {
+            backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
+          },
         },
       },
     },
     MuiTableHead: {
       styleOverrides: {
         root: {
-          backgroundColor: LIGHT_COLORS.primary.main,
-          "& .MuiTableCell-head": {
-            color: LIGHT_COLORS.primary.main,
-            fontWeight: TYPOGRAPHY.fontWeights.bold,
+          backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
+          "& .MuiTableCell-root": {
+            backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
+            color: `${LIGHT_COLORS.primary.contrastText} !important`,
+            fontWeight: `${TYPOGRAPHY.fontWeights.semibold} !important`,
             height: COMPONENT_CONSTANTS.table.headerHeight,
-            borderBottom: "none",
+            borderBottom: "none !important",
+            fontSize: `${TYPOGRAPHY.fontSizes.sm} !important`,
             "&:not(:last-child)": {
-              borderRight: `1px solid ${alpha(LIGHT_COLORS.primary.main, 0.2)}`,
+              borderRight: `1px solid ${alpha(LIGHT_COLORS.primary.contrastText, 0.2)} !important`,
+            },
+          },
+          "& .MuiTableCell-head": {
+            backgroundColor: `${LIGHT_COLORS.primary.main} !important`,
+            color: `${LIGHT_COLORS.primary.contrastText} !important`,
+            fontWeight: `${TYPOGRAPHY.fontWeights.semibold} !important`,
+            height: COMPONENT_CONSTANTS.table.headerHeight,
+            borderBottom: "none !important",
+            fontSize: `${TYPOGRAPHY.fontSizes.sm} !important`,
+            "&:not(:last-child)": {
+              borderRight: `1px solid ${alpha(LIGHT_COLORS.primary.contrastText, 0.2)} !important`,
             },
           },
         },
@@ -271,6 +362,116 @@ const lightTheme = createTheme({
         root: {
           height: COMPONENT_CONSTANTS.table.paginationHeight,
           borderTop: `1px solid ${LIGHT_COLORS.divider}`,
+        },
+      },
+    },
+    MuiAccordion: {
+      styleOverrides: {
+        root: {
+          boxShadow: `0 2px 8px ${alpha(LIGHT_COLORS.primary.main, 0.08)}`,
+          borderRadius: SHAPE.borderRadius,
+          "&:before": {
+            display: "none",
+          },
+          "&.Mui-expanded": {
+            margin: `${SPACING_UNIT}px 0`,
+          },
+          transition: `box-shadow ${TRANSITIONS.duration.short}ms ${TRANSITIONS.easing.easeInOut}, margin ${TRANSITIONS.duration.short}ms ${TRANSITIONS.easing.easeInOut}`,
+          "&:hover": {
+            boxShadow: `0 4px 12px ${alpha(LIGHT_COLORS.primary.main, 0.12)}`,
+          },
+        },
+      },
+    },
+    MuiAccordionSummary: {
+      styleOverrides: {
+        root: {
+          background: `linear-gradient(135deg, ${alpha(LIGHT_COLORS.primary.main, 0.05)}, ${alpha(LIGHT_COLORS.primary.main, 0.1)})`,
+          color: LIGHT_COLORS.primary.main,
+          minHeight: "42px !important",
+          height: "42px",
+          borderRadius: `${SHAPE.borderRadius}px ${SHAPE.borderRadius}px 0 0`,
+          "&.Mui-expanded": {
+            minHeight: "48px",
+          },
+          "&:hover": {
+            background: `linear-gradient(135deg, ${alpha(LIGHT_COLORS.primary.main, 0.1)}, ${alpha(LIGHT_COLORS.primary.main, 0.15)})`,
+          },
+          transition: `background ${TRANSITIONS.duration.shortest}ms ${TRANSITIONS.easing.easeInOut}`,
+          "& .MuiAccordionSummary-expandIconWrapper": {
+            color: LIGHT_COLORS.primary.main,
+            transition: `transform ${TRANSITIONS.duration.shortest}ms ${TRANSITIONS.easing.easeInOut}`,
+            "&.Mui-expanded": {
+              transform: "rotate(180deg)",
+            },
+          },
+        },
+        content: {
+          margin: "12px 0",
+          "& .MuiTypography-root": {
+            fontSize: "1rem",
+            fontWeight: TYPOGRAPHY.fontWeights.semibold,
+            letterSpacing: "0.5px",
+            textTransform: "uppercase",
+            color: LIGHT_COLORS.primary.main,
+          },
+        },
+      },
+    },
+    MuiAccordionDetails: {
+      styleOverrides: {
+        root: {
+          padding: SPACING_UNIT * 2,
+          borderTop: `1px solid ${alpha(LIGHT_COLORS.divider, 0.5)}`,
+          backgroundColor: alpha(LIGHT_COLORS.background.paper, 0.8),
+          borderRadius: `0 0 ${SHAPE.borderRadius}px ${SHAPE.borderRadius}px`,
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: LIGHT_COLORS.primary.main,
+          color: LIGHT_COLORS.primary.contrastText,
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+          borderBottom: `1px solid ${LIGHT_COLORS.divider}`,
+          "& .MuiToolbar-root": {
+            backgroundColor: "inherit",
+            color: "inherit",
+          },
+          "& .MuiIconButton-root": {
+            color: LIGHT_COLORS.primary.contrastText,
+            "&:hover": {
+              backgroundColor: alpha(LIGHT_COLORS.primary.contrastText, 0.1),
+            },
+          },
+          "& .MuiTypography-root": {
+            color: LIGHT_COLORS.primary.contrastText,
+            fontWeight: TYPOGRAPHY.fontWeights.semibold,
+          },
+        },
+      },
+    },
+    MuiButtonGroup: {
+      styleOverrides: {
+        root: {
+          "& .MuiButtonGroup-grouped:not(:last-of-type)": {
+            borderColor: alpha(LIGHT_COLORS.primary.main, 0.15),
+          },
+          "& .MuiButton-root": {
+            textTransform: "none",
+            gap: SPACING_UNIT,
+            fontSize: TYPOGRAPHY.fontSizes.sm,
+            fontWeight: TYPOGRAPHY.fontWeights.medium,
+            "& .MuiSvgIcon-root": {
+              fontSize: 20,
+            },
+          },
+        },
+        grouped: {
+          "&:not(:last-of-type)": {
+            borderColor: alpha(LIGHT_COLORS.primary.main, 0.15),
+          },
         },
       },
     },

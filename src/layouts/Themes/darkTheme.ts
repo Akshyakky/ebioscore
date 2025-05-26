@@ -94,6 +94,42 @@ const darkTheme = createTheme({
           height: "100%",
           backgroundColor: DARK_COLORS.background.default,
         },
+        // Global scrollbar styles for dark theme
+        "*::-webkit-scrollbar": {
+          width: "8px",
+          height: "8px",
+        },
+        "*::-webkit-scrollbar-track": {
+          background: DARK_COLORS.background.default,
+          borderRadius: "4px",
+        },
+        "*::-webkit-scrollbar-thumb": {
+          background: DARK_COLORS.grey[600],
+          borderRadius: "4px",
+          border: `2px solid ${DARK_COLORS.background.default}`,
+          transition: "background-color 0.2s ease",
+        },
+        "*::-webkit-scrollbar-thumb:hover": {
+          background: DARK_COLORS.primary.main,
+        },
+        "*::-webkit-scrollbar-corner": {
+          background: DARK_COLORS.background.default,
+        },
+        // Sidebar specific scrollbar (thinner)
+        ".sidebar-scroll::-webkit-scrollbar": {
+          width: "6px",
+        },
+        ".sidebar-scroll::-webkit-scrollbar-track": {
+          background: "transparent",
+        },
+        ".sidebar-scroll::-webkit-scrollbar-thumb": {
+          background: DARK_COLORS.grey[600],
+          borderRadius: "3px",
+          border: "none",
+        },
+        ".sidebar-scroll::-webkit-scrollbar-thumb:hover": {
+          background: DARK_COLORS.primary.main,
+        },
       },
     },
     MuiDrawer: {
@@ -143,10 +179,32 @@ const darkTheme = createTheme({
           backgroundColor: DARK_COLORS.primary.main,
           color: DARK_COLORS.primary.contrastText,
           borderBottom: `1px solid ${DARK_COLORS.divider}`,
-          padding: COMPONENT_CONSTANTS.dialog.spacing,
-          height: COMPONENT_CONSTANTS.dialog.titleHeight,
+          padding: `${SPACING_UNIT}px ${COMPONENT_CONSTANTS.dialog.spacing}px`,
+          minHeight: COMPONENT_CONSTANTS.dialog.titleHeight,
           fontSize: TYPOGRAPHY.fontSizes.lg,
           fontWeight: TYPOGRAPHY.fontWeights.semibold,
+          display: "flex",
+          alignItems: "center",
+          "& .MuiBox-root": {
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          },
+          "& .MuiTypography-root": {
+            flex: 1,
+            marginRight: SPACING_UNIT,
+            fontSize: "inherit",
+            fontWeight: "inherit",
+            lineHeight: 1.2,
+          },
+          "& .MuiIconButton-root": {
+            color: DARK_COLORS.primary.contrastText,
+            padding: SPACING_UNIT / 2,
+            "&:hover": {
+              backgroundColor: alpha(DARK_COLORS.primary.contrastText, 0.1),
+            },
+          },
         },
       },
     },
@@ -206,6 +264,23 @@ const darkTheme = createTheme({
           borderRadius: SHAPE.borderRadius,
           fontWeight: TYPOGRAPHY.fontWeights.medium,
           height: COMPONENT_CONSTANTS.button.mediumHeight,
+          "& .MuiSvgIcon-root": {
+            fontSize: 20,
+          },
+        },
+        sizeSmall: {
+          height: COMPONENT_CONSTANTS.button.smallHeight,
+          fontSize: TYPOGRAPHY.fontSizes.xs,
+          "& .MuiSvgIcon-root": {
+            fontSize: 16,
+          },
+        },
+        sizeLarge: {
+          height: COMPONENT_CONSTANTS.button.largeHeight,
+          fontSize: TYPOGRAPHY.fontSizes.md,
+          "& .MuiSvgIcon-root": {
+            fontSize: 24,
+          },
         },
         contained: {
           boxShadow: "none",
@@ -234,20 +309,36 @@ const darkTheme = createTheme({
         root: {
           backgroundColor: DARK_COLORS.background.paper,
           color: DARK_COLORS.text.primary,
+          "& .MuiTableHead-root": {
+            backgroundColor: `${DARK_COLORS.primary.main} !important`,
+          },
         },
       },
     },
     MuiTableHead: {
       styleOverrides: {
         root: {
-          backgroundColor: DARK_COLORS.primary.main,
-          "& .MuiTableCell-head": {
-            color: DARK_COLORS.primary.contrastText,
-            fontWeight: TYPOGRAPHY.fontWeights.semibold,
+          backgroundColor: `${DARK_COLORS.primary.main} !important`,
+          "& .MuiTableCell-root": {
+            backgroundColor: `${DARK_COLORS.primary.main} !important`,
+            color: `${DARK_COLORS.primary.contrastText} !important`,
+            fontWeight: `${TYPOGRAPHY.fontWeights.semibold} !important`,
             height: COMPONENT_CONSTANTS.table.headerHeight,
-            borderBottom: "none",
+            borderBottom: "none !important",
+            fontSize: `${TYPOGRAPHY.fontSizes.sm} !important`,
             "&:not(:last-child)": {
-              borderRight: `1px solid ${alpha(DARK_COLORS.primary.contrastText, 0.2)}`,
+              borderRight: `1px solid ${alpha(DARK_COLORS.primary.contrastText, 0.2)} !important`,
+            },
+          },
+          "& .MuiTableCell-head": {
+            backgroundColor: `${DARK_COLORS.primary.main} !important`,
+            color: `${DARK_COLORS.primary.contrastText} !important`,
+            fontWeight: `${TYPOGRAPHY.fontWeights.semibold} !important`,
+            height: COMPONENT_CONSTANTS.table.headerHeight,
+            borderBottom: "none !important",
+            fontSize: `${TYPOGRAPHY.fontSizes.sm} !important`,
+            "&:not(:last-child)": {
+              borderRight: `1px solid ${alpha(DARK_COLORS.primary.contrastText, 0.2)} !important`,
             },
           },
         },
@@ -314,7 +405,122 @@ const darkTheme = createTheme({
         },
       },
     },
+    MuiAccordion: {
+      styleOverrides: {
+        root: {
+          boxShadow: `0 2px 8px ${alpha(DARK_COLORS.background.default, 0.3)}`,
+          borderRadius: SHAPE.borderRadius,
+          backgroundColor: DARK_COLORS.background.paper,
+          "&:before": {
+            display: "none",
+          },
+          "&.Mui-expanded": {
+            margin: `${SPACING_UNIT}px 0`,
+          },
+          transition: `box-shadow ${TRANSITIONS.duration.short}ms ${TRANSITIONS.easing.easeInOut}, margin ${TRANSITIONS.duration.short}ms ${TRANSITIONS.easing.easeInOut}`,
+          "&:hover": {
+            boxShadow: `0 4px 12px ${alpha(DARK_COLORS.background.default, 0.5)}`,
+          },
+        },
+      },
+    },
+    MuiAccordionSummary: {
+      styleOverrides: {
+        root: {
+          background: `linear-gradient(135deg, ${alpha(DARK_COLORS.primary.main, 0.1)}, ${alpha(DARK_COLORS.primary.main, 0.15)})`,
+          color: DARK_COLORS.primary.light,
+          minHeight: "42px !important",
+          height: "42px",
+          borderRadius: `${SHAPE.borderRadius}px ${SHAPE.borderRadius}px 0 0`,
+          "&.Mui-expanded": {
+            minHeight: "48px",
+          },
+          "&:hover": {
+            background: `linear-gradient(135deg, ${alpha(DARK_COLORS.primary.main, 0.15)}, ${alpha(DARK_COLORS.primary.main, 0.2)})`,
+            color: DARK_COLORS.primary.main,
+          },
+          transition: `background ${TRANSITIONS.duration.shortest}ms ${TRANSITIONS.easing.easeInOut}, color ${TRANSITIONS.duration.shortest}ms ${TRANSITIONS.easing.easeInOut}`,
+          "& .MuiAccordionSummary-expandIconWrapper": {
+            color: DARK_COLORS.primary.light,
+            transition: `transform ${TRANSITIONS.duration.shortest}ms ${TRANSITIONS.easing.easeInOut}, color ${TRANSITIONS.duration.shortest}ms ${TRANSITIONS.easing.easeInOut}`,
+            "&.Mui-expanded": {
+              transform: "rotate(180deg)",
+            },
+          },
+          "&:hover .MuiAccordionSummary-expandIconWrapper": {
+            color: DARK_COLORS.primary.main,
+          },
+        },
+        content: {
+          margin: "12px 0",
+          "& .MuiTypography-root": {
+            fontSize: "1rem",
+            fontWeight: TYPOGRAPHY.fontWeights.semibold,
+            letterSpacing: "0.5px",
+            textTransform: "uppercase",
+            color: "inherit",
+          },
+        },
+      },
+    },
+    MuiAccordionDetails: {
+      styleOverrides: {
+        root: {
+          padding: SPACING_UNIT * 2,
+          borderTop: `1px solid ${alpha(DARK_COLORS.divider, 0.5)}`,
+          backgroundColor: alpha(DARK_COLORS.background.dark, 0.6),
+          borderRadius: `0 0 ${SHAPE.borderRadius}px ${SHAPE.borderRadius}px`,
+          color: DARK_COLORS.text.primary,
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: DARK_COLORS.primary.main,
+          color: DARK_COLORS.primary.contrastText,
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+          borderBottom: `1px solid ${DARK_COLORS.divider}`,
+          "& .MuiToolbar-root": {
+            backgroundColor: "inherit",
+            color: "inherit",
+          },
+          "& .MuiIconButton-root": {
+            color: DARK_COLORS.primary.contrastText,
+            "&:hover": {
+              backgroundColor: alpha(DARK_COLORS.primary.contrastText, 0.1),
+            },
+          },
+          "& .MuiTypography-root": {
+            color: DARK_COLORS.primary.contrastText,
+            fontWeight: TYPOGRAPHY.fontWeights.semibold,
+          },
+        },
+      },
+    },
+    MuiButtonGroup: {
+      styleOverrides: {
+        root: {
+          "& .MuiButtonGroup-grouped:not(:last-of-type)": {
+            borderColor: alpha(DARK_COLORS.primary.main, 0.2),
+          },
+          "& .MuiButton-root": {
+            textTransform: "none",
+            gap: SPACING_UNIT,
+            fontSize: TYPOGRAPHY.fontSizes.sm,
+            fontWeight: TYPOGRAPHY.fontWeights.medium,
+            "& .MuiSvgIcon-root": {
+              fontSize: 20,
+            },
+          },
+        },
+        grouped: {
+          "&:not(:last-of-type)": {
+            borderColor: alpha(DARK_COLORS.primary.main, 0.2),
+          },
+        },
+      },
+    },
   },
 });
-
 export default darkTheme;

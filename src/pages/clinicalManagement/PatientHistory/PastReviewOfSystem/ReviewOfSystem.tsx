@@ -4,8 +4,6 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import FormField from "@/components/FormField/FormField";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
-
-import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";
@@ -15,6 +13,7 @@ import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import ClearIcon from "@mui/icons-material/Clear";
+import { reviewOfSystemService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface ReviewOfSystemProps {
   pChartID: number;
@@ -43,8 +42,6 @@ export const ReviewOfSystem: React.FC<ReviewOfSystemProps> = ({ pChartID, opipNo
 
   const [formState, setFormState] = useState<OPIPHistROSDto>(initialFormState);
   const { setLoading } = useLoading();
-
-  const reviewOfSystemService = useMemo(() => createEntityService<OPIPHistROSDto>("OPIPHistROS", "clinicalManagementURL"), []);
 
   const resetForm = useCallback(() => {
     setFormState({

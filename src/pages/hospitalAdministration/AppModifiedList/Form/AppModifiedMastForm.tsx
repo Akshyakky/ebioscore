@@ -14,7 +14,7 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { showAlert } from "@/utils/Common/showAlert";
 import { useAppModifiedList } from "../hooks/useAppModifiedList";
 import { useAppSelector } from "@/store/hooks";
-import moduleService from "@/services/CommonServices/ModuleService";
+import moduleService from "@/services/NotGenericPaternServices/ModuleService";
 
 interface AppModifiedMasterFormProps {
   open: boolean;

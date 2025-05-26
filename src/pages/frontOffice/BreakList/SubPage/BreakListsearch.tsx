@@ -3,8 +3,8 @@ import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearc
 import { useLoading } from "@/hooks/Common/useLoading";
 import { BreakConSuspendData } from "@/interfaces/FrontOffice/BreakConSuspendData";
 import { BreakConDetailData, BreakListData } from "@/interfaces/FrontOffice/BreakListData";
-import { AppointmentService } from "@/services/FrontOfficeServices/AppointmentServices/AppointmentService";
-import { BreakListService } from "@/services/FrontOfficeServices/BreakListServices/BreakListService";
+import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
+import { BreakListService } from "@/services/NotGenericPaternServices/BreakListService";
 import { breakConDetailsService, breakConSuspendService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { formatDate } from "@/utils/Common/dateUtils";
 import { showAlert } from "@/utils/Common/showAlert";

@@ -3,7 +3,7 @@ import CustomButton from "@/components/Button/CustomButton";
 import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { BChargeDetailsDto, BChargePackDto } from "@/interfaces/Billing/BChargeDetails";
-import { chargeDetailsService } from "@/services/BillingServices/chargeDetailsService";
+import { chargeDetailsService } from "@/services/BillingServices/ChargeDetailsService";
 
 import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Grid, SelectChangeEvent, Typography } from "@mui/material";

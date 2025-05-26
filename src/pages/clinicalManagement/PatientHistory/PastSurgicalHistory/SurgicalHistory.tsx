@@ -5,7 +5,6 @@ import FormField from "../../../../components/FormField/FormField";
 import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { OPIPHistPSHDto } from "../../../../interfaces/ClinicalManagement/OPIPHistPSHDto";
-import { createEntityService } from "../../../../utils/Common/serviceFactory";
 import { showAlert } from "../../../../utils/Common/showAlert";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
@@ -14,6 +13,7 @@ import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import HealingIcon from "@mui/icons-material/Healing";
 import ClearIcon from "@mui/icons-material/Clear";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { pshService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface SurgicalHistoryProps {
   pChartID: number;
@@ -43,8 +43,6 @@ export const SurgicalHistory: React.FC<SurgicalHistoryProps> = ({ pChartID, opip
   const [formState, setFormState] = useState<OPIPHistPSHDto>(initialFormState);
   const { setLoading } = useLoading();
 
-  const surgicalHistoryService = useMemo(() => createEntityService<OPIPHistPSHDto>("OPIPHistPSH", "clinicalManagementURL"), []);
-
   const resetForm = useCallback(() => {
     setFormState({
       ...initialFormState,
@@ -69,7 +67,7 @@ export const SurgicalHistory: React.FC<SurgicalHistoryProps> = ({ pChartID, opip
       if (confirmed) {
         setLoading(true);
         try {
-          await surgicalHistoryService.updateActiveStatus(item.opipPshID, false);
+          await pshService.updateActiveStatus(item.opipPshID, false);
           const updatedList = historyList.filter((history) => history.opipPshID !== item.opipPshID);
           onHistoryChange(updatedList);
           showAlert("Success", "Surgical history record deleted successfully", "success");
@@ -81,7 +79,7 @@ export const SurgicalHistory: React.FC<SurgicalHistoryProps> = ({ pChartID, opip
         }
       }
     },
-    [historyList, onHistoryChange, surgicalHistoryService, setLoading]
+    [historyList, onHistoryChange, pshService]
   );
 
   const columns: Column<OPIPHistPSHDto>[] = useMemo(

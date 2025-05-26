@@ -1,51 +1,60 @@
-import LoginPage from "../pages/common/LoginPage/LoginPage";
-import DashboardPage from "../pages/common/DashboardPage/DashboardPage";
-import RevisitPage from "../pages/patientAdministration/RevisitPage/MainPage/RevisitPage";
+import { lazy, Suspense } from "react";
+import React from "react";
 import { PatientSearchProvider } from "../context/PatientSearchContext";
-import ContactListPage from "../pages/hospitalAdministration/ContactListPage/MainPage/ContactListPage";
-import ProfileListPage from "../pages/securityManagement/ProfileListPage/MainPage/ProfileListPage";
 import { ProfileListSearchProvider } from "../context/SecurityManagement/ProfileListSearchContext";
-import AdmissionPage from "../pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
 import { UserListSearchProvider } from "../context/SecurityManagement/UserListSearchContext";
-import UserListPage from "../pages/securityManagement/UserListPage/MainPage/UserListPage";
-import ResourceListPage from "../pages/frontOffice/ResourceList/MainPage/ResourceListPage";
-import ReasonListPage from "../pages/frontOffice/ReasonList/MainPage/ReasonListPage";
-import BreakListPage from "../pages/frontOffice/BreakList/MainPage/BreakListPage";
-import AppointmentPage from "../pages/frontOffice/AppointmentPage/MainPage/AppointmentPage";
-import PatientInvoiceCodePage from "../pages/billing/PatientInvoiceCodePage/MainPage/PatientInvoiceCodePage";
-import DepartmentListPage from "../pages/billing/DepartmentListPage/MainPage/DepartmentListPage";
-import PaymentTypesPage from "../pages/billing/PaymentTypesPage/MainPage/PaymentTypesPage";
-import ServiceGroupsListPage from "../pages/billing/ServiceGroupsListPage/MainPage/ServiceGroupsListPage";
-import WardCategoryPage from "../pages/hospitalAdministration/WardCategoryPage/MainPage/WardCategoryPage";
-import BedSetUpPage from "../pages/hospitalAdministration/Room-BedSetUp/MainPage/BedSetUpPage";
-import DeptUnitListPage from "../pages/hospitalAdministration/DeptUnitList/MainPage/DeptUnitListPage";
-import InsuranceListPage from "../pages/hospitalAdministration/InsuranceList/MainPage/InsuranceListPage";
-import ProductTaxListPage from "../pages/inventoryManagement/ProductTaxList/MainPage/ProductTaxListPage";
-import ProductOverviewPage from "../pages/inventoryManagement/ProductOverview/MainPage/ProductOverviewPage";
-import ManageBedPage from "../pages/patientAdministration/ManageBed/MainPage/ManageBedPage";
-import DiagnosisListPage from "../pages/clinicalManagement/DiagnosisList/MainPage/DiagnosisListPage";
-import MedicationListPage from "../pages/clinicalManagement/MedicationList/MainPage/MedicationListPage";
-import AppModifiedListPage from "../pages/hospitalAdministration/AppModifiedList/MainPage/AppModifiedListPage";
-import ChargeDetailsPage from "../pages/billing/ChargeDetailsPage/MainPage/ChargeDetailsPage";
-import DischargePage from "../pages/patientAdministration/DischargePage/MainPage/DischargePage";
-import WardBedTransferPage from "../pages/patientAdministration/WardBedTransfer/MainPage/WardBedTransferPage";
-import MedicationFormPage from "@/pages/clinicalManagement/medicationForm/MainPage/MedicationFormPage";
-import MedicationFrequencyPage from "@/pages/clinicalManagement/MedicationFrequency/MainPage/MedicationFrequencyPage";
-import MedicationDosagePage from "@/pages/clinicalManagement/MedicationDosage/MainPage/MedicationDosagePage";
-import ProcedureListPage from "@/pages/clinicalManagement/ProcedureList/MainPage/ProcedureListPage";
-import MedicationGenericPage from "@/pages/clinicalManagement/MedicationGeneric/MainPage/MedicationGenericPage";
-import InvestigationListPage from "@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage";
-import ComponentEntryTypePage from "@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage";
-import ForgotPasswordPage from "@/pages/common/ForgotPasswordPage/ForgotPasswordPage";
-import IndentProductPage from "@/pages/inventoryManagement/IndentProduct/MainPage/IndentProductPage";
-import NotFoundPage from "@/pages/common/NotFoundPage/NotFoundPage";
-import EmployeeRegistrationForm from "@/pages/common/ExampleFormPage/EmployeeRegistrationForm";
-import AlertManager from "@/pages/common/AlertManagerPage/MainPage/AlertManager";
-import PurchaseOrderPage from "@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage";
-import LogModule from "@/pages/common/LogViewerPage/LogModule";
-import ProductList from "@/pages/inventoryManagement/ProductList/MainPage/ProductList";
-import ProductTransaction from "@/pages/inventoryManagement/ProductTransaction/ProductTransaction";
-import RegistrationPage from "@/pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage";
+
+// Lazy load components
+const LoginPage = lazy(() => import("../pages/common/LoginPage/LoginPage"));
+const DashboardPage = lazy(() => import("../pages/common/DashboardPage/DashboardPage"));
+const RevisitPage = lazy(() => import("../pages/patientAdministration/RevisitPage/MainPage/RevisitPage"));
+const ContactListPage = lazy(() => import("../pages/hospitalAdministration/ContactListPage/MainPage/ContactListPage"));
+const ProfileListPage = lazy(() => import("../pages/securityManagement/ProfileListPage/MainPage/ProfileListPage"));
+const AdmissionPage = lazy(() => import("../pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage"));
+const UserListPage = lazy(() => import("../pages/securityManagement/UserListPage/MainPage/UserListPage"));
+const ResourceListPage = lazy(() => import("../pages/frontOffice/ResourceList/MainPage/ResourceListPage"));
+const ReasonListPage = lazy(() => import("../pages/frontOffice/ReasonList/MainPage/ReasonListPage"));
+const BreakListPage = lazy(() => import("../pages/frontOffice/BreakList/MainPage/BreakListPage"));
+const AppointmentPage = lazy(() => import("../pages/frontOffice/AppointmentPage/MainPage/AppointmentPage"));
+const PatientInvoiceCodePage = lazy(() => import("../pages/billing/PatientInvoiceCodePage/MainPage/PatientInvoiceCodePage"));
+const DepartmentListPage = lazy(() => import("../pages/billing/DepartmentListPage/MainPage/DepartmentListPage"));
+const PaymentTypesPage = lazy(() => import("../pages/billing/PaymentTypesPage/MainPage/PaymentTypesPage"));
+const ServiceGroupsListPage = lazy(() => import("../pages/billing/ServiceGroupsListPage/MainPage/ServiceGroupsListPage"));
+const WardCategoryPage = lazy(() => import("../pages/hospitalAdministration/WardCategoryPage/MainPage/WardCategoryPage"));
+const BedSetUpPage = lazy(() => import("../pages/hospitalAdministration/Room-BedSetUp/MainPage/BedSetUpPage"));
+const DeptUnitListPage = lazy(() => import("../pages/hospitalAdministration/DeptUnitList/MainPage/DeptUnitListPage"));
+const InsuranceListPage = lazy(() => import("../pages/hospitalAdministration/InsuranceList/MainPage/InsuranceListPage"));
+const ProductTaxListPage = lazy(() => import("../pages/inventoryManagement/ProductTaxList/MainPage/ProductTaxListPage"));
+const ProductOverviewPage = lazy(() => import("../pages/inventoryManagement/ProductOverview/MainPage/ProductOverviewPage"));
+const ManageBedPage = lazy(() => import("../pages/patientAdministration/ManageBed/MainPage/ManageBedPage"));
+const DiagnosisListPage = lazy(() => import("../pages/clinicalManagement/DiagnosisList/MainPage/DiagnosisListPage"));
+const MedicationListPage = lazy(() => import("../pages/clinicalManagement/MedicationList/MainPage/MedicationListPage"));
+const AppModifiedListPage = lazy(() => import("../pages/hospitalAdministration/AppModifiedList/MainPage/AppModifiedListPage"));
+const ChargeDetailsPage = lazy(() => import("../pages/billing/ChargeDetailsPage/MainPage/ChargeDetailsPage"));
+const DischargePage = lazy(() => import("../pages/patientAdministration/DischargePage/MainPage/DischargePage"));
+const WardBedTransferPage = lazy(() => import("../pages/patientAdministration/WardBedTransfer/MainPage/WardBedTransferPage"));
+const MedicationFormPage = lazy(() => import("@/pages/clinicalManagement/medicationForm/MainPage/MedicationFormPage"));
+const MedicationFrequencyPage = lazy(() => import("@/pages/clinicalManagement/MedicationFrequency/MainPage/MedicationFrequencyPage"));
+const MedicationDosagePage = lazy(() => import("@/pages/clinicalManagement/MedicationDosage/MainPage/MedicationDosagePage"));
+const ProcedureListPage = lazy(() => import("@/pages/clinicalManagement/ProcedureList/MainPage/ProcedureListPage"));
+const MedicationGenericPage = lazy(() => import("@/pages/clinicalManagement/MedicationGeneric/MainPage/MedicationGenericPage"));
+const InvestigationListPage = lazy(() => import("@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage"));
+const ComponentEntryTypePage = lazy(() => import("@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage"));
+const ForgotPasswordPage = lazy(() => import("@/pages/common/ForgotPasswordPage/ForgotPasswordPage"));
+const IndentProductPage = lazy(() => import("@/pages/inventoryManagement/IndentProduct/MainPage/IndentProductPage"));
+const NotFoundPage = lazy(() => import("@/pages/common/NotFoundPage/NotFoundPage"));
+const EmployeeRegistrationForm = lazy(() => import("@/pages/common/ExampleFormPage/EmployeeRegistrationForm"));
+const AlertManager = lazy(() => import("@/pages/common/AlertManagerPage/MainPage/AlertManager"));
+const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
+const LogModule = lazy(() => import("@/pages/common/LogViewerPage/LogModule"));
+const ProductList = lazy(() => import("@/pages/inventoryManagement/ProductList/MainPage/ProductList"));
+const ProductTransaction = lazy(() => import("@/pages/inventoryManagement/ProductTransaction/ProductTransaction"));
+const RegistrationPage = lazy(() => import("@/pages/patientAdministration/RegistrationPage/MainPage/RegistrationPage"));
+
+// Wrap components with Suspense
+const wrapWithSuspense = (Component: React.ComponentType<any>) => {
+  return (props: any) => React.createElement(Suspense, { fallback: React.createElement("div", null, "Loading...") }, React.createElement(Component, props));
+};
 
 interface RouteConfig {
   path: string;
@@ -64,7 +73,7 @@ const routeConfig: RouteConfig[] = [
   // { path: "/", component: () => <Navigate to="/dashboard" />, protected: true },
   {
     path: "/",
-    component: LoginPage, // or use: () => <Navigate to="/login" />
+    component: wrapWithSuspense(LoginPage),
     protected: false,
     metadata: {
       title: "Home",
@@ -73,7 +82,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/login",
-    component: LoginPage,
+    component: wrapWithSuspense(LoginPage),
     protected: false,
     metadata: {
       title: "Login",
@@ -82,7 +91,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/dashboard",
-    component: DashboardPage,
+    component: wrapWithSuspense(DashboardPage),
     protected: true,
     metadata: {
       title: "Dashboard",
@@ -91,7 +100,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/registrationpage",
-    component: RegistrationPage,
+    component: wrapWithSuspense(RegistrationPage),
     protected: true,
     providers: [PatientSearchProvider],
     metadata: {
@@ -101,7 +110,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/revisitpage",
-    component: RevisitPage,
+    component: wrapWithSuspense(RevisitPage),
     protected: true,
     providers: [PatientSearchProvider],
     metadata: {
@@ -111,7 +120,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/contactlistpage",
-    component: ContactListPage,
+    component: wrapWithSuspense(ContactListPage),
     protected: true,
     metadata: {
       title: "Contact List",
@@ -120,7 +129,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/userlistpage",
-    component: UserListPage,
+    component: wrapWithSuspense(UserListPage),
     protected: true,
     providers: [UserListSearchProvider],
     metadata: {
@@ -130,7 +139,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/profilelistpage",
-    component: ProfileListPage,
+    component: wrapWithSuspense(ProfileListPage),
     protected: true,
     providers: [ProfileListSearchProvider],
     metadata: {
@@ -140,7 +149,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/admissionpage",
-    component: AdmissionPage,
+    component: wrapWithSuspense(AdmissionPage),
     protected: true,
     providers: [PatientSearchProvider],
     metadata: {
@@ -150,7 +159,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ResourceListPage",
-    component: ResourceListPage,
+    component: wrapWithSuspense(ResourceListPage),
     protected: true,
     metadata: {
       title: "Resource List",
@@ -159,7 +168,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ReasonListPage",
-    component: ReasonListPage,
+    component: wrapWithSuspense(ReasonListPage),
     protected: true,
     metadata: {
       title: "Reason List",
@@ -168,7 +177,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/BreakListPage",
-    component: BreakListPage,
+    component: wrapWithSuspense(BreakListPage),
     protected: true,
     metadata: {
       title: "Break List",
@@ -177,7 +186,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/Appointmentpage",
-    component: AppointmentPage,
+    component: wrapWithSuspense(AppointmentPage),
     protected: true,
     metadata: {
       title: "Appointments",
@@ -186,7 +195,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/PatientInvoiceCodePage",
-    component: PatientInvoiceCodePage,
+    component: wrapWithSuspense(PatientInvoiceCodePage),
     protected: true,
     metadata: {
       title: "Patient Invoice Code",
@@ -195,7 +204,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/DepartmentListPage",
-    component: DepartmentListPage,
+    component: wrapWithSuspense(DepartmentListPage),
     protected: true,
     providers: [UserListSearchProvider],
     metadata: {
@@ -205,7 +214,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ServiceGroupsListPage",
-    component: ServiceGroupsListPage,
+    component: wrapWithSuspense(ServiceGroupsListPage),
     protected: true,
     metadata: {
       title: "Service Groups",
@@ -214,7 +223,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/PaymentTypesPage",
-    component: PaymentTypesPage,
+    component: wrapWithSuspense(PaymentTypesPage),
     protected: true,
     metadata: {
       title: "Payment Types",
@@ -223,7 +232,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/AlertPage",
-    component: AlertManager,
+    component: wrapWithSuspense(AlertManager),
     protected: true,
     providers: [PatientSearchProvider],
     metadata: {
@@ -233,7 +242,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/WardCategoryPage",
-    component: WardCategoryPage,
+    component: wrapWithSuspense(WardCategoryPage),
     protected: true,
     metadata: {
       title: "Ward Categories",
@@ -242,7 +251,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/BedSetUpPage",
-    component: BedSetUpPage,
+    component: wrapWithSuspense(BedSetUpPage),
     protected: true,
     metadata: {
       title: "Bed Setup",
@@ -251,7 +260,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/DeptUnitListPage",
-    component: DeptUnitListPage,
+    component: wrapWithSuspense(DeptUnitListPage),
     protected: true,
     metadata: {
       title: "Department Units",
@@ -260,7 +269,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/InsuranceListPage",
-    component: InsuranceListPage,
+    component: wrapWithSuspense(InsuranceListPage),
     protected: true,
     metadata: {
       title: "Insurance",
@@ -269,7 +278,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ProductListPage",
-    component: ProductList,
+    component: wrapWithSuspense(ProductList),
     protected: true,
     metadata: {
       title: "Products",
@@ -278,7 +287,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ProductTaxListPage",
-    component: ProductTaxListPage,
+    component: wrapWithSuspense(ProductTaxListPage),
     protected: true,
     metadata: {
       title: "Product Tax",
@@ -287,7 +296,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ProductOverviewPage",
-    component: ProductOverviewPage,
+    component: wrapWithSuspense(ProductOverviewPage),
     protected: true,
     metadata: {
       title: "Product Overview",
@@ -296,7 +305,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ManageBedPage",
-    component: ManageBedPage,
+    component: wrapWithSuspense(ManageBedPage),
     protected: true,
     metadata: {
       title: "Manage Beds",
@@ -305,7 +314,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/DiagnosisListPage",
-    component: DiagnosisListPage,
+    component: wrapWithSuspense(DiagnosisListPage),
     protected: true,
     metadata: {
       title: "Diagnosis List",
@@ -314,7 +323,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/MedicationListPage",
-    component: MedicationListPage,
+    component: wrapWithSuspense(MedicationListPage),
     protected: true,
     metadata: {
       title: "Medications",
@@ -323,7 +332,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/MedicationFormPage",
-    component: MedicationFormPage,
+    component: wrapWithSuspense(MedicationFormPage),
     protected: true,
     metadata: {
       title: "Medication Forms",
@@ -332,7 +341,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/AppModifiedListPage",
-    component: AppModifiedListPage,
+    component: wrapWithSuspense(AppModifiedListPage),
     protected: true,
     metadata: {
       title: "Modified Applications",
@@ -341,7 +350,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ChargeDetailsPage",
-    component: ChargeDetailsPage,
+    component: wrapWithSuspense(ChargeDetailsPage),
     protected: true,
     metadata: {
       title: "Charge Details",
@@ -350,7 +359,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/DischargePage",
-    component: DischargePage,
+    component: wrapWithSuspense(DischargePage),
     protected: true,
     metadata: {
       title: "Discharge",
@@ -359,7 +368,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/WardBedTransferPage",
-    component: WardBedTransferPage,
+    component: wrapWithSuspense(WardBedTransferPage),
     protected: true,
     metadata: {
       title: "Ward/Bed Transfer",
@@ -368,7 +377,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/MedicationFrequencyPage",
-    component: MedicationFrequencyPage,
+    component: wrapWithSuspense(MedicationFrequencyPage),
     protected: true,
     metadata: {
       title: "Medication Frequency",
@@ -377,7 +386,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/MedicationDosagePage",
-    component: MedicationDosagePage,
+    component: wrapWithSuspense(MedicationDosagePage),
     protected: true,
     metadata: {
       title: "Medication Dosage",
@@ -386,7 +395,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ProcedureListPage",
-    component: ProcedureListPage,
+    component: wrapWithSuspense(ProcedureListPage),
     protected: true,
     metadata: {
       title: "Procedures",
@@ -395,7 +404,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/MedicationGenericPage",
-    component: MedicationGenericPage,
+    component: wrapWithSuspense(MedicationGenericPage),
     protected: true,
     metadata: {
       title: "Generic Medications",
@@ -404,7 +413,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/InvestigationListPage",
-    component: InvestigationListPage,
+    component: wrapWithSuspense(InvestigationListPage),
     protected: true,
     metadata: {
       title: "Investigations",
@@ -413,7 +422,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ComponentEntryTypePage",
-    component: ComponentEntryTypePage,
+    component: wrapWithSuspense(ComponentEntryTypePage),
     protected: true,
     metadata: {
       title: "Component Entry Types",
@@ -422,7 +431,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/PurchaseOrderPage",
-    component: PurchaseOrderPage,
+    component: wrapWithSuspense(PurchaseOrderPage),
     protected: true,
     metadata: {
       title: "Purchase Orders",
@@ -431,7 +440,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ForgotPasswordPage",
-    component: ForgotPasswordPage,
+    component: wrapWithSuspense(ForgotPasswordPage),
     protected: false,
     metadata: {
       title: "Forgot Password",
@@ -440,7 +449,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/IndentProductPage",
-    component: IndentProductPage,
+    component: wrapWithSuspense(IndentProductPage),
     protected: true,
     metadata: {
       title: "Indent Product",
@@ -449,7 +458,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/EmployeeRegistrationForm",
-    component: EmployeeRegistrationForm,
+    component: wrapWithSuspense(EmployeeRegistrationForm),
     protected: true,
     metadata: {
       title: "Employee Registration",
@@ -458,7 +467,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/LogModulePage",
-    component: LogModule,
+    component: wrapWithSuspense(LogModule),
     protected: true,
     metadata: {
       title: "Log Module",
@@ -467,7 +476,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ProductTransaction",
-    component: ProductTransaction,
+    component: wrapWithSuspense(ProductTransaction),
     protected: true,
     metadata: {
       title: "Product Transaction",
@@ -477,7 +486,7 @@ const routeConfig: RouteConfig[] = [
   // 404 Not Found route - must be placed last to catch all unmatched routes
   {
     path: "*",
-    component: NotFoundPage,
+    component: wrapWithSuspense(NotFoundPage),
     protected: false,
     metadata: {
       title: "Page Not Found",
