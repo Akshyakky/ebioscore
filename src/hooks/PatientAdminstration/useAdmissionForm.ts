@@ -18,6 +18,7 @@ import { showAlert } from "@/utils/Common/showAlert";
 import { diagnosisService } from "@/services/ClinicalManagementServices/diagnosisService";
 import { allergyService } from "@/services/ClinicalManagementServices/allergyService";
 import { HistoryState } from "@/pages/clinicalManagement/PatientHistory/PatientHistory";
+import { fhService, pmhService, pshService, rosService, shService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface UseAdmissionFormReturn {
   formData: AdmissionDto;
@@ -110,11 +111,6 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
   const insurancePageRef = useRef<any>(null);
   const { setLoading } = useLoading();
 
-  const fhService = useMemo(() => createEntityService<OPIPHistFHDto>("OPIPHistFH", "clinicalManagementURL"), []);
-  const pmhService = useMemo(() => createEntityService<OPIPHistPMHDto>("OPIPHistPMH", "clinicalManagementURL"), []);
-  const shService = useMemo(() => createEntityService<OPIPHistSHDto>("OPIPHistSH", "clinicalManagementURL"), []);
-  const rosService = useMemo(() => createEntityService<OPIPHistROSDto>("OPIPHistROS", "clinicalManagementURL"), []);
-  const pshService = useMemo(() => createEntityService<OPIPHistPSHDto>("OPIPHistPSH", "clinicalManagementURL"), []);
   const pastMedService = useMemo(() => pastMedicationService, []);
 
   const fetchAdmitCode = useCallback(async () => {

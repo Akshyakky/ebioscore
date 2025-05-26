@@ -4,8 +4,6 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import FormField from "@/components/FormField/FormField";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
-
-import { createEntityService } from "@/utils/Common/serviceFactory";
 import { showAlert } from "@/utils/Common/showAlert";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";

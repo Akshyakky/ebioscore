@@ -1,10 +1,8 @@
 import { createEntityHook } from "@/hooks/Common/useGenericEntity";
 import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
-import { createEntityService } from "@/utils/Common/serviceFactory";
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 
-const userListService = createEntityService<UserListDto>("AppUser", "securityManagementURL");
-const useGenericUserList = createEntityHook<UserListDto>(userListService, "appID");
+const useGenericUserList = createEntityHook<UserListDto>(userListServices, "appID");
 
 export const useUserList = () => {
   const hook = useGenericUserList();
