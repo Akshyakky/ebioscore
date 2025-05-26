@@ -1,13 +1,5 @@
 import React, { useState, useMemo } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 
 export interface ColumnFilter {
   type: "text" | "number" | "date" | "select";
@@ -99,50 +91,46 @@ const CustomGrid = <T extends Record<string, any>>({
   customFilter,
 }: CustomGridProps<T>) => {
   const [columns, setColumns] = useState<Column<T>[]>(initialColumns);
-  
+
   const filteredData = useMemo(() => {
     if (!searchTerm) return data;
-    
-    return data.filter(item => {
+
+    return data.filter((item) => {
       if (customFilter) {
         return customFilter(item, searchTerm);
       }
-      
-      return columns.some(column => {
+
+      return columns.some((column) => {
         // Only search in visible columns
         if (!column.visible) return false;
-        
+
         const value = item[column.key];
-        
+
         if (value === null || value === undefined) return false;
-        
+
         const stringValue = String(value).toLowerCase();
         const searchTermLower = searchTerm.toLowerCase();
-        
+
         return stringValue.includes(searchTermLower);
       });
     });
   }, [data, searchTerm, columns, customFilter]);
- 
+
   const renderCell = (item: T, column: Column<T>, rowIndex: number, columnIndex: number) => {
     if (column.render) {
       return column.render(item, rowIndex, columnIndex);
     }
     return item[column.key];
-  }
- 
+  };
+
   return (
     <TableContainer sx={{ maxHeight, minHeight, ...gridStyle }}>
       <Table stickyHeader size="small">
         <TableHead>
           <TableRow>
             {columns.map((column) => (
-              <TableCell 
-                key={column.key}
-                style={column.headerStyle}
-                align={column.align || "left"}
-              >
-               <Typography>{column.header}</Typography> 
+              <TableCell key={column.key} style={column.headerStyle} align={column.align || "left"}>
+                <Typography>{column.header}</Typography>
               </TableCell>
             ))}
           </TableRow>
@@ -156,19 +144,19 @@ const CustomGrid = <T extends Record<string, any>>({
             </TableRow>
           ) : (
             filteredData.map((item, rowIndex) => (
-              <TableRow 
+              <TableRow
                 key={rowKeyField ? String(item[rowKeyField]) : rowIndex}
                 onClick={() => onRowClick && onRowClick(item)}
                 style={customRowStyle ? customRowStyle(item) : undefined}
                 hover={!!onRowClick}
-                sx={onRowClick ? { cursor: 'pointer' } : undefined}
+                sx={onRowClick ? { cursor: "pointer" } : undefined}
               >
                 {columns.map((column, columnIndex) => (
-                  <TableCell 
+                  <TableCell
                     key={`${rowIndex}-${column.key}`}
                     style={{
                       ...(column.cellStyle || {}),
-                      ...(customCellStyle ? customCellStyle(item, column) : {})
+                      ...(customCellStyle ? customCellStyle(item, column) : {}),
                     }}
                     align={column.align || "left"}
                   >

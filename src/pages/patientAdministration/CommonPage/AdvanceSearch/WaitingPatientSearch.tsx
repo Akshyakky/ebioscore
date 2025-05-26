@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { SelectChangeEvent, Grid } from "@mui/material";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CloseIcon from "@mui/icons-material/Close";
@@ -31,42 +31,125 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
   const [toDate, setToDate] = useState<Date | undefined>(new Date());
   const [physicians, setPhysicians] = useState<Array<{ value: string; label: string }>>([]);
   const [originalSearchResults, setOriginalSearchResults] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Use refs to track dialog state and prevent unnecessary API calls
+  const isDialogOpen = useRef(false);
+  const initialLoadDone = useRef(false);
+  const isCurrentlyFetching = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchWaitingPatients = useCallback(async () => {
+    // Prevent multiple concurrent requests
+    if (!isDialogOpen.current || isCurrentlyFetching.current) {
+      return;
+    }
+
+    // Cancel any existing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+
     try {
+      isCurrentlyFetching.current = true;
+      setIsLoading(true);
+
       const dateFilterTypeEnum = dateRange ? DateFilterType[dateRange as keyof typeof DateFilterType] : undefined;
+
       const data = await RevisitService.getWaitingPatientDetails(attendingPhy ? parseInt(attendingPhy) : undefined, dateFilterTypeEnum, fromDate, toDate);
+
+      // Check if request was aborted
+      if (abortControllerRef.current?.signal.aborted) {
+        return;
+      }
+
       const fetchedResults = data.data || [];
       setOriginalSearchResults(fetchedResults);
-      setSearchResults(data.data || []);
+      setSearchResults(fetchedResults);
+      initialLoadDone.current = true;
     } catch (error) {
-      console.error("Failed to fetch waiting patient details", error);
-      showAlert("Error", "Failed to fetch waiting patient details. Please try again.", "error");
+      // Only show error if request wasn't aborted
+      if (!abortControllerRef.current?.signal.aborted) {
+        console.error("Failed to fetch waiting patient details", error);
+        showAlert("Error", "Failed to fetch waiting patient details. Please try again.", "error");
+      }
+    } finally {
+      isCurrentlyFetching.current = false;
+      setIsLoading(false);
+      abortControllerRef.current = null;
     }
-  }, [attendingPhy, dateRange, fromDate, toDate]);
+  }, [attendingPhy, dateRange, fromDate, toDate]); // Removed isLoading from dependencies
 
+  // Handle dialog open/close
   useEffect(() => {
-    fetchWaitingPatients();
-  }, [fetchWaitingPatients]);
+    isDialogOpen.current = show;
+
+    if (show) {
+      // Only perform the initial load once when the dialog opens
+      if (!initialLoadDone.current) {
+        fetchWaitingPatients();
+      }
+    } else {
+      // Reset state when dialog closes
+      initialLoadDone.current = false;
+
+      // Cancel any ongoing request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+
+      // Reset loading state
+      if (isCurrentlyFetching.current) {
+        isCurrentlyFetching.current = false;
+        setIsLoading(false);
+      }
+    }
+  }, [show]); // Removed fetchWaitingPatients from dependencies to prevent loops
+
+  // Handle search parameter changes
+  useEffect(() => {
+    if (show && initialLoadDone.current) {
+      fetchWaitingPatients();
+    }
+  }, [dateRange, attendingPhy, fromDate, toDate, show]); // Removed fetchWaitingPatients from dependencies
 
   const handleDateRangeChange = useCallback((event: SelectChangeEvent<unknown>, child: React.ReactNode) => {
     setDateRange(event.target.value as string);
   }, []);
 
+  // Fetch physicians only once when dialog opens
   useEffect(() => {
-    const fetchPhysicians = async () => {
-      try {
-        const endpoint = "GetActiveConsultants";
-        const fetchedPhysicians = await ContactMastService.fetchAttendingPhysician(endpoint, userInfo.compID || 0);
-        setPhysicians(fetchedPhysicians);
-      } catch (error) {
-        console.error("Failed to fetch attending physicians", error);
-        showAlert("Error", "Failed to fetch attending physicians. Please try again.", "error");
-      }
-    };
+    if (show && physicians.length === 0 && !isCurrentlyFetching.current) {
+      const fetchPhysicians = async () => {
+        try {
+          isCurrentlyFetching.current = true;
+          setIsLoading(true);
 
-    fetchPhysicians();
-  }, [userInfo.compID]);
+          const endpoint = "GetActiveConsultants";
+          const fetchedPhysicians = await ContactMastService.fetchAttendingPhysician(endpoint, userInfo.compID || 0);
+
+          setPhysicians(
+            fetchedPhysicians.map((option: any) => ({
+              value: String(option.value),
+              label: option.label,
+            }))
+          );
+        } catch (error) {
+          console.error("Failed to fetch attending physicians", error);
+          showAlert("Error", "Failed to fetch attending physicians. Please try again.", "error");
+        } finally {
+          isCurrentlyFetching.current = false;
+          setIsLoading(false);
+        }
+      };
+
+      fetchPhysicians();
+    }
+  }, [show, userInfo.compID, physicians.length]);
 
   const handleAttendingPhyChange = useCallback(
     (event: SelectChangeEvent<string>) => {
@@ -120,6 +203,7 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
     [userInfo.userName, fetchWaitingPatients]
   );
 
+  // Filter results based on search term (client-side filtering)
   const filteredResults = useMemo(() => {
     if (!searchTerm) return originalSearchResults;
 
@@ -127,6 +211,7 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
     return originalSearchResults.filter((patient) => Object.values(patient).some((value) => String(value).toLowerCase().includes(lowercasedSearchTerm)));
   }, [searchTerm, originalSearchResults]);
 
+  // Update displayed results when filter changes
   useEffect(() => {
     setSearchResults(filteredResults);
   }, [filteredResults]);
@@ -157,6 +242,22 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
     [fromDate]
   );
 
+  // Search button handler - explicitly trigger a search
+  const handleSearch = useCallback(() => {
+    if (!isCurrentlyFetching.current) {
+      fetchWaitingPatients();
+    }
+  }, [fetchWaitingPatients]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   const columns = [
     {
       key: "pVisitDate",
@@ -175,11 +276,17 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
       visible: true,
       render: (row: any) => <CustomButton text="Cancel Visit" onClick={() => handleCancelVisit(row.opVID.toString())} icon={CancelIcon} color="error" size="small" />,
     },
+    {
+      key: "SelectPatient",
+      header: "Select",
+      visible: true,
+      render: (row: any) => <CustomButton text="Select" onClick={() => handlePatientSelect(row.pChartCode)} color="primary" size="small" />,
+    },
   ];
 
   const dialogContent = (
     <>
-      <Grid container spacing={2}>
+      <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <FloatingLabelTextBox
             ControlID="SearchWaitingPatient"
@@ -213,9 +320,9 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
           value={attendingPhy}
           name="attendingPhy"
           ControlID="AttendingPhysician"
-          options={physicians} // Use fetched physicians
+          options={physicians}
           onChange={handleAttendingPhyChange}
-          isMandatory={true}
+          isMandatory={false}
           size="small"
         />
         {dateRange === "Custom" && (
@@ -248,8 +355,18 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
             />
           </>
         )}
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <CustomButton text="Search" onClick={handleSearch} color="primary" size="medium" disabled={isLoading || isCurrentlyFetching.current} />
+        </Grid>
       </Grid>
-      <CustomGrid columns={columns} data={searchResults} minHeight="500px" maxHeight="500px" />
+      <CustomGrid
+        columns={columns}
+        data={searchResults}
+        minHeight="500px"
+        maxHeight="500px"
+        loading={isLoading}
+        emptyStateMessage="No waiting patients found. Try changing your search criteria."
+      />
     </>
   );
 

@@ -43,10 +43,6 @@ const ProfileListPage: React.FC = () => {
     transfer: "",
   });
 
-  useEffect(() => {
-    document.title = "Profile Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchProfileList();
   }, [fetchProfileList]);

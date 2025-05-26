@@ -13,51 +13,10 @@ export interface UserListDto extends BaseDto {
   appCode: string;
   appUAccess?: string;
   profileID: number;
+  profileName?: string;
   rActiveYN: string;
   rNotes?: string;
   transferYN?: string;
-}
-
-export interface UserListSearchResult {
-  profileID: number;
-  profileCode: string;
-  profileName: string;
-  status: string;
-  rNotes: string;
-  rActiveYN: string;
-}
-
-export interface UserMastDto {
-  profileID: number;
-  profileCode: string;
-  profileName: string;
-  rActiveYN: string;
-  compID: number;
-  rNotes: string;
-}
-
-export interface UserPermissionDto {
-  repID: number;
-  auAccessID?: number;
-  appID: number;
-  appUName: string;
-  aOPRID?: number;
-  allowYN: string;
-  rActiveYN: string;
-  rNotes: string;
-  profileID: number;
-  operationID?: number;
-  profDetID?: number;
-  operationName?: string;
-  allow?: boolean;
-}
-export interface UserPermissionDropdowns {
-  mainModuleID: string;
-  mainModuleName: string;
-  subModuleID: string;
-  subModuleName: string;
-  repMainModuleID: string;
-  repMainModuleName: string;
 }
 
 export interface UserListPermissionDto {

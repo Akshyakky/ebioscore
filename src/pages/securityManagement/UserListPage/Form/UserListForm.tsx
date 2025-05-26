@@ -49,7 +49,7 @@ type UserListFormData = z.infer<typeof schema>;
 
 const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { saveUser } = useUserList();
+  const { saveUserList } = useUserList();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -62,7 +62,6 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
   const [isProfileModifyModalOpen, setIsProfileModifyModalOpen] = useState<boolean>(false);
   const { usersWithoutLogin, profiles } = useDropdownValues(["usersWithoutLogin", "profiles"]);
   const isAddMode = !initialData;
-
   const defaultValues: UserListFormData = {
     appID: 0,
     appCode: "",
@@ -97,7 +96,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
 
   const watchedData = watch();
   const permissionView = watchedData.appID > 0 && watchedData.adminUserYN === "N" && !watchedData.profileID;
-
+  const newPasswordEnabled = isAddMode || newPassword;
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
@@ -136,7 +135,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
   const onSubmit = async (data: UserListFormData) => {
     if (viewOnly) return;
 
-    if (isAddMode || newPassword) {
+    if (newPasswordEnabled) {
       if (data.appUAccess !== data.confirmPassword) {
         setFormError("Passwords do not match");
         return;
@@ -172,8 +171,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
         transferYN: data.transferYN ?? "N",
       };
 
-      const response = await saveUser(formData);
-
+      const response: any = await saveUserList(formData);
       if (response.success) {
         showAlert("Success", isAddMode ? "User created successfully" : "User updated successfully", "success");
         onClose(true);
@@ -408,24 +406,15 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
                     type="switch"
                     disabled={viewOnly}
                     size="small"
-                    onChange={(e) => setNewPassword(e.target.checked)}
+                    onChange={(checked) => setNewPassword(checked === "Y")}
                   />
                 </Grid>
               )}
 
-              {(isAddMode || newPassword) && (
+              {newPasswordEnabled && (
                 <>
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField
-                      name="appUAccess"
-                      control={control}
-                      label="Password"
-                      type="password"
-                      required={isAddMode || newPassword}
-                      disabled={viewOnly}
-                      size="small"
-                      fullWidth
-                    />
+                    <FormField name="appUAccess" control={control} label="Password" type="password" required={newPasswordEnabled} disabled={viewOnly} size="small" fullWidth />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
@@ -434,7 +423,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
                       control={control}
                       label="Confirm Password"
                       type="password"
-                      required={isAddMode || newPassword}
+                      required={newPasswordEnabled}
                       disabled={viewOnly}
                       size="small"
                       fullWidth
@@ -486,6 +475,9 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
                   fullWidth
                   options={profiles.filter((profile) => profile.rActiveYN === "Y")}
                   defaultText="Select Profile"
+                  onChange={(item) => {
+                    setValue("profileID", Number(item.value), { shouldDirty: true });
+                  }}
                 />
               </Grid>
               {watchedData.profileID > 0 && (
