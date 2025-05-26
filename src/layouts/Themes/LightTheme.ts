@@ -86,6 +86,42 @@ const lightTheme = createTheme({
           height: "100%",
           backgroundColor: LIGHT_COLORS.background.default,
         },
+        // Global scrollbar styles for light theme
+        "*::-webkit-scrollbar": {
+          width: "8px",
+          height: "8px",
+        },
+        "*::-webkit-scrollbar-track": {
+          background: LIGHT_COLORS.grey[100],
+          borderRadius: "4px",
+        },
+        "*::-webkit-scrollbar-thumb": {
+          background: LIGHT_COLORS.grey[400],
+          borderRadius: "4px",
+          border: `2px solid ${LIGHT_COLORS.grey[100]}`,
+          transition: "background-color 0.2s ease",
+        },
+        "*::-webkit-scrollbar-thumb:hover": {
+          background: LIGHT_COLORS.primary.main,
+        },
+        "*::-webkit-scrollbar-corner": {
+          background: LIGHT_COLORS.grey[100],
+        },
+        // Sidebar specific scrollbar (thinner)
+        ".sidebar-scroll::-webkit-scrollbar": {
+          width: "6px",
+        },
+        ".sidebar-scroll::-webkit-scrollbar-track": {
+          background: "transparent",
+        },
+        ".sidebar-scroll::-webkit-scrollbar-thumb": {
+          background: LIGHT_COLORS.grey[300],
+          borderRadius: "3px",
+          border: "none",
+        },
+        ".sidebar-scroll::-webkit-scrollbar-thumb:hover": {
+          background: LIGHT_COLORS.primary.main,
+        },
       },
     },
     MuiDrawer: {
@@ -134,20 +170,18 @@ const lightTheme = createTheme({
           backgroundColor: LIGHT_COLORS.primary.main,
           color: LIGHT_COLORS.primary.contrastText,
           borderBottom: `1px solid ${LIGHT_COLORS.divider}`,
-          padding: `${SPACING_UNIT}px ${COMPONENT_CONSTANTS.dialog.spacing}px`, // Reduced vertical padding
+          padding: `${SPACING_UNIT}px ${COMPONENT_CONSTANTS.dialog.spacing}px`,
           minHeight: COMPONENT_CONSTANTS.dialog.titleHeight,
           fontSize: TYPOGRAPHY.fontSizes.lg,
           fontWeight: TYPOGRAPHY.fontWeights.semibold,
           display: "flex",
           alignItems: "center",
-          // Ensure proper flex container behavior for title content
           "& .MuiBox-root": {
             width: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
           },
-          // Style the typography element
           "& .MuiTypography-root": {
             flex: 1,
             marginRight: SPACING_UNIT,
@@ -155,7 +189,6 @@ const lightTheme = createTheme({
             fontWeight: "inherit",
             lineHeight: 1.2,
           },
-          // Style the close button
           "& .MuiIconButton-root": {
             color: LIGHT_COLORS.primary.contrastText,
             padding: SPACING_UNIT / 2,
@@ -225,7 +258,6 @@ const lightTheme = createTheme({
             fontSize: 20,
           },
         },
-
         sizeSmall: {
           height: COMPONENT_CONSTANTS.button.smallHeight,
           fontSize: TYPOGRAPHY.fontSizes.xs,
@@ -351,7 +383,6 @@ const lightTheme = createTheme({
         },
       },
     },
-
     MuiAccordionSummary: {
       styleOverrides: {
         root: {
@@ -387,7 +418,6 @@ const lightTheme = createTheme({
         },
       },
     },
-
     MuiAccordionDetails: {
       styleOverrides: {
         root: {

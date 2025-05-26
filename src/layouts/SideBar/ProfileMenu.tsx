@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Menu, MenuItem, Divider, Box, Typography, Avatar, ListItemIcon, Tooltip, alpha, useTheme, Button, styled } from "@mui/material";
+import { Menu, MenuItem, Divider, Box, Typography, Avatar, ListItemIcon, Tooltip, Button, useTheme } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import HomeIcon from "@mui/icons-material/Home";
@@ -15,57 +15,6 @@ import AuthService from "@/services/AuthService/AuthService";
 import { logout } from "@/store/features/auth/authSlice";
 import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-
-// Enhanced styled components for better visual
-const ProfileButton = styled(Button)(({ theme }) => ({
-  borderRadius: 28,
-  padding: theme.spacing(1, 2),
-  textTransform: "none",
-  transition: "all 0.2s ease-in-out",
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.warning.light, 0.15),
-  },
-}));
-
-const UserAvatar = styled(Avatar)(({ theme }) => ({
-  width: 34,
-  height: 34,
-  backgroundColor: theme.palette.warning.main,
-  fontSize: "1rem",
-  fontWeight: 600,
-  marginRight: theme.spacing(1),
-  border: `2px solid ${theme.palette.background.paper}`,
-  boxShadow: theme.shadows[1],
-}));
-
-const ProfileCard = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2),
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  borderBottom: `1px solid ${theme.palette.divider}`,
-  marginBottom: theme.spacing(1),
-}));
-
-const LargeAvatar = styled(Avatar)(({ theme }) => ({
-  width: 64,
-  height: 64,
-  backgroundColor: theme.palette.warning.main,
-  fontSize: "1.5rem",
-  fontWeight: 600,
-  marginBottom: theme.spacing(1),
-  border: `3px solid ${theme.palette.background.paper}`,
-  boxShadow: theme.shadows[2],
-}));
-
-const MenuItemWithIcon = styled(MenuItem)(({ theme }) => ({
-  padding: theme.spacing(1, 2),
-  borderRadius: 4,
-  margin: theme.spacing(0.5, 1),
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.primary.main, 0.04),
-  },
-}));
 
 const ProfileMenu: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -95,18 +44,15 @@ const ProfileMenu: React.FC = () => {
     setAnchorEl(null);
   };
 
-  // Modified to show confirmation dialog instead of direct logout
   const handleLogoutClick = () => {
-    handleClose(); // Close the menu
-    setLogoutDialogOpen(true); // Open the confirmation dialog
+    handleClose();
+    setLogoutDialogOpen(true);
   };
 
-  // Cancel logout
   const handleCancelLogout = () => {
     setLogoutDialogOpen(false);
   };
 
-  // Confirmed logout
   const handleConfirmLogout = async () => {
     if (user?.token) {
       try {
@@ -132,31 +78,47 @@ const ProfileMenu: React.FC = () => {
   };
 
   const handleProfile = () => {
-    // Navigate to user profile page if available
     handleClose();
   };
 
   const handleSettings = () => {
-    // Navigate to settings page
     handleClose();
   };
 
   return (
     <div>
       <Tooltip title="Account settings">
-        <ProfileButton
+        <Button
           variant="text"
           color="warning"
           onClick={handleClick}
-          endIcon={<UserAvatar>{getInitials(user?.userName || "")}</UserAvatar>}
+          sx={{
+            borderRadius: 28,
+            px: 2,
+            py: 1,
+            textTransform: "none",
+          }}
+          endIcon={
+            <Avatar
+              sx={{
+                width: 34,
+                height: 34,
+                ml: 1,
+                bgcolor: "warning.main",
+                color: "warning.contrastText",
+              }}
+            >
+              {getInitials(user?.userName || "")}
+            </Avatar>
+          }
           aria-controls={open ? "profile-menu" : undefined}
           aria-haspopup="true"
           aria-expanded={open ? "true" : undefined}
         >
           <Typography
             variant="body2"
+            fontWeight="medium"
             sx={{
-              fontWeight: 500,
               maxWidth: 120,
               textOverflow: "ellipsis",
               overflow: "hidden",
@@ -166,7 +128,7 @@ const ProfileMenu: React.FC = () => {
           >
             {user?.userName || "User"}
           </Typography>
-        </ProfileButton>
+        </Button>
       </Tooltip>
 
       <Menu
@@ -187,49 +149,42 @@ const ProfileMenu: React.FC = () => {
           sx: {
             minWidth: "260px",
             mt: 1.5,
-            borderRadius: 2,
-            boxShadow: theme.shadows[3],
-            "& .MuiList-root": {
-              padding: theme.spacing(1, 0),
-            },
           },
         }}
       >
-        <ProfileCard>
-          <LargeAvatar>{getInitials(user?.userName || "")}</LargeAvatar>
+        {/* Profile header */}
+        <Box p={2} display="flex" flexDirection="column" alignItems="center" borderBottom={1} borderColor="divider" mb={1}>
+          <Avatar
+            sx={{
+              width: 64,
+              height: 64,
+              mb: 1,
+              bgcolor: "warning.main",
+              color: "warning.contrastText",
+            }}
+          >
+            {getInitials(user?.userName || "")}
+          </Avatar>
           <Typography variant="subtitle1" fontWeight={600}>
             {user?.userName || "User"}
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{
-              mt: 0.5,
-              color: "primary.main",
-              backgroundColor: alpha(theme.palette.primary.main, 0.1),
-              padding: "2px 8px",
-              borderRadius: 10,
-              fontWeight: 500,
-            }}
-          >
-            {/* {user?.userRole || "User"} */}
-          </Typography>
-        </ProfileCard>
+        </Box>
 
-        <MenuItemWithIcon onClick={handleDashboard}>
+        <MenuItem onClick={handleDashboard} sx={{ m: 0.5, borderRadius: 1 }}>
           <ListItemIcon>
             <HomeIcon fontSize="small" color="primary" />
           </ListItemIcon>
           <Typography variant="body2">Dashboard</Typography>
-        </MenuItemWithIcon>
+        </MenuItem>
 
-        <MenuItemWithIcon onClick={handleProfile}>
+        <MenuItem onClick={handleProfile} sx={{ m: 0.5, borderRadius: 1 }}>
           <ListItemIcon>
             <PersonIcon fontSize="small" color="info" />
           </ListItemIcon>
           <Typography variant="body2">My Profile</Typography>
-        </MenuItemWithIcon>
+        </MenuItem>
 
-        <MenuItemWithIcon onClick={handleClose}>
+        <MenuItem onClick={handleClose} sx={{ m: 0.5, borderRadius: 1 }}>
           <ListItemIcon>
             <NotificationsIcon fontSize="small" color="warning" />
           </ListItemIcon>
@@ -237,8 +192,8 @@ const ProfileMenu: React.FC = () => {
           <Box
             sx={{
               ml: 1,
-              backgroundColor: theme.palette.error.main,
-              color: theme.palette.error.contrastText,
+              bgcolor: "error.main",
+              color: "error.contrastText",
               borderRadius: "50%",
               width: 20,
               height: 20,
@@ -251,41 +206,40 @@ const ProfileMenu: React.FC = () => {
           >
             3
           </Box>
-        </MenuItemWithIcon>
+        </MenuItem>
 
-        <MenuItemWithIcon onClick={handleSettings}>
+        <MenuItem onClick={handleSettings} sx={{ m: 0.5, borderRadius: 1 }}>
           <ListItemIcon>
             <SettingsIcon fontSize="small" color="action" />
           </ListItemIcon>
           <Typography variant="body2">Settings</Typography>
-        </MenuItemWithIcon>
+        </MenuItem>
 
-        <MenuItemWithIcon onClick={handleClose}>
+        <MenuItem onClick={handleClose} sx={{ m: 0.5, borderRadius: 1 }}>
           <ListItemIcon>
             <HelpOutlineIcon fontSize="small" color="disabled" />
           </ListItemIcon>
           <Typography variant="body2">Help & Support</Typography>
-        </MenuItemWithIcon>
+        </MenuItem>
 
         <Divider sx={{ my: 1 }} />
 
-        <MenuItemWithIcon
+        <MenuItem
           onClick={handleLogoutClick}
           sx={{
-            color: theme.palette.error.main,
-            "&:hover": {
-              backgroundColor: alpha(theme.palette.error.main, 0.04),
-            },
+            m: 0.5,
+            borderRadius: 1,
+            color: "error.main",
           }}
         >
           <ListItemIcon>
             <LogoutIcon fontSize="small" color="error" />
           </ListItemIcon>
           <Typography variant="body2">Logout</Typography>
-        </MenuItemWithIcon>
+        </MenuItem>
       </Menu>
 
-      {/* Logout Confirmation Dialog using ConfirmationDialog component */}
+      {/* Logout Confirmation Dialog */}
       <ConfirmationDialog
         open={logoutDialogOpen}
         onClose={handleCancelLogout}
