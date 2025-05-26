@@ -154,7 +154,7 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
   const handleInsuranceChange = useCallback(
     (event: any) => {
       const value = event?.target?.value || event?.value || event;
-      const selectedOption = dropdownValues.insurance?.find((option) => option.value === Number(value));
+      const selectedOption = dropdownValues.insurance?.find((option) => Number(option.value) === Number(value));
 
       if (selectedOption) {
         setValue("insurID", Number(value), { shouldValidate: true, shouldDirty: true });
