@@ -1,13 +1,15 @@
-import React, { useEffect } from "react";
-import Swal, { SweetAlertIcon, SweetAlertResult } from "sweetalert2";
-import withReactContent from "sweetalert2-react-content";
+import React, { useEffect, useState } from "react";
+import { Typography, Box, useTheme, Stack } from "@mui/material";
+import { CheckCircle as SuccessIcon, Error as ErrorIcon, Warning as WarningIcon, Info as InfoIcon, Print as PrintIcon } from "@mui/icons-material";
+import GenericDialog from "../GenericDialog/GenericDialog";
+import CustomButton from "../Button/CustomButton";
 
-const MySwal = withReactContent(Swal);
+export type AlertType = "success" | "error" | "warning" | "info" | "question";
 
 interface CustomAlertProps {
   title?: string;
   message: string;
-  type: SweetAlertIcon;
+  type: AlertType;
   show: boolean;
   showConfirmButton?: boolean;
   showCancelButton?: boolean;
@@ -41,62 +43,126 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
   onPrint,
   onClose,
 }) => {
-  useEffect(() => {
-    if (show) {
-      MySwal.fire({
-        title,
-        text: message,
-        icon: type,
-        showConfirmButton,
-        showCancelButton,
-        confirmButtonText,
-        cancelButtonText,
-        showCloseButton,
-        footer: showPrintButton ? `<button id="print-button" class="swal2-print-button">${printButtonText}</button>` : "",
-        didOpen: () => {
-          if (showPrintButton) {
-            const printButton = document.getElementById("print-button");
-            if (printButton) {
-              printButton.addEventListener("click", () => {
-                if (onPrint) onPrint();
-              });
-            }
-          }
-          const container = document.querySelector(".swal2-container") as HTMLElement;
-          if (container) {
-            container.style.zIndex = "1400";
-          }
-        },
-        buttonsStyling: true,
-      }).then((result: SweetAlertResult) => {
-        if (result.isConfirmed && onConfirm) {
-          onConfirm();
-        } else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel && onCancel) {
-          onCancel();
-        } else if (result.isDismissed && result.dismiss === Swal.DismissReason.close && onClose) {
-          onClose();
-        }
-      });
-    }
-  }, [
-    title,
-    message,
-    type,
-    show,
-    showConfirmButton,
-    showCancelButton,
-    confirmButtonText,
-    cancelButtonText,
-    showPrintButton,
-    showCloseButton,
-    printButtonText,
-    onConfirm,
-    onCancel,
-    onPrint,
-    onClose,
-  ]);
+  const theme = useTheme();
+  const [open, setOpen] = useState(false);
 
-  return null;
+  // Icon and color configuration for different alert types
+  const alertConfig = {
+    success: {
+      icon: SuccessIcon,
+      color: theme.palette.success.main,
+      buttonColor: "success" as const,
+    },
+    error: {
+      icon: ErrorIcon,
+      color: theme.palette.error.main,
+      buttonColor: "error" as const,
+    },
+    warning: {
+      icon: WarningIcon,
+      color: theme.palette.warning.main,
+      buttonColor: "warning" as const,
+    },
+    info: {
+      icon: InfoIcon,
+      color: theme.palette.info.main,
+      buttonColor: "info" as const,
+    },
+    question: {
+      icon: InfoIcon,
+      color: theme.palette.primary.main,
+      buttonColor: "primary" as const,
+    },
+  };
+
+  const { icon: Icon, color, buttonColor } = alertConfig[type];
+
+  useEffect(() => {
+    setOpen(show);
+  }, [show]);
+
+  const handleClose = () => {
+    setOpen(false);
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  const handleConfirm = () => {
+    setOpen(false);
+    if (onConfirm) {
+      onConfirm();
+    }
+  };
+
+  const handleCancel = () => {
+    setOpen(false);
+    if (onCancel) {
+      onCancel();
+    }
+  };
+
+  const handlePrint = () => {
+    if (onPrint) {
+      onPrint();
+    }
+  };
+
+  // Render action buttons using CustomButton
+  const renderActions = () => {
+    const buttons = [];
+
+    if (showPrintButton) {
+      buttons.push(<CustomButton key="print" variant="outlined" color="inherit" icon={PrintIcon} text={printButtonText} onClick={handlePrint} ariaLabel="print" />);
+    }
+
+    if (showCancelButton) {
+      buttons.push(<CustomButton key="cancel" variant="outlined" color="inherit" text={cancelButtonText} onClick={handleCancel} ariaLabel="cancel" />);
+    }
+
+    if (showConfirmButton) {
+      buttons.push(
+        <CustomButton key="confirm" variant="contained" color={buttonColor} text={confirmButtonText} onClick={handleConfirm} ariaLabel="confirm" sx={{ minWidth: 100 }} />
+      );
+    }
+
+    return buttons.length > 0 ? (
+      <Stack direction="row" spacing={1} justifyContent="flex-end">
+        {buttons}
+      </Stack>
+    ) : null;
+  };
+
+  return (
+    <GenericDialog
+      open={open}
+      onClose={handleClose}
+      title={title || getDefaultTitle(type)}
+      maxWidth="sm"
+      fullWidth={true}
+      showCloseButton={showCloseButton}
+      disableBackdropClick={false}
+      disableEscapeKeyDown={false}
+      actions={renderActions()}
+    >
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, py: 2 }}>
+        <Icon sx={{ fontSize: 36, color, flexShrink: 0, mt: 0.5 }} />
+        <Typography variant="body1">{message}</Typography>
+      </Box>
+    </GenericDialog>
+  );
+};
+
+// Helper function to provide default titles based on alert type
+const getDefaultTitle = (type: AlertType): string => {
+  const defaultTitles = {
+    success: "Success",
+    error: "Error",
+    warning: "Warning",
+    info: "Information",
+    question: "Confirmation",
+  };
+  return defaultTitles[type];
 };
 
 export default CustomAlert;

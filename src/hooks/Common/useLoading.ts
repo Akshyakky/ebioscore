@@ -1,4 +1,4 @@
-// src/hooks/useLoading.ts
+// src/hooks/Common/useLoading.ts
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectIsLoading } from "@/store/features/ui/loadingSelectors";
 import { setLoading } from "@/store/features/ui/loadingSlice";

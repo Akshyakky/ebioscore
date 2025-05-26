@@ -1,6 +1,8 @@
-import { SweetAlertIcon } from "sweetalert2";
 import { createRoot } from "react-dom/client";
-import CustomAlert from "../../components/Alert/CustomAlert";
+import CustomAlert, { AlertType } from "../../components/Alert/CustomAlert";
+
+// Type mapping from SweetAlert2 icons to our native alert types
+type SweetAlertIcon = "success" | "error" | "warning" | "info" | "question";
 
 type AlertOptions = {
   showConfirmButton?: boolean;
@@ -17,7 +19,19 @@ type AlertOptions = {
   onClose?: () => void;
 };
 
-// Overloaded function signatures
+// Map SweetAlert2 icon types to our native alert types
+const mapIconType = (icon: SweetAlertIcon): AlertType => {
+  const iconMap: Record<SweetAlertIcon, AlertType> = {
+    success: "success",
+    error: "error",
+    warning: "warning",
+    info: "info",
+    question: "question",
+  };
+  return iconMap[icon] || "info";
+};
+
+// Overloaded function signatures to maintain backwards compatibility
 export function showAlert(title: string, message: string, type: SweetAlertIcon): Promise<boolean>;
 export function showAlert(title: string, message: string, type: SweetAlertIcon, needsConfirmation: boolean): Promise<boolean>;
 export function showAlert(title: string, message: string, type: SweetAlertIcon, options: AlertOptions): Promise<boolean>;
@@ -53,20 +67,37 @@ export function showAlert(title: string, message: string, type: SweetAlertIcon, 
 
   return new Promise((resolve) => {
     try {
-      const alertElement = document.createElement("div");
-      document.body.appendChild(alertElement);
-      const root = createRoot(alertElement);
+      // Create a container for the alert
+      const alertContainer = document.createElement("div");
+      alertContainer.id = `alert-container-${Date.now()}`;
+      document.body.appendChild(alertContainer);
+
+      const root = createRoot(alertContainer);
 
       const cleanup = () => {
-        root.unmount();
-        alertElement.remove();
+        try {
+          root.unmount();
+          if (alertContainer.parentNode) {
+            alertContainer.parentNode.removeChild(alertContainer);
+          }
+        } catch (error) {
+          console.warn("Error during alert cleanup:", error);
+        }
+      };
+
+      const handleResult = (result: boolean) => {
+        // Small delay to allow any animations to complete
+        setTimeout(() => {
+          cleanup();
+          resolve(result);
+        }, 150);
       };
 
       root.render(
         <CustomAlert
           title={title}
           message={message}
-          type={type}
+          type={mapIconType(type)}
           show={true}
           showConfirmButton={showConfirmButton}
           showCancelButton={showCancelButton}
@@ -77,22 +108,44 @@ export function showAlert(title: string, message: string, type: SweetAlertIcon, 
           printButtonText={printButtonText}
           closeButtonText={closeButtonText}
           onConfirm={() => {
-            if (onConfirm) onConfirm();
-            cleanup();
-            resolve(true);
+            if (onConfirm) {
+              try {
+                onConfirm();
+              } catch (error) {
+                console.error("Error in onConfirm callback:", error);
+              }
+            }
+            handleResult(true);
           }}
           onCancel={() => {
-            if (onCancel) onCancel();
-            cleanup();
-            resolve(false);
+            if (onCancel) {
+              try {
+                onCancel();
+              } catch (error) {
+                console.error("Error in onCancel callback:", error);
+              }
+            }
+            handleResult(false);
           }}
           onPrint={() => {
-            if (onPrint) onPrint();
+            if (onPrint) {
+              try {
+                onPrint();
+              } catch (error) {
+                console.error("Error in onPrint callback:", error);
+              }
+            }
+            // Don't close the dialog after print
           }}
           onClose={() => {
-            if (onClose) onClose();
-            cleanup();
-            resolve(false);
+            if (onClose) {
+              try {
+                onClose();
+              } catch (error) {
+                console.error("Error in onClose callback:", error);
+              }
+            }
+            handleResult(false);
           }}
         />
       );
@@ -102,3 +155,27 @@ export function showAlert(title: string, message: string, type: SweetAlertIcon, 
     }
   });
 }
+
+// Export the AlertType for external use
+export type { AlertType };
+
+// Convenience functions for common alert types
+export const showSuccessAlert = (title: string, message: string, options?: AlertOptions): Promise<boolean> => {
+  return showAlert(title, message, "success", options);
+};
+
+export const showErrorAlert = (title: string, message: string, options?: AlertOptions): Promise<boolean> => {
+  return showAlert(title, message, "error", options);
+};
+
+export const showWarningAlert = (title: string, message: string, options?: AlertOptions): Promise<boolean> => {
+  return showAlert(title, message, "warning", options);
+};
+
+export const showInfoAlert = (title: string, message: string, options?: AlertOptions): Promise<boolean> => {
+  return showAlert(title, message, "info", options);
+};
+
+export const showConfirmAlert = (title: string, message: string, options?: AlertOptions): Promise<boolean> => {
+  return showAlert(title, message, "question", true, options);
+};
