@@ -13,7 +13,6 @@ import { useLoading } from "@/hooks/Common/useLoading";
 
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
-import { ContactMastService } from "@/services/CommonServices/ContactMastService";
 import { RevisitService } from "@/services/PatientAdministrationServices/RevisitService/RevisitService";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 
@@ -28,6 +27,7 @@ import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientS
 import { useRevisit } from "../../RevisitPage/hooks/useRevisitForm";
 import PatientVisitHistoryDialog from "../../RevisitPage/Form/RevisitForm";
 import InsuranceManagementDialog from "../Form/InsuranceGrid";
+import { ContactMastService } from "@/services/NotGenericPaternServices/ContactMastService";
 
 // Schema definition for form validation
 const schema = z.object({
@@ -651,7 +651,7 @@ const RevisitPage: React.FC = () => {
                         options={dropdownValues.pic || []}
                         onChange={(event: SelectChangeEvent<string>) => {
                           const selectedValue = Number(event.target.value);
-                          const selectedOption = dropdownValues.pic?.find((option) => option.value === selectedValue);
+                          const selectedOption = dropdownValues.pic?.find((option) => Number(option.value) === selectedValue);
 
                           handleDropdownChange("pTypeID", selectedValue, dropdownValues.pic, {
                             pTypeName: selectedOption?.label || "",
@@ -693,7 +693,7 @@ const RevisitPage: React.FC = () => {
                           options={DepartmentDropdownValues}
                           onChange={(event: SelectChangeEvent<string>) => {
                             const selectedValue = Number(event.target.value);
-                            const selectedOption = DepartmentDropdownValues?.find((option) => option.value === selectedValue);
+                            const selectedOption = DepartmentDropdownValues?.find((option) => Number(option.value) === selectedValue);
 
                             handleDropdownChange("deptID", selectedValue, DepartmentDropdownValues, {
                               deptName: selectedOption?.label || "",
