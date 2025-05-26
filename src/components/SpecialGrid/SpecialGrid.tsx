@@ -129,7 +129,7 @@ const SpecialGrid = <T extends {}>({ data, onReorder, getItemId, renderLabel, on
                 disabled={index === 0}
                 className="action-no-select"
                 onClick={(e) => {
-                  e.stopPropagation(); // ✅ Prevent bubbling to Row
+                  e.stopPropagation();
                   moveItem(index, index - 1);
                 }}
               >
@@ -141,7 +141,7 @@ const SpecialGrid = <T extends {}>({ data, onReorder, getItemId, renderLabel, on
                 disabled={index === orderedData.length - 1}
                 className="action-no-select"
                 onClick={(e) => {
-                  e.stopPropagation(); // ✅ Prevent bubbling to Row
+                  e.stopPropagation();
                   moveItem(index, index + 1);
                 }}
               >
@@ -152,7 +152,6 @@ const SpecialGrid = <T extends {}>({ data, onReorder, getItemId, renderLabel, on
         );
       })}
 
-      {/* ✅ Bottom Control Buttons */}
       <Box
         sx={{
           display: "flex",

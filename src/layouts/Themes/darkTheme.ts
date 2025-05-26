@@ -523,42 +523,4 @@ const darkTheme = createTheme({
     },
   },
 });
-const scrollbarStylesDark = {
-  // Global scrollbar styles
-  "*::-webkit-scrollbar": {
-    width: "8px",
-    height: "8px",
-  },
-  "*::-webkit-scrollbar-track": {
-    background: "#121212",
-    borderRadius: "4px",
-  },
-  "*::-webkit-scrollbar-thumb": {
-    background: "#757575",
-    borderRadius: "4px",
-    border: "2px solid #121212",
-    transition: "background-color 0.2s ease",
-  },
-  "*::-webkit-scrollbar-thumb:hover": {
-    background: "#1976d2",
-  },
-  "*::-webkit-scrollbar-corner": {
-    background: "#121212",
-  },
-  // Sidebar specific scrollbar (thinner)
-  ".sidebar-scroll::-webkit-scrollbar": {
-    width: "6px",
-  },
-  ".sidebar-scroll::-webkit-scrollbar-track": {
-    background: "transparent",
-  },
-  ".sidebar-scroll::-webkit-scrollbar-thumb": {
-    background: "#616161",
-    borderRadius: "3px",
-    border: "none",
-  },
-  ".sidebar-scroll::-webkit-scrollbar-thumb:hover": {
-    background: "#1976d2",
-  },
-};
 export default darkTheme;
