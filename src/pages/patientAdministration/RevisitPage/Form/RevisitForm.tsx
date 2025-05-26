@@ -22,6 +22,7 @@ import { useRevisit } from "../hooks/useRevisitForm";
 interface PatientVisitHistoryDialogProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
+  onEditVisit?: (visitData: OPVisitDto) => void; // New prop for edit functionality
   pChartID?: number;
 }
 
@@ -44,7 +45,7 @@ const dateFilterOptions = [
   { value: DateFilterType.Custom, label: "Custom Range" },
 ];
 
-const PatientVisitHistoryDialog: React.FC<PatientVisitHistoryDialogProps> = ({ open, onClose, pChartID }) => {
+const PatientVisitHistoryDialog: React.FC<PatientVisitHistoryDialogProps> = ({ open, onClose, onEditVisit, pChartID }) => {
   debugger;
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
@@ -136,11 +137,18 @@ const PatientVisitHistoryDialog: React.FC<PatientVisitHistoryDialogProps> = ({ o
     debouncedSearch.cancel();
   }, [debouncedSearch]);
 
-  const handleEdit = useCallback((visit: OPVisitDto) => {
-    setSelectedVisit(visit);
-    setIsViewMode(false);
-    showAlert("Info", "Edit functionality would be implemented here", "info");
-  }, []);
+  const handleEdit = useCallback(
+    (visit: OPVisitDto) => {
+      // Pass the visit data back to parent component for editing
+      if (onEditVisit) {
+        onEditVisit(visit);
+        onClose(); // Close the dialog
+      } else {
+        showAlert("Info", "Edit functionality is not available", "info");
+      }
+    },
+    [onEditVisit, onClose]
+  );
 
   const handleView = useCallback((visit: OPVisitDto) => {
     setSelectedVisit(visit);
@@ -365,52 +373,19 @@ const PatientVisitHistoryDialog: React.FC<PatientVisitHistoryDialogProps> = ({ o
       width: 200,
       render: (item) => (
         <Stack direction="row" spacing={1}>
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => handleView(item)}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            <VisibilityIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="info"
-            onClick={() => handleEdit(item)}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="secondary"
-            onClick={() => handlePrintVisit(item)}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            <PrintIcon fontSize="small" />
-          </IconButton>
-          {item.pVisitStatus === "W" && (
+          <Tooltip title="Print Visit">
             <IconButton
               size="small"
-              color="error"
-              onClick={() => handleCancelVisit(item)}
+              color="secondary"
+              onClick={() => handlePrintVisit(item)}
               sx={{
                 bgcolor: "rgba(25, 118, 210, 0.08)",
                 "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
               }}
             >
-              <DeleteIcon fontSize="small" />
+              <PrintIcon fontSize="small" />
             </IconButton>
-          )}
+          </Tooltip>
         </Stack>
       ),
     },

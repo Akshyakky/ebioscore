@@ -1,4 +1,5 @@
-// src/hooks/PatientAdministration/useInsuranceManagement.ts
+// Fixed useInsuranceManagement.ts - Ensures proper date handling to prevent React rendering errors
+
 import { useState, useCallback } from "react";
 import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
@@ -10,6 +11,62 @@ export const useInsuranceManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { setLoading } = useLoading();
+
+  // Helper function to safely convert date values
+  const safeDateConversion = (dateValue: any): Date => {
+    if (!dateValue) return new Date();
+
+    if (dateValue instanceof Date) {
+      return isNaN(dateValue.getTime()) ? new Date() : dateValue;
+    }
+
+    if (typeof dateValue === "string" || typeof dateValue === "number") {
+      const date = new Date(dateValue);
+      return isNaN(date.getTime()) ? new Date() : date;
+    }
+
+    return new Date();
+  };
+
+  // Helper function to format insurance data safely
+  const formatInsuranceData = (insurance: any): OPIPInsurancesDto => {
+    return {
+      ...insurance,
+      // Ensure critical fields have default values
+      ID: insurance.ID || 0,
+      oPIPInsID: insurance.oPIPInsID || 0,
+      pChartID: insurance.pChartID || 0,
+      insurID: insurance.insurID || 0,
+      insurName: insurance.insurName || "",
+      policyNumber: insurance.policyNumber || "",
+      relationVal: insurance.relationVal || "",
+      rActiveYN: insurance.rActiveYN || "Y",
+
+      // CRITICAL FIX: Properly handle date fields to prevent React rendering errors
+      policyStartDt: safeDateConversion(insurance.policyStartDt),
+      policyEndDt: safeDateConversion(insurance.policyEndDt),
+
+      // Ensure string fields are properly initialized
+      policyHolder: insurance.policyHolder || "",
+      groupNumber: insurance.groupNumber || "",
+      guarantor: insurance.guarantor || "",
+      relation: insurance.relation || "",
+      address1: insurance.address1 || "",
+      address2: insurance.address2 || "",
+      phone1: insurance.phone1 || "",
+      phone2: insurance.phone2 || "",
+      rNotes: insurance.rNotes || "",
+      insurStatusCode: insurance.insurStatusCode || "",
+      insurStatusName: insurance.insurStatusName || "",
+      pChartCode: insurance.pChartCode || "",
+      pChartCompID: insurance.pChartCompID || 0,
+      referenceNo: insurance.referenceNo || "",
+      transferYN: insurance.transferYN || "N",
+      coveredVal: insurance.coveredVal || "",
+      coveredFor: insurance.coveredFor || "",
+      insurCode: insurance.insurCode || "",
+    };
+  };
 
   // Fetch insurance list by patient chart ID
   const fetchInsuranceList = useCallback(async (pChartID: number) => {
@@ -29,11 +86,8 @@ export const useInsuranceManagement = () => {
       console.log("Insurance fetch response:", response);
 
       if (response.success && response.data) {
-        const formattedData = response.data.map((insurance) => ({
-          ...insurance,
-          policyStartDt: insurance.policyStartDt ? new Date(insurance.policyStartDt) : new Date(),
-          policyEndDt: insurance.policyEndDt ? new Date(insurance.policyEndDt) : new Date(),
-        }));
+        // CRITICAL FIX: Format each insurance record to prevent rendering errors
+        const formattedData = response.data.map((insurance: any) => formatInsuranceData(insurance));
 
         console.log("Formatted insurance data:", formattedData);
         setInsuranceList(formattedData);
@@ -58,14 +112,17 @@ export const useInsuranceManagement = () => {
 
         console.log("Saving insurance data:", insuranceData);
 
-        const response = await InsuranceCarrierService.addOrUpdateOPIPInsurance(insuranceData);
+        // CRITICAL FIX: Format the data before sending to API
+        const formattedData = formatInsuranceData(insuranceData);
+
+        const response = await InsuranceCarrierService.addOrUpdateOPIPInsurance(formattedData);
 
         console.log("Save insurance response:", response);
 
         if (response.success) {
           // Refresh the list after successful save
-          if (insuranceData.pChartID) {
-            await fetchInsuranceList(insuranceData.pChartID);
+          if (formattedData.pChartID) {
+            await fetchInsuranceList(formattedData.pChartID);
           }
           return { success: true, data: response.data };
         } else {
@@ -118,13 +175,12 @@ export const useInsuranceManagement = () => {
 
     setInsuranceList((prev) => {
       const maxId = prev.reduce((max, item) => Math.max(max, item.ID || 0), 0);
-      const newInsurance = {
+
+      // CRITICAL FIX: Format the new insurance record properly
+      const newInsurance = formatInsuranceData({
         ...insurance,
         ID: maxId + 1,
-        // Ensure dates are properly formatted
-        policyStartDt: insurance.policyStartDt instanceof Date ? insurance.policyStartDt : new Date(insurance.policyStartDt),
-        policyEndDt: insurance.policyEndDt instanceof Date ? insurance.policyEndDt : new Date(insurance.policyEndDt),
-      };
+      });
 
       const updatedList = [...prev, newInsurance];
       console.log("Updated insurance list after add:", updatedList);
@@ -141,12 +197,8 @@ export const useInsuranceManagement = () => {
         const isMatch = (item.oPIPInsID && item.oPIPInsID === insurance.oPIPInsID) || (item.ID && item.ID === insurance.ID);
 
         if (isMatch) {
-          return {
-            ...insurance,
-            // Ensure dates are properly formatted
-            policyStartDt: insurance.policyStartDt instanceof Date ? insurance.policyStartDt : new Date(insurance.policyStartDt),
-            policyEndDt: insurance.policyEndDt instanceof Date ? insurance.policyEndDt : new Date(insurance.policyEndDt),
-          };
+          // CRITICAL FIX: Format the updated insurance record properly
+          return formatInsuranceData(insurance);
         }
         return item;
       });
@@ -189,7 +241,8 @@ export const useInsuranceManagement = () => {
 
         if (unsavedRecords.length > 0) {
           const saveOperations = unsavedRecords.map((insurance) => {
-            const insuranceData = { ...insurance, pChartID };
+            // CRITICAL FIX: Format each record before saving
+            const insuranceData = formatInsuranceData({ ...insurance, pChartID });
             return InsuranceCarrierService.addOrUpdateOPIPInsurance(insuranceData);
           });
 
