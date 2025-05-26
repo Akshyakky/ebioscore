@@ -24,7 +24,7 @@ import {
 } from "@/services/ClinicalManagementServices/clinicalManagementService";
 import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
 import { componentEntryTypeService, templategroupService } from "@/services/Laboratory/LaboratoryService";
-import { appSubModuleService, appUserModuleService } from "@/services/SecurityManagementServices/securityManagementServices";
+import { appSubModuleService, appUserModuleService, profileMastService } from "@/services/SecurityManagementServices/securityManagementServices";
 import { serviceTypeService } from "@/services/BillingServices/BillingGenericService";
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
@@ -32,6 +32,7 @@ import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceA
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import { useUserList } from "@/pages/securityManagement/UserListPage/hooks/useUserList";
 import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
+import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 
 export type DropdownType =
   | "pic"
@@ -99,7 +100,8 @@ export type DropdownType =
   | "productLocation"
   | "grnType"
   | "resourceList"
-  | "usersWithoutLogin";
+  | "usersWithoutLogin"
+  | "profiles";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -492,6 +494,16 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           value: user.conID || 0,
           label: user.appUserName || "",
         }));
+      },
+      profiles: async () => {
+        const response = await profileMastService.getAll();
+        const profiles: ProfileMastDto[] = response.data || [];
+        const profilesDropdownOptions: any[] = profiles.map((profile: ProfileMastDto) => ({
+          value: profile.profileID,
+          label: profile.profileName,
+          ...profile,
+        }));
+        return profilesDropdownOptions;
       },
     }),
     []

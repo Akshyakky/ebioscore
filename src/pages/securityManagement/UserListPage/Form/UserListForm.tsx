@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, Tabs, Tab, ImageList, ImageListItem, Button } from "@mui/material";
+import { Box, Grid, Typography, Divider, Card, CardContent, Alert, Tabs, Tab, ImageList, ImageListItem, Tooltip } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
-import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel } from "@mui/icons-material";
+import { Save, Cancel, Visibility, Edit } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
@@ -17,7 +16,6 @@ import { useUserList } from "../hooks/useUserList";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import ProfilePermissionsListModal from "../SubPage/ProfilePermissionsListModal";
 import ProfilePermissionsModifyModal from "../SubPage/ProfilePermissionsModifyModal";
-import { createEntityService } from "@/utils/Common/serviceFactory";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { CompanyService } from "@/services/NotGenericPaternServices/CompanyService";
 
@@ -60,11 +58,9 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
   const [digSignImageName, setDigSignImageName] = useState<string>("");
   const [newPassword, setNewPassword] = useState<boolean>(true);
   const [companyDropdown, setCompanyDropdown] = useState<DropdownOption[]>([]);
-  const [profileDropdown, setProfileDropdown] = useState<DropdownOption[]>([]);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isProfileModifyModalOpen, setIsProfileModifyModalOpen] = useState<boolean>(false);
-  const profileMastService = React.useMemo(() => createEntityService<ProfileMastDto>("ProfileMast", "securityManagementURL"), []);
-  const { usersWithoutLogin } = useDropdownValues(["usersWithoutLogin"]);
+  const { usersWithoutLogin, profiles } = useDropdownValues(["usersWithoutLogin", "profiles"]);
   const isAddMode = !initialData;
 
   const defaultValues: UserListFormData = {
@@ -102,7 +98,6 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
   const watchedData = watch();
   const permissionView = watchedData.appID > 0 && watchedData.adminUserYN === "N" && !watchedData.profileID;
 
-  console.log("usersWithoutLogin", usersWithoutLogin);
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
@@ -116,21 +111,8 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
         console.error("Fetching companies failed: ", error);
       }
     };
-
-    const fetchProfiles = async () => {
-      const response = await profileMastService.getAll();
-      const profiles: ProfileMastDto[] = response.data || [];
-      const activeProfiles: ProfileMastDto[] = profiles.filter((profile: ProfileMastDto) => profile.rActiveYN === "Y");
-      const profilesDropdownOptions: any[] = activeProfiles.map((profile: ProfileMastDto) => ({
-        value: profile.profileID,
-        label: profile.profileName,
-      }));
-      setProfileDropdown(profilesDropdownOptions);
-    };
-
     fetchCompanies();
-    fetchProfiles();
-  }, [profileMastService]);
+  }, [CompanyService]);
 
   useEffect(() => {
     if (initialData) {
@@ -395,21 +377,23 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
             <Divider sx={{ mb: 2 }} />
 
             <Grid container spacing={2}>
-              <Grid size={{ sm: 12, md: 6 }}>
-                <FormField
-                  name="conID"
-                  control={control}
-                  label="Select User"
-                  type="select"
-                  required
-                  disabled={viewOnly || Boolean(watchedData.appID)}
-                  size="small"
-                  fullWidth
-                  options={usersWithoutLogin}
-                  defaultText="Select User"
-                  onChange={(item) => handleChangeUserName(item)}
-                />
-              </Grid>
+              {isAddMode && (
+                <Grid size={{ sm: 12, md: 6 }}>
+                  <FormField
+                    name="conID"
+                    control={control}
+                    label="Select User"
+                    type="select"
+                    required
+                    disabled={viewOnly || Boolean(watchedData.appID)}
+                    size="small"
+                    fullWidth
+                    options={usersWithoutLogin}
+                    defaultText="Select User"
+                    onChange={(item) => handleChangeUserName(item)}
+                  />
+                </Grid>
+              )}
 
               <Grid size={{ sm: 12, md: 6 }}>
                 <FormField name="appCode" control={control} label="Username" type="text" required disabled={viewOnly} size="small" fullWidth />
@@ -491,7 +475,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
             <Divider sx={{ mb: 2 }} />
 
             <Grid container spacing={2}>
-              <Grid size={{ sm: 12, md: 6 }}>
+              <Grid size={{ xs: 12, sm: 8, md: 6, lg: 4 }}>
                 <FormField
                   name="profileID"
                   control={control}
@@ -500,20 +484,19 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
                   disabled={viewOnly}
                   size="small"
                   fullWidth
-                  options={profileDropdown}
+                  options={profiles.filter((profile) => profile.rActiveYN === "Y")}
                   defaultText="Select Profile"
                 />
               </Grid>
-
               {watchedData.profileID > 0 && (
                 <Grid size={{ sm: 12, md: 6 }}>
                   <Box display="flex" gap={2}>
-                    <Button variant="outlined" onClick={handleViewProfilePermissions} disabled={viewOnly}>
-                      View Profile Permissions
-                    </Button>
-                    <Button variant="outlined" color="secondary" onClick={handleModifyProfilePermissions} disabled={viewOnly}>
-                      Modify Profile Permissions
-                    </Button>
+                    <Tooltip title="View Profile Permissions">
+                      <SmartButton text="View" onClick={handleViewProfilePermissions} variant="outlined" color="primary" icon={Visibility} disabled={viewOnly} />
+                    </Tooltip>
+                    <Tooltip title="Modify Profile Permissions">
+                      <SmartButton text="Modify" onClick={handleModifyProfilePermissions} variant="outlined" color="secondary" icon={Edit} disabled={viewOnly} />
+                    </Tooltip>
                   </Box>
                 </Grid>
               )}
