@@ -116,10 +116,10 @@ export const LIGHT_COLORS = {
 // Dark Theme Colors
 export const DARK_COLORS = {
   primary: {
-    main: "#90caf9",
-    light: "#e3f2fd",
-    dark: "#42a5f5",
-    contrastText: "#000000",
+    main: "#1976d2", // Changed from light blue to proper primary blue
+    light: "#42a5f5",
+    dark: "#1565c0",
+    contrastText: "#ffffff", // Changed from black to white for better contrast
   },
   secondary: {
     main: "#f48fb1",
@@ -260,7 +260,7 @@ export const COMPONENT_CONSTANTS = {
   },
   dialog: {
     spacing: 16,
-    titleHeight: 48,
+    titleHeight: 40, // Reduced from 48 to 40 for more compact title
     footerHeight: 48,
   },
   drawer: {

@@ -16,11 +16,8 @@ import {
   CssBaseline,
   InputAdornment,
   ListItemButton,
-  styled,
-  alpha,
   Tooltip,
   useMediaQuery,
-  Badge,
   Fade,
   useTheme,
 } from "@mui/material";
@@ -35,7 +32,6 @@ import { usePageTitle } from "../../hooks/usePageTitle";
 import ProfileMenu from "./ProfileMenu";
 import { notifyError } from "../../utils/Common/toastManager";
 import { MaterialUISwitch } from "../../components/Switch/MaterialUISwitch";
-import "./SideBar.css";
 import moduleService, { ModuleDto, SubModuleDto } from "@/services/NotGenericPaternServices/ModuleService";
 import { useTheme as useCustomTheme } from "@/providers/ThemeProvider";
 
@@ -47,102 +43,24 @@ interface SideBarProps {
 // Responsive drawer width
 const getDrawerWidth = (isSmallScreen: boolean) => (isSmallScreen ? 280 : 320);
 
-interface StyledDrawerProps {
-  isSmallScreen: boolean;
-}
-
-const StyledDrawer = styled(Drawer)<StyledDrawerProps>(({ theme, isSmallScreen }) => ({
-  "& .MuiDrawer-paper": {
-    width: getDrawerWidth(isSmallScreen),
-    boxSizing: "border-box",
-    backgroundColor: theme.palette.mode === "light" ? "#ffffff" : theme.palette.background.default,
-    color: theme.palette.text.primary,
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-    borderRight: `1px solid ${theme.palette.divider}`,
-    transition: theme.transitions.create(["width", "transform"], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  },
-}));
-
-// Improved NavLink with animation and better active state
-const StyledNavLink = styled(NavLink)(({ theme }) => ({
-  textDecoration: "none",
-  color: theme.palette.text.primary,
-  display: "block",
-  transition: "all 0.2s ease",
-  "&.active-submenu-item": {
-    backgroundColor: alpha(theme.palette.primary.main, 0.08),
-    borderLeft: `4px solid ${theme.palette.primary.main}`,
-    "& .MuiListItemText-primary": {
-      fontWeight: 600,
-      color: theme.palette.primary.main,
-    },
-    "& .MuiListItemIcon-root svg": {
-      color: theme.palette.primary.main,
-    },
-  },
-}));
-
-// Enhanced ListItemButton with better hover effects
-const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
-  borderRadius: "8px",
-  margin: "2px 4px",
-  padding: "8px 16px",
-  transition: "all 0.2s ease",
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.primary.main, 0.06),
-    transform: "translateX(2px)",
-  },
-  "&.Mui-selected": {
-    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-    "&:hover": {
-      backgroundColor: alpha(theme.palette.primary.main, 0.14),
-    },
-    "& .MuiListItemText-primary": {
-      fontWeight: 600,
-    },
-    "& .MuiListItemIcon-root svg": {
-      color: theme.palette.primary.main,
-    },
-  },
-}));
-
-// Enhanced search box with animation
-const SearchBox = styled(TextField)(({ theme }) => ({
-  "& .MuiOutlinedInput-root": {
-    borderRadius: "20px",
-    backgroundColor: theme.palette.mode === "light" ? alpha(theme.palette.common.black, 0.04) : alpha(theme.palette.common.white, 0.15),
-    transition: "all 0.3s ease",
-    "&:hover": {
-      backgroundColor: theme.palette.mode === "light" ? alpha(theme.palette.common.black, 0.07) : alpha(theme.palette.common.white, 0.25),
-      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
-    },
-    "&.Mui-focused": {
-      backgroundColor: theme.palette.mode === "light" ? alpha(theme.palette.common.black, 0.07) : alpha(theme.palette.common.white, 0.25),
-      boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.3)}`,
-    },
-  },
-}));
-
 // Memo-ized SubModule component for better performance
-const SubModuleItem = memo(({ subModule, handleSubModuleClick, theme }: { subModule: SubModuleDto; handleSubModuleClick: (path: string) => void; theme: any }) => (
-  <StyledNavLink
+const SubModuleItem = memo(({ subModule, handleSubModuleClick }: { subModule: SubModuleDto; handleSubModuleClick: (path: string) => void }) => (
+  <NavLink
     to={subModule.link}
+    style={{ textDecoration: "none", color: "inherit", display: "block" }}
     className={({ isActive }) => (isActive ? "active-submenu-item" : "")}
     onClick={(e) => {
       e.preventDefault();
       handleSubModuleClick(subModule.link);
     }}
   >
-    <StyledListItemButton sx={{ pl: 3 }}>
+    <ListItemButton sx={{ pl: 3, borderRadius: 1, m: 0.5 }}>
       <ListItemIcon>
-        <Icon icon={subModule.iCon} style={{ fontSize: "20px", color: theme.palette.text.secondary }} />
+        <Icon icon={subModule.iCon} style={{ fontSize: "20px" }} />
       </ListItemIcon>
       <ListItemText primary={subModule.title} primaryTypographyProps={{ fontSize: "0.95rem" }} />
-    </StyledListItemButton>
-  </StyledNavLink>
+    </ListItemButton>
+  </NavLink>
 ));
 
 const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
@@ -269,7 +187,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
   }, [handleDrawerClose]);
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box display="flex">
       <CssBaseline />
       <AppBar
         position="fixed"
@@ -280,37 +198,15 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
           }),
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-          borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
         <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label={open ? "close drawer" : "open drawer"}
-            onClick={handleDrawerToggle}
-            edge="start"
-            sx={{
-              mr: 2,
-              transition: "transform 0.3s ease",
-              transform: open ? "rotate(180deg)" : "rotate(0deg)",
-            }}
-          >
+          <IconButton color="inherit" aria-label={open ? "close drawer" : "open drawer"} onClick={handleDrawerToggle} edge="start" sx={{ mr: 2 }}>
             {open ? <CloseIcon /> : <MenuIcon />}
           </IconButton>
 
           <Tooltip title="Go to Dashboard">
-            <IconButton
-              color="inherit"
-              aria-label="dashboard"
-              onClick={handleDashboardClick}
-              sx={{
-                mr: 2,
-                "&:hover": {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.15),
-                },
-              }}
-            >
+            <IconButton color="inherit" aria-label="dashboard" onClick={handleDashboardClick} sx={{ mr: 2 }}>
               <HomeIcon />
             </IconButton>
           </Tooltip>
@@ -323,16 +219,22 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
           <ProfileMenu />
         </Toolbar>
       </AppBar>
-      <StyledDrawer variant={isSmallScreen ? "temporary" : "persistent"} anchor="left" open={open} onClose={handleDrawerClose} isSmallScreen={isSmallScreen}>
-        <Box
-          sx={{
-            padding: 0.7,
-            borderBottom: `1px solid ${theme.palette.divider}`,
-            transition: "padding 0.2s ease",
-            ...(isSearchFocused && {}),
-          }}
-        >
-          <SearchBox
+
+      <Drawer
+        variant={isSmallScreen ? "temporary" : "persistent"}
+        anchor="left"
+        open={open}
+        onClose={handleDrawerClose}
+        PaperProps={{
+          sx: {
+            width: getDrawerWidth(isSmallScreen),
+            bgcolor: "background.paper",
+            color: "text.primary",
+          },
+        }}
+      >
+        <Box p={0.7} borderBottom={1} borderColor="divider">
+          <TextField
             variant="outlined"
             size="small"
             fullWidth
@@ -348,31 +250,29 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
             type="search"
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 3,
+              },
+            }}
           />
         </Box>
+
         <Divider />
+
         <List
+          className="sidebar-scroll"
           sx={{
             pt: 1,
             overflowY: "auto",
             height: "calc(100vh - 140px)",
-            "&::-webkit-scrollbar": {
-              width: "6px",
-            },
-            "&::-webkit-scrollbar-thumb": {
-              backgroundColor: alpha(theme.palette.primary.main, 0.2),
-              borderRadius: "6px",
-            },
-            "&::-webkit-scrollbar-track": {
-              backgroundColor: "transparent",
-            },
           }}
           component="nav"
           aria-label="main navigation"
         >
           {filteredModules.length === 0 && (
-            <Box sx={{ p: 2, textAlign: "center" }}>
-              <Typography color="textSecondary" variant="body2">
+            <Box p={2} textAlign="center">
+              <Typography color="text.secondary" variant="body2">
                 No modules found
               </Typography>
             </Box>
@@ -380,7 +280,7 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
 
           {filteredModules.map((module) => (
             <React.Fragment key={`module-${module.auGrpID}`}>
-              <StyledListItemButton onClick={() => toggleModule(module.auGrpID)} selected={activeModuleId === module.auGrpID}>
+              <ListItemButton onClick={() => toggleModule(module.auGrpID)} selected={activeModuleId === module.auGrpID} sx={{ borderRadius: 1, m: 0.5 }}>
                 <ListItemIcon>
                   <Icon
                     icon={module.iCon}
@@ -398,29 +298,15 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
                 />
                 {getFilteredSubModules(module).length > 0 && (
                   <Fade in={true}>
-                    {activeModuleId === module.auGrpID ? (
-                      <KeyboardArrowDownIcon fontSize="small" sx={{ color: theme.palette.text.secondary }} />
-                    ) : (
-                      <KeyboardArrowRightIcon fontSize="small" sx={{ color: theme.palette.text.secondary }} />
-                    )}
+                    {activeModuleId === module.auGrpID ? <KeyboardArrowDownIcon fontSize="small" color="action" /> : <KeyboardArrowRightIcon fontSize="small" color="action" />}
                   </Fade>
                 )}
-              </StyledListItemButton>
+              </ListItemButton>
 
-              <Collapse
-                in={activeModuleId === module.auGrpID}
-                timeout={300}
-                unmountOnExit
-                sx={{
-                  borderLeft: `1px dashed ${alpha(theme.palette.primary.main, 0.5)}`,
-                  ml: 1,
-                  mt: 0.5,
-                  mb: 0.5,
-                }}
-              >
+              <Collapse in={activeModuleId === module.auGrpID} timeout={300} unmountOnExit>
                 <List component="div" disablePadding>
                   {getFilteredSubModules(module).map((subModule, index) => (
-                    <SubModuleItem key={`submodule-${subModule.auGrpID}-${index}`} subModule={subModule} handleSubModuleClick={handleSubModuleClick} theme={theme} />
+                    <SubModuleItem key={`submodule-${subModule.auGrpID}-${index}`} subModule={subModule} handleSubModuleClick={handleSubModuleClick} />
                   ))}
                 </List>
               </Collapse>
@@ -429,19 +315,12 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
         </List>
 
         {/* Footer area for version info */}
-        <Box
-          sx={{
-            mt: "auto",
-            p: 2,
-            borderTop: `1px solid ${theme.palette.divider}`,
-            textAlign: "center",
-          }}
-        >
-          <Typography variant="caption" color="textSecondary">
+        <Box mt="auto" p={2} borderTop={1} borderColor="divider" textAlign="center">
+          <Typography variant="caption" color="text.secondary">
             eBios Core v2.5.1
           </Typography>
         </Box>
-      </StyledDrawer>
+      </Drawer>
     </Box>
   );
 };

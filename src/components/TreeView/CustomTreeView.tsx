@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
-import { Typography, Box, IconButton, TextField, styled } from "@mui/material";
+import { Typography, Box, IconButton, TextField } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon } from "@mui/icons-material";
 import { useLoading } from "@/hooks/Common/useLoading";
 
@@ -24,30 +24,6 @@ interface CustomTreeViewProps {
   addable?: boolean;
   searchable?: boolean;
 }
-
-const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
-  [`&.MuiTreeItem-content`]: {
-    borderRadius: theme.spacing(0.5),
-    paddingRight: theme.spacing(1),
-    fontWeight: theme.typography.fontWeightMedium,
-    "&.Mui-expanded": {
-      fontWeight: theme.typography.fontWeightRegular,
-    },
-    "&:hover": {
-      backgroundColor: theme.palette.action.hover,
-    },
-    "&.Mui-focused, &.Mui-selected, &.Mui-selected.Mui-focused": {
-      backgroundColor: `var(--tree-view-bg-color, ${theme.palette.action.selected})`,
-      color: "var(--tree-view-color)",
-    },
-  },
-  [`&.MuiTreeItem-group`]: {
-    marginLeft: 0,
-    [`&.MuiTreeItem-content`]: {
-      paddingLeft: theme.spacing(2),
-    },
-  },
-}));
 
 const CustomTreeView: React.FC<CustomTreeViewProps> = ({
   data,
@@ -114,7 +90,7 @@ const CustomTreeView: React.FC<CustomTreeViewProps> = ({
   const renderTree = useCallback(
     (nodes: TreeNodeType[]) =>
       nodes.map((node) => (
-        <StyledTreeItem
+        <TreeItem
           key={node.id}
           itemId={node.id}
           label={
@@ -171,7 +147,7 @@ const CustomTreeView: React.FC<CustomTreeViewProps> = ({
           onClick={() => handleToggle(node.id)}
         >
           {Array.isArray(node.children) ? renderTree(node.children) : null}
-        </StyledTreeItem>
+        </TreeItem>
       )),
     [selected, addable, editable, deletable, onNodeAdd, onNodeEdit, onNodeDelete]
   );

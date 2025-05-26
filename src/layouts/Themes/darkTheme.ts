@@ -94,6 +94,42 @@ const darkTheme = createTheme({
           height: "100%",
           backgroundColor: DARK_COLORS.background.default,
         },
+        // Global scrollbar styles for dark theme
+        "*::-webkit-scrollbar": {
+          width: "8px",
+          height: "8px",
+        },
+        "*::-webkit-scrollbar-track": {
+          background: DARK_COLORS.background.default,
+          borderRadius: "4px",
+        },
+        "*::-webkit-scrollbar-thumb": {
+          background: DARK_COLORS.grey[600],
+          borderRadius: "4px",
+          border: `2px solid ${DARK_COLORS.background.default}`,
+          transition: "background-color 0.2s ease",
+        },
+        "*::-webkit-scrollbar-thumb:hover": {
+          background: DARK_COLORS.primary.main,
+        },
+        "*::-webkit-scrollbar-corner": {
+          background: DARK_COLORS.background.default,
+        },
+        // Sidebar specific scrollbar (thinner)
+        ".sidebar-scroll::-webkit-scrollbar": {
+          width: "6px",
+        },
+        ".sidebar-scroll::-webkit-scrollbar-track": {
+          background: "transparent",
+        },
+        ".sidebar-scroll::-webkit-scrollbar-thumb": {
+          background: DARK_COLORS.grey[600],
+          borderRadius: "3px",
+          border: "none",
+        },
+        ".sidebar-scroll::-webkit-scrollbar-thumb:hover": {
+          background: DARK_COLORS.primary.main,
+        },
       },
     },
     MuiDrawer: {
@@ -143,20 +179,18 @@ const darkTheme = createTheme({
           backgroundColor: DARK_COLORS.primary.main,
           color: DARK_COLORS.primary.contrastText,
           borderBottom: `1px solid ${DARK_COLORS.divider}`,
-          padding: COMPONENT_CONSTANTS.dialog.spacing,
+          padding: `${SPACING_UNIT}px ${COMPONENT_CONSTANTS.dialog.spacing}px`,
           minHeight: COMPONENT_CONSTANTS.dialog.titleHeight,
           fontSize: TYPOGRAPHY.fontSizes.lg,
           fontWeight: TYPOGRAPHY.fontWeights.semibold,
           display: "flex",
           alignItems: "center",
-          // Ensure proper flex container behavior for title content
           "& .MuiBox-root": {
             width: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
           },
-          // Style the typography element
           "& .MuiTypography-root": {
             flex: 1,
             marginRight: SPACING_UNIT,
@@ -164,7 +198,6 @@ const darkTheme = createTheme({
             fontWeight: "inherit",
             lineHeight: 1.2,
           },
-          // Style the close button
           "& .MuiIconButton-root": {
             color: DARK_COLORS.primary.contrastText,
             padding: SPACING_UNIT / 2,
@@ -391,7 +424,6 @@ const darkTheme = createTheme({
         },
       },
     },
-
     MuiAccordionSummary: {
       styleOverrides: {
         root: {
@@ -431,7 +463,6 @@ const darkTheme = createTheme({
         },
       },
     },
-
     MuiAccordionDetails: {
       styleOverrides: {
         root: {
@@ -440,6 +471,30 @@ const darkTheme = createTheme({
           backgroundColor: alpha(DARK_COLORS.background.dark, 0.6),
           borderRadius: `0 0 ${SHAPE.borderRadius}px ${SHAPE.borderRadius}px`,
           color: DARK_COLORS.text.primary,
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: DARK_COLORS.primary.main,
+          color: DARK_COLORS.primary.contrastText,
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+          borderBottom: `1px solid ${DARK_COLORS.divider}`,
+          "& .MuiToolbar-root": {
+            backgroundColor: "inherit",
+            color: "inherit",
+          },
+          "& .MuiIconButton-root": {
+            color: DARK_COLORS.primary.contrastText,
+            "&:hover": {
+              backgroundColor: alpha(DARK_COLORS.primary.contrastText, 0.1),
+            },
+          },
+          "& .MuiTypography-root": {
+            color: DARK_COLORS.primary.contrastText,
+            fontWeight: TYPOGRAPHY.fontWeights.semibold,
+          },
         },
       },
     },
@@ -468,5 +523,4 @@ const darkTheme = createTheme({
     },
   },
 });
-
 export default darkTheme;
