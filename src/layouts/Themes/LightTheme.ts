@@ -134,7 +134,7 @@ const lightTheme = createTheme({
           backgroundColor: LIGHT_COLORS.primary.main,
           color: LIGHT_COLORS.primary.contrastText,
           borderBottom: `1px solid ${LIGHT_COLORS.divider}`,
-          padding: COMPONENT_CONSTANTS.dialog.spacing,
+          padding: `${SPACING_UNIT}px ${COMPONENT_CONSTANTS.dialog.spacing}px`, // Reduced vertical padding
           minHeight: COMPONENT_CONSTANTS.dialog.titleHeight,
           fontSize: TYPOGRAPHY.fontSizes.lg,
           fontWeight: TYPOGRAPHY.fontWeights.semibold,
@@ -395,6 +395,30 @@ const lightTheme = createTheme({
           borderTop: `1px solid ${alpha(LIGHT_COLORS.divider, 0.5)}`,
           backgroundColor: alpha(LIGHT_COLORS.background.paper, 0.8),
           borderRadius: `0 0 ${SHAPE.borderRadius}px ${SHAPE.borderRadius}px`,
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: LIGHT_COLORS.primary.main,
+          color: LIGHT_COLORS.primary.contrastText,
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+          borderBottom: `1px solid ${LIGHT_COLORS.divider}`,
+          "& .MuiToolbar-root": {
+            backgroundColor: "inherit",
+            color: "inherit",
+          },
+          "& .MuiIconButton-root": {
+            color: LIGHT_COLORS.primary.contrastText,
+            "&:hover": {
+              backgroundColor: alpha(LIGHT_COLORS.primary.contrastText, 0.1),
+            },
+          },
+          "& .MuiTypography-root": {
+            color: LIGHT_COLORS.primary.contrastText,
+            fontWeight: TYPOGRAPHY.fontWeights.semibold,
+          },
         },
       },
     },

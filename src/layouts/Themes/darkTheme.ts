@@ -143,7 +143,7 @@ const darkTheme = createTheme({
           backgroundColor: DARK_COLORS.primary.main,
           color: DARK_COLORS.primary.contrastText,
           borderBottom: `1px solid ${DARK_COLORS.divider}`,
-          padding: COMPONENT_CONSTANTS.dialog.spacing,
+          padding: `${SPACING_UNIT}px ${COMPONENT_CONSTANTS.dialog.spacing}px`, // Reduced vertical padding
           minHeight: COMPONENT_CONSTANTS.dialog.titleHeight,
           fontSize: TYPOGRAPHY.fontSizes.lg,
           fontWeight: TYPOGRAPHY.fontWeights.semibold,
@@ -440,6 +440,30 @@ const darkTheme = createTheme({
           backgroundColor: alpha(DARK_COLORS.background.dark, 0.6),
           borderRadius: `0 0 ${SHAPE.borderRadius}px ${SHAPE.borderRadius}px`,
           color: DARK_COLORS.text.primary,
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: DARK_COLORS.primary.main,
+          color: DARK_COLORS.primary.contrastText,
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+          borderBottom: `1px solid ${DARK_COLORS.divider}`,
+          "& .MuiToolbar-root": {
+            backgroundColor: "inherit",
+            color: "inherit",
+          },
+          "& .MuiIconButton-root": {
+            color: DARK_COLORS.primary.contrastText,
+            "&:hover": {
+              backgroundColor: alpha(DARK_COLORS.primary.contrastText, 0.1),
+            },
+          },
+          "& .MuiTypography-root": {
+            color: DARK_COLORS.primary.contrastText,
+            fontWeight: TYPOGRAPHY.fontWeights.semibold,
+          },
         },
       },
     },
