@@ -19,6 +19,7 @@ import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import ProfilePermissionsListModal from "../SubPage/ProfilePermissionsListModal";
 import ProfilePermissionsModifyModal from "../SubPage/ProfilePermissionsModifyModal";
 import { createEntityService } from "@/utils/Common/serviceFactory";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface UserListFormProps {
   open: boolean;
@@ -33,11 +34,11 @@ const schema = z.object({
   appUserName: z.string().optional(),
   appGeneralCode: z.string().optional(),
   conID: z.number(),
-  appUcatCode: z.string().nonempty("User category is required"),
+  appUcatCode: z.string().optional(),
   appUcatType: z.string(),
   adminUserYN: z.string(),
   conCompId: z.number().optional(),
-  digSignPath: z.string().optional(),
+  digSignPath: z.any().optional(),
   appUAccess: z.string().optional(),
   confirmPassword: z.string().optional(),
   profileID: z.number().optional(),
@@ -50,7 +51,7 @@ type UserListFormData = z.infer<typeof schema>;
 
 const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { saveUser, getUsersWithoutCredentials } = useUserList();
+  const { saveUser } = useUserList();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -59,12 +60,11 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
   const [digSignImageName, setDigSignImageName] = useState<string>("");
   const [newPassword, setNewPassword] = useState<boolean>(true);
   const [companyDropdown, setCompanyDropdown] = useState<DropdownOption[]>([]);
-  const [userListDropdown, setUserListDropdown] = useState<DropdownOption[]>([]);
   const [profileDropdown, setProfileDropdown] = useState<DropdownOption[]>([]);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isProfileModifyModalOpen, setIsProfileModifyModalOpen] = useState<boolean>(false);
   const profileMastService = React.useMemo(() => createEntityService<ProfileMastDto>("ProfileMast", "securityManagementURL"), []);
-
+  const { usersWithoutLogin } = useDropdownValues(["usersWithoutLogin"]);
   const isAddMode = !initialData;
 
   const defaultValues: UserListFormData = {
@@ -102,6 +102,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
   const watchedData = watch();
   const permissionView = watchedData.appID > 0 && watchedData.adminUserYN === "N" && !watchedData.profileID;
 
+  console.log("usersWithoutLogin", usersWithoutLogin);
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
@@ -135,7 +136,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
     if (initialData) {
       reset(initialData as UserListFormData);
       setNewPassword(false);
-      setDigSignImageName(initialData.digSignPath ? "Existing signature" : "");
+      setDigSignImageName("");
     } else {
       reset(defaultValues);
       setNewPassword(true);
@@ -250,11 +251,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
     setShowCancelConfirmation(false);
   };
 
-  const handleDigitalSignatureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    const file = files[0];
+  const handleDigitalSignatureChange = (file: File): void => {
     if (file.size > 51200) {
       showAlert(`Image size exceeds 50kb limit (current file size: ${(file.size / 1024).toFixed(1)}kb)`, "Please select an image smaller than 50kb.", "warning");
       return;
@@ -302,28 +299,6 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
   const handleCloseProfileModifyModal = () => {
     setIsProfileModifyModalOpen(false);
   };
-  const fetchUsersWithoutCredentials = async () => {
-    if (Boolean(watchedData.appID)) {
-      const userNameDropdownData: DropdownOption[] = [
-        {
-          value: watchedData.conID,
-          label: watchedData.appUserName,
-        },
-      ];
-      setUserListDropdown(userNameDropdownData);
-      return;
-    }
-
-    const response: any = await getUsersWithoutCredentials();
-    const usersWithoutCredentials: DropdownOption[] = response.data.map((user: UserListDto) => ({
-      value: user.conID,
-      label: user.appUserName,
-    }));
-    setUserListDropdown(usersWithoutCredentials);
-  };
-  useEffect(() => {
-    fetchUsersWithoutCredentials();
-  }, []);
 
   const dialogTitle = viewOnly ? "View User Details" : isAddMode ? "Create New User" : `Edit User - ${initialData?.appUserName}`;
 
@@ -430,7 +405,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
                   disabled={viewOnly || Boolean(watchedData.appID)}
                   size="small"
                   fullWidth
-                  options={userListDropdown}
+                  options={usersWithoutLogin}
                   defaultText="Select User"
                   onChange={(item) => handleChangeUserName(item)}
                 />
@@ -574,16 +549,15 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
               ) : (
                 <Grid size={{ sm: 12 }}>
                   <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-                    <ImageList sx={{ width: 300 }} cols={1} rowHeight={164}>
+                    <ImageList cols={1}>
                       <ImageListItem>
-                        <img src={watchedData.digSignPath} alt={digSignImageName || "Digital Signature"} loading="lazy" style={{ maxWidth: "100%", maxHeight: "150px" }} />
+                        <img src={watchedData.digSignPath} alt={digSignImageName || "Digital Signature"} loading="lazy" />
                       </ImageListItem>
                     </ImageList>
-                    {!viewOnly && (
-                      <Button variant="contained" color="error" onClick={handleDigSignClear}>
-                        Clear Signature
-                      </Button>
-                    )}
+                    <Typography variant="body2" color="text.secondary">
+                      {digSignImageName}
+                    </Typography>
+                    {!viewOnly && <SmartButton text="Clear" onClick={handleDigSignClear} variant="contained" color="error" icon={Cancel} />}
                   </Box>
                 </Grid>
               )}

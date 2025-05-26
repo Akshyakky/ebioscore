@@ -30,6 +30,8 @@ import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
+import { useUserList } from "@/pages/securityManagement/UserListPage/hooks/useUserList";
+import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
 
 export type DropdownType =
   | "pic"
@@ -96,7 +98,8 @@ export type DropdownType =
   | "manufacturer"
   | "productLocation"
   | "grnType"
-  | "resourceList";
+  | "resourceList"
+  | "usersWithoutLogin";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -136,7 +139,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
 
   // State to track status of each dropdown
   const [dropdownStates, setDropdownStates] = useState<Record<DropdownType, DropdownState>>({} as Record<DropdownType, DropdownState>);
-
+  const { getUsersWithoutCredentials } = useUserList();
   // Registry of dropdown fetcher functions
   const fetcherRegistry = useMemo<Record<DropdownType, FetcherFunction>>(
     () => ({
@@ -481,6 +484,13 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           value: item.rLID || 0,
           label: item.rLName || "",
           ...item,
+        }));
+      },
+      usersWithoutLogin: async () => {
+        const response = await getUsersWithoutCredentials();
+        return response.data.map((user: UserListDto) => ({
+          value: user.conID || 0,
+          label: user.appUserName || "",
         }));
       },
     }),
