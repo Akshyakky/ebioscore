@@ -23,47 +23,46 @@ import { useContext } from "react";
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import { PatientSearch } from "../../CommonPage/Patient/PatientSearch/PatientSearch";
 import { PatientDemographics } from "../../CommonPage/Patient/PatientDemographics/PatientDemographics";
-import PatientVisitHistoryDialog from "../Form/RevisitForm";
+
 import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientSearch";
-import { useRevisit } from "../hooks/useRevisitForm";
-import InsuranceManagementDialog from "../../InsuranceForm/Form/InsuranceGrid";
+import { useRevisit } from "../../RevisitPage/hooks/useRevisitForm";
+import PatientVisitHistoryDialog from "../../RevisitPage/Form/RevisitForm";
+import InsuranceManagementDialog from "../Form/InsuranceGrid";
 
 // Schema definition for form validation
-// Updated schema definition with proper type handling
 const schema = z.object({
   opVID: z.number().default(0),
-  pChartID: z.number().default(0),
-  pChartCode: z.string().default(""),
+  pChartID: z.number().optional().default(0),
+  pChartCode: z.string().optional().default(""),
   pVisitDate: z.date().default(new Date()),
   patOPIP: z.string().default("O"),
-  // Allow both string (for composite dropdown value) and number (for API submission)
-  attendingPhysicianId: z.union([z.number(), z.string()]).default(0),
-  attendingPhysicianSpecialtyId: z.number().default(0),
-  attendingPhysicianName: z.string().default(""),
-  attendingPhysicianSpecialty: z.string().default(""),
-  primaryReferralSourceId: z.number().default(0),
-  primaryReferralSourceName: z.string().default(""),
-  primaryPhysicianId: z.number().default(0),
-  primaryPhysicianName: z.string().default(""),
+  attendingPhysicianId: z.number().optional().default(0),
+  attendingPhysicianName: z.string().optional().default(""),
+  attendingPhysicianSpecialtyId: z.number().optional().default(0),
+  attendingPhysicianSpecialty: z.string().optional().default(""),
+  primaryReferralSourceId: z.number().optional().default(0),
+  primaryReferralSourceName: z.string().optional().default(""),
+  primaryPhysicianId: z.number().optional().default(0),
+  primaryPhysicianName: z.string().optional().default(""),
   pVisitStatus: z.string().default("W"),
   pVisitType: z.enum(["H", "P"]).default("P"),
-  pVisitTypeText: z.string().default(""),
+  pVisitTypeText: z.string().optional().default(""),
   rActiveYN: z.string().default("Y"),
-  rNotes: z.string().default(""),
-  pTypeID: z.number().default(0),
-  pTypeCode: z.string().default(""),
-  pTypeName: z.string().default(""),
-  crossConsultation: z.enum(["Y", "N"]).default("N"),
-  deptID: z.number().default(0),
-  deptName: z.string().default(""),
-  opNumber: z.string().default(""),
-  pChartCompID: z.number().default(0),
-  refFacultyID: z.number().default(0),
-  refFaculty: z.string().default(""),
-  secondaryReferralSourceId: z.number().default(0),
-  secondaryReferralSourceName: z.string().default(""),
+  rNotes: z.string().optional().default(""),
+  pTypeID: z.number().optional().default(0),
+  pTypeCode: z.string().optional().default(""),
+  pTypeName: z.string().optional().default(""),
+  crossConsultation: z.enum(["Y", "N"]).optional().default("N"),
+  deptID: z.number().optional().default(0),
+  deptName: z.string().optional().default(""),
+  opNumber: z.string().optional().default(""),
+  pChartCompID: z.number().optional().default(0),
+  refFacultyID: z.number().optional().default(0),
+  refFaculty: z.string().optional().default(""),
+  secondaryReferralSourceId: z.number().optional().default(0),
+  secondaryReferralSourceName: z.string().optional().default(""),
   oldPChartID: z.number().default(0),
-  transferYN: z.string().default("N"),
+  transferYN: z.string().optional().default("N"),
 });
 
 type RevisitFormData = z.infer<typeof schema>;
@@ -190,24 +189,6 @@ const RevisitPage: React.FC = () => {
   }, [dropdownValues.department]);
 
   // Load dropdown values
-  const loadDropdownValues = useCallback(async () => {
-    try {
-      debugger;
-      setLoading(true);
-      const [primaryIntroducingSourceData] = await Promise.all([ContactMastService.fetchRefferalPhy("GetActiveReferralContacts", compID)]);
-      setPrimaryIntroducingSource(
-        primaryIntroducingSourceData.map((item) => ({
-          value: item.value.toString(),
-          label: item.label,
-        }))
-      );
-    } catch (error) {
-      console.error("Error loading dropdown values:", error);
-      showAlert("Error", "Failed to load dropdown values", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [compID, setLoading]);
 
   // Statistics dashboard component
   const renderStatsDashboard = () => (
@@ -265,6 +246,7 @@ const RevisitPage: React.FC = () => {
     }
   }, [selectedPatient]);
 
+  // Patient selection handler
   const handlePatientSelect = useCallback(
     async (patientResult: PatientSearchResult) => {
       try {
@@ -294,11 +276,15 @@ const RevisitPage: React.FC = () => {
 
           if (lastVisitResult && lastVisitResult.success && lastVisitResult.data) {
             const isSavedPhysicianAvailable = availablePhysicians.some((physician) => physician.value === `${savedPhysicianId}-${savedPhysicianSpecialtyId}`);
+
+            // Set form values with last visit data
             setValue("attendingPhysicianId", isSavedPhysicianAvailable ? savedPhysicianId : 0, { shouldDirty: true });
             setValue("attendingPhysicianSpecialtyId", isSavedPhysicianAvailable ? savedPhysicianSpecialtyId : 0, { shouldDirty: true });
             setValue("deptID", lastVisitResult.data.deptID || 0, { shouldDirty: true });
             setValue("pTypeID", lastVisitResult.data.pTypeID || 0, { shouldDirty: true });
             setValue("primaryReferralSourceId", lastVisitResult.data.primaryReferralSourceId || 0, { shouldDirty: true });
+
+            // Set physician names if available
             if (isSavedPhysicianAvailable) {
               const savedPhysician = availablePhysicians.find((physician) => physician.value === `${savedPhysicianId}-${savedPhysicianSpecialtyId}`);
               if (savedPhysician) {
@@ -307,6 +293,7 @@ const RevisitPage: React.FC = () => {
               }
             }
 
+            // Set department and payment source names
             const selectedDept = dropdownValues.department?.find((dept) => dept.value === lastVisitResult.data.deptID);
             if (selectedDept) {
               setValue("deptName", selectedDept.label, { shouldDirty: true });
@@ -323,6 +310,8 @@ const RevisitPage: React.FC = () => {
               setValue("primaryReferralSourceName", selectedReferralSource.label, { shouldDirty: true });
             }
           }
+
+          // Trigger form validation
           await trigger();
         }
       } catch (error) {
@@ -335,134 +324,34 @@ const RevisitPage: React.FC = () => {
     [setLoading, setValue, dropdownValues.department, dropdownValues.pic, primaryIntroducingSource, trigger]
   );
 
-  const handleAdvancedPatientSelect = useCallback(
-    async (selectedSuggestion: string) => {
-      if (!selectedSuggestion) return;
+  // Advanced patient search handler
+  const handleAdvancedPatientSelect = useCallback(async (selectedSuggestion: string) => {
+    if (!selectedSuggestion) return;
 
-      try {
-        setLoading(true);
+    const parts = selectedSuggestion.split("|");
+    const pChartCode = parts[0]?.trim();
+    const fullName = parts[1]?.trim() || "";
 
-        const parts = selectedSuggestion.split("|");
-        const pChartCode = parts[0]?.trim();
-        const fullName = parts[1]?.trim() || "";
+    // Extract pChartID from the suggestion
+    const pChartIDMatch = selectedSuggestion.match(/\((\d+)\)/);
+    const pChartID = pChartIDMatch ? parseInt(pChartIDMatch[1], 10) : 0;
 
-        const pChartIDMatch = selectedSuggestion.match(/\((\d+)\)/);
-        const pChartID = pChartIDMatch ? parseInt(pChartIDMatch[1], 10) : 0;
+    if (pChartCode && pChartID) {
+      const patientResult: PatientSearchResult = {
+        pChartID,
+        pChartCode,
+        fullName,
+      };
+      setSelectedPatient(patientResult);
+    }
+  }, []);
 
-        if (pChartCode && pChartID) {
-          const patientResult: PatientSearchResult = {
-            pChartID,
-            pChartCode,
-            fullName,
-          };
-
-          // Set the patient first
-          setSelectedPatient(patientResult);
-          setSelectedPChartID(pChartID);
-
-          // Reset physician selection when selecting from waiting search
-          setValue("attendingPhysicianId", 0, { shouldValidate: true, shouldDirty: true });
-          setValue("attendingPhysicianSpecialtyId", 0, { shouldValidate: true, shouldDirty: true });
-          setValue("attendingPhysicianName", "", { shouldValidate: true, shouldDirty: true });
-          setValue("attendingPhysicianSpecialty", "", { shouldValidate: true, shouldDirty: true });
-
-          // Load fresh physician data for the selected patient
-          await handlePatientSelect(patientResult);
-        }
-      } catch (error) {
-        console.error("Error in waiting patient search:", error);
-        showAlert("Error", "Failed to load patient from waiting search", "error");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [setLoading, setValue, handlePatientSelect, showAlert]
-  );
-
-  const handlePhysicianChange = useCallback(
-    async (event: any) => {
-      // Handle custom FormField event structure
-      const selectedValue = event.value || event.target?.value;
-      const selectedLabel = event.label;
-
-      console.log("Physician selection:", { selectedValue, selectedLabel });
-
-      // Handle empty or default selection
-      if (!selectedValue || selectedValue === "" || selectedValue === "0" || selectedValue === "0-0") {
-        setValue("attendingPhysicianId", 0, { shouldValidate: true, shouldDirty: true });
-        setValue("attendingPhysicianSpecialtyId", 0, { shouldValidate: true, shouldDirty: true });
-        setValue("attendingPhysicianName", "", { shouldValidate: true, shouldDirty: true });
-        setValue("attendingPhysicianSpecialty", "", { shouldValidate: true, shouldDirty: true });
-        await trigger("attendingPhysicianId");
-        return;
-      }
-
-      // Validate the composite value format
-      if (typeof selectedValue === "string" && selectedValue.includes("-")) {
-        const parts = selectedValue.split("-");
-        if (parts.length !== 2) {
-          console.error("Invalid physician value format:", selectedValue);
-          setFormError("Invalid physician selection format");
-          return;
-        }
-
-        const [conIDStr, cdIDStr] = parts;
-        const conID = parseInt(conIDStr, 10);
-        const cdID = parseInt(cdIDStr, 10);
-
-        if (isNaN(conID) || isNaN(cdID) || conID === 0) {
-          console.error("Invalid numeric values in physician selection:", { conIDStr, cdIDStr });
-          setFormError("Invalid physician selection values");
-          return;
-        }
-
-        // Extract physician name and specialty from label
-        let physicianName = "";
-        let physicianSpecialty = "";
-
-        if (selectedLabel) {
-          const labelParts = selectedLabel.split("|");
-          physicianName = labelParts[0]?.trim() || "";
-          physicianSpecialty = labelParts[1]?.trim() || "Unknown Specialty";
-        } else {
-          const selectedPhysician = availableAttendingPhysicians.find((physician) => physician.value === selectedValue);
-          if (selectedPhysician) {
-            const labelParts = selectedPhysician.label.split("|");
-            physicianName = labelParts[0]?.trim() || "";
-            physicianSpecialty = labelParts[1]?.trim() || "Unknown Specialty";
-          }
-        }
-
-        // Set all physician-related fields
-        setValue("attendingPhysicianId", selectedValue, { shouldValidate: true, shouldDirty: true });
-        setValue("attendingPhysicianSpecialtyId", cdID, { shouldValidate: true, shouldDirty: true });
-        setValue("attendingPhysicianName", physicianName, { shouldValidate: true, shouldDirty: true });
-        setValue("attendingPhysicianSpecialty", physicianSpecialty, { shouldValidate: true, shouldDirty: true });
-
-        // Clear any previous form errors
-        setFormError(null);
-
-        // Trigger validation
-        await trigger(["attendingPhysicianId", "attendingPhysicianSpecialtyId"]);
-
-        console.log("Physician data set:", {
-          attendingPhysicianId: selectedValue,
-          attendingPhysicianSpecialtyId: cdID,
-          attendingPhysicianName: physicianName,
-          attendingPhysicianSpecialty: physicianSpecialty,
-        });
-      } else {
-        console.error("Unexpected physician value format:", selectedValue);
-        setFormError("Unexpected physician selection format");
-      }
-    },
-    [setValue, trigger, availableAttendingPhysicians, setFormError]
-  );
-
+  // Waiting search handler
   const handleWaitingSearch = useCallback(() => {
     setShowWaitingPatientSearch(true);
   }, []);
 
+  // Visit type radio button change handler
   const handleRadioButtonChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const { value } = event.target;
@@ -482,6 +371,8 @@ const RevisitPage: React.FC = () => {
           console.error("Error loading physicians:", error);
         }
       }
+
+      // Clear department/physician fields when switching visit type
       if (value === "H") {
         setValue("attendingPhysicianId", 0, { shouldDirty: true });
         setValue("attendingPhysicianName", "", { shouldDirty: true });
@@ -497,62 +388,42 @@ const RevisitPage: React.FC = () => {
     [selectedPChartID, setValue, trigger]
   );
 
+  // Dropdown change handler
   const handleDropdownChange = useCallback(
     async (fieldName: keyof RevisitFormData, value: string | number, options?: DropdownOption[], additionalFields?: Record<string, any>) => {
       setValue(fieldName, value, { shouldValidate: true, shouldDirty: true });
+
+      // Set additional related fields based on the dropdown selection
       if (additionalFields) {
         Object.entries(additionalFields).forEach(([key, val]) => {
           setValue(key as keyof RevisitFormData, val, { shouldDirty: true });
         });
       }
+
       await trigger();
     },
     [setValue, trigger]
   );
 
-  const extractPhysicianId = (attendingPhysicianId: string | number): number => {
-    if (typeof attendingPhysicianId === "number") {
-      return attendingPhysicianId;
-    }
-
-    if (typeof attendingPhysicianId === "string") {
-      // Handle composite value format "123-456"
-      if (attendingPhysicianId.includes("-")) {
-        const [conIDStr] = attendingPhysicianId.split("-");
-        const physicianId = parseInt(conIDStr, 10);
-        return isNaN(physicianId) ? 0 : physicianId;
-      }
-
-      // Handle string number format "123"
-      const physicianId = parseInt(attendingPhysicianId, 10);
-      return isNaN(physicianId) ? 0 : physicianId;
-    }
-
-    return 0;
-  };
-
+  // Form submission handler
   const onSubmit = async (data: RevisitFormData) => {
     setFormError(null);
 
     try {
-      debugger;
       setIsSaving(true);
       setLoading(true);
 
-      // Extract the actual physician ID from the composite value
-      const physicianId = extractPhysicianId(data.attendingPhysicianId);
+      // Validate required fields based on visit type
+      if (data.pVisitType === "H" && (!data.deptID || data.deptID === 0)) {
+        setFormError("Department is required for hospital visits");
+        return;
+      }
 
-      console.log("Form validation data:", {
-        pVisitType: data.pVisitType,
-        attendingPhysicianId: data.attendingPhysicianId,
-        extractedPhysicianId: physicianId,
-        deptID: data.deptID,
-        pChartID: data.pChartID,
-        pTypeID: data.pTypeID,
-        primaryReferralSourceId: data.primaryReferralSourceId,
-      });
+      if (data.pVisitType === "P" && (!data.attendingPhysicianId || data.attendingPhysicianId === 0)) {
+        setFormError("Attending Physician is required for physician visits");
+        return;
+      }
 
-      // Validation checks with proper physician ID extraction
       if (!data.pChartID || data.pChartID === 0) {
         setFormError("Patient selection is required");
         return;
@@ -568,62 +439,7 @@ const RevisitPage: React.FC = () => {
         return;
       }
 
-      if (data.pVisitType === "H" && (!data.deptID || data.deptID === 0)) {
-        setFormError("Department is required for hospital visits");
-        return;
-      }
-
-      if (data.pVisitType === "P" && physicianId === 0) {
-        setFormError("Attending Physician is required for physician visits");
-        return;
-      }
-
-      // Prepare the data object with correct field types
-      const visitData: OPVisitDto = {
-        ...data,
-        // Use the extracted physician ID for API submission
-        attendingPhysicianId: physicianId,
-        // Ensure all numeric fields are properly typed
-        opVID: data.opVID || 0,
-        pChartID: data.pChartID,
-        oldPChartID: data.oldPChartID || 0,
-        attendingPhysicianSpecialtyId: data.attendingPhysicianSpecialtyId || 0,
-        primaryReferralSourceId: data.primaryReferralSourceId || 0,
-        primaryPhysicianId: data.primaryPhysicianId || 0,
-        pTypeID: data.pTypeID || 0,
-        deptID: data.deptID || 0,
-        pChartCompID: data.pChartCompID || 0,
-        refFacultyID: data.refFacultyID || 0,
-        secondaryReferralSourceId: data.secondaryReferralSourceId || 0,
-        // Ensure string fields are properly set
-        pChartCode: data.pChartCode || "",
-        patOPIP: data.patOPIP || "O",
-        pVisitStatus: data.pVisitStatus || "W",
-        pVisitType: data.pVisitType,
-        pVisitTypeText: data.pVisitTypeText || "",
-        rActiveYN: data.rActiveYN || "Y",
-        rNotes: data.rNotes || "",
-        pTypeCode: data.pTypeCode || "",
-        pTypeName: data.pTypeName || "",
-        crossConsultation: data.crossConsultation || "N",
-        deptName: data.deptName || "",
-        opNumber: data.opNumber || "",
-        refFaculty: data.refFaculty || "",
-        primaryReferralSourceName: data.primaryReferralSourceName || "",
-        primaryPhysicianName: data.primaryPhysicianName || "",
-        secondaryReferralSourceName: data.secondaryReferralSourceName || "",
-        transferYN: data.transferYN || "N",
-        attendingPhysicianName: data.attendingPhysicianName || "",
-        attendingPhysicianSpecialty: data.attendingPhysicianSpecialty || "",
-        pVisitDate: data.pVisitDate,
-        compID: compID,
-        compName: userInfo.compName || "",
-        compCode: userInfo.compCode || "",
-      };
-
-      console.log("Submitting visit data:", visitData);
-
-      const response = await saveVisit(visitData);
+      const response = await saveVisit(data as OPVisitDto);
 
       if (response.success) {
         showAlert("Success", "Visit created successfully", "success");
@@ -677,7 +493,6 @@ const RevisitPage: React.FC = () => {
 
   // Open history dialog
   const handleOpenHistoryDialog = useCallback(() => {
-    debugger;
     setIsHistoryDialogOpen(true);
   }, []);
 
@@ -899,8 +714,25 @@ const RevisitPage: React.FC = () => {
                           size="small"
                           fullWidth
                           options={availableAttendingPhysicians}
-                          onChange={handlePhysicianChange}
-                          helperText={errors.attendingPhysicianId?.message}
+                          onChange={(event: SelectChangeEvent<string>) => {
+                            const selectedValue = event.target.value;
+                            if (selectedValue && selectedValue !== "0-0") {
+                              const [conID, cdID] = selectedValue.split("-");
+                              const selectedPhysician = availableAttendingPhysicians.find((physician) => physician.value === selectedValue);
+
+                              handleDropdownChange("attendingPhysicianId", Number(conID), availableAttendingPhysicians, {
+                                attendingPhysicianSpecialtyId: Number(cdID),
+                                attendingPhysicianName: selectedPhysician?.label.split("|")[0]?.trim() || "",
+                                attendingPhysicianSpecialty: selectedPhysician?.label.split("|")[1]?.trim() || "Unknown Specialty",
+                              });
+                            } else {
+                              handleDropdownChange("attendingPhysicianId", 0, availableAttendingPhysicians, {
+                                attendingPhysicianSpecialtyId: 0,
+                                attendingPhysicianName: "",
+                                attendingPhysicianSpecialty: "",
+                              });
+                            }
+                          }}
                         />
                       </Grid>
                     )}
@@ -952,7 +784,6 @@ const RevisitPage: React.FC = () => {
                   variant="contained"
                   color="primary"
                   icon={SaveIcon}
-                  onClick={handleSubmit(onSubmit)}
                   asynchronous={true}
                   showLoadingIndicator={true}
                   loadingText="Creating..."
