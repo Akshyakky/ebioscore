@@ -1,24 +1,8 @@
 import React from "react";
-import { Stack, Grid, styled } from "@mui/material";
+import { Stack, Grid } from "@mui/material";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import CustomButton, { CustomButtonProps } from "./CustomButton";
 import { SvgIconComponent } from "@mui/icons-material";
-
-// Styled ButtonGroup component
-const StyledButtonGroup = styled(ButtonGroup)(({ theme }) => ({
-  "& .MuiButtonGroup-grouped:not(:last-of-type)": {
-    borderColor: "rgba(255, 255, 255, 0.15)",
-  },
-  "& .MuiButton-root": {
-    textTransform: "none",
-    gap: theme.spacing(1),
-    fontSize: "0.875rem",
-    fontWeight: 500,
-    "& .MuiSvgIcon-root": {
-      fontSize: 20,
-    },
-  },
-}));
 
 export interface ButtonProps extends Omit<CustomButtonProps, "icon"> {
   icon?: SvgIconComponent;
@@ -35,7 +19,7 @@ const ActionButtonGroup: React.FC<ActionButtonGroupProps> = ({ buttons, orientat
   return (
     <Stack spacing={1}>
       <Grid>
-        <StyledButtonGroup orientation={orientation} aria-label="action button group" disableElevation disableRipple>
+        <ButtonGroup orientation={orientation} aria-label="action button group" disableElevation disableRipple>
           {buttons.map((button, index) => (
             <CustomButton
               key={index}
@@ -49,10 +33,9 @@ const ActionButtonGroup: React.FC<ActionButtonGroupProps> = ({ buttons, orientat
               ariaLabel={button.text || `button-${index}`}
             />
           ))}
-        </StyledButtonGroup>
+        </ButtonGroup>
       </Grid>
     </Stack>
   );
 };
-
 export default ActionButtonGroup;
