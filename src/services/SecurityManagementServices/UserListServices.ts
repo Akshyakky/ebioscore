@@ -15,8 +15,8 @@ class UserListServices extends GenericEntityService<UserListDto> {
   async getUsersWithoutCredentials(): Promise<OperationResult<UserListDto>> {
     return this.apiService.get<OperationResult<UserListDto>>(`${this.baseEndpoint}/GetUsersWithoutCredentials`, this.getToken());
   }
-  async getAllAppUsers(): Promise<OperationResult<UserListDto>> {
-    return this.apiService.get<OperationResult<UserListDto>>(`${this.baseEndpoint}/GetAllAppUsers`, this.getToken());
+  async getAllAppUsers(): Promise<OperationResult<UserListDto[]>> {
+    return this.apiService.get<OperationResult<UserListDto[]>>(`${this.baseEndpoint}/GetAllAppUsers`, this.getToken());
   }
   async getUserListPermissionsByType(appID: Number, mainID: Number, subID: Number, type: string): Promise<OperationResult<UserListDto>> {
     return this.apiService.get<OperationResult<UserListDto>>(

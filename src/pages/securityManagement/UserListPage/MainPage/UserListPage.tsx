@@ -37,8 +37,7 @@ const UserListPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
-
-  const { userList, isLoading, error, fetchUserList, deleteUser } = useUserList();
+  const { isLoading, error, fetchUsersList, deleteUserList, userList } = useUserList();
 
   const [filters, setFilters] = useState<{
     status: string;
@@ -48,13 +47,9 @@ const UserListPage: React.FC = () => {
     adminUser: "",
   });
 
-  useEffect(() => {
-    document.title = "User Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
-    fetchUserList();
-  }, [fetchUserList]);
+    fetchUsersList();
+  }, [fetchUsersList]);
 
   const debouncedSearch = useMemo(() => debounce((value: string) => setDebouncedSearchTerm(value), 300), []);
 
@@ -106,7 +101,7 @@ const UserListPage: React.FC = () => {
     if (!selectedUser) return;
 
     try {
-      const success = await deleteUser(selectedUser.appID);
+      const success = await deleteUserList(selectedUser.appID);
 
       if (success) {
         showAlert("Success", "User deleted successfully", "success");
@@ -118,7 +113,7 @@ const UserListPage: React.FC = () => {
     } finally {
       setIsDeleteConfirmOpen(false);
     }
-  }, [selectedUser, deleteUser]);
+  }, [selectedUser, deleteUserList]);
 
   const handleFormClose = useCallback(
     (refreshData?: boolean) => {
@@ -237,8 +232,16 @@ const UserListPage: React.FC = () => {
       width: 150,
     },
     {
+      key: "profileName",
+      header: "Profile",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 150,
+    },
+    {
       key: "adminUserYN",
-      header: "User Type",
+      header: "Super User",
       visible: true,
       sortable: true,
       filterable: true,
