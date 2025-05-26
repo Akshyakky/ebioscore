@@ -1,12 +1,5 @@
 import React from "react";
-import { Grid, Typography, Box, styled } from "@mui/material";
-
-const StyledGrid = styled(Grid)(({ theme }) => ({
-  "& > .MuiGrid-item": {
-    paddingTop: theme.spacing(0),
-    paddingBottom: theme.spacing(0),
-  },
-}));
+import { Grid, Box } from "@mui/material";
 
 interface FormSectionWrapperProps {
   title: string;
@@ -18,9 +11,9 @@ interface FormSectionWrapperProps {
 const FormSectionWrapper: React.FC<FormSectionWrapperProps> = ({ title, children, spacing = 1, actionButton }) => {
   return (
     <Box mb={1}>
-      <StyledGrid container spacing={spacing}>
+      <Grid container spacing={spacing}>
         {children}
-      </StyledGrid>
+      </Grid>
     </Box>
   );
 };
