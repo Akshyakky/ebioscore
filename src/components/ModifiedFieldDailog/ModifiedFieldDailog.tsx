@@ -10,8 +10,8 @@ import SmartButton from "../Button/SmartButton";
 import EnhancedFormField from "../EnhancedFormField/EnhancedFormField";
 import ConfirmationDialog from "../Dialog/ConfirmationDialog";
 import { appModifiedListService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
-import { showAlert } from "../../providers/AlertProvider";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
+import { useAlert } from "@/providers/AlertProvider";
 
 interface ModifiedFieldDialogProps {
   open: boolean;
@@ -54,6 +54,7 @@ const ModifiedFieldDialog: React.FC<ModifiedFieldDialogProps> = ({
   initialFormData = {},
   onFieldAddedOrUpdated,
 }) => {
+  const { showAlert } = useAlert();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmDialogConfig, setConfirmDialogConfig] = useState({

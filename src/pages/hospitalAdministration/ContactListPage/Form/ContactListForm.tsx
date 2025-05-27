@@ -10,7 +10,7 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import CustomSwitch from "@/components/Checkbox/ColorSwitch";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import useDropdownChange from "@/hooks/useDropdownChange";
@@ -60,6 +60,7 @@ type ContactFormData = z.infer<typeof schema>;
 
 const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
   const { getContactById, saveContact, generateContactCode } = useContactList();
   const serverDate = useServerDate();
   const [isSaving, setIsSaving] = useState(false);
