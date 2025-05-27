@@ -57,10 +57,6 @@ const MedicationListPage: React.FC = () => {
     manufacturer: "",
   });
 
-  useEffect(() => {
-    document.title = "Medication List Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchMedicationList();
   }, [fetchMedicationList]);

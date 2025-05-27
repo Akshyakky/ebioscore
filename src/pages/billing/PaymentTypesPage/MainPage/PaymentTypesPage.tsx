@@ -65,10 +65,6 @@ const PaymentTypesPage: React.FC = () => {
     bankCharge: "",
   });
 
-  useEffect(() => {
-    document.title = "Payment Types Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchPaymentTypesList();
   }, [fetchPaymentTypesList]);

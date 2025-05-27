@@ -232,13 +232,6 @@ const RevisitPage: React.FC = () => {
     </Paper>
   );
 
-  // Initial load
-  // useEffect(() => {
-  //   document.title = "Patient Revisit Management";
-  //   loadDropdownValues();
-  //   fetchVisitList(DateFilterType.Today, null, null);
-  // }, [loadDropdownValues, fetchVisitList]);
-
   // Handle patient selection when selectedPatient changes
   useEffect(() => {
     if (selectedPatient) {

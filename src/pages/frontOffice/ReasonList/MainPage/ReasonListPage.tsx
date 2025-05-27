@@ -50,10 +50,6 @@ const ReasonListPage: React.FC = () => {
     duration: "",
   });
 
-  useEffect(() => {
-    document.title = "Reason List Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchReasonList();
   }, [fetchReasonList]);

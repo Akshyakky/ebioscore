@@ -59,10 +59,6 @@ const ServiceGroupsListPage: React.FC = () => {
     modification: "",
   });
 
-  useEffect(() => {
-    document.title = "Service Groups Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchServiceGroupsList();
   }, [fetchServiceGroupsList]);

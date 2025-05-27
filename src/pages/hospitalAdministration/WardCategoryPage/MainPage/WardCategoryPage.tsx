@@ -44,10 +44,6 @@ const WardCategoryPage: React.FC = () => {
     transfer: "",
   });
 
-  useEffect(() => {
-    document.title = "Ward Category Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchWardCategoryList();
   }, [fetchWardCategoryList]);

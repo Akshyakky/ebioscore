@@ -50,10 +50,6 @@ const PatientInvoiceCodePage: React.FC = () => {
     insurance: "",
   });
 
-  useEffect(() => {
-    document.title = "Patient Invoice Codes Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchPatientInvoiceList();
   }, [fetchPatientInvoiceList]);

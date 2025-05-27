@@ -43,10 +43,6 @@ const MedicationDosagePage: React.FC = () => {
     status: "",
   });
 
-  useEffect(() => {
-    document.title = "Medication Dosage Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchMedicationDosageList();
   }, [fetchMedicationDosageList]);

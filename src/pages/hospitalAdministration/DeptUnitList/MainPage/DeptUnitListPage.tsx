@@ -41,10 +41,6 @@ const DeptUnitListPage: React.FC = () => {
     status: "",
   });
 
-  useEffect(() => {
-    document.title = "Department Unit List Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchDeptUnitList();
   }, [fetchDeptUnitList]);

@@ -48,10 +48,6 @@ const MedicationGenericPage: React.FC = () => {
     transfer: "",
   });
 
-  useEffect(() => {
-    document.title = "Generic Medication Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchMedicationGenericList();
   }, [fetchMedicationGenericList]);

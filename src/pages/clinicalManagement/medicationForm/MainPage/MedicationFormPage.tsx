@@ -48,10 +48,6 @@ const MedicationFormPage: React.FC = () => {
     transfer: "",
   });
 
-  useEffect(() => {
-    document.title = "Medication Form Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchMedicationFormList();
   }, [fetchMedicationFormList]);

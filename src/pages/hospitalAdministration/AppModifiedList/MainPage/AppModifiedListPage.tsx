@@ -66,7 +66,6 @@ const AppModifiedListPage: React.FC = () => {
   });
 
   useEffect(() => {
-    document.title = "App Modified List Management";
     fetchMasterList();
   }, [fetchMasterList]);
 

@@ -58,10 +58,6 @@ const ResourceListPage: React.FC = () => {
     validation: "",
   });
 
-  useEffect(() => {
-    document.title = "Resource List Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchResourceList();
   }, [fetchResourceList]);

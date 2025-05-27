@@ -51,10 +51,6 @@ const ProcedureListPage: React.FC = () => {
     transfer: "",
   });
 
-  useEffect(() => {
-    document.title = "Procedure List Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchProcedureList();
   }, [fetchProcedureList]);

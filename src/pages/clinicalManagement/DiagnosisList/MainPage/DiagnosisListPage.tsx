@@ -57,10 +57,6 @@ const DiagnosisListPage: React.FC = () => {
     version: "",
   });
 
-  useEffect(() => {
-    document.title = "Diagnosis List Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchDiagnosisList();
   }, [fetchDiagnosisList]);

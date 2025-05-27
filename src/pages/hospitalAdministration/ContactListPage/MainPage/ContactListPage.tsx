@@ -57,7 +57,6 @@ const ContactListPage: React.FC = () => {
   });
 
   useEffect(() => {
-    document.title = "Contact List Management";
     handleRefresh();
   }, []);
 

@@ -63,10 +63,6 @@ const ProductOverviewPage: React.FC = () => {
     transfer: "",
   });
 
-  useEffect(() => {
-    document.title = "Product Overview Management";
-  }, []);
-
   // Auto-open department selection dialog if no department is selected
   useEffect(() => {
     if (!isDepartmentSelected && !isDialogOpen) {

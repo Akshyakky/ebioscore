@@ -50,10 +50,6 @@ const ProductTaxListPage: React.FC = () => {
     taxRange: "",
   });
 
-  useEffect(() => {
-    document.title = "Product Tax List Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchProductTaxList();
   }, [fetchProductTaxList]);

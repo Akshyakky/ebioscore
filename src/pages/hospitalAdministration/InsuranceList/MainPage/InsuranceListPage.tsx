@@ -51,10 +51,6 @@ const InsuranceListPage: React.FC = () => {
     category: "",
   });
 
-  useEffect(() => {
-    document.title = "Insurance Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchInsuranceList();
   }, [fetchInsuranceList]);

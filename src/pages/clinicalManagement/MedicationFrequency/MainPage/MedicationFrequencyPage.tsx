@@ -48,10 +48,6 @@ const MedicationFrequencyPage: React.FC = () => {
     transfer: "",
   });
 
-  useEffect(() => {
-    document.title = "Medication Frequency Management";
-  }, []);
-
   const handleRefresh = useCallback(() => {
     fetchMedicationFrequencyList();
   }, [fetchMedicationFrequencyList]);
