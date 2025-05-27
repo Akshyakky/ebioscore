@@ -1,49 +1,32 @@
-// src/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage.tsx
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Box, Container, CircularProgress, Paper, Typography, Divider, Tabs, Tab } from "@mui/material";
+import React, { useState, useCallback } from "react";
+import { Box, Container, CircularProgress } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import PrintIcon from "@mui/icons-material/Print";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { useLoading } from "@/hooks/Common/useLoading";
 import { investigationDto, LCompMultipleDto, LCompAgeRangeDto, LInvMastDto, LCompTemplateDto, LComponentDto, InvestigationFormErrors } from "@/interfaces/Laboratory/LInvMastDto";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
 import { useAlert } from "@/providers/AlertProvider";
 import { notifyWarning } from "@/utils/Common/toastManager";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import { useInvestigationList } from "../hooks/useInvestigationList";
 import CustomButton from "@/components/Button/CustomButton";
-import InvestigationListSearch from "../Forms/InvestigationListSearch";
-import InvestigationPrintOrder from "../Forms/InvestigationPrintorder";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import InvestigationListSearch from "../SubPage/InvestigationListSearch";
+import InvestigationPrintOrder from "../SubPage/investigationPrintOrder";
 import InvestigationListDetails from "../SubPage/InvestigationListDetails";
-import ComponentDetailsSection from "../Forms/InvestigatuionCompDetailSection";
-import PrintPreferences from "../Forms/InvestigationPrintPreferences";
+import PrintPreferences from "../SubPage/PrintPreference";
 import LComponentDetails from "../SubPage/InvComponentsDetails";
+import ComponentDetailsSection from "../SubPage/ComponentDetailsSection";
 
 interface Props {}
 
 const InvestigationListPage: React.FC<Props> = () => {
-  const { showAlert } = useAlert();
   const dropdownValues = useDropdownValues(["entryType"]);
-  const { saveInvestigation, getInvestigationById, error: hookError } = useInvestigationList();
-
-  // Dialog States
   const [isLoading, setIsLoading] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showInvestigationPrintOrder, setShowInvestigationPrintOrder] = useState(false);
-  const [isComponentDialogOpen, setIsComponentDialogOpen] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [confirmationConfig, setConfirmationConfig] = useState({
-    title: "",
-    message: "",
-    onConfirm: () => {},
-  });
-
-  // Data States
   const [investigationDetails, setInvestigationDetails] = useState<LInvMastDto | null>(null);
   const [componentDetails, setComponentDetails] = useState<LComponentDto[]>([]);
   const [compMultipleDetails, setCompMultipleDetails] = useState<LCompMultipleDto[]>([]);
@@ -55,30 +38,23 @@ const InvestigationListPage: React.FC<Props> = () => {
     invTitle: "",
     invSTitle: "",
   });
-
-  // Form States
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { showAlert } = useAlert();
   const [shouldResetForm, setShouldResetForm] = useState(false);
-  const [formErrors, setFormErrors] = useState<InvestigationFormErrors>({});
+  const [, setFormErrors] = useState<InvestigationFormErrors>({});
   const [activeView, setActiveView] = useState<"component" | "printPreferences">("component");
+  const [isComponentDialogOpen, setIsComponentDialogOpen] = useState(false);
 
-  // Helper Functions
-  const enhanceComponentDetails = (components: LComponentDto[], multiples: LCompMultipleDto[], ages: LCompAgeRangeDto[], templates: LCompTemplateDto[]): LComponentDto[] =>
-    components.map((comp) => ({
-      ...comp,
-      multipleChoices: multiples.filter((mc) => mc.compOID === comp.compoID),
-      ageRanges: ages.filter((ar) => ar.compoID === comp.compoID || ar.cappID === comp.compoID),
-      templates: templates.filter((tpl) => tpl.compoID === comp.compoID),
-    }));
-
-  // Action Buttons
+  const handleAdvancedSearch = () => {
+    setIsSearchOpen(true);
+  };
   const actionButtons: ButtonProps[] = [
     {
       variant: "contained",
       size: "medium",
       icon: SearchIcon,
       text: "Advanced Search",
-      onClick: () => setIsSearchOpen(true),
+      onClick: handleAdvancedSearch,
     },
     {
       variant: "contained",
@@ -89,6 +65,15 @@ const InvestigationListPage: React.FC<Props> = () => {
     },
   ];
 
+  const enhanceComponentDetails = (components: LComponentDto[], multiples: LCompMultipleDto[], ages: LCompAgeRangeDto[], templates: LCompTemplateDto[]): LComponentDto[] =>
+    components.map((comp) => ({
+      ...comp,
+      multipleChoices: multiples.filter((mc) => mc.compOID === comp.compoID),
+      ageRanges: ages.filter((ar) => ar.compoID === comp.compoID || ar.cappID === comp.compoID),
+      templates: templates.filter((tpl) => tpl.compoID === comp.compoID),
+    }));
+
+  // 1) Searching/Selecting an existing Investigation
   const handleSelect = async (selectedInvestigation: investigationDto) => {
     try {
       if (!selectedInvestigation.invID) {
@@ -97,7 +82,7 @@ const InvestigationListPage: React.FC<Props> = () => {
       }
       setIsLoading(true);
 
-      const response = await getInvestigationById(selectedInvestigation.invID);
+      const response = await investigationlistService.getById(selectedInvestigation.invID);
       if (response.success && response.data) {
         const data = response.data;
         const enhanced = enhanceComponentDetails(data.lComponentsDto || [], data.lCompMultipleDtos || [], data.lCompAgeRangeDtos || [], data.lCompTemplateDtos || []);
@@ -124,7 +109,7 @@ const InvestigationListPage: React.FC<Props> = () => {
     }
   };
 
-  // Form validation
+  // 2) Validate top-level Investigation form
   const validateFormData = useCallback(() => {
     const errors: InvestigationFormErrors = {};
     if (!investigationDetails?.invCode?.trim()) errors.invCode = "Investigation Code is required.";
@@ -136,18 +121,18 @@ const InvestigationListPage: React.FC<Props> = () => {
     return Object.keys(errors).length === 0;
   }, [investigationDetails]);
 
-  // Save implementation
+  // 3) Actually save (upsert) the Investigation with components
   const handleSave = async () => {
     try {
       setIsSubmitted(true);
 
-      // Validate top-level fields
+      // -- Validate top-level fields
       if (!validateFormData()) {
         notifyWarning("Please fill all mandatory fields.");
         return;
       }
 
-      // Gather active (not deleted) components
+      // -- Gather active (not deleted) components
       const activeSaved = componentDetails.filter((c) => c.rActiveYN !== "N");
       const activeUnsaved = unsavedComponents.filter((c) => c.rActiveYN !== "N");
       const allActive = [...activeSaved, ...activeUnsaved];
@@ -159,20 +144,22 @@ const InvestigationListPage: React.FC<Props> = () => {
 
       setIsLoading(true);
 
-      // Prep final list of components
+      // -- Prep final list of components
+      // Keep existing compoIDs for updates, use 0 for new
       const finalComponents: LComponentDto[] = allActive.map((comp, index) => ({
         ...comp,
         compOrder: index + 1,
-        compoID: comp.compoID || 0,
+        compoID: comp.compoID || 0, // 0 => new in the DB
         indexID: comp.indexID,
         mGrpID: typeof comp.mGrpID === "string" ? parseInt(comp.mGrpID, 10) || 0 : comp.mGrpID || 0,
+        // etc...
       }));
 
       // Build the main payload
       const payload: investigationDto = {
         lInvMastDto: {
           ...investigationDetails,
-          invID: investigationDetails?.invID || 0,
+          invID: investigationDetails?.invID || 0, // 0 => new
           invTitle: printPreferences.invTitle,
           invSTitle: printPreferences.invSTitle,
         } as LInvMastDto,
@@ -228,11 +215,11 @@ const InvestigationListPage: React.FC<Props> = () => {
         }
       });
 
-      // Call the API
-      const response = await saveInvestigation(payload);
+      // -- Call the API
+      const response = await investigationlistService.save(payload);
       if (response.success) {
         showAlert("Success", "Investigation saved successfully", "success");
-        handleClearConfirmed();
+        handleClear();
       } else {
         showAlert("Error", response.errorMessage || "Save failed", "error");
       }
@@ -246,17 +233,8 @@ const InvestigationListPage: React.FC<Props> = () => {
     }
   };
 
-  const handleSaveWithConfirmation = () => {
-    setConfirmationConfig({
-      title: "Save Investigation",
-      message: "Are you sure you want to save this investigation?",
-      onConfirm: handleSave,
-    });
-    setShowConfirmation(true);
-  };
-
-  // Clear form implementation
-  const handleClearConfirmed = () => {
+  // 4) Clear the entire form
+  const handleClear = () => {
     setShouldResetForm(true);
     setIsSubmitted(false);
     setInvestigationDetails(null);
@@ -272,67 +250,12 @@ const InvestigationListPage: React.FC<Props> = () => {
     setTimeout(() => setShouldResetForm(false), 100);
   };
 
-  // Clear with confirmation
-  const handleClear = () => {
-    setConfirmationConfig({
-      title: "Clear Form",
-      message: "Are you sure you want to clear all data? This action cannot be undone.",
-      onConfirm: handleClearConfirmed,
-    });
-    setShowConfirmation(true);
-  };
-
-  // Component Operations
+  // 5) Additional helper methods, e.g. add a new component
   const handleAddComponent = () => {
     setSelectedComponent(null);
     setIsComponentDialogOpen(true);
   };
 
-  const handleEditComponent = (component: LComponentDto) => {
-    const isUnsaved = component.compoID !== 0 && unsavedComponents.some((c) => c.compoID === component.compoID);
-    const compWithNestedData: LComponentDto = {
-      ...component,
-      multipleChoices: isUnsaved ? component.multipleChoices || [] : compMultipleDetails.filter((mc) => mc.compOID === component.compoID),
-      ageRanges: isUnsaved ? component.ageRanges || [] : ageRangeDetails.filter((ar) => ar.compoID === component.compoID),
-      templates: isUnsaved ? component.templates || [] : templateDetails.filter((tpl) => tpl.compoID === component.compoID),
-    };
-
-    setSelectedComponent(compWithNestedData);
-    setIsComponentDialogOpen(true);
-  };
-
-  const handleDeleteComponent = (component: LComponentDto) => {
-    const activeSaved = componentDetails.filter((c) => c.rActiveYN !== "N" && c.compoID !== component.compoID);
-    const activeUnsaved = unsavedComponents.filter((c) => c.rActiveYN !== "N" && c.compoID !== component.compoID);
-
-    const totalActive = activeSaved.length + activeUnsaved.length;
-
-    if (totalActive === 0) {
-      showAlert("Warning", "At least one component is required for this investigation. Deletion not allowed.", "warning");
-      return;
-    }
-
-    setConfirmationConfig({
-      title: "Delete Component",
-      message: `Are you sure you want to delete the component "${component.compoNameCD}"?`,
-      onConfirm: () => {
-        const existsInUnsaved = unsavedComponents.some((c) => c.compoID === component.compoID);
-
-        if (existsInUnsaved) {
-          setUnsavedComponents((prev) => prev.map((c) => (c.compoID === component.compoID ? { ...c, rActiveYN: "N" } : c)));
-        } else {
-          setComponentDetails((prev) => prev.map((c) => (c.compoID === component.compoID ? { ...c, rActiveYN: "N" } : c)));
-        }
-
-        if (selectedComponent?.compoID === component.compoID) {
-          setSelectedComponent(null);
-        }
-      },
-    });
-    setShowConfirmation(true);
-  };
-
-  // Code selection handling
   const handleCodeSelect = async (selectedSuggestion: string) => {
     const selectedCode = selectedSuggestion?.split(" - ")[0]?.trim();
     if (!selectedCode) {
@@ -349,7 +272,7 @@ const InvestigationListPage: React.FC<Props> = () => {
         const matchingInvestigation = allInvestigations.find((inv: investigationDto) => inv.lInvMastDto?.invCode === selectedCode);
 
         if (matchingInvestigation?.lInvMastDto?.invID) {
-          const investigationDetailsResponse = await getInvestigationById(matchingInvestigation.lInvMastDto.invID);
+          const investigationDetailsResponse = await investigationlistService.getById(matchingInvestigation.lInvMastDto.invID);
 
           if (investigationDetailsResponse?.success && investigationDetailsResponse.data) {
             const investigationDetails = investigationDetailsResponse.data;
@@ -398,7 +321,46 @@ const InvestigationListPage: React.FC<Props> = () => {
     }
   };
 
-  // Update functions for each part of the investigation
+  const handleEditComponent = (component: LComponentDto) => {
+    const isUnsaved = component.compoID !== 0 && unsavedComponents.some((c) => c.compoID === component.compoID);
+    const compWithNestedData: LComponentDto = {
+      ...component,
+
+      multipleChoices: isUnsaved ? component.multipleChoices || [] : compMultipleDetails.filter((mc) => mc.compOID === component.compoID),
+      ageRanges: isUnsaved ? component.ageRanges || [] : ageRangeDetails.filter((ar) => ar.compoID === component.compoID),
+      templates: isUnsaved ? component.templates || [] : templateDetails.filter((tpl) => tpl.compoID === component.compoID),
+    };
+
+    setSelectedComponent(compWithNestedData);
+    setIsComponentDialogOpen(true);
+  };
+
+  const handleDeleteComponent = (component: LComponentDto) => {
+    const activeSaved = componentDetails.filter((c) => c.rActiveYN !== "N" && c.compoID !== component.compoID);
+    const activeUnsaved = unsavedComponents.filter((c) => c.rActiveYN !== "N" && c.compoID !== component.compoID);
+
+    const totalActive = activeSaved.length + activeUnsaved.length;
+
+    // ⛔ If trying to delete the only active component, block it
+    if (totalActive === 0) {
+      showAlert("Warning", "At least one component is required for this investigation. Deletion not allowed.", "warning");
+
+      return;
+    }
+
+    const existsInUnsaved = unsavedComponents.some((c) => c.compoID === component.compoID);
+
+    if (existsInUnsaved) {
+      setUnsavedComponents((prev) => prev.map((c) => (c.compoID === component.compoID ? { ...c, rActiveYN: "N" } : c)));
+    } else {
+      setComponentDetails((prev) => prev.map((c) => (c.compoID === component.compoID ? { ...c, rActiveYN: "N" } : c)));
+    }
+
+    if (selectedComponent?.compoID === component.compoID) {
+      setSelectedComponent(null);
+    }
+  };
+
   const updateInvestigationDetails = useCallback((data: LInvMastDto) => {
     setInvestigationDetails(data);
   }, []);
@@ -477,16 +439,28 @@ const InvestigationListPage: React.FC<Props> = () => {
     return found ? found.label : "Not Specified";
   };
 
-  if (hookError) {
+  const renderComponentDetails = () => {
+    const filteredComponentDetails = componentDetails.filter((comp) => comp.rActiveYN !== "N");
+    const filteredUnsavedComponents = unsavedComponents.filter((comp) => comp.rActiveYN !== "N");
+    const isDeleted = selectedComponent?.rActiveYN === "N";
+    const validSelectedComponent = isDeleted ? null : selectedComponent;
+
     return (
-      <Box sx={{ p: 2 }}>
-        <Typography color="error" variant="h6">
-          Error loading investigation data: {hookError}
-        </Typography>
-        <CustomButton text="Retry" onClick={() => window.location.reload()} variant="contained" color="primary" />
-      </Box>
+      <ComponentDetailsSection
+        componentDetails={filteredComponentDetails}
+        unsavedComponents={filteredUnsavedComponents}
+        selectedComponent={validSelectedComponent}
+        templateDetails={templateDetails}
+        ageRangeDetails={ageRangeDetails}
+        compMultipleDetails={compMultipleDetails}
+        onAddComponent={handleAddComponent}
+        onEditComponent={handleEditComponent}
+        onDeleteComponent={handleDeleteComponent}
+        onSelectComponent={setSelectedComponent}
+        getEntryTypeName={getEntryTypeName}
+      />
     );
-  }
+  };
 
   return (
     <Container maxWidth={false} sx={{ mt: 2 }}>
@@ -505,7 +479,6 @@ const InvestigationListPage: React.FC<Props> = () => {
           <CircularProgress />
         </Box>
       )}
-
       <Box
         sx={{
           display: "flex",
@@ -527,53 +500,43 @@ const InvestigationListPage: React.FC<Props> = () => {
         />
       </Box>
 
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h5" sx={{ mb: 2 }}>
-          Investigation Details
-        </Typography>
+      <Box sx={{ mt: 2, mb: 2 }}>
         <InvestigationListDetails
           onUpdate={updateInvestigationDetails}
           investigationData={investigationDetails}
           shouldReset={shouldResetForm}
           isSubmitted={isSubmitted}
-          onCodeSelect={handleCodeSelect}
+          onCodeSelect={handleCodeSelect} // <- Use this prop
         />
-      </Paper>
-
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Tabs value={activeView} onChange={(_, newValue) => setActiveView(newValue)} aria-label="investigation tabs" sx={{ mb: 2 }}>
-          <Tab label="Component Details" value="component" />
-          <Tab label="Print Preferences" value="printPreferences" />
-        </Tabs>
-        <Divider sx={{ mb: 3 }} />
-
-        {activeView === "component" ? (
-          <ComponentDetailsSection
-            componentDetails={componentDetails.filter((comp) => comp.rActiveYN !== "N")}
-            unsavedComponents={unsavedComponents.filter((comp) => comp.rActiveYN !== "N")}
-            selectedComponent={selectedComponent?.rActiveYN === "N" ? null : selectedComponent}
-            templateDetails={templateDetails}
-            ageRangeDetails={ageRangeDetails}
-            compMultipleDetails={compMultipleDetails}
-            onAddComponent={handleAddComponent}
-            onEditComponent={handleEditComponent}
-            onDeleteComponent={handleDeleteComponent}
-            onSelectComponent={setSelectedComponent}
-            getEntryTypeName={getEntryTypeName}
-          />
-        ) : (
-          <PrintPreferences
-            componentsList={componentDetails.filter((comp) => comp.rActiveYN !== "N")}
-            reportTitle={printPreferences.invTitle || ""}
-            subTitle={printPreferences.invSTitle || ""}
-            onReportTitleChange={(val) => setPrintPreferences((prev) => ({ ...prev, invTitle: val }))}
-            onSubTitleChange={(val) => setPrintPreferences((prev) => ({ ...prev, invSTitle: val }))}
-            onClear={() => setPrintPreferences({ invTitle: "", invSTitle: "" })}
-            onUpdateComponentOrder={handleUpdateComponentOrder}
-          />
-        )}
-      </Paper>
-
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", sm: "row" },
+          gap: 2,
+          mb: 2,
+        }}
+      >
+        <CustomButton variant={activeView === "component" ? "contained" : "outlined"} onClick={() => setActiveView("component")}>
+          Component Details
+        </CustomButton>
+        <CustomButton variant={activeView === "printPreferences" ? "contained" : "outlined"} onClick={() => setActiveView("printPreferences")}>
+          Print Preferences
+        </CustomButton>
+      </Box>
+      {activeView === "component" ? (
+        renderComponentDetails()
+      ) : (
+        <PrintPreferences
+          componentsList={componentDetails}
+          reportTitle={printPreferences.invTitle || ""}
+          subTitle={printPreferences.invSTitle || ""}
+          onReportTitleChange={(val) => setPrintPreferences((prev) => ({ ...prev, invTitle: val }))}
+          onSubTitleChange={(val) => setPrintPreferences((prev) => ({ ...prev, invSTitle: val }))}
+          onClear={() => setPrintPreferences({ invTitle: "", invSTitle: "" })}
+          onUpdateComponentOrder={handleUpdateComponentOrder}
+        />
+      )}
       <GenericDialog open={isComponentDialogOpen} onClose={() => setIsComponentDialogOpen(false)} title="Component Details" maxWidth="xl" fullWidth>
         <LComponentDetails
           onUpdate={updateComponentDetails}
@@ -584,33 +547,12 @@ const InvestigationListPage: React.FC<Props> = () => {
           setSelectedComponent={setSelectedComponent}
           totalComponentsForInvestigation={componentDetails.length + unsavedComponents.length}
           setUnsavedComponents={setUnsavedComponents}
-          handleCloseDialog={() => setIsComponentDialogOpen(false)}
+          handleCloseDialog={() => setIsComponentDialogOpen(false)} // 👈 ADD THIS
         />
       </GenericDialog>
 
-      <ConfirmationDialog
-        open={showConfirmation}
-        onClose={() => setShowConfirmation(false)}
-        onConfirm={() => {
-          confirmationConfig.onConfirm();
-          setShowConfirmation(false);
-        }}
-        title={confirmationConfig.title}
-        message={confirmationConfig.message}
-        type="warning"
-        maxWidth="sm"
-      />
-
-      <Box sx={{ mt: 3, position: "sticky", bottom: 0, zIndex: 100 }}>
-        <FormSaveClearButton
-          clearText="Clear"
-          saveText="Save"
-          onClear={handleClear}
-          onSave={handleSaveWithConfirmation}
-          clearIcon={DeleteIcon}
-          saveIcon={SaveIcon}
-          isLoading={isLoading}
-        />
+      <Box sx={{ mt: 3 }}>
+        <FormSaveClearButton clearText="Clear" saveText="Save" onClear={handleClear} onSave={handleSave} clearIcon={DeleteIcon} saveIcon={SaveIcon} />
       </Box>
     </Container>
   );
