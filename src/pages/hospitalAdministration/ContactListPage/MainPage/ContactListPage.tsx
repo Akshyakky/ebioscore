@@ -33,6 +33,7 @@ const categoryOptions = [
 ];
 
 const ContactListPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedContact, setSelectedContact] = useState<ContactMastData | null>(null);

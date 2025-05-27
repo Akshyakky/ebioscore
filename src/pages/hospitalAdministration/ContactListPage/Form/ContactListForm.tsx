@@ -15,9 +15,7 @@ import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useFieldsList from "@/components/FieldsList/UseFieldsList";
-import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
-import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { useContactList } from "../hooks/useContactListForm";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 
