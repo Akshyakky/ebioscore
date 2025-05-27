@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useImperativeHandle } from "react";
 import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Save as SaveIcon, Cancel as CancelIcon, Refresh as RefreshIcon, AccountBalance as InsuranceIcon, People as NextOfKinIcon } from "@mui/icons-material";
+import { Refresh as RefreshIcon, AccountBalance as InsuranceIcon, People as NextOfKinIcon } from "@mui/icons-material";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
@@ -37,6 +37,7 @@ const createSchema = (mode: "create" | "edit" | "view") => {
     // Age/DOB Selection
     pDobOrAgeVal: z.enum(["DOB", "AGE"]).default("DOB"),
     pDob: z.date().optional(),
+
     pAgeNumber: z.number().min(0).max(150).optional().default(0),
     pAgeDescriptionVal: z.string().optional().default(""),
 
@@ -124,7 +125,7 @@ interface PatientRegistrationFormProps {
   onClose?: () => void;
 }
 
-const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode = "create", initialData = null, onSave, onClose }) => {
+const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormProps>(({ mode = "create", initialData = null, onSave, onClose }, ref) => {
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
   const serverDate = useServerDate();
@@ -211,8 +212,8 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
       pAddPostcode: "",
       pAddCountryVal: "",
       pAddCountry: "",
-      visitTypeVal: isCreateMode ? "" : "N",
-      visitType: isCreateMode ? "" : "None",
+      visitTypeVal: isCreateMode ? "N" : "N",
+      visitType: isCreateMode ? "None" : "None",
       deptID: 0,
       deptName: "",
       attndPhyID: "",
@@ -478,8 +479,12 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
       const formData = transformToFormData(initialData);
       reset(formData);
       setSavedPChartID(initialData.patRegisters.pChartID);
+    } else if (isCreateMode) {
+      reset(defaultValues);
+      generatePatientCode();
+      setSavedPChartID(0);
     }
-  }, [initialData, isEditMode, isViewMode, reset, transformToFormData]);
+  }, [initialData, isEditMode, isViewMode, reset, transformToFormData, isCreateMode, defaultValues]);
 
   // Generate new patient code
   const generatePatientCode = async () => {
@@ -635,11 +640,11 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
       }
 
       if (success) {
-        showAlert("Success", `Patient ${isCreateMode ? "registered" : "updated"} successfully`, "success");
         if (isCreateMode) {
           const newDefaults = { ...defaultValues };
           reset(newDefaults);
           generatePatientCode();
+          setSavedPChartID(0);
         }
       }
     } catch (error) {
@@ -653,9 +658,9 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
     }
   };
 
-  // Form reset
-  const performReset = () => {
-    const resetData = initialData ? transformToFormData(initialData) : defaultValues;
+  // Internal form reset logic
+  const performReset = useCallback(() => {
+    const resetData = initialData && (isEditMode || isViewMode) ? transformToFormData(initialData) : defaultValues;
     reset(resetData);
     setFormError(null);
 
@@ -663,24 +668,31 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
       setSavedPChartID(0);
       generatePatientCode();
     }
-  };
+  }, [initialData, isEditMode, isViewMode, isCreateMode, defaultValues, reset, transformToFormData]);
 
-  const handleReset = () => {
-    if (isDirty) {
-      setShowResetConfirmation(true);
-    } else {
-      performReset();
-    }
-  };
+  // Expose methods to parent component via ref
+  useImperativeHandle(ref, () => ({
+    handleSubmit: () => handleSubmit(onSubmit)(), // Trigger form submission
+    handleReset: () => {
+      if (isDirty) {
+        setShowResetConfirmation(true);
+      } else {
+        performReset();
+      }
+    },
+    isDirty,
+    isValid,
+    isSaving,
+  }));
 
-  const handleResetConfirm = () => {
+  const handleResetConfirm = useCallback(() => {
     performReset();
     setShowResetConfirmation(false);
-  };
+  }, [performReset]);
 
-  const handleResetCancel = () => {
+  const handleResetCancel = useCallback(() => {
     setShowResetConfirmation(false);
-  };
+  }, []);
 
   const isHospitalVisit = watchedVisitType === "H";
   const isPhysicianVisit = watchedVisitType === "P";
@@ -1161,30 +1173,7 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
             </Card>
           </Grid>
 
-          {/* Action Buttons */}
-          <Grid size={{ sm: 12 }}>
-            <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
-              {onClose && <SmartButton text="Close" onClick={onClose} variant="outlined" color="inherit" />}
-
-              {!isViewMode && (
-                <>
-                  <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={CancelIcon} disabled={isSaving || (!isDirty && !formError)} />
-                  <SmartButton
-                    text={isCreateMode ? "Register Patient" : "Update Patient"}
-                    onClick={handleSubmit(onSubmit)}
-                    variant="contained"
-                    color="primary"
-                    icon={SaveIcon}
-                    asynchronous={true}
-                    showLoadingIndicator={true}
-                    loadingText={isCreateMode ? "Registering..." : "Updating..."}
-                    successText={isCreateMode ? "Registered!" : "Updated!"}
-                    disabled={isSaving || !isValid}
-                  />
-                </>
-              )}
-            </Box>
-          </Grid>
+          {/* Action Buttons - REMOVED from here, now in GenericDialog's actions prop */}
         </Grid>
       </Box>
 
@@ -1223,6 +1212,6 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
       />
     </Box>
   );
-};
+});
 
 export default PatientRegistrationForm;

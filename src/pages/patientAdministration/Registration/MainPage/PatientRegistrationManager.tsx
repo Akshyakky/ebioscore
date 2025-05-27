@@ -11,6 +11,8 @@ import {
   AccountBalance as InsuranceIcon,
   People as NextOfKinIcon,
   PersonAdd as PersonAddIcon,
+  Save as SaveIcon, // Import SaveIcon
+  Cancel as CancelIcon, // Import CancelIcon
 } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
@@ -66,6 +68,9 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
     status: "",
     visitType: "",
   });
+
+  // Ref to access the form's submission and reset functions
+  const patientFormRef = React.useRef<any>(null);
 
   // Create debounced search function
   const debouncedSearch = useMemo(() => debounce((value: string) => setDebouncedSearchTerm(value), 300), []);
@@ -573,8 +578,37 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
         disableBackdropClick={formMode !== "view"}
         disableEscapeKeyDown={formMode !== "view"}
         fullScreen={true}
+        actions={
+          <Box display="flex" justifyContent="flex-end" gap={2}>
+            <SmartButton text="Close" onClick={handleFormClose} variant="outlined" color="inherit" />
+            {formMode !== "view" && (
+              <>
+                <SmartButton
+                  text="Reset"
+                  onClick={() => patientFormRef.current?.handleReset()} // Call reset function from child
+                  variant="outlined"
+                  color="error"
+                  icon={CancelIcon}
+                  disabled={isLoading} // assuming isLoading from manager covers form loading
+                />
+                <SmartButton
+                  text={formMode === "create" ? "Register Patient" : "Update Patient"}
+                  onClick={() => patientFormRef.current?.handleSubmit()} // Call handleSubmit from child
+                  variant="contained"
+                  color="primary"
+                  icon={SaveIcon}
+                  asynchronous={true}
+                  showLoadingIndicator={true}
+                  loadingText={formMode === "create" ? "Registering..." : "Updating..."}
+                  successText={formMode === "create" ? "Registered!" : "Updated!"}
+                  disabled={isLoading} // assuming isLoading from manager covers form loading
+                />
+              </>
+            )}
+          </Box>
+        }
       >
-        <PatientRegistrationForm mode={formMode} initialData={selectedPatient} onSave={handleFormSave} onClose={handleFormClose} />
+        <PatientRegistrationForm ref={patientFormRef} mode={formMode} initialData={selectedPatient} onSave={handleFormSave} onClose={handleFormClose} />
       </GenericDialog>
 
       {/* Next of Kin Management Dialog */}
