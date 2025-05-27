@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, IconButton, InputAdornment } from "@mui/material";
-import { useForm, useWatch } from "react-hook-form";
+import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment } from "@mui/material";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Save as SaveIcon, Cancel as CancelIcon, Add as AddIcon, Refresh as RefreshIcon, AccountBalance as InsuranceIcon, People as NextOfKinIcon } from "@mui/icons-material";
+import { Save as SaveIcon, Cancel as CancelIcon, Refresh as RefreshIcon, AccountBalance as InsuranceIcon, People as NextOfKinIcon } from "@mui/icons-material";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
@@ -11,14 +11,8 @@ import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
-import { OPVisitDto } from "@/interfaces/PatientAdministration/revisitFormData";
-import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
-import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
-import { PatientService } from "@/services/PatientAdministrationServices/RegistrationService/PatientService";
 import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
-import NextOfKinManager from "@/pages/patientAdministration/NextOfkinPage/MainPage/NextOfKinPage";
-import InsuranceManagementDialog from "@/pages/patientAdministration/InsuranceForm/Form/InsuranceGrid";
+import { PatientSearch } from "../../CommonPage/Patient/PatientSearch/PatientSearch";
 
 // Schema definition for comprehensive patient registration
 const schema = z.object({
@@ -31,9 +25,12 @@ const schema = z.object({
   pFName: z.string().min(1, "First name is required"),
   pMName: z.string().optional().default(""),
   pLName: z.string().min(1, "Last name is required"),
-  pDobOrAgeVal: z.string().default("DOB"),
+
+  // Age/DOB Selection
+  pDobOrAgeVal: z.enum(["DOB", "AGE"]).default("DOB"),
   pDobOrAge: z.string().default(""),
-  pDob: z.date(),
+  pDob: z.date().optional(),
+
   pGenderVal: z.string().min(1, "Gender is required"),
   pGender: z.string().default(""),
   pBldGrp: z.string().optional().default(""),
@@ -42,6 +39,11 @@ const schema = z.object({
   pTypeName: z.string().default(""),
   pFhName: z.string().optional().default(""),
   fatherBldGrp: z.string().optional().default(""),
+
+  // SMS and Email Send Options
+  sendSMSYN: z.enum(["Y", "N"]).default("Y"),
+  sendEmailYN: z.enum(["Y", "N"]).default("Y"),
+
   patMemID: z.number().optional().default(0),
   patMemName: z.string().optional().default(""),
   patMemDescription: z.string().optional().default(""),
@@ -109,6 +111,12 @@ const schema = z.object({
   // Visit Details (OpvisitDto)
   visitTypeVal: z.string().min(1, "Visit type is required"),
   visitType: z.string().default(""),
+  attndPhyID: z.string().optional().default(""),
+  attendingPhysicianName: z.string().optional().default(""),
+
+  // Primary Introducing Source
+  primIntroSourceID: z.string().optional().default(""),
+  primIntroSourceName: z.string().optional().default(""),
 
   // Common fields
   rActiveYN: z.string().default("Y"),
@@ -118,9 +126,16 @@ const schema = z.object({
 
 type PatientRegistrationFormData = z.infer<typeof schema>;
 
-const PatientRegistrationForm: React.FC = () => {
+interface PatientRegistrationFormProps {
+  mode?: "create" | "edit" | "view";
+  initialData?: PatientRegistrationFormData | null;
+  onSave?: (data: PatientRegistrationFormData) => Promise<boolean>;
+  onClose?: () => void;
+}
+
+const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode = "create", initialData = null, onSave, onClose }) => {
   const { setLoading } = useLoading();
-  const { showAlert } = useAlert();
+  const { showAlert, showErrorAlert } = useAlert();
   const serverDate = useServerDate();
 
   const [isSaving, setIsSaving] = useState(false);
@@ -130,8 +145,11 @@ const PatientRegistrationForm: React.FC = () => {
   const [savedPChartID, setSavedPChartID] = useState<number>(0);
   const [showNextOfKin, setShowNextOfKin] = useState(false);
   const [showInsurance, setShowInsurance] = useState(false);
-  const [nokList, setNokList] = useState<PatNokDetailsDto[]>([]);
-  const [insuranceList, setInsuranceList] = useState<OPIPInsurancesDto[]>([]);
+  const [patientClearTrigger, setPatientClearTrigger] = useState(0);
+
+  const isViewMode = mode === "view";
+  const isEditMode = mode === "edit";
+  const isCreateMode = mode === "create";
 
   // Load dropdown values
   const dropdownValues = useDropdownValues([
@@ -149,7 +167,9 @@ const PatientRegistrationForm: React.FC = () => {
     "pic",
     "ageUnit",
     "state",
-    "company",
+    "department",
+    "primaryIntroducingSource",
+    "attendingPhy",
   ]);
 
   const defaultValues: PatientRegistrationFormData = {
@@ -251,15 +271,22 @@ const PatientRegistrationForm: React.FC = () => {
     mode: "onChange",
   });
 
-  const watchedGender = watch("pGenderVal");
-  const watchedTitle = watch("pTitleVal");
   const watchedMembership = watch("patMemID");
   const watchedDobOrAge = watch("pDobOrAgeVal");
+  const watchedVisitType = watch("visitTypeVal");
 
-  // Generate patient chart code on component mount
   useEffect(() => {
-    generatePatientCode();
-  }, []);
+    if (isCreateMode) {
+      generatePatientCode();
+    }
+  }, [isCreateMode]);
+
+  useEffect(() => {
+    if (initialData && (isEditMode || isViewMode)) {
+      reset(initialData);
+      setSavedPChartID(initialData.pChartID);
+    }
+  }, [initialData, isEditMode, isViewMode, reset]);
 
   const generatePatientCode = async () => {
     try {
@@ -301,6 +328,63 @@ const PatientRegistrationForm: React.FC = () => {
       }
     },
     [dropdownValues.gender, setValue]
+  );
+
+  const handleVisitTypeChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      setValue("visitTypeVal", value, { shouldValidate: true, shouldDirty: true });
+
+      // Clear dependent fields when visit type changes
+      setValue("deptID", 0, { shouldDirty: true });
+      setValue("deptName", "", { shouldDirty: true });
+      setValue("attndPhyID", "", { shouldDirty: true });
+      setValue("attendingPhysicianName", "", { shouldDirty: true });
+
+      // Set visit type label
+      const labels = { P: "Physician", H: "Hospital", N: "None" };
+      setValue("visitType", labels[value as keyof typeof labels] || "", { shouldDirty: true });
+    },
+    [setValue]
+  );
+
+  const handleDepartmentChange = useCallback(
+    (event: any) => {
+      const value = event?.target?.value || event?.value || event;
+      const selectedOption = dropdownValues.department?.find((option) => Number(option.value) === Number(value));
+
+      if (selectedOption) {
+        setValue("deptID", Number(value), { shouldValidate: true, shouldDirty: true });
+        setValue("deptName", selectedOption.label, { shouldValidate: true, shouldDirty: true });
+      }
+    },
+    [dropdownValues.department, setValue]
+  );
+
+  const handleAttendingPhysicianChange = useCallback(
+    (event: any) => {
+      const value = event?.target?.value || event?.value || event;
+      const selectedOption = dropdownValues.attendingPhy?.find((option) => option.value === value);
+
+      if (selectedOption) {
+        setValue("attndPhyID", value, { shouldValidate: true, shouldDirty: true });
+        setValue("attendingPhysicianName", selectedOption.label, { shouldValidate: true, shouldDirty: true });
+      }
+    },
+    [dropdownValues.attendingPhy, setValue]
+  );
+
+  const handlePrimaryIntroSourceChange = useCallback(
+    (event: any) => {
+      const value = event?.target?.value || event?.value || event;
+      const selectedOption = dropdownValues.primaryIntroducingSource?.find((option) => option.value === value);
+
+      if (selectedOption) {
+        setValue("primIntroSourceID", value, { shouldValidate: true, shouldDirty: true });
+        setValue("primIntroSourceName", selectedOption.label, { shouldValidate: true, shouldDirty: true });
+      }
+    },
+    [dropdownValues.primaryIntroducingSource, setValue]
   );
 
   const handleMembershipChange = useCallback(
@@ -382,132 +466,53 @@ const PatientRegistrationForm: React.FC = () => {
     [dropdownValues.country, setValue]
   );
 
+  const handlePatientSelect = useCallback(
+    (patient: any) => {
+      if (patient && isEditMode) {
+        // Mock loading patient data - replace with actual service call
+        const mockPatientData = {
+          ...defaultValues,
+          pChartID: patient.pChartID,
+          pChartCode: patient.pChartCode,
+          pFName: patient.fullName?.split(" ")[0] || "",
+          pLName: patient.fullName?.split(" ").slice(1).join(" ") || "",
+          // Add other fields as needed
+        };
+
+        reset(mockPatientData);
+        setSavedPChartID(patient.pChartID);
+      }
+    },
+    [isEditMode, reset, defaultValues]
+  );
+
   // Form submission
   const onSubmit = async (data: PatientRegistrationFormData) => {
+    if (isViewMode) return;
     setFormError(null);
 
     try {
       setIsSaving(true);
       setLoading(true);
+      let success = false;
+      if (onSave) {
+        success = await onSave(data);
+      }
 
-      // Prepare patient registration data
-      const patientRegistrationDto: PatientRegistrationDto = {
-        patRegisters: {
-          pChartID: data.pChartID,
-          pChartCode: data.pChartCode,
-          pRegDate: data.pRegDate,
-          pTitleVal: data.pTitleVal,
-          pTitle: data.pTitle,
-          pFName: data.pFName,
-          pMName: data.pMName,
-          pLName: data.pLName,
-          pDobOrAgeVal: data.pDobOrAgeVal,
-          pDobOrAge: data.pDobOrAge,
-          pDob: data.pDob,
-          pGenderVal: data.pGenderVal,
-          pGender: data.pGender,
-          pBldGrp: data.pBldGrp,
-          pTypeID: data.pTypeID,
-          pTypeCode: data.pTypeCode,
-          pTypeName: data.pTypeName,
-          pFhName: data.pFhName,
-          fatherBldGrp: data.fatherBldGrp,
-          patMemID: data.patMemID,
-          patMemName: data.patMemName,
-          patMemDescription: data.patMemDescription,
-          patMemSchemeExpiryDate: data.patMemSchemeExpiryDate || serverDate,
-          patSchemeExpiryDateYN: data.patSchemeExpiryDateYN,
-          patSchemeDescriptionYN: data.patSchemeDescriptionYN,
-          cancelReason: data.cancelReason,
-          cancelYN: data.cancelYN,
-          deptID: data.deptID,
-          deptName: data.deptName,
-          facultyID: data.facultyID,
-          faculty: data.faculty,
-          langType: data.langType,
-          pChartCompID: data.pChartCompID,
-          pExpiryDate: data.pExpiryDate,
-          regTypeVal: data.regTypeVal,
-          physicianRoom: data.physicianRoom,
-          regType: data.regType,
-          pPob: data.pPob,
-          patCompNameVal: data.patCompNameVal,
-          patCompName: data.patCompName,
-          patDataFormYN: data.patDataFormYN,
-          intIdPsprt: data.intIdPsprt,
-          indentityType: data.indentityType,
-          indentityValue: data.indentityValue,
-          patientType: data.patientType,
-          rActiveYN: data.rActiveYN,
-          transferYN: data.transferYN,
-          rNotes: data.rNotes,
-        },
-        patAddress: {
-          pAddID: 0,
-          pChartID: data.pChartID,
-          pChartCode: data.pChartCode,
-          pAddType: data.pAddType,
-          pAddMailVal: data.pAddMailVal,
-          pAddMail: data.pAddMail,
-          pAddSMSVal: data.pAddSMSVal,
-          pAddSMS: data.pAddSMS,
-          pAddEmail: data.pAddEmail,
-          pAddStreet: data.pAddStreet,
-          pAddStreet1: data.pAddStreet1,
-          pAddCityVal: data.pAddCityVal,
-          pAddCity: data.pAddCity,
-          pAddState: data.pAddState,
-          pAddPostcode: data.pAddPostcode,
-          pAddCountryVal: data.pAddCountryVal,
-          pAddCountry: data.pAddCountry,
-          pAddPhone1: data.pAddPhone1,
-          pAddPhone2: data.pAddPhone2,
-          pAddPhone3: data.pAddPhone3,
-          pAddWorkPhone: data.pAddWorkPhone,
-          pAddActualCountryVal: data.pAddActualCountryVal,
-          pAddActualCountry: data.pAddActualCountry,
-          patAreaVal: data.patAreaVal,
-          patArea: data.patArea,
-          patDoorNo: data.patDoorNo,
-        },
-        patOverview: {
-          patOverID: 0,
-          pChartID: data.pChartID,
-          pChartCode: data.pChartCode,
-          pPhoto: data.pPhoto,
-          pMaritalStatus: data.pMaritalStatus,
-          pReligion: data.pReligion,
-          pEducation: data.pEducation,
-          pOccupation: data.pOccupation,
-          pEmployer: data.pEmployer,
-          ethnicity: data.ethnicity,
-          pCountryOfOrigin: data.pCountryOfOrigin,
-          pAgeNumber: data.pAgeNumber,
-          pAgeDescriptionVal: data.pAgeDescriptionVal,
-        },
-        opvisits: {
-          visitTypeVal: data.visitTypeVal,
-          visitType: data.visitType,
-        },
-      };
-
-      const response = await PatientService.savePatient(patientRegistrationDto);
-
-      if (response.success && response.data) {
-        setSavedPChartID(response.data);
-        setValue("pChartID", response.data, { shouldDirty: false });
-
-        showAlert("Success", "Patient registered successfully", "success");
-
-        // Reset form but keep the patient ID for subsequent operations
-        const newDefaults = { ...defaultValues, pChartID: response.data, pChartCode: data.pChartCode };
-        reset(newDefaults);
+      if (success) {
+        showAlert("Success", "Patient " + (isCreateMode ? "registered" : "updated") + " successfully", "success");
+        if (isCreateMode) {
+          // Reset form for new entry
+          const newDefaults = { ...defaultValues };
+          reset(newDefaults);
+          generatePatientCode();
+        }
       } else {
-        throw new Error(response.errorMessage || "Failed to register patient");
+        showErrorAlert("Error", "Failed to " + (isCreateMode ? "register" : "update") + " patient");
       }
     } catch (error) {
       console.error("Error saving patient:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to register patient";
+      const errorMessage = error instanceof Error ? error.message : `Failed to ${isCreateMode ? "register" : "update"} patient`;
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
     } finally {
@@ -518,10 +523,14 @@ const PatientRegistrationForm: React.FC = () => {
 
   // Form reset
   const performReset = () => {
-    reset(defaultValues);
+    const resetData = initialData || defaultValues;
+    reset(resetData);
     setFormError(null);
-    setSavedPChartID(0);
-    generatePatientCode();
+
+    if (isCreateMode) {
+      setSavedPChartID(0);
+      generatePatientCode();
+    }
   };
 
   const handleReset = () => {
@@ -541,32 +550,53 @@ const PatientRegistrationForm: React.FC = () => {
     setShowResetConfirmation(false);
   };
 
-  // Next of Kin and Insurance handlers
-  const handleNokChange = (nokData: PatNokDetailsDto[]) => {
-    setNokList(nokData);
+  // Calculate age from DOB or DOB from age
+  const calculateAge = (dob: Date) => {
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      return age - 1;
+    }
+    return age;
   };
 
-  const handleOpenNextOfKin = () => {
-    if (savedPChartID === 0) {
-      showAlert("Warning", "Please save the patient details first", "warning");
-      return;
+  const getFormTitle = () => {
+    switch (mode) {
+      case "create":
+        return "Patient Registration";
+      case "edit":
+        return "Edit Patient Details";
+      case "view":
+        return "View Patient Details";
+      default:
+        return "Patient Registration";
     }
-    setShowNextOfKin(true);
-  };
-
-  const handleOpenInsurance = () => {
-    if (savedPChartID === 0) {
-      showAlert("Warning", "Please save the patient details first", "warning");
-      return;
-    }
-    setShowInsurance(true);
   };
 
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        Patient Registration
+        {getFormTitle()}
       </Typography>
+
+      {/* Patient Search for Edit Mode */}
+      {isEditMode && !savedPChartID && (
+        <Card variant="outlined" sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Search Patient
+            </Typography>
+            <PatientSearch
+              onPatientSelect={handlePatientSelect}
+              clearTrigger={patientClearTrigger}
+              label="Search Patient to Edit"
+              placeholder="Enter patient name, chart code, or phone number"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 2 }}>
         {formError && (
@@ -580,14 +610,14 @@ const PatientRegistrationForm: React.FC = () => {
           <Grid size={{ sm: 12 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
               <Box display="flex" gap={1}>
-                <SmartButton text="Manage Next of Kin" icon={NextOfKinIcon} onClick={handleOpenNextOfKin} variant="outlined" size="small" disabled={savedPChartID === 0} />
-                <SmartButton text="Manage Insurance" icon={InsuranceIcon} onClick={handleOpenInsurance} variant="outlined" size="small" disabled={savedPChartID === 0} />
+                <SmartButton text="Manage Next of Kin" icon={NextOfKinIcon} onClick={() => setShowNextOfKin(true)} variant="outlined" size="small" disabled={savedPChartID === 0} />
+                <SmartButton text="Manage Insurance" icon={InsuranceIcon} onClick={() => setShowInsurance(true)} variant="outlined" size="small" disabled={savedPChartID === 0} />
               </Box>
               <Box display="flex" alignItems="center" gap={2}>
                 <Typography variant="body2" color="text.secondary">
                   Status:
                 </Typography>
-                <FormField name="rActiveYN" control={control} label="Active" type="switch" size="small" />
+                <FormField name="rActiveYN" control={control} label="Active" type="switch" size="small" disabled={isViewMode} />
               </Box>
             </Box>
           </Grid>
@@ -609,11 +639,11 @@ const PatientRegistrationForm: React.FC = () => {
                       label="Patient Chart Code"
                       type="text"
                       required
-                      disabled
+                      disabled={!isCreateMode}
                       size="small"
                       fullWidth
                       InputProps={{
-                        endAdornment: (
+                        endAdornment: isCreateMode ? (
                           <InputAdornment position="end">
                             {isGeneratingCode ? (
                               <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -625,13 +655,13 @@ const PatientRegistrationForm: React.FC = () => {
                               <SmartButton icon={RefreshIcon} variant="text" size="small" onClick={generatePatientCode} tooltip="Generate new code" sx={{ minWidth: "unset" }} />
                             )}
                           </InputAdornment>
-                        ),
+                        ) : null,
                       }}
                     />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pRegDate" control={control} label="Registration Date" type="datepicker" required size="small" fullWidth />
+                    <FormField name="pRegDate" control={control} label="Registration Date" type="datepicker" required size="small" fullWidth disabled={isViewMode} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 4 }}>
@@ -645,19 +675,20 @@ const PatientRegistrationForm: React.FC = () => {
                       fullWidth
                       options={dropdownValues.title || []}
                       onChange={handleTitleChange}
+                      disabled={isViewMode}
                     />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pFName" control={control} label="First Name" type="text" required size="small" fullWidth />
+                    <FormField name="pFName" control={control} label="First Name" type="text" required size="small" fullWidth disabled={isViewMode} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pMName" control={control} label="Middle Name" type="text" size="small" fullWidth />
+                    <FormField name="pMName" control={control} label="Middle Name" type="text" size="small" fullWidth disabled={isViewMode} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pLName" control={control} label="Last Name" type="text" required size="small" fullWidth />
+                    <FormField name="pLName" control={control} label="Last Name" type="text" required size="small" fullWidth disabled={isViewMode} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 4 }}>
@@ -671,23 +702,90 @@ const PatientRegistrationForm: React.FC = () => {
                       fullWidth
                       options={dropdownValues.gender || []}
                       onChange={handleGenderChange}
+                      disabled={isViewMode}
                     />
                   </Grid>
 
+                  {/* Age/DOB Selection */}
                   <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pDob" control={control} label="Date of Birth" type="datepicker" required size="small" fullWidth />
+                    <FormField
+                      name="ageOrDobType"
+                      control={control}
+                      label="Age/DOB Selection"
+                      type="radio"
+                      required
+                      options={[
+                        { value: "DOB", label: "Date of Birth" },
+                        { value: "AGE", label: "Age" },
+                      ]}
+                      disabled={isViewMode}
+                      row
+                    />
                   </Grid>
 
+                  {watchedDobOrAge === "DOB" ? (
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <FormField name="pDob" control={control} label="Date of Birth" type="datepicker" required size="small" fullWidth disabled={isViewMode} />
+                    </Grid>
+                  ) : (
+                    <>
+                      <Grid size={{ sm: 12, md: 2 }}>
+                        <FormField
+                          name="ageNumber"
+                          control={control}
+                          label="Age"
+                          type="number"
+                          required
+                          size="small"
+                          fullWidth
+                          inputProps={{ min: 0, max: 150 }}
+                          disabled={isViewMode}
+                        />
+                      </Grid>
+                      <Grid size={{ sm: 12, md: 2 }}>
+                        <FormField
+                          name="ageUnit"
+                          control={control}
+                          label="Unit"
+                          type="select"
+                          required
+                          size="small"
+                          fullWidth
+                          options={dropdownValues.ageUnit || []}
+                          disabled={isViewMode}
+                        />
+                      </Grid>
+                    </>
+                  )}
+
                   <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pBldGrp" control={control} label="Blood Group" type="select" size="small" fullWidth options={dropdownValues.bloodGroup || []} />
+                    <FormField
+                      name="pBldGrp"
+                      control={control}
+                      label="Blood Group"
+                      type="select"
+                      size="small"
+                      fullWidth
+                      options={dropdownValues.bloodGroup || []}
+                      disabled={isViewMode}
+                    />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="pFhName" control={control} label="Father's Name" type="text" size="small" fullWidth />
+                    <FormField name="pFhName" control={control} label="Father's Name" type="text" size="small" fullWidth disabled={isViewMode} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="pMaritalStatus" control={control} label="Marital Status" type="select" size="small" fullWidth options={dropdownValues.maritalStatus || []} />
+                    <FormField
+                      name="pMaritalStatus"
+                      control={control}
+                      label="Marital Status"
+                      type="select"
+                      size="small"
+                      fullWidth
+                      options={dropdownValues.maritalStatus || []}
+                      disabled={isViewMode}
+                    />
                   </Grid>
                 </Grid>
               </CardContent>
@@ -705,23 +803,40 @@ const PatientRegistrationForm: React.FC = () => {
 
                 <Grid container spacing={2}>
                   <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pAddPhone1" control={control} label="Primary Phone" type="tel" required size="small" fullWidth />
+                    <FormField name="pAddPhone1" control={control} label="Primary Phone" type="tel" required size="small" fullWidth disabled={isViewMode} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pAddPhone2" control={control} label="Secondary Phone" type="tel" size="small" fullWidth />
+                    <FormField name="pAddPhone2" control={control} label="Secondary Phone" type="tel" size="small" fullWidth disabled={isViewMode} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pAddEmail" control={control} label="Email Address" type="email" size="small" fullWidth />
+                    <FormField name="pAddEmail" control={control} label="Email Address" type="email" size="small" fullWidth disabled={isViewMode} />
+                  </Grid>
+                  {/* SMS and Email Send Options */}
+                  <Grid size={{ sm: 12, md: 6 }}>
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <FormField name="sendSMSYN" control={control} label="Send SMS" type="switch" size="small" disabled={isViewMode} />
+                      <Typography variant="body2" color="text.secondary">
+                        Allow SMS notifications
+                      </Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid size={{ sm: 12, md: 6 }}>
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <FormField name="sendEmailYN" control={control} label="Send Email" type="switch" size="small" disabled={isViewMode} />
+                      <Typography variant="body2" color="text.secondary">
+                        Allow Email notifications
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ sm: 12, md: 4 }}>
+                    <FormField name="patDoorNo" control={control} label="Door Number" type="text" size="small" fullWidth disabled={isViewMode} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="patDoorNo" control={control} label="Door Number" type="text" size="small" fullWidth />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pAddStreet" control={control} label="Street" type="text" size="small" fullWidth />
+                    <FormField name="pAddStreet" control={control} label="Street" type="text" size="small" fullWidth disabled={isViewMode} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 4 }}>
@@ -734,6 +849,7 @@ const PatientRegistrationForm: React.FC = () => {
                       fullWidth
                       options={dropdownValues.area || []}
                       onChange={handleAreaChange}
+                      disabled={isViewMode}
                     />
                   </Grid>
 
@@ -747,6 +863,7 @@ const PatientRegistrationForm: React.FC = () => {
                       fullWidth
                       options={dropdownValues.city || []}
                       onChange={handleCityChange}
+                      disabled={isViewMode}
                     />
                   </Grid>
 
@@ -760,11 +877,12 @@ const PatientRegistrationForm: React.FC = () => {
                       fullWidth
                       options={dropdownValues.state || []}
                       onChange={handleStateChange}
+                      disabled={isViewMode}
                     />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pAddPostcode" control={control} label="Postal Code" type="text" size="small" fullWidth />
+                    <FormField name="pAddPostcode" control={control} label="Postal Code" type="text" size="small" fullWidth disabled={isViewMode} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 4 }}>
@@ -777,6 +895,7 @@ const PatientRegistrationForm: React.FC = () => {
                       fullWidth
                       options={dropdownValues.country || []}
                       onChange={handleCountryChange}
+                      disabled={isViewMode}
                     />
                   </Grid>
                 </Grid>
@@ -806,12 +925,46 @@ const PatientRegistrationForm: React.FC = () => {
                         { value: "H", label: "Hospital" },
                         { value: "N", label: "None" },
                       ]}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                        setValue("visitTypeVal", event.target.value, { shouldValidate: true, shouldDirty: true });
-                        setValue("visitType", event.target.labels?.[0]?.textContent || "", { shouldDirty: true });
-                      }}
+                      onChange={handleVisitTypeChange}
+                      disabled={isViewMode}
                     />
                   </Grid>
+
+                  {/* Conditional Department Dropdown for Hospital Visit */}
+                  {watchedVisitType === "H" && (
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField
+                        name="deptID"
+                        control={control}
+                        label="Department"
+                        type="select"
+                        required
+                        size="small"
+                        fullWidth
+                        options={dropdownValues.department || []}
+                        onChange={handleDepartmentChange}
+                        disabled={isViewMode}
+                      />
+                    </Grid>
+                  )}
+
+                  {/* Conditional Attending Physician Dropdown for Physician Visit */}
+                  {watchedVisitType === "P" && (
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField
+                        name="attndPhyID"
+                        control={control}
+                        label="Attending Physician"
+                        type="select"
+                        required
+                        size="small"
+                        fullWidth
+                        options={dropdownValues.attendingPhy || []}
+                        onChange={handleAttendingPhysicianChange}
+                        disabled={isViewMode}
+                      />
+                    </Grid>
+                  )}
 
                   <Grid size={{ sm: 12, md: 6 }}>
                     <FormField
@@ -851,12 +1004,13 @@ const PatientRegistrationForm: React.FC = () => {
                       fullWidth
                       options={dropdownValues.membershipScheme || []}
                       onChange={handleMembershipChange}
+                      disabled={isViewMode}
                     />
                   </Grid>
 
                   {watchedMembership && watchedMembership > 0 && (
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="patMemSchemeExpiryDate" control={control} label="Scheme Expiry Date" type="datepicker" size="small" fullWidth />
+                      <FormField name="patMemSchemeExpiryDate" control={control} label="Scheme Expiry Date" type="datepicker" size="small" fullWidth disabled={isViewMode} />
                     </Grid>
                   )}
                 </Grid>
@@ -875,11 +1029,11 @@ const PatientRegistrationForm: React.FC = () => {
 
                 <Grid container spacing={2}>
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="pOccupation" control={control} label="Occupation" type="text" size="small" fullWidth />
+                    <FormField name="pOccupation" control={control} label="Occupation" type="text" size="small" fullWidth disabled={isViewMode} />
                   </Grid>
 
                   <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="pEmployer" control={control} label="Employer" type="text" size="small" fullWidth />
+                    <FormField name="pEmployer" control={control} label="Employer" type="text" size="small" fullWidth disabled={isViewMode} />
                   </Grid>
 
                   <Grid size={{ sm: 12 }}>
@@ -892,6 +1046,7 @@ const PatientRegistrationForm: React.FC = () => {
                       fullWidth
                       rows={3}
                       placeholder="Enter any additional notes about this patient"
+                      disabled={isViewMode}
                     />
                   </Grid>
                 </Grid>
@@ -899,72 +1054,32 @@ const PatientRegistrationForm: React.FC = () => {
             </Card>
           </Grid>
 
-          {/* Next of Kin Summary */}
-          {savedPChartID > 0 && nokList.length > 0 && (
-            <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h6">Next of Kin ({nokList.length})</Typography>
-                    <SmartButton text="Manage" icon={NextOfKinIcon} onClick={handleOpenNextOfKin} variant="outlined" size="small" />
-                  </Box>
-                  <Divider sx={{ mb: 2 }} />
-                  <Box>
-                    {nokList.slice(0, 3).map((nok, index) => (
-                      <Typography key={index} variant="body2" sx={{ mb: 1 }}>
-                        {nok.pNokFName} {nok.pNokLName} - {nok.pNokRelName} ({nok.pAddPhone1})
-                      </Typography>
-                    ))}
-                    {nokList.length > 3 && (
-                      <Typography variant="body2" color="text.secondary">
-                        ... and {nokList.length - 3} more
-                      </Typography>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-
           {/* Action Buttons */}
           <Grid size={{ sm: 12 }}>
             <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
-              <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={CancelIcon} disabled={isSaving || (!isDirty && !formError)} />
-              <SmartButton
-                text="Register Patient"
-                onClick={handleSubmit(onSubmit)}
-                variant="contained"
-                color="primary"
-                icon={SaveIcon}
-                asynchronous={true}
-                showLoadingIndicator={true}
-                loadingText="Registering..."
-                successText="Registered!"
-                disabled={isSaving || !isValid}
-              />
+              {onClose && <SmartButton text="Close" onClick={onClose} variant="outlined" color="inherit" />}
+
+              {!isViewMode && (
+                <>
+                  <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={CancelIcon} disabled={isSaving || (!isDirty && !formError)} />
+                  <SmartButton
+                    text={isCreateMode ? "Register Patient" : "Update Patient"}
+                    onClick={handleSubmit(onSubmit)}
+                    variant="contained"
+                    color="primary"
+                    icon={SaveIcon}
+                    asynchronous={true}
+                    showLoadingIndicator={true}
+                    loadingText={isCreateMode ? "Registering..." : "Updating..."}
+                    successText={isCreateMode ? "Registered!" : "Updated!"}
+                    disabled={isSaving || !isValid}
+                  />
+                </>
+              )}
             </Box>
           </Grid>
         </Grid>
       </Box>
-
-      {/* Next of Kin Management */}
-      {showNextOfKin && savedPChartID > 0 && (
-        <NextOfKinManager pChartID={savedPChartID} pChartCode={watch("pChartCode")} title="Next of Kin Management" showStats={false} onNokChange={handleNokChange} />
-      )}
-
-      {/* Insurance Management */}
-      {showInsurance && savedPChartID > 0 && (
-        <InsuranceManagementDialog
-          open={showInsurance}
-          onClose={() => setShowInsurance(false)}
-          pChartID={savedPChartID}
-          pChartCode={watch("pChartCode")}
-          patientName={`${watch("pFName")} ${watch("pLName")}`}
-          title="Insurance Management"
-          readOnly={false}
-          showSaveAll={false}
-        />
-      )}
 
       {/* Reset Confirmation Dialog */}
       <ConfirmationDialog

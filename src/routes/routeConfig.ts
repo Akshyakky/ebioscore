@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import React from "react";
 import { PatientSearchProvider } from "../context/PatientSearchContext";
 import { AlertProvider } from "@/providers/AlertProvider";
-import PatientRegistrationForm from "@/pages/patientAdministration/Registration/RegistrationForm";
+import PatientRegistrationManager from "@/pages/patientAdministration/Registration/MainPage/PatientRegistrationManager";
 
 // Lazy load components
 const LoginPage = lazy(() => import("@/pages/common/LoginPage/LoginPage"));
@@ -103,7 +103,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/registrationpage",
-    component: wrapWithSuspense(PatientRegistrationForm),
+    component: wrapWithSuspense(PatientRegistrationManager),
     protected: true,
     providers: [AlertProvider],
     metadata: {
