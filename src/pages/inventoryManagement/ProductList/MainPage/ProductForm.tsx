@@ -7,7 +7,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
@@ -81,6 +81,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const { showAlert } = useAlert();
 
   // Load dropdown values with comprehensive list
   const { productCategory, productGroup, productUnit, taxType, medicationForm, medicationGeneric, productSubGroup, manufacturer, productLocation } = useDropdownValues([

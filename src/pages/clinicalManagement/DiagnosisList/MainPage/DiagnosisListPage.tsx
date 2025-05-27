@@ -15,7 +15,7 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import DiagnosisListForm from "../Form/DiagnosisListForm";
 import { useDiagnosisList } from "../hooks/useDiagnosisList";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { IcdDetailDto } from "@/interfaces/ClinicalManagement/IcdDetailDto";
 
@@ -36,6 +36,7 @@ const versionOptions = [
 ];
 
 const DiagnosisListPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedDiagnosis, setSelectedDiagnosis] = useState<IcdDetailDto | null>(null);

@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { Control, UseFormSetValue } from "react-hook-form";
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 import { purchaseOrderMastService } from "@/services/InventoryManagementService/inventoryManagementService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { PurchaseOrderFormData, PurchaseOrderMastDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 
 interface PurchaseOrderSearchProps {
@@ -14,6 +14,7 @@ interface PurchaseOrderSearchProps {
 
 const PurchaseOrderSearch: React.FC<PurchaseOrderSearchProps> = ({ open, onClose, control, setValue }) => {
   const departmentId = control._formValues.purchaseOrderMast.fromDeptID;
+  const { showAlert } = useAlert();
 
   const onSelect = useCallback(
     (data: PurchaseOrderMastDto) => {

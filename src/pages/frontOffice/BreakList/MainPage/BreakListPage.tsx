@@ -1,6 +1,6 @@
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import { BreakListDto } from "@/interfaces/FrontOffice/BreakListData";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { Search } from "@mui/icons-material";
 import { Box, Container } from "@mui/material";
 import React, { useState } from "react";
@@ -10,6 +10,7 @@ import BreakListSearch from "../SubPage/BreakListsearch";
 const BreakListPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<BreakListDto | undefined>(undefined);
+  const { showAlert } = useAlert();
 
   const handleAdvancedSearch = () => {
     setIsSearchOpen(true);

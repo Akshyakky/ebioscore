@@ -14,7 +14,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import ProfileListForm from "../Form/ProfileListForm";
 import { useProfileList } from "../hooks/useProfileListPage";
@@ -32,6 +32,7 @@ const ProfileListPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
+  const { showAlert } = useAlert();
 
   const { profileList, isLoading, error, fetchProfileList, deleteProfile } = useProfileList();
 

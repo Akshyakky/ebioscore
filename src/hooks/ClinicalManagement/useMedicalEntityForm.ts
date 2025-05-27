@@ -1,7 +1,7 @@
 // src/hooks/useMedicalEntityForm.ts
 import { useState, useCallback, useEffect } from "react";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { createEntityService } from "@/utils/Common/serviceFactory";
 
@@ -30,6 +30,7 @@ export function useMedicalEntityForm<T extends BaseDto>({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
 
   const entityService = createEntityService<T>(entityName, serviceUrl);
 

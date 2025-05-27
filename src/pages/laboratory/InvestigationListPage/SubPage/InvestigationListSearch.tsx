@@ -1,7 +1,7 @@
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 import { investigationDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import React, { useCallback } from "react";
 
 interface InvestigationListSearchProps {
@@ -12,6 +12,7 @@ interface InvestigationListSearchProps {
 }
 
 const InvestigationListSearch: React.FC<InvestigationListSearchProps> = ({ open, onClose, onSelect }) => {
+  const { showAlert } = useAlert();
   const fetchItems = useCallback(async () => {
     try {
       const result: any = await investigationlistService.getAll();

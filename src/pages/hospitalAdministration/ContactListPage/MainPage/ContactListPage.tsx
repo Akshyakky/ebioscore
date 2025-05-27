@@ -4,7 +4,7 @@ import { useServerDate } from "@/hooks/Common/useServerDate";
 import { ContactListData, ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import { Box, Container, Paper } from "@mui/material";
 import ContactListForm from "../SubPage/ContactListForm";
@@ -12,6 +12,7 @@ import ContactListSearch from "../../CommonPage/AdvanceSearch/ContactListSearch"
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
 const contactService = new ContactService();
 const ContactListPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [selectedData, setSelectedData] = useState<ContactMastData | undefined>(undefined);
   const serverDate = useServerDate();
 

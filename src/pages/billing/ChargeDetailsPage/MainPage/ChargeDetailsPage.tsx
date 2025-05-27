@@ -6,12 +6,13 @@ import { useState } from "react";
 import { ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
 import ChargeDetailsSearch from "../SubPage/ChargeDetailsSearch";
 import ChargeDetails from "../SubPage/ChargesDetails";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { chargeDetailsService } from "@/services/BillingServices/ChargeDetailsService";
 
 const ChargeDetailsPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<ChargeDetailsDto | undefined>(undefined);
+  const { showAlert } = useAlert();
 
   const handleAdvancedSearch = () => {
     setIsSearchOpen(true);

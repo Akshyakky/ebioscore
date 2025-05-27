@@ -16,7 +16,7 @@ import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import DepartmentListForm from "../Form/DepartmentListForm";
 import { useDepartmentList } from "../hooks/useDepartmentList";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 
 const statusOptions = [
@@ -52,6 +52,7 @@ const DepartmentListPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
+  const { showAlert } = useAlert();
 
   const { departmentList, isLoading, error, fetchDepartmentList, deleteDepartment } = useDepartmentList();
 

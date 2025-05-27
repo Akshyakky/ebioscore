@@ -3,6 +3,7 @@ import React from "react";
 import { PatientSearchProvider } from "../context/PatientSearchContext";
 import { ProfileListSearchProvider } from "../context/SecurityManagement/ProfileListSearchContext";
 import { UserListSearchProvider } from "../context/SecurityManagement/UserListSearchContext";
+import { AlertProvider } from "@/providers/AlertProvider";
 
 // Lazy load components
 const LoginPage = lazy(() => import("../pages/common/LoginPage/LoginPage"));
@@ -75,6 +76,7 @@ const routeConfig: RouteConfig[] = [
     path: "/",
     component: wrapWithSuspense(LoginPage),
     protected: false,
+    providers: [AlertProvider],
     metadata: {
       title: "Home",
       category: "default",
@@ -84,6 +86,7 @@ const routeConfig: RouteConfig[] = [
     path: "/login",
     component: wrapWithSuspense(LoginPage),
     protected: false,
+    providers: [AlertProvider],
     metadata: {
       title: "Login",
       category: "default",
@@ -93,6 +96,7 @@ const routeConfig: RouteConfig[] = [
     path: "/dashboard",
     component: wrapWithSuspense(DashboardPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Dashboard",
       category: "default",
@@ -122,6 +126,7 @@ const routeConfig: RouteConfig[] = [
     path: "/contactlistpage",
     component: wrapWithSuspense(ContactListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Contact List",
       category: "admin",
@@ -161,6 +166,7 @@ const routeConfig: RouteConfig[] = [
     path: "/ResourceListPage",
     component: wrapWithSuspense(ResourceListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Resource List",
       category: "default",
@@ -170,6 +176,7 @@ const routeConfig: RouteConfig[] = [
     path: "/ReasonListPage",
     component: wrapWithSuspense(ReasonListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Reason List",
       category: "default",
@@ -179,6 +186,7 @@ const routeConfig: RouteConfig[] = [
     path: "/BreakListPage",
     component: wrapWithSuspense(BreakListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Break List",
       category: "default",
@@ -188,6 +196,7 @@ const routeConfig: RouteConfig[] = [
     path: "/Appointmentpage",
     component: wrapWithSuspense(AppointmentPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Appointments",
       category: "default",
@@ -197,6 +206,7 @@ const routeConfig: RouteConfig[] = [
     path: "/PatientInvoiceCodePage",
     component: wrapWithSuspense(PatientInvoiceCodePage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Patient Invoice Code",
       category: "billing",
@@ -216,6 +226,7 @@ const routeConfig: RouteConfig[] = [
     path: "/ServiceGroupsListPage",
     component: wrapWithSuspense(ServiceGroupsListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Service Groups",
       category: "billing",
@@ -225,6 +236,7 @@ const routeConfig: RouteConfig[] = [
     path: "/PaymentTypesPage",
     component: wrapWithSuspense(PaymentTypesPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Payment Types",
       category: "billing",
@@ -244,6 +256,7 @@ const routeConfig: RouteConfig[] = [
     path: "/WardCategoryPage",
     component: wrapWithSuspense(WardCategoryPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Ward Categories",
       category: "admin",
@@ -253,6 +266,7 @@ const routeConfig: RouteConfig[] = [
     path: "/BedSetUpPage",
     component: wrapWithSuspense(BedSetUpPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Bed Setup",
       category: "admin",
@@ -262,6 +276,7 @@ const routeConfig: RouteConfig[] = [
     path: "/DeptUnitListPage",
     component: wrapWithSuspense(DeptUnitListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Department Units",
       category: "admin",
@@ -271,6 +286,7 @@ const routeConfig: RouteConfig[] = [
     path: "/InsuranceListPage",
     component: wrapWithSuspense(InsuranceListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Insurance",
       category: "admin",
@@ -280,6 +296,7 @@ const routeConfig: RouteConfig[] = [
     path: "/ProductListPage",
     component: wrapWithSuspense(ProductList),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Products",
       category: "inventory",
@@ -289,6 +306,7 @@ const routeConfig: RouteConfig[] = [
     path: "/ProductTaxListPage",
     component: wrapWithSuspense(ProductTaxListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Product Tax",
       category: "inventory",
@@ -298,6 +316,7 @@ const routeConfig: RouteConfig[] = [
     path: "/ProductOverviewPage",
     component: wrapWithSuspense(ProductOverviewPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Product Overview",
       category: "inventory",
@@ -307,6 +326,7 @@ const routeConfig: RouteConfig[] = [
     path: "/ManageBedPage",
     component: wrapWithSuspense(ManageBedPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Manage Beds",
       category: "patient",
@@ -316,6 +336,7 @@ const routeConfig: RouteConfig[] = [
     path: "/DiagnosisListPage",
     component: wrapWithSuspense(DiagnosisListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Diagnosis List",
       category: "clinical",
@@ -325,6 +346,7 @@ const routeConfig: RouteConfig[] = [
     path: "/MedicationListPage",
     component: wrapWithSuspense(MedicationListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Medications",
       category: "clinical",
@@ -334,6 +356,7 @@ const routeConfig: RouteConfig[] = [
     path: "/MedicationFormPage",
     component: wrapWithSuspense(MedicationFormPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Medication Forms",
       category: "clinical",
@@ -343,6 +366,7 @@ const routeConfig: RouteConfig[] = [
     path: "/AppModifiedListPage",
     component: wrapWithSuspense(AppModifiedListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Modified Applications",
       category: "admin",
@@ -352,6 +376,7 @@ const routeConfig: RouteConfig[] = [
     path: "/ChargeDetailsPage",
     component: wrapWithSuspense(ChargeDetailsPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Charge Details",
       category: "billing",
@@ -361,6 +386,7 @@ const routeConfig: RouteConfig[] = [
     path: "/DischargePage",
     component: wrapWithSuspense(DischargePage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Discharge",
       category: "patient",
@@ -370,6 +396,7 @@ const routeConfig: RouteConfig[] = [
     path: "/WardBedTransferPage",
     component: wrapWithSuspense(WardBedTransferPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Ward/Bed Transfer",
       category: "patient",
@@ -379,6 +406,7 @@ const routeConfig: RouteConfig[] = [
     path: "/MedicationFrequencyPage",
     component: wrapWithSuspense(MedicationFrequencyPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Medication Frequency",
       category: "clinical",
@@ -388,6 +416,7 @@ const routeConfig: RouteConfig[] = [
     path: "/MedicationDosagePage",
     component: wrapWithSuspense(MedicationDosagePage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Medication Dosage",
       category: "clinical",
@@ -397,6 +426,7 @@ const routeConfig: RouteConfig[] = [
     path: "/ProcedureListPage",
     component: wrapWithSuspense(ProcedureListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Procedures",
       category: "clinical",
@@ -406,6 +436,7 @@ const routeConfig: RouteConfig[] = [
     path: "/MedicationGenericPage",
     component: wrapWithSuspense(MedicationGenericPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Generic Medications",
       category: "clinical",
@@ -415,6 +446,7 @@ const routeConfig: RouteConfig[] = [
     path: "/InvestigationListPage",
     component: wrapWithSuspense(InvestigationListPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Investigations",
       category: "clinical",
@@ -424,6 +456,7 @@ const routeConfig: RouteConfig[] = [
     path: "/ComponentEntryTypePage",
     component: wrapWithSuspense(ComponentEntryTypePage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Component Entry Types",
       category: "clinical",
@@ -433,6 +466,7 @@ const routeConfig: RouteConfig[] = [
     path: "/PurchaseOrderPage",
     component: wrapWithSuspense(PurchaseOrderPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Purchase Orders",
       category: "inventory",
@@ -442,6 +476,7 @@ const routeConfig: RouteConfig[] = [
     path: "/ForgotPasswordPage",
     component: wrapWithSuspense(ForgotPasswordPage),
     protected: false,
+    providers: [AlertProvider],
     metadata: {
       title: "Forgot Password",
       category: "default",
@@ -451,6 +486,7 @@ const routeConfig: RouteConfig[] = [
     path: "/IndentProductPage",
     component: wrapWithSuspense(IndentProductPage),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Indent Product",
       category: "inventory",
@@ -460,6 +496,7 @@ const routeConfig: RouteConfig[] = [
     path: "/EmployeeRegistrationForm",
     component: wrapWithSuspense(EmployeeRegistrationForm),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Employee Registration",
       category: "admin",
@@ -469,6 +506,7 @@ const routeConfig: RouteConfig[] = [
     path: "/LogModulePage",
     component: wrapWithSuspense(LogModule),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Log Module",
       category: "admin",
@@ -478,6 +516,7 @@ const routeConfig: RouteConfig[] = [
     path: "/ProductTransaction",
     component: wrapWithSuspense(ProductTransaction),
     protected: true,
+    providers: [AlertProvider],
     metadata: {
       title: "Product Transaction",
       category: "inventory",
@@ -488,6 +527,7 @@ const routeConfig: RouteConfig[] = [
     path: "*",
     component: wrapWithSuspense(NotFoundPage),
     protected: false,
+    providers: [AlertProvider],
     metadata: {
       title: "Page Not Found",
       category: "default",

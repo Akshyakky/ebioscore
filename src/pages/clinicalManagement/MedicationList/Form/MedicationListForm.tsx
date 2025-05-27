@@ -10,7 +10,7 @@ import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useMedicationList } from "../hooks/useMedicationList";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
@@ -42,6 +42,7 @@ type MedicationListFormData = z.infer<typeof schema>;
 const MedicationListForm: React.FC<MedicationListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
   const { getNextCode, saveMedication } = useMedicationList();
+  const { showAlert } = useAlert();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);

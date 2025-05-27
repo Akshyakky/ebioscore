@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { RootState } from "@/store";
 import { useAppSelector } from "@/store/hooks";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { BillingService } from "@/services/NotGenericPaternServices/BillingService";
 import { AppModifyListService } from "@/services/NotGenericPaternServices/AppModifyListService";
@@ -142,6 +142,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
   // State to track status of each dropdown
   const [dropdownStates, setDropdownStates] = useState<Record<DropdownType, DropdownState>>({} as Record<DropdownType, DropdownState>);
   const { getUsersWithoutCredentials } = useUserList();
+  const { showAlert } = useAlert();
   // Registry of dropdown fetcher functions
   const fetcherRegistry = useMemo<Record<DropdownType, FetcherFunction>>(
     () => ({

@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { Grid, SelectChangeEvent } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
-import { showAlert } from "../../../../utils/Common/showAlert";
+import { showAlert } from "../../../../providers/AlertProvider";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
 
 import { IpDischargeDetailsDto } from "@/interfaces/PatientAdministration/IpDischargeDetailDto";

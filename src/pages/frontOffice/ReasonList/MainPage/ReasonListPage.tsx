@@ -16,7 +16,7 @@ import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { ReasonListData } from "@/interfaces/FrontOffice/ReasonListData";
 import ReasonListForm from "../Form/ReasonListForm";
 import { useReasonList } from "../hooks/useReasonList";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 
 const statusOptions = [
@@ -31,6 +31,7 @@ const durationOptions = [
 ];
 
 const ReasonListPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedReason, setSelectedReason] = useState<ReasonListData | null>(null);

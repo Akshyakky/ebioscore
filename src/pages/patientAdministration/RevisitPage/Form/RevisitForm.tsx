@@ -15,7 +15,7 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { OPVisitDto, DateFilterType } from "@/interfaces/PatientAdministration/revisitFormData";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { useRevisit } from "../hooks/useRevisitForm";
 
@@ -53,7 +53,7 @@ const PatientVisitHistoryDialog: React.FC<PatientVisitHistoryDialogProps> = ({ o
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
-
+  const { showAlert } = useAlert();
   const { visitList, isLoading, error, fetchVisitList, deleteVisit, cancelVisit } = useRevisit();
 
   const [filters, setFilters] = useState<{

@@ -14,7 +14,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { useWardCategory } from "../hooks/useWardCategoryPage";
 import WardCategoryForm from "../Form/WardCategoryPage";
@@ -32,6 +32,7 @@ const WardCategoryPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
+  const { showAlert } = useAlert();
 
   const { wardCategoryList, isLoading, error, fetchWardCategoryList, deleteWardCategory } = useWardCategory();
 

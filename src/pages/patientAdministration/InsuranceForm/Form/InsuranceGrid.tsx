@@ -17,7 +17,7 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import InsuranceForm from "./InsuranceForm";
 import useDayjs from "@/hooks/Common/useDateTime";
@@ -52,6 +52,7 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
   onSaveAll,
 }) => {
   const { formatDate } = useDayjs();
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedInsurance, setSelectedInsurance] = useState<OPIPInsurancesDto | null>(null);

@@ -3,8 +3,7 @@ import { useServerDate } from "@/hooks/Common/useServerDate";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { AppointBookingDto } from "@/interfaces/FrontOffice/AppointBookingDto";
 import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
-import { useAppSelector } from "@/store/hooks";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { Box, Container, Paper } from "@mui/material";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import SchedulerHeader from "../SubPage/SchedulerHeader";
@@ -19,6 +18,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import { reasonListService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 
 const AppointmentPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const serverDate = useServerDate();
   const { add } = useDayjs(serverDate);
   const endTime = add(15, "minute", serverDate).toDate(); // Convert Dayjs to Date

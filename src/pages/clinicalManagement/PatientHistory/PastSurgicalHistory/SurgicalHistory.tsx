@@ -5,7 +5,7 @@ import FormField from "../../../../components/FormField/FormField";
 import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { OPIPHistPSHDto } from "../../../../interfaces/ClinicalManagement/OPIPHistPSHDto";
-import { showAlert } from "../../../../utils/Common/showAlert";
+import { showAlert } from "../../../../providers/AlertProvider";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import SurgeryIcon from "@mui/icons-material/LocalHospital";

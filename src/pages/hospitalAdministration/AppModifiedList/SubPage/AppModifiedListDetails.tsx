@@ -8,7 +8,7 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { useAppSelector } from "@/store/hooks";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { appModifiedListService, appModifiedMastService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { Grid, SelectChangeEvent } from "@mui/material";
 import moduleService from "@/services/NotGenericPaternServices/ModuleService";
 import CustomButton from "@/components/Button/CustomButton";
@@ -23,6 +23,7 @@ interface AppModifiedDetailsListProps {
 }
 const AppModifiedDetails: React.FC<AppModifiedDetailsListProps> = ({ selectedData, editData }) => {
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
   const [masterList, setMasterList] = useState<AppModifiedMast[]>([]);
   const [fieldsList, setFieldsList] = useState<AppModifyFieldDto[]>([]);
   const [selectedMasterId, setSelectedMasterId] = useState<number>(0);

@@ -16,7 +16,7 @@ import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import ResourceListForm from "../Form/ResourceListForm";
 import { useResourceList } from "../hooks/useResourceList";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 
 const statusOptions = [
@@ -37,6 +37,7 @@ const validationOptions = [
 ];
 
 const ResourceListPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedResource, setSelectedResource] = useState<ResourceListData | null>(null);

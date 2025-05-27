@@ -16,7 +16,7 @@ import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
 import ProductTaxListForm from "../Form/ProductTaxListForm";
 import { useProductTaxList } from "../hooks/useProductTaxListPage";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 
 const statusOptions = [
@@ -31,6 +31,7 @@ const taxRangeOptions = [
 ];
 
 const ProductTaxListPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedProductTax, setSelectedProductTax] = useState<ProductTaxListDto | null>(null);

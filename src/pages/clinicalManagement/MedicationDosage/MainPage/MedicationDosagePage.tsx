@@ -17,7 +17,7 @@ import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { MedicationDosageDto } from "@/interfaces/ClinicalManagement/MedicationDosageDto";
 import MedicationDosageForm from "../Form/MedicationDosageForm";
 import { useMedicationDosage } from "../hooks/useMedicationDosage";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 
 const statusOptions = [
@@ -26,6 +26,7 @@ const statusOptions = [
 ];
 
 const MedicationDosagePage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedDosage, setSelectedDosage] = useState<MedicationDosageDto | null>(null);

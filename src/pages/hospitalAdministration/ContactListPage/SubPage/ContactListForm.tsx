@@ -12,7 +12,7 @@ import FormField from "@/components/FormField/FormField";
 import ContactListSwitches from "./ContactListSwitches";
 import ContactListActions from "./ContactListActions";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { ContactListData } from "@/interfaces/HospitalAdministration/ContactListData";
 
 type SwitchStates = {
@@ -37,6 +37,7 @@ interface ContactListFormProps {
 const ContactListForm = forwardRef<{ resetForm: () => void }, ContactListFormProps>(({ contactList, setContactList, switchStates, setSwitchStates, onSave, onClear }, ref) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { handleDropdownChange } = useDropdownChange<ContactListData>(setContactList);
+  const { showAlert } = useAlert();
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
   const serverDate = useServerDate();
   const { refreshDropdownValues, ...dropdownValues } = useDropdownValues([

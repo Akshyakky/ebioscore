@@ -5,7 +5,7 @@ import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
 import { PastMedicationDetailDto, PastMedicationDto } from "@/interfaces/ClinicalManagement/PastMedicationDto";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { Box, Grid, Paper, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -24,7 +24,7 @@ interface PastMedicationProps {
 
 const PastMedication: React.FC<PastMedicationProps> = ({ pChartID, opipNo, opipCaseNo, medicationData, onMedicationChange }) => {
   const dropdownValues = useDropdownValues(["medicationForm", "medicationDosage", "medicationFrequency", "medicationInstruction"]);
-
+  const { showAlert } = useAlert();
   const [selectedMedication, setSelectedMedication] = useState<string>("");
 
   const initialMedicationState = useMemo(

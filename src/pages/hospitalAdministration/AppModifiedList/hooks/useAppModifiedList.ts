@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { AppModifiedMast, AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { appModifiedListService, appModifiedMastService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
 
 export const useAppModifiedList = () => {
@@ -10,6 +10,7 @@ export const useAppModifiedList = () => {
   const [fieldsList, setFieldsList] = useState<AppModifyFieldDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showAlert } = useAlert();
 
   const fetchMasterList = useCallback(async () => {
     setIsLoading(true);

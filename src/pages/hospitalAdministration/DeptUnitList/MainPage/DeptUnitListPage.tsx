@@ -16,7 +16,7 @@ import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
 import DeptUnitListForm from "../Form/DeptUnitListForm";
 import { useDeptUnitList } from "../hooks/useDeptUnitList";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 
 const statusOptions = [
@@ -32,7 +32,7 @@ const DeptUnitListPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
-
+  const { showAlert } = useAlert();
   const { deptUnitList, isLoading, error, fetchDeptUnitList, deleteDeptUnit } = useDeptUnitList();
 
   const [filters, setFilters] = useState<{

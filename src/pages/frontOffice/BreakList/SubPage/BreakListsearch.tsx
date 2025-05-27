@@ -7,7 +7,7 @@ import { AppointmentService } from "@/services/NotGenericPaternServices/Appointm
 import { BreakListService } from "@/services/NotGenericPaternServices/BreakListService";
 import { breakConDetailsService, breakConSuspendService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { formatDate } from "@/utils/Common/dateUtils";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import React, { useCallback, useEffect, useState } from "react";
 import BreakSuspendDetails from "./BreakSuspendDetails";
 import { PauseCircleOutline, PlayCircleOutline } from "@mui/icons-material";
@@ -25,6 +25,7 @@ const BreakListSearch: React.FC<BreakListSearchProps> = ({ open, onClose, onSele
   const [resources, setResources] = useState<any[]>([]);
   const [, setBreakList] = useState<any[]>([]);
   const [, setBreakSuspendDetails] = useState<any[]>([]);
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     fetchConsultantsAndResources();

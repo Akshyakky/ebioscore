@@ -10,7 +10,7 @@ import SmartButton from "../Button/SmartButton";
 import EnhancedFormField from "../EnhancedFormField/EnhancedFormField";
 import ConfirmationDialog from "../Dialog/ConfirmationDialog";
 import { appModifiedListService } from "../../services/HospitalAdministrationServices/hospitalAdministrationService";
-import { showAlert } from "../../utils/Common/showAlert";
+import { showAlert } from "../../providers/AlertProvider";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 
 interface ModifiedFieldDialogProps {

@@ -10,11 +10,12 @@ import PurchaseOrderFooter from "../SubPage/PurchaseOrderFooter";
 import PurchaseOrderSearch from "../SubPage/PurchaseOrderSearch";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { purchaseOrderService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { initialPOMastDto, PurchaseOrderDetailDto, PurchaseOrderFormData, PurchaseOrderMastDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 
 const PurchaseOrderPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect, requireDepartmentSelection } = useDepartmentSelection({
     isDialogOpen: true,
   });

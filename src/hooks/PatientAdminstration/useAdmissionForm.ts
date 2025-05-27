@@ -6,15 +6,9 @@ import { AssocDiagnosisDetailDto, DiagnosisDetailDto, DiagnosisDto } from "@/int
 import { useCompanyDetails } from "../Common/useCompanyDetails";
 import { PatientHistory } from "@/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { createEntityService } from "@/utils/Common/serviceFactory";
-import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
-import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
-import { OPIPHistSHDto } from "@/interfaces/ClinicalManagement/OPIPHistSHDto";
-import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
-import { OPIPHistPSHDto } from "@/interfaces/ClinicalManagement/OPIPHistPSHDto";
 import { pastMedicationService } from "@/services/ClinicalManagementServices/pastMedicationService";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { diagnosisService } from "@/services/ClinicalManagementServices/diagnosisService";
 import { allergyService } from "@/services/ClinicalManagementServices/allergyService";
 import { HistoryState } from "@/pages/clinicalManagement/PatientHistory/PatientHistory";
@@ -110,7 +104,7 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
   });
   const insurancePageRef = useRef<any>(null);
   const { setLoading } = useLoading();
-
+  const { showAlert } = useAlert();
   const pastMedService = useMemo(() => pastMedicationService, []);
 
   const fetchAdmitCode = useCallback(async () => {

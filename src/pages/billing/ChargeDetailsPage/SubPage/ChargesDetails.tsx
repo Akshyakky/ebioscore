@@ -3,7 +3,7 @@ import { BChargeDetailsDto, BChargePackDto, BDoctorSharePerShare, ChargeDetailsD
 import { useState } from "react";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { chargeDetailsService } from "@/services/BillingServices/ChargeDetailsService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { Grid, Paper, SelectChangeEvent, TextField, Typography } from "@mui/material";
 import ChargeBasicDetails from "./Charges";
 import ChargeConfigDetails from "./ChargesAlias";
@@ -23,6 +23,7 @@ interface GridData {
   [key: string]: any;
 }
 const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
+  const { showAlert } = useAlert();
   const [selectedTab, setSelectedTab] = useState<"ServiceCharges" | "ServiceAlias">("ServiceCharges");
   const [gridData, setGridData] = useState<GridData[]>([]);
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);

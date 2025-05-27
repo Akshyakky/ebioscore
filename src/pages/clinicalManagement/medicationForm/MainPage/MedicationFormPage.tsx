@@ -14,8 +14,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { MedicationFormDto } from "@/interfaces/ClinicalManagement/MedicationFormDto";
-
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import MedicationFormForm from "../Form/MedicationForm";
 import { useMedicationForm } from "../hooks/useMedicationForm";
@@ -26,6 +25,7 @@ const statusOptions = [
 ];
 
 const MedicationFormPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedForm, setSelectedForm] = useState<MedicationFormDto | null>(null);

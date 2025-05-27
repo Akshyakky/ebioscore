@@ -10,7 +10,7 @@ import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useReasonList } from "../hooks/useReasonList";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
@@ -46,6 +46,7 @@ const ReasonListForm: React.FC<ReasonListFormProps> = ({ open, onClose, initialD
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const { resourceList } = useDropdownValues(["resourceList"]);
+  const { showAlert } = useAlert();
   const isAddMode = !initialData;
 
   const defaultValues: ReasonListFormData = {

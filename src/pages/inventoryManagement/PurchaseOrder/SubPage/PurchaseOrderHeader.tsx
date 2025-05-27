@@ -5,7 +5,7 @@ import DepartmentInfoChange from "../../CommonPage/DepartmentInfoChange";
 import { PurchaseOrderHeaderProps } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { ProductSearch } from "../../CommonPage/Product/ProductSearchForm";
 import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
@@ -16,6 +16,7 @@ interface PurchaseOrderHeaderFormProps extends PurchaseOrderHeaderProps {
 }
 
 const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderFormProps> = ({ control, setValue, handleDepartmentChange }) => {
+  const { showAlert } = useAlert();
   const dropdownValues = useDropdownValues(["department"]);
   const departmentName = control._formValues.purchaseOrderMast.fromDeptName;
   const departmentId = control._formValues.purchaseOrderMast.fromDeptID;
