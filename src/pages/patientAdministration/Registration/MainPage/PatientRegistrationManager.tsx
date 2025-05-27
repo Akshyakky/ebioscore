@@ -568,11 +568,11 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
         open={isFormOpen}
         onClose={handleFormClose}
         title={formMode === "create" ? "New Patient Registration" : formMode === "edit" ? "Edit Patient Details" : "View Patient Details"}
-        maxWidth="xl"
         fullWidth
         showCloseButton
         disableBackdropClick={formMode !== "view"}
         disableEscapeKeyDown={formMode !== "view"}
+        fullScreen={true}
       >
         <PatientRegistrationForm mode={formMode} initialData={selectedPatient} onSave={handleFormSave} onClose={handleFormClose} />
       </GenericDialog>

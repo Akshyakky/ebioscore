@@ -19,99 +19,103 @@ import InsuranceManagementDialog from "../../InsuranceForm/Form/InsuranceGrid";
 import { PatientRegistrationDto, PatRegistersDto, PatAddressDto, PatOverviewDto, OpvisitDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 
-// Comprehensive schema for patient registration form
-const schema = z.object({
-  // Patient Registration Fields
-  pChartID: z.number().default(0),
-  pChartCode: z.string().min(1, "Patient chart code is required"),
-  pRegDate: z.date().default(new Date()),
-  pTitleVal: z.string().min(1, "Title is required"),
-  pTitle: z.string().default(""),
-  pFName: z.string().min(1, "First name is required"),
-  pMName: z.string().optional().default(""),
-  pLName: z.string().min(1, "Last name is required"),
+// Create conditional schema based on form mode
+const createSchema = (mode: "create" | "edit" | "view") => {
+  const isCreateMode = mode === "create";
 
-  // Age/DOB Selection
-  pDobOrAgeVal: z.enum(["DOB", "AGE"]).default("DOB"),
-  pDob: z.date().optional(),
-  pAgeNumber: z.number().min(0).max(150).optional().default(0),
-  pAgeDescriptionVal: z.string().optional().default(""),
+  return z.object({
+    // Patient Registration Fields
+    pChartID: z.number().default(0),
+    pChartCode: z.string().min(1, "Patient chart code is required"),
+    pRegDate: z.date().default(new Date()),
+    pTitleVal: z.string().min(1, "Title is required"),
+    pTitle: z.string().default(""),
+    pFName: z.string().min(1, "First name is required"),
+    pMName: z.string().optional().default(""),
+    pLName: z.string().min(1, "Last name is required"),
 
-  pGenderVal: z.string().min(1, "Gender is required"),
-  pGender: z.string().default(""),
-  pBldGrp: z.string().optional().default(""),
-  pFhName: z.string().optional().default(""),
-  fatherBldGrp: z.string().optional().default(""),
-  pMaritalStatus: z.string().optional().default(""),
+    // Age/DOB Selection
+    pDobOrAgeVal: z.enum(["DOB", "AGE"]).default("DOB"),
+    pDob: z.date().optional(),
+    pAgeNumber: z.number().min(0).max(150).optional().default(0),
+    pAgeDescriptionVal: z.string().optional().default(""),
 
-  // Patient Type and Membership
-  pTypeID: z.number().min(1, "Patient type is required"),
-  pTypeCode: z.string().default(""),
-  pTypeName: z.string().default(""),
-  patMemID: z.number().optional().default(0),
-  patMemName: z.string().optional().default(""),
-  patMemDescription: z.string().optional().default(""),
-  patMemSchemeExpiryDate: z.date().optional(),
+    pGenderVal: z.string().min(1, "Gender is required"),
+    pGender: z.string().default(""),
+    pBldGrp: z.string().optional().default(""),
+    pFhName: z.string().optional().default(""),
+    fatherBldGrp: z.string().optional().default(""),
+    pMaritalStatus: z.string().optional().default(""),
 
-  // Contact Information
-  pAddPhone1: z.string().min(1, "Primary phone number is required"),
-  pAddPhone2: z.string().optional().default(""),
-  pAddPhone3: z.string().optional().default(""),
-  pAddEmail: z.string().email("Invalid email format").optional().or(z.literal("")),
-  pAddWorkPhone: z.string().optional().default(""),
+    // Patient Type and Membership - Payment Information (Always Required)
+    pTypeID: z.number().min(1, "Payment source is required"),
+    pTypeCode: z.string().default(""),
+    pTypeName: z.string().default(""),
+    patMemID: z.number().optional().default(0),
+    patMemName: z.string().optional().default(""),
+    patMemDescription: z.string().optional().default(""),
+    patMemSchemeExpiryDate: z.date().optional(),
 
-  // SMS and Email Preferences
-  sendSMSYN: z.enum(["Y", "N"]).default("Y"),
-  sendEmailYN: z.enum(["Y", "N"]).default("Y"),
+    // Contact Information
+    pAddPhone1: z.string().min(1, "Primary phone number is required"),
+    pAddPhone2: z.string().optional().default(""),
+    pAddPhone3: z.string().optional().default(""),
+    pAddEmail: z.string().email("Invalid email format").optional().or(z.literal("")),
+    pAddWorkPhone: z.string().optional().default(""),
 
-  // Address Information
-  patDoorNo: z.string().optional().default(""),
-  pAddStreet: z.string().optional().default(""),
-  pAddStreet1: z.string().optional().default(""),
-  patAreaVal: z.string().optional().default(""),
-  patArea: z.string().optional().default(""),
-  pAddCityVal: z.string().optional().default(""),
-  pAddCity: z.string().optional().default(""),
-  pAddState: z.string().optional().default(""),
-  pAddPostcode: z.string().optional().default(""),
-  pAddCountryVal: z.string().optional().default(""),
-  pAddCountry: z.string().optional().default(""),
+    // SMS and Email Preferences
+    sendSMSYN: z.enum(["Y", "N"]).default("Y"),
+    sendEmailYN: z.enum(["Y", "N"]).default("Y"),
 
-  // Visit Information
-  visitTypeVal: z.string().min(1, "Visit type is required"),
-  visitType: z.string().default(""),
-  deptID: z.number().optional().default(0),
-  deptName: z.string().optional().default(""),
-  attndPhyID: z.string().optional().default(""),
-  attendingPhysicianName: z.string().optional().default(""),
-  primIntroSourceID: z.string().optional().default(""),
-  primIntroSourceName: z.string().optional().default(""),
+    // Address Information
+    patDoorNo: z.string().optional().default(""),
+    pAddStreet: z.string().optional().default(""),
+    pAddStreet1: z.string().optional().default(""),
+    patAreaVal: z.string().optional().default(""),
+    patArea: z.string().optional().default(""),
+    pAddCityVal: z.string().optional().default(""),
+    pAddCity: z.string().optional().default(""),
+    pAddState: z.string().optional().default(""),
+    pAddPostcode: z.string().optional().default(""),
+    pAddCountryVal: z.string().optional().default(""),
+    pAddCountry: z.string().optional().default(""),
 
-  // Additional Information
-  pOccupation: z.string().optional().default(""),
-  pEmployer: z.string().optional().default(""),
-  pEducation: z.string().optional().default(""),
-  pReligion: z.string().optional().default(""),
-  ethnicity: z.string().optional().default(""),
-  pCountryOfOrigin: z.string().optional().default(""),
+    // Visit Information - Conditional validation based on mode
+    visitTypeVal: isCreateMode ? z.string().min(1, "Visit type is required") : z.string().optional().default("N"),
+    visitType: z.string().default(""),
+    deptID: z.number().optional().default(0),
+    deptName: z.string().optional().default(""),
+    attndPhyID: z.string().optional().default(""),
+    attendingPhysicianName: z.string().optional().default(""),
+    primIntroSourceID: z.string().optional().default(""),
+    primIntroSourceName: z.string().optional().default(""),
 
-  // System Fields
-  rActiveYN: z.enum(["Y", "N"]).default("Y"),
-  rNotes: z.string().optional().default(""),
-  transferYN: z.enum(["Y", "N"]).default("N"),
-  cancelYN: z.enum(["Y", "N"]).default("N"),
-  patSchemeExpiryDateYN: z.enum(["Y", "N"]).default("N"),
-  patSchemeDescriptionYN: z.enum(["Y", "N"]).default("N"),
-  patDataFormYN: z.enum(["Y", "N"]).default("N"),
+    // Additional Information
+    pOccupation: z.string().optional().default(""),
+    pEmployer: z.string().optional().default(""),
+    pEducation: z.string().optional().default(""),
+    pReligion: z.string().optional().default(""),
+    ethnicity: z.string().optional().default(""),
+    pCountryOfOrigin: z.string().optional().default(""),
 
-  // Identity Information
-  intIdPsprt: z.string().optional().default(""),
-  indentityType: z.string().default(""),
-  indentityValue: z.string().default(""),
-  patientType: z.string().default(""),
-});
+    // System Fields
+    rActiveYN: z.enum(["Y", "N"]).default("Y"),
+    rNotes: z.string().optional().default(""),
+    transferYN: z.enum(["Y", "N"]).default("N"),
+    cancelYN: z.enum(["Y", "N"]).default("N"),
+    patSchemeExpiryDateYN: z.enum(["Y", "N"]).default("N"),
+    patSchemeDescriptionYN: z.enum(["Y", "N"]).default("N"),
+    patDataFormYN: z.enum(["Y", "N"]).default("N"),
 
-type PatientFormData = z.infer<typeof schema>;
+    // Identity Information
+    intIdPsprt: z.string().optional().default(""),
+    indentityType: z.string().default(""),
+    indentityValue: z.string().default(""),
+    patientType: z.string().default(""),
+  });
+};
+
+type PatientFormData = z.infer<ReturnType<typeof createSchema>>;
 
 interface PatientRegistrationFormProps {
   mode?: "create" | "edit" | "view";
@@ -157,6 +161,9 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
     "primaryIntroducingSource",
     "attendingPhy",
   ]);
+
+  // Create schema based on current mode
+  const schema = useMemo(() => createSchema(mode), [mode]);
 
   // Default form values
   const defaultValues: PatientFormData = useMemo(
@@ -204,8 +211,8 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
       pAddPostcode: "",
       pAddCountryVal: "",
       pAddCountry: "",
-      visitTypeVal: "N",
-      visitType: "None",
+      visitTypeVal: isCreateMode ? "" : "N",
+      visitType: isCreateMode ? "" : "None",
       deptID: 0,
       deptName: "",
       attndPhyID: "",
@@ -230,7 +237,7 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
       indentityValue: "",
       patientType: "",
     }),
-    [serverDate]
+    [serverDate, isCreateMode]
   );
 
   const {
@@ -445,8 +452,8 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
       };
 
       const opvisits: OpvisitDto = {
-        visitTypeVal: formData.visitTypeVal,
-        visitType: formData.visitType,
+        visitTypeVal: formData.visitTypeVal || "N",
+        visitType: formData.visitType || "None",
       };
 
       return {
@@ -675,29 +682,11 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
     setShowResetConfirmation(false);
   };
 
-  // Get form title based on mode
-  const getFormTitle = () => {
-    switch (mode) {
-      case "create":
-        return "Patient Registration";
-      case "edit":
-        return "Edit Patient Details";
-      case "view":
-        return "View Patient Details";
-      default:
-        return "Patient Registration";
-    }
-  };
-
   const isHospitalVisit = watchedVisitType === "H";
   const isPhysicianVisit = watchedVisitType === "P";
 
   return (
     <Box sx={{ p: 2 }}>
-      <Typography variant="h5" component="h1" gutterBottom>
-        {getFormTitle()}
-      </Typography>
-
       {/* Patient Search for Edit Mode */}
       {isEditMode && !savedPChartID && (
         <Card variant="outlined" sx={{ mb: 3 }}>
@@ -989,69 +978,100 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
             </Card>
           </Grid>
 
-          {/* Visit Details & Payment Information */}
+          {/* Visit Details - Only Required in Create Mode */}
+          {isCreateMode && (
+            <Grid size={{ sm: 12 }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Visit Details
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+
+                  <Grid container spacing={2}>
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField
+                        name="visitTypeVal"
+                        control={control}
+                        label="Visit Type"
+                        type="radio"
+                        required
+                        options={[
+                          { value: "P", label: "Physician" },
+                          { value: "H", label: "Hospital" },
+                          { value: "N", label: "None" },
+                        ]}
+                        onChange={handleVisitTypeChange}
+                        disabled={isViewMode}
+                      />
+                    </Grid>
+
+                    {/* Conditional Department Dropdown for Hospital Visit */}
+                    {isHospitalVisit && (
+                      <Grid size={{ sm: 12, md: 6 }}>
+                        <FormField
+                          name="deptID"
+                          control={control}
+                          label="Department"
+                          type="select"
+                          required
+                          size="small"
+                          fullWidth
+                          options={dropdownValues.department || []}
+                          onChange={handleDepartmentChange}
+                          disabled={isViewMode}
+                        />
+                      </Grid>
+                    )}
+
+                    {/* Conditional Attending Physician Dropdown for Physician Visit */}
+                    {isPhysicianVisit && (
+                      <Grid size={{ sm: 12, md: 6 }}>
+                        <FormField
+                          name="attndPhyID"
+                          control={control}
+                          label="Attending Physician"
+                          type="select"
+                          required
+                          size="small"
+                          fullWidth
+                          options={dropdownValues.attendingPhy || []}
+                          onChange={handleAttendingPhysicianChange}
+                          disabled={isViewMode}
+                        />
+                      </Grid>
+                    )}
+
+                    {/* Primary Introducing Source */}
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField
+                        name="primIntroSourceID"
+                        control={control}
+                        label="Primary Introducing Source"
+                        type="select"
+                        size="small"
+                        fullWidth
+                        options={dropdownValues.primaryIntroducingSource || []}
+                        onChange={handlePrimaryIntroSourceChange}
+                        disabled={isViewMode}
+                      />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
+
+          {/* Payment Information - Always Required */}
           <Grid size={{ sm: 12 }}>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Visit Details & Payment Information
+                  Payment Information
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField
-                      name="visitTypeVal"
-                      control={control}
-                      label="Visit Type"
-                      type="radio"
-                      required
-                      options={[
-                        { value: "P", label: "Physician" },
-                        { value: "H", label: "Hospital" },
-                        { value: "N", label: "None" },
-                      ]}
-                      onChange={handleVisitTypeChange}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
-
-                  {/* Conditional Department Dropdown for Hospital Visit */}
-                  {watchedVisitType === "H" && (
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField
-                        name="deptID"
-                        control={control}
-                        label="Department"
-                        type="select"
-                        required
-                        size="small"
-                        fullWidth
-                        options={dropdownValues.department || []}
-                        onChange={handleDepartmentChange}
-                        disabled={isViewMode}
-                      />
-                    </Grid>
-                  )}
-
-                  {/* Conditional Attending Physician Dropdown for Physician Visit */}
-                  {watchedVisitType === "P" && (
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField
-                        name="attndPhyID"
-                        control={control}
-                        label="Attending Physician"
-                        type="select"
-                        required
-                        size="small"
-                        fullWidth
-                        options={dropdownValues.attendingPhy || []}
-                        onChange={handleAttendingPhysicianChange}
-                        disabled={isViewMode}
-                      />
-                    </Grid>
-                  )}
-
                   <Grid size={{ sm: 12, md: 6 }}>
                     <FormField
                       name="pTypeID"
@@ -1063,20 +1083,6 @@ const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = ({ mode 
                       fullWidth
                       options={dropdownValues.pic || []}
                       onChange={handlePICChange}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
-                  {/* Primary Introducing Source */}
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField
-                      name="primIntroSourceID"
-                      control={control}
-                      label="Primary Introducing Source"
-                      type="select"
-                      size="small"
-                      fullWidth
-                      options={dropdownValues.primaryIntroducingSource || []}
-                      onChange={handlePrimaryIntroSourceChange}
                       disabled={isViewMode}
                     />
                   </Grid>
