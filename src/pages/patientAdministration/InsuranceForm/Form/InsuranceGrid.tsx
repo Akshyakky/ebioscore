@@ -1,4 +1,5 @@
-// src/components/InsuranceManagement/InsuranceManagementDialog.tsx
+// Fixed InsuranceGrid.tsx - Key changes to prevent Date object rendering errors
+
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Alert } from "@mui/material";
 import {
@@ -312,21 +313,30 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
     </Paper>
   );
 
-  // Safe date formatter function
+  // CRITICAL FIX: Enhanced date formatter to always return strings
   const formatDateSafely = useCallback(
     (dateValue: any): string => {
       if (!dateValue) return "-";
 
       try {
+        let dateObj: Date;
+
         if (dateValue instanceof Date) {
-          return formatDate(dateValue);
+          dateObj = dateValue;
         } else if (typeof dateValue === "string") {
-          const date = new Date(dateValue);
-          if (!isNaN(date.getTime())) {
-            return formatDate(date);
-          }
+          dateObj = new Date(dateValue);
+        } else if (typeof dateValue === "number") {
+          dateObj = new Date(dateValue);
+        } else {
+          return "-";
         }
-        return "-";
+
+        // Validate the date
+        if (isNaN(dateObj.getTime())) {
+          return "-";
+        }
+
+        return formatDate(dateObj);
       } catch (error) {
         console.error("Error formatting date:", error);
         return "-";
@@ -335,13 +345,26 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
     [formatDate]
   );
 
-  // Safe string formatter function
-  const formatStringSafely = useCallback((value: any): string => {
-    if (value === null || value === undefined) return "-";
-    if (typeof value === "string") return value || "-";
-    if (typeof value === "number") return value.toString();
-    return String(value) || "-";
-  }, []);
+  // CRITICAL FIX: Enhanced string formatter to prevent object rendering
+  const formatStringSafely = useCallback(
+    (value: any): string => {
+      if (value === null || value === undefined) return "-";
+      if (typeof value === "string") return value || "-";
+      if (typeof value === "number") return value.toString();
+      if (typeof value === "boolean") return value ? "Yes" : "No";
+
+      // Handle objects (including Date objects) by converting to string
+      if (typeof value === "object") {
+        if (value instanceof Date) {
+          return formatDateSafely(value);
+        }
+        return String(value) || "-";
+      }
+
+      return String(value) || "-";
+    },
+    [formatDateSafely]
+  );
 
   const columns: Column<OPIPInsurancesDto>[] = [
     {
@@ -388,6 +411,8 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
       filterable: true,
       width: 120,
       formatter: (value: any) => formatDateSafely(value),
+      // CRITICAL FIX: Add render function to ensure proper date handling
+      render: (item: OPIPInsurancesDto) => <span>{formatDateSafely(item.policyStartDt)}</span>,
     },
     {
       key: "policyEndDt",
@@ -397,6 +422,8 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
       filterable: true,
       width: 120,
       formatter: (value: any) => formatDateSafely(value),
+      // CRITICAL FIX: Add render function to ensure proper date handling
+      render: (item: OPIPInsurancesDto) => <span>{formatDateSafely(item.policyEndDt)}</span>,
     },
     {
       key: "guarantor",

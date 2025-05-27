@@ -26,15 +26,12 @@ import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientS
 import { useRevisit } from "../hooks/useRevisitForm";
 import InsuranceManagementDialog from "../../InsuranceForm/Form/InsuranceGrid";
 
-// Schema definition for form validation
-// Updated schema definition with proper type handling
 const schema = z.object({
   opVID: z.number().default(0),
   pChartID: z.number().default(0),
   pChartCode: z.string().default(""),
   pVisitDate: z.date().default(new Date()),
   patOPIP: z.string().default("O"),
-  // Allow both string (for composite dropdown value) and number (for API submission)
   attendingPhysicianId: z.union([z.number(), z.string()]).default(0),
   attendingPhysicianSpecialtyId: z.number().default(0),
   attendingPhysicianName: z.string().default(""),
@@ -67,7 +64,6 @@ const schema = z.object({
 type RevisitFormData = z.infer<typeof schema>;
 
 const RevisitPage: React.FC = () => {
-  // User and context information
   const userInfo = useAppSelector((state) => state.auth);
   const compID = userInfo.compID!;
   const { setLoading } = useLoading();
@@ -76,7 +72,6 @@ const RevisitPage: React.FC = () => {
   const { visitList, isLoading, error, fetchVisitList, deleteVisit, cancelVisit, saveVisit } = useRevisit();
   const { showAlert } = useAlert();
 
-  // Form state
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -87,17 +82,9 @@ const RevisitPage: React.FC = () => {
   const [primaryIntroducingSource, setPrimaryIntroducingSource] = useState<DropdownOption[]>([]);
   const [clearSearchTrigger, setClearSearchTrigger] = useState(0);
   const [showStats, setShowStats] = useState(false);
-
-  // Patient history dialog state
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
-
-  // Insurance management dialog state
   const [isInsuranceDialogOpen, setIsInsuranceDialogOpen] = useState(false);
-
-  // Dropdowns and refs
   const dropdownValues = useDropdownValues(["pic", "department"]);
-
-  // Form setup
   const defaultValues: RevisitFormData = {
     opVID: 0,
     pChartID: 0,
@@ -150,10 +137,8 @@ const RevisitPage: React.FC = () => {
   });
 
   const watchedVisitType = watch("pVisitType");
-  const watchedPChartID = watch("pChartID");
   const watchedPChartCode = watch("pChartCode");
 
-  // Statistics calculation
   const stats = useMemo(() => {
     if (!visitList.length) {
       return {
@@ -182,33 +167,11 @@ const RevisitPage: React.FC = () => {
     };
   }, [visitList]);
 
-  // Department dropdown filtering
   const DepartmentDropdownValues = useMemo(() => {
     if (!dropdownValues.department) return [];
     return dropdownValues.department.filter((item: any) => item.rActiveYN === "Y" && item.isUnitYN === "Y");
   }, [dropdownValues.department]);
 
-  // Load dropdown values
-  const loadDropdownValues = useCallback(async () => {
-    try {
-      debugger;
-      setLoading(true);
-      const [primaryIntroducingSourceData] = await Promise.all([ContactMastService.fetchRefferalPhy("GetActiveReferralContacts", compID)]);
-      setPrimaryIntroducingSource(
-        primaryIntroducingSourceData.map((item) => ({
-          value: item.value.toString(),
-          label: item.label,
-        }))
-      );
-    } catch (error) {
-      console.error("Error loading dropdown values:", error);
-      showAlert("Error", "Failed to load dropdown values", "error");
-    } finally {
-      setLoading(false);
-    }
-  }, [compID, setLoading]);
-
-  // Statistics dashboard component
   const renderStatsDashboard = () => (
     <Paper sx={{ p: 2, mb: 2 }}>
       <Grid container spacing={2}>
@@ -250,14 +213,6 @@ const RevisitPage: React.FC = () => {
     </Paper>
   );
 
-  // Initial load
-  // useEffect(() => {
-  //   document.title = "Patient Revisit Management";
-  //   loadDropdownValues();
-  //   fetchVisitList(DateFilterType.Today, null, null);
-  // }, [loadDropdownValues, fetchVisitList]);
-
-  // Handle patient selection when selectedPatient changes
   useEffect(() => {
     if (selectedPatient) {
       handlePatientSelect(selectedPatient);
@@ -325,7 +280,6 @@ const RevisitPage: React.FC = () => {
           await trigger();
         }
       } catch (error) {
-        console.error("Error selecting patient:", error);
         showAlert("Error", "Failed to load patient data", "error");
       } finally {
         setLoading(false);
@@ -354,22 +308,15 @@ const RevisitPage: React.FC = () => {
             pChartCode,
             fullName,
           };
-
-          // Set the patient first
           setSelectedPatient(patientResult);
           setSelectedPChartID(pChartID);
-
-          // Reset physician selection when selecting from waiting search
           setValue("attendingPhysicianId", 0, { shouldValidate: true, shouldDirty: true });
           setValue("attendingPhysicianSpecialtyId", 0, { shouldValidate: true, shouldDirty: true });
           setValue("attendingPhysicianName", "", { shouldValidate: true, shouldDirty: true });
           setValue("attendingPhysicianSpecialty", "", { shouldValidate: true, shouldDirty: true });
-
-          // Load fresh physician data for the selected patient
           await handlePatientSelect(patientResult);
         }
       } catch (error) {
-        console.error("Error in waiting patient search:", error);
         showAlert("Error", "Failed to load patient from waiting search", "error");
       } finally {
         setLoading(false);
@@ -380,13 +327,9 @@ const RevisitPage: React.FC = () => {
 
   const handlePhysicianChange = useCallback(
     async (event: any) => {
-      // Handle custom FormField event structure
       const selectedValue = event.value || event.target?.value;
       const selectedLabel = event.label;
 
-      console.log("Physician selection:", { selectedValue, selectedLabel });
-
-      // Handle empty or default selection
       if (!selectedValue || selectedValue === "" || selectedValue === "0" || selectedValue === "0-0") {
         setValue("attendingPhysicianId", 0, { shouldValidate: true, shouldDirty: true });
         setValue("attendingPhysicianSpecialtyId", 0, { shouldValidate: true, shouldDirty: true });
@@ -396,11 +339,9 @@ const RevisitPage: React.FC = () => {
         return;
       }
 
-      // Validate the composite value format
       if (typeof selectedValue === "string" && selectedValue.includes("-")) {
         const parts = selectedValue.split("-");
         if (parts.length !== 2) {
-          console.error("Invalid physician value format:", selectedValue);
           setFormError("Invalid physician selection format");
           return;
         }
@@ -410,12 +351,10 @@ const RevisitPage: React.FC = () => {
         const cdID = parseInt(cdIDStr, 10);
 
         if (isNaN(conID) || isNaN(cdID) || conID === 0) {
-          console.error("Invalid numeric values in physician selection:", { conIDStr, cdIDStr });
           setFormError("Invalid physician selection values");
           return;
         }
 
-        // Extract physician name and specialty from label
         let physicianName = "";
         let physicianSpecialty = "";
 
@@ -431,27 +370,13 @@ const RevisitPage: React.FC = () => {
             physicianSpecialty = labelParts[1]?.trim() || "Unknown Specialty";
           }
         }
-
-        // Set all physician-related fields
         setValue("attendingPhysicianId", selectedValue, { shouldValidate: true, shouldDirty: true });
         setValue("attendingPhysicianSpecialtyId", cdID, { shouldValidate: true, shouldDirty: true });
         setValue("attendingPhysicianName", physicianName, { shouldValidate: true, shouldDirty: true });
         setValue("attendingPhysicianSpecialty", physicianSpecialty, { shouldValidate: true, shouldDirty: true });
-
-        // Clear any previous form errors
         setFormError(null);
-
-        // Trigger validation
         await trigger(["attendingPhysicianId", "attendingPhysicianSpecialtyId"]);
-
-        console.log("Physician data set:", {
-          attendingPhysicianId: selectedValue,
-          attendingPhysicianSpecialtyId: cdID,
-          attendingPhysicianName: physicianName,
-          attendingPhysicianSpecialty: physicianSpecialty,
-        });
       } else {
-        console.error("Unexpected physician value format:", selectedValue);
         setFormError("Unexpected physician selection format");
       }
     },
@@ -477,9 +402,7 @@ const RevisitPage: React.FC = () => {
               label: item.label,
             }))
           );
-        } catch (error) {
-          console.error("Error loading physicians:", error);
-        }
+        } catch (error) {}
       }
       if (value === "H") {
         setValue("attendingPhysicianId", 0, { shouldDirty: true });
@@ -513,16 +436,12 @@ const RevisitPage: React.FC = () => {
     if (typeof attendingPhysicianId === "number") {
       return attendingPhysicianId;
     }
-
     if (typeof attendingPhysicianId === "string") {
-      // Handle composite value format "123-456"
       if (attendingPhysicianId.includes("-")) {
         const [conIDStr] = attendingPhysicianId.split("-");
         const physicianId = parseInt(conIDStr, 10);
         return isNaN(physicianId) ? 0 : physicianId;
       }
-
-      // Handle string number format "123"
       const physicianId = parseInt(attendingPhysicianId, 10);
       return isNaN(physicianId) ? 0 : physicianId;
     }
@@ -534,24 +453,10 @@ const RevisitPage: React.FC = () => {
     setFormError(null);
 
     try {
-      debugger;
       setIsSaving(true);
       setLoading(true);
-
-      // Extract the actual physician ID from the composite value
       const physicianId = extractPhysicianId(data.attendingPhysicianId);
 
-      console.log("Form validation data:", {
-        pVisitType: data.pVisitType,
-        attendingPhysicianId: data.attendingPhysicianId,
-        extractedPhysicianId: physicianId,
-        deptID: data.deptID,
-        pChartID: data.pChartID,
-        pTypeID: data.pTypeID,
-        primaryReferralSourceId: data.primaryReferralSourceId,
-      });
-
-      // Validation checks with proper physician ID extraction
       if (!data.pChartID || data.pChartID === 0) {
         setFormError("Patient selection is required");
         return;
@@ -576,13 +481,9 @@ const RevisitPage: React.FC = () => {
         setFormError("Attending Physician is required for physician visits");
         return;
       }
-
-      // Prepare the data object with correct field types
       const visitData: OPVisitDto = {
         ...data,
-        // Use the extracted physician ID for API submission
         attendingPhysicianId: physicianId,
-        // Ensure all numeric fields are properly typed
         opVID: data.opVID || 0,
         pChartID: data.pChartID,
         oldPChartID: data.oldPChartID || 0,
@@ -594,7 +495,6 @@ const RevisitPage: React.FC = () => {
         pChartCompID: data.pChartCompID || 0,
         refFacultyID: data.refFacultyID || 0,
         secondaryReferralSourceId: data.secondaryReferralSourceId || 0,
-        // Ensure string fields are properly set
         pChartCode: data.pChartCode || "",
         patOPIP: data.patOPIP || "O",
         pVisitStatus: data.pVisitStatus || "W",
@@ -620,8 +520,6 @@ const RevisitPage: React.FC = () => {
         compCode: userInfo.compCode || "",
       };
 
-      console.log("Submitting visit data:", visitData);
-
       const response = await saveVisit(visitData);
 
       if (response.success) {
@@ -632,7 +530,6 @@ const RevisitPage: React.FC = () => {
         throw new Error(response.errorMessage || "Failed to save visit");
       }
     } catch (error) {
-      console.error("Error saving visit:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save visit";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
@@ -641,8 +538,6 @@ const RevisitPage: React.FC = () => {
       setLoading(false);
     }
   };
-
-  // Form reset handler
   const performReset = () => {
     reset(defaultValues);
     setFormError(null);
@@ -669,18 +564,12 @@ const RevisitPage: React.FC = () => {
     setShowResetConfirmation(false);
   };
 
-  // Refresh handler
   const handleRefresh = useCallback(() => {
     fetchVisitList(DateFilterType.Today, null, null);
   }, [fetchVisitList]);
-
-  // Open history dialog
   const handleOpenHistoryDialog = useCallback(() => {
-    debugger;
     setIsHistoryDialogOpen(true);
   }, []);
-
-  // Close history dialog
   const handleCloseHistoryDialog = useCallback(
     (refreshData?: boolean) => {
       setIsHistoryDialogOpen(false);
@@ -690,8 +579,6 @@ const RevisitPage: React.FC = () => {
     },
     [handleRefresh]
   );
-
-  // Insurance dialog handlers
   const handleOpenInsuranceDialog = useCallback(() => {
     if (!selectedPChartID) {
       showAlert("Warning", "Please select a patient first", "warning");
@@ -702,7 +589,6 @@ const RevisitPage: React.FC = () => {
 
   const handleCloseInsuranceDialog = useCallback((refreshData?: boolean) => {
     setIsInsuranceDialogOpen(false);
-    // Optional: You can add any additional logic here if needed when insurance dialog closes
   }, []);
 
   const isHospitalVisit = watchedVisitType === "H";
@@ -721,11 +607,11 @@ const RevisitPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      {/* Header with Stats Toggle and View History Button */}
       <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}>
         <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
         <Box sx={{ display: "flex", gap: 2 }}>
           <SmartButton text="Refresh" icon={RefreshIcon} onClick={handleRefresh} color="info" variant="outlined" size="small" disabled={isLoading} />
+          <SmartButton text="Waiting Patient Search" icon={SearchIcon} onClick={handleWaitingSearch} color="warning" variant="contained" size="small" />
           <SmartButton text="View Visit History" onClick={handleOpenHistoryDialog} color="primary" variant="contained" size="small" />
           <SmartButton
             text="Manage Insurance"
@@ -738,11 +624,7 @@ const RevisitPage: React.FC = () => {
           />
         </Box>
       </Box>
-
-      {/* Statistics Dashboard */}
       {showStats && renderStatsDashboard()}
-
-      {/* Main Content */}
       <Paper sx={{ p: 2 }}>
         <Typography variant="h5" component="h1" gutterBottom>
           Create New Visit
@@ -774,12 +656,8 @@ const RevisitPage: React.FC = () => {
           )}
 
           <Grid container spacing={3}>
-            {/* Action Buttons */}
             <Grid size={{ sm: 12 }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
-                <Box display="flex" gap={1}>
-                  <SmartButton text="Waiting Search" icon={SearchIcon} onClick={handleWaitingSearch} variant="outlined" size="small" />
-                </Box>
+              <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
                 <Box display="flex" alignItems="center" gap={2}>
                   <Typography variant="body2" color="text.secondary">
                     Status:
@@ -788,8 +666,6 @@ const RevisitPage: React.FC = () => {
                 </Box>
               </Box>
             </Grid>
-
-            {/* Patient Information */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -812,8 +688,6 @@ const RevisitPage: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-
-            {/* Visit Details */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -941,8 +815,6 @@ const RevisitPage: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-
-            {/* Form Action Buttons */}
             <Grid size={{ sm: 12 }}>
               <Box display="flex" justifyContent="flex-end" gap={2}>
                 <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={CancelIcon} disabled={isSaving || !isDirty} />
@@ -963,11 +835,7 @@ const RevisitPage: React.FC = () => {
           </Grid>
         </Box>
       </Paper>
-
-      {/* Patient Visit History Dialog */}
       {isHistoryDialogOpen && <PatientVisitHistoryDialog open={isHistoryDialogOpen} onClose={handleCloseHistoryDialog} />}
-
-      {/* Insurance Management Dialog */}
       {isInsuranceDialogOpen && selectedPChartID > 0 && (
         <InsuranceManagementDialog
           open={isInsuranceDialogOpen}
@@ -981,15 +849,12 @@ const RevisitPage: React.FC = () => {
         />
       )}
 
-      {/* Waiting Patient Search Dialog */}
       <WaitingPatientSearch
         userInfo={userInfo}
         show={showWaitingPatientSearch}
         handleClose={() => setShowWaitingPatientSearch(false)}
         onPatientSelect={handleAdvancedPatientSelect}
       />
-
-      {/* Confirmation Dialog for Form Reset */}
       <ConfirmationDialog
         open={showResetConfirmation}
         onClose={handleResetCancel}

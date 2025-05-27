@@ -277,12 +277,6 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
       visible: true,
       render: (row: any) => <CustomButton text="Cancel Visit" onClick={() => handleCancelVisit(row.opVID.toString())} icon={CancelIcon} color="error" size="small" />,
     },
-    {
-      key: "SelectPatient",
-      header: "Select",
-      visible: true,
-      render: (row: any) => <CustomButton text="Select" onClick={() => handlePatientSelect(row.pChartCode)} color="primary" size="small" />,
-    },
   ];
 
   const dialogContent = (
