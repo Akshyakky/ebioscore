@@ -3,15 +3,10 @@ import { Box, Grid, Typography, Button, IconButton, Tooltip, Checkbox } from "@m
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import FormField from "@/components/FormField/FormField";
-import { showAlert } from "@/utils/Common/showAlert";
-
-import { useServerDate } from "@/hooks/Common/useServerDate";
-
+import { useAlert } from "@/providers/AlertProvider";
 import AdvancedGrid, { ColumnConfig } from "@/components/AdvancedGrid/AdvancedGrid";
-
 import { LCompAgeRangeDto, LComponentDto } from "@/interfaces/Laboratory/LInvMastDto";
 import CustomButton from "@/components/Button/CustomButton";
 
@@ -34,6 +29,7 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({
   onDeleteAgeRanges,
   indexID,
 }) => {
+  const { showAlert } = useAlert();
   // Local states
   const [updatedAgeRanges, setUpdatedAgeRanges] = useState<LCompAgeRangeDto[]>(ageRanges);
   const [selectedRows, setSelectedRows] = useState<number[]>([]); // IDs of selected rows

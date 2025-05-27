@@ -12,7 +12,7 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useProductOverview } from "../hooks/useProductOverview";
 import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/ProductSearchForm";
 import { ProductOption, ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
@@ -64,6 +64,7 @@ type ProductOverviewFormData = z.infer<typeof schema>;
 
 const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose, initialData, viewOnly = false, selectedDepartment, onChangeDepartment }) => {
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
   const { saveProductOverview, getProductByCode, fetchProductSuggestions, isLoadingProducts, convertLeadTimeToDays } = useProductOverview();
 
   const [isSaving, setIsSaving] = useState(false);

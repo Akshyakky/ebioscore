@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 
 interface DepartmentSelectionState {
   deptId: number;
@@ -20,6 +20,7 @@ interface UseDepartmentSelectionReturn {
 }
 
 const useDepartmentSelection = (initialState?: Partial<DepartmentSelectionState>): UseDepartmentSelectionReturn => {
+  const { showAlert } = useAlert();
   const [state, setState] = useState<DepartmentSelectionState>({
     deptId: initialState?.deptId || 0,
     deptName: initialState?.deptName || "",

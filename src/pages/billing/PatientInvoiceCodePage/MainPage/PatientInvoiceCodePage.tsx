@@ -16,7 +16,7 @@ import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { BPatTypeDto } from "@/interfaces/Billing/BPatTypeDto";
 import PatientInvoiceCodeForm from "../Form/PatientInvoiceCodeForm";
 import { usePatientInvoiceCode } from "../hooks/usePatientInvoiceCode";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 
 const statusOptions = [
@@ -38,6 +38,7 @@ const PatientInvoiceCodePage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
+  const { showAlert } = useAlert();
 
   const { patientInvoiceList, isLoading, error, fetchPatientInvoiceList, deletePatientInvoice } = usePatientInvoiceCode();
 
@@ -48,10 +49,6 @@ const PatientInvoiceCodePage: React.FC = () => {
     status: "",
     insurance: "",
   });
-
-  useEffect(() => {
-    document.title = "Patient Invoice Codes Management";
-  }, []);
 
   const handleRefresh = useCallback(() => {
     fetchPatientInvoiceList();

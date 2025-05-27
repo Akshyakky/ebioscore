@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, ChangeEvent, Dispatch, SetStateAction } from "react";
 import { Box, Grid, Typography, IconButton, CircularProgress, Grow } from "@mui/material";
 import FormField from "@/components/FormField/FormField";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { LCompMultipleDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
 import CustomButton from "@/components/Button/CustomButton";
@@ -26,6 +26,7 @@ interface CompMultipleDetailsProps {
 }
 
 const CompMultipleDetails: React.FC<CompMultipleDetailsProps> = ({ setFormComp, compoID, invID, onUpdateCompMultiple, existingChoices, onMultipleListChange, indexID }) => {
+  const { showAlert } = useAlert();
   const [multipleState, setMultipleState] = useState<{
     newValue: string;
     valuesList: MultipleValue[];

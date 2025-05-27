@@ -14,7 +14,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { BServiceGrpDto } from "@/interfaces/Billing/BServiceGrpDto";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { useServiceGroupsList } from "../hooks/useServiceGroupList";
 import ServiceGroupsForm from "../Form/ServiceGroupListForm";
@@ -45,6 +45,7 @@ const ServiceGroupsListPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
+  const { showAlert } = useAlert();
 
   const { serviceGroupsList, isLoading, error, fetchServiceGroupsList, deleteServiceGroup } = useServiceGroupsList();
 
@@ -57,10 +58,6 @@ const ServiceGroupsListPage: React.FC = () => {
     serviceType: "",
     modification: "",
   });
-
-  useEffect(() => {
-    document.title = "Service Groups Management";
-  }, []);
 
   const handleRefresh = useCallback(() => {
     fetchServiceGroupsList();

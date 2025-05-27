@@ -10,7 +10,7 @@ import { Save, Cancel, Visibility, Edit } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import PermissionManager from "../../CommonPage/PermissionManager";
 import { useUserList } from "../hooks/useUserList";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
@@ -61,6 +61,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isProfileModifyModalOpen, setIsProfileModifyModalOpen] = useState<boolean>(false);
   const { usersWithoutLogin, profiles } = useDropdownValues(["usersWithoutLogin", "profiles"]);
+  const { showAlert } = useAlert();
   const isAddMode = !initialData;
   const defaultValues: UserListFormData = {
     appID: 0,

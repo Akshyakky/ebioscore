@@ -4,7 +4,7 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import FormField from "@/components/FormField/FormField";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { OPIPHistROSDto } from "@/interfaces/ClinicalManagement/OPIPHistROSDto";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";
 import Add from "@mui/icons-material/Add";
@@ -42,6 +42,7 @@ export const ReviewOfSystem: React.FC<ReviewOfSystemProps> = ({ pChartID, opipNo
 
   const [formState, setFormState] = useState<OPIPHistROSDto>(initialFormState);
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
 
   const resetForm = useCallback(() => {
     setFormState({

@@ -10,7 +10,7 @@ import { ProfileDetailDto, ProfileMastDto } from "@/interfaces/SecurityManagemen
 import { UserListDto, UserListPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
 import { Add, Book, Cancel, Delete, Edit, FileUpload, Lock, Print, Save } from "@mui/icons-material";
 import IconSwitch from "@/components/Switch/IconSwitch";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 
 interface DropdownListProps {
   options: DropdownOption[];
@@ -145,6 +145,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
   const [subId, setSubId] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSelectAll, setIsSelectAll] = useState<boolean>(false);
+  const { showAlert } = useAlert();
 
   const [{ compID }] = useState({ compID: 1 });
   const dropdownValues = useDropdownValues(["mainModules", "subModules"]);

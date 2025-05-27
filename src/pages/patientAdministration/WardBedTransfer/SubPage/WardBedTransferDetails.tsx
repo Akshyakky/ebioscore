@@ -14,7 +14,7 @@ import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientA
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { roomListService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { wardBedTransferService } from "@/services/PatientAdministrationServices/WardBedTransferService/WardBedTransferService";
 import CustomAccordion from "@/components/Accordion/CustomAccordion";
 import FormField from "@/components/FormField/FormField";
@@ -58,6 +58,7 @@ const WardBedTransferDetails = forwardRef<{ focusUhidInput: () => void }, WardBe
   const { setLoading } = useLoading();
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const uhidInputRef = useRef<HTMLInputElement>(null);
+  const { showAlert } = useAlert();
 
   const dropdownValues = useDropdownValues(["roomGroup", "attendingPhy", "speciality"]);
 

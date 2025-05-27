@@ -10,7 +10,7 @@ import { Save, Cancel } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useAppModifiedList } from "../hooks/useAppModifiedList";
 
 interface AppModifiedFieldFormProps {
@@ -26,10 +26,10 @@ const schema = z.object({
   amlCode: z.string().nonempty("Field code is required"),
   amlName: z.string().nonempty("Field name is required"),
   amlField: z.string().nonempty("Category field is required"),
-  defaultYN: z.string(),
-  modifyYN: z.string(),
-  rActiveYN: z.string(),
-  transferYN: z.string(),
+  defaultYN: z.enum(["Y", "N"]),
+  modifyYN: z.enum(["Y", "N"]),
+  rActiveYN: z.enum(["Y", "N"]),
+  transferYN: z.enum(["Y", "N"]),
   rNotes: z.string().nullable().optional(),
 });
 
@@ -38,6 +38,7 @@ type AppModifiedFieldFormData = z.infer<typeof schema>;
 const AppModifiedFieldForm: React.FC<AppModifiedFieldFormProps> = ({ open, onClose, initialData, categoryCode, viewOnly = false }) => {
   const { setLoading } = useLoading();
   const { saveField } = useAppModifiedList();
+  const { showAlert } = useAlert();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);

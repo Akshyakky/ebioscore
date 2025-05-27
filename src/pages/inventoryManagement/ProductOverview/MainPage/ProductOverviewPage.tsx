@@ -16,7 +16,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import ProductOverviewForm from "../Form/ProductOverviewForm";
 import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialog";
@@ -35,6 +35,7 @@ const stockLevelOptions = [
 ];
 
 const ProductOverviewPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedProductOverview, setSelectedProductOverview] = useState<ProductOverviewDto | null>(null);
@@ -61,10 +62,6 @@ const ProductOverviewPage: React.FC = () => {
     autoIndent: "",
     transfer: "",
   });
-
-  useEffect(() => {
-    document.title = "Product Overview Management";
-  }, []);
 
   // Auto-open department selection dialog if no department is selected
   useEffect(() => {

@@ -6,7 +6,7 @@ import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarr
 import CustomButton from "@/components/Button/CustomButton";
 import PatientInsuranceForm from "./PatientInsuranceForm";
 import PatientInsuranceGrid from "./PatientInsuranceGrid";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
 
 interface InsurancePageProps {
@@ -19,6 +19,7 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
   const [editingInsuranceData, setEditingInsuranceData] = useState<OPIPInsurancesDto | undefined>(undefined);
   const [gridInsuranceData, setGridInsuranceData] = useState<OPIPInsurancesDto[]>([]);
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
 
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({

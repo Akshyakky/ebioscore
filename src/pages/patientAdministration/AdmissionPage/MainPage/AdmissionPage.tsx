@@ -8,7 +8,7 @@ import useDropdownChange from "@/hooks/useDropdownChange";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import CustomAccordion from "@/components/Accordion/CustomAccordion";
 import AdmissionDetails from "../SubPage/AdmissionDetails";
 import CustomButton from "@/components/Button/CustomButton";
@@ -25,6 +25,7 @@ export interface PatientHistory {
 }
 
 const AdmissionPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const {
     formData,
     setFormData,

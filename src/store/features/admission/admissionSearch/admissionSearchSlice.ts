@@ -2,7 +2,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
 import { AdmissionSearchState } from "./types";
-import { showAlert } from "@/utils/Common/showAlert";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 
 const initialState: AdmissionSearchState = {
@@ -22,7 +21,6 @@ export const fetchCurrentAdmissions = createAsyncThunk<AdmissionDto[], void, { r
     return response.data;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An error occurred";
-    showAlert("Error", `Failed to fetch admissions: ${errorMessage}`, "error");
     return rejectWithValue(errorMessage);
   }
 });

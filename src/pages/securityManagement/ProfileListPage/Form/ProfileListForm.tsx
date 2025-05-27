@@ -10,7 +10,7 @@ import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import PermissionManager from "../../CommonPage/PermissionManager";
 import { useProfileList } from "../hooks/useProfileListPage";
 
@@ -35,6 +35,7 @@ type ProfileListFormData = z.infer<typeof schema>;
 const ProfileListForm: React.FC<ProfileListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
   const { getNextCode, saveProfile } = useProfileList();
+  const { showAlert } = useAlert();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);

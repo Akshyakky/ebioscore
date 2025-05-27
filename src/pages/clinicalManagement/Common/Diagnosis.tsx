@@ -3,7 +3,7 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import FormField from "@/components/FormField/FormField";
 import { AssocDiagnosisDetailDto, DiagnosisDetailDto } from "@/interfaces/ClinicalManagement/DiagnosisDto";
 import { icdDetailService } from "@/services/ClinicalManagementServices/clinicalManagementService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { Grid, Paper, Typography } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";
 interface DiagnosisSectionProps {
@@ -15,6 +15,7 @@ interface DiagnosisSectionProps {
 
 const DiagnosisSection: React.FC<DiagnosisSectionProps> = ({ primaryDiagnoses, associatedDiagnoses, onPrimaryDiagnosesChange, onAssociatedDiagnosesChange }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { showAlert } = useAlert();
 
   const fetchIcdSuggestions = useCallback(
     async (input: string) => {

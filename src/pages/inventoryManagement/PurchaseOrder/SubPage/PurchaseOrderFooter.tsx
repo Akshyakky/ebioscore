@@ -3,7 +3,7 @@ import { Control, useFieldArray, UseFormSetValue, UseFormWatch } from "react-hoo
 import { Box, FormControl, Grid, Paper, Stack, Typography } from "@mui/material";
 import { Check, History } from "@mui/icons-material";
 import CustomButton from "@/components/Button/CustomButton";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import PurchaseOrderImportDialog from "./PurchaseOrderImportDialog";
 import { PurchaseOrderDetailDto, PurchaseOrderFormData } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
@@ -16,6 +16,7 @@ interface PurchaseOrderFooterProps {
 
 const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({ control, setValue, watch }) => {
   const [importPODialogOpen, setImportPODialogOpen] = useState<boolean>(false);
+  const { showAlert } = useAlert();
   const { fields, update } = useFieldArray({
     control,
     name: "purchaseOrderDetails",

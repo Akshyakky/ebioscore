@@ -16,7 +16,7 @@ import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { BPayTypeDto } from "@/interfaces/Billing/BPayTypeDto";
 import PaymentTypesForm from "../Form/PaymentTypesForm";
 import { usePaymentTypes } from "../hooks/usePaymentTypes";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 
 const statusOptions = [
@@ -51,6 +51,7 @@ const PaymentTypesPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
+  const { showAlert } = useAlert();
 
   const { paymentTypesList, isLoading, error, fetchPaymentTypesList, deletePaymentType } = usePaymentTypes();
 
@@ -63,10 +64,6 @@ const PaymentTypesPage: React.FC = () => {
     paymentMode: "",
     bankCharge: "",
   });
-
-  useEffect(() => {
-    document.title = "Payment Types Management";
-  }, []);
 
   const handleRefresh = useCallback(() => {
     fetchPaymentTypesList();

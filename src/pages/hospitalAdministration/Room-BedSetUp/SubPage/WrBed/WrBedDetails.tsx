@@ -13,7 +13,7 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { roomListService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import CustomButton from "@/components/Button/CustomButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomGrid from "@/components/CustomGrid/CustomGrid";
@@ -36,6 +36,7 @@ const WrBedDetails: React.FC<WrBedDetailsProps> = ({ beds, roomGroups, roomLists
   const dropdownValues = useDropdownValues(["bedCategory", "service"]);
   const user = useAppSelector((state) => state.auth);
   const [filteredRoomLists, setFilteredRoomLists] = useState<RoomListDto[]>([]);
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     if (user) {

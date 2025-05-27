@@ -2,7 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import { ProductListService } from "@/services/InventoryManagementService/ProductListService/ProductListService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
 
 const productService = new ProductListService();
@@ -69,7 +69,7 @@ export const useNextProductCodeQuery = () => {
 export const useProductMutation = () => {
   const queryClient = useQueryClient();
   const { setLoading } = useLoading();
-
+  const { showAlert } = useAlert();
   return useMutation({
     mutationFn: async (product: ProductListDto) => {
       const response = await productService.save(product);
@@ -118,7 +118,7 @@ export const useProductMutation = () => {
 export const useDeleteProductMutation = () => {
   const queryClient = useQueryClient();
   const { setLoading } = useLoading();
-
+  const { showAlert } = useAlert();
   return useMutation({
     mutationFn: async ({ id, softDelete }: { id: number; softDelete: boolean }) => {
       const response = await productService.delete(id, softDelete);
@@ -154,7 +154,7 @@ export const useDeleteProductMutation = () => {
 export const useBulkDeleteProductsMutation = () => {
   const queryClient = useQueryClient();
   const { setLoading } = useLoading();
-
+  const { showAlert } = useAlert();
   return useMutation({
     mutationFn: async ({ ids, softDelete }: { ids: number[]; softDelete: boolean }) => {
       const response = await productService.bulkDelete(ids, softDelete);

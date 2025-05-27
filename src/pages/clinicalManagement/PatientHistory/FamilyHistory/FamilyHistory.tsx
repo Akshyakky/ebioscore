@@ -2,7 +2,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { OPIPHistFHDto } from "@/interfaces/ClinicalManagement/OPIPHistFHDto";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import FormField from "@/components/FormField/FormField";
@@ -45,6 +45,7 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
 
   const [formState, setFormState] = useState<OPIPHistFHDto>(initialFormState);
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
 
   const resetForm = useCallback(() => {
     setFormState({

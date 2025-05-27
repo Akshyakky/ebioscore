@@ -12,7 +12,7 @@ import CustomButton from "@/components/Button/CustomButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { formatDate } from "@/utils/Common/dateUtils";
 import FormField from "@/components/FormField/FormField";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 
 interface WaitingPatientSearchProps {
@@ -32,6 +32,7 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
   const [physicians, setPhysicians] = useState<Array<{ value: string; label: string }>>([]);
   const [originalSearchResults, setOriginalSearchResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { showAlert } = useAlert();
 
   // Use refs to track dialog state and prevent unnecessary API calls
   const isDialogOpen = useRef(false);

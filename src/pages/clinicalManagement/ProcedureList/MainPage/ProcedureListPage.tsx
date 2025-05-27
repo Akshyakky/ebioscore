@@ -14,8 +14,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { OTProcedureListDto } from "@/interfaces/ClinicalManagement/ProcedureListDto";
-
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import ProcedureForm from "../Form/ProcedureListForm";
 import { useProcedureList } from "../hooks/useProcedureListForm";
@@ -31,6 +30,7 @@ const procedureTypeOptions = [
 ];
 
 const ProcedureListPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedProcedure, setSelectedProcedure] = useState<OTProcedureListDto | null>(null);
@@ -50,10 +50,6 @@ const ProcedureListPage: React.FC = () => {
     procType: "",
     transfer: "",
   });
-
-  useEffect(() => {
-    document.title = "Procedure List Management";
-  }, []);
 
   const handleRefresh = useCallback(() => {
     fetchProcedureList();

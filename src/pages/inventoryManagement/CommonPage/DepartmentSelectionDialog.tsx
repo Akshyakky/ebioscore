@@ -6,7 +6,7 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import FormField from "@/components/FormField/FormField";
 import CustomButton from "@/components/Button/CustomButton";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useNavigate } from "react-router-dom";
 import { notifySuccess } from "@/utils/Common/toastManager";
 
@@ -27,6 +27,7 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
   dialogTitle = "Select Department",
   requireSelection = true,
 }) => {
+  const { showAlert } = useAlert();
   const [selectedDeptId, setSelectedDeptId] = useState<number>(initialDeptId);
   const [deptName, setDeptName] = useState<string>("");
   const dropdownValues = useDropdownValues(["department"]);

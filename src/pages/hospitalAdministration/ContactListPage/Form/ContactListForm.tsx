@@ -10,13 +10,12 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import CustomSwitch from "@/components/Checkbox/ColorSwitch";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useContactList } from "../hooks/useContactListForm";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
-import { D } from "node_modules/@tanstack/react-query-devtools/build/modern/ReactQueryDevtools-Cn7cKi7o";
 
 interface ContactListFormProps {
   open: boolean;
@@ -66,7 +65,8 @@ type ContactFormData = z.infer<typeof schema>;
 
 const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { saveContact, generateContactCode, getContactById } = useContactList();
+  const { showAlert } = useAlert();
+  const { getContactById, saveContact, generateContactCode } = useContactList();
   const serverDate = useServerDate();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);

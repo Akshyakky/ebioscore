@@ -4,7 +4,7 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import FormField from "@/components/FormField/FormField";
 import { AllergyDto, OPIPHistAllergyDetailDto } from "@/interfaces/ClinicalManagement/AllergyDto";
 import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { Box, Grid, Paper, Typography } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -22,6 +22,7 @@ interface AllergyHistoryProps {
 }
 
 const AllergyHistory: React.FC<AllergyHistoryProps> = ({ pChartID, opipNo, opipCaseNo, historyList, onHistoryChange }) => {
+  const { showAlert } = useAlert();
   const initialAllergyState: AllergyDto = useMemo(
     () => ({
       opIPHistAllergyMastDto: {

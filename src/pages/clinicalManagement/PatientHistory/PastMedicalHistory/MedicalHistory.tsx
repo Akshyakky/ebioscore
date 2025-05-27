@@ -4,7 +4,7 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import FormField from "@/components/FormField/FormField";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { OPIPHistPMHDto } from "@/interfaces/ClinicalManagement/OPIPHistPMHDto";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { Box, Grid, IconButton, Paper, Tooltip, Typography } from "@mui/material";
 import React, { useCallback, useMemo, useState } from "react";
 import Add from "@mui/icons-material/Add";
@@ -42,6 +42,7 @@ export const MedicalHistory: React.FC<PastMedicalHistoryProps> = ({ pChartID, op
 
   const [formState, setFormState] = useState<OPIPHistPMHDto>(initialFormState);
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
 
   const resetForm = useCallback(() => {
     setFormState({

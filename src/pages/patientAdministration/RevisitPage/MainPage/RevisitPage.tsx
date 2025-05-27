@@ -8,17 +8,13 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { OPVisitDto, DateFilterType } from "@/interfaces/PatientAdministration/revisitFormData";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
-
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
-import useDropdownChange from "@/hooks/useDropdownChange";
 import { ContactMastService } from "@/services/NotGenericPaternServices/ContactMastService";
-import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
 import { RevisitService } from "@/services/PatientAdministrationServices/RevisitService/RevisitService";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
-
 import { useAppSelector } from "@/store/hooks";
 import { PatientSearchContext } from "@/context/PatientSearchContext";
 import { useContext } from "react";
@@ -74,6 +70,7 @@ const RevisitPage: React.FC = () => {
   const { performSearch } = useContext(PatientSearchContext);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const { visitList, isLoading, error, fetchVisitList, deleteVisit, cancelVisit, saveVisit } = useRevisit();
+  const { showAlert } = useAlert();
 
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);

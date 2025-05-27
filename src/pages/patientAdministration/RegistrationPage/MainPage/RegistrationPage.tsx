@@ -9,7 +9,7 @@ import { PatientSearchContext } from "@/context/PatientSearchContext";
 import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import { notifyError, notifySuccess, notifyWarning } from "@/utils/Common/toastManager";
 import { PatientService } from "@/services/PatientAdministrationServices/RegistrationService/PatientService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import PatientSearch from "../../CommonPage/AdvanceSearch/PatientSearch";
@@ -30,6 +30,7 @@ const RegistrationPage: React.FC = () => {
   const serverDate = useServerDate();
   const { fetchLatestUHID } = useRegistrationUtils();
   const { performSearch } = useContext(PatientSearchContext);
+  const { showAlert } = useAlert();
 
   const initializeFormData = useCallback(
     (): PatientRegistrationDto => ({

@@ -11,7 +11,7 @@ import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifi
 import { LCompTemplateDto, LComponentDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { appModifiedListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 import CustomButton from "@/components/Button/CustomButton";
 import FormField from "@/components/FormField/FormField";
@@ -23,10 +23,11 @@ interface TemplateGroup extends AppModifyFieldDto {
 interface LCompTemplateDetailsProps {
   onUpdateTemplate: (templateData: LCompTemplateDto) => void;
   selectedComponent: LComponentDto;
-  indexID: number; // <-- ADD THIS
+  indexID: number;
 }
 
 const CompTemplateDetails: React.FC<LCompTemplateDetailsProps> = ({ onUpdateTemplate, selectedComponent, indexID }) => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState("");
   const [editorValue, setEditorValue] = useState("");
   const [selectedTemplateGroupId, setSelectedTemplateGroupId] = useState<number | null>(null);

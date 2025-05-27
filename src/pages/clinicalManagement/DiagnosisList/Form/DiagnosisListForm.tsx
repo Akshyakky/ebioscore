@@ -9,7 +9,7 @@ import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useDiagnosisList } from "../hooks/useDiagnosisList";
 import { IcdDetailDto } from "@/interfaces/ClinicalManagement/IcdDetailDto";
 
@@ -44,6 +44,8 @@ const DiagnosisListForm: React.FC<DiagnosisListFormProps> = ({ open, onClose, in
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const isAddMode = !initialData;
+
+  const { showSuccessAlert, showErrorAlert, showWarningAlert } = useAlert();
 
   const defaultValues: DiagnosisListFormData = {
     icddId: 0,
@@ -81,7 +83,7 @@ const DiagnosisListForm: React.FC<DiagnosisListFormProps> = ({ open, onClose, in
       if (nextCode) {
         setValue("icddCode", nextCode, { shouldValidate: true, shouldDirty: true });
       } else {
-        showAlert("Warning", "Failed to generate diagnosis code", "warning");
+        showWarningAlert("Warning", "Failed to generate diagnosis code");
       }
     } catch (error) {
       console.error("Error generating diagnosis code:", error);
@@ -124,7 +126,7 @@ const DiagnosisListForm: React.FC<DiagnosisListFormProps> = ({ open, onClose, in
       const response = await saveDiagnosis(diagnosisData);
 
       if (response.success) {
-        showAlert("Success", isAddMode ? "Diagnosis created successfully" : "Diagnosis updated successfully", "success");
+        showSuccessAlert("Success", isAddMode ? "Diagnosis created successfully" : "Diagnosis updated successfully");
         onClose(true);
       } else {
         throw new Error(response.errorMessage || "Failed to save diagnosis");
@@ -133,7 +135,7 @@ const DiagnosisListForm: React.FC<DiagnosisListFormProps> = ({ open, onClose, in
       console.error("Error saving diagnosis:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save diagnosis";
       setFormError(errorMessage);
-      showAlert("Error", errorMessage, "error");
+      showErrorAlert("Error", errorMessage);
     } finally {
       setIsSaving(false);
       setLoading(false);

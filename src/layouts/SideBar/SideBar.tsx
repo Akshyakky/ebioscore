@@ -175,6 +175,8 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
   );
 
   // Keyboard navigation support
+  {
+    /*
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -185,6 +187,8 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleDrawerClose]);
+    */
+  }
 
   return (
     <Box display="flex">

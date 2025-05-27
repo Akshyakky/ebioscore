@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
 
 export const useInsuranceManagement = () => {
@@ -11,6 +11,7 @@ export const useInsuranceManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
 
   // Helper function to safely convert date values
   const safeDateConversion = (dateValue: any): Date => {

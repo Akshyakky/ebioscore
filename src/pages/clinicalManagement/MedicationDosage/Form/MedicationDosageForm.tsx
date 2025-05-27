@@ -10,7 +10,7 @@ import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useMedicationDosage } from "../hooks/useMedicationDosage";
 
 interface MedicationDosageFormProps {
@@ -37,6 +37,7 @@ type MedicationDosageFormData = z.infer<typeof schema>;
 const MedicationDosageForm: React.FC<MedicationDosageFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
   const { getNextCode, saveMedicationDosage } = useMedicationDosage();
+  const { showAlert } = useAlert();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);

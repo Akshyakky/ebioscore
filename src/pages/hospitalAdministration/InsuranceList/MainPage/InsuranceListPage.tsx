@@ -14,7 +14,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { InsuranceListDto } from "@/interfaces/HospitalAdministration/InsuranceListDto";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import InsuranceListForm from "../Form/InsuranceListForm";
 import { useInsuranceList } from "../hooks/useInsuranceList";
@@ -30,6 +30,7 @@ const transferOptions = [
 ];
 
 const InsuranceListPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedInsurance, setSelectedInsurance] = useState<InsuranceListDto | null>(null);
@@ -49,10 +50,6 @@ const InsuranceListPage: React.FC = () => {
     transfer: "",
     category: "",
   });
-
-  useEffect(() => {
-    document.title = "Insurance Management";
-  }, []);
 
   const handleRefresh = useCallback(() => {
     fetchInsuranceList();

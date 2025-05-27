@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Typography, Box, useTheme, Stack } from "@mui/material";
+import React from "react";
+import { Typography, Box, useTheme } from "@mui/material";
 import { CheckCircle as SuccessIcon, Error as ErrorIcon, Warning as WarningIcon, Info as InfoIcon, Print as PrintIcon } from "@mui/icons-material";
 import GenericDialog from "../GenericDialog/GenericDialog";
 import CustomButton from "../Button/CustomButton";
@@ -7,10 +7,11 @@ import CustomButton from "../Button/CustomButton";
 export type AlertType = "success" | "error" | "warning" | "info" | "question";
 
 interface CustomAlertProps {
+  open: boolean;
+  onClose: () => void;
   title?: string;
   message: string;
   type: AlertType;
-  show: boolean;
   showConfirmButton?: boolean;
   showCancelButton?: boolean;
   showPrintButton?: boolean;
@@ -22,14 +23,17 @@ interface CustomAlertProps {
   onConfirm?: () => void;
   onCancel?: () => void;
   onPrint?: () => void;
-  onClose?: () => void;
+  maxWidth?: "xs" | "sm" | "md" | "lg" | "xl";
+  disableBackdropClick?: boolean;
+  disableEscapeKeyDown?: boolean;
 }
 
 const CustomAlert: React.FC<CustomAlertProps> = ({
-  title = "",
+  open,
+  onClose,
+  title,
   message,
   type,
-  show,
   showConfirmButton = true,
   showCancelButton = false,
   showPrintButton = false,
@@ -41,10 +45,11 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
   onConfirm,
   onCancel,
   onPrint,
-  onClose,
+  maxWidth = "sm",
+  disableBackdropClick = false,
+  disableEscapeKeyDown = false,
 }) => {
   const theme = useTheme();
-  const [open, setOpen] = useState(false);
 
   // Icon and color configuration for different alert types
   const alertConfig = {
@@ -77,38 +82,28 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
 
   const { icon: Icon, color, buttonColor } = alertConfig[type];
 
-  useEffect(() => {
-    setOpen(show);
-  }, [show]);
-
-  const handleClose = () => {
-    setOpen(false);
-    if (onClose) {
-      onClose();
-    }
-  };
-
   const handleConfirm = () => {
-    setOpen(false);
     if (onConfirm) {
       onConfirm();
     }
+    onClose();
   };
 
   const handleCancel = () => {
-    setOpen(false);
     if (onCancel) {
       onCancel();
     }
+    onClose();
   };
 
   const handlePrint = () => {
     if (onPrint) {
       onPrint();
     }
+    // Don't close dialog after print
   };
 
-  // Render action buttons using CustomButton
+  // Render action buttons
   const renderActions = () => {
     const buttons = [];
 
@@ -126,23 +121,19 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
       );
     }
 
-    return buttons.length > 0 ? (
-      <Stack direction="row" spacing={1} justifyContent="flex-end">
-        {buttons}
-      </Stack>
-    ) : null;
+    return buttons;
   };
 
   return (
     <GenericDialog
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       title={title || getDefaultTitle(type)}
-      maxWidth="sm"
-      fullWidth={true}
+      maxWidth={maxWidth}
+      fullWidth
       showCloseButton={showCloseButton}
-      disableBackdropClick={false}
-      disableEscapeKeyDown={false}
+      disableBackdropClick={disableBackdropClick}
+      disableEscapeKeyDown={disableEscapeKeyDown}
       actions={renderActions()}
     >
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, py: 2 }}>

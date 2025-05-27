@@ -5,7 +5,6 @@ import FormField from "../../../../components/FormField/FormField";
 import CustomGrid, { Column } from "../../../../components/CustomGrid/CustomGrid";
 import CustomButton from "../../../../components/Button/CustomButton";
 import { OPIPHistPSHDto } from "../../../../interfaces/ClinicalManagement/OPIPHistPSHDto";
-import { showAlert } from "../../../../utils/Common/showAlert";
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import SurgeryIcon from "@mui/icons-material/LocalHospital";
@@ -13,6 +12,7 @@ import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import HealingIcon from "@mui/icons-material/Healing";
 import ClearIcon from "@mui/icons-material/Clear";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { useAlert } from "@/providers/AlertProvider";
 import { pshService } from "@/services/ClinicalManagementServices/clinicalManagementService";
 
 interface SurgicalHistoryProps {
@@ -42,6 +42,7 @@ export const SurgicalHistory: React.FC<SurgicalHistoryProps> = ({ pChartID, opip
 
   const [formState, setFormState] = useState<OPIPHistPSHDto>(initialFormState);
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
 
   const resetForm = useCallback(() => {
     setFormState({

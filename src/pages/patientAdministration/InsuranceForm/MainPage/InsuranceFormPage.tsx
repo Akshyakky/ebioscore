@@ -8,7 +8,7 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { OPVisitDto, DateFilterType } from "@/interfaces/PatientAdministration/revisitFormData";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
 
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
@@ -70,8 +70,8 @@ type RevisitFormData = z.infer<typeof schema>;
 const RevisitPage: React.FC = () => {
   // User and context information
   const userInfo = useAppSelector((state) => state.auth);
-  const compID = userInfo.compID!;
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
   const { performSearch } = useContext(PatientSearchContext);
   const { fetchPatientSuggestions } = usePatientAutocomplete();
   const { visitList, isLoading, error, fetchVisitList, deleteVisit, cancelVisit, saveVisit } = useRevisit();
@@ -231,13 +231,6 @@ const RevisitPage: React.FC = () => {
       </Grid>
     </Paper>
   );
-
-  // Initial load
-  // useEffect(() => {
-  //   document.title = "Patient Revisit Management";
-  //   loadDropdownValues();
-  //   fetchVisitList(DateFilterType.Today, null, null);
-  // }, [loadDropdownValues, fetchVisitList]);
 
   // Handle patient selection when selectedPatient changes
   useEffect(() => {

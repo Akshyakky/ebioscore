@@ -5,7 +5,7 @@ import { Search } from "@mui/icons-material";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import CustomAccordion from "@/components/Accordion/CustomAccordion";
@@ -20,6 +20,7 @@ const WardBedTransferPage: React.FC = () => {
   const [admissionHistory, setAdmissionHistory] = useState<AdmissionHistoryDto[]>([]);
   const transferDetailsRef = useRef<{ focusUhidInput: () => void }>(null);
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
 
   // Event Handlers
   const handleAdvancedSearch = useCallback(() => {

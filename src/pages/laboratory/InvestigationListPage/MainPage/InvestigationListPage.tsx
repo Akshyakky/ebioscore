@@ -9,7 +9,7 @@ import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { investigationDto, LCompMultipleDto, LCompAgeRangeDto, LInvMastDto, LCompTemplateDto, LComponentDto, InvestigationFormErrors } from "@/interfaces/Laboratory/LInvMastDto";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { notifyWarning } from "@/utils/Common/toastManager";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
@@ -24,8 +24,10 @@ import ComponentDetailsSection from "../Forms/InvestigatuionCompDetailSection";
 import PrintPreferences from "../Forms/InvestigationPrintPreferences";
 import LComponentDetails from "../SubPage/InvComponentsDetails";
 
-const InvestigationListPage: React.FC = () => {
-  const { setLoading } = useLoading();
+interface Props {}
+
+const InvestigationListPage: React.FC<Props> = () => {
+  const { showAlert } = useAlert();
   const dropdownValues = useDropdownValues(["entryType"]);
   const { saveInvestigation, getInvestigationById, error: hookError } = useInvestigationList();
 
@@ -87,7 +89,6 @@ const InvestigationListPage: React.FC = () => {
     },
   ];
 
-  // Handle investigation selection
   const handleSelect = async (selectedInvestigation: investigationDto) => {
     try {
       if (!selectedInvestigation.invID) {

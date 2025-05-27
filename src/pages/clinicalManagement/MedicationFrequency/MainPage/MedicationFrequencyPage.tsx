@@ -14,8 +14,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { MedicationFrequencyDto } from "@/interfaces/ClinicalManagement/MedicationFrequencyDto";
-
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import MedicationFrequencyForm from "../Form/MedicationFreequencyForm";
 import { useMedicationFrequency } from "../hooks/useMedicationFreequencyForm";
@@ -26,6 +25,7 @@ const statusOptions = [
 ];
 
 const MedicationFrequencyPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedFrequency, setSelectedFrequency] = useState<MedicationFrequencyDto | null>(null);
@@ -47,10 +47,6 @@ const MedicationFrequencyPage: React.FC = () => {
     modify: "",
     transfer: "",
   });
-
-  useEffect(() => {
-    document.title = "Medication Frequency Management";
-  }, []);
 
   const handleRefresh = useCallback(() => {
     fetchMedicationFrequencyList();

@@ -5,7 +5,7 @@ import { Delete as DeleteIcon } from "@mui/icons-material";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { PurchaseOrderDetailDto, purchaseOrderSaveDto } from "@/interfaces/InventoryManagement/PurchaseOrderDto";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
@@ -25,6 +25,7 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
   const dropdownValues = useDropdownValues(["taxType"]);
   const [isLoading, setLoading] = useState(false);
   const [gridKey, setGridKey] = useState(0);
+  const { showAlert } = useAlert();
 
   // Use useWatch instead of accessing control._formValues directly
   const selectedProduct = useWatch({

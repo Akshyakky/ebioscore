@@ -9,7 +9,7 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import dischargeService from "@/services/PatientAdministrationServices/DischargeService/DischargeService";
 import FormSectionWrapper from "@/components/FormField/FormSectionWrapper";
 import FormField from "@/components/FormField/FormField";
@@ -58,6 +58,7 @@ const DischargeDetails: React.FC<DischargeDetailsProps> = ({ selectedAdmission, 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { setLoading } = useLoading();
   const { fetchPatientSuggestions } = usePatientAutocomplete();
+  const { showAlert } = useAlert();
 
   const dropdownValues = useDropdownValues(["dischargeStatus", "dischargeSituation", "deliveryType", "attendingPhy", "speciality"]);
 

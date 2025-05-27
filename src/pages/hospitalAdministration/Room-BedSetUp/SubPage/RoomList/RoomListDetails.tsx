@@ -8,7 +8,7 @@ import { useAppSelector } from "@/store/hooks";
 import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import useDropdownChange from "@/hooks/useDropdownChange";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { roomGroupService, roomListService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import CustomButton from "@/components/Button/CustomButton";
 import CustomGrid from "@/components/CustomGrid/CustomGrid";
@@ -31,6 +31,7 @@ const RoomListDetails: React.FC<RoomListDetailsProps> = ({ roomLists, updatedRoo
   const { handleDropdownChange } = useDropdownChange<RoomListDto>(setFormData);
   const dropdownValues = useDropdownValues(["floor", "unit", "roomGroup"]);
   const user = useAppSelector((state) => state.auth);
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     setUpdatedRoomLists(roomLists);

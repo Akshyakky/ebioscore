@@ -3,7 +3,7 @@ import Close from "@mui/icons-material/Close";
 import Save from "@mui/icons-material/Save";
 import RepeatIcon from "@mui/icons-material/Repeat";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { formatDate } from "@/utils/Common/dateUtils";
 import FormField from "@/components/FormField/FormField";
 import { Checkbox, FormControlLabel, FormGroup, Typography } from "@mui/material";
@@ -27,6 +27,7 @@ export interface FrequencyData {
 
 const BreakFrequencyDetails: React.FC<BreakFrequencyDetailsProps> = ({ open, onClose, endDateFromBreakDetails, onSave, initialFrequencyData }) => {
   const serverDate = useServerDate();
+  const { showAlert } = useAlert();
   const [frequencyData, setFrequencyData] = useState<FrequencyData>(initialFrequencyData);
 
   useEffect(() => {

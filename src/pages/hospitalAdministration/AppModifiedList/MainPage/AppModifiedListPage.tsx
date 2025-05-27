@@ -14,10 +14,9 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { AppModifiedMast, AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { useAppModifiedList } from "../hooks/useAppModifiedList";
-
 import AppModifiedMastSearch from "../SubPage/AppModifiedListSearch";
 import AppModifiedMasterForm from "../Form/AppModifiedMastForm";
 import AppModifiedFieldForm from "../Form/AppModifiedListForm";
@@ -43,6 +42,7 @@ const statusOptions = [
 ];
 
 const AppModifiedListPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [currentTab, setCurrentTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -66,7 +66,6 @@ const AppModifiedListPage: React.FC = () => {
   });
 
   useEffect(() => {
-    document.title = "App Modified List Management";
     fetchMasterList();
   }, [fetchMasterList]);
 
