@@ -41,7 +41,7 @@ const IndentProductGrid: React.FC<Props> = ({ gridData, handleCellValueChange, h
       value={type === "package" ? item.ppkgID || "" : item.supplierID || ""}
       onChange={(e) => {
         const value = e.target.value;
-        const selectedOption = options.find((opt) => opt.value === value);
+        const selectedOption = options.find((opt) => String(opt.value) === String(value));
 
         if (type === "package") {
           handleCellValueChange(rowIndex, "ppkgID", selectedOption?.value || "");

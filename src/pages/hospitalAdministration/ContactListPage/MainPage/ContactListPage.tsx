@@ -24,14 +24,6 @@ const statusOptions = [
   { value: "inactive", label: "Inactive" },
 ];
 
-const categoryOptions = [
-  { value: "PHY", label: "Physician" },
-  { value: "SUP", label: "Supplier" },
-  { value: "MAN", label: "Manufacturer" },
-  { value: "EMP", label: "Employee" },
-  { value: "PAT", label: "Patient" },
-];
-
 const ContactListPage: React.FC = () => {
   const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");

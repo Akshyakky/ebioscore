@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Box, Grid, Typography, Divider, Card, CardContent, Alert, SelectChangeEvent } from "@mui/material";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { ContactListData, ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel, Refresh } from "@mui/icons-material";
+import { Save, Cancel } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import CustomSwitch from "@/components/Checkbox/ColorSwitch";
@@ -13,8 +13,6 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import useDropdownChange from "@/hooks/useDropdownChange";
-import useFieldsList from "@/components/FieldsList/UseFieldsList";
 import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useContactList } from "../hooks/useContactListForm";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
@@ -52,6 +50,15 @@ const schema = z.object({
   rActiveYN: z.string(),
   transferYN: z.string(),
   rNotes: z.string().optional(),
+  cAddPhone1: z.string().optional(),
+  cAddCity: z.string().optional(),
+  cAddState: z.string().optional(),
+  cAddEmail: z.string().optional(),
+  accCode: z.string().optional(),
+  accPayCode: z.string().optional(),
+  conEmpStatus: z.string().optional(),
+  maritalStatus: z.string().optional(),
+  deptID: z.number().optional(),
 });
 
 type ContactFormData = z.infer<typeof schema>;
@@ -63,82 +70,15 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
   const serverDate = useServerDate();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [, setIsGeneratingCode] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [dialogCategory, setDialogCategory] = useState<string>("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [contactDetails, setContactDetails] = useState<ContactListData | null>(null);
   const isAddMode = !initialData;
-
-  const [contactList, setContactList] = useState<ContactListData>({
-    contactMastDto: {
-      conID: 0,
-      conCode: "",
-      conTitle: "",
-      conFName: "",
-      conLName: "",
-      conMName: "",
-      conDob: serverDate,
-      conGender: "",
-      conSSNID: "",
-      conBldGrp: "",
-      conCat: "",
-      consValue: "",
-      conEmpYN: "N",
-      rActiveYN: "Y",
-      rNotes: "",
-      conEmpStatus: "",
-      allergicToAllergence: "",
-      allergicToMedicine: "",
-      aPHYRMID: 0,
-      aPhyRoomName: "",
-      deptID: 0,
-      deptName: "",
-      designation: "",
-      emergenContactName: "",
-      iPP: 0,
-      oPP: 0,
-      isAuthorizedUserYN: "N",
-      isContractYN: "N",
-      isSuperSpecialtyYN: "N",
-      isEmployeeYN: "N",
-      isRefferalYN: "N",
-      isAppointmentYN: "N",
-      isUserRequiredYN: "N",
-      maritalStatus: "",
-      tINNo: "",
-      accCode: "",
-      accPayCode: "",
-      gESYCode: "",
-      digSignPath: "",
-      stampPath: "",
-      payPolicy: 0,
-      transferYN: "N",
-    },
-    contactAddressDto: {
-      cAddID: 0,
-      conID: 0,
-      conCode: "",
-      cAddType: "",
-      cAddMail: "N",
-      cAddPostCode: "",
-      cAddPSSID: "",
-      cAddCity: "",
-      cAddCountry: "",
-      cAddEmail: "",
-      cAddPhone1: "",
-      cAddPhone2: "",
-      cAddPhone3: "",
-      cAddState: "",
-      cAddStreet: "",
-      cAddStreet1: "",
-      transferYN: "N",
-      rActiveYN: "Y",
-      rNotes: "",
-    },
-    contactDetailsDto: [],
-  });
 
   const [switchStates, setSwitchStates] = useState<SwitchStates>({
     isEmployee: false,
@@ -165,16 +105,14 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
     "employeeRoom",
   ]);
 
-  const { fieldsList, defaultFields } = useFieldsList(["city", "state", "nationality"]);
-  const { handleDropdownChange } = useDropdownChange<ContactListData>(setContactList);
-
   const {
     control,
     handleSubmit,
     reset,
     setValue,
     watch,
-    formState: { isDirty, isValid, errors },
+    getValues,
+    formState: { isDirty, isValid },
   } = useForm<ContactFormData>({
     resolver: zodResolver(schema),
     mode: "onChange",
@@ -194,273 +132,326 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
       rActiveYN: "Y",
       transferYN: "N",
       rNotes: "",
+      cAddPhone1: "",
+      cAddCity: "",
+      cAddState: "",
+      cAddEmail: "",
+      accCode: "",
+      accPayCode: "",
+      conEmpStatus: "",
+      maritalStatus: "",
+      deptID: 0,
     },
   });
 
-  const generateCode = async () => {
-    if (!isAddMode || !contactList.contactMastDto.consValue) return;
-
-    try {
-      setIsGeneratingCode(true);
-      const nextCode = await generateContactCode(contactList.contactMastDto.consValue, 5);
-      if (nextCode) {
-        setValue("conCode", nextCode, { shouldValidate: true, shouldDirty: true });
-        setContactList((prev) => ({
-          ...prev,
-          contactMastDto: { ...prev.contactMastDto, conCode: nextCode },
-          contactAddressDto: { ...prev.contactAddressDto, conCode: nextCode },
-        }));
-      } else {
-        showAlert("Warning", "Failed to generate contact code", "warning");
-      }
-    } catch (error) {
-      console.error("Error generating contact code:", error);
-    } finally {
-      setIsGeneratingCode(false);
-    }
-  };
+  const watchedCategory = watch("consValue");
+  const watchedEmployeeSwitch = switchStates.isEmployee;
 
   useEffect(() => {
-    const loadInitialData = async () => {
-      if (initialData) {
+    const loadContactDetails = async () => {
+      if (initialData && initialData.conID) {
         try {
           setLoading(true);
-          const fullContactData = await getContactById(initialData.conID);
-          if (fullContactData) {
-            setContactList(fullContactData);
-
-            // Set form values
+          const details = await getContactById(initialData.conID);
+          if (details) {
+            setContactDetails(details);
+            const contactMast = details.contactMastDto;
+            const contactAddress = details.contactAddressDto;
             reset({
-              conID: fullContactData.contactMastDto.conID,
-              conCode: fullContactData.contactMastDto.conCode,
-              conTitle: fullContactData.contactMastDto.conTitle,
-              conFName: fullContactData.contactMastDto.conFName,
-              conLName: fullContactData.contactMastDto.conLName || "",
-              conMName: fullContactData.contactMastDto.conMName || "",
-              conDob: fullContactData.contactMastDto.conDob,
-              conGender: fullContactData.contactMastDto.conGender || "",
-              conSSNID: fullContactData.contactMastDto.conSSNID || "",
-              conBldGrp: fullContactData.contactMastDto.conBldGrp || "",
-              conCat: fullContactData.contactMastDto.conCat,
-              consValue: fullContactData.contactMastDto.consValue,
-              rActiveYN: fullContactData.contactMastDto.rActiveYN,
-              transferYN: fullContactData.contactMastDto.transferYN,
-              rNotes: fullContactData.contactMastDto.rNotes || "",
+              conID: contactMast.conID,
+              conCode: contactMast.conCode,
+              conTitle: contactMast.conTitle,
+              conFName: contactMast.conFName,
+              conLName: contactMast.conLName,
+              conMName: contactMast.conMName || "",
+              conDob: new Date(contactMast.conDob),
+              conGender: contactMast.conGender,
+              conSSNID: contactMast.conSSNID || "",
+              conBldGrp: contactMast.conBldGrp || "",
+              conCat: contactMast.conCat,
+              consValue: contactMast.consValue,
+              rActiveYN: contactMast.rActiveYN,
+              transferYN: contactMast.transferYN,
+              rNotes: contactMast.rNotes || "",
+              cAddPhone1: contactAddress?.cAddPhone1 || "",
+              cAddCity: contactAddress?.cAddCity || "",
+              cAddState: contactAddress?.cAddState || "",
+              cAddEmail: contactAddress?.cAddEmail || "",
+              accCode: contactMast.accCode || "",
+              accPayCode: contactMast.accPayCode || "",
+              conEmpStatus: contactMast.conEmpStatus || "",
+              maritalStatus: contactMast.maritalStatus || "",
+              deptID: contactMast.deptID || 0,
             });
-
-            // Set switch states
             setSwitchStates({
-              isEmployee: fullContactData.contactMastDto.isEmployeeYN === "Y",
-              isReferral: fullContactData.contactMastDto.isRefferalYN === "Y",
-              isAppointment: fullContactData.contactMastDto.isAppointmentYN === "Y",
-              isSuperSpeciality: fullContactData.contactMastDto.isSuperSpecialtyYN === "Y",
-              isUserRequired: fullContactData.contactMastDto.isUserRequiredYN === "Y",
-              isAuthorisedUser: fullContactData.contactMastDto.isAuthorizedUserYN === "Y",
-              isContract: fullContactData.contactMastDto.isContractYN === "Y",
+              isEmployee: contactMast.isEmployeeYN === "Y",
+              isReferral: contactMast.isRefferalYN === "Y",
+              isAppointment: contactMast.isAppointmentYN === "Y",
+              isSuperSpeciality: contactMast.isSuperSpecialtyYN === "Y",
+              isUserRequired: contactMast.isUserRequiredYN === "Y",
+              isAuthorisedUser: contactMast.isAuthorizedUserYN === "Y",
+              isContract: contactMast.isContractYN === "Y",
             });
-
-            // Set specialities for physician
-            if (fullContactData.contactDetailsDto.length > 0) {
-              const specialties = fullContactData.contactDetailsDto.filter((detail) => detail.facName).map((detail) => detail.facID.toString());
+            if (details.contactDetailsDto && details.contactDetailsDto.length > 0) {
+              const specialties = details.contactDetailsDto.map((detail) => detail.facID.toString());
               setSelectedSpecialities(specialties);
             }
+          } else {
+            populateFormWithInitialData();
           }
         } catch (error) {
-          console.error("Error loading contact data:", error);
-          showAlert("Error", "Failed to load contact data", "error");
+          populateFormWithInitialData();
         } finally {
           setLoading(false);
         }
-      } else {
-        // Reset for new contact
-        reset({
-          conID: 0,
-          conCode: "",
-          conTitle: "",
-          conFName: "",
-          conLName: "",
-          conMName: "",
-          conDob: serverDate,
-          conGender: "",
-          conSSNID: "",
-          conBldGrp: "",
-          conCat: "",
-          consValue: "",
-          rActiveYN: "Y",
-          transferYN: "N",
-          rNotes: "",
-        });
-        setSwitchStates({
-          isEmployee: false,
-          isReferral: false,
-          isAppointment: false,
-          isSuperSpeciality: false,
-          isUserRequired: false,
-          isAuthorisedUser: false,
-          isContract: false,
-        });
-        setSelectedSpecialities([]);
       }
     };
 
-    if (open) {
-      loadInitialData();
+    const populateFormWithInitialData = () => {
+      if (initialData) {
+        reset({
+          conID: initialData.conID || 0,
+          conCode: initialData.conCode || "",
+          conTitle: initialData.conTitle || "",
+          conFName: initialData.conFName || "",
+          conLName: initialData.conLName || "",
+          conMName: initialData.conMName || "",
+          conDob: initialData.conDob ? new Date(initialData.conDob) : serverDate,
+          conGender: initialData.conGender || "",
+          conSSNID: initialData.conSSNID || "",
+          conBldGrp: initialData.conBldGrp || "",
+          conCat: initialData.conCat || "",
+          consValue: initialData.consValue || "",
+          rActiveYN: initialData.rActiveYN || "Y",
+          transferYN: initialData.transferYN || "N",
+          rNotes: initialData.rNotes || "",
+          cAddPhone1: "",
+          cAddCity: "",
+          cAddState: "",
+          cAddEmail: "",
+          accCode: initialData.accCode || "",
+          accPayCode: initialData.accPayCode || "",
+          conEmpStatus: initialData.conEmpStatus || "",
+          maritalStatus: initialData.maritalStatus || "",
+          deptID: initialData.deptID || 0,
+        });
+        setSwitchStates({
+          isEmployee: initialData.isEmployeeYN === "Y",
+          isReferral: initialData.isRefferalYN === "Y",
+          isAppointment: initialData.isAppointmentYN === "Y",
+          isSuperSpeciality: initialData.isSuperSpecialtyYN === "Y",
+          isUserRequired: initialData.isUserRequiredYN === "Y",
+          isAuthorisedUser: initialData.isAuthorizedUserYN === "Y",
+          isContract: initialData.isContractYN === "Y",
+        });
+      }
+    };
+
+    if (!isAddMode && initialData && initialData.conID) {
+      loadContactDetails();
     }
-  }, [initialData, open, reset, getContactById, setLoading, serverDate]);
+  }, [initialData?.conID, isAddMode, reset, serverDate]);
 
   const handleCategoryChange = useCallback(
-    async (event: SelectChangeEvent<unknown>) => {
-      const selectedCategory = event.target.value as string;
+    (value: any) => {
+      let selectedCategory = value;
+      if (value && typeof value === "object") {
+        if (value.value !== undefined) {
+          selectedCategory = value.value;
+        } else if (value.target && value.target.value !== undefined) {
+          selectedCategory = value.target.value;
+        }
+      }
       const selectedPhysician = selectedCategory === "PHY";
-
       setValue("consValue", selectedCategory, { shouldValidate: true, shouldDirty: true });
       setValue("conCat", selectedCategory, { shouldValidate: true, shouldDirty: true });
 
       if (selectedPhysician) {
         setValue("conTitle", "DR", { shouldValidate: true, shouldDirty: true });
       }
-
-      setContactList((prev) => ({
-        ...prev,
-        contactMastDto: {
-          ...prev.contactMastDto,
-          consValue: selectedCategory,
-          conCat: selectedCategory,
-          conTitle: selectedPhysician ? "DR" : prev.contactMastDto.conTitle,
-        },
-      }));
-
-      if (selectedCategory && isAddMode) {
-        generateCode();
-      }
-    },
-    [setValue, isAddMode]
-  );
-
-  const handleSpecialityChange = useCallback(
-    (event: SelectChangeEvent<string[]>) => {
-      const selectedValues = event.target.value as string[];
-      setSelectedSpecialities(selectedValues);
-
-      const selectedNames = selectedValues
-        .map((val) => dropdownValues.speciality?.find((opt) => opt.value === val)?.label || "")
-        .filter(Boolean)
-        .join(", ");
-
-      setContactList((prev) => ({
-        ...prev,
-        contactDetailsDto: selectedValues.map((val) => ({
-          facID: parseInt(val),
-          facName: dropdownValues.speciality?.find((opt) => opt.value === val)?.label || "",
-          transferYN: "N",
-          cdID: 0,
-          conID: prev.contactMastDto.conID,
-          conType: "",
-          rActiveYN: "Y",
-          rNotes: "",
-        })),
-        contactMastDto: {
-          ...prev.contactMastDto,
-          specialityNames: selectedNames,
-        },
-      }));
-    },
-    [dropdownValues.speciality]
-  );
-
-  const handleSwitchChange = useCallback(
-    (name: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      const checkedValue = event.target.checked ? "Y" : "N";
-      setSwitchStates((prev) => ({ ...prev, [name]: event.target.checked }));
-
-      setContactList((prev) => ({
-        ...prev,
-        contactMastDto: {
-          ...prev.contactMastDto,
-          [`${name}YN`]: checkedValue,
-        },
-      }));
-    },
-    []
-  );
-
-  const handleInputChange = useCallback(
-    (field: string, value: any) => {
-      if (field === "conCode") {
-        setValue("conCode", value, { shouldValidate: true, shouldDirty: true });
-        setContactList((prev) => ({
-          ...prev,
-          contactMastDto: { ...prev.contactMastDto, conCode: value },
-          contactAddressDto: { ...prev.contactAddressDto, conCode: value },
-        }));
-      } else if (field.startsWith("cAdd")) {
-        // Address fields
-        setContactList((prev) => ({
-          ...prev,
-          contactAddressDto: { ...prev.contactAddressDto, [field]: value },
-        }));
-      } else {
-        // Master data fields
-        setContactList((prev) => ({
-          ...prev,
-          contactMastDto: { ...prev.contactMastDto, [field]: value },
-        }));
-      }
     },
     [setValue]
   );
 
-  const onSubmit = async (data: ContactFormData) => {
-    if (viewOnly) return;
-
-    setFormError(null);
-
-    try {
-      setIsSaving(true);
-      setLoading(true);
-
-      // Validate physician-specific requirements
-      if (contactList.contactMastDto.consValue === "PHY") {
-        if (!contactList.contactMastDto.accCode) {
-          throw new Error("Account code is required for physicians");
-        }
-        if (selectedSpecialities.length === 0) {
-          throw new Error("At least one speciality is required for physicians");
-        }
-      }
-
-      const response = await saveContact(contactList);
-
-      if (response.success) {
-        showAlert("Success", isAddMode ? "Contact created successfully" : "Contact updated successfully", "success");
-        onClose(true);
-      } else {
-        throw new Error(response.errorMessage || "Failed to save contact");
-      }
-    } catch (error) {
-      console.error("Error saving contact:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to save contact";
-      setFormError(errorMessage);
-      showAlert("Error", errorMessage, "error");
-    } finally {
-      setIsSaving(false);
-      setLoading(false);
+  const handleSpecialityChange = useCallback((values: any) => {
+    let specialities = [];
+    if (Array.isArray(values)) {
+      specialities = values;
+    } else if (values && typeof values === "object" && values.target) {
+      specialities = values.target.value || [];
+    } else if (values) {
+      specialities = [values];
     }
-  };
+    setSelectedSpecialities(specialities);
+  }, []);
 
-  const handleReset = () => {
+  const handleSwitchChange = useCallback(
+    (name: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      setSwitchStates((prev) => ({ ...prev, [name]: event.target.checked }));
+    },
+    []
+  );
+
+  const onSubmit = useCallback(
+    async (data: ContactFormData) => {
+      if (viewOnly) return;
+      setIsSubmitted(true);
+      setFormError(null);
+      try {
+        debugger;
+        setIsSaving(true);
+        setLoading(true);
+        if (data.consValue === "PHY") {
+          if (!data.accCode) {
+            throw new Error("Account code is required for physicians");
+          }
+          if (selectedSpecialities.length === 0) {
+            throw new Error("At least one speciality is required for physicians");
+          }
+        }
+
+        const existingAddressData =
+          !isAddMode && contactDetails?.contactAddressDto
+            ? contactDetails.contactAddressDto
+            : {
+                cAddID: 0,
+                conID: data.conID,
+                conCode: data.conCode,
+                cAddType: "",
+                cAddMail: "N",
+                cAddPostCode: "",
+                cAddPSSID: "",
+                cAddCity: "",
+                cAddCountry: "",
+                cAddEmail: "",
+                cAddPhone1: "",
+                cAddPhone2: "",
+                cAddPhone3: "",
+                cAddState: "",
+                cAddStreet: "",
+                cAddStreet1: "",
+                transferYN: "N",
+                rActiveYN: "Y",
+                rNotes: "",
+              };
+
+        const contactData: ContactListData = {
+          contactMastDto: {
+            conID: data.conID,
+            conCode: data.conCode,
+            conTitle: data.conTitle,
+            conFName: data.conFName,
+            conLName: data.conLName,
+            conMName: data.conMName || "",
+            conDob: data.conDob,
+            conGender: data.conGender,
+            conSSNID: data.conSSNID || "",
+            conBldGrp: data.conBldGrp || "",
+            conCat: data.conCat,
+            consValue: data.consValue,
+            conEmpYN: "N",
+            rActiveYN: data.rActiveYN,
+            rNotes: data.rNotes || "",
+            conEmpStatus: data.conEmpStatus || "",
+            allergicToAllergence: initialData?.allergicToAllergence || "",
+            allergicToMedicine: initialData?.allergicToMedicine || "",
+            aPHYRMID: initialData?.aPHYRMID || 0,
+            aPhyRoomName: initialData?.aPhyRoomName || "",
+            deptID: data.deptID || 0,
+            deptName: initialData?.deptName || "",
+            designation: initialData?.designation || "",
+            emergenContactName: initialData?.emergenContactName || "",
+            iPP: initialData?.iPP || 0,
+            oPP: initialData?.oPP || 0,
+            isAuthorizedUserYN: switchStates.isAuthorisedUser ? "Y" : "N",
+            isContractYN: switchStates.isContract ? "Y" : "N",
+            isSuperSpecialtyYN: switchStates.isSuperSpeciality ? "Y" : "N",
+            isEmployeeYN: switchStates.isEmployee ? "Y" : "N",
+            isRefferalYN: switchStates.isReferral ? "Y" : "N",
+            isAppointmentYN: switchStates.isAppointment ? "Y" : "N",
+            isUserRequiredYN: switchStates.isUserRequired ? "Y" : "N",
+            maritalStatus: data.maritalStatus || "",
+            tINNo: initialData?.tINNo || "",
+            accCode: data.accCode || "",
+            accPayCode: data.accPayCode || "",
+            gESYCode: initialData?.gESYCode || "",
+            digSignPath: initialData?.digSignPath || "",
+            stampPath: initialData?.stampPath || "",
+            payPolicy: initialData?.payPolicy || 0,
+            transferYN: data.transferYN,
+          },
+          contactAddressDto: {
+            ...existingAddressData,
+            conID: data.conID,
+            conCode: data.conCode,
+            cAddCity: data.cAddCity || "",
+            cAddEmail: data.cAddEmail || "",
+            cAddPhone1: data.cAddPhone1 || "",
+            cAddState: data.cAddState || "",
+          },
+          contactDetailsDto: selectedSpecialities.map((val) => {
+            const existingDetail = contactDetails?.contactDetailsDto?.find((d) => d.facID.toString() === val);
+            return {
+              facID: parseInt(val),
+              facName: dropdownValues.speciality?.find((opt) => opt.value === val)?.label || "",
+              transferYN: "N",
+              cdID: existingDetail?.cdID || 0,
+              conID: data.conID,
+              conType: existingDetail?.conType || "",
+              rActiveYN: "Y",
+              rNotes: "",
+            };
+          }),
+        };
+
+        const response = await saveContact(contactData);
+
+        if (response.success) {
+          showAlert("Success", isAddMode ? "Contact created successfully" : "Contact updated successfully", "success");
+          onClose(true);
+        } else {
+          throw new Error(response.errorMessage || "Failed to save contact");
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to save contact";
+        setFormError(errorMessage);
+        showAlert("Error", errorMessage, "error");
+      } finally {
+        setIsSaving(false);
+        setLoading(false);
+      }
+    },
+    [viewOnly, selectedSpecialities, switchStates, dropdownValues.speciality, saveContact, isAddMode, setLoading, onClose, initialData, contactDetails]
+  );
+
+  const handleReset = useCallback(() => {
     if (isDirty) {
       setShowResetConfirmation(true);
     } else {
       performReset();
     }
-  };
+  }, [isDirty]);
 
-  const performReset = () => {
+  const performReset = useCallback(() => {
     if (initialData) {
-      // Reset to initial data logic here
+      if (contactDetails) {
+        const contactMast = contactDetails.contactMastDto;
+        setSwitchStates({
+          isEmployee: contactMast.isEmployeeYN === "Y",
+          isReferral: contactMast.isRefferalYN === "Y",
+          isAppointment: contactMast.isAppointmentYN === "Y",
+          isSuperSpeciality: contactMast.isSuperSpecialtyYN === "Y",
+          isUserRequired: contactMast.isUserRequiredYN === "Y",
+          isAuthorisedUser: contactMast.isAuthorizedUserYN === "Y",
+          isContract: contactMast.isContractYN === "Y",
+        });
+
+        if (contactDetails.contactDetailsDto && contactDetails.contactDetailsDto.length > 0) {
+          const specialties = contactDetails.contactDetailsDto.map((detail) => detail.facID.toString());
+          setSelectedSpecialities(specialties);
+        }
+      }
     } else {
-      // Reset to default state
       reset();
       setSelectedSpecialities([]);
       setSwitchStates({
@@ -474,61 +465,63 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
       });
     }
     setFormError(null);
-  };
+    setIsSubmitted(false);
+  }, [initialData, reset, contactDetails]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     if (isDirty) {
       setShowCancelConfirmation(true);
     } else {
       onClose();
     }
-  };
+  }, [isDirty, onClose]);
 
-  const handleAddField = (category: string) => {
-    setDialogCategory(category);
-    setIsFieldDialogOpen(true);
-  };
+  const dialogTitle = useMemo(() => {
+    if (viewOnly) return "View Contact Details";
+    if (isAddMode) return "Create New Contact";
 
-  const dialogTitle = viewOnly
-    ? "View Contact Details"
-    : isAddMode
-    ? "Create New Contact"
-    : `Edit Contact - ${contactList.contactMastDto.conFName} ${contactList.contactMastDto.conLName}`;
+    const formValues = getValues();
+    return `Edit Contact - ${formValues.conFName} ${formValues.conLName}`;
+  }, [viewOnly, isAddMode, getValues]);
 
-  const dialogActions = viewOnly ? (
-    <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
-  ) : (
-    <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-      <SmartButton text="Cancel" onClick={handleCancel} variant="outlined" color="inherit" disabled={isSaving} />
-      <Box sx={{ display: "flex", gap: 1 }}>
-        <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
-        <SmartButton
-          text={isAddMode ? "Create Contact" : "Update Contact"}
-          onClick={handleSubmit(onSubmit)}
-          variant="contained"
-          color="primary"
-          icon={Save}
-          asynchronous={true}
-          showLoadingIndicator={true}
-          loadingText={isAddMode ? "Creating..." : "Updating..."}
-          successText={isAddMode ? "Created!" : "Updated!"}
-          disabled={isSaving || !isValid}
-        />
+  const dialogActions = useMemo(() => {
+    if (viewOnly) {
+      return <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />;
+    }
+
+    return (
+      <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+        <SmartButton text="Cancel" onClick={handleCancel} variant="outlined" color="inherit" disabled={isSaving} />
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
+          <SmartButton
+            text={isAddMode ? "Create Contact" : "Update Contact"}
+            onClick={handleSubmit(onSubmit)}
+            variant="contained"
+            color="primary"
+            icon={Save}
+            asynchronous={true}
+            showLoadingIndicator={true}
+            loadingText={isAddMode ? "Creating..." : "Updating..."}
+            successText={isAddMode ? "Created!" : "Updated!"}
+            disabled={isSaving || !isValid}
+          />
+        </Box>
       </Box>
-    </Box>
-  );
+    );
+  }, [viewOnly, onClose, handleCancel, isSaving, handleReset, isDirty, formError, handleSubmit, onSubmit, isAddMode, isValid]);
 
-  const renderSwitches = () => {
+  const renderSwitches = useMemo(() => {
     const switches = [
       { label: "Employee", name: "isEmployee" },
       { label: "Referral", name: "isReferral" },
-      ...(contactList.contactMastDto.consValue === "PHY"
+      ...(watchedCategory === "PHY"
         ? [
             { label: "Appointment", name: "isAppointment" },
             { label: "Super Speciality", name: "isSuperSpeciality" },
           ]
         : []),
-      ...(switchStates.isEmployee
+      ...(watchedEmployeeSwitch
         ? [
             { label: "User Required", name: "isUserRequired" },
             { label: "Authorised User", name: "isAuthorisedUser" },
@@ -552,7 +545,7 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
         ))}
       </Grid>
     );
-  };
+  }, [watchedCategory, watchedEmployeeSwitch, switchStates, handleSwitchChange, viewOnly]);
 
   return (
     <>
@@ -560,7 +553,7 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
         open={open}
         onClose={() => onClose()}
         title={dialogTitle}
-        maxWidth="lg"
+        maxWidth="xxl"
         fullWidth
         showCloseButton
         disableBackdropClick={!viewOnly && (isDirty || isSaving)}
@@ -580,17 +573,10 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
                 <Typography variant="body2" color="text.secondary">
                   Status:
                 </Typography>
-                <Controller
-                  name="rActiveYN"
-                  control={control}
-                  render={({ field }) => (
-                    <CustomSwitch label="Active" checked={field.value === "Y"} onChange={(e) => field.onChange(e.target.checked ? "Y" : "N")} disabled={viewOnly} size="small" />
-                  )}
-                />
+                <FormField name="rActiveYN" control={control} type="switch" label="Active" disabled={viewOnly} size="small" />
               </Box>
             </Grid>
 
-            {/* Basic Information Card */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -602,63 +588,64 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField
+                        name="consValue"
+                        control={control}
                         type="select"
                         label="Category"
-                        name="conCat"
                         options={dropdownValues.category || []}
                         onChange={handleCategoryChange}
                         disabled={viewOnly}
                         size="small"
-                        control={control}
                         fullWidth
-                      />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 3 }}>
-                      <Controller
-                        name="conCode"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                          <FormField
-                            type="text"
-                            label="Code"
-                            {...field}
-                            helperText={fieldState.error?.message}
-                            disabled={viewOnly || !isAddMode}
-                            size="small"
-                            fullWidth
-                            control={control}
-                          />
-                        )}
+                        required
+                        isSubmitted={isSubmitted}
                       />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField
-                        type="select"
-                        label="Department"
-                        name="deptID"
-                        options={dropdownValues.department || []}
-                        onChange={handleDropdownChange(["contactMastDto", "deptID"], ["contactMastDto", "deptName"], dropdownValues.department || [])}
-                        disabled={viewOnly}
+                        name="conCode"
+                        control={control}
+                        type="text"
+                        label="Code"
+                        disabled={viewOnly || !isAddMode}
                         size="small"
                         fullWidth
-                        control={control}
+                        required
+                        isSubmitted={isSubmitted}
                       />
                     </Grid>
 
-                    {contactList.contactMastDto.consValue === "PHY" && (
+                    <Grid size={{ sm: 12, md: 3 }}>
+                      <FormField
+                        name="deptID"
+                        control={control}
+                        type="select"
+                        label="Department"
+                        options={dropdownValues.department || []}
+                        onChange={(value) => {
+                          const deptValue = typeof value === "object" ? value.value : value;
+                          setValue("deptID", Number(deptValue) || 0);
+                        }}
+                        disabled={viewOnly}
+                        size="small"
+                        fullWidth
+                      />
+                    </Grid>
+
+                    {watchedCategory === "PHY" && (
                       <Grid size={{ sm: 12, md: 3 }}>
                         <FormField
+                          name="specialities"
+                          control={control}
                           type="multiselect"
                           label="Speciality"
-                          name="specialities"
                           options={dropdownValues.speciality || []}
                           onChange={handleSpecialityChange}
                           disabled={viewOnly}
                           size="small"
                           fullWidth
-                          control={control}
+                          defaultValue={selectedSpecialities}
                         />
                       </Grid>
                     )}
@@ -667,7 +654,6 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
               </Card>
             </Grid>
 
-            {/* Personal Details Card */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -678,156 +664,119 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 3 }}>
-                      <Controller
+                      <FormField
                         name="conTitle"
                         control={control}
-                        render={({ field, fieldState }) => (
-                          <FormField
-                            type="select"
-                            label="Title"
-                            {...field}
-                            options={dropdownValues.title || []}
-                            helperText={fieldState.error?.message}
-                            disabled={viewOnly || contactList.contactMastDto.consValue === "PHY"}
-                            size="small"
-                            fullWidth
-                            control={control}
-                          />
-                        )}
+                        type="select"
+                        label="Title"
+                        options={dropdownValues.title || []}
+                        disabled={viewOnly || watchedCategory === "PHY"}
+                        size="small"
+                        fullWidth
+                        required
                       />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 3 }}>
-                      <Controller
+                      <FormField
                         name="conFName"
                         control={control}
-                        render={({ field, fieldState }) => (
-                          <FormField
-                            type="text"
-                            label="First Name"
-                            {...field}
-                            onChange={(e) => {
-                              field.onChange(e.target.value.toUpperCase());
-                              handleInputChange("conFName", e.target.value.toUpperCase());
-                            }}
-                            helperText={fieldState.error?.message}
-                            disabled={viewOnly}
-                            size="small"
-                            fullWidth
-                            control={control}
-                          />
-                        )}
+                        type="text"
+                        label="First Name"
+                        onChange={(e) => {
+                          let value = "";
+                          if (typeof e === "string") {
+                            value = e.toUpperCase();
+                          } else if (e && e.target) {
+                            value = e.target.value.toUpperCase();
+                          }
+                          setValue("conFName", value, { shouldValidate: true, shouldDirty: true });
+                        }}
+                        disabled={viewOnly}
+                        size="small"
+                        fullWidth
+                        required
                       />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 3 }}>
-                      <Controller
+                      <FormField
                         name="conLName"
                         control={control}
-                        render={({ field, fieldState }) => (
-                          <FormField
-                            type="text"
-                            label="Last Name"
-                            {...field}
-                            onChange={(e) => {
-                              field.onChange(e.target.value.toUpperCase());
-                              handleInputChange("conLName", e.target.value.toUpperCase());
-                            }}
-                            helperText={fieldState.error?.message}
-                            disabled={viewOnly}
-                            size="small"
-                            fullWidth
-                            control={control}
-                          />
-                        )}
+                        type="text"
+                        label="Last Name"
+                        onChange={(e) => {
+                          let value = "";
+                          if (typeof e === "string") {
+                            value = e.toUpperCase();
+                          } else if (e && e.target) {
+                            value = e.target.value.toUpperCase();
+                          }
+                          setValue("conLName", value, { shouldValidate: true, shouldDirty: true });
+                        }}
+                        disabled={viewOnly}
+                        size="small"
+                        fullWidth
+                        required
                       />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 3 }}>
-                      <Controller
+                      <FormField
                         name="conGender"
                         control={control}
-                        render={({ field, fieldState }) => (
-                          <FormField
-                            type="select"
-                            label="Gender"
-                            {...field}
-                            options={dropdownValues.gender || []}
-                            helperText={fieldState.error?.message}
-                            disabled={viewOnly}
-                            size="small"
-                            control={control}
-                            fullWidth
-                          />
-                        )}
+                        type="select"
+                        label="Gender"
+                        options={dropdownValues.gender || []}
+                        disabled={viewOnly}
+                        size="small"
+                        fullWidth
+                        required
                       />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 3 }}>
-                      <Controller
-                        name="conDob"
-                        control={control}
-                        render={({ field, fieldState }) => (
-                          <FormField
-                            type="datepicker"
-                            label="Birth Date"
-                            {...field}
-                            helperText={fieldState.error?.message}
-                            disabled={viewOnly}
-                            control={control}
-                            size="small"
-                            fullWidth
-                          />
-                        )}
-                      />
+                      <FormField name="conDob" control={control} type="datepicker" label="Birth Date" disabled={viewOnly} size="small" fullWidth required />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField
+                        name="conBldGrp"
+                        control={control}
                         type="select"
                         label="Blood Group"
-                        name="conBldGrp"
                         options={dropdownValues.bloodGroup || []}
-                        onChange={(e) => handleInputChange("conBldGrp", e.target.value)}
                         disabled={viewOnly}
                         size="small"
-                        control={control}
                         fullWidth
                       />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField
+                        name="maritalStatus"
+                        control={control}
                         type="select"
                         label="Marital Status"
-                        name="maritalStatus"
                         options={dropdownValues.maritalStatus || []}
-                        onChange={(e) => handleInputChange("maritalStatus", e.target.value)}
                         disabled={viewOnly}
                         size="small"
                         fullWidth
-                        control={control}
                       />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 3 }}>
-                      <FormField
-                        type="text"
-                        label="ID/Passport No"
-                        name="conSSNID"
-                        onChange={(e) => handleInputChange("conSSNID", e.target.value)}
-                        disabled={viewOnly}
-                        size="small"
-                        control={control}
-                        fullWidth
-                      />
+                      <FormField name="conSSNID" control={control} type="text" label="ID/Passport No" disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 3 }}>
+                      <FormField name="conMName" control={control} type="text" label="Middle Name" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                   </Grid>
                 </CardContent>
               </Card>
             </Grid>
 
-            {/* Contact Details Card */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -838,64 +787,24 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 3 }}>
-                      <FormField
-                        type="text"
-                        label="Mobile No"
-                        name="cAddPhone1"
-                        onChange={(e) => handleInputChange("cAddPhone1", e.target.value)}
-                        disabled={viewOnly}
-                        control={control}
-                        size="small"
-                        fullWidth
-                      />
+                      <FormField name="cAddPhone1" control={control} type="text" label="Mobile No" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 3 }}>
-                      <FormField
-                        type="select"
-                        label="City"
-                        name="cAddCity"
-                        control={control}
-                        options={dropdownValues.city || []}
-                        onChange={(e) => handleInputChange("cAddCity", e.target.value)}
-                        disabled={viewOnly}
-                        size="small"
-                        fullWidth
-                      />
+                      <FormField name="cAddCity" control={control} type="select" label="City" options={dropdownValues.city || []} disabled={viewOnly} size="small" fullWidth />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 3 }}>
-                      <FormField
-                        type="select"
-                        label="State"
-                        control={control}
-                        name="cAddState"
-                        options={dropdownValues.state || []}
-                        onChange={(e) => handleInputChange("cAddState", e.target.value)}
-                        disabled={viewOnly}
-                        size="small"
-                        fullWidth
-                      />
+                      <FormField name="cAddState" control={control} type="select" label="State" options={dropdownValues.state || []} disabled={viewOnly} size="small" fullWidth />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 3 }}>
-                      <FormField
-                        type="email"
-                        label="E-Mail ID"
-                        control={control}
-                        name="cAddEmail"
-                        onChange={(e) => handleInputChange("cAddEmail", e.target.value)}
-                        disabled={viewOnly}
-                        size="small"
-                        fullWidth
-                      />
+                      <FormField name="cAddEmail" control={control} type="email" label="E-Mail ID" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                   </Grid>
                 </CardContent>
               </Card>
             </Grid>
-
-            {/* Account Details Card */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -906,39 +815,20 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField
-                        type="text"
-                        label="Account Code"
-                        control={control}
-                        name="accCode"
-                        onChange={(e) => handleInputChange("accCode", e.target.value)}
-                        disabled={viewOnly}
-                        size="small"
-                        fullWidth
-                      />
+                      <FormField name="accCode" control={control} type="text" label="Account Code" disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <FormField name="accPayCode" control={control} type="text" label="Account Pay Code" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 4 }}>
                       <FormField
-                        type="text"
-                        label="Account Pay Code"
+                        name="conEmpStatus"
                         control={control}
-                        name="accPayCode"
-                        onChange={(e) => handleInputChange("accPayCode", e.target.value)}
-                        disabled={viewOnly}
-                        size="small"
-                        fullWidth
-                      />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField
                         type="select"
                         label="Employee Status"
-                        control={control}
-                        name="conEmpStatus"
                         options={dropdownValues.employeeStatus || []}
-                        onChange={(e) => handleInputChange("conEmpStatus", e.target.value)}
                         disabled={viewOnly}
                         size="small"
                         fullWidth
@@ -949,7 +839,6 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
               </Card>
             </Grid>
 
-            {/* Settings Card */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -958,12 +847,11 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
-                  {renderSwitches()}
+                  {renderSwitches}
                 </CardContent>
               </Card>
             </Grid>
 
-            {/* Notes Card */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -974,22 +862,16 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12 }}>
-                      <Controller
+                      <FormField
                         name="rNotes"
                         control={control}
-                        render={({ field }) => (
-                          <FormField
-                            type="textarea"
-                            control={control}
-                            label="Notes"
-                            {...field}
-                            disabled={viewOnly}
-                            size="small"
-                            fullWidth
-                            rows={4}
-                            placeholder="Enter any additional information about this contact"
-                          />
-                        )}
+                        type="textarea"
+                        label="Notes"
+                        disabled={viewOnly}
+                        size="small"
+                        fullWidth
+                        rows={4}
+                        placeholder="Enter any additional information about this contact"
                       />
                     </Grid>
                   </Grid>
