@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, Box, SxProps, useTheme, useMediaQuery, Fade, Theme } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -46,8 +46,6 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const contentRef = useRef<HTMLDivElement>(null);
-  const [showScrollDown, setShowScrollDown] = useState(false);
-  const [showScrollUp, setShowScrollUp] = useState(false);
 
   const handleClose = (event: {}, reason: "backdropClick" | "escapeKeyDown") => {
     if (disableBackdropClick && reason === "backdropClick") {
@@ -55,49 +53,6 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
     }
     onClose();
   };
-
-  const checkScrollPosition = () => {
-    if (!contentRef.current) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
-    const isAtTop = scrollTop === 0;
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 5; // 5px tolerance
-
-    setShowScrollDown(!isAtBottom && scrollHeight > clientHeight);
-    setShowScrollUp(!isAtTop && scrollHeight > clientHeight);
-  };
-
-  const scrollToDirection = (direction: "up" | "down") => {
-    if (!contentRef.current) return;
-
-    const { clientHeight } = contentRef.current;
-    const scrollAmount = clientHeight * 0.8; // Scroll 80% of visible height
-
-    contentRef.current.scrollBy({
-      top: direction === "down" ? scrollAmount : -scrollAmount,
-      behavior: "smooth",
-    });
-  };
-
-  useEffect(() => {
-    const content = contentRef.current;
-    if (!content) return;
-
-    // Initial check
-    checkScrollPosition();
-
-    // Add scroll listener
-    content.addEventListener("scroll", checkScrollPosition);
-
-    // Check on resize
-    const resizeObserver = new ResizeObserver(checkScrollPosition);
-    resizeObserver.observe(content);
-
-    return () => {
-      content.removeEventListener("scroll", checkScrollPosition);
-      resizeObserver.disconnect();
-    };
-  }, [open]);
 
   return (
     <Dialog
@@ -129,23 +84,8 @@ const GenericDialog: React.FC<GenericDialogProps> = ({
         sx={{
           ...dialogContentSx,
           overflowY: "auto",
-          maxHeight: isMobile ? "calc(100vh - 56px)" : "70vh",
+          maxHeight: isMobile ? "calc(100vh - 56px)" : "100vh",
           position: "relative",
-          // Enhanced scrollbar styling that works with both themes
-          scrollbarWidth: "thin",
-          "&::-webkit-scrollbar": {
-            width: "8px",
-          },
-          "&::-webkit-scrollbar-track": {
-            backgroundColor: theme.palette.action.hover,
-          },
-          "&::-webkit-scrollbar-thumb": {
-            backgroundColor: theme.palette.action.disabled,
-            borderRadius: "4px",
-            "&:hover": {
-              backgroundColor: theme.palette.action.active,
-            },
-          },
         }}
       >
         {children}
