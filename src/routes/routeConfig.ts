@@ -48,7 +48,7 @@ const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/Purchas
 const LogModule = lazy(() => import("@/pages/common/LogViewerPage/LogModule"));
 const ProductList = lazy(() => import("@/pages/inventoryManagement/ProductList/MainPage/ProductList"));
 const ProductTransaction = lazy(() => import("@/pages/inventoryManagement/ProductTransaction/ProductTransaction"));
-const PatientRegistrationManager = lazy(() => import("@/pages/patientAdministration/Registration/MainPage/PatientRegistrationManager"));
+const PatientRegistrationManager = lazy(() => import("@/pages/patientAdministration/RegistrationPage/MainPage/PatientRegistrationManager"));
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {

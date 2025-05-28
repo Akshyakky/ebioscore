@@ -1,3 +1,4 @@
+// src/pages/patientAdministration/RegistrationPage/MainPage/PatientRegistrationManager.tsx
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
 import {
@@ -20,6 +21,8 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import PatientRegistrationForm from "../Form/PatientRegistrationForm";
+import NextOfKinManagement from "../Components/NextOfKinManagement";
+import PatientInsuranceManagement from "../Components/PatientInsuranceManagement";
 import { usePatientRegistration, PatientListData } from "../hooks/usePatientRegistration";
 import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import { useAlert } from "@/providers/AlertProvider";
@@ -54,6 +57,12 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
   const [formMode, setFormMode] = useState<"create" | "edit" | "view">("create");
   const [selectedPatientForAction, setSelectedPatientForAction] = useState<PatientListData | null>(null);
   const [gridDensity, setGridDensity] = useState<GridDensity>("medium");
+
+  // New state for Next of Kin and Insurance management
+  const [isNextOfKinOpen, setIsNextOfKinOpen] = useState<boolean>(false);
+  const [isInsuranceOpen, setIsInsuranceOpen] = useState<boolean>(false);
+  const [selectedPatientForNok, setSelectedPatientForNok] = useState<PatientListData | null>(null);
+  const [selectedPatientForInsurance, setSelectedPatientForInsurance] = useState<PatientListData | null>(null);
 
   const { showAlert } = useAlert();
   const { patientList, isLoading, error, fetchPatientList, getPatientById, savePatient, deletePatient, searchPatients } = usePatientRegistration();
@@ -205,6 +214,28 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
       setSelectedPatientForAction(null);
     }
   }, [selectedPatientForAction, deletePatient, showAlert]);
+
+  // Next of Kin management handlers
+  const handleManageNextOfKin = useCallback((patient: PatientListData) => {
+    setSelectedPatientForNok(patient);
+    setIsNextOfKinOpen(true);
+  }, []);
+
+  const handleCloseNextOfKin = useCallback(() => {
+    setIsNextOfKinOpen(false);
+    setSelectedPatientForNok(null);
+  }, []);
+
+  // Insurance management handlers
+  const handleManageInsurance = useCallback((patient: PatientListData) => {
+    setSelectedPatientForInsurance(patient);
+    setIsInsuranceOpen(true);
+  }, []);
+
+  const handleCloseInsurance = useCallback(() => {
+    setIsInsuranceOpen(false);
+    setSelectedPatientForInsurance(null);
+  }, []);
 
   // Form save handler
   const handleFormSave = useCallback(
@@ -649,6 +680,21 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
       >
         <PatientRegistrationForm ref={patientFormRef} mode={formMode} initialData={selectedPatient} onSave={handleFormSave} onClose={handleFormClose} />
       </GenericDialog>
+
+      {/* Next of Kin Management Dialog */}
+      {selectedPatientForNok && (
+        <NextOfKinManagement open={isNextOfKinOpen} onClose={handleCloseNextOfKin} pChartID={selectedPatientForNok.pChartID} patientName={selectedPatientForNok.fullName} />
+      )}
+
+      {/* Insurance Management Dialog */}
+      {selectedPatientForInsurance && (
+        <PatientInsuranceManagement
+          open={isInsuranceOpen}
+          onClose={handleCloseInsurance}
+          pChartID={selectedPatientForInsurance.pChartID}
+          patientName={selectedPatientForInsurance.fullName}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
