@@ -81,7 +81,6 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
         showAlert("Warning", "Failed to generate frequency code", "warning");
       }
     } catch (error) {
-      console.error("Error generating frequency code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -126,7 +125,6 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
         throw new Error(response.errorMessage || "Failed to save medication frequency");
       }
     } catch (error) {
-      console.error("Error saving medication frequency:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save medication frequency";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");

@@ -86,7 +86,6 @@ const ProcedureForm: React.FC<ProcedureFormProps> = ({ open, onClose, initialDat
         showAlert("Warning", "Failed to generate procedure code", "warning");
       }
     } catch (error) {
-      console.error("Error generating procedure code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -141,7 +140,6 @@ const ProcedureForm: React.FC<ProcedureFormProps> = ({ open, onClose, initialDat
         throw new Error(response.errorMessage || "Failed to save procedure");
       }
     } catch (error) {
-      console.error("Error saving procedure:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save procedure";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");

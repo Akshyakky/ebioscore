@@ -1,5 +1,3 @@
-// Fixed InsuranceGrid.tsx - Key changes to prevent Date object rendering errors
-
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Alert } from "@mui/material";
 import {
@@ -12,7 +10,7 @@ import {
   Close as CloseIcon,
   Save as SaveIcon,
 } from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
@@ -62,6 +60,7 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
+  const [gridDensity, setGridDensity] = useState<GridDensity>("medium");
 
   const {
     insuranceList,
@@ -81,8 +80,6 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
   }>({
     status: "",
   });
-
-  // Load insurance data when dialog opens or pChartID changes
   useEffect(() => {
     if (open && pChartID) {
       fetchInsuranceList(pChartID);
@@ -155,21 +152,17 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
 
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedInsurance) return;
-
     try {
       if (selectedInsurance.oPIPInsID) {
-        // Delete from server if it exists
         const success = await deleteInsurance(selectedInsurance.oPIPInsID, pChartID);
         if (success) {
           showAlert("Success", "Insurance record deleted successfully", "success");
         }
       } else {
-        // Remove from local state if it's a new record
         removeInsuranceFromList(selectedInsurance.ID || 0);
         showAlert("Success", "Insurance record removed successfully", "success");
       }
     } catch (error) {
-      console.error("Error deleting insurance:", error);
       showAlert("Error", "Failed to delete insurance record", "error");
     } finally {
       setIsDeleteConfirmOpen(false);
@@ -186,13 +179,10 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
       };
 
       if (!formattedData.oPIPInsID && !formattedData.ID) {
-        // New record
         addInsuranceToList(formattedData);
       } else {
-        // Update existing record
         updateInsuranceInList(formattedData);
       }
-
       setIsInsuranceFormOpen(false);
       setSelectedInsurance(null);
       showAlert("Success", "Insurance record saved successfully", "success");
@@ -220,10 +210,8 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
 
   const handleSaveAll = useCallback(async () => {
     if (!onSaveAll && !showSaveAll) return;
-
     try {
       setIsSavingAll(true);
-
       let success = false;
       if (onSaveAll) {
         success = await onSaveAll(insuranceList);
@@ -231,7 +219,6 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
         const result = await saveAllInsurance(pChartID);
         success = result.success;
       }
-
       if (success) {
         showAlert("Success", "All insurance records saved successfully", "success");
         onClose(true);
@@ -239,7 +226,6 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
         showAlert("Error", "Failed to save insurance records", "error");
       }
     } catch (error) {
-      console.error("Error saving all insurance records:", error);
       showAlert("Error", "Failed to save insurance records", "error");
     } finally {
       setIsSavingAll(false);
@@ -269,7 +255,6 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
 
   const filteredInsurance = useMemo(() => {
     if (!insuranceList.length) return [];
-
     return insuranceList.filter((insurance) => {
       const matchesSearch =
         debouncedSearchTerm === "" ||
@@ -277,9 +262,7 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
         insurance.policyNumber?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         insurance.policyHolder?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         insurance.guarantor?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
-
       const matchesStatus = filters.status === "" || (filters.status === "active" && insurance.rActiveYN === "Y") || (filters.status === "inactive" && insurance.rActiveYN === "N");
-
       return matchesSearch && matchesStatus;
     });
   }, [insuranceList, debouncedSearchTerm, filters]);
@@ -313,14 +296,11 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
     </Paper>
   );
 
-  // CRITICAL FIX: Enhanced date formatter to always return strings
   const formatDateSafely = useCallback(
     (dateValue: any): string => {
       if (!dateValue) return "-";
-
       try {
         let dateObj: Date;
-
         if (dateValue instanceof Date) {
           dateObj = dateValue;
         } else if (typeof dateValue === "string") {
@@ -330,30 +310,23 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
         } else {
           return "-";
         }
-
-        // Validate the date
         if (isNaN(dateObj.getTime())) {
           return "-";
         }
-
         return formatDate(dateObj);
       } catch (error) {
-        console.error("Error formatting date:", error);
         return "-";
       }
     },
     [formatDate]
   );
 
-  // CRITICAL FIX: Enhanced string formatter to prevent object rendering
   const formatStringSafely = useCallback(
     (value: any): string => {
       if (value === null || value === undefined) return "-";
       if (typeof value === "string") return value || "-";
       if (typeof value === "number") return value.toString();
       if (typeof value === "boolean") return value ? "Yes" : "No";
-
-      // Handle objects (including Date objects) by converting to string
       if (typeof value === "object") {
         if (value instanceof Date) {
           return formatDateSafely(value);
@@ -411,7 +384,6 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
       filterable: true,
       width: 120,
       formatter: (value: any) => formatDateSafely(value),
-      // CRITICAL FIX: Add render function to ensure proper date handling
       render: (item: OPIPInsurancesDto) => <span>{formatDateSafely(item.policyStartDt)}</span>,
     },
     {
@@ -422,7 +394,6 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
       filterable: true,
       width: 120,
       formatter: (value: any) => formatDateSafely(value),
-      // CRITICAL FIX: Add render function to ensure proper date handling
       render: (item: OPIPInsurancesDto) => <span>{formatDateSafely(item.policyEndDt)}</span>,
     },
     {
@@ -448,9 +419,10 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
       header: "Status",
       visible: true,
       sortable: true,
-      filterable: true,
-      width: 100,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
+      width: gridDensity === "large" ? 120 : gridDensity === "medium" ? 100 : 80,
+      formatter: (value: string) => (
+        <Chip size={gridDensity === "large" ? "medium" : "small"} color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />
+      ),
     },
     {
       key: "actions",
@@ -548,15 +520,10 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
         actions={dialogActions}
       >
         <Box sx={{ p: 2 }}>
-          {/* Header Controls */}
           <Box sx={{ mb: 2 }}>
             <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
           </Box>
-
-          {/* Statistics Dashboard */}
           {showStats && renderStatsDashboard()}
-
-          {/* Main Content */}
           <Paper sx={{ p: 2, mb: 2 }}>
             <Grid container spacing={2} alignItems="center" justifyContent="space-between">
               <Grid size={{ xs: 12, md: 8 }}>
@@ -587,7 +554,6 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
                 </Stack>
               </Grid>
 
-              {/* Search and Filters */}
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
@@ -636,14 +602,12 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
             </Grid>
           </Paper>
 
-          {/* Insurance Grid */}
           <Paper sx={{ p: 2 }}>
             <CustomGrid columns={columns} data={filteredInsurance} maxHeight="calc(100vh - 400px)" emptyStateMessage="No insurance records found" loading={isLoading} />
           </Paper>
         </Box>
       </GenericDialog>
 
-      {/* Insurance Form Dialog */}
       {isInsuranceFormOpen && (
         <InsuranceForm
           open={isInsuranceFormOpen}
@@ -656,7 +620,6 @@ const InsuranceManagementDialog: React.FC<InsuranceManagementDialogProps> = ({
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog
         open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}

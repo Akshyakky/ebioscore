@@ -1,10 +1,9 @@
-// src/components/InsuranceManagement/InsuranceForm.tsx
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Box, Grid, Typography, Divider, Card, CardContent, Alert } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Add as AddIcon, Save, Cancel, Refresh } from "@mui/icons-material";
+import { Add as AddIcon, Save, Cancel } from "@mui/icons-material";
 import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
@@ -27,7 +26,6 @@ interface InsuranceFormProps {
   viewOnly?: boolean;
 }
 
-// Schema definition for form validation
 const schema = z
   .object({
     ID: z.number().default(0),
@@ -65,13 +63,11 @@ const schema = z
   });
 
 type InsuranceFormData = z.infer<typeof schema>;
-
 const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, initialData, pChartID, pChartCode, viewOnly = false }) => {
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
   const { refreshDropdownValues, ...dropdownValues } = useDropdownValues(["insurance", "relation", "coverFor"]);
   const { showAlert } = useAlert();
-
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -81,7 +77,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
 
   const isAddMode = !initialData || (!initialData.oPIPInsID && !initialData.ID);
 
-  // Memoize default values to prevent infinite re-renders
   const defaultValues: InsuranceFormData = useMemo(
     () => ({
       ID: 0,
@@ -121,7 +116,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
     handleSubmit,
     reset,
     setValue,
-    watch,
     formState: { isDirty, isValid, errors },
   } = useForm<InsuranceFormData>({
     defaultValues,
@@ -129,11 +123,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
     mode: "onChange",
   });
 
-  const watchedInsurID = watch("insurID");
-  const watchedRelationVal = watch("relationVal");
-  const watchedCoveredVal = watch("coveredVal");
-
-  // Reset form when initialData changes - Fixed to prevent infinite re-renders
   useEffect(() => {
     if (open) {
       if (initialData) {
@@ -151,12 +140,10 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
     }
   }, [open, initialData, reset, serverDate, pChartID, pChartCode]);
 
-  // Handle insurance dropdown change - Fixed
   const handleInsuranceChange = useCallback(
     (event: any) => {
       const value = event?.target?.value || event?.value || event;
       const selectedOption = dropdownValues.insurance?.find((option) => Number(option.value) === Number(value));
-
       if (selectedOption) {
         setValue("insurID", Number(value), { shouldValidate: true, shouldDirty: true });
         setValue("insurName", selectedOption.label, { shouldValidate: true, shouldDirty: true });
@@ -170,12 +157,10 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
     [dropdownValues.insurance, setValue]
   );
 
-  // Handle relation dropdown change - Fixed
   const handleRelationChange = useCallback(
     (event: any) => {
       const value = event?.target?.value || event?.value || event;
       const selectedOption = dropdownValues.relation?.find((option) => option.value === value);
-
       if (selectedOption) {
         setValue("relationVal", value, { shouldValidate: true, shouldDirty: true });
         setValue("relation", selectedOption.label, { shouldValidate: true, shouldDirty: true });
@@ -187,12 +172,10 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
     [dropdownValues.relation, setValue]
   );
 
-  // Handle covered for dropdown change - Fixed
   const handleCoveredForChange = useCallback(
     (event: any) => {
       const value = event?.target?.value || event?.value || event;
       const selectedOption = dropdownValues.coverFor?.find((option) => option.value === value);
-
       if (selectedOption) {
         setValue("coveredVal", value, { shouldValidate: true, shouldDirty: true });
         setValue("coveredFor", selectedOption.label, { shouldValidate: true, shouldDirty: true });
@@ -204,29 +187,22 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
     [dropdownValues.coverFor, setValue]
   );
 
-  // Form submission handler - Fixed
   const onSubmit = useCallback(
     async (data: InsuranceFormData) => {
       if (viewOnly) return;
-
       setFormError(null);
-
       try {
         setIsSaving(true);
         setLoading(true);
-
-        // Additional validation
         if (!data.insurID || data.insurID === 0) {
           setFormError("Insurance selection is required");
           return;
         }
-
         if (!data.policyNumber?.trim()) {
           setFormError("Policy number is required");
           return;
         }
 
-        // Format data for submission
         const formattedData: OPIPInsurancesDto = {
           ...data,
           ID: data.ID || 0,
@@ -258,16 +234,10 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
           coveredFor: data.coveredFor || "",
           insurCode: data.insurCode || "",
         };
-
-        console.log("Submitting insurance data:", formattedData);
-
         onSave(formattedData);
-
         showAlert("Success", isAddMode ? "Insurance record created successfully" : "Insurance record updated successfully", "success");
-
         onClose(true);
       } catch (error) {
-        console.error("Error saving insurance:", error);
         const errorMessage = error instanceof Error ? error.message : "Failed to save insurance record";
         setFormError(errorMessage);
         showAlert("Error", errorMessage, "error");
@@ -279,7 +249,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
     [viewOnly, setLoading, onSave, isAddMode, onClose, pChartID, pChartCode]
   );
 
-  // Form reset handler
   const performReset = useCallback(() => {
     if (initialData) {
       const formData = {
@@ -313,7 +282,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
     setShowResetConfirmation(false);
   }, []);
 
-  // Cancel handler
   const handleCancel = useCallback(() => {
     if (isDirty) {
       setShowCancelConfirmation(true);
@@ -331,8 +299,7 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
     setShowCancelConfirmation(false);
   }, []);
 
-  // Field dialog handlers
-  const [formDataDialog, setFormDataDialog] = useState<AppModifyFieldDto>({
+  const [, setFormDataDialog] = useState<AppModifyFieldDto>({
     amlID: 0,
     amlName: "",
     amlCode: "",
@@ -378,7 +345,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
   }, [dialogCategory, refreshDropdownValues]);
 
   const dialogTitle = viewOnly ? "View Insurance Details" : isAddMode ? "Create New Insurance Record" : `Edit Insurance Record - ${initialData?.insurName}`;
-
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
   ) : (
@@ -423,7 +389,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
           )}
 
           <Grid container spacing={3}>
-            {/* Status Control */}
             <Grid size={{ sm: 12 }}>
               <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
                 <Typography variant="body2" color="text.secondary">
@@ -433,7 +398,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
               </Box>
             </Grid>
 
-            {/* Basic Insurance Information */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -490,7 +454,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
               </Card>
             </Grid>
 
-            {/* Relationship and Coverage Information */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -534,7 +497,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
               </Card>
             </Grid>
 
-            {/* Contact Information */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -564,7 +526,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
               </Card>
             </Grid>
 
-            {/* Additional Information */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -599,7 +560,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
         </Box>
       </GenericDialog>
 
-      {/* Reset Confirmation Dialog */}
       <ConfirmationDialog
         open={showResetConfirmation}
         onClose={handleResetCancel}
@@ -612,7 +572,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
         maxWidth="sm"
       />
 
-      {/* Cancel Confirmation Dialog */}
       <ConfirmationDialog
         open={showCancelConfirmation}
         onClose={handleCancelCancel}
@@ -625,7 +584,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
         maxWidth="sm"
       />
 
-      {/* Modified Field Dialog */}
       <ModifiedFieldDialog
         open={isFieldDialogOpen}
         onClose={handleFieldDialogClose}

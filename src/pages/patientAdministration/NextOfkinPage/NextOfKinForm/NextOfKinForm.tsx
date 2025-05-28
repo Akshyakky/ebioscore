@@ -172,7 +172,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ onSave, onCancel, initial
 
       await onSave(nokData);
     } catch (error) {
-      console.error("Error saving next of kin:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save next of kin";
       setFormError(errorMessage);
     } finally {

@@ -9,7 +9,7 @@ import {
   Visibility as VisibilityIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
@@ -56,9 +56,8 @@ const AppModifiedListPage: React.FC = () => {
   const [isViewMode, setIsViewMode] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "master" | "field"; item: AppModifiedMast | AppModifyFieldDto } | null>(null);
-
   const { masterList, fieldsList, isLoading, error, fetchMasterList, fetchFieldsList, deleteMaster, deleteField } = useAppModifiedList();
-
+  const [gridDensity, setGridDensity] = useState<GridDensity>("medium");
   const [filters, setFilters] = useState<{
     status: string;
   }>({
@@ -381,9 +380,10 @@ const AppModifiedListPage: React.FC = () => {
       header: "Status",
       visible: true,
       sortable: true,
-      filterable: true,
-      width: 100,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
+      width: gridDensity === "large" ? 120 : gridDensity === "medium" ? 100 : 80,
+      formatter: (value: string) => (
+        <Chip size={gridDensity === "large" ? "medium" : "small"} color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />
+      ),
     },
     {
       key: "rNotes",
@@ -490,9 +490,10 @@ const AppModifiedListPage: React.FC = () => {
       header: "Status",
       visible: true,
       sortable: true,
-      filterable: true,
-      width: 100,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
+      width: gridDensity === "large" ? 120 : gridDensity === "medium" ? 100 : 80,
+      formatter: (value: string) => (
+        <Chip size={gridDensity === "large" ? "medium" : "small"} color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />
+      ),
     },
     {
       key: "actions",

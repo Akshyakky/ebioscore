@@ -9,7 +9,7 @@ import {
   Visibility as VisibilityIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
@@ -56,7 +56,7 @@ const NextOfKinManager: React.FC<NextOfKinManagerProps> = ({
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
-
+  const [gridDensity, setGridDensity] = useState<GridDensity>("medium");
   const { nokList, isLoading, error, fetchNokList, saveNextOfKin, deleteNextOfKin, stats } = useNextOfKin({
     pChartID,
     pChartCode,
@@ -302,9 +302,10 @@ const NextOfKinManager: React.FC<NextOfKinManagerProps> = ({
       header: "Status",
       visible: true,
       sortable: true,
-      filterable: true,
-      width: 100,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
+      width: gridDensity === "large" ? 120 : gridDensity === "medium" ? 100 : 80,
+      formatter: (value: string) => (
+        <Chip size={gridDensity === "large" ? "medium" : "small"} color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />
+      ),
     },
   ];
 

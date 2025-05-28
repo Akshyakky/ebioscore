@@ -83,13 +83,10 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
     resolver: zodResolver(schema),
     mode: "onChange",
   });
-
-  // Watch for changes in dropdown selections
   const rgrpID = watch("rgrpID");
   const rLocationID = watch("rLocationID");
   const dulID = watch("dulID");
 
-  // Fetch department details when room group changes
   const fetchDepartmentDetails = useCallback(
     async (groupId: number) => {
       if (!groupId) return;
@@ -97,14 +94,12 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
       try {
         setLoading(true);
         const response = await roomGroupService.getById(groupId);
-
         if (response.success && response.data) {
           const roomGroup = response.data;
           setValue("deptID", roomGroup.deptID || 0, { shouldValidate: true, shouldDirty: true });
           setValue("deptName", roomGroup.deptName || "", { shouldValidate: true, shouldDirty: true });
         }
       } catch (error) {
-        console.error("Error fetching department details:", error);
         showAlert("Error", "Failed to load department details", "error");
       } finally {
         setLoading(false);
@@ -113,7 +108,6 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
     [setLoading, setValue, showAlert]
   );
 
-  // Update related fields when selections change
   useEffect(() => {
     if (rgrpID) {
       fetchDepartmentDetails(rgrpID);
@@ -155,7 +149,6 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
 
   const generateRoomCode = async () => {
     if (!isAddMode) return;
-
     try {
       setIsGeneratingCode(true);
       const nextCodeResult = await roomListService.getNextCode("RM", 3);
@@ -165,7 +158,6 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
         showAlert("Warning", "Failed to generate room code", "warning");
       }
     } catch (error) {
-      console.error("Error generating room code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -179,9 +171,7 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
 
   const onSubmit = async (data: RoomListFormData) => {
     if (viewOnly) return;
-
     setFormError(null);
-
     try {
       setIsSaving(true);
       setLoading(true);
@@ -202,9 +192,7 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
         unitDesc: data.unitDesc || "",
         rlCode: data.rlCode || "",
       };
-
       const response = await roomListService.save(formData);
-
       if (response.success) {
         showAlert("Success", isAddMode ? "Room created successfully" : "Room updated successfully", "success");
         onClose(true);
@@ -212,7 +200,6 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
         throw new Error(response.errorMessage || "Failed to save room");
       }
     } catch (error) {
-      console.error("Error saving room:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save room";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");

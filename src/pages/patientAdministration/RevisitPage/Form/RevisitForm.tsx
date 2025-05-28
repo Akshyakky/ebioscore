@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
-import {
-  Search as SearchIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-  Close as CloseIcon,
-  Print as PrintIcon,
-} from "@mui/icons-material";
+import { Search as SearchIcon, Refresh as RefreshIcon, Close as CloseIcon, Print as PrintIcon } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
@@ -22,7 +14,7 @@ import { useRevisit } from "../hooks/useRevisitForm";
 interface PatientVisitHistoryDialogProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
-  onEditVisit?: (visitData: OPVisitDto) => void; // New prop for edit functionality
+  onEditVisit?: (visitData: OPVisitDto) => void;
   pChartID?: number;
 }
 
@@ -51,11 +43,10 @@ const PatientVisitHistoryDialog: React.FC<PatientVisitHistoryDialogProps> = ({ o
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedVisit, setSelectedVisit] = useState<OPVisitDto | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
-  const [isViewMode, setIsViewMode] = useState<boolean>(false);
-  const [isEditFormOpen, setIsEditFormOpen] = useState<boolean>(false);
+  const [, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
   const { showAlert } = useAlert();
-  const { visitList, isLoading, error, fetchVisitList, deleteVisit, cancelVisit } = useRevisit();
+  const { visitList, isLoading, fetchVisitList, deleteVisit, cancelVisit } = useRevisit();
 
   const [filters, setFilters] = useState<{
     status: string;
@@ -99,7 +90,6 @@ const PatientVisitHistoryDialog: React.FC<PatientVisitHistoryDialogProps> = ({ o
         return `${day}/${month}/${year} ${hours}:${minutes}`;
       }
     } catch (error) {
-      console.error("Error formatting date:", error);
       return "-";
     }
   };
@@ -137,45 +127,8 @@ const PatientVisitHistoryDialog: React.FC<PatientVisitHistoryDialogProps> = ({ o
     debouncedSearch.cancel();
   }, [debouncedSearch]);
 
-  const handleEdit = useCallback(
-    (visit: OPVisitDto) => {
-      // Pass the visit data back to parent component for editing
-      if (onEditVisit) {
-        onEditVisit(visit);
-        onClose(); // Close the dialog
-      } else {
-        showAlert("Info", "Edit functionality is not available", "info");
-      }
-    },
-    [onEditVisit, onClose]
-  );
-
-  const handleView = useCallback((visit: OPVisitDto) => {
-    setSelectedVisit(visit);
-    setIsViewMode(true);
-    showAlert("Info", "View functionality would be implemented here", "info");
-  }, []);
-
-  const handleCancelVisit = useCallback(
-    async (visit: OPVisitDto) => {
-      try {
-        const success = await cancelVisit(visit.opVID, "System");
-        if (success) {
-          showAlert("Success", "Visit cancelled successfully", "success");
-          handleRefresh();
-        } else {
-          throw new Error("Failed to cancel visit");
-        }
-      } catch (error) {
-        showAlert("Error", "Failed to cancel visit", "error");
-      }
-    },
-    [cancelVisit, handleRefresh]
-  );
-
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedVisit) return;
-
     try {
       const success = await deleteVisit(selectedVisit.opVID);
       if (success) {

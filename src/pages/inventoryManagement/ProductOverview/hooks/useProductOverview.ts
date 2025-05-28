@@ -16,11 +16,9 @@ export const useProductOverview = () => {
       setProductSuggestions([]);
       return [];
     }
-
     try {
       setIsLoadingProducts(true);
       const response = await productListService.getAll();
-
       if (response.success && response.data) {
         const filteredProducts = response.data.filter((product: ProductListDto) => {
           const prodCode = product.productCode?.toLowerCase();
@@ -29,7 +27,6 @@ export const useProductOverview = () => {
 
           return prodCode?.includes(searchLower) || prodName?.includes(searchLower);
         });
-
         setProductSuggestions(filteredProducts);
         return filteredProducts.map((product: ProductListDto) => {
           const prodCode = product.productCode || "";
@@ -40,7 +37,6 @@ export const useProductOverview = () => {
 
       return [];
     } catch (error) {
-      console.error("Error fetching product suggestions:", error);
       return [];
     } finally {
       setIsLoadingProducts(false);
@@ -56,7 +52,6 @@ export const useProductOverview = () => {
       }
       return null;
     } catch (error) {
-      console.error("Error fetching product by code:", error);
       return null;
     }
   }, []);
@@ -67,7 +62,6 @@ export const useProductOverview = () => {
       const items = result.success ? result.data ?? [] : [];
       return items.filter((product: ProductOverviewDto) => product.deptID === deptID);
     } catch (error) {
-      console.error("Error fetching products by department:", error);
       return [];
     }
   }, []);
