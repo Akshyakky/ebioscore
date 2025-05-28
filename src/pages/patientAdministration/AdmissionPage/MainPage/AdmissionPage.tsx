@@ -14,7 +14,6 @@ import AdmissionDetails from "../SubPage/AdmissionDetails";
 import CustomButton from "@/components/Button/CustomButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ManageBedDetails from "../../ManageBed/SubPage/ManageBedDetails";
-import InsurancePage from "../../RegistrationPage/SubPage/InsurancePage";
 import DiagnosisSection from "../../../clinicalManagement/Common/Diagnosis";
 import PatientHistory from "@/pages/clinicalManagement/PatientHistory/PatientHistory";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
@@ -168,9 +167,9 @@ const AdmissionPage: React.FC = () => {
       <GenericDialog open={isBedSelectionOpen} onClose={handleCloseBedSelection} title="Select a Bed" maxWidth="xl" fullWidth>
         <ManageBedDetails onBedSelect={handleBedSelect} isSelectionMode={true} />
       </GenericDialog>
-      <CustomAccordion title="Payer Details">
+      {/* <CustomAccordion title="Payer Details">
         <InsurancePage ref={insurancePageRef} pChartID={formData.ipAdmissionDto.pChartID || 0} shouldClearData={shouldClearInsuranceData} />
-      </CustomAccordion>
+      </CustomAccordion> */}
       <CustomAccordion title="Principal Diagnosis">
         <DiagnosisSection
           primaryDiagnoses={primaryDiagnoses}
