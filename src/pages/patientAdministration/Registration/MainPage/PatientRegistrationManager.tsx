@@ -11,10 +11,10 @@ import {
   AccountBalance as InsuranceIcon,
   People as NextOfKinIcon,
   PersonAdd as PersonAddIcon,
-  Save as SaveIcon, // Import SaveIcon
-  Cancel as CancelIcon, // Import CancelIcon
+  Save as SaveIcon,
+  Cancel as CancelIcon,
 } from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
@@ -39,7 +39,6 @@ const visitTypeOptions = [
   { value: "H", label: "Hospital" },
   { value: "P", label: "Physician" },
   { value: "N", label: "None" },
-  { value: "all", label: "All Types" },
 ];
 
 interface PatientRegistrationManagerProps {
@@ -59,6 +58,7 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
   const [formMode, setFormMode] = useState<"create" | "edit" | "view">("create");
   const [selectedPatientForAction, setSelectedPatientForAction] = useState<PatientListData | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "form">(defaultMode);
+  const [gridDensity, setGridDensity] = useState<GridDensity>("medium");
 
   const { showAlert } = useAlert();
   const { patientList, isLoading, error, fetchPatientList, getPatientById, savePatient, deletePatient, searchPatients } = usePatientRegistration();
@@ -106,6 +106,11 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
     debouncedSearch.cancel();
     searchPatients("");
   }, [debouncedSearch, searchPatients]);
+
+  // Handle grid density change
+  const handleDensityChange = useCallback((density: GridDensity) => {
+    setGridDensity(density);
+  }, []);
 
   // Filter patients based on current filters
   const filteredPatients = useMemo(() => {
@@ -258,14 +263,14 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
     fetchPatientList(debouncedSearchTerm);
   }, [fetchPatientList, debouncedSearchTerm]);
 
-  // Grid columns definition
+  // Enhanced grid columns definition with better responsive design
   const columns: Column<PatientListData>[] = [
     {
       key: "pChartCode",
       header: "Chart Code",
       visible: true,
       sortable: true,
-      width: 120,
+      width: gridDensity === "large" ? 150 : gridDensity === "medium" ? 120 : 100,
       formatter: (value: string) => value || "-",
     },
     {
@@ -273,13 +278,30 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
       header: "Patient Name",
       visible: true,
       sortable: true,
-      width: 200,
+      width: gridDensity === "large" ? 280 : gridDensity === "medium" ? 200 : 160,
       render: (item) => (
         <Box>
-          <Typography variant="body2" fontWeight="medium">
+          <Typography
+            variant="body2"
+            fontWeight="medium"
+            sx={{
+              fontSize: gridDensity === "large" ? "0.875rem" : gridDensity === "medium" ? "0.875rem" : "0.75rem",
+              lineHeight: gridDensity === "large" ? 1.6 : gridDensity === "medium" ? 1.4 : 1.2,
+              wordBreak: "break-word",
+              maxWidth: "100%",
+            }}
+          >
             {item.fullName}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              fontSize: gridDensity === "large" ? "0.75rem" : gridDensity === "medium" ? "0.75rem" : "0.6875rem",
+              display: "block",
+              lineHeight: 1.2,
+            }}
+          >
             {item.pTitle} {item.pGender ? `• ${item.pGender}` : ""}
           </Typography>
         </Box>
@@ -290,7 +312,7 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
       header: "Phone",
       visible: true,
       sortable: true,
-      width: 120,
+      width: gridDensity === "large" ? 140 : gridDensity === "medium" ? 120 : 100,
       formatter: (value: string) => value || "-",
     },
     {
@@ -298,23 +320,43 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
       header: "Email",
       visible: true,
       sortable: true,
-      width: 180,
-      formatter: (value: string) => value || "-",
+      width: gridDensity === "large" ? 220 : gridDensity === "medium" ? 180 : 140,
+      render: (item) => (
+        <Typography
+          variant="body2"
+          sx={{
+            fontSize: gridDensity === "large" ? "0.875rem" : gridDensity === "medium" ? "0.875rem" : "0.75rem",
+            wordBreak: "break-all",
+            maxWidth: "100%",
+          }}
+        >
+          {item.pAddEmail || "-"}
+        </Typography>
+      ),
     },
     {
       key: "pRegDate",
       header: "Registration Date",
       visible: true,
       sortable: true,
-      width: 130,
-      render: (item) => <Typography variant="body2">{item.pRegDate ? formatDt(item.pRegDate) : "-"}</Typography>,
+      width: gridDensity === "large" ? 150 : gridDensity === "medium" ? 130 : 110,
+      render: (item) => (
+        <Typography
+          variant="body2"
+          sx={{
+            fontSize: gridDensity === "large" ? "0.875rem" : gridDensity === "medium" ? "0.875rem" : "0.75rem",
+          }}
+        >
+          {item.pRegDate ? formatDt(item.pRegDate) : "-"}
+        </Typography>
+      ),
     },
     {
       key: "visitType",
       header: "Visit Type",
       visible: true,
       sortable: true,
-      width: 100,
+      width: gridDensity === "large" ? 120 : gridDensity === "medium" ? 100 : 80,
       formatter: (value: string) => {
         const typeMap: Record<string, string> = {
           H: "Hospital",
@@ -329,73 +371,90 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
       header: "Payment Source",
       visible: true,
       sortable: true,
-      width: 140,
-      formatter: (value: string) => value || "-",
+      width: gridDensity === "large" ? 160 : gridDensity === "medium" ? 140 : 120,
+      render: (item) => (
+        <Typography
+          variant="body2"
+          sx={{
+            fontSize: gridDensity === "large" ? "0.875rem" : gridDensity === "medium" ? "0.875rem" : "0.75rem",
+            wordBreak: "break-word",
+          }}
+        >
+          {item.pTypeName || "-"}
+        </Typography>
+      ),
     },
     {
       key: "rActiveYN",
       header: "Status",
       visible: true,
       sortable: true,
-      width: 100,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
+      width: gridDensity === "large" ? 120 : gridDensity === "medium" ? 100 : 80,
+      formatter: (value: string) => (
+        <Chip size={gridDensity === "large" ? "medium" : "small"} color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />
+      ),
     },
     {
       key: "actions",
       header: "Actions",
       visible: true,
       sortable: false,
-      width: 200,
+      width: gridDensity === "large" ? 240 : gridDensity === "medium" ? 200 : 160,
       render: (item) => (
-        <Stack direction="row" spacing={0.5}>
+        <Stack direction="row" spacing={gridDensity === "large" ? 0.8 : 0.5} flexWrap="wrap">
           <Tooltip title="View Details">
             <IconButton
-              size="small"
+              size={gridDensity === "large" ? "medium" : "small"}
               color="primary"
               onClick={() => handleView(item)}
               sx={{ bgcolor: "rgba(25, 118, 210, 0.08)", "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" } }}
             >
-              <VisibilityIcon fontSize="small" />
+              <VisibilityIcon fontSize={gridDensity === "large" ? "medium" : "small"} />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Edit Patient">
-            <IconButton size="small" color="info" onClick={() => handleEdit(item)} sx={{ bgcolor: "rgba(25, 118, 210, 0.08)", "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" } }}>
-              <EditIcon fontSize="small" />
+            <IconButton
+              size={gridDensity === "large" ? "medium" : "small"}
+              color="info"
+              onClick={() => handleEdit(item)}
+              sx={{ bgcolor: "rgba(25, 118, 210, 0.08)", "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" } }}
+            >
+              <EditIcon fontSize={gridDensity === "large" ? "medium" : "small"} />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Next of Kin">
             <IconButton
-              size="small"
+              size={gridDensity === "large" ? "medium" : "small"}
               color="secondary"
               onClick={() => handleManageNextOfKin(item)}
               sx={{ bgcolor: "rgba(156, 39, 176, 0.08)", "&:hover": { bgcolor: "rgba(156, 39, 176, 0.15)" } }}
             >
-              <NextOfKinIcon fontSize="small" />
+              <NextOfKinIcon fontSize={gridDensity === "large" ? "medium" : "small"} />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Insurance">
             <IconButton
-              size="small"
+              size={gridDensity === "large" ? "medium" : "small"}
               color="warning"
               onClick={() => handleManageInsurance(item)}
               sx={{ bgcolor: "rgba(237, 108, 2, 0.08)", "&:hover": { bgcolor: "rgba(237, 108, 2, 0.15)" } }}
             >
-              <InsuranceIcon fontSize="small" />
+              <InsuranceIcon fontSize={gridDensity === "large" ? "medium" : "small"} />
             </IconButton>
           </Tooltip>
 
           {item.rActiveYN === "Y" && (
             <Tooltip title="Deactivate Patient">
               <IconButton
-                size="small"
+                size={gridDensity === "large" ? "medium" : "small"}
                 color="error"
                 onClick={() => handleDeleteClick(item)}
                 sx={{ bgcolor: "rgba(211, 47, 47, 0.08)", "&:hover": { bgcolor: "rgba(211, 47, 47, 0.15)" } }}
               >
-                <DeleteIcon fontSize="small" />
+                <DeleteIcon fontSize={gridDensity === "large" ? "medium" : "small"} />
               </IconButton>
             </Tooltip>
           )}
@@ -552,7 +611,7 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
         </Grid>
       </Paper>
 
-      {/* Patient Grid */}
+      {/* Patient Grid with Enhanced Density Controls */}
       <Paper sx={{ p: 2 }}>
         <CustomGrid
           columns={columns}
@@ -565,6 +624,10 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
           showExportCSV={true}
           showExportPDF={true}
           rowKeyField="pChartID"
+          density={gridDensity}
+          onDensityChange={handleDensityChange}
+          showDensityControls={true}
+          searchTerm={searchTerm}
         />
       </Paper>
 
@@ -583,17 +646,10 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
             <SmartButton text="Close" onClick={handleFormClose} variant="outlined" color="inherit" />
             {formMode !== "view" && (
               <>
-                <SmartButton
-                  text="Reset"
-                  onClick={() => patientFormRef.current?.handleReset()} // Call reset function from child
-                  variant="outlined"
-                  color="error"
-                  icon={CancelIcon}
-                  disabled={isLoading} // assuming isLoading from manager covers form loading
-                />
+                <SmartButton text="Reset" onClick={() => patientFormRef.current?.handleReset()} variant="outlined" color="error" icon={CancelIcon} disabled={isLoading} />
                 <SmartButton
                   text={formMode === "create" ? "Register Patient" : "Update Patient"}
-                  onClick={() => patientFormRef.current?.handleSubmit()} // Call handleSubmit from child
+                  onClick={() => patientFormRef.current?.handleSubmit()}
                   variant="contained"
                   color="primary"
                   icon={SaveIcon}
@@ -601,7 +657,7 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
                   showLoadingIndicator={true}
                   loadingText={formMode === "create" ? "Registering..." : "Updating..."}
                   successText={formMode === "create" ? "Registered!" : "Updated!"}
-                  disabled={isLoading} // assuming isLoading from manager covers form loading
+                  disabled={isLoading}
                 />
               </>
             )}
