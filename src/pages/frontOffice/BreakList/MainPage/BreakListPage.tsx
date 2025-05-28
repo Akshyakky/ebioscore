@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
 import {
   Search as SearchIcon,
   Add as AddIcon,
@@ -8,16 +7,21 @@ import {
   Refresh as RefreshIcon,
   Visibility as VisibilityIcon,
   Close as CloseIcon,
+  PauseCircleOutline as SuspendIcon,
+  PlayCircleOutline as ResumeIcon,
 } from "@mui/icons-material";
+import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import { BreakListData } from "@/interfaces/FrontOffice/BreakListData";
+import { BreakConSuspendData, BreakListData } from "@/interfaces/FrontOffice/BreakListData";
 import BreakListForm from "../Form/BreakListForm";
-import { useBreakList } from "../hooks/useBreakList";
+import BreakSuspendDetails from "../SubPage/BreakSuspendDetails";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
+import { useBreak } from "../hooks/useBreak";
+import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 
 const statusOptions = [
   { value: "active", label: "Active" },
@@ -29,17 +33,38 @@ const typeOptions = [
   { value: "resource", label: "Resource Break" },
 ];
 
+export const frequencyCodeMap = {
+  none: "FO70",
+  daily: "FO71",
+  weekly: "FO72",
+  monthly: "FO73",
+  yearly: "FO74",
+};
+
+export const weekDayCodeMap = {
+  Sunday: "FO75",
+  Monday: "FO76",
+  Tuesday: "FO77",
+  Wednesday: "FO78",
+  Thursday: "FO79",
+  Friday: "FO80",
+  Saturday: "FO81",
+};
+
 const BreakListPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedBreak, setSelectedBreak] = useState<BreakListData | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
+  const [isSuspendDialogOpen, setIsSuspendDialogOpen] = useState<boolean>(false);
+  const [suspendData, setSuspendData] = useState<BreakConSuspendData | null>(null);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
 
-  const { breakList, isLoading, error, fetchBreakList, deleteBreak } = useBreakList();
+  const { breakList, isLoading, error, fetchBreakList, deleteBreak, suspendBreak, resumeBreak } = useBreak();
   const { showAlert } = useAlert();
+
   const [filters, setFilters] = useState<{
     status: string;
     type: string;
@@ -103,7 +128,6 @@ const BreakListPage: React.FC = () => {
 
     try {
       const success = await deleteBreak(selectedBreak.bLID);
-
       if (success) {
         showAlert("Success", "Break deleted successfully", "success");
       } else {
@@ -114,8 +138,97 @@ const BreakListPage: React.FC = () => {
       showAlert("Error", "Failed to delete break", "error");
     } finally {
       setIsDeleteConfirmOpen(false);
+      setSelectedBreak(null);
     }
-  }, [selectedBreak, deleteBreak]);
+  }, [selectedBreak, deleteBreak, showAlert]);
+
+  const handleSuspend = useCallback(
+    async (breakItem: BreakListData) => {
+      try {
+        const suspendResult = await breakConSuspendService.getAll();
+        if (suspendResult.success && suspendResult.data) {
+          const filteredSuspendDetails = suspendResult.data.filter((bsd: BreakConSuspendData) => bsd.bLID === breakItem.bLID);
+          if (filteredSuspendDetails.length > 0) {
+            const currentSuspendDetail = filteredSuspendDetails[0];
+            setSuspendData({
+              bCSID: currentSuspendDetail.bCSID,
+              bLID: breakItem.bLID,
+              hPLID: currentSuspendDetail.hPLID || null, // Adjust as needed
+              bLStartDate: currentSuspendDetail.bLStartDate || breakItem.bLStartDate,
+              bLEndDate: currentSuspendDetail.bLEndDate || breakItem.bLEndDate,
+              bCSStartDate: new Date(currentSuspendDetail.bCSStartDate),
+              bCSEndDate: new Date(currentSuspendDetail.bCSEndDate),
+              rActiveYN: currentSuspendDetail.rActiveYN,
+              rNotes: currentSuspendDetail.rNotes || "",
+              transferYN: currentSuspendDetail.transferYN || "N",
+            });
+          } else {
+            setSuspendData({
+              bCSID: 0,
+              bLID: breakItem.bLID,
+              hPLID: null,
+              bLStartDate: breakItem.bLStartDate,
+              bLEndDate: breakItem.bLEndDate,
+              bCSStartDate: new Date(),
+              bCSEndDate: new Date(),
+              rActiveYN: "N",
+              rNotes: "",
+              transferYN: "N",
+            });
+          }
+          setSelectedBreak(breakItem);
+          setIsSuspendDialogOpen(true);
+        }
+      } catch (error) {
+        console.error("Error loading suspend details:", error);
+        showAlert("Error", "Failed to load suspend details", "error");
+      }
+    },
+    [showAlert]
+  );
+
+  const handleResume = useCallback(
+    async (breakItem: BreakListData) => {
+      if (!breakItem.bCSID) {
+        showAlert("Error", "No suspend record found", "error");
+        return;
+      }
+      try {
+        const success = await resumeBreak(breakItem.bCSID, breakItem.bLID);
+        if (success) {
+          showAlert("Success", "Break resumed successfully", "success");
+        } else {
+          showAlert("Error", "Failed to resume break", "error");
+        }
+      } catch (error) {
+        console.error("Error resuming break:", error);
+        showAlert("Error", "Failed to resume break", "error");
+      }
+    },
+    [resumeBreak, showAlert]
+  );
+
+  const handleSuspendDialogClose = useCallback(
+    async (isSaved: boolean, updatedData?: BreakConSuspendData) => {
+      setIsSuspendDialogOpen(false);
+      if (isSaved && updatedData) {
+        try {
+          const result = await suspendBreak(updatedData);
+          if (result.success) {
+            showAlert("Success", "Break suspended successfully", "success");
+          } else {
+            showAlert("Error", result.errorMessage || "Failed to suspend break", "error");
+          }
+        } catch (error) {
+          console.error("Error updating suspend status:", error);
+          showAlert("Error", "Failed to update suspend status", "error");
+        }
+      }
+      setSelectedBreak(null);
+      setSuspendData(null);
+    },
+    [suspendBreak, showAlert]
+  );
 
   const handleFormClose = useCallback(
     (refreshData?: boolean) => {
@@ -123,6 +236,7 @@ const BreakListPage: React.FC = () => {
       if (refreshData) {
         handleRefresh();
       }
+      setSelectedBreak(null);
     },
     [handleRefresh]
   );
@@ -141,7 +255,6 @@ const BreakListPage: React.FC = () => {
     });
   }, []);
 
-  // Calculate stats for the dashboard
   const stats = useMemo(() => {
     if (!breakList.length) {
       return {
@@ -165,7 +278,6 @@ const BreakListPage: React.FC = () => {
     };
   }, [breakList]);
 
-  // Apply filters to the list
   const filteredBreaks = useMemo(() => {
     if (!breakList.length) return [];
 
@@ -224,6 +336,15 @@ const BreakListPage: React.FC = () => {
     return dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  const formatDate = (date: Date | string) => {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+    return dateObj.toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  };
+
   const columns: Column<BreakListData>[] = [
     {
       key: "bLName",
@@ -240,7 +361,7 @@ const BreakListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 120,
-      //   formatter: (value: Date | string) => formatDate(value),
+      formatter: (value: Date | string) => formatDate(value),
     },
     {
       key: "bLEndDate",
@@ -249,7 +370,7 @@ const BreakListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 120,
-      //   formatter: (value: Date | string) => formatDate(value),
+      formatter: (value: Date | string) => formatDate(value),
     },
     {
       key: "bLStartTime",
@@ -294,7 +415,22 @@ const BreakListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 150,
-      formatter: (value: any) => value || "-",
+      formatter: (value: any, item: BreakListData) => {
+        const frequencyKey = Object.keys(frequencyCodeMap).find((key) => frequencyCodeMap[key as keyof typeof frequencyCodeMap] === value) || "none";
+        const frequencyLabel = frequencyKey.charAt(0).toUpperCase() + frequencyKey.slice(1);
+
+        if (frequencyKey === "weekly" && item.bLFrqWkDesc) {
+          const weekdays = item.bLFrqWkDesc
+            .split(",")
+            .map((code) => Object.keys(weekDayCodeMap).find((day) => weekDayCodeMap[day as keyof typeof weekDayCodeMap] === code))
+            .filter((day): day is string => !!day)
+            .map((day) => day.slice(0, 3))
+            .join(", ");
+          return `${frequencyLabel} (${weekdays})`;
+        }
+
+        return frequencyLabel || "-";
+      },
     },
     {
       key: "rNotes",
@@ -311,7 +447,7 @@ const BreakListPage: React.FC = () => {
       visible: true,
       sortable: false,
       filterable: false,
-      width: 170,
+      width: 220, // Increased width to accommodate new button
       render: (item) => (
         <Stack direction="row" spacing={1}>
           <IconButton
@@ -335,6 +471,17 @@ const BreakListPage: React.FC = () => {
             }}
           >
             <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            color={item.rActiveYN === "Y" ? "warning" : "success"}
+            onClick={() => (item.rActiveYN === "Y" ? handleSuspend(item) : handleResume(item))}
+            sx={{
+              bgcolor: "rgba(25, 118, 210, 0.08)",
+              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+            }}
+          >
+            {item.rActiveYN === "Y" ? <SuspendIcon fontSize="small" /> : <ResumeIcon fontSize="small" />}
           </IconButton>
           <IconButton
             size="small"
@@ -432,7 +579,6 @@ const BreakListPage: React.FC = () => {
                   size="small"
                   defaultText="All Status"
                 />
-
                 <DropdownSelect
                   label="Type"
                   name="type"
@@ -442,7 +588,6 @@ const BreakListPage: React.FC = () => {
                   size="small"
                   defaultText="All Types"
                 />
-
                 <Box display="flex" alignItems="center" gap={1}>
                   {(filters.status || filters.type) && (
                     <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
@@ -459,6 +604,8 @@ const BreakListPage: React.FC = () => {
       </Paper>
 
       {isFormOpen && <BreakListForm open={isFormOpen} onClose={handleFormClose} initialData={selectedBreak} viewOnly={isViewMode} />}
+
+      {isSuspendDialogOpen && suspendData && <BreakSuspendDetails open={isSuspendDialogOpen} onClose={handleSuspendDialogClose} breakData={suspendData} />}
 
       <ConfirmationDialog
         open={isDeleteConfirmOpen}

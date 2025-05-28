@@ -16,6 +16,25 @@ export interface BreakListData extends BaseDto {
   isPhyResYN: string;
   transferYN?: string;
 }
+export interface BreakDto extends BaseDto {
+  bLID: number;
+  bLName: string;
+  bLStartTime: Date;
+  bLEndTime: Date;
+  bLStartDate: Date;
+  bLEndDate: Date;
+  bLFrqNo: number;
+  bLFrqDesc: string;
+  bLFrqWkDesc: string;
+  bColor: string;
+  rActiveYN: string;
+  rNotes: string;
+  isPhyResYN: string;
+  transferYN?: string;
+  //
+  bCSID?: number;
+  breakConDetailData?: BreakConDetailData[];
+}
 
 export interface BreakConDetailData extends BaseDto {
   bCDID: number;
@@ -27,8 +46,8 @@ export interface BreakConDetailData extends BaseDto {
 }
 
 export interface BreakListDto extends BaseDto {
-  breakListData: BreakListData;
-  breakListConDetailsData: BreakConDetailData[];
+  breakList: BreakListData;
+  breakConDetails: BreakConDetailData[];
 }
 
 export interface FrequencyData {
@@ -36,4 +55,15 @@ export interface FrequencyData {
   endDate: string;
   interval: number;
   weekDays: string[];
+}
+
+export interface BreakConSuspendData extends BaseDto {
+  bCSID: number;
+  bLID: number;
+  hPLID: number | null;
+  bCSStartDate: Date | string;
+  bCSEndDate: Date | string;
+  rActiveYN?: string;
+  rNotes?: string;
+  transferYN?: string;
 }
