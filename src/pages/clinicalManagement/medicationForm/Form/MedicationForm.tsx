@@ -81,7 +81,6 @@ const MedicationFormForm: React.FC<MedicationFormFormProps> = ({ open, onClose, 
         showAlert("Warning", "Failed to generate form code", "warning");
       }
     } catch (error) {
-      console.error("Error generating form code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -126,7 +125,6 @@ const MedicationFormForm: React.FC<MedicationFormFormProps> = ({ open, onClose, 
         throw new Error(response.errorMessage || "Failed to save medication form");
       }
     } catch (error) {
-      console.error("Error saving medication form:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save medication form";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
@@ -301,10 +299,6 @@ const MedicationFormForm: React.FC<MedicationFormFormProps> = ({ open, onClose, 
 
                     <Grid size={{ sm: 12, md: 4 }}>
                       <FormField name="modifyYN" control={control} label="Allow Modification" type="switch" disabled={viewOnly} size="small" />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField name="transferYN" control={control} label="Allow Transfer" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>

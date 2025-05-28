@@ -11,7 +11,7 @@ import {
   Dashboard as DashboardIcon,
   ChangeCircleRounded as ChangeDepartmentIcon,
 } from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
@@ -28,27 +28,19 @@ const statusOptions = [
   { value: "inactive", label: "Inactive" },
 ];
 
-const stockLevelOptions = [
-  { value: "low", label: "Low Stock" },
-  { value: "danger", label: "Danger Level" },
-  { value: "normal", label: "Normal" },
-];
-
 const ProductOverviewPage: React.FC = () => {
   const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedProductOverview, setSelectedProductOverview] = useState<ProductOverviewDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [, setIsSearchOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
-
+  const [gridDensity] = useState<GridDensity>("medium");
   const { isLoading, error, deleteProductOverview, getProductOverviewByDepartment } = useProductOverview();
-
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
-
   const [departmentProductList, setDepartmentProductList] = useState<ProductOverviewDto[]>([]);
 
   const [filters, setFilters] = useState<{
@@ -63,7 +55,6 @@ const ProductOverviewPage: React.FC = () => {
     transfer: "",
   });
 
-  // Auto-open department selection dialog if no department is selected
   useEffect(() => {
     if (!isDepartmentSelected && !isDialogOpen) {
       openDialog();
@@ -82,7 +73,6 @@ const ProductOverviewPage: React.FC = () => {
         const products = await getProductOverviewByDepartment(deptId);
         setDepartmentProductList(products);
       } catch (error) {
-        console.error("Error fetching department products:", error);
         showAlert("Error", "Failed to fetch department products", "error");
       }
     }
@@ -172,17 +162,6 @@ const ProductOverviewPage: React.FC = () => {
     },
     [fetchDepartmentProducts]
   );
-
-  const handleSearchClose = useCallback(() => {
-    setIsSearchOpen(false);
-  }, []);
-
-  const handleSearchSelect = useCallback((productOverview: ProductOverviewDto) => {
-    setSelectedProductOverview(productOverview);
-    setIsViewMode(true);
-    setIsFormOpen(true);
-    setIsSearchOpen(false);
-  }, []);
 
   const handleDepartmentChange = useCallback(() => {
     openDialog();
@@ -421,9 +400,10 @@ const ProductOverviewPage: React.FC = () => {
       header: "Status",
       visible: true,
       sortable: true,
-      filterable: true,
-      width: 100,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
+      width: gridDensity === "large" ? 120 : gridDensity === "medium" ? 100 : 80,
+      formatter: (value: string) => (
+        <Chip size={gridDensity === "large" ? "medium" : "small"} color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />
+      ),
     },
     {
       key: "rNotes",
@@ -575,7 +555,6 @@ const ProductOverviewPage: React.FC = () => {
             </Grid>
           </Paper>
 
-          {/* Data Grid */}
           <Paper sx={{ p: 2 }}>
             <CustomGrid
               columns={columns}
@@ -588,10 +567,7 @@ const ProductOverviewPage: React.FC = () => {
         </>
       )}
 
-      {/* Department Selection Dialog */}
       <DepartmentSelectionDialog open={isDialogOpen} onClose={closeDialog} onSelectDepartment={handleDepartmentSelect} initialDeptId={deptId} requireSelection={true} />
-
-      {/* Product Overview Form */}
       {isFormOpen && isDepartmentSelected && (
         <ProductOverviewForm
           open={isFormOpen}
@@ -603,7 +579,6 @@ const ProductOverviewPage: React.FC = () => {
         />
       )}
 
-      {/* Delete Confirmation */}
       <ConfirmationDialog
         open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}

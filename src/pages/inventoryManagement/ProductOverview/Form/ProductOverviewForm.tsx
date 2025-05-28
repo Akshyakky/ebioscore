@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress, Paper } from "@mui/material";
+import { Box, Grid, Typography, Divider, Card, CardContent, Alert } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -7,7 +7,7 @@ import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOver
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel, Refresh, ChangeCircleRounded } from "@mui/icons-material";
+import { Save, Cancel, ChangeCircleRounded } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
@@ -15,7 +15,7 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
 import { useProductOverview } from "../hooks/useProductOverview";
 import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/ProductSearchForm";
-import { ProductOption, ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
+import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
 
 interface ProductOverviewFormProps {
   open: boolean;
@@ -26,7 +26,6 @@ interface ProductOverviewFormProps {
   onChangeDepartment?: () => void;
 }
 
-// Updated schema with proper number coercion
 const schema = z.object({
   pvID: z.coerce.number().default(0),
   productID: z.coerce.number().default(0),
@@ -51,7 +50,6 @@ const schema = z.object({
   rActiveYN: z.string().default("Y"),
   transferYN: z.string().default("N"),
   rNotes: z.string().optional(),
-  // Additional fields for dialog
   productName: z.string().optional(),
   baseUnit: z.string().optional(),
   leadTime: z.coerce.number().min(0, "Must be non-negative").default(0),
@@ -61,22 +59,18 @@ const schema = z.object({
 });
 
 type ProductOverviewFormData = z.infer<typeof schema>;
-
 const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose, initialData, viewOnly = false, selectedDepartment, onChangeDepartment }) => {
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
-  const { saveProductOverview, getProductByCode, fetchProductSuggestions, isLoadingProducts, convertLeadTimeToDays } = useProductOverview();
-
+  const { saveProductOverview, getProductByCode, fetchProductSuggestions, convertLeadTimeToDays } = useProductOverview();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [selectedProductData, setSelectedProductData] = useState<ProductListDto[]>([]);
-  const [isProductSelected, setIsProductSelected] = useState(false);
+  const [, setIsProductSelected] = useState(false);
   const [convertedLeadTime, setConvertedLeadTime] = useState<number | null>(null);
-  const [productSuggestions, setProductSuggestions] = useState<string[]>([]);
   const productSearchRef = useRef<ProductSearchRef>(null);
-
   const isAddMode = !initialData;
 
   const defaultValues: ProductOverviewFormData = {
@@ -126,9 +120,7 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
 
   const watchedLeadTime = watch("leadTime");
   const watchedLeadTimeUnit = watch("leadTimeUnit");
-  const watchedProductCode = watch("productCode");
 
-  // Lead time conversion effect
   useEffect(() => {
     if (watchedLeadTime && watchedLeadTimeUnit) {
       const days = convertLeadTimeToDays(Number(watchedLeadTime), watchedLeadTimeUnit);
@@ -136,13 +128,11 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
     }
   }, [watchedLeadTime, watchedLeadTimeUnit, convertLeadTimeToDays]);
 
-  // Initialize form with data
   useEffect(() => {
     if (initialData) {
       const formData = {
         ...defaultValues,
         ...initialData,
-        // Ensure numbers are properly converted
         pvID: Number(initialData.pvID || 0),
         productID: Number(initialData.productID || 0),
         minLevelUnits: Number(initialData.minLevelUnits || 0),
@@ -170,22 +160,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
       });
     }
   }, [initialData, reset, selectedDepartment]);
-
-  // Fetch product suggestions
-  const fetchProductSuggestionsCallback = useCallback(
-    async (searchTerm: string): Promise<string[]> => {
-      if (!searchTerm.trim()) return [];
-
-      try {
-        const suggestions = await fetchProductSuggestions(searchTerm);
-        return suggestions;
-      } catch (error) {
-        console.error("Error fetching product suggestions:", error);
-        return [];
-      }
-    },
-    [fetchProductSuggestions]
-  );
 
   const handleProductSelect = (product: ProductSearchResult | null) => {
     if (product) {
@@ -227,24 +201,12 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
     [getProductByCode, setValue]
   );
 
-  // Handle autocomplete product selection
-  const handleAutocompleteProductSelect = useCallback(
-    async (selectedProductString: string) => {
-      if (!selectedProductString) return;
-      await handleProductSelection(selectedProductString);
-    },
-    [handleProductSelection]
-  );
-
   const onSubmit = async (data: ProductOverviewFormData) => {
     if (viewOnly) return;
-
     setFormError(null);
-
     try {
       setIsSaving(true);
       setLoading(true);
-
       const formData: ProductOverviewDto = {
         pvID: Number(data.pvID),
         productID: Number(data.productID),
@@ -269,7 +231,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
         rActiveYN: data.rActiveYN || "Y",
         transferYN: data.transferYN || "N",
         rNotes: data.rNotes || "",
-        // Additional fields
         leadTime: Number(data.leadTime || 0),
         leadTimeUnit: data.leadTimeUnit || "days",
         avgDemandUnit: data.avgDemandUnit || "days",
@@ -279,7 +240,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
       };
 
       const response = await saveProductOverview(formData);
-
       if (response.success) {
         showAlert("Success", isAddMode ? "Product overview created successfully" : "Product overview updated successfully", "success");
         onClose(true);
@@ -287,7 +247,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
         throw new Error(response.errorMessage || "Failed to save product overview");
       }
     } catch (error) {
-      console.error("Error saving product overview:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save product overview";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
@@ -423,7 +382,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
           )}
 
           <Grid container spacing={3}>
-            {/* Department Selection */}
             <Grid size={{ sm: 12 }}>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="h6">Department: {selectedDepartment.department}</Typography>
@@ -433,7 +391,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
               </Box>
             </Grid>
 
-            {/* Product Selection */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -475,7 +432,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
               </Card>
             </Grid>
 
-            {/* Location Information */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -499,7 +455,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
               </Card>
             </Grid>
 
-            {/* Stock Level Information */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -526,7 +481,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
               </Card>
             </Grid>
 
-            {/* Lead Time and Demand */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -561,7 +515,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
               </Card>
             </Grid>
 
-            {/* Reorder Information */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -596,7 +549,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
               </Card>
             </Grid>
 
-            {/* Settings */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -623,7 +575,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
               </Card>
             </Grid>
 
-            {/* Notes */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>

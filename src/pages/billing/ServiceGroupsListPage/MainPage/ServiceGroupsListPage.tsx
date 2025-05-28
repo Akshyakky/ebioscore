@@ -9,7 +9,7 @@ import {
   Visibility as VisibilityIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
@@ -46,9 +46,8 @@ const ServiceGroupsListPage: React.FC = () => {
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
   const { showAlert } = useAlert();
-
+  const [gridDensity, setGridDensity] = useState<GridDensity>("medium");
   const { serviceGroupsList, isLoading, error, fetchServiceGroupsList, deleteServiceGroup } = useServiceGroupsList();
-
   const [filters, setFilters] = useState<{
     status: string;
     serviceType: string;
@@ -306,9 +305,10 @@ const ServiceGroupsListPage: React.FC = () => {
       header: "Status",
       visible: true,
       sortable: true,
-      filterable: true,
-      width: 100,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
+      width: gridDensity === "large" ? 120 : gridDensity === "medium" ? 100 : 80,
+      formatter: (value: string) => (
+        <Chip size={gridDensity === "large" ? "medium" : "small"} color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />
+      ),
     },
     {
       key: "actions",

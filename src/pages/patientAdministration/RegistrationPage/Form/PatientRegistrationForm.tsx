@@ -7,15 +7,11 @@ import { Refresh as RefreshIcon, AccountBalance as InsuranceIcon, People as Next
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
-import { PatientSearch } from "../../CommonPage/Patient/PatientSearch/PatientSearch";
-import NextOfKinManager from "../../NextOfkinPage/MainPage/NextOfKinPage";
-import InsuranceManagementDialog from "../../InsuranceForm/Form/InsuranceGrid";
 import { PatientRegistrationDto, PatRegistersDto, PatAddressDto, PatOverviewDto, OpvisitDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 
@@ -69,6 +65,7 @@ const createSchema = (mode: "create" | "edit" | "view") => {
     sendEmailYN: z.enum(["Y", "N"]).default("Y"),
 
     // Address Information
+    pAddID: z.number().default(0),
     patDoorNo: z.string().optional().default(""),
     pAddStreet: z.string().optional().default(""),
     pAddStreet1: z.string().optional().default(""),
@@ -92,6 +89,7 @@ const createSchema = (mode: "create" | "edit" | "view") => {
     primIntroSourceName: z.string().optional().default(""),
 
     // Additional Information
+    patOverID: z.number().default(0),
     pOccupation: z.string().optional().default(""),
     pEmployer: z.string().optional().default(""),
     pEducation: z.string().optional().default(""),
@@ -134,10 +132,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
-  const [savedPChartID, setSavedPChartID] = useState<number>(0);
-  const [showNextOfKin, setShowNextOfKin] = useState(false);
-  const [showInsurance, setShowInsurance] = useState(false);
-  const [patientClearTrigger, setPatientClearTrigger] = useState(0);
   const [isCalculating, setIsCalculating] = useState(false);
 
   const isViewMode = mode === "view";
@@ -258,7 +252,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
   const watchedMembership = watch("patMemID");
   const watchedDobOrAge = watch("pDobOrAgeVal");
   const watchedVisitType = watch("visitTypeVal");
-  const watchedPChartCode = watch("pChartCode");
   const watchedDob = watch("pDob");
   const watchedAgeNumber = watch("pAgeNumber");
   const watchedAgeUnit = watch("pAgeDescriptionVal");
@@ -384,6 +377,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         patMemSchemeExpiryDate: dto.patRegisters.patMemSchemeExpiryDate ? new Date(dto.patRegisters.patMemSchemeExpiryDate) : undefined,
 
         // Contact Information
+        pAddID: dto.patAddress.pAddID,
         pAddPhone1: dto.patAddress.pAddPhone1 || "",
         pAddPhone2: dto.patAddress.pAddPhone2 || "",
         pAddPhone3: dto.patAddress.pAddPhone3 || "",
@@ -416,6 +410,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         primIntroSourceName: "",
 
         // Additional Information
+        patOverID: dto.patOverview.patOverID,
         pOccupation: dto.patOverview.pOccupation || "",
         pEmployer: dto.patOverview.pEmployer || "",
         pEducation: dto.patOverview.pEducation || "",
@@ -499,7 +494,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
       };
 
       const patAddress: PatAddressDto = {
-        pAddID: 0,
+        pAddID: formData.pAddID,
         pChartID: formData.pChartID,
         pChartCode: formData.pChartCode,
         pAddType: "HOME",
@@ -528,7 +523,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
       };
 
       const patOverview: PatOverviewDto = {
-        patOverID: 0,
+        patOverID: formData.patOverID,
         pChartID: formData.pChartID,
         pChartCode: formData.pChartCode,
         pPhoto: "",
@@ -569,11 +564,9 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
     if (initialData && (isEditMode || isViewMode)) {
       const formData = transformToFormData(initialData);
       reset(formData);
-      setSavedPChartID(initialData.patRegisters.pChartID);
     } else if (isCreateMode) {
       reset(defaultValues);
       generatePatientCode();
-      setSavedPChartID(0);
     }
   }, [initialData, isEditMode, isViewMode, reset, transformToFormData, isCreateMode, defaultValues]);
 
@@ -725,7 +718,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         // This is just for UI feedback
         setValue("pChartID", patient.pChartID, { shouldDirty: true });
         setValue("pChartCode", patient.pChartCode, { shouldDirty: true });
-        setSavedPChartID(patient.pChartID);
       }
     },
     [isEditMode, setValue]
@@ -752,7 +744,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
           const newDefaults = { ...defaultValues };
           reset(newDefaults);
           generatePatientCode();
-          setSavedPChartID(0);
         }
       }
     } catch (error) {
@@ -773,7 +764,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
     setFormError(null);
 
     if (isCreateMode) {
-      setSavedPChartID(0);
       generatePatientCode();
     }
   }, [initialData, isEditMode, isViewMode, isCreateMode, defaultValues, reset, transformToFormData]);
@@ -817,21 +807,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
 
   return (
     <Box sx={{ p: 1.5 }}>
-      {/* Patient Search for Edit Mode - Compact */}
-      {isEditMode && !savedPChartID && (
-        <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
-          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-            Search Patient
-          </Typography>
-          <PatientSearch
-            onPatientSelect={handlePatientSelect}
-            clearTrigger={patientClearTrigger}
-            label="Search Patient to Edit"
-            placeholder="Enter patient name, chart code, or phone number"
-          />
-        </Paper>
-      )}
-
       <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         {formError && (
           <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setFormError(null)}>
@@ -843,8 +818,8 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
             <Box display="flex" gap={1} flexWrap="wrap">
-              <SmartButton text="Next of Kin" icon={NextOfKinIcon} onClick={() => setShowNextOfKin(true)} variant="outlined" size="small" disabled={savedPChartID === 0} />
-              <SmartButton text="Insurance" icon={InsuranceIcon} onClick={() => setShowInsurance(true)} variant="outlined" size="small" disabled={savedPChartID === 0} />
+              {/* Next of Kin */}
+              {/* Patient Insurance */}
             </Box>
             <Box display="flex" alignItems="center" gap={1}>
               <Typography variant="caption" color="text.secondary">
@@ -1279,26 +1254,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
           </Grid>
         </Grid>
       </Box>
-
-      {/* Dialog Components */}
-      {showNextOfKin && savedPChartID > 0 && (
-        <GenericDialog open={showNextOfKin} onClose={() => setShowNextOfKin(false)} title="Next of Kin Management" maxWidth="xl" fullWidth showCloseButton>
-          <NextOfKinManager pChartID={savedPChartID} pChartCode={watchedPChartCode} title="Next of Kin Information" showStats={true} />
-        </GenericDialog>
-      )}
-
-      {showInsurance && savedPChartID > 0 && (
-        <InsuranceManagementDialog
-          open={showInsurance}
-          onClose={() => setShowInsurance(false)}
-          pChartID={savedPChartID}
-          pChartCode={watchedPChartCode}
-          patientName={`${watch("pFName")} ${watch("pLName")}`}
-          title="Insurance Management"
-          readOnly={false}
-          showSaveAll={false}
-        />
-      )}
 
       <ConfirmationDialog
         open={showResetConfirmation}

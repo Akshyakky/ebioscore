@@ -40,7 +40,6 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({
 
   // Important: Keep the local state in sync with props
   useEffect(() => {
-    console.log("Received ageRanges in table:", ageRanges);
     setUpdatedAgeRanges(ageRanges);
     setSelectedRows([]);
   }, [ageRanges]);
@@ -103,7 +102,6 @@ const ApplicableAgeRangeTable: React.FC<ApplicableAgeRangeTableProps> = ({
     }
 
     const finalItem = buildAgeRange(editAgeRange);
-    console.log("Saving age range:", finalItem);
 
     setUpdatedAgeRanges((prev) => {
       const index = prev.findIndex((x) => x.carID === finalItem.carID);

@@ -53,7 +53,6 @@ const EmployeeRegistrationForm: React.FC = () => {
     try {
       // Simulate API call with a delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Form submitted successfully:", data);
 
       alert("Employee registration successful!");
     } catch (error) {

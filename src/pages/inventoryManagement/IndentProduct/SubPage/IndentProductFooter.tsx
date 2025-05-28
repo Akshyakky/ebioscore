@@ -29,14 +29,6 @@ const IndentProductFooter: React.FC<IndentProductFooterProps> = ({ setValue, con
     setValue("IndentMaster.indentApprovedYN", newValue);
   };
 
-  useEffect(() => {
-    console.log("Current values:", {
-      rNotes: getValues("IndentMaster.rNotes"),
-      rActiveYN: getValues("IndentMaster.rActiveYN"),
-      indentApprovedYN: getValues("IndentMaster.indentApprovedYN"),
-    });
-  }, [getValues, rActiveYN, indentApprovedYN]);
-
   return (
     <Paper variant="outlined" sx={{ padding: 2 }}>
       <Grid container spacing={3}>

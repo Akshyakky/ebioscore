@@ -178,7 +178,6 @@ const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, 
   }, []);
 
   const getItemId = useCallback((item: IndentMastDto) => {
-    console.log("getItemId called with item:", item);
     return item.indentID || 0;
   }, []);
 

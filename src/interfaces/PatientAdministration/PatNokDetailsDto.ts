@@ -1,5 +1,4 @@
 export interface PatNokDetailsDto {
-  ID: number;
   pNokID: number;
   pChartID: number;
   pNokPChartCode: string;

@@ -23,7 +23,6 @@ const PurchaseOrderHeader: React.FC<PurchaseOrderHeaderFormProps> = ({ control, 
   const approvedDisable = control._formValues.purchaseOrderMast.disableApprovedFields || false;
 
   const handleProductSelect = (product: ProductSearchResult | null) => {
-    console.log("Selected Product:", product);
     if (departmentId === 0) {
       showAlert("Please select a department first", "", "warning");
       return;

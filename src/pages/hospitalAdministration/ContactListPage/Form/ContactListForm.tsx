@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, SelectChangeEvent } from "@mui/material";
+import { Box, Grid, Typography, Divider, Card, CardContent, Alert } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -66,16 +66,15 @@ type ContactFormData = z.infer<typeof schema>;
 const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
-  const { getContactById, saveContact, generateContactCode } = useContactList();
+  const { getContactById, saveContact } = useContactList();
   const serverDate = useServerDate();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [, setIsGeneratingCode] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
-  const [dialogCategory, setDialogCategory] = useState<string>("");
+  const [dialogCategory] = useState<string>("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [contactDetails, setContactDetails] = useState<ContactListData | null>(null);
   const isAddMode = !initialData;

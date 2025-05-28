@@ -80,7 +80,6 @@ const ProfileListForm: React.FC<ProfileListFormProps> = ({ open, onClose, initia
         showAlert("Warning", "Failed to generate profile code", "warning");
       }
     } catch (error) {
-      console.error("Error generating profile code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -122,7 +121,6 @@ const ProfileListForm: React.FC<ProfileListFormProps> = ({ open, onClose, initia
         throw new Error(response.errorMessage || "Failed to save profile");
       }
     } catch (error) {
-      console.error("Error saving profile:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save profile";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
