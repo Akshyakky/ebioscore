@@ -20,8 +20,6 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import PatientRegistrationForm from "../Form/PatientRegistrationForm";
-import NextOfKinManager from "../../NextOfkinPage/MainPage/NextOfKinPage";
-import InsuranceManagementDialog from "../../InsuranceForm/Form/InsuranceGrid";
 import { usePatientRegistration, PatientListData } from "../hooks/usePatientRegistration";
 import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import { useAlert } from "@/providers/AlertProvider";
@@ -53,8 +51,6 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
   const [selectedPatient, setSelectedPatient] = useState<PatientRegistrationDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
-  const [isNextOfKinOpen, setIsNextOfKinOpen] = useState<boolean>(false);
-  const [isInsuranceOpen, setIsInsuranceOpen] = useState<boolean>(false);
   const [formMode, setFormMode] = useState<"create" | "edit" | "view">("create");
   const [selectedPatientForAction, setSelectedPatientForAction] = useState<PatientListData | null>(null);
   const [gridDensity, setGridDensity] = useState<GridDensity>("medium");
@@ -209,18 +205,6 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
       setSelectedPatientForAction(null);
     }
   }, [selectedPatientForAction, deletePatient, showAlert]);
-
-  // Next of Kin management
-  const handleManageNextOfKin = useCallback((patient: PatientListData) => {
-    setSelectedPatientForAction(patient);
-    setIsNextOfKinOpen(true);
-  }, []);
-
-  // Insurance management
-  const handleManageInsurance = useCallback((patient: PatientListData) => {
-    setSelectedPatientForAction(patient);
-    setIsInsuranceOpen(true);
-  }, []);
 
   // Form save handler
   const handleFormSave = useCallback(
@@ -665,34 +649,6 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
       >
         <PatientRegistrationForm ref={patientFormRef} mode={formMode} initialData={selectedPatient} onSave={handleFormSave} onClose={handleFormClose} />
       </GenericDialog>
-
-      {/* Next of Kin Management Dialog */}
-      {isNextOfKinOpen && selectedPatientForAction && (
-        <GenericDialog
-          open={isNextOfKinOpen}
-          onClose={() => setIsNextOfKinOpen(false)}
-          title={`Next of Kin Management - ${selectedPatientForAction.fullName}`}
-          maxWidth="xl"
-          fullWidth
-          showCloseButton
-        >
-          <NextOfKinManager pChartID={selectedPatientForAction.pChartID} pChartCode={selectedPatientForAction.pChartCode} title="Next of Kin Information" showStats={true} />
-        </GenericDialog>
-      )}
-
-      {/* Insurance Management Dialog */}
-      {isInsuranceOpen && selectedPatientForAction && (
-        <InsuranceManagementDialog
-          open={isInsuranceOpen}
-          onClose={() => setIsInsuranceOpen(false)}
-          pChartID={selectedPatientForAction.pChartID}
-          pChartCode={selectedPatientForAction.pChartCode}
-          patientName={selectedPatientForAction.fullName}
-          title="Insurance Management"
-          readOnly={false}
-          showSaveAll={false}
-        />
-      )}
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialog

@@ -14,8 +14,6 @@ import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { PatientSearch } from "../../CommonPage/Patient/PatientSearch/PatientSearch";
-import NextOfKinManager from "../../NextOfkinPage/MainPage/NextOfKinPage";
-import InsuranceManagementDialog from "../../InsuranceForm/Form/InsuranceGrid";
 import { PatientRegistrationDto, PatRegistersDto, PatAddressDto, PatOverviewDto, OpvisitDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 
@@ -137,9 +135,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [savedPChartID, setSavedPChartID] = useState<number>(0);
-  const [showNextOfKin, setShowNextOfKin] = useState(false);
-  const [showInsurance, setShowInsurance] = useState(false);
-  const [patientClearTrigger, setPatientClearTrigger] = useState(0);
+  const [patientClearTrigger] = useState(0);
   const [isCalculating, setIsCalculating] = useState(false);
 
   const isViewMode = mode === "view";
@@ -260,7 +256,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
   const watchedMembership = watch("patMemID");
   const watchedDobOrAge = watch("pDobOrAgeVal");
   const watchedVisitType = watch("visitTypeVal");
-  const watchedPChartCode = watch("pChartCode");
   const watchedDob = watch("pDob");
   const watchedAgeNumber = watch("pAgeNumber");
   const watchedAgeUnit = watch("pAgeDescriptionVal");
@@ -847,8 +842,8 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
             <Box display="flex" gap={1} flexWrap="wrap">
-              <SmartButton text="Next of Kin" icon={NextOfKinIcon} onClick={() => setShowNextOfKin(true)} variant="outlined" size="small" disabled={savedPChartID === 0} />
-              <SmartButton text="Insurance" icon={InsuranceIcon} onClick={() => setShowInsurance(true)} variant="outlined" size="small" disabled={savedPChartID === 0} />
+              {/* Next of Kin */}
+              {/* Patient Insurance */}
             </Box>
             <Box display="flex" alignItems="center" gap={1}>
               <Typography variant="caption" color="text.secondary">
@@ -1283,26 +1278,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
           </Grid>
         </Grid>
       </Box>
-
-      {/* Dialog Components */}
-      {showNextOfKin && savedPChartID > 0 && (
-        <GenericDialog open={showNextOfKin} onClose={() => setShowNextOfKin(false)} title="Next of Kin Management" maxWidth="xl" fullWidth showCloseButton>
-          <NextOfKinManager pChartID={savedPChartID} pChartCode={watchedPChartCode} title="Next of Kin Information" showStats={true} />
-        </GenericDialog>
-      )}
-
-      {showInsurance && savedPChartID > 0 && (
-        <InsuranceManagementDialog
-          open={showInsurance}
-          onClose={() => setShowInsurance(false)}
-          pChartID={savedPChartID}
-          pChartCode={watchedPChartCode}
-          patientName={`${watch("pFName")} ${watch("pLName")}`}
-          title="Insurance Management"
-          readOnly={false}
-          showSaveAll={false}
-        />
-      )}
 
       <ConfirmationDialog
         open={showResetConfirmation}
