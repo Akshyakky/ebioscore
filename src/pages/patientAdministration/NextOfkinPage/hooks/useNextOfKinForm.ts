@@ -13,9 +13,8 @@ interface UseNextOfKinOptions {
 export const useNextOfKin = (options: UseNextOfKinOptions = {}) => {
   const { pChartID, pChartCode, autoFetch = true } = options;
   const [nokList, setNokList] = useState<PatNokDetailsDto[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { setLoading: setGlobalLoading } = useLoading();
+  const { isLoading, setLoading } = useLoading();
 
   const fetchNokList = useCallback(
     async (chartID?: number) => {
@@ -27,9 +26,8 @@ export const useNextOfKin = (options: UseNextOfKinOptions = {}) => {
       }
 
       try {
-        setIsLoading(true);
+        setLoading(true);
         setError(null);
-        setGlobalLoading(true);
 
         const response = await PatNokService.getNokDetailsByPChartID(targetChartID);
 
@@ -49,18 +47,16 @@ export const useNextOfKin = (options: UseNextOfKinOptions = {}) => {
         notifyError(errorMessage);
         return false;
       } finally {
-        setIsLoading(false);
-        setGlobalLoading(false);
+        setLoading(false);
       }
     },
-    [pChartID, setGlobalLoading]
+    [pChartID]
   );
 
   const saveNextOfKin = useCallback(
     async (data: PatNokDetailsDto): Promise<{ success: boolean; errorMessage?: string }> => {
       try {
-        setIsLoading(true);
-        setGlobalLoading(true);
+        setLoading(true);
         const nokData = {
           ...data,
           pChartID: data.pChartID || pChartID,
@@ -83,18 +79,16 @@ export const useNextOfKin = (options: UseNextOfKinOptions = {}) => {
         notifyError(errorMessage);
         return { success: false, errorMessage };
       } finally {
-        setIsLoading(false);
-        setGlobalLoading(false);
+        setLoading(false);
       }
     },
-    [pChartID, pChartCode, fetchNokList, setGlobalLoading]
+    [pChartID, pChartCode, fetchNokList]
   );
 
   const deleteNextOfKin = useCallback(
     async (nokId: number): Promise<boolean> => {
       try {
-        setIsLoading(true);
-        setGlobalLoading(true);
+        setLoading(true);
         const nokToUpdate = nokList.find((nok) => nok.pNokID === nokId);
         if (!nokToUpdate) {
           notifyError("Record not found");
@@ -120,11 +114,10 @@ export const useNextOfKin = (options: UseNextOfKinOptions = {}) => {
         notifyError("An error occurred while removing next of kin");
         return false;
       } finally {
-        setIsLoading(false);
-        setGlobalLoading(false);
+        setLoading(false);
       }
     },
-    [nokList, fetchNokList, setGlobalLoading]
+    [nokList, fetchNokList]
   );
 
   const getActiveNokList = useCallback(() => {

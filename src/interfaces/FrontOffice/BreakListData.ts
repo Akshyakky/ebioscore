@@ -30,3 +30,10 @@ export interface BreakListDto extends BaseDto {
   breakListData: BreakListData;
   breakListConDetailsData: BreakConDetailData[];
 }
+
+export interface FrequencyData {
+  frequency: string;
+  endDate: string;
+  interval: number;
+  weekDays: string[];
+}

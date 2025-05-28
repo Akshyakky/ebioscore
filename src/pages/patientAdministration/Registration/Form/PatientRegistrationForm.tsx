@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useImperativeHandle } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment } from "@mui/material";
+import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, Chip, Paper } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Refresh as RefreshIcon, AccountBalance as InsuranceIcon, People as NextOfKinIcon } from "@mui/icons-material";
+import { Refresh as RefreshIcon, AccountBalance as InsuranceIcon, People as NextOfKinIcon, CheckCircle, Cancel } from "@mui/icons-material";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
@@ -35,7 +35,7 @@ const createSchema = (mode: "create" | "edit" | "view") => {
     pLName: z.string().min(1, "Last name is required"),
 
     // Age/DOB Selection
-    pDobOrAgeVal: z.enum(["DOB", "AGE"]).default("DOB"),
+    pDobOrAgeVal: z.enum(["D", "A"]).default("D"),
     pDob: z.date().optional(),
 
     pAgeNumber: z.number().min(0).max(150).optional().default(0),
@@ -69,6 +69,7 @@ const createSchema = (mode: "create" | "edit" | "view") => {
     sendEmailYN: z.enum(["Y", "N"]).default("Y"),
 
     // Address Information
+    pAddID: z.number().default(0),
     patDoorNo: z.string().optional().default(""),
     pAddStreet: z.string().optional().default(""),
     pAddStreet1: z.string().optional().default(""),
@@ -92,6 +93,7 @@ const createSchema = (mode: "create" | "edit" | "view") => {
     primIntroSourceName: z.string().optional().default(""),
 
     // Additional Information
+    patOverID: z.number().default(0),
     pOccupation: z.string().optional().default(""),
     pEmployer: z.string().optional().default(""),
     pEducation: z.string().optional().default(""),
@@ -138,6 +140,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
   const [showNextOfKin, setShowNextOfKin] = useState(false);
   const [showInsurance, setShowInsurance] = useState(false);
   const [patientClearTrigger, setPatientClearTrigger] = useState(0);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   const isViewMode = mode === "view";
   const isEditMode = mode === "edit";
@@ -177,7 +180,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
       pFName: "",
       pMName: "",
       pLName: "",
-      pDobOrAgeVal: "DOB",
+      pDobOrAgeVal: "D",
       pDob: serverDate,
       pAgeNumber: 0,
       pAgeDescriptionVal: "",
@@ -258,6 +261,96 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
   const watchedDobOrAge = watch("pDobOrAgeVal");
   const watchedVisitType = watch("visitTypeVal");
   const watchedPChartCode = watch("pChartCode");
+  const watchedDob = watch("pDob");
+  const watchedAgeNumber = watch("pAgeNumber");
+  const watchedAgeUnit = watch("pAgeDescriptionVal");
+  const watchedSendSMS = watch("sendSMSYN");
+  const watchedSendEmail = watch("sendEmailYN");
+
+  // Age calculation utilities
+  const calculateAgeFromDob = useCallback(
+    (dob: Date, referenceDate: Date = serverDate) => {
+      const diffTime = referenceDate.getTime() - dob.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        return { ageNumber: 0, ageUnit: "Y" }; // Future date
+      }
+
+      const years = Math.floor(diffDays / 365.25);
+      const months = Math.floor(diffDays / 30.44);
+      const days = diffDays;
+
+      // Determine the most appropriate unit
+      if (years >= 2) {
+        return { ageNumber: years, ageUnit: "Y" }; // Years
+      } else if (months >= 2) {
+        return { ageNumber: months, ageUnit: "M" }; // Months
+      } else {
+        return { ageNumber: days, ageUnit: "D" }; // Days
+      }
+    },
+    [serverDate]
+  );
+
+  const calculateDobFromAge = useCallback(
+    (ageNumber: number, ageUnit: string, referenceDate: Date = serverDate) => {
+      if (!ageNumber || ageNumber <= 0) {
+        return referenceDate;
+      }
+
+      const dobDate = new Date(referenceDate);
+
+      switch (ageUnit) {
+        case "Y": // Years
+          dobDate.setFullYear(dobDate.getFullYear() - ageNumber);
+          break;
+        case "M": // Months
+          dobDate.setMonth(dobDate.getMonth() - ageNumber);
+          break;
+        case "D": // Days
+          dobDate.setDate(dobDate.getDate() - ageNumber);
+          break;
+        default:
+          // Default to years if unit is not recognized
+          dobDate.setFullYear(dobDate.getFullYear() - ageNumber);
+      }
+
+      return dobDate;
+    },
+    [serverDate]
+  );
+
+  // Effect to calculate age when DOB changes
+  useEffect(() => {
+    if (watchedDobOrAge === "D" && watchedDob && !isCalculating) {
+      setIsCalculating(true);
+      try {
+        const calculatedAge = calculateAgeFromDob(watchedDob);
+        setValue("pAgeNumber", calculatedAge.ageNumber, { shouldDirty: false });
+        setValue("pAgeDescriptionVal", calculatedAge.ageUnit, { shouldDirty: false });
+      } catch (error) {
+        console.error("Error calculating age from DOB:", error);
+      } finally {
+        setIsCalculating(false);
+      }
+    }
+  }, [watchedDob, watchedDobOrAge, isCalculating, calculateAgeFromDob, setValue]);
+
+  // Effect to calculate DOB when age changes
+  useEffect(() => {
+    if (watchedDobOrAge === "A" && watchedAgeNumber && watchedAgeUnit && !isCalculating) {
+      setIsCalculating(true);
+      try {
+        const calculatedDob = calculateDobFromAge(watchedAgeNumber, watchedAgeUnit);
+        setValue("pDob", calculatedDob, { shouldDirty: false });
+      } catch (error) {
+        console.error("Error calculating DOB from age:", error);
+      } finally {
+        setIsCalculating(false);
+      }
+    }
+  }, [watchedAgeNumber, watchedAgeUnit, watchedDobOrAge, isCalculating, calculateDobFromAge, setValue]);
 
   // Transform PatientRegistrationDto to form data
   const transformToFormData = useCallback(
@@ -272,7 +365,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         pFName: dto.patRegisters.pFName || "",
         pMName: dto.patRegisters.pMName || "",
         pLName: dto.patRegisters.pLName || "",
-        pDobOrAgeVal: dto.patRegisters.pDobOrAgeVal as "DOB" | "AGE",
+        pDobOrAgeVal: dto.patRegisters.pDobOrAgeVal as "D" | "A",
         pDob: dto.patRegisters.pDob ? new Date(dto.patRegisters.pDob) : serverDate,
         pAgeNumber: dto.patOverview.pAgeNumber || 0,
         pAgeDescriptionVal: dto.patOverview.pAgeDescriptionVal || "",
@@ -293,6 +386,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         patMemSchemeExpiryDate: dto.patRegisters.patMemSchemeExpiryDate ? new Date(dto.patRegisters.patMemSchemeExpiryDate) : undefined,
 
         // Contact Information
+        pAddID: dto.patAddress.pAddID,
         pAddPhone1: dto.patAddress.pAddPhone1 || "",
         pAddPhone2: dto.patAddress.pAddPhone2 || "",
         pAddPhone3: dto.patAddress.pAddPhone3 || "",
@@ -325,6 +419,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         primIntroSourceName: "",
 
         // Additional Information
+        patOverID: dto.patOverview.patOverID,
         pOccupation: dto.patOverview.pOccupation || "",
         pEmployer: dto.patOverview.pEmployer || "",
         pEducation: dto.patOverview.pEducation || "",
@@ -408,7 +503,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
       };
 
       const patAddress: PatAddressDto = {
-        pAddID: 0,
+        pAddID: formData.pAddID,
         pChartID: formData.pChartID,
         pChartCode: formData.pChartCode,
         pAddType: "HOME",
@@ -437,7 +532,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
       };
 
       const patOverview: PatOverviewDto = {
-        patOverID: 0,
+        patOverID: formData.patOverID,
         pChartID: formData.pChartID,
         pChartCode: formData.pChartCode,
         pPhoto: "",
@@ -589,7 +684,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
       const selectedOption = dropdownValues.primaryIntroducingSource?.find((option) => option.value === value);
 
       if (selectedOption) {
-        setValue("primIntroSourceID", value, { shouldValidate: true, shouldDirty: true });
+        setValue("primIntroSourceID", value.toString(), { shouldValidate: true, shouldDirty: true });
         setValue("primIntroSourceName", selectedOption.label, { shouldValidate: true, shouldDirty: true });
       }
     },
@@ -604,9 +699,26 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
       if (selectedOption) {
         setValue("patMemID", Number(value), { shouldValidate: true, shouldDirty: true });
         setValue("patMemName", selectedOption.label, { shouldValidate: true, shouldDirty: true });
+      } else {
+        // Clear membership when no selection
+        setValue("patMemID", 0, { shouldValidate: true, shouldDirty: true });
+        setValue("patMemName", "", { shouldDirty: true });
       }
     },
     [dropdownValues.membershipScheme, setValue]
+  );
+
+  const handleStateChange = useCallback(
+    (event: any) => {
+      const value = event?.target?.value || event?.value || event;
+      const selectedOption = dropdownValues.state?.find((option) => option.value === value);
+      if (selectedOption) {
+        setValue("pAddState", selectedOption.label, { shouldValidate: true, shouldDirty: true });
+      } else {
+        setValue("pAddState", value, { shouldValidate: true, shouldDirty: true });
+      }
+    },
+    [dropdownValues.state, setValue]
   );
 
   // Patient search handler for edit mode
@@ -696,370 +808,385 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
 
   const isHospitalVisit = watchedVisitType === "H";
   const isPhysicianVisit = watchedVisitType === "P";
+  const isNoneVisit = watchedVisitType === "N";
+
+  // Helper function to get membership scheme display name
+  const getMembershipDisplayName = () => {
+    if (!watchedMembership || watchedMembership === 0) {
+      return "No Membership Selected";
+    }
+    const selected = dropdownValues.membershipScheme?.find((option) => Number(option.value) === watchedMembership);
+    return selected?.label || "Unknown Membership";
+  };
 
   return (
-    <Box sx={{ p: 2 }}>
-      {/* Patient Search for Edit Mode */}
+    <Box sx={{ p: 1.5 }}>
+      {/* Patient Search for Edit Mode - Compact */}
       {isEditMode && !savedPChartID && (
-        <Card variant="outlined" sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Search Patient
-            </Typography>
-            <PatientSearch
-              onPatientSelect={handlePatientSelect}
-              clearTrigger={patientClearTrigger}
-              label="Search Patient to Edit"
-              placeholder="Enter patient name, chart code, or phone number"
-            />
-          </CardContent>
-        </Card>
+        <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+            Search Patient
+          </Typography>
+          <PatientSearch
+            onPatientSelect={handlePatientSelect}
+            clearTrigger={patientClearTrigger}
+            label="Search Patient to Edit"
+            placeholder="Enter patient name, chart code, or phone number"
+          />
+        </Paper>
       )}
 
-      <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 2 }}>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         {formError && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError(null)}>
+          <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setFormError(null)}>
             {formError}
           </Alert>
         )}
 
-        <Grid container spacing={3}>
-          {/* Status and Action Controls */}
-          <Grid size={{ sm: 12 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
-              <Box display="flex" gap={1}>
-                <SmartButton text="Manage Next of Kin" icon={NextOfKinIcon} onClick={() => setShowNextOfKin(true)} variant="outlined" size="small" disabled={savedPChartID === 0} />
-                <SmartButton text="Manage Insurance" icon={InsuranceIcon} onClick={() => setShowInsurance(true)} variant="outlined" size="small" disabled={savedPChartID === 0} />
-              </Box>
-              <Box display="flex" alignItems="center" gap={2}>
-                <Typography variant="body2" color="text.secondary">
-                  Status:
-                </Typography>
-                <FormField name="rActiveYN" control={control} label="Active" type="switch" size="small" disabled={isViewMode} />
-              </Box>
+        {/* Header Controls - Compact Layout */}
+        <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+            <Box display="flex" gap={1} flexWrap="wrap">
+              <SmartButton text="Next of Kin" icon={NextOfKinIcon} onClick={() => setShowNextOfKin(true)} variant="outlined" size="small" disabled={savedPChartID === 0} />
+              <SmartButton text="Insurance" icon={InsuranceIcon} onClick={() => setShowInsurance(true)} variant="outlined" size="small" disabled={savedPChartID === 0} />
             </Box>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Typography variant="caption" color="text.secondary">
+                Status:
+              </Typography>
+              <FormField name="rActiveYN" control={control} label="Active" type="switch" size="small" disabled={isViewMode} />
+            </Box>
+          </Box>
+        </Paper>
+
+        <Grid container spacing={1.5}>
+          {/* Personal & Contact Information - Combined Section */}
+          <Grid size={{ xs: 12 }}>
+            <Paper variant="outlined" sx={{ p: 1.5 }}>
+              <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 1.5 }}>
+                Personal & Contact Information
+              </Typography>
+
+              <Grid container spacing={1.5}>
+                {/* Row 1 - Basic Identity */}
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField
+                    name="pChartCode"
+                    control={control}
+                    label="Chart Code"
+                    type="text"
+                    required
+                    disabled={!isCreateMode}
+                    size="small"
+                    fullWidth
+                    InputProps={{
+                      endAdornment: isCreateMode ? (
+                        <InputAdornment position="end">
+                          {isGeneratingCode ? (
+                            <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
+                              Gen...
+                            </Typography>
+                          ) : (
+                            <SmartButton
+                              icon={RefreshIcon}
+                              variant="text"
+                              size="small"
+                              onClick={generatePatientCode}
+                              tooltip="Generate new code"
+                              sx={{ minWidth: "unset", p: 0.5 }}
+                            />
+                          )}
+                        </InputAdornment>
+                      ) : null,
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField name="pRegDate" control={control} label="Reg. Date" type="datepicker" required size="small" fullWidth disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <FormField
+                    name="pTitleVal"
+                    control={control}
+                    label="Title"
+                    type="select"
+                    required
+                    size="small"
+                    fullWidth
+                    options={dropdownValues.title || []}
+                    onChange={handleTitleChange}
+                    disabled={isViewMode}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <FormField
+                    name="pGenderVal"
+                    control={control}
+                    label="Gender"
+                    type="select"
+                    required
+                    size="small"
+                    fullWidth
+                    options={dropdownValues.gender || []}
+                    onChange={handleGenderChange}
+                    disabled={isViewMode}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <FormField
+                    name="pBldGrp"
+                    control={control}
+                    label="Blood Group"
+                    type="select"
+                    size="small"
+                    fullWidth
+                    options={dropdownValues.bloodGroup || []}
+                    disabled={isViewMode}
+                  />
+                </Grid>
+
+                {/* Row 2 - Names */}
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField name="pFName" control={control} label="First Name" type="text" required size="small" fullWidth disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField name="pMName" control={control} label="Middle Name" type="text" size="small" fullWidth disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField name="pLName" control={control} label="Last Name" type="text" required size="small" fullWidth disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField name="pFhName" control={control} label="Father's Name" type="text" size="small" fullWidth disabled={isViewMode} />
+                </Grid>
+
+                {/* Row 3 - Age/DOB Section */}
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField
+                    name="pDobOrAgeVal"
+                    control={control}
+                    label="Age/DOB"
+                    type="radio"
+                    required
+                    options={[
+                      { value: "D", label: "DOB" },
+                      { value: "A", label: "Age" },
+                    ]}
+                    disabled={isViewMode}
+                    row
+                  />
+                </Grid>
+                {watchedDobOrAge === "D" ? (
+                  <Grid size={{ xs: 12, sm: 3 }}>
+                    <FormField name="pDob" control={control} label="Date of Birth" type="datepicker" required size="small" fullWidth disabled={isViewMode} />
+                  </Grid>
+                ) : (
+                  <>
+                    <Grid size={{ xs: 12, sm: 2 }}>
+                      <FormField
+                        name="pAgeNumber"
+                        control={control}
+                        label="Age"
+                        type="number"
+                        required
+                        size="small"
+                        fullWidth
+                        inputProps={{ min: 0, max: 150 }}
+                        disabled={isViewMode}
+                        helperText={
+                          watchedDob ? (
+                            <Typography variant="caption" sx={{ fontSize: "0.7rem", color: "text.secondary" }}>
+                              Calculated DOB: {watchedDob.toLocaleDateString()}
+                            </Typography>
+                          ) : (
+                            ""
+                          )
+                        }
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 1 }}>
+                      <FormField
+                        name="pAgeDescriptionVal"
+                        control={control}
+                        label="Unit"
+                        type="select"
+                        required
+                        size="small"
+                        fullWidth
+                        options={dropdownValues.ageUnit || []}
+                        disabled={isViewMode}
+                      />
+                    </Grid>
+                  </>
+                )}
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField
+                    name="pMaritalStatus"
+                    control={control}
+                    label="Marital Status"
+                    type="select"
+                    size="small"
+                    fullWidth
+                    options={dropdownValues.maritalStatus || []}
+                    disabled={isViewMode}
+                  />
+                </Grid>
+
+                {/* Row 4 - Contact Information */}
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField name="pAddPhone1" control={control} label="Primary Phone" type="tel" required size="small" fullWidth disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField name="pAddPhone2" control={control} label="Secondary Phone" type="tel" size="small" fullWidth disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField name="pAddEmail" control={control} label="Email Address" type="email" size="small" fullWidth disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <Box display="flex" gap={1} alignItems="center" sx={{ height: "100%" }}>
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <FormField name="sendSMSYN" control={control} label="" type="switch" size="small" disabled={isViewMode} />
+                      <Typography variant="caption">SMS</Typography>
+                      <Chip
+                        icon={watchedSendSMS === "Y" ? <CheckCircle sx={{ fontSize: "12px !important" }} /> : <Cancel sx={{ fontSize: "12px !important" }} />}
+                        label={watchedSendSMS === "Y" ? "On" : "Off"}
+                        color={watchedSendSMS === "Y" ? "success" : "default"}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontSize: "0.7rem", height: "20px" }}
+                      />
+                    </Box>
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      <FormField name="sendEmailYN" control={control} label="" type="switch" size="small" disabled={isViewMode} />
+                      <Typography variant="caption">Email</Typography>
+                      <Chip
+                        icon={watchedSendEmail === "Y" ? <CheckCircle sx={{ fontSize: "12px !important" }} /> : <Cancel sx={{ fontSize: "12px !important" }} />}
+                        label={watchedSendEmail === "Y" ? "On" : "Off"}
+                        color={watchedSendEmail === "Y" ? "success" : "default"}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontSize: "0.7rem", height: "20px" }}
+                      />
+                    </Box>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Paper>
           </Grid>
 
-          {/* Personal Details */}
-          <Grid size={{ sm: 12 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Personal Details
+          {/* Address Information - Compact */}
+          <Grid size={{ xs: 12 }}>
+            <Paper variant="outlined" sx={{ p: 1.5 }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+                Address Information
+              </Typography>
+              <Grid container spacing={1.5}>
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <FormField name="patDoorNo" control={control} label="Door No." type="text" size="small" fullWidth disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormField name="pAddStreet" control={control} label="Street" type="text" size="small" fullWidth disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField name="patAreaVal" control={control} label="Area" type="select" size="small" fullWidth options={dropdownValues.area || []} disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField name="pAddCityVal" control={control} label="City" type="select" size="small" fullWidth options={dropdownValues.city || []} disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField
+                    name="pAddState"
+                    control={control}
+                    label="State"
+                    type="select"
+                    size="small"
+                    fullWidth
+                    options={dropdownValues.state || []}
+                    onChange={handleStateChange}
+                    disabled={isViewMode}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField name="pAddPostcode" control={control} label="Postal Code" type="text" size="small" fullWidth disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 3 }}>
+                  <FormField
+                    name="pAddCountryVal"
+                    control={control}
+                    label="Country"
+                    type="select"
+                    size="small"
+                    fullWidth
+                    options={dropdownValues.country || []}
+                    disabled={isViewMode}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+
+          {/* Visit Details - Only for Create Mode - More Compact */}
+          {isCreateMode && (
+            <Grid size={{ xs: 12 }}>
+              <Paper variant="outlined" sx={{ p: 1.5 }}>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+                  Visit Configuration
                 </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid size={{ sm: 12, md: 4 }}>
+                <Grid container spacing={1.5}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <FormField
-                      name="pChartCode"
+                      name="visitTypeVal"
                       control={control}
-                      label="Patient Chart Code"
-                      type="text"
-                      required
-                      disabled={!isCreateMode}
-                      size="small"
-                      fullWidth
-                      InputProps={{
-                        endAdornment: isCreateMode ? (
-                          <InputAdornment position="end">
-                            {isGeneratingCode ? (
-                              <Box sx={{ display: "flex", alignItems: "center" }}>
-                                <Typography variant="caption" sx={{ mr: 1 }}>
-                                  Generating...
-                                </Typography>
-                              </Box>
-                            ) : (
-                              <SmartButton icon={RefreshIcon} variant="text" size="small" onClick={generatePatientCode} tooltip="Generate new code" sx={{ minWidth: "unset" }} />
-                            )}
-                          </InputAdornment>
-                        ) : null,
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pRegDate" control={control} label="Registration Date" type="datepicker" required size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField
-                      name="pTitleVal"
-                      control={control}
-                      label="Title"
-                      type="select"
-                      required
-                      size="small"
-                      fullWidth
-                      options={dropdownValues.title || []}
-                      onChange={handleTitleChange}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pFName" control={control} label="First Name" type="text" required size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pMName" control={control} label="Middle Name" type="text" size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pLName" control={control} label="Last Name" type="text" required size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField
-                      name="pGenderVal"
-                      control={control}
-                      label="Gender"
-                      type="select"
-                      required
-                      size="small"
-                      fullWidth
-                      options={dropdownValues.gender || []}
-                      onChange={handleGenderChange}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField
-                      name="pDobOrAgeVal"
-                      control={control}
-                      label="Age/DOB Selection"
+                      label="Visit Type"
                       type="radio"
                       required
                       options={[
-                        { value: "DOB", label: "Date of Birth" },
-                        { value: "AGE", label: "Age" },
+                        { value: "P", label: "Physician" },
+                        { value: "H", label: "Hospital" },
+                        { value: "N", label: "None" },
                       ]}
+                      onChange={handleVisitTypeChange}
                       disabled={isViewMode}
                       row
                     />
                   </Grid>
-
-                  {watchedDobOrAge === "DOB" ? (
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField name="pDob" control={control} label="Date of Birth" type="datepicker" required size="small" fullWidth disabled={isViewMode} />
-                    </Grid>
-                  ) : (
-                    <>
-                      <Grid size={{ sm: 12, md: 2 }}>
-                        <FormField
-                          name="pAgeNumber"
-                          control={control}
-                          label="Age"
-                          type="number"
-                          required
-                          size="small"
-                          fullWidth
-                          inputProps={{ min: 0, max: 150 }}
-                          disabled={isViewMode}
-                        />
-                      </Grid>
-                      <Grid size={{ sm: 12, md: 2 }}>
-                        <FormField
-                          name="pAgeDescriptionVal"
-                          control={control}
-                          label="Unit"
-                          type="select"
-                          required
-                          size="small"
-                          fullWidth
-                          options={dropdownValues.ageUnit || []}
-                          disabled={isViewMode}
-                        />
-                      </Grid>
-                    </>
-                  )}
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField
-                      name="pBldGrp"
-                      control={control}
-                      label="Blood Group"
-                      type="select"
-                      size="small"
-                      fullWidth
-                      options={dropdownValues.bloodGroup || []}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="pFhName" control={control} label="Father's Name" type="text" size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField
-                      name="pMaritalStatus"
-                      control={control}
-                      label="Marital Status"
-                      type="select"
-                      size="small"
-                      fullWidth
-                      options={dropdownValues.maritalStatus || []}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Contact Details */}
-          <Grid size={{ sm: 12 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Contact Details
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pAddPhone1" control={control} label="Primary Phone" type="tel" required size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pAddPhone2" control={control} label="Secondary Phone" type="tel" size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pAddEmail" control={control} label="Email Address" type="email" size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <Box display="flex" alignItems="center" gap={2}>
-                      <FormField name="sendSMSYN" control={control} label="Send SMS" type="switch" size="small" disabled={isViewMode} />
-                      <Typography variant="body2" color="text.secondary">
-                        Allow SMS notifications
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <Box display="flex" alignItems="center" gap={2}>
-                      <FormField name="sendEmailYN" control={control} label="Send Email" type="switch" size="small" disabled={isViewMode} />
-                      <Typography variant="body2" color="text.secondary">
-                        Allow Email notifications
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="patDoorNo" control={control} label="Door Number" type="text" size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pAddStreet" control={control} label="Street" type="text" size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="patAreaVal" control={control} label="Area" type="select" size="small" fullWidth options={dropdownValues.area || []} disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pAddCityVal" control={control} label="City" type="select" size="small" fullWidth options={dropdownValues.city || []} disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pAddState" control={control} label="State" type="text" size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField name="pAddPostcode" control={control} label="Postal Code" type="text" size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 4 }}>
-                    <FormField
-                      name="pAddCountryVal"
-                      control={control}
-                      label="Country"
-                      type="select"
-                      size="small"
-                      fullWidth
-                      options={dropdownValues.country || []}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Visit Details - Only Required in Create Mode */}
-          {isCreateMode && (
-            <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Visit Details
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  <Grid container spacing={2}>
-                    <Grid size={{ sm: 12, md: 6 }}>
+                  {isHospitalVisit && (
+                    <Grid size={{ xs: 12, sm: 3 }}>
                       <FormField
-                        name="visitTypeVal"
+                        name="deptID"
                         control={control}
-                        label="Visit Type"
-                        type="radio"
+                        label="Department"
+                        type="select"
                         required
-                        options={[
-                          { value: "P", label: "Physician" },
-                          { value: "H", label: "Hospital" },
-                          { value: "N", label: "None" },
-                        ]}
-                        onChange={handleVisitTypeChange}
+                        size="small"
+                        fullWidth
+                        options={dropdownValues.department || []}
+                        onChange={handleDepartmentChange}
                         disabled={isViewMode}
                       />
                     </Grid>
-
-                    {/* Conditional Department Dropdown for Hospital Visit */}
-                    {isHospitalVisit && (
-                      <Grid size={{ sm: 12, md: 6 }}>
-                        <FormField
-                          name="deptID"
-                          control={control}
-                          label="Department"
-                          type="select"
-                          required
-                          size="small"
-                          fullWidth
-                          options={dropdownValues.department || []}
-                          onChange={handleDepartmentChange}
-                          disabled={isViewMode}
-                        />
-                      </Grid>
-                    )}
-
-                    {/* Conditional Attending Physician Dropdown for Physician Visit */}
-                    {isPhysicianVisit && (
-                      <Grid size={{ sm: 12, md: 6 }}>
-                        <FormField
-                          name="attndPhyID"
-                          control={control}
-                          label="Attending Physician"
-                          type="select"
-                          required
-                          size="small"
-                          fullWidth
-                          options={dropdownValues.attendingPhy || []}
-                          onChange={handleAttendingPhysicianChange}
-                          disabled={isViewMode}
-                        />
-                      </Grid>
-                    )}
-
-                    {/* Primary Introducing Source */}
-                    <Grid size={{ sm: 12, md: 6 }}>
+                  )}
+                  {isPhysicianVisit && (
+                    <Grid size={{ xs: 12, sm: 3 }}>
+                      <FormField
+                        name="attndPhyID"
+                        control={control}
+                        label="Attending Physician"
+                        type="select"
+                        required
+                        size="small"
+                        fullWidth
+                        options={dropdownValues.attendingPhy || []}
+                        onChange={handleAttendingPhysicianChange}
+                        disabled={isViewMode}
+                      />
+                    </Grid>
+                  )}
+                  {!isNoneVisit && (
+                    <Grid size={{ xs: 12, sm: 3 }}>
                       <FormField
                         name="primIntroSourceID"
                         control={control}
-                        label="Primary Introducing Source"
+                        label="Intro. Source"
                         type="select"
                         size="small"
                         fullWidth
@@ -1068,123 +1195,102 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
                         disabled={isViewMode}
                       />
                     </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
+                  )}
+                </Grid>
+              </Paper>
             </Grid>
           )}
 
-          {/* Payment Information - Always Required */}
-          <Grid size={{ sm: 12 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Payment Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField
-                      name="pTypeID"
-                      control={control}
-                      label="Payment Source"
-                      type="select"
-                      required
-                      size="small"
-                      fullWidth
-                      options={dropdownValues.pic || []}
-                      onChange={handlePICChange}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
+          {/* Payment & Membership - Combined */}
+          <Grid size={{ xs: 12 }}>
+            <Paper variant="outlined" sx={{ p: 1.5 }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+                Payment & Membership
+              </Typography>
+              <Grid container spacing={1.5}>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormField
+                    name="pTypeID"
+                    control={control}
+                    label="Payment Source"
+                    type="select"
+                    required
+                    size="small"
+                    fullWidth
+                    options={dropdownValues.pic || []}
+                    onChange={handlePICChange}
+                    disabled={isViewMode}
+                  />
                 </Grid>
-              </CardContent>
-            </Card>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormField
+                    name="patMemID"
+                    control={control}
+                    label="Membership Scheme"
+                    type="select"
+                    size="small"
+                    fullWidth
+                    options={[{ value: "0", label: "No Membership" }, ...(dropdownValues.membershipScheme || [])]}
+                    onChange={handleMembershipChange}
+                    disabled={isViewMode}
+                  />
+                </Grid>
+                {watchedMembership && watchedMembership > 0 && (
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <FormField name="patMemSchemeExpiryDate" control={control} label="Scheme Expiry" type="datepicker" size="small" fullWidth disabled={isViewMode} />
+                  </Grid>
+                )}
+                <Grid size={{ xs: 12 }}>
+                  <Box sx={{ mt: 0.5 }}>
+                    <Chip label={getMembershipDisplayName()} color={watchedMembership && watchedMembership > 0 ? "primary" : "default"} size="small" variant="outlined" />
+                  </Box>
+                </Grid>
+              </Grid>
+            </Paper>
           </Grid>
 
-          {/* Membership Scheme */}
-          <Grid size={{ sm: 12 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Membership Scheme
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField
-                      name="patMemID"
-                      control={control}
-                      label="Membership Scheme"
-                      type="select"
-                      size="small"
-                      fullWidth
-                      options={dropdownValues.membershipScheme || []}
-                      onChange={handleMembershipChange}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
-
-                  {watchedMembership && watchedMembership > 0 && (
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="patMemSchemeExpiryDate" control={control} label="Scheme Expiry Date" type="datepicker" size="small" fullWidth disabled={isViewMode} />
-                    </Grid>
-                  )}
+          {/* Additional Information - Compact */}
+          <Grid size={{ xs: 12 }}>
+            <Paper variant="outlined" sx={{ p: 1.5 }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+                Additional Information
+              </Typography>
+              <Grid container spacing={1.5}>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormField name="pOccupation" control={control} label="Occupation" type="text" size="small" fullWidth disabled={isViewMode} />
                 </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Additional Information */}
-          <Grid size={{ sm: 12 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Additional Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="pOccupation" control={control} label="Occupation" type="text" size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12, md: 6 }}>
-                    <FormField name="pEmployer" control={control} label="Employer" type="text" size="small" fullWidth disabled={isViewMode} />
-                  </Grid>
-
-                  <Grid size={{ sm: 12 }}>
-                    <FormField
-                      name="rNotes"
-                      control={control}
-                      label="Notes"
-                      type="textarea"
-                      size="small"
-                      fullWidth
-                      rows={3}
-                      placeholder="Enter any additional notes about this patient"
-                      disabled={isViewMode}
-                    />
-                  </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormField name="pEmployer" control={control} label="Employer" type="text" size="small" fullWidth disabled={isViewMode} />
                 </Grid>
-              </CardContent>
-            </Card>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormField name="pEducation" control={control} label="Education" type="text" size="small" fullWidth disabled={isViewMode} />
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <FormField
+                    name="rNotes"
+                    control={control}
+                    label="Notes"
+                    type="textarea"
+                    size="small"
+                    fullWidth
+                    rows={2}
+                    placeholder="Additional notes about the patient"
+                    disabled={isViewMode}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
           </Grid>
-
-          {/* Action Buttons - REMOVED from here, now in GenericDialog's actions prop */}
         </Grid>
       </Box>
 
-      {/* Next of Kin Management Dialog */}
+      {/* Dialog Components */}
       {showNextOfKin && savedPChartID > 0 && (
         <GenericDialog open={showNextOfKin} onClose={() => setShowNextOfKin(false)} title="Next of Kin Management" maxWidth="xl" fullWidth showCloseButton>
           <NextOfKinManager pChartID={savedPChartID} pChartCode={watchedPChartCode} title="Next of Kin Information" showStats={true} />
         </GenericDialog>
       )}
 
-      {/* Insurance Management Dialog */}
       {showInsurance && savedPChartID > 0 && (
         <InsuranceManagementDialog
           open={showInsurance}
@@ -1198,7 +1304,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         />
       )}
 
-      {/* Reset Confirmation Dialog */}
       <ConfirmationDialog
         open={showResetConfirmation}
         onClose={handleResetCancel}
