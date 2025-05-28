@@ -234,17 +234,7 @@ const AppModifiedFieldForm: React.FC<AppModifiedFieldFormProps> = ({ open, onClo
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField
-                        name="amlField"
-                        control={control}
-                        label="Category"
-                        type="text"
-                        required
-                        disabled={true}
-                        size="small"
-                        fullWidth
-                        helperText="This List Details is automatically set based on the selected category"
-                      />
+                      <FormField name="amlField" control={control} label="Category" type="text" required disabled={true} size="small" fullWidth />
                     </Grid>
                   </Grid>
                 </CardContent>

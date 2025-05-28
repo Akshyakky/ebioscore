@@ -277,17 +277,7 @@ const AppModifiedMasterForm: React.FC<AppModifiedMasterFormProps> = ({ open, onC
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12 }}>
-                      <FormField
-                        name="rNotes"
-                        control={control}
-                        label="Notes"
-                        type="textarea"
-                        disabled={viewOnly}
-                        size="small"
-                        fullWidth
-                        rows={4}
-                        placeholder="Enter any additional information about this List Master"
-                      />
+                      <FormField name="rNotes" control={control} label="Notes" type="textarea" disabled={viewOnly} size="small" fullWidth rows={4} />
                     </Grid>
                   </Grid>
                 </CardContent>
