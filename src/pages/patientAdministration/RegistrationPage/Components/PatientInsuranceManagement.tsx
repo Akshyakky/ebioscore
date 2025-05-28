@@ -400,7 +400,7 @@ const PatientInsuranceManagement: React.FC<PatientInsuranceManagementProps> = ({
         onClose={onClose}
         title={`Insurance Management - ${patientName}`}
         fullWidth
-        maxWidth="lg"
+        maxWidth="xl"
         showCloseButton
         actions={
           <Box display="flex" justifyContent="space-between" width="100%">
@@ -435,7 +435,7 @@ const PatientInsuranceManagement: React.FC<PatientInsuranceManagementProps> = ({
         onClose={() => setIsFormOpen(false)}
         title={`${formMode === "create" ? "Add" : "Edit"} Insurance`}
         fullWidth
-        maxWidth="md"
+        maxWidth="xl"
         showCloseButton
         actions={
           <Box display="flex" justifyContent="flex-end" gap={2}>

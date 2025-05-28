@@ -21,7 +21,7 @@ import { PatientDemographics } from "../../CommonPage/Patient/PatientDemographic
 import PatientVisitHistoryDialog from "../Form/RevisitForm";
 import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientSearch";
 import { useRevisit } from "../hooks/useRevisitForm";
-import InsuranceManagementDialog from "../../InsuranceForm/Form/InsuranceGrid";
+import PatientInsuranceManagement from "../../RegistrationPage/Components/PatientInsuranceManagement";
 
 const schema = z.object({
   opVID: z.number().default(0),
@@ -444,6 +444,7 @@ const RevisitPage: React.FC = () => {
   };
 
   const onSubmit = async (data: RevisitFormData) => {
+    debugger;
     setFormError(null);
 
     try {
@@ -830,16 +831,13 @@ const RevisitPage: React.FC = () => {
         </Box>
       </Paper>
       {isHistoryDialogOpen && <PatientVisitHistoryDialog open={isHistoryDialogOpen} onClose={handleCloseHistoryDialog} />}
-      {isInsuranceDialogOpen && selectedPChartID > 0 && (
-        <InsuranceManagementDialog
+
+      {selectedPChartID > 0 && (
+        <PatientInsuranceManagement
           open={isInsuranceDialogOpen}
           onClose={handleCloseInsuranceDialog}
           pChartID={selectedPChartID}
-          pChartCode={watchedPChartCode}
-          patientName={selectedPatient?.fullName}
-          title="Patient Insurance Management"
-          readOnly={false}
-          showSaveAll={false}
+          patientName={selectedPatient?.fullName || "Selected Patient"}
         />
       )}
 
