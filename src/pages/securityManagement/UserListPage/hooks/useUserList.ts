@@ -22,11 +22,11 @@ export const useUserList = () => {
       if (result.success && result.data) {
         setUserList(result.data);
       } else {
-        setError(result.errorMessage || "Failed to fetch payment types");
+        setError(result.errorMessage || "Failed to fetch User List");
       }
     } catch (err) {
-      console.error("Error fetching payment types:", err);
-      setError("An unexpected error occurred while fetching payment types");
+      console.error("Error fetching User List", err);
+      setError("An unexpected error occurred while fetching User List");
     } finally {
       if (setLoading) {
         setLoading(false);
