@@ -48,7 +48,7 @@ const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/Purchas
 const LogModule = lazy(() => import("@/pages/common/LogViewerPage/LogModule"));
 const ProductList = lazy(() => import("@/pages/inventoryManagement/ProductList/MainPage/ProductList"));
 const ProductTransaction = lazy(() => import("@/pages/inventoryManagement/ProductTransaction/ProductTransaction"));
-const PatientRegistrationManager = lazy(() => import("@/pages/patientAdministration/RegistrationPage/MainPage/PatientRegistrationManager"));
+const PatientRegistrationRouter = lazy(() => import("@/pages/patientAdministration/RegistrationPage/PatientRegistrationRouter"));
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {
@@ -102,7 +102,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/registrationpage",
-    component: wrapWithSuspense(PatientRegistrationManager),
+    component: wrapWithSuspense(PatientRegistrationRouter),
     protected: true,
     providers: [AlertProvider],
     metadata: {

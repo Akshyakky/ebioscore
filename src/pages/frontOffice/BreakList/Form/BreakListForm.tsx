@@ -23,7 +23,7 @@ import {
 } from "@mui/material";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
-import { BreakListData, BreakConDetailData, FrequencyData } from "@/interfaces/FrontOffice/BreakListData";
+import { BreakListData, BreakConDetailData, FrequencyData, BreakListDto } from "@/interfaces/FrontOffice/BreakListData";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import CustomButton from "@/components/Button/CustomButton";
@@ -33,14 +33,14 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import CustomCheckbox from "@/components/Checkbox/Checkbox";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
-import { useBreakList } from "../hooks/useBreakList";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import { breakConDetailsService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+import { breakConDetailsService, breakService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { formatDate } from "@/utils/Common/dateUtils";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import BreakFrequencyDetails from "./BreakFrequency";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { frequencyCodeMap, weekDayCodeMap } from "../MainPage/BreakListPage";
 
 interface BreakListFormProps {
   open: boolean;
@@ -68,26 +68,8 @@ const schema = z.object({
 
 type BreakListFormData = z.infer<typeof schema>;
 
-const frequencyCodeMap = {
-  none: "FO70",
-  daily: "FO71",
-  weekly: "FO72",
-  monthly: "FO73",
-  yearly: "FO74",
-};
-
-const weekDayCodeMap = {
-  Sunday: "FO75",
-  Monday: "FO76",
-  Tuesday: "FO77",
-  Wednesday: "FO78",
-  Thursday: "FO79",
-  Friday: "FO80",
-  Saturday: "FO81",
-};
 const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { saveBreak } = useBreakList();
   const serverDate = useServerDate();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -145,7 +127,6 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
   const endTime = watch("bLEndTime");
   const isPhyResYN = watch("isPhyResYN");
 
-  // Generate frequency description
   const generateFrequencyDescription = (data: FrequencyData): string => {
     const formattedEndDate = formatDate(data.endDate);
     switch (data.frequency) {
@@ -190,10 +171,8 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
       };
       reset(formData);
 
-      // Set selected option based on data
       setSelectedOption(initialData.isPhyResYN === "Y" ? "physician" : "resource");
 
-      // Load frequency data
       const frequencyKey = Object.keys(frequencyCodeMap).find((key) => frequencyCodeMap[key as keyof typeof frequencyCodeMap] === initialData.bLFrqDesc);
       const freqData: FrequencyData = {
         frequency: frequencyKey || "none",
@@ -203,7 +182,6 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
       };
       setFrequencyData(freqData);
 
-      // Load break connection details
       loadBreakConDetails(initialData.bLID);
     } else {
       reset(defaultValues);
@@ -228,7 +206,6 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     }
   };
 
-  // Handle one-day toggle
   const handleOneDayToggle = useCallback(
     (checked: boolean) => {
       setIsOneDay(checked);
@@ -256,7 +233,6 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     [startDate, setValue]
   );
 
-  // Handle physician/resource selection
   const handleRadioChange = useCallback(
     (value: string) => {
       setSelectedOption(value);
@@ -266,12 +242,10 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     [setValue]
   );
 
-  // Handle checkbox changes for resource/physician selection
   const handleCheckboxChange = useCallback((id: number, isChecked: boolean) => {
     setSelectedItems((prevItems) => (isChecked ? [...prevItems, id] : prevItems.filter((item) => item !== id)));
   }, []);
 
-  // Handle select all/deselect all
   const handleSelectAll = useCallback(
     (checked: boolean) => {
       if (selectedOption === "resource") {
@@ -306,14 +280,12 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     [selectedOption, renderCheckbox, renderConsultantName]
   );
 
-  // Ensure end date is not before start date
   useEffect(() => {
     if (startDate && endDate && startDate > endDate) {
       setValue("bLEndDate", startDate);
     }
   }, [startDate, endDate, setValue]);
 
-  // Ensure end time is after start time for same day
   useEffect(() => {
     if (startDate && endDate && startTime && endTime && !isOneDay) {
       const isSameDay = startDate === endDate;
@@ -334,17 +306,17 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     },
     [setValue]
   );
-
   const onSubmit = async (data: BreakListFormData) => {
     if (viewOnly) return;
-
+    if (selectedItems.length === 0) {
+      return showAlert("Warning", "Please select at least one resource or physician", "warning");
+    }
     setFormError(null);
 
     try {
       setIsSaving(true);
       setLoading(true);
 
-      // Prepare frequency data
       const frequencyKey = frequencyData.frequency as keyof typeof frequencyCodeMap;
       data.bLFrqDesc = frequencyCodeMap[frequencyKey] || "FO70";
       data.bLFrqNo = frequencyData.interval || 0;
@@ -377,40 +349,29 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
         transferYN: data.transferYN || "N",
       };
 
-      const response = await saveBreak(breakData);
+      const breakConDetails = selectedItems.map((itemID) => {
+        const breakConDetailData: BreakConDetailData = {
+          bCDID: 0,
+          blID: 0,
+          hPLID: itemID,
+          rActiveYN: "Y",
+          rNotes: "",
+          transferYN: "N",
+        };
+        return breakConDetailData;
+      });
 
-      if (response.success && response.data) {
-        const savedBreakListData = response.data;
-        const blID = savedBreakListData.bLID;
+      const breakListSaveData: BreakListDto = {
+        breakList: breakData,
+        breakConDetails: breakConDetails,
+      };
+      const response = await breakService.save(breakListSaveData);
 
-        // Save break connection details
-        if (selectedItems.length > 0) {
-          const breakConDetailPromises = selectedItems.map((itemID) => {
-            const breakConDetailData: BreakConDetailData = {
-              bCDID: 0,
-              blID,
-              hPLID: itemID,
-              rActiveYN: "Y",
-              rNotes: "",
-              transferYN: "N",
-            };
-
-            return breakConDetailsService.save(breakConDetailData);
-          });
-
-          const breakConDetailResults = await Promise.all(breakConDetailPromises);
-          const allBreakConDetailsSaved = breakConDetailResults.every((result) => result.success);
-
-          if (!allBreakConDetailsSaved) {
-            showAlert("Warning", "Break saved, but some break connection details failed to save.", "warning");
-          }
-        }
-
+      console.log("Break List Save Data:", response);
+      if (response.success) {
         showAlert("Success", isAddMode ? "Break created successfully" : "Break updated successfully", "success");
-        onClose(true);
-      } else {
-        throw new Error(response.errorMessage || "Failed to save break");
       }
+      onClose(true);
     } catch (error) {
       console.error("Error saving break:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save break";

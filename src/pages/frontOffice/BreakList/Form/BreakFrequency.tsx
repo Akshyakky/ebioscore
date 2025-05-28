@@ -11,7 +11,6 @@ import SmartButton from "@/components/Button/SmartButton";
 import { ChangeCircle, Save } from "@mui/icons-material";
 import { FrequencyData } from "@/interfaces/FrontOffice/BreakListData";
 
-// Frequency Details Dialog Component
 const frequencySchema = z.object({
   frequency: z.string(),
   endDate: z.string(),
@@ -28,7 +27,6 @@ const BreakFrequencyDetails: React.FC<{
   onSave: (frequencyData: FrequencyData) => void;
   initialFrequencyData: FrequencyData;
 }> = ({ open, onClose, endDateFromBreakDetails, onSave, initialFrequencyData }) => {
-  // Initialize useForm with default values
   const { control, handleSubmit, setValue, watch } = useForm<FrequencyFormData>({
     defaultValues: {
       ...initialFrequencyData,
@@ -38,7 +36,6 @@ const BreakFrequencyDetails: React.FC<{
     mode: "onChange",
   });
 
-  // Watch form values
   const frequencyData = watch();
   const { showAlert } = useAlert();
   useEffect(() => {
@@ -46,7 +43,6 @@ const BreakFrequencyDetails: React.FC<{
   }, [endDateFromBreakDetails, setValue]);
 
   useEffect(() => {
-    // Update form values when initialFrequencyData changes
     Object.keys(initialFrequencyData).forEach((key) => {
       setValue(key as keyof FrequencyFormData, initialFrequencyData[key as keyof FrequencyData]);
     });
