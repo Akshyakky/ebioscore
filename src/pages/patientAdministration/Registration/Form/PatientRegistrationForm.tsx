@@ -69,6 +69,7 @@ const createSchema = (mode: "create" | "edit" | "view") => {
     sendEmailYN: z.enum(["Y", "N"]).default("Y"),
 
     // Address Information
+    pAddID: z.number().default(0),
     patDoorNo: z.string().optional().default(""),
     pAddStreet: z.string().optional().default(""),
     pAddStreet1: z.string().optional().default(""),
@@ -92,6 +93,7 @@ const createSchema = (mode: "create" | "edit" | "view") => {
     primIntroSourceName: z.string().optional().default(""),
 
     // Additional Information
+    patOverID: z.number().default(0),
     pOccupation: z.string().optional().default(""),
     pEmployer: z.string().optional().default(""),
     pEducation: z.string().optional().default(""),
@@ -384,6 +386,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         patMemSchemeExpiryDate: dto.patRegisters.patMemSchemeExpiryDate ? new Date(dto.patRegisters.patMemSchemeExpiryDate) : undefined,
 
         // Contact Information
+        pAddID: dto.patAddress.pAddID,
         pAddPhone1: dto.patAddress.pAddPhone1 || "",
         pAddPhone2: dto.patAddress.pAddPhone2 || "",
         pAddPhone3: dto.patAddress.pAddPhone3 || "",
@@ -416,6 +419,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         primIntroSourceName: "",
 
         // Additional Information
+        patOverID: dto.patOverview.patOverID,
         pOccupation: dto.patOverview.pOccupation || "",
         pEmployer: dto.patOverview.pEmployer || "",
         pEducation: dto.patOverview.pEducation || "",
@@ -499,7 +503,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
       };
 
       const patAddress: PatAddressDto = {
-        pAddID: 0,
+        pAddID: formData.pAddID,
         pChartID: formData.pChartID,
         pChartCode: formData.pChartCode,
         pAddType: "HOME",
@@ -528,7 +532,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
       };
 
       const patOverview: PatOverviewDto = {
-        patOverID: 0,
+        patOverID: formData.patOverID,
         pChartID: formData.pChartID,
         pChartCode: formData.pChartCode,
         pPhoto: "",
