@@ -259,8 +259,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
           insurCode: data.insurCode || "",
         };
 
-        console.log("Submitting insurance data:", formattedData);
-
         onSave(formattedData);
 
         showAlert("Success", isAddMode ? "Insurance record created successfully" : "Insurance record updated successfully", "success");

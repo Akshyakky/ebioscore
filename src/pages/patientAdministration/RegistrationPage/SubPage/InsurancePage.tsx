@@ -99,16 +99,12 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
 
     setLoading(true);
     try {
-      console.log("Fetching insurance data for pChartID:", pChartID);
       const insuranceDetails = await InsuranceCarrierService.getOPIPInsuranceByPChartID(pChartID);
-
-      console.log("Insurance API response:", insuranceDetails);
 
       // Check the response structure - it might be wrapped differently
       if (insuranceDetails && insuranceDetails.success) {
         // Handle both cases: when data exists and when it's empty/null
         const dataArray = insuranceDetails.data || [];
-        console.log("Processing data array:", dataArray);
 
         const formattedData = dataArray.map((insur) => ({
           ...insur,
@@ -116,21 +112,14 @@ const InsurancePage: React.ForwardRefRenderFunction<any, InsurancePageProps> = (
           policyEndDt: insur.policyEndDt,
         }));
         setGridInsuranceData(formattedData);
-        console.log("Formatted data set:", formattedData);
       } else {
-        // If the API call was not successful, set empty array
-        console.log("API call unsuccessful or no success property");
         setGridInsuranceData([]);
-        if (insuranceDetails && insuranceDetails.errorMessage) {
-          console.warn("Failed to fetch insurance data:", insuranceDetails.errorMessage);
-        }
       }
     } catch (error) {
       console.error("Error fetching insurance data:", error);
       // On error, also set empty array to ensure state is consistent
       setGridInsuranceData([]);
     } finally {
-      console.log("Setting loading to false");
       setLoading(false);
     }
   }, [pChartID, setLoading]);

@@ -35,8 +35,7 @@ export const useNextOfKin = (options: UseNextOfKinOptions = {}) => {
           setNokList(response.data);
           return true;
         } else if (response.errorMessage) {
-          setError(response.errorMessage);
-          notifyWarning(response.errorMessage);
+          setNokList([]);
           return false;
         }
 

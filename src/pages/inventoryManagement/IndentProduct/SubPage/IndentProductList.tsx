@@ -112,12 +112,6 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
     }
   }, [selectedDeptId, selectedDeptName, reset, setLoading, getValues]);
 
-  useEffect(() => {
-    if (departmentIndent && departmentIndent.length > 0) {
-      console.log("Department indent options:", departmentIndent);
-    }
-  }, [departmentIndent]);
-
   const handleClearPatient = () => {
     setSelectedPatient(null);
     setClearSearchTrigger((prev) => prev + 1);
@@ -146,8 +140,6 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
 
       setGridData([...(selectedData.IndentDetails || [])]);
       initializedRef.current = true;
-
-      setTimeout(() => console.log("Current form values:", getValues()), 100);
     } else if (!initializedRef.current) {
       initializeForm();
     }
@@ -271,7 +263,6 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
           setSelectedProduct(null);
         },
         onCancel: () => {
-          console.log("Product addition canceled");
           setInputValue("");
           setSelectedProduct(null);
         },
@@ -301,11 +292,6 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
       newData[rowIndex] = { ...newData[rowIndex], [field]: value };
       setValue("IndentDetails", newData);
       onIndentDetailsChange(newData);
-
-      // Log the updated details to confirm ID is preserved
-      console.log(`Updated row ${rowIndex}, field ${String(field)} to ${value}`);
-      console.log(`Row now has indentDetID: ${newData[rowIndex].indentDetID}`);
-
       return newData;
     });
   };
@@ -355,8 +341,6 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
         indentID: indentID,
       })),
     };
-
-    console.log("Payload being sent to API:", payload);
 
     setLoading(true);
     try {

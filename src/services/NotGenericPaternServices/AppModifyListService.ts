@@ -25,7 +25,6 @@ const fetchAppModifyList = async (endpoint: string, fieldCode: string): Promise<
       code: item.amlCode,
     }));
   } catch (error) {
-    console.log(`Error fetching ${fieldCode} values:`, error);
     throw error;
   }
 };

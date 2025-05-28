@@ -33,9 +33,6 @@ const generateContactCode = async (prefix: string, padLength: number = 5): Promi
     // Sending the API request to generate the contact code
     const response = await apiService.get<OperationResult<string>>(`ContactList/GenerateContactCode`, getToken(), { prefix, padLength });
 
-    // Log the response to check its structure
-    console.log("Generated Contact Code Response:", response);
-
     // Ensure the response structure has success and data
     if (response) {
       return response;

@@ -136,7 +136,7 @@ const PurchaseOrderFooter: React.FC<PurchaseOrderFooterProps> = ({ control, setV
   useEffect(() => {
     recalculateFooterAmounts(purchaseOrderDetails);
   }, [purchaseOrderDetails, coinAdjAmt, setValue]);
-  console.log(purchaseOrderDetails);
+
   return (
     <Paper variant="elevation" sx={{ padding: 2 }}>
       <Grid container spacing={2} alignContent="center" justifyContent="center">

@@ -57,7 +57,6 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
   const [isInsuranceOpen, setIsInsuranceOpen] = useState<boolean>(false);
   const [formMode, setFormMode] = useState<"create" | "edit" | "view">("create");
   const [selectedPatientForAction, setSelectedPatientForAction] = useState<PatientListData | null>(null);
-  const [viewMode, setViewMode] = useState<"grid" | "form">(defaultMode);
   const [gridDensity, setGridDensity] = useState<GridDensity>("medium");
 
   const { showAlert } = useAlert();
@@ -626,7 +625,7 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
           rowKeyField="pChartID"
           density={gridDensity}
           onDensityChange={handleDensityChange}
-          showDensityControls={true}
+          showDensityControls={false}
           searchTerm={searchTerm}
         />
       </Paper>

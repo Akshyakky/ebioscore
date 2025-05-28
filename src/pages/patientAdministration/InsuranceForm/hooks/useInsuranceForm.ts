@@ -80,20 +80,13 @@ export const useInsuranceManagement = () => {
       setIsLoading(true);
       setError(null);
 
-      console.log("Fetching insurance list for pChartID:", pChartID);
-
       const response = await InsuranceCarrierService.getOPIPInsuranceByPChartID(pChartID);
 
-      console.log("Insurance fetch response:", response);
-
       if (response.success && response.data) {
-        // CRITICAL FIX: Format each insurance record to prevent rendering errors
         const formattedData = response.data.map((insurance: any) => formatInsuranceData(insurance));
 
-        console.log("Formatted insurance data:", formattedData);
         setInsuranceList(formattedData);
       } else {
-        console.log("No insurance data found or API error");
         setInsuranceList([]);
       }
     } catch (error) {
@@ -111,14 +104,10 @@ export const useInsuranceManagement = () => {
       try {
         setLoading(true);
 
-        console.log("Saving insurance data:", insuranceData);
-
         // CRITICAL FIX: Format the data before sending to API
         const formattedData = formatInsuranceData(insuranceData);
 
         const response = await InsuranceCarrierService.addOrUpdateOPIPInsurance(formattedData);
-
-        console.log("Save insurance response:", response);
 
         if (response.success) {
           // Refresh the list after successful save
@@ -146,11 +135,7 @@ export const useInsuranceManagement = () => {
       try {
         setLoading(true);
 
-        console.log("Deleting insurance ID:", insuranceId);
-
         const response = await InsuranceCarrierService.hideOPIPInsurance(insuranceId);
-
-        console.log("Delete insurance response:", response);
 
         if (response.success) {
           // Refresh the list after successful delete
@@ -172,8 +157,6 @@ export const useInsuranceManagement = () => {
 
   // Add insurance record to local state (for unsaved records)
   const addInsuranceToList = useCallback((insurance: OPIPInsurancesDto) => {
-    console.log("Adding insurance to list:", insurance);
-
     setInsuranceList((prev) => {
       const maxId = prev.reduce((max, item) => Math.max(max, item.ID || 0), 0);
 
@@ -184,15 +167,12 @@ export const useInsuranceManagement = () => {
       });
 
       const updatedList = [...prev, newInsurance];
-      console.log("Updated insurance list after add:", updatedList);
       return updatedList;
     });
   }, []);
 
   // Update insurance record in local state
   const updateInsuranceInList = useCallback((insurance: OPIPInsurancesDto) => {
-    console.log("Updating insurance in list:", insurance);
-
     setInsuranceList((prev) => {
       const updatedList = prev.map((item) => {
         const isMatch = (item.oPIPInsID && item.oPIPInsID === insurance.oPIPInsID) || (item.ID && item.ID === insurance.ID);
@@ -204,25 +184,20 @@ export const useInsuranceManagement = () => {
         return item;
       });
 
-      console.log("Updated insurance list after update:", updatedList);
       return updatedList;
     });
   }, []);
 
   // Remove insurance record from local state
   const removeInsuranceFromList = useCallback((insuranceId: number) => {
-    console.log("Removing insurance from list with ID:", insuranceId);
-
     setInsuranceList((prev) => {
       const updatedList = prev.filter((item) => item.oPIPInsID !== insuranceId && item.ID !== insuranceId);
-      console.log("Updated insurance list after remove:", updatedList);
       return updatedList;
     });
   }, []);
 
   // Clear insurance list
   const clearInsuranceList = useCallback(() => {
-    console.log("Clearing insurance list");
     setInsuranceList([]);
     setError(null);
   }, []);
@@ -238,8 +213,6 @@ export const useInsuranceManagement = () => {
         // Filter for new/unsaved records (those without oPIPInsID)
         const unsavedRecords = insuranceList.filter((insurance) => !insurance.oPIPInsID);
 
-        console.log("Saving all insurance records:", unsavedRecords);
-
         if (unsavedRecords.length > 0) {
           const saveOperations = unsavedRecords.map((insurance) => {
             // CRITICAL FIX: Format each record before saving
@@ -248,8 +221,6 @@ export const useInsuranceManagement = () => {
           });
 
           const results = await Promise.all(saveOperations);
-
-          console.log("Bulk save results:", results);
 
           // Check if all operations succeeded
           const allSucceeded = results.every((result) => result.success);
