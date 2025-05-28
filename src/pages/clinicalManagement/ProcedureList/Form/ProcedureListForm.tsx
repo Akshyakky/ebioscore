@@ -86,7 +86,6 @@ const ProcedureForm: React.FC<ProcedureFormProps> = ({ open, onClose, initialDat
         showAlert("Warning", "Failed to generate procedure code", "warning");
       }
     } catch (error) {
-      console.error("Error generating procedure code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -141,7 +140,6 @@ const ProcedureForm: React.FC<ProcedureFormProps> = ({ open, onClose, initialDat
         throw new Error(response.errorMessage || "Failed to save procedure");
       }
     } catch (error) {
-      console.error("Error saving procedure:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save procedure";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
@@ -340,23 +338,6 @@ const ProcedureForm: React.FC<ProcedureFormProps> = ({ open, onClose, initialDat
                         size="small"
                         fullWidth
                       />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Procedure Settings
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  <Grid container spacing={2}>
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="transferYN" control={control} label="Allow Transfer" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Box,
   Paper,
@@ -39,7 +39,7 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import RoomGroupForm from "../Forms/RoomGroupForm";
 import RoomListForm from "../Forms/RoomListForm";
@@ -64,7 +64,6 @@ const EnhancedBedSetupPage: React.FC = () => {
     department: "",
     roomGroup: "",
   });
-
   const [showRoomGroupForm, setShowRoomGroupForm] = useState(false);
   const [showRoomListForm, setShowRoomListForm] = useState(false);
   const [showBedForm, setShowBedForm] = useState(false);
@@ -76,6 +75,8 @@ const EnhancedBedSetupPage: React.FC = () => {
   const [itemToDelete, setItemToDelete] = useState<{ type: "roomGroup" | "room" | "bed"; id: number; name: string } | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
+  const [gridDensity, setGridDensity] = useState<GridDensity>("medium");
+
   const handleRefresh = useCallback(() => {
     setLoading(true);
     fetchAllData().finally(() => setLoading(false));
@@ -309,16 +310,12 @@ const EnhancedBedSetupPage: React.FC = () => {
     }
   };
 
-  // Filtered data based on search and filters
   const filteredRoomGroups = useMemo(() => {
     return roomGroups.filter((group) => {
       const matchesSearch =
         searchTerm === "" || group.rGrpName.toLowerCase().includes(searchTerm.toLowerCase()) || (group.deptName && group.deptName.toLowerCase().includes(searchTerm.toLowerCase()));
-
       const matchesStatus = filters.status === "" || (filters.status === "active" && group.rActiveYN === "Y") || (filters.status === "inactive" && group.rActiveYN === "N");
-
       const matchesDepartment = filters.department === "" || group.deptName === filters.department;
-
       return matchesSearch && matchesStatus && matchesDepartment;
     });
   }, [roomGroups, searchTerm, filters]);
@@ -330,13 +327,9 @@ const EnhancedBedSetupPage: React.FC = () => {
         room.rName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (room.deptName && room.deptName.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (room.rLocation && room.rLocation.toLowerCase().includes(searchTerm.toLowerCase()));
-
       const matchesStatus = filters.status === "" || (filters.status === "active" && room.rActiveYN === "Y") || (filters.status === "inactive" && room.rActiveYN === "N");
-
       const matchesDepartment = filters.department === "" || room.deptName === filters.department;
-
       const matchesRoomGroup = filters.roomGroup === "" || room.rgrpID.toString() === filters.roomGroup;
-
       return matchesSearch && matchesStatus && matchesDepartment && matchesRoomGroup;
     });
   }, [roomLists, searchTerm, filters]);
@@ -348,21 +341,16 @@ const EnhancedBedSetupPage: React.FC = () => {
         bed.bedName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (bed.roomList?.rName && bed.roomList.rName.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (bed.roomList?.roomGroup?.rGrpName && bed.roomList.roomGroup.rGrpName.toLowerCase().includes(searchTerm.toLowerCase()));
-
       const matchesStatus = filters.status === "" || (filters.status === "active" && bed.rActiveYN === "Y") || (filters.status === "inactive" && bed.rActiveYN === "N");
-
       const matchesRoomGroup = filters.roomGroup === "" || bed.roomList?.roomGroup?.rGrpID.toString() === filters.roomGroup;
-
       return matchesSearch && matchesStatus && matchesRoomGroup;
     });
   }, [beds, searchTerm, filters]);
 
-  // Room Group hierarchical data preparation
   const roomGroupHierarchy = useMemo(() => {
     const buildHierarchy = (groups: RoomGroupDto[]) => {
       const map = new Map<number, RoomGroupDto[]>();
       const roots: RoomGroupDto[] = [];
-
       groups.forEach((group) => {
         if (group.key === 0) {
           roots.push({ ...group, children: [] });
@@ -373,8 +361,6 @@ const EnhancedBedSetupPage: React.FC = () => {
           map.get(group.key)!.push({ ...group, children: [] });
         }
       });
-
-      // Assign children to parent nodes
       roots.forEach((root) => {
         const children = map.get(root.rGrpID) || [];
         root.children = children;
@@ -386,36 +372,28 @@ const EnhancedBedSetupPage: React.FC = () => {
     return buildHierarchy(filteredRoomGroups);
   }, [filteredRoomGroups]);
 
-  // Prepare data for display in hierarchical format
   const flattenedRoomGroups = useMemo(() => {
     const result: RoomGroupDto[] = [];
-
     const flatten = (groups: RoomGroupDto[], level = 0) => {
       groups.forEach((group) => {
-        // Add the group with its nesting level
         result.push({
           ...group,
           nestingLevel: level,
         });
-
-        // If expanded, add its children
         if (expandedGroups.has(group.rGrpID) && group.children && group.children.length > 0) {
           flatten(group.children, level + 1);
         }
       });
     };
-
     flatten(roomGroupHierarchy);
     return result;
   }, [roomGroupHierarchy, expandedGroups]);
 
-  // Stats calculations
   const stats = useMemo(() => {
     const activeRoomGroups = roomGroups.filter((g) => g.rActiveYN === "Y").length;
     const activeRooms = roomLists.filter((r) => r.rActiveYN === "Y").length;
     const activeBeds = beds.filter((b) => b.rActiveYN === "Y").length;
     const occupiedBeds = beds.filter((b) => b.rActiveYN === "Y" && b.bedStatus === "Occupied").length;
-
     return {
       totalRoomGroups: roomGroups.length,
       activeRoomGroups,
@@ -431,35 +409,30 @@ const EnhancedBedSetupPage: React.FC = () => {
     };
   }, [roomGroups, roomLists, beds]);
 
-  // Create safer processed data to avoid object rendering issues
   const processedRoomGroups = useMemo(() => {
     return flattenedRoomGroups.map((group) => ({
       ...group,
-      // Convert any potential object properties to strings
-      children: undefined, // Remove children array to avoid rendering issues
+      children: undefined,
     }));
   }, [flattenedRoomGroups]);
 
   const processedRooms = useMemo(() => {
     return filteredRooms.map((room) => ({
       ...room,
-      // Replace the roomGroup object with a string property
       roomGroupName: room.roomGroup?.rGrpName || "No Group",
-      roomGroup: undefined, // Remove the original object
+      roomGroup: undefined,
     }));
   }, [filteredRooms]);
 
   const processedBeds = useMemo(() => {
     return filteredBeds.map((bed) => ({
       ...bed,
-      // Replace the nested objects with string properties
       roomName: bed.roomList?.rName || "No Room",
       groupName: bed.roomList?.roomGroup?.rGrpName || "No Group",
-      roomList: undefined, // Remove the original object
+      roomList: undefined,
     }));
   }, [filteredBeds]);
 
-  // Column definitions for grids
   const roomGroupColumns: Column<RoomGroupDto>[] = [
     {
       key: "rGrpName",
@@ -468,7 +441,7 @@ const EnhancedBedSetupPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 250,
-      render: (row, rowIndex, columnIndex) => (
+      render: (row) => (
         <Box
           sx={{
             display: "flex",
@@ -505,9 +478,10 @@ const EnhancedBedSetupPage: React.FC = () => {
       header: "Status",
       visible: true,
       sortable: true,
-      filterable: true,
-      width: 100,
-      formatter: (value) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
+      width: gridDensity === "large" ? 120 : gridDensity === "medium" ? 100 : 80,
+      formatter: (value: string) => (
+        <Chip size={gridDensity === "large" ? "medium" : "small"} color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />
+      ),
     },
     {
       key: "actions",
@@ -590,7 +564,7 @@ const EnhancedBedSetupPage: React.FC = () => {
       width: 180,
     },
     {
-      key: "roomGroupName", // Using the string property instead of the object
+      key: "roomGroupName",
       header: "Room Group",
       visible: true,
       sortable: true,
@@ -702,7 +676,7 @@ const EnhancedBedSetupPage: React.FC = () => {
       width: 150,
     },
     {
-      key: "roomName", // Using the string property instead of the object
+      key: "roomName",
       header: "Room",
       visible: true,
       sortable: true,
@@ -710,7 +684,7 @@ const EnhancedBedSetupPage: React.FC = () => {
       width: 150,
     },
     {
-      key: "groupName", // Using the string property instead of the object
+      key: "groupName",
       header: "Room Group",
       visible: true,
       sortable: true,
@@ -782,7 +756,6 @@ const EnhancedBedSetupPage: React.FC = () => {
     },
   ];
 
-  // Stats dashboard renderer
   const renderStatsDashboard = () => (
     <Paper sx={{ p: 2, mb: 2, bgcolor: "background.paper", boxShadow: 2 }}>
       <Grid container spacing={2}>
@@ -883,7 +856,6 @@ const EnhancedBedSetupPage: React.FC = () => {
     </Paper>
   );
 
-  // Search and filter controls renderer
   const renderSearchAndFilter = () => (
     <Paper sx={{ p: 2, mb: 2, bgcolor: "background.paper", boxShadow: 2 }}>
       <Grid container spacing={2} alignItems="center">

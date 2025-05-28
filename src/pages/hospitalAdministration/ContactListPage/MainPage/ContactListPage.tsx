@@ -9,7 +9,7 @@ import {
   Visibility as VisibilityIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
@@ -33,7 +33,7 @@ const ContactListPage: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
-
+  const [gridDensity, setGridDensity] = useState<GridDensity>("medium");
   const { contactList, isLoading, error, fetchContactList, deleteContact } = useContactList();
 
   const [filters, setFilters] = useState<{
@@ -184,15 +184,11 @@ const ContactListPage: React.FC = () => {
         contact.conSSNID?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
       const matchesStatus = filters.status === "" || (filters.status === "active" && contact.rActiveYN === "Y") || (filters.status === "inactive" && contact.rActiveYN === "N");
-
       const matchesCategory = filters.category === "" || contact.conCat === filters.category;
-
       const matchesEmployee =
         filters.employee === "" || (filters.employee === "yes" && contact.isEmployeeYN === "Y") || (filters.employee === "no" && contact.isEmployeeYN === "N");
-
       const matchesReferral =
         filters.referral === "" || (filters.referral === "yes" && contact.isRefferalYN === "Y") || (filters.referral === "no" && contact.isRefferalYN === "N");
-
       return matchesSearch && matchesStatus && matchesCategory && matchesEmployee && matchesReferral;
     });
   }, [contactList, debouncedSearchTerm, filters]);
@@ -315,9 +311,10 @@ const ContactListPage: React.FC = () => {
       header: "Status",
       visible: true,
       sortable: true,
-      filterable: true,
-      width: 100,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
+      width: gridDensity === "large" ? 120 : gridDensity === "medium" ? 100 : 80,
+      formatter: (value: string) => (
+        <Chip size={gridDensity === "large" ? "medium" : "small"} color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />
+      ),
     },
     {
       key: "actions",

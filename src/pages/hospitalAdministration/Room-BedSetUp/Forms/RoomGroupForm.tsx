@@ -66,7 +66,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
     groupYN: "N",
     rActiveYN: "Y",
     rNotes: "",
-    transferYN: "Y",
+    transferYN: "N",
     showinboYN: "Y",
     teachingYN: "N",
   };
@@ -84,12 +84,9 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
     mode: "onChange",
   });
 
-  // Watch for changes in dropdown selections
   const deptID = watch("deptID");
   const gender = watch("gender");
-  const rGrpTypeValue = watch("rGrpTypeValue");
 
-  // Update related fields when selections change
   useEffect(() => {
     if (deptID && dropdownValues.department) {
       const selectedDept = dropdownValues.department.find((d) => d.value.toString() === deptID.toString());
@@ -110,15 +107,12 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
 
   useEffect(() => {
     if (initialData) {
-      // Handle regular edit mode
       if (initialData.rGrpID && !initialData.isParent) {
         reset({
           ...defaultValues,
           ...initialData,
         });
-      }
-      // Handle sub-group creation (initialData contains parent info)
-      else if (initialData.isParent) {
+      } else if (initialData.isParent) {
         reset({
           ...defaultValues,
           key: initialData.rGrpID,
@@ -133,10 +127,8 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
 
   const generateRoomGroupCode = async () => {
     if (!isAddMode) return;
-
     try {
       setIsGeneratingCode(true);
-      // You'll need to implement a getNextCode function in your room group service
       const nextCodeResult = await roomGroupService.getNextCode("RG", 3);
       if (nextCodeResult && nextCodeResult.success && nextCodeResult.data) {
         setValue("rGrpCode", nextCodeResult.data, { shouldValidate: true, shouldDirty: true });
@@ -144,7 +136,6 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
         showAlert("Warning", "Failed to generate room group code", "warning");
       }
     } catch (error) {
-      console.error("Error generating room group code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -158,14 +149,10 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
 
   const onSubmit = async (data: RoomGroupFormData) => {
     if (viewOnly) return;
-
     setFormError(null);
-
     try {
       setIsSaving(true);
       setLoading(true);
-
-      // Ensure all required properties are explicitly set
       const formData: RoomGroupDto = {
         rGrpID: data.rGrpID,
         rGrpName: data.rGrpName,
@@ -174,8 +161,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
         groupYN: data.groupYN,
         rActiveYN: data.rActiveYN,
         rNotes: data.rNotes || "",
-        transferYN: data.transferYN || "Y",
-        // Convert deptID to number if it's a string
+        transferYN: data.transferYN || "N",
         deptID: typeof data.deptID === "string" ? parseInt(data.deptID, 10) : data.deptID,
         deptName: data.deptName || "",
         gender: data.gender || "",
@@ -186,7 +172,6 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
       };
 
       const response = await roomGroupService.save(formData);
-
       if (response.success) {
         showAlert("Success", isAddMode ? "Room group created successfully" : "Room group updated successfully", "success");
         onClose(true);
@@ -194,7 +179,6 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
         throw new Error(response.errorMessage || "Failed to save room group");
       }
     } catch (error) {
-      console.error("Error saving room group:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save room group";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
@@ -422,11 +406,6 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
                         ]}
                       />
                     </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="transferYN" control={control} label="Allow Transfer" type="switch" disabled={viewOnly} size="small" />
-                    </Grid>
-
                     <Grid size={{ sm: 12, md: 6 }}>
                       <FormField name="teachingYN" control={control} label="Teaching Ward" type="switch" disabled={viewOnly} size="small" />
                     </Grid>

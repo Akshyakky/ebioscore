@@ -20,22 +20,13 @@ export const useRevisit = (): UseRevisitReturn => {
   const [visitList, setVisitList] = useState<OPVisitDto[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
   const fetchVisitList = useCallback(async (dateFilter: DateFilterType = DateFilterType.Today, startDate: Date | null = null, endDate: Date | null = null) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Since there's no direct API for fetching all visits, we'll use the waiting patients endpoint
-      // and expand it to get all visits within the date range
-      const result = await RevisitService.getWaitingPatientDetails(
-        undefined, // attendingPhysicianID
-        dateFilter,
-        startDate || undefined,
-        endDate || undefined
-      );
+      const result = await RevisitService.getWaitingPatientDetails(undefined, dateFilter, startDate || undefined, endDate || undefined);
 
       if (result.success && result.data) {
-        // Transform the waiting patient data to match OPVisitDto structure
         const transformedVisits: OPVisitDto[] = result.data.map((item: any) => ({
           opVID: item.opVID || 0,
           pChartID: item.pChartID || 0,
@@ -79,7 +70,6 @@ export const useRevisit = (): UseRevisitReturn => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
       setError(errorMessage);
-      console.error("Error fetching visit list:", err);
       setVisitList([]);
     } finally {
       setIsLoading(false);
@@ -95,7 +85,6 @@ export const useRevisit = (): UseRevisitReturn => {
         }
         return null;
       } catch (err) {
-        console.error("Error fetching visit by ID:", err);
         return null;
       }
     },
@@ -117,7 +106,6 @@ export const useRevisit = (): UseRevisitReturn => {
       return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to save visit";
-      console.error("Error saving visit:", err);
       return {
         success: false,
         errorMessage,
@@ -136,7 +124,6 @@ export const useRevisit = (): UseRevisitReturn => {
 
       return false;
     } catch (err) {
-      console.error("Error deleting visit:", err);
       return false;
     }
   }, []);
@@ -151,7 +138,6 @@ export const useRevisit = (): UseRevisitReturn => {
 
       return false;
     } catch (err) {
-      console.error("Error cancelling visit:", err);
       return false;
     }
   }, []);
@@ -167,7 +153,6 @@ export const useRevisit = (): UseRevisitReturn => {
 
         return [];
       } catch (err) {
-        console.error("Error fetching waiting patients:", err);
         return [];
       }
     },
@@ -180,7 +165,6 @@ export const useRevisit = (): UseRevisitReturn => {
         setVisitList((prev) => prev.map((visit) => (visit.opVID === opVID ? { ...visit, pVisitStatus: status } : visit)));
         return true;
       } catch (err) {
-        console.error("Error updating visit status:", err);
         fetchVisitList();
         return false;
       }

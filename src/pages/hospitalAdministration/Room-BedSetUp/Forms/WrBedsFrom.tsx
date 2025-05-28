@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -76,7 +76,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
     bedRemarks: "",
     blockBedYN: "N",
     key: isCradle && initialData ? initialData.key : 0,
-    transferYN: "Y",
+    transferYN: "N",
     wbCatID: null,
     wbCatName: "",
     bedStatusValue: "AVLBL",
@@ -95,21 +95,16 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
     resolver: zodResolver(schema),
     mode: "onChange",
   });
-
-  // Watch for changes in dropdown selections
   const rgrpID = watch("rgrpID");
   const rlID = watch("rlID");
   const bedStatusValue = watch("bedStatusValue");
   const wbCatID = watch("wbCatID");
   const bchID = watch("bchID");
 
-  // Filter room lists when room group changes
   useEffect(() => {
     if (rgrpID) {
       const filtered = roomLists.filter((room) => room.rgrpID === rgrpID);
       setFilteredRoomLists(filtered);
-
-      // If the current room is not in the filtered list, clear the selection
       if (rlID && !filtered.some((room) => room.rlID === rlID)) {
         setValue("rlID", 0, { shouldValidate: true, shouldDirty: true });
       }
@@ -118,7 +113,6 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
     }
   }, [rgrpID, roomLists, rlID, setValue]);
 
-  // Update bed status display name when value changes
   useEffect(() => {
     if (bedStatusValue) {
       const selectedStatus = bedStatusOptions.find((s) => s.value === bedStatusValue);
@@ -128,7 +122,6 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
     }
   }, [bedStatusValue, setValue]);
 
-  // Update category and service names when IDs change
   useEffect(() => {
     if (wbCatID && dropdownValues.bedCategory) {
       const selectedCategory = dropdownValues.bedCategory.find((c) => c.value.toString() === wbCatID.toString());
@@ -166,27 +159,21 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
 
   const generateBedCode = async () => {
     if (!isAddMode) return;
-
     try {
       setIsGeneratingCode(true);
-
-      // Auto-generate a bed name based on room name and count if possible
       if (rlID) {
         const selectedRoom = roomLists.find((room) => room.rlID === rlID);
         if (selectedRoom) {
-          // Count existing beds for this room to generate the next number
           const existingBeds = await wrBedService.getAll();
           if (existingBeds.success && existingBeds.data) {
             const roomBeds = existingBeds.data.filter((bed: WrBedDto) => bed.rlID === rlID && bed.key === 0);
             const nextNumber = roomBeds.length + 1;
             const bedName = isCradle ? `CRADLE ${nextNumber}` : `${selectedRoom.rName.replace("ROOM", "BED")} ${nextNumber.toString().padStart(2, "0")}`;
-
             setValue("bedName", bedName, { shouldValidate: true, shouldDirty: true });
           }
         }
       }
     } catch (error) {
-      console.error("Error generating bed name:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -200,13 +187,10 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
 
   const onSubmit = async (data: BedFormData) => {
     if (viewOnly) return;
-
     setFormError(null);
-
     try {
       setIsSaving(true);
       setLoading(true);
-
       const formData: WrBedDto = {
         ...data,
         bedID: typeof data.bedID === "string" ? parseInt(data.bedID, 10) : data.bedID ?? 0,
@@ -216,7 +200,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
         bchID: data.bchID ? (typeof data.bchID === "string" ? parseInt(data.bchID, 10) : data.bchID) : null,
         rActiveYN: data.rActiveYN || "Y",
         blockBedYN: data.blockBedYN || "N",
-        transferYN: data.transferYN || "Y",
+        transferYN: data.transferYN || "N",
         key: isCradle && initialData ? initialData.key : 0,
         bedStatusValue: data.bedStatusValue || "AVLBL",
         bedStatus: data.bedStatus || "Available",
@@ -226,7 +210,6 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
       };
 
       const response = await wrBedService.save(formData);
-
       if (response.success) {
         showAlert("Success", isAddMode ? "Bed created successfully" : "Bed updated successfully", "success");
         onClose(true);
@@ -234,7 +217,6 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
         throw new Error(response.errorMessage || "Failed to save bed");
       }
     } catch (error) {
-      console.error("Error saving bed:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save bed";
       setFormError(errorMessage);
       showAlert("Error", errorMessage, "error");
@@ -489,10 +471,6 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
 
                     <Grid size={{ xs: 12, md: 6 }}>
                       <FormField name="blockBedYN" control={control} label="Block Bed" type="switch" disabled={viewOnly} size="small" />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <FormField name="transferYN" control={control} label="Allow Transfer" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>

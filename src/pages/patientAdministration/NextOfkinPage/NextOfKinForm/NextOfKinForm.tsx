@@ -172,7 +172,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ onSave, onCancel, initial
 
       await onSave(nokData);
     } catch (error) {
-      console.error("Error saving next of kin:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save next of kin";
       setFormError(errorMessage);
     } finally {
@@ -526,14 +525,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ onSave, onCancel, initial
                         size="small"
                       />
                     )}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Controller
-                    name="transferYN"
-                    control={control}
-                    render={({ field }) => <EnhancedFormField {...field} control={control} label="Allow Transfer" type="switch" disabled={viewOnly} size="small" />}
                   />
                 </Grid>
               </Grid>

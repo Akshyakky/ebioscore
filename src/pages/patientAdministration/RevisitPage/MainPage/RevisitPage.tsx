@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, SelectChangeEvent, Paper, IconButton, Chip, Stack } from "@mui/material";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { Box, Grid, Typography, Divider, Card, CardContent, Alert, SelectChangeEvent, Paper } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -67,11 +67,8 @@ const RevisitPage: React.FC = () => {
   const userInfo = useAppSelector((state) => state.auth);
   const compID = userInfo.compID!;
   const { setLoading } = useLoading();
-  const { performSearch } = useContext(PatientSearchContext);
-  const { fetchPatientSuggestions } = usePatientAutocomplete();
-  const { visitList, isLoading, error, fetchVisitList, deleteVisit, cancelVisit, saveVisit } = useRevisit();
+  const { visitList, isLoading, error, fetchVisitList, saveVisit } = useRevisit();
   const { showAlert } = useAlert();
-
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -79,7 +76,7 @@ const RevisitPage: React.FC = () => {
   const [selectedPChartID, setSelectedPChartID] = useState<number>(0);
   const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
   const [availableAttendingPhysicians, setAvailableAttendingPhysicians] = useState<DropdownOption[]>([]);
-  const [primaryIntroducingSource, setPrimaryIntroducingSource] = useState<DropdownOption[]>([]);
+  const [primaryIntroducingSource] = useState<DropdownOption[]>([]);
   const [clearSearchTrigger, setClearSearchTrigger] = useState(0);
   const [showStats, setShowStats] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
