@@ -7,13 +7,11 @@ import { Refresh as RefreshIcon, AccountBalance as InsuranceIcon, People as Next
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
-import { PatientSearch } from "../../CommonPage/Patient/PatientSearch/PatientSearch";
 import { PatientRegistrationDto, PatRegistersDto, PatAddressDto, PatOverviewDto, OpvisitDto } from "@/interfaces/PatientAdministration/PatientFormData";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 
@@ -134,8 +132,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
-  const [savedPChartID, setSavedPChartID] = useState<number>(0);
-  const [patientClearTrigger] = useState(0);
   const [isCalculating, setIsCalculating] = useState(false);
 
   const isViewMode = mode === "view";
@@ -568,11 +564,9 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
     if (initialData && (isEditMode || isViewMode)) {
       const formData = transformToFormData(initialData);
       reset(formData);
-      setSavedPChartID(initialData.patRegisters.pChartID);
     } else if (isCreateMode) {
       reset(defaultValues);
       generatePatientCode();
-      setSavedPChartID(0);
     }
   }, [initialData, isEditMode, isViewMode, reset, transformToFormData, isCreateMode, defaultValues]);
 
@@ -724,7 +718,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
         // This is just for UI feedback
         setValue("pChartID", patient.pChartID, { shouldDirty: true });
         setValue("pChartCode", patient.pChartCode, { shouldDirty: true });
-        setSavedPChartID(patient.pChartID);
       }
     },
     [isEditMode, setValue]
@@ -751,7 +744,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
           const newDefaults = { ...defaultValues };
           reset(newDefaults);
           generatePatientCode();
-          setSavedPChartID(0);
         }
       }
     } catch (error) {
@@ -772,7 +764,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
     setFormError(null);
 
     if (isCreateMode) {
-      setSavedPChartID(0);
       generatePatientCode();
     }
   }, [initialData, isEditMode, isViewMode, isCreateMode, defaultValues, reset, transformToFormData]);
@@ -816,21 +807,6 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
 
   return (
     <Box sx={{ p: 1.5 }}>
-      {/* Patient Search for Edit Mode - Compact */}
-      {isEditMode && !savedPChartID && (
-        <Paper variant="outlined" sx={{ p: 1.5, mb: 2 }}>
-          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
-            Search Patient
-          </Typography>
-          <PatientSearch
-            onPatientSelect={handlePatientSelect}
-            clearTrigger={patientClearTrigger}
-            label="Search Patient to Edit"
-            placeholder="Enter patient name, chart code, or phone number"
-          />
-        </Paper>
-      )}
-
       <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         {formError && (
           <Alert severity="error" sx={{ mb: 1.5 }} onClose={() => setFormError(null)}>
