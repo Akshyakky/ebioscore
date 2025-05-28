@@ -1,16 +1,4 @@
-export interface InsuranceGridProps {
-  data: OPIPInsurancesDto[];
-  onEdit: (insurance: OPIPInsurancesDto) => void;
-  onDelete: (id: number) => void;
-}
-
-export interface InsuranceFormProps {
-  onSave: (insurance: OPIPInsurancesDto) => void;
-  onCancel: () => void;
-  initialData?: OPIPInsurancesDto;
-}
 export interface OPIPInsurancesDto {
-  ID: number;
   oPIPInsID: number;
   pChartID: number;
   insurID: number;

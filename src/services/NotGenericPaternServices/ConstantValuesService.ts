@@ -16,7 +16,6 @@ const fetchConstantValues = async (endpoint: string, consCode: string): Promise<
       label: item.consDesc,
     }));
   } catch (error) {
-    console.log(`Error fetching ${consCode} values:`, error);
     throw error;
   }
 };

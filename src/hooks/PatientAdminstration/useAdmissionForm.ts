@@ -663,7 +663,6 @@ const useAdmissionForm = (): UseAdmissionFormReturn => {
             reviewOfSystem: [],
             surgicalHistory: [],
           });
-          console.log(formData);
         }
       } catch (error) {
         console.error("Error fetching patient status:", error);

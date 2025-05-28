@@ -158,14 +158,6 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
       const selectedPhysician = physicians.find((physician) => physician.value === `${conID}-${cdID}`);
 
       setAttendingPhy(event.target.value);
-
-      if (selectedPhysician) {
-        console.log("Selected Physician Details:", {
-          consultantID: conID,
-          consultantCDID: cdID,
-          consultantName: selectedPhysician.label.split("|")[0].trim(),
-        });
-      }
     },
     [physicians]
   );

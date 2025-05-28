@@ -71,14 +71,6 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
   }, [pOID]);
 
   useEffect(() => {
-    console.log("Current fields:", fields);
-  }, [fields]);
-
-  useEffect(() => {
-    console.log("Selected Product changed:", selectedProduct);
-    console.log("Approved Disable:", approvedDisable);
-    console.log("Department ID:", departmentId);
-
     if (!departmentId) {
       showAlert("Please select a department", "", "warning");
       return;
@@ -88,10 +80,8 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
       const fetchPOProductDetails = async () => {
         setLoading(true);
         try {
-          console.log("Fetching product details for:", selectedProduct.productCode);
           const response: OperationResult<PurchaseOrderDetailDto> = await purchaseOrderMastServices.getPOProductDetails(selectedProduct.productCode || "", departmentId);
 
-          console.log("API Response:", response);
           if (!response.success || !response.data) {
             showAlert("Error", "Failed to fetch product details", "error");
             setLoading(false);
@@ -114,8 +104,6 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
             rActiveYN: response.data.rActiveYN || "Y",
           };
 
-          console.log("Purchase Order Detail:", purchaseOrderdetailDto);
-
           const productExist = fields.find((item) => item.productID === purchaseOrderdetailDto.productID && item.rActiveYN === "Y");
           if (productExist) {
             showAlert("Product already exists in the grid", "", "warning");
@@ -128,17 +116,14 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
             remove(index);
           }
 
-          console.log("Appending product:", purchaseOrderdetailDto);
           append(purchaseOrderdetailDto);
 
           // Clear the selected product after a brief delay
           setTimeout(() => {
             setValue("selectedProduct", null);
-            console.log("Selected Product cleared");
           }, 100);
 
           setGridKey((prev) => {
-            console.log("Updating gridKey:", prev + 1);
             return prev + 1;
           });
         } catch (error) {
@@ -170,7 +155,6 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
     setLoading(false);
     setDeleteConfirmation({ open: false, index: null });
     setGridKey((prev) => {
-      console.log("Updating gridKey:", prev + 1);
       return prev + 1;
     });
   };
@@ -226,7 +210,6 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
 
     update(index, currentRow);
     setGridKey((prev) => {
-      console.log("Updating gridKey:", prev + 1);
       return prev + 1;
     });
   };
@@ -249,7 +232,6 @@ const PurchaseOrderGrid: React.FC<PurchaseOrderGridProps> = ({ control, fields, 
     "Delete",
   ];
 
-  console.log("Rendering fields:", fields);
   return (
     <Paper sx={{ mt: 2, overflowX: "auto" }}>
       <Box sx={{ minWidth: 1200 }}>
