@@ -16,9 +16,6 @@ import { ContactMastService } from "@/services/NotGenericPaternServices/ContactM
 import { RevisitService } from "@/services/PatientAdministrationServices/RevisitService/RevisitService";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { useAppSelector } from "@/store/hooks";
-import { PatientSearchContext } from "@/context/PatientSearchContext";
-import { useContext } from "react";
-import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import { PatientSearch } from "../../CommonPage/Patient/PatientSearch/PatientSearch";
 import { PatientDemographics } from "../../CommonPage/Patient/PatientDemographics/PatientDemographics";
 import PatientVisitHistoryDialog from "../Form/RevisitForm";
