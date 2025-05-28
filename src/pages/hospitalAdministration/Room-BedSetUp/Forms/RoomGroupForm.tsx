@@ -66,7 +66,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
     groupYN: "N",
     rActiveYN: "Y",
     rNotes: "",
-    transferYN: "Y",
+    transferYN: "N",
     showinboYN: "Y",
     teachingYN: "N",
   };
@@ -161,7 +161,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
         groupYN: data.groupYN,
         rActiveYN: data.rActiveYN,
         rNotes: data.rNotes || "",
-        transferYN: data.transferYN || "Y",
+        transferYN: data.transferYN || "N",
         deptID: typeof data.deptID === "string" ? parseInt(data.deptID, 10) : data.deptID,
         deptName: data.deptName || "",
         gender: data.gender || "",
@@ -406,11 +406,6 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
                         ]}
                       />
                     </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="transferYN" control={control} label="Allow Transfer" type="switch" disabled={viewOnly} size="small" />
-                    </Grid>
-
                     <Grid size={{ sm: 12, md: 6 }}>
                       <FormField name="teachingYN" control={control} label="Teaching Ward" type="switch" disabled={viewOnly} size="small" />
                     </Grid>

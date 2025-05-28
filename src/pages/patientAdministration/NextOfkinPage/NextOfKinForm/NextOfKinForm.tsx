@@ -527,14 +527,6 @@ const NextOfKinForm: React.FC<NextOfKinFormProps> = ({ onSave, onCancel, initial
                     )}
                   />
                 </Grid>
-
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Controller
-                    name="transferYN"
-                    control={control}
-                    render={({ field }) => <EnhancedFormField {...field} control={control} label="Allow Transfer" type="switch" disabled={viewOnly} size="small" />}
-                  />
-                </Grid>
               </Grid>
             </CardContent>
           </Card>

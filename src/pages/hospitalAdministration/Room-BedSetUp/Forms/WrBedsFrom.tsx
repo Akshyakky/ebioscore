@@ -76,7 +76,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
     bedRemarks: "",
     blockBedYN: "N",
     key: isCradle && initialData ? initialData.key : 0,
-    transferYN: "Y",
+    transferYN: "N",
     wbCatID: null,
     wbCatName: "",
     bedStatusValue: "AVLBL",
@@ -200,7 +200,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
         bchID: data.bchID ? (typeof data.bchID === "string" ? parseInt(data.bchID, 10) : data.bchID) : null,
         rActiveYN: data.rActiveYN || "Y",
         blockBedYN: data.blockBedYN || "N",
-        transferYN: data.transferYN || "Y",
+        transferYN: data.transferYN || "N",
         key: isCradle && initialData ? initialData.key : 0,
         bedStatusValue: data.bedStatusValue || "AVLBL",
         bedStatus: data.bedStatus || "Available",
@@ -471,10 +471,6 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
 
                     <Grid size={{ xs: 12, md: 6 }}>
                       <FormField name="blockBedYN" control={control} label="Block Bed" type="switch" disabled={viewOnly} size="small" />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <FormField name="transferYN" control={control} label="Allow Transfer" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>

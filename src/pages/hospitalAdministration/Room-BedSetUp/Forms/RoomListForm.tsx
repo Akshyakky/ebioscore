@@ -66,7 +66,7 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
     deptID: 0,
     deptName: "",
     rOrder: 0,
-    transferYN: "Y",
+    transferYN: "N",
     dulID: 0,
     unitDesc: "",
   };
@@ -431,10 +431,6 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
                         fullWidth
                         InputProps={{ inputProps: { min: 0 } }}
                       />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <FormField name="transferYN" control={control} label="Allow Transfer" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>

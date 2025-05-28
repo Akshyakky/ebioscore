@@ -308,10 +308,6 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
                     <Grid size={{ sm: 12, md: 4 }}>
                       <FormField name="modifyYN" control={control} label="Allow Modification" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
-
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField name="transferYN" control={control} label="Allow Transfer" type="switch" disabled={viewOnly} size="small" />
-                    </Grid>
                   </Grid>
                 </CardContent>
               </Card>

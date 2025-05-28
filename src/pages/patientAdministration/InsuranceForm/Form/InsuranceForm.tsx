@@ -308,7 +308,7 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
     modifyYN: "N",
     rNotes: "",
     rActiveYN: "Y",
-    transferYN: "Y",
+    transferYN: "N",
   });
 
   const handleAddField = useCallback((category: string) => {
@@ -322,7 +322,7 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
       modifyYN: "N",
       rNotes: "",
       rActiveYN: "Y",
-      transferYN: "Y",
+      transferYN: "N",
     });
     setIsFieldDialogOpen(true);
   }, []);
@@ -535,10 +535,6 @@ const InsuranceForm: React.FC<InsuranceFormProps> = ({ open, onClose, onSave, in
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField name="transferYN" control={control} label="Allow Transfer" type="switch" disabled={viewOnly} size="small" />
-                    </Grid>
-
                     <Grid size={{ sm: 12 }}>
                       <FormField
                         name="rNotes"
