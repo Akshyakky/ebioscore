@@ -1,5 +1,4 @@
-import { BreakConSuspendData } from "@/interfaces/FrontOffice/BreakConSuspendData";
-import { BreakConDetailData, BreakListData, BreakListDto } from "@/interfaces/FrontOffice/BreakListData";
+import { BreakConDetailData, BreakConSuspendData, BreakListData, BreakListDto } from "@/interfaces/FrontOffice/BreakListData";
 import { ReasonListData } from "@/interfaces/FrontOffice/ReasonListData";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import { createEntityService } from "@/utils/Common/serviceFactory";

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import Close from "@mui/icons-material/Close";
-import { BreakConSuspendData } from "@/interfaces/FrontOffice/BreakConSuspendData";
+import { Close } from "@mui/icons-material";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
@@ -10,16 +9,25 @@ import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/Floa
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
 import TextArea from "@/components/TextArea/TextArea";
-
-const formatToDDMMYYYY = (date: Date) => {
-  return date ? date.toLocaleDateString("en-GB").split("/").reverse().join("-") : "Invalid Date";
-};
+import { BreakConSuspendData } from "@/interfaces/FrontOffice/BreakListData";
 
 interface BreakSuspendDetailsProps {
   open: boolean;
   onClose: (isSaved: boolean, updatedData?: BreakConSuspendData) => void;
-  breakData: BreakConSuspendData;
+  breakData: BreakConSuspendData | null;
 }
+
+const formatToDDMMYYYY = (date: Date | string) => {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return dateObj
+    .toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
+    .split("/")
+    .join("-");
+};
 
 const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose, breakData }) => {
   const { setLoading } = useLoading();
@@ -34,12 +42,11 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
 
   useEffect(() => {
     if (open && breakData) {
-      setSuspendData((prevData) => ({
-        ...prevData,
-        bCSStartDate: serverDate,
-        bCSEndDate: serverDate,
+      setSuspendData({
+        bCSStartDate: breakData.bCSStartDate || serverDate,
+        bCSEndDate: breakData.bCSEndDate || serverDate,
         rNotes: breakData.rNotes || "",
-      }));
+      });
     }
   }, [open, breakData, serverDate]);
 
@@ -65,23 +72,24 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
         showAlert("Success", "The break has been suspended", "success");
         onClose(true, updatedSuspendData);
       } else {
-        console.error("Failed to save suspend data:", result.errorMessage);
+        showAlert("Error", result.errorMessage || "Failed to suspend break", "error");
         onClose(false);
       }
     } catch (error) {
       console.error("Error saving suspend data:", error);
+      showAlert("Error", "Failed to suspend break", "error");
       onClose(false);
     } finally {
       setLoading(false);
     }
-  }, [breakData, suspendData, setLoading, onClose]);
+  }, [breakData, suspendData, setLoading, onClose, showAlert]);
 
   const renderDateField = (id: string, title: string, value: Date | string | undefined, onChange?: (value: Date) => void) => (
     <Grid size={{ xs: 12, md: 6 }}>
       <FloatingLabelTextBox
         ControlID={id}
         title={title}
-        value={value ? (typeof value === "string" ? value : formatToDDMMYYYY(value)) : "Invalid Date"}
+        value={value ? (typeof value === "string" ? value : formatToDDMMYYYY(value)) : ""}
         onChange={
           onChange
             ? (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,8 +126,8 @@ const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose
     >
       <Box>
         <Grid container spacing={2}>
-          {renderDateField("BreakStartDate", "Break Start Date", breakData?.blStartDate)}
-          {renderDateField("BreakEndDate", "Break End Date", breakData?.blEndDate)}
+          {renderDateField("BreakStartDate", "Break Start Date", breakData?.bLStartDate)}
+          {renderDateField("BreakEndDate", "Break End Date", breakData?.bLEndDate)}
           {renderDateField("SuspendStartDate", "Suspend Start Date", suspendData.bCSStartDate, (date) => handleInputChange("bCSStartDate", date))}
           {renderDateField("SuspendEndDate", "Suspend End Date", suspendData.bCSEndDate, (date) => handleInputChange("bCSEndDate", date))}
           <Grid size={{ xs: 12 }}>
