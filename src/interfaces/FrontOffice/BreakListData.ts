@@ -27,8 +27,8 @@ export interface BreakConDetailData extends BaseDto {
 }
 
 export interface BreakListDto extends BaseDto {
-  breakListData: BreakListData;
-  breakListConDetailsData: BreakConDetailData[];
+  breakList: BreakListData;
+  breakConDetails: BreakConDetailData[];
 }
 
 export interface FrequencyData {

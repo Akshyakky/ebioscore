@@ -29,6 +29,24 @@ const typeOptions = [
   { value: "resource", label: "Resource Break" },
 ];
 
+export const frequencyCodeMap = {
+  none: "FO70",
+  daily: "FO71",
+  weekly: "FO72",
+  monthly: "FO73",
+  yearly: "FO74",
+};
+
+export const weekDayCodeMap = {
+  Sunday: "FO75",
+  Monday: "FO76",
+  Tuesday: "FO77",
+  Wednesday: "FO78",
+  Thursday: "FO79",
+  Friday: "FO80",
+  Saturday: "FO81",
+};
+
 const BreakListPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
@@ -141,7 +159,6 @@ const BreakListPage: React.FC = () => {
     });
   }, []);
 
-  // Calculate stats for the dashboard
   const stats = useMemo(() => {
     if (!breakList.length) {
       return {
@@ -165,7 +182,6 @@ const BreakListPage: React.FC = () => {
     };
   }, [breakList]);
 
-  // Apply filters to the list
   const filteredBreaks = useMemo(() => {
     if (!breakList.length) return [];
 
@@ -224,6 +240,14 @@ const BreakListPage: React.FC = () => {
     return dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  const formatDate = (date: Date | string) => {
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+    return dateObj.toLocaleDateString("en-In", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  };
   const columns: Column<BreakListData>[] = [
     {
       key: "bLName",
@@ -240,7 +264,7 @@ const BreakListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 120,
-      //   formatter: (value: Date | string) => formatDate(value),
+      formatter: (value: Date | string) => formatDate(value),
     },
     {
       key: "bLEndDate",
@@ -249,7 +273,7 @@ const BreakListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 120,
-      //   formatter: (value: Date | string) => formatDate(value),
+      formatter: (value: Date | string) => formatDate(value),
     },
     {
       key: "bLStartTime",
@@ -294,7 +318,22 @@ const BreakListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 150,
-      formatter: (value: any) => value || "-",
+      formatter: (value: any, item: BreakListData) => {
+        const frequencyKey = Object.keys(frequencyCodeMap).find((key) => frequencyCodeMap[key as keyof typeof frequencyCodeMap] === value) || "none";
+        const frequencyLabel = frequencyKey.charAt(0).toUpperCase() + frequencyKey.slice(1);
+
+        if (frequencyKey === "weekly" && item.bLFrqWkDesc) {
+          const weekdays = item.bLFrqWkDesc
+            .split(",")
+            .map((code) => Object.keys(weekDayCodeMap).find((day) => weekDayCodeMap[day as keyof typeof weekDayCodeMap] === code))
+            .filter((day): day is string => !!day)
+            .map((day) => day.slice(0, 3))
+            .join(", ");
+          return `${frequencyLabel} (${weekdays})`;
+        }
+
+        return frequencyLabel || "-";
+      },
     },
     {
       key: "rNotes",
