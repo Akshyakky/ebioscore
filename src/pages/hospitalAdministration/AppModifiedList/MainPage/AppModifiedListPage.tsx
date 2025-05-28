@@ -14,13 +14,12 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { AppModifiedMast, AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { useAppModifiedList } from "../hooks/useAppModifiedList";
-
-import AppModifiedMastSearch from "../SubPage/AppModifiedListSearch";
 import AppModifiedMasterForm from "../Form/AppModifiedMastForm";
 import AppModifiedFieldForm from "../Form/AppModifiedListForm";
+import AppModifiedMastSearch from "../Form/AppModifiedListSearch";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -43,6 +42,7 @@ const statusOptions = [
 ];
 
 const AppModifiedListPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [currentTab, setCurrentTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -66,7 +66,6 @@ const AppModifiedListPage: React.FC = () => {
   });
 
   useEffect(() => {
-    document.title = "App Modified List Management";
     fetchMasterList();
   }, [fetchMasterList]);
 
@@ -133,10 +132,16 @@ const AppModifiedListPage: React.FC = () => {
     setIsMasterFormOpen(true);
   }, []);
 
-  const handleSelectMasterForFields = useCallback((master: AppModifiedMast) => {
-    setSelectedMasterForFields(master);
-    setCurrentTab(1);
-  }, []);
+  const handleSelectMasterForFields = useCallback(
+    (master: AppModifiedMast) => {
+      setSelectedMasterForFields(master);
+      setCurrentTab(1);
+      setSearchTerm("");
+      setDebouncedSearchTerm("");
+      debouncedSearch.cancel();
+    },
+    [debouncedSearch]
+  );
 
   const handleAddField = useCallback(() => {
     if (!selectedMasterForFields) {
@@ -775,7 +780,6 @@ const AppModifiedListPage: React.FC = () => {
         </Paper>
       </TabPanel>
 
-      {/* Forms and Dialogs */}
       {isMasterFormOpen && <AppModifiedMasterForm open={isMasterFormOpen} onClose={handleMasterFormClose} initialData={selectedMaster} viewOnly={isViewMode} />}
 
       {isFieldFormOpen && (

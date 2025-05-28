@@ -10,7 +10,7 @@ import { notifyWarning } from "@/utils/Common/toastManager";
 import ApplicableAgeRangeTable from "./ApplicableAgeRanges";
 import CompMultipleDetails from "./CompMultipleDetails";
 import CompTemplateDetails from "./CompTemplateDetails";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 
 interface LComponentDetailsProps {
   onUpdate: (componentData: LComponentDto) => void;
@@ -38,6 +38,7 @@ const LComponentDetails: React.FC<LComponentDetailsProps> = ({
   handleCloseDialog,
 }) => {
   const serverDate = useServerDate();
+  const { showAlert } = useAlert();
   const [isDeltaValueDisabled, setIsDeltaValueDisabled] = useState(false);
 
   // Create a ref to hold the latest ageRanges.

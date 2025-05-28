@@ -11,7 +11,7 @@ import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useDepartmentList } from "../hooks/useDepartmentList";
 
 interface DepartmentListFormProps {
@@ -54,6 +54,7 @@ const departmentTypeOptions = [
 const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
   const { getNextCode, saveDepartment } = useDepartmentList();
+  const { showAlert } = useAlert();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);

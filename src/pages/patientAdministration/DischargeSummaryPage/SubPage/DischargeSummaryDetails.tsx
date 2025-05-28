@@ -1,9 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { Grid, SelectChangeEvent } from "@mui/material";
 import FormField from "../../../../components/FormField/FormField";
-import { showAlert } from "../../../../utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import FormSectionWrapper from "../../../../components/FormField/FormSectionWrapper";
-
 import { IpDischargeDetailsDto } from "@/interfaces/PatientAdministration/IpDischargeDetailDto";
 import { usePatientAutocomplete } from "@/hooks/PatientAdminstration/usePatientAutocomplete";
 import extractNumbers from "@/utils/PatientAdministration/extractNumbers";
@@ -66,6 +65,7 @@ const initialState = (): IpDischargeDetailsDto => ({
 });
 
 const DischargeSummaryDetails: React.FC<DischargeSummaryDetailsProps> = ({ onClear, selectedAdmission, onAdmissionSelect }) => {
+  const { showAlert } = useAlert();
   const [formState, setFormState] = useState<IpDischargeDetailsDto>(() => initialState());
   const { register, control, setValue } = useForm<IpDischargeDetailsDto>({
     defaultValues: initialState(),

@@ -4,7 +4,7 @@ import CustomButton from "@/components/Button/CustomButton";
 import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import CloseIcon from "@mui/icons-material/Close";
 import SpecialGrid from "@/components/SpecialGrid/SpecialGrid";
 
@@ -15,6 +15,7 @@ interface InvestigationPrintOrderProps {
 }
 
 const InvestigationPrintOrder: React.FC<InvestigationPrintOrderProps> = ({ show, handleClose }) => {
+  const { showAlert } = useAlert();
   const [investigations, setInvestigations] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredInvestigations, setFilteredInvestigations] = useState<any[]>([]);

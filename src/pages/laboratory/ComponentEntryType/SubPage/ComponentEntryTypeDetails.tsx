@@ -2,9 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { useServerDate } from "@/hooks/Common/useServerDate";
-
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { Grid, Paper, Typography } from "@mui/material";
 import FormField from "@/components/FormField/FormField";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
@@ -25,7 +23,7 @@ const ComponentEntryTypeDetails: React.FC<{ editData?: LComponentEntryTypeDto }>
   });
 
   const { setLoading } = useLoading();
-  const serverDate = useServerDate();
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     if (editData) {

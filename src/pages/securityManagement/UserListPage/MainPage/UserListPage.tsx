@@ -14,7 +14,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import UserListForm from "../Form/UserListForm";
 import { useUserList } from "../hooks/useUserList";
@@ -38,6 +38,7 @@ const UserListPage: React.FC = () => {
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
   const { isLoading, error, fetchUsersList, deleteUserList, userList } = useUserList();
+  const { showAlert } = useAlert();
 
   const [filters, setFilters] = useState<{
     status: string;

@@ -10,7 +10,7 @@ import { Save, Cancel, Refresh } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useProductTaxList } from "../hooks/useProductTaxListPage";
 
 interface ProductTaxListFormProps {
@@ -35,6 +35,7 @@ type ProductTaxListFormData = z.infer<typeof schema>;
 const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
   const { getNextCode, saveProductTax } = useProductTaxList();
+  const { showAlert } = useAlert();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);

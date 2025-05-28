@@ -6,7 +6,7 @@ import DepartmentSelectionDialog from "../../CommonPage/DepartmentSelectionDialo
 import { IndentDetailDto, IndentMastDto, IndentSaveRequestDto } from "@/interfaces/InventoryManagement/IndentProductDto";
 import IndentSearchDialog from "../SubPage/IndentProductSearch";
 import { indentProductServices } from "@/services/InventoryManagementService/indentProductService/IndentProductService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
 import dayjs from "dayjs";
 import { productListService, productOverviewService } from "@/services/InventoryManagementService/inventoryManagementService";
@@ -21,6 +21,7 @@ const IndentProductPage: React.FC = () => {
   const [selectedData, setSelectedData] = useState<IndentSaveRequestDto | null>(null);
   const [, setIndentDetails] = useState<IndentDetailDto[]>([]);
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
 
   const handleDepartmentSelect = useCallback((id: number, name: string) => {
     setDepartment({ id, name });

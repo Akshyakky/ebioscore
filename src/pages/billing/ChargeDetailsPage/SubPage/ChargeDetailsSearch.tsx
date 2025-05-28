@@ -1,6 +1,6 @@
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 import { chargeDetailsService } from "@/services/BillingServices/ChargeDetailsService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useCallback } from "react";
 import React from "react";
 
@@ -11,6 +11,7 @@ interface ChargeDetailsSearchProps {
 }
 
 const ChargeDetailsSearch: React.FC<ChargeDetailsSearchProps> = ({ open, onClose, onSelect }) => {
+  const { showAlert } = useAlert();
   const fetchItems = useCallback(async () => {
     try {
       const result: any = await chargeDetailsService.getAll();

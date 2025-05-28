@@ -16,9 +16,8 @@ import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { MedicationListDto } from "@/interfaces/ClinicalManagement/MedicationListDto";
 import MedicationListForm from "../Form/MedicationListForm";
 import { useMedicationList } from "../hooks/useMedicationList";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 const statusOptions = [
   { value: "active", label: "Active" },
@@ -31,6 +30,7 @@ const calcQuantityOptions = [
 ];
 
 const MedicationListPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedMedication, setSelectedMedication] = useState<MedicationListDto | null>(null);
@@ -56,10 +56,6 @@ const MedicationListPage: React.FC = () => {
     group: "",
     manufacturer: "",
   });
-
-  useEffect(() => {
-    document.title = "Medication List Management";
-  }, []);
 
   const handleRefresh = useCallback(() => {
     fetchMedicationList();

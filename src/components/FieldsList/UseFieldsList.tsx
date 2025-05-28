@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { AppModifyFieldDto } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
 import { DropdownOption } from "../FormField/FormField";
 import { appModifiedListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
 
 interface FieldsListState {
@@ -22,6 +22,7 @@ interface UseFieldsListResult {
 
 const useFieldsList = (fieldNames: string[]): UseFieldsListResult => {
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
   const [state, setState] = useState<FieldsListState>({
     fieldsList: {},
     defaultFields: {},

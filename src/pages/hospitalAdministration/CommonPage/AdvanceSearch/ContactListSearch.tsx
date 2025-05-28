@@ -3,7 +3,7 @@ import { ContactService } from "@/services/HospitalAdministrationServices/Contac
 import { ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
 import { Column } from "@/components/CustomGrid/CustomGrid";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 
 interface ContactListSearchProps {
   open: boolean;
@@ -14,6 +14,7 @@ interface ContactListSearchProps {
 const ContactListSearch: React.FC<ContactListSearchProps> = ({ open, onClose, onSelect }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const contactService = new ContactService();
+  const { showAlert } = useAlert();
 
   const fetchContacts = useCallback(async () => {
     try {

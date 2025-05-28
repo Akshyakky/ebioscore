@@ -22,10 +22,10 @@ import {
   TextFieldProps,
   CircularProgress,
   Switch,
-  styled,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -33,8 +33,9 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ClearIcon from "@mui/icons-material/Clear";
 import dayjs, { Dayjs } from "dayjs";
 
-// Define the date format constant
+// Define the date and time format constants
 const DATE_FORMAT = "DD/MM/YYYY";
+const TIME_FORMAT = "HH:mm";
 
 // Define option type for select, radio, checkbox, etc.
 export interface OptionType {
@@ -42,7 +43,7 @@ export interface OptionType {
   label: string;
 }
 
-// Field types
+// Field types - added "timepicker"
 export type FieldType =
   | "text"
   | "email"
@@ -59,6 +60,7 @@ export type FieldType =
   | "checkbox"
   | "datepicker"
   | "datetimepicker"
+  | "timepicker"
   | "file"
   | "switch";
 
@@ -71,7 +73,7 @@ interface FormFieldCommonProps<TFieldValues extends FieldValues> {
   disabled?: boolean;
   fullWidth?: boolean;
   placeholder?: string;
-  helperText?: string;
+  helperText?: ReactNode; // Changed from string to ReactNode
   variant?: "outlined" | "filled" | "standard";
   size?: "small" | "medium";
   defaultValue?: any;
@@ -141,6 +143,20 @@ type DatePickerTypeProps = {
   format?: string;
 };
 
+// New TimePicker type props
+type TimePickerTypeProps = {
+  type: "timepicker";
+  minTime?: Dayjs;
+  maxTime?: Dayjs;
+  format?: string;
+  ampm?: boolean;
+  timeSteps?: {
+    hours?: number;
+    minutes?: number;
+    seconds?: number;
+  };
+};
+
 type FileTypeProps = {
   type: "file";
   accept?: string;
@@ -155,9 +171,20 @@ type SwitchTypeProps = {
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 };
 
-// Combine all possible props using discriminated union
+// Combine all possible props using discriminated union - added TimePickerTypeProps
 export type FormFieldProps<TFieldValues extends FieldValues> = FormFieldCommonProps<TFieldValues> &
-  (TextFieldTypeProps | TextareaTypeProps | SelectTypeProps | AutocompleteTypeProps | RadioTypeProps | CheckboxTypeProps | DatePickerTypeProps | FileTypeProps | SwitchTypeProps);
+  (
+    | TextFieldTypeProps
+    | TextareaTypeProps
+    | SelectTypeProps
+    | AutocompleteTypeProps
+    | RadioTypeProps
+    | CheckboxTypeProps
+    | DatePickerTypeProps
+    | TimePickerTypeProps
+    | FileTypeProps
+    | SwitchTypeProps
+  );
 
 /**
  * FormField - A comprehensive form field component for Material UI v7
@@ -194,7 +221,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [fileError, setFileError] = useState<string>("");
 
-    // Type guards for checking field types
+    // Type guards for checking field types - added isTimePicker
     const isTextField = (type: FieldType): type is TextFieldTypeProps["type"] => ["text", "email", "password", "number", "search", "tel", "url"].includes(type);
     const isTextArea = (type: FieldType): boolean => type === "textarea";
     const isSelect = (type: FieldType): boolean => type === "select";
@@ -204,6 +231,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
     const isCheckbox = (type: FieldType): boolean => type === "checkbox";
     const isDatePicker = (type: FieldType): boolean => type === "datepicker";
     const isDateTimePicker = (type: FieldType): boolean => type === "datetimepicker";
+    const isTimePicker = (type: FieldType): boolean => type === "timepicker";
     const isFileInput = (type: FieldType): boolean => type === "file";
     const isSwitch = (type: FieldType): boolean => type === "switch";
 
@@ -243,6 +271,43 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
         return (rest as any).format || DATE_FORMAT;
       }
       return DATE_FORMAT;
+    };
+
+    // Get time format from props or use default
+    const getTimeFormat = (): string => {
+      if (isTimePicker(type)) {
+        return (rest as any).format || TIME_FORMAT;
+      }
+      return TIME_FORMAT;
+    };
+
+    // Get time picker specific props
+    const getAmpm = (): boolean => {
+      if (isTimePicker(type)) {
+        return (rest as any).ampm !== undefined ? (rest as any).ampm : false;
+      }
+      return false;
+    };
+
+    const getMinTime = (): Dayjs | undefined => {
+      if (isTimePicker(type)) {
+        return (rest as any).minTime;
+      }
+      return undefined;
+    };
+
+    const getMaxTime = (): Dayjs | undefined => {
+      if (isTimePicker(type)) {
+        return (rest as any).maxTime;
+      }
+      return undefined;
+    };
+
+    const getTimeSteps = (): { hours?: number; minutes?: number; seconds?: number } => {
+      if (isTimePicker(type)) {
+        return (rest as any).timeSteps || {};
+      }
+      return {};
     };
 
     // Other getter functions similar to your original component
@@ -295,6 +360,19 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
       return true;
     };
 
+    // Helper function to render helper text (now supports ReactNode)
+    const renderHelperText = (helperTextContent: ReactNode, errorMessage?: string): ReactNode => {
+      const content = errorMessage || helperTextContent;
+
+      // If it's a string, wrap it in FormHelperText
+      if (typeof content === "string") {
+        return content;
+      }
+
+      // If it's a ReactNode, return it as is
+      return content;
+    };
+
     // Main render function for Controller
     const renderField = ({ field, fieldState }: { field: any; fieldState: { error?: { message?: string } } }) => {
       const { error } = fieldState;
@@ -305,7 +383,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
         id: `field-${name}`,
         label,
         error: !!errorMessage,
-        helperText: errorMessage || helperText,
+        helperText: renderHelperText(helperText, errorMessage),
         disabled,
         fullWidth,
         required,
@@ -339,7 +417,14 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
               }),
             }}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              field.onChange(e);
+              let valueToSet: any = e.target.value;
+              if (type === "number") {
+                valueToSet = valueToSet === "" ? 0 : Number(valueToSet);
+                if (isNaN(valueToSet)) {
+                  valueToSet = undefined;
+                }
+              }
+              field.onChange(valueToSet);
               externalOnChange?.(e);
             }}
             onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
@@ -506,7 +591,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
                 </MenuItem>
               ))}
             </Select>
-            {(hasError || errorMessage || helperText) && <FormHelperText>{hasError ? `${label} is required.` : errorMessage || helperText}</FormHelperText>}
+            {(hasError || errorMessage || helperText) && <FormHelperText>{hasError ? `${label} is required.` : renderHelperText(helperText, errorMessage)}</FormHelperText>}
           </FormControl>
         );
       }
@@ -554,7 +639,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
                 label={label}
                 variant={variant}
                 error={!!errorMessage}
-                helperText={errorMessage || helperText}
+                helperText={renderHelperText(helperText, errorMessage)}
                 required={required}
                 size={size}
                 InputLabelProps={{
@@ -588,7 +673,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
                 <FormControlLabel key={String(option.value)} value={option.value} control={<Radio size={size} />} label={option.label} />
               ))}
             </RadioGroup>
-            {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
+            {(errorMessage || helperText) && <FormHelperText>{renderHelperText(helperText, errorMessage)}</FormHelperText>}
           </FormControl>
         );
       }
@@ -631,7 +716,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
                   );
                 })}
               </FormGroup>
-              {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
+              {(errorMessage || helperText) && <FormHelperText>{renderHelperText(helperText, errorMessage)}</FormHelperText>}
             </FormControl>
           );
         }
@@ -652,7 +737,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
               }
               label={label}
             />
-            {(errorMessage || helperText) && <FormHelperText>{errorMessage || helperText}</FormHelperText>}
+            {(errorMessage || helperText) && <FormHelperText>{renderHelperText(helperText, errorMessage)}</FormHelperText>}
           </FormControl>
         );
       }
@@ -666,16 +751,16 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <PickerComponent
               label={label}
-              value={field.value ? (typeof field.value === "string" ? dayjs(field.value) : dayjs(field.value)) : null}
+              value={field.value ? dayjs(field.value) : null}
               onChange={(newValue) => {
-                let formattedValue = null;
+                let valueToStore: Date | null = null;
 
-                if (newValue && dayjs.isDayjs(newValue)) {
-                  formattedValue = newValue.toISOString();
+                if (newValue && dayjs.isDayjs(newValue) && newValue.isValid()) {
+                  valueToStore = newValue.toDate();
                 }
 
-                field.onChange(formattedValue);
-                externalOnChange?.(formattedValue);
+                field.onChange(valueToStore);
+                externalOnChange?.(valueToStore);
               }}
               disabled={disabled}
               format={dateFormat}
@@ -685,7 +770,53 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
                   fullWidth,
                   required,
                   error: !!errorMessage,
-                  helperText: errorMessage || helperText,
+                  helperText: renderHelperText(helperText, errorMessage),
+                  size,
+                  InputLabelProps: {
+                    shrink: true,
+                  },
+                },
+              }}
+            />
+          </LocalizationProvider>
+        );
+      }
+
+      if (isTimePicker(type)) {
+        const timeFormat = getTimeFormat();
+        const ampm = getAmpm();
+        const minTime = getMinTime();
+        const maxTime = getMaxTime();
+        const timeSteps = getTimeSteps();
+
+        return (
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <TimePicker
+              label={label}
+              value={field.value ? (typeof field.value === "string" ? dayjs(field.value, timeFormat) : dayjs(field.value)) : null}
+              onChange={(newValue) => {
+                let formattedValue = null;
+
+                if (newValue && dayjs.isDayjs(newValue) && newValue.isValid()) {
+                  formattedValue = newValue.format(timeFormat);
+                }
+
+                field.onChange(formattedValue);
+                externalOnChange?.(formattedValue);
+              }}
+              disabled={disabled}
+              format={timeFormat}
+              ampm={ampm}
+              minTime={minTime}
+              maxTime={maxTime}
+              timeSteps={timeSteps}
+              slotProps={{
+                textField: {
+                  variant,
+                  fullWidth,
+                  required,
+                  error: !!errorMessage,
+                  helperText: renderHelperText(helperText, errorMessage),
                   size,
                   InputLabelProps: {
                     shrink: true,
@@ -804,7 +935,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
                   fontSize: size === "small" ? "0.75rem" : "0.875rem",
                 }}
               >
-                {errorMessage || helperText}
+                {renderHelperText(helperText, errorMessage)}
               </FormHelperText>
             )}
           </FormControl>
@@ -822,7 +953,6 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
           }}
           onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
             field.onBlur(e);
-            externalOnBlur?.(e);
           }}
         />
       );

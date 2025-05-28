@@ -8,7 +8,7 @@ import BreakFrequencyDetails, { FrequencyData } from "./BreakFrequencyDetails";
 import { BreakListService } from "@/services/NotGenericPaternServices/BreakListService";
 import { breakConDetailsService, resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import CustomCheckbox from "@/components/Checkbox/Checkbox";
 import { Grid, Paper, Typography } from "@mui/material";
 import FormField from "@/components/FormField/FormField";
@@ -38,6 +38,7 @@ const weekDayCodeMap = {
 const BreakDetails: React.FC<{ editData?: any }> = ({ editData }) => {
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
+  const { showAlert } = useAlert();
 
   // Destructure from useAppSelector for user details
 

@@ -11,7 +11,7 @@ import { Save, Cancel } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useAppModifiedList } from "../hooks/useAppModifiedList";
 import { useAppSelector } from "@/store/hooks";
 import moduleService from "@/services/NotGenericPaternServices/ModuleService";
@@ -28,8 +28,8 @@ const schema = z.object({
   fieldCode: z.string().nonempty("Field code is required"),
   fieldName: z.string().nonempty("Field name is required"),
   auGrpID: z.number().min(1, "Main module is required"),
-  rActiveYN: z.string(),
-  transferYN: z.string(),
+  rActiveYN: z.enum(["Y", "N"]),
+  transferYN: z.enum(["Y", "N"]),
   rNotes: z.string().nullable().optional(),
 });
 
@@ -37,6 +37,7 @@ type AppModifiedMasterFormData = z.infer<typeof schema>;
 
 const AppModifiedMasterForm: React.FC<AppModifiedMasterFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
   const { saveMaster } = useAppModifiedList();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -77,7 +78,7 @@ const AppModifiedMasterForm: React.FC<AppModifiedMasterFormProps> = ({ open, onC
           const modulesData = await moduleService.getActiveModules(adminYN === "Y" ? 0 : userID ?? 0);
           const mainModuleOptions = modulesData.map((module) => ({
             label: module.title,
-            value: module.auGrpID,
+            value: module.auGrpID.toString(),
           }));
 
           setMainModulesOptions(mainModuleOptions);
@@ -276,17 +277,7 @@ const AppModifiedMasterForm: React.FC<AppModifiedMasterFormProps> = ({ open, onC
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12 }}>
-                      <FormField
-                        name="rNotes"
-                        control={control}
-                        label="Notes"
-                        type="textarea"
-                        disabled={viewOnly}
-                        size="small"
-                        fullWidth
-                        rows={4}
-                        placeholder="Enter any additional information about this List Master"
-                      />
+                      <FormField name="rNotes" control={control} label="Notes" type="textarea" disabled={viewOnly} size="small" fullWidth rows={4} />
                     </Grid>
                   </Grid>
                 </CardContent>

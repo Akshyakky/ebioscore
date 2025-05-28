@@ -16,7 +16,7 @@ import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
 import MedicationGenericForm from "../Form/MedicationGenericForm";
 import { useMedicationGeneric } from "../hooks/useMedicationGeneric";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 
 const statusOptions = [
@@ -25,6 +25,7 @@ const statusOptions = [
 ];
 
 const MedicationGenericPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedGeneric, setSelectedGeneric] = useState<MedicationGenericDto | null>(null);
@@ -46,10 +47,6 @@ const MedicationGenericPage: React.FC = () => {
     modify: "",
     transfer: "",
   });
-
-  useEffect(() => {
-    document.title = "Generic Medication Management";
-  }, []);
 
   const handleRefresh = useCallback(() => {
     fetchMedicationGenericList();

@@ -5,7 +5,7 @@ import { IndentMastDto } from "@/interfaces/InventoryManagement/IndentProductDto
 import { appModifiedListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { indentProductServices } from "@/services/InventoryManagementService/indentProductService/IndentProductService";
 import { DateFilterType, FilterDto } from "@/interfaces/Common/FilterDto";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
 import { indentProductMastService } from "@/services/InventoryManagementService/inventoryManagementService";
 import dayjs from "dayjs";
@@ -17,6 +17,7 @@ interface IndentSearchDialogProps {
 }
 
 const IndentSearchDialog: React.FC<IndentSearchDialogProps> = ({ open, onClose, onSelect }) => {
+  const { showAlert } = useAlert();
   const [, setStatusOptions] = useState<{ label: string; value: string }[]>([]);
   const [filterConfigs, setFilterConfigs] = useState<any[]>([]);
   const [, setLoading] = useState(false);

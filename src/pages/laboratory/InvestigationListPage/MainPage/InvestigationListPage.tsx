@@ -7,7 +7,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { investigationDto, LCompMultipleDto, LCompAgeRangeDto, LInvMastDto, LCompTemplateDto, LComponentDto, InvestigationFormErrors } from "@/interfaces/Laboratory/LInvMastDto";
 import { investigationlistService } from "@/services/Laboratory/LaboratoryService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { notifyWarning } from "@/utils/Common/toastManager";
 import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
@@ -39,6 +39,7 @@ const InvestigationListPage: React.FC<Props> = () => {
     invSTitle: "",
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { showAlert } = useAlert();
   const [shouldResetForm, setShouldResetForm] = useState(false);
   const [, setFormErrors] = useState<InvestigationFormErrors>({});
   const [activeView, setActiveView] = useState<"component" | "printPreferences">("component");

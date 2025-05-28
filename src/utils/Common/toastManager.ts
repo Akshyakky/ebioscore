@@ -16,5 +16,3 @@ export const notifyInfo = (message: string) => {
 export const notifyWarning = (message: string) => {
   toast.warn(message);
 };
-
-// ... You can add more customized functions as needed

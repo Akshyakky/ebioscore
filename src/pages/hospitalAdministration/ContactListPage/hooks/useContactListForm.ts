@@ -3,7 +3,7 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
 import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { ContactListData, ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
-import { OperationResult, PaginatedList } from "@/services/GenericEntityService/GenericEntityService";
+import { OperationResult } from "@/services/GenericEntityService/GenericEntityService";
 
 const contactService = new ContactService();
 
@@ -18,9 +18,7 @@ export const useContactList = () => {
       try {
         setIsLoading(true);
         setError(null);
-
         const response = await contactService.searchContactList(name, conCode, conCat, phoneNumber, fromDate, toDate, pageIndex, pageSize);
-
         if (response.success && response.data) {
           setContactList(response.data.items || []);
         } else {
@@ -28,7 +26,6 @@ export const useContactList = () => {
           setContactList([]);
         }
       } catch (err) {
-        console.error("Error fetching contact list:", err);
         setError("Failed to fetch contact list");
         setContactList([]);
       } finally {
@@ -43,14 +40,12 @@ export const useContactList = () => {
       try {
         setLoading(true);
         const response = await ContactListService.fetchContactDetails(conID);
-
         if (response) {
           return response;
         } else {
           throw new Error("Failed to fetch contact details");
         }
       } catch (err) {
-        console.error("Error fetching contact by ID:", err);
         setError("Failed to fetch contact details");
         return null;
       } finally {
@@ -65,15 +60,11 @@ export const useContactList = () => {
       try {
         setLoading(true);
         const response = await contactService.saveContactList(contactData);
-
         if (response.success) {
-          // Refresh the list after successful save
           await fetchContactList();
         }
-
         return response;
       } catch (err) {
-        console.error("Error saving contact:", err);
         return {
           success: false,
           errorMessage: "Failed to save contact",
@@ -91,9 +82,7 @@ export const useContactList = () => {
       try {
         setLoading(true);
         const response = await contactService.delete(conID);
-
         if (response.success) {
-          // Refresh the list after successful delete
           await fetchContactList();
           return true;
         } else {
@@ -101,7 +90,6 @@ export const useContactList = () => {
           return false;
         }
       } catch (err) {
-        console.error("Error deleting contact:", err);
         setError("Failed to delete contact");
         return false;
       } finally {
@@ -111,35 +99,9 @@ export const useContactList = () => {
     [setLoading, fetchContactList]
   );
 
-  //   const updateContactStatus = useCallback(
-  //     async (conID: number, status: string): Promise<boolean> => {
-  //       try {
-  //         setLoading(true);
-  //         const response = await contactService.updateStatus(conID, status);
-
-  //         if (response.success) {
-  //           // Refresh the list after successful update
-  //           await fetchContactList();
-  //           return true;
-  //         } else {
-  //           setError(response.errorMessage || "Failed to update contact status");
-  //           return false;
-  //         }
-  //       } catch (err) {
-  //         console.error("Error updating contact status:", err);
-  //         setError("Failed to update contact status");
-  //         return false;
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     },
-  //     [setLoading, fetchContactList]
-  //   );
-
   const generateContactCode = useCallback(async (prefix: string, padLength: number = 5): Promise<string | null> => {
     try {
       const response = await ContactListService.generateContactCode(prefix, padLength);
-
       if (response && typeof response === "string") {
         return response;
       } else if (response && "success" in response && response.success && "data" in response) {
@@ -148,7 +110,6 @@ export const useContactList = () => {
         return null;
       }
     } catch (err) {
-      console.error("Error generating contact code:", err);
       return null;
     }
   }, []);
@@ -157,16 +118,13 @@ export const useContactList = () => {
     try {
       setIsLoading(true);
       setError(null);
-
       const response = await ContactListService.searchContactListDetails(searchTerm);
-
       if (response.success && response.data) {
         setContactList(response.data);
       } else {
         setContactList([]);
       }
     } catch (err) {
-      console.error("Error searching contacts:", err);
       setError("Failed to search contacts");
       setContactList([]);
     } finally {
@@ -182,7 +140,6 @@ export const useContactList = () => {
     getContactById,
     saveContact,
     deleteContact,
-    // updateContactStatus,
     generateContactCode,
     searchContacts,
   };

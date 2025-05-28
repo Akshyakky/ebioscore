@@ -4,8 +4,7 @@ import FormField from "@/components/FormField/FormField";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { BChargeDetailsDto, BChargePackDto } from "@/interfaces/Billing/BChargeDetails";
 import { chargeDetailsService } from "@/services/BillingServices/ChargeDetailsService";
-
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { Box, Grid, SelectChangeEvent, Typography } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import React from "react";
@@ -25,6 +24,7 @@ interface GridData {
 }
 
 const ChargePackageDetails: React.FC<ChargePackageDetailsProps> = ({ chargeBreakYN, onChargePackagesChange, onGridDataChange }) => {
+  const { showAlert } = useAlert();
   const [gridData, setGridData] = useState<GridData[]>([]);
   const [adjustmentAmount, setAdjustmentAmount] = useState<number>(0);
   const [isPercentage, setIsPercentage] = useState<boolean>(true);

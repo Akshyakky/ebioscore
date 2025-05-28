@@ -10,7 +10,7 @@ import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Folder as F
 import useDropdownChange from "@/hooks/useDropdownChange";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { roomGroupService, roomListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import CustomButton from "@/components/Button/CustomButton";
 import CustomGrid from "@/components/CustomGrid/CustomGrid";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
@@ -25,6 +25,7 @@ interface RoomGroupDetailsProps {
 
 const RoomGroupDetails: React.FC<RoomGroupDetailsProps> = ({ roomGroups, fetchRoomGroups }) => {
   const { setLoading } = useLoading();
+  const { showAlert } = useAlert();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());

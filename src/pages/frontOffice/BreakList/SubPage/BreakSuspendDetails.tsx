@@ -4,7 +4,7 @@ import { BreakConSuspendData } from "@/interfaces/FrontOffice/BreakConSuspendDat
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { Box, Grid } from "@mui/material";
 import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
@@ -24,6 +24,7 @@ interface BreakSuspendDetailsProps {
 const BreakSuspendDetails: React.FC<BreakSuspendDetailsProps> = ({ open, onClose, breakData }) => {
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
+  const { showAlert } = useAlert();
 
   const [suspendData, setSuspendData] = useState<Partial<BreakConSuspendData>>({
     bCSStartDate: serverDate,

@@ -14,7 +14,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import ContactListForm from "../Form/ContactListForm";
 import { useContactList } from "../hooks/useContactListForm";
@@ -24,15 +24,8 @@ const statusOptions = [
   { value: "inactive", label: "Inactive" },
 ];
 
-const categoryOptions = [
-  { value: "PHY", label: "Physician" },
-  { value: "SUP", label: "Supplier" },
-  { value: "MAN", label: "Manufacturer" },
-  { value: "EMP", label: "Employee" },
-  { value: "PAT", label: "Patient" },
-];
-
 const ContactListPage: React.FC = () => {
+  const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedContact, setSelectedContact] = useState<ContactMastData | null>(null);
@@ -56,7 +49,6 @@ const ContactListPage: React.FC = () => {
   });
 
   useEffect(() => {
-    document.title = "Contact List Management";
     handleRefresh();
   }, []);
 

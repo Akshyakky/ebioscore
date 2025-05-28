@@ -4,9 +4,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import { useForm } from "react-hook-form";
 import dayjs from "dayjs";
-import { useAppSelector } from "@/store/hooks";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { indentProductServices } from "@/services/InventoryManagementService/indentProductService/IndentProductService";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
@@ -43,6 +42,7 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [clearSearchTrigger, setClearSearchTrigger] = useState(0);
   const { setInputValue, setSelectedProduct } = useProductSearch({ minSearchLength: 2 });
+  const { showAlert } = useAlert();
 
   const packageOptions = [
     { value: "1", label: "Package 1" },
