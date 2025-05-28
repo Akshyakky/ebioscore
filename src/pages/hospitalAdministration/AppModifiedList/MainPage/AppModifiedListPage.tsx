@@ -17,9 +17,9 @@ import { AppModifiedMast, AppModifyFieldDto } from "@/interfaces/HospitalAdminis
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { useAppModifiedList } from "../hooks/useAppModifiedList";
-import AppModifiedMastSearch from "../SubPage/AppModifiedListSearch";
 import AppModifiedMasterForm from "../Form/AppModifiedMastForm";
 import AppModifiedFieldForm from "../Form/AppModifiedListForm";
+import AppModifiedMastSearch from "../Form/AppModifiedListSearch";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -132,10 +132,16 @@ const AppModifiedListPage: React.FC = () => {
     setIsMasterFormOpen(true);
   }, []);
 
-  const handleSelectMasterForFields = useCallback((master: AppModifiedMast) => {
-    setSelectedMasterForFields(master);
-    setCurrentTab(1);
-  }, []);
+  const handleSelectMasterForFields = useCallback(
+    (master: AppModifiedMast) => {
+      setSelectedMasterForFields(master);
+      setCurrentTab(1);
+      setSearchTerm("");
+      setDebouncedSearchTerm("");
+      debouncedSearch.cancel();
+    },
+    [debouncedSearch]
+  );
 
   const handleAddField = useCallback(() => {
     if (!selectedMasterForFields) {
@@ -774,7 +780,6 @@ const AppModifiedListPage: React.FC = () => {
         </Paper>
       </TabPanel>
 
-      {/* Forms and Dialogs */}
       {isMasterFormOpen && <AppModifiedMasterForm open={isMasterFormOpen} onClose={handleMasterFormClose} initialData={selectedMaster} viewOnly={isViewMode} />}
 
       {isFieldFormOpen && (
