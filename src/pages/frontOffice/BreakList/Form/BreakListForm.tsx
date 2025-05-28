@@ -32,7 +32,7 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import CustomCheckbox from "@/components/Checkbox/Checkbox";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { useBreakList } from "../hooks/useBreakList";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { breakConDetailsService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
@@ -107,7 +107,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
   });
   const { resourceList } = useDropdownValues(["resourceList"]);
   const isAddMode = !initialData;
-
+  const { showAlert } = useAlert();
   const defaultValues: BreakListFormData = {
     bLID: 0,
     bLName: "",

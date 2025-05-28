@@ -2,7 +2,7 @@ import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { formatDate } from "@/utils/Common/dateUtils";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { Box, Checkbox, FormControlLabel, FormGroup, Typography } from "@mui/material";
@@ -40,7 +40,7 @@ const BreakFrequencyDetails: React.FC<{
 
   // Watch form values
   const frequencyData = watch();
-
+  const { showAlert } = useAlert();
   useEffect(() => {
     setValue("endDate", endDateFromBreakDetails);
   }, [endDateFromBreakDetails, setValue]);

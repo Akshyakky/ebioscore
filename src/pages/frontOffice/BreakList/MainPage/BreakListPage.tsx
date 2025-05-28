@@ -16,7 +16,7 @@ import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { BreakListData } from "@/interfaces/FrontOffice/BreakListData";
 import BreakListForm from "../Form/BreakListForm";
 import { useBreakList } from "../hooks/useBreakList";
-import { showAlert } from "@/utils/Common/showAlert";
+import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 
 const statusOptions = [
@@ -39,7 +39,7 @@ const BreakListPage: React.FC = () => {
   const [showStats, setShowStats] = useState(false);
 
   const { breakList, isLoading, error, fetchBreakList, deleteBreak } = useBreakList();
-
+  const { showAlert } = useAlert();
   const [filters, setFilters] = useState<{
     status: string;
     type: string;
