@@ -38,7 +38,7 @@ import { breakConDetailsService, breakService } from "@/services/FrontOfficeServ
 import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { formatDate } from "@/utils/Common/dateUtils";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import BreakFrequencyDetails from "./BreakFrequency";
+import BreakFrequency from "./BreakFrequency";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { frequencyCodeMap, weekDayCodeMap } from "../MainPage/BreakListPage";
 
@@ -88,7 +88,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     weekDays: [],
   });
   const { resourceList } = useDropdownValues(["resourceList"]);
-  const isAddMode = !initialData;
+
   const { showAlert } = useAlert();
   const defaultValues: BreakListFormData = {
     bLID: 0,
@@ -126,7 +126,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
   const startTime = watch("bLStartTime");
   const endTime = watch("bLEndTime");
   const isPhyResYN = watch("isPhyResYN");
-
+  const isSuspended = initialData?.status === "Suspended";
   const generateFrequencyDescription = (data: FrequencyData): string => {
     const formattedEndDate = formatDate(data.endDate);
     switch (data.frequency) {
@@ -260,7 +260,16 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
   const renderCheckbox = useCallback(
     (item: any) => {
       const id = selectedOption === "resource" ? item.rLID : item.conID;
-      return <CustomCheckbox label="" name={`select-${id}`} checked={selectedItems.includes(id)} onChange={(e: any) => handleCheckboxChange(id, e.target.checked)} size="small" />;
+      return (
+        <CustomCheckbox
+          label=""
+          name={`select-${id}`}
+          checked={selectedItems.includes(id)}
+          onChange={(e: any) => handleCheckboxChange(id, e.target.checked)}
+          size="small"
+          disabled={viewOnly}
+        />
+      );
     },
     [selectedOption, selectedItems, handleCheckboxChange]
   );
@@ -348,7 +357,6 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
         isPhyResYN: data.isPhyResYN || "Y",
         transferYN: data.transferYN || "N",
       };
-
       const breakConDetails = selectedItems.map((itemID) => {
         const breakConDetailData: BreakConDetailData = {
           bCDID: 0,
@@ -369,7 +377,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
 
       console.log("Break List Save Data:", response);
       if (response.success) {
-        showAlert("Success", isAddMode ? "Break created successfully" : "Break updated successfully", "success");
+        showAlert("Success", "Break created successfully", "success");
       }
       onClose(true);
     } catch (error) {
@@ -430,7 +438,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     setShowCancelConfirmation(false);
   };
 
-  const dialogTitle = viewOnly ? "View Break Details" : isAddMode ? "Create New Break" : `Edit Break - ${initialData?.bLName}`;
+  const dialogTitle = viewOnly ? "View Break Details" : "Create New Break";
 
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
@@ -440,15 +448,15 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? "Create Break" : "Update Break"}
+          text={"Create Break"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
           icon={Save}
           asynchronous={true}
           showLoadingIndicator={true}
-          loadingText={isAddMode ? "Creating..." : "Updating..."}
-          successText={isAddMode ? "Created!" : "Updated!"}
+          loadingText={"Creating..."}
+          successText={"Created!"}
           disabled={isSaving || !isValid}
         />
       </Box>
@@ -474,7 +482,13 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
               {formError}
             </Alert>
           )}
-
+          {isSuspended && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                This break is suspended from {formatDate(initialData.bCSStartDate)} until {formatDate(initialData.bCSEndDate)}.
+              </Typography>
+            </Alert>
+          )}
           <Grid container spacing={3}>
             {/* Status Toggle - Prominent Position */}
             <Grid size={{ sm: 12 }}>
@@ -581,6 +595,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
                                     checked={selectedItems.length > 0 && selectedItems.length === (selectedOption === "resource" ? resourceData.length : consultantData.length)}
                                     onChange={(e) => handleSelectAll(e.target.checked)}
                                     size="small"
+                                    disabled={viewOnly}
                                   />
                                 </TableCell>
                                 <TableCell sx={{ fontWeight: "bold" }}>{selectedOption === "resource" ? "Resource Name" : "Consultant Name"}</TableCell>
@@ -661,7 +676,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
         maxWidth="sm"
       />
 
-      <BreakFrequencyDetails
+      <BreakFrequency
         open={openFrequencyDialog}
         onClose={() => setOpenFrequencyDialog(false)}
         endDateFromBreakDetails={frequencyData.endDate}

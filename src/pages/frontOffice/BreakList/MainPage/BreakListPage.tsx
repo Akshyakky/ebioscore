@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Search as SearchIcon,
   Add as AddIcon,
-  Edit as EditIcon,
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
   Visibility as VisibilityIcon,
@@ -15,13 +14,12 @@ import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import { BreakConSuspendData, BreakListData } from "@/interfaces/FrontOffice/BreakListData";
+import { BreakConSuspendData, BreakDto } from "@/interfaces/FrontOffice/BreakListData";
 import BreakListForm from "../Form/BreakListForm";
-import BreakSuspendDetails from "../SubPage/BreakSuspendDetails";
+import BreakSuspend from "../Form/BreakSuspend";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
-import { useBreak } from "../hooks/useBreak";
-import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+import { breakConDetailsService, breakConSuspendService, breakService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 
 const statusOptions = [
   { value: "active", label: "Active" },
@@ -54,15 +52,16 @@ export const weekDayCodeMap = {
 const BreakListPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
-  const [selectedBreak, setSelectedBreak] = useState<BreakListData | null>(null);
+  const [selectedBreak, setSelectedBreak] = useState<BreakDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isSuspendDialogOpen, setIsSuspendDialogOpen] = useState<boolean>(false);
   const [suspendData, setSuspendData] = useState<BreakConSuspendData | null>(null);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
-
-  const { breakList, isLoading, error, fetchBreakList, deleteBreak, suspendBreak, resumeBreak } = useBreak();
+  const [breakList, setBreakList] = useState<BreakDto[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { showAlert } = useAlert();
 
   const [filters, setFilters] = useState<{
@@ -72,6 +71,27 @@ const BreakListPage: React.FC = () => {
     status: "",
     type: "",
   });
+  const fetchBreakList = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result: any = await breakService.getAll();
+      if (result.success && result.data) {
+        const activeBreaks = result.data.filter((item) => item.rActiveYN === "Y");
+        setBreakList(activeBreaks);
+      } else {
+        setError("Failed to load break list");
+      }
+    } catch (err) {
+      setError("Error fetching break list");
+      showAlert("Error", "Failed to load break list", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showAlert]);
+
+  useEffect(() => {
+    fetchBreakList();
+  }, []);
 
   const handleRefresh = useCallback(() => {
     fetchBreakList();
@@ -106,19 +126,13 @@ const BreakListPage: React.FC = () => {
     setIsFormOpen(true);
   }, []);
 
-  const handleEdit = useCallback((breakItem: BreakListData) => {
-    setSelectedBreak(breakItem);
-    setIsViewMode(false);
-    setIsFormOpen(true);
-  }, []);
-
-  const handleView = useCallback((breakItem: BreakListData) => {
+  const handleView = useCallback((breakItem: BreakDto) => {
     setSelectedBreak(breakItem);
     setIsViewMode(true);
     setIsFormOpen(true);
   }, []);
 
-  const handleDeleteClick = useCallback((breakItem: BreakListData) => {
+  const handleDeleteClick = useCallback((breakItem: BreakDto) => {
     setSelectedBreak(breakItem);
     setIsDeleteConfirmOpen(true);
   }, []);
@@ -127,8 +141,8 @@ const BreakListPage: React.FC = () => {
     if (!selectedBreak) return;
 
     try {
-      const success = await deleteBreak(selectedBreak.bLID);
-      if (success) {
+      const result = await breakConDetailsService.delete(selectedBreak.bCDID);
+      if (result.success) {
         showAlert("Success", "Break deleted successfully", "success");
       } else {
         throw new Error("Failed to delete break");
@@ -140,38 +154,38 @@ const BreakListPage: React.FC = () => {
       setIsDeleteConfirmOpen(false);
       setSelectedBreak(null);
     }
-  }, [selectedBreak, deleteBreak, showAlert]);
+  }, [selectedBreak, showAlert]);
 
   const handleSuspend = useCallback(
-    async (breakItem: BreakListData) => {
+    async (breakItem: BreakDto) => {
       try {
         const suspendResult = await breakConSuspendService.getAll();
         if (suspendResult.success && suspendResult.data) {
-          const filteredSuspendDetails = suspendResult.data.filter((bsd: BreakConSuspendData) => bsd.bLID === breakItem.bLID);
+          const filteredSuspendDetails = suspendResult.data.filter((bsd: BreakConSuspendData) => bsd.bLID === breakItem.bLID && bsd.hPLID === breakItem.hPLID);
           if (filteredSuspendDetails.length > 0) {
             const currentSuspendDetail = filteredSuspendDetails[0];
             setSuspendData({
               bCSID: currentSuspendDetail.bCSID,
               bLID: breakItem.bLID,
-              hPLID: currentSuspendDetail.hPLID || null, // Adjust as needed
-              bLStartDate: currentSuspendDetail.bLStartDate || breakItem.bLStartDate,
-              bLEndDate: currentSuspendDetail.bLEndDate || breakItem.bLEndDate,
-              bCSStartDate: new Date(currentSuspendDetail.bCSStartDate),
-              bCSEndDate: new Date(currentSuspendDetail.bCSEndDate),
-              rActiveYN: currentSuspendDetail.rActiveYN,
-              rNotes: currentSuspendDetail.rNotes || "",
-              transferYN: currentSuspendDetail.transferYN || "N",
+              hPLID: currentSuspendDetail.hPLID || breakItem.hPLID,
+              bLStartDate: breakItem.bLStartDate,
+              bLEndDate: breakItem.bLEndDate,
+              bCSStartDate: new Date(),
+              bCSEndDate: new Date(),
+              rActiveYN: "Y",
+              rNotes: "",
+              transferYN: "N",
             });
           } else {
             setSuspendData({
               bCSID: 0,
               bLID: breakItem.bLID,
-              hPLID: null,
-              bLStartDate: breakItem.bLStartDate,
-              bLEndDate: breakItem.bLEndDate,
+              hPLID: breakItem.hPLID,
+              bLStartDate: new Date(breakItem.bLStartDate),
+              bLEndDate: new Date(breakItem.bLEndDate),
               bCSStartDate: new Date(),
               bCSEndDate: new Date(),
-              rActiveYN: "N",
+              rActiveYN: "Y",
               rNotes: "",
               transferYN: "N",
             });
@@ -188,14 +202,14 @@ const BreakListPage: React.FC = () => {
   );
 
   const handleResume = useCallback(
-    async (breakItem: BreakListData) => {
+    async (breakItem: BreakDto) => {
       if (!breakItem.bCSID) {
         showAlert("Error", "No suspend record found", "error");
         return;
       }
       try {
-        const success = await resumeBreak(breakItem.bCSID, breakItem.bLID);
-        if (success) {
+        const result = await breakConSuspendService.updateActiveStatus(breakItem.bCSID, false);
+        if (result.success) {
           showAlert("Success", "Break resumed successfully", "success");
         } else {
           showAlert("Error", "Failed to resume break", "error");
@@ -205,7 +219,7 @@ const BreakListPage: React.FC = () => {
         showAlert("Error", "Failed to resume break", "error");
       }
     },
-    [resumeBreak, showAlert]
+    [showAlert]
   );
 
   const handleSuspendDialogClose = useCallback(
@@ -213,7 +227,7 @@ const BreakListPage: React.FC = () => {
       setIsSuspendDialogOpen(false);
       if (isSaved && updatedData) {
         try {
-          const result = await suspendBreak(updatedData);
+          const result = await breakConSuspendService.save(updatedData);
           if (result.success) {
             showAlert("Success", "Break suspended successfully", "success");
           } else {
@@ -227,7 +241,7 @@ const BreakListPage: React.FC = () => {
       setSelectedBreak(null);
       setSuspendData(null);
     },
-    [suspendBreak, showAlert]
+    [showAlert]
   );
 
   const handleFormClose = useCallback(
@@ -263,11 +277,13 @@ const BreakListPage: React.FC = () => {
         inactiveBreaks: 0,
         physicianBreaks: 0,
         resourceBreaks: 0,
+        suspendedBreaks: 0,
       };
     }
 
     const activeCount = breakList.filter((b) => b.rActiveYN === "Y").length;
     const physicianCount = breakList.filter((b) => b.isPhyResYN === "Y").length;
+    const suspendedCount = breakList.filter((b) => b.status === "Suspended").length;
 
     return {
       totalBreaks: breakList.length,
@@ -275,6 +291,7 @@ const BreakListPage: React.FC = () => {
       inactiveBreaks: breakList.length - activeCount,
       physicianBreaks: physicianCount,
       resourceBreaks: breakList.length - physicianCount,
+      suspendedBreaks: suspendedCount,
     };
   }, [breakList]);
 
@@ -299,32 +316,38 @@ const BreakListPage: React.FC = () => {
   const renderStatsDashboard = () => (
     <Paper sx={{ p: 2, mb: 2 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Grid size={{ xs: 12, sm: 2 }}>
           <Typography variant="h6">Total Breaks</Typography>
           <Typography variant="h4">{stats.totalBreaks}</Typography>
         </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Grid size={{ xs: 12, sm: 2 }}>
           <Typography variant="h6">Active</Typography>
           <Typography variant="h4" color="success.main">
             {stats.activeBreaks}
           </Typography>
         </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Grid size={{ xs: 12, sm: 2 }}>
           <Typography variant="h6">Inactive</Typography>
           <Typography variant="h4" color="error.main">
             {stats.inactiveBreaks}
           </Typography>
         </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Grid size={{ xs: 12, sm: 2 }}>
           <Typography variant="h6">Physician</Typography>
           <Typography variant="h4" color="info.main">
             {stats.physicianBreaks}
           </Typography>
         </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Grid size={{ xs: 12, sm: 2 }}>
           <Typography variant="h6">Resource</Typography>
           <Typography variant="h4" color="warning.main">
             {stats.resourceBreaks}
+          </Typography>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 2 }}>
+          <Typography variant="h6">Suspended</Typography>
+          <Typography variant="h4" color="secondary.main">
+            {stats.suspendedBreaks}
           </Typography>
         </Grid>
       </Grid>
@@ -345,7 +368,7 @@ const BreakListPage: React.FC = () => {
     });
   };
 
-  const columns: Column<BreakListData>[] = [
+  const columns: Column<BreakDto>[] = [
     {
       key: "bLName",
       header: "Break Name",
@@ -353,6 +376,23 @@ const BreakListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 200,
+    },
+    {
+      key: "hPLID",
+      header: "Assigned To",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 200,
+    },
+    {
+      key: "isPhyResYN",
+      header: "Type",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 130,
+      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "primary" : "secondary"} label={value === "Y" ? "Physician" : "Resource"} />,
     },
     {
       key: "bLStartDate",
@@ -391,31 +431,13 @@ const BreakListPage: React.FC = () => {
       formatter: (value: Date | string) => formatTime(value),
     },
     {
-      key: "isPhyResYN",
-      header: "Type",
-      visible: true,
-      sortable: true,
-      filterable: true,
-      width: 130,
-      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "primary" : "secondary"} label={value === "Y" ? "Physician" : "Resource"} />,
-    },
-    {
-      key: "rActiveYN",
-      header: "Status",
-      visible: true,
-      sortable: true,
-      filterable: true,
-      width: 100,
-      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
-    },
-    {
       key: "bLFrqDesc",
       header: "Frequency",
       visible: true,
       sortable: true,
       filterable: true,
       width: 150,
-      formatter: (value: any, item: BreakListData) => {
+      formatter: (value: any, item: BreakDto) => {
         const frequencyKey = Object.keys(frequencyCodeMap).find((key) => frequencyCodeMap[key as keyof typeof frequencyCodeMap] === value) || "none";
         const frequencyLabel = frequencyKey.charAt(0).toUpperCase() + frequencyKey.slice(1);
 
@@ -442,58 +464,77 @@ const BreakListPage: React.FC = () => {
       formatter: (value: any) => (value ? value.substring(0, 50) + (value.length > 50 ? "..." : "") : "-"),
     },
     {
+      key: "status",
+      header: "Status",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 150,
+      formatter: (value: any, item: BreakDto) => (
+        <Tooltip
+          title={
+            value === "Suspended" ? (
+              <Box>
+                <Typography variant="body2">Suspended From: {formatDate(item.bCSStartDate)}</Typography>
+                <Typography variant="body2">Suspended Until: {formatDate(item.bCSEndDate)}</Typography>
+              </Box>
+            ) : (
+              ""
+            )
+          }
+        >
+          <Chip size="small" color={value === "Suspended" ? "error" : "success"} label={value === "Suspended" ? `Inactive` : "Active"} />
+        </Tooltip>
+      ),
+    },
+    {
       key: "actions",
       header: "Actions",
       visible: true,
       sortable: false,
       filterable: false,
-      width: 220, // Increased width to accommodate new button
+      width: 220,
       render: (item) => (
         <Stack direction="row" spacing={1}>
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => handleView(item)}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            <VisibilityIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="info"
-            onClick={() => handleEdit(item)}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            color={item.rActiveYN === "Y" ? "warning" : "success"}
-            onClick={() => (item.rActiveYN === "Y" ? handleSuspend(item) : handleResume(item))}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            {item.rActiveYN === "Y" ? <SuspendIcon fontSize="small" /> : <ResumeIcon fontSize="small" />}
-          </IconButton>
-          <IconButton
-            size="small"
-            color="error"
-            onClick={() => handleDeleteClick(item)}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
+          <Tooltip title="View Break">
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => handleView(item)}
+              sx={{
+                bgcolor: "rgba(25, 118, 210, 0.08)",
+                "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+              }}
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={item.status === "Suspended" ? "Resume Break" : "Suspend Break"}>
+            <IconButton
+              size="small"
+              color={item.status === "Suspended" ? "success" : "warning"}
+              onClick={() => (item.status === "Suspended" ? handleResume(item) : handleSuspend(item))}
+              sx={{
+                bgcolor: "rgba(25, 118, 210, 0.08)",
+                "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+              }}
+            >
+              {item.status === "Suspended" ? <ResumeIcon fontSize="small" /> : <SuspendIcon fontSize="small" />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete Break">
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => handleDeleteClick(item)}
+              sx={{
+                bgcolor: "rgba(25, 118, 210, 0.08)",
+                "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+              }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Stack>
       ),
     },
@@ -605,7 +646,7 @@ const BreakListPage: React.FC = () => {
 
       {isFormOpen && <BreakListForm open={isFormOpen} onClose={handleFormClose} initialData={selectedBreak} viewOnly={isViewMode} />}
 
-      {isSuspendDialogOpen && suspendData && <BreakSuspendDetails open={isSuspendDialogOpen} onClose={handleSuspendDialogClose} breakData={suspendData} />}
+      {isSuspendDialogOpen && suspendData && <BreakSuspend open={isSuspendDialogOpen} onClose={handleSuspendDialogClose} breakData={suspendData} />}
 
       <ConfirmationDialog
         open={isDeleteConfirmOpen}
