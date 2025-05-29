@@ -1,14 +1,15 @@
 // src/pages/hospitalAdministration/ManageBeds/Components/BedFormDialog.tsx
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Box, Grid, Divider, Alert, Typography } from "@mui/material";
+import { Box, Grid, Divider, Alert, Typography, Switch, FormControlLabel, Paper, Chip } from "@mui/material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save as SaveIcon, Clear as ClearIcon, Key as KeyIcon } from "@mui/icons-material";
+import BedSelectionDialog from "../BedSelection/BedSelectionDialog";
+import { Save as SaveIcon, Clear as ClearIcon, Bed as BedIcon, Crib as CradleIcon } from "@mui/icons-material";
 import { WrBedDto, RoomListDto, RoomGroupDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
@@ -27,6 +28,7 @@ interface BedFormData {
   bedStatusValue?: "AVLBL" | "OCCUP" | "BLOCK" | "MNTN" | "RSRV";
   transferYN?: "Y" | "N";
   key?: number;
+  isCradle?: boolean; // New field to indicate if this is a cradle
 }
 
 interface BedFormDialogProps {
@@ -34,8 +36,11 @@ interface BedFormDialogProps {
   onClose: () => void;
   onSubmit: (data: Partial<WrBedDto>) => Promise<void>;
   bed?: WrBedDto | null;
+  beds: WrBedDto[]; // All beds for cradle selection
   rooms: RoomListDto[];
   roomGroups: RoomGroupDto[];
+  mode?: "bed" | "cradle"; // New prop to specify mode
+  preselectedBedForCradle?: WrBedDto; // Pre-selected bed when adding cradle
 }
 
 // Mapping between bedStatus and bedStatusValue
@@ -55,43 +60,95 @@ const bedStatusValueMapping = {
   RSRV: "Reserved",
 } as const;
 
-// Zod validation schema
-const validationSchema = z
-  .object({
-    bedID: z.number().optional(),
-    bedName: z
-      .string()
-      .min(1, "Bed name must be at least 1 character")
-      .max(50, "Bed name must not exceed 50 characters")
-      .regex(/^[a-zA-Z0-9\s\-_]+$/, "Bed name can only contain letters, numbers, spaces, hyphens, and underscores"),
-    rlID: z.number().min(1, "Please select a valid room"),
-    rActiveYN: z.enum(["Y", "N"], { required_error: "Active status is required" }),
-    bedRemarks: z.string().max(500, "Remarks must not exceed 500 characters").optional(),
-    blockBedYN: z.enum(["Y", "N"], { required_error: "Block bed status must be Y or N" }).optional(),
-    wbCatID: z.number().min(1, "Please select a bed category").optional(),
-    wbCatName: z.string().optional(),
-    bchID: z.number().min(1, "Please select a service type").optional(),
-    bchName: z.string().optional(),
-    bedStatus: z.enum(["Available", "Occupied", "Blocked", "Maintenance", "Reserved"], { required_error: "Bed status is required" }),
-    bedStatusValue: z.enum(["AVLBL", "OCCUP", "BLOCK", "MNTN", "RSRV"], { required_error: "Bed status value is required" }),
-    transferYN: z.enum(["Y", "N"], { required_error: "Transfer status must be Y or N" }).optional(),
-    key: z.number().min(1, "Cradle key must be a positive number").optional(),
-  })
-  .required({
-    bedName: true,
-    rlID: true,
-    rActiveYN: true,
-    bedStatus: true,
-    bedStatusValue: true,
-  });
+// Enhanced validation schema with cradle validation
+const createValidationSchema = (beds: WrBedDto[], isEditMode: boolean, currentBedId?: number) => {
+  return z
+    .object({
+      bedID: z.number().optional(),
+      bedName: z
+        .string()
+        .min(1, "Bed name must be at least 1 character")
+        .max(50, "Bed name must not exceed 50 characters")
+        .regex(/^[a-zA-Z0-9\s\-_]+$/, "Bed name can only contain letters, numbers, spaces, hyphens, and underscores"),
+      rlID: z.number().min(1, "Please select a valid room"),
+      rActiveYN: z.enum(["Y", "N"], { required_error: "Active status is required" }),
+      bedRemarks: z.string().max(500, "Remarks must not exceed 500 characters").optional(),
+      blockBedYN: z.enum(["Y", "N"], { required_error: "Block bed status must be Y or N" }).optional(),
+      wbCatID: z.number().min(1, "Please select a bed category").optional(),
+      wbCatName: z.string().optional(),
+      bchID: z.number().min(1, "Please select a service type").optional(),
+      bchName: z.string().optional(),
+      bedStatus: z.enum(["Available", "Occupied", "Blocked", "Maintenance", "Reserved"], { required_error: "Bed status is required" }),
+      bedStatusValue: z.enum(["AVLBL", "OCCUP", "BLOCK", "MNTN", "RSRV"], { required_error: "Bed status value is required" }),
+      transferYN: z.enum(["Y", "N"], { required_error: "Transfer status must be Y or N" }).optional(),
+      key: z.number().optional(),
+      isCradle: z.boolean().optional(),
+    })
+    .required({
+      bedName: true,
+      rlID: true,
+      rActiveYN: true,
+      bedStatus: true,
+      bedStatusValue: true,
+    })
+    .refine(
+      (data) => {
+        // If this is a cradle (key > 0), validate that the key corresponds to a valid bed
+        if (data.key && data.key > 0) {
+          const associatedBed = beds.find((bed) => bed.bedID === data.key);
+          if (!associatedBed) {
+            return false;
+          }
+          // Cannot associate cradle with itself
+          if (isEditMode && data.key === currentBedId) {
+            return false;
+          }
+          // Cannot associate cradle with another cradle
+          if (associatedBed.key && associatedBed.key > 0) {
+            return false;
+          }
+        }
+        return true;
+      },
+      {
+        message: "Invalid bed selection for cradle association",
+        path: ["key"],
+      }
+    )
+    .refine(
+      (data) => {
+        // Ensure unique bed names within the same room
+        if (beds && data.rlID) {
+          const bedsInSameRoom = beds.filter((bed) => bed.rlID === data.rlID && bed.bedID !== currentBedId);
+          const nameExists = bedsInSameRoom.some((bed) => bed.bedName.toLowerCase() === data.bedName.toLowerCase());
+          return !nameExists;
+        }
+        return true;
+      },
+      {
+        message: "Bed name must be unique within the same room",
+        path: ["bedName"],
+      }
+    );
+};
 
-type BedFormSchema = z.infer<typeof validationSchema>;
+type BedFormSchema = z.infer<ReturnType<typeof createValidationSchema>>;
 
-const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, bed, rooms, roomGroups }) => {
+const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, bed, beds = [], rooms, roomGroups, mode = "bed", preselectedBedForCradle }) => {
   const isEditMode = !!bed;
+  const isCradleMode = mode === "cradle";
+
+  // State for bed selection dialog
+  const [isBedSelectionOpen, setIsBedSelectionOpen] = useState(false);
+  const [selectedBedForCradle, setSelectedBedForCradle] = useState<WrBedDto | null>(preselectedBedForCradle || null);
 
   // Load dropdown values
   const { bedCategory = [], serviceType = [] } = useDropdownValues(["bedCategory", "serviceType"]);
+
+  // Create validation schema with current beds data
+  const validationSchema = useMemo(() => {
+    return createValidationSchema(beds, isEditMode, bed?.bedID);
+  }, [beds, isEditMode, bed?.bedID]);
 
   // Form setup
   const {
@@ -117,19 +174,30 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
       bedStatusValue: "AVLBL" as const,
       transferYN: "N" as const,
       key: undefined,
+      isCradle: isCradleMode,
     },
   });
 
-  // Watch room selection and dropdown selections
+  // Watch form values
   const selectedRoomId = watch("rlID");
   const watchedBedStatus = watch("bedStatus");
   const watchedBedCategoryId = watch("wbCatID");
   const watchedServiceTypeId = watch("bchID");
+  const watchedKey = watch("key");
+  const watchedIsCradle = watch("isCradle");
 
   // Get selected room details
   const selectedRoom = useMemo(() => {
     return rooms.find((room) => room.rlID === selectedRoomId);
   }, [rooms, selectedRoomId]);
+
+  // Get associated bed details for cradle
+  const associatedBed = useMemo(() => {
+    if (watchedKey && watchedKey > 0) {
+      return beds.find((bed) => bed.bedID === watchedKey);
+    }
+    return null;
+  }, [beds, watchedKey]);
 
   // Effect to sync bedStatus and bedStatusValue
   useEffect(() => {
@@ -159,10 +227,27 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
     }
   }, [watchedServiceTypeId, serviceType, setValue]);
 
-  // Effect to populate form when editing
+  // Effect to handle cradle mode changes
+  useEffect(() => {
+    if (watchedIsCradle) {
+      // If switching to cradle mode, clear key if not already set
+      if (!watchedKey && selectedBedForCradle) {
+        setValue("key", selectedBedForCradle.bedID, { shouldValidate: true });
+      }
+    } else {
+      // If switching to bed mode, clear key
+      setValue("key", undefined, { shouldValidate: true });
+      setSelectedBedForCradle(null);
+    }
+  }, [watchedIsCradle, watchedKey, selectedBedForCradle, setValue]);
+
+  // Effect to populate form when editing or in cradle mode
   useEffect(() => {
     if (open) {
       if (isEditMode && bed) {
+        // Determine if this is a cradle (has key > 0)
+        const isCradle = !!(bed.key && bed.key > 0);
+
         // Determine bedStatus from bedStatusValue if bedStatus is not provided
         let bedStatus = bed.bedStatus;
         if (!bedStatus && bed.bedStatusValue) {
@@ -190,9 +275,17 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
           bedStatusValue: (bedStatusValue || "AVLBL") as "AVLBL" | "OCCUP" | "BLOCK" | "MNTN" | "RSRV",
           transferYN: (bed.transferYN || "N") as "Y" | "N",
           key: bed.key || undefined,
+          isCradle: isCradle,
         });
+
+        // Set selected bed for cradle if applicable
+        if (isCradle && bed.key) {
+          const associatedBed = beds.find((b) => b.bedID === bed.key);
+          setSelectedBedForCradle(associatedBed || null);
+        }
       } else {
-        reset({
+        // New bed/cradle
+        const initialValues = {
           bedName: "",
           rlID: 0,
           rActiveYN: "Y" as const,
@@ -206,19 +299,49 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
           bedStatusValue: "AVLBL" as const,
           transferYN: "N" as const,
           key: undefined,
-        });
+          isCradle: isCradleMode,
+        };
+
+        // If creating cradle with preselected bed
+        if (isCradleMode && preselectedBedForCradle) {
+          initialValues.key = preselectedBedForCradle.bedID;
+          initialValues.bedName = `CRADLE-${preselectedBedForCradle.bedName}`;
+          initialValues.rlID = preselectedBedForCradle.rlID;
+          setSelectedBedForCradle(preselectedBedForCradle);
+        }
+
+        reset(initialValues);
       }
     }
-  }, [open, isEditMode, bed, reset]);
+  }, [open, isEditMode, bed, beds, isCradleMode, preselectedBedForCradle, reset]);
+
+  // Handle bed selection for cradle
+  const handleBedSelectionForCradle = (selectedBed: WrBedDto) => {
+    setSelectedBedForCradle(selectedBed);
+    setValue("key", selectedBed.bedID, { shouldValidate: true });
+
+    // Auto-populate cradle name and room if not already set
+    if (!watch("bedName") || watch("bedName").startsWith("CRADLE-")) {
+      setValue("bedName", `CRADLE-${selectedBed.bedName}`, { shouldValidate: true });
+    }
+    if (!watch("rlID") || watch("rlID") === 0) {
+      setValue("rlID", selectedBed.rlID, { shouldValidate: true });
+    }
+
+    setIsBedSelectionOpen(false);
+  };
 
   // Form submission handler
   const handleFormSubmit = async (data: BedFormData) => {
-    // Ensure names are populated from dropdown selections if IDs are provided
+    // Format data for submission
     const formattedData: Partial<WrBedDto> = {
       ...data,
       // Only include key if it has a value (for cradle association)
-      key: data.key && data.key > 0 ? data.key : undefined,
+      key: data.isCradle && data.key && data.key > 0 ? data.key : undefined,
     };
+
+    // Remove the isCradle field as it's not part of the DTO
+    delete (formattedData as any).isCradle;
 
     await onSubmit(formattedData);
   };
@@ -239,7 +362,9 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
       bedStatusValue: "AVLBL" as const,
       transferYN: "N" as const,
       key: undefined,
+      isCradle: isCradleMode,
     });
+    setSelectedBedForCradle(null);
   };
 
   // Close dialog handler
@@ -273,7 +398,7 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
     }));
   }, [serviceType]);
 
-  // Bed status options (using full text for display)
+  // Bed status options
   const bedStatusOptions = [
     { value: "Available", label: "Available" },
     { value: "Occupied", label: "Occupied" },
@@ -297,246 +422,372 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
   // Check if form has changes
   const hasChanges = isDirty;
 
+  // Get available beds for cradle selection (exclude self and other cradles)
+  const availableBedsForCradle = useMemo(() => {
+    return beds.filter((bed) => {
+      // Exclude current bed if editing
+      if (isEditMode && bed.bedID === watch("bedID")) return false;
+      // Exclude beds that are already cradles
+      if (bed.key && bed.key > 0) return false;
+      // Only include active beds
+      if (bed.rActiveYN !== "Y") return false;
+      return true;
+    });
+  }, [beds, isEditMode, watch]);
+
+  const dialogTitle = isEditMode ? (watchedIsCradle ? "Edit Cradle" : "Edit Bed") : isCradleMode ? "Add New Cradle" : "Add New Bed";
+
   return (
-    <GenericDialog
-      open={open}
-      onClose={handleClose}
-      title={isEditMode ? "Edit Bed" : "Add New Bed"}
-      maxWidth="lg"
-      fullWidth
-      disableBackdropClick={isSubmitting}
-      disableEscapeKeyDown={isSubmitting}
-      actions={
-        <>
-          <CustomButton variant="outlined" text="Clear" icon={ClearIcon} onClick={handleClear} disabled={isSubmitting || !hasChanges} color="inherit" />
-          <CustomButton variant="outlined" text="Cancel" onClick={handleClose} disabled={isSubmitting} />
-          <SmartButton
-            variant="contained"
-            text={isEditMode ? "Update Bed" : "Save Bed"}
-            icon={SaveIcon}
-            onAsyncClick={handleSubmit(handleFormSubmit)}
-            asynchronous
-            disabled={!hasChanges}
-            color="primary"
-            loadingText={isEditMode ? "Updating..." : "Saving..."}
-            successText={isEditMode ? "Updated!" : "Saved!"}
-          />
-        </>
-      }
-    >
-      <form>
-        <Box sx={{ p: 2 }}>
-          <Grid container spacing={3}>
-            {/* Basic Information */}
-            <Grid size={{ xs: 12 }}>
-              <Box sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}>Basic Information</Box>
-            </Grid>
+    <>
+      <GenericDialog
+        open={open}
+        onClose={handleClose}
+        title={dialogTitle}
+        maxWidth="lg"
+        fullWidth
+        disableBackdropClick={isSubmitting}
+        disableEscapeKeyDown={isSubmitting}
+        actions={
+          <>
+            <CustomButton variant="outlined" text="Clear" icon={ClearIcon} onClick={handleClear} disabled={isSubmitting || !hasChanges} color="inherit" />
+            <CustomButton variant="outlined" text="Cancel" onClick={handleClose} disabled={isSubmitting} />
+            <SmartButton
+              variant="contained"
+              text={isEditMode ? (watchedIsCradle ? "Update Cradle" : "Update Bed") : isCradleMode ? "Save Cradle" : "Save Bed"}
+              icon={SaveIcon}
+              onAsyncClick={handleSubmit(handleFormSubmit)}
+              asynchronous
+              disabled={!hasChanges}
+              color="primary"
+              loadingText={isEditMode ? "Updating..." : "Saving..."}
+              successText={isEditMode ? "Updated!" : "Saved!"}
+            />
+          </>
+        }
+      >
+        <form>
+          <Box sx={{ p: 2 }}>
+            <Grid container spacing={3}>
+              {/* Bed/Cradle Type Selection */}
+              {!isEditMode && (
+                <Grid size={{ xs: 12 }}>
+                  <Paper sx={{ p: 2, backgroundColor: "primary.50", border: "1px solid", borderColor: "primary.200" }}>
+                    <FormControlLabel
+                      control={<Switch checked={watchedIsCradle} onChange={(e) => setValue("isCradle", e.target.checked, { shouldValidate: true })} disabled={isSubmitting} />}
+                      label={
+                        <Box display="flex" alignItems="center" gap={1}>
+                          {watchedIsCradle ? <CradleIcon color="primary" /> : <BedIcon color="primary" />}
+                          <Typography variant="subtitle1" fontWeight="medium">
+                            {watchedIsCradle ? "Create as Cradle" : "Create as Bed"}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                    <Typography variant="body2" color="text.secondary" sx={{ ml: 5 }}>
+                      {watchedIsCradle ? "A cradle is associated with a specific bed and shares its location" : "A bed is a primary sleeping unit in a room"}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              )}
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <EnhancedFormField
-                name="bedName"
-                control={control}
-                type="text"
-                label="Bed Name"
-                placeholder="Enter bed name (e.g., B001, Room1-Bed1)"
-                required
-                disabled={isSubmitting}
-                helperText="Unique identifier for the bed"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <EnhancedFormField
-                name="rlID"
-                control={control}
-                type="select"
-                label="Room"
-                options={roomOptions}
-                required
-                disabled={isSubmitting}
-                helperText="Select the room where this bed is located"
-                defaultText="Select a room"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <EnhancedFormField
-                name="key"
-                control={control}
-                type="number"
-                label="Cradle Key"
-                placeholder="Enter cradle identifier"
-                disabled={isSubmitting}
-                helperText="Unique key to associate a cradle with this bed (leave empty if no cradle)"
-                min={1}
-                //icon={<KeyIcon />}
-              />
-            </Grid>
-
-            {/* Room Information Display */}
-            {selectedRoom && (
+              {/* Basic Information */}
               <Grid size={{ xs: 12 }}>
-                <Box
-                  sx={{
-                    p: 2,
-                    backgroundColor: "grey.50",
-                    borderRadius: 1,
-                    border: "1px solid",
-                    borderColor: "grey.300",
-                  }}
-                >
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <Box>
-                        <strong>Room Group:</strong> {selectedRoom.roomGroup?.rGrpName || "N/A"}
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <Box>
-                        <strong>Department:</strong> {selectedRoom.deptName || "N/A"}
-                      </Box>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <Box>
-                        <strong>Total Beds:</strong> {selectedRoom.noOfBeds}
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Box>
+                <Box sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}>Basic Information</Box>
               </Grid>
-            )}
 
-            {/* Cradle Information Alert */}
-            <Grid size={{ xs: 12 }}>
-              <Alert severity="info" icon={<KeyIcon />}>
-                <Typography variant="body2">
-                  <strong>Cradle Association:</strong> The cradle key field allows you to associate a cradle with this bed. When a key is provided, it serves as the unique
-                  identifier for the cradle linked to this specific bed. Leave this field empty if no cradle is associated with this bed.
-                </Typography>
-              </Alert>
-            </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <EnhancedFormField
+                  name="bedName"
+                  control={control}
+                  type="text"
+                  label={watchedIsCradle ? "Cradle Name" : "Bed Name"}
+                  placeholder={watchedIsCradle ? "Enter cradle name (e.g., CRADLE-B001)" : "Enter bed name (e.g., B001, Room1-Bed1)"}
+                  required
+                  disabled={isSubmitting}
+                  helperText={watchedIsCradle ? "Unique identifier for the cradle" : "Unique identifier for the bed"}
+                />
+              </Grid>
 
-            <Grid size={{ xs: 12 }}>
-              <Divider />
-            </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <EnhancedFormField
+                  name="rlID"
+                  control={control}
+                  type="select"
+                  label="Room"
+                  options={roomOptions}
+                  required
+                  disabled={isSubmitting}
+                  helperText={watchedIsCradle ? "Room where this cradle is located (usually same as associated bed)" : "Select the room where this bed is located"}
+                  defaultText="Select a room"
+                />
+              </Grid>
 
-            {/* Classification Information */}
-            <Grid size={{ xs: 12 }}>
-              <Box sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}>Classification & Service Information</Box>
-            </Grid>
+              {/* Cradle Association Section */}
+              {watchedIsCradle && (
+                <>
+                  <Grid size={{ xs: 12 }}>
+                    <Divider />
+                    <Box sx={{ my: 2, fontWeight: "bold", color: "secondary.main" }}>Cradle Association</Box>
+                  </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <EnhancedFormField
-                name="wbCatID"
-                control={control}
-                type="select"
-                label="Bed Category"
-                options={bedCategoryOptions}
-                disabled={isSubmitting}
-                helperText="Select the category of this bed"
-                defaultText="Select bed category"
-                clearable
-              />
-            </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Box display="flex" alignItems="center" gap={2} mb={2}>
+                      <Typography variant="subtitle1">Associated Bed:</Typography>
+                      {selectedBedForCradle ? (
+                        <Chip
+                          icon={<BedIcon />}
+                          label={`${selectedBedForCradle.bedName} (${selectedBedForCradle.roomList?.rName || "Unknown Room"})`}
+                          color="primary"
+                          onDelete={() => {
+                            setSelectedBedForCradle(null);
+                            setValue("key", undefined, { shouldValidate: true });
+                          }}
+                        />
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          No bed selected
+                        </Typography>
+                      )}
+                    </Box>
+                    <CustomButton variant="outlined" text="Select Bed for Cradle" icon={BedIcon} onClick={() => setIsBedSelectionOpen(true)} disabled={isSubmitting} />
+                    {errors.key && (
+                      <Typography variant="caption" color="error.main" sx={{ mt: 1, display: "block" }}>
+                        {errors.key.message}
+                      </Typography>
+                    )}
+                  </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <EnhancedFormField
-                name="bchID"
-                control={control}
-                type="select"
-                label="Service Type"
-                options={serviceTypeOptions}
-                disabled={isSubmitting}
-                helperText="Select the service type for this bed"
-                defaultText="Select service type"
-                clearable
-              />
-            </Grid>
+                  {/* Associated Bed Information */}
+                  {associatedBed && (
+                    <Grid size={{ xs: 12 }}>
+                      <Paper sx={{ p: 2, backgroundColor: "grey.50", border: "1px solid", borderColor: "grey.300" }}>
+                        <Typography variant="subtitle2" gutterBottom color="primary.main">
+                          Associated Bed Information
+                        </Typography>
+                        <Grid container spacing={2}>
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Bed Name
+                            </Typography>
+                            <Typography variant="body1" fontWeight="medium">
+                              {associatedBed.bedName}
+                            </Typography>
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Room
+                            </Typography>
+                            <Typography variant="body1" fontWeight="medium">
+                              {associatedBed.roomList?.rName || "Unknown"}
+                            </Typography>
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Room Group
+                            </Typography>
+                            <Typography variant="body1" fontWeight="medium">
+                              {associatedBed.roomList?.roomGroup?.rGrpName || "Unknown"}
+                            </Typography>
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Status
+                            </Typography>
+                            <Typography variant="body1" fontWeight="medium">
+                              {associatedBed.bedStatusValue || "Unknown"}
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                      </Paper>
+                    </Grid>
+                  )}
+                </>
+              )}
 
-            <Grid size={{ xs: 12 }}>
-              <Divider />
-            </Grid>
+              {/* Room Information Display */}
+              {selectedRoom && (
+                <Grid size={{ xs: 12 }}>
+                  <Paper sx={{ p: 2, backgroundColor: "grey.50", border: "1px solid", borderColor: "grey.300" }}>
+                    <Typography variant="subtitle2" gutterBottom color="primary.main">
+                      Room Information
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Room Group
+                        </Typography>
+                        <Typography variant="body1" fontWeight="medium">
+                          {selectedRoom.roomGroup?.rGrpName || "N/A"}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Department
+                        </Typography>
+                        <Typography variant="body1" fontWeight="medium">
+                          {selectedRoom.deptName || "N/A"}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Total Beds
+                        </Typography>
+                        <Typography variant="body1" fontWeight="medium">
+                          {selectedRoom.noOfBeds}
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                </Grid>
+              )}
 
-            {/* Status Information */}
-            <Grid size={{ xs: 12 }}>
-              <Box sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}>Status Information</Box>
-            </Grid>
+              {/* Cradle Information Alert */}
+              {watchedIsCradle && (
+                <Grid size={{ xs: 12 }}>
+                  <Alert severity="info" icon={<CradleIcon />}>
+                    <Typography variant="body2">
+                      <strong>Cradle Association:</strong> A cradle is associated with a specific bed through the bed selection above. The cradle will share the same room location
+                      as the associated bed and serves as an additional sleeping unit for that bed. Each bed can have only one associated cradle.
+                    </Typography>
+                  </Alert>
+                </Grid>
+              )}
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <EnhancedFormField
-                name="bedStatus"
-                control={control}
-                type="select"
-                label="Bed Status"
-                options={bedStatusOptions}
-                required
-                disabled={isSubmitting}
-                helperText="Current operational status of the bed"
-              />
-            </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Divider />
+              </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <EnhancedFormField
-                name="rActiveYN"
-                control={control}
-                type="select"
-                label="Active Status"
-                options={activeStatusOptions}
-                required
-                disabled={isSubmitting}
-                helperText="Whether this bed is active in the system"
-              />
-            </Grid>
+              {/* Classification Information */}
+              <Grid size={{ xs: 12 }}>
+                <Box sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}>Classification & Service Information</Box>
+              </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <EnhancedFormField
-                name="blockBedYN"
-                control={control}
-                type="select"
-                label="Block Bed"
-                options={yesNoOptions}
-                disabled={isSubmitting}
-                helperText="Temporarily block this bed from use"
-              />
-            </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <EnhancedFormField
+                  name="wbCatID"
+                  control={control}
+                  type="select"
+                  label={watchedIsCradle ? "Cradle Category" : "Bed Category"}
+                  options={bedCategoryOptions}
+                  disabled={isSubmitting}
+                  helperText={watchedIsCradle ? "Select the category of this cradle" : "Select the category of this bed"}
+                  defaultText={watchedIsCradle ? "Select cradle category" : "Select bed category"}
+                  clearable
+                />
+              </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <EnhancedFormField
-                name="transferYN"
-                control={control}
-                type="select"
-                label="Transfer Allowed"
-                options={yesNoOptions}
-                disabled={isSubmitting}
-                helperText="Whether transfers are allowed for this bed"
-              />
-            </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <EnhancedFormField
+                  name="bchID"
+                  control={control}
+                  type="select"
+                  label="Service Type"
+                  options={serviceTypeOptions}
+                  disabled={isSubmitting}
+                  helperText={watchedIsCradle ? "Select the service type for this cradle" : "Select the service type for this bed"}
+                  defaultText="Select service type"
+                  clearable
+                />
+              </Grid>
 
-            <Grid size={{ xs: 12 }}>
-              <Divider />
-            </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Divider />
+              </Grid>
 
-            {/* Additional Information */}
-            <Grid size={{ xs: 12 }}>
-              <Box sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}>Additional Information</Box>
-            </Grid>
+              {/* Status Information */}
+              <Grid size={{ xs: 12 }}>
+                <Box sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}>Status Information</Box>
+              </Grid>
 
-            <Grid size={{ xs: 12 }}>
-              <EnhancedFormField
-                name="bedRemarks"
-                control={control}
-                type="textarea"
-                label="Remarks"
-                placeholder="Enter any additional notes or comments about this bed"
-                rows={3}
-                disabled={isSubmitting}
-                helperText="Optional notes about the bed (max 500 characters)"
-              />
+              <Grid size={{ xs: 12, md: 6 }}>
+                <EnhancedFormField
+                  name="bedStatus"
+                  control={control}
+                  type="select"
+                  label={watchedIsCradle ? "Cradle Status" : "Bed Status"}
+                  options={bedStatusOptions}
+                  required
+                  disabled={isSubmitting}
+                  helperText={watchedIsCradle ? "Current operational status of the cradle" : "Current operational status of the bed"}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <EnhancedFormField
+                  name="rActiveYN"
+                  control={control}
+                  type="select"
+                  label="Active Status"
+                  options={activeStatusOptions}
+                  required
+                  disabled={isSubmitting}
+                  helperText={watchedIsCradle ? "Whether this cradle is active in the system" : "Whether this bed is active in the system"}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <EnhancedFormField
+                  name="blockBedYN"
+                  control={control}
+                  type="select"
+                  label={watchedIsCradle ? "Block Cradle" : "Block Bed"}
+                  options={yesNoOptions}
+                  disabled={isSubmitting}
+                  helperText={watchedIsCradle ? "Temporarily block this cradle from use" : "Temporarily block this bed from use"}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <EnhancedFormField
+                  name="transferYN"
+                  control={control}
+                  type="select"
+                  label="Transfer Allowed"
+                  options={yesNoOptions}
+                  disabled={isSubmitting}
+                  helperText={watchedIsCradle ? "Whether transfers are allowed for this cradle" : "Whether transfers are allowed for this bed"}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <Divider />
+              </Grid>
+
+              {/* Additional Information */}
+              <Grid size={{ xs: 12 }}>
+                <Box sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}>Additional Information</Box>
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <EnhancedFormField
+                  name="bedRemarks"
+                  control={control}
+                  type="textarea"
+                  label="Remarks"
+                  placeholder={watchedIsCradle ? "Enter any additional notes or comments about this cradle" : "Enter any additional notes or comments about this bed"}
+                  rows={3}
+                  disabled={isSubmitting}
+                  helperText={`Optional notes about the ${watchedIsCradle ? "cradle" : "bed"} (max 500 characters)`}
+                />
+              </Grid>
             </Grid>
-          </Grid>
-        </Box>
-      </form>
-    </GenericDialog>
+          </Box>
+        </form>
+      </GenericDialog>
+
+      {/* Bed Selection Dialog for Cradle */}
+      <BedSelectionDialog
+        open={isBedSelectionOpen}
+        onClose={() => setIsBedSelectionOpen(false)}
+        onSelect={handleBedSelectionForCradle}
+        beds={availableBedsForCradle}
+        rooms={rooms}
+        roomGroups={roomGroups}
+        title="Select Bed for Cradle Association"
+        filters={{ availableOnly: false }}
+        allowOccupied={true}
+      />
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 // src/pages/hospitalAdministration/ManageBeds/MainPage/ManageBedsPage.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Chip, Tooltip, IconButton, Stack, Badge } from "@mui/material";
+import { Box, Typography, Paper, Chip, Tooltip, IconButton, Stack, Badge, Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -12,10 +12,12 @@ import {
   Build as MaintenanceIcon,
   Refresh as RefreshIcon,
   FilterList as FilterIcon,
-  Key as KeyIcon,
+  Crib as CradleIcon,
   Category as CategoryIcon,
   MedicalServices as ServiceIcon,
-  Crib as CradleIcon,
+  MoreVert as MoreVertIcon,
+  Link as LinkIcon,
+  LinkOff as LinkOffIcon,
 } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import CustomButton from "@/components/Button/CustomButton";
@@ -37,7 +39,10 @@ interface EnhancedWrBedDto extends WrBedDto {
   bedStatusLabel?: string;
   bedCategoryDisplayName?: string;
   serviceTypeDisplayName?: string;
-  hasCradle?: boolean;
+  isCradle?: boolean;
+  associatedBedName?: string;
+  associatedBedId?: number;
+  cradleCount?: number; // Number of cradles associated with this bed
 }
 
 interface BedFilters {
@@ -48,6 +53,13 @@ interface BedFilters {
   bedCategoryId?: number;
   serviceTypeId?: number;
   availability?: "all" | "available" | "occupied" | "blocked" | "maintenance";
+  showCradles?: boolean;
+  showBedsOnly?: boolean;
+}
+
+interface ActionMenuState {
+  anchorEl: HTMLElement | null;
+  bed: EnhancedWrBedDto | null;
 }
 
 const ManageBedsPage: React.FC = () => {
@@ -63,8 +75,11 @@ const ManageBedsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<BedFilters>({});
   const [density, setDensity] = useState<"small" | "medium" | "large">("medium");
+  const [formMode, setFormMode] = useState<"bed" | "cradle">("bed");
+  const [preselectedBedForCradle, setPreselectedBedForCradle] = useState<WrBedDto | null>(null);
+  const [actionMenu, setActionMenu] = useState<ActionMenuState>({ anchorEl: null, bed: null });
 
-  const { showErrorAlert, showSuccessAlert } = useAlert();
+  const { showErrorAlert, showSuccessAlert, showConfirmAlert } = useAlert();
 
   // Load dropdown values for bed categories and service types (fallback for names)
   const { bedCategory = [], serviceType = [], isLoading: dropdownLoading } = useDropdownValues(["bedCategory", "serviceType"]);
@@ -138,8 +153,23 @@ const ManageBedsPage: React.FC = () => {
     try {
       const response = await wrBedService.getAllWithIncludes(["RoomList", "RoomList.RoomGroup"]);
       if (response.success && response.data) {
-        const enhancedBeds = response.data.map((bed) => {
+        const allBeds = response.data;
+
+        const enhancedBeds = allBeds.map((bed) => {
           const statusConfig = getStatusConfig(bed.bedStatusValue);
+          const isCradle = !!(bed.key && bed.key > 0);
+
+          // Find associated bed if this is a cradle
+          let associatedBed = null;
+          if (isCradle) {
+            associatedBed = allBeds.find((b) => b.bedID === bed.key);
+          }
+
+          // Count cradles for this bed if it's a bed (not a cradle)
+          let cradleCount = 0;
+          if (!isCradle) {
+            cradleCount = allBeds.filter((b) => b.key === bed.bedID).length;
+          }
 
           return {
             ...bed,
@@ -151,7 +181,10 @@ const ManageBedsPage: React.FC = () => {
             bedStatusLabel: statusConfig.label,
             bedCategoryDisplayName: getBedCategoryDisplayName(bed),
             serviceTypeDisplayName: getServiceTypeDisplayName(bed),
-            hasCradle: !!(bed.key && bed.key > 0),
+            isCradle: isCradle,
+            associatedBedName: associatedBed?.bedName,
+            associatedBedId: associatedBed?.bedID,
+            cradleCount: cradleCount,
           };
         });
         setBeds(enhancedBeds);
@@ -208,6 +241,10 @@ const ManageBedsPage: React.FC = () => {
   // Filtered data based on search term and filters
   const filteredBeds = useMemo(() => {
     return beds.filter((bed) => {
+      // Filter by cradle/bed type
+      if (filters.showCradles && !bed.isCradle) return false;
+      if (filters.showBedsOnly && bed.isCradle) return false;
+
       // Search term filter
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
@@ -220,8 +257,9 @@ const ManageBedsPage: React.FC = () => {
           bed.bedStatusLabel?.toLowerCase().includes(searchLower) ||
           bed.bedCategoryDisplayName?.toLowerCase().includes(searchLower) ||
           bed.serviceTypeDisplayName?.toLowerCase().includes(searchLower) ||
-          bed.key?.toString().includes(searchTerm) ||
-          (bed.hasCradle && "cradle".includes(searchLower));
+          bed.associatedBedName?.toLowerCase().includes(searchLower) ||
+          (bed.isCradle && "cradle".includes(searchLower)) ||
+          (!bed.isCradle && "bed".includes(searchLower));
 
         if (!matchesSearch) return false;
       }
@@ -266,25 +304,75 @@ const ManageBedsPage: React.FC = () => {
   // Event handlers
   const handleAddBed = () => {
     setSelectedBed(null);
+    setFormMode("bed");
+    setPreselectedBedForCradle(null);
+    setIsFormOpen(true);
+  };
+
+  const handleAddCradle = (bed?: EnhancedWrBedDto) => {
+    setSelectedBed(null);
+    setFormMode("cradle");
+    setPreselectedBedForCradle(bed || null);
     setIsFormOpen(true);
   };
 
   const handleEditBed = (bed: EnhancedWrBedDto) => {
     setSelectedBed(bed);
+    setFormMode(bed.isCradle ? "cradle" : "bed");
+    setPreselectedBedForCradle(null);
     setIsFormOpen(true);
   };
 
   const handleDeleteBed = async (bed: EnhancedWrBedDto) => {
-    try {
-      const response = await wrBedService.delete(bed.bedID);
-      if (response.success) {
-        showSuccessAlert("Bed deleted successfully", "success");
-        fetchBeds();
-      } else {
-        showErrorAlert(response.errorMessage || "Failed to delete bed", "error");
+    const itemType = bed.isCradle ? "cradle" : "bed";
+    const confirmMessage = bed.isCradle
+      ? `Are you sure you want to delete the cradle "${bed.bedName}"? This will remove the cradle association.`
+      : `Are you sure you want to delete the bed "${bed.bedName}"? ${
+          bed.cradleCount && bed.cradleCount > 0 ? `This bed has ${bed.cradleCount} associated cradle(s) that will also be affected.` : ""
+        }`;
+
+    const confirmed = await showConfirmAlert(`Delete ${itemType}`, confirmMessage);
+
+    if (confirmed) {
+      try {
+        const response = await wrBedService.delete(bed.bedID);
+        if (response.success) {
+          showSuccessAlert(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} deleted successfully`, "success");
+          fetchBeds();
+        } else {
+          showErrorAlert(response.errorMessage || `Failed to delete ${itemType}`, "error");
+        }
+      } catch (error) {
+        showErrorAlert(`Failed to delete ${itemType}`, "error");
       }
-    } catch (error) {
-      showErrorAlert("Failed to delete bed", "error");
+    }
+  };
+
+  const handleRemoveCradleAssociation = async (bed: EnhancedWrBedDto) => {
+    if (!bed.isCradle) return;
+
+    const confirmed = await showConfirmAlert(
+      "Remove Cradle Association",
+      `Are you sure you want to remove the cradle association for "${bed.bedName}"? This will convert it to a regular bed.`
+    );
+
+    if (confirmed) {
+      try {
+        const updatedBed = {
+          ...bed,
+          key: undefined, // Remove the association
+        };
+
+        const response = await wrBedService.save(updatedBed);
+        if (response.success) {
+          showSuccessAlert("Cradle association removed successfully", "success");
+          fetchBeds();
+        } else {
+          showErrorAlert(response.errorMessage || "Failed to remove cradle association", "error");
+        }
+      } catch (error) {
+        showErrorAlert("Failed to remove cradle association", "error");
+      }
     }
   };
 
@@ -297,14 +385,20 @@ const ManageBedsPage: React.FC = () => {
     try {
       const response = await wrBedService.save(bedData as WrBedDto);
       if (response.success) {
-        showSuccessAlert(selectedBed ? "Bed updated successfully" : "Bed created successfully", "success");
+        const itemType = formMode === "cradle" ? "cradle" : "bed";
+        showSuccessAlert(
+          selectedBed
+            ? `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} updated successfully`
+            : `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} created successfully`,
+          "success"
+        );
         setIsFormOpen(false);
         fetchBeds();
       } else {
-        showErrorAlert(response.errorMessage || "Failed to save bed", "error");
+        showErrorAlert(response.errorMessage || "Failed to save", "error");
       }
     } catch (error) {
-      showErrorAlert("Failed to save bed", "error");
+      showErrorAlert("Failed to save", "error");
     }
   };
 
@@ -320,68 +414,108 @@ const ManageBedsPage: React.FC = () => {
 
         const response = await wrBedService.save(updatedBed);
         if (response.success) {
-          showSuccessAlert("Bed status updated successfully", "success");
+          showSuccessAlert("Status updated successfully", "success");
           setIsStatusDialogOpen(false);
           fetchBeds();
         } else {
-          showErrorAlert(response.errorMessage || "Failed to update bed status", "error");
+          showErrorAlert(response.errorMessage || "Failed to update status", "error");
         }
       }
     } catch (error) {
-      showErrorAlert("Failed to update bed status", "error");
+      showErrorAlert("Failed to update status", "error");
     }
+  };
+
+  // Action menu handlers
+  const handleActionMenuOpen = (event: React.MouseEvent<HTMLElement>, bed: EnhancedWrBedDto) => {
+    event.stopPropagation();
+    setActionMenu({ anchorEl: event.currentTarget, bed });
+  };
+
+  const handleActionMenuClose = () => {
+    setActionMenu({ anchorEl: null, bed: null });
   };
 
   // Statistics calculations
   const statistics = useMemo(() => {
-    const totalBeds = filteredBeds.length;
-    const bedsWithCradles = filteredBeds.filter((bed) => bed.hasCradle).length;
-    const statusCounts = Object.keys(bedStatusConfig).reduce((acc, status) => {
-      acc[status] = filteredBeds.filter((bed) => bed.bedStatusValue === status).length;
+    const allBeds = beds.filter((bed) => !bed.isCradle);
+    const allCradles = beds.filter((bed) => bed.isCradle);
+    const filteredRegularBeds = filteredBeds.filter((bed) => !bed.isCradle);
+    const filteredCradles = filteredBeds.filter((bed) => bed.isCradle);
+
+    const bedStatusCounts = Object.keys(bedStatusConfig).reduce((acc, status) => {
+      acc[status] = filteredRegularBeds.filter((bed) => bed.bedStatusValue === status).length;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const cradleStatusCounts = Object.keys(bedStatusConfig).reduce((acc, status) => {
+      acc[status] = filteredCradles.filter((bed) => bed.bedStatusValue === status).length;
       return acc;
     }, {} as Record<string, number>);
 
     return {
-      totalBeds,
-      bedsWithCradles,
-      statusCounts,
+      totalBeds: allBeds.length,
+      totalCradles: allCradles.length,
+      filteredBeds: filteredRegularBeds.length,
+      filteredCradles: filteredCradles.length,
+      bedStatusCounts,
+      cradleStatusCounts,
+      bedsWithCradles: allBeds.filter((bed) => bed.cradleCount && bed.cradleCount > 0).length,
     };
-  }, [filteredBeds]);
+  }, [beds, filteredBeds]);
 
   // Grid column configuration
   const columns: Column<EnhancedWrBedDto>[] = [
     {
+      key: "type",
+      header: "Type",
+      visible: true,
+      sortable: true,
+      width: 80,
+      render: (bed) => (
+        <Tooltip title={bed.isCradle ? "Cradle" : "Bed"}>
+          <Box display="flex" alignItems="center" justifyContent="center">
+            {bed.isCradle ? (
+              <CradleIcon color="secondary" fontSize="small" />
+            ) : (
+              <Badge badgeContent={bed.cradleCount || 0} color="primary" invisible={!bed.cradleCount}>
+                <BedIcon color="primary" fontSize="small" />
+              </Badge>
+            )}
+          </Box>
+        </Tooltip>
+      ),
+    },
+    {
       key: "bedName",
-      header: "Bed Name",
+      header: "Name",
       visible: true,
       sortable: true,
       width: 140,
       render: (bed) => (
         <Box display="flex" alignItems="center" gap={1}>
-          {bed.hasCradle ? (
-            <Badge badgeContent={<CradleIcon fontSize="small" />} color="primary">
-              <BedIcon fontSize="small" color="action" />
-            </Badge>
-          ) : (
-            <BedIcon fontSize="small" color="action" />
-          )}
           <Typography variant="body2" fontWeight="medium">
             {bed.bedName}
           </Typography>
+          {bed.isCradle && <Chip size="small" label="Cradle" color="secondary" variant="outlined" />}
         </Box>
       ),
     },
     {
-      key: "key",
-      header: "Cradle Key",
+      key: "association",
+      header: "Association",
       visible: true,
       sortable: true,
-      width: 100,
+      width: 150,
       render: (bed) => (
-        <Box display="flex" alignItems="center" gap={1}>
-          {bed.hasCradle ? (
-            <Tooltip title="This bed has an associated cradle">
-              <Chip icon={<CradleIcon fontSize="small" />} label={bed.key} size="small" color="primary" variant="outlined" />
+        <Box>
+          {bed.isCradle && bed.associatedBedName ? (
+            <Tooltip title={`Associated with bed: ${bed.associatedBedName}`}>
+              <Chip icon={<LinkIcon fontSize="small" />} label={bed.associatedBedName} size="small" color="primary" variant="outlined" />
+            </Tooltip>
+          ) : !bed.isCradle && bed.cradleCount && bed.cradleCount > 0 ? (
+            <Tooltip title={`This bed has ${bed.cradleCount} associated cradle(s)`}>
+              <Chip icon={<CradleIcon fontSize="small" />} label={`${bed.cradleCount} cradle(s)`} size="small" color="secondary" variant="outlined" />
             </Tooltip>
           ) : (
             <Typography variant="body2" color="text.secondary">
@@ -396,28 +530,28 @@ const ManageBedsPage: React.FC = () => {
       header: "Room",
       visible: true,
       sortable: true,
-      width: 150,
+      width: 130,
     },
     {
       key: "roomGroupName",
       header: "Room Group",
       visible: true,
       sortable: true,
-      width: 150,
+      width: 130,
     },
     {
       key: "departmentName",
       header: "Department",
       visible: true,
       sortable: true,
-      width: 150,
+      width: 130,
     },
     {
       key: "bedCategoryDisplayName",
-      header: "Bed Category",
+      header: "Category",
       visible: true,
       sortable: true,
-      width: 130,
+      width: 120,
       render: (bed) => (
         <Box display="flex" alignItems="center" gap={1}>
           <CategoryIcon fontSize="small" color="action" />
@@ -430,7 +564,7 @@ const ManageBedsPage: React.FC = () => {
       header: "Service Type",
       visible: true,
       sortable: true,
-      width: 130,
+      width: 120,
       render: (bed) => (
         <Box display="flex" alignItems="center" gap={1}>
           <ServiceIcon fontSize="small" color="action" />
@@ -476,13 +610,13 @@ const ManageBedsPage: React.FC = () => {
       key: "bedRemarks",
       header: "Remarks",
       visible: true,
-      width: 200,
+      width: 180,
       render: (bed) => (
         <Tooltip title={bed.bedRemarks || "No remarks"}>
           <Typography
             variant="body2"
             sx={{
-              maxWidth: 180,
+              maxWidth: 160,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -504,17 +638,17 @@ const ManageBedsPage: React.FC = () => {
       key: "actions",
       header: "Actions",
       visible: true,
-      width: 120,
+      width: 140,
       render: (bed) => (
         <Stack direction="row" spacing={0.5}>
-          <Tooltip title="Edit Bed">
+          <Tooltip title={`Edit ${bed.isCradle ? "Cradle" : "Bed"}`}>
             <IconButton size="small" onClick={() => handleEditBed(bed)} color="primary">
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Delete Bed">
-            <IconButton size="small" onClick={() => handleDeleteBed(bed)} color="error">
-              <DeleteIcon fontSize="small" />
+          <Tooltip title="More Actions">
+            <IconButton size="small" onClick={(e) => handleActionMenuOpen(e, bed)} color="default">
+              <MoreVertIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Stack>
@@ -527,17 +661,18 @@ const ManageBedsPage: React.FC = () => {
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1" fontWeight="bold">
-          Manage Beds
+          Manage Beds & Cradles
         </Typography>
         <Stack direction="row" spacing={2}>
           <CustomButton variant="outlined" icon={FilterIcon} text="Filters" onClick={() => setIsFilterDialogOpen(true)} />
           <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={fetchBeds} asynchronous />
+          <CustomButton variant="outlined" icon={CradleIcon} text="Add Cradle" onClick={() => handleAddCradle()} color="secondary" />
           <CustomButton variant="contained" icon={AddIcon} text="Add Bed" onClick={handleAddBed} />
         </Stack>
       </Box>
 
       {/* Statistics Cards */}
-      <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={2} mb={2}>
+      <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(180px, 1fr))" gap={2} mb={2}>
         {/* Total Beds Card */}
         <Paper sx={{ p: 2, textAlign: "center" }}>
           <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>
@@ -551,11 +686,26 @@ const ManageBedsPage: React.FC = () => {
           </Typography>
         </Paper>
 
-        {/* Beds with Cradles Card */}
+        {/* Total Cradles Card */}
         <Paper sx={{ p: 2, textAlign: "center" }}>
           <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>
             <CradleIcon color="secondary" />
             <Typography variant="h6" color="secondary.main">
+              {statistics.totalCradles}
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary">
+            Total Cradles
+          </Typography>
+        </Paper>
+
+        {/* Beds with Cradles Card */}
+        <Paper sx={{ p: 2, textAlign: "center" }}>
+          <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>
+            <Badge badgeContent={<CradleIcon fontSize="small" />} color="secondary">
+              <BedIcon color="primary" />
+            </Badge>
+            <Typography variant="h6" color="primary.main">
               {statistics.bedsWithCradles}
             </Typography>
           </Box>
@@ -564,20 +714,30 @@ const ManageBedsPage: React.FC = () => {
           </Typography>
         </Paper>
 
-        {/* Status Cards */}
+        {/* Status Cards - Only show for filtered data */}
         {Object.entries(bedStatusConfig).map(([status, config]) => {
-          const count = statistics.statusCounts[status] || 0;
+          const bedCount = statistics.bedStatusCounts[status] || 0;
+          const cradleCount = statistics.cradleStatusCounts[status] || 0;
+          const totalCount = bedCount + cradleCount;
+
+          if (totalCount === 0) return null;
+
           return (
             <Paper key={status} sx={{ p: 2, textAlign: "center" }}>
               <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>
                 {config.icon}
                 <Typography variant="h6" color={config.color}>
-                  {count}
+                  {totalCount}
                 </Typography>
               </Box>
               <Typography variant="body2" color="text.secondary">
                 {config.label}
               </Typography>
+              {bedCount > 0 && cradleCount > 0 && (
+                <Typography variant="caption" color="text.secondary" display="block">
+                  {bedCount} beds, {cradleCount} cradles
+                </Typography>
+              )}
             </Paper>
           );
         })}
@@ -590,17 +750,70 @@ const ManageBedsPage: React.FC = () => {
           data={filteredBeds}
           searchTerm={searchTerm}
           onRowClick={handleEditBed}
-          maxHeight="600px"
+          maxHeight="700px"
           density={density}
           onDensityChange={setDensity}
           showDensityControls
-          emptyStateMessage="No beds found. Add some beds to get started."
+          emptyStateMessage="No beds or cradles found. Add some to get started."
           rowKeyField="bedID"
         />
       </Paper>
 
+      {/* Action Menu */}
+      <Menu anchorEl={actionMenu.anchorEl} open={Boolean(actionMenu.anchorEl)} onClose={handleActionMenuClose}>
+        {actionMenu.bed && !actionMenu.bed.isCradle && (
+          <MenuItem
+            onClick={() => {
+              handleAddCradle(actionMenu.bed!);
+              handleActionMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              <CradleIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Add Cradle for this Bed</ListItemText>
+          </MenuItem>
+        )}
+
+        {actionMenu.bed && actionMenu.bed.isCradle && (
+          <MenuItem
+            onClick={() => {
+              handleRemoveCradleAssociation(actionMenu.bed!);
+              handleActionMenuClose();
+            }}
+          >
+            <ListItemIcon>
+              <LinkOffIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Remove Cradle Association</ListItemText>
+          </MenuItem>
+        )}
+
+        <MenuItem
+          onClick={() => {
+            handleDeleteBed(actionMenu.bed!);
+            handleActionMenuClose();
+          }}
+        >
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" color="error" />
+          </ListItemIcon>
+          <ListItemText>Delete {actionMenu.bed?.isCradle ? "Cradle" : "Bed"}</ListItemText>
+        </MenuItem>
+      </Menu>
+
       {/* Dialogs */}
-      <BedFormDialog open={isFormOpen} onClose={() => setIsFormOpen(false)} onSubmit={handleFormSubmit} bed={selectedBed} rooms={rooms} roomGroups={roomGroups} />
+      <BedFormDialog
+        open={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSubmit={handleFormSubmit}
+        bed={selectedBed}
+        beds={beds}
+        rooms={rooms}
+        roomGroups={roomGroups}
+        mode={formMode}
+        preselectedBedForCradle={preselectedBedForCradle}
+      />
 
       <BedStatusDialog
         open={isStatusDialogOpen}
