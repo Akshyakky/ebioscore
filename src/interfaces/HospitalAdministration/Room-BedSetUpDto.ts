@@ -60,6 +60,7 @@ export interface WrBedDto extends BaseDto {
     roomGroup?: {
       rGrpID: number;
       rGrpName: string;
+      deptName: string;
     };
   };
 }
