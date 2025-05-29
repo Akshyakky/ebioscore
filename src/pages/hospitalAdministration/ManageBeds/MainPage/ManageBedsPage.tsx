@@ -1,6 +1,6 @@
 // src/pages/hospitalAdministration/ManageBeds/MainPage/ManageBedsPage.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Chip, Tooltip, IconButton, Stack, Badge, Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
+import { Box, Typography, Paper, Chip, Tooltip, IconButton, Stack, Badge, Menu, MenuItem, ListItemIcon, ListItemText, Avatar } from "@mui/material";
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -464,66 +464,182 @@ const ManageBedsPage: React.FC = () => {
     };
   }, [beds, filteredBeds]);
 
-  // Grid column configuration
+  // Enhanced type column component for better visual clarity
+  const TypeIndicator = ({ bed }: { bed: EnhancedWrBedDto }) => {
+    if (bed.isCradle) {
+      return (
+        <Box display="flex" alignItems="center" justifyContent="center">
+          <Chip
+            icon={<CradleIcon fontSize="small" />}
+            label="Cradle"
+            size="small"
+            variant="filled"
+            sx={{
+              backgroundColor: "#9c27b0",
+              color: "white",
+              fontWeight: "medium",
+              minWidth: "70px",
+            }}
+          />
+        </Box>
+      );
+    }
+
+    return (
+      <Box display="flex" alignItems="center" justifyContent="center">
+        <Stack alignItems="center" spacing={0.5}>
+          <Chip
+            icon={<BedIcon fontSize="small" />}
+            label="Bed"
+            size="small"
+            variant="filled"
+            sx={{
+              backgroundColor: "#1976d2",
+              color: "white",
+              fontWeight: "medium",
+              minWidth: "70px",
+            }}
+          />
+          {bed.cradleCount && bed.cradleCount > 0 && (
+            <Chip
+              label={`+${bed.cradleCount} cradle${bed.cradleCount > 1 ? "s" : ""}`}
+              size="small"
+              variant="outlined"
+              sx={{
+                fontSize: "0.65rem",
+                height: "16px",
+                color: "#9c27b0",
+                borderColor: "#9c27b0",
+                backgroundColor: "transparent",
+              }}
+            />
+          )}
+        </Stack>
+      </Box>
+    );
+  };
+
+  // Enhanced name column for better identification
+  const NameDisplay = ({ bed }: { bed: EnhancedWrBedDto }) => {
+    return (
+      <Box display="flex" alignItems="center" gap={1}>
+        <Avatar
+          sx={{
+            width: 28,
+            height: 28,
+            fontSize: "0.75rem",
+            backgroundColor: bed.isCradle ? "#9c27b0" : "#1976d2",
+            color: "white",
+          }}
+        >
+          {bed.isCradle ? <CradleIcon fontSize="small" /> : <BedIcon fontSize="small" />}
+        </Avatar>
+        <Box>
+          <Typography variant="body2" fontWeight="medium">
+            {bed.bedName}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {bed.isCradle ? "Cradle Unit" : "Bed Unit"}
+          </Typography>
+        </Box>
+      </Box>
+    );
+  };
+
+  // Enhanced association display for better clarity
+  const AssociationDisplay = ({ bed }: { bed: EnhancedWrBedDto }) => {
+    if (bed.isCradle && bed.associatedBedName) {
+      return (
+        <Box display="flex" alignItems="center" gap={1}>
+          <Avatar
+            sx={{
+              width: 20,
+              height: 20,
+              backgroundColor: "#1976d2",
+              color: "white",
+            }}
+          >
+            <BedIcon sx={{ fontSize: "12px" }} />
+          </Avatar>
+          <Box>
+            <Typography variant="body2" fontWeight="medium">
+              {bed.associatedBedName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Parent Bed
+            </Typography>
+          </Box>
+        </Box>
+      );
+    }
+
+    if (!bed.isCradle && bed.cradleCount && bed.cradleCount > 0) {
+      return (
+        <Box display="flex" alignItems="center" gap={1}>
+          <Avatar
+            sx={{
+              width: 20,
+              height: 20,
+              backgroundColor: "#9c27b0",
+              color: "white",
+            }}
+          >
+            <CradleIcon sx={{ fontSize: "12px" }} />
+          </Avatar>
+          <Box>
+            <Typography variant="body2" fontWeight="medium">
+              {bed.cradleCount} Cradle{bed.cradleCount > 1 ? "s" : ""}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Associated Units
+            </Typography>
+          </Box>
+        </Box>
+      );
+    }
+
+    return (
+      <Box display="flex" alignItems="center" justifyContent="center">
+        <Typography variant="body2" color="text.secondary" fontStyle="italic">
+          No associations
+        </Typography>
+      </Box>
+    );
+  };
+
+  // Grid column configuration with enhanced visuals
   const columns: Column<EnhancedWrBedDto>[] = [
     {
       key: "type",
       header: "Type",
       visible: true,
       sortable: true,
-      width: 80,
+      width: 100,
       render: (bed) => (
-        <Tooltip title={bed.isCradle ? "Cradle" : "Bed"}>
-          <Box display="flex" alignItems="center" justifyContent="center">
-            {bed.isCradle ? (
-              <CradleIcon color="secondary" fontSize="small" />
-            ) : (
-              <Badge badgeContent={bed.cradleCount || 0} color="primary" invisible={!bed.cradleCount}>
-                <BedIcon color="primary" fontSize="small" />
-              </Badge>
-            )}
+        <Tooltip
+          title={bed.isCradle ? "Cradle - Associated with a bed" : bed.cradleCount && bed.cradleCount > 0 ? `Bed with ${bed.cradleCount} associated cradle(s)` : "Standard Bed"}
+        >
+          <Box>
+            <TypeIndicator bed={bed} />
           </Box>
         </Tooltip>
       ),
     },
     {
       key: "bedName",
-      header: "Name",
+      header: "Name & Details",
       visible: true,
       sortable: true,
-      width: 140,
-      render: (bed) => (
-        <Box display="flex" alignItems="center" gap={1}>
-          <Typography variant="body2" fontWeight="medium">
-            {bed.bedName}
-          </Typography>
-          {bed.isCradle && <Chip size="small" label="Cradle" color="secondary" variant="outlined" />}
-        </Box>
-      ),
+      width: 180,
+      render: (bed) => <NameDisplay bed={bed} />,
     },
     {
       key: "association",
-      header: "Association",
+      header: "Associations",
       visible: true,
       sortable: true,
       width: 150,
-      render: (bed) => (
-        <Box>
-          {bed.isCradle && bed.associatedBedName ? (
-            <Tooltip title={`Associated with bed: ${bed.associatedBedName}`}>
-              <Chip icon={<LinkIcon fontSize="small" />} label={bed.associatedBedName} size="small" color="primary" variant="outlined" />
-            </Tooltip>
-          ) : !bed.isCradle && bed.cradleCount && bed.cradleCount > 0 ? (
-            <Tooltip title={`This bed has ${bed.cradleCount} associated cradle(s)`}>
-              <Chip icon={<CradleIcon fontSize="small" />} label={`${bed.cradleCount} cradle(s)`} size="small" color="secondary" variant="outlined" />
-            </Tooltip>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              -
-            </Typography>
-          )}
-        </Box>
-      ),
+      render: (bed) => <AssociationDisplay bed={bed} />,
     },
     {
       key: "roomName",
@@ -671,45 +787,49 @@ const ManageBedsPage: React.FC = () => {
         </Stack>
       </Box>
 
-      {/* Statistics Cards */}
-      <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(180px, 1fr))" gap={2} mb={2}>
+      {/* Enhanced Statistics Cards */}
+      <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={2} mb={2}>
         {/* Total Beds Card */}
-        <Paper sx={{ p: 2, textAlign: "center" }}>
+        <Paper sx={{ p: 2, textAlign: "center", borderLeft: "4px solid #1976d2" }}>
           <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>
-            <BedIcon color="primary" />
-            <Typography variant="h6" color="primary.main">
+            <Avatar sx={{ bgcolor: "#1976d2", width: 32, height: 32 }}>
+              <BedIcon fontSize="small" />
+            </Avatar>
+            <Typography variant="h5" color="#1976d2" fontWeight="bold">
               {statistics.totalBeds}
             </Typography>
           </Box>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" fontWeight="medium">
             Total Beds
           </Typography>
         </Paper>
 
         {/* Total Cradles Card */}
-        <Paper sx={{ p: 2, textAlign: "center" }}>
+        <Paper sx={{ p: 2, textAlign: "center", borderLeft: "4px solid #9c27b0" }}>
           <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>
-            <CradleIcon color="secondary" />
-            <Typography variant="h6" color="secondary.main">
+            <Avatar sx={{ bgcolor: "#9c27b0", width: 32, height: 32 }}>
+              <CradleIcon fontSize="small" />
+            </Avatar>
+            <Typography variant="h5" color="#9c27b0" fontWeight="bold">
               {statistics.totalCradles}
             </Typography>
           </Box>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" fontWeight="medium">
             Total Cradles
           </Typography>
         </Paper>
 
         {/* Beds with Cradles Card */}
-        <Paper sx={{ p: 2, textAlign: "center" }}>
+        <Paper sx={{ p: 2, textAlign: "center", borderLeft: "4px solid #ff9800" }}>
           <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>
-            <Badge badgeContent={<CradleIcon fontSize="small" />} color="secondary">
-              <BedIcon color="primary" />
-            </Badge>
-            <Typography variant="h6" color="primary.main">
+            <Avatar sx={{ bgcolor: "#ff9800", width: 32, height: 32 }}>
+              <LinkIcon fontSize="small" />
+            </Avatar>
+            <Typography variant="h5" color="#ff9800" fontWeight="bold">
               {statistics.bedsWithCradles}
             </Typography>
           </Box>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" fontWeight="medium">
             Beds with Cradles
           </Typography>
         </Paper>
@@ -723,14 +843,14 @@ const ManageBedsPage: React.FC = () => {
           if (totalCount === 0) return null;
 
           return (
-            <Paper key={status} sx={{ p: 2, textAlign: "center" }}>
+            <Paper key={status} sx={{ p: 2, textAlign: "center", borderLeft: `4px solid ${config.color}` }}>
               <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>
-                {config.icon}
-                <Typography variant="h6" color={config.color}>
+                <Avatar sx={{ bgcolor: config.color, width: 32, height: 32 }}>{config.icon}</Avatar>
+                <Typography variant="h5" color={config.color} fontWeight="bold">
                   {totalCount}
                 </Typography>
               </Box>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" fontWeight="medium">
                 {config.label}
               </Typography>
               {bedCount > 0 && cradleCount > 0 && (
