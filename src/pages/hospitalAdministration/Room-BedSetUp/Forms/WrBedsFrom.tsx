@@ -62,7 +62,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
   const [filteredRoomLists, setFilteredRoomLists] = useState<RoomListDto[]>([]);
   const isAddMode = !initialData?.bedID;
   const isCradle = initialData?.key && initialData.key > 0;
-  const dropdownValues = useDropdownValues(["bedCategory", "service"]);
+  const dropdownValues = useDropdownValues(["bedCategory", "serviceType"]);
 
   const defaultValues: BedFormData = {
     bedID: 0,
@@ -132,13 +132,13 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
   }, [wbCatID, dropdownValues.bedCategory, setValue]);
 
   useEffect(() => {
-    if (bchID && dropdownValues.service) {
-      const selectedService = dropdownValues.service.find((s) => s.value.toString() === bchID.toString());
+    if (bchID && dropdownValues.serviceType) {
+      const selectedService = dropdownValues.serviceType.find((s) => s.value.toString() === bchID.toString());
       if (selectedService) {
         setValue("bchName", selectedService.label, { shouldValidate: true, shouldDirty: true });
       }
     }
-  }, [bchID, dropdownValues.service, setValue]);
+  }, [bchID, dropdownValues.serviceType, setValue]);
 
   useEffect(() => {
     if (initialData?.bedID) {
@@ -465,7 +465,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
                         disabled={viewOnly}
                         size="small"
                         fullWidth
-                        options={dropdownValues.service || []}
+                        options={dropdownValues.serviceType || []}
                       />
                     </Grid>
 
