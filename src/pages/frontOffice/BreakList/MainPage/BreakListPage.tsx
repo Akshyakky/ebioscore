@@ -312,7 +312,7 @@ const BreakListPage: React.FC = () => {
       width: 200,
     },
     {
-      key: "hPLID",
+      key: "assignedName",
       header: "Assigned To",
       visible: true,
       sortable: true,
