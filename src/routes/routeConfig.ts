@@ -26,6 +26,7 @@ const InsuranceListPage = lazy(() => import("@/pages/hospitalAdministration/Insu
 const ProductTaxListPage = lazy(() => import("@/pages/inventoryManagement/ProductTaxList/MainPage/ProductTaxListPage"));
 const ProductOverviewPage = lazy(() => import("@/pages/inventoryManagement/ProductOverview/MainPage/ProductOverviewPage"));
 const ManageBedPage = lazy(() => import("@/pages/patientAdministration/ManageBed/MainPage/ManageBedPage"));
+const ManageBedsPage = lazy(() => import("@/pages/hospitalAdministration/ManageBeds/MainPage/ManageBedsPage"));
 const DiagnosisListPage = lazy(() => import("@/pages/clinicalManagement/DiagnosisList/MainPage/DiagnosisListPage"));
 const MedicationListPage = lazy(() => import("@/pages/clinicalManagement/MedicationList/MainPage/MedicationListPage"));
 const AppModifiedListPage = lazy(() => import("@/pages/hospitalAdministration/AppModifiedList/MainPage/AppModifiedListPage"));
@@ -322,7 +323,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ManageBedPage",
-    component: wrapWithSuspense(ManageBedPage),
+    component: wrapWithSuspense(ManageBedsPage),
     protected: true,
     providers: [AlertProvider],
     metadata: {

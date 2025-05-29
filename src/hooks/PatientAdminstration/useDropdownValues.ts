@@ -60,7 +60,6 @@ export type DropdownType =
   | "speciality"
   | "floor"
   | "unit"
-  | "service"
   | "bedCategory"
   | "productCategory"
   | "productSubGroup"
@@ -276,14 +275,6 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return (response.data || []).map((item: any) => ({
           value: item.dulID || 0,
           label: item.unitDesc || "",
-        }));
-      },
-      service: async () => {
-        const response = await serviceTypeService.getAll();
-        return (response.data || []).map((item: ServiceTypeDto) => ({
-          value: item.bchID || 0,
-          label: item.bchName || "",
-          isLabYN: item.isLabYN,
         }));
       },
       bedCategory: async () => {
