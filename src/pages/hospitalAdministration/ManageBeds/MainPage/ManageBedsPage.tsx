@@ -22,12 +22,14 @@ import { WrBedDto, RoomListDto, RoomGroupDto } from "@/interfaces/HospitalAdmini
 import BedFilterDialog from "../Components/BedFilterDialog";
 import BedFormDialog from "../Components/BedFormDialog";
 import BedStatusDialog from "../Components/BedStatusDialog";
+
 interface EnhancedWrBedDto extends WrBedDto {
   roomName?: string;
   roomGroupName?: string;
   departmentName?: string;
   bedStatusColor?: string;
   bedStatusIcon?: React.ReactElement;
+  bedStatusLabel?: string;
 }
 
 interface BedFilters {
@@ -54,13 +56,31 @@ const ManageBedsPage: React.FC = () => {
 
   const { showErrorAlert, showSuccessAlert } = useAlert();
 
-  // Bed status configuration
+  // Updated bed status configuration to match actual database values
   const bedStatusConfig = {
-    Available: { color: "#4caf50", icon: <AvailableIcon fontSize="small" />, label: "Available" },
-    Occupied: { color: "#f44336", icon: <OccupiedIcon fontSize="small" />, label: "Occupied" },
-    Blocked: { color: "#ff9800", icon: <BlockIcon fontSize="small" />, label: "Blocked" },
-    Maintenance: { color: "#9c27b0", icon: <MaintenanceIcon fontSize="small" />, label: "Maintenance" },
-    Reserved: { color: "#2196f3", icon: <BedIcon fontSize="small" />, label: "Reserved" },
+    OCCUP: { color: "#f44336", icon: <OccupiedIcon fontSize="small" />, label: "Occupied" },
+    AVLBL: { color: "#4caf50", icon: <AvailableIcon fontSize="small" />, label: "Available" },
+    BLOCK: { color: "#ff9800", icon: <BlockIcon fontSize="small" />, label: "Blocked" },
+    MAINT: { color: "#9c27b0", icon: <MaintenanceIcon fontSize="small" />, label: "Maintenance" },
+    RESERV: { color: "#2196f3", icon: <BedIcon fontSize="small" />, label: "Reserved" },
+    // Add any other status values you might have
+    OUT_PATIENT: { color: "#795548", icon: <BedIcon fontSize="small" />, label: "Out Patient" },
+    IN_PATIENT: { color: "#607d8b", icon: <OccupiedIcon fontSize="small" />, label: "In Patient" },
+  };
+
+  // Fallback configuration for unknown statuses
+  const getStatusConfig = (status: string) => {
+    const config = bedStatusConfig[status as keyof typeof bedStatusConfig];
+    if (config) {
+      return config;
+    }
+
+    // Fallback for unknown statuses
+    return {
+      color: "#757575", // Gray color for unknown statuses
+      icon: <BedIcon fontSize="small" />,
+      label: status || "Unknown",
+    };
   };
 
   // Data fetching functions
@@ -69,14 +89,19 @@ const ManageBedsPage: React.FC = () => {
     try {
       const response = await wrBedService.getAllWithIncludes(["RoomList", "RoomList.RoomGroup"]);
       if (response.success && response.data) {
-        const enhancedBeds = response.data.map((bed) => ({
-          ...bed,
-          roomName: bed.roomList?.rName || "Unknown Room",
-          roomGroupName: bed.roomList?.roomGroup?.rGrpName || "Unknown Group",
-          departmentName: bed.roomList?.roomGroup?.deptName || "Unknown Department",
-          bedStatusColor: bedStatusConfig[bed.bedStatusValue as keyof typeof bedStatusConfig]?.color || "#757575",
-          bedStatusIcon: bedStatusConfig[bed.bedStatusValue as keyof typeof bedStatusConfig]?.icon || <BedIcon fontSize="small" />,
-        }));
+        const enhancedBeds = response.data.map((bed) => {
+          const statusConfig = getStatusConfig(bed.bedStatusValue);
+
+          return {
+            ...bed,
+            roomName: bed.roomList?.rName || "Unknown Room",
+            roomGroupName: bed.roomList?.roomGroup?.rGrpName || "Unknown Group",
+            departmentName: bed.roomList?.roomGroup?.deptName || "Unknown Department",
+            bedStatusColor: statusConfig.color,
+            bedStatusIcon: statusConfig.icon,
+            bedStatusLabel: statusConfig.label,
+          };
+        });
         setBeds(enhancedBeds);
       }
     } catch (error) {
@@ -126,7 +151,8 @@ const ManageBedsPage: React.FC = () => {
           bed.roomName?.toLowerCase().includes(searchLower) ||
           bed.roomGroupName?.toLowerCase().includes(searchLower) ||
           bed.departmentName?.toLowerCase().includes(searchLower) ||
-          bed.bedStatusValue?.toLowerCase().includes(searchLower);
+          bed.bedStatusValue?.toLowerCase().includes(searchLower) ||
+          bed.bedStatusLabel?.toLowerCase().includes(searchLower);
 
         if (!matchesSearch) return false;
       }
@@ -275,16 +301,25 @@ const ManageBedsPage: React.FC = () => {
         <Tooltip title={`Click to change status`}>
           <Chip
             icon={bed.bedStatusIcon}
-            label={bed.bedStatusValue || "Unknown"}
+            label={bed.bedStatusLabel || bed.bedStatusValue || "Unknown"}
             size="small"
             onClick={() => handleBedStatusChange(bed)}
+            variant="filled"
             sx={{
               backgroundColor: bed.bedStatusColor,
               color: "white",
               cursor: "pointer",
+              fontWeight: "medium",
+              border: "none",
+              "& .MuiChip-icon": {
+                color: "white",
+              },
               "&:hover": {
                 opacity: 0.8,
+                transform: "scale(1.02)",
+                boxShadow: `0 2px 8px ${bed.bedStatusColor}40`,
               },
+              transition: "all 0.2s ease-in-out",
             }}
           />
         </Tooltip>

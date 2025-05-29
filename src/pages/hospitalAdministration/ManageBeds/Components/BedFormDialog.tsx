@@ -292,17 +292,7 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <EnhancedFormField
-                name="transferYN"
-                control={control}
-                type="select"
-                label="Allow Transfer"
-                options={yesNoOptions}
-                disabled={isSubmitting}
-                helperText="Allow patient transfers to this bed"
-              />
-            </Grid>
+
 
             <Grid size={{ xs: 12 }}>
               <Divider />
