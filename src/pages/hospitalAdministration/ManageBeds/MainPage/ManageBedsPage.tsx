@@ -1,6 +1,6 @@
 // src/pages/hospitalAdministration/ManageBeds/MainPage/ManageBedsPage.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Chip, Tooltip, IconButton, Stack } from "@mui/material";
+import { Box, Typography, Paper, Chip, Tooltip, IconButton, Stack, Badge } from "@mui/material";
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -15,6 +15,7 @@ import {
   Key as KeyIcon,
   Category as CategoryIcon,
   MedicalServices as ServiceIcon,
+  Crib as CradleIcon,
 } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import CustomButton from "@/components/Button/CustomButton";
@@ -34,8 +35,9 @@ interface EnhancedWrBedDto extends WrBedDto {
   bedStatusColor?: string;
   bedStatusIcon?: React.ReactElement;
   bedStatusLabel?: string;
-  bedCategoryName?: string;
-  serviceTypeName?: string;
+  bedCategoryDisplayName?: string;
+  serviceTypeDisplayName?: string;
+  hasCradle?: boolean;
 }
 
 interface BedFilters {
@@ -64,7 +66,7 @@ const ManageBedsPage: React.FC = () => {
 
   const { showErrorAlert, showSuccessAlert } = useAlert();
 
-  // Load dropdown values for bed categories and service types
+  // Load dropdown values for bed categories and service types (fallback for names)
   const { bedCategory = [], serviceType = [], isLoading: dropdownLoading } = useDropdownValues(["bedCategory", "serviceType"]);
 
   // Updated bed status configuration to match actual database values
@@ -92,22 +94,40 @@ const ManageBedsPage: React.FC = () => {
     };
   };
 
-  // Helper function to get bed category name
-  const getBedCategoryName = useCallback(
-    (categoryId?: number): string => {
-      if (!categoryId) return "";
-      const category = bedCategory.find((cat) => Number(cat.value) === categoryId);
-      return category?.label || "";
+  // Helper function to get bed category name (with fallback to dropdown lookup)
+  const getBedCategoryDisplayName = useCallback(
+    (bed: WrBedDto): string => {
+      // First try to use the stored name
+      if (bed.wbCatName) {
+        return bed.wbCatName;
+      }
+
+      // Fallback to dropdown lookup if no stored name
+      if (bed.wbCatID) {
+        const category = bedCategory.find((cat) => Number(cat.value) === bed.wbCatID);
+        return category?.label || "";
+      }
+
+      return "";
     },
     [bedCategory]
   );
 
-  // Helper function to get service type name
-  const getServiceTypeName = useCallback(
-    (serviceTypeId?: number): string => {
-      if (!serviceTypeId) return "";
-      const service = serviceType.find((svc) => Number(svc.value) === serviceTypeId);
-      return service?.label || "";
+  // Helper function to get service type name (with fallback to dropdown lookup)
+  const getServiceTypeDisplayName = useCallback(
+    (bed: WrBedDto): string => {
+      // First try to use the stored name
+      if (bed.bchName) {
+        return bed.bchName;
+      }
+
+      // Fallback to dropdown lookup if no stored name
+      if (bed.bchID) {
+        const service = serviceType.find((svc) => Number(svc.value) === bed.bchID);
+        return service?.label || "";
+      }
+
+      return "";
     },
     [serviceType]
   );
@@ -129,8 +149,9 @@ const ManageBedsPage: React.FC = () => {
             bedStatusColor: statusConfig.color,
             bedStatusIcon: statusConfig.icon,
             bedStatusLabel: statusConfig.label,
-            bedCategoryName: getBedCategoryName(bed.wbCatID),
-            serviceTypeName: getServiceTypeName(bed.bchID),
+            bedCategoryDisplayName: getBedCategoryDisplayName(bed),
+            serviceTypeDisplayName: getServiceTypeDisplayName(bed),
+            hasCradle: !!(bed.key && bed.key > 0),
           };
         });
         setBeds(enhancedBeds);
@@ -140,7 +161,7 @@ const ManageBedsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [showErrorAlert, getBedCategoryName, getServiceTypeName]);
+  }, [showErrorAlert, getBedCategoryDisplayName, getServiceTypeDisplayName]);
 
   const fetchRooms = useCallback(async () => {
     try {
@@ -171,18 +192,18 @@ const ManageBedsPage: React.FC = () => {
     fetchRoomGroups();
   }, [fetchBeds, fetchRooms, fetchRoomGroups]);
 
-  // Re-enhance beds when dropdown data loads
+  // Re-enhance beds when dropdown data loads (for fallback name resolution)
   useEffect(() => {
     if (!dropdownLoading && beds.length > 0) {
       setBeds((currentBeds) =>
         currentBeds.map((bed) => ({
           ...bed,
-          bedCategoryName: getBedCategoryName(bed.wbCatID),
-          serviceTypeName: getServiceTypeName(bed.bchID),
+          bedCategoryDisplayName: getBedCategoryDisplayName(bed),
+          serviceTypeDisplayName: getServiceTypeDisplayName(bed),
         }))
       );
     }
-  }, [dropdownLoading, getBedCategoryName, getServiceTypeName]);
+  }, [dropdownLoading, getBedCategoryDisplayName, getServiceTypeDisplayName]);
 
   // Filtered data based on search term and filters
   const filteredBeds = useMemo(() => {
@@ -197,9 +218,10 @@ const ManageBedsPage: React.FC = () => {
           bed.departmentName?.toLowerCase().includes(searchLower) ||
           bed.bedStatusValue?.toLowerCase().includes(searchLower) ||
           bed.bedStatusLabel?.toLowerCase().includes(searchLower) ||
-          bed.bedCategoryName?.toLowerCase().includes(searchLower) ||
-          bed.serviceTypeName?.toLowerCase().includes(searchLower) ||
-          bed.key?.toString().includes(searchTerm);
+          bed.bedCategoryDisplayName?.toLowerCase().includes(searchLower) ||
+          bed.serviceTypeDisplayName?.toLowerCase().includes(searchLower) ||
+          bed.key?.toString().includes(searchTerm) ||
+          (bed.hasCradle && "cradle".includes(searchLower));
 
         if (!matchesSearch) return false;
       }
@@ -310,6 +332,22 @@ const ManageBedsPage: React.FC = () => {
     }
   };
 
+  // Statistics calculations
+  const statistics = useMemo(() => {
+    const totalBeds = filteredBeds.length;
+    const bedsWithCradles = filteredBeds.filter((bed) => bed.hasCradle).length;
+    const statusCounts = Object.keys(bedStatusConfig).reduce((acc, status) => {
+      acc[status] = filteredBeds.filter((bed) => bed.bedStatusValue === status).length;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      totalBeds,
+      bedsWithCradles,
+      statusCounts,
+    };
+  }, [filteredBeds]);
+
   // Grid column configuration
   const columns: Column<EnhancedWrBedDto>[] = [
     {
@@ -317,10 +355,16 @@ const ManageBedsPage: React.FC = () => {
       header: "Bed Name",
       visible: true,
       sortable: true,
-      width: 120,
+      width: 140,
       render: (bed) => (
         <Box display="flex" alignItems="center" gap={1}>
-          <BedIcon fontSize="small" color="action" />
+          {bed.hasCradle ? (
+            <Badge badgeContent={<CradleIcon fontSize="small" />} color="primary">
+              <BedIcon fontSize="small" color="action" />
+            </Badge>
+          ) : (
+            <BedIcon fontSize="small" color="action" />
+          )}
           <Typography variant="body2" fontWeight="medium">
             {bed.bedName}
           </Typography>
@@ -329,14 +373,21 @@ const ManageBedsPage: React.FC = () => {
     },
     {
       key: "key",
-      header: "Key",
+      header: "Cradle Key",
       visible: true,
       sortable: true,
-      width: 80,
+      width: 100,
       render: (bed) => (
         <Box display="flex" alignItems="center" gap={1}>
-          <KeyIcon fontSize="small" color="action" />
-          <Typography variant="body2">{bed.key || "-"}</Typography>
+          {bed.hasCradle ? (
+            <Tooltip title="This bed has an associated cradle">
+              <Chip icon={<CradleIcon fontSize="small" />} label={bed.key} size="small" color="primary" variant="outlined" />
+            </Tooltip>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              -
+            </Typography>
+          )}
         </Box>
       ),
     },
@@ -362,7 +413,7 @@ const ManageBedsPage: React.FC = () => {
       width: 150,
     },
     {
-      key: "bedCategoryName",
+      key: "bedCategoryDisplayName",
       header: "Bed Category",
       visible: true,
       sortable: true,
@@ -370,12 +421,12 @@ const ManageBedsPage: React.FC = () => {
       render: (bed) => (
         <Box display="flex" alignItems="center" gap={1}>
           <CategoryIcon fontSize="small" color="action" />
-          <Typography variant="body2">{bed.bedCategoryName || "-"}</Typography>
+          <Typography variant="body2">{bed.bedCategoryDisplayName || "-"}</Typography>
         </Box>
       ),
     },
     {
-      key: "serviceTypeName",
+      key: "serviceTypeDisplayName",
       header: "Service Type",
       visible: true,
       sortable: true,
@@ -383,7 +434,7 @@ const ManageBedsPage: React.FC = () => {
       render: (bed) => (
         <Box display="flex" alignItems="center" gap={1}>
           <ServiceIcon fontSize="small" color="action" />
-          <Typography variant="body2">{bed.serviceTypeName || "-"}</Typography>
+          <Typography variant="body2">{bed.serviceTypeDisplayName || "-"}</Typography>
         </Box>
       ),
     },
@@ -486,9 +537,36 @@ const ManageBedsPage: React.FC = () => {
       </Box>
 
       {/* Statistics Cards */}
-      <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={2} mb={3}>
+      <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={2} mb={2}>
+        {/* Total Beds Card */}
+        <Paper sx={{ p: 2, textAlign: "center" }}>
+          <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>
+            <BedIcon color="primary" />
+            <Typography variant="h6" color="primary.main">
+              {statistics.totalBeds}
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary">
+            Total Beds
+          </Typography>
+        </Paper>
+
+        {/* Beds with Cradles Card */}
+        <Paper sx={{ p: 2, textAlign: "center" }}>
+          <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>
+            <CradleIcon color="secondary" />
+            <Typography variant="h6" color="secondary.main">
+              {statistics.bedsWithCradles}
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary">
+            Beds with Cradles
+          </Typography>
+        </Paper>
+
+        {/* Status Cards */}
         {Object.entries(bedStatusConfig).map(([status, config]) => {
-          const count = filteredBeds.filter((bed) => bed.bedStatusValue === status).length;
+          const count = statistics.statusCounts[status] || 0;
           return (
             <Paper key={status} sx={{ p: 2, textAlign: "center" }}>
               <Box display="flex" alignItems="center" justifyContent="center" gap={1} mb={1}>

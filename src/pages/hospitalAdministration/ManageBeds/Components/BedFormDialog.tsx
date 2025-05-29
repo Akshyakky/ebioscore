@@ -3,12 +3,12 @@ import React, { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Box, Grid, Divider } from "@mui/material";
+import { Box, Grid, Divider, Alert, Typography } from "@mui/material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save as SaveIcon, Clear as ClearIcon } from "@mui/icons-material";
+import { Save as SaveIcon, Clear as ClearIcon, Key as KeyIcon } from "@mui/icons-material";
 import { WrBedDto, RoomListDto, RoomGroupDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
@@ -20,7 +20,9 @@ interface BedFormData {
   bedRemarks?: string;
   blockBedYN?: "Y" | "N";
   wbCatID?: number;
+  wbCatName?: string;
   bchID?: number;
+  bchName?: string;
   bedStatus?: "Available" | "Occupied" | "Blocked" | "Maintenance" | "Reserved";
   bedStatusValue?: "AVLBL" | "OCCUP" | "BLOCK" | "MNTN" | "RSRV";
   transferYN?: "Y" | "N";
@@ -67,11 +69,13 @@ const validationSchema = z
     bedRemarks: z.string().max(500, "Remarks must not exceed 500 characters").optional(),
     blockBedYN: z.enum(["Y", "N"], { required_error: "Block bed status must be Y or N" }).optional(),
     wbCatID: z.number().min(1, "Please select a bed category").optional(),
+    wbCatName: z.string().optional(),
     bchID: z.number().min(1, "Please select a service type").optional(),
+    bchName: z.string().optional(),
     bedStatus: z.enum(["Available", "Occupied", "Blocked", "Maintenance", "Reserved"], { required_error: "Bed status is required" }),
     bedStatusValue: z.enum(["AVLBL", "OCCUP", "BLOCK", "MNTN", "RSRV"], { required_error: "Bed status value is required" }),
     transferYN: z.enum(["Y", "N"], { required_error: "Transfer status must be Y or N" }).optional(),
-    key: z.number().min(0, "Key must be a non-negative number").optional(),
+    key: z.number().min(1, "Cradle key must be a positive number").optional(),
   })
   .required({
     bedName: true,
@@ -106,17 +110,21 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
       bedRemarks: "",
       blockBedYN: "N" as const,
       wbCatID: undefined,
+      wbCatName: "",
       bchID: undefined,
+      bchName: "",
       bedStatus: "Available" as const,
       bedStatusValue: "AVLBL" as const,
       transferYN: "N" as const,
-      key: 1,
+      key: undefined,
     },
   });
 
-  // Watch room selection to show room group info
+  // Watch room selection and dropdown selections
   const selectedRoomId = watch("rlID");
   const watchedBedStatus = watch("bedStatus");
+  const watchedBedCategoryId = watch("wbCatID");
+  const watchedServiceTypeId = watch("bchID");
 
   // Get selected room details
   const selectedRoom = useMemo(() => {
@@ -130,6 +138,26 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
       setValue("bedStatusValue", correspondingValue, { shouldValidate: true });
     }
   }, [watchedBedStatus, setValue]);
+
+  // Effect to sync bed category name when category ID changes
+  useEffect(() => {
+    if (watchedBedCategoryId) {
+      const selectedCategory = bedCategory.find((cat) => Number(cat.value) === watchedBedCategoryId);
+      setValue("wbCatName", selectedCategory?.label || "", { shouldValidate: true });
+    } else {
+      setValue("wbCatName", "", { shouldValidate: true });
+    }
+  }, [watchedBedCategoryId, bedCategory, setValue]);
+
+  // Effect to sync service type name when service type ID changes
+  useEffect(() => {
+    if (watchedServiceTypeId) {
+      const selectedService = serviceType.find((svc) => Number(svc.value) === watchedServiceTypeId);
+      setValue("bchName", selectedService?.label || "", { shouldValidate: true });
+    } else {
+      setValue("bchName", "", { shouldValidate: true });
+    }
+  }, [watchedServiceTypeId, serviceType, setValue]);
 
   // Effect to populate form when editing
   useEffect(() => {
@@ -155,11 +183,13 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
           bedRemarks: bed.bedRemarks || "",
           blockBedYN: (bed.blockBedYN || "N") as "Y" | "N",
           wbCatID: bed.wbCatID || undefined,
+          wbCatName: bed.wbCatName || "",
           bchID: bed.bchID || undefined,
+          bchName: bed.bchName || "",
           bedStatus: (bedStatus || "Available") as "Available" | "Occupied" | "Blocked" | "Maintenance" | "Reserved",
           bedStatusValue: (bedStatusValue || "AVLBL") as "AVLBL" | "OCCUP" | "BLOCK" | "MNTN" | "RSRV",
           transferYN: (bed.transferYN || "N") as "Y" | "N",
-          key: bed.key || 1,
+          key: bed.key || undefined,
         });
       } else {
         reset({
@@ -169,11 +199,13 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
           bedRemarks: "",
           blockBedYN: "N" as const,
           wbCatID: undefined,
+          wbCatName: "",
           bchID: undefined,
+          bchName: "",
           bedStatus: "Available" as const,
           bedStatusValue: "AVLBL" as const,
           transferYN: "N" as const,
-          key: 1,
+          key: undefined,
         });
       }
     }
@@ -181,7 +213,14 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
 
   // Form submission handler
   const handleFormSubmit = async (data: BedFormData) => {
-    await onSubmit(data);
+    // Ensure names are populated from dropdown selections if IDs are provided
+    const formattedData: Partial<WrBedDto> = {
+      ...data,
+      // Only include key if it has a value (for cradle association)
+      key: data.key && data.key > 0 ? data.key : undefined,
+    };
+
+    await onSubmit(formattedData);
   };
 
   // Clear form handler
@@ -193,11 +232,13 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
       bedRemarks: "",
       blockBedYN: "N" as const,
       wbCatID: undefined,
+      wbCatName: "",
       bchID: undefined,
+      bchName: "",
       bedStatus: "Available" as const,
       bedStatusValue: "AVLBL" as const,
       transferYN: "N" as const,
-      key: 1,
+      key: undefined,
     });
   };
 
@@ -323,11 +364,12 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
                 name="key"
                 control={control}
                 type="number"
-                label="Key (Cradle)"
-                placeholder="Enter key number"
+                label="Cradle Key"
+                placeholder="Enter cradle identifier"
                 disabled={isSubmitting}
-                helperText="Key number for cradle functionality"
-                min={0}
+                helperText="Unique key to associate a cradle with this bed (leave empty if no cradle)"
+                min={1}
+                //icon={<KeyIcon />}
               />
             </Grid>
 
@@ -363,6 +405,16 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
                 </Box>
               </Grid>
             )}
+
+            {/* Cradle Information Alert */}
+            <Grid size={{ xs: 12 }}>
+              <Alert severity="info" icon={<KeyIcon />}>
+                <Typography variant="body2">
+                  <strong>Cradle Association:</strong> The cradle key field allows you to associate a cradle with this bed. When a key is provided, it serves as the unique
+                  identifier for the cradle linked to this specific bed. Leave this field empty if no cradle is associated with this bed.
+                </Typography>
+              </Alert>
+            </Grid>
 
             <Grid size={{ xs: 12 }}>
               <Divider />
