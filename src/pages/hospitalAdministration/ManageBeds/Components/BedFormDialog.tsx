@@ -1,12 +1,13 @@
 // src/pages/hospitalAdministration/ManageBeds/Components/BedFormDialog.tsx
 import React, { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod"; // Import zodResolver
-import { z } from "zod"; // Import z from zod
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Box, Grid, Divider } from "@mui/material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
-import FormSaveClearButton from "@/components/Button/FormSaveClearButton";
+import CustomButton from "@/components/Button/CustomButton";
+import SmartButton from "@/components/Button/SmartButton";
 import { Save as SaveIcon, Clear as ClearIcon } from "@mui/icons-material";
 import { WrBedDto, RoomListDto, RoomGroupDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 
@@ -18,7 +19,8 @@ interface BedFormData {
   bedRemarks?: string;
   blockBedYN?: "Y" | "N";
   wbCatID?: number;
-  bedStatusValue?: "Available" | "Occupied" | "Blocked" | "Maintenance" | "Reserved";
+  bedStatus?: "Available" | "Occupied" | "Blocked" | "Maintenance" | "Reserved";
+  bedStatusValue?: "AVLBL" | "OCCUP" | "BLOCK" | "MNTN" | "RSRV";
   transferYN?: "Y" | "N";
 }
 
@@ -30,6 +32,23 @@ interface BedFormDialogProps {
   rooms: RoomListDto[];
   roomGroups: RoomGroupDto[];
 }
+
+// Mapping between bedStatus and bedStatusValue
+const bedStatusMapping = {
+  Available: "AVLBL",
+  Occupied: "OCCUP",
+  Blocked: "BLOCK",
+  Maintenance: "MNTN",
+  Reserved: "RSRV",
+} as const;
+
+const bedStatusValueMapping = {
+  AVLBL: "Available",
+  OCCUP: "Occupied",
+  BLOCK: "Blocked",
+  MNTN: "Maintenance",
+  RSRV: "Reserved",
+} as const;
 
 // Zod validation schema
 const validationSchema = z
@@ -45,13 +64,15 @@ const validationSchema = z
     bedRemarks: z.string().max(500, "Remarks must not exceed 500 characters").optional(),
     blockBedYN: z.enum(["Y", "N"], { required_error: "Block bed status must be Y or N" }).optional(),
     wbCatID: z.number().optional(),
-    bedStatusValue: z.enum(["Available", "Occupied", "Blocked", "Maintenance", "Reserved"], { required_error: "Bed status is required" }),
+    bedStatus: z.enum(["Available", "Occupied", "Blocked", "Maintenance", "Reserved"], { required_error: "Bed status is required" }),
+    bedStatusValue: z.enum(["AVLBL", "OCCUP", "BLOCK", "MNTN", "RSRV"], { required_error: "Bed status value is required" }),
     transferYN: z.enum(["Y", "N"], { required_error: "Transfer status must be Y or N" }).optional(),
   })
   .required({
     bedName: true,
     rlID: true,
     rActiveYN: true,
+    bedStatus: true,
     bedStatusValue: true,
   });
 
@@ -66,6 +87,7 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<BedFormSchema>({
     resolver: zodResolver(validationSchema),
@@ -75,23 +97,45 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
       rActiveYN: "Y" as const,
       bedRemarks: "",
       blockBedYN: "N" as const,
-      bedStatusValue: "Available" as const,
+      bedStatus: "Available" as const,
+      bedStatusValue: "AVLBL" as const,
       transferYN: "N" as const,
     },
   });
 
   // Watch room selection to show room group info
   const selectedRoomId = watch("rlID");
+  const watchedBedStatus = watch("bedStatus");
 
   // Get selected room details
   const selectedRoom = useMemo(() => {
     return rooms.find((room) => room.rlID === selectedRoomId);
   }, [rooms, selectedRoomId]);
 
+  // Effect to sync bedStatus and bedStatusValue
+  useEffect(() => {
+    if (watchedBedStatus) {
+      const correspondingValue = bedStatusMapping[watchedBedStatus];
+      setValue("bedStatusValue", correspondingValue, { shouldValidate: true });
+    }
+  }, [watchedBedStatus, setValue]);
+
   // Effect to populate form when editing
   useEffect(() => {
     if (open) {
       if (isEditMode && bed) {
+        // Determine bedStatus from bedStatusValue if bedStatus is not provided
+        let bedStatus = bed.bedStatus;
+        if (!bedStatus && bed.bedStatusValue) {
+          bedStatus = bedStatusValueMapping[bed.bedStatusValue as keyof typeof bedStatusValueMapping];
+        }
+
+        // Determine bedStatusValue from bedStatus if bedStatusValue is not provided
+        let bedStatusValue = bed.bedStatusValue;
+        if (!bedStatusValue && bedStatus) {
+          bedStatusValue = bedStatusMapping[bedStatus as keyof typeof bedStatusMapping];
+        }
+
         reset({
           bedID: bed.bedID,
           bedName: bed.bedName,
@@ -100,7 +144,8 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
           bedRemarks: bed.bedRemarks || "",
           blockBedYN: (bed.blockBedYN || "N") as "Y" | "N",
           wbCatID: bed.wbCatID || undefined,
-          bedStatusValue: (bed.bedStatusValue || "Available") as "Available" | "Occupied" | "Blocked" | "Maintenance" | "Reserved",
+          bedStatus: (bedStatus || "Available") as "Available" | "Occupied" | "Blocked" | "Maintenance" | "Reserved",
+          bedStatusValue: (bedStatusValue || "AVLBL") as "AVLBL" | "OCCUP" | "BLOCK" | "MNTN" | "RSRV",
           transferYN: (bed.transferYN || "N") as "Y" | "N",
         });
       } else {
@@ -110,28 +155,34 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
           rActiveYN: "Y" as const,
           bedRemarks: "",
           blockBedYN: "N" as const,
-          bedStatusValue: "Available" as const,
+          bedStatus: "Available" as const,
+          bedStatusValue: "AVLBL" as const,
           transferYN: "N" as const,
         });
       }
     }
   }, [open, isEditMode, bed, reset]);
 
-  // Form submission
-  const onFormSubmit = async (data: BedFormData) => {
-    try {
-      await onSubmit(data);
-    } catch (error) {
-      console.error("Form submission error:", error);
-    }
+  // Form submission handler
+  const handleFormSubmit = async (data: BedFormData) => {
+    await onSubmit(data);
   };
 
-  // Clear form
+  // Clear form handler
   const handleClear = () => {
-    reset();
+    reset({
+      bedName: "",
+      rlID: 0,
+      rActiveYN: "Y" as const,
+      bedRemarks: "",
+      blockBedYN: "N" as const,
+      bedStatus: "Available" as const,
+      bedStatusValue: "AVLBL" as const,
+      transferYN: "N" as const,
+    });
   };
 
-  // Close dialog
+  // Close dialog handler
   const handleClose = () => {
     if (!isSubmitting) {
       onClose();
@@ -146,7 +197,7 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
     }));
   }, [rooms]);
 
-  // Bed status options
+  // Bed status options (using full text for display)
   const bedStatusOptions = [
     { value: "Available", label: "Available" },
     { value: "Occupied", label: "Occupied" },
@@ -167,6 +218,9 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
     { value: "N", label: "No" },
   ];
 
+  // Check if form has changes
+  const hasChanges = isDirty;
+
   return (
     <GenericDialog
       open={open}
@@ -176,8 +230,25 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
       fullWidth
       disableBackdropClick={isSubmitting}
       disableEscapeKeyDown={isSubmitting}
+      actions={
+        <>
+          <CustomButton variant="outlined" text="Clear" icon={ClearIcon} onClick={handleClear} disabled={isSubmitting || !hasChanges} color="inherit" />
+          <CustomButton variant="outlined" text="Cancel" onClick={handleClose} disabled={isSubmitting} />
+          <SmartButton
+            variant="contained"
+            text={isEditMode ? "Update Bed" : "Save Bed"}
+            icon={SaveIcon}
+            onAsyncClick={handleSubmit(handleFormSubmit)}
+            asynchronous
+            disabled={!hasChanges}
+            color="primary"
+            loadingText={isEditMode ? "Updating..." : "Saving..."}
+            successText={isEditMode ? "Updated!" : "Saved!"}
+          />
+        </>
+      }
     >
-      <form onSubmit={handleSubmit(onFormSubmit)}>
+      <form>
         <Box sx={{ p: 2 }}>
           <Grid container spacing={3}>
             {/* Basic Information */}
@@ -256,7 +327,7 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
 
             <Grid size={{ xs: 12, md: 6 }}>
               <EnhancedFormField
-                name="bedStatusValue"
+                name="bedStatus"
                 control={control}
                 type="select"
                 label="Bed Status"
@@ -292,8 +363,6 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
               />
             </Grid>
 
-
-
             <Grid size={{ xs: 12 }}>
               <Divider />
             </Grid>
@@ -317,19 +386,6 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
             </Grid>
           </Grid>
         </Box>
-
-        {/* Form Actions */}
-        <FormSaveClearButton
-          clearText="Clear"
-          saveText={isEditMode ? "Update Bed" : "Save Bed"}
-          onClear={handleClear}
-          onSave={handleSubmit(onFormSubmit)}
-          clearIcon={ClearIcon}
-          saveIcon={SaveIcon}
-          isLoading={isSubmitting}
-          clearVariant="outlined"
-          saveVariant="contained"
-        />
       </form>
     </GenericDialog>
   );
