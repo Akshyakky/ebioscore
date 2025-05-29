@@ -7,12 +7,15 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { RoomListDto, RoomGroupDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface BedFilters {
   roomGroupId?: number;
   roomId?: number;
   departmentId?: number;
   bedStatus?: string;
+  bedCategoryId?: number;
+  serviceTypeId?: number;
   availability?: "all" | "available" | "occupied" | "blocked" | "maintenance";
 }
 
@@ -32,11 +35,16 @@ interface FilterFormData {
   roomId: number;
   departmentId: number;
   bedStatus: string;
+  bedCategoryId: number;
+  serviceTypeId: number;
   availability: string;
 }
 
 const BedFilterDialog: React.FC<BedFilterDialogProps> = ({ open, onClose, onApply, filters, rooms, roomGroups, searchTerm, onSearchChange }) => {
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+
+  // Load dropdown values for bed categories and service types
+  const { bedCategory = [], serviceType = [], isLoading: dropdownLoading } = useDropdownValues(["bedCategory", "serviceType"]);
 
   // Form setup
   const { control, handleSubmit, reset, watch, setValue } = useForm<FilterFormData>({
@@ -45,6 +53,8 @@ const BedFilterDialog: React.FC<BedFilterDialogProps> = ({ open, onClose, onAppl
       roomId: 0,
       departmentId: 0,
       bedStatus: "",
+      bedCategoryId: 0,
+      serviceTypeId: 0,
       availability: "all",
     },
   });
@@ -60,6 +70,8 @@ const BedFilterDialog: React.FC<BedFilterDialogProps> = ({ open, onClose, onAppl
         roomId: filters.roomId || 0,
         departmentId: filters.departmentId || 0,
         bedStatus: filters.bedStatus || "",
+        bedCategoryId: filters.bedCategoryId || 0,
+        serviceTypeId: filters.serviceTypeId || 0,
         availability: filters.availability || "all",
       });
       setLocalSearchTerm(searchTerm);
@@ -101,12 +113,28 @@ const BedFilterDialog: React.FC<BedFilterDialogProps> = ({ open, onClose, onAppl
     }));
   }, [roomGroups]);
 
+  const bedCategoryOptions = useMemo(() => {
+    return bedCategory.map((category) => ({
+      value: category.value,
+      label: category.label,
+    }));
+  }, [bedCategory]);
+
+  const serviceTypeOptions = useMemo(() => {
+    return serviceType.map((service) => ({
+      value: service.value,
+      label: service.label,
+    }));
+  }, [serviceType]);
+
   const bedStatusOptions = [
-    { value: "Available", label: "Available" },
-    { value: "Occupied", label: "Occupied" },
-    { value: "Blocked", label: "Blocked" },
-    { value: "Maintenance", label: "Maintenance" },
-    { value: "Reserved", label: "Reserved" },
+    { value: "AVLBL", label: "Available" },
+    { value: "OCCUP", label: "Occupied" },
+    { value: "BLOCK", label: "Blocked" },
+    { value: "MAINT", label: "Maintenance" },
+    { value: "RESERV", label: "Reserved" },
+    { value: "OUT_PATIENT", label: "Out Patient" },
+    { value: "IN_PATIENT", label: "In Patient" },
   ];
 
   const availabilityOptions = [
@@ -125,6 +153,8 @@ const BedFilterDialog: React.FC<BedFilterDialogProps> = ({ open, onClose, onAppl
     if (data.roomId > 0) newFilters.roomId = data.roomId;
     if (data.departmentId > 0) newFilters.departmentId = data.departmentId;
     if (data.bedStatus) newFilters.bedStatus = data.bedStatus;
+    if (data.bedCategoryId > 0) newFilters.bedCategoryId = data.bedCategoryId;
+    if (data.serviceTypeId > 0) newFilters.serviceTypeId = data.serviceTypeId;
     if (data.availability !== "all") newFilters.availability = data.availability as any;
 
     onApply(newFilters);
@@ -139,6 +169,8 @@ const BedFilterDialog: React.FC<BedFilterDialogProps> = ({ open, onClose, onAppl
       roomId: 0,
       departmentId: 0,
       bedStatus: "",
+      bedCategoryId: 0,
+      serviceTypeId: 0,
       availability: "all",
     });
     setLocalSearchTerm("");
@@ -153,6 +185,8 @@ const BedFilterDialog: React.FC<BedFilterDialogProps> = ({ open, onClose, onAppl
     if (filters.roomId) count++;
     if (filters.departmentId) count++;
     if (filters.bedStatus) count++;
+    if (filters.bedCategoryId) count++;
+    if (filters.serviceTypeId) count++;
     if (filters.availability && filters.availability !== "all") count++;
     if (searchTerm) count++;
     return count;
@@ -178,11 +212,23 @@ const BedFilterDialog: React.FC<BedFilterDialogProps> = ({ open, onClose, onAppl
     }
 
     if (filters.bedStatus) {
-      descriptions.push(`Status: ${filters.bedStatus}`);
+      const status = bedStatusOptions.find((s) => s.value === filters.bedStatus);
+      descriptions.push(`Status: ${status?.label || filters.bedStatus}`);
+    }
+
+    if (filters.bedCategoryId) {
+      const category = bedCategory.find((c) => Number(c.value) === filters.bedCategoryId);
+      if (category) descriptions.push(`Bed Category: ${category.label}`);
+    }
+
+    if (filters.serviceTypeId) {
+      const service = serviceType.find((s) => Number(s.value) === filters.serviceTypeId);
+      if (service) descriptions.push(`Service Type: ${service.label}`);
     }
 
     if (filters.availability && filters.availability !== "all") {
-      descriptions.push(`Availability: ${filters.availability}`);
+      const availability = availabilityOptions.find((a) => a.value === filters.availability);
+      descriptions.push(`Availability: ${availability?.label || filters.availability}`);
     }
 
     if (searchTerm) {
@@ -190,14 +236,14 @@ const BedFilterDialog: React.FC<BedFilterDialogProps> = ({ open, onClose, onAppl
     }
 
     return descriptions;
-  }, [filters, searchTerm, roomGroups, rooms]);
+  }, [filters, searchTerm, roomGroups, rooms, bedCategory, serviceType]);
 
   return (
     <GenericDialog
       open={open}
       onClose={onClose}
       title={`Filter Beds ${activeFiltersCount > 0 ? `(${activeFiltersCount} active)` : ""}`}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       actions={
         <>
@@ -217,7 +263,7 @@ const BedFilterDialog: React.FC<BedFilterDialogProps> = ({ open, onClose, onAppl
             fullWidth
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
-            placeholder="Search by bed name, room, room group, department, or status..."
+            placeholder="Search by bed name, room, room group, department, status, category, service type, or key..."
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -260,6 +306,31 @@ const BedFilterDialog: React.FC<BedFilterDialogProps> = ({ open, onClose, onAppl
 
             <Grid size={{ xs: 12, md: 6 }}>
               <EnhancedFormField name="departmentId" control={control} type="select" label="Department" options={departmentOptions} defaultText="All Departments" clearable />
+            </Grid>
+          </Grid>
+
+          <Divider sx={{ mb: 3 }} />
+
+          {/* Classification Filters */}
+          <Typography variant="h6" gutterBottom sx={{ color: "primary.main" }}>
+            Classification Filters
+          </Typography>
+
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <EnhancedFormField
+                name="bedCategoryId"
+                control={control}
+                type="select"
+                label="Bed Category"
+                options={bedCategoryOptions}
+                defaultText="All Bed Categories"
+                clearable
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <EnhancedFormField name="serviceTypeId" control={control} type="select" label="Service Type" options={serviceTypeOptions} defaultText="All Service Types" clearable />
             </Grid>
           </Grid>
 

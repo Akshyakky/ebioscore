@@ -10,6 +10,7 @@ import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
 import { Save as SaveIcon, Clear as ClearIcon } from "@mui/icons-material";
 import { WrBedDto, RoomListDto, RoomGroupDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface BedFormData {
   bedID?: number;
@@ -19,9 +20,11 @@ interface BedFormData {
   bedRemarks?: string;
   blockBedYN?: "Y" | "N";
   wbCatID?: number;
+  bchID?: number;
   bedStatus?: "Available" | "Occupied" | "Blocked" | "Maintenance" | "Reserved";
   bedStatusValue?: "AVLBL" | "OCCUP" | "BLOCK" | "MNTN" | "RSRV";
   transferYN?: "Y" | "N";
+  key?: number;
 }
 
 interface BedFormDialogProps {
@@ -63,10 +66,12 @@ const validationSchema = z
     rActiveYN: z.enum(["Y", "N"], { required_error: "Active status is required" }),
     bedRemarks: z.string().max(500, "Remarks must not exceed 500 characters").optional(),
     blockBedYN: z.enum(["Y", "N"], { required_error: "Block bed status must be Y or N" }).optional(),
-    wbCatID: z.number().optional(),
+    wbCatID: z.number().min(1, "Please select a bed category").optional(),
+    bchID: z.number().min(1, "Please select a service type").optional(),
     bedStatus: z.enum(["Available", "Occupied", "Blocked", "Maintenance", "Reserved"], { required_error: "Bed status is required" }),
     bedStatusValue: z.enum(["AVLBL", "OCCUP", "BLOCK", "MNTN", "RSRV"], { required_error: "Bed status value is required" }),
     transferYN: z.enum(["Y", "N"], { required_error: "Transfer status must be Y or N" }).optional(),
+    key: z.number().min(0, "Key must be a non-negative number").optional(),
   })
   .required({
     bedName: true,
@@ -80,6 +85,9 @@ type BedFormSchema = z.infer<typeof validationSchema>;
 
 const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, bed, rooms, roomGroups }) => {
   const isEditMode = !!bed;
+
+  // Load dropdown values
+  const { bedCategory = [], serviceType = [] } = useDropdownValues(["bedCategory", "serviceType"]);
 
   // Form setup
   const {
@@ -97,9 +105,12 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
       rActiveYN: "Y" as const,
       bedRemarks: "",
       blockBedYN: "N" as const,
+      wbCatID: undefined,
+      bchID: undefined,
       bedStatus: "Available" as const,
       bedStatusValue: "AVLBL" as const,
       transferYN: "N" as const,
+      key: 1,
     },
   });
 
@@ -144,9 +155,11 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
           bedRemarks: bed.bedRemarks || "",
           blockBedYN: (bed.blockBedYN || "N") as "Y" | "N",
           wbCatID: bed.wbCatID || undefined,
+          bchID: bed.bchID || undefined,
           bedStatus: (bedStatus || "Available") as "Available" | "Occupied" | "Blocked" | "Maintenance" | "Reserved",
           bedStatusValue: (bedStatusValue || "AVLBL") as "AVLBL" | "OCCUP" | "BLOCK" | "MNTN" | "RSRV",
           transferYN: (bed.transferYN || "N") as "Y" | "N",
+          key: bed.key || 1,
         });
       } else {
         reset({
@@ -155,9 +168,12 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
           rActiveYN: "Y" as const,
           bedRemarks: "",
           blockBedYN: "N" as const,
+          wbCatID: undefined,
+          bchID: undefined,
           bedStatus: "Available" as const,
           bedStatusValue: "AVLBL" as const,
           transferYN: "N" as const,
+          key: 1,
         });
       }
     }
@@ -176,9 +192,12 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
       rActiveYN: "Y" as const,
       bedRemarks: "",
       blockBedYN: "N" as const,
+      wbCatID: undefined,
+      bchID: undefined,
       bedStatus: "Available" as const,
       bedStatusValue: "AVLBL" as const,
       transferYN: "N" as const,
+      key: 1,
     });
   };
 
@@ -196,6 +215,22 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
       label: `${room.rName} (${room.roomGroup?.rGrpName || "No Group"}) - ${room.noOfBeds} beds`,
     }));
   }, [rooms]);
+
+  // Bed category options
+  const bedCategoryOptions = useMemo(() => {
+    return bedCategory.map((category) => ({
+      value: category.value,
+      label: category.label,
+    }));
+  }, [bedCategory]);
+
+  // Service type options
+  const serviceTypeOptions = useMemo(() => {
+    return serviceType.map((service) => ({
+      value: service.value,
+      label: service.label,
+    }));
+  }, [serviceType]);
 
   // Bed status options (using full text for display)
   const bedStatusOptions = [
@@ -226,7 +261,7 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
       open={open}
       onClose={handleClose}
       title={isEditMode ? "Edit Bed" : "Add New Bed"}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       disableBackdropClick={isSubmitting}
       disableEscapeKeyDown={isSubmitting}
@@ -283,6 +318,19 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
               />
             </Grid>
 
+            <Grid size={{ xs: 12, md: 6 }}>
+              <EnhancedFormField
+                name="key"
+                control={control}
+                type="number"
+                label="Key (Cradle)"
+                placeholder="Enter key number"
+                disabled={isSubmitting}
+                helperText="Key number for cradle functionality"
+                min={0}
+              />
+            </Grid>
+
             {/* Room Information Display */}
             {selectedRoom && (
               <Grid size={{ xs: 12 }}>
@@ -315,6 +363,43 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
                 </Box>
               </Grid>
             )}
+
+            <Grid size={{ xs: 12 }}>
+              <Divider />
+            </Grid>
+
+            {/* Classification Information */}
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}>Classification & Service Information</Box>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <EnhancedFormField
+                name="wbCatID"
+                control={control}
+                type="select"
+                label="Bed Category"
+                options={bedCategoryOptions}
+                disabled={isSubmitting}
+                helperText="Select the category of this bed"
+                defaultText="Select bed category"
+                clearable
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <EnhancedFormField
+                name="bchID"
+                control={control}
+                type="select"
+                label="Service Type"
+                options={serviceTypeOptions}
+                disabled={isSubmitting}
+                helperText="Select the service type for this bed"
+                defaultText="Select service type"
+                clearable
+              />
+            </Grid>
 
             <Grid size={{ xs: 12 }}>
               <Divider />
@@ -360,6 +445,18 @@ const BedFormDialog: React.FC<BedFormDialogProps> = ({ open, onClose, onSubmit, 
                 options={yesNoOptions}
                 disabled={isSubmitting}
                 helperText="Temporarily block this bed from use"
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <EnhancedFormField
+                name="transferYN"
+                control={control}
+                type="select"
+                label="Transfer Allowed"
+                options={yesNoOptions}
+                disabled={isSubmitting}
+                helperText="Whether transfers are allowed for this bed"
               />
             </Grid>
 

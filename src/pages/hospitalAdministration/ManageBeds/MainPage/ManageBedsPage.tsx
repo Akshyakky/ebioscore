@@ -12,6 +12,9 @@ import {
   Build as MaintenanceIcon,
   Refresh as RefreshIcon,
   FilterList as FilterIcon,
+  Key as KeyIcon,
+  Category as CategoryIcon,
+  MedicalServices as ServiceIcon,
 } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import CustomButton from "@/components/Button/CustomButton";
@@ -19,6 +22,7 @@ import SmartButton from "@/components/Button/SmartButton";
 import { useAlert } from "@/providers/AlertProvider";
 import { wrBedService, roomListService, roomGroupService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { WrBedDto, RoomListDto, RoomGroupDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import BedFilterDialog from "../Components/BedFilterDialog";
 import BedFormDialog from "../Components/BedFormDialog";
 import BedStatusDialog from "../Components/BedStatusDialog";
@@ -30,6 +34,8 @@ interface EnhancedWrBedDto extends WrBedDto {
   bedStatusColor?: string;
   bedStatusIcon?: React.ReactElement;
   bedStatusLabel?: string;
+  bedCategoryName?: string;
+  serviceTypeName?: string;
 }
 
 interface BedFilters {
@@ -37,6 +43,8 @@ interface BedFilters {
   roomId?: number;
   departmentId?: number;
   bedStatus?: string;
+  bedCategoryId?: number;
+  serviceTypeId?: number;
   availability?: "all" | "available" | "occupied" | "blocked" | "maintenance";
 }
 
@@ -56,6 +64,9 @@ const ManageBedsPage: React.FC = () => {
 
   const { showErrorAlert, showSuccessAlert } = useAlert();
 
+  // Load dropdown values for bed categories and service types
+  const { bedCategory = [], serviceType = [], isLoading: dropdownLoading } = useDropdownValues(["bedCategory", "serviceType"]);
+
   // Updated bed status configuration to match actual database values
   const bedStatusConfig = {
     OCCUP: { color: "#f44336", icon: <OccupiedIcon fontSize="small" />, label: "Occupied" },
@@ -63,7 +74,6 @@ const ManageBedsPage: React.FC = () => {
     BLOCK: { color: "#ff9800", icon: <BlockIcon fontSize="small" />, label: "Blocked" },
     MAINT: { color: "#9c27b0", icon: <MaintenanceIcon fontSize="small" />, label: "Maintenance" },
     RESERV: { color: "#2196f3", icon: <BedIcon fontSize="small" />, label: "Reserved" },
-    // Add any other status values you might have
     OUT_PATIENT: { color: "#795548", icon: <BedIcon fontSize="small" />, label: "Out Patient" },
     IN_PATIENT: { color: "#607d8b", icon: <OccupiedIcon fontSize="small" />, label: "In Patient" },
   };
@@ -75,13 +85,32 @@ const ManageBedsPage: React.FC = () => {
       return config;
     }
 
-    // Fallback for unknown statuses
     return {
-      color: "#757575", // Gray color for unknown statuses
+      color: "#757575",
       icon: <BedIcon fontSize="small" />,
       label: status || "Unknown",
     };
   };
+
+  // Helper function to get bed category name
+  const getBedCategoryName = useCallback(
+    (categoryId?: number): string => {
+      if (!categoryId) return "";
+      const category = bedCategory.find((cat) => Number(cat.value) === categoryId);
+      return category?.label || "";
+    },
+    [bedCategory]
+  );
+
+  // Helper function to get service type name
+  const getServiceTypeName = useCallback(
+    (serviceTypeId?: number): string => {
+      if (!serviceTypeId) return "";
+      const service = serviceType.find((svc) => Number(svc.value) === serviceTypeId);
+      return service?.label || "";
+    },
+    [serviceType]
+  );
 
   // Data fetching functions
   const fetchBeds = useCallback(async () => {
@@ -100,6 +129,8 @@ const ManageBedsPage: React.FC = () => {
             bedStatusColor: statusConfig.color,
             bedStatusIcon: statusConfig.icon,
             bedStatusLabel: statusConfig.label,
+            bedCategoryName: getBedCategoryName(bed.wbCatID),
+            serviceTypeName: getServiceTypeName(bed.bchID),
           };
         });
         setBeds(enhancedBeds);
@@ -109,7 +140,7 @@ const ManageBedsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [showErrorAlert]);
+  }, [showErrorAlert, getBedCategoryName, getServiceTypeName]);
 
   const fetchRooms = useCallback(async () => {
     try {
@@ -140,6 +171,19 @@ const ManageBedsPage: React.FC = () => {
     fetchRoomGroups();
   }, [fetchBeds, fetchRooms, fetchRoomGroups]);
 
+  // Re-enhance beds when dropdown data loads
+  useEffect(() => {
+    if (!dropdownLoading && beds.length > 0) {
+      setBeds((currentBeds) =>
+        currentBeds.map((bed) => ({
+          ...bed,
+          bedCategoryName: getBedCategoryName(bed.wbCatID),
+          serviceTypeName: getServiceTypeName(bed.bchID),
+        }))
+      );
+    }
+  }, [dropdownLoading, getBedCategoryName, getServiceTypeName]);
+
   // Filtered data based on search term and filters
   const filteredBeds = useMemo(() => {
     return beds.filter((bed) => {
@@ -152,7 +196,10 @@ const ManageBedsPage: React.FC = () => {
           bed.roomGroupName?.toLowerCase().includes(searchLower) ||
           bed.departmentName?.toLowerCase().includes(searchLower) ||
           bed.bedStatusValue?.toLowerCase().includes(searchLower) ||
-          bed.bedStatusLabel?.toLowerCase().includes(searchLower);
+          bed.bedStatusLabel?.toLowerCase().includes(searchLower) ||
+          bed.bedCategoryName?.toLowerCase().includes(searchLower) ||
+          bed.serviceTypeName?.toLowerCase().includes(searchLower) ||
+          bed.key?.toString().includes(searchTerm);
 
         if (!matchesSearch) return false;
       }
@@ -169,6 +216,16 @@ const ManageBedsPage: React.FC = () => {
 
       // Filter by bed status
       if (filters.bedStatus && bed.bedStatusValue !== filters.bedStatus) {
+        return false;
+      }
+
+      // Filter by bed category
+      if (filters.bedCategoryId && bed.wbCatID !== filters.bedCategoryId) {
+        return false;
+      }
+
+      // Filter by service type
+      if (filters.serviceTypeId && bed.bchID !== filters.serviceTypeId) {
         return false;
       }
 
@@ -271,6 +328,19 @@ const ManageBedsPage: React.FC = () => {
       ),
     },
     {
+      key: "key",
+      header: "Key",
+      visible: true,
+      sortable: true,
+      width: 80,
+      render: (bed) => (
+        <Box display="flex" alignItems="center" gap={1}>
+          <KeyIcon fontSize="small" color="action" />
+          <Typography variant="body2">{bed.key || "-"}</Typography>
+        </Box>
+      ),
+    },
+    {
       key: "roomName",
       header: "Room",
       visible: true,
@@ -290,6 +360,32 @@ const ManageBedsPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 150,
+    },
+    {
+      key: "bedCategoryName",
+      header: "Bed Category",
+      visible: true,
+      sortable: true,
+      width: 130,
+      render: (bed) => (
+        <Box display="flex" alignItems="center" gap={1}>
+          <CategoryIcon fontSize="small" color="action" />
+          <Typography variant="body2">{bed.bedCategoryName || "-"}</Typography>
+        </Box>
+      ),
+    },
+    {
+      key: "serviceTypeName",
+      header: "Service Type",
+      visible: true,
+      sortable: true,
+      width: 130,
+      render: (bed) => (
+        <Box display="flex" alignItems="center" gap={1}>
+          <ServiceIcon fontSize="small" color="action" />
+          <Typography variant="body2">{bed.serviceTypeName || "-"}</Typography>
+        </Box>
+      ),
     },
     {
       key: "bedStatusValue",
@@ -324,13 +420,6 @@ const ManageBedsPage: React.FC = () => {
           />
         </Tooltip>
       ),
-    },
-    {
-      key: "wbCatName",
-      header: "Category",
-      visible: true,
-      sortable: true,
-      width: 120,
     },
     {
       key: "bedRemarks",
@@ -421,7 +510,6 @@ const ManageBedsPage: React.FC = () => {
         <CustomGrid
           columns={columns}
           data={filteredBeds}
-          loading={loading}
           searchTerm={searchTerm}
           onRowClick={handleEditBed}
           maxHeight="600px"
