@@ -19,8 +19,8 @@ import BreakListForm from "../Form/BreakListForm";
 import BreakSuspend from "../Form/BreakSuspend";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
-import { breakConDetailsService, breakConSuspendService, breakService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
-
+import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+import { useBreakListOperations } from "../hooks/useBreakListOperations";
 const statusOptions = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
@@ -52,18 +52,26 @@ export const weekDayCodeMap = {
 const BreakListPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
-  const [selectedBreak, setSelectedBreak] = useState<BreakDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
-  const [isSuspendDialogOpen, setIsSuspendDialogOpen] = useState<boolean>(false);
   const [suspendData, setSuspendData] = useState<BreakConSuspendData | null>(null);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(false);
-  const [breakList, setBreakList] = useState<BreakDto[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { showAlert } = useAlert();
-
+  const {
+    breakList,
+    selectedBreak,
+    setSelectedBreak,
+    isDeleteConfirmOpen,
+    setIsDeleteConfirmOpen,
+    isSuspendDialogOpen,
+    setIsSuspendDialogOpen,
+    isLoading,
+    error,
+    fetchBreakList,
+    deleteBreak,
+    suspendBreak,
+    resumeBreak,
+  } = useBreakListOperations();
   const [filters, setFilters] = useState<{
     status: string;
     type: string;
@@ -71,23 +79,6 @@ const BreakListPage: React.FC = () => {
     status: "",
     type: "",
   });
-  const fetchBreakList = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const result: any = await breakService.getAll();
-      if (result.success && result.data) {
-        const activeBreaks = result.data.filter((item) => item.rActiveYN === "Y");
-        setBreakList(activeBreaks);
-      } else {
-        setError("Failed to load break list");
-      }
-    } catch (err) {
-      setError("Error fetching break list");
-      showAlert("Error", "Failed to load break list", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [showAlert]);
 
   useEffect(() => {
     fetchBreakList();
@@ -139,87 +130,30 @@ const BreakListPage: React.FC = () => {
 
   const handleConfirmDelete = useCallback(async () => {
     if (!selectedBreak) return;
-
-    try {
-      const result = await breakConDetailsService.delete(selectedBreak.bCDID);
-      if (result.success) {
-        showAlert("Success", "Break deleted successfully", "success");
-      } else {
-        throw new Error("Failed to delete break");
-      }
-    } catch (error) {
-      console.error("Delete operation failed:", error);
-      showAlert("Error", "Failed to delete break", "error");
-    } finally {
+    const success = await deleteBreak(selectedBreak);
+    if (success) {
       setIsDeleteConfirmOpen(false);
       setSelectedBreak(null);
     }
-  }, [selectedBreak, showAlert]);
+  }, [selectedBreak, deleteBreak]);
 
   const handleSuspend = useCallback(
     async (breakItem: BreakDto) => {
-      try {
-        const suspendResult = await breakConSuspendService.getAll();
-        if (suspendResult.success && suspendResult.data) {
-          const filteredSuspendDetails = suspendResult.data.filter((bsd: BreakConSuspendData) => bsd.bLID === breakItem.bLID && bsd.hPLID === breakItem.hPLID);
-          if (filteredSuspendDetails.length > 0) {
-            const currentSuspendDetail = filteredSuspendDetails[0];
-            setSuspendData({
-              bCSID: currentSuspendDetail.bCSID,
-              bLID: breakItem.bLID,
-              hPLID: currentSuspendDetail.hPLID || breakItem.hPLID,
-              bLStartDate: breakItem.bLStartDate,
-              bLEndDate: breakItem.bLEndDate,
-              bCSStartDate: new Date(),
-              bCSEndDate: new Date(),
-              rActiveYN: "Y",
-              rNotes: "",
-              transferYN: "N",
-            });
-          } else {
-            setSuspendData({
-              bCSID: 0,
-              bLID: breakItem.bLID,
-              hPLID: breakItem.hPLID,
-              bLStartDate: new Date(breakItem.bLStartDate),
-              bLEndDate: new Date(breakItem.bLEndDate),
-              bCSStartDate: new Date(),
-              bCSEndDate: new Date(),
-              rActiveYN: "Y",
-              rNotes: "",
-              transferYN: "N",
-            });
-          }
-          setSelectedBreak(breakItem);
-          setIsSuspendDialogOpen(true);
-        }
-      } catch (error) {
-        console.error("Error loading suspend details:", error);
-        showAlert("Error", "Failed to load suspend details", "error");
+      const suspendData = await suspendBreak(breakItem);
+      if (suspendData) {
+        setSuspendData(suspendData);
+        setSelectedBreak(breakItem);
+        setIsSuspendDialogOpen(true);
       }
     },
-    [showAlert]
+    [suspendBreak]
   );
 
   const handleResume = useCallback(
     async (breakItem: BreakDto) => {
-      if (!breakItem.bCSID) {
-        showAlert("Error", "No suspend record found", "error");
-        return;
-      }
-      try {
-        const result = await breakConSuspendService.updateActiveStatus(breakItem.bCSID, false);
-        if (result.success) {
-          showAlert("Success", "Break resumed successfully", "success");
-        } else {
-          showAlert("Error", "Failed to resume break", "error");
-        }
-      } catch (error) {
-        console.error("Error resuming break:", error);
-        showAlert("Error", "Failed to resume break", "error");
-      }
+      await resumeBreak(breakItem);
     },
-    [showAlert]
+    [resumeBreak]
   );
 
   const handleSuspendDialogClose = useCallback(

@@ -5,13 +5,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { useAlert } from "@/providers/AlertProvider";
 import { Box, Grid, TextField } from "@mui/material";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
 import { BreakConSuspendData, BreakListData } from "@/interfaces/FrontOffice/BreakListData";
+// Import the hook instead of service
+import { useBreakConSuspend } from "../hooks/useBreakConSuspend";
 
 const suspendSchema = z.object({
   bCSStartDate: z.date({
@@ -61,6 +62,9 @@ const BreakSuspend: React.FC<BreakSuspendProps> = ({ open, onClose, breakData })
   const serverDate = useServerDate();
   const { showAlert } = useAlert();
 
+  // Use the hook instead of direct service call
+  const { saveBreakConSuspend } = useBreakConSuspend();
+
   const {
     control,
     handleSubmit,
@@ -97,9 +101,11 @@ const BreakSuspend: React.FC<BreakSuspendProps> = ({ open, onClose, breakData })
         rNotes: formData.rNotes,
         rActiveYN: "Y",
       };
+
       setLoading(true);
       try {
-        const result = await breakConSuspendService.save(updatedSuspendData);
+        // Use the hook method instead of direct service call
+        const result = await saveBreakConSuspend(updatedSuspendData);
         if (result.success) {
           showAlert("Success", "The break has been suspended", "success");
           onClose(true, updatedSuspendData);
@@ -115,7 +121,7 @@ const BreakSuspend: React.FC<BreakSuspendProps> = ({ open, onClose, breakData })
         setLoading(false);
       }
     },
-    [breakData, setLoading, onClose, showAlert]
+    [breakData, setLoading, onClose, showAlert, saveBreakConSuspend]
   );
 
   const renderSuspendDateField = (name: keyof SuspendFormData, label: string) => (
@@ -123,9 +129,10 @@ const BreakSuspend: React.FC<BreakSuspendProps> = ({ open, onClose, breakData })
       <FormField name={name} control={control} label={label} type="datepicker" required size="small" fullWidth />
     </Grid>
   );
+
   const renderBreakDateField = (name: keyof BreakListData, label: string) => (
     <Grid size={{ xs: 12, md: 6 }}>
-      <TextField label={label} value={breakData[name] ? formatToDDMMYYYY(breakData[name]) : ""} fullWidth size="small" disabled InputProps={{ readOnly: true }} />
+      <TextField label={label} value={breakData && breakData[name] ? formatToDDMMYYYY(breakData[name]) : ""} fullWidth size="small" disabled InputProps={{ readOnly: true }} />
     </Grid>
   );
 

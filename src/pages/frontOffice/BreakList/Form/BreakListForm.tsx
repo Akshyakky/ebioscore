@@ -34,13 +34,16 @@ import CustomCheckbox from "@/components/Checkbox/Checkbox";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
 import { useServerDate } from "@/hooks/Common/useServerDate";
-import { breakConDetailsService, breakService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
+
 import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { formatDate } from "@/utils/Common/dateUtils";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import BreakFrequency from "./BreakFrequency";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { frequencyCodeMap, weekDayCodeMap } from "../MainPage/BreakListPage";
+
+import { useBreakList } from "../hooks/useBreakList";
+import { useBreakConDetails } from "../hooks/useBreakConDetails";
 
 interface BreakListFormProps {
   open: boolean;
@@ -71,6 +74,11 @@ type BreakListFormData = z.infer<typeof schema>;
 const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
   const serverDate = useServerDate();
+  const { showAlert } = useAlert();
+
+  const { saveBreak } = useBreakList();
+  const { breakConDetailsList, fetchBreakConDetails } = useBreakConDetails();
+
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
@@ -87,9 +95,8 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     interval: 1,
     weekDays: [],
   });
-  const { resourceList } = useDropdownValues(["resourceList"]);
+  const { resourceList, appointmentConsultants } = useDropdownValues(["resourceList", "appointmentConsultants"]);
 
-  const { showAlert } = useAlert();
   const defaultValues: BreakListFormData = {
     bLID: 0,
     bLName: "",
@@ -150,15 +157,14 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
       if (selectedOption === "resource") {
         setResourceData(resourceList || []);
       } else {
-        const result = await AppointmentService.fetchAppointmentConsultants();
-        if (result.success && result.data) setConsultantData(result.data);
+        setConsultantData(appointmentConsultants);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
-  }, [selectedOption]);
+  }, [selectedOption, resourceList, setLoading]);
 
   useEffect(() => {
     if (initialData) {
@@ -194,8 +200,8 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
 
   const loadBreakConDetails = async (bLID: number) => {
     try {
-      const conDetailsResult = await breakConDetailsService.getAll();
-      const filteredConDetails = (conDetailsResult.data ?? []).filter((bcd: any) => bcd.bLID === bLID);
+      await fetchBreakConDetails();
+      const filteredConDetails = breakConDetailsList.filter((bcd: any) => bcd.bLID === bLID);
 
       if (filteredConDetails.length > 0) {
         const selectedHPLIDs = filteredConDetails.map((detail: BreakConDetailData) => detail.hPLID);
@@ -271,7 +277,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
         />
       );
     },
-    [selectedOption, selectedItems, handleCheckboxChange]
+    [selectedOption, selectedItems, handleCheckboxChange, viewOnly]
   );
 
   const renderConsultantName = useCallback((item: any) => {
@@ -373,13 +379,14 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
         breakList: breakData,
         breakConDetails: breakConDetails,
       };
-      const response = await breakService.save(breakListSaveData);
+      const response = await saveBreak(breakListSaveData);
 
-      console.log("Break List Save Data:", response);
       if (response.success) {
         showAlert("Success", "Break created successfully", "success");
+        onClose(true);
+      } else {
+        throw new Error(response.errorMessage || "Failed to save break");
       }
-      onClose(true);
     } catch (error) {
       console.error("Error saving break:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save break";
@@ -490,16 +497,6 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
             </Alert>
           )}
           <Grid container spacing={3}>
-            {/* Status Toggle - Prominent Position */}
-            <Grid size={{ sm: 12 }}>
-              <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
-                <Typography variant="body2" color="text.secondary">
-                  Status:
-                </Typography>
-                <FormField name="rActiveYN" control={control} label="Active" type="switch" disabled={viewOnly} size="small" />
-              </Box>
-            </Grid>
-
             {/* Basic Information Section */}
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
