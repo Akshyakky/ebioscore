@@ -366,7 +366,7 @@ const WardCategoryPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, md: 8 }}>
             <Tooltip title="Filter Ward Categories">
-              <Stack direction="row" spacing={2} sx={{ pt: 1 }}>
+              <Stack direction="row" spacing={2}>
                 <DropdownSelect
                   label="Status"
                   name="status"
