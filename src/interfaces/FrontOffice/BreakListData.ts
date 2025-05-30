@@ -16,24 +16,13 @@ export interface BreakListData extends BaseDto {
   isPhyResYN: string;
   transferYN?: string;
 }
-export interface BreakDto extends BaseDto {
-  bLID: number;
-  bLName: string;
-  bLStartTime: Date;
-  bLEndTime: Date;
-  bLStartDate: Date;
-  bLEndDate: Date;
-  bLFrqNo: number;
-  bLFrqDesc: string;
-  bLFrqWkDesc: string;
-  bColor: string;
-  rActiveYN: string;
-  rNotes: string;
-  isPhyResYN: string;
-  transferYN?: string;
-  //
+export interface BreakDto extends BreakListData {
   bCSID?: number;
-  breakConDetailData?: BreakConDetailData[];
+  hPLID?: number;
+  assignedName?: number;
+  status?: string;
+  bCSStartDate: Date | string;
+  bCSEndDate: Date | string;
 }
 
 export interface BreakConDetailData extends BaseDto {

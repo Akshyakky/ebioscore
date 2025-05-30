@@ -20,7 +20,7 @@ const frequencySchema = z.object({
 
 type FrequencyFormData = z.infer<typeof frequencySchema>;
 
-const BreakFrequencyDetails: React.FC<{
+const BreakFrequency: React.FC<{
   open: boolean;
   onClose: () => void;
   endDateFromBreakDetails: string;
@@ -206,4 +206,4 @@ const BreakFrequencyDetails: React.FC<{
   );
 };
 
-export default BreakFrequencyDetails;
+export default BreakFrequency;
