@@ -88,32 +88,22 @@ export const useBreakListOperations = () => {
     [breakConSuspendHook, breakListHook, showAlert]
   );
 
-  const getEnrichedBreakList = useCallback(() => {
+  const getActiveBreakList = useCallback(() => {
     return breakListHook.breakList
       .map((breakItem) => {
         if (!breakItem || !breakItem.breakList) {
           return null;
         }
 
-        const firstConDetail = Array.isArray(breakItem.breakConDetails) && breakItem.breakConDetails.length > 0 ? breakItem.breakConDetails[0] : null;
-
-        const suspendRecord = breakConSuspendHook.breakConSuspendList.find((suspend) => suspend.bLID === breakItem.breakList.bLID && suspend.rActiveYN === "Y");
-
         return {
           ...breakItem.breakList,
-          bCDID: firstConDetail?.bCDID || 0,
-          hPLID: firstConDetail?.hPLID || null,
-          status: suspendRecord ? "Suspended" : "Active",
-          bCSID: suspendRecord?.bCSID,
-          bCSStartDate: suspendRecord?.bCSStartDate || "",
-          bCSEndDate: suspendRecord?.bCSEndDate || "",
         } as BreakDto;
       })
-      .filter(Boolean);
+      .filter((item) => item.rActiveYN === "Y");
   }, [breakListHook.breakList, breakConSuspendHook.breakConSuspendList]);
 
   return {
-    breakList: getEnrichedBreakList(),
+    breakList: getActiveBreakList(),
     selectedBreak,
     setSelectedBreak,
     isDeleteConfirmOpen,

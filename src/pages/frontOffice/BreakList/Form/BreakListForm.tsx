@@ -55,10 +55,10 @@ interface BreakListFormProps {
 const schema = z.object({
   bLID: z.number(),
   bLName: z.string().nonempty("Break name is required"),
-  bLStartTime: z.any(),
-  bLEndTime: z.any(),
-  bLStartDate: z.any(),
-  bLEndDate: z.any(),
+  bLStartTime: z.date(),
+  bLEndTime: z.date(),
+  bLStartDate: z.date(),
+  bLEndDate: z.date(),
   bLFrqNo: z.number().min(0, "Frequency number must be positive").optional(),
   bLFrqDesc: z.string().optional(),
   bLFrqWkDesc: z.string().optional(),
@@ -285,16 +285,6 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     return `${conTitle || ""} ${conFName || ""} ${conMName || ""} ${conLName || ""}`.trim();
   }, []);
 
-  const columns = useMemo(
-    () => [
-      { key: "checkbox", header: "Action", visible: true, render: renderCheckbox },
-      selectedOption === "resource"
-        ? { key: "rLName", header: "Resource Name", visible: true }
-        : { key: "consultantName", header: "Consultant Name", visible: true, render: renderConsultantName },
-    ],
-    [selectedOption, renderCheckbox, renderConsultantName]
-  );
-
   useEffect(() => {
     if (startDate && endDate && startDate > endDate) {
       setValue("bLEndDate", startDate);
@@ -445,6 +435,13 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     setShowCancelConfirmation(false);
   };
 
+  const formatTimeStringToDate = (timeString: string): Date => {
+    const today = new Date();
+    const [hours, minutes] = timeString.split(":");
+
+    const dateWithTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes));
+    return dateWithTime;
+  };
   const dialogTitle = viewOnly ? "View Break Details" : "Create New Break";
 
   const dialogActions = viewOnly ? (
@@ -539,11 +536,37 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
                       />
                     </Grid>
                     <Grid size={{ sm: 12, md: 5 }}>
-                      <FormField name="bLStartTime" control={control} label="Start Time" type="timepicker" required disabled={viewOnly || isOneDay} size="small" fullWidth />
+                      <FormField
+                        name="bLStartTime"
+                        control={control}
+                        label="Start Time"
+                        type="timepicker"
+                        required
+                        disabled={viewOnly || isOneDay}
+                        size="small"
+                        fullWidth
+                        onChange={(item) => {
+                          const formattedTime = formatTimeStringToDate(item);
+                          setValue("bLStartTime", formattedTime);
+                        }}
+                      />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 5 }}>
-                      <FormField name="bLEndTime" control={control} label="End Time" type="timepicker" required disabled={viewOnly || isOneDay} size="small" fullWidth />
+                      <FormField
+                        name="bLEndTime"
+                        control={control}
+                        label="End Time"
+                        type="timepicker"
+                        required
+                        disabled={viewOnly || isOneDay}
+                        size="small"
+                        fullWidth
+                        onChange={(item) => {
+                          const formattedTime = formatTimeStringToDate(item);
+                          setValue("bLEndTime", formattedTime);
+                        }}
+                      />
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 8 }}>

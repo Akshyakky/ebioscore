@@ -70,8 +70,7 @@ const BreakFrequency: React.FC<{
         }
         break;
       case "weekly":
-        validEndDate = new Date(startDate.setDate(startDate.getDate() + interval * 7));
-        if (endDateObj < validEndDate) {
+        if (endDateObj < startDate) {
           showAlert("Error", "Invalid date range, End Date does not match with the Start Date for weekly frequency", "error");
           return false;
         }
