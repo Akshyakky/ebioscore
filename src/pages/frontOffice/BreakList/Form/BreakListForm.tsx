@@ -35,7 +35,6 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 
-import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { formatDate } from "@/utils/Common/dateUtils";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import BreakFrequency from "./BreakFrequency";
@@ -97,7 +96,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
   });
   const { resourceList, appointmentConsultants } = useDropdownValues(["resourceList", "appointmentConsultants"]);
 
-  const defaultValues: BreakListFormData = {
+  const defaultValues: BreakListData = {
     bLID: 0,
     bLName: "",
     bLStartTime: serverDate || new Date(),
@@ -583,63 +582,88 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
             </Grid>
 
             {/* Resource/Physician Selection Section */}
-            <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Assignment
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
 
-                  <Grid container spacing={2}>
-                    <Grid size={{ sm: 12 }}>
-                      <FormControl component="fieldset" disabled={viewOnly}>
-                        <FormLabel component="legend">Choose Option</FormLabel>
-                        <RadioGroup row value={selectedOption} onChange={(e) => handleRadioChange(e.target.value)}>
-                          <FormControlLabel value="physician" control={<Radio size="small" />} label="Physician" />
-                          <FormControlLabel value="resource" control={<Radio size="small" />} label="Resource" />
-                        </RadioGroup>
-                      </FormControl>
-                    </Grid>
+            {viewOnly ? (
+              <Grid size={{ sm: 12 }}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Assigned {isPhyResYN === "Y" ? "Physician" : "Resource"}
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <Typography variant="body1">
+                      {isPhyResYN === "Y"
+                        ? consultantData
+                            .filter((item) => initialData.hPLID === item.conID)
+                            .map((item) => renderConsultantName(item))
+                            .join(", ")
+                        : resourceData
+                            .filter((item) => initialData.hPLID === item.rLID)
+                            .map((item) => item.rLName)
+                            .join(", ")}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ) : (
+              <Grid size={{ sm: 12 }}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Assignment
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
 
-                    <Grid size={{ sm: 12 }}>
-                      {(selectedOption === "resource" || selectedOption === "physician") && (
-                        <TableContainer component={Paper} sx={{ maxHeight: "300px", minHeight: "300px" }}>
-                          <Table size="small" stickyHeader>
-                            <TableHead>
-                              <TableRow>
-                                <TableCell sx={{ fontWeight: "bold" }}>
-                                  <CustomCheckbox
-                                    label=""
-                                    name="selectAll"
-                                    checked={selectedItems.length > 0 && selectedItems.length === (selectedOption === "resource" ? resourceData.length : consultantData.length)}
-                                    onChange={(e) => handleSelectAll(e.target.checked)}
-                                    size="small"
-                                    disabled={viewOnly}
-                                  />
-                                </TableCell>
-                                <TableCell sx={{ fontWeight: "bold" }}>{selectedOption === "resource" ? "Resource Name" : "Consultant Name"}</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {(selectedOption === "resource" ? resourceData : consultantData).map((item) => {
-                                const id = selectedOption === "resource" ? item.rLID : item.conID;
-                                return (
-                                  <TableRow key={id}>
-                                    <TableCell>{renderCheckbox(item)}</TableCell>
-                                    <TableCell>{selectedOption === "resource" ? item.rLName : renderConsultantName(item)}</TableCell>
-                                  </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      )}
+                    <Grid container spacing={2}>
+                      <Grid size={{ sm: 12 }}>
+                        <FormControl component="fieldset" disabled={viewOnly}>
+                          <FormLabel component="legend">Choose Option</FormLabel>
+                          <RadioGroup row value={selectedOption} onChange={(e) => handleRadioChange(e.target.value)}>
+                            <FormControlLabel value="physician" control={<Radio size="small" />} label="Physician" />
+                            <FormControlLabel value="resource" control={<Radio size="small" />} label="Resource" />
+                          </RadioGroup>
+                        </FormControl>
+                      </Grid>
+
+                      <Grid size={{ sm: 12 }}>
+                        {(selectedOption === "resource" || selectedOption === "physician") && (
+                          <TableContainer component={Paper} sx={{ maxHeight: "300px", minHeight: "300px" }}>
+                            <Table size="small" stickyHeader>
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell sx={{ fontWeight: "bold" }}>
+                                    <CustomCheckbox
+                                      label=""
+                                      name="selectAll"
+                                      checked={selectedItems.length > 0 && selectedItems.length === (selectedOption === "resource" ? resourceData.length : consultantData.length)}
+                                      onChange={(e) => handleSelectAll(e.target.checked)}
+                                      size="small"
+                                      disabled={viewOnly}
+                                    />
+                                  </TableCell>
+                                  <TableCell sx={{ fontWeight: "bold" }}>{selectedOption === "resource" ? "Resource Name" : "Consultant Name"}</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {(selectedOption === "resource" ? resourceData : consultantData).map((item) => {
+                                  const id = selectedOption === "resource" ? item.rLID : item.conID;
+                                  return (
+                                    <TableRow key={id}>
+                                      <TableCell>{renderCheckbox(item)}</TableCell>
+                                      <TableCell>{selectedOption === "resource" ? item.rLName : renderConsultantName(item)}</TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        )}
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
 
             {/* Notes Section */}
             <Grid size={{ sm: 12 }}>
