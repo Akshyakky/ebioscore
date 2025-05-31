@@ -22,6 +22,7 @@ import {
   CardHeader,
   Tab,
   Tabs,
+  Container,
 } from "@mui/material";
 import {
   People as RegistrationIcon,
@@ -46,6 +47,7 @@ import {
   BarChart as BarChartIcon,
   PieChart as PieChartIcon,
   ShowChart as LineChartIcon,
+  Analytics as AnalyticsIcon,
 } from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -73,6 +75,7 @@ import {
   Area,
   AreaChart,
 } from "recharts";
+
 interface DashboardMetric {
   id: string;
   title: string;
@@ -265,34 +268,36 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, userValue, allValue, vi
         height: "100%",
         transition: "all 0.3s ease",
         "&:hover": {
-          transform: "translateY(-4px)",
-          boxShadow: theme.shadows[8],
+          transform: "translateY(-2px)",
+          boxShadow: theme.shadows[6],
         },
-        border: `1px solid ${theme.palette.divider}`,
         borderLeft: `4px solid ${metric.color}`,
+        borderRadius: 2,
+        overflow: "hidden",
       }}
     >
-      <CardContent sx={{ p: 3 }}>
+      <CardContent sx={{ p: 2.5 }}>
         <Box sx={{ display: "flex", alignItems: "flex-start", mb: 2 }}>
           <Avatar
             sx={{
-              bgcolor: `${metric.color}20`,
+              bgcolor: `${metric.color}15`,
               color: metric.color,
               mr: 2,
-              width: 56,
-              height: 56,
+              width: 48,
+              height: 48,
             }}
           >
-            <IconComponent fontSize="large" />
+            <IconComponent fontSize="medium" />
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
-              variant="h6"
+              variant="subtitle1"
               sx={{
                 fontWeight: 600,
-                fontSize: "1rem",
-                lineHeight: 1.2,
+                fontSize: "0.95rem",
+                lineHeight: 1.3,
                 mb: 0.5,
+                color: "text.primary",
               }}
               noWrap
             >
@@ -304,47 +309,42 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, userValue, allValue, vi
               sx={{
                 bgcolor: getCategoryColor(metric.category),
                 color: "white",
-                fontWeight: 600,
-                fontSize: "0.7rem",
+                fontWeight: 500,
+                fontSize: "0.65rem",
+                height: 20,
               }}
             />
           </Box>
         </Box>
 
-        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
-          {metric.description}
-        </Typography>
-
-        <Divider sx={{ mb: 2 }} />
-
         {loading ? (
           <Box>
-            <Skeleton variant="text" width="60%" height={48} />
-            <Skeleton variant="text" width="40%" height={24} />
+            <Skeleton variant="text" width="70%" height={40} />
+            <Skeleton variant="rectangular" width="100%" height={60} sx={{ mt: 1, borderRadius: 1 }} />
           </Box>
         ) : error ? (
-          <Alert severity="error" icon={<ErrorIcon fontSize="small" />} sx={{ fontSize: "0.75rem" }}>
-            Failed to load data
+          <Alert severity="error" icon={<ErrorIcon fontSize="small" />} sx={{ fontSize: "0.75rem", py: 1 }}>
+            Failed to load
           </Alert>
         ) : (
           <Box>
             <Typography
-              variant="h3"
+              variant="h4"
               sx={{
                 fontWeight: 700,
                 mb: 2,
                 color: metric.color,
-                fontSize: { xs: "1.8rem", sm: "2.2rem" },
+                fontSize: { xs: "1.5rem", sm: "1.8rem" },
               }}
             >
               {formatValue(currentValue, metric.format)}
             </Typography>
 
-            <Paper elevation={0} sx={{ bgcolor: "grey.50", p: 1.5, borderRadius: 2 }}>
+            <Paper elevation={0} sx={{ bgcolor: "grey.50", p: 1.5, borderRadius: 1.5 }}>
               <Grid container spacing={1}>
                 <Grid size={{ xs: 6 }}>
                   <Box sx={{ textAlign: "center" }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, fontSize: "0.7rem" }}>
                       My Data
                     </Typography>
                     <Typography
@@ -352,6 +352,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, userValue, allValue, vi
                       sx={{
                         fontWeight: 600,
                         color: viewMode === "user" ? metric.color : "text.primary",
+                        fontSize: "0.85rem",
                       }}
                     >
                       {formatValue(userValue, metric.format)}
@@ -360,7 +361,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, userValue, allValue, vi
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Box sx={{ textAlign: "center" }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, fontSize: "0.7rem" }}>
                       All Data
                     </Typography>
                     <Typography
@@ -368,6 +369,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, userValue, allValue, vi
                       sx={{
                         fontWeight: 600,
                         color: viewMode === "all" ? metric.color : "text.primary",
+                        fontSize: "0.85rem",
                       }}
                     >
                       {formatValue(allValue, metric.format)}
@@ -392,7 +394,7 @@ interface TabPanelProps {
 const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => {
   return (
     <div role="tabpanel" hidden={value !== index} id={`chart-tabpanel-${index}`} aria-labelledby={`chart-tab-${index}`} {...other}>
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ pt: 2 }}>{children}</Box>}
     </div>
   );
 };
@@ -566,7 +568,7 @@ const DashboardPage: React.FC = () => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <Paper sx={{ p: 2, border: `1px solid ${theme.palette.divider}` }}>
+        <Paper sx={{ p: 2, border: `1px solid ${theme.palette.divider}`, borderRadius: 1 }}>
           <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
             {label}
           </Typography>
@@ -583,7 +585,7 @@ const DashboardPage: React.FC = () => {
 
   if (error) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3, bgcolor: "background.default", minHeight: "100vh" }}>
         <Alert severity="error" sx={{ mb: 3 }} action={<CustomButton variant="outlined" size="small" text="Retry" onClick={handleRefresh} color="error" />}>
           Failed to load dashboard data. Please check your connection and try again.
         </Alert>
@@ -593,319 +595,351 @@ const DashboardPage: React.FC = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="en-gb">
-      <Box sx={{ p: 3, maxWidth: "1400px", mx: "auto" }}>
-        {/* Header */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-            <DashboardIcon sx={{ fontSize: 40, color: "primary.main", mr: 2 }} />
-            <Box>
-              <Typography variant="h4" component="h1" sx={{ fontWeight: 700, color: "text.primary" }}>
-                Hospital Management Dashboard
-              </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
-                Real-time overview of hospital operations and financial metrics
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Controls */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {/* Date Range Controls */}
-          <Grid size={{ xs: 12, lg: 6 }}>
-            <Card sx={{ p: 2, height: "100%" }}>
-              <Stack direction={isMobile ? "column" : "row"} spacing={2} alignItems="center">
-                <DateIcon color="action" />
-                <DatePicker
-                  label="From Date"
-                  value={fromDate}
-                  onChange={(date) => date && setFromDate(dayjs(date))}
-                  format="DD/MM/YYYY"
-                  slotProps={{
-                    textField: {
-                      size: "small",
-                      sx: { minWidth: "140px" },
-                      variant: "outlined",
-                    },
-                  }}
-                />
-                <DatePicker
-                  label="To Date"
-                  value={toDate}
-                  onChange={(date) => date && setToDate(dayjs(date))}
-                  format="DD/MM/YYYY"
-                  slotProps={{
-                    textField: {
-                      size: "small",
-                      sx: { minWidth: "140px" },
-                      variant: "outlined",
-                    },
-                  }}
-                />
-                <Tooltip title="Refresh Dashboard">
-                  <IconButton
-                    onClick={handleRefresh}
-                    disabled={isLoading}
-                    color="primary"
-                    sx={{
-                      animation: isLoading ? "spin 1s linear infinite" : "none",
-                      "@keyframes spin": {
-                        "0%": { transform: "rotate(0deg)" },
-                        "100%": { transform: "rotate(360deg)" },
-                      },
-                    }}
-                  >
-                    <RefreshIcon />
-                  </IconButton>
-                </Tooltip>
-              </Stack>
-            </Card>
-          </Grid>
-
-          {/* View Mode Toggle */}
-          <Grid size={{ xs: 12, lg: 6 }}>
-            <Card sx={{ p: 2, height: "100%", display: "flex", alignItems: "center" }}>
-              <ToggleButtonGroup value={viewMode} exclusive onChange={handleViewModeChange} size="small" fullWidth sx={{ "& .MuiToggleButton-root": { py: 1 } }}>
-                <ToggleButton value="user">
-                  <UserIcon sx={{ mr: 1, fontSize: "1.2rem" }} />
-                  My Data
-                </ToggleButton>
-                <ToggleButton value="all">
-                  <AllUsersIcon sx={{ mr: 1, fontSize: "1.2rem" }} />
-                  All Data
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Card>
-          </Grid>
-
-          {/* Category Filter */}
-          <Grid size={{ xs: 12, lg: 3 }}>
-            <Card sx={{ p: 2, height: "100%", display: "flex", alignItems: "center" }}>
-              <ToggleButtonGroup
-                value={categoryFilter}
-                exclusive
-                onChange={handleCategoryChange}
-                size="small"
-                fullWidth
-                sx={{ "& .MuiToggleButton-root": { py: 1, fontSize: "0.8rem" } }}
-              >
-                <ToggleButton value="all">All</ToggleButton>
-                <ToggleButton value="patient">Patient</ToggleButton>
-                <ToggleButton value="financial">Financial</ToggleButton>
-                <ToggleButton value="operational">Ops</ToggleButton>
-              </ToggleButtonGroup>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Summary Cards */}
-        {categoryFilter === "all" && (
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Card
-                sx={{
-                  p: 3,
-                  background: "linear-gradient(135deg, #4CAF50 0%, #45a049 100%)",
-                  color: "white",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                <Box sx={{ position: "relative", zIndex: 1 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                    <TrendingUpIcon sx={{ fontSize: 40, mr: 2 }} />
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      Total Financial Revenue (My Data)
-                    </Typography>
-                  </Box>
-                  <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                    {formatCurrency(totals.userTotal)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: -20,
-                    right: -20,
-                    opacity: 0.1,
-                    fontSize: "8rem",
-                  }}
-                >
-                  💰
-                </Box>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Card
-                sx={{
-                  p: 3,
-                  background: "linear-gradient(135deg, #2196F3 0%, #1976d2 100%)",
-                  color: "white",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                <Box sx={{ position: "relative", zIndex: 1 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                    <TrendingUpIcon sx={{ fontSize: 40, mr: 2 }} />
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      Total Financial Revenue (All Data)
-                    </Typography>
-                  </Box>
-                  <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                    {formatCurrency(totals.allTotal)}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: -20,
-                    right: -20,
-                    opacity: 0.1,
-                    fontSize: "8rem",
-                  }}
-                >
-                  💰
-                </Box>
-              </Card>
-            </Grid>
-          </Grid>
-        )}
-
-        {/* Charts Section */}
-        <Card sx={{ mb: 4 }}>
-          <CardHeader
-            title="Analytics Dashboard"
-            subheader="Visual representation of hospital metrics and trends"
-            avatar={
-              <Avatar sx={{ bgcolor: "primary.main" }}>
-                <BarChartIcon />
-              </Avatar>
-            }
-          />
-          <CardContent>
-            <Tabs value={chartTab} onChange={handleChartTabChange} variant="scrollable" scrollButtons="auto">
-              <Tab icon={<BarChartIcon />} label="Comparison Chart" />
-              <Tab icon={<PieChartIcon />} label="Financial Breakdown" />
-              <Tab icon={<LineChartIcon />} label="Category Overview" />
-            </Tabs>
-
-            <TabPanel value={chartTab} index={0}>
-              <Card elevation={2} sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                  My Data vs All Data Comparison
-                </Typography>
-                <ResponsiveContainer width="100%" height={400}>
-                  <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-                    <YAxis />
-                    <RechartsTooltip content={<CustomTooltip />} />
-                    <Legend />
-                    <Bar dataKey="userValue" fill="#2196F3" name="My Data" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="allValue" fill="#4CAF50" name="All Data" radius={[4, 4, 0, 0]} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </Card>
-            </TabPanel>
-
-            <TabPanel value={chartTab} index={1}>
-              <Card elevation={2} sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                  Financial Metrics Distribution ({viewMode === "user" ? "My Data" : "All Data"})
-                </Typography>
-                <ResponsiveContainer width="100%" height={400}>
-                  <PieChart>
-                    <Pie
-                      data={pieChartData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={120}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {pieChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip formatter={(value) => [formatCurrency(Number(value)), "Amount"]} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card>
-            </TabPanel>
-
-            <TabPanel value={chartTab} index={2}>
-              <Card elevation={2} sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                  Category-wise Performance Overview
-                </Typography>
-                <ResponsiveContainer width="100%" height={400}>
-                  <AreaChart data={categoryChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <RechartsTooltip content={<CustomTooltip />} />
-                    <Legend />
-                    <Area type="monotone" dataKey="userValue" stackId="1" stroke="#2196F3" fill="#2196F3" fillOpacity={0.6} name="My Data" />
-                    <Area type="monotone" dataKey="allValue" stackId="2" stroke="#4CAF50" fill="#4CAF50" fillOpacity={0.6} name="All Data" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </Card>
-            </TabPanel>
-          </CardContent>
-        </Card>
-
-        {/* Metrics Grid */}
-        <Grid container spacing={3}>
-          {filteredMetrics.map((metric) => {
-            const data = metricsData?.[metric.id];
-
-            return (
-              <Grid size={{ xs: 12, sm: 6, lg: 4, xl: 3 }} key={metric.id}>
-                <MetricCard
-                  metric={metric}
-                  userValue={data?.userValue || 0}
-                  allValue={data?.allValue || 0}
-                  viewMode={viewMode}
-                  loading={isLoading}
-                  error={data?.userError || data?.allError || false}
-                />
-              </Grid>
-            );
-          })}
-        </Grid>
-
-        {/* Loading Overlay */}
-        {isLoading && (
-          <Box
+      <Box
+        sx={{
+          bgcolor: "background.default",
+          minHeight: "100vh",
+          p: 0,
+        }}
+      >
+        <Container maxWidth={false} sx={{ px: { xs: 2, sm: 3 }, py: 3 }}>
+          {/* Header Section */}
+          <Paper
+            elevation={1}
             sx={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              bgcolor: "rgba(255, 255, 255, 0.9)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 9999,
-              backdropFilter: "blur(2px)",
+              p: 3,
+              mb: 3,
+              borderRadius: 2,
+              background: "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
+              color: "white",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <Card sx={{ p: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-              <CircularProgress size={48} thickness={3.6} />
-              <Typography variant="h6" color="text.secondary">
-                Loading Dashboard Data...
+            <Box sx={{ position: "relative", zIndex: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                <DashboardIcon sx={{ fontSize: 40, mr: 2 }} />
+                <Box>
+                  <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 0.5 }}>
+                    Hospital Management Dashboard
+                  </Typography>
+                  <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
+                    Real-time overview of hospital operations and financial metrics
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                position: "absolute",
+                top: -30,
+                right: -30,
+                opacity: 0.1,
+                fontSize: "12rem",
+              }}
+            >
+              📊
+            </Box>
+          </Paper>
+
+          {/* Controls Section */}
+          <Paper elevation={1} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+            <Grid container spacing={3}>
+              {/* Date Range Controls */}
+              <Grid size={{ xs: 12, lg: 5 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+                  <DateIcon color="action" />
+                  <DatePicker
+                    label="From Date"
+                    value={fromDate}
+                    onChange={(date) => date && setFromDate(dayjs(date))}
+                    format="DD/MM/YYYY"
+                    slotProps={{
+                      textField: {
+                        size: "small",
+                        sx: { minWidth: "140px" },
+                        variant: "outlined",
+                      },
+                    }}
+                  />
+                  <DatePicker
+                    label="To Date"
+                    value={toDate}
+                    onChange={(date) => date && setToDate(dayjs(date))}
+                    format="DD/MM/YYYY"
+                    slotProps={{
+                      textField: {
+                        size: "small",
+                        sx: { minWidth: "140px" },
+                        variant: "outlined",
+                      },
+                    }}
+                  />
+                  <Tooltip title="Refresh Dashboard">
+                    <IconButton
+                      onClick={handleRefresh}
+                      disabled={isLoading}
+                      color="primary"
+                      sx={{
+                        animation: isLoading ? "spin 1s linear infinite" : "none",
+                        "@keyframes spin": {
+                          "0%": { transform: "rotate(0deg)" },
+                          "100%": { transform: "rotate(360deg)" },
+                        },
+                      }}
+                    >
+                      <RefreshIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Grid>
+
+              {/* View Mode Toggle */}
+              <Grid size={{ xs: 12, lg: 4 }}>
+                <ToggleButtonGroup value={viewMode} exclusive onChange={handleViewModeChange} size="small" fullWidth>
+                  <ToggleButton value="user">
+                    <UserIcon sx={{ mr: 1, fontSize: "1.2rem" }} />
+                    My Data
+                  </ToggleButton>
+                  <ToggleButton value="all">
+                    <AllUsersIcon sx={{ mr: 1, fontSize: "1.2rem" }} />
+                    All Data
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Grid>
+
+              {/* Category Filter */}
+              <Grid size={{ xs: 12, lg: 3 }}>
+                <ToggleButtonGroup value={categoryFilter} exclusive onChange={handleCategoryChange} size="small" fullWidth>
+                  <ToggleButton value="all">All</ToggleButton>
+                  <ToggleButton value="patient">Patient</ToggleButton>
+                  <ToggleButton value="financial">Financial</ToggleButton>
+                  <ToggleButton value="operational">Ops</ToggleButton>
+                </ToggleButtonGroup>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          {/* Summary Financial Cards - Only show when viewing all categories */}
+          {categoryFilter === "all" && (
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Card
+                  sx={{
+                    p: 3,
+                    background: "linear-gradient(135deg, #4CAF50 0%, #45a049 100%)",
+                    color: "white",
+                    position: "relative",
+                    overflow: "hidden",
+                    borderRadius: 2,
+                  }}
+                >
+                  <Box sx={{ position: "relative", zIndex: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <TrendingUpIcon sx={{ fontSize: 32, mr: 2 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Total Financial Revenue (My Data)
+                      </Typography>
+                    </Box>
+                    <Typography variant="h3" sx={{ fontWeight: 700 }}>
+                      {formatCurrency(totals.userTotal)}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: -10,
+                      right: -10,
+                      opacity: 0.15,
+                      fontSize: "6rem",
+                    }}
+                  >
+                    💰
+                  </Box>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Card
+                  sx={{
+                    p: 3,
+                    background: "linear-gradient(135deg, #2196F3 0%, #1976d2 100%)",
+                    color: "white",
+                    position: "relative",
+                    overflow: "hidden",
+                    borderRadius: 2,
+                  }}
+                >
+                  <Box sx={{ position: "relative", zIndex: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <TrendingUpIcon sx={{ fontSize: 32, mr: 2 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Total Financial Revenue (All Data)
+                      </Typography>
+                    </Box>
+                    <Typography variant="h3" sx={{ fontWeight: 700 }}>
+                      {formatCurrency(totals.allTotal)}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: -10,
+                      right: -10,
+                      opacity: 0.15,
+                      fontSize: "6rem",
+                    }}
+                  >
+                    💰
+                  </Box>
+                </Card>
+              </Grid>
+            </Grid>
+          )}
+
+          {/* Main Metrics Grid - PRIORITIZED FIRST */}
+          <Paper elevation={1} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+              <AnalyticsIcon sx={{ fontSize: 28, mr: 2, color: "primary.main" }} />
+              <Typography variant="h5" sx={{ fontWeight: 600, color: "text.primary" }}>
+                Performance Metrics
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center" }}>
-                Please wait while we fetch the latest metrics
-              </Typography>
-            </Card>
-          </Box>
-        )}
+            </Box>
+            <Grid container spacing={2.5}>
+              {filteredMetrics.map((metric) => {
+                const data = metricsData?.[metric.id];
+
+                return (
+                  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2.4 }} key={metric.id}>
+                    <MetricCard
+                      metric={metric}
+                      userValue={data?.userValue || 0}
+                      allValue={data?.allValue || 0}
+                      viewMode={viewMode}
+                      loading={isLoading}
+                      error={data?.userError || data?.allError || false}
+                    />
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Paper>
+
+          {/* Charts Section - MOVED AFTER METRICS */}
+          <Paper elevation={1} sx={{ borderRadius: 2 }}>
+            <CardHeader
+              title="Analytics Dashboard"
+              subheader="Visual representation of hospital metrics and trends"
+              avatar={
+                <Avatar sx={{ bgcolor: "primary.main" }}>
+                  <BarChartIcon />
+                </Avatar>
+              }
+              sx={{ pb: 0 }}
+            />
+            <CardContent sx={{ pt: 1 }}>
+              <Tabs value={chartTab} onChange={handleChartTabChange} variant="scrollable" scrollButtons="auto">
+                <Tab icon={<BarChartIcon />} label="Comparison Chart" />
+                <Tab icon={<PieChartIcon />} label="Financial Breakdown" />
+                <Tab icon={<LineChartIcon />} label="Category Overview" />
+              </Tabs>
+
+              <TabPanel value={chartTab} index={0}>
+                <Card elevation={0} sx={{ p: 3, bgcolor: "background.default" }}>
+                  <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                    My Data vs All Data Comparison
+                  </Typography>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
+                      <YAxis />
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Legend />
+                      <Bar dataKey="userValue" fill="#2196F3" name="My Data" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="allValue" fill="#4CAF50" name="All Data" radius={[4, 4, 0, 0]} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </Card>
+              </TabPanel>
+
+              <TabPanel value={chartTab} index={1}>
+                <Card elevation={0} sx={{ p: 3, bgcolor: "background.default" }}>
+                  <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                    Financial Metrics Distribution ({viewMode === "user" ? "My Data" : "All Data"})
+                  </Typography>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <PieChart>
+                      <Pie
+                        data={pieChartData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={120}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {pieChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip formatter={(value) => [formatCurrency(Number(value)), "Amount"]} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Card>
+              </TabPanel>
+
+              <TabPanel value={chartTab} index={2}>
+                <Card elevation={0} sx={{ p: 3, bgcolor: "background.default" }}>
+                  <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                    Category-wise Performance Overview
+                  </Typography>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <AreaChart data={categoryChartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Legend />
+                      <Area type="monotone" dataKey="userValue" stackId="1" stroke="#2196F3" fill="#2196F3" fillOpacity={0.6} name="My Data" />
+                      <Area type="monotone" dataKey="allValue" stackId="2" stroke="#4CAF50" fill="#4CAF50" fillOpacity={0.6} name="All Data" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </Card>
+              </TabPanel>
+            </CardContent>
+          </Paper>
+
+          {/* Loading Overlay */}
+          {isLoading && (
+            <Box
+              sx={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                bgcolor: "rgba(255, 255, 255, 0.95)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 9999,
+                backdropFilter: "blur(4px)",
+              }}
+            >
+              <Card sx={{ p: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, borderRadius: 2 }}>
+                <CircularProgress size={48} thickness={3.6} />
+                <Typography variant="h6" color="text.secondary">
+                  Loading Dashboard Data...
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center" }}>
+                  Please wait while we fetch the latest metrics
+                </Typography>
+              </Card>
+            </Box>
+          )}
+        </Container>
       </Box>
     </LocalizationProvider>
   );
