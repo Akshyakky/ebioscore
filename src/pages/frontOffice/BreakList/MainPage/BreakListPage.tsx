@@ -23,7 +23,7 @@ import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfii
 import { useBreakListOperations } from "../hooks/useBreakListOperations";
 const statusOptions = [
   { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
+  { value: "suspended", label: "Suspended" },
 ];
 
 const typeOptions = [
@@ -208,21 +208,19 @@ const BreakListPage: React.FC = () => {
       return {
         totalBreaks: 0,
         activeBreaks: 0,
-        inactiveBreaks: 0,
         physicianBreaks: 0,
         resourceBreaks: 0,
         suspendedBreaks: 0,
       };
     }
 
-    const activeCount = breakList.filter((b) => b.rActiveYN === "Y").length;
     const physicianCount = breakList.filter((b) => b.isPhyResYN === "Y").length;
     const suspendedCount = breakList.filter((b) => b.status === "Suspended").length;
+    const activeCount = breakList.filter((b) => b.rActiveYN === "Y").length - suspendedCount;
 
     return {
       totalBreaks: breakList.length,
       activeBreaks: activeCount,
-      inactiveBreaks: breakList.length - activeCount,
       physicianBreaks: physicianCount,
       resourceBreaks: breakList.length - physicianCount,
       suspendedBreaks: suspendedCount,
@@ -239,7 +237,10 @@ const BreakListPage: React.FC = () => {
         breakItem.rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         breakItem.bLFrqDesc?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
-      const matchesStatus = filters.status === "" || (filters.status === "active" && breakItem.rActiveYN === "Y") || (filters.status === "inactive" && breakItem.rActiveYN === "N");
+      const matchesStatus =
+        filters.status === "" ||
+        (filters.status === "active" && breakItem.rActiveYN === "Y" && breakItem.status === "") ||
+        (filters.status === "suspended" && breakItem.status === "Suspended");
 
       const matchesType = filters.type === "" || (filters.type === "physician" && breakItem.isPhyResYN === "Y") || (filters.type === "resource" && breakItem.isPhyResYN === "N");
 
@@ -258,12 +259,6 @@ const BreakListPage: React.FC = () => {
           <Typography variant="h6">Active</Typography>
           <Typography variant="h4" color="success.main">
             {stats.activeBreaks}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Inactive</Typography>
-          <Typography variant="h4" color="error.main">
-            {stats.inactiveBreaks}
           </Typography>
         </Grid>
         <Grid size={{ xs: 12, sm: 2 }}>
@@ -417,7 +412,7 @@ const BreakListPage: React.FC = () => {
             )
           }
         >
-          <Chip size="small" color={value === "Suspended" ? "error" : "success"} label={value === "Suspended" ? `Inactive` : "Active"} />
+          <Chip size="small" color={value === "Suspended" ? "error" : "success"} label={value === "Suspended" ? `Suspended` : "Active"} />
         </Tooltip>
       ),
     },
