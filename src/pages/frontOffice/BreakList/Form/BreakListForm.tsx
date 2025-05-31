@@ -306,14 +306,12 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
       const now = serverDate || new Date();
       const today = new Date(now.setHours(0, 0, 0, 0));
 
-      // Ensure start time is not in the past
       if (startDate.toDateString() === today.toDateString() && startTime < now) {
         const newStartTime = new Date(now);
         newStartTime.setMinutes(newStartTime.getMinutes() + 1);
         setValue("bLStartTime", newStartTime);
       }
 
-      // Ensure end time is after start time on the same day
       if (isSameDay && endTime <= startTime) {
         const newEndTime = new Date(startTime);
         newEndTime.setMinutes(newEndTime.getMinutes() + 30);

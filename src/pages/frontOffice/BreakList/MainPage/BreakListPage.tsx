@@ -52,6 +52,7 @@ export const weekDayCodeMap = {
 const BreakListPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
+  const [isResumeConfirmOpen, setIsResumeConfirmOpen] = useState<boolean>(false);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [suspendData, setSuspendData] = useState<BreakConSuspendData | null>(null);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
@@ -296,6 +297,22 @@ const BreakListPage: React.FC = () => {
       day: "2-digit",
     });
   };
+  const handleResumeClick = useCallback((breakItem: BreakDto) => {
+    setSelectedBreak(breakItem);
+    setIsResumeConfirmOpen(true);
+  }, []);
+
+  const handleConfirmResume = useCallback(async () => {
+    if (!selectedBreak) return;
+    await resumeBreak(selectedBreak);
+    setIsResumeConfirmOpen(false);
+    setSelectedBreak(null);
+  }, [selectedBreak, resumeBreak]);
+
+  const handleResumeDialogClose = useCallback(() => {
+    setIsResumeConfirmOpen(false);
+    setSelectedBreak(null);
+  }, []);
 
   const columns: Column<BreakDto>[] = [
     {
@@ -442,7 +459,7 @@ const BreakListPage: React.FC = () => {
             <IconButton
               size="small"
               color={item.status === "Suspended" ? "success" : "warning"}
-              onClick={() => (item.status === "Suspended" ? handleResume(item) : handleSuspend(item))}
+              onClick={() => (item.status === "Suspended" ? handleResumeClick(item) : handleSuspend(item))}
               sx={{
                 bgcolor: "rgba(25, 118, 210, 0.08)",
                 "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
@@ -586,6 +603,18 @@ const BreakListPage: React.FC = () => {
         confirmText="Delete"
         cancelText="Cancel"
         type="error"
+        maxWidth="xs"
+      />
+
+      <ConfirmationDialog
+        open={isResumeConfirmOpen}
+        onClose={handleResumeDialogClose}
+        onConfirm={handleConfirmResume}
+        title="Confirm Resume"
+        message={`Are you sure you want to resume the break "${selectedBreak?.bLName}"?`}
+        confirmText="Resume"
+        cancelText="Cancel"
+        type="success"
         maxWidth="xs"
       />
     </Box>
