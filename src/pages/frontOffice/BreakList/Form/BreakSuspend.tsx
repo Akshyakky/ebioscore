@@ -96,6 +96,7 @@ const BreakSuspend: React.FC<BreakSuspendProps> = ({ open, onClose, breakData })
 
       const updatedSuspendData: BreakConSuspendData = {
         ...breakData,
+        hPLID: breakData.hPLID,
         bCSStartDate: formData.bCSStartDate,
         bCSEndDate: formData.bCSEndDate,
         rNotes: formData.rNotes,

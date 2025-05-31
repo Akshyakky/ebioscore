@@ -17,12 +17,12 @@ export interface BreakListData extends BaseDto {
   transferYN?: string;
 }
 export interface BreakDto extends BreakListData {
+  hPLID: number;
   bCSID?: number;
-  hPLID?: number;
   assignedName?: number;
   status?: string;
-  bCSStartDate: Date | string;
-  bCSEndDate: Date | string;
+  bCSStartDate?: Date | string;
+  bCSEndDate?: Date | string;
 }
 
 export interface BreakConDetailData extends BaseDto {
