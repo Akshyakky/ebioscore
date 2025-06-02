@@ -53,7 +53,6 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
   const isAddMode = !initialData?.rGrpID;
   const isActuallySubGroup = isSubGroup || (initialData?.key !== undefined && initialData?.key !== null && initialData?.key > 0);
   const dropdownValues = useDropdownValues(["department", "gender"]);
-  const [parentGroupName, setParentGroupName] = useState<string>("");
 
   const defaultValues: RoomGroupFormData = {
     rGrpID: 0,
