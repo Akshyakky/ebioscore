@@ -415,6 +415,8 @@ const EnhancedBedSetupPage = () => {
                 ? {
                     rGrpID: associatedRoom.rgrpID,
                     rGrpName: associatedRoom.roomGroup.rGrpName,
+                    deptID: associatedRoom.deptID,
+                    deptName: associatedRoom.deptName,
                   }
                 : undefined,
             };
@@ -437,6 +439,8 @@ const EnhancedBedSetupPage = () => {
             enrichedBedData.roomList.roomGroup = {
               rGrpID: associatedRoomGroup.rGrpID,
               rGrpName: associatedRoomGroup.rGrpName,
+              deptID: associatedRoomGroup.deptID,
+              deptName: associatedRoomGroup.deptName,
             };
           }
         }
@@ -480,6 +484,8 @@ const EnhancedBedSetupPage = () => {
                 ? {
                     rGrpID: associatedRoom.rgrpID,
                     rGrpName: associatedRoom.roomGroup.rGrpName,
+                    deptID: associatedRoom.deptID,
+                    deptName: associatedRoom.deptName,
                   }
                 : undefined,
             };
@@ -502,6 +508,8 @@ const EnhancedBedSetupPage = () => {
             enrichedBedData.roomList.roomGroup = {
               rGrpID: associatedRoomGroup.rGrpID,
               rGrpName: associatedRoomGroup.rGrpName,
+              deptID: associatedRoomGroup.deptID,
+              deptName: associatedRoomGroup.deptName,
             };
           }
         }
