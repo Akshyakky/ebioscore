@@ -126,7 +126,7 @@ const BedSelectionDialog: React.FC<BedSelectionDialogProps> = ({
       }
 
       // Apply available only filter
-      if (filters.availableOnly && bed.bedStatusValue !== "Available") {
+      if (filters.availableOnly && bed.bedStatusValue !== "AVLBL") {
         return false;
       }
 
@@ -297,7 +297,7 @@ const BedSelectionDialog: React.FC<BedSelectionDialogProps> = ({
                           <Stack spacing={1}>
                             <Chip
                               icon={bed.statusConfig.icon}
-                              label={bed.bedStatusValue}
+                              label={bed.bedStatus}
                               size="small"
                               sx={{
                                 backgroundColor: bed.statusConfig.color,
