@@ -495,7 +495,6 @@ const EnhancedBedSetupPage = () => {
           }
         }
 
-        // Handle room group information
         if (!enrichedBedData.roomList?.roomGroup && enrichedBedData.rgrpID) {
           const associatedRoomGroup = roomGroups.find((group) => group.rGrpID === enrichedBedData.rgrpID);
           if (associatedRoomGroup) {
@@ -514,7 +513,6 @@ const EnhancedBedSetupPage = () => {
           }
         }
 
-        // Handle parent bed information for cradles
         if (enrichedBedData.key && enrichedBedData.key > 0) {
           const parentBed = beds.find((b) => b.bedID === enrichedBedData.key);
           if (parentBed) {
