@@ -7,7 +7,7 @@ import { ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
 import ChargeDetailsSearch from "../SubPage/ChargeDetailsSearch";
 import ChargeDetails from "../SubPage/ChargesDetails";
 import { useAlert } from "@/providers/AlertProvider";
-import { chargeDetailsService } from "@/services/BillingServices/ChargeDetailsService";
+import { chargeDetailsService } from "@/services/BillingServices/chargeDetailsService";
 
 const ChargeDetailsPage: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -21,10 +21,10 @@ const ChargeDetailsPage: React.FC = () => {
     setIsSearchOpen(false);
   };
 
-  useEffect(() => {
-    if (selectedData) {
-    }
-  }, [selectedData]);
+  // useEffect(() => {
+  //   if (selectedData) {
+  //   }
+  // }, [selectedData]);
   const handleSelect = async (item: any) => {
     try {
       if (!item?.chargeID) {
@@ -38,7 +38,7 @@ const ChargeDetailsPage: React.FC = () => {
         setSelectedData({ ...rawData, chargeAliases: rawData.chargeAliases || [] });
         setSelectedData({ ...rawData, chargeDetails: rawData.chargeDetails || [] });
         setSelectedData({ ...rawData, chargeFaculties: rawData.chargeFaculties || [] });
-        setSelectedData({ ...rawData, chargeInfo: rawData.chargeInfo || [] });
+        setSelectedData({ ...rawData, chargeInfo: rawData.chargeInfo });
         setSelectedData({ ...rawData, chargePackDetails: rawData.chargePackDetails || [] });
         setSelectedData({ ...rawData, doctorSharePerShare: rawData.doctorSharePerShare || [] });
         setIsSearchOpen(false);

@@ -19,6 +19,7 @@ interface RoomGroupFormProps {
   onClose: (refreshData?: boolean) => void;
   initialData: RoomGroupDto | null;
   viewOnly?: boolean;
+  isSubGroup?: boolean; // Added isSubGroup prop
 }
 
 const schema = z.object({
@@ -41,7 +42,13 @@ const schema = z.object({
 
 type RoomGroupFormData = z.infer<typeof schema>;
 
-const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
+const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
+  open,
+  onClose,
+  initialData,
+  viewOnly = false,
+  isSubGroup = false, // Default to false if not provided
+}) => {
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
   const [isSaving, setIsSaving] = useState(false);
@@ -50,14 +57,17 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const isAddMode = !initialData?.rGrpID;
-  const isSubGroup = initialData?.isParent;
+
+  // Use the passed isSubGroup prop or fallback to initialData?.isParent for backward compatibility
+  const isActuallySubGroup = isSubGroup || initialData?.isParent || false;
+
   const dropdownValues = useDropdownValues(["department", "gender"]);
 
   const defaultValues: RoomGroupFormData = {
     rGrpID: 0,
     rGrpName: "",
     rGrpCode: "",
-    key: isSubGroup && initialData ? initialData.rGrpID : 0,
+    key: isActuallySubGroup && initialData ? initialData.rGrpID : 0,
     deptID: 0,
     deptName: "",
     gender: "",
@@ -107,12 +117,14 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
 
   useEffect(() => {
     if (initialData) {
-      if (initialData.rGrpID && !initialData.isParent) {
+      if (initialData.rGrpID && !initialData.isParent && !isActuallySubGroup) {
+        // Editing existing room group
         reset({
           ...defaultValues,
           ...initialData,
         });
-      } else if (initialData.isParent) {
+      } else if (initialData.isParent || isActuallySubGroup) {
+        // Creating sub-group under a parent
         reset({
           ...defaultValues,
           key: initialData.rGrpID,
@@ -123,7 +135,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
     } else {
       reset(defaultValues);
     }
-  }, [initialData, reset]);
+  }, [initialData, reset, isActuallySubGroup]);
 
   const generateRoomGroupCode = async () => {
     if (!isAddMode) return;
@@ -136,16 +148,17 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
         showAlert("Warning", "Failed to generate room group code", "warning");
       }
     } catch (error) {
+      console.error("Error generating room group code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
   };
 
   useEffect(() => {
-    if (isAddMode && !isSubGroup) {
+    if (isAddMode && !isActuallySubGroup) {
       generateRoomGroupCode();
     }
-  }, [isAddMode, isSubGroup]);
+  }, [isAddMode, isActuallySubGroup]);
 
   const onSubmit = async (data: RoomGroupFormData) => {
     if (viewOnly) return;
@@ -189,14 +202,14 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
   };
 
   const performReset = () => {
-    if (initialData && !initialData.isParent) {
+    if (initialData && !initialData.isParent && !isActuallySubGroup) {
       reset(initialData as RoomGroupFormData);
     } else {
       reset(defaultValues);
     }
     setFormError(null);
 
-    if (isAddMode && !isSubGroup) {
+    if (isAddMode && !isActuallySubGroup) {
       generateRoomGroupCode();
     }
   };
@@ -236,7 +249,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
   };
 
   const handleRefreshCode = () => {
-    if (isAddMode && !isSubGroup) {
+    if (isAddMode && !isActuallySubGroup) {
       generateRoomGroupCode();
     }
   };
@@ -244,7 +257,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
   const dialogTitle = viewOnly
     ? "View Room Group Details"
     : isAddMode
-    ? isSubGroup
+    ? isActuallySubGroup
       ? "Create New Sub Group"
       : "Create New Room Group"
     : `Edit Room Group - ${initialData?.rGrpName}`;
@@ -257,7 +270,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? (isSubGroup ? "Create Sub Group" : "Create Room Group") : "Update Room Group"}
+          text={isAddMode ? (isActuallySubGroup ? "Create Sub Group" : "Create Room Group") : "Update Room Group"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
@@ -311,7 +324,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
-                    {!isSubGroup && (
+                    {!isActuallySubGroup && (
                       <Grid size={{ sm: 12, md: 6 }}>
                         <FormField
                           name="rGrpCode"
@@ -323,7 +336,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
                           fullWidth
                           InputProps={{
                             endAdornment:
-                              isAddMode && !viewOnly && !isSubGroup ? (
+                              isAddMode && !viewOnly && !isActuallySubGroup ? (
                                 <InputAdornment position="end">
                                   {isGeneratingCode ? (
                                     <CircularProgress size={20} />
@@ -337,7 +350,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
                       </Grid>
                     )}
 
-                    <Grid size={{ sm: 12, md: isSubGroup ? 12 : 6 }}>
+                    <Grid size={{ sm: 12, md: isActuallySubGroup ? 12 : 6 }}>
                       <FormField
                         name="rGrpName"
                         control={control}
@@ -351,7 +364,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
                       />
                     </Grid>
 
-                    {isSubGroup && (
+                    {isActuallySubGroup && (
                       <Grid size={{ xs: 12 }}>
                         <Alert severity="info" sx={{ mb: 2 }}>
                           This sub-group will be created under: <strong>{initialData?.rGrpName}</strong>
@@ -366,7 +379,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
                         label="Department"
                         type="select"
                         required
-                        disabled={viewOnly || isSubGroup}
+                        disabled={viewOnly || isActuallySubGroup}
                         size="small"
                         fullWidth
                         options={dropdownValues.department || []}

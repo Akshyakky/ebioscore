@@ -11,7 +11,7 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
 import { BreakConSuspendData, BreakListData } from "@/interfaces/FrontOffice/BreakListData";
-// Import the hook instead of service
+
 import { useBreakConSuspend } from "../hooks/useBreakConSuspend";
 
 const suspendSchema = z.object({
@@ -62,7 +62,6 @@ const BreakSuspend: React.FC<BreakSuspendProps> = ({ open, onClose, breakData })
   const serverDate = useServerDate();
   const { showAlert } = useAlert();
 
-  // Use the hook instead of direct service call
   const { saveBreakConSuspend } = useBreakConSuspend();
 
   const {
@@ -105,7 +104,6 @@ const BreakSuspend: React.FC<BreakSuspendProps> = ({ open, onClose, breakData })
 
       setLoading(true);
       try {
-        // Use the hook method instead of direct service call
         const result = await saveBreakConSuspend(updatedSuspendData);
         if (result.success) {
           showAlert("Success", "The break has been suspended", "success");

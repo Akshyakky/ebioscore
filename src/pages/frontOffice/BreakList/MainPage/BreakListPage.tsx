@@ -23,7 +23,7 @@ import { breakConSuspendService } from "@/services/FrontOfficeServices/FrontOfii
 import { useBreakListOperations } from "../hooks/useBreakListOperations";
 const statusOptions = [
   { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
+  { value: "suspended", label: "Suspended" },
 ];
 
 const typeOptions = [
@@ -52,6 +52,7 @@ export const weekDayCodeMap = {
 const BreakListPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
+  const [isResumeConfirmOpen, setIsResumeConfirmOpen] = useState<boolean>(false);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [suspendData, setSuspendData] = useState<BreakConSuspendData | null>(null);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
@@ -208,21 +209,19 @@ const BreakListPage: React.FC = () => {
       return {
         totalBreaks: 0,
         activeBreaks: 0,
-        inactiveBreaks: 0,
         physicianBreaks: 0,
         resourceBreaks: 0,
         suspendedBreaks: 0,
       };
     }
 
-    const activeCount = breakList.filter((b) => b.rActiveYN === "Y").length;
     const physicianCount = breakList.filter((b) => b.isPhyResYN === "Y").length;
     const suspendedCount = breakList.filter((b) => b.status === "Suspended").length;
+    const activeCount = breakList.filter((b) => b.rActiveYN === "Y").length - suspendedCount;
 
     return {
       totalBreaks: breakList.length,
       activeBreaks: activeCount,
-      inactiveBreaks: breakList.length - activeCount,
       physicianBreaks: physicianCount,
       resourceBreaks: breakList.length - physicianCount,
       suspendedBreaks: suspendedCount,
@@ -239,7 +238,10 @@ const BreakListPage: React.FC = () => {
         breakItem.rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         breakItem.bLFrqDesc?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
-      const matchesStatus = filters.status === "" || (filters.status === "active" && breakItem.rActiveYN === "Y") || (filters.status === "inactive" && breakItem.rActiveYN === "N");
+      const matchesStatus =
+        filters.status === "" ||
+        (filters.status === "active" && breakItem.rActiveYN === "Y" && breakItem.status === "") ||
+        (filters.status === "suspended" && breakItem.status === "Suspended");
 
       const matchesType = filters.type === "" || (filters.type === "physician" && breakItem.isPhyResYN === "Y") || (filters.type === "resource" && breakItem.isPhyResYN === "N");
 
@@ -258,12 +260,6 @@ const BreakListPage: React.FC = () => {
           <Typography variant="h6">Active</Typography>
           <Typography variant="h4" color="success.main">
             {stats.activeBreaks}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Inactive</Typography>
-          <Typography variant="h4" color="error.main">
-            {stats.inactiveBreaks}
           </Typography>
         </Grid>
         <Grid size={{ xs: 12, sm: 2 }}>
@@ -301,6 +297,22 @@ const BreakListPage: React.FC = () => {
       day: "2-digit",
     });
   };
+  const handleResumeClick = useCallback((breakItem: BreakDto) => {
+    setSelectedBreak(breakItem);
+    setIsResumeConfirmOpen(true);
+  }, []);
+
+  const handleConfirmResume = useCallback(async () => {
+    if (!selectedBreak) return;
+    await resumeBreak(selectedBreak);
+    setIsResumeConfirmOpen(false);
+    setSelectedBreak(null);
+  }, [selectedBreak, resumeBreak]);
+
+  const handleResumeDialogClose = useCallback(() => {
+    setIsResumeConfirmOpen(false);
+    setSelectedBreak(null);
+  }, []);
 
   const columns: Column<BreakDto>[] = [
     {
@@ -417,7 +429,7 @@ const BreakListPage: React.FC = () => {
             )
           }
         >
-          <Chip size="small" color={value === "Suspended" ? "error" : "success"} label={value === "Suspended" ? `Inactive` : "Active"} />
+          <Chip size="small" color={value === "Suspended" ? "error" : "success"} label={value === "Suspended" ? `Suspended` : "Active"} />
         </Tooltip>
       ),
     },
@@ -447,7 +459,7 @@ const BreakListPage: React.FC = () => {
             <IconButton
               size="small"
               color={item.status === "Suspended" ? "success" : "warning"}
-              onClick={() => (item.status === "Suspended" ? handleResume(item) : handleSuspend(item))}
+              onClick={() => (item.status === "Suspended" ? handleResumeClick(item) : handleSuspend(item))}
               sx={{
                 bgcolor: "rgba(25, 118, 210, 0.08)",
                 "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
@@ -591,6 +603,18 @@ const BreakListPage: React.FC = () => {
         confirmText="Delete"
         cancelText="Cancel"
         type="error"
+        maxWidth="xs"
+      />
+
+      <ConfirmationDialog
+        open={isResumeConfirmOpen}
+        onClose={handleResumeDialogClose}
+        onConfirm={handleConfirmResume}
+        title="Confirm Resume"
+        message={`Are you sure you want to resume the break "${selectedBreak?.bLName}"?`}
+        confirmText="Resume"
+        cancelText="Cancel"
+        type="success"
         maxWidth="xs"
       />
     </Box>

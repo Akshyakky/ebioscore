@@ -1,6 +1,6 @@
 import GenericAdvanceSearch from "@/components/GenericDialog/GenericAdvanceSearch";
-import { chargeDetailsService } from "@/services/BillingServices/ChargeDetailsService";
 import { useAlert } from "@/providers/AlertProvider";
+import { chargeDetailsService } from "@/services/BillingServices/chargeDetailsService";
 import { useCallback } from "react";
 import React from "react";
 

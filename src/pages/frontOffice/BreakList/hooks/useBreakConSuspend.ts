@@ -36,7 +36,7 @@ export const useBreakConSuspend = () => {
     async (bCSID: number) => {
       try {
         setLoading(true);
-        const result = await breakConSuspendService.updateActiveStatus(bCSID, true);
+        const result = await breakConSuspendService.updateActiveStatus(bCSID, false);
         if (result.success) {
           await hook.fetchEntityList();
         }

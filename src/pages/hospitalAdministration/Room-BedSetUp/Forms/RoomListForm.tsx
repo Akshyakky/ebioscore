@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -53,23 +53,26 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
   const isAddMode = !initialData?.rlID;
   const dropdownValues = useDropdownValues(["floor", "unit"]);
 
-  const defaultValues: RoomListFormData = {
-    rlID: 0,
-    rlCode: "",
-    rName: "",
-    noOfBeds: 0,
-    rLocation: "",
-    rLocationID: 0,
-    rActiveYN: "Y",
-    rNotes: "",
-    rgrpID: initialData?.rgrpID || 0,
-    deptID: 0,
-    deptName: "",
-    rOrder: 0,
-    transferYN: "N",
-    dulID: 0,
-    unitDesc: "",
-  };
+  const defaultValues: RoomListFormData = useMemo(
+    () => ({
+      rlID: 0,
+      rlCode: "",
+      rName: "",
+      noOfBeds: 0,
+      rLocation: "",
+      rLocationID: 0,
+      rActiveYN: "Y",
+      rNotes: "",
+      rgrpID: initialData?.rgrpID || 0,
+      deptID: 0,
+      deptName: "",
+      rOrder: 0,
+      transferYN: "N",
+      dulID: 0,
+      unitDesc: "",
+    }),
+    [initialData?.rgrpID]
+  );
 
   const {
     control,
@@ -87,36 +90,9 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
   const rLocationID = watch("rLocationID");
   const dulID = watch("dulID");
 
-  const fetchDepartmentDetails = useCallback(
-    async (groupId: number) => {
-      if (!groupId) return;
-
-      try {
-        setLoading(true);
-        const response = await roomGroupService.getById(groupId);
-        if (response.success && response.data) {
-          const roomGroup = response.data;
-          setValue("deptID", roomGroup.deptID || 0, { shouldValidate: true, shouldDirty: true });
-          setValue("deptName", roomGroup.deptName || "", { shouldValidate: true, shouldDirty: true });
-        }
-      } catch (error) {
-        showAlert("Error", "Failed to load department details", "error");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [setLoading, setValue, showAlert]
-  );
-
-  useEffect(() => {
-    if (rgrpID) {
-      fetchDepartmentDetails(rgrpID);
-    }
-  }, [rgrpID, fetchDepartmentDetails]);
-
   useEffect(() => {
     if (rLocationID && dropdownValues.floor) {
-      const selectedLocation = dropdownValues.floor.find((f) => f.value.toString() === rLocationID.toString());
+      const selectedLocation = dropdownValues.floor.find((f) => f.id === rLocationID);
       if (selectedLocation) {
         setValue("rLocation", selectedLocation.label, { shouldValidate: true, shouldDirty: true });
       }
@@ -133,19 +109,20 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
   }, [dulID, dropdownValues.unit, setValue]);
 
   useEffect(() => {
-    if (initialData?.rlID) {
-      reset({
-        ...defaultValues,
-        ...initialData,
-      });
-    } else {
-      reset(defaultValues);
+    if (open) {
+      const dataToSet = initialData ? { ...defaultValues, ...initialData } : defaultValues;
+      reset(dataToSet);
+
       if (initialData?.rgrpID) {
         setValue("rgrpID", initialData.rgrpID, { shouldValidate: true, shouldDirty: true });
-        fetchDepartmentDetails(initialData.rgrpID);
+        // fetchDepartmentDetails(initialData.rgrpID);
+      }
+
+      if (isAddMode) {
+        generateRoomCode();
       }
     }
-  }, [initialData, reset, setValue, fetchDepartmentDetails]);
+  }, [open, initialData, isAddMode]);
 
   const generateRoomCode = async () => {
     if (!isAddMode) return;
@@ -158,21 +135,58 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
         showAlert("Warning", "Failed to generate room code", "warning");
       }
     } catch (error) {
+      showAlert("Error", "Failed to generate room code", "error");
     } finally {
       setIsGeneratingCode(false);
     }
   };
 
+  // Also update the fetchDepartmentDetails function to be more robust:
+
+  const fetchDepartmentDetails = useCallback(
+    async (groupId: number) => {
+      if (!groupId || groupId === 0) {
+        // Clear department fields if no group is selected
+        setValue("deptID", 0, { shouldValidate: true, shouldDirty: true });
+        setValue("deptName", "", { shouldValidate: true, shouldDirty: true });
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await roomGroupService.getById(groupId);
+        if (response.success && response.data) {
+          const roomGroup = response.data;
+          setValue("deptID", roomGroup.deptID || 0, { shouldValidate: true, shouldDirty: true });
+          setValue("deptName", roomGroup.deptName || "", { shouldValidate: true, shouldDirty: true });
+        } else {
+          // Handle case where room group data is not found
+          setValue("deptID", 0, { shouldValidate: true, shouldDirty: true });
+          setValue("deptName", "", { shouldValidate: true, shouldDirty: true });
+          showAlert("Warning", "Could not load department details for selected room group", "warning");
+        }
+      } catch (error) {
+        console.error("Error fetching department details:", error);
+        setValue("deptID", 0, { shouldValidate: true, shouldDirty: true });
+        setValue("deptName", "", { shouldValidate: true, shouldDirty: true });
+        showAlert("Error", "Failed to load department details", "error");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading, setValue, showAlert]
+  );
   useEffect(() => {
-    if (isAddMode) {
-      generateRoomCode();
+    if (rgrpID && rgrpID !== 0) {
+      fetchDepartmentDetails(rgrpID);
     }
-  }, [isAddMode]);
+  }, [rgrpID]);
 
   const onSubmit = async (data: RoomListFormData) => {
     if (viewOnly) return;
     setFormError(null);
     try {
+      debugger;
       setIsSaving(true);
       setLoading(true);
       const formData: RoomListDto = {
@@ -216,7 +230,6 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
       reset(defaultValues);
       if (initialData?.rgrpID) {
         setValue("rgrpID", initialData.rgrpID, { shouldValidate: true, shouldDirty: true });
-        fetchDepartmentDetails(initialData.rgrpID);
       }
     }
     setFormError(null);
@@ -330,7 +343,7 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, md: 6 }}>
+                    <Grid size={{ sm: 12, md: 6 }}>
                       <FormField
                         name="rlCode"
                         control={control}
@@ -354,7 +367,7 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
                       />
                     </Grid>
 
-                    <Grid size={{ xs: 12, md: 6 }}>
+                    <Grid size={{ sm: 12, md: 6 }}>
                       <FormField
                         name="rName"
                         control={control}
@@ -368,7 +381,7 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
                       />
                     </Grid>
 
-                    <Grid size={{ xs: 12, md: 6 }}>
+                    <Grid size={{ sm: 12, md: 6 }}>
                       <FormField
                         name="rgrpID"
                         control={control}
@@ -379,15 +392,23 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
                         size="small"
                         fullWidth
                         options={roomGroups.map((group) => ({
-                          value: group.rGrpID.toString(),
+                          value: group.rGrpID,
                           label: group.rGrpName,
                         }))}
                         helperText={errors.rgrpID?.message}
                       />
                     </Grid>
-
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <FormField name="deptName" control={control} label="Department" type="text" disabled={true} size="small" fullWidth />
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField
+                        name="deptName"
+                        control={control}
+                        label="Department"
+                        type="text"
+                        disabled={true} // Always disabled as it's auto-populated
+                        size="small"
+                        fullWidth
+                        helperText="Auto-populated from selected Room Group"
+                      />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -403,7 +424,7 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, md: 6 }}>
+                    <Grid size={{ sm: 12, md: 6 }}>
                       <FormField
                         name="rLocationID"
                         control={control}
@@ -412,15 +433,22 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
                         disabled={viewOnly}
                         size="small"
                         fullWidth
-                        options={dropdownValues.floor || []}
+                        options={
+                          dropdownValues.floor
+                            ? dropdownValues.floor.map((floor) => ({
+                                value: floor.id, // Use numeric id instead of string value
+                                label: floor.label,
+                              }))
+                            : []
+                        }
                       />
                     </Grid>
 
-                    <Grid size={{ xs: 12, md: 6 }}>
+                    <Grid size={{ sm: 12, md: 6 }}>
                       <FormField name="dulID" control={control} label="Unit" type="select" disabled={viewOnly} size="small" fullWidth options={dropdownValues.unit || []} />
                     </Grid>
 
-                    <Grid size={{ xs: 12, md: 6 }}>
+                    <Grid size={{ sm: 12, md: 6 }}>
                       <FormField
                         name="noOfBeds"
                         control={control}

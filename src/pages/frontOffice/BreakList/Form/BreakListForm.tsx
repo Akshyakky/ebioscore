@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Grid,
@@ -51,23 +51,33 @@ interface BreakListFormProps {
   viewOnly?: boolean;
 }
 
-const schema = z.object({
-  bLID: z.number(),
-  bLName: z.string().nonempty("Break name is required"),
-  bLStartTime: z.date(),
-  bLEndTime: z.date(),
-  bLStartDate: z.date(),
-  bLEndDate: z.date(),
-  bLFrqNo: z.number().min(0, "Frequency number must be positive").optional(),
-  bLFrqDesc: z.string().optional(),
-  bLFrqWkDesc: z.string().optional(),
-  bColor: z.string().optional(),
-  rActiveYN: z.string(),
-  rNotes: z.string().nullable().optional(),
-  isPhyResYN: z.string(),
-  transferYN: z.string().optional(),
-});
-
+const schema = z
+  .object({
+    bLID: z.number(),
+    bLName: z.string().nonempty("Break name is required"),
+    bLStartTime: z.date().refine((date) => date >= new Date(new Date().setHours(0, 0, 0, 0)), { message: "Start time cannot be in the past" }),
+    bLEndTime: z.date().refine((date) => date >= new Date(new Date().setHours(0, 0, 0, 0)), { message: "End time cannot be in the past" }),
+    bLStartDate: z.date().refine((date) => date >= new Date(new Date().setHours(0, 0, 0, 0)), { message: "Start date cannot be before today" }),
+    bLEndDate: z.date().refine((date) => date >= new Date(new Date().setHours(0, 0, 0, 0)), { message: "End date cannot be before today" }),
+    bLFrqNo: z.number().min(0, "Frequency number must be positive").optional(),
+    bLFrqDesc: z.string().optional(),
+    bLFrqWkDesc: z.string().optional(),
+    bColor: z.string().optional(),
+    rActiveYN: z.string(),
+    rNotes: z.string().nullable().optional(),
+    isPhyResYN: z.string(),
+    transferYN: z.string().optional(),
+  })
+  .refine((data) => data.bLEndDate >= data.bLStartDate, { message: "End date cannot be before start date", path: ["bLEndDate"] })
+  .refine(
+    (data) => {
+      if (data.bLStartDate.toDateString() === data.bLEndDate.toDateString()) {
+        return data.bLEndTime > data.bLStartTime;
+      }
+      return true;
+    },
+    { message: "End time must be after start time on the same day", path: ["bLEndTime"] }
+  );
 type BreakListFormData = z.infer<typeof schema>;
 
 const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
@@ -292,14 +302,23 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
 
   useEffect(() => {
     if (startDate && endDate && startTime && endTime && !isOneDay) {
-      const isSameDay = startDate === endDate;
-      if (isSameDay && startTime >= endTime) {
+      const isSameDay = startDate.toDateString() === endDate.toDateString();
+      const now = serverDate || new Date();
+      const today = new Date(now.setHours(0, 0, 0, 0));
+
+      if (startDate.toDateString() === today.toDateString() && startTime < now) {
+        const newStartTime = new Date(now);
+        newStartTime.setMinutes(newStartTime.getMinutes() + 1);
+        setValue("bLStartTime", newStartTime);
+      }
+
+      if (isSameDay && endTime <= startTime) {
         const newEndTime = new Date(startTime);
         newEndTime.setMinutes(newEndTime.getMinutes() + 30);
         setValue("bLEndTime", newEndTime);
       }
     }
-  }, [startDate, endDate, startTime, endTime, setValue, isOneDay]);
+  }, [startDate, endDate, startTime, endTime, setValue, isOneDay, serverDate]);
 
   const handleSaveFrequency = useCallback(
     (data: FrequencyData) => {
@@ -529,11 +548,14 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
                       <FormField name="bLEndDate" control={control} label="End Date" type="datepicker" required disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                     <Grid size={{ sm: 12, md: 2 }}>
-                      <FormControlLabel
-                        control={<Switch checked={isOneDay} onChange={(e) => handleOneDayToggle(e.target.checked)} disabled={viewOnly} size="small" />}
-                        label="One Day"
-                      />
+                      {!viewOnly && (
+                        <FormControlLabel
+                          control={<Switch checked={isOneDay} onChange={(e) => handleOneDayToggle(e.target.checked)} disabled={viewOnly} size="small" />}
+                          label="One Day"
+                        />
+                      )}
                     </Grid>
+
                     <Grid size={{ sm: 12, md: 5 }}>
                       <FormField
                         name="bLStartTime"
@@ -569,12 +591,17 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 8 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <FormField name="bLFrqDesc" control={control} label="Repeat" type="text" disabled={true} size="small" fullWidth />
-                        {!viewOnly && (
+                      {viewOnly ? (
+                        <Typography sx={{ color: "primary.main", display: "flex", alignItems: "center", mt: 2 }}>
+                          <ChangeCircle sx={{ mr: 1 }} />
+                          {generateFrequencyDescription(frequencyData)}
+                        </Typography>
+                      ) : (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <FormField name="bLFrqDesc" control={control} label="Repeat" type="text" disabled={true} size="small" fullWidth />
                           <CustomButton variant="contained" text="Change" icon={ChangeCircle} size="small" color="secondary" onClick={() => setOpenFrequencyDialog(true)} />
-                        )}
-                      </Box>
+                        </Box>
+                      )}
                     </Grid>
                   </Grid>
                 </CardContent>
