@@ -1,6 +1,6 @@
 // src/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, Card, CardContent, Chip, Stack, IconButton, Avatar, Divider } from "@mui/material";
+import { Box, Typography, Paper, Grid, Card, CardContent, Chip, Stack, IconButton, Avatar, Divider, TextField } from "@mui/material";
 import {
   Add as AddIcon,
   Person as PatientIcon,
@@ -296,7 +296,7 @@ const AdmissionPage: React.FC = () => {
     <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1" fontWeight="bold">
+        <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
           Patient Admission Management
         </Typography>
         <Stack direction="row" spacing={2}>
@@ -382,18 +382,7 @@ const AdmissionPage: React.FC = () => {
             Current Admissions
           </Typography>
           <Box display="flex" alignItems="center" gap={2}>
-            <input
-              type="text"
-              placeholder="Search admissions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                width: "200px",
-              }}
-            />
+            <TextField type="search" placeholder="Search admissions..." value={searchTerm} size="small" onChange={(e) => setSearchTerm(e.target.value)} />
           </Box>
         </Box>
 

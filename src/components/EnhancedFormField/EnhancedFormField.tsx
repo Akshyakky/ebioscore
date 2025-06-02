@@ -584,7 +584,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
                 return options.find((opt) => String(opt.value) === String(selected))?.label ?? selected;
               }}
             >
-              <MenuItem value="">{defaultText || `Select ${label}`}</MenuItem>
+              <MenuItem value="0">{defaultText || `Select ${label}`}</MenuItem>
               {options.map((option) => (
                 <MenuItem key={String(option.value)} value={String(option.value)}>
                   {option.label}
