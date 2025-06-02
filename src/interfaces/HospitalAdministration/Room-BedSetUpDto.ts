@@ -16,6 +16,7 @@ export interface RoomGroupDto extends BaseDto {
   rGrpTypeValue?: string;
   showinboYN: string;
   teachingYN: string;
+  parentGroupName?: string;
 }
 
 export interface RoomListDto extends BaseDto {
