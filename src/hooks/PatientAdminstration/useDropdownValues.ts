@@ -33,6 +33,7 @@ import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import { useUserList } from "@/pages/securityManagement/UserListPage/hooks/useUserList";
 import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 
 export type DropdownType =
   | "pic"
@@ -60,7 +61,6 @@ export type DropdownType =
   | "speciality"
   | "floor"
   | "unit"
-  | "service"
   | "bedCategory"
   | "productCategory"
   | "productSubGroup"
@@ -101,6 +101,7 @@ export type DropdownType =
   | "grnType"
   | "resourceList"
   | "usersWithoutLogin"
+  | "appointmentConsultants"
   | "profiles";
 
 // Structure for tracking each dropdown's state
@@ -280,14 +281,6 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return (response.data || []).map((item: any) => ({
           value: item.dulID || 0,
           label: item.unitDesc || "",
-        }));
-      },
-      service: async () => {
-        const response = await serviceTypeService.getAll();
-        return (response.data || []).map((item: ServiceTypeDto) => ({
-          value: item.bchID || 0,
-          label: item.bchName || "",
-          isLabYN: item.isLabYN,
         }));
       },
       bedCategory: async () => {
@@ -490,6 +483,14 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return (response.data || []).map((item: ResourceListData) => ({
           value: item.rLID || 0,
           label: item.rLName || "",
+          ...item,
+        }));
+      },
+      appointmentConsultants: async () => {
+        const response = await AppointmentService.fetchAppointmentConsultants();
+        return (response.data || []).map((item) => ({
+          value: item.conID || 0,
+          label: item.conFName + " " + item.conLName || "",
           ...item,
         }));
       },

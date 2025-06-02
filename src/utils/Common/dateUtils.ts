@@ -55,3 +55,11 @@ export const isValidDate = (date: Date): boolean => {
 export const getDefaultFormDate = (): Date => {
   return getTodayStart();
 };
+
+/**
+ * Calculates the number of days between two dates
+ */
+export const calculateDaysBetween = (startDate: Date, endDate: Date): number => {
+  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};

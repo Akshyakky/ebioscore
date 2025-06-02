@@ -20,7 +20,7 @@ const frequencySchema = z.object({
 
 type FrequencyFormData = z.infer<typeof frequencySchema>;
 
-const BreakFrequencyDetails: React.FC<{
+const BreakFrequency: React.FC<{
   open: boolean;
   onClose: () => void;
   endDateFromBreakDetails: string;
@@ -70,8 +70,7 @@ const BreakFrequencyDetails: React.FC<{
         }
         break;
       case "weekly":
-        validEndDate = new Date(startDate.setDate(startDate.getDate() + interval * 7));
-        if (endDateObj < validEndDate) {
+        if (endDateObj < startDate) {
           showAlert("Error", "Invalid date range, End Date does not match with the Start Date for weekly frequency", "error");
           return false;
         }
@@ -206,4 +205,4 @@ const BreakFrequencyDetails: React.FC<{
   );
 };
 
-export default BreakFrequencyDetails;
+export default BreakFrequency;

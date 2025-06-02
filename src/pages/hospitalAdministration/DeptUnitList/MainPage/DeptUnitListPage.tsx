@@ -363,7 +363,7 @@ const DeptUnitListPage: React.FC = () => {
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
             <Tooltip title="Filter Department Units">
-              <Stack direction="row" spacing={2} sx={{ pt: 1 }}>
+              <Stack direction="row" spacing={2}>
                 <DropdownSelect
                   label="Status"
                   name="status"
