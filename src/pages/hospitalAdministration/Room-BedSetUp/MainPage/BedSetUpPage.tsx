@@ -19,6 +19,12 @@ import {
   Alert,
   useMediaQuery,
   useTheme,
+  LinearProgress,
+  Button,
+  ToggleButtonGroup,
+  ToggleButton,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -33,6 +39,18 @@ import {
   Hotel as HotelIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
+  SubdirectoryArrowRight as SubdirectoryArrowRightIcon,
+  UnfoldMore as UnfoldMoreIcon,
+  UnfoldLess as UnfoldLessIcon,
+  TrendingUp as TrendingUpIcon,
+  FilterList as FilterListIcon,
+  MoreVert as MoreVertIcon,
+  Dashboard as DashboardIcon,
+  Settings as SettingsIcon,
+  KeyboardArrowUp as KeyboardArrowUpIcon,
+  Info as InfoIcon,
+  Circle as CircleIcon,
+  FilterAltOutlined as FilterAltOutlinedIcon,
 } from "@mui/icons-material";
 
 import { useLoading } from "@/hooks/Common/useLoading";
@@ -46,17 +64,20 @@ import RoomListForm from "../Forms/RoomListForm";
 import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import BedForm from "../Forms/WrBedsFrom";
 import useBedSetup from "../hooks/useRoomBedSetUp";
+
 const statusOptions = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
 ];
 
-const EnhancedBedSetupPage: React.FC = () => {
+const EnhancedBedSetupPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
   const { roomGroups, roomLists, beds, isLoading, error, fetchAllData, deleteRoomGroup, deleteRoom, deleteBed, getRoomGroupById, getRoomById, getBedById } = useBedSetup();
+
+  // Base state
   const [activeTab, setActiveTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
@@ -64,30 +85,45 @@ const EnhancedBedSetupPage: React.FC = () => {
     department: "",
     roomGroup: "",
   });
+
+  // Form states
   const [showRoomGroupForm, setShowRoomGroupForm] = useState(false);
   const [showRoomListForm, setShowRoomListForm] = useState(false);
   const [showBedForm, setShowBedForm] = useState(false);
-  const [selectedRoomGroup, setSelectedRoomGroup] = useState<RoomGroupDto | null>(null);
-  const [selectedRoom, setSelectedRoom] = useState<RoomListDto | null>(null);
-  const [selectedBed, setSelectedBed] = useState<WrBedDto | null>(null);
+  const [selectedRoomGroup, setSelectedRoomGroup] = useState(null);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedBed, setSelectedBed] = useState(null);
   const [formViewOnly, setFormViewOnly] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{ type: "roomGroup" | "room" | "bed"; id: number; name: string } | null>(null);
-  const [showStats, setShowStats] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
-  const [gridDensity, setGridDensity] = useState<GridDensity>("medium");
 
+  // Dialog states
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+
+  // UI states
+  const [showStats, setShowStats] = useState(true);
+  const [showTrends, setShowTrends] = useState(true);
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
+  const [expandedBeds, setExpandedBeds] = useState(new Set()); // New state for bed hierarchy
+  const [gridDensity, setGridDensity] = useState("medium");
+  const [isSubGroup, setIsSubGroup] = useState(false);
+  const [trendView, setTrendView] = useState("occupancy");
+  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
+
+  // Basic handlers
   const handleRefresh = useCallback(() => {
     setLoading(true);
     fetchAllData().finally(() => setLoading(false));
   }, [fetchAllData, setLoading]);
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
+
   const handleClearSearch = () => {
     setSearchTerm("");
   };
-  const handleFilterChange = (field: keyof typeof filters, value: string) => {
+
+  const handleFilterChange = (field, value) => {
     setFilters((prev) => ({
       ...prev,
       [field]: value,
@@ -101,10 +137,13 @@ const EnhancedBedSetupPage: React.FC = () => {
       roomGroup: "",
     });
   };
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+
+  const handleTabChange = (_event, newValue) => {
     setActiveTab(newValue);
   };
-  const toggleExpand = (groupId: number) => {
+
+  // Room group expansion handlers
+  const toggleExpand = (groupId) => {
     setExpandedGroups((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(groupId)) {
@@ -115,18 +154,87 @@ const EnhancedBedSetupPage: React.FC = () => {
       return newSet;
     });
   };
+
+  const expandAll = () => {
+    const allGroupIds = new Set();
+    const collectIds = (groups) => {
+      groups.forEach((group) => {
+        if (group.children && group.children.length > 0) {
+          allGroupIds.add(group.rGrpID);
+          collectIds(group.children);
+        }
+      });
+    };
+    collectIds(roomGroupHierarchy);
+    setExpandedGroups(allGroupIds);
+  };
+
+  const collapseAll = () => {
+    setExpandedGroups(new Set());
+  };
+
+  // Bed expansion handlers
+  const toggleBedExpand = (bedId) => {
+    setExpandedBeds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(bedId)) {
+        newSet.delete(bedId);
+      } else {
+        newSet.add(bedId);
+      }
+      return newSet;
+    });
+  };
+
+  const expandAllBeds = () => {
+    const allBedIds = new Set();
+    bedHierarchy.forEach((bed) => {
+      if (bed.children && bed.children.length > 0) {
+        allBedIds.add(bed.bedID);
+      }
+    });
+    setExpandedBeds(allBedIds);
+  };
+
+  const collapseAllBeds = () => {
+    setExpandedBeds(new Set());
+  };
+
+  // Room Group handlers
   const handleAddRoomGroup = (parentGroup?: RoomGroupDto) => {
-    setSelectedRoomGroup(parentGroup ? { ...parentGroup, isParent: true } : null);
+    if (parentGroup) {
+      setSelectedRoomGroup({
+        rGrpID: 0,
+        rGrpName: "",
+        key: parentGroup.rGrpID,
+        deptName: parentGroup.deptName,
+        rActiveYN: "Y",
+        parentGroupName: parentGroup.rGrpName,
+        parentId: parentGroup.rGrpID,
+        isParent: false,
+      });
+      setIsSubGroup(true);
+
+      setExpandedGroups((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(parentGroup.rGrpID);
+        return newSet;
+      });
+    } else {
+      setSelectedRoomGroup(null);
+      setIsSubGroup(false);
+    }
     setFormViewOnly(false);
     setShowRoomGroupForm(true);
   };
 
-  const handleEditRoomGroup = async (roomGroup: RoomGroupDto) => {
+  const handleEditRoomGroup = async (roomGroup) => {
     setLoading(true);
     try {
       const data = await getRoomGroupById(roomGroup.rGrpID);
       if (data) {
         setSelectedRoomGroup(data);
+        setIsSubGroup(data.key !== 0);
         setFormViewOnly(false);
         setShowRoomGroupForm(true);
       } else {
@@ -139,12 +247,13 @@ const EnhancedBedSetupPage: React.FC = () => {
     }
   };
 
-  const handleViewRoomGroup = async (roomGroup: RoomGroupDto) => {
+  const handleViewRoomGroup = async (roomGroup) => {
     setLoading(true);
     try {
       const data = await getRoomGroupById(roomGroup.rGrpID);
       if (data) {
         setSelectedRoomGroup(data);
+        setIsSubGroup(data.key !== 0);
         setFormViewOnly(true);
         setShowRoomGroupForm(true);
       } else {
@@ -157,21 +266,30 @@ const EnhancedBedSetupPage: React.FC = () => {
     }
   };
 
-  const handleRoomGroupFormClose = (refreshData?: boolean) => {
+  const handleRoomGroupFormClose = (refreshData) => {
     setShowRoomGroupForm(false);
     setSelectedRoomGroup(null);
+    setIsSubGroup(false);
     if (refreshData) {
+      if (selectedRoomGroup?.key && selectedRoomGroup.key !== 0) {
+        setExpandedGroups((prev) => {
+          const newSet = new Set(prev);
+          newSet.add(selectedRoomGroup.key);
+          return newSet;
+        });
+      }
       handleRefresh();
     }
   };
 
+  // Room handlers
   const handleAddRoom = (roomGroup?: RoomGroupDto) => {
-    setSelectedRoom(roomGroup ? ({ rgrpID: roomGroup.rGrpID } as RoomListDto) : null);
+    setSelectedRoom(roomGroup ? { rgrpID: roomGroup.rGrpID } : null);
     setFormViewOnly(false);
     setShowRoomListForm(true);
   };
 
-  const handleEditRoom = async (room: RoomListDto) => {
+  const handleEditRoom = async (room) => {
     setLoading(true);
     try {
       const data = await getRoomById(room.rlID);
@@ -189,7 +307,7 @@ const EnhancedBedSetupPage: React.FC = () => {
     }
   };
 
-  const handleViewRoom = async (room: RoomListDto) => {
+  const handleViewRoom = async (room) => {
     setLoading(true);
     try {
       const data = await getRoomById(room.rlID);
@@ -207,13 +325,15 @@ const EnhancedBedSetupPage: React.FC = () => {
     }
   };
 
-  const handleRoomFormClose = (refreshData?: boolean) => {
+  const handleRoomFormClose = (refreshData) => {
     setShowRoomListForm(false);
     setSelectedRoom(null);
     if (refreshData) {
       handleRefresh();
     }
   };
+
+  // Bed handlers
   const handleAddBed = (room?: RoomListDto) => {
     if (room) {
       const roomGroup = roomGroups.find((rg) => rg.rGrpID === room.rgrpID);
@@ -221,7 +341,7 @@ const EnhancedBedSetupPage: React.FC = () => {
         rlID: room.rlID,
         rgrpID: room.rgrpID,
         roomGroupName: roomGroup?.rGrpName,
-      } as unknown as WrBedDto);
+      });
     } else {
       setSelectedBed(null);
     }
@@ -229,12 +349,108 @@ const EnhancedBedSetupPage: React.FC = () => {
     setShowBedForm(true);
   };
 
-  const handleEditBed = async (bed: WrBedDto) => {
+  // Enhanced cradle handler
+  const handleAddCradle = (parentBed?: WrBedDto) => {
+    if (parentBed) {
+      const associatedRoom = roomLists.find((room) => room.rlID === parentBed.rlID);
+      const associatedRoomGroup = roomGroups.find((group) => group.rGrpID === parentBed.rgrpID);
+
+      setSelectedBed({
+        bedID: 0,
+        bedName: "",
+        rlID: parentBed.rlID,
+        rgrpID: parentBed.rgrpID,
+        rActiveYN: "Y",
+        rNotes: `Cradle under bed: ${parentBed.bedName}`,
+        bchID: parentBed.bchID || null,
+        bchName: parentBed.bchName || "",
+        bedRemarks: "",
+        blockBedYN: "N",
+        key: parentBed.bedID,
+        transferYN: "N",
+        wbCatID: parentBed.wbCatID || null,
+        wbCatName: parentBed.wbCatName || "",
+        bedStatusValue: "AVLBL",
+        bedStatus: "Available",
+        roomList: {
+          rName: associatedRoom?.rName || "",
+          roomGroup: associatedRoomGroup
+            ? {
+                rGrpID: associatedRoomGroup.rGrpID,
+                rGrpName: associatedRoomGroup.rGrpName,
+              }
+            : undefined,
+        },
+        parentBedName: parentBed.bedName,
+        parentBedId: parentBed.bedID,
+      });
+
+      // Auto-expand the parent bed to show the new cradle will be added
+      setExpandedBeds((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(parentBed.bedID);
+        return newSet;
+      });
+    } else {
+      setSelectedBed(null);
+    }
+    setFormViewOnly(false);
+    setShowBedForm(true);
+  };
+
+  const handleEditBed = async (bed) => {
     setLoading(true);
     try {
       const data = await getBedById(bed.bedID);
       if (data) {
-        setSelectedBed(data);
+        const enrichedBedData = { ...data };
+
+        // Handle room list information
+        if (!enrichedBedData.roomList && enrichedBedData.rlID) {
+          const associatedRoom = roomLists.find((room) => room.rlID === enrichedBedData.rlID);
+          if (associatedRoom) {
+            enrichedBedData.roomList = {
+              rName: associatedRoom.rName,
+              roomGroup: associatedRoom.roomGroup
+                ? {
+                    rGrpID: associatedRoom.rgrpID,
+                    rGrpName: associatedRoom.roomGroup.rGrpName,
+                  }
+                : undefined,
+            };
+            if (!enrichedBedData.rgrpID && associatedRoom.rgrpID) {
+              enrichedBedData.rgrpID = associatedRoom.rgrpID;
+            }
+          }
+        }
+
+        // Handle room group information
+        if (!enrichedBedData.roomList?.roomGroup && enrichedBedData.rgrpID) {
+          const associatedRoomGroup = roomGroups.find((group) => group.rGrpID === enrichedBedData.rgrpID);
+          if (associatedRoomGroup) {
+            if (!enrichedBedData.roomList) {
+              enrichedBedData.roomList = {
+                rName: "",
+                roomGroup: undefined,
+              };
+            }
+            enrichedBedData.roomList.roomGroup = {
+              rGrpID: associatedRoomGroup.rGrpID,
+              rGrpName: associatedRoomGroup.rGrpName,
+            };
+          }
+        }
+
+        // Handle parent bed information for cradles
+        if (enrichedBedData.key && enrichedBedData.key > 0) {
+          const parentBed = beds.find((b) => b.bedID === enrichedBedData.key);
+          if (parentBed) {
+            enrichedBedData.parentBedName = parentBed.bedName;
+            enrichedBedData.parentBedId = parentBed.bedID;
+          }
+        }
+
+        setSelectedBed(enrichedBedData);
         setFormViewOnly(false);
         setShowBedForm(true);
       } else {
@@ -247,12 +463,59 @@ const EnhancedBedSetupPage: React.FC = () => {
     }
   };
 
-  const handleViewBed = async (bed: WrBedDto) => {
+  const handleViewBed = async (bed) => {
     setLoading(true);
     try {
       const data = await getBedById(bed.bedID);
       if (data) {
-        setSelectedBed(data);
+        const enrichedBedData = { ...data };
+
+        // Handle room list information
+        if (!enrichedBedData.roomList && enrichedBedData.rlID) {
+          const associatedRoom = roomLists.find((room) => room.rlID === enrichedBedData.rlID);
+          if (associatedRoom) {
+            enrichedBedData.roomList = {
+              rName: associatedRoom.rName,
+              roomGroup: associatedRoom.roomGroup
+                ? {
+                    rGrpID: associatedRoom.rgrpID,
+                    rGrpName: associatedRoom.roomGroup.rGrpName,
+                  }
+                : undefined,
+            };
+            if (!enrichedBedData.rgrpID && associatedRoom.rgrpID) {
+              enrichedBedData.rgrpID = associatedRoom.rgrpID;
+            }
+          }
+        }
+
+        // Handle room group information
+        if (!enrichedBedData.roomList?.roomGroup && enrichedBedData.rgrpID) {
+          const associatedRoomGroup = roomGroups.find((group) => group.rGrpID === enrichedBedData.rgrpID);
+          if (associatedRoomGroup) {
+            if (!enrichedBedData.roomList) {
+              enrichedBedData.roomList = {
+                rName: "",
+                roomGroup: undefined,
+              };
+            }
+            enrichedBedData.roomList.roomGroup = {
+              rGrpID: associatedRoomGroup.rGrpID,
+              rGrpName: associatedRoomGroup.rGrpName,
+            };
+          }
+        }
+
+        // Handle parent bed information for cradles
+        if (enrichedBedData.key && enrichedBedData.key > 0) {
+          const parentBed = beds.find((b) => b.bedID === enrichedBedData.key);
+          if (parentBed) {
+            enrichedBedData.parentBedName = parentBed.bedName;
+            enrichedBedData.parentBedId = parentBed.bedID;
+          }
+        }
+
+        setSelectedBed(enrichedBedData);
         setFormViewOnly(true);
         setShowBedForm(true);
       } else {
@@ -265,18 +528,21 @@ const EnhancedBedSetupPage: React.FC = () => {
     }
   };
 
-  const handleBedFormClose = (refreshData?: boolean) => {
+  const handleBedFormClose = (refreshData) => {
     setShowBedForm(false);
     setSelectedBed(null);
     if (refreshData) {
       handleRefresh();
     }
   };
-  const handleDeleteClick = (type: "roomGroup" | "room" | "bed", item: any) => {
+
+  // Delete handlers
+  const handleDeleteClick = (type, item) => {
     setItemToDelete({
       type,
       id: type === "roomGroup" ? item.rGrpID : type === "room" ? item.rlID : item.bedID,
       name: type === "roomGroup" ? item.rGrpName : type === "room" ? item.rName : item.bedName,
+      isCradle: type === "bed" && item.key && item.key > 0,
     });
     setShowDeleteConfirm(true);
   };
@@ -310,6 +576,22 @@ const EnhancedBedSetupPage: React.FC = () => {
     }
   };
 
+  // Filter handlers
+  const handleTrendViewChange = (event, newView) => {
+    if (newView !== null) {
+      setTrendView(newView);
+    }
+  };
+
+  const handleFilterMenuOpen = (event) => {
+    setFilterAnchorEl(event.currentTarget);
+  };
+
+  const handleFilterMenuClose = () => {
+    setFilterAnchorEl(null);
+  };
+
+  // Data processing
   const filteredRoomGroups = useMemo(() => {
     return roomGroups.filter((group) => {
       const matchesSearch =
@@ -347,53 +629,154 @@ const EnhancedBedSetupPage: React.FC = () => {
     });
   }, [beds, searchTerm, filters]);
 
+  // Room group hierarchy
   const roomGroupHierarchy = useMemo(() => {
-    const buildHierarchy = (groups: RoomGroupDto[]) => {
-      const map = new Map<number, RoomGroupDto[]>();
-      const roots: RoomGroupDto[] = [];
+    const buildHierarchy = (groups) => {
+      const map = new Map();
+      const roots = [];
+
       groups.forEach((group) => {
+        if (!map.has(group.key)) {
+          map.set(group.key, []);
+        }
+
+        if (group.key !== 0) {
+          map.get(group.key).push({ ...group, children: [] });
+        }
+
         if (group.key === 0) {
           roots.push({ ...group, children: [] });
-        } else {
-          if (!map.has(group.key)) {
-            map.set(group.key, []);
-          }
-          map.get(group.key)!.push({ ...group, children: [] });
         }
       });
-      roots.forEach((root) => {
-        const children = map.get(root.rGrpID) || [];
-        root.children = children;
-      });
 
+      const assignChildren = (group) => {
+        if (map.has(group.rGrpID)) {
+          group.children = map.get(group.rGrpID) || [];
+          group.children.forEach(assignChildren);
+        }
+      };
+
+      roots.forEach(assignChildren);
       return roots;
     };
 
     return buildHierarchy(filteredRoomGroups);
   }, [filteredRoomGroups]);
 
+  // Enhanced bed hierarchy
+  const bedHierarchy = useMemo(() => {
+    const buildBedHierarchy = (beds) => {
+      const bedMap = new Map();
+      const parentBeds = [];
+
+      // First, separate parent beds and cradles
+      beds.forEach((bed) => {
+        const isCradle = bed.key && bed.key > 0;
+
+        if (!isCradle) {
+          // This is a parent bed
+          if (!bedMap.has(bed.bedID)) {
+            bedMap.set(bed.bedID, []);
+          }
+          parentBeds.push({
+            ...bed,
+            children: [],
+            isCradle: false,
+            nestingLevel: 0,
+            isParent: true,
+          });
+        } else {
+          // This is a cradle
+          if (!bedMap.has(bed.key)) {
+            bedMap.set(bed.key, []);
+          }
+          bedMap.get(bed.key).push({
+            ...bed,
+            children: [],
+            isCradle: true,
+            nestingLevel: 1,
+            isParent: false,
+          });
+        }
+      });
+
+      // Assign cradles to their parent beds
+      parentBeds.forEach((parentBed) => {
+        if (bedMap.has(parentBed.bedID)) {
+          parentBed.children = bedMap.get(parentBed.bedID) || [];
+        }
+      });
+
+      return parentBeds;
+    };
+
+    return buildBedHierarchy(filteredBeds);
+  }, [filteredBeds]);
+
   const flattenedRoomGroups = useMemo(() => {
-    const result: RoomGroupDto[] = [];
-    const flatten = (groups: RoomGroupDto[], level = 0) => {
-      groups.forEach((group) => {
+    const result = [];
+
+    const flatten = (groups, level = 0, parentId = null, isLastInBranch = []) => {
+      groups.forEach((group, index) => {
+        const isLast = index === groups.length - 1;
+        const currentIsLastInBranch = [...isLastInBranch, isLast];
+
         result.push({
           ...group,
           nestingLevel: level,
+          isLastChild: isLast,
+          isLastInBranch: currentIsLastInBranch,
+          parentId,
         });
+
         if (expandedGroups.has(group.rGrpID) && group.children && group.children.length > 0) {
-          flatten(group.children, level + 1);
+          flatten(group.children, level + 1, group.rGrpID, currentIsLastInBranch);
         }
       });
     };
+
     flatten(roomGroupHierarchy);
     return result;
   }, [roomGroupHierarchy, expandedGroups]);
+
+  // Enhanced flattened beds with hierarchy
+  const flattenedBeds = useMemo(() => {
+    const result = [];
+
+    const flatten = (beds, level = 0, parentId = null, isLastInBranch = []) => {
+      beds.forEach((bed, index) => {
+        const isLast = index === beds.length - 1;
+        const currentIsLastInBranch = [...isLastInBranch, isLast];
+        const hasCradles = bed.children && bed.children.length > 0;
+
+        result.push({
+          ...bed,
+          nestingLevel: level,
+          isLastChild: isLast,
+          isLastInBranch: currentIsLastInBranch,
+          parentId,
+          hasCradles,
+          cradleCount: hasCradles ? bed.children.length : 0,
+        });
+
+        if (expandedBeds.has(bed.bedID) && bed.children && bed.children.length > 0) {
+          flatten(bed.children, level + 1, bed.bedID, currentIsLastInBranch);
+        }
+      });
+    };
+
+    flatten(bedHierarchy);
+    return result;
+  }, [bedHierarchy, expandedBeds]);
 
   const stats = useMemo(() => {
     const activeRoomGroups = roomGroups.filter((g) => g.rActiveYN === "Y").length;
     const activeRooms = roomLists.filter((r) => r.rActiveYN === "Y").length;
     const activeBeds = beds.filter((b) => b.rActiveYN === "Y").length;
     const occupiedBeds = beds.filter((b) => b.rActiveYN === "Y" && b.bedStatus === "Occupied").length;
+    const cradles = beds.filter((b) => b.key && b.key > 0).length;
+    const activeCradles = beds.filter((b) => b.key && b.key > 0 && b.rActiveYN === "Y").length;
+
     return {
       totalRoomGroups: roomGroups.length,
       activeRoomGroups,
@@ -406,6 +789,13 @@ const EnhancedBedSetupPage: React.FC = () => {
       inactiveBeds: beds.length - activeBeds,
       occupiedBeds,
       availableBeds: activeBeds - occupiedBeds,
+      totalCradles: cradles,
+      activeCradles,
+      inactiveCradles: cradles - activeCradles,
+      trends: {
+        occupancy: [65, 70, 68, 72, 75, 73, 77],
+        availability: [35, 30, 32, 28, 25, 27, 23],
+      },
     };
   }, [roomGroups, roomLists, beds]);
 
@@ -425,44 +815,239 @@ const EnhancedBedSetupPage: React.FC = () => {
   }, [filteredRooms]);
 
   const processedBeds = useMemo(() => {
-    return filteredBeds.map((bed) => ({
+    return flattenedBeds.map((bed) => ({
       ...bed,
       roomName: bed.roomList?.rName || "No Room",
       groupName: bed.roomList?.roomGroup?.rGrpName || "No Group",
+      parentBedName: bed.isCradle ? bedHierarchy.find((parent) => parent.bedID === bed.key)?.bedName || "Unknown" : undefined,
       roomList: undefined,
     }));
-  }, [filteredBeds]);
+  }, [flattenedBeds, bedHierarchy]);
 
-  const roomGroupColumns: Column<RoomGroupDto>[] = [
+  const bedFormRoomGroups = useMemo(() => {
+    return roomGroups;
+  }, [roomGroups]);
+
+  const bedFormRoomLists = useMemo(() => {
+    return roomLists;
+  }, [roomLists]);
+
+  // Column definitions
+  const roomGroupColumns = [
     {
       key: "rGrpName",
       header: "Room Group Name",
       visible: true,
       sortable: true,
       filterable: true,
-      width: 250,
-      render: (row) => (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            pl: row.nestingLevel ? row.nestingLevel * 4 : 0,
-          }}
-        >
-          {row.children && row.children.length > 0 && (
-            <IconButton size="small" onClick={() => toggleExpand(row.rGrpID)}>
-              {expandedGroups.has(row.rGrpID) ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-            </IconButton>
-          )}
-          <FolderSpecialIcon
+      width: 300,
+      render: (row) => {
+        const hasChildren = row.children && row.children.length > 0;
+        const isExpanded = expandedGroups.has(row.rGrpID);
+        const isParent = row.key === 0;
+
+        const TreeLines = () => {
+          if (row.nestingLevel === 0) return null;
+
+          return (
+            <>
+              {row.isLastInBranch?.slice(0, -1).map((isLast, i) =>
+                isLast ? null : (
+                  <Box
+                    key={`vline-${i}`}
+                    sx={{
+                      position: "absolute",
+                      left: 16 + i * 24,
+                      top: 0,
+                      bottom: 0,
+                      width: 1.5,
+                      bgcolor: "rgba(0, 0, 0, 0.08)",
+                      zIndex: 1,
+                    }}
+                  />
+                )
+              )}
+
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: 16 + (row.nestingLevel - 1) * 24,
+                  width: 16,
+                  height: 1.5,
+                  top: "50%",
+                  bgcolor: "rgba(0, 0, 0, 0.08)",
+                  zIndex: 1,
+                }}
+              />
+            </>
+          );
+        };
+
+        return (
+          <Box
+            onClick={() => hasChildren && toggleExpand(row.rGrpID)}
             sx={{
-              mr: 1,
-              color: row.key === 0 ? "warning.main" : "info.main",
+              display: "flex",
+              alignItems: "center",
+              width: "100%",
+              pl: row.nestingLevel ? row.nestingLevel * 2 : 0,
+              py: 1,
+              position: "relative",
+              borderRadius: 1,
+              cursor: hasChildren ? "pointer" : "default",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: "rgba(0, 0, 0, 0.02)",
+              },
             }}
-          />
-          <Typography variant="body2">{row.rGrpName}</Typography>
-        </Box>
-      ),
+          >
+            {row.nestingLevel > 0 && <TreeLines />}
+
+            <Box sx={{ display: "flex", alignItems: "center", ml: 1, position: "relative", zIndex: 2 }}>
+              {hasChildren ? (
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpand(row.rGrpID);
+                  }}
+                  sx={{
+                    transition: "all 0.2s ease",
+                    transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+                    color: isExpanded ? "primary.main" : "text.secondary",
+                    p: 0.5,
+                  }}
+                >
+                  <ExpandMoreIcon fontSize="small" />
+                </IconButton>
+              ) : (
+                <Box sx={{ width: 28 }} />
+              )}
+            </Box>
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: isParent ? "rgba(255, 152, 0, 0.1)" : "rgba(3, 169, 244, 0.1)",
+                borderRadius: "50%",
+                p: 0.8,
+                mr: 1.5,
+                border: "1px solid",
+                borderColor: isParent ? "rgba(255, 152, 0, 0.5)" : "rgba(3, 169, 244, 0.5)",
+                transition: "all 0.2s ease",
+                position: "relative",
+                zIndex: 2,
+              }}
+            >
+              <FolderSpecialIcon
+                fontSize="small"
+                sx={{
+                  color: isParent ? "warning.main" : "info.main",
+                }}
+              />
+            </Box>
+
+            <Box sx={{ display: "flex", flexDirection: "column", flex: 1, position: "relative", zIndex: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontWeight: isParent ? 500 : 400,
+                    color: isParent ? "text.primary" : "text.secondary",
+                    transition: "color 0.2s ease",
+                    "&:hover": {
+                      color: "primary.main",
+                    },
+                  }}
+                >
+                  {row.rGrpName}
+                </Typography>
+
+                {hasChildren && (
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    sx={{
+                      ml: 1,
+                      color: "text.disabled",
+                      fontSize: "0.7rem",
+                      bgcolor: "rgba(0, 0, 0, 0.04)",
+                      px: 0.5,
+                      py: 0.1,
+                      borderRadius: 1,
+                    }}
+                  >
+                    {row.children.length}
+                  </Typography>
+                )}
+              </Box>
+
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "0.75rem",
+                  }}
+                >
+                  {row.deptName || "No Department"}
+                </Typography>
+
+                {!isParent && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      ml: 1,
+                      bgcolor: "rgba(3, 169, 244, 0.08)",
+                      px: 0.5,
+                      py: 0.1,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <SubdirectoryArrowRightIcon
+                      sx={{
+                        fontSize: "0.8rem",
+                        color: "info.main",
+                        mr: 0.5,
+                        opacity: 0.7,
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "info.main",
+                        fontStyle: "italic",
+                        fontSize: "0.7rem",
+                      }}
+                    >
+                      {row.parentGroupName || "Subgroup"}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Box>
+
+            <Chip
+              size="small"
+              color={row.rActiveYN === "Y" ? "success" : "error"}
+              label={row.rActiveYN === "Y" ? "Active" : "Inactive"}
+              sx={{
+                height: 20,
+                ml: 1,
+                position: "relative",
+                zIndex: 2,
+                "& .MuiChip-label": {
+                  px: 1,
+                  fontSize: "0.7rem",
+                },
+              }}
+            />
+          </Box>
+        );
+      },
     },
     {
       key: "deptName",
@@ -474,22 +1059,12 @@ const EnhancedBedSetupPage: React.FC = () => {
       formatter: (value) => value || "No Department",
     },
     {
-      key: "rActiveYN",
-      header: "Status",
-      visible: true,
-      sortable: true,
-      width: gridDensity === "large" ? 120 : gridDensity === "medium" ? 100 : 80,
-      formatter: (value: string) => (
-        <Chip size={gridDensity === "large" ? "medium" : "small"} color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />
-      ),
-    },
-    {
       key: "actions",
       header: "Actions",
       visible: true,
       sortable: false,
       filterable: false,
-      width: 250,
+      width: 300,
       render: (row) => (
         <Stack direction="row" spacing={1}>
           <IconButton
@@ -527,26 +1102,28 @@ const EnhancedBedSetupPage: React.FC = () => {
           </IconButton>
           {row.key === 0 && (
             <Tooltip title="Add Sub Group">
-              <IconButton
-                size="small"
-                color="secondary"
-                onClick={() => handleAddRoomGroup(row)}
-                sx={{
-                  bgcolor: "rgba(156, 39, 176, 0.08)",
-                  "&:hover": { bgcolor: "rgba(156, 39, 176, 0.15)" },
-                }}
-              >
-                <Badge
+              <span>
+                <IconButton
+                  size="small"
                   color="secondary"
-                  badgeContent="+"
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "right",
+                  onClick={() => handleAddRoomGroup(row)}
+                  sx={{
+                    bgcolor: "rgba(156, 39, 176, 0.08)",
+                    "&:hover": { bgcolor: "rgba(156, 39, 176, 0.15)" },
                   }}
                 >
-                  <FolderSpecialIcon fontSize="small" />
-                </Badge>
-              </IconButton>
+                  <Badge
+                    color="secondary"
+                    badgeContent="+"
+                    anchorOrigin={{
+                      vertical: "bottom",
+                      horizontal: "right",
+                    }}
+                  >
+                    <SubdirectoryArrowRightIcon fontSize="small" />
+                  </Badge>
+                </IconButton>
+              </span>
             </Tooltip>
           )}
         </Stack>
@@ -554,7 +1131,7 @@ const EnhancedBedSetupPage: React.FC = () => {
     },
   ];
 
-  const roomListColumns: Column<any>[] = [
+  const roomListColumns = [
     {
       key: "rName",
       header: "Room Name",
@@ -666,14 +1243,269 @@ const EnhancedBedSetupPage: React.FC = () => {
     },
   ];
 
-  const bedColumns: Column<any>[] = [
+  // Enhanced bed columns with hierarchical tree structure
+  const bedColumns = [
     {
       key: "bedName",
-      header: "Bed Name",
+      header: "Bed/Cradle Hierarchy",
       visible: true,
       sortable: true,
       filterable: true,
-      width: 150,
+      width: 350,
+      render: (row) => {
+        const isCradle = row.isCradle;
+        const hasCradles = row.hasCradles;
+        const isExpanded = expandedBeds.has(row.bedID);
+
+        const TreeLines = () => {
+          if (row.nestingLevel === 0) return null;
+
+          return (
+            <>
+              {row.isLastInBranch?.slice(0, -1).map((isLast, i) =>
+                isLast ? null : (
+                  <Box
+                    key={`vline-${i}`}
+                    sx={{
+                      position: "absolute",
+                      left: 16 + i * 24,
+                      top: 0,
+                      bottom: 0,
+                      width: 1.5,
+                      bgcolor: "rgba(156, 39, 176, 0.12)",
+                      zIndex: 1,
+                    }}
+                  />
+                )
+              )}
+
+              <Box
+                sx={{
+                  position: "absolute",
+                  left: 16 + (row.nestingLevel - 1) * 24,
+                  width: 16,
+                  height: 1.5,
+                  top: "50%",
+                  bgcolor: "rgba(156, 39, 176, 0.12)",
+                  zIndex: 1,
+                }}
+              />
+            </>
+          );
+        };
+
+        return (
+          <Box
+            onClick={() => hasCradles && toggleBedExpand(row.bedID)}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              width: "100%",
+              pl: row.nestingLevel ? row.nestingLevel * 3 : 0,
+              py: 1.5,
+              position: "relative",
+              borderRadius: 1,
+              cursor: hasCradles ? "pointer" : "default",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: isCradle ? "rgba(156, 39, 176, 0.04)" : "rgba(25, 118, 210, 0.04)",
+              },
+            }}
+          >
+            {row.nestingLevel > 0 && <TreeLines />}
+
+            {/* Expand/Collapse Button */}
+            <Box sx={{ display: "flex", alignItems: "center", ml: 1, position: "relative", zIndex: 2 }}>
+              {hasCradles ? (
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleBedExpand(row.bedID);
+                  }}
+                  sx={{
+                    transition: "all 0.2s ease",
+                    transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+                    color: isExpanded ? "primary.main" : "text.secondary",
+                    p: 0.5,
+                  }}
+                >
+                  <ExpandMoreIcon fontSize="small" />
+                </IconButton>
+              ) : (
+                <Box sx={{ width: 28 }} />
+              )}
+            </Box>
+
+            {/* Icon */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: isCradle ? "rgba(156, 39, 176, 0.1)" : "rgba(25, 118, 210, 0.1)",
+                borderRadius: "50%",
+                p: 1,
+                mr: 1.5,
+                border: "1px solid",
+                borderColor: isCradle ? "rgba(156, 39, 176, 0.3)" : "rgba(25, 118, 210, 0.3)",
+                transition: "all 0.2s ease",
+                position: "relative",
+                zIndex: 2,
+              }}
+            >
+              {isCradle ? (
+                <Badge
+                  color="secondary"
+                  variant="dot"
+                  sx={{
+                    "& .MuiBadge-badge": {
+                      backgroundColor: "secondary.main",
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                    },
+                  }}
+                >
+                  <HotelIcon
+                    fontSize="small"
+                    sx={{
+                      color: "secondary.main",
+                      fontSize: "1rem",
+                    }}
+                  />
+                </Badge>
+              ) : (
+                <HotelIcon
+                  fontSize="small"
+                  sx={{
+                    color: "primary.main",
+                    fontSize: "1.1rem",
+                  }}
+                />
+              )}
+            </Box>
+
+            {/* Content */}
+            <Box sx={{ display: "flex", flexDirection: "column", flex: 1, position: "relative", zIndex: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontWeight: isCradle ? 500 : 600,
+                    color: isCradle ? "secondary.main" : "text.primary",
+                    transition: "color 0.2s ease",
+                    "&:hover": {
+                      color: isCradle ? "secondary.dark" : "primary.main",
+                    },
+                  }}
+                >
+                  {row.bedName}
+                </Typography>
+
+                {hasCradles && (
+                  <Chip
+                    size="small"
+                    label={`${row.cradleCount} cradle${row.cradleCount !== 1 ? "s" : ""}`}
+                    sx={{
+                      ml: 1,
+                      height: 20,
+                      bgcolor: "rgba(156, 39, 176, 0.1)",
+                      color: "secondary.main",
+                      "& .MuiChip-label": {
+                        px: 1,
+                        fontSize: "0.7rem",
+                        fontWeight: 500,
+                      },
+                    }}
+                  />
+                )}
+
+                {isCradle && (
+                  <Chip
+                    size="small"
+                    label="Cradle"
+                    sx={{
+                      ml: 1,
+                      height: 18,
+                      bgcolor: "rgba(156, 39, 176, 0.15)",
+                      color: "secondary.main",
+                      "& .MuiChip-label": {
+                        px: 0.8,
+                        fontSize: "0.65rem",
+                        fontWeight: 500,
+                      },
+                    }}
+                  />
+                )}
+              </Box>
+
+              {/* Secondary information */}
+              <Box sx={{ display: "flex", alignItems: "center", mt: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "0.75rem",
+                  }}
+                >
+                  {row.roomName} • {row.groupName}
+                </Typography>
+
+                {isCradle && row.parentBedName && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      ml: 1,
+                      bgcolor: "rgba(156, 39, 176, 0.08)",
+                      px: 0.8,
+                      py: 0.2,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <SubdirectoryArrowRightIcon
+                      sx={{
+                        fontSize: "0.7rem",
+                        color: "secondary.main",
+                        mr: 0.5,
+                        opacity: 0.8,
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "secondary.main",
+                        fontSize: "0.65rem",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Under: {row.parentBedName}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Box>
+
+            {/* Status indicator */}
+            <Box sx={{ position: "relative", zIndex: 2 }}>
+              <Chip
+                size="small"
+                color={row.bedStatus === "Available" ? "success" : row.bedStatus === "Occupied" ? "error" : "default"}
+                label={row.bedStatus || "Unknown"}
+                sx={{
+                  height: 22,
+                  "& .MuiChip-label": {
+                    px: 1,
+                    fontSize: "0.7rem",
+                    fontWeight: 500,
+                  },
+                }}
+              />
+            </Box>
+          </Box>
+        );
+      },
     },
     {
       key: "roomName",
@@ -692,22 +1524,26 @@ const EnhancedBedSetupPage: React.FC = () => {
       width: 180,
     },
     {
-      key: "bedStatus",
-      header: "Status",
-      visible: true,
-      sortable: true,
-      filterable: true,
-      width: 120,
-      formatter: (value) => <Chip size="small" color={value === "Available" ? "success" : value === "Occupied" ? "error" : "default"} label={value || "Unknown"} />,
-    },
-    {
       key: "rActiveYN",
       header: "Active",
       visible: true,
       sortable: true,
       filterable: true,
       width: 100,
-      formatter: (value) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Yes" : "No"} />,
+      formatter: (value) => (
+        <Chip
+          size="small"
+          color={value === "Y" ? "success" : "error"}
+          label={value === "Y" ? "Yes" : "No"}
+          sx={{
+            height: 22,
+            "& .MuiChip-label": {
+              fontSize: "0.7rem",
+              fontWeight: 500,
+            },
+          }}
+        />
+      ),
     },
     {
       key: "actions",
@@ -715,151 +1551,322 @@ const EnhancedBedSetupPage: React.FC = () => {
       visible: true,
       sortable: false,
       filterable: false,
-      width: 170,
-      render: (row) => (
-        <Stack direction="row" spacing={1}>
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => handleViewBed(row)}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            <VisibilityIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="info"
-            onClick={() => handleEditBed(row)}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="error"
-            onClick={() => handleDeleteClick("bed", row)}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </Stack>
-      ),
+      width: 220,
+      render: (row) => {
+        const isCradle = row.isCradle;
+
+        return (
+          <Stack direction="row" spacing={1}>
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => handleViewBed(row)}
+              sx={{
+                bgcolor: "rgba(25, 118, 210, 0.08)",
+                "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+              }}
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              color="info"
+              onClick={() => handleEditBed(row)}
+              sx={{
+                bgcolor: "rgba(25, 118, 210, 0.08)",
+                "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+              }}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => handleDeleteClick("bed", row)}
+              sx={{
+                bgcolor: "rgba(244, 67, 54, 0.08)",
+                "&:hover": { bgcolor: "rgba(244, 67, 54, 0.15)" },
+              }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+            {!isCradle && (
+              <Tooltip title={`Add Cradle to ${row.bedName}`}>
+                <span>
+                  <IconButton
+                    size="small"
+                    color="secondary"
+                    onClick={() => handleAddCradle(row)}
+                    sx={{
+                      bgcolor: "rgba(156, 39, 176, 0.08)",
+                      "&:hover": { bgcolor: "rgba(156, 39, 176, 0.15)" },
+                    }}
+                  >
+                    <Badge
+                      color="secondary"
+                      badgeContent="+"
+                      anchorOrigin={{
+                        vertical: "bottom",
+                        horizontal: "right",
+                      }}
+                    >
+                      <HotelIcon fontSize="small" />
+                    </Badge>
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+          </Stack>
+        );
+      },
     },
   ];
 
-  const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2, bgcolor: "background.paper", boxShadow: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12 }}>
-          <Typography variant="h6" gutterBottom>
-            Dashboard Overview
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-        </Grid>
-
-        <Grid size={{ sm: 12, md: 6 }}>
-          <Card variant="outlined" sx={{ height: "100%" }}>
-            <CardContent>
-              <Typography variant="subtitle1" color="primary" gutterBottom>
-                <FolderSpecialIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                Room Groups
-              </Typography>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                <Typography variant="body2">Total:</Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  {stats.totalRoomGroups}
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                <Typography variant="body2">Active:</Typography>
-                <Typography variant="body1" color="success.main">
-                  {stats.activeRoomGroups}
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography variant="body2">Inactive:</Typography>
-                <Typography variant="body1" color="error.main">
-                  {stats.inactiveRoomGroups}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ sm: 12, md: 6 }}>
-          <Card variant="outlined" sx={{ height: "100%" }}>
-            <CardContent>
-              <Typography variant="subtitle1" color="primary" gutterBottom>
-                <MeetingRoomIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                Rooms
-              </Typography>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                <Typography variant="body2">Total:</Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  {stats.totalRooms}
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                <Typography variant="body2">Active:</Typography>
-                <Typography variant="body1" color="success.main">
-                  {stats.activeRooms}
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography variant="body2">Inactive:</Typography>
-                <Typography variant="body1" color="error.main">
-                  {stats.inactiveRooms}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ sm: 12, md: 6 }}>
-          <Card variant="outlined" sx={{ height: "100%" }}>
-            <CardContent>
-              <Typography variant="subtitle1" color="primary" gutterBottom>
-                <HotelIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                Beds
-              </Typography>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                <Typography variant="body2">Total:</Typography>
-                <Typography variant="body1" fontWeight="bold">
-                  {stats.totalBeds}
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                <Typography variant="body2">Available:</Typography>
-                <Typography variant="body1" color="success.main">
-                  {stats.availableBeds}
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography variant="body2">Occupied:</Typography>
-                <Typography variant="body1" color="warning.main">
-                  {stats.occupiedBeds}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+  // Render functions
+  const renderHeader = () => (
+    <Paper sx={{ p: 2, mb: 2, bgcolor: "background.paper", borderRadius: 1 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box sx={{ mr: 2, color: "primary.main" }}>
+            <DashboardIcon sx={{ fontSize: 28 }} />
+          </Box>
+          <Box>
+            <Typography variant="h6" component="h1" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
+              Hospital Room & Bed Management
+            </Typography>
+          </Box>
+        </Box>
+        <Stack direction="row" spacing={1}>
+          <Button variant="outlined" size="small" startIcon={<ExpandLessIcon />} onClick={() => setShowStats(!showStats)} sx={{ height: 32 }}>
+            {showStats ? "Hide Statistics" : "Show Statistics"}
+          </Button>
+          <Button variant="outlined" size="small" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={isLoading} sx={{ height: 32 }}>
+            {isLoading ? "Refreshing..." : "Refresh"}
+          </Button>
+          <Button variant="outlined" size="small" color="primary" startIcon={<SettingsIcon />} sx={{ height: 32 }}>
+            Settings
+          </Button>
+        </Stack>
+      </Box>
     </Paper>
   );
 
-  const renderSearchAndFilter = () => (
-    <Paper sx={{ p: 2, mb: 2, bgcolor: "background.paper", boxShadow: 2 }}>
+  const renderDashboard = () => (
+    <Box sx={{ mb: 2, display: showStats ? "block" : "none" }}>
+      <Paper sx={{ p: 2, bgcolor: "background.paper", borderRadius: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <DashboardIcon sx={{ mr: 1, color: "primary.main", fontSize: 20 }} />
+            <Typography variant="h6" sx={{ fontSize: "1rem", fontWeight: 500 }}>
+              Room-Bed Setup Statistics
+            </Typography>
+            <Chip label="Real-time" size="small" color="primary" variant="outlined" sx={{ ml: 1, height: 20, "& .MuiChip-label": { px: 1, fontSize: "0.7rem" } }} />
+          </Box>
+        </Box>
+
+        <Grid container spacing={2}>
+          {/* Room Groups Stats */}
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Card variant="outlined" sx={{ height: "100%" }}>
+              <CardContent>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <Box
+                    sx={{
+                      bgcolor: "primary.50",
+                      color: "primary.main",
+                      borderRadius: "50%",
+                      width: 36,
+                      height: 36,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mr: 1.5,
+                    }}
+                  >
+                    <FolderSpecialIcon fontSize="small" />
+                  </Box>
+                  <Typography variant="subtitle1" color="primary.main">
+                    Room Groups
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                  <Typography variant="body2">Total:</Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {stats.totalRoomGroups}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ mb: 1.5 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                    <Typography variant="body2">Active:</Typography>
+                    <Typography variant="body1" color="success.main" fontWeight="medium">
+                      {stats.activeRoomGroups}
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={(stats.activeRoomGroups / Math.max(1, stats.totalRoomGroups)) * 100}
+                    color="success"
+                    sx={{ height: 8, borderRadius: 1 }}
+                  />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Rooms Stats */}
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Card variant="outlined" sx={{ height: "100%" }}>
+              <CardContent>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <Box
+                    sx={{
+                      bgcolor: "secondary.50",
+                      color: "secondary.main",
+                      borderRadius: "50%",
+                      width: 36,
+                      height: 36,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mr: 1.5,
+                    }}
+                  >
+                    <MeetingRoomIcon fontSize="small" />
+                  </Box>
+                  <Typography variant="subtitle1" color="secondary.main">
+                    Rooms
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                  <Typography variant="body2">Total:</Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {stats.totalRooms}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ mb: 1.5 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                    <Typography variant="body2">Active:</Typography>
+                    <Typography variant="body1" color="success.main" fontWeight="medium">
+                      {stats.activeRooms}
+                    </Typography>
+                  </Box>
+                  <LinearProgress variant="determinate" value={(stats.activeRooms / Math.max(1, stats.totalRooms)) * 100} color="success" sx={{ height: 8, borderRadius: 1 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Beds Stats */}
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Card variant="outlined" sx={{ height: "100%" }}>
+              <CardContent>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <Box
+                    sx={{
+                      bgcolor: "success.50",
+                      color: "success.main",
+                      borderRadius: "50%",
+                      width: 36,
+                      height: 36,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mr: 1.5,
+                    }}
+                  >
+                    <HotelIcon fontSize="small" />
+                  </Box>
+                  <Typography variant="subtitle1" color="success.main">
+                    Beds
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                  <Typography variant="body2">Total:</Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {stats.totalBeds}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ mb: 1.5 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                    <Typography variant="body2">Available:</Typography>
+                    <Typography variant="body1" color="success.main" fontWeight="medium">
+                      {stats.availableBeds}
+                    </Typography>
+                  </Box>
+                  <LinearProgress variant="determinate" value={(stats.availableBeds / Math.max(1, stats.activeBeds)) * 100} color="success" sx={{ height: 8, borderRadius: 1 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Cradles Stats */}
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Card variant="outlined" sx={{ height: "100%" }}>
+              <CardContent>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <Box
+                    sx={{
+                      bgcolor: "secondary.50",
+                      color: "secondary.main",
+                      borderRadius: "50%",
+                      width: 36,
+                      height: 36,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mr: 1.5,
+                    }}
+                  >
+                    <Badge
+                      color="secondary"
+                      badgeContent="+"
+                      anchorOrigin={{
+                        vertical: "bottom",
+                        horizontal: "right",
+                      }}
+                    >
+                      <HotelIcon fontSize="small" />
+                    </Badge>
+                  </Box>
+                  <Typography variant="subtitle1" color="secondary.main">
+                    Cradles
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                  <Typography variant="body2">Total:</Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {stats.totalCradles}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ mb: 1.5 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                    <Typography variant="body2">Active:</Typography>
+                    <Typography variant="body1" color="success.main" fontWeight="medium">
+                      {stats.activeCradles}
+                    </Typography>
+                  </Box>
+                  <LinearProgress variant="determinate" value={(stats.activeCradles / Math.max(1, stats.totalCradles)) * 100} color="success" sx={{ height: 8, borderRadius: 1 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Paper>
+    </Box>
+  );
+
+  const renderSearch = () => (
+    <Paper sx={{ p: 2, mb: 2, bgcolor: "background.paper", borderRadius: 1 }}>
       <Grid container spacing={2} alignItems="center">
-        <Grid size={{ sm: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
             placeholder="Search rooms, beds, or groups..."
@@ -884,26 +1891,35 @@ const EnhancedBedSetupPage: React.FC = () => {
           />
         </Grid>
 
-        <Grid size={{ sm: 12, md: 6 }}>
-          <Stack direction={isMobile ? "column" : "row"} spacing={2} alignItems={isMobile ? "stretch" : "center"}>
-            <DropdownSelect
-              label="Status"
-              name="status"
-              value={filters.status}
-              options={statusOptions}
-              onChange={(e) => handleFilterChange("status", e.target.value)}
-              size="small"
-              defaultText="All Status"
-            />
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <Button size="small" startIcon={<FilterAltOutlinedIcon />} onClick={handleFilterMenuOpen} sx={{ textTransform: "none" }}>
+              Filter
+            </Button>
+            <Menu anchorEl={filterAnchorEl} open={Boolean(filterAnchorEl)} onClose={handleFilterMenuClose}>
+              <MenuItem>
+                <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
+                  Status
+                </Typography>
+              </MenuItem>
+            </Menu>
 
             {Object.values(filters).some(Boolean) && (
-              <Chip label={`Filters (${Object.values(filters).filter(Boolean).length})`} onDelete={handleClearFilters} size="small" color="primary" sx={{ ml: 1 }} />
+              <Chip
+                label={`Filters (${Object.values(filters).filter(Boolean).length})`}
+                onDelete={handleClearFilters}
+                size="small"
+                color="primary"
+                variant="outlined"
+                sx={{ ml: 1 }}
+              />
             )}
-          </Stack>
+          </Box>
         </Grid>
       </Grid>
     </Paper>
   );
+
   if (error) {
     return (
       <Box sx={{ p: 2 }}>
@@ -917,69 +1933,85 @@ const EnhancedBedSetupPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Paper sx={{ p: 2, mb: 2, bgcolor: "background.paper", boxShadow: 2 }}>
-        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-          <Grid size={{ sm: 12, md: 6 }}>
-            <Typography variant="h5" component="h1" gutterBottom>
-              Hospital Room & Bed Management
-            </Typography>
-          </Grid>
-          <Grid size={{ sm: 12, md: 6 }} sx={{ display: "flex", justifyContent: "flex-end" }}>
-            <Stack direction="row" spacing={1}>
-              <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
-              <SmartButton
-                text="Refresh"
-                icon={RefreshIcon}
-                onClick={handleRefresh}
-                color="info"
-                variant="outlined"
-                size="small"
-                disabled={isLoading}
-                loadingText="Refreshing..."
-                asynchronous={true}
-                showLoadingIndicator={true}
-              />
-            </Stack>
-          </Grid>
-        </Grid>
-      </Paper>
-      {showStats && renderStatsDashboard()}
-      {renderSearchAndFilter()}
-      <Paper sx={{ bgcolor: "background.paper", boxShadow: 2 }}>
+      {renderHeader()}
+      {renderDashboard()}
+      {renderSearch()}
+
+      <Paper sx={{ bgcolor: "background.paper", borderRadius: 1, overflow: "hidden" }}>
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
           indicatorColor="primary"
           textColor="primary"
           variant={isMobile ? "fullWidth" : "standard"}
-          sx={{ borderBottom: 1, borderColor: "divider" }}
+          sx={{
+            borderBottom: 1,
+            borderColor: "divider",
+            "& .MuiTab-root": {
+              minHeight: 48,
+              fontWeight: 500,
+            },
+          }}
         >
-          <Tab icon={<FolderSpecialIcon />} iconPosition="start" label="Room Groups" id="tab-0" aria-controls="tabpanel-0" />
-          <Tab icon={<MeetingRoomIcon />} iconPosition="start" label="Rooms" id="tab-1" aria-controls="tabpanel-1" />
-          <Tab icon={<HotelIcon />} iconPosition="start" label="Beds" id="tab-2" aria-controls="tabpanel-2" />
+          <Tab icon={<FolderSpecialIcon fontSize="small" />} iconPosition="start" label="Room Groups" id="tab-0" aria-controls="tabpanel-0" />
+          <Tab icon={<MeetingRoomIcon fontSize="small" />} iconPosition="start" label="Rooms" id="tab-1" aria-controls="tabpanel-1" />
+          <Tab icon={<HotelIcon fontSize="small" />} iconPosition="start" label="Beds" id="tab-2" aria-controls="tabpanel-2" />
         </Tabs>
+
         <Box sx={{ p: 2 }} role="tabpanel" hidden={activeTab !== 0} id="tabpanel-0" aria-labelledby="tab-0">
-          <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
-            <SmartButton text="Add Room Group" icon={AddIcon} onClick={() => handleAddRoomGroup()} color="primary" variant="contained" size="small" />
+          <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography variant="subtitle1" color="text.secondary" sx={{ mr: 1 }}>
+                Groups and Subgroups
+              </Typography>
+              <Chip label={`Total: ${filteredRoomGroups.length}`} size="small" color="primary" variant="outlined" />
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <SmartButton text="Expand All" icon={UnfoldMoreIcon} onClick={expandAll} color="info" variant="outlined" size="small" />
+              <SmartButton text="Collapse All" icon={UnfoldLessIcon} onClick={collapseAll} color="info" variant="outlined" size="small" />
+              <SmartButton text="Add Room Group" icon={AddIcon} onClick={() => handleAddRoomGroup()} color="primary" variant="contained" size="small" />
+            </Stack>
           </Box>
           <CustomGrid columns={roomGroupColumns} data={processedRoomGroups} maxHeight="calc(100vh - 400px)" emptyStateMessage="No room groups found" loading={isLoading} />
         </Box>
 
         <Box sx={{ p: 2 }} role="tabpanel" hidden={activeTab !== 1} id="tabpanel-1" aria-labelledby="tab-1">
-          <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
+          <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography variant="subtitle1" color="text.secondary" sx={{ mr: 1 }}>
+                Hospital Rooms
+              </Typography>
+              <Chip label={`Total: ${filteredRooms.length}`} size="small" color="primary" variant="outlined" />
+            </Box>
             <SmartButton text="Add Room" icon={AddIcon} onClick={() => handleAddRoom()} color="primary" variant="contained" size="small" />
           </Box>
           <CustomGrid columns={roomListColumns} data={processedRooms} maxHeight="calc(100vh - 400px)" emptyStateMessage="No rooms found" loading={isLoading} />
         </Box>
 
         <Box sx={{ p: 2 }} role="tabpanel" hidden={activeTab !== 2} id="tabpanel-2" aria-labelledby="tab-2">
-          <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-end" }}>
-            <SmartButton text="Add Bed" icon={AddIcon} onClick={() => handleAddBed()} color="primary" variant="contained" size="small" />
+          <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography variant="subtitle1" color="text.secondary">
+                Bed & Cradle Hierarchy
+              </Typography>
+              <Chip label={`Beds: ${bedHierarchy.length}`} size="small" color="primary" variant="outlined" />
+              <Chip label={`Cradles: ${flattenedBeds.filter((bed) => bed.isCradle).length}`} size="small" color="secondary" variant="outlined" />
+              <Chip label={`Total: ${flattenedBeds.length}`} size="small" color="info" variant="filled" />
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <SmartButton text="Expand All" icon={UnfoldMoreIcon} onClick={expandAllBeds} color="info" variant="outlined" size="small" />
+              <SmartButton text="Collapse All" icon={UnfoldLessIcon} onClick={collapseAllBeds} color="info" variant="outlined" size="small" />
+              <SmartButton text="Add Bed" icon={AddIcon} onClick={() => handleAddBed()} color="primary" variant="contained" size="small" />
+            </Stack>
           </Box>
-          <CustomGrid columns={bedColumns} data={processedBeds} maxHeight="calc(100vh - 400px)" emptyStateMessage="No beds found" loading={isLoading} />
+          <CustomGrid columns={bedColumns} data={processedBeds} maxHeight="calc(100vh - 400px)" emptyStateMessage="No beds or cradles found" loading={isLoading} />
         </Box>
       </Paper>
-      {showRoomGroupForm && <RoomGroupForm open={showRoomGroupForm} onClose={handleRoomGroupFormClose} initialData={selectedRoomGroup} viewOnly={formViewOnly} />}
+
+      {showRoomGroupForm && (
+        <RoomGroupForm open={showRoomGroupForm} onClose={handleRoomGroupFormClose} initialData={selectedRoomGroup} viewOnly={formViewOnly} isSubGroup={isSubGroup} />
+      )}
+
       {showRoomListForm && (
         <RoomListForm
           open={showRoomListForm}
@@ -991,14 +2023,7 @@ const EnhancedBedSetupPage: React.FC = () => {
       )}
 
       {showBedForm && (
-        <BedForm
-          open={showBedForm}
-          onClose={handleBedFormClose}
-          initialData={selectedBed}
-          viewOnly={formViewOnly}
-          roomGroups={roomGroups.filter((g) => g.rActiveYN === "Y")}
-          roomLists={roomLists.filter((r) => r.rActiveYN === "Y")}
-        />
+        <BedForm open={showBedForm} onClose={handleBedFormClose} initialData={selectedBed} viewOnly={formViewOnly} roomGroups={bedFormRoomGroups} roomLists={bedFormRoomLists} />
       )}
 
       <ConfirmationDialog
@@ -1013,6 +2038,8 @@ const EnhancedBedSetupPage: React.FC = () => {
                   ? `room group "${itemToDelete.name}"`
                   : itemToDelete.type === "room"
                   ? `room "${itemToDelete.name}"`
+                  : itemToDelete.isCradle
+                  ? `cradle "${itemToDelete.name}"`
                   : `bed "${itemToDelete.name}"`
               }?`
             : ""
@@ -1022,6 +2049,22 @@ const EnhancedBedSetupPage: React.FC = () => {
         type="error"
         maxWidth="xs"
       />
+
+      <Box sx={{ position: "fixed", bottom: 20, right: 20 }}>
+        <Tooltip title="Back to top">
+          <IconButton
+            color="primary"
+            sx={{
+              bgcolor: "white",
+              boxShadow: 2,
+              "&:hover": { bgcolor: "primary.50" },
+            }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          >
+            <KeyboardArrowUpIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
     </Box>
   );
 };

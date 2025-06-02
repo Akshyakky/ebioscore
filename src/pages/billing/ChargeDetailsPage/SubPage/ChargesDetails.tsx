@@ -2,7 +2,6 @@ import React, { useCallback, useEffect } from "react";
 import { BChargeDetailsDto, BChargePackDto, BDoctorSharePerShare, ChargeDetailsDto } from "@/interfaces/Billing/BChargeDetails";
 import { useState } from "react";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { chargeDetailsService } from "@/services/BillingServices/ChargeDetailsService";
 import { useAlert } from "@/providers/AlertProvider";
 import { Grid, Paper, SelectChangeEvent, TextField, Typography } from "@mui/material";
 import ChargeBasicDetails from "./Charges";
@@ -14,6 +13,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
 import ChargePackageDetails from "./ChargePackDetails";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { chargeDetailsService } from "@/services/BillingServices/chargeDetailsService";
 
 interface ChargeDetailsProps {
   editData?: ChargeDetailsDto;
@@ -360,64 +360,64 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     }
   };
 
-  useEffect(() => {
-    if (editData && dropdownValues.pic && dropdownValues.bedCategory && dropdownValues.service && dropdownValues.speciality && Array.isArray(editData.chargeDetails)) {
-      const picName = dropdownValues.pic.find((pic) => Number(pic.value) === editData.chargeDetails?.[0]?.pTypeID)?.label || "";
-      const wardCategoryName = dropdownValues.bedCategory.find((category) => Number(category.value) === editData.chargeDetails?.[0]?.wCatID)?.label || "";
-      const serviceGroupName = dropdownValues.service.find((service) => Number(service.value) === editData.chargeInfo?.sGrpID)?.label || "";
-      const facultyNames = dropdownValues.speciality.find((speciality) => Number(speciality.value) === editData.chargeFaculties?.[0]?.aSubID)?.label || "";
-      const mergedGridData = dropdownValues.pic.map((pic) => {
-        const savedDetails = editData.chargeDetails?.filter((detail) => detail.pTypeID === Number(pic.value)) || [];
-        const rowData: GridData = { picName: pic.label };
-        dropdownValues.bedCategory?.forEach((category) => {
-          const matchingDetail = savedDetails.find((detail) => detail.wCatID === Number(category.value));
-          rowData[`${category.label}_drAmt`] = matchingDetail?.dcValue?.toFixed(2) || "0.00";
-          rowData[`${category.label}_hospAmt`] = matchingDetail?.hcValue?.toFixed(2) || "0.00";
-          rowData[`${category.label}_totAmt`] = ((matchingDetail?.dcValue || 0) + (matchingDetail?.hcValue || 0)).toFixed(2);
-        });
-        return rowData;
-      });
+  // useEffect(() => {
+  //   if (editData && dropdownValues.pic && dropdownValues.bedCategory && dropdownValues.service && dropdownValues.speciality && Array.isArray(editData.chargeDetails)) {
+  //     const picName = dropdownValues.pic.find((pic) => Number(pic.value) === editData.chargeDetails?.[0]?.pTypeID)?.label || "";
+  //     const wardCategoryName = dropdownValues.bedCategory.find((category) => Number(category.value) === editData.chargeDetails?.[0]?.wCatID)?.label || "";
+  //     const serviceGroupName = dropdownValues.service.find((service) => Number(service.value) === editData.chargeInfo?.sGrpID)?.label || "";
+  //     const facultyNames = dropdownValues.speciality.find((speciality) => Number(speciality.value) === editData.chargeFaculties?.[0]?.aSubID)?.label || "";
+  //     const mergedGridData = dropdownValues.pic.map((pic) => {
+  //       const savedDetails = editData.chargeDetails?.filter((detail) => detail.pTypeID === Number(pic.value)) || [];
+  //       const rowData: GridData = { picName: pic.label };
+  //       dropdownValues.bedCategory?.forEach((category) => {
+  //         const matchingDetail = savedDetails.find((detail) => detail.wCatID === Number(category.value));
+  //         rowData[`${category.label}_drAmt`] = matchingDetail?.dcValue?.toFixed(2) || "0.00";
+  //         rowData[`${category.label}_hospAmt`] = matchingDetail?.hcValue?.toFixed(2) || "0.00";
+  //         rowData[`${category.label}_totAmt`] = ((matchingDetail?.dcValue || 0) + (matchingDetail?.hcValue || 0)).toFixed(2);
+  //       });
+  //       return rowData;
+  //     });
 
-      setSelectedPicIds([picName]);
-      setSelectedWardCategoryIds([wardCategoryName]);
-      setSelectedFacultyIds([facultyNames]);
-      setFormData((prev) => ({
-        ...prev,
-        chargeInfo: {
-          ...editData.chargeInfo,
-          picName,
-          wardCategoryName,
-          serviceGroupName,
-          facultyNames,
-        },
-        chargeDetails:
-          editData.chargeDetails?.map((detail) => ({
-            ...detail,
-            picName,
-            wardCategoryName,
-          })) || [],
-        doctorSharePerShare: editData.doctorSharePerShare || [],
-      }));
+  //     setSelectedPicIds([picName]);
+  //     setSelectedWardCategoryIds([wardCategoryName]);
+  //     setSelectedFacultyIds([facultyNames]);
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       chargeInfo: {
+  //         ...editData.chargeInfo,
+  //         picName,
+  //         wardCategoryName,
+  //         serviceGroupName,
+  //         facultyNames,
+  //       },
+  //       chargeDetails:
+  //         editData.chargeDetails?.map((detail) => ({
+  //           ...detail,
+  //           picName,
+  //           wardCategoryName,
+  //         })) || [],
+  //       doctorSharePerShare: editData.doctorSharePerShare || [],
+  //     }));
 
-      setGridData(mergedGridData);
-      if (editData.doctorSharePerShare && editData.doctorSharePerShare.length > 0) {
-        const updatedDoctorShareGridData = editData.doctorSharePerShare?.map((share, index) => ({
-          serialNumber: index + 1,
-          attendingPhysician: "",
-          docShare: share.doctorShare,
-          hospShare: share.hospShare,
-          totalAmount: (share.doctorShare || 0) + (share.hospShare || 0),
-          conID: share.conID,
-          docShareID: share.docShareID,
-          picName,
-        }));
+  //     setGridData(mergedGridData);
+  //     if (editData.doctorSharePerShare && editData.doctorSharePerShare.length > 0) {
+  //       const updatedDoctorShareGridData = editData.doctorSharePerShare?.map((share, index) => ({
+  //         serialNumber: index + 1,
+  //         attendingPhysician: "",
+  //         docShare: share.doctorShare,
+  //         hospShare: share.hospShare,
+  //         totalAmount: (share.doctorShare || 0) + (share.hospShare || 0),
+  //         conID: share.conID,
+  //         docShareID: share.docShareID,
+  //         picName,
+  //       }));
 
-        setGridData((prevGridData) => [...prevGridData, ...updatedDoctorShareGridData]);
-      }
-    } else {
-      handleClear();
-    }
-  }, [editData, dropdownValues]);
+  //       setGridData((prevGridData) => [...prevGridData, ...updatedDoctorShareGridData]);
+  //     }
+  //   } else {
+  //     handleClear();
+  //   }
+  // }, [editData, dropdownValues]);
 
   const handleFacultyChange = useCallback(
     (event: SelectChangeEvent<string[]>) => {
@@ -574,26 +574,26 @@ const ChargeDetails: React.FC<ChargeDetailsProps> = ({ editData }) => {
     }
   };
 
-  useEffect(() => {
-    if (dropdownValues.pic) {
-      const initialData = dropdownValues.pic.map((item, index) => ({
-        id: index,
-        picName: item.label,
-        aliasName: "",
-      }));
-      setAliasData(initialData);
-    }
-  }, [dropdownValues.pic]);
+  // useEffect(() => {
+  //   if (dropdownValues.pic) {
+  //     const initialData = dropdownValues.pic.map((item, index) => ({
+  //       id: index,
+  //       picName: item.label,
+  //       aliasName: "",
+  //     }));
+  //     setAliasData(initialData);
+  //   }
+  // }, [dropdownValues.pic]);
 
-  useEffect(() => {
-    if (formData.chargeInfo.chargeCode && aliasData.length > 0) {
-      const updatedAliasData = aliasData.map((item) => ({
-        ...item,
-        aliasName: item.aliasName || `${formData.chargeInfo.chargeCode}_${item.picName}`,
-      }));
-      setAliasData(updatedAliasData);
-    }
-  }, [formData.chargeInfo.chargeCode]);
+  // useEffect(() => {
+  //   if (formData.chargeInfo.chargeCode && aliasData.length > 0) {
+  //     const updatedAliasData = aliasData.map((item) => ({
+  //       ...item,
+  //       aliasName: item.aliasName || `${formData.chargeInfo.chargeCode}_${item.picName}`,
+  //     }));
+  //     setAliasData(updatedAliasData);
+  //   }
+  // }, [formData.chargeInfo.chargeCode]);
 
   const handleAliasNameChange = (id: number, newValue: string) => {
     setAliasData((prevData) => prevData.map((item) => (item.id === id ? { ...item, aliasName: newValue } : item)));

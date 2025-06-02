@@ -269,7 +269,11 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       floor: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "FLOOR");
-        return response;
+        return (response || []).map((item: any) => ({
+          value: item.value || 0,
+          label: item.value || "",
+          id: item.id,
+        }));
       },
       unit: async () => {
         const response = await deptUnitListService.getAll();
