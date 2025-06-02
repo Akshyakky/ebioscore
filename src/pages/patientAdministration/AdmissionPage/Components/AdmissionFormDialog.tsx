@@ -31,6 +31,9 @@ const admissionSchema = z.object({
   caseTypeName: z.string().default(""),
   admissionType: z.string().min(1, "Admission type is required"),
 
+  // New field: Reason for Admission
+  rNotes: z.string().min(1, "Reason for admission is required"),
+
   // Medical information
   attendingPhysicianId: z.number().min(1, "Attending physician is required"),
   attendingPhysicianName: z.string().default(""),
@@ -39,10 +42,11 @@ const admissionSchema = z.object({
   primaryReferralSourceId: z.number().optional(),
   primaryReferralSourceName: z.string().optional().default(""),
 
-  // Department and location
+  // Department and location - now required fields
   deptID: z.number().min(1, "Department is required"),
   deptName: z.string().default(""),
-  dulId: z.number().optional().default(0),
+  dulId: z.number().min(1, "Unit is required"), // Made required
+  unitName: z.string().default(""), // Added unit name
 
   // Bed assignment
   bedID: z.number().min(1, "Bed assignment is required"),
@@ -132,6 +136,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       caseTypeCode: "",
       caseTypeName: "",
       admissionType: "",
+      rNotes: "",
       attendingPhysicianId: 0,
       attendingPhysicianName: "",
       primaryPhysicianId: 0,
@@ -141,6 +146,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       deptID: 0,
       deptName: "",
       dulId: 0,
+      unitName: "",
       bedID: 0,
       bedName: "",
       rlID: 0,
@@ -163,6 +169,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
 
   // Watch form values
   const watchedDeptID = watch("deptID");
+  const watchedDulId = watch("dulId");
   const watchedBedID = watch("bedID");
 
   // Generate admission code on form open
@@ -212,7 +219,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       setValue("wCatID", bed.wbCatID || 0, { shouldValidate: true });
       setValue("wCatName", bed.wbCatName || "", { shouldValidate: true });
 
-      // Set department from room group
+      // Auto-fill department from room group if available
       if (bed.roomList?.roomGroup) {
         setValue("deptID", bed.roomList.roomGroup.deptID || 0, { shouldValidate: true });
         setValue("deptName", bed.roomList.roomGroup.deptName || "", { shouldValidate: true });
@@ -233,6 +240,32 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       }
     },
     [caseType, setValue]
+  );
+
+  const handleDepartmentChange = useCallback(
+    (value: any) => {
+      const selectedOption = department.find((option) => Number(option.value) === Number(value));
+      if (selectedOption) {
+        setValue("deptID", Number(value), { shouldValidate: true });
+        setValue("deptName", selectedOption.label, { shouldValidate: true });
+
+        // Reset unit when department changes
+        setValue("dulId", 0, { shouldValidate: true });
+        setValue("unitName", "", { shouldValidate: true });
+      }
+    },
+    [department, setValue]
+  );
+
+  const handleUnitChange = useCallback(
+    (value: any) => {
+      const selectedOption = unit.find((option) => Number(option.value) === Number(value));
+      if (selectedOption) {
+        setValue("dulId", Number(value), { shouldValidate: true });
+        setValue("unitName", selectedOption.label, { shouldValidate: true });
+      }
+    },
+    [unit, setValue]
   );
 
   const handleAttendingPhysicianChange = useCallback(
@@ -281,7 +314,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         patientIns: data.patientIns,
         acApprovedBy: "",
         acApprovedId: 0,
-        acReason: "",
+        acReason: data.rNotes,
         caseTypeCode: data.caseTypeCode,
         caseTypeName: data.caseTypeName,
         deliveryCaseYN: data.deliveryCaseYN,
@@ -293,7 +326,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         pmName: "",
         oldPChartID: 0,
         visitGesy: data.visitGesy || "",
-        dulId: data.dulId || 0,
+        dulId: data.dulId,
         advisedVisitNo: data.advisedVisitNo,
         pTypeID: data.pTypeID,
         pTypeName: data.pTypeName,
@@ -495,8 +528,9 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                 />
               </Grid>
 
+              {/* Changed from datepicker to datetimepicker */}
               <Grid size={{ xs: 12, md: 4 }}>
-                <EnhancedFormField name="admitDate" control={control} type="datepicker" label="Admission Date" required size="small" />
+                <EnhancedFormField name="admitDate" control={control} type="datetimepicker" label="Admission Date & Time" required size="small" />
               </Grid>
 
               <Grid size={{ xs: 12, md: 4 }}>
@@ -509,6 +543,47 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
 
               <Grid size={{ xs: 12, md: 6 }}>
                 <EnhancedFormField name="pTypeID" control={control} type="select" label="Payment Source" required size="small" options={pic} onChange={handlePICChange} />
+              </Grid>
+
+              {/* New Reason for Admission field */}
+              <Grid size={{ xs: 12 }}>
+                <EnhancedFormField
+                  name="rNotes"
+                  control={control}
+                  type="textarea"
+                  label="Reason for Admission"
+                  required
+                  size="small"
+                  rows={3}
+                  placeholder="Please describe the reason for admission..."
+                />
+              </Grid>
+
+              {/* Department and Unit Section */}
+              <Grid size={{ xs: 12 }}>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" gutterBottom>
+                  Department & Unit Assignment
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <EnhancedFormField name="deptID" control={control} type="select" label="Department" required size="small" options={department} onChange={handleDepartmentChange} />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <EnhancedFormField
+                  name="dulId"
+                  control={control}
+                  type="select"
+                  label="Unit"
+                  required
+                  size="small"
+                  options={unit}
+                  onChange={handleUnitChange}
+                  disabled={!watchedDeptID}
+                  helperText={!watchedDeptID ? "Please select a department first" : ""}
+                />
               </Grid>
 
               {/* Medical Team Section */}
