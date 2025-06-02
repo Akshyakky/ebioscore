@@ -53,7 +53,7 @@ const admissionSchema = z.object({
   wCatName: z.string().optional().default(""),
 
   // Patient type and payment
-  pTypeID: z.number().min(1, "Patient type is required"),
+  pTypeID: z.number().min(1, "PIC is required"),
   pTypeName: z.string().default(""),
 
   // Insurance and additional information
@@ -99,9 +99,9 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     primaryIntroducingSource = [],
     department = [],
     unit = [],
-    payment = [],
+    pic = [],
     bedCategory = [],
-  } = useDropdownValues(["caseType", "admissionType", "attendingPhy", "primaryIntroducingSource", "department", "unit", "payment", "bedCategory"]);
+  } = useDropdownValues(["caseType", "admissionType", "attendingPhy", "primaryIntroducingSource", "department", "unit", "pic", "bedCategory"]);
 
   // Load bed data
   const {
@@ -246,15 +246,15 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     [attendingPhy, setValue]
   );
 
-  const handlePatientTypeChange = useCallback(
+  const handlePICChange = useCallback(
     (value: any) => {
-      const selectedOption = payment.find((option) => Number(option.value) === Number(value));
+      const selectedOption = pic.find((option) => Number(option.value) === Number(value.value));
       if (selectedOption) {
-        setValue("pTypeID", Number(value), { shouldValidate: true });
+        setValue("pTypeID", Number(selectedOption.value), { shouldValidate: true });
         setValue("pTypeName", selectedOption.label, { shouldValidate: true });
       }
     },
-    [payment, setValue]
+    [pic, setValue]
   );
 
   // Form submission
@@ -508,16 +508,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
               </Grid>
 
               <Grid size={{ xs: 12, md: 6 }}>
-                <EnhancedFormField
-                  name="pTypeID"
-                  control={control}
-                  type="select"
-                  label="Patient Type / Payment Source"
-                  required
-                  size="small"
-                  options={payment}
-                  onChange={handlePatientTypeChange}
-                />
+                <EnhancedFormField name="pTypeID" control={control} type="select" label="Payment Source" required size="small" options={pic} onChange={handlePICChange} />
               </Grid>
 
               {/* Medical Team Section */}

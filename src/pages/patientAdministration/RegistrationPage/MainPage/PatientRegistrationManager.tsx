@@ -545,7 +545,7 @@ const PatientRegistrationManager: React.FC<PatientRegistrationManagerProps> = ({
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="h5" component="h1">
+            <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
               Patient Registration Management
             </Typography>
           </Grid>

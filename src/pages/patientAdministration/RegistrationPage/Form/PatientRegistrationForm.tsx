@@ -834,7 +834,7 @@ const PatientRegistrationForm = React.forwardRef<any, PatientRegistrationFormPro
           {/* Personal & Contact Information - Combined Section */}
           <Grid size={{ xs: 12 }}>
             <Paper variant="outlined" sx={{ p: 1.5 }}>
-              <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mb: 1.5 }}>
+              <Typography variant="subtitle1" color="primary" gutterBottom sx={{ fontWeight: 600, mb: 1.5 }}>
                 Personal & Contact Information
               </Typography>
 
