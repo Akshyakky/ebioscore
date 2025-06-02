@@ -1,0 +1,34 @@
+export interface DeptUnitAllocationDto {
+  dUAID: number;
+  deptID: number;
+  deptName?: string;
+  dulID: number;
+  unitDesc?: string;
+  uASTIME: string;
+  uAETIME: string;
+  facultyID: number;
+  facultyName?: string;
+  roomID: number;
+  roomName?: string;
+  resourceID: number;
+  resourceName?: string;
+  occurance1YN?: "Y" | "N";
+  occurance2YN?: "Y" | "N";
+  occurance3YN?: "Y" | "N";
+  occurance4YN?: "Y" | "N";
+  occurance5YN?: "Y" | "N";
+  occuranceAllYN?: "Y" | "N";
+  sunYN?: "Y" | "N";
+  monYN?: "Y" | "N";
+  tueYN?: "Y" | "N";
+  wedYN?: "Y" | "N";
+  thuYN?: "Y" | "N";
+  friYN?: "Y" | "N";
+  satYN?: "Y" | "N";
+  allDaysYN?: "Y" | "N";
+  specialityID?: number;
+  unitHeadYN?: "Y" | "N";
+  rActiveYN: string;
+  rNotes?: string;
+  transferYN?: string;
+}

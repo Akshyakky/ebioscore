@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import React from "react";
 import { PatientSearchProvider } from "../context/PatientSearchContext";
 import { AlertProvider } from "@/providers/AlertProvider";
+import DeptUnitAllocationPage from "@/pages/hospitalAdministration/DeptUnitAllocation/MainPage/DeptUnitAllocationPage";
 
 // Lazy load components
 const LoginPage = lazy(() => import("@/pages/common/LoginPage/LoginPage"));
@@ -519,6 +520,16 @@ const routeConfig: RouteConfig[] = [
     metadata: {
       title: "Product Transaction",
       category: "inventory",
+    },
+  },
+  {
+    path: "/DeptUnitAllocationPage",
+    component: wrapWithSuspense(DeptUnitAllocationPage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Department Unit Allocation",
+      category: "admin",
     },
   },
   // 404 Not Found route - must be placed last to catch all unmatched routes

@@ -19,7 +19,7 @@ interface RoomGroupFormProps {
   onClose: (refreshData?: boolean) => void;
   initialData: RoomGroupDto | null;
   viewOnly?: boolean;
-  isSubGroup?: boolean; // Added isSubGroup prop
+  isSubGroup?: boolean;
 }
 
 const schema = z.object({
@@ -42,13 +42,7 @@ const schema = z.object({
 
 type RoomGroupFormData = z.infer<typeof schema>;
 
-const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
-  open,
-  onClose,
-  initialData,
-  viewOnly = false,
-  isSubGroup = false, // Default to false if not provided
-}) => {
+const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialData, viewOnly = false, isSubGroup = false }) => {
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
   const [isSaving, setIsSaving] = useState(false);
@@ -57,23 +51,20 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const isAddMode = !initialData?.rGrpID;
-
-  // Use the passed isSubGroup prop or fallback to initialData?.isParent for backward compatibility
-  const isActuallySubGroup = isSubGroup || initialData?.isParent || false;
-
+  const isActuallySubGroup = isSubGroup || (initialData?.key !== undefined && initialData?.key !== null && initialData?.key > 0);
   const dropdownValues = useDropdownValues(["department", "gender"]);
 
   const defaultValues: RoomGroupFormData = {
     rGrpID: 0,
     rGrpName: "",
     rGrpCode: "",
-    key: isActuallySubGroup && initialData ? initialData.rGrpID : 0,
+    key: 0,
     deptID: 0,
     deptName: "",
     gender: "",
     genderValue: "",
     rGrpTypeValue: "",
-    groupYN: "N",
+    groupYN: "Y",
     rActiveYN: "Y",
     rNotes: "",
     transferYN: "N",
@@ -116,21 +107,26 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
   }, [gender, dropdownValues.gender, setValue]);
 
   useEffect(() => {
+    debugger;
     if (initialData) {
-      if (initialData.rGrpID && !initialData.isParent && !isActuallySubGroup) {
-        // Editing existing room group
+      if (initialData.rGrpID) {
         reset({
           ...defaultValues,
           ...initialData,
+          key: initialData.key || 0,
         });
-      } else if (initialData.isParent || isActuallySubGroup) {
-        // Creating sub-group under a parent
-        reset({
+      } else {
+        const formData = {
           ...defaultValues,
-          key: initialData.rGrpID,
-          deptID: initialData.deptID || 0,
+          key: isActuallySubGroup ? initialData.key || 0 : 0,
           deptName: initialData.deptName || "",
-        });
+          gender: initialData.gender || "",
+          genderValue: initialData.genderValue || "",
+          rGrpTypeValue: initialData.rGrpTypeValue || "",
+          parentGroupName: initialData.rGrpName,
+          rGrpName: initialData.rGrpName,
+        };
+        reset(formData);
       }
     } else {
       reset(defaultValues);
@@ -138,7 +134,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
   }, [initialData, reset, isActuallySubGroup]);
 
   const generateRoomGroupCode = async () => {
-    if (!isAddMode) return;
+    if (!isAddMode || isActuallySubGroup) return;
     try {
       setIsGeneratingCode(true);
       const nextCodeResult = await roomGroupService.getNextCode("RG", 3);
@@ -148,7 +144,6 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
         showAlert("Warning", "Failed to generate room group code", "warning");
       }
     } catch (error) {
-      console.error("Error generating room group code:", error);
     } finally {
       setIsGeneratingCode(false);
     }
@@ -170,8 +165,8 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
         rGrpID: data.rGrpID,
         rGrpName: data.rGrpName,
         rGrpCode: data.rGrpCode || "",
-        key: data.key,
-        groupYN: data.groupYN,
+        key: isActuallySubGroup ? initialData?.key || 0 : 0,
+        groupYN: "Y",
         rActiveYN: data.rActiveYN,
         rNotes: data.rNotes || "",
         transferYN: data.transferYN || "N",
@@ -183,10 +178,11 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
         showinboYN: data.showinboYN,
         teachingYN: data.teachingYN,
       };
-
       const response = await roomGroupService.save(formData);
       if (response.success) {
-        showAlert("Success", isAddMode ? "Room group created successfully" : "Room group updated successfully", "success");
+        const actionType = isAddMode ? "created" : "updated";
+        const itemType = isActuallySubGroup ? "Sub-group" : "Room group";
+        showAlert("Success", `${itemType} ${actionType} successfully`, "success");
         onClose(true);
       } else {
         throw new Error(response.errorMessage || "Failed to save room group");
@@ -202,10 +198,19 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
   };
 
   const performReset = () => {
-    if (initialData && !initialData.isParent && !isActuallySubGroup) {
-      reset(initialData as RoomGroupFormData);
+    if (initialData && initialData.rGrpID) {
+      reset({
+        ...initialData,
+        key: initialData.key || 0,
+      } as RoomGroupFormData);
     } else {
-      reset(defaultValues);
+      const resetData = {
+        ...defaultValues,
+        key: isActuallySubGroup ? initialData?.key || 0 : 0,
+        deptID: initialData?.deptID || 0,
+        deptName: initialData?.deptName || "",
+      };
+      reset(resetData);
     }
     setFormError(null);
 
@@ -255,12 +260,14 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
   };
 
   const dialogTitle = viewOnly
-    ? "View Room Group Details"
+    ? isActuallySubGroup
+      ? `View Sub-group Details${initialData?.parentGroupName ? ` (Under: ${initialData.parentGroupName})` : ""}`
+      : "View Room Group Details"
     : isAddMode
     ? isActuallySubGroup
-      ? "Create New Sub Group"
+      ? `Create New Sub-group${initialData?.parentGroupName ? ` under ${initialData.parentGroupName}` : ""}`
       : "Create New Room Group"
-    : `Edit Room Group - ${initialData?.rGrpName}`;
+    : `Edit ${isActuallySubGroup ? "Sub-group" : "Room Group"} - ${initialData?.rGrpName}`;
 
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
@@ -270,7 +277,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? (isActuallySubGroup ? "Create Sub Group" : "Create Room Group") : "Update Room Group"}
+          text={isAddMode ? (isActuallySubGroup ? "Create Sub-group" : "Create Room Group") : isActuallySubGroup ? "Update Sub-group" : "Update Room Group"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
@@ -315,6 +322,48 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
               </Box>
             </Grid>
 
+            {isActuallySubGroup && (
+              <Grid size={{ xs: 12 }}>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  <Typography variant="body1" component="div" sx={{ fontWeight: 500, mb: 1 }}>
+                    {isAddMode ? "Creating Sub-group Under:" : "Sub-group Information:"}
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box sx={{ bgcolor: "rgba(25, 118, 210, 0.1)", p: 1.5, borderRadius: 1 }}>
+                        <Typography variant="caption" color="primary" sx={{ fontWeight: 500 }}>
+                          Parent Group
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                          {initialData?.parentGroupName || initialData?.parentGroup?.rGrpName || "Unknown Group"}
+                        </Typography>
+                        {initialData?.parentGroup && (
+                          <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                            Department: {initialData.parentGroup.deptName || "Not specified"}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Box sx={{ bgcolor: "rgba(76, 175, 80, 0.1)", p: 1.5, borderRadius: 1 }}>
+                        <Typography variant="caption" color="success.main" sx={{ fontWeight: 500 }}>
+                          Department (Inherited)
+                        </Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                          {initialData?.deptName || "Unknown Department"}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                  {isAddMode && (
+                    <Typography variant="body2" sx={{ mt: 1, fontStyle: "italic", color: "text.secondary" }}>
+                      The sub-group will inherit department settings from the parent group.
+                    </Typography>
+                  )}
+                </Alert>
+              </Grid>
+            )}
+
             <Grid size={{ xs: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -354,7 +403,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
                       <FormField
                         name="rGrpName"
                         control={control}
-                        label="Group Name"
+                        label={isActuallySubGroup ? "Sub-group Name" : "Group Name"}
                         type="text"
                         required
                         disabled={viewOnly}
@@ -363,14 +412,6 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
                         helperText={errors.rGrpName?.message}
                       />
                     </Grid>
-
-                    {isActuallySubGroup && (
-                      <Grid size={{ xs: 12 }}>
-                        <Alert severity="info" sx={{ mb: 2 }}>
-                          This sub-group will be created under: <strong>{initialData?.rGrpName}</strong>
-                        </Alert>
-                      </Grid>
-                    )}
 
                     <Grid size={{ sm: 12, md: 6 }}>
                       <FormField
@@ -383,7 +424,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
                         size="small"
                         fullWidth
                         options={dropdownValues.department || []}
-                        helperText={errors.deptID?.message}
+                        helperText={errors.deptID?.message || (isActuallySubGroup ? "Inherited from parent group" : "")}
                       />
                     </Grid>
 
@@ -399,7 +440,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Room Group Settings
+                    {isActuallySubGroup ? "Sub-group Settings" : "Room Group Settings"}
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
@@ -450,7 +491,7 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({
                         size="small"
                         fullWidth
                         rows={4}
-                        placeholder="Enter any additional information about this room group"
+                        placeholder={`Enter any additional information about this ${isActuallySubGroup ? "sub-group" : "room group"}`}
                       />
                     </Grid>
                   </Grid>

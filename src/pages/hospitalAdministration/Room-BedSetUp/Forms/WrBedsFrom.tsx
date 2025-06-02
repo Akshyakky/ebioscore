@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress, Tooltip, TextField } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +14,7 @@ import { useAlert } from "@/providers/AlertProvider";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
 import { SubdirectoryArrowRight as SubdirectoryArrowRightIcon, FolderSpecial as FolderSpecialIcon, MeetingRoom as MeetingRoomIcon } from "@mui/icons-material";
+
 interface BedFormProps {
   open: boolean;
   onClose: (refreshData?: boolean) => void;
@@ -60,10 +61,35 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [filteredRoomLists, setFilteredRoomLists] = useState<RoomListDto[]>([]);
-  const [isInitializing, setIsInitializing] = useState(false); // Add initialization flag
+  const [isInitializing, setIsInitializing] = useState(false);
   const isAddMode = !initialData?.bedID;
   const isCradle = initialData?.key && initialData.key > 0;
   const dropdownValues = useDropdownValues(["bedCategory", "serviceType"]);
+
+  const roomInfo = useMemo(() => {
+    if (!initialData?.rlID) {
+      return { roomName: "Unknown Room", roomGroupName: "Unknown Group" };
+    }
+    const selectedRoom = roomLists.find((room) => room.rlID === initialData.rlID);
+    if (selectedRoom) {
+      const roomGroupId = initialData.rgrpID || selectedRoom.rgrpID;
+      const selectedRoomGroup = roomGroups.find((group) => group.rGrpID === roomGroupId);
+      const result = {
+        roomName: selectedRoom.rName || "Unknown Room",
+        roomGroupName: selectedRoomGroup?.rGrpName || "Unknown Group",
+      };
+      return result;
+    }
+
+    if (initialData.roomList && initialData.roomList.rName !== "Unknown Room") {
+      const fallbackResult = {
+        roomName: initialData.roomList.rName,
+        roomGroupName: initialData.roomList.roomGroup?.rGrpName || "Unknown Group",
+      };
+      return fallbackResult;
+    }
+    return { roomName: "Unknown Room", roomGroupName: "Unknown Group" };
+  }, [initialData?.rlID, initialData?.rgrpID, initialData?.roomList, roomLists, roomGroups]);
 
   const defaultValues: BedFormData = {
     bedID: 0,
@@ -76,7 +102,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
     bchName: "",
     bedRemarks: "",
     blockBedYN: "N",
-    key: isCradle && initialData ? initialData.key : 0,
+    key: 0,
     transferYN: "N",
     wbCatID: null,
     wbCatName: "",
@@ -96,27 +122,29 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
     resolver: zodResolver(schema),
     mode: "onChange",
   });
+
   const rgrpID = watch("rgrpID");
   const rlID = watch("rlID");
   const bedStatusValue = watch("bedStatusValue");
   const wbCatID = watch("wbCatID");
   const bchID = watch("bchID");
 
-  // Modified room filtering effect with initialization flag
   useEffect(() => {
     if (rgrpID) {
       const filtered = roomLists.filter((room) => room.rgrpID === rgrpID);
       setFilteredRoomLists(filtered);
-
-      // Only reset rlID if we're not in the middle of initializing the form
-      // and if the current rlID is not valid for the selected room group
-      if (!isInitializing && rlID && !filtered.some((room) => room.rlID === rlID)) {
-        setValue("rlID", 0, { shouldValidate: true, shouldDirty: true });
+      if (!isInitializing && rlID) {
+        const isEditMode = initialData?.bedID && initialData.bedID > 0;
+        const currentRoomValid = filtered.some((room) => room.rlID === rlID);
+        if (!isEditMode && !currentRoomValid) {
+          setValue("rlID", 0, { shouldValidate: true, shouldDirty: true });
+        } else if (isEditMode && !currentRoomValid) {
+        }
       }
     } else {
       setFilteredRoomLists([]);
     }
-  }, [rgrpID, roomLists, rlID, setValue, isInitializing]);
+  }, [rgrpID, roomLists, rlID, setValue, isInitializing, initialData?.bedID]);
 
   useEffect(() => {
     if (bedStatusValue) {
@@ -145,55 +173,55 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
     }
   }, [bchID, dropdownValues.serviceType, setValue]);
 
-  // Modified initialization effect
   useEffect(() => {
     setIsInitializing(true);
-
     if (initialData?.bedID) {
-      // For edit mode (existing bed or cradle)
       const formData = {
         ...defaultValues,
         ...initialData,
       };
-
       reset(formData);
-
-      // Set room group first to trigger filtering
       if (initialData.rgrpID) {
         setValue("rgrpID", initialData.rgrpID, { shouldValidate: true, shouldDirty: false });
       }
-
-      // Use setTimeout to ensure room filtering happens before setting room
-      setTimeout(() => {
-        if (initialData.rlID) {
-          setValue("rlID", initialData.rlID, { shouldValidate: true, shouldDirty: false });
+    } else {
+      const newFormData = { ...defaultValues };
+      if (isCradle && initialData) {
+        newFormData.key = initialData.key || 0;
+        newFormData.rgrpID = initialData.rgrpID || 0;
+        newFormData.rlID = initialData.rlID || 0;
+        if (!newFormData.rgrpID && newFormData.rlID) {
+          const selectedRoom = roomLists.find((room) => room.rlID === newFormData.rlID);
+          if (selectedRoom) {
+            newFormData.rgrpID = selectedRoom.rgrpID;
+          }
+        }
+        if (initialData.parentBedName) {
+          newFormData.rNotes = `Cradle under bed: ${initialData.parentBedName}`;
+        }
+      } else if (initialData) {
+        newFormData.rgrpID = initialData.rgrpID || 0;
+        newFormData.rlID = initialData.rlID || 0;
+      }
+      reset(newFormData);
+      if (isCradle && initialData?.rlID) {
+        setValue("rlID", initialData.rlID, { shouldValidate: true, shouldDirty: true });
+        let roomGroupId = initialData.rgrpID;
+        if (!roomGroupId) {
+          const selectedRoom = roomLists.find((room) => room.rlID === initialData.rlID);
+          roomGroupId = selectedRoom?.rgrpID;
+        }
+        if (roomGroupId) {
+          setValue("rgrpID", roomGroupId, { shouldValidate: true, shouldDirty: true });
         }
         setIsInitializing(false);
-      }, 0);
-    } else {
-      // For add mode (new bed or cradle)
-      reset(defaultValues);
-
-      if (initialData?.rgrpID) {
+      } else if (initialData?.rgrpID) {
         setValue("rgrpID", initialData.rgrpID, { shouldValidate: true, shouldDirty: true });
+      } else {
+        setIsInitializing(false);
       }
-      if (initialData?.rlID) {
-        setValue("rlID", initialData.rlID, { shouldValidate: true, shouldDirty: true });
-      }
-
-      // For cradles, set the key field and initial notes
-      if (isCradle && initialData?.key) {
-        setValue("key", initialData.key, { shouldValidate: true, shouldDirty: true });
-
-        // Set initial notes with parent bed reference
-        if (initialData.parentBedName) {
-          setValue("rNotes", `Cradle under bed: ${initialData.parentBedName}`, { shouldValidate: true, shouldDirty: true });
-        }
-      }
-
-      setIsInitializing(false);
     }
-  }, [initialData, reset, setValue, isCradle]);
+  }, [initialData, reset, setValue, isCradle, roomLists]);
 
   useEffect(() => {
     if (isAddMode && rlID && !isInitializing) {
@@ -217,7 +245,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
         rActiveYN: data.rActiveYN || "Y",
         blockBedYN: data.blockBedYN || "N",
         transferYN: data.transferYN || "N",
-        key: isCradle && initialData ? initialData.key : 0, // Maintain parent bed reference for cradles
+        key: isCradle ? initialData?.key || 0 : 0,
         bedStatusValue: data.bedStatusValue || "AVLBL",
         bedStatus: data.bedStatus || "Available",
         bedName: data.bedName.trim(),
@@ -256,20 +284,14 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
           const existingBeds = await wrBedService.getAll();
           if (existingBeds.success && existingBeds.data) {
             const roomBeds = existingBeds.data.filter((bed) => bed.rlID === rlID);
-
             let generatedName = "";
-
             if (isCradle && initialData?.parentBedName && initialData?.key) {
-              // For cradles, generate name based on parent bed
               const parentBedName = initialData.parentBedName;
               const existingCradles = roomBeds.filter((bed) => bed.key === initialData.key && bed.bedName.startsWith(parentBedName));
-
               const cradleNumber = existingCradles.length + 1;
               generatedName = `${parentBedName}-C${cradleNumber.toString().padStart(2, "0")}`;
-
               showAlert("Info", `Generated cradle name: ${generatedName} for bed: ${parentBedName}`, "info");
             } else {
-              // For regular beds, use existing logic
               const regularBeds = roomBeds.filter((bed) => !bed.key || bed.key === 0);
               const bedNumber = regularBeds.length + 1;
               generatedName = `${selectedRoom.rName}-B${bedNumber.toString().padStart(3, "0")}`;
@@ -280,42 +302,41 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
         }
       }
     } catch (error) {
-      console.error("Error generating bed name:", error);
       showAlert("Error", "Failed to generate bed name", "error");
     } finally {
       setIsGeneratingCode(false);
     }
   };
+
   const performReset = () => {
     setIsInitializing(true);
-
     if (initialData?.bedID) {
       const formData = initialData as BedFormData;
       reset(formData);
-
-      // Set room group first
       if (initialData.rgrpID) {
         setValue("rgrpID", initialData.rgrpID, { shouldValidate: true, shouldDirty: false });
+        const filtered = roomLists.filter((room) => room.rgrpID === initialData.rgrpID);
+        setFilteredRoomLists(filtered);
       }
-
-      // Then set room after filtering
-      setTimeout(() => {
-        if (initialData.rlID) {
-          setValue("rlID", initialData.rlID, { shouldValidate: true, shouldDirty: false });
-        }
-        setIsInitializing(false);
-      }, 0);
     } else {
-      reset(defaultValues);
+      const resetData = { ...defaultValues };
+
+      if (initialData) {
+        resetData.rgrpID = initialData.rgrpID || 0;
+        resetData.rlID = initialData.rlID || 0;
+        if (isCradle) {
+          resetData.key = initialData.key || 0;
+          if (initialData.parentBedName) {
+            resetData.rNotes = `Cradle under bed: ${initialData.parentBedName}`;
+          }
+        }
+      }
+      reset(resetData);
       if (initialData?.rgrpID) {
         setValue("rgrpID", initialData.rgrpID, { shouldValidate: true, shouldDirty: true });
       }
       if (initialData?.rlID) {
         setValue("rlID", initialData.rlID, { shouldValidate: true, shouldDirty: true });
-      }
-      // For cradles, restore the key field
-      if (isCradle && initialData?.key) {
-        setValue("key", initialData.key, { shouldValidate: true, shouldDirty: true });
       }
       setIsInitializing(false);
     }
@@ -376,58 +397,6 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
       : "Create New Bed"
     : `Edit ${isCradle ? "Cradle" : "Bed"} - ${initialData?.bedName}`;
 
-  // Update the cradle alert section
-  {
-    isCradle && initialData?.key && (
-      <Grid size={{ xs: 12 }}>
-        <Alert severity="info" sx={{ mb: 2 }}>
-          <Box>
-            <Typography variant="body1" component="div" sx={{ fontWeight: 500, mb: 1 }}>
-              {isAddMode ? "Creating Cradle Under:" : "Cradle Information:"}
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Box sx={{ bgcolor: "rgba(25, 118, 210, 0.1)", p: 1.5, borderRadius: 1 }}>
-                  <Typography variant="caption" color="primary" sx={{ fontWeight: 500 }}>
-                    Parent Bed
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {initialData.parentBedName || "Unknown Bed"}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Box sx={{ bgcolor: "rgba(76, 175, 80, 0.1)", p: 1.5, borderRadius: 1 }}>
-                  <Typography variant="caption" color="success.main" sx={{ fontWeight: 500 }}>
-                    Room
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {initialData.roomList?.rName || "Unknown Room"}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Box sx={{ bgcolor: "rgba(255, 152, 0, 0.1)", p: 1.5, borderRadius: 1 }}>
-                  <Typography variant="caption" color="warning.main" sx={{ fontWeight: 500 }}>
-                    Room Group
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                    {initialData.roomList?.roomGroup?.rGrpName || "Unknown Group"}
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-            {isAddMode && (
-              <Typography variant="body2" sx={{ mt: 1, fontStyle: "italic", color: "text.secondary" }}>
-                The cradle will inherit the room and group settings from the parent bed.
-              </Typography>
-            )}
-          </Box>
-        </Alert>
-      </Grid>
-    );
-  }
-
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
   ) : (
@@ -465,6 +434,28 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
         actions={dialogActions}
       >
         <Box component="form" noValidate sx={{ p: 1 }}>
+          {process.env.NODE_ENV === "development" && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                <strong>Debug Info:</strong>
+                <br />
+                isValid: {isValid ? "true" : "false"}
+                <br />
+                isDirty: {isDirty ? "true" : "false"}
+                <br />
+                isSaving: {isSaving ? "true" : "false"}
+                <br />
+                rgrpID: {watch("rgrpID")}
+                <br />
+                rlID: {watch("rlID")}
+                <br />
+                bedName: {watch("bedName")}
+                <br />
+                Errors: {JSON.stringify(errors, null, 2)}
+              </Typography>
+            </Alert>
+          )}
+
           {formError && (
             <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError(null)}>
               {formError}
@@ -481,13 +472,51 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
               </Box>
             </Grid>
 
-            {isCradle && initialData?.key && (
+            {isCradle && initialData && (
               <Grid size={{ xs: 12 }}>
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  This cradle will be created under:{" "}
-                  <strong>
-                    {initialData.roomList?.roomGroup?.rGrpName} - {initialData.roomList?.rName}
-                  </strong>
+                  <Box>
+                    <Typography variant="body1" component="div" sx={{ fontWeight: 500, mb: 1 }}>
+                      {isAddMode ? "Creating Cradle Under:" : "Cradle Information:"}
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Box sx={{ bgcolor: "rgba(25, 118, 210, 0.1)", p: 1.5, borderRadius: 1 }}>
+                          <Typography variant="caption" color="primary" sx={{ fontWeight: 500 }}>
+                            Parent Bed
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            {initialData.parentBedName || "Unknown Bed"}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Box sx={{ bgcolor: "rgba(76, 175, 80, 0.1)", p: 1.5, borderRadius: 1 }}>
+                          <Typography variant="caption" color="success.main" sx={{ fontWeight: 500 }}>
+                            Room
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            {roomInfo.roomName}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Box sx={{ bgcolor: "rgba(255, 152, 0, 0.1)", p: 1.5, borderRadius: 1 }}>
+                          <Typography variant="caption" color="warning.main" sx={{ fontWeight: 500 }}>
+                            Room Group
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            {roomInfo.roomGroupName}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                    {isAddMode && (
+                      <Typography variant="body2" sx={{ mt: 1, fontStyle: "italic", color: "text.secondary" }}>
+                        The cradle will inherit the room and group settings from the parent bed.
+                      </Typography>
+                    )}
+                  </Box>
                 </Alert>
               </Grid>
             )}
@@ -571,7 +600,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
                             label="Room Group"
                             type="select"
                             required
-                            disabled={viewOnly || (initialData?.rgrpID && !isAddMode)}
+                            disabled={viewOnly || (isCradle && !isAddMode)}
                             size="small"
                             fullWidth
                             options={roomGroups.map((group) => ({
@@ -589,7 +618,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
                             label="Room"
                             type="select"
                             required
-                            disabled={viewOnly || (initialData?.rlID && !isAddMode) || !rgrpID}
+                            disabled={viewOnly || (isCradle && !isAddMode) || !rgrpID}
                             size="small"
                             fullWidth
                             options={filteredRoomLists.map((room) => ({
@@ -601,12 +630,35 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
                         </Grid>
                       </>
                     ) : (
-                      // For cradles, show room information as read-only display
                       <>
+                        <Box sx={{ display: "none" }}>
+                          <FormField
+                            name="rgrpID"
+                            control={control}
+                            label="Room Group"
+                            type="select"
+                            required
+                            options={roomGroups.map((group) => ({
+                              value: group.rGrpID,
+                              label: group.rGrpName,
+                            }))}
+                          />
+                          <FormField
+                            name="rlID"
+                            control={control}
+                            label="Room"
+                            type="select"
+                            required
+                            options={filteredRoomLists.map((room) => ({
+                              value: room.rlID,
+                              label: room.rName,
+                            }))}
+                          />
+                        </Box>
                         <Grid size={{ xs: 12, md: 6 }}>
                           <TextField
                             label="Room Group (Inherited)"
-                            value={initialData?.roomList?.roomGroup?.rGrpName || "Unknown Group"}
+                            value={roomInfo.roomGroupName}
                             disabled
                             size="small"
                             fullWidth
@@ -624,7 +676,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
                         <Grid size={{ xs: 12, md: 6 }}>
                           <TextField
                             label="Room (Inherited)"
-                            value={initialData?.roomList?.rName || "Unknown Room"}
+                            value={roomInfo.roomName}
                             disabled
                             size="small"
                             fullWidth
@@ -649,7 +701,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Bed Configuration
+                    {isCradle ? "Cradle Configuration" : "Bed Configuration"}
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
@@ -658,7 +710,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
                       <FormField
                         name="wbCatID"
                         control={control}
-                        label="Bed Category"
+                        label={isCradle ? "Cradle Category" : "Bed Category"}
                         type="select"
                         disabled={viewOnly}
                         size="small"
@@ -681,7 +733,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
                     </Grid>
 
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <FormField name="blockBedYN" control={control} label="Block Bed" type="switch" disabled={viewOnly} size="small" />
+                      <FormField name="blockBedYN" control={control} label={isCradle ? "Block Cradle" : "Block Bed"} type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -701,13 +753,13 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
                       <FormField
                         name="bedRemarks"
                         control={control}
-                        label="Bed Remarks"
+                        label={isCradle ? "Cradle Remarks" : "Bed Remarks"}
                         type="textarea"
                         disabled={viewOnly}
                         size="small"
                         fullWidth
                         rows={2}
-                        placeholder="Enter any specific remarks about this bed"
+                        placeholder={`Enter any specific remarks about this ${isCradle ? "cradle" : "bed"}`}
                       />
                     </Grid>
 
