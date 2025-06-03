@@ -36,6 +36,7 @@ import dayjs, { Dayjs } from "dayjs";
 // Define the date and time format constants
 const DATE_FORMAT = "DD/MM/YYYY";
 const TIME_FORMAT = "HH:mm";
+const DATETIME_FORMAT = "DD/MM/YYYY HH:mm";
 
 // Define option type for select, radio, checkbox, etc.
 export interface OptionType {
@@ -267,7 +268,9 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
 
     // Get date format from props or use default
     const getDateFormat = (): string => {
-      if (isDatePicker(type) || isDateTimePicker(type)) {
+      if (isDateTimePicker(type)) {
+        return (rest as any).format || DATETIME_FORMAT;
+      } else if (isDatePicker(type)) {
         return (rest as any).format || DATE_FORMAT;
       }
       return DATE_FORMAT;
