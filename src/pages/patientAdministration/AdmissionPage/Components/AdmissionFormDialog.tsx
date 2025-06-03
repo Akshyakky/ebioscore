@@ -18,7 +18,7 @@ import { useBedSelection } from "@/pages/hospitalAdministration/ManageBeds/hooks
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
 
-// [Schema remains the same - keeping validation schema unchanged]
+// Schema remains the same
 const admissionSchema = z.object({
   pChartID: z.number().min(1, "Patient is required"),
   pChartCode: z.string().min(1, "Patient chart code is required"),
@@ -55,6 +55,11 @@ const admissionSchema = z.object({
   patientIns: z.string().optional().default(""),
   advisedVisitNo: z.number().default(1),
   visitGesy: z.string().optional().default(""),
+  // Add patient name fields to schema
+  pTitle: z.string().default(""),
+  pfName: z.string().default(""),
+  plName: z.string().default(""),
+  pmName: z.string().default(""),
 });
 
 type AdmissionFormData = z.infer<typeof admissionSchema>;
@@ -72,6 +77,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
   const [isBedSelectionOpen, setIsBedSelectionOpen] = useState(false);
   const [admitCode, setAdmitCode] = useState<string>("");
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [patientData, setPatientData] = useState<any>(null);
 
   const isEditMode = !!existingAdmission;
   const serverDate = useServerDate();
@@ -98,7 +104,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     filters: { availableOnly: true },
   });
 
-  // Form setup with compact default values
+  // Form setup with default values
   const {
     control,
     handleSubmit,
@@ -145,6 +151,10 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       patientIns: "",
       advisedVisitNo: 1,
       visitGesy: "",
+      pTitle: "",
+      pfName: "",
+      plName: "",
+      pmName: "",
     },
   });
 
@@ -153,7 +163,35 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
   const watchedDulId = watch("dulId");
   const watchedBedID = watch("bedID");
 
-  // [All existing useEffect and handler functions remain the same]
+  // Load patient data when patient is selected
+  useEffect(() => {
+    if (open && patient && !isEditMode) {
+      loadPatientData();
+    }
+  }, [open, patient, isEditMode]);
+
+  // Load patient data including name fields
+  const loadPatientData = useCallback(async () => {
+    if (!patient) return;
+
+    try {
+      const statusResult = await extendedAdmissionService.getPatientAdmissionStatus(patient.pChartID);
+
+      if (statusResult.success && statusResult.data?.patientData) {
+        const patRegister = statusResult.data.patientData.patRegisters;
+        setPatientData(patRegister);
+
+        // Set patient name fields in form
+        setValue("pTitle", patRegister.pTitle || "", { shouldValidate: true });
+        setValue("pfName", patRegister.pFName || "", { shouldValidate: true });
+        setValue("plName", patRegister.pLName || "", { shouldValidate: true });
+        setValue("pmName", patRegister.pMName || "", { shouldValidate: true });
+      }
+    } catch (error) {
+      console.error("Error loading patient data:", error);
+    }
+  }, [patient, setValue]);
+
   useEffect(() => {
     if (open && !isEditMode) {
       generateAdmissionCode();
@@ -167,6 +205,11 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         pChartCode: patient.pChartCode,
         admitCode: admitCode,
         admitDate: serverDate,
+        // Reset patient name fields - they will be set by loadPatientData
+        pTitle: "",
+        pfName: "",
+        plName: "",
+        pmName: "",
       });
     }
   }, [open, patient, admitCode, serverDate, reset]);
@@ -247,6 +290,8 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       if (selectedOption) {
         setValue("attendingPhysicianId", Number(value.value.split("-")[0]), { shouldValidate: true });
         setValue("attendingPhysicianName", selectedOption.label, { shouldValidate: true });
+        // setValue("treatingSpecialtyID", Number(value.value.split("-")[1]), { shouldValidate: true });
+        // setValue("treatingPhySpecialty", selectedOption.label.split("|")[1], { shouldValidate: true });
       }
     },
     [attendingPhy, setValue]
@@ -263,7 +308,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     [pic, setValue]
   );
 
-  // [Form submission logic remains the same]
+  // Form submission with proper patient name fields
   const onFormSubmit = async (data: AdmissionFormData) => {
     try {
       const ipAdmissionDto: IPAdmissionDto = {
@@ -273,7 +318,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         pChartCode: data.pChartCode,
         oPIPCaseNo: 0,
         opipNo: 0,
-        patOPIP: "",
+        patOPIP: "I",
         admitDate: data.admitDate,
         admitStatus: "ADMITTED",
         provDiagnosisYN: data.provDiagnosisYN,
@@ -282,7 +327,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         dischargeAdviceYN: data.dischargeAdviceYN,
         nurseIns: data.nurseIns,
         clerkIns: data.clerkIns,
-        pTitle: "",
+        pTitle: data.pTitle, // Properly assigned from patient data
         patientIns: data.patientIns,
         acApprovedBy: "",
         acApprovedId: 0,
@@ -293,9 +338,9 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         deptID: data.deptID,
         deptName: data.deptName,
         pChartCompId: 0,
-        pfName: "",
-        plName: "",
-        pmName: "",
+        pfName: data.pfName, // Properly assigned from patient data
+        plName: data.plName, // Properly assigned from patient data
+        pmName: data.pmName, // Properly assigned from patient data
         oldPChartID: 0,
         visitGesy: data.visitGesy || "",
         dulId: data.dulId,
@@ -311,10 +356,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         primaryReferralSourceName: data.primaryReferralSourceName,
         rActiveYN: "Y",
         transferYN: "N",
-        rCreatedBy: "System",
-        rCreatedDate: new Date(),
-        rModifiedBy: "System",
-        rModifiedDate: new Date(),
         rNotes: "",
       };
 
@@ -345,7 +386,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         treatPhyName: data.attendingPhysicianName,
         facID: 0,
         facName: "",
-        bStatusValue: "OCCUPIED",
+        bStatusValue: "OCCUP",
         patientStatusValue: "ADMITTED",
         admitCode: data.admitCode,
         pChartCode: data.pChartCode,
@@ -356,10 +397,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         oldPChartID: 0,
         rActiveYN: "Y",
         transferYN: "N",
-        rCreatedBy: "System",
-        rCreatedDate: new Date(),
-        rModifiedBy: "System",
-        rModifiedDate: new Date(),
         rNotes: "",
       };
 
@@ -367,7 +404,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         bedDetID: existingAdmission?.wrBedDetailsDto?.bedDetID || 0,
         bedID: data.bedID,
         bedName: data.bedName,
-        bedStatusValue: "OCCUPIED",
+        bedStatusValue: "OCCUP",
         bedDeptID: data.deptID,
         rlID: data.rlID,
         rName: data.rName,
@@ -375,8 +412,8 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         rGrpName: selectedBed?.roomList?.roomGroup?.rGrpName || "",
         pChartID: data.pChartID,
         pChartCode: data.pChartCode,
-        pTitle: "",
-        pfName: "",
+        pTitle: data.pTitle, // Properly assigned from patient data
+        pfName: data.pfName, // Properly assigned from patient data
         patDeptID: data.deptID,
         adID: existingAdmission?.ipAdmissionDetailsDto?.adID || 0,
         admitID: existingAdmission?.ipAdmissionDto?.admitID || 0,
@@ -391,10 +428,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         oldPChartID: 0,
         rActiveYN: "Y",
         transferYN: "N",
-        rCreatedBy: "System",
-        rCreatedDate: new Date(),
-        rModifiedBy: "System",
-        rModifiedDate: new Date(),
         rNotes: "",
       };
 
@@ -415,6 +448,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     reset();
     setSelectedBed(null);
     setAdmitCode("");
+    setPatientData(null);
   };
 
   const dialogActions = (
@@ -450,7 +484,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         <Box sx={{ p: 1.5 }}>
           <form onSubmit={handleSubmit(onFormSubmit)}>
             <Grid container spacing={1.5}>
-              {/* Compact Patient Information Header */}
+              {/* Patient Information Header */}
               <Grid size={{ xs: 12 }}>
                 <Paper sx={{ p: 1.5, backgroundColor: "primary.50", border: "1px solid", borderColor: "primary.200" }}>
                   <Box display="flex" alignItems="center" gap={1.5}>
@@ -463,13 +497,20 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         UHID: {patient?.pChartCode}
+                        {patientData && (
+                          <>
+                            {" | "}
+                            {[patientData.pTitle, patientData.pFName, patientData.pMName, patientData.pLName].filter(Boolean).join(" ")}
+                          </>
+                        )}
                       </Typography>
                     </Box>
                   </Box>
                 </Paper>
               </Grid>
 
-              {/* Compact Admission Details - Single Row */}
+              {/* Rest of the form remains the same as in the original */}
+              {/* Admission Details - Single Row */}
               <Grid size={{ xs: 12, md: 3 }}>
                 <EnhancedFormField
                   name="admitCode"
@@ -549,7 +590,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                 <EnhancedFormField name="primaryReferralSourceId" control={control} type="select" label="Referral Source" size="small" options={primaryIntroducingSource} />
               </Grid>
 
-              {/* Compact Bed Assignment */}
+              {/* Bed Assignment */}
               <Grid size={{ xs: 12 }}>
                 <Box sx={{ p: 1.5, backgroundColor: "grey.50", borderRadius: 1, border: "1px solid", borderColor: "grey.300" }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
@@ -586,7 +627,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                 </Box>
               </Grid>
 
-              {/* Compact Additional Options - Single Row */}
+              {/* Additional Options - Single Row */}
               <Grid size={{ xs: 12, md: 3 }}>
                 <EnhancedFormField name="insuranceYN" control={control} type="switch" label="Has Insurance" size="small" />
               </Grid>
@@ -603,7 +644,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                 <EnhancedFormField name="dischargeAdviceYN" control={control} type="switch" label="Discharge Advice" size="small" />
               </Grid>
 
-              {/* Compact Instructions - Single Row */}
+              {/* Instructions - Single Row */}
               <Grid size={{ xs: 12, md: 4 }}>
                 <EnhancedFormField name="nurseIns" control={control} type="textarea" label="Nurse Instructions" size="small" rows={2} />
               </Grid>
