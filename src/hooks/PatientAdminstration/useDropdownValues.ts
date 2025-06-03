@@ -34,6 +34,7 @@ import { useUserList } from "@/pages/securityManagement/UserListPage/hooks/useUs
 import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
+import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
 
 export type DropdownType =
   | "pic"
@@ -102,7 +103,8 @@ export type DropdownType =
   | "resourceList"
   | "usersWithoutLogin"
   | "appointmentConsultants"
-  | "profiles";
+  | "profiles"
+  | "units";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -483,6 +485,14 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         return (response.data || []).map((item: ResourceListData) => ({
           value: item.rLID || 0,
           label: item.rLName || "",
+          ...item,
+        }));
+      },
+      units: async () => {
+        const response = await deptUnitListService.getAll();
+        return (response.data || []).map((item: DeptUnitListDto) => ({
+          value: item.dulID || 0,
+          label: item.unitDesc || "",
           ...item,
         }));
       },

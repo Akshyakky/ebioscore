@@ -63,3 +63,11 @@ export const calculateDaysBetween = (startDate: Date, endDate: Date): number => 
   const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
+
+export const formatTimeStringToDate = (timeString: string): Date => {
+  const today = new Date();
+  const [hours, minutes] = timeString.split(":");
+
+  const dateWithTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes));
+  return dateWithTime;
+};
