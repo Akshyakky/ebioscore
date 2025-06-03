@@ -149,13 +149,11 @@ const DeptUnitAllocationPage: React.FC = () => {
     });
   }, []);
 
-  // Get unique departments for filter
   const departmentOptions = useMemo(() => {
     const uniqueDepts = [...new Set(allocationList.map((a) => a.deptName).filter(Boolean))];
     return uniqueDepts.map((dept) => ({ value: dept!, label: dept! }));
   }, [allocationList]);
 
-  // Calculate stats for the dashboard
   const stats = useMemo(() => {
     if (!allocationList.length) {
       return {
@@ -184,7 +182,6 @@ const DeptUnitAllocationPage: React.FC = () => {
     };
   }, [allocationList]);
 
-  // Apply filters to the list
   const filteredAllocations = useMemo(() => {
     if (!allocationList.length) return [];
 
@@ -280,12 +277,11 @@ const DeptUnitAllocationPage: React.FC = () => {
     return occurrences.join(", ") || "-";
   };
 
-  const formatTime = (timeString: string): string => {
+  const formatTime = (time: Date): string => {
     try {
-      const date = new Date(timeString);
-      return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      return new Date(time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
     } catch {
-      return timeString;
+      return "-";
     }
   };
 
@@ -325,7 +321,7 @@ const DeptUnitAllocationPage: React.FC = () => {
       header: "Schedule",
       visible: true,
       sortable: true,
-      width: 150,
+      width: 200,
       render: (item) => (
         <Box display="flex" alignItems="center" gap={0.5}>
           <AccessTimeIcon fontSize="small" />
@@ -510,7 +506,6 @@ const DeptUnitAllocationPage: React.FC = () => {
                   size="small"
                   defaultText="All Status"
                 />
-
                 <DropdownSelect
                   label="Department"
                   name="department"
@@ -520,7 +515,6 @@ const DeptUnitAllocationPage: React.FC = () => {
                   size="small"
                   defaultText="All Departments"
                 />
-
                 <DropdownSelect
                   label="Day Type"
                   name="dayType"
@@ -530,7 +524,6 @@ const DeptUnitAllocationPage: React.FC = () => {
                   size="small"
                   defaultText="All Day Types"
                 />
-
                 <Box display="flex" alignItems="center" gap={1}>
                   {(filters.status || filters.department || filters.dayType) && (
                     <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />

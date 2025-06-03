@@ -21,9 +21,27 @@ interface DeptUnitAllocationFormProps {
   viewOnly?: boolean;
 }
 
+// Utility function to convert Date to time string (HH:mm)
+const formatTimeToString = (date: Date | undefined): string => {
+  if (!date) return "";
+  return date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+};
+
+// Utility function to convert time string (HH:mm) to Date
+const parseTimeToDate = (time: string): Date => {
+  const [hours, minutes] = time.split(":").map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+};
+
 const schema = z
   .object({
-    dUAID: z.number(),
+    dUAID: z.number().default(0),
     deptID: z.number().min(1, "Department is required"),
     deptName: z.string().optional(),
     dulID: z.number().min(1, "Unit is required"),
@@ -39,7 +57,6 @@ const schema = z
     specialityID: z.number().optional(),
     unitHeadYN: z.string().optional(),
     fullDay: z.boolean().optional(),
-    // Week days
     allDaysYN: z.string().optional(),
     sunYN: z.string().optional(),
     monYN: z.string().optional(),
@@ -48,14 +65,12 @@ const schema = z
     thuYN: z.string().optional(),
     friYN: z.string().optional(),
     satYN: z.string().optional(),
-    // Occurrences
     occuranceAllYN: z.string().optional(),
     occurance1YN: z.string().optional(),
     occurance2YN: z.string().optional(),
     occurance3YN: z.string().optional(),
     occurance4YN: z.string().optional(),
     occurance5YN: z.string().optional(),
-    // Common fields
     rActiveYN: z.string(),
     rNotes: z.string().nullable().optional(),
     transferYN: z.string().optional(),
@@ -82,9 +97,13 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
-  const { department: departmentList, roomList, resourceList } = useDropdownValues(["department", "roomList", "resourceList"]);
-  const unitList = [];
-  const facultyList = [];
+  const {
+    department,
+    roomList,
+    resourceList,
+    units,
+    appointmentConsultants: facultyList,
+  } = useDropdownValues(["department", "roomList", "resourceList", "units", "appointmentConsultants"]);
 
   const { showAlert } = useAlert();
   const isAddMode = !initialData;
@@ -106,7 +125,6 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
     specialityID: 0,
     unitHeadYN: "N",
     fullDay: false,
-    // Week days
     allDaysYN: "N",
     sunYN: "N",
     monYN: "Y",
@@ -115,14 +133,12 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
     thuYN: "Y",
     friYN: "Y",
     satYN: "N",
-    // Occurrences
     occuranceAllYN: "Y",
     occurance1YN: "Y",
     occurance2YN: "Y",
     occurance3YN: "Y",
     occurance4YN: "Y",
     occurance5YN: "Y",
-    // Common fields
     rActiveYN: "Y",
     rNotes: "",
     transferYN: "N",
@@ -148,23 +164,23 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
 
   // Filter units based on selected department
   const filteredUnitList = useMemo(() => {
-    if (!deptID || !unitList) return [];
-    // Assuming unitList has department association - adjust based on actual data structure
-    return unitList.filter((unit) => unit.deptID === deptID);
-  }, [deptID, unitList]);
+    if (!deptID || !units) return [];
+    return units.filter((unit) => unit.deptID === deptID);
+  }, [deptID, units]);
 
   useEffect(() => {
     if (initialData) {
       reset({
         ...initialData,
-        fullDay: false, // This is a UI-only field
+        uASTIME: formatTimeToString(initialData.uASTIME),
+        uAETIME: formatTimeToString(initialData.uAETIME),
+        fullDay: false,
       } as DeptUnitAllocationFormData);
     } else {
       reset(defaultValues);
     }
   }, [initialData, reset]);
 
-  // Handle full day toggle
   useEffect(() => {
     if (fullDay) {
       setValue("uASTIME", "00:00", { shouldValidate: true });
@@ -172,20 +188,16 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
     }
   }, [fullDay, setValue]);
 
-  // Handle all days toggle
   const handleAllDaysChange = (checked: boolean) => {
     const value = checked ? "Y" : "N";
     setValue("allDaysYN", value);
-
     const days = ["sunYN", "monYN", "tueYN", "wedYN", "thuYN", "friYN", "satYN"] as const;
     days.forEach((day) => setValue(day, value, { shouldValidate: true }));
   };
 
-  // Handle all occurrences toggle
   const handleAllOccurrencesChange = (checked: boolean) => {
     const value = checked ? "Y" : "N";
     setValue("occuranceAllYN", value);
-
     const occurrences = ["occurance1YN", "occurance2YN", "occurance3YN", "occurance4YN", "occurance5YN"] as const;
     occurrences.forEach((occ) => setValue(occ, value, { shouldValidate: true }));
   };
@@ -199,29 +211,57 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
       setIsSaving(true);
       setLoading(true);
 
-      // Check for conflicts
-      // const conflictCheck = checkScheduleConflict(data, allocationList);
-      // if (conflictCheck.hasConflict) {
-      //   setFormError(conflictCheck.message!);
-      //   showAlert("Warning", conflictCheck.message!, "warning");
-      //   return;
-      // }
+      // Convert form data to DeptUnitAllocationDto
+      const allocationData: DeptUnitAllocationDto = {
+        dUAID: data.dUAID ?? 0,
+        deptID: data.deptID,
+        deptName: data.deptName ?? "",
+        dulID: data.dulID,
+        unitDesc: data.unitDesc ?? "",
+        uASTIME: parseTimeToDate(data.uASTIME),
+        uAETIME: parseTimeToDate(data.uAETIME),
+        facultyID: data.facultyID,
+        facultyName: data.facultyName ?? "",
+        roomID: data.roomID ?? 0,
+        roomName: data.roomName ?? "",
+        resourceID: data.resourceID ?? 0,
+        resourceName: data.resourceName ?? "",
+        specialityID: data.specialityID ?? 0,
+        unitHeadYN: data.unitHeadYN ?? "N",
+        allDaysYN: data.allDaysYN ?? "N",
+        sunYN: data.sunYN ?? "N",
+        monYN: data.monYN ?? "N",
+        tueYN: data.tueYN ?? "N",
+        wedYN: data.wedYN ?? "N",
+        thuYN: data.thuYN ?? "N",
+        friYN: data.friYN ?? "N",
+        satYN: data.satYN ?? "N",
+        occuranceAllYN: data.occuranceAllYN ?? "N",
+        occurance1YN: data.occurance1YN ?? "N",
+        occurance2YN: data.occurance2YN ?? "N",
+        occurance3YN: data.occurance3YN ?? "N",
+        occurance4YN: data.occurance4YN ?? "N",
+        occurance5YN: data.occurance5YN ?? "N",
+        rActiveYN: data.rActiveYN || "Y",
+        rNotes: data.rNotes ?? "",
+        transferYN: data.transferYN ?? "N",
+      };
 
-      // const allocationData: DeptUnitAllocationDto = {
-      //   ...data,
-      //   rActiveYN: data.rActiveYN || "Y",
-      //   rNotes: data.rNotes || "",
-      //   transferYN: data.transferYN || "N",
-      // };
+      const conflictCheck = checkScheduleConflict(allocationData, allocationList);
+      if (conflictCheck.hasConflict) {
+        setFormError(conflictCheck.message!);
+        showAlert("Warning", conflictCheck.message!, "warning");
+        return;
+      }
 
-      // const response = await saveAllocation(allocationData);
+      const response = await saveAllocation(allocationData);
 
-      // if (response.success) {
-      //   showAlert("Success", isAddMode ? "Allocation created successfully" : "Allocation updated successfully", "success");
-      //   onClose(true);
-      // } else {
-      //   throw new Error(response.errorMessage || "Failed to save allocation");
-      // }
+      if (response.success) {
+        showAlert("Success", isAddMode ? "Allocation created successfully" : "Allocation updated successfully", "success");
+        onClose(true);
+      } else {
+        throw new Error(response.errorMessage || "Failed to save allocation");
+      }
     } catch (error) {
       console.error("Error saving allocation:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to save allocation";
@@ -234,7 +274,16 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
   };
 
   const performReset = () => {
-    reset(initialData ? (initialData as DeptUnitAllocationFormData) : defaultValues);
+    reset(
+      initialData
+        ? {
+            ...initialData,
+            uASTIME: formatTimeToString(initialData.uASTIME),
+            uAETIME: formatTimeToString(initialData.uAETIME),
+            fullDay: false,
+          }
+        : defaultValues
+    );
     setFormError(null);
   };
 
@@ -310,8 +359,7 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
           )}
 
           <Grid container spacing={3}>
-            {/* Status Toggle */}
-            <Grid size={{ sm: 12 }}>
+            <Grid size={{ xs: 12, sm: 12 }}>
               <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2}>
                 <Typography variant="body2" color="text.secondary">
                   Status:
@@ -320,17 +368,15 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
               </Box>
             </Grid>
 
-            {/* Department and Unit Section */}
-            <Grid size={{ sm: 12 }}>
+            <Grid size={{ xs: 12, sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Department & Unit Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   <Grid container spacing={2}>
-                    <Grid size={{ sm: 12, md: 6 }}>
+                    <Grid size={{ xs: 12, sm: 12, md: 6 }}>
                       <FormField
                         name="deptID"
                         control={control}
@@ -339,18 +385,17 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
                         required
                         disabled={viewOnly}
                         size="small"
-                        options={departmentList}
+                        options={department}
                         fullWidth
                         onChange={(value) => {
-                          const selectedDept = departmentList?.find((dept) => Number(dept.value) === Number(value.value));
+                          const selectedDept = department?.find((dept) => Number(dept.value) === Number(value.value));
                           setValue("deptName", selectedDept?.label || "");
-                          setValue("dulID", 0); // Reset unit selection when department changes
+                          setValue("dulID", 0);
                           setValue("unitDesc", "");
                         }}
                       />
                     </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
+                    <Grid size={{ xs: 12, sm: 12, md: 6 }}>
                       <FormField
                         name="dulID"
                         control={control}
@@ -372,29 +417,24 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
               </Card>
             </Grid>
 
-            {/* Schedule Section */}
-            <Grid size={{ sm: 12, md: 6 }}>
+            <Grid size={{ xs: 12, sm: 12, md: 6 }}>
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Schedule
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   <Grid container spacing={2}>
-                    <Grid size={{ sm: 12 }}>
+                    <Grid size={{ xs: 12, sm: 12 }}>
                       <FormField name="fullDay" control={control} label="Full Day" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
+                    <Grid size={{ xs: 12, sm: 12, md: 6 }}>
                       <FormField name="uASTIME" control={control} label="Start Time" type="timepicker" required disabled={viewOnly || fullDay} size="small" fullWidth />
                     </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
+                    <Grid size={{ xs: 12, sm: 12, md: 6 }}>
                       <FormField name="uAETIME" control={control} label="End Time" type="timepicker" required disabled={viewOnly || fullDay} size="small" fullWidth />
                     </Grid>
-
-                    <Grid size={{ sm: 12 }}>
+                    <Grid size={{ xs: 12, sm: 12 }}>
                       <FormField
                         name="facultyID"
                         control={control}
@@ -416,17 +456,15 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
               </Card>
             </Grid>
 
-            {/* Resources Section */}
-            <Grid size={{ sm: 12, md: 6 }}>
+            <Grid size={{ xs: 12, sm: 12, md: 6 }}>
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Resources
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   <Grid container spacing={2}>
-                    <Grid size={{ sm: 12 }}>
+                    <Grid size={{ xs: 12, sm: 12 }}>
                       <FormField
                         name="roomID"
                         control={control}
@@ -442,8 +480,7 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
                         }}
                       />
                     </Grid>
-
-                    <Grid size={{ sm: 12 }}>
+                    <Grid size={{ xs: 12, sm: 12 }}>
                       <FormField
                         name="resourceID"
                         control={control}
@@ -459,8 +496,7 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
                         }}
                       />
                     </Grid>
-
-                    <Grid size={{ sm: 12 }}>
+                    <Grid size={{ xs: 12, sm: 12 }}>
                       <FormField name="unitHeadYN" control={control} label="Unit Head" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
@@ -468,15 +504,13 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
               </Card>
             </Grid>
 
-            {/* Week Days Section */}
-            <Grid size={{ sm: 12, md: 6 }}>
+            <Grid size={{ xs: 12, sm: 12, md: 6 }}>
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Week Days
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   <FormGroup>
                     <FormControlLabel
                       control={<Checkbox checked={allDaysYN === "Y"} onChange={(e) => handleAllDaysChange(e.target.checked)} disabled={viewOnly} />}
@@ -502,15 +536,13 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
               </Card>
             </Grid>
 
-            {/* Occurrences Section */}
-            <Grid size={{ sm: 12, md: 6 }}>
+            <Grid size={{ xs: 12, sm: 12, md: 6 }}>
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Occurrences
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   <FormGroup>
                     <FormControlLabel
                       control={<Checkbox checked={occuranceAllYN === "Y"} onChange={(e) => handleAllOccurrencesChange(e.target.checked)} disabled={viewOnly} />}
@@ -534,15 +566,13 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
               </Card>
             </Grid>
 
-            {/* Notes Section */}
-            <Grid size={{ sm: 12 }}>
+            <Grid size={{ xs: 12, sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Additional Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   <FormField
                     name="rNotes"
                     control={control}

@@ -35,7 +35,7 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 
-import { formatDate } from "@/utils/Common/dateUtils";
+import { formatDate, formatTimeStringToDate } from "@/utils/Common/dateUtils";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import BreakFrequency from "./BreakFrequency";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -453,13 +453,6 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     setShowCancelConfirmation(false);
   };
 
-  const formatTimeStringToDate = (timeString: string): Date => {
-    const today = new Date();
-    const [hours, minutes] = timeString.split(":");
-
-    const dateWithTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes));
-    return dateWithTime;
-  };
   const dialogTitle = viewOnly ? "View Break Details" : "Create New Break";
 
   const dialogActions = viewOnly ? (
