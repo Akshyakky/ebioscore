@@ -53,7 +53,6 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
   const isAddMode = !initialData?.rGrpID;
   const isActuallySubGroup = isSubGroup || (initialData?.key !== undefined && initialData?.key !== null && initialData?.key > 0);
   const dropdownValues = useDropdownValues(["department", "gender"]);
-  const [parentGroupName, setParentGroupName] = useState<string>("");
 
   const defaultValues: RoomGroupFormData = {
     rGrpID: 0,
@@ -336,8 +335,13 @@ const RoomGroupForm: React.FC<RoomGroupFormProps> = ({ open, onClose, initialDat
                           Parent Group
                         </Typography>
                         <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                          {initialData?.rGrpName || initialData?.parentGroupName || "Unknown Group"}
+                          {initialData?.parentGroupName || initialData?.parentGroup?.rGrpName || "Unknown Group"}
                         </Typography>
+                        {initialData?.parentGroup && (
+                          <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                            Department: {initialData.parentGroup.deptName || "Not specified"}
+                          </Typography>
+                        )}
                       </Box>
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>

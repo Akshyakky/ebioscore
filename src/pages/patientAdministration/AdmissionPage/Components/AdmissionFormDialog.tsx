@@ -18,56 +18,41 @@ import { useBedSelection } from "@/pages/hospitalAdministration/ManageBeds/hooks
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
 
-// Validation schema for admission form
+// [Schema remains the same - keeping validation schema unchanged]
 const admissionSchema = z.object({
-  // Patient information (read-only)
   pChartID: z.number().min(1, "Patient is required"),
   pChartCode: z.string().min(1, "Patient chart code is required"),
-
-  // Admission basic information
   admitCode: z.string().min(1, "Admission code is required"),
   admitDate: z.date().default(new Date()),
   caseTypeCode: z.string().min(1, "Case type is required"),
   caseTypeName: z.string().default(""),
   admissionType: z.string().min(1, "Admission type is required"),
-
-  // Medical information
-  attendingPhysicianId: z.number().min(1, "Attending physician is required"),
+  rNotes: z.string().min(1, "Reason for admission is required"),
+  attendingPhysicianId: z.coerce.number().min(1, "Attending physician is required"),
   attendingPhysicianName: z.string().default(""),
   primaryPhysicianId: z.number().optional(),
   primaryPhysicianName: z.string().optional().default(""),
   primaryReferralSourceId: z.number().optional(),
   primaryReferralSourceName: z.string().optional().default(""),
-
-  // Department and location
   deptID: z.number().min(1, "Department is required"),
   deptName: z.string().default(""),
-  dulId: z.number().optional().default(0),
-
-  // Bed assignment
+  dulId: z.number().min(1, "Unit is required"),
+  unitName: z.string().default(""),
   bedID: z.number().min(1, "Bed assignment is required"),
   bedName: z.string().default(""),
   rlID: z.number().min(1, "Room is required"),
   rName: z.string().default(""),
   wCatID: z.number().optional(),
   wCatName: z.string().optional().default(""),
-
-  // Patient type and payment
   pTypeID: z.number().min(1, "PIC is required"),
   pTypeName: z.string().default(""),
-
-  // Insurance and additional information
   insuranceYN: z.enum(["Y", "N"]).default("N"),
   deliveryCaseYN: z.enum(["Y", "N"]).default("N"),
   provDiagnosisYN: z.enum(["Y", "N"]).default("N"),
   dischargeAdviceYN: z.enum(["Y", "N"]).default("N"),
-
-  // Instructions and notes
   nurseIns: z.string().optional().default(""),
   clerkIns: z.string().optional().default(""),
   patientIns: z.string().optional().default(""),
-
-  // Additional fields
   advisedVisitNo: z.number().default(1),
   visitGesy: z.string().optional().default(""),
 });
@@ -79,7 +64,7 @@ interface AdmissionFormDialogProps {
   onClose: () => void;
   onSubmit: (admission: AdmissionDto) => Promise<void>;
   patient: PatientSearchResult | null;
-  existingAdmission?: any; // For editing existing admission
+  existingAdmission?: any;
 }
 
 const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose, onSubmit, patient, existingAdmission }) => {
@@ -113,7 +98,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     filters: { availableOnly: true },
   });
 
-  // Form setup
+  // Form setup with compact default values
   const {
     control,
     handleSubmit,
@@ -132,6 +117,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       caseTypeCode: "",
       caseTypeName: "",
       admissionType: "",
+      rNotes: "",
       attendingPhysicianId: 0,
       attendingPhysicianName: "",
       primaryPhysicianId: 0,
@@ -141,6 +127,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       deptID: 0,
       deptName: "",
       dulId: 0,
+      unitName: "",
       bedID: 0,
       bedName: "",
       rlID: 0,
@@ -163,16 +150,16 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
 
   // Watch form values
   const watchedDeptID = watch("deptID");
+  const watchedDulId = watch("dulId");
   const watchedBedID = watch("bedID");
 
-  // Generate admission code on form open
+  // [All existing useEffect and handler functions remain the same]
   useEffect(() => {
     if (open && !isEditMode) {
       generateAdmissionCode();
     }
   }, [open, isEditMode]);
 
-  // Reset form when patient changes
   useEffect(() => {
     if (open && patient) {
       reset({
@@ -180,12 +167,10 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         pChartCode: patient.pChartCode,
         admitCode: admitCode,
         admitDate: serverDate,
-        // Reset other fields to defaults
       });
     }
   }, [open, patient, admitCode, serverDate, reset]);
 
-  // Generate admission code
   const generateAdmissionCode = useCallback(async () => {
     try {
       setIsGeneratingCode(true);
@@ -201,7 +186,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     }
   }, [setValue]);
 
-  // Handle bed selection
   const handleBedSelect = useCallback(
     (bed: WrBedDto) => {
       setSelectedBed(bed);
@@ -212,7 +196,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       setValue("wCatID", bed.wbCatID || 0, { shouldValidate: true });
       setValue("wCatName", bed.wbCatName || "", { shouldValidate: true });
 
-      // Set department from room group
       if (bed.roomList?.roomGroup) {
         setValue("deptID", bed.roomList.roomGroup.deptID || 0, { shouldValidate: true });
         setValue("deptName", bed.roomList.roomGroup.deptName || "", { shouldValidate: true });
@@ -223,7 +206,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     [setValue]
   );
 
-  // Handle dropdown changes
   const handleCaseTypeChange = useCallback(
     (value: any) => {
       const selectedOption = caseType.find((option) => option.value === value);
@@ -235,11 +217,35 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     [caseType, setValue]
   );
 
+  const handleDepartmentChange = useCallback(
+    (value: any) => {
+      const selectedOption = department.find((option) => Number(option.value) === Number(value));
+      if (selectedOption) {
+        setValue("deptID", Number(value), { shouldValidate: true });
+        setValue("deptName", selectedOption.label, { shouldValidate: true });
+        setValue("dulId", 0, { shouldValidate: true });
+        setValue("unitName", "", { shouldValidate: true });
+      }
+    },
+    [department, setValue]
+  );
+
+  const handleUnitChange = useCallback(
+    (value: any) => {
+      const selectedOption = unit.find((option) => Number(option.value) === Number(value));
+      if (selectedOption) {
+        setValue("dulId", Number(value), { shouldValidate: true });
+        setValue("unitName", selectedOption.label, { shouldValidate: true });
+      }
+    },
+    [unit, setValue]
+  );
+
   const handleAttendingPhysicianChange = useCallback(
     (value: any) => {
-      const selectedOption = attendingPhy.find((option) => Number(option.value) === Number(value));
+      const selectedOption = attendingPhy.find((option) => option.value === value.value);
       if (selectedOption) {
-        setValue("attendingPhysicianId", Number(value), { shouldValidate: true });
+        setValue("attendingPhysicianId", Number(value.value.split("-")[0]), { shouldValidate: true });
         setValue("attendingPhysicianName", selectedOption.label, { shouldValidate: true });
       }
     },
@@ -257,10 +263,9 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     [pic, setValue]
   );
 
-  // Form submission
+  // [Form submission logic remains the same]
   const onFormSubmit = async (data: AdmissionFormData) => {
     try {
-      // Construct admission DTO
       const ipAdmissionDto: IPAdmissionDto = {
         admitID: existingAdmission?.ipAdmissionDto?.admitID || 0,
         admitCode: data.admitCode,
@@ -281,7 +286,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         patientIns: data.patientIns,
         acApprovedBy: "",
         acApprovedId: 0,
-        acReason: "",
+        acReason: data.rNotes,
         caseTypeCode: data.caseTypeCode,
         caseTypeName: data.caseTypeName,
         deliveryCaseYN: data.deliveryCaseYN,
@@ -293,7 +298,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         pmName: "",
         oldPChartID: 0,
         visitGesy: data.visitGesy || "",
-        dulId: data.dulId || 0,
+        dulId: data.dulId,
         advisedVisitNo: data.advisedVisitNo,
         pTypeID: data.pTypeID,
         pTypeName: data.pTypeName,
@@ -406,14 +411,12 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     }
   };
 
-  // Clear form
   const handleClear = () => {
     reset();
     setSelectedBed(null);
     setAdmitCode("");
   };
 
-  // Dialog actions
   const dialogActions = (
     <>
       <CustomButton variant="outlined" text="Clear" icon={ClearIcon} onClick={handleClear} disabled={isSubmitting || !isDirty} color="inherit" />
@@ -444,45 +447,30 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         disableEscapeKeyDown={isSubmitting}
         actions={dialogActions}
       >
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ p: 1.5 }}>
           <form onSubmit={handleSubmit(onFormSubmit)}>
-            <Grid container spacing={3}>
-              {/* Patient Information Section */}
+            <Grid container spacing={1.5}>
+              {/* Compact Patient Information Header */}
               <Grid size={{ xs: 12 }}>
-                <Paper sx={{ p: 2, backgroundColor: "primary.50", border: "1px solid", borderColor: "primary.200" }}>
-                  <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <PatientIcon />
-                    Patient Information
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <EnhancedFormField name="pChartCode" control={control} type="text" label="Patient UHID" required disabled size="small" />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      {patient && (
-                        <Box display="flex" alignItems="center" gap={1} mt={1}>
-                          <Avatar sx={{ bgcolor: "primary.main", width: 32, height: 32 }}>
-                            <PatientIcon fontSize="small" />
-                          </Avatar>
-                          <Typography variant="body1" fontWeight="medium">
-                            {patient.fullName}
-                          </Typography>
-                        </Box>
-                      )}
-                    </Grid>
-                  </Grid>
+                <Paper sx={{ p: 1.5, backgroundColor: "primary.50", border: "1px solid", borderColor: "primary.200" }}>
+                  <Box display="flex" alignItems="center" gap={1.5}>
+                    <Avatar sx={{ bgcolor: "primary.main", width: 28, height: 28 }}>
+                      <PatientIcon fontSize="small" />
+                    </Avatar>
+                    <Box flex={1}>
+                      <Typography variant="subtitle1" fontWeight="600">
+                        {patient?.fullName || "Patient Information"}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        UHID: {patient?.pChartCode}
+                      </Typography>
+                    </Box>
+                  </Box>
                 </Paper>
               </Grid>
 
-              {/* Admission Details Section */}
-              <Grid size={{ xs: 12 }}>
-                <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <AdmissionIcon />
-                  Admission Details
-                </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
+              {/* Compact Admission Details - Single Row */}
+              <Grid size={{ xs: 12, md: 3 }}>
                 <EnhancedFormField
                   name="admitCode"
                   control={control}
@@ -491,37 +479,62 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                   required
                   disabled
                   size="small"
-                  helperText={isGeneratingCode ? "Generating code..." : "Auto-generated admission code"}
+                  helperText={isGeneratingCode ? "Generating..." : "Auto-generated"}
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 4 }}>
-                <EnhancedFormField name="admitDate" control={control} type="datepicker" label="Admission Date" required size="small" />
+              <Grid size={{ xs: 12, md: 3 }}>
+                <EnhancedFormField name="admitDate" control={control} type="datetimepicker" label="Admission Date & Time" required size="small" />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 4 }}>
+              <Grid size={{ xs: 12, md: 3 }}>
                 <EnhancedFormField name="caseTypeCode" control={control} type="select" label="Case Type" required size="small" options={caseType} onChange={handleCaseTypeChange} />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid size={{ xs: 12, md: 3 }}>
                 <EnhancedFormField name="admissionType" control={control} type="select" label="Admission Type" required size="small" options={admissionType} />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
+              {/* Payment and Reason - Single Row */}
+              <Grid size={{ xs: 12, md: 4 }}>
                 <EnhancedFormField name="pTypeID" control={control} type="select" label="Payment Source" required size="small" options={pic} onChange={handlePICChange} />
               </Grid>
 
-              {/* Medical Team Section */}
-              <Grid size={{ xs: 12 }}>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  Medical Team
-                </Typography>
+              <Grid size={{ xs: 12, md: 8 }}>
+                <EnhancedFormField
+                  name="rNotes"
+                  control={control}
+                  type="textarea"
+                  label="Reason for Admission"
+                  required
+                  size="small"
+                  rows={2}
+                  placeholder="Describe the reason for admission..."
+                />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
+              {/* Department and Medical Team - Two Rows Compact */}
+              <Grid size={{ xs: 12, md: 3 }}>
+                <EnhancedFormField name="deptID" control={control} type="select" label="Department" required size="small" options={department} onChange={handleDepartmentChange} />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 3 }}>
                 <EnhancedFormField
-                  name="attendingPhysicianId"
+                  name="dulId"
+                  control={control}
+                  type="select"
+                  label="Unit"
+                  required
+                  size="small"
+                  options={unit}
+                  onChange={handleUnitChange}
+                  disabled={!watchedDeptID}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 3 }}>
+                <EnhancedFormField
+                  name="attendingPhysicianName"
                   control={control}
                   type="select"
                   label="Attending Physician"
@@ -532,27 +545,26 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <EnhancedFormField name="primaryReferralSourceId" control={control} type="select" label="Primary Referral Source" size="small" options={primaryIntroducingSource} />
+              <Grid size={{ xs: 12, md: 3 }}>
+                <EnhancedFormField name="primaryReferralSourceId" control={control} type="select" label="Referral Source" size="small" options={primaryIntroducingSource} />
               </Grid>
 
-              {/* Bed Assignment Section */}
+              {/* Compact Bed Assignment */}
               <Grid size={{ xs: 12 }}>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <BedIcon />
-                  Bed Assignment
-                </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12 }}>
-                <Box display="flex" alignItems="center" gap={2} mb={2}>
-                  <Typography variant="subtitle1">Selected Bed:</Typography>
+                <Box sx={{ p: 1.5, backgroundColor: "grey.50", borderRadius: 1, border: "1px solid", borderColor: "grey.300" }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Typography variant="subtitle2" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <BedIcon fontSize="small" />
+                      Bed Assignment
+                    </Typography>
+                    <CustomButton variant="outlined" text="Select Bed" size="small" onClick={() => setIsBedSelectionOpen(true)} disabled={isSubmitting} />
+                  </Box>
                   {selectedBed ? (
                     <Chip
                       icon={<BedIcon />}
                       label={`${selectedBed.bedName} (${selectedBed.roomList?.rName || "Unknown Room"})`}
                       color="primary"
+                      size="small"
                       onDelete={() => {
                         setSelectedBed(null);
                         setValue("bedID", 0);
@@ -562,27 +574,19 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                       }}
                     />
                   ) : (
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary">
                       No bed selected
                     </Typography>
                   )}
+                  {errors.bedID && (
+                    <Typography variant="caption" color="error.main" sx={{ mt: 0.5, display: "block" }}>
+                      {errors.bedID.message}
+                    </Typography>
+                  )}
                 </Box>
-                <CustomButton variant="outlined" text="Select Bed" icon={BedIcon} onClick={() => setIsBedSelectionOpen(true)} disabled={isSubmitting} />
-                {errors.bedID && (
-                  <Typography variant="caption" color="error.main" sx={{ mt: 1, display: "block" }}>
-                    {errors.bedID.message}
-                  </Typography>
-                )}
               </Grid>
 
-              {/* Additional Options Section */}
-              <Grid size={{ xs: 12 }}>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  Additional Options
-                </Typography>
-              </Grid>
-
+              {/* Compact Additional Options - Single Row */}
               <Grid size={{ xs: 12, md: 3 }}>
                 <EnhancedFormField name="insuranceYN" control={control} type="switch" label="Has Insurance" size="small" />
               </Grid>
@@ -599,24 +603,17 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                 <EnhancedFormField name="dischargeAdviceYN" control={control} type="switch" label="Discharge Advice" size="small" />
               </Grid>
 
-              {/* Instructions Section */}
-              <Grid size={{ xs: 12 }}>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  Instructions
-                </Typography>
+              {/* Compact Instructions - Single Row */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <EnhancedFormField name="nurseIns" control={control} type="textarea" label="Nurse Instructions" size="small" rows={2} />
               </Grid>
 
               <Grid size={{ xs: 12, md: 4 }}>
-                <EnhancedFormField name="nurseIns" control={control} type="textarea" label="Nurse Instructions" size="small" rows={3} />
+                <EnhancedFormField name="clerkIns" control={control} type="textarea" label="Clerk Instructions" size="small" rows={2} />
               </Grid>
 
               <Grid size={{ xs: 12, md: 4 }}>
-                <EnhancedFormField name="clerkIns" control={control} type="textarea" label="Clerk Instructions" size="small" rows={3} />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
-                <EnhancedFormField name="patientIns" control={control} type="textarea" label="Patient Instructions" size="small" rows={3} />
+                <EnhancedFormField name="patientIns" control={control} type="textarea" label="Patient Instructions" size="small" rows={2} />
               </Grid>
             </Grid>
           </form>

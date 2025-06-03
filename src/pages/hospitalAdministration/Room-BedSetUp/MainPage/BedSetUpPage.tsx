@@ -321,12 +321,34 @@ const BedSetupPage: React.FC = () => {
 
   const handleEditRoomGroup = useCallback(
     async (roomGroup: RoomGroupDto) => {
+      debugger;
       setLoading(true);
       try {
         const data = await getRoomGroupById(roomGroup.rGrpID);
         if (data) {
-          setSelectedRoomGroup(data);
-          setIsSubGroup(data.key !== undefined && data.key !== null && data.key > 0);
+          const isSubGroup = data.key !== undefined && data.key !== null && data.key > 0;
+          if (isSubGroup && data.key > 0) {
+            const parentGroup = await getRoomGroupById(data.key);
+            if (parentGroup) {
+              const enhancedData = {
+                ...data,
+                parentGroup: parentGroup,
+                parentGroupName: parentGroup.rGrpName,
+              };
+              setSelectedRoomGroup(enhancedData);
+            } else {
+              const fallbackParent = roomGroups.find((group) => group.rGrpID === data.key);
+              const enhancedData = {
+                ...data,
+                parentGroupName: fallbackParent?.rGrpName || "Unknown Group",
+              };
+              setSelectedRoomGroup(enhancedData);
+            }
+          } else {
+            setSelectedRoomGroup(data);
+          }
+
+          setIsSubGroup(isSubGroup);
           setFormViewOnly(false);
           setShowRoomGroupForm(true);
         } else {
@@ -338,7 +360,7 @@ const BedSetupPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [getRoomGroupById, setLoading, showAlert]
+    [getRoomGroupById, setLoading, showAlert, roomGroups]
   );
 
   const handleViewRoomGroup = useCallback(
@@ -347,8 +369,29 @@ const BedSetupPage: React.FC = () => {
       try {
         const data = await getRoomGroupById(roomGroup.rGrpID);
         if (data) {
-          setSelectedRoomGroup(data);
-          setIsSubGroup(data.key !== undefined && data.key !== null && data.key > 0);
+          const isSubGroup = data.key !== undefined && data.key !== null && data.key > 0;
+          if (isSubGroup && data.key > 0) {
+            const parentGroup = await getRoomGroupById(data.key);
+            if (parentGroup) {
+              const enhancedData = {
+                ...data,
+                parentGroup: parentGroup,
+                parentGroupName: parentGroup.rGrpName,
+              };
+              setSelectedRoomGroup(enhancedData);
+            } else {
+              const fallbackParent = roomGroups.find((group) => group.rGrpID === data.key);
+              const enhancedData = {
+                ...data,
+                parentGroupName: fallbackParent?.rGrpName || "Unknown Group",
+              };
+              setSelectedRoomGroup(enhancedData);
+            }
+          } else {
+            setSelectedRoomGroup(data);
+          }
+
+          setIsSubGroup(isSubGroup);
           setFormViewOnly(true);
           setShowRoomGroupForm(true);
         } else {
@@ -360,7 +403,7 @@ const BedSetupPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [getRoomGroupById, setLoading, showAlert]
+    [getRoomGroupById, setLoading, showAlert, roomGroups]
   );
 
   const handleRoomGroupFormClose = useCallback(
