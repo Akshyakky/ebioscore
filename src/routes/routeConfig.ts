@@ -2,7 +2,6 @@ import { lazy, Suspense } from "react";
 import React from "react";
 import { PatientSearchProvider } from "../context/PatientSearchContext";
 import { AlertProvider } from "@/providers/AlertProvider";
-import DeptUnitAllocationPage from "@/pages/hospitalAdministration/DeptUnitAllocation/MainPage/DeptUnitAllocationPage";
 
 // Lazy load components
 const LoginPage = lazy(() => import("@/pages/common/LoginPage/LoginPage"));
@@ -51,6 +50,7 @@ const LogModule = lazy(() => import("@/pages/common/LogViewerPage/LogModule"));
 const ProductList = lazy(() => import("@/pages/inventoryManagement/ProductList/MainPage/ProductList"));
 const ProductTransaction = lazy(() => import("@/pages/inventoryManagement/ProductTransaction/ProductTransaction"));
 const PatientRegistrationRouter = lazy(() => import("@/pages/patientAdministration/RegistrationPage/PatientRegistrationRouter"));
+const DeptUnitAllocationPage = lazy(() => import("@/pages/hospitalAdministration/DeptUnitAllocation/MainPage/DeptUnitAllocationPage"));
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {
