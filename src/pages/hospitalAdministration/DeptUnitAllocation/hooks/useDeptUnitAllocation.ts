@@ -8,7 +8,6 @@ export const useDeptUnitAllocation = () => {
   const hook = useGenericDeptUnitAllocation();
 
   const checkScheduleConflict = (newAllocation: Partial<DeptUnitAllocationDto>, existingAllocations: DeptUnitAllocationDto[]): { hasConflict: boolean; message?: string } => {
-    // Ensure uASTIME and uAETIME are Date objects
     if (!newAllocation.uASTIME || !newAllocation.uAETIME) {
       return { hasConflict: true, message: "Start or end time is missing" };
     }
@@ -89,7 +88,6 @@ export const useDeptUnitAllocation = () => {
     saveAllocation: hook.saveEntity,
     deleteAllocation: hook.deleteEntity,
     updateAllocationStatus: hook.updateEntityStatus,
-    getNextCode: hook.getNextCode,
     checkScheduleConflict,
   };
 };

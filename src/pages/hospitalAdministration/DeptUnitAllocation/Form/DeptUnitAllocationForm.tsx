@@ -21,7 +21,6 @@ interface DeptUnitAllocationFormProps {
   viewOnly?: boolean;
 }
 
-// Utility function to convert Date to time string (HH:mm)
 const formatTimeToString = (date: Date | undefined): string => {
   const dateValue = new Date(date);
   if (!date || isNaN(dateValue.getTime())) return "";
@@ -32,7 +31,6 @@ const formatTimeToString = (date: Date | undefined): string => {
   });
 };
 
-// Utility function to convert time string (HH:mm) to Date
 const parseTimeToDate = (time: string): Date => {
   if (!time || !/^\d{2}:\d{2}$/.test(time)) {
     throw new Error(`Invalid time format: ${time}`);
@@ -46,7 +44,6 @@ const parseTimeToDate = (time: string): Date => {
   return date;
 };
 
-// Define options for week days
 const weekDayOptions = [
   { value: "sun", label: "Sunday" },
   { value: "mon", label: "Monday" },
@@ -57,7 +54,6 @@ const weekDayOptions = [
   { value: "sat", label: "Saturday" },
 ];
 
-// Define options for occurrences
 const occurrenceOptions = [
   { value: "1", label: "First Week" },
   { value: "2", label: "Second Week" },
@@ -179,13 +175,11 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
   const occuranceAllYN = watch("occuranceAllYN");
   const deptID = watch("deptID");
 
-  // Filter units based on selected department
   const filteredUnitList = useMemo(() => {
     if (!deptID || !units) return [];
     return units.filter((unit) => unit.deptID === deptID);
   }, [deptID, units]);
 
-  // Initialize form with initialData
   useEffect(() => {
     if (initialData) {
       const weekDays = [];
@@ -245,7 +239,6 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
       setIsSaving(true);
       setLoading(true);
 
-      // Convert weekDays and occurrences arrays to Y/N flags
       const weekDaysFlags = {
         sunYN: data.weekDays.includes("sun") ? "Y" : "N",
         monYN: data.weekDays.includes("mon") ? "Y" : "N",
@@ -264,11 +257,9 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
         occurance5YN: data.occuranceAllYN === "Y" ? "Y" : data.occurrences.includes("5") ? "Y" : "N",
       };
 
-      // Convert time strings to Date objects
       const uASTIME = parseTimeToDate(data.uASTIME);
       const uAETIME = parseTimeToDate(data.uAETIME);
 
-      // Convert form data to DeptUnitAllocationDto
       const allocationData: DeptUnitAllocationDto = {
         dUAID: data.dUAID ?? 0,
         deptID: data.deptID,
