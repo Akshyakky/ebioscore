@@ -1,24 +1,26 @@
 // src/pages/patientAdministration/AdmissionPage/Components/AdmissionFormDialog.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Grid, Typography, Divider, Alert, Paper, Chip, Avatar } from "@mui/material";
+import { Box, Grid, Typography, Paper, Chip, Avatar, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Save as SaveIcon, Clear as ClearIcon, Person as PatientIcon, Hotel as BedIcon, LocalHospital as AdmissionIcon, CalendarMonth } from "@mui/icons-material";
+import { Save as SaveIcon, Clear as ClearIcon, Person as PatientIcon, Hotel as BedIcon, People as PeopleIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
 import BedSelectionDialog from "@/pages/hospitalAdministration/ManageBeds/BedSelection/BedSelectionDialog";
+import NokAttendantSelection from "./NokAttendantSelection";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { AdmissionDto, IPAdmissionDto, IPAdmissionDetailsDto, WrBedDetailsDto } from "@/interfaces/PatientAdministration/AdmissionDto";
-import { WrBedDto, RoomListDto, RoomGroupDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
+import { WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { useBedSelection } from "@/pages/hospitalAdministration/ManageBeds/hooks/useBedSelection";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
 
-// Schema remains the same
+// Updated schema to include NOK-related fields
 const admissionSchema = z.object({
   pChartID: z.number().min(1, "Patient is required"),
   pChartCode: z.string().min(1, "Patient chart code is required"),
@@ -55,11 +57,16 @@ const admissionSchema = z.object({
   patientIns: z.string().optional().default(""),
   advisedVisitNo: z.number().default(1),
   visitGesy: z.string().optional().default(""),
-  // Add patient name fields to schema
+  // Patient name fields
   pTitle: z.string().default(""),
   pfName: z.string().default(""),
   plName: z.string().default(""),
   pmName: z.string().default(""),
+  // NOK/Attendant fields
+  patNokID: z.number().optional().default(0),
+  attendantName: z.string().optional().default(""),
+  attendantRelation: z.string().optional().default(""),
+  attendantPhone: z.string().optional().default(""),
 });
 
 type AdmissionFormData = z.infer<typeof admissionSchema>;
@@ -75,10 +82,12 @@ interface AdmissionFormDialogProps {
 const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose, onSubmit, patient, existingAdmission }) => {
   const [selectedBed, setSelectedBed] = useState<WrBedDto | null>(null);
   const [isBedSelectionOpen, setIsBedSelectionOpen] = useState(false);
-  const [admitCode, setAdmitCode] = useState<string>("");
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [patientData, setPatientData] = useState<any>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [bedDataLoaded, setBedDataLoaded] = useState(false);
+  const [selectedNok, setSelectedNok] = useState<PatNokDetailsDto | null>(null);
+  const [nokAccordionExpanded, setNokAccordionExpanded] = useState(false);
 
   const isEditMode = !!existingAdmission;
   const serverDate = useServerDate();
@@ -102,10 +111,17 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     roomGroups,
     loading: bedLoading,
   } = useBedSelection({
-    filters: { availableOnly: !isEditMode }, // In edit mode, allow current bed selection
+    filters: { availableOnly: !isEditMode },
   });
 
-  // Form setup with default values
+  // Track when bed data has finished loading
+  useEffect(() => {
+    if (!bedLoading && beds.length >= 0) {
+      setBedDataLoaded(true);
+    }
+  }, [bedLoading, beds]);
+
+  // Form setup with default values including NOK fields
   const {
     control,
     handleSubmit,
@@ -156,6 +172,10 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       pfName: "",
       plName: "",
       pmName: "",
+      patNokID: 0,
+      attendantName: "",
+      attendantRelation: "",
+      attendantPhone: "",
     },
   });
 
@@ -171,16 +191,65 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       setIsInitialized(true);
     } else if (!open) {
       setIsInitialized(false);
+      setBedDataLoaded(false);
+      setSelectedBed(null);
+      setSelectedNok(null);
+      setPatientData(null);
     }
   }, [open, patient, existingAdmission, isInitialized]);
+
+  // Re-populate bed selection when bed data becomes available in edit mode
+  useEffect(() => {
+    if (isEditMode && existingAdmission && bedDataLoaded && !selectedBed) {
+      populateBedSelection();
+    }
+  }, [isEditMode, existingAdmission, bedDataLoaded, selectedBed, beds]);
+
+  // Function to handle bed selection population
+  const populateBedSelection = useCallback(() => {
+    if (!existingAdmission || !bedDataLoaded) return;
+
+    const details = existingAdmission.ipAdmissionDetailsDto;
+    if (details?.bedID) {
+      const currentBed = beds.find((bed) => bed.bedID === details.bedID);
+      if (currentBed) {
+        setSelectedBed(currentBed);
+      } else {
+        // Create placeholder bed for edit mode
+        const placeholderBed: WrBedDto = {
+          bedID: details.bedID,
+          bedName: details.bedName,
+          rlID: details.rlID,
+          roomList: {
+            rlID: details.rlID,
+            rName: details.rName,
+            roomGroup: existingAdmission.wrBedDetailsDto.rGrpID
+              ? {
+                  rGrpID: existingAdmission.wrBedDetailsDto.rGrpID,
+                  rGrpName: existingAdmission.wrBedDetailsDto.rGrpName || "",
+                  deptID: existingAdmission.ipAdmissionDto.deptID,
+                  deptName: existingAdmission.ipAdmissionDto.deptName,
+                }
+              : undefined,
+          },
+          wbCatID: details.wCatID,
+          wbCatName: details.wCatName,
+          bedStatus: existingAdmission.wrBedDetailsDto.bedStatusValue || "OCCUP",
+          bedAvailable: false,
+          rActiveYN: "Y",
+          key: details.bedID.toString(),
+        } as WrBedDto;
+
+        setSelectedBed(placeholderBed);
+      }
+    }
+  }, [existingAdmission, bedDataLoaded, beds, selectedBed]);
 
   // Initialize form with either new admission or existing admission data
   const initializeForm = useCallback(async () => {
     if (isEditMode && existingAdmission) {
-      // Edit mode: populate form with existing admission data
       await populateFormWithExistingData();
     } else if (patient) {
-      // New admission mode: load patient data and generate admission code
       await loadPatientDataAndSetupNewAdmission();
     }
   }, [isEditMode, existingAdmission, patient]);
@@ -193,16 +262,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     const details = existingAdmission.ipAdmissionDetailsDto;
     const bedDetails = existingAdmission.wrBedDetailsDto;
 
-    // Set admission code for edit mode
-    setAdmitCode(admission.admitCode);
-
-    // Find the selected bed
-    const currentBed = beds.find((bed) => bed.bedID === details.bedID);
-    if (currentBed) {
-      setSelectedBed(currentBed);
-    }
-
-    // Populate form with existing data
+    // Populate form with existing data including NOK fields
     reset({
       pChartID: admission.pChartID,
       pChartCode: admission.pChartCode,
@@ -221,7 +281,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       deptID: admission.deptID || 0,
       deptName: admission.deptName,
       dulId: admission.dulId,
-      unitName: "", // Will be set by dropdown change handlers
+      unitName: "",
       bedID: details.bedID,
       bedName: details.bedName,
       rlID: details.rlID,
@@ -243,6 +303,11 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       pfName: admission.pfName,
       plName: admission.plName,
       pmName: admission.pmName,
+      // NOK fields
+      patNokID: admission.patNokID || 0,
+      attendantName: "",
+      attendantRelation: "",
+      attendantPhone: "",
     });
 
     // Load patient data for display
@@ -254,33 +319,27 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     } catch (error) {
       console.error("Error loading patient data in edit mode:", error);
     }
-  }, [existingAdmission, beds, reset]);
+  }, [existingAdmission, reset]);
 
   // Load patient data and setup new admission
   const loadPatientDataAndSetupNewAdmission = useCallback(async () => {
     if (!patient) return;
 
     try {
-      // Generate admission code for new admissions
-      await generateAdmissionCode();
-
-      // Load patient data
       const statusResult = await extendedAdmissionService.getPatientAdmissionStatus(patient.pChartID);
       if (statusResult.success && statusResult.data?.patientData) {
         const patRegister = statusResult.data.patientData.patRegisters;
         setPatientData(patRegister);
 
-        // Reset form with patient data
         reset({
           pChartID: patient.pChartID,
           pChartCode: patient.pChartCode,
-          admitCode: admitCode,
+          //admitCode: admitCode,
           admitDate: serverDate,
           pTitle: patRegister.pTitle || "",
           pfName: patRegister.pFName || "",
           plName: patRegister.pLName || "",
           pmName: patRegister.pMName || "",
-          // Reset other fields to defaults
           caseTypeCode: "",
           caseTypeName: "",
           admissionType: "",
@@ -312,21 +371,25 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
           patientIns: "",
           advisedVisitNo: 1,
           visitGesy: "",
+          patNokID: 0,
+          attendantName: "",
+          attendantRelation: "",
+          attendantPhone: "",
         });
+        await generateAdmissionCode();
       }
     } catch (error) {
       console.error("Error setting up new admission:", error);
     }
-  }, [patient, serverDate, admitCode, reset]);
+  }, [patient, serverDate, reset]);
 
   const generateAdmissionCode = useCallback(async () => {
-    if (isEditMode) return; // Don't generate new code in edit mode
+    if (isEditMode) return;
 
     try {
       setIsGeneratingCode(true);
       const result = await extendedAdmissionService.generateAdmitCode();
       if (result.success && result.data) {
-        setAdmitCode(result.data);
         setValue("admitCode", result.data, { shouldValidate: true });
       }
     } catch (error) {
@@ -335,6 +398,28 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       setIsGeneratingCode(false);
     }
   }, [isEditMode, setValue]);
+
+  // Handle NOK selection
+  const handleNokSelect = useCallback(
+    (nokDetails: PatNokDetailsDto | null) => {
+      setSelectedNok(nokDetails);
+
+      if (nokDetails) {
+        const attendantName = `${nokDetails.pNokFName} ${nokDetails.pNokMName || ""} ${nokDetails.pNokLName}`.trim();
+
+        setValue("patNokID", nokDetails.pNokID, { shouldValidate: true });
+        setValue("attendantName", attendantName, { shouldValidate: true });
+        setValue("attendantRelation", nokDetails.pNokRelName || "", { shouldValidate: true });
+        setValue("attendantPhone", nokDetails.pAddPhone1 || "", { shouldValidate: true });
+      } else {
+        setValue("patNokID", 0, { shouldValidate: true });
+        setValue("attendantName", "", { shouldValidate: true });
+        setValue("attendantRelation", "", { shouldValidate: true });
+        setValue("attendantPhone", "", { shouldValidate: true });
+      }
+    },
+    [setValue]
+  );
 
   const handleBedSelect = useCallback(
     (bed: WrBedDto) => {
@@ -356,6 +441,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     [setValue]
   );
 
+  // Other event handlers (keeping existing implementations)
   const handleCaseTypeChange = useCallback(
     (value: any) => {
       const selectedOption = caseType.find((option) => option.value === value);
@@ -413,7 +499,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     [pic, setValue]
   );
 
-  // Form submission with proper patient name fields
+  // Form submission with NOK data
   const onFormSubmit = async (data: AdmissionFormData) => {
     try {
       const ipAdmissionDto: IPAdmissionDto = {
@@ -452,7 +538,8 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         advisedVisitNo: data.advisedVisitNo,
         pTypeID: data.pTypeID,
         pTypeName: data.pTypeName,
-        patNokID: existingAdmission?.ipAdmissionDto?.patNokID || 0,
+        // Include NOK data
+        patNokID: data.patNokID || 0,
         attendingPhysicianId: data.attendingPhysicianId,
         attendingPhysicianName: data.attendingPhysicianName,
         primaryPhysicianId: data.primaryPhysicianId,
@@ -551,13 +638,14 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
 
   const handleClear = () => {
     if (isEditMode) {
-      // In edit mode, reset to original data
       populateFormWithExistingData();
+      if (bedDataLoaded) {
+        populateBedSelection();
+      }
     } else {
-      // In new mode, reset to defaults
       reset();
       setSelectedBed(null);
-      setAdmitCode("");
+      setSelectedNok(null);
       setPatientData(null);
     }
   };
@@ -581,15 +669,18 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
   );
 
   const patientDisplayName = useMemo(() => {
-    if (patientData) {
-      return [patientData.pTitle, patientData.pFName, patientData.pMName, patientData.pLName].filter(Boolean).join(" ");
-    }
-    if (existingAdmission) {
+    if (isEditMode && existingAdmission) {
       const admission = existingAdmission.ipAdmissionDto;
       return [admission.pTitle, admission.pfName, admission.pmName, admission.plName].filter(Boolean).join(" ");
     }
+
+    if (patientData) {
+      return [patientData.pTitle, patientData.pFName, patientData.pMName, patientData.pLName].filter(Boolean).join(" ");
+    }
+
+    // Fallback to patient prop
     return patient?.fullName || "Patient Information";
-  }, [patientData, existingAdmission, patient]);
+  }, [isEditMode, existingAdmission, patientData, patient]);
 
   return (
     <>
@@ -710,6 +801,26 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                 <EnhancedFormField name="primaryReferralSourceId" control={control} type="select" label="Referral Source" size="small" options={primaryIntroducingSource} />
               </Grid>
 
+              {/* Patient Attendant/NOK Section */}
+              <Grid size={{ xs: 12 }}>
+                <Accordion expanded={nokAccordionExpanded} onChange={() => setNokAccordionExpanded(!nokAccordionExpanded)} sx={{ border: "1px solid", borderColor: "grey.300" }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <PeopleIcon fontSize="small" />
+                      <Typography variant="subtitle2">Patient Attendant Selection</Typography>
+                      {selectedNok && (
+                        <Chip size="small" label={`${selectedNok.pNokFName} ${selectedNok.pNokLName} (${selectedNok.pNokRelName})`} color="primary" variant="outlined" />
+                      )}
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    {patient && (
+                      <NokAttendantSelection pChartID={patient.pChartID} patientName={patientDisplayName} selectedNokID={selectedNok?.pNokID} onNokSelect={handleNokSelect} />
+                    )}
+                  </AccordionDetails>
+                </Accordion>
+              </Grid>
+
               {/* Bed Assignment */}
               <Grid size={{ xs: 12 }}>
                 <Box sx={{ p: 1.5, backgroundColor: "grey.50", borderRadius: 1, border: "1px solid", borderColor: "grey.300" }}>
@@ -736,7 +847,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                     />
                   ) : (
                     <Typography variant="caption" color="text.secondary">
-                      No bed selected
+                      {bedLoading ? "Loading bed data..." : "No bed selected"}
                     </Typography>
                   )}
                   {errors.bedID && (
