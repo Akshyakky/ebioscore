@@ -11,6 +11,7 @@ import {
   History as HistoryIcon,
   Edit as EditIcon,
   Visibility as ViewIcon,
+  AccountBalance,
 } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import CustomButton from "@/components/Button/CustomButton";
@@ -33,6 +34,10 @@ interface EnhancedAdmissionDto extends AdmissionDto {
   departmentDisplay?: string;
   statusDisplay?: string;
   daysAdmitted?: number;
+  insuranceDisplay?: string;
+  hasActiveInsurance?: boolean;
+  insuranceCarrierName?: string;
+  policyNumber?: string;
 }
 
 const AdmissionPage: React.FC = () => {
@@ -201,6 +206,10 @@ const AdmissionPage: React.FC = () => {
             <Typography variant="caption" color="text.secondary">
               {admission.ipAdmissionDto.pChartCode}
             </Typography>
+            {/* Insurance indicator */}
+            {admission.ipAdmissionDto.insuranceYN === "Y" && (
+              <Chip icon={<AccountBalance />} label="Insured" size="small" color="info" variant="outlined" sx={{ ml: 0.5, height: 16, fontSize: "0.65rem" }} />
+            )}
           </Box>
         </Box>
       ),
@@ -266,12 +275,38 @@ const AdmissionPage: React.FC = () => {
       formatter: (value, admission) => admission.ipAdmissionDto.attendingPhysicianName || "Not Assigned",
     },
     {
+      key: "paymentInsurance",
+      header: "Payment & Insurance",
+      visible: true,
+      sortable: true,
+      width: 160,
+      render: (admission) => (
+        <Box>
+          <Typography variant="body2" fontWeight="medium">
+            {admission.ipAdmissionDto.pTypeName}
+          </Typography>
+          <Box display="flex" gap={0.5} mt={0.5}>
+            {admission.ipAdmissionDto.insuranceYN === "Y" ? (
+              <Chip icon={<AccountBalance />} label="Insured" size="small" color="success" variant="filled" />
+            ) : (
+              <Chip label="Self Pay" size="small" color="default" variant="outlined" />
+            )}
+          </Box>
+        </Box>
+      ),
+    },
+    {
       key: "status",
       header: "Status",
       visible: true,
       sortable: true,
       width: 120,
-      render: (admission) => <Chip label={admission.statusDisplay} size="small" color={admission.statusDisplay === "Admitted" ? "success" : "default"} variant="filled" />,
+      render: (admission) => (
+        <Stack spacing={0.5}>
+          <Chip label={admission.statusDisplay} size="small" color={admission.statusDisplay === "Admitted" ? "success" : "default"} variant="filled" />
+          {admission.ipAdmissionDto.deliveryCaseYN === "Y" && <Chip label="Delivery" size="small" color="secondary" variant="outlined" />}
+        </Stack>
+      ),
     },
     {
       key: "actions",
@@ -288,6 +323,7 @@ const AdmissionPage: React.FC = () => {
               event.stopPropagation();
               handleViewHistory(admission);
             }}
+            title="View History"
           >
             <HistoryIcon fontSize="small" />
           </IconButton>
@@ -298,6 +334,7 @@ const AdmissionPage: React.FC = () => {
               event.stopPropagation();
               handleEditAdmission(admission);
             }}
+            title="Edit Admission"
           >
             <EditIcon fontSize="small" />
           </IconButton>

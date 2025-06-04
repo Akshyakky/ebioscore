@@ -1,6 +1,6 @@
 // src/pages/patientAdministration/AdmissionPage/Components/AdmissionHistoryDialog.tsx
 import React, { useState, useEffect, useMemo } from "react";
-import { Box, Typography, Paper, Grid, Chip, Avatar, Divider, Tab, Tabs, CircularProgress } from "@mui/material";
+import { Box, Typography, Paper, Grid, Chip, Avatar, Divider, Tab, Tabs, CircularProgress, Alert } from "@mui/material";
 import {
   History as HistoryIcon,
   Person as PatientIcon,
@@ -10,14 +10,15 @@ import {
   Timeline as TimelineIcon,
   Receipt as BillingIcon,
   Assignment as NotesIcon,
+  AccountBalance,
 } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
-import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
 import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
+import PeopleIcon from "@mui/icons-material/People";
 
 interface AdmissionHistoryDialogProps {
   open: boolean;
@@ -257,6 +258,57 @@ const AdmissionHistoryDialog: React.FC<AdmissionHistoryDialogProps> = ({ open, o
           </Box>
         </Grid>
 
+        {/* Insurance Information */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <AccountBalance />
+            Insurance Information
+          </Typography>
+          <Box sx={{ pl: 2 }}>
+            <Typography variant="body2" gutterBottom>
+              <strong>Insurance Coverage:</strong>
+              <Chip
+                label={currentAdmission.insuranceYN === "Y" ? "Covered" : "Not Covered"}
+                size="small"
+                color={currentAdmission.insuranceYN === "Y" ? "success" : "default"}
+                variant="outlined"
+                sx={{ ml: 1 }}
+              />
+            </Typography>
+
+            {currentAdmission.insuranceYN === "Y" && currentAdmission.opipInsID && (
+              <>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Insurance ID:</strong> {currentAdmission.opipInsID}
+                </Typography>
+                {/* Add more insurance details if available in the admission data */}
+                {currentAdmission.selectedInsuranceDetails && (
+                  <>
+                    <Typography variant="body2" gutterBottom>
+                      <strong>Insurance Carrier:</strong> {currentAdmission.selectedInsuranceDetails.insurName}
+                    </Typography>
+                    <Typography variant="body2" gutterBottom>
+                      <strong>Policy Number:</strong> {currentAdmission.selectedInsuranceDetails.policyNumber}
+                    </Typography>
+                    <Typography variant="body2" gutterBottom>
+                      <strong>Policy Holder:</strong> {currentAdmission.selectedInsuranceDetails.policyHolder}
+                    </Typography>
+                    <Typography variant="body2" gutterBottom>
+                      <strong>Relationship:</strong> {currentAdmission.selectedInsuranceDetails.relation}
+                    </Typography>
+                  </>
+                )}
+              </>
+            )}
+
+            {currentAdmission.insuranceYN === "N" && (
+              <Alert severity="info" sx={{ mt: 1 }}>
+                Patient does not have insurance coverage for this admission
+              </Alert>
+            )}
+          </Box>
+        </Grid>
+
         {/* Additional Information */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Typography variant="h6" gutterBottom>
@@ -279,6 +331,36 @@ const AdmissionHistoryDialog: React.FC<AdmissionHistoryDialogProps> = ({ open, o
             )}
           </Box>
         </Grid>
+
+        {/* NOK/Attendant Information */}
+        {currentAdmission.patNokID && currentAdmission.patNokID > 0 && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <PeopleIcon />
+              Patient Attendant
+            </Typography>
+            <Box sx={{ pl: 2 }}>
+              <Typography variant="body2" gutterBottom>
+                <strong>Attendant ID:</strong> {currentAdmission.patNokID}
+              </Typography>
+              {currentAdmission.attendantName && (
+                <Typography variant="body2" gutterBottom>
+                  <strong>Name:</strong> {currentAdmission.attendantName}
+                </Typography>
+              )}
+              {currentAdmission.attendantRelation && (
+                <Typography variant="body2" gutterBottom>
+                  <strong>Relationship:</strong> {currentAdmission.attendantRelation}
+                </Typography>
+              )}
+              {currentAdmission.attendantPhone && (
+                <Typography variant="body2" gutterBottom>
+                  <strong>Contact:</strong> {currentAdmission.attendantPhone}
+                </Typography>
+              )}
+            </Box>
+          </Grid>
+        )}
 
         {/* Instructions */}
         {(currentAdmission.nurseIns || currentAdmission.clerkIns || currentAdmission.patientIns) && (

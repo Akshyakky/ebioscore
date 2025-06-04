@@ -10,6 +10,7 @@ import {
   Home as HomeIcon,
   CheckCircle as CheckIcon,
   Error as ErrorIcon,
+  AccountBalance,
 } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
@@ -113,7 +114,7 @@ const AdmissionStatusDialog: React.FC<AdmissionStatusDialogProps> = ({ open, onC
             </Box>
           </Grid>
 
-          <Grid size={{ xs: 12 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box>
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                 Medical Team
@@ -134,6 +135,36 @@ const AdmissionStatusDialog: React.FC<AdmissionStatusDialogProps> = ({ open, onC
             </Box>
           </Grid>
 
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Box>
+              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                Insurance Coverage
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                <strong>Coverage Status:</strong>
+                <Chip
+                  label={admission.insuranceYN === "Y" ? "Insured" : "Self Pay"}
+                  size="small"
+                  color={admission.insuranceYN === "Y" ? "success" : "default"}
+                  variant="outlined"
+                  sx={{ ml: 1 }}
+                />
+              </Typography>
+
+              {admission.insuranceYN === "Y" && admission.opipInsID && (
+                <Typography variant="body2">
+                  <strong>Insurance Reference:</strong> {admission.opipInsID}
+                </Typography>
+              )}
+
+              {admission.insuranceYN === "N" && (
+                <Typography variant="caption" color="text.secondary">
+                  Patient will be responsible for all charges
+                </Typography>
+              )}
+            </Box>
+          </Grid>
+
           <Grid size={{ xs: 12 }}>
             <Box mt={2}>
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
@@ -141,7 +172,7 @@ const AdmissionStatusDialog: React.FC<AdmissionStatusDialogProps> = ({ open, onC
               </Typography>
               <Box display="flex" gap={1} flexWrap="wrap">
                 <Chip icon={<CheckIcon />} label={admission.ipStatus} size="small" color="success" variant="filled" />
-                {admission.insuranceYN === "Y" && <Chip label="Has Insurance" size="small" color="info" variant="outlined" />}
+                {admission.insuranceYN === "Y" && <Chip icon={<AccountBalance />} label="Has Insurance" size="small" color="info" variant="outlined" />}
                 {admission.deliveryCaseYN === "Y" && <Chip label="Delivery Case" size="small" color="secondary" variant="outlined" />}
                 {admission.provDiagnosisYN === "Y" && <Chip label="Provisional Diagnosis" size="small" color="warning" variant="outlined" />}
               </Box>
