@@ -9,6 +9,7 @@ import {
   FilterList as FilterIcon,
   Visibility as VisibilityIcon,
   Close as CloseIcon,
+  Business as DepartmentIcon,
 } from "@mui/icons-material";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
@@ -16,13 +17,27 @@ import CustomButton from "@/components/Button/CustomButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import SmartButton from "@/components/Button/SmartButton";
 import ProductForm from "./ProductForm";
+import ProductDepartmentOverview from "./ProductDepartmentOverview";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { useProductsQuery, useDeleteProductMutation } from "@/hooks/InventoryManagement/useProductQuery";
+import { FormProvider, useForm } from "react-hook-form"; // Import React Hook Form
+
+interface FormData {
+  selectedProduct: ProductListDto | null;
+}
 
 const ProductList: React.FC = () => {
+  // Form context setup
+  const methods = useForm<FormData>({
+    defaultValues: {
+      selectedProduct: null,
+    },
+  });
+  const { setValue } = methods;
+
   // State management
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
@@ -31,6 +46,8 @@ const ProductList: React.FC = () => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
+  const [isDepartmentOverviewOpen, setIsDepartmentOverviewOpen] = useState<boolean>(false);
+  const { department: departments } = useDropdownValues(["department"]);
   const [filters, setFilters] = useState<{
     category: string;
     productGroup: string;
@@ -42,9 +59,13 @@ const ProductList: React.FC = () => {
   });
   const [showStats, setShowStats] = useState(false);
 
+  // Update form context when selectedProduct changes
+  useEffect(() => {
+    setValue("selectedProduct", selectedProduct);
+  }, [selectedProduct, setValue]);
+
   // React Query hooks
   const { data: products, isLoading, error, refetch, isFetching } = useProductsQuery();
-
   const deleteProductMutation = useDeleteProductMutation();
 
   // Load dropdown values
@@ -108,6 +129,12 @@ const ProductList: React.FC = () => {
     setIsFormOpen(true);
   }, []);
 
+  // Open department overview dialog
+  const handleDepartmentOverview = useCallback((product: ProductListDto) => {
+    setSelectedProduct(product);
+    setIsDepartmentOverviewOpen(true);
+  }, []);
+
   // Open confirm dialog for deleting a product
   const handleDeleteClick = useCallback((product: ProductListDto) => {
     setSelectedProduct(product);
@@ -125,7 +152,6 @@ const ProductList: React.FC = () => {
       });
       setIsDeleteConfirmOpen(false);
     } catch (error) {
-      // Error handling is done in the mutation
       console.error("Delete operation failed:", error);
     }
   }, [selectedProduct, deleteProductMutation]);
@@ -133,9 +159,18 @@ const ProductList: React.FC = () => {
   // Close product form dialog
   const handleFormClose = useCallback((refreshData?: boolean) => {
     setIsFormOpen(false);
-    // React Query will automatically refresh data when mutations succeed
-    // No need to manually refetch
   }, []);
+
+  // Close department overview dialog
+  const handleDepartmentOverviewClose = useCallback(
+    (refreshData?: boolean) => {
+      setIsDepartmentOverviewOpen(false);
+      if (refreshData) {
+        refetch();
+      }
+    },
+    [refetch]
+  );
 
   // Handle filter changes
   const handleFilterChange = useCallback((field: keyof typeof filters, value: string) => {
@@ -180,19 +215,13 @@ const ProductList: React.FC = () => {
     if (!products) return [];
 
     return products.filter((product) => {
-      // Search term filter (using debounced search)
       const matchesSearch =
         debouncedSearchTerm === "" ||
         product.productName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         product.productCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
-      // Category filter
       const matchesCategory = filters.category === "" || product.catValue === filters.category;
-
-      // Product group filter
       const matchesGroup = filters.productGroup === "" || product.pGrpID?.toString() === filters.productGroup;
-
-      // Status filter
       const matchesStatus = filters.status === "" || (filters.status === "active" && product.rActiveYN === "Y") || (filters.status === "inactive" && product.rActiveYN === "N");
 
       return matchesSearch && matchesCategory && matchesGroup && matchesStatus;
@@ -304,42 +333,61 @@ const ProductList: React.FC = () => {
       visible: true,
       sortable: false,
       filterable: false,
-      width: 170,
+      width: 220,
       render: (item) => (
         <Stack direction="row" spacing={1}>
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => handleView(item)}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            <VisibilityIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="info"
-            onClick={() => handleEdit(item)}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            size="small"
-            color="error"
-            onClick={() => handleDeleteClick(item)}
-            sx={{
-              bgcolor: "rgba(25, 118, 210, 0.08)",
-              "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
-            }}
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
+          <Tooltip title="View Details">
+            <IconButton
+              size="small"
+              color="primary"
+              onClick={() => handleView(item)}
+              sx={{
+                bgcolor: "rgba(25, 118, 210, 0.08)",
+                "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+              }}
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Edit Product">
+            <IconButton
+              size="small"
+              color="info"
+              onClick={() => handleEdit(item)}
+              sx={{
+                bgcolor: "rgba(25, 118, 210, 0.08)",
+                "&:hover": { bgcolor: "rgba(25, 118, 210, 0.15)" },
+              }}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Product Overview">
+            <IconButton
+              size="small"
+              color="success"
+              onClick={() => handleDepartmentOverview(item)}
+              sx={{
+                bgcolor: "rgba(76, 175, 80, 0.08)",
+                "&:hover": { bgcolor: "rgba(76, 175, 80, 0.15)" },
+              }}
+            >
+              <DepartmentIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete Product">
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => handleDeleteClick(item)}
+              sx={{
+                bgcolor: "rgba(244, 67, 54, 0.08)",
+                "&:hover": { bgcolor: "rgba(244, 67, 54, 0.15)" },
+              }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Stack>
       ),
     },
@@ -358,170 +406,175 @@ const ProductList: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 2 }}>
-      {/* Toggle Stats Dashboard */}
-      <Box sx={{ mb: 2 }}>
-        <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
-      </Box>
+    <FormProvider {...methods}>
+      <Box sx={{ p: 2 }}>
+        {/* Toggle Stats Dashboard */}
+        <Box sx={{ mb: 2 }}>
+          <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
+        </Box>
 
-      {/* Stats Dashboard */}
-      {showStats && renderStatsDashboard()}
+        {/* Stats Dashboard */}
+        {showStats && renderStatsDashboard()}
 
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Typography variant="h5" component="h1" gutterBottom>
-              Product List
-            </Typography>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
-            <Stack direction="row" spacing={1}>
-              <SmartButton
-                text="Refresh"
-                icon={RefreshIcon}
-                onClick={handleRefresh}
-                color="info"
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Typography variant="h5" component="h1" gutterBottom>
+                Product List
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
+              <Stack direction="row" spacing={1}>
+                <SmartButton
+                  text="Refresh"
+                  icon={RefreshIcon}
+                  onClick={handleRefresh}
+                  color="info"
+                  variant="outlined"
+                  size="small"
+                  disabled={isFetching}
+                  loadingText="Refreshing..."
+                />
+                <SmartButton text="Add Product" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
+              </Stack>
+            </Grid>
+
+            {/* Search and Filter Row */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                placeholder="Search by name or code"
                 variant="outlined"
                 size="small"
-                disabled={isFetching}
-                loadingText="Refreshing..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchTerm && (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={handleClearSearch}>
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
-              <SmartButton text="Add Product" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
-            </Stack>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }} display="flex" justifyContent="flex-end">
+              <Box display="flex" alignItems="center" gap={1}>
+                {(filters.category || filters.productGroup || filters.status) && (
+                  <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
+                )}
+                <Tooltip title="Filter Products">
+                  <IconButton onClick={() => setFilterOpen(true)}>
+                    <FilterIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Grid>
           </Grid>
+        </Paper>
 
-          {/* Search and Filter Row */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              placeholder="Search by name or code"
-              variant="outlined"
-              size="small"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-                endAdornment: searchTerm && (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={handleClearSearch}>
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }} display="flex" justifyContent="flex-end">
-            <Box display="flex" alignItems="center" gap={1}>
-              {(filters.category || filters.productGroup || filters.status) && (
-                <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
-              )}
-              <Tooltip title="Filter Products">
-                <IconButton onClick={() => setFilterOpen(true)}>
-                  <FilterIcon />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
+        {/* Products Grid */}
+        <Paper sx={{ p: 2 }}>
+          <CustomGrid
+            columns={columns}
+            data={filteredProducts}
+            pagination
+            pageSize={10}
+            maxHeight="calc(100vh - 280px)"
+            showExportCSV
+            showExportPDF
+            exportFileName="product-list"
+            emptyStateMessage="No products found"
+            showColumnCustomization
+            initialSortBy={{ field: "productName", direction: "asc" }}
+            loading={isLoading || isFetching}
+          />
+        </Paper>
 
-      {/* Products Grid */}
-      <Paper sx={{ p: 2 }}>
-        <CustomGrid
-          columns={columns}
-          data={filteredProducts}
-          pagination
-          pageSize={10}
-          maxHeight="calc(100vh - 280px)"
-          showExportCSV
-          showExportPDF
-          exportFileName="product-list"
-          emptyStateMessage="No products found"
-          showColumnCustomization
-          initialSortBy={{ field: "productName", direction: "asc" }}
-          loading={isLoading || isFetching}
+        {/* Product Form Dialog */}
+        {isFormOpen && <ProductForm open={isFormOpen} onClose={handleFormClose} viewOnly={isViewMode} product={selectedProduct} />}
+
+        {/* Product Department Overview Dialog */}
+        {isDepartmentOverviewOpen && <ProductDepartmentOverview open={isDepartmentOverviewOpen} onClose={handleDepartmentOverviewClose} departments={departments} />}
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          open={isDeleteConfirmOpen}
+          onClose={() => setIsDeleteConfirmOpen(false)}
+          onConfirm={handleConfirmDelete}
+          title="Confirm Delete"
+          message={`Are you sure you want to delete the product "${selectedProduct?.productName}"?`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          type="error"
+          maxWidth="xs"
         />
-      </Paper>
 
-      {/* Product Form Dialog */}
-      {isFormOpen && <ProductForm open={isFormOpen} onClose={handleFormClose} product={selectedProduct} viewOnly={isViewMode} />}
+        {/* Filter Dialog */}
+        <GenericDialog
+          open={filterOpen}
+          onClose={() => setFilterOpen(false)}
+          title="Filter Products"
+          maxWidth="xs"
+          fullWidth
+          showCloseButton
+          actions={
+            <>
+              <CustomButton text="Clear Filters" onClick={handleClearFilters} variant="outlined" color="error" />
+              <CustomButton text="Apply" onClick={() => setFilterOpen(false)} variant="contained" color="primary" />
+            </>
+          }
+        >
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <DropdownSelect
+              label="Category"
+              name="category"
+              value={filters.category}
+              options={
+                productCategory?.map((option) => ({
+                  value: option.value.toString(),
+                  label: option.label,
+                })) || []
+              }
+              onChange={(e) => handleFilterChange("category", e.target.value)}
+              size="small"
+              defaultText="All Categories"
+            />
 
-      {/* Delete Confirmation Dialog */}
-      <ConfirmationDialog
-        open={isDeleteConfirmOpen}
-        onClose={() => setIsDeleteConfirmOpen(false)}
-        onConfirm={handleConfirmDelete}
-        title="Confirm Delete"
-        message={`Are you sure you want to delete the product "${selectedProduct?.productName}"?`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        type="error"
-        maxWidth="xs"
-      />
+            <DropdownSelect
+              label="Product Group"
+              name="ProductGroup"
+              value={filters.productGroup}
+              options={
+                productGroup?.map((option) => ({
+                  value: option.value.toString(),
+                  label: option.label,
+                })) || []
+              }
+              onChange={(e) => handleFilterChange("productGroup", e.target.value)}
+              size="small"
+              defaultText="All Product Group"
+            />
 
-      {/* Filter Dialog */}
-      <GenericDialog
-        open={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        title="Filter Products"
-        maxWidth="xs"
-        fullWidth
-        showCloseButton
-        actions={
-          <>
-            <CustomButton text="Clear Filters" onClick={handleClearFilters} variant="outlined" color="error" />
-            <CustomButton text="Apply" onClick={() => setFilterOpen(false)} variant="contained" color="primary" />
-          </>
-        }
-      >
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          <DropdownSelect
-            label="Category"
-            name="category"
-            value={filters.category}
-            options={
-              productCategory?.map((option) => ({
-                value: option.value.toString(),
-                label: option.label,
-              })) || []
-            }
-            onChange={(e) => handleFilterChange("category", e.target.value)}
-            size="small"
-            defaultText="All Categories"
-          />
-
-          <DropdownSelect
-            label="Product Group"
-            name="ProductGroup"
-            value={filters.productGroup}
-            options={
-              productGroup?.map((option) => ({
-                value: option.value.toString(),
-                label: option.label,
-              })) || []
-            }
-            onChange={(e) => handleFilterChange("productGroup", e.target.value)}
-            size="small"
-            defaultText="All Product Group"
-          />
-
-          <DropdownSelect
-            label="Status"
-            name="Status"
-            value={filters.status}
-            options={status}
-            onChange={(e) => handleFilterChange("status", e.target.value)}
-            size="small"
-            defaultText="All Records"
-          />
-        </Stack>
-      </GenericDialog>
-    </Box>
+            <DropdownSelect
+              label="Status"
+              name="Status"
+              value={filters.status}
+              options={status}
+              onChange={(e) => handleFilterChange("status", e.target.value)}
+              size="small"
+              defaultText="All Records"
+            />
+          </Stack>
+        </GenericDialog>
+      </Box>
+    </FormProvider>
   );
 };
 
