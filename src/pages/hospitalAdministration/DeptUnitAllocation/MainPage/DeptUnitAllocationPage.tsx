@@ -279,7 +279,7 @@ const DeptUnitAllocationPage: React.FC = () => {
 
   const formatTime = (time: Date): string => {
     try {
-      return new Date(time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      return new Date(time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
     } catch {
       return "-";
     }
