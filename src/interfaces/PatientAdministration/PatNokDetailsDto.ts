@@ -32,4 +32,5 @@ export interface PatNokDetailsDto {
   rActiveYN: string;
   rNotes: string;
   transferYN: string;
+  displayName?: string;
 }
