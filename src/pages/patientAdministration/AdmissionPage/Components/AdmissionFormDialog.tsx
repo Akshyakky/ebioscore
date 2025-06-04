@@ -166,7 +166,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       nurseIns: "",
       clerkIns: "",
       patientIns: "",
-      advisedVisitNo: 1,
+      advisedVisitNo: 0,
       visitGesy: "",
       pTitle: "",
       pfName: "",

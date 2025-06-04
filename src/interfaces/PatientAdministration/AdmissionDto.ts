@@ -14,6 +14,7 @@ export interface IPAdmissionDto extends RecordFieldsWithPhysician {
   admitStatus: string;
   provDiagnosisYN?: YesNo;
   insuranceYN: YesNo;
+  opipInsID: number;
   ipStatus: string;
   dischargeAdviceYN: YesNo;
   nurseIns?: string;
