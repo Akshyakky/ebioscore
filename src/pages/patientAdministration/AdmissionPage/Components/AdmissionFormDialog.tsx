@@ -1,19 +1,10 @@
 // src/pages/patientAdministration/AdmissionPage/Components/AdmissionFormDialog.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Grid, Typography, Divider, Alert, Paper, Chip, Avatar, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Box, Grid, Typography, Paper, Chip, Avatar, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Save as SaveIcon,
-  Clear as ClearIcon,
-  Person as PatientIcon,
-  Hotel as BedIcon,
-  LocalHospital as AdmissionIcon,
-  CalendarMonth,
-  People as PeopleIcon,
-  ExpandMore as ExpandMoreIcon,
-} from "@mui/icons-material";
+import { Save as SaveIcon, Clear as ClearIcon, Person as PatientIcon, Hotel as BedIcon, People as PeopleIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
@@ -23,7 +14,7 @@ import NokAttendantSelection from "./NokAttendantSelection";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { AdmissionDto, IPAdmissionDto, IPAdmissionDetailsDto, WrBedDetailsDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
-import { WrBedDto, RoomListDto, RoomGroupDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { useBedSelection } from "@/pages/hospitalAdministration/ManageBeds/hooks/useBedSelection";
 import { useServerDate } from "@/hooks/Common/useServerDate";

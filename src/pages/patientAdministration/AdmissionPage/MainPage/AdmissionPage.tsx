@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Box, Typography, Paper, Grid, Card, CardContent, Chip, Stack, IconButton, Avatar, Divider, TextField } from "@mui/material";
 import {
-  Add as AddIcon,
+  Add,
   Person as PatientIcon,
   Hotel as BedIcon,
   LocalHospital as AdmissionIcon,
@@ -38,7 +38,6 @@ interface EnhancedAdmissionDto extends AdmissionDto {
 const AdmissionPage: React.FC = () => {
   // State management
   const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
-  const [currentAdmissions, setCurrentAdmissions] = useState<EnhancedAdmissionDto[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [patientClearTrigger, setPatientClearTrigger] = useState(0);
   const [selectedAdmission, setSelectedAdmission] = useState<EnhancedAdmissionDto | null>(null);
@@ -136,7 +135,7 @@ const AdmissionPage: React.FC = () => {
       showAlert("Warning", "This patient is already admitted", "warning");
       return;
     }
-
+    setSelectedAdmission(null);
     setIsAdmissionFormOpen(true);
   }, [selectedPatient, currentAdmissionStatus, showAlert]);
 
@@ -149,6 +148,7 @@ const AdmissionPage: React.FC = () => {
 
         // Clear patient selection and refresh data
         setSelectedPatient(null);
+        setSelectedAdmission(null);
         setPatientClearTrigger((prev) => prev + 1);
         await refreshAdmissions();
       } catch (error) {
@@ -179,6 +179,12 @@ const AdmissionPage: React.FC = () => {
       fullName: admission.patientName || "",
     });
     setIsAdmissionFormOpen(true);
+  }, []);
+
+  const handleAdmissionClose = useCallback(() => {
+    setIsAdmissionFormOpen(false);
+    setSelectedPatient(null);
+    setSelectedAdmission(null);
   }, []);
 
   // Grid columns
@@ -416,7 +422,7 @@ const AdmissionPage: React.FC = () => {
       {/* Dialogs */}
       <AdmissionFormDialog
         open={isAdmissionFormOpen}
-        onClose={() => setIsAdmissionFormOpen(false)}
+        onClose={handleAdmissionClose}
         onSubmit={handleAdmissionSubmit}
         patient={selectedPatient}
         existingAdmission={selectedAdmission}
