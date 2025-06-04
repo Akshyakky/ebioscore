@@ -4,7 +4,15 @@ import { Box, Grid, Typography, Paper, Chip, Avatar, Accordion, AccordionSummary
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Save as SaveIcon, Clear as ClearIcon, Person as PatientIcon, Hotel as BedIcon, People as PeopleIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import {
+  Save as SaveIcon,
+  Clear as ClearIcon,
+  Person as PatientIcon,
+  Hotel as BedIcon,
+  People as PeopleIcon,
+  AccountBalance as InsuranceIcon,
+  ExpandMore as ExpandMoreIcon,
+} from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
@@ -14,60 +22,93 @@ import NokAttendantSelection from "./NokAttendantSelection";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { AdmissionDto, IPAdmissionDto, IPAdmissionDetailsDto, WrBedDetailsDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
+import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
 import { WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { useBedSelection } from "@/pages/hospitalAdministration/ManageBeds/hooks/useBedSelection";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
+import InsuranceSelectionForAdmission from "./InsuranceSelectionForAdmission";
 
-// Updated schema to include NOK-related fields
-const admissionSchema = z.object({
-  pChartID: z.number().min(1, "Patient is required"),
-  pChartCode: z.string().min(1, "Patient chart code is required"),
-  admitCode: z.string().min(1, "Admission code is required"),
-  admitDate: z.date().default(new Date()),
-  caseTypeCode: z.string().min(1, "Case type is required"),
-  caseTypeName: z.string().default(""),
-  admissionType: z.string().min(1, "Admission type is required"),
-  rNotes: z.string().min(1, "Reason for admission is required"),
-  attendingPhysicianId: z.coerce.number().min(1, "Attending physician is required"),
-  attendingPhysicianName: z.string().default(""),
-  primaryPhysicianId: z.number().optional(),
-  primaryPhysicianName: z.string().optional().default(""),
-  primaryReferralSourceId: z.number().optional(),
-  primaryReferralSourceName: z.string().optional().default(""),
-  deptID: z.number().min(1, "Department is required"),
-  deptName: z.string().default(""),
-  dulId: z.number().min(1, "Unit is required"),
-  unitName: z.string().default(""),
-  bedID: z.number().min(1, "Bed assignment is required"),
-  bedName: z.string().default(""),
-  rlID: z.number().min(1, "Room is required"),
-  rName: z.string().default(""),
-  wCatID: z.number().optional(),
-  wCatName: z.string().optional().default(""),
-  pTypeID: z.number().min(1, "PIC is required"),
-  pTypeName: z.string().default(""),
-  insuranceYN: z.enum(["Y", "N"]).default("N"),
-  deliveryCaseYN: z.enum(["Y", "N"]).default("N"),
-  provDiagnosisYN: z.enum(["Y", "N"]).default("N"),
-  dischargeAdviceYN: z.enum(["Y", "N"]).default("N"),
-  nurseIns: z.string().optional().default(""),
-  clerkIns: z.string().optional().default(""),
-  patientIns: z.string().optional().default(""),
-  advisedVisitNo: z.number().default(1),
-  visitGesy: z.string().optional().default(""),
-  // Patient name fields
-  pTitle: z.string().default(""),
-  pfName: z.string().default(""),
-  plName: z.string().default(""),
-  pmName: z.string().default(""),
-  // NOK/Attendant fields
-  patNokID: z.number().optional().default(0),
-  attendantName: z.string().optional().default(""),
-  attendantRelation: z.string().optional().default(""),
-  attendantPhone: z.string().optional().default(""),
-});
+// Enhanced schema with insurance fields
+const admissionSchema = z
+  .object({
+    pChartID: z.number().min(1, "Patient is required"),
+    pChartCode: z.string().min(1, "Patient chart code is required"),
+    admitCode: z.string().min(1, "Admission code is required"),
+    admitDate: z.date().default(new Date()),
+    caseTypeCode: z.string().min(1, "Case type is required"),
+    caseTypeName: z.string().default(""),
+    admissionType: z.string().min(1, "Admission type is required"),
+    rNotes: z.string().min(1, "Reason for admission is required"),
+    attendingPhysicianId: z.coerce.number().min(1, "Attending physician is required"),
+    attendingPhysicianName: z.string().default(""),
+    primaryPhysicianId: z.number().optional(),
+    primaryPhysicianName: z.string().optional().default(""),
+    primaryReferralSourceId: z.number().optional(),
+    primaryReferralSourceName: z.string().optional().default(""),
+    deptID: z.number().min(1, "Department is required"),
+    deptName: z.string().default(""),
+    dulId: z.number().min(1, "Unit is required"),
+    unitName: z.string().default(""),
+    bedID: z.number().min(1, "Bed assignment is required"),
+    bedName: z.string().default(""),
+    rlID: z.number().min(1, "Room is required"),
+    rName: z.string().default(""),
+    wCatID: z.number().optional(),
+    wCatName: z.string().optional().default(""),
+    pTypeID: z.number().min(1, "PIC is required"),
+    pTypeName: z.string().default(""),
+    insuranceYN: z.enum(["Y", "N"]).default("N"),
+    deliveryCaseYN: z.enum(["Y", "N"]).default("N"),
+    provDiagnosisYN: z.enum(["Y", "N"]).default("N"),
+    dischargeAdviceYN: z.enum(["Y", "N"]).default("N"),
+    nurseIns: z.string().optional().default(""),
+    clerkIns: z.string().optional().default(""),
+    patientIns: z.string().optional().default(""),
+    advisedVisitNo: z.number().default(1),
+    visitGesy: z.string().optional().default(""),
+    // Patient name fields
+    pTitle: z.string().default(""),
+    pfName: z.string().default(""),
+    plName: z.string().default(""),
+    pmName: z.string().default(""),
+    // NOK/Attendant fields
+    patNokID: z.number().optional().default(0),
+    attendantName: z.string().optional().default(""),
+    attendantRelation: z.string().optional().default(""),
+    attendantPhone: z.string().optional().default(""),
+    // Insurance fields
+    opipInsID: z.number().optional().default(0),
+    selectedInsuranceDetails: z
+      .object({
+        oPIPInsID: z.number(),
+        insurID: z.number(),
+        insurName: z.string(),
+        policyNumber: z.string(),
+        policyHolder: z.string(),
+        groupNumber: z.string().optional(),
+        relationVal: z.string(),
+        relation: z.string().optional(),
+        policyStartDt: z.date(),
+        policyEndDt: z.date(),
+        rActiveYN: z.string(),
+      })
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      // If insurance is required and selected, ensure insurance details are provided
+      if (data.insuranceYN === "Y" && data.opipInsID === 0) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Insurance selection is required when insurance coverage is enabled",
+      path: ["opipInsID"],
+    }
+  );
 
 type AdmissionFormData = z.infer<typeof admissionSchema>;
 
@@ -87,7 +128,9 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
   const [isInitialized, setIsInitialized] = useState(false);
   const [bedDataLoaded, setBedDataLoaded] = useState(false);
   const [selectedNok, setSelectedNok] = useState<PatNokDetailsDto | null>(null);
+  const [selectedInsurance, setSelectedInsurance] = useState<OPIPInsurancesDto | null>(null);
   const [nokAccordionExpanded, setNokAccordionExpanded] = useState(false);
+  const [insuranceAccordionExpanded, setInsuranceAccordionExpanded] = useState(false);
 
   const isEditMode = !!existingAdmission;
   const serverDate = useServerDate();
@@ -121,7 +164,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     }
   }, [bedLoading, beds]);
 
-  // Form setup with default values including NOK fields
+  // Form setup with default values including insurance fields
   const {
     control,
     handleSubmit,
@@ -176,6 +219,8 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       attendantName: "",
       attendantRelation: "",
       attendantPhone: "",
+      opipInsID: 0,
+      selectedInsuranceDetails: undefined,
     },
   });
 
@@ -183,6 +228,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
   const watchedDeptID = watch("deptID");
   const watchedDulId = watch("dulId");
   const watchedBedID = watch("bedID");
+  const watchedInsuranceYN = watch("insuranceYN");
 
   // Initialize form data when dialog opens
   useEffect(() => {
@@ -194,6 +240,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       setBedDataLoaded(false);
       setSelectedBed(null);
       setSelectedNok(null);
+      setSelectedInsurance(null);
       setPatientData(null);
     }
   }, [open, patient, existingAdmission, isInitialized]);
@@ -204,6 +251,13 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       populateBedSelection();
     }
   }, [isEditMode, existingAdmission, bedDataLoaded, selectedBed, beds]);
+
+  // Auto-expand insurance accordion when insurance is required
+  useEffect(() => {
+    if (watchedInsuranceYN === "Y") {
+      setInsuranceAccordionExpanded(true);
+    }
+  }, [watchedInsuranceYN]);
 
   // Function to handle bed selection population
   const populateBedSelection = useCallback(() => {
@@ -262,7 +316,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     const details = existingAdmission.ipAdmissionDetailsDto;
     const bedDetails = existingAdmission.wrBedDetailsDto;
 
-    // Populate form with existing data including NOK fields
+    // Populate form with existing data including insurance fields
     reset({
       pChartID: admission.pChartID,
       pChartCode: admission.pChartCode,
@@ -308,6 +362,9 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       attendantName: "",
       attendantRelation: "",
       attendantPhone: "",
+      // Insurance fields
+      opipInsID: admission.opipInsID || 0,
+      selectedInsuranceDetails: undefined,
     });
 
     // Load patient data for display
@@ -334,7 +391,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         reset({
           pChartID: patient.pChartID,
           pChartCode: patient.pChartCode,
-          //admitCode: admitCode,
           admitDate: serverDate,
           pTitle: patRegister.pTitle || "",
           pfName: patRegister.pFName || "",
@@ -375,6 +431,8 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
           attendantName: "",
           attendantRelation: "",
           attendantPhone: "",
+          opipInsID: 0,
+          selectedInsuranceDetails: undefined,
         });
         await generateAdmissionCode();
       }
@@ -416,6 +474,38 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         setValue("attendantName", "", { shouldValidate: true });
         setValue("attendantRelation", "", { shouldValidate: true });
         setValue("attendantPhone", "", { shouldValidate: true });
+      }
+    },
+    [setValue]
+  );
+
+  // Handle insurance selection
+  const handleInsuranceSelect = useCallback(
+    (insuranceDetails: OPIPInsurancesDto | null) => {
+      setSelectedInsurance(insuranceDetails);
+
+      if (insuranceDetails) {
+        setValue("opipInsID", insuranceDetails.oPIPInsID, { shouldValidate: true });
+        setValue(
+          "selectedInsuranceDetails",
+          {
+            oPIPInsID: insuranceDetails.oPIPInsID,
+            insurID: insuranceDetails.insurID,
+            insurName: insuranceDetails.insurName,
+            policyNumber: insuranceDetails.policyNumber || "",
+            policyHolder: insuranceDetails.policyHolder || "",
+            groupNumber: insuranceDetails.groupNumber || "",
+            relationVal: insuranceDetails.relationVal,
+            relation: insuranceDetails.relation || "",
+            policyStartDt: new Date(insuranceDetails.policyStartDt),
+            policyEndDt: new Date(insuranceDetails.policyEndDt),
+            rActiveYN: insuranceDetails.rActiveYN,
+          },
+          { shouldValidate: true }
+        );
+      } else {
+        setValue("opipInsID", 0, { shouldValidate: true });
+        setValue("selectedInsuranceDetails", undefined, { shouldValidate: true });
       }
     },
     [setValue]
@@ -499,7 +589,22 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     [pic, setValue]
   );
 
-  // Form submission with NOK data
+  // Handle insurance toggle
+  const handleInsuranceToggle = useCallback(
+    (checked: boolean) => {
+      setValue("insuranceYN", checked ? "Y" : "N", { shouldValidate: true });
+      if (!checked) {
+        // Clear insurance selection when disabled
+        setSelectedInsurance(null);
+        setValue("opipInsID", 0, { shouldValidate: true });
+        setValue("selectedInsuranceDetails", undefined, { shouldValidate: true });
+        setInsuranceAccordionExpanded(false);
+      }
+    },
+    [setValue]
+  );
+
+  // Form submission with insurance data
   const onFormSubmit = async (data: AdmissionFormData) => {
     try {
       const ipAdmissionDto: IPAdmissionDto = {
@@ -514,6 +619,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         admitStatus: "ADMITTED",
         provDiagnosisYN: data.provDiagnosisYN,
         insuranceYN: data.insuranceYN,
+        opipInsID: data.opipInsID || 0, // Include selected insurance ID
         ipStatus: "ADMITTED",
         dischargeAdviceYN: data.dischargeAdviceYN,
         nurseIns: data.nurseIns,
@@ -646,6 +752,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       reset();
       setSelectedBed(null);
       setSelectedNok(null);
+      setSelectedInsurance(null);
       setPatientData(null);
     }
   };
@@ -801,26 +908,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                 <EnhancedFormField name="primaryReferralSourceId" control={control} type="select" label="Referral Source" size="small" options={primaryIntroducingSource} />
               </Grid>
 
-              {/* Patient Attendant/NOK Section */}
-              <Grid size={{ xs: 12 }}>
-                <Accordion expanded={nokAccordionExpanded} onChange={() => setNokAccordionExpanded(!nokAccordionExpanded)} sx={{ border: "1px solid", borderColor: "grey.300" }}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <PeopleIcon fontSize="small" />
-                      <Typography variant="subtitle2">Patient Attendant Selection</Typography>
-                      {selectedNok && (
-                        <Chip size="small" label={`${selectedNok.pNokFName} ${selectedNok.pNokLName} (${selectedNok.pNokRelName})`} color="primary" variant="outlined" />
-                      )}
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    {patient && (
-                      <NokAttendantSelection pChartID={patient.pChartID} patientName={patientDisplayName} selectedNokID={selectedNok?.pNokID} onNokSelect={handleNokSelect} />
-                    )}
-                  </AccordionDetails>
-                </Accordion>
-              </Grid>
-
               {/* Bed Assignment */}
               <Grid size={{ xs: 12 }}>
                 <Box sx={{ p: 1.5, backgroundColor: "grey.50", borderRadius: 1, border: "1px solid", borderColor: "grey.300" }}>
@@ -860,10 +947,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
 
               {/* Additional Options - Single Row */}
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField name="insuranceYN" control={control} type="switch" label="Has Insurance" size="small" />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 3 }}>
                 <EnhancedFormField name="deliveryCaseYN" control={control} type="switch" label="Delivery Case" size="small" />
               </Grid>
 
@@ -886,6 +969,62 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
 
               <Grid size={{ xs: 12, md: 4 }}>
                 <EnhancedFormField name="patientIns" control={control} type="textarea" label="Patient Instructions" size="small" rows={2} />
+              </Grid>
+              {/* Patient Attendant/NOK Section */}
+              <Grid size={{ xs: 12 }}>
+                <Accordion expanded={nokAccordionExpanded} onChange={() => setNokAccordionExpanded(!nokAccordionExpanded)} sx={{ border: "1px solid", borderColor: "grey.300" }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <PeopleIcon fontSize="small" />
+                      <Typography variant="subtitle2">Patient Attendant Selection</Typography>
+                      {selectedNok && (
+                        <Chip size="small" label={`${selectedNok.pNokFName} ${selectedNok.pNokLName} (${selectedNok.pNokRelName})`} color="primary" variant="outlined" />
+                      )}
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    {patient && (
+                      <NokAttendantSelection pChartID={patient.pChartID} patientName={patientDisplayName} selectedNokID={selectedNok?.pNokID} onNokSelect={handleNokSelect} />
+                    )}
+                  </AccordionDetails>
+                </Accordion>
+              </Grid>
+
+              {/* Insurance Section */}
+              <Grid size={{ xs: 12 }}>
+                <Accordion
+                  expanded={insuranceAccordionExpanded}
+                  onChange={() => setInsuranceAccordionExpanded(!insuranceAccordionExpanded)}
+                  sx={{ border: "1px solid", borderColor: "grey.300" }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <InsuranceIcon fontSize="small" />
+                      <Typography variant="subtitle2">Insurance Coverage</Typography>
+                      {selectedInsurance && <Chip size="small" label={`${selectedInsurance.insurName} - ${selectedInsurance.policyNumber}`} color="success" variant="outlined" />}
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box sx={{ mb: 2 }}>
+                      <EnhancedFormField name="insuranceYN" control={control} type="switch" label="Patient has insurance coverage" size="small" onChange={handleInsuranceToggle} />
+                    </Box>
+
+                    {watchedInsuranceYN === "Y" && patient && (
+                      <InsuranceSelectionForAdmission
+                        pChartID={patient.pChartID}
+                        patientName={patientDisplayName}
+                        selectedInsuranceID={selectedInsurance?.oPIPInsID}
+                        onInsuranceSelect={handleInsuranceSelect}
+                      />
+                    )}
+
+                    {errors.opipInsID && (
+                      <Typography variant="caption" color="error.main" sx={{ mt: 1, display: "block" }}>
+                        {errors.opipInsID.message}
+                      </Typography>
+                    )}
+                  </AccordionDetails>
+                </Accordion>
               </Grid>
             </Grid>
           </form>
