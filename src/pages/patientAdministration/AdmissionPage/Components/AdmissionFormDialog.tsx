@@ -79,6 +79,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [patientData, setPatientData] = useState<any>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [bedDataLoaded, setBedDataLoaded] = useState(false);
 
   const isEditMode = !!existingAdmission;
   const serverDate = useServerDate();
@@ -104,6 +105,13 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
   } = useBedSelection({
     filters: { availableOnly: !isEditMode }, // In edit mode, allow current bed selection
   });
+
+  // Track when bed data has finished loading
+  useEffect(() => {
+    if (!bedLoading && beds.length >= 0) {
+      setBedDataLoaded(true);
+    }
+  }, [bedLoading, beds]);
 
   // Form setup with default values
   const {
@@ -171,8 +179,60 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       setIsInitialized(true);
     } else if (!open) {
       setIsInitialized(false);
+      setBedDataLoaded(false);
+      setSelectedBed(null);
     }
   }, [open, patient, existingAdmission, isInitialized]);
+
+  // NEW: Re-populate bed selection when bed data becomes available in edit mode
+  useEffect(() => {
+    if (isEditMode && existingAdmission && bedDataLoaded && !selectedBed) {
+      populateBedSelection();
+    }
+  }, [isEditMode, existingAdmission, bedDataLoaded, selectedBed, beds]);
+
+  // NEW: Function to handle bed selection population
+  const populateBedSelection = useCallback(() => {
+    if (!existingAdmission || !bedDataLoaded) return;
+
+    const details = existingAdmission.ipAdmissionDetailsDto;
+    if (details?.bedID) {
+      const currentBed = beds.find((bed) => bed.bedID === details.bedID);
+      if (currentBed) {
+        console.log("Found bed for edit mode:", currentBed);
+        setSelectedBed(currentBed);
+      } else {
+        console.warn("Bed not found in available beds list:", details.bedID);
+        // In edit mode, if the exact bed isn't found, create a placeholder
+        const placeholderBed: WrBedDto = {
+          bedID: details.bedID,
+          bedName: details.bedName,
+          rlID: details.rlID,
+          roomList: {
+            rlID: details.rlID,
+            rName: details.rName,
+            roomGroup: existingAdmission.wrBedDetailsDto.rGrpID
+              ? {
+                  rGrpID: existingAdmission.wrBedDetailsDto.rGrpID,
+                  rGrpName: existingAdmission.wrBedDetailsDto.rGrpName || "",
+                  deptID: existingAdmission.ipAdmissionDto.deptID,
+                  deptName: existingAdmission.ipAdmissionDto.deptName,
+                }
+              : undefined,
+          },
+          wbCatID: details.wCatID,
+          wbCatName: details.wCatName,
+          bedStatus: existingAdmission.wrBedDetailsDto.bedStatusValue || "OCCUP",
+          bedAvailable: false, // Current bed is occupied
+          rActiveYN: "Y",
+          key: details.bedID.toString(),
+        } as WrBedDto;
+
+        console.log("Created placeholder bed for edit mode:", placeholderBed);
+        setSelectedBed(placeholderBed);
+      }
+    }
+  }, [existingAdmission, bedDataLoaded, beds, selectedBed]);
 
   // Initialize form with either new admission or existing admission data
   const initializeForm = useCallback(async () => {
@@ -196,11 +256,8 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     // Set admission code for edit mode
     setAdmitCode(admission.admitCode);
 
-    // Find the selected bed
-    const currentBed = beds.find((bed) => bed.bedID === details.bedID);
-    if (currentBed) {
-      setSelectedBed(currentBed);
-    }
+    // NOTE: Bed selection is now handled separately in the useEffect above
+    // when bed data becomes available
 
     // Populate form with existing data
     reset({
@@ -254,7 +311,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     } catch (error) {
       console.error("Error loading patient data in edit mode:", error);
     }
-  }, [existingAdmission, beds, reset]);
+  }, [existingAdmission, reset]);
 
   // Load patient data and setup new admission
   const loadPatientDataAndSetupNewAdmission = useCallback(async () => {
@@ -553,6 +610,10 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     if (isEditMode) {
       // In edit mode, reset to original data
       populateFormWithExistingData();
+      // Also re-populate bed selection if data is available
+      if (bedDataLoaded) {
+        populateBedSelection();
+      }
     } else {
       // In new mode, reset to defaults
       reset();
@@ -736,7 +797,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                     />
                   ) : (
                     <Typography variant="caption" color="text.secondary">
-                      No bed selected
+                      {bedLoading ? "Loading bed data..." : "No bed selected"}
                     </Typography>
                   )}
                   {errors.bedID && (
