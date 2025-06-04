@@ -173,17 +173,11 @@ const AdmissionPage: React.FC = () => {
 
   const handleEditAdmission = useCallback((admission: EnhancedAdmissionDto) => {
     setSelectedAdmission(admission);
-    setSelectedPatient({
-      pChartID: admission.ipAdmissionDto.pChartID,
-      pChartCode: admission.ipAdmissionDto.pChartCode,
-      fullName: admission.patientName || "",
-    });
     setIsAdmissionFormOpen(true);
   }, []);
 
   const handleAdmissionClose = useCallback(() => {
     setIsAdmissionFormOpen(false);
-    setSelectedPatient(null);
     setSelectedAdmission(null);
   }, []);
 

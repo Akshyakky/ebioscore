@@ -194,6 +194,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       setBedDataLoaded(false);
       setSelectedBed(null);
       setSelectedNok(null);
+      setPatientData(null);
     }
   }, [open, patient, existingAdmission, isInitialized]);
 
@@ -668,15 +669,18 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
   );
 
   const patientDisplayName = useMemo(() => {
-    if (patientData) {
-      return [patientData.pTitle, patientData.pFName, patientData.pMName, patientData.pLName].filter(Boolean).join(" ");
-    }
-    if (existingAdmission) {
+    if (isEditMode && existingAdmission) {
       const admission = existingAdmission.ipAdmissionDto;
       return [admission.pTitle, admission.pfName, admission.pmName, admission.plName].filter(Boolean).join(" ");
     }
+
+    if (patientData) {
+      return [patientData.pTitle, patientData.pFName, patientData.pMName, patientData.pLName].filter(Boolean).join(" ");
+    }
+
+    // Fallback to patient prop
     return patient?.fullName || "Patient Information";
-  }, [patientData, existingAdmission, patient]);
+  }, [isEditMode, existingAdmission, patientData, patient]);
 
   return (
     <>
