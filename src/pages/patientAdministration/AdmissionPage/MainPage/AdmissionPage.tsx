@@ -281,10 +281,24 @@ const AdmissionPage: React.FC = () => {
       width: 120,
       render: (admission) => (
         <Stack direction="row" spacing={0.5}>
-          <IconButton size="small" color="primary" onClick={() => handleViewHistory(admission)}>
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleViewHistory(admission);
+            }}
+          >
             <HistoryIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" color="secondary" onClick={() => handleEditAdmission(admission)}>
+          <IconButton
+            size="small"
+            color="secondary"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleEditAdmission(admission);
+            }}
+          >
             <EditIcon fontSize="small" />
           </IconButton>
         </Stack>
