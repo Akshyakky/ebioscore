@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, Chip, FormGroup, FormControlLabel, Checkbox } from "@mui/material";
-import { useForm, useWatch } from "react-hook-form";
+import { Box, Grid, Typography, Divider, Card, CardContent, Alert, FormGroup, FormControlLabel, Checkbox } from "@mui/material";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { DeptUnitAllocationDto } from "@/interfaces/HospitalAdministration/DeptUnitAllocationDto";
@@ -23,8 +23,9 @@ interface DeptUnitAllocationFormProps {
 
 // Utility function to convert Date to time string (HH:mm)
 const formatTimeToString = (date: Date | undefined): string => {
-  if (!date) return "";
-  return date.toLocaleTimeString("en-US", {
+  const dateValue = new Date(date);
+  if (!date || isNaN(dateValue.getTime())) return "";
+  return dateValue.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -33,11 +34,37 @@ const formatTimeToString = (date: Date | undefined): string => {
 
 // Utility function to convert time string (HH:mm) to Date
 const parseTimeToDate = (time: string): Date => {
+  if (!time || !/^\d{2}:\d{2}$/.test(time)) {
+    throw new Error(`Invalid time format: ${time}`);
+  }
   const [hours, minutes] = time.split(":").map(Number);
+  if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    throw new Error(`Invalid time values: ${time}`);
+  }
   const date = new Date();
   date.setHours(hours, minutes, 0, 0);
   return date;
 };
+
+// Define options for week days
+const weekDayOptions = [
+  { value: "sun", label: "Sunday" },
+  { value: "mon", label: "Monday" },
+  { value: "tue", label: "Tuesday" },
+  { value: "wed", label: "Wednesday" },
+  { value: "thu", label: "Thursday" },
+  { value: "fri", label: "Friday" },
+  { value: "sat", label: "Saturday" },
+];
+
+// Define options for occurrences
+const occurrenceOptions = [
+  { value: "1", label: "First Week" },
+  { value: "2", label: "Second Week" },
+  { value: "3", label: "Third Week" },
+  { value: "4", label: "Fourth Week" },
+  { value: "5", label: "Fifth Week" },
+];
 
 const schema = z
   .object({
@@ -46,8 +73,14 @@ const schema = z
     deptName: z.string().optional(),
     dulID: z.number().min(1, "Unit is required"),
     unitDesc: z.string().optional(),
-    uASTIME: z.string().nonempty("Start time is required"),
-    uAETIME: z.string().nonempty("End time is required"),
+    uASTIME: z
+      .string()
+      .nonempty("Start time is required")
+      .regex(/^\d{2}:\d{2}$/, "Invalid time format"),
+    uAETIME: z
+      .string()
+      .nonempty("End time is required")
+      .regex(/^\d{2}:\d{2}$/, "Invalid time format"),
     facultyID: z.number().min(1, "Faculty is required"),
     facultyName: z.string().optional(),
     roomID: z.number().optional(),
@@ -58,28 +91,22 @@ const schema = z
     unitHeadYN: z.string().optional(),
     fullDay: z.boolean().optional(),
     allDaysYN: z.string().optional(),
-    sunYN: z.string().optional(),
-    monYN: z.string().optional(),
-    tueYN: z.string().optional(),
-    wedYN: z.string().optional(),
-    thuYN: z.string().optional(),
-    friYN: z.string().optional(),
-    satYN: z.string().optional(),
+    weekDays: z.array(z.string()).optional(),
     occuranceAllYN: z.string().optional(),
-    occurance1YN: z.string().optional(),
-    occurance2YN: z.string().optional(),
-    occurance3YN: z.string().optional(),
-    occurance4YN: z.string().optional(),
-    occurance5YN: z.string().optional(),
+    occurrences: z.array(z.string()).optional(),
     rActiveYN: z.string(),
     rNotes: z.string().nullable().optional(),
     transferYN: z.string().optional(),
   })
   .refine(
     (data) => {
-      const startTime = new Date(`2000-01-01T${data.uASTIME}`);
-      const endTime = new Date(`2000-01-01T${data.uAETIME}`);
-      return endTime > startTime;
+      try {
+        const startTime = parseTimeToDate(data.uASTIME);
+        const endTime = parseTimeToDate(data.uAETIME);
+        return endTime > startTime;
+      } catch {
+        return false;
+      }
     },
     {
       message: "End time must be after start time",
@@ -126,19 +153,9 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
     unitHeadYN: "N",
     fullDay: false,
     allDaysYN: "N",
-    sunYN: "N",
-    monYN: "Y",
-    tueYN: "Y",
-    wedYN: "Y",
-    thuYN: "Y",
-    friYN: "Y",
-    satYN: "N",
-    occuranceAllYN: "Y",
-    occurance1YN: "Y",
-    occurance2YN: "Y",
-    occurance3YN: "Y",
-    occurance4YN: "Y",
-    occurance5YN: "Y",
+    weekDays: [],
+    occuranceAllYN: "N",
+    occurrences: [],
     rActiveYN: "Y",
     rNotes: "",
     transferYN: "N",
@@ -168,13 +185,32 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
     return units.filter((unit) => unit.deptID === deptID);
   }, [deptID, units]);
 
+  // Initialize form with initialData
   useEffect(() => {
     if (initialData) {
+      const weekDays = [];
+      if (initialData.sunYN === "Y") weekDays.push("sun");
+      if (initialData.monYN === "Y") weekDays.push("mon");
+      if (initialData.tueYN === "Y") weekDays.push("tue");
+      if (initialData.wedYN === "Y") weekDays.push("wed");
+      if (initialData.thuYN === "Y") weekDays.push("thu");
+      if (initialData.friYN === "Y") weekDays.push("fri");
+      if (initialData.satYN === "Y") weekDays.push("sat");
+
+      const occurrences = [];
+      if (initialData.occurance1YN === "Y") occurrences.push("1");
+      if (initialData.occurance2YN === "Y") occurrences.push("2");
+      if (initialData.occurance3YN === "Y") occurrences.push("3");
+      if (initialData.occurance4YN === "Y") occurrences.push("4");
+      if (initialData.occurance5YN === "Y") occurrences.push("5");
+
       reset({
         ...initialData,
         uASTIME: formatTimeToString(initialData.uASTIME),
         uAETIME: formatTimeToString(initialData.uAETIME),
         fullDay: false,
+        weekDays,
+        occurrences,
       } as DeptUnitAllocationFormData);
     } else {
       reset(defaultValues);
@@ -191,15 +227,13 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
   const handleAllDaysChange = (checked: boolean) => {
     const value = checked ? "Y" : "N";
     setValue("allDaysYN", value);
-    const days = ["sunYN", "monYN", "tueYN", "wedYN", "thuYN", "friYN", "satYN"] as const;
-    days.forEach((day) => setValue(day, value, { shouldValidate: true }));
+    setValue("weekDays", checked ? weekDayOptions.map((opt) => opt.value) : [], { shouldValidate: true });
   };
 
   const handleAllOccurrencesChange = (checked: boolean) => {
     const value = checked ? "Y" : "N";
     setValue("occuranceAllYN", value);
-    const occurrences = ["occurance1YN", "occurance2YN", "occurance3YN", "occurance4YN", "occurance5YN"] as const;
-    occurrences.forEach((occ) => setValue(occ, value, { shouldValidate: true }));
+    setValue("occurrences", checked ? occurrenceOptions.map((opt) => opt.value) : [], { shouldValidate: true });
   };
 
   const onSubmit = async (data: DeptUnitAllocationFormData) => {
@@ -211,6 +245,29 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
       setIsSaving(true);
       setLoading(true);
 
+      // Convert weekDays and occurrences arrays to Y/N flags
+      const weekDaysFlags = {
+        sunYN: data.weekDays.includes("sun") ? "Y" : "N",
+        monYN: data.weekDays.includes("mon") ? "Y" : "N",
+        tueYN: data.weekDays.includes("tue") ? "Y" : "N",
+        wedYN: data.weekDays.includes("wed") ? "Y" : "N",
+        thuYN: data.weekDays.includes("thu") ? "Y" : "N",
+        friYN: data.weekDays.includes("fri") ? "Y" : "N",
+        satYN: data.weekDays.includes("sat") ? "Y" : "N",
+      };
+
+      const occurrencesFlags = {
+        occurance1YN: data.occurrences.includes("1") ? "Y" : "N",
+        occurance2YN: data.occurrences.includes("2") ? "Y" : "N",
+        occurance3YN: data.occurrences.includes("3") ? "Y" : "N",
+        occurance4YN: data.occurrences.includes("4") ? "Y" : "N",
+        occurance5YN: data.occuranceAllYN === "Y" ? "Y" : data.occurrences.includes("5") ? "Y" : "N",
+      };
+
+      // Convert time strings to Date objects
+      const uASTIME = parseTimeToDate(data.uASTIME);
+      const uAETIME = parseTimeToDate(data.uAETIME);
+
       // Convert form data to DeptUnitAllocationDto
       const allocationData: DeptUnitAllocationDto = {
         dUAID: data.dUAID ?? 0,
@@ -218,8 +275,8 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
         deptName: data.deptName ?? "",
         dulID: data.dulID,
         unitDesc: data.unitDesc ?? "",
-        uASTIME: parseTimeToDate(data.uASTIME),
-        uAETIME: parseTimeToDate(data.uAETIME),
+        uASTIME,
+        uAETIME,
         facultyID: data.facultyID,
         facultyName: data.facultyName ?? "",
         roomID: data.roomID ?? 0,
@@ -229,19 +286,9 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
         specialityID: data.specialityID ?? 0,
         unitHeadYN: data.unitHeadYN ?? "N",
         allDaysYN: data.allDaysYN ?? "N",
-        sunYN: data.sunYN ?? "N",
-        monYN: data.monYN ?? "N",
-        tueYN: data.tueYN ?? "N",
-        wedYN: data.wedYN ?? "N",
-        thuYN: data.thuYN ?? "N",
-        friYN: data.friYN ?? "N",
-        satYN: data.satYN ?? "N",
+        ...weekDaysFlags,
         occuranceAllYN: data.occuranceAllYN ?? "N",
-        occurance1YN: data.occurance1YN ?? "N",
-        occurance2YN: data.occurance2YN ?? "N",
-        occurance3YN: data.occurance3YN ?? "N",
-        occurance4YN: data.occurance4YN ?? "N",
-        occurance5YN: data.occurance5YN ?? "N",
+        ...occurrencesFlags,
         rActiveYN: data.rActiveYN || "Y",
         rNotes: data.rNotes ?? "",
         transferYN: data.transferYN ?? "N",
@@ -274,16 +321,34 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
   };
 
   const performReset = () => {
-    reset(
-      initialData
-        ? {
-            ...initialData,
-            uASTIME: formatTimeToString(initialData.uASTIME),
-            uAETIME: formatTimeToString(initialData.uAETIME),
-            fullDay: false,
-          }
-        : defaultValues
-    );
+    if (initialData) {
+      const weekDays = [];
+      if (initialData.sunYN === "Y") weekDays.push("sun");
+      if (initialData.monYN === "Y") weekDays.push("mon");
+      if (initialData.tueYN === "Y") weekDays.push("tue");
+      if (initialData.wedYN === "Y") weekDays.push("wed");
+      if (initialData.thuYN === "Y") weekDays.push("thu");
+      if (initialData.friYN === "Y") weekDays.push("fri");
+      if (initialData.satYN === "Y") weekDays.push("sat");
+
+      const occurrences = [];
+      if (initialData.occurance1YN === "Y") occurrences.push("1");
+      if (initialData.occurance2YN === "Y") occurrences.push("2");
+      if (initialData.occurance3YN === "Y") occurrences.push("3");
+      if (initialData.occurance4YN === "Y") occurrences.push("4");
+      if (initialData.occurance5YN === "Y") occurrences.push("5");
+
+      reset({
+        ...initialData,
+        uASTIME: formatTimeToString(initialData.uASTIME),
+        uAETIME: formatTimeToString(initialData.uAETIME),
+        fullDay: false,
+        weekDays,
+        occurrences,
+      } as DeptUnitAllocationFormData);
+    } else {
+      reset(defaultValues);
+    }
     setFormError(null);
   };
 
@@ -313,7 +378,7 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
     onClose();
   };
 
-  const dialogTitle = viewOnly ? "View Allocation Details" : isAddMode ? "Create New Department Unit Allocation" : `Edit Allocation - ${initialData?.unitDesc}`;
+  const dialogTitle = viewOnly ? "View Allocation Details" : isAddMode ? "Create New Department Unit Allocation" : `Edit Allocation - ${initialData?.unitDesc ?? ""}`;
 
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
@@ -516,21 +581,19 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
                       control={<Checkbox checked={allDaysYN === "Y"} onChange={(e) => handleAllDaysChange(e.target.checked)} disabled={viewOnly} />}
                       label="All Days"
                     />
-                    <Grid container spacing={1} sx={{ mt: 1 }}>
-                      {[
-                        { key: "sunYN", label: "Sunday" },
-                        { key: "monYN", label: "Monday" },
-                        { key: "tueYN", label: "Tuesday" },
-                        { key: "wedYN", label: "Wednesday" },
-                        { key: "thuYN", label: "Thursday" },
-                        { key: "friYN", label: "Friday" },
-                        { key: "satYN", label: "Saturday" },
-                      ].map((day) => (
-                        <Grid size={{ xs: 6 }} key={day.key}>
-                          <FormField name={day.key} control={control} label={day.label} type="checkbox" disabled={viewOnly || allDaysYN === "Y"} size="small" />
-                        </Grid>
-                      ))}
-                    </Grid>
+                    <Box sx={{ mt: 2 }}>
+                      <FormField
+                        name="weekDays"
+                        control={control}
+                        label="Select Days"
+                        type="multiselect"
+                        options={weekDayOptions}
+                        disabled={viewOnly || allDaysYN === "Y"}
+                        size="small"
+                        fullWidth
+                        multiple
+                      />
+                    </Box>
                   </FormGroup>
                 </CardContent>
               </Card>
@@ -548,19 +611,19 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
                       control={<Checkbox checked={occuranceAllYN === "Y"} onChange={(e) => handleAllOccurrencesChange(e.target.checked)} disabled={viewOnly} />}
                       label="All Occurrences"
                     />
-                    <Grid container spacing={1} sx={{ mt: 1 }}>
-                      {[
-                        { key: "occurance1YN", label: "First" },
-                        { key: "occurance2YN", label: "Second" },
-                        { key: "occurance3YN", label: "Third" },
-                        { key: "occurance4YN", label: "Fourth" },
-                        { key: "occurance5YN", label: "Fifth" },
-                      ].map((occ) => (
-                        <Grid size={{ xs: 6 }} key={occ.key}>
-                          <FormField name={occ.key} control={control} label={occ.label} type="checkbox" disabled={viewOnly || occuranceAllYN === "Y"} size="small" />
-                        </Grid>
-                      ))}
-                    </Grid>
+                    <Box sx={{ mt: 2 }}>
+                      <FormField
+                        name="occurrences"
+                        control={control}
+                        label="Select Occurrences"
+                        type="multiselect"
+                        options={occurrenceOptions}
+                        disabled={viewOnly || occuranceAllYN === "Y"}
+                        size="small"
+                        fullWidth
+                        multiple
+                      />
+                    </Box>
                   </FormGroup>
                 </CardContent>
               </Card>

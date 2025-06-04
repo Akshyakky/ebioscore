@@ -19,8 +19,10 @@ export const useDeptUnitAllocation = () => {
     const activeAllocations = existingAllocations.filter((allocation) => allocation.dUAID !== newAllocation.dUAID && allocation.rActiveYN === "Y");
 
     for (const allocation of activeAllocations) {
-      const existingStartMinutes = allocation.uASTIME.getHours() * 60 + allocation.uASTIME.getMinutes();
-      const existingEndMinutes = allocation.uAETIME.getHours() * 60 + allocation.uAETIME.getMinutes();
+      const allocationStartTime = new Date(allocation.uASTIME);
+      const allocationEndTime = new Date(allocation.uAETIME);
+      const existingStartMinutes = allocationStartTime.getHours() * 60 + allocationStartTime.getMinutes();
+      const existingEndMinutes = allocationEndTime.getHours() * 60 + allocationEndTime.getMinutes();
 
       if (allocation.facultyID === newAllocation.facultyID) {
         if (newStartMinutes < existingEndMinutes && newEndMinutes > existingStartMinutes) {
@@ -30,10 +32,10 @@ export const useDeptUnitAllocation = () => {
           if (daysOverlap && occurrencesOverlap) {
             return {
               hasConflict: true,
-              message: `Faculty ${allocation.facultyName} already has an allocation from ${allocation.uASTIME.toLocaleTimeString("en-US", {
+              message: `Faculty ${allocation.facultyName} already has an allocation from ${allocationStartTime.toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
-              })} to ${allocation.uAETIME.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} on overlapping days/occurrences.`,
+              })} to ${allocationEndTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} on overlapping days/occurrences.`,
             };
           }
         }
