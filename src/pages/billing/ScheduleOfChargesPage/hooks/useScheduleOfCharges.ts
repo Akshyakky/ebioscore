@@ -174,13 +174,9 @@ export const useScheduleOfCharges = (): UseScheduleOfChargesReturn => {
     [updateState, handleError, showAlert, refreshCharges]
   );
 
-  /**
-   * Generates a new charge code based on the provided parameters
-   */
   const generateChargeCode = useCallback(
     async (codeGeneration: ChargeCodeGenerationDto): Promise<string> => {
       try {
-        // Validate code generation parameters
         if (!codeGeneration.ChargeType) {
           throw new Error("Charge type is required for code generation");
         }
@@ -188,9 +184,7 @@ export const useScheduleOfCharges = (): UseScheduleOfChargesReturn => {
         if (!codeGeneration.ChargeTo) {
           throw new Error("Charge to is required for code generation");
         }
-
         const result = await bChargeService.generateChargeCode(codeGeneration);
-
         if (result.success && result.data) {
           return result.data;
         } else {
