@@ -25,7 +25,7 @@ import {
 import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
 import { componentEntryTypeService, templategroupService } from "@/services/Laboratory/LaboratoryService";
 import { appSubModuleService, appUserModuleService, profileMastService } from "@/services/SecurityManagementServices/securityManagementServices";
-import { serviceTypeService } from "@/services/BillingServices/BillingGenericService";
+import { serviceGroupService, serviceTypeService } from "@/services/BillingServices/BillingGenericService";
 import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
@@ -92,8 +92,8 @@ export type DropdownType =
   | "mainGroup"
   | "subTitle"
   | "sampleType"
-  | "chargeType"
   | "serviceType"
+  | "serviceGroup"
   | "employeeRoom"
   | "departmentIndent"
   | "statusFilter"
@@ -452,9 +452,12 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           label: item.bchName || "",
         }));
       },
-      chargeType: async () => {
-        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "CHARGETYPE");
-        return response;
+      serviceGroup: async () => {
+        const response = await serviceGroupService.getAll();
+        return (response.data || []).map((item: any) => ({
+          value: item.sGrpID || 0,
+          label: item.sGrpName || "",
+        }));
       },
       departmentIndent: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DEPARTMENTINDENT");

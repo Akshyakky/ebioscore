@@ -21,6 +21,9 @@ export interface BChargeDto extends BaseDto {
   cNhsEnglishName?: string;
   chargeCost?: number;
   serviceGroupID?: number;
+  rActiveYN?: "Y" | "N";
+  rTransferYN?: "Y" | "N";
+  rNotes?: string;
 
   // Navigation properties for related entities
   ChargeDetails: BChargeDetailDto[];
@@ -39,6 +42,9 @@ export interface BChargeDetailDto extends BaseDto {
   hcValue?: number;
   chValue: number;
   chargeStatus: string;
+  rActiveYN?: "Y" | "N";
+  rTransferYN?: "Y" | "N";
+  rNotes?: string;
 
   // Navigation properties
   ChargePacks: BChargePackDto[];
@@ -50,6 +56,9 @@ export interface BDoctorSharePercShareDto extends BaseDto {
   conID: number;
   doctorShare: number;
   hospShare: number;
+  rActiveYN?: "Y" | "N";
+  rTransferYN?: "Y" | "N";
+  rNotes?: string;
 }
 
 export interface BChargeAliasDto extends BaseDto {
@@ -58,12 +67,18 @@ export interface BChargeAliasDto extends BaseDto {
   pTypeID: number;
   chargeDesc: string;
   chargeDescLang: string;
+  rActiveYN?: "Y" | "N";
+  rTransferYN?: "Y" | "N";
+  rNotes?: string;
 }
 
 export interface BChargeFacultyDto extends BaseDto {
   chFacID: number;
   chargeID: number;
   aSubID: number;
+  rActiveYN?: "Y" | "N";
+  rTransferYN?: "Y" | "N";
+  rNotes?: string;
 }
 
 export interface BChargePackDto extends BaseDto {
@@ -77,6 +92,9 @@ export interface BChargePackDto extends BaseDto {
   chValue: number;
   effectiveFromDate?: Date;
   effectiveToDate?: Date;
+  rActiveYN?: "Y" | "N";
+  rTransferYN?: "Y" | "N";
+  rNotes?: string;
 }
 
 export interface ChargeWithAllDetailsDto extends BChargeDto {
