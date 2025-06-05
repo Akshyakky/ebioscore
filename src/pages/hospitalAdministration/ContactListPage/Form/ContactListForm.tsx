@@ -192,7 +192,7 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
               isContract: contactMast.isContractYN === "Y",
             });
             if (details.contactDetailsDto && details.contactDetailsDto.length > 0) {
-              const specialties = details.contactDetailsDto.map((detail) => detail.facID.toString());
+              const specialties = details.contactDetailsDto.map((detail) => detail.facName.toString());
               setSelectedSpecialities(specialties);
             }
           } else {
@@ -640,11 +640,18 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
                           type="multiselect"
                           label="Speciality"
                           options={dropdownValues.speciality || []}
-                          onChange={handleSpecialityChange}
+                          onChange={(values) => {
+                            let specialities = Array.isArray(values) ? values : [values];
+                            setSelectedSpecialities(specialities);
+                            handleSpecialityChange(specialities);
+                          }}
                           disabled={viewOnly}
                           size="small"
                           fullWidth
-                          defaultValue={selectedSpecialities}
+                          defaultValue={selectedSpecialities.map((id) => {
+                            const option = dropdownValues.speciality?.find((opt) => opt.value === id);
+                            return option ? option.value : id;
+                          })}
                         />
                       </Grid>
                     )}
