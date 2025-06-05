@@ -131,7 +131,7 @@ interface PermissionManagerProps {
   mode: "profile" | "user";
   details: ProfileMastDto | UserListDto;
   title: string;
-  type: "M" | "R";
+  type: "M" | "R" | "D";
   useMainModules?: boolean;
   useSubModules?: boolean;
 }
@@ -354,6 +354,16 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
       fetchPermissions(mainId, value);
     }
   };
+
+  useEffect(() => {
+    setMainId(0);
+    setSubId(0);
+    setPermissions([]);
+    setSelectedItems([]);
+    if (type === "D") {
+      fetchPermissions(0, 0);
+    }
+  }, [type]);
 
   return (
     <Grid container spacing={3}>

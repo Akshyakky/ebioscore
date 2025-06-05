@@ -376,8 +376,6 @@ const ProfileListPage: React.FC = () => {
 
       {isFormOpen && <ProfileListForm open={isFormOpen} onClose={handleFormClose} initialData={selectedProfile} viewOnly={isViewMode} />}
 
-      {/* <ProfileListSearch open={isAdvancedSearchOpen} onClose={handleAdvancedSearchClose} onSelect={handleAdvancedSearchSelect} /> */}
-
       <ConfirmationDialog
         open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
