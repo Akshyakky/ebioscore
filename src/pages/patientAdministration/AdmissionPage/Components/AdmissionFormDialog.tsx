@@ -29,6 +29,8 @@ import { useBedSelection } from "@/pages/hospitalAdministration/ManageBeds/hooks
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
 import InsuranceSelectionForAdmission from "./InsuranceSelectionForAdmission";
+import { PatNokService } from "@/services/PatientAdministrationServices/RegistrationService/PatNokService";
+import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
 
 // Enhanced schema with insurance fields
 const admissionSchema = z
@@ -376,7 +378,58 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     } catch (error) {
       console.error("Error loading patient data in edit mode:", error);
     }
-  }, [existingAdmission, reset]);
+
+    // Load and set existing insurance data if insurance is enabled
+    if (admission.insuranceYN === "Y" && admission.opipInsID && admission.opipInsID > 0) {
+      try {
+        const insuranceResult = await InsuranceCarrierService.getOPIPInsuranceByPChartID(admission.pChartID);
+        if (insuranceResult.success && insuranceResult.data) {
+          const existingInsurance = insuranceResult.data.find((insurance) => insurance.oPIPInsID === admission.opipInsID);
+          if (existingInsurance) {
+            setSelectedInsurance(existingInsurance);
+            setValue("selectedInsuranceDetails", {
+              oPIPInsID: existingInsurance.oPIPInsID,
+              insurID: existingInsurance.insurID,
+              insurName: existingInsurance.insurName,
+              policyNumber: existingInsurance.policyNumber || "",
+              policyHolder: existingInsurance.policyHolder || "",
+              groupNumber: existingInsurance.groupNumber || "",
+              relationVal: existingInsurance.relationVal,
+              relation: existingInsurance.relation || "",
+              policyStartDt: new Date(existingInsurance.policyStartDt),
+              policyEndDt: new Date(existingInsurance.policyEndDt),
+              rActiveYN: existingInsurance.rActiveYN,
+            });
+            // Expand insurance accordion if insurance is selected
+            setInsuranceAccordionExpanded(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading existing insurance data:", error);
+      }
+    }
+
+    // Load and set existing NOK data if NOK is assigned
+    if (admission.patNokID && admission.patNokID > 0) {
+      try {
+        const nokResult = await PatNokService.getNokDetailsByPChartID(admission.pChartID);
+        if (nokResult.success && nokResult.data) {
+          const existingNok = nokResult.data.find((nok) => nok.pNokID === admission.patNokID);
+          if (existingNok) {
+            setSelectedNok(existingNok);
+            const attendantName = `${existingNok.pNokFName} ${existingNok.pNokMName || ""} ${existingNok.pNokLName}`.trim();
+            setValue("attendantName", attendantName);
+            setValue("attendantRelation", existingNok.pNokRelName || "");
+            setValue("attendantPhone", existingNok.pAddPhone1 || "");
+            // Expand NOK accordion if NOK is selected
+            setNokAccordionExpanded(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading existing NOK data:", error);
+      }
+    }
+  }, [existingAdmission, reset, setValue, InsuranceCarrierService, PatNokService]);
 
   // Load patient data and setup new admission
   const loadPatientDataAndSetupNewAdmission = useCallback(async () => {
@@ -984,7 +1037,12 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                   </AccordionSummary>
                   <AccordionDetails>
                     {patient && (
-                      <NokAttendantSelection pChartID={patient.pChartID} patientName={patientDisplayName} selectedNokID={selectedNok?.pNokID} onNokSelect={handleNokSelect} />
+                      <NokAttendantSelection
+                        pChartID={patient.pChartID}
+                        patientName={patientDisplayName}
+                        selectedNokID={selectedNok?.pNokID || (isEditMode ? watch("patNokID") : undefined)}
+                        onNokSelect={handleNokSelect}
+                      />
                     )}
                   </AccordionDetails>
                 </Accordion>
@@ -1013,7 +1071,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                       <InsuranceSelectionForAdmission
                         pChartID={patient.pChartID}
                         patientName={patientDisplayName}
-                        selectedInsuranceID={selectedInsurance?.oPIPInsID}
+                        selectedInsuranceID={selectedInsurance?.oPIPInsID || (isEditMode ? watch("opipInsID") : undefined)}
                         onInsuranceSelect={handleInsuranceSelect}
                       />
                     )}
