@@ -1,6 +1,6 @@
 // src/pages/patientAdministration/AdmissionPage/Components/AdmissionFormDialog.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Grid, Typography, Paper, Chip, Avatar, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Box, Grid, Typography, Paper, Chip, Avatar, Accordion, AccordionSummary, AccordionDetails, Stack } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -70,17 +70,14 @@ const admissionSchema = z
     patientIns: z.string().optional().default(""),
     advisedVisitNo: z.number().default(1),
     visitGesy: z.string().optional().default(""),
-    // Patient name fields
     pTitle: z.string().default(""),
     pfName: z.string().default(""),
     plName: z.string().default(""),
     pmName: z.string().default(""),
-    // NOK/Attendant fields
     patNokID: z.number().optional().default(0),
     attendantName: z.string().optional().default(""),
     attendantRelation: z.string().optional().default(""),
     attendantPhone: z.string().optional().default(""),
-    // Insurance fields
     opipInsID: z.number().optional().default(0),
     selectedInsuranceDetails: z
       .object({
@@ -100,7 +97,6 @@ const admissionSchema = z
   })
   .refine(
     (data) => {
-      // If insurance is required and selected, ensure insurance details are provided
       if (data.insuranceYN === "Y" && data.opipInsID === 0) {
         return false;
       }
@@ -271,7 +267,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       if (currentBed) {
         setSelectedBed(currentBed);
       } else {
-        // Create placeholder bed for edit mode
         const placeholderBed: WrBedDto = {
           bedID: details.bedID,
           bedName: details.bedName,
@@ -318,7 +313,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     const details = existingAdmission.ipAdmissionDetailsDto;
     const bedDetails = existingAdmission.wrBedDetailsDto;
 
-    // Populate form with existing data including insurance fields
     reset({
       pChartID: admission.pChartID,
       pChartCode: admission.pChartCode,
@@ -359,12 +353,10 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       pfName: admission.pfName,
       plName: admission.plName,
       pmName: admission.pmName,
-      // NOK fields
       patNokID: admission.patNokID || 0,
       attendantName: "",
       attendantRelation: "",
       attendantPhone: "",
-      // Insurance fields
       opipInsID: admission.opipInsID || 0,
       selectedInsuranceDetails: undefined,
     });
@@ -400,7 +392,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
               policyEndDt: new Date(existingInsurance.policyEndDt),
               rActiveYN: existingInsurance.rActiveYN,
             });
-            // Expand insurance accordion if insurance is selected
             setInsuranceAccordionExpanded(true);
           }
         }
@@ -421,7 +412,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
             setValue("attendantName", attendantName);
             setValue("attendantRelation", existingNok.pNokRelName || "");
             setValue("attendantPhone", existingNok.pAddPhone1 || "");
-            // Expand NOK accordion if NOK is selected
             setNokAccordionExpanded(true);
           }
         }
@@ -584,7 +574,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     [setValue]
   );
 
-  // Other event handlers (keeping existing implementations)
+  // Other event handlers
   const handleCaseTypeChange = useCallback(
     (value: any) => {
       const selectedOption = caseType.find((option) => option.value === value.value);
@@ -647,7 +637,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
     (checked: boolean) => {
       setValue("insuranceYN", checked ? "Y" : "N", { shouldValidate: true });
       if (!checked) {
-        // Clear insurance selection when disabled
         setSelectedInsurance(null);
         setValue("opipInsID", 0, { shouldValidate: true });
         setValue("selectedInsuranceDetails", undefined, { shouldValidate: true });
@@ -672,7 +661,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         admitStatus: "ADMITTED",
         provDiagnosisYN: data.provDiagnosisYN,
         insuranceYN: data.insuranceYN,
-        opipInsID: data.opipInsID || 0, // Include selected insurance ID
+        opipInsID: data.opipInsID || 0,
         ipStatus: "ADMITTED",
         dischargeAdviceYN: data.dischargeAdviceYN,
         nurseIns: data.nurseIns,
@@ -697,7 +686,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         advisedVisitNo: data.advisedVisitNo,
         pTypeID: data.pTypeID,
         pTypeName: data.pTypeName,
-        // Include NOK data
         patNokID: data.patNokID || 0,
         attendingPhysicianId: data.attendingPhysicianId,
         attendingPhysicianName: data.attendingPhysicianName,
@@ -811,9 +799,17 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
   };
 
   const dialogActions = (
-    <>
-      <CustomButton variant="outlined" text={isEditMode ? "Reset" : "Clear"} icon={ClearIcon} onClick={handleClear} disabled={isSubmitting || !isDirty} color="inherit" />
-      <CustomButton variant="outlined" text="Cancel" onClick={onClose} disabled={isSubmitting} />
+    <Stack direction="row" spacing={1}>
+      <CustomButton
+        variant="outlined"
+        text={isEditMode ? "Reset" : "Clear"}
+        icon={ClearIcon}
+        onClick={handleClear}
+        disabled={isSubmitting || !isDirty}
+        color="inherit"
+        size="small"
+      />
+      <CustomButton variant="outlined" text="Cancel" onClick={onClose} disabled={isSubmitting} size="small" />
       <SmartButton
         variant="contained"
         text={isEditMode ? "Update Admission" : "Admit Patient"}
@@ -824,8 +820,9 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         color="primary"
         loadingText={isEditMode ? "Updating..." : "Admitting..."}
         successText={isEditMode ? "Updated!" : "Admitted!"}
+        size="small"
       />
-    </>
+    </Stack>
   );
 
   const patientDisplayName = useMemo(() => {
@@ -838,7 +835,6 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
       return [patientData.pTitle, patientData.pFName, patientData.pMName, patientData.pLName].filter(Boolean).join(" ");
     }
 
-    // Fallback to patient prop
     return patient?.fullName || "Patient Information";
   }, [isEditMode, existingAdmission, patientData, patient]);
 
@@ -848,7 +844,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         open={open}
         onClose={onClose}
         title={isEditMode ? "Edit Admission" : "New Patient Admission"}
-        maxWidth="xl"
+        maxWidth="lg"
         fullWidth
         disableBackdropClick={isSubmitting}
         disableEscapeKeyDown={isSubmitting}
@@ -857,7 +853,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
         <Box sx={{ p: 1.5 }}>
           <form onSubmit={handleSubmit(onFormSubmit)}>
             <Grid container spacing={1.5}>
-              {/* Patient Information Header */}
+              {/* Compact Patient Information Header */}
               <Grid size={{ xs: 12 }}>
                 <Paper sx={{ p: 1.5, backgroundColor: "primary.50", border: "1px solid", borderColor: "primary.200" }}>
                   <Box display="flex" alignItems="center" gap={1.5}>
@@ -881,7 +877,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                 </Paper>
               </Grid>
 
-              {/* Admission Details - Single Row */}
+              {/* Compact Basic Information - 4 columns */}
               <Grid size={{ xs: 12, md: 3 }}>
                 <EnhancedFormField
                   name="admitCode"
@@ -891,12 +887,12 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                   required
                   disabled
                   size="small"
-                  helperText={isEditMode ? "Admission code cannot be changed" : isGeneratingCode ? "Generating..." : "Auto-generated"}
+                  helperText={isEditMode ? "Cannot be changed" : isGeneratingCode ? "Generating..." : "Auto-generated"}
                 />
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField name="admitDate" control={control} type="datetimepicker" label="Admission Date & Time" required size="small" />
+                <EnhancedFormField name="admitDate" control={control} type="datetimepicker" label="Admission Date" required size="small" />
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
@@ -907,25 +903,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                 <EnhancedFormField name="admissionType" control={control} type="select" label="Admission Type" required size="small" options={admissionType} />
               </Grid>
 
-              {/* Payment and Reason - Single Row */}
-              <Grid size={{ xs: 12, md: 4 }}>
-                <EnhancedFormField name="pTypeID" control={control} type="select" label="Payment Source" required size="small" options={pic} onChange={handlePICChange} />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 8 }}>
-                <EnhancedFormField
-                  name="rNotes"
-                  control={control}
-                  type="textarea"
-                  label="Reason for Admission"
-                  required
-                  size="small"
-                  rows={2}
-                  placeholder="Describe the reason for admission..."
-                />
-              </Grid>
-
-              {/* Department and Medical Team - Two Rows Compact */}
+              {/* Department and Staff - 4 columns */}
               <Grid size={{ xs: 12, md: 3 }}>
                 <EnhancedFormField name="deptID" control={control} type="select" label="Department" required size="small" options={department} onChange={handleDepartmentChange} />
               </Grid>
@@ -958,10 +936,24 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField name="primaryReferralSourceId" control={control} type="select" label="Referral Source" size="small" options={primaryIntroducingSource} />
+                <EnhancedFormField name="pTypeID" control={control} type="select" label="Payment Source" required size="small" options={pic} onChange={handlePICChange} />
               </Grid>
 
-              {/* Bed Assignment */}
+              {/* Reason for Admission */}
+              <Grid size={{ xs: 12 }}>
+                <EnhancedFormField
+                  name="rNotes"
+                  control={control}
+                  type="textarea"
+                  label="Reason for Admission"
+                  required
+                  size="small"
+                  rows={2}
+                  placeholder="Describe the reason for admission..."
+                />
+              </Grid>
+
+              {/* Compact Bed Assignment */}
               <Grid size={{ xs: 12 }}>
                 <Box sx={{ p: 1.5, backgroundColor: "grey.50", borderRadius: 1, border: "1px solid", borderColor: "grey.300" }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
@@ -998,20 +990,20 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                 </Box>
               </Grid>
 
-              {/* Additional Options - Single Row */}
-              <Grid size={{ xs: 12, md: 3 }}>
+              {/* Compact Options - 3 columns */}
+              <Grid size={{ xs: 12, md: 4 }}>
                 <EnhancedFormField name="deliveryCaseYN" control={control} type="switch" label="Delivery Case" size="small" />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <EnhancedFormField name="provDiagnosisYN" control={control} type="switch" label="Provisional Diagnosis" size="small" />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <EnhancedFormField name="dischargeAdviceYN" control={control} type="switch" label="Discharge Advice" size="small" />
               </Grid>
 
-              {/* Instructions - Single Row */}
+              {/* Compact Instructions - 3 columns */}
               <Grid size={{ xs: 12, md: 4 }}>
                 <EnhancedFormField name="nurseIns" control={control} type="textarea" label="Nurse Instructions" size="small" rows={2} />
               </Grid>
@@ -1023,19 +1015,26 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
               <Grid size={{ xs: 12, md: 4 }}>
                 <EnhancedFormField name="patientIns" control={control} type="textarea" label="Patient Instructions" size="small" rows={2} />
               </Grid>
-              {/* Patient Attendant/NOK Section */}
+
+              {/* Compact Patient Attendant/NOK Section */}
               <Grid size={{ xs: 12 }}>
                 <Accordion expanded={nokAccordionExpanded} onChange={() => setNokAccordionExpanded(!nokAccordionExpanded)} sx={{ border: "1px solid", borderColor: "grey.300" }}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ py: 0.5 }}>
                     <Box display="flex" alignItems="center" gap={1}>
                       <PeopleIcon fontSize="small" />
                       <Typography variant="subtitle2">Patient Attendant Selection</Typography>
                       {selectedNok && (
-                        <Chip size="small" label={`${selectedNok.pNokFName} ${selectedNok.pNokLName} (${selectedNok.pNokRelName})`} color="primary" variant="outlined" />
+                        <Chip
+                          size="small"
+                          label={`${selectedNok.pNokFName} ${selectedNok.pNokLName} (${selectedNok.pNokRelName})`}
+                          color="primary"
+                          variant="outlined"
+                          sx={{ height: 20, fontSize: "0.6rem" }}
+                        />
                       )}
                     </Box>
                   </AccordionSummary>
-                  <AccordionDetails>
+                  <AccordionDetails sx={{ p: 1.5 }}>
                     {patient && (
                       <NokAttendantSelection
                         pChartID={patient.pChartID}
@@ -1048,22 +1047,30 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
                 </Accordion>
               </Grid>
 
-              {/* Insurance Section */}
+              {/* Compact Insurance Section */}
               <Grid size={{ xs: 12 }}>
                 <Accordion
                   expanded={insuranceAccordionExpanded}
                   onChange={() => setInsuranceAccordionExpanded(!insuranceAccordionExpanded)}
                   sx={{ border: "1px solid", borderColor: "grey.300" }}
                 >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ py: 0.5 }}>
                     <Box display="flex" alignItems="center" gap={1}>
                       <InsuranceIcon fontSize="small" />
                       <Typography variant="subtitle2">Insurance Coverage</Typography>
-                      {selectedInsurance && <Chip size="small" label={`${selectedInsurance.insurName} - ${selectedInsurance.policyNumber}`} color="success" variant="outlined" />}
+                      {selectedInsurance && (
+                        <Chip
+                          size="small"
+                          label={`${selectedInsurance.insurName} - ${selectedInsurance.policyNumber}`}
+                          color="success"
+                          variant="outlined"
+                          sx={{ height: 20, fontSize: "0.6rem" }}
+                        />
+                      )}
                     </Box>
                   </AccordionSummary>
-                  <AccordionDetails>
-                    <Box sx={{ mb: 2 }}>
+                  <AccordionDetails sx={{ p: 1.5 }}>
+                    <Box sx={{ mb: 1 }}>
                       <EnhancedFormField name="insuranceYN" control={control} type="switch" label="Patient has insurance coverage" size="small" onChange={handleInsuranceToggle} />
                     </Box>
 

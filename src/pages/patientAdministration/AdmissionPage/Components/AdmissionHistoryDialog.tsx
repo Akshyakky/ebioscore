@@ -1,6 +1,6 @@
 // src/pages/patientAdministration/AdmissionPage/Components/AdmissionHistoryDialog.tsx
 import React, { useState, useEffect, useMemo } from "react";
-import { Box, Typography, Paper, Grid, Chip, Avatar, Divider, Tab, Tabs, CircularProgress, Alert } from "@mui/material";
+import { Box, Typography, Paper, Grid, Chip, Avatar, Divider, Tab, Tabs, CircularProgress, Alert, Stack } from "@mui/material";
 import {
   History as HistoryIcon,
   Person as PatientIcon,
@@ -23,7 +23,7 @@ import PeopleIcon from "@mui/icons-material/People";
 interface AdmissionHistoryDialogProps {
   open: boolean;
   onClose: () => void;
-  admission: any; // Current admission data
+  admission: any;
 }
 
 interface TabPanelProps {
@@ -35,7 +35,7 @@ interface TabPanelProps {
 const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => {
   return (
     <div role="tabpanel" hidden={value !== index} id={`admission-tabpanel-${index}`} aria-labelledby={`admission-tab-${index}`} {...other}>
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: 1.5 }}>{children}</Box>}
     </div>
   );
 };
@@ -162,7 +162,7 @@ const AdmissionHistoryDialog: React.FC<AdmissionHistoryDialogProps> = ({ open, o
         <Chip
           label={item.status}
           size="small"
-          color={item.status === "Currently Admitted" ? "success" : item.status === "Discharged" ? "info" : item.status === "Transferred" ? "warning" : "default"}
+          color={item.status === "ADMITTED" ? "success" : item.status === "Discharged" ? "info" : item.status === "Transferred" ? "warning" : "default"}
           variant="filled"
         />
       ),
@@ -170,131 +170,133 @@ const AdmissionHistoryDialog: React.FC<AdmissionHistoryDialogProps> = ({ open, o
   ];
 
   const renderCurrentAdmissionDetails = () => (
-    <Paper sx={{ p: 3 }}>
-      <Grid container spacing={3}>
+    <Paper sx={{ p: 1.5 }}>
+      <Grid container spacing={1.5}>
         {/* Basic Information */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <AdmissionIcon />
+          <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <AdmissionIcon fontSize="small" />
             Admission Information
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="body2" gutterBottom>
+          <Stack spacing={0.25} sx={{ pl: 1 }}>
+            <Typography variant="caption">
               <strong>Admission Code:</strong> {currentAdmission.admitCode}
             </Typography>
-            <Typography variant="body2" gutterBottom>
+            <Typography variant="caption">
               <strong>Admit Date:</strong> {formatDt(currentAdmission.admitDate)}
             </Typography>
-            <Typography variant="body2" gutterBottom>
+            <Typography variant="caption">
               <strong>Duration:</strong> {admissionDuration} day{admissionDuration !== 1 ? "s" : ""}
             </Typography>
-            <Typography variant="body2" gutterBottom>
+            <Typography variant="caption">
               <strong>Case Type:</strong> {currentAdmission.caseTypeName}
             </Typography>
-            <Typography variant="body2" gutterBottom>
+            <Typography variant="caption">
               <strong>Patient Type:</strong> {currentAdmission.pTypeName}
             </Typography>
-            <Typography variant="body2" gutterBottom>
-              <strong>Status:</strong>
-              <Chip label={currentAdmission.ipStatus} size="small" color="success" variant="filled" sx={{ ml: 1 }} />
-            </Typography>
-          </Box>
+            <Box display="flex" alignItems="center" gap={0.5} mt={0.5}>
+              <Typography variant="caption">
+                <strong>Status:</strong>
+              </Typography>
+              <Chip label={currentAdmission.ipStatus} size="small" color="success" variant="filled" sx={{ height: 16, fontSize: "0.6rem" }} />
+            </Box>
+          </Stack>
         </Grid>
 
         {/* Location Details */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <BedIcon />
+          <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <BedIcon fontSize="small" />
             Location Details
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="body2" gutterBottom>
+          <Stack spacing={0.25} sx={{ pl: 1 }}>
+            <Typography variant="caption">
               <strong>Department:</strong> {currentAdmission.deptName}
             </Typography>
-            <Typography variant="body2" gutterBottom>
+            <Typography variant="caption">
               <strong>Room Group:</strong> {bedDetails.rGrpName}
             </Typography>
-            <Typography variant="body2" gutterBottom>
+            <Typography variant="caption">
               <strong>Room:</strong> {admissionDetails.rName}
             </Typography>
-            <Typography variant="body2" gutterBottom>
+            <Typography variant="caption">
               <strong>Bed:</strong> {bedDetails.bedName}
             </Typography>
-            <Typography variant="body2" gutterBottom>
+            <Typography variant="caption">
               <strong>Bed Category:</strong> {admissionDetails.wCatName || "Standard"}
             </Typography>
-            <Typography variant="body2" gutterBottom>
-              <strong>Bed Status:</strong>
-              <Chip label={bedDetails.bedStatusValue} size="small" color="warning" variant="outlined" sx={{ ml: 1 }} />
-            </Typography>
-          </Box>
+            <Box display="flex" alignItems="center" gap={0.5} mt={0.5}>
+              <Typography variant="caption">
+                <strong>Bed Status:</strong>
+              </Typography>
+              <Chip label={bedDetails.bedStatusValue} size="small" color="warning" variant="outlined" sx={{ height: 16, fontSize: "0.6rem" }} />
+            </Box>
+          </Stack>
         </Grid>
 
         {/* Medical Team */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <DoctorIcon />
+          <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <DoctorIcon fontSize="small" />
             Medical Team
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="body2" gutterBottom>
+          <Stack spacing={0.25} sx={{ pl: 1 }}>
+            <Typography variant="caption">
               <strong>Attending Physician:</strong> {currentAdmission.attendingPhysicianName || "Not assigned"}
             </Typography>
             {currentAdmission.primaryPhysicianName && (
-              <Typography variant="body2" gutterBottom>
+              <Typography variant="caption">
                 <strong>Primary Physician:</strong> {currentAdmission.primaryPhysicianName}
               </Typography>
             )}
             {currentAdmission.primaryReferralSourceName && (
-              <Typography variant="body2" gutterBottom>
+              <Typography variant="caption">
                 <strong>Referral Source:</strong> {currentAdmission.primaryReferralSourceName}
               </Typography>
             )}
             {admissionDetails.treatingPhyName && admissionDetails.treatingPhyName !== currentAdmission.attendingPhysicianName && (
-              <Typography variant="body2" gutterBottom>
+              <Typography variant="caption">
                 <strong>Treating Physician:</strong> {admissionDetails.treatingPhyName}
               </Typography>
             )}
-          </Box>
+          </Stack>
         </Grid>
 
         {/* Insurance Information */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <AccountBalance />
+          <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <AccountBalance fontSize="small" />
             Insurance Information
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Typography variant="body2" gutterBottom>
-              <strong>Insurance Coverage:</strong>
+          <Stack spacing={0.25} sx={{ pl: 1 }}>
+            <Box display="flex" alignItems="center" gap={0.5}>
+              <Typography variant="caption">
+                <strong>Coverage:</strong>
+              </Typography>
               <Chip
                 label={currentAdmission.insuranceYN === "Y" ? "Covered" : "Not Covered"}
                 size="small"
                 color={currentAdmission.insuranceYN === "Y" ? "success" : "default"}
                 variant="outlined"
-                sx={{ ml: 1 }}
+                sx={{ height: 16, fontSize: "0.6rem" }}
               />
-            </Typography>
+            </Box>
 
             {currentAdmission.insuranceYN === "Y" && currentAdmission.opipInsID && (
               <>
-                <Typography variant="body2" gutterBottom>
+                <Typography variant="caption">
                   <strong>Insurance ID:</strong> {currentAdmission.opipInsID}
                 </Typography>
-                {/* Add more insurance details if available in the admission data */}
                 {currentAdmission.selectedInsuranceDetails && (
                   <>
-                    <Typography variant="body2" gutterBottom>
-                      <strong>Insurance Carrier:</strong> {currentAdmission.selectedInsuranceDetails.insurName}
+                    <Typography variant="caption">
+                      <strong>Carrier:</strong> {currentAdmission.selectedInsuranceDetails.insurName}
                     </Typography>
-                    <Typography variant="body2" gutterBottom>
-                      <strong>Policy Number:</strong> {currentAdmission.selectedInsuranceDetails.policyNumber}
+                    <Typography variant="caption">
+                      <strong>Policy:</strong> {currentAdmission.selectedInsuranceDetails.policyNumber}
                     </Typography>
-                    <Typography variant="body2" gutterBottom>
-                      <strong>Policy Holder:</strong> {currentAdmission.selectedInsuranceDetails.policyHolder}
-                    </Typography>
-                    <Typography variant="body2" gutterBottom>
-                      <strong>Relationship:</strong> {currentAdmission.selectedInsuranceDetails.relation}
+                    <Typography variant="caption">
+                      <strong>Holder:</strong> {currentAdmission.selectedInsuranceDetails.policyHolder}
                     </Typography>
                   </>
                 )}
@@ -302,30 +304,34 @@ const AdmissionHistoryDialog: React.FC<AdmissionHistoryDialogProps> = ({ open, o
             )}
 
             {currentAdmission.insuranceYN === "N" && (
-              <Alert severity="info" sx={{ mt: 1 }}>
-                Patient does not have insurance coverage for this admission
+              <Alert severity="info" sx={{ py: 0.25 }}>
+                <Typography variant="caption">Patient does not have insurance coverage for this admission</Typography>
               </Alert>
             )}
-          </Box>
+          </Stack>
         </Grid>
 
         {/* Additional Information */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="subtitle2" gutterBottom>
             Additional Information
           </Typography>
-          <Box sx={{ pl: 2 }}>
-            <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
-              {currentAdmission.insuranceYN === "Y" && <Chip label="Has Insurance" size="small" color="info" variant="outlined" />}
-              {currentAdmission.deliveryCaseYN === "Y" && <Chip label="Delivery Case" size="small" color="secondary" variant="outlined" />}
-              {currentAdmission.provDiagnosisYN === "Y" && <Chip label="Provisional Diagnosis" size="small" color="warning" variant="outlined" />}
-              {currentAdmission.dischargeAdviceYN === "Y" && <Chip label="Discharge Advice Given" size="small" color="success" variant="outlined" />}
+          <Box sx={{ pl: 1 }}>
+            <Box display="flex" gap={0.5} flexWrap="wrap" mb={1}>
+              {currentAdmission.insuranceYN === "Y" && <Chip label="Has Insurance" size="small" color="info" variant="outlined" sx={{ height: 16, fontSize: "0.6rem" }} />}
+              {currentAdmission.deliveryCaseYN === "Y" && <Chip label="Delivery Case" size="small" color="secondary" variant="outlined" sx={{ height: 16, fontSize: "0.6rem" }} />}
+              {currentAdmission.provDiagnosisYN === "Y" && (
+                <Chip label="Provisional Diagnosis" size="small" color="warning" variant="outlined" sx={{ height: 16, fontSize: "0.6rem" }} />
+              )}
+              {currentAdmission.dischargeAdviceYN === "Y" && (
+                <Chip label="Discharge Advice Given" size="small" color="success" variant="outlined" sx={{ height: 16, fontSize: "0.6rem" }} />
+              )}
             </Box>
-            <Typography variant="body2" gutterBottom>
+            <Typography variant="caption">
               <strong>Visit Number:</strong> {currentAdmission.advisedVisitNo}
             </Typography>
             {currentAdmission.visitGesy && (
-              <Typography variant="body2" gutterBottom>
+              <Typography variant="caption" display="block">
                 <strong>GESY Visit:</strong> {currentAdmission.visitGesy}
               </Typography>
             )}
@@ -335,68 +341,74 @@ const AdmissionHistoryDialog: React.FC<AdmissionHistoryDialogProps> = ({ open, o
         {/* NOK/Attendant Information */}
         {currentAdmission.patNokID && currentAdmission.patNokID > 0 && (
           <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <PeopleIcon />
+            <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <PeopleIcon fontSize="small" />
               Patient Attendant
             </Typography>
-            <Box sx={{ pl: 2 }}>
-              <Typography variant="body2" gutterBottom>
+            <Stack spacing={0.25} sx={{ pl: 1 }}>
+              <Typography variant="caption">
                 <strong>Attendant ID:</strong> {currentAdmission.patNokID}
               </Typography>
               {currentAdmission.attendantName && (
-                <Typography variant="body2" gutterBottom>
+                <Typography variant="caption">
                   <strong>Name:</strong> {currentAdmission.attendantName}
                 </Typography>
               )}
               {currentAdmission.attendantRelation && (
-                <Typography variant="body2" gutterBottom>
+                <Typography variant="caption">
                   <strong>Relationship:</strong> {currentAdmission.attendantRelation}
                 </Typography>
               )}
               {currentAdmission.attendantPhone && (
-                <Typography variant="body2" gutterBottom>
+                <Typography variant="caption">
                   <strong>Contact:</strong> {currentAdmission.attendantPhone}
                 </Typography>
               )}
-            </Box>
+            </Stack>
           </Grid>
         )}
 
         {/* Instructions */}
         {(currentAdmission.nurseIns || currentAdmission.clerkIns || currentAdmission.patientIns) && (
           <Grid size={{ xs: 12 }}>
-            <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <NotesIcon />
+            <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <NotesIcon fontSize="small" />
               Instructions
             </Typography>
-            <Grid container spacing={2} sx={{ pl: 2 }}>
+            <Grid container spacing={1} sx={{ pl: 1 }}>
               {currentAdmission.nurseIns && (
                 <Grid size={{ xs: 12, md: 4 }}>
-                  <Paper sx={{ p: 2, backgroundColor: "grey.50" }}>
-                    <Typography variant="subtitle2" gutterBottom>
+                  <Paper sx={{ p: 1, backgroundColor: "grey.50" }}>
+                    <Typography variant="caption" fontWeight="medium" gutterBottom>
                       Nurse Instructions
                     </Typography>
-                    <Typography variant="body2">{currentAdmission.nurseIns}</Typography>
+                    <Typography variant="caption" display="block">
+                      {currentAdmission.nurseIns}
+                    </Typography>
                   </Paper>
                 </Grid>
               )}
               {currentAdmission.clerkIns && (
                 <Grid size={{ xs: 12, md: 4 }}>
-                  <Paper sx={{ p: 2, backgroundColor: "grey.50" }}>
-                    <Typography variant="subtitle2" gutterBottom>
+                  <Paper sx={{ p: 1, backgroundColor: "grey.50" }}>
+                    <Typography variant="caption" fontWeight="medium" gutterBottom>
                       Clerk Instructions
                     </Typography>
-                    <Typography variant="body2">{currentAdmission.clerkIns}</Typography>
+                    <Typography variant="caption" display="block">
+                      {currentAdmission.clerkIns}
+                    </Typography>
                   </Paper>
                 </Grid>
               )}
               {currentAdmission.patientIns && (
                 <Grid size={{ xs: 12, md: 4 }}>
-                  <Paper sx={{ p: 2, backgroundColor: "grey.50" }}>
-                    <Typography variant="subtitle2" gutterBottom>
+                  <Paper sx={{ p: 1, backgroundColor: "grey.50" }}>
+                    <Typography variant="caption" fontWeight="medium" gutterBottom>
                       Patient Instructions
                     </Typography>
-                    <Typography variant="body2">{currentAdmission.patientIns}</Typography>
+                    <Typography variant="caption" display="block">
+                      {currentAdmission.patientIns}
+                    </Typography>
                   </Paper>
                 </Grid>
               )}
@@ -408,24 +420,23 @@ const AdmissionHistoryDialog: React.FC<AdmissionHistoryDialogProps> = ({ open, o
   );
 
   const renderAdmissionHistory = () => (
-    <Paper sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <TimelineIcon />
+    <Paper sx={{ p: 1.5 }}>
+      <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <TimelineIcon fontSize="small" />
         Previous Admissions
       </Typography>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-          <CircularProgress />
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="150px">
+          <CircularProgress size={24} />
         </Box>
       ) : (
         <CustomGrid
           columns={historyColumns}
           data={admissionHistory}
-          maxHeight="400px"
+          maxHeight="350px"
           emptyStateMessage="No previous admission history found"
           rowKeyField="admitID"
-          density="small"
           showDensityControls={false}
         />
       )}
@@ -433,33 +444,33 @@ const AdmissionHistoryDialog: React.FC<AdmissionHistoryDialogProps> = ({ open, o
   );
 
   const renderBillingInformation = () => (
-    <Paper sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <BillingIcon />
+    <Paper sx={{ p: 1.5 }}>
+      <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <BillingIcon fontSize="small" />
         Billing Information
       </Typography>
 
-      <Box sx={{ pl: 2 }}>
-        <Typography variant="body2" color="text.secondary">
+      <Stack spacing={0.5} sx={{ pl: 1 }}>
+        <Typography variant="caption" color="text.secondary">
           Billing information will be available once integrated with the billing module.
         </Typography>
-        <Typography variant="body2" gutterBottom sx={{ mt: 2 }}>
+        <Typography variant="caption">
           <strong>Patient Type:</strong> {currentAdmission.pTypeName}
         </Typography>
-        <Typography variant="body2" gutterBottom>
+        <Typography variant="caption">
           <strong>Insurance Coverage:</strong> {currentAdmission.insuranceYN === "Y" ? "Yes" : "No"}
         </Typography>
         {currentAdmission.acApprovedBy && (
-          <Typography variant="body2" gutterBottom>
+          <Typography variant="caption">
             <strong>Approved By:</strong> {currentAdmission.acApprovedBy}
           </Typography>
         )}
         {currentAdmission.acReason && (
-          <Typography variant="body2" gutterBottom>
+          <Typography variant="caption">
             <strong>Approval Reason:</strong> {currentAdmission.acReason}
           </Typography>
         )}
-      </Box>
+      </Stack>
     </Paper>
   );
 
@@ -468,35 +479,64 @@ const AdmissionHistoryDialog: React.FC<AdmissionHistoryDialogProps> = ({ open, o
       open={open}
       onClose={onClose}
       title={`Admission Details - ${patientName}`}
-      maxWidth="xl"
+      maxWidth="lg"
       fullWidth
       showCloseButton
-      actions={<CustomButton variant="contained" text="Close" onClick={onClose} color="primary" />}
+      actions={<CustomButton variant="contained" text="Close" onClick={onClose} color="primary" size="small" />}
     >
       <Box sx={{ width: "100%" }}>
-        {/* Patient Header */}
-        <Paper sx={{ p: 2, mb: 2, backgroundColor: "primary.50", border: "1px solid", borderColor: "primary.200" }}>
-          <Box display="flex" alignItems="center" gap={2}>
-            <Avatar sx={{ bgcolor: "primary.main", width: 48, height: 48 }}>
-              <PatientIcon />
+        {/* Compact Patient Header */}
+        <Paper
+          sx={{
+            p: 1.5,
+            mb: 1.5,
+            backgroundColor: "primary.50",
+            border: "1px solid",
+            borderColor: "primary.200",
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <Avatar sx={{ bgcolor: "primary.main", width: 36, height: 36 }}>
+              <PatientIcon fontSize="small" />
             </Avatar>
             <Box>
-              <Typography variant="h6" fontWeight="bold">
+              <Typography variant="subtitle1" fontWeight="bold">
                 {patientName}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="caption" color="text.secondary">
                 UHID: {currentAdmission.pChartCode} | Admission: {currentAdmission.admitCode}
               </Typography>
             </Box>
           </Box>
         </Paper>
 
-        {/* Tabs */}
+        {/* Compact Tabs */}
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <Tabs value={tabValue} onChange={handleTabChange} aria-label="admission details tabs">
-            <Tab label="Current Admission" icon={<AdmissionIcon />} iconPosition="start" id="admission-tab-0" aria-controls="admission-tabpanel-0" />
-            <Tab label="History" icon={<HistoryIcon />} iconPosition="start" id="admission-tab-1" aria-controls="admission-tabpanel-1" />
-            <Tab label="Billing" icon={<BillingIcon />} iconPosition="start" id="admission-tab-2" aria-controls="admission-tabpanel-2" />
+          <Tabs value={tabValue} onChange={handleTabChange} aria-label="admission details tabs" variant="scrollable" scrollButtons="auto">
+            <Tab
+              label="Current Admission"
+              icon={<AdmissionIcon fontSize="small" />}
+              iconPosition="start"
+              id="admission-tab-0"
+              aria-controls="admission-tabpanel-0"
+              sx={{ minHeight: 48, textTransform: "none" }}
+            />
+            <Tab
+              label="History"
+              icon={<HistoryIcon fontSize="small" />}
+              iconPosition="start"
+              id="admission-tab-1"
+              aria-controls="admission-tabpanel-1"
+              sx={{ minHeight: 48, textTransform: "none" }}
+            />
+            <Tab
+              label="Billing"
+              icon={<BillingIcon fontSize="small" />}
+              iconPosition="start"
+              id="admission-tab-2"
+              aria-controls="admission-tabpanel-2"
+              sx={{ minHeight: 48, textTransform: "none" }}
+            />
           </Tabs>
         </Box>
 

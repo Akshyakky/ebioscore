@@ -176,91 +176,102 @@ const WardBedTransferPage: React.FC = () => {
     setIsHistoryDialogOpen(true);
   }, [currentAdmission, getTransferHistory, showAlert]);
 
-  // Compact grid columns
+  // Grid columns
   const columns: Column<TransferRecord>[] = [
     {
       key: "id",
       header: "#",
       visible: true,
       sortable: true,
-      width: 50,
+      width: 60,
       formatter: (value: number) => value.toString(),
     },
     {
       key: "patientInfo",
-      header: "Patient",
+      header: "Patient Information",
       visible: true,
       sortable: true,
-      width: 140,
+      width: 180,
       render: (transfer) => (
-        <Box>
-          <Typography variant="body2" fontWeight="medium" sx={{ fontSize: "0.75rem" }}>
-            {transfer.patientName}
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.65rem" }}>
-            {transfer.pChartCode}
-          </Typography>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Avatar sx={{ bgcolor: "primary.main", width: 32, height: 32 }}>
+            <PatientIcon fontSize="small" />
+          </Avatar>
+          <Box>
+            <Typography variant="body2" fontWeight="medium">
+              {transfer.patientName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {transfer.pChartCode}
+            </Typography>
+          </Box>
         </Box>
       ),
     },
     {
       key: "transferDateTime",
-      header: "Date/Time",
+      header: "Transfer Date/Time",
       visible: true,
       sortable: true,
-      width: 110,
-      render: (transfer) => (
-        <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
-          {formatDt(transfer.transferDateTime)}
-        </Typography>
-      ),
+      width: 140,
+      render: (transfer) => <Typography variant="body2">{formatDt(transfer.transferDateTime)}</Typography>,
     },
     {
-      key: "location",
-      header: "From → To",
+      key: "previousLocation",
+      header: "From",
       visible: true,
       sortable: true,
       width: 160,
       render: (transfer) => (
         <Box>
-          <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
-            <strong>From:</strong> {transfer.rName} ({transfer.bedName})
+          <Typography variant="body2" fontWeight="medium">
+            {transfer.rName}
           </Typography>
-          <br />
-          <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
-            <strong>To:</strong> {transfer.rName} ({transfer.bedName})
+          <Typography variant="caption" color="text.secondary">
+            Bed: {transfer.bedName}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      key: "newLocation",
+      header: "To",
+      visible: true,
+      sortable: true,
+      width: 160,
+      render: (transfer) => (
+        <Box>
+          <Typography variant="body2" fontWeight="medium">
+            {transfer.rName}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Bed: {transfer.bedName}
           </Typography>
         </Box>
       ),
     },
     {
       key: "treatPhyName",
-      header: "Physician",
+      header: "Treating Physician",
       visible: true,
       sortable: true,
-      width: 120,
-      render: (transfer) => (
-        <Typography variant="caption" sx={{ fontSize: "0.7rem" }}>
-          {transfer.treatPhyName || "Not Assigned"}
-        </Typography>
-      ),
+      width: 160,
+      formatter: (value, transfer) => transfer.treatPhyName || "Not Assigned",
     },
     {
       key: "reasonForTransfer",
       header: "Reason",
       visible: true,
       sortable: true,
-      width: 140,
+      width: 200,
       render: (transfer) => (
         <Typography
-          variant="caption"
+          variant="body2"
           sx={{
-            fontSize: "0.7rem",
-            maxWidth: 120,
+            maxWidth: 180,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
-            display: "block",
           }}
           title={transfer.reasonForTransfer}
         >
@@ -273,15 +284,9 @@ const WardBedTransferPage: React.FC = () => {
       header: "Status",
       visible: true,
       sortable: true,
-      width: 80,
+      width: 100,
       render: (transfer) => (
-        <Chip
-          label={transfer.status}
-          size="small"
-          color={transfer.status === "Completed" ? "success" : transfer.status === "Pending" ? "warning" : "default"}
-          variant="filled"
-          sx={{ height: 20, fontSize: "0.6rem" }}
-        />
+        <Chip label={transfer.status} size="small" color={transfer.status === "Completed" ? "success" : transfer.status === "Pending" ? "warning" : "default"} variant="filled" />
       ),
     },
   ];
@@ -445,7 +450,6 @@ const WardBedTransferPage: React.FC = () => {
           maxHeight="450px"
           emptyStateMessage="No transfers found"
           rowKeyField="id"
-          density="medium"
           showDensityControls={false}
           onRowClick={handleViewHistory}
         />
