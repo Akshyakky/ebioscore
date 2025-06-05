@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { AppModifiedMast } from "@/interfaces/HospitalAdministration/AppModifiedListDto";
-import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import { Save, Cancel } from "@mui/icons-material";
@@ -13,8 +12,7 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
 import { useAppModifiedList } from "../hooks/useAppModifiedList";
-import { useAppSelector } from "@/store/hooks";
-import moduleService from "@/services/NotGenericPaternServices/ModuleService";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface AppModifiedMasterFormProps {
   open: boolean;
@@ -43,11 +41,10 @@ const AppModifiedMasterForm: React.FC<AppModifiedMasterFormProps> = ({ open, onC
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
-  const [mainModulesOptions, setMainModulesOptions] = useState<DropdownOption[]>([]);
-  const [isDropdownLoading, setIsDropdownLoading] = useState(true);
   const isAddMode = !initialData;
 
-  const { token, adminYN, userID } = useAppSelector((state) => state.auth);
+  // Use the dropdown hook for main modules
+  const { mainModules, isLoading } = useDropdownValues(["mainModules"]);
 
   const defaultValues: AppModifiedMasterFormData = {
     fieldID: 0,
@@ -69,29 +66,6 @@ const AppModifiedMasterForm: React.FC<AppModifiedMasterFormProps> = ({ open, onC
     resolver: zodResolver(schema),
     mode: "onChange",
   });
-
-  useEffect(() => {
-    const fetchMainModules = async () => {
-      if (token) {
-        setIsDropdownLoading(true);
-        try {
-          const modulesData = await moduleService.getActiveModules(adminYN === "Y" ? 0 : userID ?? 0);
-          const mainModuleOptions = modulesData.map((module) => ({
-            label: module.title,
-            value: module.auGrpID.toString(),
-          }));
-
-          setMainModulesOptions(mainModuleOptions);
-        } catch (error) {
-          showAlert("Error", "Error fetching main modules", "error");
-        } finally {
-          setIsDropdownLoading(false);
-        }
-      }
-    };
-
-    fetchMainModules();
-  }, [token, adminYN, userID]);
 
   useEffect(() => {
     if (initialData) {
@@ -256,10 +230,10 @@ const AppModifiedMasterForm: React.FC<AppModifiedMasterFormProps> = ({ open, onC
                         label="Main Module"
                         type="select"
                         required
-                        disabled={viewOnly || isDropdownLoading}
+                        disabled={viewOnly || isLoading("mainModules")}
                         size="small"
                         fullWidth
-                        options={isDropdownLoading ? [{ label: "Loading...", value: "0" }] : mainModulesOptions}
+                        options={isLoading("mainModules") ? [{ label: "Loading...", value: 0 }] : mainModules || []}
                       />
                     </Grid>
                   </Grid>
