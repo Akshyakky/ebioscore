@@ -505,7 +505,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
     >
       <Box sx={{ width: "100%" }}>
         <form onSubmit={handleSubmit(onFormSubmit)}>
-          {/* Basic Information */}
           <Paper sx={{ p: 2, mb: 2 }}>
             <Typography variant="h6" gutterBottom>
               Basic Charge Information
@@ -558,41 +557,36 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField
-                  name="chargeStatus"
-                  control={control}
-                  type="select"
-                  label="Status"
-                  required
-                  size="small"
-                  options={[
-                    { value: "Y", label: "Active" },
-                    { value: "N", label: "Inactive" },
-                  ]}
-                />
+                <EnhancedFormField name="chargeDesc" control={control} type="text" label="Charge Name" required size="small" />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <EnhancedFormField name="chargeDesc" control={control} type="text" label="Charge Description" required size="small" />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <EnhancedFormField name="cShortName" control={control} type="text" label="Short Name" size="small" />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <EnhancedFormField name="serviceGroupID" control={control} type="select" label="Service Group" size="small" options={serviceGroup} />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <EnhancedFormField name="chargesHDesc" control={control} type="textarea" label="Short Description" size="small" rows={2} />
+              <Grid size={{ xs: 12, md: 4 }}>
+                <EnhancedFormField name="chargeCost" control={control} type="number" label="Charge Cost" required size="small" />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <EnhancedFormField name="chargeDescLang" control={control} type="textarea" label="Description in Local Language" size="small" rows={2} />
+              <Grid size={{ xs: 12, md: 4 }}>
+                <EnhancedFormField name="cNhsCode" control={control} type="text" label="Resource Code" size="small" />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <EnhancedFormField name="cNhsEnglishName" control={control} type="text" label="Resource Name" size="small" />
               </Grid>
 
-              {/* Configuration Options */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <EnhancedFormField name="scheduleDate" control={control} type="datepicker" label="Schedule Date" size="small" />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 4 }}>
+                <EnhancedFormField name="chargesHDesc" control={control} type="textarea" label="Charge Description" size="small" />
+              </Grid>
+
               <Grid size={{ xs: 12 }}>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="subtitle2" gutterBottom>
@@ -610,6 +604,9 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
                   </Grid>
                   <Grid size={{ xs: 12, md: 3 }}>
                     <EnhancedFormField name="chargeBreakYN" control={control} type="switch" label="Charge Break" size="small" />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <EnhancedFormField name="chargeStatus" control={control} type="switch" label="Charge Status " size="small" />
                   </Grid>
                 </Grid>
               </Grid>
