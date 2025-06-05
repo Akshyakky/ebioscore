@@ -81,7 +81,7 @@ const AdmissionPage: React.FC = () => {
         bedDisplay,
         roomDisplay,
         departmentDisplay,
-        statusDisplay: admission.ipAdmissionDto.ipStatus || "Admitted",
+        statusDisplay: admission.ipAdmissionDto.ipStatus || "ADMITTED",
         daysAdmitted,
       };
     });
@@ -178,6 +178,11 @@ const AdmissionPage: React.FC = () => {
 
   const handleEditAdmission = useCallback((admission: EnhancedAdmissionDto) => {
     setSelectedAdmission(admission);
+    setSelectedPatient({
+      pChartID: admission.ipAdmissionDto.pChartID,
+      pChartCode: admission.ipAdmissionDto.pChartCode,
+      fullName: admission.patientName || "",
+    });
     setIsAdmissionFormOpen(true);
   }, []);
 
@@ -303,7 +308,7 @@ const AdmissionPage: React.FC = () => {
       width: 120,
       render: (admission) => (
         <Stack spacing={0.5}>
-          <Chip label={admission.statusDisplay} size="small" color={admission.statusDisplay === "Admitted" ? "success" : "default"} variant="filled" />
+          <Chip label={admission.statusDisplay} size="small" color={admission.statusDisplay === "ADMITTED" ? "success" : "default"} variant="filled" />
           {admission.ipAdmissionDto.deliveryCaseYN === "Y" && <Chip label="Delivery" size="small" color="secondary" variant="outlined" />}
         </Stack>
       ),
@@ -408,12 +413,12 @@ const AdmissionPage: React.FC = () => {
 
         {Object.entries(statistics.statusCounts).map(([status, count]) => (
           <Grid size={{ xs: 12, md: 3 }} key={status}>
-            <Card sx={{ borderLeft: `4px solid ${status === "Admitted" ? "#4caf50" : "#ff9800"}` }}>
+            <Card sx={{ borderLeft: `4px solid ${status === "ADMITTED" ? "#4caf50" : "#ff9800"}` }}>
               <CardContent sx={{ textAlign: "center" }}>
-                <Avatar sx={{ bgcolor: status === "Admitted" ? "#4caf50" : "#ff9800", width: 48, height: 48, mx: "auto", mb: 1 }}>
+                <Avatar sx={{ bgcolor: status === "ADMITTED" ? "#4caf50" : "#ff9800", width: 48, height: 48, mx: "auto", mb: 1 }}>
                   <BedIcon />
                 </Avatar>
-                <Typography variant="h4" color={status === "Admitted" ? "#4caf50" : "#ff9800"} fontWeight="bold">
+                <Typography variant="h4" color={status === "ADMITTED" ? "#4caf50" : "#ff9800"} fontWeight="bold">
                   {count}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
