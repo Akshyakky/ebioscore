@@ -9,8 +9,8 @@ import { userListServices } from "@/services/SecurityManagementServices/UserList
 import { ProfileDetailDto, ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { UserListDto, UserListPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
 import { Add, Book, Cancel, Delete, Edit, FileUpload, Lock, Print, Save } from "@mui/icons-material";
-import IconSwitch from "@/components/Switch/IconSwitch";
 import { useAlert } from "@/providers/AlertProvider";
+import { CustomUISwitch } from "@/components/Switch/CustomUISwitch";
 
 interface DropdownListProps {
   options: DropdownOption[];
@@ -111,12 +111,16 @@ const PermissionsList: React.FC<PermissionsListProps> = ({
               gap: 1,
             }}
           >
-            <IconSwitch
-              icon={PermissionIcon}
+            <CustomUISwitch
               checked={selectedPermissions.includes(permission.accessID)}
               onChange={() => handlePermissionChange(permission.accessID)}
               disabled={disabled}
+              onSVGPath={"M12 17a2 2 0 100-4 2 2 0 000 4zm5-14a4 4 0 00-4 4v2H8a2 2 0 00-2 2v9a2 2 0 002 2h10a2 2 0 002-2v-9a2 2 0 00-2-2h-3V7a2 2 0 114 0h2a4 4 0 00-4-4z"}
+              offSVGPath={
+                "M14.167 9.167V7.5a4.167 4.167 0 00-8.334 0v1.667H4.167A1.667 1.667 0 002.5 10.833v6.667A1.667 1.667 0 004.167 19.167h11.666a1.667 1.667 0 001.667-1.667v-6.667a1.667 1.667 0 00-1.667-1.666H14.167zM7.5 7.5a2.5 2.5 0 115 0v1.667h-5V7.5zM10 13.333a1.25 1.25 0 110 2.5 1.25 1.25 0 010-2.5z"
+              }
             />
+
             <Typography variant="body1" sx={{ flexGrow: 1, fontWeight: 500, fontSize: 16 }}>
               {permission.accessName}
             </Typography>
