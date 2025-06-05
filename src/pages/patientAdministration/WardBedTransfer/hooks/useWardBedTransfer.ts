@@ -40,7 +40,7 @@ interface UseWardBedTransferReturn extends UseWardBedTransferState {
   processTransfer: (transferData: BedTransferRequestDto) => Promise<void>;
   validateTransfer: (currentBedId: number, newBedId: number, admitId: number) => Promise<boolean>;
   getTransferHistory: (admitId: number) => Promise<void>;
-  refreshTransfers: () => Promise<void>;
+  refreshTransfers: (days?: number, maxRecords?: number) => Promise<void>;
   clearState: () => void;
 }
 
@@ -244,70 +244,39 @@ export const useWardBedTransfer = (): UseWardBedTransferReturn => {
 
   /**
    * Refreshes the list of recent transfers with caching support
+   * @param days Number of days to look back for transfers (default: 7)
+   * @param maxRecords Maximum number of records to return (default: 50)
    */
-  const refreshTransfers = useCallback(async (): Promise<void> => {
-    const now = Date.now();
+  const refreshTransfers = useCallback(
+    async (days: number = 7, maxRecords: number = 50): Promise<void> => {
+      const now = Date.now();
 
-    // Check if we should use cached data
-    if (now - lastFetchTime.current < cacheTimeout && state.recentTransfers.length > 0) {
-      return;
-    }
+      // Check if we should use cached data (only if using default parameters)
+      if (days === 7 && maxRecords === 50 && now - lastFetchTime.current < cacheTimeout && state.recentTransfers.length > 0) {
+        return;
+      }
 
-    try {
-      updateState({ loading: true, error: null });
+      try {
+        updateState({ loading: true, error: null });
 
-      // Since there's no direct "get all recent transfers" endpoint,
-      // we'll simulate this by getting transfers for known admissions
-      // In a real implementation, you'd have an endpoint for recent transfers
-      const mockRecentTransfers: BedTransferRequestDto[] = [
-        {
-          admitID: 1,
-          pChartID: 1001,
-          pChartCode: "PAT001",
-          bedID: 101,
-          bedName: "B001",
-          rlID: 1,
-          rName: "Room 101",
-          rGrpID: 1,
-          rGrpName: "ICU",
-          treatPhyID: 1,
-          treatPhyName: "Dr. Smith",
-          treatingSpecialtyID: 1,
-          treatingPhySpecialty: "Cardiology",
-          reasonForTransfer: "Better monitoring required",
-          transferDate: new Date().toISOString(),
-          rNotes: "Patient stable for transfer",
-        },
-        {
-          admitID: 2,
-          pChartID: 1002,
-          pChartCode: "PAT002",
-          bedID: 102,
-          bedName: "B002",
-          rlID: 2,
-          rName: "Room 102",
-          rGrpID: 2,
-          rGrpName: "General Ward",
-          treatPhyID: 2,
-          treatPhyName: "Dr. Johnson",
-          treatingSpecialtyID: 2,
-          treatingPhySpecialty: "Internal Medicine",
-          reasonForTransfer: "Step down from ICU",
-          transferDate: new Date(Date.now() - 86400000).toISOString(), // Yesterday
-          rNotes: "Patient recovering well",
-        },
-      ];
+        const recentTransfers = await wardBedTransferService.getRecentTransfers(days, maxRecords);
 
-      updateState({
-        recentTransfers: mockRecentTransfers,
-        loading: false,
-        error: null,
-      });
-      lastFetchTime.current = now;
-    } catch (error) {
-      handleError(error, "fetch recent transfers");
-    }
-  }, [state.recentTransfers.length, updateState, handleError]);
+        updateState({
+          recentTransfers: recentTransfers || [],
+          loading: false,
+          error: null,
+        });
+
+        // Update cache time only for default parameters
+        if (days === 7 && maxRecords === 50) {
+          lastFetchTime.current = now;
+        }
+      } catch (error) {
+        handleError(error, "fetch recent transfers");
+      }
+    },
+    [state.recentTransfers.length, updateState, handleError]
+  );
 
   /**
    * Clears all state data and resets the hook to initial state
