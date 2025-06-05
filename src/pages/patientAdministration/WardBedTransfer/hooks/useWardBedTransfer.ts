@@ -161,12 +161,10 @@ export const useWardBedTransfer = (): UseWardBedTransferReturn => {
       try {
         updateState({ loading: true, error: null });
 
+        const currentBedId = state.currentAdmission?.ipAdmissionDetailsDto?.bedID;
+
         // Validate transfer before processing
-        const isValid = await validateTransfer(
-          transferData.admitID, // Using admitID as current bed reference
-          transferData.bedID,
-          transferData.admitID
-        );
+        const isValid = await validateTransfer(currentBedId, transferData.bedID, transferData.admitID);
 
         if (!isValid) {
           updateState({ loading: false });
@@ -221,12 +219,12 @@ export const useWardBedTransfer = (): UseWardBedTransferReturn => {
           toBedId: transfer.bedID,
           toBedName: transfer.bedName,
           toRoomName: transfer.rName,
-          transferDate: new Date(transfer.transferDate),
+          transferDate: new Date(transfer.rCreatedOn),
           treatPhyID: transfer.treatPhyID,
           treatPhyName: transfer.treatPhyName,
           reasonForTransfer: transfer.reasonForTransfer,
           transferNotes: transfer.rNotes || "",
-          transferredBy: "System User", // Would come from audit trail
+          transferredBy: transfer.rCreatedBy, // Would come from audit trail
           status: "Completed" as const,
         }));
 
