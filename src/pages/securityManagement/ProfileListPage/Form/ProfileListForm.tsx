@@ -41,7 +41,7 @@ const ProfileListForm: React.FC<ProfileListFormProps> = ({ open, onClose, initia
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
-  const [activeTab, setActiveTab] = useState<"details" | "modulePermissions" | "reportPermissions">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "modulePermissions" | "reportPermissions" | "departmentPermissions">("details");
   const isAddMode = !initialData;
 
   const defaultValues: ProfileListFormData = {
@@ -253,6 +253,18 @@ const ProfileListForm: React.FC<ProfileListFormProps> = ({ open, onClose, initia
             }}
           />
         )}
+        {!isAddMode && (
+          <Tab
+            label="Department Permissions"
+            value="departmentPermissions"
+            disabled={!watchedData.profileID}
+            sx={{
+              minHeight: 40,
+              textTransform: "none",
+              fontSize: "0.875rem",
+            }}
+          />
+        )}
       </Tabs>
     </Box>
   );
@@ -338,23 +350,11 @@ const ProfileListForm: React.FC<ProfileListFormProps> = ({ open, onClose, initia
       </Grid>
     </Grid>
   );
-
-  const renderModulePermissionsTab = () =>
+  const renderPermissionsTab = (title: string, type: "M" | "R" | "D", isMainModules: boolean, isSubModules: boolean) =>
     !isAddMode && watchedData.profileID ? (
       <Card variant="outlined">
         <CardContent>
-          <PermissionManager mode="profile" details={watchedData as ProfileMastDto} title="Module Permissions" type="M" useMainModules={true} useSubModules={true} />
-        </CardContent>
-      </Card>
-    ) : (
-      <Alert severity="info">Profile must be saved before managing module permissions.</Alert>
-    );
-
-  const renderReportPermissionsTab = () =>
-    !isAddMode && watchedData.profileID ? (
-      <Card variant="outlined">
-        <CardContent>
-          <PermissionManager mode="profile" details={watchedData as ProfileMastDto} title="Report Permissions" type="R" useMainModules={true} useSubModules={false} />
+          <PermissionManager mode="profile" details={watchedData as ProfileMastDto} title={title} type={type} useMainModules={isMainModules} useSubModules={isSubModules} />
         </CardContent>
       </Card>
     ) : (
@@ -366,9 +366,11 @@ const ProfileListForm: React.FC<ProfileListFormProps> = ({ open, onClose, initia
       case "details":
         return renderDetailsTab();
       case "modulePermissions":
-        return renderModulePermissionsTab();
+        return renderPermissionsTab("Module Permissions", "M", true, true);
       case "reportPermissions":
-        return renderReportPermissionsTab();
+        return renderPermissionsTab("Report Permissions", "R", true, false);
+      case "departmentPermissions":
+        return renderPermissionsTab("Department Permissions", "D", false, false);
       default:
         return renderDetailsTab();
     }
@@ -387,7 +389,7 @@ const ProfileListForm: React.FC<ProfileListFormProps> = ({ open, onClose, initia
         disableEscapeKeyDown={!viewOnly && (isDirty || isSaving)}
         actions={dialogActions}
       >
-        <Box component="form" noValidate sx={{ p: 1 }}>
+        <Box component="form" noValidate sx={{ p: 1, minHeight: "600px" }}>
           {formError && (
             <Alert severity="error" sx={{ mb: 2 }} onClose={() => setFormError(null)}>
               {formError}
