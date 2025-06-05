@@ -1,124 +1,445 @@
-// src/pages/patientAdministration/WardBedTransferPage/MainPage/WardBedTransferPage.tsx
-import React, { useState, useCallback, useRef } from "react";
-import { Container, Box } from "@mui/material";
-import { Search } from "@mui/icons-material";
-import { useLoading } from "@/hooks/Common/useLoading";
-import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
-import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
+// src/pages/patientAdministration/WardBedTransfer/MainPage/WardBedTransferPage.tsx
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { Box, Typography, Paper, Grid, Card, CardContent, Chip, Stack, Avatar, Alert, TextField } from "@mui/material";
+import {
+  SwapHoriz as TransferIcon,
+  Person as PatientIcon,
+  Hotel as BedIcon,
+  History as HistoryIcon,
+  Search as SearchIcon,
+  Refresh as RefreshIcon,
+  LocalHospital as HospitalIcon,
+  MedicalServices as DoctorIcon,
+} from "@mui/icons-material";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import CustomButton from "@/components/Button/CustomButton";
+import SmartButton from "@/components/Button/SmartButton";
+import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
+import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { useAlert } from "@/providers/AlertProvider";
-import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
-import ActionButtonGroup, { ButtonProps } from "@/components/Button/ActionButtonGroup";
-import CustomAccordion from "@/components/Accordion/CustomAccordion";
-import WardBedTransferDetails from "../SubPage/WardBedTransferDetails";
-import AdmissionHistory from "../../AdmissionPage/SubPage/AdmissionHistory";
-import AdmissionListSearch from "../../AdmissionPage/SubPage/AdmissionListSearch";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { BedTransferRequestDto } from "@/interfaces/PatientAdministration/BedTransferRequestDto";
+import { formatDt } from "@/utils/Common/dateUtils";
+import BedTransferDialog from "../Components/BedTransferDialog";
+import TransferHistoryDialog from "../Components/TransferHistoryDialog";
+import CurrentAdmissionDisplay from "../Components/CurrentAdmissionDisplay";
+import useWardBedTransfer from "../hooks/useWardBedTransfer";
+
+interface TransferRecord extends BedTransferRequestDto {
+  id: number;
+  transferDateTime: Date;
+  status: "Completed" | "Pending" | "Cancelled";
+  transferredBy: string;
+  previousLocation: string;
+  newLocation: string;
+  patientName: string;
+}
 
 const WardBedTransferPage: React.FC = () => {
-  // State Management
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [selectedAdmission, setSelectedAdmission] = useState<AdmissionDto | undefined>(undefined);
-  const [admissionHistory, setAdmissionHistory] = useState<AdmissionHistoryDto[]>([]);
-  const transferDetailsRef = useRef<{ focusUhidInput: () => void }>(null);
-  const { setLoading } = useLoading();
+  // State management
+  const [selectedPatient, setSelectedPatient] = useState<PatientSearchResult | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [patientClearTrigger, setPatientClearTrigger] = useState(0);
+
+  // Dialog states
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+
   const { showAlert } = useAlert();
+  const { currentAdmission, transferHistory, recentTransfers, loading, checkPatientAdmission, processTransfer, refreshTransfers, getTransferHistory } = useWardBedTransfer();
 
-  // Event Handlers
-  const handleAdvancedSearch = useCallback(() => {
-    setIsSearchOpen(true);
-  }, []);
+  // Load recent transfers on component mount
+  useEffect(() => {
+    refreshTransfers();
+  }, [refreshTransfers]);
 
-  const handleCloseSearch = useCallback(() => {
-    setIsSearchOpen(false);
-    transferDetailsRef.current?.focusUhidInput();
-  }, []);
+  // Enhanced transfer records with calculated fields
+  const enhancedTransfers = useMemo(() => {
+    return recentTransfers.map((transfer, index) => {
+      const patientName = `${transfer.pChartCode}` || "Unknown Patient";
+      const previousLocation = `${transfer.rName || "Unknown Room"} - Bed: ${transfer.bedName || "Unknown"}`;
+      const newLocation = `${transfer.rName || "New Room"} - Bed: ${transfer.bedName || "New Bed"}`;
 
-  const handleClearAll = useCallback(() => {
-    setSelectedAdmission(undefined);
-    setAdmissionHistory([]);
-    transferDetailsRef.current?.focusUhidInput();
-  }, []);
+      return {
+        ...transfer,
+        id: index + 1,
+        transferDateTime: new Date(transfer.transferDate),
+        status: "Completed" as "Completed" | "Pending" | "Cancelled",
+        transferredBy: "System User", // This would come from the actual transfer record
+        previousLocation,
+        newLocation,
+        patientName,
+      };
+    });
+  }, [recentTransfers]);
 
-  const validateAdmissionForTransfer = useCallback((admission: AdmissionDto): boolean => {
-    if (!admission.ipAdmissionDto) {
-      showAlert("Warning", "Invalid admission record", "warning");
-      return false;
-    }
+  // Filtered transfers based on search
+  const filteredTransfers = useMemo(() => {
+    if (!searchTerm) return enhancedTransfers;
 
-    if (admission.ipAdmissionDto.dischgYN === "Y") {
-      showAlert("Warning", `Patient was discharged on ${new Date(admission.ipAdmissionDto.dischgDate).toLocaleDateString()}`, "warning");
-      return false;
-    }
+    const searchLower = searchTerm.toLowerCase();
+    return enhancedTransfers.filter((transfer) => {
+      return (
+        transfer.pChartCode.toLowerCase().includes(searchLower) ||
+        transfer.patientName?.toLowerCase().includes(searchLower) ||
+        transfer.bedName?.toLowerCase().includes(searchLower) ||
+        transfer.rName?.toLowerCase().includes(searchLower) ||
+        transfer.reasonForTransfer?.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [enhancedTransfers, searchTerm]);
 
-    if (admission.ipAdmissionDto.rActiveYN !== "Y") {
-      showAlert("Warning", "This admission is not active", "warning");
-      return false;
-    }
+  // Statistics
+  const statistics = useMemo(() => {
+    const today = new Date();
+    const todayTransfers = enhancedTransfers.filter((transfer) => transfer.transferDateTime.toDateString() === today.toDateString());
 
-    if (!admission.wrBedDetailsDto?.bedID) {
-      showAlert("Warning", "No bed assignment found for this admission", "warning");
-      return false;
-    }
+    const thisWeek = enhancedTransfers.filter((transfer) => {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return transfer.transferDateTime >= weekAgo;
+    });
 
-    return true;
-  }, []);
+    return {
+      total: enhancedTransfers.length,
+      today: todayTransfers.length,
+      thisWeek: thisWeek.length,
+      pending: enhancedTransfers.filter((t) => t.status === "Pending").length,
+    };
+  }, [enhancedTransfers]);
 
-  const handleSelect = useCallback(
-    async (admission: AdmissionDto) => {
-      setLoading(true);
-      try {
-        if (!validateAdmissionForTransfer(admission)) {
-          return;
-        }
-
-        setSelectedAdmission(admission);
-
-        if (admission.ipAdmissionDto?.pChartID) {
-          const result = await extendedAdmissionService.getPatientAdmissionStatus(admission.ipAdmissionDto.pChartID);
-          if (result.success && result.data?.admissionHistory) {
-            const formattedHistory = extendedAdmissionService.formatAdmissionHistoryForDisplay(result.data.admissionHistory);
-            setAdmissionHistory(formattedHistory);
-          }
-        } else {
-          setAdmissionHistory([]);
-        }
-        setIsSearchOpen(false);
-      } catch (error) {
-        console.error("Error fetching admission history:", error);
-        showAlert("Error", "Failed to fetch admission history", "error");
-        setAdmissionHistory([]);
-      } finally {
-        setLoading(false);
+  // Event handlers
+  const handlePatientSelect = useCallback(
+    async (patient: PatientSearchResult | null) => {
+      setSelectedPatient(patient);
+      if (patient) {
+        await checkPatientAdmission(patient.pChartID);
       }
     },
-    [setLoading, validateAdmissionForTransfer]
+    [checkPatientAdmission]
   );
 
-  const actionButtons: ButtonProps[] = [
+  const handleInitiateTransfer = useCallback(() => {
+    if (!selectedPatient) {
+      showAlert("Warning", "Please select a patient first", "warning");
+      return;
+    }
+
+    if (!currentAdmission) {
+      showAlert("Warning", "Selected patient is not currently admitted", "warning");
+      return;
+    }
+
+    setIsTransferDialogOpen(true);
+  }, [selectedPatient, currentAdmission, showAlert]);
+
+  const handleTransferSubmit = useCallback(
+    async (transferData: BedTransferRequestDto) => {
+      try {
+        await processTransfer(transferData);
+        setIsTransferDialogOpen(false);
+        showAlert("Success", "Patient transferred successfully", "success");
+
+        // Clear patient selection and refresh data
+        setSelectedPatient(null);
+        setPatientClearTrigger((prev) => prev + 1);
+        await refreshTransfers();
+      } catch (error) {
+        showAlert("Error", "Failed to process transfer", "error");
+      }
+    },
+    [processTransfer, showAlert, refreshTransfers]
+  );
+
+  const handleViewHistory = useCallback(
+    async (transfer: TransferRecord) => {
+      if (transfer.admitID) {
+        await getTransferHistory(transfer.admitID);
+        setIsHistoryDialogOpen(true);
+      }
+    },
+    [getTransferHistory]
+  );
+
+  const handleViewPatientHistory = useCallback(async () => {
+    if (!currentAdmission) {
+      showAlert("Warning", "No current admission selected", "warning");
+      return;
+    }
+
+    await getTransferHistory(currentAdmission.ipAdmissionDto.admitID);
+    setIsHistoryDialogOpen(true);
+  }, [currentAdmission, getTransferHistory, showAlert]);
+
+  // Grid columns
+  const columns: Column<TransferRecord>[] = [
     {
-      variant: "contained",
-      icon: Search,
-      text: "Search Admission",
-      onClick: handleAdvancedSearch,
-      color: "primary",
+      key: "id",
+      header: "#",
+      visible: true,
+      sortable: true,
+      width: 60,
+      formatter: (value: number) => value.toString(),
+    },
+    {
+      key: "patientInfo",
+      header: "Patient Information",
+      visible: true,
+      sortable: true,
+      width: 180,
+      render: (transfer) => (
+        <Box display="flex" alignItems="center" gap={1}>
+          <Avatar sx={{ bgcolor: "primary.main", width: 32, height: 32 }}>
+            <PatientIcon fontSize="small" />
+          </Avatar>
+          <Box>
+            <Typography variant="body2" fontWeight="medium">
+              {transfer.patientName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {transfer.pChartCode}
+            </Typography>
+          </Box>
+        </Box>
+      ),
+    },
+    {
+      key: "transferDateTime",
+      header: "Transfer Date/Time",
+      visible: true,
+      sortable: true,
+      width: 140,
+      render: (transfer) => <Typography variant="body2">{formatDt(transfer.transferDateTime)}</Typography>,
+    },
+    {
+      key: "previousLocation",
+      header: "From",
+      visible: true,
+      sortable: true,
+      width: 160,
+      render: (transfer) => (
+        <Box>
+          <Typography variant="body2" fontWeight="medium">
+            {transfer.rName}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Bed: {transfer.bedName}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      key: "newLocation",
+      header: "To",
+      visible: true,
+      sortable: true,
+      width: 160,
+      render: (transfer) => (
+        <Box>
+          <Typography variant="body2" fontWeight="medium">
+            {transfer.rName}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Bed: {transfer.bedName}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      key: "treatPhyName",
+      header: "Treating Physician",
+      visible: true,
+      sortable: true,
+      width: 160,
+      formatter: (value, transfer) => transfer.treatPhyName || "Not Assigned",
+    },
+    {
+      key: "reasonForTransfer",
+      header: "Reason",
+      visible: true,
+      sortable: true,
+      width: 200,
+      render: (transfer) => (
+        <Typography
+          variant="body2"
+          sx={{
+            maxWidth: 180,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+          title={transfer.reasonForTransfer}
+        >
+          {transfer.reasonForTransfer || "No reason provided"}
+        </Typography>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      visible: true,
+      sortable: true,
+      width: 100,
+      render: (transfer) => (
+        <Chip label={transfer.status} size="small" color={transfer.status === "Completed" ? "success" : transfer.status === "Pending" ? "warning" : "default"} variant="filled" />
+      ),
     },
   ];
 
   return (
-    <Container maxWidth={false}>
-      <Box sx={{ marginBottom: 2 }}>
-        <ActionButtonGroup buttons={actionButtons} />
+    <Box sx={{ p: 3 }}>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
+          Ward/Bed Transfer Management
+        </Typography>
+        <Stack direction="row" spacing={2}>
+          <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={refreshTransfers} asynchronous />
+        </Stack>
       </Box>
 
-      <CustomAccordion title="Transfer Details" defaultExpanded>
-        <WardBedTransferDetails ref={transferDetailsRef} selectedAdmission={selectedAdmission} onAdmissionSelect={handleSelect} onClear={handleClearAll} />
-      </CustomAccordion>
+      {/* Patient Search and Current Admission */}
+      <Grid container spacing={3} mb={3}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <SearchIcon />
+              Patient Search
+            </Typography>
+            <PatientSearch onPatientSelect={handlePatientSelect} clearTrigger={patientClearTrigger} placeholder="Search by name, UHID, or phone number" />
 
-      <CustomAccordion title="Admission History">
-        <AdmissionHistory admissionHistory={admissionHistory} />
-      </CustomAccordion>
+            {selectedPatient && (
+              <Box mt={2}>
+                <Stack direction="row" spacing={1}>
+                  <CustomButton variant="contained" icon={TransferIcon} text="Initiate Transfer" onClick={handleInitiateTransfer} disabled={!currentAdmission} color="primary" />
+                  <CustomButton variant="outlined" icon={HistoryIcon} text="Transfer History" onClick={handleViewPatientHistory} disabled={!currentAdmission} />
+                </Stack>
+              </Box>
+            )}
+          </Paper>
+        </Grid>
 
-      <AdmissionListSearch open={isSearchOpen} onClose={handleCloseSearch} onSelect={handleSelect} />
-    </Container>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <PatientDemographics pChartID={selectedPatient?.pChartID || null} variant="compact" showEditButton={false} showRefreshButton={false} />
+        </Grid>
+      </Grid>
+
+      {/* Current Admission Display */}
+      {selectedPatient && (
+        <Box mb={3}>
+          <CurrentAdmissionDisplay
+            patient={selectedPatient}
+            admission={currentAdmission}
+            loading={loading}
+            onTransferClick={handleInitiateTransfer}
+            onHistoryClick={handleViewPatientHistory}
+          />
+        </Box>
+      )}
+
+      {/* Statistics Cards */}
+      <Grid container spacing={2} mb={3}>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <Card sx={{ borderLeft: "4px solid #1976d2" }}>
+            <CardContent sx={{ textAlign: "center" }}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 48, height: 48, mx: "auto", mb: 1 }}>
+                <TransferIcon />
+              </Avatar>
+              <Typography variant="h4" color="#1976d2" fontWeight="bold">
+                {statistics.total}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Total Transfers
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 3 }}>
+          <Card sx={{ borderLeft: "4px solid #4caf50" }}>
+            <CardContent sx={{ textAlign: "center" }}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 48, height: 48, mx: "auto", mb: 1 }}>
+                <HospitalIcon />
+              </Avatar>
+              <Typography variant="h4" color="#4caf50" fontWeight="bold">
+                {statistics.today}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Today's Transfers
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 3 }}>
+          <Card sx={{ borderLeft: "4px solid #ff9800" }}>
+            <CardContent sx={{ textAlign: "center" }}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 48, height: 48, mx: "auto", mb: 1 }}>
+                <BedIcon />
+              </Avatar>
+              <Typography variant="h4" color="#ff9800" fontWeight="bold">
+                {statistics.thisWeek}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                This Week
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 3 }}>
+          <Card sx={{ borderLeft: "4px solid #9c27b0" }}>
+            <CardContent sx={{ textAlign: "center" }}>
+              <Avatar sx={{ bgcolor: "#9c27b0", width: 48, height: 48, mx: "auto", mb: 1 }}>
+                <DoctorIcon />
+              </Avatar>
+              <Typography variant="h4" color="#9c27b0" fontWeight="bold">
+                {statistics.pending}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Pending Transfers
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Recent Transfers Grid */}
+      <Paper sx={{ p: 2 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <HistoryIcon />
+            Recent Transfers
+          </Typography>
+          <Box display="flex" alignItems="center" gap={2}>
+            <TextField type="search" placeholder="Search transfers..." value={searchTerm} size="small" onChange={(e) => setSearchTerm(e.target.value)} />
+          </Box>
+        </Box>
+
+        <CustomGrid
+          columns={columns}
+          data={filteredTransfers}
+          loading={loading}
+          maxHeight="600px"
+          emptyStateMessage="No transfers found"
+          rowKeyField="id"
+          density="medium"
+          showDensityControls
+          onRowClick={handleViewHistory}
+        />
+      </Paper>
+
+      {/* Dialogs */}
+      <BedTransferDialog
+        open={isTransferDialogOpen}
+        onClose={() => setIsTransferDialogOpen(false)}
+        onSubmit={handleTransferSubmit}
+        patient={selectedPatient}
+        currentAdmission={currentAdmission}
+      />
+
+      <TransferHistoryDialog open={isHistoryDialogOpen} onClose={() => setIsHistoryDialogOpen(false)} transferHistory={transferHistory} patient={selectedPatient} />
+    </Box>
   );
 };
 
