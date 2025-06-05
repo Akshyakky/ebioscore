@@ -25,7 +25,6 @@ import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Pa
 import { useAlert } from "@/providers/AlertProvider";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDto";
-import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
 import useDischarge from "../hooks/useDischarge";
 import DischargeFormDialog from "../Components/DischargeFormDialog";
