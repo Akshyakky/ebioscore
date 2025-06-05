@@ -25,12 +25,11 @@ const DeptUnitListPage = lazy(() => import("@/pages/hospitalAdministration/DeptU
 const InsuranceListPage = lazy(() => import("@/pages/hospitalAdministration/InsuranceList/MainPage/InsuranceListPage"));
 const ProductTaxListPage = lazy(() => import("@/pages/inventoryManagement/ProductTaxList/MainPage/ProductTaxListPage"));
 const ProductOverviewPage = lazy(() => import("@/pages/inventoryManagement/ProductOverview/MainPage/ProductOverviewPage"));
-const ManageBedPage = lazy(() => import("@/pages/patientAdministration/ManageBed/MainPage/ManageBedPage"));
 const ManageBedsPage = lazy(() => import("@/pages/hospitalAdministration/ManageBeds/MainPage/ManageBedsPage"));
 const DiagnosisListPage = lazy(() => import("@/pages/clinicalManagement/DiagnosisList/MainPage/DiagnosisListPage"));
 const MedicationListPage = lazy(() => import("@/pages/clinicalManagement/MedicationList/MainPage/MedicationListPage"));
 const AppModifiedListPage = lazy(() => import("@/pages/hospitalAdministration/AppModifiedList/MainPage/AppModifiedListPage"));
-const ChargeDetailsPage = lazy(() => import("@/pages/billing/ChargeDetailsPage/MainPage/ChargeDetailsPage"));
+const ScheduleOfChargesPage = lazy(() => import("@/pages/billing/ScheduleOfChargesPage/MainPage/ScheduleOfChargesPage"));
 const DischargePage = lazy(() => import("@/pages/patientAdministration/DischargePage/MainPage/DischargePage"));
 const WardBedTransferPage = lazy(() => import("@/pages/patientAdministration/WardBedTransfer/MainPage/WardBedTransferPage"));
 const MedicationFormPage = lazy(() => import("@/pages/clinicalManagement/medicationForm/MainPage/MedicationFormPage"));
@@ -374,7 +373,7 @@ const routeConfig: RouteConfig[] = [
   },
   {
     path: "/ChargeDetailsPage",
-    component: wrapWithSuspense(ChargeDetailsPage),
+    component: wrapWithSuspense(ScheduleOfChargesPage),
     protected: true,
     providers: [AlertProvider],
     metadata: {
