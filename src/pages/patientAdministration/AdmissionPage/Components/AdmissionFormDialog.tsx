@@ -587,7 +587,7 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
   // Other event handlers (keeping existing implementations)
   const handleCaseTypeChange = useCallback(
     (value: any) => {
-      const selectedOption = caseType.find((option) => option.value === value);
+      const selectedOption = caseType.find((option) => option.value === value.value);
       if (selectedOption) {
         setValue("caseTypeCode", selectedOption.value as string, { shouldValidate: true });
         setValue("caseTypeName", selectedOption.label, { shouldValidate: true });
@@ -598,9 +598,9 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
 
   const handleDepartmentChange = useCallback(
     (value: any) => {
-      const selectedOption = department.find((option) => Number(option.value) === Number(value));
+      const selectedOption = department.find((option) => Number(option.value) === Number(value.value));
       if (selectedOption) {
-        setValue("deptID", Number(value), { shouldValidate: true });
+        setValue("deptID", Number(value.value), { shouldValidate: true });
         setValue("deptName", selectedOption.label, { shouldValidate: true });
         setValue("dulId", 0, { shouldValidate: true });
         setValue("unitName", "", { shouldValidate: true });
@@ -611,9 +611,9 @@ const AdmissionFormDialog: React.FC<AdmissionFormDialogProps> = ({ open, onClose
 
   const handleUnitChange = useCallback(
     (value: any) => {
-      const selectedOption = unit.find((option) => Number(option.value) === Number(value));
+      const selectedOption = unit.find((option) => Number(option.value) === Number(value.value));
       if (selectedOption) {
-        setValue("dulId", Number(value), { shouldValidate: true });
+        setValue("dulId", Number(value.value), { shouldValidate: true });
         setValue("unitName", selectedOption.label, { shouldValidate: true });
       }
     },
