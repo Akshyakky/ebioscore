@@ -177,6 +177,7 @@ export const useScheduleOfCharges = (): UseScheduleOfChargesReturn => {
   const generateChargeCode = useCallback(
     async (codeGeneration: ChargeCodeGenerationDto): Promise<string> => {
       try {
+        debugger;
         if (!codeGeneration.ChargeType) {
           throw new Error("Charge type is required for code generation");
         }
