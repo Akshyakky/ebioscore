@@ -1,6 +1,6 @@
 // src/pages/billing/ScheduleOfChargesPage/Components/ChargeFormDialog.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Grid, Tabs, Tab, Paper, Divider, Chip, Stack, IconButton, Alert, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Box, Typography, Grid, Tabs, Tab, Paper, Divider, Chip, Stack, IconButton, Alert, Accordion, AccordionSummary, AccordionDetails, SelectChangeEvent } from "@mui/material";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -21,6 +21,7 @@ const chargeSchema = z.object({
   chargesHDesc: z.string().optional(),
   chargeDescLang: z.string().optional(),
   cShortName: z.string().optional(),
+  bChID: z.number().optional(),
   chargeType: z.string().min(1, "Charge type is required"),
   chargeTo: z.string().min(1, "Charge to is required"),
   chargeStatus: z.string().min(1, "Charge status is required"),
@@ -181,6 +182,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
       chargesHDesc: "",
       chargeDescLang: "",
       cShortName: "",
+      bChID: 0,
       chargeType: "",
       chargeTo: "",
       chargeStatus: "AC",
@@ -244,6 +246,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
           chargesHDesc: charge.chargesHDesc || "",
           chargeDescLang: charge.chargeDescLang || "",
           cShortName: charge.cShortName || "",
+          bChID: charge.bChID || 0,
           chargeType: charge.chargeType,
           chargeTo: charge.chargeTo,
           chargeStatus: charge.chargeStatus,
@@ -328,6 +331,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         cShortName: data.cShortName,
         chargeType: data.chargeType,
         chargeTo: data.chargeTo,
+        bChID: data.bChID,
         chargeStatus: data.chargeStatus,
         chargeBreakYN: data.chargeBreakYN,
         regServiceYN: data.regServiceYN,
@@ -459,6 +463,17 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
     setPacksExpanded(true);
   };
 
+  const handleBChIDChange = useCallback(
+    (value: any) => {
+      const selectedOption = serviceType.find((option) => Number(option.value) === Number(value));
+      if (selectedOption) {
+        setValue("bChID", Number(value), { shouldValidate: true });
+        setValue("chargeType", selectedOption.label, { shouldValidate: true });
+      }
+    },
+    [serviceType, setValue]
+  );
+
   const dialogActions = (
     <>
       <CustomButton variant="outlined" text={isEditMode ? "Reset" : "Clear"} icon={ClearIcon} onClick={handleClear} disabled={isSubmitting || !isDirty} color="inherit" />
@@ -522,7 +537,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField name="chargeType" control={control} type="select" label="Charge Type" required size="small" options={serviceType} />
+                <EnhancedFormField name="bChID" control={control} type="select" onChange={handleBChIDChange} label="Charge Type" required size="small" options={serviceType} />
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
@@ -551,8 +566,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
                   required
                   size="small"
                   options={[
-                    { value: "AC", label: "Active" },
-                    { value: "IN", label: "Inactive" },
+                    { value: "Y", label: "Active" },
+                    { value: "N", label: "Inactive" },
                   ]}
                 />
               </Grid>
@@ -663,8 +678,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
                             required
                             size="small"
                             options={[
-                              { value: "AC", label: "Active" },
-                              { value: "IN", label: "Inactive" },
+                              { value: "Y", label: "Active" },
+                              { value: "N", label: "Inactive" },
                             ]}
                           />
                         </Grid>
@@ -728,7 +743,205 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
               </Accordion>
             )}
 
-            {/* Other sections would follow similar patterns for Aliases, Faculties, and Packs */}
+            {/* Charge Aliases */}
+            <Accordion expanded={aliasesExpanded} onChange={() => setAliasesExpanded(!aliasesExpanded)}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box display="flex" alignItems="center" gap={1} width="100%">
+                  <Typography variant="subtitle1">Charge Aliases</Typography>
+                  <Chip label={`${aliasesArray.fields.length} aliases`} size="small" color="info" variant="outlined" />
+                  <Box sx={{ ml: "auto" }}>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addAlias();
+                      }}
+                      color="primary"
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={2}>
+                  {aliasesArray.fields.map((field, index) => (
+                    <Paper key={field.id} sx={{ p: 2, backgroundColor: "grey.50" }}>
+                      <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
+                        <Typography variant="subtitle2">Alias #{index + 1}</Typography>
+                        <IconButton size="small" color="error" onClick={() => aliasesArray.remove(index)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <EnhancedFormField name={`ChargeAliases.${index}.pTypeID`} control={control} type="select" label="Patient Type" required size="small" options={pic} />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <EnhancedFormField
+                            name={`ChargeAliases.${index}.chargeDesc`}
+                            control={control}
+                            type="text"
+                            label="Alias Description"
+                            required
+                            size="small"
+                            helperText="Alternative description for this patient type"
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <EnhancedFormField
+                            name={`ChargeAliases.${index}.chargeDescLang`}
+                            control={control}
+                            type="text"
+                            label="Local Language Description"
+                            required
+                            size="small"
+                            helperText="Description in local language"
+                          />
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  ))}
+                  {aliasesArray.fields.length === 0 && (
+                    <Alert severity="info">No charge aliases configured. Click the + button to add alternative descriptions for different patient types or languages.</Alert>
+                  )}
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+
+            {/* Faculties Section */}
+            <Accordion expanded={facultiesExpanded} onChange={() => setFacultiesExpanded(!facultiesExpanded)}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box display="flex" alignItems="center" gap={1} width="100%">
+                  <Typography variant="subtitle1">Associated Faculties</Typography>
+                  <Chip label={`${facultiesArray.fields.length} faculties`} size="small" color="secondary" variant="outlined" />
+                  <Box sx={{ ml: "auto" }}>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addFaculty();
+                      }}
+                      color="primary"
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={2}>
+                  {facultiesArray.fields.map((field, index) => (
+                    <Paper key={field.id} sx={{ p: 2, backgroundColor: "grey.50" }}>
+                      <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
+                        <Typography variant="subtitle2">Faculty #{index + 1}</Typography>
+                        <IconButton size="small" color="error" onClick={() => facultiesArray.remove(index)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, md: 12 }}>
+                          <EnhancedFormField
+                            name={`ChargeFaculties.${index}.aSubID`}
+                            control={control}
+                            type="select"
+                            label="Academic Subject/Faculty"
+                            required
+                            size="small"
+                            options={subModules}
+                            helperText="Select the academic subject or faculty this charge is associated with"
+                          />
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  ))}
+                  {facultiesArray.fields.length === 0 && (
+                    <Alert severity="info">No faculties associated. Click the + button to associate this charge with academic subjects or faculties.</Alert>
+                  )}
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
+
+            {/* Charge Packs Section */}
+            <Accordion expanded={packsExpanded} onChange={() => setPacksExpanded(!packsExpanded)}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box display="flex" alignItems="center" gap={1} width="100%">
+                  <Typography variant="subtitle1">Charge Packs</Typography>
+                  <Chip label={`${packsArray.fields.length} packs`} size="small" color="warning" variant="outlined" />
+                  <Box sx={{ ml: "auto" }}>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addPack();
+                      }}
+                      color="primary"
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Stack spacing={2}>
+                  {packsArray.fields.map((field, index) => (
+                    <Paper key={field.id} sx={{ p: 2, backgroundColor: "grey.50" }}>
+                      <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
+                        <Typography variant="subtitle2">Pack #{index + 1}</Typography>
+                        <IconButton size="small" color="error" onClick={() => packsArray.remove(index)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, md: 3 }}>
+                          <EnhancedFormField
+                            name={`ChargePacks.${index}.chargeRevise`}
+                            control={control}
+                            type="text"
+                            label="Revision"
+                            required
+                            size="small"
+                            helperText="Pack revision identifier"
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 3 }}>
+                          <EnhancedFormField name={`ChargePacks.${index}.chValue`} control={control} type="number" label="Pack Value" required size="small" />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 3 }}>
+                          <EnhancedFormField name={`ChargePacks.${index}.effectiveFromDate`} control={control} type="datepicker" label="Effective From" size="small" />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 3 }}>
+                          <EnhancedFormField name={`ChargePacks.${index}.effectiveToDate`} control={control} type="datepicker" label="Effective To" size="small" />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 3 }}>
+                          <EnhancedFormField name={`ChargePacks.${index}.dcValue`} control={control} type="number" label="DC Value" size="small" />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 3 }}>
+                          <EnhancedFormField name={`ChargePacks.${index}.hcValue`} control={control} type="number" label="HC Value" size="small" />
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <EnhancedFormField
+                            name={`ChargePacks.${index}.chargeStatus`}
+                            control={control}
+                            type="select"
+                            label="Status"
+                            required
+                            size="small"
+                            options={[
+                              { value: "AC", label: "Active" },
+                              { value: "IN", label: "Inactive" },
+                            ]}
+                          />
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  ))}
+                  {packsArray.fields.length === 0 && (
+                    <Alert severity="info">No charge packs configured. Click the + button to add versioned charge packages with effective dates.</Alert>
+                  )}
+                </Stack>
+              </AccordionDetails>
+            </Accordion>
           </Stack>
         </form>
       </Box>
