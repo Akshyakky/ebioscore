@@ -1,34 +1,45 @@
-// src/pages/patientAdministration/WardBedTransfer/Components/CurrentAdmissionDisplay.tsx
+// src/pages/patientAdministration/DischargePage/Components/CurrentAdmissionDisplayForDischarge.tsx
 import React, { useMemo } from "react";
-import { Box, Typography, Paper, Grid, Chip, Avatar, Stack, Alert, Divider, CircularProgress } from "@mui/material";
+import { Box, Typography, Paper, Grid, Chip, Avatar, Stack, Alert, CircularProgress } from "@mui/material";
 import {
   Person as PatientIcon,
   Hotel as BedIcon,
   LocalHospital as AdmissionIcon,
   MedicalServices as DoctorIcon,
   CalendarToday as CalendarIcon,
-  SwapHoriz as TransferIcon,
+  ExitToApp as DischargeIcon,
   History as HistoryIcon,
   CheckCircle as CheckIcon,
   Error as ErrorIcon,
   AccountBalance as InsuranceIcon,
-  Room as RoomIcon,
-  Business as DepartmentIcon,
+  Home as HomeIcon,
+  Warning as WarningIcon,
 } from "@mui/icons-material";
 import CustomButton from "@/components/Button/CustomButton";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
+import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDto";
 import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
 
-interface CurrentAdmissionDisplayProps {
+interface CurrentAdmissionDisplayForDischargeProps {
   patient: PatientSearchResult | null;
   admission: AdmissionDto | null;
+  existingDischarge: IpDischargeDto | null;
   loading: boolean;
-  onTransferClick: () => void;
+  onDischargeClick: () => void;
+  onEditDischargeClick: () => void;
   onHistoryClick: () => void;
 }
 
-const CurrentAdmissionDisplay: React.FC<CurrentAdmissionDisplayProps> = ({ patient, admission, loading, onTransferClick, onHistoryClick }) => {
+const CurrentAdmissionDisplayForDischarge: React.FC<CurrentAdmissionDisplayForDischargeProps> = ({
+  patient,
+  admission,
+  existingDischarge,
+  loading,
+  onDischargeClick,
+  onEditDischargeClick,
+  onHistoryClick,
+}) => {
   // Process admission data for display
   const admissionInfo = useMemo(() => {
     if (!admission || !patient) return null;
@@ -76,24 +87,20 @@ const CurrentAdmissionDisplay: React.FC<CurrentAdmissionDisplayProps> = ({ patie
     };
   }, [admission, patient]);
 
-  // Bed status configuration
-  const bedStatusConfig = {
-    OCCUP: { color: "#f44336", label: "Occupied", icon: <BedIcon fontSize="small" /> },
-    AVLBL: { color: "#4caf50", label: "Available", icon: <CheckIcon fontSize="small" /> },
-    BLOCK: { color: "#ff9800", label: "Blocked", icon: <ErrorIcon fontSize="small" /> },
-    MAINT: { color: "#9c27b0", label: "Maintenance", icon: <ErrorIcon fontSize="small" /> },
-    RESERV: { color: "#2196f3", label: "Reserved", icon: <BedIcon fontSize="small" /> },
-  };
+  // Process existing discharge information
+  const dischargeInfo = useMemo(() => {
+    if (!existingDischarge) return null;
 
-  const getBedStatusConfig = (status: string) => {
-    return (
-      bedStatusConfig[status as keyof typeof bedStatusConfig] || {
-        color: "#757575",
-        label: status || "Unknown",
-        icon: <BedIcon fontSize="small" />,
-      }
-    );
-  };
+    return {
+      dischgCode: existingDischarge.dischargeCode,
+      dischgDate: new Date(existingDischarge.dischgDate),
+      dischgStatus: existingDischarge.dischgStatus,
+      dischgPhyName: existingDischarge.dischgPhyName,
+      dischgType: existingDischarge.dischgType,
+      releaseBedYN: existingDischarge.releaseBedYN,
+      authorisedBy: existingDischarge.authorisedBy,
+    };
+  }, [existingDischarge]);
 
   if (loading) {
     return (
@@ -110,7 +117,7 @@ const CurrentAdmissionDisplay: React.FC<CurrentAdmissionDisplayProps> = ({ patie
     return (
       <Paper sx={{ p: 1.5 }}>
         <Alert severity="info" sx={{ py: 0.5 }}>
-          <Typography variant="body2">Please search and select a patient to view admission details.</Typography>
+          <Typography variant="body2">Please search and select a patient to view admission details and process discharge.</Typography>
         </Alert>
       </Paper>
     );
@@ -124,47 +131,145 @@ const CurrentAdmissionDisplay: React.FC<CurrentAdmissionDisplayProps> = ({ patie
             <strong>{patient.fullName}</strong> (UHID: {patient.pChartCode}) is not currently admitted.
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Patient must be admitted before initiating a transfer.
+            Patient must be admitted before processing discharge.
           </Typography>
         </Alert>
       </Paper>
     );
   }
 
-  const bedStatusInfo = getBedStatusConfig(admissionInfo.bedStatus);
+  // If patient has been discharged
+  if (existingDischarge && dischargeInfo) {
+    return (
+      <Paper
+        sx={{
+          p: 1.5,
+          border: "1px solid",
+          borderColor: "info.200",
+          backgroundColor: "info.50",
+        }}
+      >
+        {/* Header */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <Avatar sx={{ bgcolor: "info.main", width: 36, height: 36 }}>
+              <HomeIcon fontSize="small" />
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle1" color="info.main" fontWeight="bold">
+                Patient Discharged
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Discharge has been processed for this admission
+              </Typography>
+            </Box>
+          </Box>
 
+          <Stack direction="row" spacing={0.5}>
+            <CustomButton variant="outlined" icon={HistoryIcon} text="History" onClick={onHistoryClick} size="small" />
+            <CustomButton variant="contained" icon={DischargeIcon} text="Edit Discharge" onClick={onEditDischargeClick} color="primary" size="small" />
+          </Stack>
+        </Box>
+
+        {/* Information Grid */}
+        <Grid container spacing={1.5}>
+          {/* Patient Information */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Box>
+              <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+                <PatientIcon fontSize="small" />
+                Patient Information
+              </Typography>
+              <Box sx={{ pl: 1, fontSize: "0.75rem" }}>
+                <Stack spacing={0.25}>
+                  <Typography variant="caption">
+                    <strong>Name:</strong> {admissionInfo.patientName}
+                  </Typography>
+                  <Typography variant="caption">
+                    <strong>UHID:</strong> {admissionInfo.pChartCode} | <strong>Admission:</strong> {admissionInfo.admitCode}
+                  </Typography>
+                  <Typography variant="caption">
+                    <strong>Admitted:</strong> {formatDt(admissionInfo.admitDate)} ({admissionInfo.admissionDuration} day{admissionInfo.admissionDuration !== 1 ? "s" : ""})
+                  </Typography>
+                </Stack>
+              </Box>
+            </Box>
+          </Grid>
+
+          {/* Discharge Information */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Box>
+              <Typography variant="subtitle2" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}>
+                <DischargeIcon fontSize="small" />
+                Discharge Information
+              </Typography>
+              <Box sx={{ pl: 1, fontSize: "0.75rem" }}>
+                <Stack spacing={0.25}>
+                  <Typography variant="caption">
+                    <strong>Discharge Code:</strong> {dischargeInfo.dischgCode}
+                  </Typography>
+                  <Typography variant="caption">
+                    <strong>Discharged:</strong> {formatDt(dischargeInfo.dischgDate)}
+                  </Typography>
+                  <Typography variant="caption">
+                    <strong>Status:</strong> {dischargeInfo.dischgStatus} | <strong>Type:</strong> {dischargeInfo.dischgType}
+                  </Typography>
+                  <Typography variant="caption">
+                    <strong>Physician:</strong> {dischargeInfo.dischgPhyName}
+                  </Typography>
+                </Stack>
+              </Box>
+            </Box>
+          </Grid>
+
+          {/* Status Summary */}
+          <Grid size={{ xs: 12 }}>
+            <Alert severity="success" sx={{ mt: 1, py: 0.5 }}>
+              <Typography variant="caption">
+                <strong>Discharge Complete:</strong> Patient has been successfully discharged.
+                {dischargeInfo.releaseBedYN === "Y" && " Bed has been released for new admissions."}
+                {dischargeInfo.authorisedBy && ` Authorized by: ${dischargeInfo.authorisedBy}.`}
+              </Typography>
+            </Alert>
+          </Grid>
+        </Grid>
+      </Paper>
+    );
+  }
+
+  // Patient is admitted and eligible for discharge
   return (
     <Paper
       sx={{
         p: 1.5,
         border: "1px solid",
-        borderColor: "success.200",
-        backgroundColor: "success.50",
+        borderColor: "warning.200",
+        backgroundColor: "warning.50",
       }}
     >
-      {/* Compact Header */}
+      {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
         <Box display="flex" alignItems="center" gap={1.5}>
-          <Avatar sx={{ bgcolor: "success.main", width: 36, height: 36 }}>
+          <Avatar sx={{ bgcolor: "warning.main", width: 36, height: 36 }}>
             <AdmissionIcon fontSize="small" />
           </Avatar>
           <Box>
-            <Typography variant="subtitle1" color="success.main" fontWeight="bold">
-              Current Admission
+            <Typography variant="subtitle1" color="warning.main" fontWeight="bold">
+              Ready for Discharge
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Patient is admitted and eligible for transfer
+              Patient is currently admitted and eligible for discharge
             </Typography>
           </Box>
         </Box>
 
         <Stack direction="row" spacing={0.5}>
           <CustomButton variant="outlined" icon={HistoryIcon} text="History" onClick={onHistoryClick} size="small" />
-          <CustomButton variant="contained" icon={TransferIcon} text="Transfer" onClick={onTransferClick} color="primary" size="small" />
+          <CustomButton variant="contained" icon={DischargeIcon} text="Process Discharge" onClick={onDischargeClick} color="primary" size="small" />
         </Stack>
       </Box>
 
-      {/* Compact Information Grid */}
+      {/* Information Grid */}
       <Grid container spacing={1.5}>
         {/* Patient Information */}
         <Grid size={{ xs: 12, md: 6 }}>
@@ -204,20 +309,8 @@ const CurrentAdmissionDisplay: React.FC<CurrentAdmissionDisplayProps> = ({ patie
                 <Typography variant="caption">
                   <strong>Room Group:</strong> {admissionInfo.roomGroupName}
                 </Typography>
-                <Typography variant="caption" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Typography variant="caption">
                   <strong>Location:</strong> {admissionInfo.rName} - {admissionInfo.bedName}
-                  <Chip
-                    icon={bedStatusInfo.icon}
-                    label={bedStatusInfo.label}
-                    size="small"
-                    sx={{
-                      backgroundColor: bedStatusInfo.color,
-                      color: "white",
-                      height: 16,
-                      fontSize: "0.6rem",
-                      "& .MuiChip-icon": { fontSize: "0.7rem" },
-                    }}
-                  />
                 </Typography>
               </Stack>
             </Box>
@@ -255,23 +348,34 @@ const CurrentAdmissionDisplay: React.FC<CurrentAdmissionDisplayProps> = ({ patie
             </Typography>
             <Box sx={{ pl: 1 }}>
               <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", gap: 0.5 }}>
-                <Chip icon={<CheckIcon />} label={admissionInfo.ipStatus} size="small" color="success" variant="filled" sx={{ height: 18, fontSize: "0.6rem" }} />
+                <Chip
+                  icon={<CheckIcon />}
+                  label={admissionInfo.ipStatus}
+                  size="small"
+                  color={admissionInfo.ipStatus === "ADMITTED" ? "success" : "default"}
+                  variant="filled"
+                  sx={{ height: 18, fontSize: "0.6rem" }}
+                />
                 <Chip label={admissionInfo.pTypeName} size="small" color="primary" variant="outlined" sx={{ height: 18, fontSize: "0.6rem" }} />
                 {admissionInfo.insuranceYN === "Y" && (
                   <Chip icon={<InsuranceIcon />} label="Insured" size="small" color="info" variant="outlined" sx={{ height: 18, fontSize: "0.6rem" }} />
                 )}
                 {admissionInfo.deliveryCaseYN === "Y" && <Chip label="Delivery" size="small" color="secondary" variant="outlined" sx={{ height: 18, fontSize: "0.6rem" }} />}
+                {admissionInfo.dischargeAdviceYN === "Y" && (
+                  <Chip label="Discharge Advice Given" size="small" color="warning" variant="outlined" sx={{ height: 18, fontSize: "0.6rem" }} />
+                )}
               </Stack>
             </Box>
           </Box>
         </Grid>
 
-        {/* Transfer Eligibility */}
+        {/* Discharge Eligibility */}
         <Grid size={{ xs: 12 }}>
-          <Alert severity="success" sx={{ mt: 1, py: 0.5 }}>
+          <Alert severity="warning" sx={{ mt: 1, py: 0.5 }}>
             <Typography variant="caption">
-              <strong>Transfer Eligible:</strong> This patient can be transferred to another bed or ward. Click "Transfer" to select a new location and complete the transfer
-              process.
+              <strong>Discharge Eligible:</strong> This patient is currently admitted and can be discharged. Click "Process Discharge" to complete the discharge procedure and
+              release the bed for new admissions.
+              {admissionInfo.dischargeAdviceYN === "Y" && " Discharge advice has already been provided to the patient."}
             </Typography>
           </Alert>
         </Grid>
@@ -280,4 +384,4 @@ const CurrentAdmissionDisplay: React.FC<CurrentAdmissionDisplayProps> = ({ patie
   );
 };
 
-export default CurrentAdmissionDisplay;
+export default CurrentAdmissionDisplayForDischarge;

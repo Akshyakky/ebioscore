@@ -104,7 +104,8 @@ export type DropdownType =
   | "usersWithoutLogin"
   | "appointmentConsultants"
   | "profiles"
-  | "units";
+  | "units"
+  | "dischargeType";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -523,6 +524,10 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           ...profile,
         }));
         return profilesDropdownOptions;
+      },
+      dischargeType: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DISCHARGETYPE");
+        return response;
       },
     }),
     []

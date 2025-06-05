@@ -1,6 +1,6 @@
 // src/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, Card, CardContent, Chip, Stack, IconButton, Avatar, Divider, TextField } from "@mui/material";
+import { Box, Typography, Paper, Grid, Card, CardContent, Chip, Stack, IconButton, Avatar, Divider, TextField, Collapse } from "@mui/material";
 import {
   Add,
   Person as PatientIcon,
@@ -12,6 +12,8 @@ import {
   Edit as EditIcon,
   Visibility as ViewIcon,
   AccountBalance,
+  ExpandMore as ExpandIcon,
+  ExpandLess as CollapseIcon,
 } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import CustomButton from "@/components/Button/CustomButton";
@@ -46,6 +48,7 @@ const AdmissionPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [patientClearTrigger, setPatientClearTrigger] = useState(0);
   const [selectedAdmission, setSelectedAdmission] = useState<EnhancedAdmissionDto | null>(null);
+  const [showPatientDetails, setShowPatientDetails] = useState(false);
 
   // Dialog states
   const [isAdmissionFormOpen, setIsAdmissionFormOpen] = useState(false);
@@ -123,6 +126,7 @@ const AdmissionPage: React.FC = () => {
   const handlePatientSelect = useCallback(
     async (patient: PatientSearchResult | null) => {
       setSelectedPatient(patient);
+      setShowPatientDetails(!!patient);
       if (patient) {
         await checkPatientAdmissionStatus(patient.pChartID);
       }
@@ -154,6 +158,7 @@ const AdmissionPage: React.FC = () => {
         // Clear patient selection and refresh data
         setSelectedPatient(null);
         setSelectedAdmission(null);
+        setShowPatientDetails(false);
         setPatientClearTrigger((prev) => prev + 1);
         await refreshAdmissions();
       } catch (error) {
@@ -349,108 +354,124 @@ const AdmissionPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
+    <Box sx={{ p: 1.5 }}>
+      {/* Compact Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+        <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
           Patient Admission Management
         </Typography>
-        <Stack direction="row" spacing={2}>
-          <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={refreshAdmissions} asynchronous />
-        </Stack>
+        <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={refreshAdmissions} asynchronous size="small" />
       </Box>
 
-      {/* Patient Search and Demographics */}
-      <Grid container spacing={3} mb={3}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <SearchIcon />
-              Patient Search
-            </Typography>
-            <PatientSearch onPatientSelect={handlePatientSelect} clearTrigger={patientClearTrigger} placeholder="Search by name, UHID, or phone number" />
-
-            {selectedPatient && (
-              <Box mt={2}>
-                <Stack direction="row" spacing={1}>
-                  <CustomButton
-                    variant="contained"
-                    icon={AdmissionIcon}
-                    text="New Admission"
-                    onClick={handleNewAdmission}
-                    disabled={currentAdmissionStatus?.isAdmitted}
-                    color="primary"
-                  />
-                  <CustomButton variant="outlined" icon={ViewIcon} text="Check Status" onClick={handleCheckStatus} />
-                </Stack>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6 }}>
-          <PatientDemographics pChartID={selectedPatient?.pChartID || null} variant="compact" showEditButton={false} showRefreshButton={false} />
-        </Grid>
-      </Grid>
-
-      {/* Statistics Cards */}
-      <Grid container spacing={2} mb={3}>
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Card sx={{ borderLeft: "4px solid #1976d2" }}>
-            <CardContent sx={{ textAlign: "center" }}>
-              <Avatar sx={{ bgcolor: "#1976d2", width: 48, height: 48, mx: "auto", mb: 1 }}>
-                <AdmissionIcon />
-              </Avatar>
-              <Typography variant="h4" color="#1976d2" fontWeight="bold">
-                {statistics.total}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total Admissions
-              </Typography>
+      {/* Compact Statistics Cards */}
+      <Grid container spacing={1} mb={1.5}>
+        <Grid size={{ xs: 3 }}>
+          <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+            <CardContent sx={{ p: 1, textAlign: "center", "&:last-child": { pb: 1 } }}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Avatar sx={{ bgcolor: "#1976d2", width: 32, height: 32 }}>
+                  <AdmissionIcon fontSize="small" />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" color="#1976d2" fontWeight="bold">
+                    {statistics.total}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Total
+                  </Typography>
+                </Box>
+              </Stack>
             </CardContent>
           </Card>
         </Grid>
 
-        {Object.entries(statistics.statusCounts).map(([status, count]) => (
-          <Grid size={{ xs: 12, md: 3 }} key={status}>
-            <Card sx={{ borderLeft: `4px solid ${status === "ADMITTED" ? "#4caf50" : "#ff9800"}` }}>
-              <CardContent sx={{ textAlign: "center" }}>
-                <Avatar sx={{ bgcolor: status === "ADMITTED" ? "#4caf50" : "#ff9800", width: 48, height: 48, mx: "auto", mb: 1 }}>
-                  <BedIcon />
-                </Avatar>
-                <Typography variant="h4" color={status === "ADMITTED" ? "#4caf50" : "#ff9800"} fontWeight="bold">
-                  {count}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {status}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+        {Object.entries(statistics.statusCounts)
+          .slice(0, 3)
+          .map(([status, count]) => (
+            <Grid size={{ xs: 3 }} key={status}>
+              <Card sx={{ borderLeft: `3px solid ${status === "ADMITTED" ? "#4caf50" : "#ff9800"}` }}>
+                <CardContent sx={{ p: 1, textAlign: "center", "&:last-child": { pb: 1 } }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Avatar sx={{ bgcolor: status === "ADMITTED" ? "#4caf50" : "#ff9800", width: 32, height: 32 }}>
+                      <BedIcon fontSize="small" />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h6" color={status === "ADMITTED" ? "#4caf50" : "#ff9800"} fontWeight="bold">
+                        {count}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {status}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
       </Grid>
 
-      {/* Current Admissions Grid */}
-      <Paper sx={{ p: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <AdmissionIcon />
+      {/* Compact Patient Search Section */}
+      <Paper sx={{ p: 1.5, mb: 1.5 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+          <Typography variant="subtitle1" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <SearchIcon fontSize="small" />
+            Patient Search & Admission
+          </Typography>
+          {selectedPatient && (
+            <IconButton size="small" onClick={() => setShowPatientDetails(!showPatientDetails)}>
+              {showPatientDetails ? <CollapseIcon /> : <ExpandIcon />}
+            </IconButton>
+          )}
+        </Box>
+
+        <Grid container spacing={1.5}>
+          <Grid size={{ xs: 12, md: selectedPatient ? 6 : 12 }}>
+            <PatientSearch onPatientSelect={handlePatientSelect} clearTrigger={patientClearTrigger} placeholder="Search by name, UHID, or phone number" />
+
+            {selectedPatient && (
+              <Stack direction="row" spacing={1} mt={1}>
+                <CustomButton
+                  variant="contained"
+                  icon={AdmissionIcon}
+                  text="New Admission"
+                  onClick={handleNewAdmission}
+                  disabled={currentAdmissionStatus?.isAdmitted}
+                  color="primary"
+                  size="small"
+                />
+                <CustomButton variant="outlined" icon={ViewIcon} text="Status" onClick={handleCheckStatus} size="small" />
+              </Stack>
+            )}
+          </Grid>
+
+          {selectedPatient && (
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Collapse in={showPatientDetails}>
+                <PatientDemographics pChartID={selectedPatient?.pChartID || null} variant="compact" showEditButton={false} showRefreshButton={false} />
+              </Collapse>
+            </Grid>
+          )}
+        </Grid>
+      </Paper>
+
+      {/* Compact Current Admissions Grid */}
+      <Paper sx={{ p: 1.5 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+          <Typography variant="subtitle1" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <AdmissionIcon fontSize="small" />
             Current Admissions
           </Typography>
-          <Box display="flex" alignItems="center" gap={2}>
-            <TextField type="search" placeholder="Search admissions..." value={searchTerm} size="small" onChange={(e) => setSearchTerm(e.target.value)} />
-          </Box>
+          <TextField type="search" placeholder="Search admissions..." value={searchTerm} size="small" onChange={(e) => setSearchTerm(e.target.value)} sx={{ width: 200 }} />
         </Box>
 
         <CustomGrid
           columns={columns}
           data={filteredAdmissions}
           loading={loading}
-          maxHeight="600px"
+          maxHeight="450px"
           emptyStateMessage="No current admissions found"
           rowKeyField="admitID"
-          density="medium"
-          showDensityControls
+          showDensityControls={false}
           onRowClick={handleViewHistory}
         />
       </Paper>
