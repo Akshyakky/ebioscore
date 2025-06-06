@@ -10,8 +10,8 @@ interface ProfilePermission {
   profDetID: number;
   profileID: number;
   profileName: string;
-  aOprID: number;
-  aOprName: string;
+  accessID: number;
+  accessName: string;
   aSubID: number;
   aSubName: string;
   aUGrpID: number;
@@ -58,8 +58,8 @@ const ProfilePermissionsList: React.FC<ProfilePermissionsListProps> = ({ title, 
               subId: 0,
               subName: "",
               operations: permissions.map((p) => ({
-                opId: p.aOprID,
-                opName: p.aOprName,
+                opId: p.accessID,
+                opName: p.accessName,
               })),
             },
           ],
@@ -90,11 +90,11 @@ const ProfilePermissionsList: React.FC<ProfilePermissionsListProps> = ({ title, 
           });
         }
         const subModule = groupedData[groupKey].subModules[0];
-        const operationExists = subModule.operations.some((op) => op.opId === permission.aOprID);
+        const operationExists = subModule.operations.some((op) => op.opId === permission.accessID);
         if (!operationExists) {
           subModule.operations.push({
-            opId: permission.aOprID,
-            opName: permission.aOprName,
+            opId: permission.accessID,
+            opName: permission.accessName,
           });
         }
       } else {
@@ -107,11 +107,11 @@ const ProfilePermissionsList: React.FC<ProfilePermissionsListProps> = ({ title, 
           };
           groupedData[groupKey].subModules.push(subModule);
         }
-        const operationExists = subModule.operations.some((op) => op.opId === permission.aOprID);
+        const operationExists = subModule.operations.some((op) => op.opId === permission.accessID);
         if (!operationExists) {
           subModule.operations.push({
-            opId: permission.aOprID,
-            opName: permission.aOprName,
+            opId: permission.accessID,
+            opName: permission.accessName,
           });
         }
       }

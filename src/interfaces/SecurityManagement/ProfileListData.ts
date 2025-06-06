@@ -60,8 +60,8 @@ export interface ProfileDetailedViewDto {
   aUGrpName: string;
   aSubID: number;
   aSubName: string;
-  aOprID: number;
-  aOprName: string;
+  accessID: number;
+  accessName: string;
 }
 
 export interface ProfileModuleOperationDto extends BaseDto {
