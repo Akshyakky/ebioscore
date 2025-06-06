@@ -1,9 +1,8 @@
 import React, { useCallback, useState, useEffect } from "react";
-import { Box, SelectChangeEvent, Typography } from "@mui/material";
+import { Box, Typography, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, FormHelperText } from "@mui/material";
 import { ThumbUp } from "@mui/icons-material";
 import Close from "@mui/icons-material/Close";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import FormField from "@/components/FormField/FormField";
 import CustomButton from "@/components/Button/CustomButton";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { useAlert } from "@/providers/AlertProvider";
@@ -30,20 +29,22 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
   const { showAlert } = useAlert();
   const [selectedDeptId, setSelectedDeptId] = useState<number>(initialDeptId);
   const [deptName, setDeptName] = useState<string>("");
+  const [hasError, setHasError] = useState<boolean>(false);
   const dropdownValues = useDropdownValues(["department"]);
-  const isSubmitted = false;
   const navigate = useNavigate();
 
   useEffect(() => {
     setSelectedDeptId(initialDeptId);
+    setHasError(false);
   }, [initialDeptId, open]);
 
   const handleDropdownChange = useCallback(
-    (event: SelectChangeEvent<string>) => {
+    (event: SelectChangeEvent<unknown>) => {
       const deptId = Number(event.target.value);
       setSelectedDeptId(deptId);
+      setHasError(false);
 
-      const selectedDept = dropdownValues.department?.find((dept) => parseInt(dept.value) === deptId);
+      const selectedDept = dropdownValues.department?.find((dept) => parseInt(dept.value.toString()) === deptId);
       if (selectedDept) {
         setDeptName(selectedDept.label);
       }
@@ -52,43 +53,47 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
   );
 
   const handleClose = useCallback(async () => {
-    if (requireSelection) {
+    if (requireSelection && selectedDeptId === 0) {
       const isSelectDept = await showAlert("Warning", "Please select a department before closing.", "warning", true);
       if (isSelectDept) return;
       navigate(-1);
     }
     onClose();
-  }, [onClose, selectedDeptId, requireSelection]);
+  }, [onClose, selectedDeptId, requireSelection, showAlert, navigate]);
 
   const handleOkClick = useCallback(() => {
     if (selectedDeptId === 0) {
+      setHasError(true);
       showAlert("Warning", "Please select a department to continue.", "warning");
     } else {
       onSelectDepartment(selectedDeptId, deptName);
       notifySuccess("Department selected successfully!");
       onClose();
     }
-  }, [selectedDeptId, deptName, onSelectDepartment, onClose]);
+  }, [selectedDeptId, deptName, onSelectDepartment, onClose, showAlert]);
 
   return (
     <GenericDialog open={open} onClose={handleClose} title={dialogTitle} maxWidth="sm" disableBackdropClick={true}>
       <Typography variant="h6" gutterBottom>
         Please select a department
       </Typography>
-      <FormField
-        type="select"
-        label="Department"
-        name="departmentId"
-        ControlID="Department"
-        value={selectedDeptId === 0 ? "" : String(selectedDeptId)}
-        options={dropdownValues.department || []}
-        onChange={handleDropdownChange}
-        isMandatory={true}
-        isSubmitted={isSubmitted}
-        gridProps={{ xs: 12, sm: 6, md: 6 }}
-      />
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: 2 }}>
+      <FormControl fullWidth variant="outlined" size="small" error={hasError} required sx={{ mt: 2 }}>
+        <InputLabel id="department-select-label">Department</InputLabel>
+        <Select labelId="department-select-label" id="department-select" value={selectedDeptId === 0 ? "" : selectedDeptId} onChange={handleDropdownChange} label="Department">
+          <MenuItem value="">
+            <em>Select a department</em>
+          </MenuItem>
+          {dropdownValues.department?.map((dept) => (
+            <MenuItem key={dept.value} value={parseInt(dept.value.toString())}>
+              {dept.label}
+            </MenuItem>
+          ))}
+        </Select>
+        {hasError && <FormHelperText>Department selection is required</FormHelperText>}
+      </FormControl>
+
+      <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: 3 }}>
         <CustomButton variant="contained" onClick={handleClose} text="Close" sx={{ marginRight: 1 }} color="error" icon={Close} />
         <CustomButton variant="contained" onClick={handleOkClick} text="Select" color="success" icon={ThumbUp} />
       </Box>

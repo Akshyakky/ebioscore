@@ -1,6 +1,14 @@
 import React from "react";
 import { Typography, Box, useTheme } from "@mui/material";
-import { CheckCircle as SuccessIcon, Error as ErrorIcon, Warning as WarningIcon, Info as InfoIcon, Print as PrintIcon } from "@mui/icons-material";
+import {
+  CheckCircle as SuccessIcon,
+  Error as ErrorIcon,
+  Warning as WarningIcon,
+  Info as InfoIcon,
+  Print as PrintIcon,
+  Check as CheckIcon,
+  Clear as ClearIcon,
+} from "@mui/icons-material";
 import GenericDialog from "../GenericDialog/GenericDialog";
 import CustomButton from "../Button/CustomButton";
 
@@ -112,12 +120,21 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
     }
 
     if (showCancelButton) {
-      buttons.push(<CustomButton key="cancel" variant="outlined" color="inherit" text={cancelButtonText} onClick={handleCancel} ariaLabel="cancel" />);
+      buttons.push(<CustomButton key="cancel" variant="outlined" color="inherit" icon={ClearIcon} text={cancelButtonText} onClick={handleCancel} ariaLabel="cancel" />);
     }
 
     if (showConfirmButton) {
       buttons.push(
-        <CustomButton key="confirm" variant="contained" color={buttonColor} text={confirmButtonText} onClick={handleConfirm} ariaLabel="confirm" sx={{ minWidth: 100 }} />
+        <CustomButton
+          key="confirm"
+          variant="contained"
+          color={buttonColor}
+          icon={CheckIcon}
+          text={confirmButtonText}
+          onClick={handleConfirm}
+          ariaLabel="confirm"
+          sx={{ minWidth: 100 }}
+        />
       );
     }
 
@@ -136,9 +153,11 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
       disableEscapeKeyDown={disableEscapeKeyDown}
       actions={renderActions()}
     >
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, py: 2 }}>
-        <Icon sx={{ fontSize: 36, color, flexShrink: 0, mt: 0.5 }} />
-        <Typography variant="body1">{message}</Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, py: 2 }}>
+        <Icon sx={{ fontSize: 36, color, flexShrink: 0 }} />
+        <Typography variant="body1" sx={{ lineHeight: 1.5 }}>
+          {message}
+        </Typography>
       </Box>
     </GenericDialog>
   );
