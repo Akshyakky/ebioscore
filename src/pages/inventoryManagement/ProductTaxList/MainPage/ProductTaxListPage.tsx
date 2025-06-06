@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
+import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Card, CardContent, Avatar } from "@mui/material";
 import {
   Search as SearchIcon,
   Add as AddIcon,
@@ -8,6 +8,12 @@ import {
   Refresh as RefreshIcon,
   Visibility as VisibilityIcon,
   Close as CloseIcon,
+  LocalOffer as TaxIcon,
+  CheckCircle as ActiveIcon,
+  Cancel as InactiveIcon,
+  Percent as RateIcon,
+  TrendingUp as HighIcon,
+  TrendingDown as LowIcon,
 } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
@@ -38,7 +44,7 @@ const ProductTaxListPage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
-  const [showStats, setShowStats] = useState(false);
+  const [showStats, setShowStats] = useState(true);
 
   const { productTaxList, isLoading, error, fetchProductTaxList, deleteProductTax } = useProductTaxList();
 
@@ -172,7 +178,6 @@ const ProductTaxListPage: React.FC = () => {
     };
   }, [productTaxList]);
 
-  // Apply filters to the list
   const filteredProductTaxes = useMemo(() => {
     if (!productTaxList.length) return [];
 
@@ -198,54 +203,138 @@ const ProductTaxListPage: React.FC = () => {
   }, [productTaxList, debouncedSearchTerm, filters]);
 
   const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Total Taxes</Typography>
-          <Typography variant="h4">{stats.totalTaxes}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Active</Typography>
-          <Typography variant="h4" color="success.main">
-            {stats.activeTaxes}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Inactive</Typography>
-          <Typography variant="h4" color="error.main">
-            {stats.inactiveTaxes}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Average Rate</Typography>
-          <Typography variant="h4" color="info.main">
-            {stats.averageTaxRate}%
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Highest Rate</Typography>
-          <Typography variant="h4" color="warning.main">
-            {stats.highestTaxRate}%
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Lowest Rate</Typography>
-          <Typography variant="h4" color="secondary.main">
-            {stats.lowestTaxRate}%
-          </Typography>
-        </Grid>
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <TaxIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {stats.totalTaxes}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Taxes
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <ActiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {stats.activeTaxes}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Active
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <InactiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {stats.inactiveTaxes}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Inactive
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <RateIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {stats.averageTaxRate}%
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Average Rate
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <HighIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {stats.highestTaxRate}%
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Highest Rate
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #9c27b0" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#9c27b0", width: 40, height: 40 }}>
+                <LowIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#9c27b0" fontWeight="bold">
+                  {stats.lowestTaxRate}%
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Lowest Rate
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 
   const columns: Column<ProductTaxListDto>[] = [
     {
       key: "pTaxCode",
-      header: "Tax Code",
+      header: "Code",
       visible: true,
       sortable: true,
       filterable: true,
       width: 120,
+      formatter: (value: string) => value || "-",
     },
     {
       key: "pTaxName",
@@ -253,8 +342,7 @@ const ProductTaxListPage: React.FC = () => {
       visible: true,
       sortable: true,
       filterable: true,
-      width: 200,
-      formatter: (value: string) => value || "-",
+      width: 250,
     },
     {
       key: "pTaxAmt",
@@ -271,7 +359,7 @@ const ProductTaxListPage: React.FC = () => {
       visible: true,
       sortable: true,
       filterable: true,
-      width: 250,
+      width: 300,
       formatter: (value: string) => (value ? value.substring(0, 50) + (value.length > 50 ? "..." : "") : "-"),
     },
     {
@@ -281,7 +369,7 @@ const ProductTaxListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 100,
-      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
+      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
     },
     {
       key: "rNotes",
@@ -290,7 +378,7 @@ const ProductTaxListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 300,
-      formatter: (value: any) => (value ? value.substring(0, 50) + (value.length > 50 ? "..." : "") : "-"),
+      formatter: (value: string) => (value ? value.substring(0, 50) + (value.length > 50 ? "..." : "") : "-"),
     },
     {
       key: "actions",
@@ -352,37 +440,19 @@ const ProductTaxListPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Box sx={{ mb: 2 }}>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+        <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
+          Product Tax List
+        </Typography>
         <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
       </Box>
 
+      {/* Statistics Dashboard */}
       {showStats && renderStatsDashboard()}
 
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Typography variant="h5" component="h1" gutterBottom>
-              Product Tax List
-            </Typography>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
-            <Stack direction="row" spacing={1}>
-              <SmartButton
-                text="Refresh"
-                icon={RefreshIcon}
-                onClick={handleRefresh}
-                color="info"
-                variant="outlined"
-                size="small"
-                disabled={isLoading}
-                loadingText="Refreshing..."
-                asynchronous={true}
-                showLoadingIndicator={true}
-              />
-              <SmartButton text="Add Tax" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
-            </Stack>
-          </Grid>
-
+        <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
@@ -407,9 +477,9 @@ const ProductTaxListPage: React.FC = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 8 }}>
+          <Grid size={{ xs: 12, md: 5 }}>
             <Tooltip title="Filter Product Taxes">
-              <Stack direction="row" spacing={2}>
+              <Stack direction="row" spacing={2} alignItems="center">
                 <DropdownSelect
                   label="Status"
                   name="status"
@@ -419,7 +489,6 @@ const ProductTaxListPage: React.FC = () => {
                   size="small"
                   defaultText="All Status"
                 />
-
                 <DropdownSelect
                   label="Tax Range"
                   name="taxRange"
@@ -429,7 +498,6 @@ const ProductTaxListPage: React.FC = () => {
                   size="small"
                   defaultText="All Ranges"
                 />
-
                 <Box display="flex" alignItems="center" gap={1}>
                   {(filters.status || filters.taxRange) && (
                     <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
@@ -438,11 +506,28 @@ const ProductTaxListPage: React.FC = () => {
               </Stack>
             </Tooltip>
           </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <SmartButton
+                text="Refresh"
+                icon={RefreshIcon}
+                onClick={handleRefresh}
+                color="info"
+                variant="outlined"
+                size="small"
+                disabled={isLoading}
+                loadingText="Refreshing..."
+                asynchronous={true}
+                showLoadingIndicator={true}
+              />
+              <SmartButton text="Add Tax" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
+            </Stack>
+          </Grid>
         </Grid>
       </Paper>
 
       <Paper sx={{ p: 2 }}>
-        <CustomGrid columns={columns} data={filteredProductTaxes} maxHeight="calc(100vh - 280px)" emptyStateMessage="No product taxes found" loading={isLoading} />
+        <CustomGrid columns={columns} data={filteredProductTaxes} maxHeight="calc(100vh - 280px)" emptyStateMessage="No product taxes found" density="small" loading={isLoading} />
       </Paper>
 
       {isFormOpen && <ProductTaxListForm open={isFormOpen} onClose={handleFormClose} initialData={selectedProductTax} viewOnly={isViewMode} />}
