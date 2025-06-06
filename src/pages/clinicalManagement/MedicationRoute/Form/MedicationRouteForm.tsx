@@ -6,7 +6,7 @@ import * as z from "zod";
 import { MedicationRouteDto } from "@/interfaces/ClinicalManagement/MedicationRouteDto";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel, Refresh } from "@mui/icons-material";
+import { Save, Cancel, Refresh, Warning } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
@@ -35,13 +35,16 @@ type MedicationRouteFormData = z.infer<typeof schema>;
 
 const MedicationRouteForm: React.FC<MedicationRouteFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
-  const { getNextCode, saveMedicationRoute } = useMedicationRoute();
+  const { getNextCode, saveMedicationRoute, medicationRouteList } = useMedicationRoute();
   const { showAlert } = useAlert();
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [showDefaultChangeConfirmation, setShowDefaultChangeConfirmation] = useState(false);
+  const [currentDefaultRoute, setCurrentDefaultRoute] = useState<MedicationRouteDto | null>(null);
+  const [pendingDefaultChange, setPendingDefaultChange] = useState<boolean>(false);
   const isAddMode = !initialData;
 
   const defaultValues: MedicationRouteFormData = {
@@ -60,6 +63,7 @@ const MedicationRouteForm: React.FC<MedicationRouteFormProps> = ({ open, onClose
     handleSubmit,
     reset,
     setValue,
+    getValues,
     formState: { errors, isDirty, isValid },
   } = useForm<MedicationRouteFormData>({
     defaultValues,
@@ -70,6 +74,25 @@ const MedicationRouteForm: React.FC<MedicationRouteFormProps> = ({ open, onClose
   const rActiveYN = useWatch({ control, name: "rActiveYN" });
   const defaultYN = useWatch({ control, name: "defaultYN" });
   const modifyYN = useWatch({ control, name: "modifyYN" });
+
+  // Find the current default route
+  useEffect(() => {
+    const existingDefault = medicationRouteList.find((route) => route.defaultYN === "Y" && route.mRouteID !== (initialData?.mRouteID || 0));
+    setCurrentDefaultRoute(existingDefault || null);
+  }, [medicationRouteList, initialData]);
+
+  // Handle default change logic
+  useEffect(() => {
+    if (defaultYN === "Y" && currentDefaultRoute && !pendingDefaultChange) {
+      // User is trying to set this as default, but another route is already default
+      if (initialData?.defaultYN !== "Y") {
+        // This wasn't previously default, show confirmation
+        setShowDefaultChangeConfirmation(true);
+        // Temporarily revert the change until user confirms
+        setValue("defaultYN", "N", { shouldValidate: false, shouldDirty: false });
+      }
+    }
+  }, [defaultYN, currentDefaultRoute, initialData, pendingDefaultChange, setValue]);
 
   const generateRouteCode = async () => {
     if (!isAddMode) return;
@@ -107,6 +130,18 @@ const MedicationRouteForm: React.FC<MedicationRouteFormProps> = ({ open, onClose
     }
   }, [initialData, reset]);
 
+  const handleDefaultChangeConfirm = () => {
+    setPendingDefaultChange(true);
+    setValue("defaultYN", "Y", { shouldValidate: true, shouldDirty: true });
+    setShowDefaultChangeConfirmation(false);
+    showAlert("Info", `"${currentDefaultRoute?.mRouteName}" will no longer be the default route when you save this form.`, "info");
+  };
+
+  const handleDefaultChangeCancel = () => {
+    setShowDefaultChangeConfirmation(false);
+    setValue("defaultYN", "N", { shouldValidate: false, shouldDirty: false });
+  };
+
   const onSubmit = async (data: MedicationRouteFormData) => {
     if (viewOnly) return;
 
@@ -127,13 +162,34 @@ const MedicationRouteForm: React.FC<MedicationRouteFormProps> = ({ open, onClose
         ...(data.rNotes && { rNotes: data.rNotes }),
       } as any;
 
-      const response = await saveMedicationRoute(routeData);
+      // If setting this route as default, we need to handle the previous default
+      if (data.defaultYN === "Y" && currentDefaultRoute) {
+        // The backend should handle unsetting the previous default
+        // but we'll show a clear message about what happened
+        const response = await saveMedicationRoute(routeData);
 
-      if (response.success) {
-        showAlert("Success", isAddMode ? "Medication route created successfully" : "Medication route updated successfully", "success");
-        onClose(true);
+        if (response.success) {
+          showAlert(
+            "Success",
+            isAddMode
+              ? `Medication route created successfully and set as the new default. "${currentDefaultRoute.mRouteName}" is no longer the default.`
+              : `Medication route updated successfully and set as the new default. "${currentDefaultRoute.mRouteName}" is no longer the default.`,
+            "success"
+          );
+          onClose(true);
+        } else {
+          throw new Error(response.errorMessage || "Failed to save medication route");
+        }
       } else {
-        throw new Error(response.errorMessage || "Failed to save medication route");
+        // Normal save operation
+        const response = await saveMedicationRoute(routeData);
+
+        if (response.success) {
+          showAlert("Success", isAddMode ? "Medication route created successfully" : "Medication route updated successfully", "success");
+          onClose(true);
+        } else {
+          throw new Error(response.errorMessage || "Failed to save medication route");
+        }
       }
     } catch (error) {
       console.error("Error saving medication route:", error);
@@ -143,6 +199,7 @@ const MedicationRouteForm: React.FC<MedicationRouteFormProps> = ({ open, onClose
     } finally {
       setIsSaving(false);
       setLoading(false);
+      setPendingDefaultChange(false);
     }
   };
 
@@ -162,6 +219,7 @@ const MedicationRouteForm: React.FC<MedicationRouteFormProps> = ({ open, onClose
         : defaultValues
     );
     setFormError(null);
+    setPendingDefaultChange(false);
 
     if (isAddMode) {
       generateRouteCode();
@@ -253,6 +311,24 @@ const MedicationRouteForm: React.FC<MedicationRouteFormProps> = ({ open, onClose
             </Alert>
           )}
 
+          {/* Default Route Information Alert */}
+          {currentDefaultRoute && defaultYN === "N" && !viewOnly && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                <strong>Current Default Route:</strong> "{currentDefaultRoute.mRouteName}" ({currentDefaultRoute.mRouteCode})
+              </Typography>
+            </Alert>
+          )}
+
+          {/* Pending Default Change Alert */}
+          {pendingDefaultChange && (
+            <Alert severity="warning" sx={{ mb: 2 }} icon={<Warning />}>
+              <Typography variant="body2">
+                <strong>Default Route Change Pending:</strong> This route will become the new default when saved. "{currentDefaultRoute?.mRouteName}" will no longer be the default.
+              </Typography>
+            </Alert>
+          )}
+
           <Grid container spacing={3}>
             {/* Status Toggle - Prominent Position */}
             <Grid size={{ sm: 12 }}>
@@ -322,7 +398,16 @@ const MedicationRouteForm: React.FC<MedicationRouteFormProps> = ({ open, onClose
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="defaultYN" control={control} label="Default" type="switch" disabled={viewOnly} size="small" />
+                      <Box>
+                        <FormField name="defaultYN" control={control} label="Default Route" type="switch" disabled={viewOnly} size="small" />
+                        {currentDefaultRoute && !viewOnly && (
+                          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                            {defaultYN === "Y" || pendingDefaultChange
+                              ? `Will replace "${currentDefaultRoute.mRouteName}" as default`
+                              : `Current default: "${currentDefaultRoute.mRouteName}"`}
+                          </Typography>
+                        )}
+                      </Box>
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
@@ -363,6 +448,19 @@ const MedicationRouteForm: React.FC<MedicationRouteFormProps> = ({ open, onClose
           </Grid>
         </Box>
       </GenericDialog>
+
+      {/* Default Change Confirmation Dialog */}
+      <ConfirmationDialog
+        open={showDefaultChangeConfirmation}
+        onClose={handleDefaultChangeCancel}
+        onConfirm={handleDefaultChangeConfirm}
+        title="Change Default Route"
+        message={`Another route is currently set as the default:\n\n"${currentDefaultRoute?.mRouteName}" (${currentDefaultRoute?.mRouteCode})\n\nSetting this route as the default will automatically remove the default status from the current default route. Do you want to continue?`}
+        confirmText="Yes, Change Default"
+        cancelText="Cancel"
+        type="warning"
+        maxWidth="sm"
+      />
 
       <ConfirmationDialog
         open={showResetConfirmation}
