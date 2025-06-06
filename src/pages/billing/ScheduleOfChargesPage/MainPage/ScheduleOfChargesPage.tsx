@@ -35,28 +35,20 @@ interface EnhancedChargeDto extends ChargeWithAllDetailsDto {
 }
 
 const ScheduleOfChargesPage: React.FC = () => {
-  // State management
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCharge, setSelectedCharge] = useState<EnhancedChargeDto | null>(null);
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
-
-  // Dialog states
   const [isChargeFormOpen, setIsChargeFormOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-
   const { showAlert } = useAlert();
   const { charges, loading, refreshCharges, saveCharge, generateChargeCode, deleteCharge } = useScheduleOfCharges();
-
-  // Load dropdown values
   const { serviceType = [], serviceGroup = [], pic = [] } = useDropdownValues(["serviceType", "serviceGroup", "pic"]);
 
-  // Load data on component mount
   useEffect(() => {
     refreshCharges();
   }, [refreshCharges]);
 
-  // Enhanced charges with calculated fields
   const enhancedCharges = useMemo(() => {
     return charges.map((charge) => {
       const prices = charge.ChargeDetails?.map((detail) => detail.chValue) || [];
@@ -64,13 +56,10 @@ const ScheduleOfChargesPage: React.FC = () => {
       const highestPrice = prices.length > 0 ? Math.max(...prices) : 0;
       const priceRange =
         prices.length > 0 ? (lowestPrice === highestPrice ? formatCurrency(lowestPrice) : `${formatCurrency(lowestPrice)} - ${formatCurrency(highestPrice)}`) : "No pricing";
-
       const totalDoctorShares = charge.DoctorShares?.reduce((sum, share) => sum + share.doctorShare, 0) || 0;
       const aliasCount = charge.ChargeAliases?.length || 0;
       const packCount = charge.ChargePacks?.length || 0;
-
       const serviceGroupDisplay = serviceType.find((s) => Number(s.value) === charge.serviceGroupID)?.label || "Not specified";
-
       return {
         ...charge,
         lowestPrice,
@@ -84,11 +73,8 @@ const ScheduleOfChargesPage: React.FC = () => {
     });
   }, [charges, serviceType]);
 
-  // Filtered charges based on search and filters
   const filteredCharges = useMemo(() => {
     let filtered = enhancedCharges;
-
-    // Apply text search
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter((charge) => {
@@ -102,12 +88,10 @@ const ScheduleOfChargesPage: React.FC = () => {
       });
     }
 
-    // Apply type filter
     if (filterType !== "all") {
       filtered = filtered.filter((charge) => charge.chargeType === filterType);
     }
 
-    // Apply status filter
     if (filterStatus !== "all") {
       filtered = filtered.filter((charge) => charge.chargeStatus === filterStatus);
     }
@@ -115,7 +99,6 @@ const ScheduleOfChargesPage: React.FC = () => {
     return filtered;
   }, [enhancedCharges, searchTerm, filterType, filterStatus]);
 
-  // Statistics
   const statistics = useMemo(() => {
     const total = enhancedCharges.length;
     const active = enhancedCharges.filter((c) => c.rActiveYN === "Y").length;
@@ -134,7 +117,6 @@ const ScheduleOfChargesPage: React.FC = () => {
     };
   }, [enhancedCharges]);
 
-  // Event handlers
   const handleNewCharge = useCallback(() => {
     setSelectedCharge(null);
     setIsChargeFormOpen(true);
@@ -153,20 +135,16 @@ const ScheduleOfChargesPage: React.FC = () => {
   const handleCopyCharge = useCallback(
     async (charge: EnhancedChargeDto) => {
       try {
-        // Generate new charge code
         const newCode = await generateChargeCode({
           ChargeType: charge.chargeType,
           ChargeTo: charge.chargeTo,
           ServiceGroupId: charge.serviceGroupID,
         });
-
-        // Create copy with new code and reset ID
         const copiedCharge: ChargeWithAllDetailsDto = {
           ...charge,
           chargeID: 0,
           chargeCode: newCode,
           chargeDesc: `${charge.chargeDesc} (Copy)`,
-          // Reset IDs for all related entities
           ChargeDetails: charge.ChargeDetails.map((detail) => ({ ...detail, chDetID: 0, chargeID: 0 })),
           DoctorShares: charge.DoctorShares.map((share) => ({ ...share, docShareID: 0, chargeID: 0 })),
           ChargeAliases: charge.ChargeAliases.map((alias) => ({ ...alias, chAliasID: 0, chargeID: 0 })),
@@ -186,6 +164,7 @@ const ScheduleOfChargesPage: React.FC = () => {
   const handleChargeSubmit = useCallback(
     async (chargeData: ChargeWithAllDetailsDto) => {
       try {
+        debugger;
         await saveCharge(chargeData);
         setIsChargeFormOpen(false);
         showAlert("Success", `Charge ${selectedCharge ? "updated" : "created"} successfully`, "success");
@@ -211,7 +190,6 @@ const ScheduleOfChargesPage: React.FC = () => {
     [deleteCharge, showAlert, refreshCharges]
   );
 
-  // Grid columns
   const columns: Column<EnhancedChargeDto>[] = [
     {
       key: "chargeInfo",
@@ -358,7 +336,6 @@ const ScheduleOfChargesPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" component="h1" color="primary" fontWeight="bold">
           Schedule of Charges
@@ -368,8 +345,6 @@ const ScheduleOfChargesPage: React.FC = () => {
           <SmartButton variant="outlined" icon={RefreshIcon} text="Refresh" onAsyncClick={refreshCharges} asynchronous />
         </Stack>
       </Box>
-
-      {/* Statistics Cards */}
       <Grid container spacing={2} mb={3}>
         <Grid size={{ xs: 12, md: 2 }}>
           <Card sx={{ borderLeft: "4px solid #1976d2" }}>
@@ -456,7 +431,6 @@ const ScheduleOfChargesPage: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* Filters and Search */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, md: 4 }}>
@@ -496,7 +470,6 @@ const ScheduleOfChargesPage: React.FC = () => {
         </Grid>
       </Paper>
 
-      {/* Charges Grid */}
       <Paper sx={{ p: 2 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h6" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -518,7 +491,6 @@ const ScheduleOfChargesPage: React.FC = () => {
         />
       </Paper>
 
-      {/* Dialogs */}
       <ChargeFormDialog
         open={isChargeFormOpen}
         onClose={() => {
