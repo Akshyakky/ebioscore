@@ -1,9 +1,21 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, SelectChangeEvent, Paper } from "@mui/material";
+import { Box, Grid, Typography, Divider, Card, CardContent, Alert, SelectChangeEvent, Paper, Avatar, Stack } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Save as SaveIcon, Cancel as CancelIcon, Search as SearchIcon, Refresh as RefreshIcon, AccountBalance as InsuranceIcon } from "@mui/icons-material";
+import {
+  Save as SaveIcon,
+  Cancel as CancelIcon,
+  Search as SearchIcon,
+  Refresh as RefreshIcon,
+  AccountBalance as InsuranceIcon,
+  MedicalServices as VisitIcon,
+  HourglassEmpty as WaitingIcon,
+  CheckCircle as CompletedIcon,
+  Cancel as CancelledIcon,
+  LocalHospital as HospitalIcon,
+  Person as PhysicianIcon,
+} from "@mui/icons-material";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
@@ -75,10 +87,11 @@ const RevisitPage: React.FC = () => {
   const [availableAttendingPhysicians, setAvailableAttendingPhysicians] = useState<DropdownOption[]>([]);
   const [primaryIntroducingSource] = useState<DropdownOption[]>([]);
   const [clearSearchTrigger, setClearSearchTrigger] = useState(0);
-  const [showStats, setShowStats] = useState(false);
+  const [showStats, setShowStats] = useState(true);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [isInsuranceDialogOpen, setIsInsuranceDialogOpen] = useState(false);
   const dropdownValues = useDropdownValues(["pic", "department"]);
+
   const defaultValues: RevisitFormData = {
     opVID: 0,
     pChartID: 0,
@@ -167,44 +180,127 @@ const RevisitPage: React.FC = () => {
   }, [dropdownValues.department]);
 
   const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ sm: 12, md: 6 }}>
-          <Typography variant="h6">Total Visits</Typography>
-          <Typography variant="h4">{stats.totalVisits}</Typography>
-        </Grid>
-        <Grid size={{ sm: 12, md: 6 }}>
-          <Typography variant="h6">Waiting</Typography>
-          <Typography variant="h4" color="warning.main">
-            {stats.waitingVisits}
-          </Typography>
-        </Grid>
-        <Grid size={{ sm: 12, md: 6 }}>
-          <Typography variant="h6">Completed</Typography>
-          <Typography variant="h4" color="success.main">
-            {stats.completedVisits}
-          </Typography>
-        </Grid>
-        <Grid size={{ sm: 12, md: 6 }}>
-          <Typography variant="h6">Cancelled</Typography>
-          <Typography variant="h4" color="error.main">
-            {stats.cancelledVisits}
-          </Typography>
-        </Grid>
-        <Grid size={{ sm: 12, md: 6 }}>
-          <Typography variant="h6">Hospital</Typography>
-          <Typography variant="h4" color="info.main">
-            {stats.hospitalVisits}
-          </Typography>
-        </Grid>
-        <Grid size={{ sm: 12, md: 6 }}>
-          <Typography variant="h6">Physician</Typography>
-          <Typography variant="h4" color="secondary.main">
-            {stats.physicianVisits}
-          </Typography>
-        </Grid>
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <VisitIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {stats.totalVisits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Visits
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <WaitingIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {stats.waitingVisits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Waiting
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <CompletedIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {stats.completedVisits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Completed
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <CancelledIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {stats.cancelledVisits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Cancelled
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <HospitalIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {stats.hospitalVisits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Hospital
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #9c27b0" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#9c27b0", width: 40, height: 40 }}>
+                <PhysicianIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#9c27b0" fontWeight="bold">
+                  {stats.physicianVisits}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Physician
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 
   useEffect(() => {
@@ -444,7 +540,6 @@ const RevisitPage: React.FC = () => {
   };
 
   const onSubmit = async (data: RevisitFormData) => {
-    debugger;
     setFormError(null);
 
     try {
@@ -533,6 +628,7 @@ const RevisitPage: React.FC = () => {
       setLoading(false);
     }
   };
+
   const performReset = () => {
     reset(defaultValues);
     setFormError(null);
@@ -562,9 +658,11 @@ const RevisitPage: React.FC = () => {
   const handleRefresh = useCallback(() => {
     fetchVisitList(DateFilterType.Today, null, null);
   }, [fetchVisitList]);
+
   const handleOpenHistoryDialog = useCallback(() => {
     setIsHistoryDialogOpen(true);
   }, []);
+
   const handleCloseHistoryDialog = useCallback(
     (refreshData?: boolean) => {
       setIsHistoryDialogOpen(false);
@@ -574,6 +672,7 @@ const RevisitPage: React.FC = () => {
     },
     [handleRefresh]
   );
+
   const handleOpenInsuranceDialog = useCallback(() => {
     if (!selectedPChartID) {
       showAlert("Warning", "Please select a patient first", "warning");
@@ -602,29 +701,46 @@ const RevisitPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Box sx={{ mb: 2, display: "flex", justifyContent: "space-between" }}>
-        <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <SmartButton text="Refresh" icon={RefreshIcon} onClick={handleRefresh} color="info" variant="outlined" size="small" disabled={isLoading} />
-          <SmartButton text="Waiting Patient Search" icon={SearchIcon} onClick={handleWaitingSearch} color="warning" variant="contained" size="small" />
-          <SmartButton text="View Visit History" onClick={handleOpenHistoryDialog} color="primary" variant="contained" size="small" />
-          <SmartButton
-            text="Manage Insurance"
-            icon={InsuranceIcon}
-            onClick={handleOpenInsuranceDialog}
-            color="secondary"
-            variant="contained"
-            size="small"
-            disabled={!selectedPChartID}
-          />
-        </Box>
-      </Box>
-      {showStats && renderStatsDashboard()}
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="h5" component="h1" gutterBottom>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+        <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
           Create New Visit
         </Typography>
+        <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
+      </Box>
 
+      {/* Statistics Dashboard */}
+      {showStats && renderStatsDashboard()}
+
+      {/* Action Buttons */}
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Typography variant="h6" color="text.secondary">
+              Quick Actions
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <SmartButton text="Refresh" icon={RefreshIcon} onClick={handleRefresh} color="info" variant="outlined" size="small" disabled={isLoading} />
+              <SmartButton text="Waiting Search" icon={SearchIcon} onClick={handleWaitingSearch} color="warning" variant="contained" size="small" />
+              <SmartButton text="Visit History" onClick={handleOpenHistoryDialog} color="primary" variant="contained" size="small" />
+              <SmartButton
+                text="Insurance"
+                icon={InsuranceIcon}
+                onClick={handleOpenInsuranceDialog}
+                color="secondary"
+                variant="contained"
+                size="small"
+                disabled={!selectedPChartID}
+              />
+            </Stack>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Main Form */}
+      <Paper sx={{ p: 2 }}>
         <Box
           component="form"
           noValidate
@@ -661,6 +777,7 @@ const RevisitPage: React.FC = () => {
                 </Box>
               </Box>
             </Grid>
+
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -683,6 +800,7 @@ const RevisitPage: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
+
             <Grid size={{ sm: 12 }}>
               <Card variant="outlined">
                 <CardContent>
@@ -810,6 +928,7 @@ const RevisitPage: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
+
             <Grid size={{ sm: 12 }}>
               <Box display="flex" justifyContent="flex-end" gap={2}>
                 <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={CancelIcon} disabled={isSaving || !isDirty} />
@@ -830,6 +949,8 @@ const RevisitPage: React.FC = () => {
           </Grid>
         </Box>
       </Paper>
+
+      {/* Dialogs */}
       {isHistoryDialogOpen && <PatientVisitHistoryDialog open={isHistoryDialogOpen} onClose={handleCloseHistoryDialog} />}
 
       {selectedPChartID > 0 && (
@@ -847,6 +968,7 @@ const RevisitPage: React.FC = () => {
         handleClose={() => setShowWaitingPatientSearch(false)}
         onPatientSelect={handleAdvancedPatientSelect}
       />
+
       <ConfirmationDialog
         open={showResetConfirmation}
         onClose={handleResetCancel}

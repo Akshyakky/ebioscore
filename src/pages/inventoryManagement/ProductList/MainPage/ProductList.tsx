@@ -1,20 +1,22 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
+import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Card, CardContent, Avatar } from "@mui/material";
 import {
   Search as SearchIcon,
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
-  FilterList as FilterIcon,
   Visibility as VisibilityIcon,
   Close as CloseIcon,
   Business as DepartmentIcon,
+  Inventory as ProductIcon,
+  CheckCircle as ActiveIcon,
+  Cancel as InactiveIcon,
+  Warning as LowStockIcon,
 } from "@mui/icons-material";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import CustomButton from "@/components/Button/CustomButton";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import SmartButton from "@/components/Button/SmartButton";
 import ProductForm from "./ProductForm";
 import ProductDepartmentOverview from "./ProductDepartmentOverview";
@@ -23,7 +25,7 @@ import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { useProductsQuery, useDeleteProductMutation } from "@/hooks/InventoryManagement/useProductQuery";
-import { FormProvider, useForm } from "react-hook-form"; // Import React Hook Form
+import { FormProvider, useForm } from "react-hook-form";
 
 interface FormData {
   selectedProduct: ProductListDto | null;
@@ -45,8 +47,9 @@ const ProductList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
-  const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [isDepartmentOverviewOpen, setIsDepartmentOverviewOpen] = useState<boolean>(false);
+  const [showStats, setShowStats] = useState(true);
+
   const { department: departments } = useDropdownValues(["department"]);
   const [filters, setFilters] = useState<{
     category: string;
@@ -57,7 +60,6 @@ const ProductList: React.FC = () => {
     productGroup: "",
     status: "",
   });
-  const [showStats, setShowStats] = useState(false);
 
   // Update form context when selectedProduct changes
   useEffect(() => {
@@ -71,7 +73,7 @@ const ProductList: React.FC = () => {
   // Load dropdown values
   const { productCategory, productGroup } = useDropdownValues(["productCategory", "productGroup"]);
 
-  const status = [
+  const statusOptions = [
     { value: "active", label: "Active" },
     { value: "inactive", label: "Inactive" },
   ];
@@ -228,34 +230,89 @@ const ProductList: React.FC = () => {
     });
   }, [products, debouncedSearchTerm, filters]);
 
-  // Render statistics dashboard
+  // Render enhanced statistics dashboard
   const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="h6">Total Products</Typography>
-          <Typography variant="h4">{stats.totalProducts}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="h6">Active Products</Typography>
-          <Typography variant="h4" color="success.main">
-            {stats.activeProducts}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="h6">Inactive Products</Typography>
-          <Typography variant="h4" color="error.main">
-            {stats.inactiveProducts}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="h6">Low Stock</Typography>
-          <Typography variant="h4" color="warning.main">
-            {stats.lowStockProducts}
-          </Typography>
-        </Grid>
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 3 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <ProductIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {stats.totalProducts}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Products
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 3 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <ActiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {stats.activeProducts}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Active Products
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 3 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <InactiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {stats.inactiveProducts}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Inactive Products
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 3 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <LowStockIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {stats.lowStockProducts}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Low Stock
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 
   // Define grid columns
@@ -408,39 +465,21 @@ const ProductList: React.FC = () => {
   return (
     <FormProvider {...methods}>
       <Box sx={{ p: 2 }}>
-        {/* Toggle Stats Dashboard */}
-        <Box sx={{ mb: 2 }}>
+        {/* Header */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+          <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
+            Product List
+          </Typography>
           <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
         </Box>
 
-        {/* Stats Dashboard */}
+        {/* Statistics Dashboard */}
         {showStats && renderStatsDashboard()}
 
         <Paper sx={{ p: 2, mb: 2 }}>
-          <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-            <Grid size={{ xs: 12, md: 8 }}>
-              <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
-                Product List
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
-              <Stack direction="row" spacing={1}>
-                <SmartButton
-                  text="Refresh"
-                  icon={RefreshIcon}
-                  onClick={handleRefresh}
-                  color="info"
-                  variant="outlined"
-                  size="small"
-                  disabled={isFetching}
-                  loadingText="Refreshing..."
-                />
-                <SmartButton text="Add Product" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
-              </Stack>
-            </Grid>
-
-            {/* Search and Filter Row */}
-            <Grid size={{ xs: 12, md: 6 }}>
+          <Grid container spacing={2} alignItems="center">
+            {/* Search Field */}
+            <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 fullWidth
                 placeholder="Search by name or code"
@@ -464,17 +503,77 @@ const ProductList: React.FC = () => {
                 }}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }} display="flex" justifyContent="flex-end">
-              <Box display="flex" alignItems="center" gap={1}>
-                {(filters.category || filters.productGroup || filters.status) && (
-                  <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
-                )}
-                <Tooltip title="Filter Products">
-                  <IconButton onClick={() => setFilterOpen(true)}>
-                    <FilterIcon />
-                  </IconButton>
-                </Tooltip>
-              </Box>
+
+            {/* Inline Filters */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Tooltip title="Filter Products">
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <DropdownSelect
+                    label="Category"
+                    name="category"
+                    value={filters.category}
+                    options={
+                      productCategory?.map((option) => ({
+                        value: option.value.toString(),
+                        label: option.label,
+                      })) || []
+                    }
+                    onChange={(e) => handleFilterChange("category", e.target.value)}
+                    size="small"
+                    defaultText="All Categories"
+                  />
+
+                  <DropdownSelect
+                    label="Product Group"
+                    name="productGroup"
+                    value={filters.productGroup}
+                    options={
+                      productGroup?.map((option) => ({
+                        value: option.value.toString(),
+                        label: option.label,
+                      })) || []
+                    }
+                    onChange={(e) => handleFilterChange("productGroup", e.target.value)}
+                    size="small"
+                    defaultText="All Groups"
+                  />
+
+                  <DropdownSelect
+                    label="Status"
+                    name="status"
+                    value={filters.status}
+                    options={statusOptions}
+                    onChange={(e) => handleFilterChange("status", e.target.value)}
+                    size="small"
+                    defaultText="All Status"
+                  />
+
+                  <Box display="flex" alignItems="center" gap={1}>
+                    {Object.values(filters).some(Boolean) && (
+                      <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
+                    )}
+                  </Box>
+                </Stack>
+              </Tooltip>
+            </Grid>
+
+            {/* Action Buttons */}
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Stack direction="row" spacing={1} justifyContent="flex-end">
+                <SmartButton
+                  text="Refresh"
+                  icon={RefreshIcon}
+                  onClick={handleRefresh}
+                  color="info"
+                  variant="outlined"
+                  size="small"
+                  disabled={isFetching}
+                  loadingText="Refreshing..."
+                  asynchronous={true}
+                  showLoadingIndicator={true}
+                />
+                <SmartButton text="Add Product" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
+              </Stack>
             </Grid>
           </Grid>
         </Paper>
@@ -493,6 +592,7 @@ const ProductList: React.FC = () => {
             emptyStateMessage="No products found"
             showColumnCustomization
             initialSortBy={{ field: "productName", direction: "asc" }}
+            density="small"
             loading={isLoading || isFetching}
           />
         </Paper>
@@ -515,64 +615,6 @@ const ProductList: React.FC = () => {
           type="error"
           maxWidth="xs"
         />
-
-        {/* Filter Dialog */}
-        <GenericDialog
-          open={filterOpen}
-          onClose={() => setFilterOpen(false)}
-          title="Filter Products"
-          maxWidth="xs"
-          fullWidth
-          showCloseButton
-          actions={
-            <>
-              <CustomButton text="Clear Filters" onClick={handleClearFilters} variant="outlined" color="error" />
-              <CustomButton text="Apply" onClick={() => setFilterOpen(false)} variant="contained" color="primary" />
-            </>
-          }
-        >
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <DropdownSelect
-              label="Category"
-              name="category"
-              value={filters.category}
-              options={
-                productCategory?.map((option) => ({
-                  value: option.value.toString(),
-                  label: option.label,
-                })) || []
-              }
-              onChange={(e) => handleFilterChange("category", e.target.value)}
-              size="small"
-              defaultText="All Categories"
-            />
-
-            <DropdownSelect
-              label="Product Group"
-              name="ProductGroup"
-              value={filters.productGroup}
-              options={
-                productGroup?.map((option) => ({
-                  value: option.value.toString(),
-                  label: option.label,
-                })) || []
-              }
-              onChange={(e) => handleFilterChange("productGroup", e.target.value)}
-              size="small"
-              defaultText="All Product Group"
-            />
-
-            <DropdownSelect
-              label="Status"
-              name="Status"
-              value={filters.status}
-              options={status}
-              onChange={(e) => handleFilterChange("status", e.target.value)}
-              size="small"
-              defaultText="All Records"
-            />
-          </Stack>
-        </GenericDialog>
       </Box>
     </FormProvider>
   );
