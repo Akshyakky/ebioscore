@@ -1,6 +1,5 @@
-// src/pages/clinicalManagement/MedicationDosage/MainPage/MedicationDosagePage.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
+import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Card, CardContent, Avatar } from "@mui/material";
 import {
   Search as SearchIcon,
   Add as AddIcon,
@@ -9,6 +8,11 @@ import {
   Refresh as RefreshIcon,
   Visibility as VisibilityIcon,
   Close as CloseIcon,
+  Medication as DosageIcon,
+  CheckCircle as ActiveIcon,
+  Cancel as InactiveIcon,
+  Star as DefaultIcon,
+  Settings as ModifiableIcon,
 } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
@@ -33,7 +37,7 @@ const MedicationDosagePage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
-  const [showStats, setShowStats] = useState(false);
+  const [showStats, setShowStats] = useState(true);
 
   const { medicationDosageList, isLoading, error, fetchMedicationDosageList, deleteMedicationDosage } = useMedicationDosage();
 
@@ -178,38 +182,107 @@ const MedicationDosagePage: React.FC = () => {
   }, [medicationDosageList, debouncedSearchTerm, filters]);
 
   const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
-          <Typography variant="h6">Total Dosages</Typography>
-          <Typography variant="h4">{stats.totalDosages}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
-          <Typography variant="h6">Active</Typography>
-          <Typography variant="h4" color="success.main">
-            {stats.activeDosages}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
-          <Typography variant="h6">Inactive</Typography>
-          <Typography variant="h4" color="error.main">
-            {stats.inactiveDosages}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
-          <Typography variant="h6">Default</Typography>
-          <Typography variant="h4" color="info.main">
-            {stats.defaultDosages}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
-          <Typography variant="h6">Modifiable</Typography>
-          <Typography variant="h4" color="warning.main">
-            {stats.modifiableDosages}
-          </Typography>
-        </Grid>
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <DosageIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {stats.totalDosages}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Dosages
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <ActiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {stats.activeDosages}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Active
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <InactiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {stats.inactiveDosages}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Inactive
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <DefaultIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {stats.defaultDosages}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Default
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2.4 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <ModifiableIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {stats.modifiableDosages}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Modifiable
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 
   const columns: Column<MedicationDosageDto>[] = [
@@ -334,37 +407,19 @@ const MedicationDosagePage: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Box sx={{ mb: 2 }}>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+        <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
+          Medication Dosage List
+        </Typography>
         <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
       </Box>
 
+      {/* Statistics Dashboard */}
       {showStats && renderStatsDashboard()}
 
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
-              Medication Dosage List
-            </Typography>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
-            <Stack direction="row" spacing={1}>
-              <SmartButton
-                text="Refresh"
-                icon={RefreshIcon}
-                onClick={handleRefresh}
-                color="info"
-                variant="outlined"
-                size="small"
-                disabled={isLoading}
-                loadingText="Refreshing..."
-                asynchronous={true}
-                showLoadingIndicator={true}
-              />
-              <SmartButton text="Add Dosage" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
-            </Stack>
-          </Grid>
-
+        <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
@@ -389,9 +444,9 @@ const MedicationDosagePage: React.FC = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 8 }}>
+          <Grid size={{ xs: 12, md: 5 }}>
             <Tooltip title="Filter Dosages">
-              <Stack direction="row" spacing={2}>
+              <Stack direction="row" spacing={2} alignItems="center">
                 <DropdownSelect
                   label="Status"
                   name="status"
@@ -407,11 +462,28 @@ const MedicationDosagePage: React.FC = () => {
               </Stack>
             </Tooltip>
           </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <SmartButton
+                text="Refresh"
+                icon={RefreshIcon}
+                onClick={handleRefresh}
+                color="info"
+                variant="outlined"
+                size="small"
+                disabled={isLoading}
+                loadingText="Refreshing..."
+                asynchronous={true}
+                showLoadingIndicator={true}
+              />
+              <SmartButton text="Add Dosage" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
+            </Stack>
+          </Grid>
         </Grid>
       </Paper>
 
       <Paper sx={{ p: 2 }}>
-        <CustomGrid columns={columns} data={filteredDosages} maxHeight="calc(100vh - 280px)" emptyStateMessage="No medication dosages found" loading={isLoading} />
+        <CustomGrid columns={columns} data={filteredDosages} maxHeight="calc(100vh - 280px)" emptyStateMessage="No medication dosages found" density="small" loading={isLoading} />
       </Paper>
 
       {isFormOpen && <MedicationDosageForm open={isFormOpen} onClose={handleFormClose} initialData={selectedDosage} viewOnly={isViewMode} />}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
+import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Card, CardContent, Avatar } from "@mui/material";
 import {
   Search as SearchIcon,
   Add as AddIcon,
@@ -8,6 +8,12 @@ import {
   Refresh as RefreshIcon,
   Visibility as VisibilityIcon,
   Close as CloseIcon,
+  MedicalServices as DiagnosisIcon,
+  CheckCircle as ActiveIcon,
+  Cancel as InactiveIcon,
+  Build as CustomIcon,
+  Assignment as StandardIcon,
+  Transform as TransferIcon,
 } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
@@ -43,7 +49,7 @@ const DiagnosisListPage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
-  const [showStats, setShowStats] = useState(false);
+  const [showStats, setShowStats] = useState(true);
 
   const { diagnosisList, isLoading, error, fetchDiagnosisList, deleteDiagnosis } = useDiagnosisList();
 
@@ -205,44 +211,127 @@ const DiagnosisListPage: React.FC = () => {
   }, [diagnosisList, debouncedSearchTerm, filters]);
 
   const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Total Diagnoses</Typography>
-          <Typography variant="h4">{stats.totalDiagnoses}</Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Active</Typography>
-          <Typography variant="h4" color="success.main">
-            {stats.activeDiagnoses}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Inactive</Typography>
-          <Typography variant="h4" color="error.main">
-            {stats.inactiveDiagnoses}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Custom</Typography>
-          <Typography variant="h4" color="info.main">
-            {stats.customDiagnoses}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Standard</Typography>
-          <Typography variant="h4" color="warning.main">
-            {stats.standardDiagnoses}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Typography variant="h6">Transfer Enabled</Typography>
-          <Typography variant="h4" color="secondary.main">
-            {stats.transferEnabled}
-          </Typography>
-        </Grid>
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <DiagnosisIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {stats.totalDiagnoses}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Diagnoses
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <ActiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {stats.activeDiagnoses}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Active
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <InactiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {stats.inactiveDiagnoses}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Inactive
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <CustomIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {stats.customDiagnoses}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Custom
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <StandardIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {stats.standardDiagnoses}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Standard
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #9c27b0" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#9c27b0", width: 40, height: 40 }}>
+                <TransferIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#9c27b0" fontWeight="bold">
+                  {stats.transferEnabled}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Transfer Enabled
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 
   const columns: Column<IcdDetailDto>[] = [
@@ -367,41 +456,23 @@ const DiagnosisListPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Box sx={{ mb: 2 }}>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+        <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
+          Diagnosis List
+        </Typography>
         <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
       </Box>
 
+      {/* Statistics Dashboard */}
       {showStats && renderStatsDashboard()}
 
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
-              Diagnosis List
-            </Typography>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }} display="flex" justifyContent="flex-end">
-            <Stack direction="row" spacing={1}>
-              <SmartButton
-                text="Refresh"
-                icon={RefreshIcon}
-                onClick={handleRefresh}
-                color="info"
-                variant="outlined"
-                size="small"
-                disabled={isLoading}
-                loadingText="Refreshing..."
-                asynchronous={true}
-                showLoadingIndicator={true}
-              />
-              <SmartButton text="Add Diagnosis" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
-            </Stack>
-          </Grid>
-
+        <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
-              placeholder="Search by code, name"
+              placeholder="Search by code, name, or notes"
               variant="outlined"
               size="small"
               value={searchTerm}
@@ -422,9 +493,9 @@ const DiagnosisListPage: React.FC = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Tooltip title="Filter Diagnosis List">
-              <Stack direction="row" spacing={2}>
+          <Grid size={{ xs: 12, md: 5 }}>
+            <Tooltip title="Filter Diagnoses">
+              <Stack direction="row" spacing={2} alignItems="center">
                 <DropdownSelect
                   label="Status"
                   name="status"
@@ -434,18 +505,54 @@ const DiagnosisListPage: React.FC = () => {
                   size="small"
                   defaultText="All Status"
                 />
-
+                <DropdownSelect
+                  label="Type"
+                  name="type"
+                  value={filters.type}
+                  options={typeOptions}
+                  onChange={(e) => handleFilterChange("type", e.target.value)}
+                  size="small"
+                  defaultText="All Types"
+                />
+                <DropdownSelect
+                  label="Version"
+                  name="version"
+                  value={filters.version}
+                  options={versionOptions}
+                  onChange={(e) => handleFilterChange("version", e.target.value)}
+                  size="small"
+                  defaultText="All Versions"
+                />
                 <Box display="flex" alignItems="center" gap={1}>
-                  {filters.status && <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />}
+                  {Object.values(filters).some(Boolean) && (
+                    <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
+                  )}
                 </Box>
               </Stack>
             </Tooltip>
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <SmartButton
+                text="Refresh"
+                icon={RefreshIcon}
+                onClick={handleRefresh}
+                color="info"
+                variant="outlined"
+                size="small"
+                disabled={isLoading}
+                loadingText="Refreshing..."
+                asynchronous={true}
+                showLoadingIndicator={true}
+              />
+              <SmartButton text="Add Diagnosis" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
+            </Stack>
           </Grid>
         </Grid>
       </Paper>
 
       <Paper sx={{ p: 2 }}>
-        <CustomGrid columns={columns} data={filteredDiagnoses} maxHeight="calc(100vh - 280px)" emptyStateMessage="No diagnosis found" loading={isLoading} />
+        <CustomGrid columns={columns} data={filteredDiagnoses} maxHeight="calc(100vh - 280px)" emptyStateMessage="No diagnosis found" density="small" loading={isLoading} />
       </Paper>
 
       {isFormOpen && <DiagnosisListForm open={isFormOpen} onClose={handleFormClose} initialData={selectedDiagnosis} viewOnly={isViewMode} />}
@@ -455,7 +562,7 @@ const DiagnosisListPage: React.FC = () => {
         onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Confirm Delete"
-        message={`Are you sure you want to delete the diagnosis "${selectedDiagnosis?.arlName}"?`}
+        message={`Are you sure you want to delete the diagnosis "${selectedDiagnosis?.icddName}"?`}
         confirmText="Delete"
         cancelText="Cancel"
         type="error"
