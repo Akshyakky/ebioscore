@@ -61,6 +61,16 @@ const ProfilePermissionsModifyModal: React.FC<ProfilePermissionsModifyModalProps
               useSubModules={false}
             />
           </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 9, lg: 9, xl: 6 }}>
+            <PermissionManager
+              mode="profile"
+              details={{ profileID: profileId, profileName: profileName } as ProfileMastDto}
+              title="Department Permissions"
+              type="D"
+              useMainModules={false}
+              useSubModules={false}
+            />
+          </Grid>
         </Grid>
       </Box>
     </GenericDialog>
