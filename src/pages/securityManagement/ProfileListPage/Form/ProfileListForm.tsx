@@ -13,6 +13,7 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
 import PermissionManager from "../../CommonPage/PermissionManager";
 import { useProfileList } from "../hooks/useProfileListPage";
+import ProfilePermissionsList from "../SubPage/ProfilePermissionsList";
 
 interface ProfileListFormProps {
   open: boolean;
@@ -73,7 +74,7 @@ const ProfileListForm: React.FC<ProfileListFormProps> = ({ open, onClose, initia
 
     try {
       setIsGeneratingCode(true);
-      const nextCode = await getNextCode("PR", 3);
+      const nextCode = await getNextCode("PRF", 3);
       if (nextCode) {
         setValue("profileCode", nextCode, { shouldValidate: true, shouldDirty: true });
       } else {
@@ -354,7 +355,13 @@ const ProfileListForm: React.FC<ProfileListFormProps> = ({ open, onClose, initia
     !isAddMode && watchedData.profileID ? (
       <Card variant="outlined">
         <CardContent>
-          <PermissionManager mode="profile" details={watchedData as ProfileMastDto} title={title} type={type} useMainModules={isMainModules} useSubModules={isSubModules} />
+          {viewOnly ? (
+            <>
+              <ProfilePermissionsList title={title} type={type} profileId={watchedData.profileID} />
+            </>
+          ) : (
+            <PermissionManager mode="profile" details={watchedData as ProfileMastDto} title={title} type={type} useMainModules={isMainModules} useSubModules={isSubModules} />
+          )}
         </CardContent>
       </Card>
     ) : (
