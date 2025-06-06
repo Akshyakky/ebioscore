@@ -8,64 +8,48 @@ import {
   Refresh as RefreshIcon,
   Visibility as VisibilityIcon,
   Close as CloseIcon,
-  MedicalServices as DiagnosisIcon,
+  Route as RouteIcon,
   CheckCircle as ActiveIcon,
   Cancel as InactiveIcon,
-  Build as CustomIcon,
-  Assignment as StandardIcon,
-  Transform as TransferIcon,
+  Star as DefaultIcon,
+  Settings as ModifiableIcon,
 } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import DiagnosisListForm from "../Form/DiagnosisListForm";
-import { useDiagnosisList } from "../hooks/useDiagnosisList";
+import { MedicationRouteDto } from "@/interfaces/ClinicalManagement/MedicationRouteDto";
+import MedicationRouteForm from "../Form/MedicationRouteForm";
+import { useMedicationRoute } from "../hooks/useMedicationRoute";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
-import { IcdDetailDto } from "@/interfaces/ClinicalManagement/IcdDetailDto";
 
 const statusOptions = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
 ];
 
-const typeOptions = [
-  { value: "standard", label: "Standard" },
-  { value: "custom", label: "Custom" },
-];
-
-const versionOptions = [
-  { value: "icd10", label: "ICD-10" },
-  { value: "icd11", label: "ICD-11" },
-  { value: "custom", label: "Custom" },
-];
-
-const DiagnosisListPage: React.FC = () => {
+const MedicationRoutePage: React.FC = () => {
   const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
-  const [selectedDiagnosis, setSelectedDiagnosis] = useState<IcdDetailDto | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<MedicationRouteDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(true);
 
-  const { diagnosisList, isLoading, error, fetchDiagnosisList, deleteDiagnosis } = useDiagnosisList();
+  const { medicationRouteList, isLoading, error, fetchMedicationRouteList, deleteMedicationRoute } = useMedicationRoute();
 
   const [filters, setFilters] = useState<{
     status: string;
-    type: string;
-    version: string;
   }>({
     status: "",
-    type: "",
-    version: "",
   });
 
   const handleRefresh = useCallback(() => {
-    fetchDiagnosisList();
-  }, [fetchDiagnosisList]);
+    fetchMedicationRouteList();
+  }, [fetchMedicationRouteList]);
 
   const debouncedSearch = useMemo(() => debounce((value: string) => setDebouncedSearchTerm(value), 300), []);
 
@@ -91,46 +75,46 @@ const DiagnosisListPage: React.FC = () => {
   }, [debouncedSearch]);
 
   const handleAddNew = useCallback(() => {
-    setSelectedDiagnosis(null);
+    setSelectedRoute(null);
     setIsViewMode(false);
     setIsFormOpen(true);
   }, []);
 
-  const handleEdit = useCallback((diagnosis: IcdDetailDto) => {
-    setSelectedDiagnosis(diagnosis);
+  const handleEdit = useCallback((route: MedicationRouteDto) => {
+    setSelectedRoute(route);
     setIsViewMode(false);
     setIsFormOpen(true);
   }, []);
 
-  const handleView = useCallback((diagnosis: IcdDetailDto) => {
-    setSelectedDiagnosis(diagnosis);
+  const handleView = useCallback((route: MedicationRouteDto) => {
+    setSelectedRoute(route);
     setIsViewMode(true);
     setIsFormOpen(true);
   }, []);
 
-  const handleDeleteClick = useCallback((diagnosis: IcdDetailDto) => {
-    setSelectedDiagnosis(diagnosis);
+  const handleDeleteClick = useCallback((route: MedicationRouteDto) => {
+    setSelectedRoute(route);
     setIsDeleteConfirmOpen(true);
   }, []);
 
   const handleConfirmDelete = useCallback(async () => {
-    if (!selectedDiagnosis) return;
+    if (!selectedRoute) return;
 
     try {
-      const success = await deleteDiagnosis(selectedDiagnosis.icddId);
+      const success = await deleteMedicationRoute(selectedRoute.mRouteID);
 
       if (success) {
-        showAlert("Success", "Diagnosis deleted successfully", "success");
+        showAlert("Success", "Medication route deleted successfully", "success");
       } else {
-        throw new Error("Failed to delete diagnosis");
+        throw new Error("Failed to delete medication route");
       }
     } catch (error) {
       console.error("Delete operation failed:", error);
-      showAlert("Error", "Failed to delete diagnosis", "error");
+      showAlert("Error", "Failed to delete medication route", "error");
     } finally {
       setIsDeleteConfirmOpen(false);
     }
-  }, [selectedDiagnosis, deleteDiagnosis]);
+  }, [selectedRoute, deleteMedicationRoute]);
 
   const handleFormClose = useCallback(
     (refreshData?: boolean) => {
@@ -152,79 +136,67 @@ const DiagnosisListPage: React.FC = () => {
   const handleClearFilters = useCallback(() => {
     setFilters({
       status: "",
-      type: "",
-      version: "",
     });
   }, []);
 
   // Calculate stats for the dashboard
   const stats = useMemo(() => {
-    if (!diagnosisList.length) {
+    if (!medicationRouteList.length) {
       return {
-        totalDiagnoses: 0,
-        activeDiagnoses: 0,
-        inactiveDiagnoses: 0,
-        customDiagnoses: 0,
-        standardDiagnoses: 0,
-        transferEnabled: 0,
+        totalRoutes: 0,
+        activeRoutes: 0,
+        inactiveRoutes: 0,
+        defaultRoutes: 0,
+        modifiableRoutes: 0,
       };
     }
 
-    const activeCount = diagnosisList.filter((d) => d.rActiveYN === "Y").length;
-    const customCount = diagnosisList.filter((d) => d.icddCustYN === "Y").length;
-    const transferCount = diagnosisList.filter((d) => d.transferYN === "Y").length;
+    const activeCount = medicationRouteList.filter((r) => (r as any).rActiveYN === "Y").length;
+    const defaultCount = medicationRouteList.filter((r) => r.defaultYN === "Y").length;
+    const modifiableCount = medicationRouteList.filter((r) => r.modifyYN === "Y").length;
 
     return {
-      totalDiagnoses: diagnosisList.length,
-      activeDiagnoses: activeCount,
-      inactiveDiagnoses: diagnosisList.length - activeCount,
-      customDiagnoses: customCount,
-      standardDiagnoses: diagnosisList.length - customCount,
-      transferEnabled: transferCount,
+      totalRoutes: medicationRouteList.length,
+      activeRoutes: activeCount,
+      inactiveRoutes: medicationRouteList.length - activeCount,
+      defaultRoutes: defaultCount,
+      modifiableRoutes: modifiableCount,
     };
-  }, [diagnosisList]);
+  }, [medicationRouteList]);
 
-  // Apply filters to the list
-  const filteredDiagnoses = useMemo(() => {
-    if (!diagnosisList.length) return [];
+  const filteredRoutes = useMemo(() => {
+    if (!medicationRouteList.length) return [];
 
-    return diagnosisList.filter((diagnosis) => {
+    return medicationRouteList.filter((route) => {
       const matchesSearch =
         debouncedSearchTerm === "" ||
-        diagnosis.icddName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        diagnosis.icddCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        diagnosis.icddNameGreek?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        diagnosis.rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+        route.mRouteName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        route.mRouteCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        route.mRouteSnomedCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        (route as any).rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
-      const matchesStatus = filters.status === "" || (filters.status === "active" && diagnosis.rActiveYN === "Y") || (filters.status === "inactive" && diagnosis.rActiveYN === "N");
+      const matchesStatus =
+        filters.status === "" || (filters.status === "active" && (route as any).rActiveYN === "Y") || (filters.status === "inactive" && (route as any).rActiveYN === "N");
 
-      const matchesType = filters.type === "" || (filters.type === "custom" && diagnosis.icddCustYN === "Y") || (filters.type === "standard" && diagnosis.icddCustYN === "N");
-
-      const matchesVersion =
-        filters.version === "" ||
-        (filters.version === "icd10" && diagnosis.icddVer?.toLowerCase().includes("10")) ||
-        (filters.version === "icd11" && diagnosis.icddVer?.toLowerCase().includes("11")) ||
-        (filters.version === "custom" && diagnosis.icddCustYN === "Y");
-
-      return matchesSearch && matchesStatus && matchesType && matchesVersion;
+      return matchesSearch && matchesStatus;
     });
-  }, [diagnosisList, debouncedSearchTerm, filters]);
+  }, [medicationRouteList, debouncedSearchTerm, filters]);
 
   const renderStatsDashboard = () => (
     <Grid container spacing={1.5} mb={1.5}>
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #1976d2" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
-                <DiagnosisIcon fontSize="small" />
+                <RouteIcon fontSize="small" />
               </Avatar>
               <Box>
                 <Typography variant="h5" color="#1976d2" fontWeight="bold">
-                  {stats.totalDiagnoses}
+                  {stats.totalRoutes}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Total Diagnoses
+                  Total Routes
                 </Typography>
               </Box>
             </Stack>
@@ -232,7 +204,7 @@ const DiagnosisListPage: React.FC = () => {
         </Card>
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #4caf50" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -241,7 +213,7 @@ const DiagnosisListPage: React.FC = () => {
               </Avatar>
               <Box>
                 <Typography variant="h5" color="#4caf50" fontWeight="bold">
-                  {stats.activeDiagnoses}
+                  {stats.activeRoutes}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Active
@@ -252,7 +224,7 @@ const DiagnosisListPage: React.FC = () => {
         </Card>
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #f44336" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -261,7 +233,7 @@ const DiagnosisListPage: React.FC = () => {
               </Avatar>
               <Box>
                 <Typography variant="h5" color="#f44336" fontWeight="bold">
-                  {stats.inactiveDiagnoses}
+                  {stats.inactiveRoutes}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Inactive
@@ -272,19 +244,19 @@ const DiagnosisListPage: React.FC = () => {
         </Card>
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #2196f3" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
-                <CustomIcon fontSize="small" />
+                <DefaultIcon fontSize="small" />
               </Avatar>
               <Box>
                 <Typography variant="h5" color="#2196f3" fontWeight="bold">
-                  {stats.customDiagnoses}
+                  {stats.defaultRoutes}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Custom
+                  Default
                 </Typography>
               </Box>
             </Stack>
@@ -292,39 +264,19 @@ const DiagnosisListPage: React.FC = () => {
         </Card>
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #ff9800" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
-                <StandardIcon fontSize="small" />
+                <ModifiableIcon fontSize="small" />
               </Avatar>
               <Box>
                 <Typography variant="h5" color="#ff9800" fontWeight="bold">
-                  {stats.standardDiagnoses}
+                  {stats.modifiableRoutes}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Standard
-                </Typography>
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid size={{ xs: 12, sm: 2 }}>
-        <Card sx={{ borderLeft: "3px solid #9c27b0" }}>
-          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
-            <Stack direction="row" alignItems="center" spacing={1.5}>
-              <Avatar sx={{ bgcolor: "#9c27b0", width: 40, height: 40 }}>
-                <TransferIcon fontSize="small" />
-              </Avatar>
-              <Box>
-                <Typography variant="h5" color="#9c27b0" fontWeight="bold">
-                  {stats.transferEnabled}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Transfer Enabled
+                  Modifiable
                 </Typography>
               </Box>
             </Stack>
@@ -334,49 +286,50 @@ const DiagnosisListPage: React.FC = () => {
     </Grid>
   );
 
-  const columns: Column<IcdDetailDto>[] = [
+  const columns: Column<MedicationRouteDto>[] = [
     {
-      key: "icddCode",
+      key: "mRouteCode",
       header: "Code",
       visible: true,
       sortable: true,
       filterable: true,
       width: 120,
+      formatter: (value: string) => value || "-",
     },
     {
-      key: "icddName",
-      header: "Diagnosis Name",
-      visible: true,
-      sortable: true,
-      filterable: true,
-      width: 300,
-    },
-    {
-      key: "icddNameGreek",
-      header: "Greek Name",
+      key: "mRouteName",
+      header: "Route Name",
       visible: true,
       sortable: true,
       filterable: true,
       width: 250,
-      formatter: (value: string) => value || "-",
     },
     {
-      key: "icddVer",
-      header: "Version",
+      key: "mRSnomedCode",
+      header: "SNOMED CT Code",
       visible: true,
       sortable: true,
       filterable: true,
-      width: 100,
+      width: 180,
       formatter: (value: string) => value || "-",
     },
     {
-      key: "icddCustYN",
-      header: "Type",
+      key: "defaultYN",
+      header: "Default",
       visible: true,
       sortable: true,
       filterable: true,
       width: 120,
-      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "info" : "warning"} label={value === "Y" ? "Custom" : "Standard"} />,
+      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "info" : "primary"} label={value === "Y" ? "Yes" : "No"} />,
+    },
+    {
+      key: "modifyYN",
+      header: "Modifiable",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 120,
+      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "warning" : "primary"} label={value === "Y" ? "Yes" : "No"} />,
     },
     {
       key: "rActiveYN",
@@ -385,7 +338,7 @@ const DiagnosisListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 100,
-      formatter: (value: any) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
+      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "success" : "error"} label={value === "Y" ? "Active" : "Inactive"} />,
     },
     {
       key: "rNotes",
@@ -394,7 +347,7 @@ const DiagnosisListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 300,
-      formatter: (value: any) => (value ? value.substring(0, 50) + (value.length > 50 ? "..." : "") : "-"),
+      formatter: (value: string) => (value ? value.substring(0, 50) + (value.length > 50 ? "..." : "") : "-"),
     },
     {
       key: "actions",
@@ -447,7 +400,7 @@ const DiagnosisListPage: React.FC = () => {
     return (
       <Box sx={{ p: 2 }}>
         <Typography color="error" variant="h6">
-          Error loading diagnoses: {error}
+          Error loading medication routes: {error}
         </Typography>
         <SmartButton text="Retry" onClick={handleRefresh} variant="contained" color="primary" />
       </Box>
@@ -459,7 +412,7 @@ const DiagnosisListPage: React.FC = () => {
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
         <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
-          Diagnosis List
+          Medication Route List
         </Typography>
         <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
       </Box>
@@ -472,7 +425,7 @@ const DiagnosisListPage: React.FC = () => {
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
-              placeholder="Search by code, name, or notes"
+              placeholder="Search by code or name"
               variant="outlined"
               size="small"
               value={searchTerm}
@@ -494,7 +447,7 @@ const DiagnosisListPage: React.FC = () => {
             />
           </Grid>
           <Grid size={{ xs: 12, md: 5 }}>
-            <Tooltip title="Filter Diagnoses">
+            <Tooltip title="Filter Routes">
               <Stack direction="row" spacing={2} alignItems="center">
                 <DropdownSelect
                   label="Status"
@@ -505,28 +458,8 @@ const DiagnosisListPage: React.FC = () => {
                   size="small"
                   defaultText="All Status"
                 />
-                <DropdownSelect
-                  label="Type"
-                  name="type"
-                  value={filters.type}
-                  options={typeOptions}
-                  onChange={(e) => handleFilterChange("type", e.target.value)}
-                  size="small"
-                  defaultText="All Types"
-                />
-                <DropdownSelect
-                  label="Version"
-                  name="version"
-                  value={filters.version}
-                  options={versionOptions}
-                  onChange={(e) => handleFilterChange("version", e.target.value)}
-                  size="small"
-                  defaultText="All Versions"
-                />
                 <Box display="flex" alignItems="center" gap={1}>
-                  {Object.values(filters).some(Boolean) && (
-                    <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
-                  )}
+                  {filters.status && <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />}
                 </Box>
               </Stack>
             </Tooltip>
@@ -545,24 +478,24 @@ const DiagnosisListPage: React.FC = () => {
                 asynchronous={true}
                 showLoadingIndicator={true}
               />
-              <SmartButton text="Add Diagnosis" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
+              <SmartButton text="Add Route" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
             </Stack>
           </Grid>
         </Grid>
       </Paper>
 
       <Paper sx={{ p: 2 }}>
-        <CustomGrid columns={columns} data={filteredDiagnoses} maxHeight="calc(100vh - 280px)" emptyStateMessage="No diagnosis found" density="small" loading={isLoading} />
+        <CustomGrid columns={columns} data={filteredRoutes} maxHeight="calc(100vh - 280px)" emptyStateMessage="No medication routes found" density="small" loading={isLoading} />
       </Paper>
 
-      {isFormOpen && <DiagnosisListForm open={isFormOpen} onClose={handleFormClose} initialData={selectedDiagnosis} viewOnly={isViewMode} />}
+      {isFormOpen && <MedicationRouteForm open={isFormOpen} onClose={handleFormClose} initialData={selectedRoute} viewOnly={isViewMode} />}
 
       <ConfirmationDialog
         open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Confirm Delete"
-        message={`Are you sure you want to delete the diagnosis "${selectedDiagnosis?.icddName}"?`}
+        message={`Are you sure you want to delete the medication route "${selectedRoute?.mRouteName}"?`}
         confirmText="Delete"
         cancelText="Cancel"
         type="error"
@@ -572,4 +505,4 @@ const DiagnosisListPage: React.FC = () => {
   );
 };
 
-export default DiagnosisListPage;
+export default MedicationRoutePage;

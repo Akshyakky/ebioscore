@@ -11,6 +11,7 @@ import { AlertDto } from "@/interfaces/Common/AlertManager";
 import { sanitizeFormData } from "@/utils/Common/sanitizeInput";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface AlertFormProps {
   open: boolean;
@@ -36,6 +37,8 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
 
   // Derive the type from the schema
   type AlertFormFields = z.infer<typeof alertSchema>;
+
+  const { alertCategory = [] } = useDropdownValues(["alertCategory"]);
 
   // Ensure we have a valid Date object for the default value
   const getInitialDate = () => {
@@ -85,17 +88,6 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
     reset();
     onClose();
   };
-
-  // Alert categories
-  const categories = [
-    { value: "Allergy", label: "Allergy" },
-    { value: "Medication", label: "Medication" },
-    { value: "Diagnosis", label: "Diagnosis" },
-    { value: "Critical", label: "Critical" },
-    { value: "Billing", label: "Billing" },
-    { value: "Admin", label: "Administrative" },
-    { value: "Other", label: "Other" },
-  ];
 
   // Define dialog actions
   const dialogActions = (
@@ -165,7 +157,7 @@ const AlertForm: React.FC<AlertFormProps> = ({ open, onClose, alert, isEditMode,
 
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <FormField name="category" control={control} label="Category" type="select" options={categories} required size="small" fullWidth />
+                <FormField name="category" control={control} label="Category" type="select" options={alertCategory} required size="small" fullWidth />
               </Grid>
 
               {/* <Grid size={{ xs: 12, sm: 6 }}>

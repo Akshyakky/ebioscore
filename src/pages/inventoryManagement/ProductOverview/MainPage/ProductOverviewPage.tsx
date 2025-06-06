@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Card, CardContent } from "@mui/material";
+import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Card, CardContent, Avatar } from "@mui/material";
 import {
   Search as SearchIcon,
   Add as AddIcon,
@@ -10,6 +10,12 @@ import {
   Close as CloseIcon,
   Dashboard as DashboardIcon,
   ChangeCircleRounded as ChangeDepartmentIcon,
+  Inventory as ProductIcon,
+  CheckCircle as ActiveIcon,
+  Cancel as InactiveIcon,
+  Warning as LowStockIcon,
+  Dangerous as DangerIcon,
+  AutoMode as AutoIndentIcon,
 } from "@mui/icons-material";
 import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
@@ -28,16 +34,31 @@ const statusOptions = [
   { value: "inactive", label: "Inactive" },
 ];
 
+const stockLevelOptions = [
+  { value: "normal", label: "Normal Stock" },
+  { value: "low", label: "Low Stock" },
+  { value: "danger", label: "Danger Level" },
+];
+
+const autoIndentOptions = [
+  { value: "Y", label: "Auto Indent: Yes" },
+  { value: "N", label: "Auto Indent: No" },
+];
+
+const transferOptions = [
+  { value: "Y", label: "Transferable: Yes" },
+  { value: "N", label: "Transferable: No" },
+];
+
 const ProductOverviewPage: React.FC = () => {
   const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedProductOverview, setSelectedProductOverview] = useState<ProductOverviewDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  const [, setIsSearchOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
-  const [showStats, setShowStats] = useState(false);
+  const [showStats, setShowStats] = useState(true);
   const [gridDensity] = useState<GridDensity>("medium");
   const { isLoading, error, deleteProductOverview, getProductOverviewByDepartment } = useProductOverview();
   const { deptId, deptName, isDialogOpen, isDepartmentSelected, openDialog, closeDialog, handleDepartmentSelect } = useDepartmentSelection({});
@@ -238,85 +259,127 @@ const ProductOverviewPage: React.FC = () => {
   }, [departmentProductList, debouncedSearchTerm, filters]);
 
   const renderStatsDashboard = () => (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Department Overview - {deptName}
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Card variant="outlined">
-            <CardContent sx={{ textAlign: "center", py: 2 }}>
-              <Typography variant="h4" color="primary">
-                {stats.totalProducts}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total Products
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Card variant="outlined">
-            <CardContent sx={{ textAlign: "center", py: 2 }}>
-              <Typography variant="h4" color="success.main">
-                {stats.activeProducts}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Active
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Card variant="outlined">
-            <CardContent sx={{ textAlign: "center", py: 2 }}>
-              <Typography variant="h4" color="error.main">
-                {stats.inactiveProducts}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Inactive
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Card variant="outlined">
-            <CardContent sx={{ textAlign: "center", py: 2 }}>
-              <Typography variant="h4" color="warning.main">
-                {stats.lowStockProducts}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Low Stock
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Card variant="outlined">
-            <CardContent sx={{ textAlign: "center", py: 2 }}>
-              <Typography variant="h4" color="error.main">
-                {stats.dangerLevelProducts}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Danger Level
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2 }}>
-          <Card variant="outlined">
-            <CardContent sx={{ textAlign: "center", py: 2 }}>
-              <Typography variant="h4" color="info.main">
-                {stats.autoIndentProducts}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Auto Indent
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+    <Grid container spacing={1.5} mb={1.5}>
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #1976d2" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
+                <ProductIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#1976d2" fontWeight="bold">
+                  {stats.totalProducts}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Total Products
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
       </Grid>
-    </Paper>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #4caf50" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#4caf50", width: 40, height: 40 }}>
+                <ActiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#4caf50" fontWeight="bold">
+                  {stats.activeProducts}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Active
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #f44336" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#f44336", width: 40, height: 40 }}>
+                <InactiveIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#f44336" fontWeight="bold">
+                  {stats.inactiveProducts}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Inactive
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #ff9800" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
+                <LowStockIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#ff9800" fontWeight="bold">
+                  {stats.lowStockProducts}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Low Stock
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #d32f2f" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#d32f2f", width: 40, height: 40 }}>
+                <DangerIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#d32f2f" fontWeight="bold">
+                  {stats.dangerLevelProducts}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Danger Level
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12, sm: 2 }}>
+        <Card sx={{ borderLeft: "3px solid #2196f3" }}>
+          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
+                <AutoIndentIcon fontSize="small" />
+              </Avatar>
+              <Box>
+                <Typography variant="h5" color="#2196f3" fontWeight="bold">
+                  {stats.autoIndentProducts}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Auto Indent
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
 
   const getStockLevelColor = (product: ProductOverviewDto) => {
@@ -476,20 +539,29 @@ const ProductOverviewPage: React.FC = () => {
     <Box sx={{ p: 2 }}>
       {isDepartmentSelected && (
         <>
-          <Box sx={{ mb: 2 }}>
+          {/* Header */}
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+            <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
+              Product Overview - {deptName}
+            </Typography>
             <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" icon={DashboardIcon} />
           </Box>
+
+          {/* Statistics Dashboard */}
           {showStats && renderStatsDashboard()}
+
           <Paper sx={{ p: 2, mb: 2 }}>
-            <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+            <Grid container spacing={2} alignItems="center">
+              {/* Department Info */}
               <Grid size={{ xs: 12, md: 6 }}>
-                <Typography variant="h5" component="h1" gutterBottom>
-                  Product Overview - {deptName}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }} display="flex" justifyContent="flex-end">
-                <Stack direction="row" spacing={1}>
+                <Stack direction="row" spacing={1} alignItems="center">
                   <SmartButton text={deptName} icon={ChangeDepartmentIcon} onClick={handleDepartmentChange} color="warning" variant="outlined" size="small" />
+                </Stack>
+              </Grid>
+
+              {/* Action Buttons */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Stack direction="row" spacing={1} justifyContent="flex-end">
                   <SmartButton
                     text="Refresh"
                     icon={RefreshIcon}
@@ -506,10 +578,11 @@ const ProductOverviewPage: React.FC = () => {
                 </Stack>
               </Grid>
 
-              <Grid size={{ xs: 12, md: 4 }}>
+              {/* Search Field */}
+              <Grid size={{ xs: 12, md: 3 }}>
                 <TextField
                   fullWidth
-                  placeholder="Search by product code, location, or notes"
+                  placeholder="Search by code, location, or notes"
                   variant="outlined"
                   size="small"
                   value={searchTerm}
@@ -531,9 +604,10 @@ const ProductOverviewPage: React.FC = () => {
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 8 }}>
+              {/* Inline Filters */}
+              <Grid size={{ xs: 12, md: 9 }}>
                 <Tooltip title="Filter Product Overview">
-                  <Stack direction="row" spacing={2} sx={{ pt: 1, pb: 1 }}>
+                  <Stack direction="row" spacing={2} alignItems="center">
                     <DropdownSelect
                       label="Status"
                       name="status"
@@ -542,6 +616,36 @@ const ProductOverviewPage: React.FC = () => {
                       onChange={(e) => handleFilterChange("status", e.target.value)}
                       size="small"
                       defaultText="All Status"
+                    />
+
+                    <DropdownSelect
+                      label="Stock Level"
+                      name="stockLevel"
+                      value={filters.stockLevel}
+                      options={stockLevelOptions}
+                      onChange={(e) => handleFilterChange("stockLevel", e.target.value)}
+                      size="small"
+                      defaultText="All Stock Levels"
+                    />
+
+                    <DropdownSelect
+                      label="Auto Indent"
+                      name="autoIndent"
+                      value={filters.autoIndent}
+                      options={autoIndentOptions}
+                      onChange={(e) => handleFilterChange("autoIndent", e.target.value)}
+                      size="small"
+                      defaultText="All Auto Indent"
+                    />
+
+                    <DropdownSelect
+                      label="Transfer"
+                      name="transfer"
+                      value={filters.transfer}
+                      options={transferOptions}
+                      onChange={(e) => handleFilterChange("transfer", e.target.value)}
+                      size="small"
+                      defaultText="All Transfer"
                     />
 
                     <Box display="flex" alignItems="center" gap={1}>
@@ -561,6 +665,7 @@ const ProductOverviewPage: React.FC = () => {
               data={filteredProducts}
               maxHeight="calc(100vh - 280px)"
               emptyStateMessage="No product overviews found for this department"
+              density="small"
               loading={isLoading}
             />
           </Paper>
