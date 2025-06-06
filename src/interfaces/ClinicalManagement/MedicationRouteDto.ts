@@ -4,7 +4,7 @@ export interface MedicationRouteDto extends BaseDto {
   mRouteID: number;
   mRouteName: string;
   mRouteCode?: string;
-  mRouteSnomedCode?: string;
+  mRSnomedCode?: string;
   defaultYN: string;
   modifyYN: string;
 }
