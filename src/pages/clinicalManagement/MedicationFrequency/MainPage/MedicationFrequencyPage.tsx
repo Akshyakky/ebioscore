@@ -260,7 +260,7 @@ const MedicationFrequencyPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 110,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "info" : "default"} label={value === "Y" ? "Yes" : "No"} />,
+      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "info" : "primary"} label={value === "Y" ? "Yes" : "No"} />,
     },
     {
       key: "modifyYN",
@@ -269,16 +269,7 @@ const MedicationFrequencyPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 120,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "warning" : "default"} label={value === "Y" ? "Yes" : "No"} />,
-    },
-    {
-      key: "transferYN",
-      header: "Transferable",
-      visible: true,
-      sortable: true,
-      filterable: true,
-      width: 130,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "secondary" : "default"} label={value === "Y" ? "Yes" : "No"} />,
+      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "warning" : "primary"} label={value === "Y" ? "Yes" : "No"} />,
     },
     {
       key: "rActiveYN",
@@ -368,7 +359,7 @@ const MedicationFrequencyPage: React.FC = () => {
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} alignItems="center" justifyContent="space-between">
           <Grid size={{ xs: 12, md: 8 }}>
-            <Typography variant="h5" component="h1" gutterBottom>
+            <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
               Medication Frequency List
             </Typography>
           </Grid>

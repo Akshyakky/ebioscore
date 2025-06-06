@@ -123,7 +123,7 @@ export function createEntityHook<T extends { [key: string]: any }>(service: any,
     );
 
     const getNextCode = useCallback(
-      async (prefix: string = "GEN", padLength: number = 3) => {
+      async (prefix: string = "MEDG", padLength: number = 5) => {
         try {
           setLoading(true);
           const result = await service.getNextCode(prefix, padLength);

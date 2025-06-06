@@ -245,7 +245,7 @@ const MedicationDosagePage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 120,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "info" : "default"} label={value === "Y" ? "Yes" : "No"} />,
+      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "info" : "primary"} label={value === "Y" ? "Yes" : "No"} />,
     },
     {
       key: "modifyYN",
@@ -254,7 +254,7 @@ const MedicationDosagePage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 120,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "warning" : "default"} label={value === "Y" ? "Yes" : "No"} />,
+      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "warning" : "primary"} label={value === "Y" ? "Yes" : "No"} />,
     },
     {
       key: "rActiveYN",
@@ -343,7 +343,7 @@ const MedicationDosagePage: React.FC = () => {
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} alignItems="center" justifyContent="space-between">
           <Grid size={{ xs: 12, md: 8 }}>
-            <Typography variant="h5" component="h1" gutterBottom>
+            <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
               Medication Dosage List
             </Typography>
           </Grid>
