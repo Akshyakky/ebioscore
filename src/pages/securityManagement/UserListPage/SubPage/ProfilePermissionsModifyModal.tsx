@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, Grid } from "@mui/material";
+import { Box, Button, Grid } from "@mui/material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import PermissionManager from "../../CommonPage/PermissionManager";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
@@ -39,28 +39,30 @@ const ProfilePermissionsModifyModal: React.FC<ProfilePermissionsModifyModalProps
       }
       dialogContentSx={{ maxHeight: "70vh" }}
     >
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, sm: 6, md: 9, lg: 9, xl: 6 }}>
-          <PermissionManager
-            mode="profile"
-            details={{ profileID: profileId, profileName: profileName } as ProfileMastDto}
-            title="Module Permissions"
-            type="M"
-            useMainModules={true}
-            useSubModules={true}
-          />
+      <Box sx={{ minHeight: "600px" }}>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 9, lg: 9, xl: 6 }}>
+            <PermissionManager
+              mode="profile"
+              details={{ profileID: profileId, profileName: profileName } as ProfileMastDto}
+              title="Module Permissions"
+              type="M"
+              useMainModules={true}
+              useSubModules={true}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 9, lg: 9, xl: 6 }}>
+            <PermissionManager
+              mode="profile"
+              details={{ profileID: profileId, profileName: profileName } as ProfileMastDto}
+              title="Report Permissions"
+              type="R"
+              useMainModules={true}
+              useSubModules={false}
+            />
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 9, lg: 9, xl: 6 }}>
-          <PermissionManager
-            mode="profile"
-            details={{ profileID: profileId, profileName: profileName } as ProfileMastDto}
-            title="Report Permissions"
-            type="R"
-            useMainModules={true}
-            useSubModules={false}
-          />
-        </Grid>
-      </Grid>
+      </Box>
     </GenericDialog>
   );
 };

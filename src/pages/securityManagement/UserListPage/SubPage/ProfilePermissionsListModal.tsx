@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Button, Typography, List, ListItem, ListItemText, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Button, Typography, List, ListItem, ListItemText, Accordion, AccordionSummary, AccordionDetails, Box } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { profileListService } from "@/services/SecurityManagementServices/ProfileListServices";
+import { profileService } from "@/services/SecurityManagementServices/ProfileListServices";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { ProfileModulesDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { ProfileDetailedViewDto } from "@/interfaces/SecurityManagement/ProfileListData";
 
 // Define interfaces based on your API response structure
 interface ProfilePermission {
@@ -56,7 +56,7 @@ const ProfilePermissionsListModal: React.FC<ProfilePermissionsModalProps> = ({ p
 
     setLoading(true);
     try {
-      const response: OperationResult<ProfileModulesDto[]> = await profileListService.getProfileDetailsByProfileId(profileId, "M");
+      const response: OperationResult<ProfileDetailedViewDto[]> = await profileService.getAllActiveProfileDetailsByType(profileId, "M");
 
       if (response.success && response.data) {
         const permissions: ProfilePermission[] = response.data;
@@ -134,59 +134,61 @@ const ProfilePermissionsListModal: React.FC<ProfilePermissionsModalProps> = ({ p
           No permissions found for this profile.
         </Typography>
       ) : (
-        <List sx={{ width: "100%", bgcolor: "background.paper", p: 0 }}>
-          {groupedPermissions.map((group) => (
-            <Accordion key={`group-${group.groupId}`} defaultExpanded>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                sx={{
-                  backgroundColor: (theme) => theme.palette.primary.main,
-                  color: (theme) => theme.palette.primary.contrastText,
-                }}
-              >
-                <Typography variant="subtitle1" fontWeight="bold">
-                  {group.groupName}
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ p: 0 }}>
-                <List disablePadding>
-                  {group.subModules.map((subModule) => (
-                    <Accordion
-                      key={`submodule-${subModule.subId}`}
-                      disableGutters
-                      elevation={0}
-                      sx={{
-                        "&:before": { display: "none" },
-                        border: "1px solid rgba(0, 0, 0, 0.12)",
-                        mb: 1,
-                      }}
-                    >
-                      <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
+        <Box sx={{ minHeight: "600px" }}>
+          <List sx={{ width: "100%", bgcolor: "background.paper", p: 0 }}>
+            {groupedPermissions.map((group) => (
+              <Accordion key={`group-${group.groupId}`} defaultExpanded>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  sx={{
+                    backgroundColor: (theme) => theme.palette.primary.main,
+                    color: (theme) => theme.palette.primary.contrastText,
+                  }}
+                >
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    {group.groupName}
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={{ p: 0 }}>
+                  <List disablePadding>
+                    {group.subModules.map((subModule) => (
+                      <Accordion
+                        key={`submodule-${subModule.subId}`}
+                        disableGutters
+                        elevation={0}
                         sx={{
-                          backgroundColor: (theme) => theme.palette.primary.contrastText,
+                          "&:before": { display: "none" },
+                          border: "1px solid rgba(0, 0, 0, 0.12)",
+                          mb: 1,
                         }}
                       >
-                        <Typography variant="body1" fontWeight="medium">
-                          {subModule.subName}
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails sx={{ p: 0 }}>
-                        <List dense disablePadding>
-                          {subModule.operations.map((operation) => (
-                            <ListItem key={`operation-${operation.opId}`} divider>
-                              <ListItemText primary={operation.opName} />
-                            </ListItem>
-                          ))}
-                        </List>
-                      </AccordionDetails>
-                    </Accordion>
-                  ))}
-                </List>
-              </AccordionDetails>
-            </Accordion>
-          ))}
-        </List>
+                        <AccordionSummary
+                          expandIcon={<ExpandMoreIcon />}
+                          sx={{
+                            backgroundColor: (theme) => theme.palette.primary.contrastText,
+                          }}
+                        >
+                          <Typography variant="body1" fontWeight="medium">
+                            {subModule.subName}
+                          </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails sx={{ p: 0 }}>
+                          <List dense disablePadding>
+                            {subModule.operations.map((operation) => (
+                              <ListItem key={`operation-${operation.opId}`} divider>
+                                <ListItemText primary={operation.opName} />
+                              </ListItem>
+                            ))}
+                          </List>
+                        </AccordionDetails>
+                      </Accordion>
+                    ))}
+                  </List>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+          </List>
+        </Box>
       )}
     </GenericDialog>
   );
