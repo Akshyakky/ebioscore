@@ -4,13 +4,15 @@ import FormField from "@/components/FormField/FormField";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
-import { profileListService } from "@/services/SecurityManagementServices/ProfileListServices";
+
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 import { ProfileDetailDto, ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { UserListDto, UserListPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
 import { Add, Book, Cancel, Delete, Edit, FileUpload, Lock, Print, Save } from "@mui/icons-material";
 import { useAlert } from "@/providers/AlertProvider";
 import { CustomUISwitch } from "@/components/Switch/CustomUISwitch";
+import { profileDetailService } from "@/services/SecurityManagementServices/securityManagementServices";
+import { profileService } from "@/services/SecurityManagementServices/ProfileListServices";
 
 interface DropdownListProps {
   options: DropdownOption[];
@@ -151,7 +153,6 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
   const [isSelectAll, setIsSelectAll] = useState<boolean>(false);
   const { showAlert } = useAlert();
 
-  const [{ compID }] = useState({ compID: 1 });
   const dropdownValues = useDropdownValues(["mainModules", "subModules"]);
 
   useEffect(() => {
@@ -183,7 +184,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
     try {
       let result: any;
       if (mode === "profile") {
-        result = await profileListService.getProfileDetailsByType(mainID, subID, compID, (details as ProfileMastDto).profileID, type);
+        result = await profileService.getProfileDetailsByType(mainID, subID, (details as ProfileMastDto).profileID, type);
       } else {
         result = await userListServices.getUserListPermissionsByType((details as UserListDto).appID, mainID, subID, type);
       }
@@ -232,7 +233,8 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
       const clickedPermission = updatedPermissions.filter((permission) => permission.accessID === id);
 
       if (mode === "profile") {
-        response = await profileListService.saveProfileDetailsByType(clickedPermission, type);
+        const [permissionToSave] = clickedPermission;
+        response = await profileDetailService.save(permissionToSave);
       } else {
         if (type === "M") {
           const userModulePermissions = clickedPermission.map((permission) => ({
@@ -247,7 +249,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
             rActiveYN: "Y",
           }));
           response = await userListServices.saveUserListPermissionsByType(userModulePermissions, type);
-        } else {
+        } else if (type === "R") {
           const userReportPermissions = updatedPermissions.map((permission) => ({
             apAccessID: permission.accessDetailID,
             repID: permission.accessID,
@@ -259,6 +261,18 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
             rActiveYN: "Y",
           }));
           response = await userListServices.saveUserListPermissionsByType(userReportPermissions, type);
+        } else if (type === "D") {
+          const userDepartmentPermissions = updatedPermissions.map((permission) => ({
+            deptUserID: permission.accessDetailID,
+            deptID: permission.accessID,
+            appID: (details as UserListDto).appID,
+            allowYN: permission.allowAccess,
+            profileID: 0,
+            rNotes: "",
+            transferYN: "Y",
+            rActiveYN: "Y",
+          }));
+          response = await userListServices.saveUserListPermissionsByType(userDepartmentPermissions, type);
         }
       }
 
@@ -282,18 +296,18 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
     const userConfirmed = await showAlert("Confirm Action", `Are you sure you want to ${selectAllChecked ? "select" : "deselect"} all permissions?`, "warning", true);
     if (!userConfirmed) return;
     setIsSelectAll(selectAllChecked);
-
     let response;
     if (mode === "profile") {
       const updatedPermissions = (permissions as ProfileDetailDto[]).map((permission) => ({
         ...permission,
         profileID: (details as ProfileMastDto).profileID,
         profileName: (details as ProfileMastDto).profileName,
+        profileType: type,
         rActiveYN: selectAllChecked ? "Y" : "N",
         rNotes: "",
         transferYN: "Y",
       }));
-      response = await profileListService.saveProfileDetailsByType(updatedPermissions, type);
+      response = await profileDetailService.bulkSave(updatedPermissions);
     } else {
       if (type === "M") {
         const updatedModulePermissions = (permissions as UserListPermissionDto[]).map((permission) => ({
@@ -322,7 +336,6 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
         response = await userListServices.saveUserListPermissionsByType(updatedReportPermissions, type);
       }
     }
-
     if (response.success) {
       notifySuccess("Permission applied!");
     } else {
@@ -364,6 +377,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
     setSubId(0);
     setPermissions([]);
     setSelectedItems([]);
+
     if (type === "D") {
       fetchPermissions(0, 0);
     }

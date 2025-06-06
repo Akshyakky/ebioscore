@@ -1,47 +1,21 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  Grid,
-  Paper,
-  Divider,
-  Chip,
-  Stack,
-  IconButton,
-  Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  TextField,
-  MenuItem,
-  FormControl,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
-  Switch,
-  Button,
-} from "@mui/material";
-import { useForm, useFieldArray } from "react-hook-form";
+import { Box, Typography, Grid, Paper, Divider, Stack } from "@mui/material";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Save as SaveIcon,
-  Clear as ClearIcon,
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Info as InfoIcon,
-  ExpandMore as ExpandMoreIcon,
-  Visibility as VisibilityIcon,
-  Check as CheckIcon,
-} from "@mui/icons-material";
+import { Save as SaveIcon, Clear as ClearIcon } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import { ChargeWithAllDetailsDto, ChargeCodeGenerationDto } from "@/interfaces/Billing/ChargeDto";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { useScheduleOfCharges } from "../hooks/useScheduleOfCharges";
+import PriceDetailsComponent from "./PriceDetailsComponent";
+import DoctorSharesComponent from "./DoctorSharesComponent";
+import ChargeAliasesComponent from "./ChargeAliasesComponent";
+import AssociatedFacultiesComponent from "./AssociatedFacultiesComponent";
+import ChargePacksComponent from "./ChargePacksComponent";
 
 const chargeSchema = z.object({
   chargeID: z.number().default(0),
@@ -71,6 +45,7 @@ const chargeSchema = z.object({
 });
 
 type ChargeFormData = z.infer<typeof chargeSchema>;
+
 interface PricingGridItem {
   id: string;
   picId: number;
@@ -84,6 +59,7 @@ interface PricingGridItem {
     };
   };
 }
+
 interface ChargeFormDialogProps {
   open: boolean;
   onClose: () => void;
@@ -100,14 +76,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
   const [facultiesExpanded, setFacultiesExpanded] = useState(false);
   const [packsExpanded, setPacksExpanded] = useState(false);
   const [formDebug, setFormDebug] = useState({ isValid: false, isDirty: false });
-  const [gridTab, setGridTab] = useState(0);
-  const [picFilter, setPicFilter] = useState<string>("All");
-  const [wardCategoryFilter, setWardCategoryFilter] = useState<string>("All");
-  const [isPercentage, setIsPercentage] = useState<boolean>(false);
-  const [amountValue, setAmountValue] = useState<number>(0);
-  const [priceChangeType, setPriceChangeType] = useState<string>("None");
-  const [displayAmountType, setDisplayAmountType] = useState<string>("Both");
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [pricingGridData, setPricingGridData] = useState<PricingGridItem[]>([]);
   const isEditMode = !!charge && charge.chargeID > 0;
   const { generateChargeCode } = useScheduleOfCharges();
@@ -163,33 +131,9 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
   useEffect(() => {
     setFormDebug({ isValid, isDirty });
     if (process.env.NODE_ENV === "development") {
+      // console log for debugging if needed
     }
   }, [isValid, isDirty, errors]);
-
-  const chargeDetailsArray = useFieldArray({
-    control,
-    name: "ChargeDetails",
-  });
-
-  const doctorSharesArray = useFieldArray({
-    control,
-    name: "DoctorShares",
-  });
-
-  const aliasesArray = useFieldArray({
-    control,
-    name: "ChargeAliases",
-  });
-
-  const facultiesArray = useFieldArray({
-    control,
-    name: "ChargeFaculties",
-  });
-
-  const packsArray = useFieldArray({
-    control,
-    name: "ChargePacks",
-  });
 
   const watchedBChID = watch("bChID");
   const watchedChargeTo = watch("chargeTo");
@@ -342,16 +286,17 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
     return bedCat ? Number(bedCat.value) : 0;
   };
 
-  const updateChargeDetailsFromGrid = () => {
-    chargeDetailsArray.remove();
-    pricingGridData.forEach((row) => {
-      Object.entries(row.wardCategories).forEach(([wcName, values]) => {
+  const updateChargeDetailsFromGrid = useCallback(() => {
+    const chargeDetailsArray = [];
+
+    for (const row of pricingGridData) {
+      for (const [wcName, values] of Object.entries(row.wardCategories)) {
         if (values.drAmt === 0 && values.hospAmt === 0 && values.totAmt === 0) {
-          return;
+          continue;
         }
         const wcId = getWardCategoryIdByName(wcName);
         if (wcId) {
-          chargeDetailsArray.append({
+          chargeDetailsArray.push({
             chDetID: 0,
             chargeID: 0,
             pTypeID: row.picId,
@@ -363,66 +308,11 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             ChargePacks: [],
           });
         }
-      });
-    });
-  };
-
-  const toggleRowSelection = (rowId: string) => {
-    if (selectedRows.includes(rowId)) {
-      setSelectedRows(selectedRows.filter((id) => id !== rowId));
-    } else {
-      setSelectedRows([...selectedRows, rowId]);
-    }
-  };
-
-  const isRowSelected = (rowId: string) => {
-    return selectedRows.includes(rowId);
-  };
-
-  const applyChanges = () => {
-    if (priceChangeType === "None" || selectedRows.length === 0) {
-      return;
-    }
-
-    const updatedGridData = pricingGridData.map((row) => {
-      if (selectedRows.includes(row.id)) {
-        const updatedCategories = { ...row.wardCategories };
-        const categoriesToUpdate = wardCategoryFilter === "All" ? Object.keys(updatedCategories) : [bedCategory.find((wc) => wc.value === wardCategoryFilter)?.label as string];
-        categoriesToUpdate.forEach((wcName) => {
-          if (!updatedCategories[wcName]) return;
-          const currentValues = updatedCategories[wcName];
-          const updateDr = displayAmountType === "Both" || displayAmountType === "Dr Amt";
-          const updateHosp = displayAmountType === "Both" || displayAmountType === "Hosp Amt";
-          if (updateDr) {
-            if (priceChangeType === "Increase") {
-              currentValues.drAmt += isPercentage ? Math.round((currentValues.drAmt * amountValue) / 100) : amountValue;
-            } else if (priceChangeType === "Decrease") {
-              currentValues.drAmt -= isPercentage ? Math.round((currentValues.drAmt * amountValue) / 100) : amountValue;
-              if (currentValues.drAmt < 0) currentValues.drAmt = 0;
-            }
-          }
-
-          if (updateHosp) {
-            if (priceChangeType === "Increase") {
-              currentValues.hospAmt += isPercentage ? Math.round((currentValues.hospAmt * amountValue) / 100) : amountValue;
-            } else if (priceChangeType === "Decrease") {
-              currentValues.hospAmt -= isPercentage ? Math.round((currentValues.hospAmt * amountValue) / 100) : amountValue;
-              if (currentValues.hospAmt < 0) currentValues.hospAmt = 0;
-            }
-          }
-          currentValues.totAmt = currentValues.drAmt + currentValues.hospAmt;
-        });
-        return {
-          ...row,
-          wardCategories: updatedCategories,
-        };
       }
+    }
 
-      return row;
-    });
-    setPricingGridData(updatedGridData);
-    updateChargeDetailsFromGrid();
-  };
+    setValue("ChargeDetails", chargeDetailsArray, { shouldValidate: true });
+  }, [pricingGridData, setValue, getWardCategoryIdByName]);
 
   const handleGenerateCode = useCallback(async () => {
     if (!watchedBChID || !watchedChargeTo) {
@@ -444,6 +334,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
       }
       trigger();
     } catch (error) {
+      // Error handling would go here
     } finally {
       setIsGeneratingCode(false);
     }
@@ -550,7 +441,9 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
           })) || [],
       };
       await onSubmit(formattedData);
-    } catch (error) {}
+    } catch (error) {
+      // Error handling would go here
+    }
   };
 
   const handleClear = () => {
@@ -612,219 +505,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
       initializeGridData([]);
     }
   };
-
-  const addDoctorShare = () => {
-    doctorSharesArray.append({
-      docShareID: 0,
-      chargeID: 0,
-      conID: 0,
-      doctorShare: 0,
-      hospShare: 0,
-    });
-    setDoctorSharesExpanded(true);
-  };
-
-  const addAlias = () => {
-    aliasesArray.append({
-      chAliasID: 0,
-      chargeID: 0,
-      pTypeID: 0,
-      chargeDesc: "",
-      chargeDescLang: "",
-    });
-    setAliasesExpanded(true);
-  };
-
-  const addFaculty = () => {
-    facultiesArray.append({
-      chFacID: 0,
-      chargeID: 0,
-      aSubID: 0,
-    });
-    setFacultiesExpanded(true);
-  };
-
-  const addPack = () => {
-    packsArray.append({
-      chPackID: 0,
-      chargeID: 0,
-      chargeRevise: "",
-      chargeStatus: "AC",
-      dcValue: 0,
-      hcValue: 0,
-      chValue: 0,
-    });
-    setPacksExpanded(true);
-  };
-
-  const pricingGridColumns = useMemo(() => {
-    const columns: Column<any>[] = [
-      {
-        key: "select",
-        header: "Select",
-        visible: true,
-        width: 70,
-        render: (row) => <input type="checkbox" checked={isRowSelected(row.id)} onChange={() => toggleRowSelection(row.id)} />,
-      },
-      {
-        key: "picName",
-        header: "PIC Name",
-        visible: true,
-        width: 180,
-        render: (row) => (
-          <Typography variant="body2" fontWeight="medium">
-            {row.picName}
-          </Typography>
-        ),
-      },
-    ];
-
-    wardCategories.forEach((category) => {
-      columns.push({
-        key: `${category.name}-drAmt`,
-        header: "Dr Amt",
-        visible: true,
-        width: 100,
-        align: "center",
-        headerStyle: {
-          backgroundColor: category.color,
-          color: "white",
-          textAlign: "center",
-          borderRight: "0px solid white",
-        },
-        cellStyle: { padding: "4px", textAlign: "center" },
-        render: (row) => (
-          <input
-            type="number"
-            min="0"
-            value={row.wardCategories[category.name]?.drAmt || 0}
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              const updatedData = [...pricingGridData];
-              const rowIndex = updatedData.findIndex((r) => r.id === row.id);
-
-              if (rowIndex !== -1) {
-                if (!updatedData[rowIndex].wardCategories[category.name]) {
-                  updatedData[rowIndex].wardCategories[category.name] = { drAmt: 0, hospAmt: 0, totAmt: 0 };
-                }
-                updatedData[rowIndex].wardCategories[category.name].drAmt = value;
-                updatedData[rowIndex].wardCategories[category.name].totAmt = value + (updatedData[rowIndex].wardCategories[category.name].hospAmt || 0);
-                setPricingGridData(updatedData);
-                updateChargeDetailsFromGrid();
-              }
-            }}
-            style={{
-              width: "70px",
-              padding: "4px",
-              textAlign: "right",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-            }}
-          />
-        ),
-      });
-
-      columns.push({
-        key: `${category.name}-hospAmt`,
-        header: "Hosp Amt.",
-        visible: true,
-        width: 100,
-        align: "center",
-        headerStyle: {
-          backgroundColor: category.color,
-          color: "white",
-          textAlign: "center",
-          borderRight: "0px solid white",
-        },
-        cellStyle: { padding: "4px", textAlign: "center" },
-        render: (row) => (
-          <input
-            type="number"
-            min="0"
-            value={row.wardCategories[category.name]?.hospAmt || 0}
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              const updatedData = [...pricingGridData];
-              const rowIndex = updatedData.findIndex((r) => r.id === row.id);
-              if (rowIndex !== -1) {
-                if (!updatedData[rowIndex].wardCategories[category.name]) {
-                  updatedData[rowIndex].wardCategories[category.name] = { drAmt: 0, hospAmt: 0, totAmt: 0 };
-                }
-                updatedData[rowIndex].wardCategories[category.name].hospAmt = value;
-                updatedData[rowIndex].wardCategories[category.name].totAmt = (updatedData[rowIndex].wardCategories[category.name].drAmt || 0) + value;
-
-                setPricingGridData(updatedData);
-                updateChargeDetailsFromGrid();
-              }
-            }}
-            style={{
-              width: "70px",
-              padding: "4px",
-              textAlign: "right",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-            }}
-          />
-        ),
-      });
-
-      columns.push({
-        key: `${category.name}-totAmt`,
-        header: "Tot Amt",
-        visible: true,
-        width: 100,
-        align: "center",
-        headerStyle: {
-          backgroundColor: category.color,
-          color: "white",
-          textAlign: "center",
-          borderRight: "1px solid white",
-        },
-        cellStyle: { padding: "4px", textAlign: "center", borderRight: "1px solid #e0e0e0" },
-        render: (row) => (
-          <input
-            type="number"
-            min="0"
-            value={row.wardCategories[category.name]?.totAmt || 0}
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              const updatedData = [...pricingGridData];
-              const rowIndex = updatedData.findIndex((r) => r.id === row.id);
-
-              if (rowIndex !== -1) {
-                if (!updatedData[rowIndex].wardCategories[category.name]) {
-                  updatedData[rowIndex].wardCategories[category.name] = { drAmt: 0, hospAmt: 0, totAmt: 0 };
-                }
-                updatedData[rowIndex].wardCategories[category.name].totAmt = value;
-                setPricingGridData(updatedData);
-                updateChargeDetailsFromGrid();
-              }
-            }}
-            style={{
-              width: "70px",
-              padding: "4px",
-              textAlign: "right",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              fontWeight: "bold",
-              backgroundColor: "#e8f0fe",
-            }}
-          />
-        ),
-      });
-    });
-
-    return columns;
-  }, [pricingGridData, selectedRows, wardCategories]);
-
-  const filteredPricingData = useMemo(() => {
-    return pricingGridData.filter((row) => {
-      if (picFilter !== "All" && row.picId !== parseInt(picFilter)) {
-        return false;
-      }
-      return true;
-    });
-  }, [pricingGridData, picFilter]);
 
   const dialogActions = (
     <>
@@ -972,368 +652,36 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             </Grid>
           </Paper>
 
-          <Accordion expanded={detailsExpanded} onChange={() => setDetailsExpanded(!detailsExpanded)}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box display="flex" alignItems="center" gap={1} width="100%">
-                <Typography variant="subtitle1">Pricing Details</Typography>
-                <Chip label={`${chargeDetailsArray.fields.length} entries`} size="small" color="primary" variant="outlined" />
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Box>
-                <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
-                  <Grid size={{ xs: 12, md: 3 }}>
-                    <Typography variant="subtitle2">PIC</Typography>
-                    <TextField select fullWidth size="small" value={picFilter} onChange={(e) => setPicFilter(e.target.value)}>
-                      <MenuItem value="All">All</MenuItem>
-                      {pic.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
+          {/* Price Details Component */}
+          <PriceDetailsComponent
+            control={control}
+            expanded={detailsExpanded}
+            onToggleExpand={() => setDetailsExpanded(!detailsExpanded)}
+            pricingGridData={pricingGridData}
+            setPricingGridData={setPricingGridData}
+            updateChargeDetailsFromGrid={updateChargeDetailsFromGrid}
+            wardCategories={wardCategories}
+            pic={pic}
+            bedCategory={bedCategory}
+          />
 
-                  <Grid size={{ xs: 12, md: 3 }}>
-                    <Typography variant="subtitle2">Ward Category</Typography>
-                    <TextField select fullWidth size="small" value={wardCategoryFilter} onChange={(e) => setWardCategoryFilter(e.target.value)}>
-                      <MenuItem value="All">All</MenuItem>
-                      {bedCategory.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
+          {/* Doctor Shares Component */}
+          <DoctorSharesComponent
+            control={control}
+            expanded={doctorSharesExpanded}
+            onToggleExpand={() => setDoctorSharesExpanded(!doctorSharesExpanded)}
+            attendingPhy={attendingPhy}
+            doctorShareEnabled={watchedDoctorShareYN === "Y"}
+          />
 
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box display="flex" alignItems="center">
-                      <FormControlLabel
-                        control={<Switch checked={isPercentage} onChange={(e) => setIsPercentage(e.target.checked)} color="primary" />}
-                        label="Percentage"
-                        sx={{ mr: 2 }}
-                      />
-                      <Typography variant="body2" sx={{ mr: 1 }}>
-                        {isPercentage ? "Percentage" : "Amount"}
-                      </Typography>
-                      <TextField
-                        type="number"
-                        size="small"
-                        value={amountValue}
-                        onChange={(e) => setAmountValue(Number(e.target.value))}
-                        InputProps={{
-                          inputProps: { min: 0 },
-                        }}
-                        sx={{ width: 150, mr: 2 }}
-                      />
-                    </Box>
-                  </Grid>
+          {/* Charge Aliases Component */}
+          <ChargeAliasesComponent control={control} expanded={aliasesExpanded} onToggleExpand={() => setAliasesExpanded(!aliasesExpanded)} pic={pic} />
 
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <FormControl component="fieldset">
-                      <RadioGroup row value={priceChangeType} onChange={(e) => setPriceChangeType(e.target.value)}>
-                        <FormControlLabel value="None" control={<Radio size="small" />} label="None" />
-                        <FormControlLabel value="Increase" control={<Radio size="small" />} label="Increase" />
-                        <FormControlLabel value="Decrease" control={<Radio size="small" />} label="Decrease" />
-                      </RadioGroup>
-                    </FormControl>
-                  </Grid>
+          {/* Associated Faculties Component */}
+          <AssociatedFacultiesComponent control={control} expanded={facultiesExpanded} onToggleExpand={() => setFacultiesExpanded(!facultiesExpanded)} subModules={subModules} />
 
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <FormControl component="fieldset">
-                      <RadioGroup row value={displayAmountType} onChange={(e) => setDisplayAmountType(e.target.value)}>
-                        <FormControlLabel value="Both" control={<Radio size="small" />} label="Both" />
-                        <FormControlLabel value="Dr Amt" control={<Radio size="small" />} label="Dr Amt" />
-                        <FormControlLabel value="Hosp Amt" control={<Radio size="small" />} label="Hosp Amt" />
-                      </RadioGroup>
-                    </FormControl>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 2 }}>
-                    <Box display="flex" justifyContent="flex-end">
-                      <Button variant="contained" startIcon={<VisibilityIcon />} size="small" color="primary" sx={{ mr: 1 }}>
-                        View
-                      </Button>
-                      <Button variant="contained" startIcon={<CheckIcon />} size="small" color="success" onClick={applyChanges}>
-                        Apply
-                      </Button>
-                    </Box>
-                  </Grid>
-                </Grid>
-
-                {gridTab === 0 && (
-                  <Box sx={{ maxHeight: "500px", overflowX: "auto" }}>
-                    <CustomGrid
-                      columns={pricingGridColumns}
-                      data={filteredPricingData}
-                      maxHeight="500px"
-                      emptyStateMessage="No pricing data available"
-                      density="small"
-                      gridStyle={{
-                        border: "1px solid #e0e0e0",
-                        borderRadius: "4px",
-                        overflow: "hidden",
-                      }}
-                    />
-                  </Box>
-                )}
-
-                {gridTab === 1 && (
-                  <Box p={2}>
-                    <Typography variant="body1">Service Alias content goes here</Typography>
-                  </Box>
-                )}
-
-                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>
-                  Note: You can select multiple rows and apply changes to Doctor and Hospital amounts in bulk. When you change Doctor Amount or Hospital Amount, the Total Amount
-                  will be calculated automatically.
-                </Typography>
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-
-          {/* Doctor Shares */}
-          {watchedDoctorShareYN === "Y" && (
-            <Accordion expanded={doctorSharesExpanded} onChange={() => setDoctorSharesExpanded(!doctorSharesExpanded)}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box display="flex" alignItems="center" gap={1} width="100%">
-                  <Typography variant="subtitle1">Doctor Revenue Sharing</Typography>
-                  <Chip label={`${doctorSharesArray.fields.length} doctors`} size="small" color="success" variant="outlined" />
-                  <Box sx={{ ml: "auto" }}>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addDoctorShare();
-                      }}
-                      color="primary"
-                    >
-                      <AddIcon />
-                    </IconButton>
-                  </Box>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Stack spacing={2}>
-                  {doctorSharesArray.fields.map((field, index) => (
-                    <Paper key={field.id} sx={{ p: 2, backgroundColor: "grey.50" }}>
-                      <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
-                        <Typography variant="subtitle2">Doctor Share #{index + 1}</Typography>
-                        <IconButton size="small" color="error" onClick={() => doctorSharesArray.remove(index)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
-                      <Grid container spacing={2}>
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <EnhancedFormField name={`DoctorShares.${index}.conID`} control={control} type="select" label="Doctor" size="small" options={attendingPhy} />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 3 }}>
-                          <EnhancedFormField name={`DoctorShares.${index}.doctorShare`} control={control} type="number" label="Doctor Share (%)" size="small" />
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 3 }}>
-                          <EnhancedFormField name={`DoctorShares.${index}.hospShare`} control={control} type="number" label="Hospital Share (%)" size="small" />
-                        </Grid>
-                      </Grid>
-                    </Paper>
-                  ))}
-                  {doctorSharesArray.fields.length === 0 && <Alert severity="info">No doctor shares configured. Click the + button to add revenue sharing with doctors.</Alert>}
-                </Stack>
-              </AccordionDetails>
-            </Accordion>
-          )}
-
-          <Accordion expanded={aliasesExpanded} onChange={() => setAliasesExpanded(!aliasesExpanded)}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box display="flex" alignItems="center" gap={1} width="100%">
-                <Typography variant="subtitle1">Charge Aliases</Typography>
-                <Chip label={`${aliasesArray.fields.length} aliases`} size="small" color="info" variant="outlined" />
-                <Box sx={{ ml: "auto" }}>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addAlias();
-                    }}
-                    color="primary"
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </Box>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack spacing={2}>
-                {aliasesArray.fields.map((field, index) => (
-                  <Paper key={field.id} sx={{ p: 2, backgroundColor: "grey.50" }}>
-                    <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
-                      <Typography variant="subtitle2">Alias #{index + 1}</Typography>
-                      <IconButton size="small" color="error" onClick={() => aliasesArray.remove(index)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                    <Grid container spacing={2}>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <EnhancedFormField name={`ChargeAliases.${index}.pTypeID`} control={control} type="select" label="Patient Type" size="small" options={pic} />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <EnhancedFormField
-                          name={`ChargeAliases.${index}.chargeDesc`}
-                          control={control}
-                          type="text"
-                          label="Alias Description"
-                          size="small"
-                          helperText="Alternative description for this patient type"
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <EnhancedFormField
-                          name={`ChargeAliases.${index}.chargeDescLang`}
-                          control={control}
-                          type="text"
-                          label="Local Language Description"
-                          size="small"
-                          helperText="Description in local language"
-                        />
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                ))}
-                {aliasesArray.fields.length === 0 && (
-                  <Alert severity="info">No charge aliases configured. Click the + button to add alternative descriptions for different patient types or languages.</Alert>
-                )}
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-
-          <Accordion expanded={facultiesExpanded} onChange={() => setFacultiesExpanded(!facultiesExpanded)}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box display="flex" alignItems="center" gap={1} width="100%">
-                <Typography variant="subtitle1">Associated Faculties</Typography>
-                <Chip label={`${facultiesArray.fields.length} faculties`} size="small" color="secondary" variant="outlined" />
-                <Box sx={{ ml: "auto" }}>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addFaculty();
-                    }}
-                    color="primary"
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </Box>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack spacing={2}>
-                {facultiesArray.fields.map((field, index) => (
-                  <Paper key={field.id} sx={{ p: 2, backgroundColor: "grey.50" }}>
-                    <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
-                      <Typography variant="subtitle2">Faculty #{index + 1}</Typography>
-                      <IconButton size="small" color="error" onClick={() => facultiesArray.remove(index)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                    <Grid container spacing={2}>
-                      <Grid size={{ xs: 12, md: 12 }}>
-                        <EnhancedFormField
-                          name={`ChargeFaculties.${index}.aSubID`}
-                          control={control}
-                          type="select"
-                          label="Academic Subject/Faculty"
-                          required
-                          size="small"
-                          options={subModules}
-                          helperText="Select the academic subject or faculty this charge is associated with"
-                        />
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                ))}
-                {facultiesArray.fields.length === 0 && (
-                  <Alert severity="info">No faculties associated. Click the + button to associate this charge with academic subjects or faculties.</Alert>
-                )}
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-
-          <Accordion expanded={packsExpanded} onChange={() => setPacksExpanded(!packsExpanded)}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box display="flex" alignItems="center" gap={1} width="100%">
-                <Typography variant="subtitle1">Charge Packs</Typography>
-                <Chip label={`${packsArray.fields.length} packs`} size="small" color="warning" variant="outlined" />
-                <Box sx={{ ml: "auto" }}>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addPack();
-                    }}
-                    color="primary"
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </Box>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack spacing={2}>
-                {packsArray.fields.map((field, index) => (
-                  <Paper key={field.id} sx={{ p: 2, backgroundColor: "grey.50" }}>
-                    <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
-                      <Typography variant="subtitle2">Pack #{index + 1}</Typography>
-                      <IconButton size="small" color="error" onClick={() => packsArray.remove(index)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                    <Grid container spacing={2}>
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <EnhancedFormField
-                          name={`ChargePacks.${index}.chargeRevise`}
-                          control={control}
-                          type="text"
-                          label="Revision"
-                          size="small"
-                          helperText="Pack revision identifier"
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <EnhancedFormField name={`ChargePacks.${index}.chValue`} control={control} type="number" label="Pack Value" size="small" />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <EnhancedFormField name={`ChargePacks.${index}.effectiveFromDate`} control={control} type="datepicker" label="Effective From" size="small" />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <EnhancedFormField name={`ChargePacks.${index}.effectiveToDate`} control={control} type="datepicker" label="Effective To" size="small" />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <EnhancedFormField name={`ChargePacks.${index}.dcValue`} control={control} type="number" label="DC Value" size="small" />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 3 }}>
-                        <EnhancedFormField name={`ChargePacks.${index}.hcValue`} control={control} type="number" label="HC Value" size="small" />
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <EnhancedFormField
-                          name={`ChargePacks.${index}.chargeStatus`}
-                          control={control}
-                          type="select"
-                          label="Status"
-                          size="small"
-                          options={[
-                            { value: "AC", label: "Active" },
-                            { value: "IN", label: "Inactive" },
-                          ]}
-                        />
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                ))}
-                {packsArray.fields.length === 0 && (
-                  <Alert severity="info">No charge packs configured. Click the + button to add versioned charge packages with effective dates.</Alert>
-                )}
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
+          {/* Charge Packs Component */}
+          <ChargePacksComponent control={control} expanded={packsExpanded} onToggleExpand={() => setPacksExpanded(!packsExpanded)} />
         </form>
       </Box>
     </GenericDialog>
