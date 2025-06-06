@@ -12,8 +12,8 @@ interface ProfilePermission {
   profDetID: number;
   profileID: number;
   profileName: string;
-  aOprID: number;
-  aOprName: string;
+  accessID: number;
+  accessName: string;
   aSubID: number;
   aSubName: string;
   aUGrpID: number;
@@ -102,11 +102,11 @@ const ProfilePermissionsListModal: React.FC<ProfilePermissionsModalProps> = ({ p
       }
 
       // Add operation to submodule if it doesn't already exist
-      const operationExists = subModule.operations.some((op) => op.opId === permission.aOprID);
+      const operationExists = subModule.operations.some((op) => op.opId === permission.accessID);
       if (!operationExists) {
         subModule.operations.push({
-          opId: permission.aOprID,
-          opName: permission.aOprName,
+          opId: permission.accessID,
+          opName: permission.accessName,
         });
       }
     });
