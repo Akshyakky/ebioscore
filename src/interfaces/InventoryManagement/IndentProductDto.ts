@@ -1,18 +1,17 @@
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 
-export interface IndentSaveRequestDto extends BaseDto {
+export interface IndentSaveRequestDto {
   IndentMaster: IndentMastDto;
   IndentDetails: IndentDetailDto[];
 }
-
-export interface IndentMastDto extends BaseDto {
+export interface IndentMastDto {
   indentID: number;
   fromDeptID?: number;
   fromDeptName?: string;
   pChartID?: number;
-  toDeptID: number | string;
+  toDeptID?: number;
   toDeptName?: string;
-  indentDate?: string;
+  indentDate?: Date;
   auGrpID?: number;
   autoIndentYN?: string;
   catDesc?: string;
@@ -26,26 +25,29 @@ export interface IndentMastDto extends BaseDto {
   indGrnStatusCode?: string;
   indGrnStatus?: string;
   pChartCode?: string;
-  transferYN?: string;
   indStatusCode?: string;
   indStatus?: string;
   oldPChartID?: number;
+  rActiveYN: string;
+  transferYN: string;
+  rNotes?: string;
 }
 
-export interface IndentDetailDto extends BaseDto {
+export interface IndentDetailDto {
   indentDetID: number;
   indentID?: number;
   productID?: number;
   productCode?: string;
   catValue?: string;
   pGrpID?: number;
+  rOL?: number;
   expiryYN?: string;
   ppkgID?: number;
   psGrpID?: number;
-  pUnitID?: string;
+  pUnitID?: number;
   pUnitName?: string;
   unitPack?: number;
-  requiredQty: number;
+  requiredQty?: number;
   requiredUnitQty?: number;
   poNo?: number;
   deptIssualYN: string;
@@ -70,21 +72,23 @@ export interface IndentDetailDto extends BaseDto {
   tax?: number;
   cgstPerValue?: number;
   sgstPerValue?: number;
-  stockLevel?: number; // New Field
-  qoh?: number; // New Field
-  average?: number; // New Field
-  reOrderLevel?: number; // New Field
-  minLevelUnits?: number; // New Field
-  maxLevelUnits?: number; // New Field
-  location?: string; // New Field
-  netValue?: number; // New Field
-  unitsPackage?: number; // New Field
-  units?: string; // New Field
-  package?: string; // New Field
-  groupName?: string; // New Field
-  baseUnit?: number; // New Field
-  leadTime?: number; // New Field
-  averageDemand?: number; // New Field
-  rol?: number; // New Field
-  roq?: number; // New Field
+  qoh?: number;
+  average?: number;
+  reOrderLevel?: number;
+  minLevelUnits?: number;
+  maxLevelUnits?: number;
+  netValue?: number;
+  unitsPackage?: number;
+  units?: string;
+  package?: string;
+  groupName?: string;
+  baseUnit?: number;
+  leadTime?: number;
+  averageDemand?: number;
+  StockLevel?: number;
+  Roq?: number;
+  Location?: string;
+  rActiveYN: string;
+  transferYN: string;
+  rNotes?: string;
 }

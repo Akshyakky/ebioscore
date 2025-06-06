@@ -1,54 +1,67 @@
-import { GenericEntityService } from "@/services/GenericEntityService/GenericEntityService";
+import { IndentDetailDto, IndentMastDto, IndentSaveRequestDto } from "@/interfaces/InventoryManagement/IndentProductDto";
+import { DateFilterType, FilterDto } from "@/interfaces/Common/FilterDto";
 import { CommonApiService } from "@/services/CommonApiService";
+import { GenericEntityService, OperationResult, PaginatedList } from "@/services/GenericEntityService/GenericEntityService";
 import { APIConfig } from "@/apiConfig";
-import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { IndentMastDto, IndentSaveRequestDto } from "@/interfaces/InventoryManagement/IndentProductDto";
-import { FilterDto } from "@/interfaces/Common/FilterDto";
-import { PaginatedList } from "@/interfaces/Common/PaginatedList";
+import { createEntityService } from "@/utils/Common/serviceFactory";
 
-class IndentProductService extends GenericEntityService<IndentSaveRequestDto> {
+// Extended services with custom methods for complex operations
+class ExtendedIndentMastService extends GenericEntityService<IndentMastDto> {
   constructor() {
-    super(
-      new CommonApiService({
-        baseURL: APIConfig.inventoryManagementURL,
-      }),
-      "Indent"
-    );
+    super(new CommonApiService({ baseURL: APIConfig.inventoryManagementURL }), "IndentMast");
+  }
+}
+
+class ExtendedIndentDetailService extends GenericEntityService<IndentDetailDto> {
+  constructor() {
+    super(new CommonApiService({ baseURL: APIConfig.inventoryManagementURL }), "IndentDetail");
+  }
+}
+
+class ExtendedIndentService extends GenericEntityService<IndentSaveRequestDto> {
+  constructor() {
+    super(new CommonApiService({ baseURL: APIConfig.inventoryManagementURL }), "Indent");
   }
 
-  async saveIndent(IndentData: IndentSaveRequestDto): Promise<OperationResult<any[]>> {
-    if (IndentData.IndentDetails) {
-      IndentData.IndentDetails = IndentData.IndentDetails.map((detail) => {
-        if (IndentData.id > 0) {
-          detail.indentDetID = detail.indentDetID || 0;
-        }
-        return detail;
-      });
-    }
-
-    return this.apiService.post<OperationResult<any[]>>(`${this.baseEndpoint}/Save`, IndentData, this.getToken());
+  /**
+   * Saves a complete indent (master + details) in a single transaction
+   */
+  async saveIndent(indentDto: IndentSaveRequestDto): Promise<OperationResult<IndentSaveRequestDto>> {
+    return this.apiService.post<OperationResult<IndentSaveRequestDto>>(`${this.baseEndpoint}/Save`, indentDto, this.getToken());
   }
 
-  async getIndentById(indentId: number): Promise<OperationResult<any>> {
-    return this.apiService.get<OperationResult<any>>(`${this.baseEndpoint}/GetById/${indentId}`, this.getToken());
+  /**
+   * Retrieves a complete indent (master + details) by ID
+   */
+  async getIndentById(id: number): Promise<OperationResult<IndentSaveRequestDto>> {
+    return this.apiService.get<OperationResult<IndentSaveRequestDto>>(`${this.baseEndpoint}/GetById/${id}`, this.getToken());
   }
 
+  /**
+   * Retrieves all indents with filtering and pagination
+   */
   async getAllIndents(filterDto: FilterDto): Promise<OperationResult<PaginatedList<IndentMastDto>>> {
-    const params = new URLSearchParams();
-    params.append("dateFilter", filterDto.dateFilter.toString());
-    if (filterDto.startDate) {
-      params.append("startDate", filterDto.startDate.toISOString());
-    }
-    if (filterDto.endDate) {
-      params.append("endDate", filterDto.endDate.toISOString());
-    }
-    if (filterDto.statusFilter) {
-      params.append("statusFilter", filterDto.statusFilter);
-    }
-    params.append("pageIndex", filterDto.pageIndex.toString());
-    params.append("pageSize", filterDto.pageSize.toString());
+    const params = new URLSearchParams({
+      dateFilter: filterDto.dateFilter.toString(),
+      pageIndex: filterDto.pageIndex.toString(),
+      pageSize: filterDto.pageSize.toString(),
+      ...(filterDto.startDate && { startDate: filterDto.startDate.toISOString() }),
+      ...(filterDto.endDate && { endDate: filterDto.endDate.toISOString() }),
+      ...(filterDto.statusFilter && { statusFilter: filterDto.statusFilter }),
+    });
+
     return this.apiService.get<OperationResult<PaginatedList<IndentMastDto>>>(`${this.baseEndpoint}/GetAll?${params.toString()}`, this.getToken());
   }
 }
 
-export const indentProductServices = new IndentProductService();
+// Export basic services using factory pattern (for simple CRUD operations)
+export const indentMastBasicService = createEntityService<IndentMastDto>("IndentMast", "inventoryManagementURL");
+export const indentDetailBasicService = createEntityService<IndentDetailDto>("IndentDetail", "inventoryManagementURL");
+
+// Export extended services with custom methods (for complex operations)
+export const indentMastService = new ExtendedIndentMastService();
+export const indentDetailService = new ExtendedIndentDetailService();
+export const indentService = new ExtendedIndentService();
+
+// Export types for convenience
+export type { IndentMastDto, IndentDetailDto, IndentSaveRequestDto, FilterDto, DateFilterType };
