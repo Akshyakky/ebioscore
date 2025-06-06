@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
-import { ProductOption } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
+import { ProductOption } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
 
 interface UseProductSearchProps {
   debounceTimeMs?: number;

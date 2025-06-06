@@ -3,7 +3,7 @@
 import React, { useEffect, useImperativeHandle, forwardRef } from "react";
 import { TextField, Autocomplete, Box, CircularProgress, Typography } from "@mui/material";
 import { ProductSearchProps } from "./ProductSearchProps";
-import { ProductOption } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
+import { ProductOption } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
 import { useProductSearch } from "@/hooks/InventoryManagement/Product/useProductSearch";
 
 export interface ProductSearchRef {
