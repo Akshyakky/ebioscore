@@ -24,8 +24,6 @@ export interface BChargeDto extends BaseDto {
   rActiveYN?: "Y" | "N";
   rTransferYN?: "Y" | "N";
   rNotes?: string;
-
-  // Navigation properties for related entities
   ChargeDetails: BChargeDetailDto[];
   DoctorShares: BDoctorSharePercShareDto[];
   ChargeAliases: BChargeAliasDto[];
@@ -45,8 +43,6 @@ export interface BChargeDetailDto extends BaseDto {
   rActiveYN?: "Y" | "N";
   rTransferYN?: "Y" | "N";
   rNotes?: string;
-
-  // Navigation properties
   ChargePacks: BChargePackDto[];
 }
 
