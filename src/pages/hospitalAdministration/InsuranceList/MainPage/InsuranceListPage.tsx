@@ -24,11 +24,6 @@ const statusOptions = [
   { value: "inactive", label: "Inactive" },
 ];
 
-const transferOptions = [
-  { value: "Y", label: "Transferable" },
-  { value: "N", label: "Non-Transferable" },
-];
-
 const InsuranceListPage: React.FC = () => {
   const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -210,12 +205,6 @@ const InsuranceListPage: React.FC = () => {
           </Typography>
         </Grid>
         <Grid size={{ xs: 12, sm: 2.4 }}>
-          <Typography variant="h6">Transferable</Typography>
-          <Typography variant="h4" color="info.main">
-            {stats.transferableInsurance}
-          </Typography>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 2.4 }}>
           <Typography variant="h6">Categories</Typography>
           <Typography variant="h4" color="secondary.main">
             {stats.categoriesCount}
@@ -277,15 +266,6 @@ const InsuranceListPage: React.FC = () => {
       filterable: true,
       width: 120,
       formatter: (value: string) => value || "-",
-    },
-    {
-      key: "transferYN",
-      header: "Transferable",
-      visible: true,
-      sortable: true,
-      filterable: true,
-      width: 120,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "info" : "default"} label={value === "Y" ? "Yes" : "No"} />,
     },
     {
       key: "rActiveYN",
@@ -431,16 +411,6 @@ const InsuranceListPage: React.FC = () => {
                   onChange={(e) => handleFilterChange("status", e.target.value)}
                   size="small"
                   defaultText="All Status"
-                />
-
-                <DropdownSelect
-                  label="Transfer"
-                  name="transfer"
-                  value={filters.transfer}
-                  options={transferOptions}
-                  onChange={(e) => handleFilterChange("transfer", e.target.value)}
-                  size="small"
-                  defaultText="All Transfer Status"
                 />
 
                 <TextField

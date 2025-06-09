@@ -45,11 +45,6 @@ const autoIndentOptions = [
   { value: "N", label: "Auto Indent: No" },
 ];
 
-const transferOptions = [
-  { value: "Y", label: "Transferable: Yes" },
-  { value: "N", label: "Transferable: No" },
-];
-
 const ProductOverviewPage: React.FC = () => {
   const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -636,16 +631,6 @@ const ProductOverviewPage: React.FC = () => {
                       onChange={(e) => handleFilterChange("autoIndent", e.target.value)}
                       size="small"
                       defaultText="All Auto Indent"
-                    />
-
-                    <DropdownSelect
-                      label="Transfer"
-                      name="transfer"
-                      value={filters.transfer}
-                      options={transferOptions}
-                      onChange={(e) => handleFilterChange("transfer", e.target.value)}
-                      size="small"
-                      defaultText="All Transfer"
                     />
 
                     <Box display="flex" alignItems="center" gap={1}>
