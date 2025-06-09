@@ -93,10 +93,7 @@ export interface BChargePackDto extends BaseDto {
   rNotes?: string;
 }
 
-export interface ChargeWithAllDetailsDto extends BChargeDto {
-  // This interface extends BChargeDto and includes all related entities
-  // The navigation properties are already defined in BChargeDto
-}
+export interface ChargeWithAllDetailsDto extends BChargeDto {}
 
 export interface ChargeCodeGenerationDto {
   ChargeType: string;

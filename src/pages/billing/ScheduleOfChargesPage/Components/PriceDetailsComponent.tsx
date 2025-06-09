@@ -145,6 +145,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
       return [];
     }
 
+    // If filters are applied, use them, otherwise use all data
     const filteredByPIC =
       picFilters.length > 0
         ? picFilters.map((picId) => {
@@ -172,6 +173,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
             wardCategories: {},
           }));
 
+    // Ensure all filtered ward categories are included
     return filteredByPIC.map((item) => {
       const updatedItem = { ...item, wardCategories: { ...item.wardCategories } };
       getFilteredWardCategories.forEach((category) => {
@@ -183,7 +185,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
           };
         }
       });
-
       return updatedItem;
     });
   }, [gridData, picFilters, pic, getFilteredWardCategories, showGrid]);
