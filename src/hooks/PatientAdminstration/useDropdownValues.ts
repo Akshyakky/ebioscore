@@ -34,6 +34,7 @@ import { useUserList } from "@/pages/securityManagement/UserListPage/hooks/useUs
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
+import { toast } from "react-toastify";
 import { ContactMastShortDto } from "@/interfaces/HospitalAdministration/ContactListData";
 
 export type DropdownType =
@@ -273,6 +274,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         const response = await ContactListService.fetchActiveSpecialties(compID!);
         return response;
       },
+
       floor: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "FLOOR");
         return (response || []).map((item: any) => ({
@@ -281,6 +283,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           id: item.id,
         }));
       },
+
       unit: async () => {
         const response = await deptUnitListService.getAll();
         return (response.data || []).map((item: any) => ({
@@ -288,6 +291,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           label: item.unitDesc || "",
         }));
       },
+
       bedCategory: async () => {
         const response = await wardCategoryService.getAll();
         return (response.data || []).map((item: WardCategoryDto) => ({
@@ -338,7 +342,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         const response = await productTaxService.getAll();
         return (response.data || []).map((item: any) => ({
           value: item.pTaxID || 0,
-          label: item.pTaxAmt || "",
+          label: item.pTaxAmt.toString() || "",
           code: item.pTaxCode || "",
         }));
       },

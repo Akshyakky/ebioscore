@@ -184,7 +184,7 @@ const MedicationFrequencyPage: React.FC = () => {
 
   const renderStatsDashboard = () => (
     <Grid container spacing={1.5} mb={1.5}>
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #1976d2" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -204,7 +204,7 @@ const MedicationFrequencyPage: React.FC = () => {
         </Card>
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #4caf50" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -224,7 +224,7 @@ const MedicationFrequencyPage: React.FC = () => {
         </Card>
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #f44336" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -244,7 +244,7 @@ const MedicationFrequencyPage: React.FC = () => {
         </Card>
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #2196f3" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -264,7 +264,7 @@ const MedicationFrequencyPage: React.FC = () => {
         </Card>
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #ff9800" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -277,26 +277,6 @@ const MedicationFrequencyPage: React.FC = () => {
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Modifiable
-                </Typography>
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid size={{ xs: 12, sm: 2 }}>
-        <Card sx={{ borderLeft: "3px solid #9c27b0" }}>
-          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
-            <Stack direction="row" alignItems="center" spacing={1.5}>
-              <Avatar sx={{ bgcolor: "#9c27b0", width: 40, height: 40 }}>
-                <TransferIcon fontSize="small" />
-              </Avatar>
-              <Box>
-                <Typography variant="h5" color="#9c27b0" fontWeight="bold">
-                  {stats.transferableFrequencies}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Transferable
                 </Typography>
               </Box>
             </Stack>

@@ -1,6 +1,6 @@
 // src/pages/inventoryManagement/commonPage/product/ProductSearchProps.ts
 
-import { ProductOption, ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
+import { ProductOption, ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
 
 export interface ProductSearchProps {
   /**

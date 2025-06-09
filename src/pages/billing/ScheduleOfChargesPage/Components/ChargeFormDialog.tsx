@@ -53,11 +53,17 @@ interface PricingGridItem {
   selected: boolean;
   wardCategories: {
     [key: string]: {
-      drAmt: number;
-      hospAmt: number;
-      totAmt: number;
+      DcValue: number;
+      hcValue: number;
+      chValue: number;
     };
   };
+}
+
+interface WardCategory {
+  id: number;
+  name: string;
+  color: string;
 }
 
 interface ChargeFormDialogProps {
@@ -88,6 +94,28 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
     attendingPhy = [],
     subModules = [],
   } = useDropdownValues(["serviceType", "serviceGroup", "pic", "bedCategory", "attendingPhy", "subModules"]);
+
+  // Generate ward categories from bedCategory dropdown with dynamic colors
+  const wardCategories = useMemo(() => {
+    const colors = [
+      "#4caf50", // Green
+      "#f44336", // Red
+      "#00bcd4", // Cyan
+      "#3f51b5", // Indigo
+      "#9c27b0", // Purple
+      "#ff9800", // Orange
+      "#795548", // Brown
+      "#607d8b", // Blue Grey
+      "#e91e63", // Pink
+      "#cddc39", // Lime
+    ];
+
+    return bedCategory.map((category, index) => ({
+      id: Number(category.value),
+      name: category.label,
+      color: colors[index % colors.length],
+    }));
+  }, [bedCategory]);
 
   const {
     control,
@@ -139,17 +167,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
   const watchedChargeTo = watch("chargeTo");
   const watchedServiceGroupID = watch("serviceGroupID");
   const watchedDoctorShareYN = watch("doctorShareYN");
-
-  const wardCategories = useMemo(
-    () => [
-      { id: 1, name: "OPD", color: "#4caf50" },
-      { id: 2, name: "GENERAL WARD", color: "#f44336" },
-      { id: 3, name: "SEMI SPECIAL", color: "#00bcd4" },
-      { id: 4, name: "SPECIAL WARD AC", color: "#3f51b5" },
-      { id: 5, name: "SPECIAL ROOM", color: "#4caf50" },
-    ],
-    []
-  );
 
   useEffect(() => {
     if (open) {
@@ -224,52 +241,70 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
     }
   }, [open, charge, reset, trigger]);
 
-  const initializeGridData = (chargeDetails: any[] = []) => {
-    const patientGroups: Record<number, any[]> = {};
-    if (chargeDetails && chargeDetails.length > 0) {
+  const initializeGridData = useCallback(
+    (chargeDetails: any[] = []) => {
+      const patientGroups: Record<number, any[]> = {};
       chargeDetails.forEach((detail) => {
         if (!patientGroups[detail.pTypeID]) {
           patientGroups[detail.pTypeID] = [];
         }
         patientGroups[detail.pTypeID].push(detail);
       });
-    }
-    const gridData: PricingGridItem[] = [];
-    const patientTypes = Object.keys(patientGroups).length > 0 ? Object.keys(patientGroups).map(Number) : pic.slice(0, 5).map((p) => Number(p.value));
-    patientTypes.forEach((patientTypeId) => {
-      const patientType = pic.find((p) => Number(p.value) === patientTypeId);
-      const details = patientGroups[patientTypeId] || [];
-      const wardCategoriesData: Record<string, any> = {};
-      wardCategories.forEach((wc) => {
-        wardCategoriesData[wc.name] = {
-          drAmt: 0,
-          hospAmt: 0,
-          totAmt: 0,
-        };
-      });
-      details.forEach((detail) => {
-        const wardCategory = bedCategory.find((wc) => Number(wc.value) === detail.wCatID);
-        const wcName = wardCategory?.label || getWardCategoryById(detail.wCatID);
-        if (wcName) {
-          wardCategoriesData[wcName] = {
-            drAmt: detail.DcValue || 0,
-            hospAmt: detail.hcValue || 0,
-            totAmt: detail.chValue || 0,
+      const gridData: PricingGridItem[] = [];
+      const patientTypes = Object.keys(patientGroups).length > 0 ? Object.keys(patientGroups).map(Number) : pic.slice(0, 5).map((p) => Number(p.value));
+      patientTypes.forEach((patientTypeId) => {
+        const patientType = pic.find((p) => Number(p.value) === patientTypeId);
+        const details = patientGroups[patientTypeId] || [];
+        const wardCategoriesData: Record<string, any> = {};
+        wardCategories.forEach((wc) => {
+          wardCategoriesData[wc.name] = {
+            DcValue: 0,
+            hcValue: 0,
+            chValue: 0,
           };
-        }
+        });
+        details.forEach((detail) => {
+          const wardCategory = bedCategory.find((wc) => Number(wc.value) === detail.wCatID);
+          const wcName = wardCategory?.label || getWardCategoryById(detail.wCatID);
+          if (wcName) {
+            wardCategoriesData[wcName] = {
+              DcValue: detail.DcValue || 0,
+              hcValue: detail.hcValue || 0,
+              chValue: detail.chValue || 0,
+            };
+          }
+        });
+        gridData.push({
+          id: `pic-${patientTypeId}`,
+          picId: patientTypeId,
+          picName: patientType?.label || `Patient Type ${patientTypeId}`,
+          selected: false,
+          wardCategories: wardCategoriesData,
+        });
       });
 
-      gridData.push({
-        id: `pic-${patientTypeId}`,
-        picId: patientTypeId,
-        picName: patientType?.label || `Patient Type ${patientTypeId}`,
-        selected: false,
-        wardCategories: wardCategoriesData,
-      });
-    });
+      setPricingGridData(gridData);
+    },
+    [pic, bedCategory, wardCategories]
+  );
 
-    setPricingGridData(gridData);
-  };
+  useEffect(() => {
+    if (open) {
+      if (charge) {
+        reset({
+          ChargeDetails: charge.ChargeDetails || [],
+        });
+        initializeGridData(charge.ChargeDetails);
+        setDetailsExpanded(charge.ChargeDetails?.length > 0);
+      } else {
+        reset({
+          // ... default values
+          ChargeDetails: [],
+        });
+        initializeGridData([]);
+      }
+    }
+  }, [open, charge, reset, initializeGridData]);
 
   const getWardCategoryById = (id: number): string => {
     const category = wardCategories.find((wc) => wc.id === id);
@@ -291,7 +326,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
 
     for (const row of pricingGridData) {
       for (const [wcName, values] of Object.entries(row.wardCategories)) {
-        if (values.drAmt === 0 && values.hospAmt === 0 && values.totAmt === 0) {
+        if (values.DcValue === 0 && values.hcValue === 0 && values.chValue === 0) {
           continue;
         }
         const wcId = getWardCategoryIdByName(wcName);
@@ -301,9 +336,9 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             chargeID: 0,
             pTypeID: row.picId,
             wCatID: wcId,
-            DcValue: values.drAmt,
-            hcValue: values.hospAmt,
-            chValue: values.totAmt,
+            DcValue: values.DcValue,
+            hcValue: values.hcValue,
+            chValue: values.chValue,
             chargeStatus: "AC",
             ChargePacks: [],
           });
@@ -360,6 +395,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
 
   const onFormSubmit = async (data: ChargeFormData) => {
     try {
+      debugger;
       updateChargeDetailsFromGrid();
       const formattedData: ChargeWithAllDetailsDto = {
         chargeID: data.chargeID || 0,

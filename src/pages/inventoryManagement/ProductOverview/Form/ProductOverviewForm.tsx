@@ -15,7 +15,8 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
 import { useProductOverview } from "../hooks/useProductOverview";
 import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/ProductSearchForm";
-import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
+import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface ProductOverviewFormProps {
   open: boolean;
@@ -72,6 +73,7 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
   const [convertedLeadTime, setConvertedLeadTime] = useState<number | null>(null);
   const productSearchRef = useRef<ProductSearchRef>(null);
   const isAddMode = !initialData;
+  const { productLocation } = useDropdownValues(["productLocation"]);
 
   const defaultValues: ProductOverviewFormData = {
     pvID: 0,
@@ -361,6 +363,17 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
     { key: "pLocationName", header: "Location", visible: true },
   ];
 
+  const watchedLocationID = watch("pLocationID");
+
+  useEffect(() => {
+    if (watchedLocationID) {
+      const selectedLocation = productLocation?.find((location) => location.id === watchedLocationID);
+      if (selectedLocation) {
+        setValue("productLocation", selectedLocation.label, { shouldValidate: true, shouldDirty: false });
+      }
+    }
+  }, [watchedLocationID, productLocation, setValue]);
+
   return (
     <>
       <GenericDialog
@@ -442,7 +455,22 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField name="productLocation" control={control} label="Location" type="text" disabled={viewOnly} size="small" fullWidth />
+                      <FormField
+                        name="pLocationID"
+                        control={control}
+                        label="Product Location"
+                        type="select"
+                        disabled={viewOnly}
+                        placeholder="Select location"
+                        options={
+                          productLocation?.map((location) => ({
+                            value: location.id,
+                            label: location.label,
+                          })) || []
+                        }
+                        size="small"
+                        fullWidth
+                      />
                     </Grid>
                     <Grid size={{ sm: 12, md: 4 }}>
                       <FormField name="rackNo" control={control} label="Rack No" type="text" disabled={viewOnly} size="small" fullWidth />
@@ -566,9 +594,6 @@ const ProductOverviewForm: React.FC<ProductOverviewFormProps> = ({ open, onClose
                     </Grid>
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="isAutoIndentYN" control={control} label="Auto Indent" type="switch" disabled={viewOnly} size="small" />
-                    </Grid>
-                    <Grid size={{ sm: 12, md: 3 }}>
-                      <FormField name="transferYN" control={control} label="Transfer" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>

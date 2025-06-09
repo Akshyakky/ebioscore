@@ -7,7 +7,7 @@ import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { purchaseOrderMastServices } from "@/services/InventoryManagementService/PurchaseOrderService/PurchaseOrderMastServices";
 import { useAlert } from "@/providers/AlertProvider";
 import { ProductSearch } from "../../CommonPage/Product/ProductSearchForm";
-import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
+import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 
 interface PurchaseOrderHeaderFormProps extends PurchaseOrderHeaderProps {

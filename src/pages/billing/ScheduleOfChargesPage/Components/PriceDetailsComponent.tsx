@@ -1,36 +1,36 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
   Grid,
-  TextField,
-  MenuItem,
-  FormControl,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
-  Switch,
   Button,
   Accordion,
   AccordionSummary,
   AccordionDetails,
   Chip,
   Tooltip,
-  Checkbox,
-  ListItemText,
-  Select,
-  OutlinedInput,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
+  TextField,
+  Alert,
+  Snackbar,
+  ToggleButtonGroup,
+  ToggleButton,
   InputAdornment,
+  Divider,
 } from "@mui/material";
-import { ExpandMore as ExpandMoreIcon, Visibility as VisibilityIcon, Check as CheckIcon } from "@mui/icons-material";
+import {
+  ExpandMore as ExpandMoreIcon,
+  Visibility as VisibilityIcon,
+  Check as CheckIcon,
+  FilterList as FilterIcon,
+  PercentOutlined as PercentIcon,
+  AttachMoney as MoneyIcon,
+  Add as AddIcon,
+  Remove as RemoveIcon,
+} from "@mui/icons-material";
 import { useFieldArray, Control } from "react-hook-form";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 
 interface PricingGridItem {
   id: string;
@@ -39,9 +39,9 @@ interface PricingGridItem {
   selected: boolean;
   wardCategories: {
     [key: string]: {
-      drAmt: number;
-      hospAmt: number;
-      totAmt: number;
+      DcValue: number;
+      hcValue: number;
+      chValue: number;
     };
   };
 }
@@ -64,71 +64,65 @@ interface PriceDetailsComponentProps {
   bedCategory: { value: string; label: string }[];
 }
 
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
-
-const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
-  control,
-  expanded,
-  onToggleExpand,
-  pricingGridData,
-  setPricingGridData,
-  updateChargeDetailsFromGrid,
-  wardCategories,
-  pic,
-  bedCategory,
-}) => {
-  // Using arrays for multi-select
+const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, expanded, onToggleExpand, pricingGridData, updateChargeDetailsFromGrid, pic, bedCategory }) => {
+  // Component state
   const [picFilters, setPicFilters] = useState<string[]>([]);
   const [wardCategoryFilters, setWardCategoryFilters] = useState<string[]>([]);
   const [isPercentage, setIsPercentage] = useState<boolean>(false);
-  const [amountValue, setAmountValue] = useState<number>(0);
+  const [amountValue, setAmountValue] = useState<string>("");
   const [priceChangeType, setPriceChangeType] = useState<string>("None");
   const [displayAmountType, setDisplayAmountType] = useState<string>("Dr Amt");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [gridData, setGridData] = useState<PricingGridItem[]>([]);
+  const [showGrid, setShowGrid] = useState<boolean>(false);
+  const [applySuccess, setApplySuccess] = useState<boolean>(false);
 
-  // When pricingGridData changes from parent, update local state
   useEffect(() => {
     setGridData([...pricingGridData]);
   }, [pricingGridData]);
+
+  useEffect(() => {
+    if (picFilters.length > 0 || wardCategoryFilters.length > 0) {
+      setShowGrid(true);
+    }
+  }, [picFilters, wardCategoryFilters]);
 
   const chargeDetailsArray = useFieldArray({
     control,
     name: "ChargeDetails",
   });
 
-  // Handle PIC multi-select change
-  const handlePicChange = (event) => {
-    const {
-      target: { value },
-    } = event;
-    setPicFilters(typeof value === "string" ? value.split(",") : value);
-  };
+  const picOptions = useMemo(() => pic.map((option) => ({ value: option.value, label: option.label })), [pic]);
+  const wardCategoryOptions = useMemo(() => bedCategory.map((option) => ({ value: option.value, label: option.label })), [bedCategory]);
+  const getFilteredWardCategories = useMemo(() => {
+    if (wardCategoryFilters.length === 0) {
+      return bedCategory.map((category) => ({
+        id: parseInt(category.value),
+        name: category.label,
+      }));
+    }
 
-  // Handle Ward Category multi-select change
-  const handleWardCategoryChange = (event) => {
-    const {
-      target: { value },
-    } = event;
-    setWardCategoryFilters(typeof value === "string" ? value.split(",") : value);
-  };
+    return wardCategoryFilters.map((filterId, index) => {
+      const category = bedCategory.find((cat) => cat.value === filterId);
+      return {
+        id: parseInt(filterId),
+        name: category?.label || filterId,
+      };
+    });
+  }, [wardCategoryFilters, bedCategory]);
 
-  // Function to select all rows
+  const selectedWardCategoryNames = useMemo(() => {
+    return wardCategoryFilters.map((filterId) => bedCategory.find((cat) => cat.value === filterId)?.label).filter(Boolean);
+  }, [wardCategoryFilters, bedCategory]);
+
+  const selectedPICNames = useMemo(() => {
+    return picFilters.map((filterId) => pic.find((p) => p.value === filterId)?.label).filter(Boolean);
+  }, [picFilters, pic]);
+
   const selectAllRows = () => {
     if (selectedRows.length === displayedPricingData.length) {
-      // If all are selected, deselect all
       setSelectedRows([]);
     } else {
-      // Otherwise, select all
       setSelectedRows(displayedPricingData.map((row) => row.id));
     }
   };
@@ -145,596 +139,502 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({
     return selectedRows.includes(rowId);
   };
 
-  // Fixed applyChanges function that correctly updates the grid
-  const applyChanges = () => {
-    if (priceChangeType === "None" || selectedRows.length === 0 || amountValue <= 0) {
-      return;
-    }
-
-    // Create a deep copy of the current grid data to work with
-    const updatedData = JSON.parse(JSON.stringify(gridData));
-
-    selectedRows.forEach((rowId) => {
-      const rowIndex = updatedData.findIndex((row) => row.id === rowId);
-
-      if (rowIndex !== -1) {
-        // Get the categories to update
-        const categoriesToUpdate =
-          wardCategoryFilters.length === 0
-            ? Object.keys(updatedData[rowIndex].wardCategories)
-            : (wardCategoryFilters.map((filterId) => bedCategory.find((cat) => cat.value === filterId)?.label).filter(Boolean) as string[]);
-
-        // If no ward categories exist yet, initialize with selected ones
-        if (Object.keys(updatedData[rowIndex].wardCategories).length === 0 && categoriesToUpdate.length > 0) {
-          categoriesToUpdate.forEach((catName) => {
-            updatedData[rowIndex].wardCategories[catName] = { drAmt: 0, hospAmt: 0, totAmt: 0 };
-          });
-        }
-
-        // Update each selected category
-        categoriesToUpdate.forEach((categoryName) => {
-          // If this category doesn't exist for this row, initialize it
-          if (!updatedData[rowIndex].wardCategories[categoryName]) {
-            updatedData[rowIndex].wardCategories[categoryName] = {
-              drAmt: 0,
-              hospAmt: 0,
-              totAmt: 0,
-            };
-          }
-
-          const values = updatedData[rowIndex].wardCategories[categoryName];
-
-          // Determine which amounts to update
-          const updateDr = displayAmountType === "Both" || displayAmountType === "Dr Amt";
-          const updateHosp = displayAmountType === "Both" || displayAmountType === "Hosp Amt";
-
-          // Update doctor amount if selected
-          if (updateDr) {
-            if (priceChangeType === "Increase") {
-              if (isPercentage) {
-                values.drAmt += Math.round((values.drAmt * amountValue) / 100);
-              } else {
-                values.drAmt += amountValue;
-              }
-            } else if (priceChangeType === "Decrease") {
-              if (isPercentage) {
-                values.drAmt -= Math.round((values.drAmt * amountValue) / 100);
-              } else {
-                values.drAmt -= amountValue;
-              }
-
-              // Ensure we don't go below zero
-              if (values.drAmt < 0) values.drAmt = 0;
-            }
-          }
-
-          // Update hospital amount if selected
-          if (updateHosp) {
-            if (priceChangeType === "Increase") {
-              if (isPercentage) {
-                values.hospAmt += Math.round((values.hospAmt * amountValue) / 100);
-              } else {
-                values.hospAmt += amountValue;
-              }
-            } else if (priceChangeType === "Decrease") {
-              if (isPercentage) {
-                values.hospAmt -= Math.round((values.hospAmt * amountValue) / 100);
-              } else {
-                values.hospAmt -= amountValue;
-              }
-
-              // Ensure we don't go below zero
-              if (values.hospAmt < 0) values.hospAmt = 0;
-            }
-          }
-
-          // Always recalculate the total
-          values.totAmt = values.drAmt + values.hospAmt;
-        });
-      }
-    });
-
-    // Update both the local state and parent state
-    setGridData(updatedData);
-    setPricingGridData(updatedData);
-    updateChargeDetailsFromGrid();
-
-    console.log("Changes applied:", updatedData);
-  };
-
-  // Get filtered ward categories based on selection
-  const getFilteredWardCategories = useMemo(() => {
-    // If no ward category filters are selected, show all available ward categories
-    if (wardCategoryFilters.length === 0) {
-      return bedCategory.map((category) => ({
-        id: parseInt(category.value),
-        name: category.label,
-        color: getColorForCategory(category.label),
-      }));
-    }
-
-    // Otherwise, show only the selected ward categories
-    return wardCategoryFilters.map((filterId) => {
-      const category = bedCategory.find((cat) => cat.value === filterId);
-      return {
-        id: parseInt(filterId),
-        name: category?.label || filterId,
-        color: getColorForCategory(category?.label || filterId),
-      };
-    });
-  }, [wardCategoryFilters, bedCategory]);
-
-  // Function to assign colors to ward categories
-  function getColorForCategory(categoryName: string): string {
-    // Map of category names to colors
-    const colorMap: Record<string, string> = {
-      "in-patient": "#4285F4", // Blue
-      "out-patient": "#34A853", // Green
-      "WARD CATEGORY 03": "#FBBC05", // Yellow
-      OPD: "#4285F4", // Blue
-      "GENERAL WARD": "#34A853", // Green
-      "SEMI SPECIAL": "#FBBC05", // Yellow
-      "SPECIAL WARD AC": "#EA4335", // Red
-      "SPECIAL ROOM": "#9C27B0", // Purple
-    };
-
-    // Return the mapped color or a default blue if no mapping exists
-    return colorMap[categoryName] || "#4285F4";
-  }
-
-  // Get the filtered data based on selected PICs
-  const filteredPricingData = useMemo(() => {
-    if (picFilters.length === 0) {
-      // If no PICs selected, show all
-      return gridData;
-    }
-
-    // Filter to only include selected PICs
-    return gridData.filter((row) => picFilters.includes(row.picId.toString()));
-  }, [gridData, picFilters]);
-
-  // Create a complete list of PICs with empty data for selected ones if needed
   const displayedPricingData = useMemo(() => {
-    // If no PIC filters, show whatever is in filtered data
-    if (picFilters.length === 0) {
-      return filteredPricingData;
+    const shouldShowGrid = showGrid || picFilters.length > 0 || wardCategoryFilters.length > 0;
+    if (!shouldShowGrid) {
+      return [];
     }
 
-    // Create a map of existing PICs in the filtered data
-    const existingPicsMap = new Map(filteredPricingData.map((item) => [item.picId.toString(), item]));
-
-    // Start with the filtered data
-    const result = [...filteredPricingData];
-
-    // Add any selected PICs that aren't already in the result
-    picFilters.forEach((picId) => {
-      if (!existingPicsMap.has(picId)) {
-        const picInfo = pic.find((p) => p.value === picId);
-        if (picInfo) {
-          // Create an empty row for this PIC
-          const newRow: PricingGridItem = {
-            id: `pic-${picId}-new`,
-            picId: parseInt(picId),
-            picName: picInfo.label,
+    // If filters are applied, use them, otherwise use all data
+    const filteredByPIC =
+      picFilters.length > 0
+        ? picFilters.map((picId) => {
+            const existingItem = gridData.find((item) => item.picId.toString() === picId);
+            if (existingItem) {
+              return { ...existingItem };
+            } else {
+              const picInfo = pic.find((p) => p.value === picId);
+              return {
+                id: `pic-${picId}`,
+                picId: parseInt(picId),
+                picName: picInfo?.label || `PIC ${picId}`,
+                selected: false,
+                wardCategories: {},
+              };
+            }
+          })
+        : gridData.length > 0
+        ? [...gridData]
+        : pic.map((picOption) => ({
+            id: `pic-${picOption.value}`,
+            picId: parseInt(picOption.value),
+            picName: picOption.label,
             selected: false,
             wardCategories: {},
+          }));
+
+    // Ensure all filtered ward categories are included
+    return filteredByPIC.map((item) => {
+      const updatedItem = { ...item, wardCategories: { ...item.wardCategories } };
+      getFilteredWardCategories.forEach((category) => {
+        if (!updatedItem.wardCategories[category.name]) {
+          updatedItem.wardCategories[category.name] = {
+            DcValue: 0,
+            hcValue: 0,
+            chValue: 0,
           };
-
-          // Initialize empty data for each selected ward category
-          getFilteredWardCategories.forEach((category) => {
-            newRow.wardCategories[category.name] = {
-              drAmt: 0,
-              hospAmt: 0,
-              totAmt: 0,
-            };
-          });
-
-          result.push(newRow);
         }
-      }
+      });
+      return updatedItem;
     });
+  }, [gridData, picFilters, pic, getFilteredWardCategories, showGrid]);
 
-    return result;
-  }, [filteredPricingData, picFilters, pic, getFilteredWardCategories]);
-
-  // Helper function to check if all changes are ready to apply
   const isApplyReady = useMemo(() => {
-    return selectedRows.length > 0 && priceChangeType !== "None" && amountValue > 0;
-  }, [selectedRows, priceChangeType, amountValue]);
+    const numericAmount = parseFloat(amountValue);
 
-  // Get the display names for the selected ward categories
-  const selectedWardCategoryNames = useMemo(() => {
-    return wardCategoryFilters.map((filterId) => bedCategory.find((cat) => cat.value === filterId)?.label).filter(Boolean);
-  }, [wardCategoryFilters, bedCategory]);
+    return (
+      // Valid number greater than zero
+      !isNaN(numericAmount) &&
+      numericAmount > 0 &&
+      // Valid price change type (not "None")
+      (priceChangeType === "Increase" || priceChangeType === "Decrease")
+    );
+  }, [amountValue, priceChangeType]);
 
-  // Get the display names for the selected PICs
-  const selectedPICNames = useMemo(() => {
-    return picFilters.map((filterId) => pic.find((p) => p.value === filterId)?.label).filter(Boolean);
-  }, [picFilters, pic]);
-
-  // Updated handler for input change in the table
-  const handleAmountChange = (rowId: string, categoryName: string, field: "drAmt" | "hospAmt" | "totAmt", value: number) => {
-    debugger;
-    // Create a deep copy of the current data
-    const updatedData = JSON.parse(JSON.stringify(gridData));
-
-    let rowIndex = updatedData.findIndex((r) => r.id === rowId);
-
-    // If row doesn't exist in the data, we need to add it
-    if (rowIndex === -1) {
-      const displayRow = displayedPricingData.find((row) => row.id === rowId);
-      if (displayRow) {
-        const newRow = JSON.parse(JSON.stringify(displayRow));
-        updatedData.push(newRow);
-        rowIndex = updatedData.length - 1;
-      }
-    }
-
-    if (rowIndex !== -1) {
-      // Initialize the category if it doesn't exist
-      if (!updatedData[rowIndex].wardCategories[categoryName]) {
-        updatedData[rowIndex].wardCategories[categoryName] = { drAmt: 0, hospAmt: 0, totAmt: 0 };
+  const applyChanges = () => {
+    if (!isApplyReady) return;
+    const numericAmount = parseFloat(amountValue);
+    const updatedGridData = [...gridData];
+    const rowsToUpdate = selectedRows.length > 0 ? selectedRows : updatedGridData.map((row) => row.id);
+    let changesMade = false;
+    updatedGridData.forEach((row) => {
+      if (!rowsToUpdate.includes(row.id) && rowsToUpdate.length > 0) {
+        return;
       }
 
-      // Update the specified field
-      updatedData[rowIndex].wardCategories[categoryName][field] = value;
-
-      // If changing doctor or hospital amount, recalculate the total
-      if (field === "drAmt" || field === "hospAmt") {
-        updatedData[rowIndex].wardCategories[categoryName].totAmt =
-          (updatedData[rowIndex].wardCategories[categoryName].drAmt || 0) + (updatedData[rowIndex].wardCategories[categoryName].hospAmt || 0);
-      }
-
-      // Update both local and parent state
-      setGridData(updatedData);
-      setPricingGridData(updatedData);
+      getFilteredWardCategories.forEach((category) => {
+        const catName = category.name;
+        if (!row.wardCategories[catName]) {
+          row.wardCategories[catName] = { DcValue: 0, hcValue: 0, chValue: 0 };
+        }
+        const values = row.wardCategories[catName];
+        const updateDr = displayAmountType === "Both" || displayAmountType === "Dr Amt";
+        const updateHosp = displayAmountType === "Both" || displayAmountType === "Hosp Amt";
+        if (updateDr) {
+          const currentValue = values.DcValue || 0;
+          let newValue;
+          if (isPercentage) {
+            const factor = priceChangeType === "Increase" ? 1 + numericAmount / 100 : 1 - numericAmount / 100;
+            newValue = Math.round(currentValue * factor * 100) / 100;
+          } else {
+            newValue = priceChangeType === "Increase" ? currentValue + numericAmount : currentValue - numericAmount;
+          }
+          values.DcValue = Math.max(0, newValue);
+          changesMade = true;
+        }
+        if (updateHosp) {
+          const currentValue = values.hcValue || 0;
+          let newValue;
+          if (isPercentage) {
+            const factor = priceChangeType === "Increase" ? 1 + numericAmount / 100 : 1 - numericAmount / 100;
+            newValue = Math.round(currentValue * factor * 100) / 100;
+          } else {
+            newValue = priceChangeType === "Increase" ? currentValue + numericAmount : currentValue - numericAmount;
+          }
+          values.hcValue = Math.max(0, newValue);
+          changesMade = true;
+        }
+        values.chValue = values.DcValue + values.hcValue;
+      });
+    });
+    if (changesMade) {
+      setGridData([...updatedGridData]);
       updateChargeDetailsFromGrid();
+      setApplySuccess(true);
     }
   };
 
-  // Toggle handler for percentage/amount switch
-  const handlePercentageToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setIsPercentage(event.target.checked);
+  const getApplyButtonText = useMemo(() => {
+    if (!isApplyReady) return "Apply";
+    const actionSymbol = priceChangeType === "Increase" ? "+" : "-";
+    const valueDisplay = isPercentage ? `${amountValue}%` : `₹${amountValue}`;
+    return `${actionSymbol}${valueDisplay}`;
+  }, [isApplyReady, priceChangeType, isPercentage, amountValue]);
+
+  const handleViewClick = () => {
+    setShowGrid(true);
+  };
+
+  const handleAmountTypeChange = (e: React.MouseEvent<HTMLElement>, newValue: boolean | null) => {
+    if (newValue !== null) {
+      setIsPercentage(newValue);
+    }
+  };
+
+  const handleAmountValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setAmountValue(event.target.value);
+  };
+
+  const gridColumns = useMemo((): Column<PricingGridItem>[] => {
+    const columns: Column<PricingGridItem>[] = [
+      {
+        key: "selected",
+        header: "Select",
+        visible: true,
+        width: 70,
+        render: (item: PricingGridItem) => (
+          <input type="checkbox" checked={isRowSelected(item.id)} onChange={() => toggleRowSelection(item.id)} style={{ transform: "scale(1.2)" }} />
+        ),
+      },
+      {
+        key: "picName",
+        header: "PIC Name",
+        visible: true,
+        width: 180,
+        render: (item: PricingGridItem) => (
+          <Typography variant="body2" fontWeight="medium">
+            {item.picName}
+          </Typography>
+        ),
+      },
+    ];
+
+    getFilteredWardCategories.forEach((category) => {
+      columns.push({
+        key: `${category.name}_drAmt`,
+        header: `${category.name} - Dr Amt`,
+        visible: true,
+        width: 120,
+        render: (item: PricingGridItem) => {
+          const currentValue = item.wardCategories[category.name]?.DcValue || 0;
+
+          return (
+            <TextField
+              type="number"
+              size="small"
+              value={currentValue}
+              onChange={(e) => {
+                const numValue = parseFloat(e.target.value) || 0;
+                if (numValue >= 0) {
+                  const updatedItem = {
+                    ...item,
+                    wardCategories: {
+                      ...item.wardCategories,
+                      [category.name]: {
+                        ...item.wardCategories[category.name],
+                        DcValue: numValue,
+                        chValue: numValue + (item.wardCategories[category.name]?.hcValue || 0),
+                      },
+                    },
+                  };
+                  setGridData((prev) => prev.map((row) => (row.id === item.id ? updatedItem : row)));
+                }
+              }}
+              fullWidth
+              variant="outlined"
+              inputProps={{ min: 0, step: "0.01" }}
+            />
+          );
+        },
+      });
+
+      columns.push({
+        key: `${category.name}_hospAmt`,
+        header: `${category.name} - Hosp Amt`,
+        visible: true,
+        width: 120,
+        render: (item: PricingGridItem) => {
+          const currentValue = item.wardCategories[category.name]?.hcValue || 0;
+          return (
+            <TextField
+              type="number"
+              size="small"
+              value={currentValue}
+              onChange={(e) => {
+                const numValue = parseFloat(e.target.value) || 0;
+                if (numValue >= 0) {
+                  const updatedItem = {
+                    ...item,
+                    wardCategories: {
+                      ...item.wardCategories,
+                      [category.name]: {
+                        ...item.wardCategories[category.name],
+                        hcValue: numValue,
+                        chValue: (item.wardCategories[category.name]?.DcValue || 0) + numValue,
+                      },
+                    },
+                  };
+                  setGridData((prev) => prev.map((row) => (row.id === item.id ? updatedItem : row)));
+                }
+              }}
+              fullWidth
+              variant="outlined"
+              inputProps={{ min: 0, step: "0.01" }}
+            />
+          );
+        },
+      });
+
+      columns.push({
+        key: `${category.name}_totalAmt`,
+        header: `${category.name} - Total Amt`,
+        visible: true,
+        width: 120,
+        render: (item: PricingGridItem) => {
+          const totalAmount = (item.wardCategories[category.name]?.DcValue || 0) + (item.wardCategories[category.name]?.hcValue || 0);
+          return (
+            <TextField
+              value={totalAmount}
+              disabled
+              size="small"
+              fullWidth
+              variant="outlined"
+              InputProps={{
+                readOnly: true,
+                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+              }}
+            />
+          );
+        },
+      });
+    });
+
+    return columns;
+  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection, updateChargeDetailsFromGrid]);
+
+  const handlePriceChangeTypeChange = (e: React.MouseEvent<HTMLElement>, newValue: string | null) => {
+    if (newValue) {
+      setPriceChangeType(newValue);
+    }
   };
 
   return (
     <Accordion expanded={expanded} onChange={onToggleExpand}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Box display="flex" alignItems="center" gap={1} width="100%">
-          <Typography variant="subtitle1">Pricing Details</Typography>
+          <Typography variant="subtitle1" fontWeight="medium">
+            Pricing Details
+          </Typography>
           <Chip label={`${chargeDetailsArray.fields.length} entries`} size="small" color="primary" variant="outlined" />
         </Box>
       </AccordionSummary>
       <AccordionDetails>
         <Box>
-          <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <Typography variant="subtitle2">PIC</Typography>
-              <Select
-                multiple
-                fullWidth
-                size="small"
-                value={picFilters}
-                onChange={handlePicChange}
-                input={<OutlinedInput />}
-                renderValue={(selected) => {
-                  if (selected.length === 0) {
-                    return (
-                      <Typography variant="body2" color="text.secondary">
-                        All PICs
-                      </Typography>
-                    );
-                  }
-                  if (selected.length === 1) {
-                    const displayName = pic.find((p) => p.value === selected[0])?.label || selected[0];
-                    return <Typography variant="body2">{displayName}</Typography>;
-                  }
-                  return <Typography variant="body2">{selected.length} PICs selected</Typography>;
-                }}
-                MenuProps={MenuProps}
-              >
-                {pic.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    <Checkbox checked={picFilters.indexOf(option.value) > -1} />
-                    <ListItemText primary={option.label} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </Grid>
+          <Snackbar open={applySuccess} autoHideDuration={3000} onClose={() => setApplySuccess(false)} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
+            <Alert severity="success" sx={{ width: "100%" }}>
+              Price changes applied successfully!
+            </Alert>
+          </Snackbar>
 
-            <Grid size={{ xs: 12, md: 3 }}>
-              <Typography variant="subtitle2">Ward Category</Typography>
-              <Select
-                multiple
-                fullWidth
-                size="small"
-                value={wardCategoryFilters}
-                onChange={handleWardCategoryChange}
-                input={<OutlinedInput />}
-                renderValue={(selected) => {
-                  if (selected.length === 0) {
-                    return (
-                      <Typography variant="body2" color="text.secondary">
-                        All Ward Categories
-                      </Typography>
-                    );
-                  }
-                  if (selected.length === 1) {
-                    const displayName = bedCategory.find((bc) => bc.value === selected[0])?.label || selected[0];
-                    return <Typography variant="body2">{displayName}</Typography>;
-                  }
-                  return <Typography variant="body2">{selected.length} categories selected</Typography>;
-                }}
-                MenuProps={MenuProps}
-              >
-                {bedCategory.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    <Checkbox checked={wardCategoryFilters.indexOf(option.value) > -1} />
-                    <ListItemText primary={option.label} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </Grid>
+          <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
+            <Typography variant="subtitle2" gutterBottom color="primary" fontWeight="medium">
+              Filter & Bulk Operations
+            </Typography>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box display="flex" alignItems="center">
-                <Switch checked={isPercentage} onChange={handlePercentageToggle} color="primary" />
-                <Typography variant="body2" sx={{ minWidth: "90px" }}>
-                  {isPercentage ? "Percentage" : "Amount"}
+            <Grid container spacing={2} alignItems="center">
+              <Grid size={{ xs: 12, md: 3 }}>
+                <FormField
+                  name="picFilters"
+                  control={control}
+                  type="multiselect"
+                  label="Patient Categories (PIC)"
+                  options={picOptions}
+                  defaultValue={picFilters}
+                  onChange={setPicFilters}
+                  size="small"
+                  placeholder="Select PICs"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 3 }}>
+                <FormField
+                  name="wardCategoryFilters"
+                  control={control}
+                  type="multiselect"
+                  label="Ward Categories"
+                  options={wardCategoryOptions}
+                  defaultValue={wardCategoryFilters}
+                  onChange={setWardCategoryFilters}
+                  size="small"
+                  placeholder="Select ward categories"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="subtitle2" gutterBottom color="primary" fontWeight="medium">
+                  Price Adjustment
                 </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Adjustment Type
+                  </Typography>
+                  <ToggleButtonGroup exclusive value={isPercentage} onChange={handleAmountTypeChange} aria-label="amount type" size="small" fullWidth>
+                    <ToggleButton value={false} aria-label="amount">
+                      <MoneyIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      Amount
+                    </ToggleButton>
+                    <ToggleButton value={true} aria-label="percentage">
+                      <PercentIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      Percentage
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
+
                 <TextField
                   type="number"
-                  size="small"
+                  label={isPercentage ? "Percentage Value" : "Amount Value"}
                   value={amountValue}
-                  onChange={(e) => setAmountValue(Number(e.target.value))}
-                  InputProps={{
-                    inputProps: { min: 0 },
-                    endAdornment: isPercentage ? <InputAdornment position="end">%</InputAdornment> : null,
-                  }}
-                  sx={{ width: 150, mr: 2 }}
+                  onChange={handleAmountValueChange}
+                  size="small"
+                  fullWidth
                   placeholder={`Enter ${isPercentage ? "percentage" : "amount"}`}
+                  InputProps={{
+                    endAdornment: <InputAdornment position="end">{isPercentage ? "%" : "₹"}</InputAdornment>,
+                  }}
+                  inputProps={{
+                    min: 0,
+                    step: "0.01",
+                  }}
+                  variant="outlined"
                 />
-              </Box>
-            </Grid>
+              </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl component="fieldset">
-                <RadioGroup row value={priceChangeType} onChange={(e) => setPriceChangeType(e.target.value)}>
-                  <FormControlLabel value="None" control={<Radio size="small" />} label="None" />
-                  <FormControlLabel value="Increase" control={<Radio size="small" />} label="Increase" />
-                  <FormControlLabel value="Decrease" control={<Radio size="small" />} label="Decrease" />
-                </RadioGroup>
-              </FormControl>
-            </Grid>
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Price Change Type
+                  </Typography>
+                  <ToggleButtonGroup exclusive value={priceChangeType} onChange={handlePriceChangeTypeChange} aria-label="price change type" size="small" fullWidth>
+                    <ToggleButton value="Increase" aria-label="increase">
+                      <AddIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      Increase
+                    </ToggleButton>
+                    <ToggleButton value="Decrease" aria-label="decrease">
+                      <RemoveIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      Decrease
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
 
-            <Grid size={{ xs: 12, md: 4 }}>
-              <FormControl component="fieldset">
-                <RadioGroup row value={displayAmountType} onChange={(e) => setDisplayAmountType(e.target.value)}>
-                  <FormControlLabel value="Both" control={<Radio size="small" />} label="Both" />
-                  <FormControlLabel value="Dr Amt" control={<Radio size="small" />} label="Dr Amt" />
-                  <FormControlLabel value="Hosp Amt" control={<Radio size="small" />} label="Hosp Amt" />
-                </RadioGroup>
-              </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 2 }}>
-              <Box display="flex" justifyContent="flex-end">
-                <Button variant="contained" startIcon={<VisibilityIcon />} size="small" color="primary" sx={{ mr: 1 }} disabled={selectedRows.length === 0}>
-                  View
-                </Button>
-                <Tooltip title={!isApplyReady ? "Select rows, set amount and action type" : "Apply changes to selected rows"}>
-                  <span>
-                    <Button variant="contained" startIcon={<CheckIcon />} size="small" color="success" onClick={applyChanges} disabled={!isApplyReady}>
-                      Apply
-                    </Button>
-                  </span>
-                </Tooltip>
-              </Box>
-            </Grid>
-          </Grid>
-
-          {/* Filter summary information */}
-          <Box sx={{ mb: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Box>
-              <Typography variant="body2">
-                {picFilters.length === 0
-                  ? "Showing all PICs"
-                  : picFilters.length === 1
-                  ? `Filtered by PIC: ${selectedPICNames[0]}`
-                  : `Filtered by PICs: ${selectedPICNames.join(", ")}`}
-                {" • "}
-                {wardCategoryFilters.length === 0
-                  ? "All ward categories"
-                  : wardCategoryFilters.length === 1
-                  ? `Ward category: ${selectedWardCategoryNames[0]}`
-                  : `Ward categories: ${selectedWardCategoryNames.join(", ")}`}
-              </Typography>
-            </Box>
-            <Box>
-              <Button size="small" color="primary" variant="outlined" onClick={selectAllRows} sx={{ minWidth: "100px" }}>
-                {selectedRows.length === displayedPricingData.length && displayedPricingData.length > 0 ? "Deselect All" : "Select All"}
-              </Button>
-            </Box>
-          </Box>
-
-          {/* Service Charges Table with Ward Category Column Groups */}
-          <TableContainer component={Paper} sx={{ maxHeight: 500, overflow: "auto" }}>
-            <Table stickyHeader size="small" sx={{ minWidth: 650 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell colSpan={2} sx={{ bgcolor: "#4285F4", color: "white", fontWeight: "bold", borderBottom: "2px solid #ddd" }}>
-                    Service Charges
-                  </TableCell>
-                  {getFilteredWardCategories.map((category) => (
-                    <TableCell
-                      key={category.id}
-                      colSpan={3}
-                      align="center"
-                      sx={{
-                        bgcolor: category.color,
-                        color: "white",
-                        fontWeight: "bold",
-                        borderBottom: "2px solid #ddd",
-                        borderLeft: "1px solid #fff",
-                      }}
-                    >
-                      {category.name}
-                    </TableCell>
-                  ))}
-                </TableRow>
-                <TableRow>
-                  <TableCell sx={{ bgcolor: "#4285F4", color: "white", fontWeight: "bold", width: 70 }}>Select</TableCell>
-                  <TableCell sx={{ bgcolor: "#4285F4", color: "white", fontWeight: "bold", width: 180 }}>PIC Name</TableCell>
-
-                  {getFilteredWardCategories.map((category) => (
-                    <React.Fragment key={`header-${category.id}`}>
-                      <TableCell
-                        align="center"
-                        sx={{
-                          bgcolor: category.color,
-                          color: "white",
-                          fontWeight: "bold",
-                          width: 100,
-                        }}
-                      >
-                        dr Amt
-                      </TableCell>
-                      <TableCell
-                        align="center"
-                        sx={{
-                          bgcolor: category.color,
-                          color: "white",
-                          fontWeight: "bold",
-                          width: 100,
-                        }}
-                      >
-                        hosp Amt
-                      </TableCell>
-                      <TableCell
-                        align="center"
-                        sx={{
-                          bgcolor: category.color,
-                          color: "white",
-                          fontWeight: "bold",
-                          width: 100,
-                          borderRight: "1px solid #ddd",
-                        }}
-                      >
-                        tot Amt
-                      </TableCell>
-                    </React.Fragment>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {displayedPricingData.length > 0 ? (
-                  displayedPricingData.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      hover
-                      sx={{
-                        "&:nth-of-type(odd)": { bgcolor: "rgba(0, 0, 0, 0.02)" },
-                        "&:hover": { bgcolor: "rgba(0, 0, 0, 0.04)" },
-                      }}
-                    >
-                      <TableCell>
-                        <Checkbox checked={isRowSelected(row.id)} onChange={() => toggleRowSelection(row.id)} size="small" />
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: "medium" }}>{row.picName}</TableCell>
-
-                      {getFilteredWardCategories.map((category) => {
-                        const categoryValues = row.wardCategories[category.name] || { drAmt: 0, hospAmt: 0, totAmt: 0 };
-
-                        return (
-                          <React.Fragment key={`data-${row.id}-${category.id}`}>
-                            <TableCell align="center">
-                              <TextField
-                                type="number"
-                                size="small"
-                                value={categoryValues.drAmt || 0}
-                                onChange={(e) => handleAmountChange(row.id, category.name, "drAmt", Number(e.target.value))}
-                                inputProps={{
-                                  min: 0,
-                                  style: {
-                                    textAlign: "right",
-                                    padding: "4px 8px",
-                                  },
-                                }}
-                                sx={{
-                                  width: "90%",
-                                  "& .MuiOutlinedInput-root": {
-                                    "& fieldset": {
-                                      borderColor: "#ddd",
-                                    },
-                                  },
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell align="center">
-                              <TextField
-                                type="number"
-                                size="small"
-                                value={categoryValues.hospAmt || 0}
-                                onChange={(e) => handleAmountChange(row.id, category.name, "hospAmt", Number(e.target.value))}
-                                inputProps={{
-                                  min: 0,
-                                  style: {
-                                    textAlign: "right",
-                                    padding: "4px 8px",
-                                  },
-                                }}
-                                sx={{
-                                  width: "90%",
-                                  "& .MuiOutlinedInput-root": {
-                                    "& fieldset": {
-                                      borderColor: "#ddd",
-                                    },
-                                  },
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell align="center" sx={{ borderRight: "1px solid #ddd" }}>
-                              <TextField
-                                type="number"
-                                size="small"
-                                value={categoryValues.totAmt || 0}
-                                onChange={(e) => handleAmountChange(row.id, category.name, "totAmt", Number(e.target.value))}
-                                inputProps={{
-                                  min: 0,
-                                  style: {
-                                    textAlign: "right",
-                                    padding: "4px 8px",
-                                    fontWeight: "bold",
-                                    backgroundColor: "#f0f7ff",
-                                  },
-                                }}
-                                sx={{
-                                  width: "90%",
-                                  "& .MuiOutlinedInput-root": {
-                                    "& fieldset": {
-                                      borderColor: "#ddd",
-                                    },
-                                  },
-                                }}
-                              />
-                            </TableCell>
-                          </React.Fragment>
-                        );
-                      })}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={2 + getFilteredWardCategories.length * 3} align="center" sx={{ py: 3 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        No pricing data available
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
+                {isApplyReady && (
+                  <Box sx={{ mt: 1, p: 1, border: "1px solid #e0e0e0", borderRadius: 1, bgcolor: "background.paper" }}>
+                    <Typography variant="body2" align="center">
+                      Example: <strong>100</strong> will become{" "}
+                      <strong>
+                        {priceChangeType === "Increase"
+                          ? isPercentage
+                            ? (100 * (1 + parseFloat(amountValue) / 100)).toFixed(2)
+                            : (100 + parseFloat(amountValue)).toFixed(2)
+                          : isPercentage
+                          ? (100 * (1 - parseFloat(amountValue) / 100)).toFixed(2)
+                          : Math.max(0, 100 - parseFloat(amountValue)).toFixed(2)}
+                      </strong>
+                    </Typography>
+                  </Box>
                 )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Apply To Amount Type
+                  </Typography>
+                  <ToggleButtonGroup
+                    exclusive
+                    value={displayAmountType}
+                    onChange={(e, newValue) => {
+                      if (newValue) {
+                        setDisplayAmountType(newValue);
+                      }
+                    }}
+                    aria-label="apply to amount type"
+                    size="small"
+                    fullWidth
+                  >
+                    <ToggleButton value="Dr Amt" aria-label="dr amount">
+                      Dr Amt
+                    </ToggleButton>
+                    <ToggleButton value="Hosp Amt" aria-label="hosp amount">
+                      Hosp Amt
+                    </ToggleButton>
+                    <ToggleButton value="Both" aria-label="both amounts">
+                      Both
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Box display="flex" justifyContent="flex-end" gap={1} alignItems="flex-end" height="100%">
+                  <Button variant="outlined" startIcon={<VisibilityIcon />} size="small" sx={{ minWidth: "90px" }} onClick={handleViewClick}>
+                    View
+                  </Button>
+
+                  <Tooltip
+                    title={
+                      !isApplyReady
+                        ? "Enter amount and select increase/decrease"
+                        : `Apply ${getApplyButtonText} to ${displayAmountType === "Both" ? "all amounts" : displayAmountType}`
+                    }
+                  >
+                    <span>
+                      <Button variant="contained" startIcon={<CheckIcon />} size="small" color="success" onClick={() => applyChanges()} disabled={!isApplyReady}>
+                        {getApplyButtonText}
+                      </Button>
+                    </span>
+                  </Tooltip>
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          {(showGrid || picFilters.length > 0 || wardCategoryFilters.length > 0) && (
+            <>
+              <Box sx={{ mb: 2, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {picFilters.length === 0
+                      ? "Showing all PICs"
+                      : picFilters.length === 1
+                      ? `Filtered by PIC: ${selectedPICNames[0]}`
+                      : `Filtered by PICs: ${selectedPICNames.join(", ")}`}
+                    {" • "}
+                    {wardCategoryFilters.length === 0
+                      ? "All ward categories"
+                      : wardCategoryFilters.length === 1
+                      ? `Ward category: ${selectedWardCategoryNames[0]}`
+                      : `Ward categories: ${selectedWardCategoryNames.join(", ")}`}
+                  </Typography>
+                </Box>
+                <Box display="flex" gap={1}>
+                  <Button size="small" color="primary" variant="outlined" onClick={selectAllRows} sx={{ minWidth: "100px" }}>
+                    {selectedRows.length === displayedPricingData.length && displayedPricingData.length > 0 ? "Deselect All" : "Select All"}
+                  </Button>
+                  <Button size="small" color="secondary" variant="outlined" onClick={updateChargeDetailsFromGrid} startIcon={<FilterIcon />}>
+                    Update Charge Details
+                  </Button>
+                </Box>
+              </Box>
+
+              <Paper elevation={1}>
+                <CustomGrid
+                  columns={gridColumns}
+                  data={displayedPricingData}
+                  maxHeight="500px"
+                  density="small"
+                  showDensityControls={true}
+                  emptyStateMessage="No pricing data available. Please select PICs and Ward Categories to begin."
+                  rowKeyField="id"
+                  pagination={false}
+                  selectable={false}
+                />
+              </Paper>
+            </>
+          )}
         </Box>
       </AccordionDetails>
     </Accordion>

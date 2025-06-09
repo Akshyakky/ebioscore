@@ -21,56 +21,70 @@ interface ProductFormProps {
   viewOnly?: boolean;
 }
 
-// Enhanced validation schema with more comprehensive rules
-const productSchema = z.object({
-  productID: z.coerce.number().optional(),
-  productCode: z
-    .string()
-    .min(1, "Product code is required")
-    .max(50, "Product code must be less than 50 characters")
-    .regex(/^[A-Za-z0-9-_]+$/, "Product code can only contain letters, numbers, hyphens, and underscores"),
-  productName: z.string().min(1, "Product name is required").max(200, "Product name must be less than 200 characters"),
-  catValue: z.string().min(1, "Category is required"),
-  pGrpID: z.coerce.number().min(1, "Product group is required"),
-  pUnitID: z.coerce.number().min(1, "Product unit is required"),
-  defaultPrice: z.coerce
-    .number()
-    .min(0, "Price cannot be negative")
-    .refine((val) => val > 0, "Price must be greater than 0"),
-  taxID: z.coerce.number().optional(),
-  prescription: z.string(),
-  expiry: z.string(),
-  sellable: z.string(),
-  taxable: z.string(),
-  mFID: z.coerce.number().optional(),
-  mGenID: z.coerce.number().optional(),
-  leadTime: z.coerce.number().min(0, "Lead time cannot be negative").optional(),
-  psGrpID: z.coerce.number().optional(),
-  rOL: z.coerce.number().min(0, "Reorder level cannot be negative").optional(),
-  manufacturerID: z.coerce.number().optional(),
-  pLocationID: z.coerce.number().optional(),
-  rActiveYN: z.string(),
-  productNotes: z.string().max(1000, "Notes must be less than 1000 characters").optional(),
-  vedCode: z.string().optional(),
-  abcCode: z.string().optional(),
-  hsnCODE: z.string().optional(),
-  barcode: z.string().optional(),
-  chargableYN: z.string(),
-  chargePercentage: z.coerce.number().min(0, "Charge percentage cannot be negative").max(100, "Charge percentage cannot exceed 100%").optional(),
-  isAssetYN: z.string(),
-  transferYN: z.string(),
-  unitPack: z.coerce.number().min(0, "Unit pack cannot be negative").optional(),
-  baseUnit: z.coerce.number().min(0, "Base unit cannot be negative").optional(),
-  pPackageID: z.coerce.number().optional(),
-  issueUnit: z.coerce.number().min(0, "Issue unit cannot be negative").optional(),
-  serialNumber: z.string().max(100, "Serial number must be less than 100 characters").optional(),
-  gstPerValue: z.coerce.number().min(0, "GST percentage cannot be negative").max(100).optional(),
-  cgstPerValue: z.coerce.number().min(0, "CGST percentage cannot be negative").max(100).optional(),
-  sgstPerValue: z.coerce.number().min(0, "SGST percentage cannot be negative").max(100).optional(),
-  universalCode: z.coerce.number().optional(),
-  rNotes: z.string().max(500, "Additional notes must be less than 500 characters").optional(),
-  supplierStatus: z.string(),
-});
+// Enhanced validation schema with conditional tax validation
+const productSchema = z
+  .object({
+    productID: z.coerce.number().optional(),
+    productCode: z
+      .string()
+      .min(1, "Product code is required")
+      .max(50, "Product code must be less than 50 characters")
+      .regex(/^[A-Za-z0-9-_]+$/, "Product code can only contain letters, numbers, hyphens, and underscores"),
+    productName: z.string().min(1, "Product name is required").max(200, "Product name must be less than 200 characters"),
+    catValue: z.string().min(1, "Category is required"),
+    pGrpID: z.coerce.number().min(1, "Product group is required"),
+    pUnitID: z.coerce.number().min(1, "Product unit is required"),
+    defaultPrice: z.coerce
+      .number()
+      .min(0, "Price cannot be negative")
+      .refine((val) => val > 0, "Price must be greater than 0"),
+    taxID: z.coerce.number().optional(),
+    prescription: z.string(),
+    expiry: z.string(),
+    sellable: z.string(),
+    taxable: z.string(),
+    mFID: z.coerce.number().optional(),
+    mGenID: z.coerce.number().optional(),
+    leadTime: z.coerce.number().min(0, "Lead time cannot be negative").optional(),
+    psGrpID: z.coerce.number().optional(),
+    rOL: z.coerce.number().min(0, "Reorder level cannot be negative").optional(),
+    manufacturerID: z.coerce.number().optional(),
+    pLocationID: z.coerce.number().optional(),
+    rActiveYN: z.string(),
+    productNotes: z.string().max(1000, "Notes must be less than 1000 characters").optional(),
+    vedCode: z.string().optional(),
+    abcCode: z.string().optional(),
+    hsnCODE: z.string().optional(),
+    barcode: z.string().optional(),
+    chargableYN: z.string(),
+    chargePercentage: z.coerce.number().min(0, "Charge percentage cannot be negative").max(100, "Charge percentage cannot exceed 100%").optional(),
+    isAssetYN: z.string(),
+    transferYN: z.string(),
+    unitPack: z.coerce.number().min(0, "Unit pack cannot be negative").optional(),
+    baseUnit: z.coerce.number().min(0, "Base unit cannot be negative").optional(),
+    pPackageID: z.coerce.number().optional(),
+    issueUnit: z.coerce.number().min(0, "Issue unit cannot be negative").optional(),
+    serialNumber: z.string().max(100, "Serial number must be less than 100 characters").optional(),
+    gstPerValue: z.coerce.number().min(0, "GST percentage cannot be negative").max(100).optional(),
+    cgstPerValue: z.coerce.number().min(0, "CGST percentage cannot be negative").max(100).optional(),
+    sgstPerValue: z.coerce.number().min(0, "SGST percentage cannot be negative").max(100).optional(),
+    universalCode: z.coerce.number().optional(),
+    rNotes: z.string().max(500, "Additional notes must be less than 500 characters").optional(),
+    supplierStatus: z.string(),
+  })
+  .refine(
+    (data) => {
+      // If taxable is Y, then taxID is required
+      if (data.taxable === "Y" && (!data.taxID || data.taxID === 0)) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Tax selection is required when product is taxable",
+      path: ["taxID"],
+    }
+  );
 
 type ProductFormData = z.infer<typeof productSchema>;
 
@@ -112,7 +126,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
       prescription: product?.prescription || "N",
       expiry: product?.expiry || "N",
       sellable: product?.sellable || "Y",
-      taxable: product?.taxable || "Y",
+      taxable: product?.taxable || "N",
       mFID: product?.mFID || 0,
       mGenID: product?.mGenID || 0,
       leadTime: product?.leadTime || 0,
@@ -159,9 +173,38 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
     mode: "onChange", // Enable real-time validation
   });
 
-  // Watch for changes in charge percentage to handle conditional validation
+  // Watch for changes in relevant fields
   const chargableYN = useWatch({ control, name: "chargableYN" });
   const chargePercentage = useWatch({ control, name: "chargePercentage" });
+  const taxable = useWatch({ control, name: "taxable" });
+  const taxID = useWatch({ control, name: "taxID" });
+
+  // Auto-calculate GST percentages when tax is selected
+  useEffect(() => {
+    if (taxable === "Y" && taxID && taxType && taxType.length > 0) {
+      const selectedTax = taxType.find((tax) => Number(tax.value) === Number(taxID));
+      if (selectedTax) {
+        // Extract tax percentage from selected tax
+        // Assuming the tax percentage is available in the tax object
+        const taxPercentage = Number(selectedTax.label) || 0;
+
+        if (taxPercentage > 0) {
+          // For Indian GST system, typically split equally between CGST and SGST
+          const halfTaxRate = taxPercentage / 2;
+
+          setValue("gstPerValue", taxPercentage);
+          setValue("cgstPerValue", halfTaxRate);
+          setValue("sgstPerValue", halfTaxRate);
+        }
+      }
+    } else if (taxable === "N") {
+      // Clear tax percentages when not taxable
+      setValue("gstPerValue", 0);
+      setValue("cgstPerValue", 0);
+      setValue("sgstPerValue", 0);
+      setValue("taxID", 0);
+    }
+  }, [taxable, taxID, taxType, setValue]);
 
   // Enhanced product code generation with error handling
   useEffect(() => {
@@ -237,7 +280,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
         // Ensure numeric values are properly set
         pGrpID: data.pGrpID || undefined,
         pUnitID: data.pUnitID || undefined,
-        taxID: data.taxID || undefined,
+        taxID: data.taxable === "Y" ? data.taxID || undefined : undefined,
         mFID: data.mFID || undefined,
         mGenID: data.mGenID || undefined,
         psGrpID: data.psGrpID || undefined,
@@ -403,12 +446,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       required
                       disabled={viewOnly}
                       placeholder="Select a category"
-                      options={
-                        productCategory?.map((cat) => ({
-                          value: cat.value.toString(),
-                          label: cat.label,
-                        })) || []
-                      }
+                      options={productCategory}
                       size="small"
                       clearable={true}
                     />
@@ -423,12 +461,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       required
                       disabled={viewOnly}
                       placeholder="Select a product group"
-                      options={
-                        productGroup?.map((group) => ({
-                          value: group.value,
-                          label: group.label,
-                        })) || []
-                      }
+                      options={productGroup}
                       size="small"
                     />
                   </Grid>
@@ -441,12 +474,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       type="select"
                       disabled={viewOnly}
                       placeholder="Select a sub group"
-                      options={
-                        productSubGroup?.map((group) => ({
-                          value: group.value,
-                          label: group.label,
-                        })) || []
-                      }
+                      options={productSubGroup}
                       size="small"
                     />
                   </Grid>
@@ -459,12 +487,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       type="select"
                       disabled={viewOnly}
                       placeholder="Select a manufacturer"
-                      options={
-                        manufacturer?.map((mfr) => ({
-                          value: mfr.value,
-                          label: mfr.label,
-                        })) || []
-                      }
+                      options={manufacturer}
                       size="small"
                       clearable={true}
                     />
@@ -496,59 +519,77 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
+                  {/* Pricing Row */}
                   <Grid size={{ xs: 12, md: 6 }}>
                     <FormField name="defaultPrice" control={control} label="Price (₹)" type="number" required disabled={viewOnly} size="small" placeholder="Enter price" />
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <FormField
-                      name="taxID"
-                      control={control}
-                      label="Tax"
-                      type="select"
-                      disabled={viewOnly}
-                      placeholder="Select Tax"
-                      options={
-                        taxType?.map((tax) => ({
-                          value: tax.value,
-                          label: tax.label,
-                        })) || []
-                      }
-                      size="small"
-                    />
+                    <Box display="flex" alignItems="center" gap={2}>
+                      <FormField name="taxable" control={control} label="Taxable" type="switch" disabled={viewOnly} size="small" />
+                      <FormField name="chargableYN" control={control} label="Chargeable" type="switch" disabled={viewOnly} size="small" />
+                    </Box>
                   </Grid>
 
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <FormField name="taxable" control={control} label="Taxable" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
+                  {/* Tax Section - Only show when taxable is Y */}
+                  {taxable === "Y" && (
+                    <>
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
+                          Tax Configuration
+                        </Typography>
+                      </Grid>
 
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <FormField name="chargableYN" control={control} label="Chargeable" type="switch" disabled={viewOnly} size="small" />
-                  </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <FormField
+                          name="taxID"
+                          control={control}
+                          label="Tax Type"
+                          type="select"
+                          required={taxable === "Y"}
+                          disabled={viewOnly}
+                          placeholder="Select Tax Type"
+                          options={taxType}
+                          size="small"
+                        />
+                      </Grid>
 
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <FormField
-                      name="chargePercentage"
-                      control={control}
-                      label="Charge Percentage (%)"
-                      type="number"
-                      disabled={viewOnly || chargableYN !== "Y"}
-                      size="small"
-                      placeholder="Enter percentage"
-                    />
-                  </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <FormField name="gstPerValue" control={control} label="GST Total (%)" type="number" disabled={true} size="small" placeholder="Auto-calculated" />
+                      </Grid>
 
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <FormField name="gstPerValue" control={control} label="GST Percentage (%)" type="number" disabled={viewOnly} size="small" placeholder="Enter GST %" />
-                  </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <FormField name="cgstPerValue" control={control} label="CGST (%)" type="number" disabled={true} size="small" placeholder="Auto-calculated" />
+                      </Grid>
 
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <FormField name="cgstPerValue" control={control} label="CGST Percentage (%)" type="number" disabled={viewOnly} size="small" placeholder="Enter CGST %" />
-                  </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <FormField name="sgstPerValue" control={control} label="SGST (%)" type="number" disabled={true} size="small" placeholder="Auto-calculated" />
+                      </Grid>
+                    </>
+                  )}
 
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <FormField name="sgstPerValue" control={control} label="SGST Percentage (%)" type="number" disabled={viewOnly} size="small" placeholder="Enter SGST %" />
-                  </Grid>
+                  {/* Charge Section - Only show when chargeable is Y */}
+                  {chargableYN === "Y" && (
+                    <>
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1, mb: 1 }}>
+                          Charge Configuration
+                        </Typography>
+                      </Grid>
+
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <FormField
+                          name="chargePercentage"
+                          control={control}
+                          label="Charge Percentage (%)"
+                          type="number"
+                          disabled={viewOnly}
+                          size="small"
+                          placeholder="Enter charge percentage"
+                        />
+                      </Grid>
+                    </>
+                  )}
                 </Grid>
               </CardContent>
             </Card>
@@ -585,12 +626,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       required
                       disabled={viewOnly}
                       placeholder="Select issue unit"
-                      options={
-                        productUnit?.map((unit) => ({
-                          value: unit.value,
-                          label: unit.label,
-                        })) || []
-                      }
+                      options={productUnit}
                       size="small"
                     />
                   </Grid>
@@ -607,12 +643,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       type="select"
                       disabled={viewOnly}
                       placeholder="Select base unit"
-                      options={
-                        productBaseUnit?.map((unit) => ({
-                          value: unit.id,
-                          label: unit.label,
-                        })) || []
-                      }
+                      options={productBaseUnit}
                       size="small"
                     />
                   </Grid>
@@ -637,12 +668,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       type="select"
                       disabled={viewOnly}
                       placeholder="Select location"
-                      options={
-                        productLocation?.map((location) => ({
-                          value: location.id,
-                          label: location.label,
-                        })) || []
-                      }
+                      options={productLocation}
                       size="small"
                     />
                   </Grid>

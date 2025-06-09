@@ -13,7 +13,7 @@ import DepartmentInfoChange from "../../CommonPage/DepartmentInfoChange";
 import { ProductSearch } from "../../CommonPage/Product/ProductSearchForm";
 import useDropdownValues, { DropdownType } from "@/hooks/PatientAdminstration/useDropdownValues";
 import { IndentDetailDto, IndentSaveRequestDto } from "@/interfaces/InventoryManagement/IndentProductDto";
-import { ProductOption, ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
+import { ProductOption, ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
 import { ProductOverviewDto } from "@/interfaces/InventoryManagement/ProductOverviewDto";
 import { ProductListDto } from "@/interfaces/InventoryManagement/ProductListDto";
 import IndentProductGrid from "./IndentProdctDetails";
