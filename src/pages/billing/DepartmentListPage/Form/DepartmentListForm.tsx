@@ -1,5 +1,4 @@
-// src/pages/billing/DepartmentListPage/Form/DepartmentListForm.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress } from "@mui/material";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,12 +6,13 @@ import * as z from "zod";
 import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel, Refresh } from "@mui/icons-material";
+import { Save, Cancel, Refresh, Info } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
 import { useDepartmentList } from "../hooks/useDepartmentList";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface DepartmentListFormProps {
   open: boolean;
@@ -44,13 +44,6 @@ const schema = z.object({
 
 type DepartmentListFormData = z.infer<typeof schema>;
 
-const departmentTypeOptions = [
-  { value: "CLINICAL", label: "Clinical" },
-  { value: "NON_CLINICAL", label: "Non-Clinical" },
-  { value: "ADMIN", label: "Administrative" },
-  { value: "SUPPORT", label: "Support" },
-];
-
 const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, initialData, viewOnly = false }) => {
   const { setLoading } = useLoading();
   const { getNextCode, saveDepartment } = useDepartmentList();
@@ -61,6 +54,17 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const isAddMode = !initialData;
+
+  // Load dynamic dropdown values
+  const { departmentTypes, isLoading: isLoadingDropdowns } = useDropdownValues(["departmentTypes"]);
+
+  // Create dynamic department type options
+  const departmentTypeOptions = useMemo(() => {
+    return (departmentTypes || []).map((item) => ({
+      value: item.value,
+      label: item.label,
+    }));
+  }, [departmentTypes]);
 
   const defaultValues: DepartmentListFormData = {
     deptID: 0,
@@ -88,7 +92,7 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
     handleSubmit,
     reset,
     setValue,
-    watch,
+    getValues,
     formState: { errors, isDirty, isValid },
   } = useForm<DepartmentListFormData>({
     defaultValues,
@@ -99,6 +103,7 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
   const rActiveYN = useWatch({ control, name: "rActiveYN" });
   const isStoreYN = useWatch({ control, name: "isStoreYN" });
   const isUnitYN = useWatch({ control, name: "isUnitYN" });
+  const deptType = useWatch({ control, name: "deptType" });
 
   const generateDepartmentCode = async () => {
     if (!isAddMode) return;
@@ -113,6 +118,7 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
       }
     } catch (error) {
       console.error("Error generating department code:", error);
+      showAlert("Error", "Error generating department code", "error");
     } finally {
       setIsGeneratingCode(false);
     }
@@ -120,7 +126,26 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
 
   useEffect(() => {
     if (initialData) {
-      reset(initialData as DepartmentListFormData);
+      reset({
+        deptID: initialData.deptID,
+        deptCode: initialData.deptCode || "",
+        deptName: initialData.deptName,
+        deptType: initialData.deptType || "CLINICAL",
+        deptStore: initialData.deptStore || "",
+        rActiveYN: initialData.rActiveYN || "Y",
+        rNotes: initialData.rNotes || "",
+        deptLocation: initialData.deptLocation || "",
+        deptSalesYN: initialData.deptSalesYN || "N",
+        deptStorePhYN: initialData.deptStorePhYN || "N",
+        dlNumber: initialData.dlNumber || "",
+        isUnitYN: initialData.isUnitYN || "N",
+        superSpecialityYN: initialData.superSpecialityYN || "N",
+        unit: initialData.unit || "",
+        isStoreYN: initialData.isStoreYN || "N",
+        autoConsumptionYN: initialData.autoConsumptionYN || "N",
+        dischargeNoteYN: initialData.dischargeNoteYN || "N",
+        transferYN: initialData.transferYN || "N",
+      });
     } else {
       reset(defaultValues);
       generateDepartmentCode();
@@ -177,7 +202,30 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
   };
 
   const performReset = () => {
-    reset(initialData ? (initialData as DepartmentListFormData) : defaultValues);
+    reset(
+      initialData
+        ? {
+            deptID: initialData.deptID,
+            deptCode: initialData.deptCode || "",
+            deptName: initialData.deptName,
+            deptType: initialData.deptType || "CLINICAL",
+            deptStore: initialData.deptStore || "",
+            rActiveYN: initialData.rActiveYN || "Y",
+            rNotes: initialData.rNotes || "",
+            deptLocation: initialData.deptLocation || "",
+            deptSalesYN: initialData.deptSalesYN || "N",
+            deptStorePhYN: initialData.deptStorePhYN || "N",
+            dlNumber: initialData.dlNumber || "",
+            isUnitYN: initialData.isUnitYN || "N",
+            superSpecialityYN: initialData.superSpecialityYN || "N",
+            unit: initialData.unit || "",
+            isStoreYN: initialData.isStoreYN || "N",
+            autoConsumptionYN: initialData.autoConsumptionYN || "N",
+            dischargeNoteYN: initialData.dischargeNoteYN || "N",
+            transferYN: initialData.transferYN || "N",
+          }
+        : defaultValues
+    );
     setFormError(null);
 
     if (isAddMode) {
@@ -270,6 +318,15 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
             </Alert>
           )}
 
+          {/* Department Type Information Alert */}
+          {deptType === "CLINICAL" && !viewOnly && (
+            <Alert severity="info" sx={{ mb: 2 }} icon={<Info />}>
+              <Typography variant="body2">
+                <strong>Clinical Department:</strong> This department will have access to clinical features and patient management capabilities.
+              </Typography>
+            </Alert>
+          )}
+
           <Grid container spacing={3}>
             {/* Status Toggle - Prominent Position */}
             <Grid size={{ sm: 12 }}>
@@ -283,9 +340,9 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
 
             {/* Basic Information Section */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #1976d2" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom color="primary" fontWeight="bold">
                     Basic Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
@@ -343,30 +400,45 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
 
             {/* Department Settings */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #ff9800" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom color="#ff9800" fontWeight="bold">
                     Department Settings
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="isUnitYN" control={control} label="Is Unit" type="switch" disabled={viewOnly} size="small" />
+                      <Box>
+                        <FormField name="isUnitYN" control={control} label="Is Unit" type="switch" disabled={viewOnly} size="small" />
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                          Enable if this department operates as a specialized unit
+                        </Typography>
+                      </Box>
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="superSpecialityYN" control={control} label="Super Speciality" type="switch" disabled={viewOnly} size="small" />
+                      <Box>
+                        <FormField name="superSpecialityYN" control={control} label="Super Speciality" type="switch" disabled={viewOnly} size="small" />
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                          Mark as super specialty department
+                        </Typography>
+                      </Box>
                     </Grid>
 
                     {isUnitYN === "Y" && (
                       <Grid size={{ sm: 12, md: 6 }}>
-                        <FormField name="unit" control={control} label="Unit" type="text" disabled={viewOnly} size="small" fullWidth />
+                        <FormField name="unit" control={control} label="Unit Name" type="text" disabled={viewOnly} size="small" fullWidth />
                       </Grid>
                     )}
 
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="isStoreYN" control={control} label="Is Store" type="switch" disabled={viewOnly} size="small" />
+                      <Box>
+                        <FormField name="isStoreYN" control={control} label="Is Store" type="switch" disabled={viewOnly} size="small" />
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                          Enable inventory and store management
+                        </Typography>
+                      </Box>
                     </Grid>
 
                     {isStoreYN === "Y" && (
@@ -392,7 +464,11 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="dlNumber" control={control} label="DL Number" type="text" disabled={viewOnly} size="small" fullWidth />
+                      <FormField name="dlNumber" control={control} label="DL Number" type="text" disabled={viewOnly} size="small" fullWidth placeholder="Drug License Number" />
+                    </Grid>
+
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField name="transferYN" control={control} label="Transfer Enabled" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -401,9 +477,9 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
 
             {/* Notes Section */}
             <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
+              <Card variant="outlined" sx={{ borderLeft: "3px solid #4caf50" }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom color="#4caf50" fontWeight="bold">
                     Additional Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
@@ -419,7 +495,7 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
                         size="small"
                         fullWidth
                         rows={4}
-                        placeholder="Enter any additional information about this department"
+                        placeholder="Enter any additional information about this department, including special instructions, operational notes, or contact details"
                       />
                     </Grid>
                   </Grid>

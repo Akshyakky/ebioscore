@@ -84,17 +84,19 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
   const { showAlert } = useAlert();
 
   // Load dropdown values with comprehensive list
-  const { productCategory, productGroup, productUnit, taxType, medicationForm, medicationGeneric, productSubGroup, manufacturer, productLocation } = useDropdownValues([
-    "productCategory",
-    "productGroup",
-    "productUnit",
-    "taxType",
-    "medicationForm",
-    "medicationGeneric",
-    "productSubGroup",
-    "manufacturer",
-    "productLocation",
-  ]);
+  const { productCategory, productGroup, productUnit, taxType, medicationForm, medicationGeneric, productSubGroup, manufacturer, productLocation, productBaseUnit } =
+    useDropdownValues([
+      "productCategory",
+      "productGroup",
+      "productUnit",
+      "taxType",
+      "medicationForm",
+      "medicationGeneric",
+      "productSubGroup",
+      "manufacturer",
+      "productLocation",
+      "productBaseUnit",
+    ]);
 
   // Initialize form with enhanced default values
   const defaultValues: ProductFormData = useMemo(
@@ -606,8 +608,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, viewO
                       disabled={viewOnly}
                       placeholder="Select base unit"
                       options={
-                        productUnit?.map((unit) => ({
-                          value: unit.value,
+                        productBaseUnit?.map((unit) => ({
+                          value: unit.id,
                           label: unit.label,
                         })) || []
                       }

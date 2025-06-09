@@ -105,7 +105,9 @@ export type DropdownType =
   | "appointmentConsultants"
   | "profiles"
   | "units"
-  | "dischargeType";
+  | "dischargeType"
+  | "alertCategory"
+  | "productBaseUnit";
 
 // Structure for tracking each dropdown's state
 interface DropdownState {
@@ -316,6 +318,10 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
           value: item.punitID || 0,
           label: item.punitName || "",
         }));
+      },
+      productBaseUnit: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "PRODUCTBASEUNIT");
+        return response;
       },
       medicationForm: async () => {
         const response = await medicationFormService.getAll();
@@ -530,6 +536,10 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       dischargeType: async () => {
         const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "DISCHARGETYPE");
+        return response;
+      },
+      alertCategory: async () => {
+        const response = await AppModifyListService.fetchAppModifyList("GetActiveAppModifyFieldsAsync", "ALERTCATEGORY");
         return response;
       },
     }),

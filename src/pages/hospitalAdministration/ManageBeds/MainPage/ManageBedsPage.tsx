@@ -776,7 +776,7 @@ const ManageBedsPage: React.FC = () => {
     <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1" fontWeight="bold">
+        <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
           Manage Beds & Cradles
         </Typography>
         <Stack direction="row" spacing={2}>

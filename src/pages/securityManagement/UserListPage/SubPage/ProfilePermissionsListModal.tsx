@@ -1,38 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Button, Typography, List, ListItem, ListItemText, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import React, { useState } from "react";
+import { Button, Box, Tabs, Tab } from "@mui/material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { profileListService } from "@/services/SecurityManagementServices/ProfileListServices";
-import { useLoading } from "@/hooks/Common/useLoading";
-import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { ProfileModulesDto } from "@/interfaces/SecurityManagement/ProfileListData";
-
-// Define interfaces based on your API response structure
-interface ProfilePermission {
-  profDetID: number;
-  profileID: number;
-  profileName: string;
-  aOprID: number;
-  aOprName: string;
-  aSubID: number;
-  aSubName: string;
-  aUGrpID: number;
-  aUGrpName: string;
-}
-
-// Interface for group structure
-interface GroupedPermission {
-  groupId: number;
-  groupName: string;
-  subModules: {
-    subId: number;
-    subName: string;
-    operations: {
-      opId: number;
-      opName: string;
-    }[];
-  }[];
-}
+import ProfilePermissionsList from "../../ProfileListPage/SubPage/ProfilePermissionsList";
 
 interface ProfilePermissionsModalProps {
   profileId: number;
@@ -41,78 +10,58 @@ interface ProfilePermissionsModalProps {
   onClose: () => void;
 }
 
-const ProfilePermissionsListModal: React.FC<ProfilePermissionsModalProps> = ({ profileId, open, onClose }) => {
-  const [groupedPermissions, setGroupedPermissions] = useState<GroupedPermission[]>([]);
-  const { setLoading } = useLoading();
-  const [profileName, setProfileName] = useState<string>("");
-  useEffect(() => {
-    if (open && profileId > 0) {
-      fetchProfilePermissions();
-    }
-  }, [open, profileId]);
+const ProfilePermissionsListModal: React.FC<ProfilePermissionsModalProps> = ({ profileId, profileName = "", open, onClose }) => {
+  const [activeTab, setActiveTab] = useState<"modulePermissions" | "reportPermissions" | "departmentPermissions">("modulePermissions");
 
-  const fetchProfilePermissions = async () => {
-    if (profileId <= 0) return;
-
-    setLoading(true);
-    try {
-      const response: OperationResult<ProfileModulesDto[]> = await profileListService.getProfileDetailsByProfileId(profileId, "M");
-
-      if (response.success && response.data) {
-        const permissions: ProfilePermission[] = response.data;
-        const grouped = groupPermissionsByHierarchy(permissions);
-        setGroupedPermissions(grouped);
-        setProfileName(permissions[0].profileName);
-      } else {
-        // console.error("Failed to fetch profile permissions:", response.message);
-      }
-    } catch (error) {
-      console.error("Error fetching profile permissions:", error);
-    } finally {
-      setLoading(false);
-    }
+  const handleTabChange = (event: React.SyntheticEvent, newValue: "modulePermissions" | "reportPermissions" | "departmentPermissions") => {
+    setActiveTab(newValue);
   };
 
-  // Group the permissions by the hierarchy: Group -> SubModule -> Operations
-  const groupPermissionsByHierarchy = (permissions: ProfilePermission[]): GroupedPermission[] => {
-    const groupedData: { [key: number]: GroupedPermission } = {};
+  const renderTabButtons = () => (
+    <Box sx={{ display: "flex", flexDirection: "row", gap: 2, mb: 2 }}>
+      <Tabs value={activeTab} onChange={handleTabChange} aria-label="permissions navigation" variant="standard" sx={{ minHeight: 40 }}>
+        <Tab
+          label="Module Permissions"
+          value="modulePermissions"
+          sx={{
+            minHeight: 40,
+            textTransform: "none",
+            fontSize: "0.875rem",
+          }}
+        />
+        <Tab
+          label="Report Permissions"
+          value="reportPermissions"
+          sx={{
+            minHeight: 40,
+            textTransform: "none",
+            fontSize: "0.875rem",
+          }}
+        />
+        <Tab
+          label="Department Permissions"
+          value="departmentPermissions"
+          sx={{
+            minHeight: 40,
+            textTransform: "none",
+            fontSize: "0.875rem",
+          }}
+        />
+      </Tabs>
+    </Box>
+  );
 
-    // First pass: create groups and submodules
-    permissions.forEach((permission) => {
-      // Create group if it doesn't exist
-      if (!groupedData[permission.aUGrpID]) {
-        groupedData[permission.aUGrpID] = {
-          groupId: permission.aUGrpID,
-          groupName: permission.aUGrpName,
-          subModules: [],
-        };
-      }
-
-      // Find if submodule already exists in the group
-      let subModule = groupedData[permission.aUGrpID].subModules.find((sub) => sub.subId === permission.aSubID);
-
-      // Create submodule if it doesn't exist
-      if (!subModule) {
-        subModule = {
-          subId: permission.aSubID,
-          subName: permission.aSubName,
-          operations: [],
-        };
-        groupedData[permission.aUGrpID].subModules.push(subModule);
-      }
-
-      // Add operation to submodule if it doesn't already exist
-      const operationExists = subModule.operations.some((op) => op.opId === permission.aOprID);
-      if (!operationExists) {
-        subModule.operations.push({
-          opId: permission.aOprID,
-          opName: permission.aOprName,
-        });
-      }
-    });
-
-    // Convert to array and sort by group ID
-    return Object.values(groupedData).sort((a, b) => a.groupId - b.groupId);
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "modulePermissions":
+        return <ProfilePermissionsList title="Module Permissions" type="M" profileId={profileId} />;
+      case "reportPermissions":
+        return <ProfilePermissionsList title="Report Permissions" type="R" profileId={profileId} />;
+      case "departmentPermissions":
+        return <ProfilePermissionsList title="Department Permissions" type="D" profileId={profileId} />;
+      default:
+        return <ProfilePermissionsList title="Module Permissions" type="M" profileId={profileId} />;
+    }
   };
 
   return (
@@ -120,7 +69,7 @@ const ProfilePermissionsListModal: React.FC<ProfilePermissionsModalProps> = ({ p
       open={open}
       onClose={onClose}
       title={`${profileName} Permissions`}
-      maxWidth="xs"
+      maxWidth="lg"
       fullWidth={true}
       actions={
         <Button variant="contained" color="primary" onClick={onClose}>
@@ -129,65 +78,10 @@ const ProfilePermissionsListModal: React.FC<ProfilePermissionsModalProps> = ({ p
       }
       dialogContentSx={{ maxHeight: "70vh" }}
     >
-      {groupedPermissions.length === 0 ? (
-        <Typography variant="body1" sx={{ py: 2, textAlign: "center" }}>
-          No permissions found for this profile.
-        </Typography>
-      ) : (
-        <List sx={{ width: "100%", bgcolor: "background.paper", p: 0 }}>
-          {groupedPermissions.map((group) => (
-            <Accordion key={`group-${group.groupId}`} defaultExpanded>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                sx={{
-                  backgroundColor: (theme) => theme.palette.primary.main,
-                  color: (theme) => theme.palette.primary.contrastText,
-                }}
-              >
-                <Typography variant="subtitle1" fontWeight="bold">
-                  {group.groupName}
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails sx={{ p: 0 }}>
-                <List disablePadding>
-                  {group.subModules.map((subModule) => (
-                    <Accordion
-                      key={`submodule-${subModule.subId}`}
-                      disableGutters
-                      elevation={0}
-                      sx={{
-                        "&:before": { display: "none" },
-                        border: "1px solid rgba(0, 0, 0, 0.12)",
-                        mb: 1,
-                      }}
-                    >
-                      <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        sx={{
-                          backgroundColor: (theme) => theme.palette.primary.contrastText,
-                        }}
-                      >
-                        <Typography variant="body1" fontWeight="medium">
-                          {subModule.subName}
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails sx={{ p: 0 }}>
-                        <List dense disablePadding>
-                          {subModule.operations.map((operation) => (
-                            <ListItem key={`operation-${operation.opId}`} divider>
-                              <ListItemText primary={operation.opName} />
-                            </ListItem>
-                          ))}
-                        </List>
-                      </AccordionDetails>
-                    </Accordion>
-                  ))}
-                </List>
-              </AccordionDetails>
-            </Accordion>
-          ))}
-        </List>
-      )}
+      <Box sx={{ p: 1 }}>
+        {renderTabButtons()}
+        {renderTabContent()}
+      </Box>
     </GenericDialog>
   );
 };

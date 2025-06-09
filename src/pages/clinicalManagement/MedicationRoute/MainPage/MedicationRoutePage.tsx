@@ -8,20 +8,19 @@ import {
   Refresh as RefreshIcon,
   Visibility as VisibilityIcon,
   Close as CloseIcon,
-  LocalOffer as TaxIcon,
+  Route as RouteIcon,
   CheckCircle as ActiveIcon,
   Cancel as InactiveIcon,
-  Percent as RateIcon,
-  TrendingUp as HighIcon,
-  TrendingDown as LowIcon,
+  Star as DefaultIcon,
+  Settings as ModifiableIcon,
 } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import { ProductTaxListDto } from "@/interfaces/InventoryManagement/ProductTaxListDto";
-import ProductTaxListForm from "../Form/ProductTaxListForm";
-import { useProductTaxList } from "../hooks/useProductTaxListPage";
+import { MedicationRouteDto } from "@/interfaces/ClinicalManagement/MedicationRouteDto";
+import MedicationRouteForm from "../Form/MedicationRouteForm";
+import { useMedicationRoute } from "../hooks/useMedicationRoute";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
 
@@ -30,35 +29,27 @@ const statusOptions = [
   { value: "inactive", label: "Inactive" },
 ];
 
-const taxRangeOptions = [
-  { value: "low", label: "Low (0-5%)" },
-  { value: "medium", label: "Medium (5-15%)" },
-  { value: "high", label: "High (15%+)" },
-];
-
-const ProductTaxListPage: React.FC = () => {
+const MedicationRoutePage: React.FC = () => {
   const { showAlert } = useAlert();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
-  const [selectedProductTax, setSelectedProductTax] = useState<ProductTaxListDto | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<MedicationRouteDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false);
   const [isViewMode, setIsViewMode] = useState<boolean>(false);
   const [showStats, setShowStats] = useState(true);
 
-  const { productTaxList, isLoading, error, fetchProductTaxList, deleteProductTax } = useProductTaxList();
+  const { medicationRouteList, isLoading, error, fetchMedicationRouteList, deleteMedicationRoute } = useMedicationRoute();
 
   const [filters, setFilters] = useState<{
     status: string;
-    taxRange: string;
   }>({
     status: "",
-    taxRange: "",
   });
 
   const handleRefresh = useCallback(() => {
-    fetchProductTaxList();
-  }, [fetchProductTaxList]);
+    fetchMedicationRouteList();
+  }, [fetchMedicationRouteList]);
 
   const debouncedSearch = useMemo(() => debounce((value: string) => setDebouncedSearchTerm(value), 300), []);
 
@@ -84,46 +75,46 @@ const ProductTaxListPage: React.FC = () => {
   }, [debouncedSearch]);
 
   const handleAddNew = useCallback(() => {
-    setSelectedProductTax(null);
+    setSelectedRoute(null);
     setIsViewMode(false);
     setIsFormOpen(true);
   }, []);
 
-  const handleEdit = useCallback((productTax: ProductTaxListDto) => {
-    setSelectedProductTax(productTax);
+  const handleEdit = useCallback((route: MedicationRouteDto) => {
+    setSelectedRoute(route);
     setIsViewMode(false);
     setIsFormOpen(true);
   }, []);
 
-  const handleView = useCallback((productTax: ProductTaxListDto) => {
-    setSelectedProductTax(productTax);
+  const handleView = useCallback((route: MedicationRouteDto) => {
+    setSelectedRoute(route);
     setIsViewMode(true);
     setIsFormOpen(true);
   }, []);
 
-  const handleDeleteClick = useCallback((productTax: ProductTaxListDto) => {
-    setSelectedProductTax(productTax);
+  const handleDeleteClick = useCallback((route: MedicationRouteDto) => {
+    setSelectedRoute(route);
     setIsDeleteConfirmOpen(true);
   }, []);
 
   const handleConfirmDelete = useCallback(async () => {
-    if (!selectedProductTax) return;
+    if (!selectedRoute) return;
 
     try {
-      const success = await deleteProductTax(selectedProductTax.pTaxID);
+      const success = await deleteMedicationRoute(selectedRoute.mRouteID);
 
       if (success) {
-        showAlert("Success", "Product tax deleted successfully", "success");
+        showAlert("Success", "Medication route deleted successfully", "success");
       } else {
-        throw new Error("Failed to delete product tax");
+        throw new Error("Failed to delete medication route");
       }
     } catch (error) {
       console.error("Delete operation failed:", error);
-      showAlert("Error", "Failed to delete product tax", "error");
+      showAlert("Error", "Failed to delete medication route", "error");
     } finally {
       setIsDeleteConfirmOpen(false);
     }
-  }, [selectedProductTax, deleteProductTax]);
+  }, [selectedRoute, deleteMedicationRoute]);
 
   const handleFormClose = useCallback(
     (refreshData?: boolean) => {
@@ -145,78 +136,67 @@ const ProductTaxListPage: React.FC = () => {
   const handleClearFilters = useCallback(() => {
     setFilters({
       status: "",
-      taxRange: "",
     });
   }, []);
 
   // Calculate stats for the dashboard
   const stats = useMemo(() => {
-    if (!productTaxList.length) {
+    if (!medicationRouteList.length) {
       return {
-        totalTaxes: 0,
-        activeTaxes: 0,
-        inactiveTaxes: 0,
-        averageTaxRate: 0,
-        highestTaxRate: 0,
-        lowestTaxRate: 0,
+        totalRoutes: 0,
+        activeRoutes: 0,
+        inactiveRoutes: 0,
+        defaultRoutes: 0,
+        modifiableRoutes: 0,
       };
     }
 
-    const activeCount = productTaxList.filter((t) => t.rActiveYN === "Y").length;
-    const taxAmounts = productTaxList.map((t) => t.pTaxAmt || 0).filter((amt) => amt > 0);
-    const averageRate = taxAmounts.length > 0 ? taxAmounts.reduce((sum, amt) => sum + amt, 0) / taxAmounts.length : 0;
-    const highestRate = taxAmounts.length > 0 ? Math.max(...taxAmounts) : 0;
-    const lowestRate = taxAmounts.length > 0 ? Math.min(...taxAmounts) : 0;
+    const activeCount = medicationRouteList.filter((r) => (r as any).rActiveYN === "Y").length;
+    const defaultCount = medicationRouteList.filter((r) => r.defaultYN === "Y").length;
+    const modifiableCount = medicationRouteList.filter((r) => r.modifyYN === "Y").length;
 
     return {
-      totalTaxes: productTaxList.length,
-      activeTaxes: activeCount,
-      inactiveTaxes: productTaxList.length - activeCount,
-      averageTaxRate: Math.round(averageRate * 100) / 100,
-      highestTaxRate: highestRate,
-      lowestTaxRate: lowestRate,
+      totalRoutes: medicationRouteList.length,
+      activeRoutes: activeCount,
+      inactiveRoutes: medicationRouteList.length - activeCount,
+      defaultRoutes: defaultCount,
+      modifiableRoutes: modifiableCount,
     };
-  }, [productTaxList]);
+  }, [medicationRouteList]);
 
-  const filteredProductTaxes = useMemo(() => {
-    if (!productTaxList.length) return [];
+  const filteredRoutes = useMemo(() => {
+    if (!medicationRouteList.length) return [];
 
-    return productTaxList.filter((productTax) => {
+    return medicationRouteList.filter((route) => {
       const matchesSearch =
         debouncedSearchTerm === "" ||
-        productTax.pTaxCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        productTax.pTaxName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        productTax.pTaxDescription?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        productTax.rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+        route.mRouteName?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        route.mRouteCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        route.mRouteSnomedCode?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        (route as any).rNotes?.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
 
       const matchesStatus =
-        filters.status === "" || (filters.status === "active" && productTax.rActiveYN === "Y") || (filters.status === "inactive" && productTax.rActiveYN === "N");
+        filters.status === "" || (filters.status === "active" && (route as any).rActiveYN === "Y") || (filters.status === "inactive" && (route as any).rActiveYN === "N");
 
-      const matchesTaxRange =
-        filters.taxRange === "" ||
-        (filters.taxRange === "low" && (productTax.pTaxAmt || 0) >= 0 && (productTax.pTaxAmt || 0) <= 5) ||
-        (filters.taxRange === "medium" && (productTax.pTaxAmt || 0) > 5 && (productTax.pTaxAmt || 0) <= 15) ||
-        (filters.taxRange === "high" && (productTax.pTaxAmt || 0) > 15);
-
-      return matchesSearch && matchesStatus && matchesTaxRange;
+      return matchesSearch && matchesStatus;
     });
-  }, [productTaxList, debouncedSearchTerm, filters]);
+  }, [medicationRouteList, debouncedSearchTerm, filters]);
 
   const renderStatsDashboard = () => (
     <Grid container spacing={1.5} mb={1.5}>
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #1976d2" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <Avatar sx={{ bgcolor: "#1976d2", width: 40, height: 40 }}>
-                <TaxIcon fontSize="small" />
+                <RouteIcon fontSize="small" />
               </Avatar>
               <Box>
                 <Typography variant="h5" color="#1976d2" fontWeight="bold">
-                  {stats.totalTaxes}
+                  {stats.totalRoutes}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Total Taxes
+                  Total Routes
                 </Typography>
               </Box>
             </Stack>
@@ -224,7 +204,7 @@ const ProductTaxListPage: React.FC = () => {
         </Card>
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #4caf50" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -233,7 +213,7 @@ const ProductTaxListPage: React.FC = () => {
               </Avatar>
               <Box>
                 <Typography variant="h5" color="#4caf50" fontWeight="bold">
-                  {stats.activeTaxes}
+                  {stats.activeRoutes}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Active
@@ -244,7 +224,7 @@ const ProductTaxListPage: React.FC = () => {
         </Card>
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #f44336" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -253,7 +233,7 @@ const ProductTaxListPage: React.FC = () => {
               </Avatar>
               <Box>
                 <Typography variant="h5" color="#f44336" fontWeight="bold">
-                  {stats.inactiveTaxes}
+                  {stats.inactiveRoutes}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   Inactive
@@ -264,19 +244,19 @@ const ProductTaxListPage: React.FC = () => {
         </Card>
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #2196f3" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <Avatar sx={{ bgcolor: "#2196f3", width: 40, height: 40 }}>
-                <RateIcon fontSize="small" />
+                <DefaultIcon fontSize="small" />
               </Avatar>
               <Box>
                 <Typography variant="h5" color="#2196f3" fontWeight="bold">
-                  {stats.averageTaxRate}%
+                  {stats.defaultRoutes}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Average Rate
+                  Default
                 </Typography>
               </Box>
             </Stack>
@@ -284,39 +264,19 @@ const ProductTaxListPage: React.FC = () => {
         </Card>
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 2 }}>
+      <Grid size={{ xs: 12, sm: 2.4 }}>
         <Card sx={{ borderLeft: "3px solid #ff9800" }}>
           <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
             <Stack direction="row" alignItems="center" spacing={1.5}>
               <Avatar sx={{ bgcolor: "#ff9800", width: 40, height: 40 }}>
-                <HighIcon fontSize="small" />
+                <ModifiableIcon fontSize="small" />
               </Avatar>
               <Box>
                 <Typography variant="h5" color="#ff9800" fontWeight="bold">
-                  {stats.highestTaxRate}%
+                  {stats.modifiableRoutes}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Highest Rate
-                </Typography>
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      <Grid size={{ xs: 12, sm: 2 }}>
-        <Card sx={{ borderLeft: "3px solid #9c27b0" }}>
-          <CardContent sx={{ p: 1.5, textAlign: "center", "&:last-child": { pb: 1.5 } }}>
-            <Stack direction="row" alignItems="center" spacing={1.5}>
-              <Avatar sx={{ bgcolor: "#9c27b0", width: 40, height: 40 }}>
-                <LowIcon fontSize="small" />
-              </Avatar>
-              <Box>
-                <Typography variant="h5" color="#9c27b0" fontWeight="bold">
-                  {stats.lowestTaxRate}%
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Lowest Rate
+                  Modifiable
                 </Typography>
               </Box>
             </Stack>
@@ -326,9 +286,9 @@ const ProductTaxListPage: React.FC = () => {
     </Grid>
   );
 
-  const columns: Column<ProductTaxListDto>[] = [
+  const columns: Column<MedicationRouteDto>[] = [
     {
-      key: "pTaxCode",
+      key: "mRouteCode",
       header: "Code",
       visible: true,
       sortable: true,
@@ -337,30 +297,39 @@ const ProductTaxListPage: React.FC = () => {
       formatter: (value: string) => value || "-",
     },
     {
-      key: "pTaxName",
-      header: "Tax Name",
+      key: "mRouteName",
+      header: "Route Name",
       visible: true,
       sortable: true,
       filterable: true,
       width: 250,
     },
     {
-      key: "pTaxAmt",
-      header: "Tax Rate (%)",
+      key: "mRSnomedCode",
+      header: "SNOMED CT Code",
+      visible: true,
+      sortable: true,
+      filterable: true,
+      width: 180,
+      formatter: (value: string) => value || "-",
+    },
+    {
+      key: "defaultYN",
+      header: "Default",
       visible: true,
       sortable: true,
       filterable: true,
       width: 120,
-      formatter: (value: number) => (value !== undefined && value !== null ? `${value}%` : "-"),
+      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "info" : "primary"} label={value === "Y" ? "Yes" : "No"} />,
     },
     {
-      key: "pTaxDescription",
-      header: "Description",
+      key: "modifyYN",
+      header: "Modifiable",
       visible: true,
       sortable: true,
       filterable: true,
-      width: 300,
-      formatter: (value: string) => (value ? value.substring(0, 50) + (value.length > 50 ? "..." : "") : "-"),
+      width: 120,
+      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "warning" : "primary"} label={value === "Y" ? "Yes" : "No"} />,
     },
     {
       key: "rActiveYN",
@@ -431,7 +400,7 @@ const ProductTaxListPage: React.FC = () => {
     return (
       <Box sx={{ p: 2 }}>
         <Typography color="error" variant="h6">
-          Error loading product taxes: {error}
+          Error loading medication routes: {error}
         </Typography>
         <SmartButton text="Retry" onClick={handleRefresh} variant="contained" color="primary" />
       </Box>
@@ -443,7 +412,7 @@ const ProductTaxListPage: React.FC = () => {
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
         <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
-          Product Tax List
+          Medication Route List
         </Typography>
         <SmartButton text={showStats ? "Hide Statistics" : "Show Statistics"} onClick={() => setShowStats(!showStats)} variant="outlined" size="small" />
       </Box>
@@ -456,7 +425,7 @@ const ProductTaxListPage: React.FC = () => {
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
-              placeholder="Search by code, name, description, or notes"
+              placeholder="Search by code or name"
               variant="outlined"
               size="small"
               value={searchTerm}
@@ -478,7 +447,7 @@ const ProductTaxListPage: React.FC = () => {
             />
           </Grid>
           <Grid size={{ xs: 12, md: 5 }}>
-            <Tooltip title="Filter Product Taxes">
+            <Tooltip title="Filter Routes">
               <Stack direction="row" spacing={2} alignItems="center">
                 <DropdownSelect
                   label="Status"
@@ -489,19 +458,8 @@ const ProductTaxListPage: React.FC = () => {
                   size="small"
                   defaultText="All Status"
                 />
-                <DropdownSelect
-                  label="Tax Range"
-                  name="taxRange"
-                  value={filters.taxRange}
-                  options={taxRangeOptions}
-                  onChange={(e) => handleFilterChange("taxRange", e.target.value)}
-                  size="small"
-                  defaultText="All Ranges"
-                />
                 <Box display="flex" alignItems="center" gap={1}>
-                  {(filters.status || filters.taxRange) && (
-                    <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />
-                  )}
+                  {filters.status && <Chip label={`Filters (${Object.values(filters).filter((v) => v).length})`} onDelete={handleClearFilters} size="small" color="primary" />}
                 </Box>
               </Stack>
             </Tooltip>
@@ -520,24 +478,24 @@ const ProductTaxListPage: React.FC = () => {
                 asynchronous={true}
                 showLoadingIndicator={true}
               />
-              <SmartButton text="Add Tax" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
+              <SmartButton text="Add Route" icon={AddIcon} onClick={handleAddNew} color="primary" variant="contained" size="small" />
             </Stack>
           </Grid>
         </Grid>
       </Paper>
 
       <Paper sx={{ p: 2 }}>
-        <CustomGrid columns={columns} data={filteredProductTaxes} maxHeight="calc(100vh - 280px)" emptyStateMessage="No product taxes found" density="small" loading={isLoading} />
+        <CustomGrid columns={columns} data={filteredRoutes} maxHeight="calc(100vh - 280px)" emptyStateMessage="No medication routes found" density="small" loading={isLoading} />
       </Paper>
 
-      {isFormOpen && <ProductTaxListForm open={isFormOpen} onClose={handleFormClose} initialData={selectedProductTax} viewOnly={isViewMode} />}
+      {isFormOpen && <MedicationRouteForm open={isFormOpen} onClose={handleFormClose} initialData={selectedRoute} viewOnly={isViewMode} />}
 
       <ConfirmationDialog
         open={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Confirm Delete"
-        message={`Are you sure you want to delete the product tax "${selectedProductTax?.pTaxName}"?`}
+        message={`Are you sure you want to delete the medication route "${selectedRoute?.mRouteName}"?`}
         confirmText="Delete"
         cancelText="Cancel"
         type="error"
@@ -547,4 +505,4 @@ const ProductTaxListPage: React.FC = () => {
   );
 };
 
-export default ProductTaxListPage;
+export default MedicationRoutePage;

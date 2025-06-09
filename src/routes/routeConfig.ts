@@ -1,6 +1,5 @@
 import { lazy, Suspense } from "react";
 import React from "react";
-import { PatientSearchProvider } from "../context/PatientSearchContext";
 import { AlertProvider } from "@/providers/AlertProvider";
 
 // Lazy load components
@@ -50,6 +49,7 @@ const ProductList = lazy(() => import("@/pages/inventoryManagement/ProductList/M
 const ProductTransaction = lazy(() => import("@/pages/inventoryManagement/ProductTransaction/ProductTransaction"));
 const PatientRegistrationRouter = lazy(() => import("@/pages/patientAdministration/RegistrationPage/PatientRegistrationRouter"));
 const DeptUnitAllocationPage = lazy(() => import("@/pages/hospitalAdministration/DeptUnitAllocation/MainPage/DeptUnitAllocationPage"));
+const MedicationRoutePage = lazy(() => import("@/pages/clinicalManagement/MedicationRoute/MainPage/MedicationRoutePage"));
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {
@@ -155,7 +155,7 @@ const routeConfig: RouteConfig[] = [
     path: "/admissionpage",
     component: wrapWithSuspense(AdmissionPage),
     protected: true,
-    providers: [PatientSearchProvider, AlertProvider],
+    providers: [AlertProvider],
     metadata: {
       title: "Patient Admission",
       category: "patient",
@@ -358,6 +358,16 @@ const routeConfig: RouteConfig[] = [
     providers: [AlertProvider],
     metadata: {
       title: "Medication Forms",
+      category: "clinical",
+    },
+  },
+  {
+    path: "/MedicationRoute",
+    component: wrapWithSuspense(MedicationRoutePage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Medication Routes",
       category: "clinical",
     },
   },

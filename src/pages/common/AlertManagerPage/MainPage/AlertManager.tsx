@@ -224,7 +224,10 @@ const AlertManager: React.FC = () => {
     <Box sx={{ p: 2 }}>
       {/* Page Header with Action Buttons */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h4">Alert Manager</Typography>
+        <Typography variant="h5" component="h1" color="primary" fontWeight="bold">
+          Alert Manager
+        </Typography>
+
         <Box sx={{ display: "flex", gap: 2 }}>
           {selectedPatient && <CustomButton variant="outlined" color="error" text="Clear Patient" icon={ClearIcon} onClick={handleClearPatient} />}
           <CustomButton variant="outlined" color="primary" text="Refresh Data" icon={RefreshIcon} onClick={handleRefreshData} disabled={!selectedPatient} />

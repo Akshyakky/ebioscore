@@ -74,7 +74,7 @@ const MedicationFrequencyForm: React.FC<MedicationFrequencyFormProps> = ({ open,
 
     try {
       setIsGeneratingCode(true);
-      const nextCode = await getNextCode("FRQ", 3);
+      const nextCode = await getNextCode("MFRQ", 5);
       if (nextCode) {
         setValue("mFrqCode", nextCode, { shouldValidate: true, shouldDirty: true });
       } else {

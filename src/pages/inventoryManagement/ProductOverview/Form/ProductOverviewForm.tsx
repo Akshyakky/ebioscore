@@ -15,7 +15,7 @@ import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
 import { useProductOverview } from "../hooks/useProductOverview";
 import { ProductSearch, ProductSearchRef } from "../../CommonPage/Product/ProductSearchForm";
-import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interfacr";
+import { ProductSearchResult } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
 
 interface ProductOverviewFormProps {
   open: boolean;

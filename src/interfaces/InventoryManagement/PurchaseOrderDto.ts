@@ -1,6 +1,6 @@
 import { BaseDto } from "@/services/GenericEntityService/GenericEntityService";
 import { ProductListDto } from "./ProductListDto";
-import { ProductSearchResult } from "./Product/ProductSearch.interfacr";
+import { ProductSearchResult } from "./Product/ProductSearch.interface";
 
 export interface PurchaseOrderMastDto extends BaseDto {
   pOID: number;

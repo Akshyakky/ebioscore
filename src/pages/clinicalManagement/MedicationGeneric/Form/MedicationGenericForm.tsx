@@ -29,7 +29,7 @@ const schema = z.object({
   rActiveYN: z.string(),
   transferYN: z.string(),
   rNotes: z.string().nullable().optional(),
-  mSnomedCode: z.string().nullable().optional(),
+  mGSnomedCode: z.string().nullable().optional(),
 });
 
 type MedicationGenericFormData = z.infer<typeof schema>;
@@ -54,7 +54,7 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
     rActiveYN: "Y",
     transferYN: "N",
     rNotes: "",
-    mSnomedCode: "",
+    mGSnomedCode: "",
   };
 
   const {
@@ -74,7 +74,7 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
 
     try {
       setIsGeneratingCode(true);
-      const nextCode = await getNextCode("GEN", 3);
+      const nextCode = await getNextCode("MEDG", 5);
       if (nextCode) {
         setValue("mGenCode", nextCode, { shouldValidate: true, shouldDirty: true });
       } else {
@@ -98,7 +98,7 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
         rActiveYN: initialData.rActiveYN || "Y",
         transferYN: initialData.transferYN || "N",
         rNotes: initialData.rNotes || "",
-        mSnomedCode: initialData.mSnomedCode || "",
+        mGSnomedCode: initialData.mGSnomedCode || "",
       });
     } else {
       reset(defaultValues);
@@ -124,7 +124,7 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
         rActiveYN: data.rActiveYN,
         transferYN: data.transferYN,
         rNotes: data.rNotes || "",
-        mSnomedCode: data.mSnomedCode || "",
+        mGSnomedCode: data.mGSnomedCode || "",
       };
 
       const response = await saveMedicationGeneric(genericData);
@@ -158,7 +158,7 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
             rActiveYN: initialData.rActiveYN || "Y",
             transferYN: initialData.transferYN || "N",
             rNotes: initialData.rNotes || "",
-            mSnomedCode: initialData.mSnomedCode || "",
+            mGSnomedCode: initialData.mGSnomedCode || "",
           }
         : defaultValues
     );
@@ -303,7 +303,7 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
                     </Grid>
 
                     <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="mSnomedCode" control={control} label="SNOMED Code" type="text" disabled={viewOnly} size="small" fullWidth />
+                      <FormField name="mGSnomedCode" control={control} label="SNOMED Code" type="text" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                   </Grid>
                 </CardContent>

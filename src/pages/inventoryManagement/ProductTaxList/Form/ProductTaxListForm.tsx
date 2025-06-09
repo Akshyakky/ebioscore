@@ -24,10 +24,11 @@ const schema = z.object({
   pTaxID: z.number(),
   pTaxCode: z.string().nonempty("Tax code is required"),
   pTaxName: z.string().nonempty("Tax name is required"),
-  pTaxAmt: z.number().min(0, "Tax amount must be non-negative").optional(),
+  pTaxAmt: z.number().min(0, "Tax amount must be non-negative").max(100, "Tax amount cannot exceed 100%").optional(),
   pTaxDescription: z.string().optional(),
   rActiveYN: z.string(),
   rNotes: z.string().nullable().optional(),
+  transferYN: z.string(),
 });
 
 type ProductTaxListFormData = z.infer<typeof schema>;
@@ -51,6 +52,7 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
     pTaxDescription: "",
     rActiveYN: "Y",
     rNotes: "",
+    transferYN: "N",
   };
 
   const {
@@ -58,6 +60,7 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
     handleSubmit,
     reset,
     setValue,
+    getValues,
     formState: { errors, isDirty, isValid },
   } = useForm<ProductTaxListFormData>({
     defaultValues,
@@ -66,13 +69,14 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
   });
 
   const rActiveYN = useWatch({ control, name: "rActiveYN" });
+  const pTaxAmt = useWatch({ control, name: "pTaxAmt" });
 
   const generateTaxCode = async () => {
     if (!isAddMode) return;
 
     try {
       setIsGeneratingCode(true);
-      const nextCode = await getNextCode("TAX", 3);
+      const nextCode = await getNextCode("TAX", 5);
       if (nextCode) {
         setValue("pTaxCode", nextCode, { shouldValidate: true, shouldDirty: true });
       } else {
@@ -87,7 +91,16 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
 
   useEffect(() => {
     if (initialData) {
-      reset(initialData as ProductTaxListFormData);
+      reset({
+        pTaxID: initialData.pTaxID,
+        pTaxCode: initialData.pTaxCode || "",
+        pTaxName: initialData.pTaxName,
+        pTaxAmt: initialData.pTaxAmt || 0,
+        pTaxDescription: initialData.pTaxDescription || "",
+        rActiveYN: initialData.rActiveYN || "Y",
+        rNotes: initialData.rNotes || "",
+        transferYN: initialData.transferYN || "N",
+      });
     } else {
       reset(defaultValues);
       generateTaxCode();
@@ -111,7 +124,7 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
         pTaxDescription: data.pTaxDescription || "",
         rActiveYN: data.rActiveYN || "Y",
         rNotes: data.rNotes || "",
-        transferYN: "N", // Always set to 'N' as per requirement
+        transferYN: data.transferYN || "N",
       };
 
       const response = await saveProductTax(productTaxData);
@@ -134,7 +147,20 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
   };
 
   const performReset = () => {
-    reset(initialData ? (initialData as ProductTaxListFormData) : defaultValues);
+    reset(
+      initialData
+        ? {
+            pTaxID: initialData.pTaxID,
+            pTaxCode: initialData.pTaxCode || "",
+            pTaxName: initialData.pTaxName,
+            pTaxAmt: initialData.pTaxAmt || 0,
+            pTaxDescription: initialData.pTaxDescription || "",
+            rActiveYN: initialData.rActiveYN || "Y",
+            rNotes: initialData.rNotes || "",
+            transferYN: initialData.transferYN || "N",
+          }
+        : defaultValues
+    );
     setFormError(null);
 
     if (isAddMode) {
@@ -186,7 +212,7 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
       <Box sx={{ display: "flex", gap: 1 }}>
         <SmartButton text="Reset" onClick={handleReset} variant="outlined" color="error" icon={Cancel} disabled={isSaving || (!isDirty && !formError)} />
         <SmartButton
-          text={isAddMode ? "Create Tax" : "Update Tax"}
+          text={isAddMode ? "Create Product Tax" : "Update Product Tax"}
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
@@ -243,7 +269,7 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Tax Information
+                    Basic Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
 
@@ -276,35 +302,8 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
                     <Grid size={{ sm: 12, md: 6 }}>
                       <FormField name="pTaxName" control={control} label="Tax Name" type="text" required disabled={viewOnly} size="small" fullWidth />
                     </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
 
-            {/* Tax Details Section */}
-            <Grid size={{ sm: 12 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Tax Details
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  <Grid container spacing={2}>
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField
-                        name="pTaxAmt"
-                        control={control}
-                        label="Tax Amount (%)"
-                        type="number"
-                        disabled={viewOnly}
-                        size="small"
-                        inputProps={{ min: 0, step: 0.01 }}
-                        placeholder="Enter tax percentage"
-                      />
-                    </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
+                    <Grid size={{ sm: 12 }}>
                       <FormField
                         name="pTaxDescription"
                         control={control}
@@ -315,6 +314,39 @@ const ProductTaxListForm: React.FC<ProductTaxListFormProps> = ({ open, onClose, 
                         fullWidth
                         placeholder="Brief description of the tax"
                       />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Tax Details Section */}
+            <Grid size={{ sm: 12 }}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Tax Settings
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+
+                  <Grid container spacing={2}>
+                    <Grid size={{ sm: 12, md: 6 }}>
+                      <FormField
+                        name="pTaxAmt"
+                        control={control}
+                        label="Tax Rate (%)"
+                        type="number"
+                        disabled={viewOnly}
+                        size="small"
+                        fullWidth
+                        inputProps={{ min: 0, max: 100, step: 0.01 }}
+                        placeholder="Enter tax percentage (0-100)"
+                      />
+                      {pTaxAmt !== undefined && pTaxAmt > 0 && (
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                          Tax rate: {pTaxAmt}%
+                        </Typography>
+                      )}
                     </Grid>
                   </Grid>
                 </CardContent>

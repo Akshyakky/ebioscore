@@ -54,7 +54,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
   const [formError, setFormError] = useState<string | null>(null);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
-  const [activeTab, setActiveTab] = useState<"details" | "modulePermissions" | "reportPermissions">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "modulePermissions" | "reportPermissions" | "departmentPermissions">("details");
   const [digSignImageName, setDigSignImageName] = useState<string>("");
   const [newPassword, setNewPassword] = useState<boolean>(true);
   const [companyDropdown, setCompanyDropdown] = useState<DropdownOption[]>([]);
@@ -352,6 +352,17 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
             }}
           />
         )}
+        {!isAddMode && permissionView && (
+          <Tab
+            label="Department Permissions"
+            value="departmentPermissions"
+            sx={{
+              minHeight: 40,
+              textTransform: "none",
+              fontSize: "0.875rem",
+            }}
+          />
+        )}
       </Tabs>
     </Box>
   );
@@ -571,36 +582,26 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
     </Grid>
   );
 
-  const renderModulePermissionsTab = () =>
+  const renderPermissionsTab = (title: string, type: "M" | "R" | "D", isMainModules: boolean, isSubModules: boolean) =>
     !isAddMode && permissionView ? (
       <Card variant="outlined">
         <CardContent>
-          <PermissionManager mode="user" details={watchedData as UserListDto} title="Module Permissions" type="M" useMainModules={true} useSubModules={true} />
+          <PermissionManager mode="user" details={watchedData as UserListDto} title={title} type={type} useMainModules={isMainModules} useSubModules={isSubModules} />
         </CardContent>
       </Card>
     ) : (
-      <Alert severity="info">User must be saved before managing module permissions, or select a profile instead of individual permissions.</Alert>
+      <Alert severity="info">User must be saved before managing {title.toLocaleLowerCase()}, or select a profile instead of individual permissions.</Alert>
     );
-
-  const renderReportPermissionsTab = () =>
-    !isAddMode && permissionView ? (
-      <Card variant="outlined">
-        <CardContent>
-          <PermissionManager mode="user" details={watchedData as UserListDto} title="Report Permissions" type="R" useMainModules={true} useSubModules={false} />
-        </CardContent>
-      </Card>
-    ) : (
-      <Alert severity="info">User must be saved before managing report permissions, or select a profile instead of individual permissions.</Alert>
-    );
-
   const renderTabContent = () => {
     switch (activeTab) {
       case "details":
         return renderDetailsTab();
       case "modulePermissions":
-        return renderModulePermissionsTab();
+        return renderPermissionsTab("Module Permissions", "M", true, true);
       case "reportPermissions":
-        return renderReportPermissionsTab();
+        return renderPermissionsTab("Report Permissions", "R", true, false);
+      case "departmentPermissions":
+        return renderPermissionsTab("Department Permissions", "D", false, false);
       default:
         return renderDetailsTab();
     }

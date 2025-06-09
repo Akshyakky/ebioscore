@@ -15,7 +15,7 @@ export interface ProfileDetailDto extends BaseDto {
   profileName: string;
   accessID: number;
   accessName: string;
-  profileType: string;
+  profileType: "M" | "R" | "D";
   rActiveYN: string;
   rNotes: string;
   transferYN: string;
@@ -52,16 +52,16 @@ export interface AppSubModuleDto extends BaseDto {
   transferYN: string;
 }
 
-export interface ProfileModulesDto {
+export interface ProfileDetailedViewDto {
   profDetID: number;
   profileID: number;
   profileName: string;
-  aOprID: number;
-  aOprName: string;
-  aSubID: number;
-  aSubName: string;
   aUGrpID: number;
   aUGrpName: string;
+  aSubID: number;
+  aSubName: string;
+  accessID: number;
+  accessName: string;
 }
 
 export interface ProfileModuleOperationDto extends BaseDto {
