@@ -120,7 +120,7 @@ const BreakSuspend: React.FC<BreakSuspendProps> = ({ open, onClose, breakData })
         setLoading(false);
       }
     },
-    [breakData, setLoading, onClose, showAlert, saveBreakConSuspend]
+    [breakData, onClose, showAlert, saveBreakConSuspend]
   );
 
   const renderSuspendDateField = (name: keyof SuspendFormData, label: string) => (

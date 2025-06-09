@@ -95,7 +95,7 @@ export const useIndentProduct = (): UseIndentProductReturn => {
         setLoading(false);
       }
     },
-    [updateState, handleError]
+    [updateState]
   );
 
   const getIndentById = useCallback(
@@ -121,7 +121,7 @@ export const useIndentProduct = (): UseIndentProductReturn => {
         setLoading(false);
       }
     },
-    [updateState, handleError]
+    [updateState]
   );
 
   const saveIndent = useCallback(
@@ -146,7 +146,7 @@ export const useIndentProduct = (): UseIndentProductReturn => {
         setLoading(false);
       }
     },
-    [updateState, handleError]
+    [updateState]
   );
 
   const deleteIndent = useCallback(
@@ -171,7 +171,7 @@ export const useIndentProduct = (): UseIndentProductReturn => {
         setLoading(false);
       }
     },
-    [updateState, handleError]
+    [updateState]
   );
 
   const updateIndentStatus = useCallback(
@@ -196,7 +196,7 @@ export const useIndentProduct = (): UseIndentProductReturn => {
         setLoading(false);
       }
     },
-    [updateState, handleError]
+    [updateState]
   );
 
   const clearCurrentIndent = useCallback(() => {

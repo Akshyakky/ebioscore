@@ -13,7 +13,7 @@ const UserListPage = lazy(() => import("@/pages/securityManagement/UserListPage/
 const ResourceListPage = lazy(() => import("@/pages/frontOffice/ResourceList/MainPage/ResourceListPage"));
 const ReasonListPage = lazy(() => import("@/pages/frontOffice/ReasonList/MainPage/ReasonListPage"));
 const BreakListPage = lazy(() => import("@/pages/frontOffice/BreakList/MainPage/BreakListPage"));
-const AppointmentPage = lazy(() => import("@/pages/frontOffice/AppointmentPage/MainPage/AppointmentPage"));
+//const AppointmentPage = lazy(() => import("@/pages/frontOffice/AppointmentPage/MainPage/AppointmentPage"));
 const PatientInvoiceCodePage = lazy(() => import("@/pages/billing/PatientInvoiceCodePage/MainPage/PatientInvoiceCodePage"));
 const DepartmentListPage = lazy(() => import("@/pages/billing/DepartmentListPage/MainPage/DepartmentListPage"));
 const PaymentTypesPage = lazy(() => import("@/pages/billing/PaymentTypesPage/MainPage/PaymentTypesPage"));
@@ -41,7 +41,6 @@ const ComponentEntryTypePage = lazy(() => import("@/pages/laboratory/ComponentEn
 const ForgotPasswordPage = lazy(() => import("@/pages/common/ForgotPasswordPage/ForgotPasswordPage"));
 const IndentProductPage = lazy(() => import("@/pages/inventoryManagement/IndentProduct/MainPage/IndentProductPage"));
 const NotFoundPage = lazy(() => import("@/pages/common/NotFoundPage/NotFoundPage"));
-const EmployeeRegistrationForm = lazy(() => import("@/pages/common/ExampleFormPage/EmployeeRegistrationForm"));
 const AlertManager = lazy(() => import("@/pages/common/AlertManagerPage/MainPage/AlertManager"));
 const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
 const LogModule = lazy(() => import("@/pages/common/LogViewerPage/LogModule"));
@@ -191,16 +190,16 @@ const routeConfig: RouteConfig[] = [
       category: "default",
     },
   },
-  {
-    path: "/Appointmentpage",
-    component: wrapWithSuspense(AppointmentPage),
-    protected: true,
-    providers: [AlertProvider],
-    metadata: {
-      title: "Appointments",
-      category: "default",
-    },
-  },
+  // {
+  //   path: "/Appointmentpage",
+  //   component: wrapWithSuspense(AppointmentPage),
+  //   protected: true,
+  //   providers: [AlertProvider],
+  //   metadata: {
+  //     title: "Appointments",
+  //     category: "default",
+  //   },
+  // },
   {
     path: "/PatientInvoiceCodePage",
     component: wrapWithSuspense(PatientInvoiceCodePage),
@@ -499,16 +498,6 @@ const routeConfig: RouteConfig[] = [
     metadata: {
       title: "Indent Product",
       category: "inventory",
-    },
-  },
-  {
-    path: "/EmployeeRegistrationForm",
-    component: wrapWithSuspense(EmployeeRegistrationForm),
-    protected: true,
-    providers: [AlertProvider],
-    metadata: {
-      title: "Employee Registration",
-      category: "admin",
     },
   },
   {

@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { ChargeWithAllDetailsDto, ChargeCodeGenerationDto } from "@/interfaces/Billing/ChargeDto";
 import { bChargeService } from "@/services/BillingServices/BillingService";
 import { useAlert } from "@/providers/AlertProvider";
+import { useLoading } from "@/hooks/Common/useLoading";
 interface UseScheduleOfChargesState {
   charges: ChargeWithAllDetailsDto[];
   loading: boolean;
@@ -198,7 +199,7 @@ export const useScheduleOfCharges = (): UseScheduleOfChargesReturn => {
 };
 
 export const useChargeSearch = () => {
-  const [loading, setLoading] = useState(false);
+  const { isLoading, setLoading } = useLoading();
   const [error, setError] = useState<string | null>(null);
   const { showAlert } = useAlert();
   const searchCharges = useCallback(
@@ -261,7 +262,7 @@ export const useChargeSearch = () => {
   return {
     searchCharges,
     validateChargeCode,
-    loading,
+    isLoading,
     error,
   };
 };

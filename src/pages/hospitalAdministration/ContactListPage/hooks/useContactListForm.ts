@@ -35,25 +35,22 @@ export const useContactList = () => {
     []
   );
 
-  const getContactById = useCallback(
-    async (conID: number): Promise<ContactListData | null> => {
-      try {
-        setLoading(true);
-        const response = await ContactListService.fetchContactDetails(conID);
-        if (response) {
-          return response;
-        } else {
-          throw new Error("Failed to fetch contact details");
-        }
-      } catch (err) {
-        setError("Failed to fetch contact details");
-        return null;
-      } finally {
-        setLoading(false);
+  const getContactById = useCallback(async (conID: number): Promise<ContactListData | null> => {
+    try {
+      setLoading(true);
+      const response = await ContactListService.fetchContactDetails(conID);
+      if (response) {
+        return response;
+      } else {
+        throw new Error("Failed to fetch contact details");
       }
-    },
-    [setLoading]
-  );
+    } catch (err) {
+      setError("Failed to fetch contact details");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const saveContact = useCallback(
     async (contactData: ContactListData): Promise<OperationResult<ContactListData>> => {
@@ -74,7 +71,7 @@ export const useContactList = () => {
         setLoading(false);
       }
     },
-    [setLoading, fetchContactList]
+    [fetchContactList]
   );
 
   const deleteContact = useCallback(
@@ -96,7 +93,7 @@ export const useContactList = () => {
         setLoading(false);
       }
     },
-    [setLoading, fetchContactList]
+    [fetchContactList]
   );
 
   const generateContactCode = useCallback(async (prefix: string, padLength: number = 5): Promise<string | null> => {

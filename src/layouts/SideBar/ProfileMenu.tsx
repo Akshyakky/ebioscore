@@ -1,14 +1,12 @@
 import React, { useState } from "react";
-import { Menu, MenuItem, Divider, Box, Typography, Avatar, ListItemIcon, Tooltip, Button, useTheme } from "@mui/material";
+import { Menu, MenuItem, Divider, Box, Typography, Avatar, ListItemIcon, Tooltip, Button } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import HomeIcon from "@mui/icons-material/Home";
 import PersonIcon from "@mui/icons-material/Person";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-
 import { useNavigate } from "react-router-dom";
-import { handleError } from "@/services/CommonServices/HandlerError";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/features/auth/selectors";
 import AuthService from "@/services/AuthService/AuthService";
@@ -22,7 +20,6 @@ const ProfileMenu: React.FC = () => {
   const user = useAppSelector(selectUser);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const theme = useTheme();
 
   const open = Boolean(anchorEl);
 
@@ -65,9 +62,7 @@ const ProfileMenu: React.FC = () => {
           notifyError(result.errorMessage || "Logout failed");
         }
       } catch (error) {
-        const errorResult = handleError(error);
-        console.error("Logout failed:", errorResult.errorMessage);
-        notifyError(errorResult.errorMessage || "");
+        notifyError(error.message || "Logout failed");
       }
     }
   };

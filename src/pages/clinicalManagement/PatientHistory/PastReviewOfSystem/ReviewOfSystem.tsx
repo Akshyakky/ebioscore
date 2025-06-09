@@ -80,7 +80,7 @@ export const ReviewOfSystem: React.FC<ReviewOfSystemProps> = ({ pChartID, opipNo
         }
       }
     },
-    [historyList, onHistoryChange, reviewOfSystemService, setLoading]
+    [historyList, onHistoryChange, reviewOfSystemService]
   );
 
   const columns: Column<OPIPHistROSDto>[] = useMemo(

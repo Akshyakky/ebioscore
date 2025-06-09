@@ -45,28 +45,25 @@ export const useAppModifiedList = () => {
     }
   }, []);
 
-  const saveMaster = useCallback(
-    async (data: AppModifiedMast) => {
-      setLoading(true);
-      try {
-        const response = await appModifiedMastService.save(data);
-        if (response) {
-          const message = data.fieldID ? "Category updated successfully" : "Category created successfully";
-          showAlert("Success", message, "success");
-          return { success: true, data: response };
-        } else {
-          throw new Error("Failed to save category");
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to save category";
-        showAlert("Error", errorMessage, "error");
-        return { success: false, errorMessage };
-      } finally {
-        setLoading(false);
+  const saveMaster = useCallback(async (data: AppModifiedMast) => {
+    setLoading(true);
+    try {
+      const response = await appModifiedMastService.save(data);
+      if (response) {
+        const message = data.fieldID ? "Category updated successfully" : "Category created successfully";
+        showAlert("Success", message, "success");
+        return { success: true, data: response };
+      } else {
+        throw new Error("Failed to save category");
       }
-    },
-    [setLoading]
-  );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save category";
+      showAlert("Error", errorMessage, "error");
+      return { success: false, errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const deleteMaster = useCallback(
     async (id: number): Promise<boolean> => {
@@ -89,7 +86,7 @@ export const useAppModifiedList = () => {
         setLoading(false);
       }
     },
-    [setLoading, getMasterById]
+    [getMasterById]
   );
 
   const updateMasterStatus = useCallback(async (id: number, status: boolean): Promise<boolean> => {
@@ -141,28 +138,25 @@ export const useAppModifiedList = () => {
     }
   }, []);
 
-  const saveField = useCallback(
-    async (data: AppModifyFieldDto) => {
-      setLoading(true);
-      try {
-        const response = await appModifiedListService.save(data);
-        if (response) {
-          const message = data.amlID ? "Field updated successfully" : "Field created successfully";
-          showAlert("Success", message, "success");
-          return { success: true, data: response };
-        } else {
-          throw new Error("Failed to save field");
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to save field";
-        showAlert("Error", errorMessage, "error");
-        return { success: false, errorMessage };
-      } finally {
-        setLoading(false);
+  const saveField = useCallback(async (data: AppModifyFieldDto) => {
+    setLoading(true);
+    try {
+      const response = await appModifiedListService.save(data);
+      if (response) {
+        const message = data.amlID ? "Field updated successfully" : "Field created successfully";
+        showAlert("Success", message, "success");
+        return { success: true, data: response };
+      } else {
+        throw new Error("Failed to save field");
       }
-    },
-    [setLoading]
-  );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save field";
+      showAlert("Error", errorMessage, "error");
+      return { success: false, errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const deleteField = useCallback(
     async (id: number): Promise<boolean> => {
@@ -185,7 +179,7 @@ export const useAppModifiedList = () => {
         setLoading(false);
       }
     },
-    [setLoading, getFieldById]
+    [getFieldById]
   );
 
   const updateFieldStatus = useCallback(async (id: number, status: boolean): Promise<boolean> => {

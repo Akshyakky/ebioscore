@@ -18,6 +18,7 @@ import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
 import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface PatientAdmissionStatusResponse {
   isAdmitted: boolean;
@@ -34,7 +35,7 @@ interface AdmissionStatusDialogProps {
 }
 
 const AdmissionStatusDialog: React.FC<AdmissionStatusDialogProps> = ({ open, onClose, patient, admissionStatus }) => {
-  const [loading, setLoading] = useState(false);
+  const { isLoading, setLoading } = useLoading();
 
   if (!patient) {
     return null;

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { productListService } from "@/services/InventoryManagementService/inventoryManagementService";
 import { ProductOption } from "@/interfaces/InventoryManagement/Product/ProductSearch.interface";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface UseProductSearchProps {
   debounceTimeMs?: number;
@@ -12,7 +13,7 @@ interface UseProductSearchResult {
   inputValue: string;
   setInputValue: (value: string) => void;
   options: ProductOption[];
-  loading: boolean;
+  isLoading: boolean;
   selectedProduct: ProductOption | null;
   setSelectedProduct: (product: ProductOption | null) => void;
   clearSearch: () => void;
@@ -26,7 +27,7 @@ interface UseProductSearchResult {
 export const useProductSearch = ({ debounceTimeMs = 500, minSearchLength = 2 }: UseProductSearchProps = {}): UseProductSearchResult => {
   const [inputValue, setInputValue] = useState<string>("");
   const [options, setOptions] = useState<ProductOption[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const { isLoading, setLoading } = useLoading();
   const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
 
   const debouncedSearch = useCallback(
@@ -83,7 +84,7 @@ export const useProductSearch = ({ debounceTimeMs = 500, minSearchLength = 2 }: 
     inputValue,
     setInputValue,
     options,
-    loading,
+    isLoading,
     selectedProduct,
     setSelectedProduct,
     clearSearch,

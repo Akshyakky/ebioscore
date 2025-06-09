@@ -360,7 +360,7 @@ const BedSetupPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [getRoomGroupById, setLoading, showAlert, roomGroups]
+    [getRoomGroupById, showAlert, roomGroups]
   );
 
   const handleViewRoomGroup = useCallback(
@@ -403,7 +403,7 @@ const BedSetupPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [getRoomGroupById, setLoading, showAlert, roomGroups]
+    [getRoomGroupById, showAlert, roomGroups]
   );
 
   const handleRoomGroupFormClose = useCallback(
@@ -442,7 +442,7 @@ const BedSetupPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [getRoomById, setLoading, showAlert]
+    [getRoomById, showAlert]
   );
 
   const handleViewRoom = useCallback(
@@ -463,7 +463,7 @@ const BedSetupPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [getRoomById, setLoading, showAlert]
+    [getRoomById, showAlert]
   );
 
   const handleRoomFormClose = useCallback(
@@ -558,7 +558,7 @@ const BedSetupPage: React.FC = () => {
       setFormViewOnly(false);
       setShowBedForm(true);
     },
-    [roomLists, roomGroups, getBedById, setLoading, showAlert]
+    [roomLists, roomGroups, getBedById, showAlert]
   );
 
   const handleEditBed = useCallback(
@@ -579,7 +579,7 @@ const BedSetupPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [getBedById, setLoading, showAlert]
+    [getBedById, showAlert]
   );
 
   const handleViewBed = useCallback(
@@ -600,7 +600,7 @@ const BedSetupPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [getBedById, setLoading, showAlert]
+    [getBedById, showAlert]
   );
 
   const handleBedFormClose = useCallback(

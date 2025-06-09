@@ -12,9 +12,8 @@ export const useUserList = () => {
   const initialFetchDone = useRef(false);
 
   const fetchUsersList = useCallback(async () => {
-    if (setLoading) {
-      setLoading(true);
-    }
+    setLoading(true);
+
     setError(null);
 
     try {
@@ -29,11 +28,10 @@ export const useUserList = () => {
       console.error("Error fetching User List", err);
       setError("An unexpected error occurred while fetching User List");
     } finally {
-      if (setLoading) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, []);
+
   const getUsersWithoutCredentials = async () => {
     try {
       return await userListServices.getUsersWithoutCredentials();
@@ -68,27 +66,24 @@ export const useUserList = () => {
     }
   }, [fetchUsersList]);
 
-  const getUserListById = useCallback(
-    async (id: number) => {
-      try {
-        setLoading(true);
-        const result = await userListServices.getById(id);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          setError(result.errorMessage || "Failed to fetch user");
-          return null;
-        }
-      } catch (err) {
-        console.error("Error fetching user:", err);
-        setError("An unexpected error occurred while fetching user");
+  const getUserListById = useCallback(async (id: number) => {
+    try {
+      setLoading(true);
+      const result = await userListServices.getById(id);
+      if (result.success && result.data) {
+        return result.data;
+      } else {
+        setError(result.errorMessage || "Failed to fetch user");
         return null;
-      } finally {
-        setLoading(false);
       }
-    },
-    [setLoading]
-  );
+    } catch (err) {
+      console.error("Error fetching user:", err);
+      setError("An unexpected error occurred while fetching user");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const saveUserList = useCallback(
     async (user: UserListDto) => {
@@ -103,7 +98,7 @@ export const useUserList = () => {
         setLoading(false);
       }
     },
-    [fetchUsersList, setLoading]
+    [fetchUsersList]
   );
 
   const deleteUserList = useCallback(
@@ -126,7 +121,7 @@ export const useUserList = () => {
         setLoading(false);
       }
     },
-    [fetchUsersList, setLoading]
+    [fetchUsersList]
   );
 
   const updateUserListStatus = useCallback(
@@ -149,7 +144,7 @@ export const useUserList = () => {
         setLoading(false);
       }
     },
-    [fetchUsersList, setLoading]
+    [fetchUsersList]
   );
 
   return {

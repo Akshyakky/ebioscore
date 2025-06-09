@@ -40,75 +40,72 @@ const IndentProductPage: React.FC = () => {
     setIndentDetails(updatedDetails);
   };
 
-  const fetchIndentDetails = useCallback(
-    async (indentId: number) => {
-      try {
-        setLoading(true);
-        const response = await indentProductServices.getIndentById(indentId);
-        if (!response.success || !response.data) {
-          showAlert("Error", response.errorMessage || "Failed to fetch indent details", "error");
-          return null;
-        }
-
-        const { indentMaster, indentDetails } = response.data;
-        const completeDetails = await Promise.all(
-          (indentDetails || []).map(async (detail: any) => {
-            const productRes = await productListService.getById(detail.productID);
-            const productOverviewRes = await productOverviewService.getAll();
-            const product: ProductListDto = productRes.data ?? ({} as ProductListDto);
-            const productOverview = productOverviewRes.data?.find((p: ProductOverviewDto) => p.productID === detail.productID);
-            return {
-              ...detail,
-              indentDetID: detail.indentDetID,
-              baseUnit: product.baseUnit ?? null,
-              package: product.productPackageName ?? null,
-              groupName: product.productGroupName ?? null,
-              ppkgID: product.pPackageID ?? null,
-              stockLevel: productOverview?.stockLevel ?? null,
-              qoh: productOverview?.stockLevel ?? null,
-              average: productOverview?.avgDemand ?? null,
-              averageDemand: productOverview?.avgDemand ?? null,
-              reOrderLevel: productOverview?.reOrderLevel ?? null,
-              rol: productOverview?.reOrderLevel ?? null,
-              minLevelUnits: productOverview?.minLevelUnits ?? null,
-              maxLevelUnits: productOverview?.maxLevelUnits ?? null,
-              leadTime: product.leadTime ?? null,
-              location: productOverview?.productLocation ?? product.productLocation ?? null,
-              unitsPackage: product.unitPack ?? null,
-              units: product.issueUnit ? String(product.issueUnit) : null,
-              taxID: product.taxID ?? null,
-              taxCode: product.taxCode ?? null,
-              sgstPerValue: product.sgstPerValue ?? null,
-              cgstPerValue: product.cgstPerValue ?? null,
-              tax: product.gstPerValue ?? null,
-            };
-          })
-        );
-
-        const indentData: IndentSaveRequestDto = {
-          id: indentMaster?.indentID || 0,
-          rActiveYN: indentMaster?.rActiveYN || "Y",
-          IndentMaster: {
-            ...indentMaster,
-            indentDate: indentMaster?.indentDate ? dayjs(indentMaster.indentDate).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
-            rNotes: indentMaster?.rNotes || "",
-          },
-          IndentDetails: completeDetails,
-        };
-
-        setSelectedData(indentData);
-        setIndentDetails(completeDetails);
-        return indentData;
-      } catch (error) {
-        console.error("Error fetching indent details:", error);
-        showAlert("Error", "An error occurred while fetching indent details", "error");
+  const fetchIndentDetails = useCallback(async (indentId: number) => {
+    try {
+      setLoading(true);
+      const response = await indentProductServices.getIndentById(indentId);
+      if (!response.success || !response.data) {
+        showAlert("Error", response.errorMessage || "Failed to fetch indent details", "error");
         return null;
-      } finally {
-        setLoading(false);
       }
-    },
-    [setLoading]
-  );
+
+      const { indentMaster, indentDetails } = response.data;
+      const completeDetails = await Promise.all(
+        (indentDetails || []).map(async (detail: any) => {
+          const productRes = await productListService.getById(detail.productID);
+          const productOverviewRes = await productOverviewService.getAll();
+          const product: ProductListDto = productRes.data ?? ({} as ProductListDto);
+          const productOverview = productOverviewRes.data?.find((p: ProductOverviewDto) => p.productID === detail.productID);
+          return {
+            ...detail,
+            indentDetID: detail.indentDetID,
+            baseUnit: product.baseUnit ?? null,
+            package: product.productPackageName ?? null,
+            groupName: product.productGroupName ?? null,
+            ppkgID: product.pPackageID ?? null,
+            stockLevel: productOverview?.stockLevel ?? null,
+            qoh: productOverview?.stockLevel ?? null,
+            average: productOverview?.avgDemand ?? null,
+            averageDemand: productOverview?.avgDemand ?? null,
+            reOrderLevel: productOverview?.reOrderLevel ?? null,
+            rol: productOverview?.reOrderLevel ?? null,
+            minLevelUnits: productOverview?.minLevelUnits ?? null,
+            maxLevelUnits: productOverview?.maxLevelUnits ?? null,
+            leadTime: product.leadTime ?? null,
+            location: productOverview?.productLocation ?? product.productLocation ?? null,
+            unitsPackage: product.unitPack ?? null,
+            units: product.issueUnit ? String(product.issueUnit) : null,
+            taxID: product.taxID ?? null,
+            taxCode: product.taxCode ?? null,
+            sgstPerValue: product.sgstPerValue ?? null,
+            cgstPerValue: product.cgstPerValue ?? null,
+            tax: product.gstPerValue ?? null,
+          };
+        })
+      );
+
+      const indentData: IndentSaveRequestDto = {
+        id: indentMaster?.indentID || 0,
+        rActiveYN: indentMaster?.rActiveYN || "Y",
+        IndentMaster: {
+          ...indentMaster,
+          indentDate: indentMaster?.indentDate ? dayjs(indentMaster.indentDate).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
+          rNotes: indentMaster?.rNotes || "",
+        },
+        IndentDetails: completeDetails,
+      };
+
+      setSelectedData(indentData);
+      setIndentDetails(completeDetails);
+      return indentData;
+    } catch (error) {
+      console.error("Error fetching indent details:", error);
+      showAlert("Error", "An error occurred while fetching indent details", "error");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const handleIndentSelect = async (indentMastDto: IndentMastDto) => {
     if (!indentMastDto || !indentMastDto.indentID) {
