@@ -25,3 +25,10 @@ export interface UserListPermissionDto {
   accessName: string;
   allowAccess: string;
 }
+
+export interface SaveUserPermissionsRequest {
+  permissions: UserListPermissionDto[];
+  permissionType: string;
+  appID: number;
+  appUserName: string;
+}

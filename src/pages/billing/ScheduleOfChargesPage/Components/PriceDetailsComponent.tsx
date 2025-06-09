@@ -1,8 +1,35 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { Box, Typography, Grid, Button, Accordion, AccordionSummary, AccordionDetails, Chip, Tooltip, Paper, TextField, FormControlLabel, Checkbox } from "@mui/material";
-import { ExpandMore as ExpandMoreIcon, Visibility as VisibilityIcon, Check as CheckIcon } from "@mui/icons-material";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import {
+  Box,
+  Typography,
+  Grid,
+  Button,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Chip,
+  Tooltip,
+  Paper,
+  TextField,
+  Alert,
+  Snackbar,
+  ToggleButtonGroup,
+  ToggleButton,
+  InputAdornment,
+  Divider,
+} from "@mui/material";
+import {
+  ExpandMore as ExpandMoreIcon,
+  Visibility as VisibilityIcon,
+  Check as CheckIcon,
+  FilterList as FilterIcon,
+  PercentOutlined as PercentIcon,
+  AttachMoney as MoneyIcon,
+  Add as AddIcon,
+  Remove as RemoveIcon,
+} from "@mui/icons-material";
 import { useFieldArray, Control } from "react-hook-form";
-import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 
 interface PricingGridItem {
@@ -18,6 +45,7 @@ interface PricingGridItem {
     };
   };
 }
+
 interface WardCategory {
   id: number;
   name: string;
@@ -36,7 +64,8 @@ interface PriceDetailsComponentProps {
   bedCategory: { value: string; label: string }[];
 }
 
-const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, expanded, onToggleExpand, pricingGridData, wardCategories, pic, bedCategory }) => {
+const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, expanded, onToggleExpand, pricingGridData, updateChargeDetailsFromGrid, pic, bedCategory }) => {
+  // Component state
   const [picFilters, setPicFilters] = useState<string[]>([]);
   const [wardCategoryFilters, setWardCategoryFilters] = useState<string[]>([]);
   const [isPercentage, setIsPercentage] = useState<boolean>(false);
@@ -46,12 +75,12 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [gridData, setGridData] = useState<PricingGridItem[]>([]);
   const [showGrid, setShowGrid] = useState<boolean>(false);
+  const [applySuccess, setApplySuccess] = useState<boolean>(false);
 
   useEffect(() => {
     setGridData([...pricingGridData]);
   }, [pricingGridData]);
 
-  // Add this effect to automatically show the grid when filters are applied
   useEffect(() => {
     if (picFilters.length > 0 || wardCategoryFilters.length > 0) {
       setShowGrid(true);
@@ -65,42 +94,19 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
 
   const picOptions = useMemo(() => pic.map((option) => ({ value: option.value, label: option.label })), [pic]);
   const wardCategoryOptions = useMemo(() => bedCategory.map((option) => ({ value: option.value, label: option.label })), [bedCategory]);
-
-  const priceChangeOptions = useMemo(
-    () => [
-      { value: "None", label: "None" },
-      { value: "Increase", label: "Increase" },
-      { value: "Decrease", label: "Decrease" },
-    ],
-    []
-  );
-
-  const displayAmountOptions = useMemo(
-    () => [
-      { value: "Both", label: "Both" },
-      { value: "Dr Amt", label: "Dr Amt" },
-      { value: "Hosp Amt", label: "Hosp Amt" },
-    ],
-    []
-  );
-
   const getFilteredWardCategories = useMemo(() => {
-    // If no ward category filters selected, show all ward categories
     if (wardCategoryFilters.length === 0) {
       return bedCategory.map((category) => ({
         id: parseInt(category.value),
         name: category.label,
-        color: "#4285F4",
       }));
     }
 
-    // If ward category filters selected, show only selected ones
-    return wardCategoryFilters.map((filterId) => {
+    return wardCategoryFilters.map((filterId, index) => {
       const category = bedCategory.find((cat) => cat.value === filterId);
       return {
         id: parseInt(filterId),
         name: category?.label || filterId,
-        color: "#4285F4",
       };
     });
   }, [wardCategoryFilters, bedCategory]);
@@ -134,166 +140,139 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
   };
 
   const displayedPricingData = useMemo(() => {
-    // Show grid automatically when any filters are applied or when showGrid is true
     const shouldShowGrid = showGrid || picFilters.length > 0 || wardCategoryFilters.length > 0;
-
     if (!shouldShowGrid) {
       return [];
     }
 
-    // If specific PICs are filtered, show only those
-    if (picFilters.length > 0) {
-      const filteredData: PricingGridItem[] = [];
-
-      picFilters.forEach((picId) => {
-        // First check if this PIC exists in existing gridData
-        const existingItem = gridData.find((item) => item.picId.toString() === picId);
-
-        if (existingItem) {
-          // Use existing data but ensure all ward categories are present
-          const updatedItem = { ...existingItem };
-          getFilteredWardCategories.forEach((category) => {
-            if (!updatedItem.wardCategories[category.name]) {
-              updatedItem.wardCategories[category.name] = {
-                DcValue: 0,
-                hcValue: 0,
-                chValue: 0,
+    // If filters are applied, use them, otherwise use all data
+    const filteredByPIC =
+      picFilters.length > 0
+        ? picFilters.map((picId) => {
+            const existingItem = gridData.find((item) => item.picId.toString() === picId);
+            if (existingItem) {
+              return { ...existingItem };
+            } else {
+              const picInfo = pic.find((p) => p.value === picId);
+              return {
+                id: `pic-${picId}`,
+                picId: parseInt(picId),
+                picName: picInfo?.label || `PIC ${picId}`,
+                selected: false,
+                wardCategories: {},
               };
             }
-          });
-          filteredData.push(updatedItem);
-        } else {
-          // Create new row for PIC not in existing data
-          const picInfo = pic.find((p) => p.value === picId);
-          if (picInfo) {
-            const newRow: PricingGridItem = {
-              id: `pic-${picId}`,
-              picId: parseInt(picId),
-              picName: picInfo.label,
-              selected: false,
-              wardCategories: {},
-            };
+          })
+        : gridData.length > 0
+        ? [...gridData]
+        : pic.map((picOption) => ({
+            id: `pic-${picOption.value}`,
+            picId: parseInt(picOption.value),
+            picName: picOption.label,
+            selected: false,
+            wardCategories: {},
+          }));
 
-            getFilteredWardCategories.forEach((category) => {
-              newRow.wardCategories[category.name] = {
-                DcValue: 0,
-                hcValue: 0,
-                chValue: 0,
-              };
-            });
-
-            filteredData.push(newRow);
-          }
-        }
-      });
-
-      return filteredData;
-    }
-
-    // If no PIC filters selected, show all available PICs
-    const allPicsData: PricingGridItem[] = [];
-
-    pic.forEach((picOption) => {
-      // Check if this PIC exists in existing gridData
-      const existingItem = gridData.find((item) => item.picId.toString() === picOption.value);
-
-      if (existingItem) {
-        // Use existing data but ensure all ward categories are present
-        const updatedItem = { ...existingItem };
-        getFilteredWardCategories.forEach((category) => {
-          if (!updatedItem.wardCategories[category.name]) {
-            updatedItem.wardCategories[category.name] = {
-              DcValue: 0,
-              hcValue: 0,
-              chValue: 0,
-            };
-          }
-        });
-        allPicsData.push(updatedItem);
-      } else {
-        // Create new row for PIC not in existing data
-        const newRow: PricingGridItem = {
-          id: `pic-${picOption.value}`,
-          picId: parseInt(picOption.value),
-          picName: picOption.label,
-          selected: false,
-          wardCategories: {},
-        };
-
-        getFilteredWardCategories.forEach((category) => {
-          newRow.wardCategories[category.name] = {
+    // Ensure all filtered ward categories are included
+    return filteredByPIC.map((item) => {
+      const updatedItem = { ...item, wardCategories: { ...item.wardCategories } };
+      getFilteredWardCategories.forEach((category) => {
+        if (!updatedItem.wardCategories[category.name]) {
+          updatedItem.wardCategories[category.name] = {
             DcValue: 0,
             hcValue: 0,
             chValue: 0,
           };
-        });
-
-        allPicsData.push(newRow);
-      }
+        }
+      });
+      return updatedItem;
     });
+  }, [gridData, picFilters, pic, getFilteredWardCategories, showGrid]);
 
-    return allPicsData;
-  }, [gridData, picFilters, pic, getFilteredWardCategories, showGrid, wardCategoryFilters]);
+  const isApplyReady = useMemo(() => {
+    const numericAmount = parseFloat(amountValue);
 
-  // Updated condition to enable Apply button when amount is entered and price change type is selected
-  const isApplyReady = priceChangeType !== "None" && amountValue !== "" && parseFloat(amountValue) > 0;
+    return (
+      // Valid number greater than zero
+      !isNaN(numericAmount) &&
+      numericAmount > 0 &&
+      // Valid price change type (not "None")
+      (priceChangeType === "Increase" || priceChangeType === "Decrease")
+    );
+  }, [amountValue, priceChangeType]);
 
   const applyChanges = () => {
     if (!isApplyReady) return;
-
     const numericAmount = parseFloat(amountValue);
+    const updatedGridData = [...gridData];
+    const rowsToUpdate = selectedRows.length > 0 ? selectedRows : updatedGridData.map((row) => row.id);
+    let changesMade = false;
+    updatedGridData.forEach((row) => {
+      if (!rowsToUpdate.includes(row.id) && rowsToUpdate.length > 0) {
+        return;
+      }
 
-    // Update the main gridData with changes
-    setGridData((prevData) => {
-      const updatedData = [...prevData];
-
-      // Also handle any new items that exist only in displayedPricingData
-      displayedPricingData.forEach((displayedItem) => {
-        const existingIndex = updatedData.findIndex((item) => item.id === displayedItem.id);
-
-        if (existingIndex === -1) {
-          // This is a new item, add it to gridData
-          updatedData.push({ ...displayedItem });
+      getFilteredWardCategories.forEach((category) => {
+        const catName = category.name;
+        if (!row.wardCategories[catName]) {
+          row.wardCategories[catName] = { DcValue: 0, hcValue: 0, chValue: 0 };
         }
-      });
-
-      // Apply changes to all items
-      return updatedData.map((row) => {
-        const updatedRow = { ...row, wardCategories: { ...row.wardCategories } };
-
-        getFilteredWardCategories.forEach((category) => {
-          const catName = category.name;
-          if (!updatedRow.wardCategories[catName]) {
-            updatedRow.wardCategories[catName] = { DcValue: 0, hcValue: 0, chValue: 0 };
+        const values = row.wardCategories[catName];
+        const updateDr = displayAmountType === "Both" || displayAmountType === "Dr Amt";
+        const updateHosp = displayAmountType === "Both" || displayAmountType === "Hosp Amt";
+        if (updateDr) {
+          const currentValue = values.DcValue || 0;
+          let newValue;
+          if (isPercentage) {
+            const factor = priceChangeType === "Increase" ? 1 + numericAmount / 100 : 1 - numericAmount / 100;
+            newValue = Math.round(currentValue * factor * 100) / 100;
+          } else {
+            newValue = priceChangeType === "Increase" ? currentValue + numericAmount : currentValue - numericAmount;
           }
-
-          const values = updatedRow.wardCategories[catName];
-          const updateDr = displayAmountType === "Both" || displayAmountType === "Dr Amt";
-          const updateHosp = displayAmountType === "Both" || displayAmountType === "Hosp Amt";
-
-          const calculateNewValue = (current: number) =>
-            isPercentage
-              ? Math.round(current * (priceChangeType === "Increase" ? 1 + numericAmount / 100 : 1 - numericAmount / 100))
-              : current + (priceChangeType === "Increase" ? numericAmount : -numericAmount);
-
-          if (updateDr) {
-            const newDrValue = calculateNewValue(values.DcValue);
-            values.DcValue = Math.max(0, newDrValue);
+          values.DcValue = Math.max(0, newValue);
+          changesMade = true;
+        }
+        if (updateHosp) {
+          const currentValue = values.hcValue || 0;
+          let newValue;
+          if (isPercentage) {
+            const factor = priceChangeType === "Increase" ? 1 + numericAmount / 100 : 1 - numericAmount / 100;
+            newValue = Math.round(currentValue * factor * 100) / 100;
+          } else {
+            newValue = priceChangeType === "Increase" ? currentValue + numericAmount : currentValue - numericAmount;
           }
-          if (updateHosp) {
-            const newHospValue = calculateNewValue(values.hcValue);
-            values.hcValue = Math.max(0, newHospValue);
-          }
-          values.chValue = values.DcValue + values.hcValue;
-        });
-
-        return updatedRow;
+          values.hcValue = Math.max(0, newValue);
+          changesMade = true;
+        }
+        values.chValue = values.DcValue + values.hcValue;
       });
     });
+    if (changesMade) {
+      setGridData([...updatedGridData]);
+      updateChargeDetailsFromGrid();
+      setApplySuccess(true);
+    }
   };
+
+  const getApplyButtonText = useMemo(() => {
+    if (!isApplyReady) return "Apply";
+    const actionSymbol = priceChangeType === "Increase" ? "+" : "-";
+    const valueDisplay = isPercentage ? `${amountValue}%` : `₹${amountValue}`;
+    return `${actionSymbol}${valueDisplay}`;
+  }, [isApplyReady, priceChangeType, isPercentage, amountValue]);
 
   const handleViewClick = () => {
     setShowGrid(true);
+  };
+
+  const handleAmountTypeChange = (e: React.MouseEvent<HTMLElement>, newValue: boolean | null) => {
+    if (newValue !== null) {
+      setIsPercentage(newValue);
+    }
+  };
+
+  const handleAmountValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setAmountValue(event.target.value);
   };
 
   const gridColumns = useMemo((): Column<PricingGridItem>[] => {
@@ -366,7 +345,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
         width: 120,
         render: (item: PricingGridItem) => {
           const currentValue = item.wardCategories[category.name]?.hcValue || 0;
-
           return (
             <TextField
               type="number"
@@ -386,7 +364,6 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                       },
                     },
                   };
-
                   setGridData((prev) => prev.map((row) => (row.id === item.id ? updatedItem : row)));
                 }
               }}
@@ -404,14 +381,32 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
         visible: true,
         width: 120,
         render: (item: PricingGridItem) => {
-          const totalAmount = item.wardCategories[category.name]?.chValue || 0;
-          return <TextField value={totalAmount} disabled size="small" fullWidth variant="outlined" InputProps={{ readOnly: true }} />;
+          const totalAmount = (item.wardCategories[category.name]?.DcValue || 0) + (item.wardCategories[category.name]?.hcValue || 0);
+          return (
+            <TextField
+              value={totalAmount}
+              disabled
+              size="small"
+              fullWidth
+              variant="outlined"
+              InputProps={{
+                readOnly: true,
+                startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+              }}
+            />
+          );
         },
       });
     });
 
     return columns;
-  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection]);
+  }, [getFilteredWardCategories, isRowSelected, toggleRowSelection, updateChargeDetailsFromGrid]);
+
+  const handlePriceChangeTypeChange = (e: React.MouseEvent<HTMLElement>, newValue: string | null) => {
+    if (newValue) {
+      setPriceChangeType(newValue);
+    }
+  };
 
   return (
     <Accordion expanded={expanded} onChange={onToggleExpand}>
@@ -425,6 +420,12 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
       </AccordionSummary>
       <AccordionDetails>
         <Box>
+          <Snackbar open={applySuccess} autoHideDuration={3000} onClose={() => setApplySuccess(false)} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
+            <Alert severity="success" sx={{ width: "100%" }}>
+              Price changes applied successfully!
+            </Alert>
+          </Snackbar>
+
           <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
             <Typography variant="subtitle2" gutterBottom color="primary" fontWeight="medium">
               Filter & Bulk Operations
@@ -432,7 +433,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
 
             <Grid container spacing={2} alignItems="center">
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField
+                <FormField
                   name="picFilters"
                   control={control}
                   type="multiselect"
@@ -446,7 +447,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField
+                <FormField
                   name="wardCategoryFilters"
                   control={control}
                   type="multiselect"
@@ -459,65 +460,132 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                 />
               </Grid>
 
+              <Grid size={{ xs: 12 }}>
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="subtitle2" gutterBottom color="primary" fontWeight="medium">
+                  Price Adjustment
+                </Typography>
+              </Grid>
+
               <Grid size={{ xs: 12, md: 3 }}>
-                <Box display="flex" alignItems="center" gap={1} mb={1}>
-                  <FormControlLabel
-                    control={<Checkbox checked={isPercentage} onChange={(e) => setIsPercentage(e.target.checked)} size="small" />}
-                    label={isPercentage ? "Percentage" : "Amount"}
-                  />
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Adjustment Type
+                  </Typography>
+                  <ToggleButtonGroup exclusive value={isPercentage} onChange={handleAmountTypeChange} aria-label="amount type" size="small" fullWidth>
+                    <ToggleButton value={false} aria-label="amount">
+                      <MoneyIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      Amount
+                    </ToggleButton>
+                    <ToggleButton value={true} aria-label="percentage">
+                      <PercentIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      Percentage
+                    </ToggleButton>
+                  </ToggleButtonGroup>
                 </Box>
+
                 <TextField
                   type="number"
-                  size="small"
+                  label={isPercentage ? "Percentage Value" : "Amount Value"}
                   value={amountValue}
-                  onChange={(e) => setAmountValue(e.target.value)}
-                  placeholder={`Enter ${isPercentage ? "percentage" : "amount"}`}
+                  onChange={handleAmountValueChange}
+                  size="small"
                   fullWidth
-                  variant="outlined"
-                  inputProps={{ min: 0, step: "0.01" }}
+                  placeholder={`Enter ${isPercentage ? "percentage" : "amount"}`}
                   InputProps={{
-                    endAdornment: isPercentage ? "%" : undefined,
+                    endAdornment: <InputAdornment position="end">{isPercentage ? "%" : "₹"}</InputAdornment>,
                   }}
+                  inputProps={{
+                    min: 0,
+                    step: "0.01",
+                  }}
+                  variant="outlined"
                 />
               </Grid>
 
               <Grid size={{ xs: 12, md: 3 }}>
-                <EnhancedFormField
-                  name="priceChangeType"
-                  control={control}
-                  type="radio"
-                  label="Price Change Type"
-                  options={priceChangeOptions}
-                  defaultValue={priceChangeType}
-                  onChange={setPriceChangeType}
-                  row
-                  size="small"
-                />
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Price Change Type
+                  </Typography>
+                  <ToggleButtonGroup exclusive value={priceChangeType} onChange={handlePriceChangeTypeChange} aria-label="price change type" size="small" fullWidth>
+                    <ToggleButton value="Increase" aria-label="increase">
+                      <AddIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      Increase
+                    </ToggleButton>
+                    <ToggleButton value="Decrease" aria-label="decrease">
+                      <RemoveIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      Decrease
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
+
+                {isApplyReady && (
+                  <Box sx={{ mt: 1, p: 1, border: "1px solid #e0e0e0", borderRadius: 1, bgcolor: "background.paper" }}>
+                    <Typography variant="body2" align="center">
+                      Example: <strong>100</strong> will become{" "}
+                      <strong>
+                        {priceChangeType === "Increase"
+                          ? isPercentage
+                            ? (100 * (1 + parseFloat(amountValue) / 100)).toFixed(2)
+                            : (100 + parseFloat(amountValue)).toFixed(2)
+                          : isPercentage
+                          ? (100 * (1 - parseFloat(amountValue) / 100)).toFixed(2)
+                          : Math.max(0, 100 - parseFloat(amountValue)).toFixed(2)}
+                      </strong>
+                    </Typography>
+                  </Box>
+                )}
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <EnhancedFormField
-                  name="displayAmountType"
-                  control={control}
-                  type="radio"
-                  label="Apply To Amount Type"
-                  options={displayAmountOptions}
-                  defaultValue={displayAmountType}
-                  onChange={setDisplayAmountType}
-                  row
-                  size="small"
-                />
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Apply To Amount Type
+                  </Typography>
+                  <ToggleButtonGroup
+                    exclusive
+                    value={displayAmountType}
+                    onChange={(e, newValue) => {
+                      if (newValue) {
+                        setDisplayAmountType(newValue);
+                      }
+                    }}
+                    aria-label="apply to amount type"
+                    size="small"
+                    fullWidth
+                  >
+                    <ToggleButton value="Dr Amt" aria-label="dr amount">
+                      Dr Amt
+                    </ToggleButton>
+                    <ToggleButton value="Hosp Amt" aria-label="hosp amount">
+                      Hosp Amt
+                    </ToggleButton>
+                    <ToggleButton value="Both" aria-label="both amounts">
+                      Both
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Box display="flex" justifyContent="flex-end" gap={1}>
+              <Grid size={{ xs: 12, md: 3 }}>
+                <Box display="flex" justifyContent="flex-end" gap={1} alignItems="flex-end" height="100%">
                   <Button variant="outlined" startIcon={<VisibilityIcon />} size="small" sx={{ minWidth: "90px" }} onClick={handleViewClick}>
                     View
                   </Button>
-                  <Tooltip title={!isApplyReady ? "Select price change type and enter amount" : "Apply to all visible rows"}>
-                    <Button variant="contained" startIcon={<CheckIcon />} size="small" color="success" onClick={applyChanges} disabled={!isApplyReady} sx={{ minWidth: "90px" }}>
-                      Apply
-                    </Button>
+
+                  <Tooltip
+                    title={
+                      !isApplyReady
+                        ? "Enter amount and select increase/decrease"
+                        : `Apply ${getApplyButtonText} to ${displayAmountType === "Both" ? "all amounts" : displayAmountType}`
+                    }
+                  >
+                    <span>
+                      <Button variant="contained" startIcon={<CheckIcon />} size="small" color="success" onClick={() => applyChanges()} disabled={!isApplyReady}>
+                        {getApplyButtonText}
+                      </Button>
+                    </span>
                   </Tooltip>
                 </Box>
               </Grid>
@@ -542,9 +610,12 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                       : `Ward categories: ${selectedWardCategoryNames.join(", ")}`}
                   </Typography>
                 </Box>
-                <Box>
+                <Box display="flex" gap={1}>
                   <Button size="small" color="primary" variant="outlined" onClick={selectAllRows} sx={{ minWidth: "100px" }}>
                     {selectedRows.length === displayedPricingData.length && displayedPricingData.length > 0 ? "Deselect All" : "Select All"}
+                  </Button>
+                  <Button size="small" color="secondary" variant="outlined" onClick={updateChargeDetailsFromGrid} startIcon={<FilterIcon />}>
+                    Update Charge Details
                   </Button>
                 </Box>
               </Box>

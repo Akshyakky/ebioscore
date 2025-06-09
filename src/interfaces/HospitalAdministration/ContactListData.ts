@@ -86,3 +86,13 @@ export interface ContactDropdownData {
   conName: string;
   conCategory: string;
 }
+export interface ContactMastShortDto {
+  conID: number;
+  conCode: string;
+  conTitle: string;
+  conName?: string;
+  conCat: string;
+  consValue: string;
+  deptID?: number;
+  deptName: string;
+}
