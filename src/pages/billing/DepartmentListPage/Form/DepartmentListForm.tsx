@@ -466,10 +466,6 @@ const DepartmentListForm: React.FC<DepartmentListFormProps> = ({ open, onClose, 
                     <Grid size={{ sm: 12, md: 6 }}>
                       <FormField name="dlNumber" control={control} label="DL Number" type="text" disabled={viewOnly} size="small" fullWidth placeholder="Drug License Number" />
                     </Grid>
-
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="transferYN" control={control} label="Transfer Enabled" type="switch" disabled={viewOnly} size="small" />
-                    </Grid>
                   </Grid>
                 </CardContent>
               </Card>

@@ -194,12 +194,6 @@ const WardCategoryPage: React.FC = () => {
             {stats.inactiveCategories}
           </Typography>
         </Grid>
-        <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="h6">Transferable</Typography>
-          <Typography variant="h4" color="secondary.main">
-            {stats.transferableCategories}
-          </Typography>
-        </Grid>
       </Grid>
     </Paper>
   );
@@ -220,15 +214,6 @@ const WardCategoryPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 250,
-    },
-    {
-      key: "transferYN",
-      header: "Transferable",
-      visible: true,
-      sortable: true,
-      filterable: true,
-      width: 130,
-      formatter: (value: string) => <Chip size="small" color={value === "Y" ? "secondary" : "default"} label={value === "Y" ? "Yes" : "No"} />,
     },
     {
       key: "rActiveYN",
@@ -375,19 +360,6 @@ const WardCategoryPage: React.FC = () => {
                   onChange={(e) => handleFilterChange("status", e.target.value)}
                   size="small"
                   defaultText="All Status"
-                />
-
-                <DropdownSelect
-                  label="Transferable"
-                  name="transfer"
-                  value={filters.transfer}
-                  options={[
-                    { value: "yes", label: "Yes" },
-                    { value: "no", label: "No" },
-                  ]}
-                  onChange={(e) => handleFilterChange("transfer", e.target.value)}
-                  size="small"
-                  defaultText="All Transfer"
                 />
 
                 <Box display="flex" alignItems="center" gap={1}>
