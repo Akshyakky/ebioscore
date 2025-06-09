@@ -35,6 +35,7 @@ import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
+import { toast } from "react-toastify";
 
 export type DropdownType =
   | "pic"
@@ -341,7 +342,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         const response = await productTaxService.getAll();
         return (response.data || []).map((item: any) => ({
           value: item.pTaxID || 0,
-          label: item.pTaxAmt || "",
+          label: item.pTaxAmt.toString() || "",
           code: item.pTaxCode || "",
         }));
       },
