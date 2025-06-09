@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
+import { SaveUserPermissionsRequest, UserListDto } from "@/interfaces/SecurityManagement/UserListData";
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
+import { appUserService } from "@/services/SecurityManagementServices/securityManagementServices";
 
 export const useUserList = () => {
   const [userList, setUserList] = useState<UserListDto[]>([]);
@@ -51,9 +52,9 @@ export const useUserList = () => {
     }
   };
 
-  const saveUserListPermissionsByType = async (userListPermissionsDto: any[], permissionType: string) => {
+  const saveUserListPermissionsByType = async (userListPermissionsDto: SaveUserPermissionsRequest) => {
     try {
-      return await userListServices.saveUserListPermissionsByType(userListPermissionsDto, permissionType);
+      return await userListServices.saveUserListPermissionsByType(userListPermissionsDto);
     } catch (error) {
       console.error("Error saving user permissions:", error);
       throw error;
@@ -93,7 +94,7 @@ export const useUserList = () => {
     async (user: UserListDto) => {
       try {
         setLoading(true);
-        return await userListServices.save(user);
+        return await appUserService.save(user);
       } catch (err) {
         console.error("Error creating user:", err);
         setError("An unexpected error occurred while creating user");
