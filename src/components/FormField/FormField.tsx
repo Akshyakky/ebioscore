@@ -15,8 +15,8 @@ import CustomDatePicker from "../DatePicker/CustomDatePicker";
 import CustomDateTimePicker from "../DateTimePicker/CustomDateTimePicker";
 import CustomButton from "../Button/CustomButton";
 import CustomTimePicker from "../TimePicker/CustomTimePicker";
-import { GridVisibilityOffIcon } from "@mui/x-data-grid";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 
 // Types
@@ -295,7 +295,7 @@ const FormFieldComponent = forwardRef<HTMLInputElement, FormFieldProps>((props, 
       endAdornment: (
         <InputAdornment position="end">
           <IconButton aria-label="toggle password visibility" onClick={handleTogglePassword} edge="end" size="small">
-            {showPassword ? <GridVisibilityOffIcon /> : <VisibilityIcon />}
+            {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
           </IconButton>
         </InputAdornment>
       ),

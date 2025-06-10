@@ -1,5 +1,5 @@
 import React, { ReactNode, useMemo } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Provider as ReduxProvider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { ToastContainer } from "react-toastify";
@@ -70,7 +70,7 @@ const App: React.FC = () => {
         <ErrorBoundary onError={handleAppError}>
           <QueryProvider>
             <ThemeProvider>
-              <Router>
+              <BrowserRouter>
                 <GlobalSpinner delay={500} color="secondary" size={50} />
                 <ToastContainer
                   position="top-right"
@@ -89,7 +89,7 @@ const App: React.FC = () => {
                     <Route path="/" element={<Navigate replace to="/login" />} />
                   </Routes>
                 </RouteNotFoundBoundary>
-              </Router>
+              </BrowserRouter>
             </ThemeProvider>
           </QueryProvider>
         </ErrorBoundary>
