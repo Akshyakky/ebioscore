@@ -1,7 +1,13 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import { format, toZonedTime } from "date-fns-tz";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 import CryptoJS from "crypto-js";
 import { toast } from "react-toastify";
+
+// Initialize dayjs plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface ApiErrorResponse {
   message?: string;
@@ -146,8 +152,7 @@ export class CommonApiService {
   }
 
   private formatDateWithTimeZone(date: Date): string {
-    const zonedDate = toZonedTime(date, this.timeZone);
-    return format(zonedDate, "yyyy-MM-dd'T'HH:mm:ssXXX", { timeZone: this.timeZone });
+    return dayjs(date).tz(this.timeZone).format("YYYY-MM-DDTHH:mm:ssZ");
   }
 
   private processData(data: unknown): unknown {

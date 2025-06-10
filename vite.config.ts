@@ -6,6 +6,7 @@ import { compression } from "vite-plugin-compression2";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const isProduction = mode === "production";
 
   return {
     server: {
@@ -27,12 +28,22 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      sourcemap: mode !== "production",
-      minify: mode === "production",
+      sourcemap: !isProduction,
+      minify: isProduction ? "terser" : false,
+      terserOptions: isProduction
+        ? {
+            compress: {
+              drop_console: true,
+              drop_debugger: true,
+              pure_funcs: ["console.log", "console.info", "console.debug", "console.warn"],
+            },
+          }
+        : undefined,
       rollupOptions: {
         output: {
           manualChunks: {
-            vendor: ["react", "react-dom", "react-router-dom"],
+            "react-vendor": ["react", "react-dom"],
+            "react-router": ["react-router-dom"],
             mui: ["@mui/material", "@mui/icons-material"],
           },
         },
@@ -41,6 +52,13 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       __APP_ENV__: JSON.stringify(env.APP_ENV),
+      "process.env.NODE_ENV": JSON.stringify(mode),
+      "process.env.REACT_APP_ENV": JSON.stringify(mode),
+      "process.env.DEBUG": JSON.stringify(false),
+    },
+    optimizeDeps: {
+      include: ["react", "react-dom"],
+      exclude: ["@vitejs/plugin-react-swc"],
     },
   };
 });

@@ -3,8 +3,6 @@ import { Grid, SelectChangeEvent, Typography } from "@mui/material";
 import FormField from "@/components/FormField/FormField";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
-
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 import { ProfileDetailDto, ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { SaveUserPermissionsRequest, UserListDto, UserListPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
@@ -151,7 +149,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
   const [subId, setSubId] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSelectAll, setIsSelectAll] = useState<boolean>(false);
-  const { showAlert } = useAlert();
+  const { showAlert, showErrorAlert, showSuccessAlert } = useAlert();
 
   const dropdownValues = useDropdownValues(["mainModules", "subModules"]);
 
@@ -251,13 +249,13 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
       }
 
       if (response.success) {
-        notifySuccess("Permission applied!");
+        showSuccessAlert("Success", "Permission applied!");
       } else {
-        notifyError("Permission not applied!");
+        showErrorAlert("Error", "Permission not applied!");
       }
       fetchPermissions(mainId, subId);
     } catch (error) {
-      notifyError("Permission not applied!");
+      showErrorAlert("Error", "Permission not applied!");
       console.error("Error saving permission:", error);
       if (type === "M") {
         fetchPermissions(mainId, subId);
@@ -298,10 +296,10 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
       response = await userListServices.saveUserListPermissionsByType(saveUserPermissionRequest);
     }
     if (response.success) {
-      notifySuccess("Permission applied!");
+      showSuccessAlert("Success", "Permission applied!");
     } else {
       setIsSelectAll(!selectAllChecked);
-      notifyError("Permission not applied!");
+      showErrorAlert("Error", "Permission not applied!");
     }
     fetchPermissions(mainId, subId);
   };

@@ -7,7 +7,6 @@ import CustomButton from "@/components/Button/CustomButton";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { useAlert } from "@/providers/AlertProvider";
 import { useNavigate } from "react-router-dom";
-import { notifySuccess } from "@/utils/Common/toastManager";
 
 interface DepartmentSelectionDialogProps {
   open: boolean;
@@ -67,7 +66,6 @@ const DepartmentSelectionDialog: React.FC<DepartmentSelectionDialogProps> = ({
       showAlert("Warning", "Please select a department to continue.", "warning");
     } else {
       onSelectDepartment(selectedDeptId, deptName);
-      notifySuccess("Department selected successfully!");
       onClose();
     }
   }, [selectedDeptId, deptName, onSelectDepartment, onClose, showAlert]);

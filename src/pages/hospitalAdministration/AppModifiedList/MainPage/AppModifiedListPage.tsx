@@ -51,7 +51,6 @@ const AppModifiedListPage: React.FC = () => {
   const [selectedMasterForFields, setSelectedMasterForFields] = useState<AppModifiedMast | null>(null);
   const [isMasterFormOpen, setIsMasterFormOpen] = useState(false);
   const [isFieldFormOpen, setIsFieldFormOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isViewMode, setIsViewMode] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -217,7 +216,6 @@ const AppModifiedListPage: React.FC = () => {
   const handleSearchSelect = useCallback((master: AppModifiedMast) => {
     setSelectedMasterForFields(master);
     setCurrentTab(1);
-    setIsSearchOpen(false);
   }, []);
 
   const handleFilterChange = useCallback((field: keyof typeof filters, value: string) => {
@@ -792,8 +790,6 @@ const AppModifiedListPage: React.FC = () => {
           viewOnly={isViewMode}
         />
       )}
-
-      <AppModifiedMastSearch open={isSearchOpen} onClose={() => setIsSearchOpen(false)} onSelect={handleSearchSelect} />
 
       <ConfirmationDialog
         open={isDeleteConfirmOpen}
