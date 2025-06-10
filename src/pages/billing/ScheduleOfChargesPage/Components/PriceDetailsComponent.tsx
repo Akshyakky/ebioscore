@@ -49,7 +49,6 @@ interface PricingGridItem {
 interface WardCategory {
   id: number;
   name: string;
-  color: string;
 }
 
 interface PriceDetailsComponentProps {
@@ -65,7 +64,6 @@ interface PriceDetailsComponentProps {
 }
 
 const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, expanded, onToggleExpand, pricingGridData, updateChargeDetailsFromGrid, pic, bedCategory }) => {
-  // Component state
   const [picFilters, setPicFilters] = useState<string[]>([]);
   const [wardCategoryFilters, setWardCategoryFilters] = useState<string[]>([]);
   const [isPercentage, setIsPercentage] = useState<boolean>(false);
@@ -432,7 +430,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
             </Typography>
 
             <Grid container spacing={2} alignItems="center">
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <FormField
                   name="picFilters"
                   control={control}
@@ -446,7 +444,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <FormField
                   name="wardCategoryFilters"
                   control={control}
