@@ -31,6 +31,17 @@ export interface BChargeDto extends BaseDto {
   ChargePacks: BChargePackDto[];
 }
 
+export interface BChargeAliasDto extends BaseDto {
+  chAliasID: number;
+  chargeID: number;
+  pTypeID: number;
+  chargeDesc: string;
+  chargeDescLang: string;
+  rActiveYN?: "Y" | "N";
+  rTransferYN?: "Y" | "N";
+  rNotes?: string;
+}
+
 export interface BChargeDetailDto extends BaseDto {
   chDetID: number;
   chargeID: number;
@@ -52,17 +63,6 @@ export interface BDoctorSharePercShareDto extends BaseDto {
   conID: number;
   doctorShare: number;
   hospShare: number;
-  rActiveYN?: "Y" | "N";
-  rTransferYN?: "Y" | "N";
-  rNotes?: string;
-}
-
-export interface BChargeAliasDto extends BaseDto {
-  chAliasID: number;
-  chargeID: number;
-  pTypeID: number;
-  chargeDesc: string;
-  chargeDescLang: string;
   rActiveYN?: "Y" | "N";
   rTransferYN?: "Y" | "N";
   rNotes?: string;
