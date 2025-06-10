@@ -11,9 +11,9 @@ import { RevisitService } from "@/services/PatientAdministrationServices/Revisit
 import CustomButton from "@/components/Button/CustomButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { formatDate } from "@/utils/Common/dateUtils";
-import FormField from "@/components/FormField/FormField";
+import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { useAlert } from "@/providers/AlertProvider";
-import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import { useForm } from "react-hook-form";
 
 interface WaitingPatientSearchProps {
   userInfo: UserState;
@@ -23,6 +23,13 @@ interface WaitingPatientSearchProps {
 }
 
 const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, show, handleClose, onPatientSelect }) => {
+  const { control, handleSubmit, setValue } = useForm({
+    defaultValues: {
+      fromDate: new Date(),
+      toDate: new Date(),
+      attendingPhy: "",
+    },
+  });
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState("");
@@ -158,8 +165,9 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
       const selectedPhysician = physicians.find((physician) => physician.value === `${conID}-${cdID}`);
 
       setAttendingPhy(event.target.value);
+      setValue("attendingPhy", event.target.value);
     },
-    [physicians]
+    [physicians, setValue]
   );
 
   const handlePatientSelect = useCallback(
@@ -218,8 +226,9 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
         return;
       }
       setFromDate(selectedDate);
+      setValue("fromDate", selectedDate);
     },
-    [toDate]
+    [toDate, setValue]
   );
 
   const handleToDateChange = useCallback(
@@ -231,16 +240,16 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
         return;
       }
       setToDate(selectedDate);
+      setValue("toDate", selectedDate);
     },
-    [fromDate]
+    [fromDate, setValue]
   );
 
-  // Search button handler - explicitly trigger a search
-  const handleSearch = useCallback(() => {
+  const onSubmit = handleSubmit((data) => {
     if (!isCurrentlyFetching.current) {
       fetchWaitingPatients();
     }
-  }, [fetchWaitingPatients]);
+  });
 
   // Cleanup on unmount
   useEffect(() => {
@@ -275,13 +284,14 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
     <>
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <FloatingLabelTextBox
-            ControlID="SearchWaitingPatient"
-            title="Search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+          <EnhancedFormField
+            type="text"
+            name="searchTerm"
+            control={control}
+            label="Search"
             placeholder="Enter name or other details"
             size="small"
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -301,49 +311,24 @@ const WaitingPatientSearch: React.FC<WaitingPatientSearchProps> = ({ userInfo, s
             size="small"
           />
         </Grid>
-        <FormField
+        <EnhancedFormField
           type="select"
-          label="Attending Physician"
-          value={attendingPhy}
           name="attendingPhy"
-          ControlID="AttendingPhysician"
+          control={control}
+          label="Attending Physician"
           options={physicians}
           onChange={handleAttendingPhyChange}
-          isMandatory={false}
           size="small"
+          clearable
         />
         {dateRange === "Custom" && (
           <>
-            <FormField
-              type="datepicker"
-              label="From Date"
-              name="FromDate"
-              ControlID="FromDate"
-              value={fromDate}
-              onChange={handleFromDateChange}
-              placeholder="From Date"
-              size="small"
-              isMandatory={true}
-              disabled={false}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-            />
-            <FormField
-              type="datepicker"
-              label="To Date"
-              name="ToDate"
-              ControlID="ToDate"
-              value={toDate}
-              onChange={handleToDateChange}
-              placeholder="To Date"
-              size="small"
-              isMandatory={true}
-              disabled={false}
-              gridProps={{ xs: 12, sm: 6, md: 4 }}
-            />
+            <EnhancedFormField type="datepicker" name="fromDate" control={control} label="From Date" onChange={handleFromDateChange} size="small" required />
+            <EnhancedFormField type="datepicker" name="toDate" control={control} label="To Date" onChange={handleToDateChange} size="small" required />
           </>
         )}
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <CustomButton text="Search" onClick={handleSearch} color="primary" size="medium" disabled={isLoading || isCurrentlyFetching.current} />
+          <CustomButton text="Search" onClick={onSubmit} color="primary" size="medium" disabled={isLoading || isCurrentlyFetching.current} />
         </Grid>
       </Grid>
       <CustomGrid

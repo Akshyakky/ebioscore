@@ -2,6 +2,12 @@ import { lazy, Suspense } from "react";
 import React from "react";
 import { AlertProvider } from "@/providers/AlertProvider";
 
+//const AppointmentPage = lazy(() => import("@/pages/frontOffice/AppointmentPage/MainPage/AppointmentPage"));
+//const LogModule = lazy(() => import("@/pages/common/LogViewerPage/LogModule"));
+//const InvestigationListPage = lazy(() => import("@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage"));
+//const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
+//const ComponentEntryTypePage = lazy(() => import("@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage"));
+
 // Lazy load components
 const LoginPage = lazy(() => import("@/pages/common/LoginPage/LoginPage"));
 const DashboardPage = lazy(() => import("@/pages/common/DashboardPage/DashboardPage"));
@@ -13,7 +19,6 @@ const UserListPage = lazy(() => import("@/pages/securityManagement/UserListPage/
 const ResourceListPage = lazy(() => import("@/pages/frontOffice/ResourceList/MainPage/ResourceListPage"));
 const ReasonListPage = lazy(() => import("@/pages/frontOffice/ReasonList/MainPage/ReasonListPage"));
 const BreakListPage = lazy(() => import("@/pages/frontOffice/BreakList/MainPage/BreakListPage"));
-//const AppointmentPage = lazy(() => import("@/pages/frontOffice/AppointmentPage/MainPage/AppointmentPage"));
 const PatientInvoiceCodePage = lazy(() => import("@/pages/billing/PatientInvoiceCodePage/MainPage/PatientInvoiceCodePage"));
 const DepartmentListPage = lazy(() => import("@/pages/billing/DepartmentListPage/MainPage/DepartmentListPage"));
 const PaymentTypesPage = lazy(() => import("@/pages/billing/PaymentTypesPage/MainPage/PaymentTypesPage"));
@@ -36,14 +41,10 @@ const MedicationFrequencyPage = lazy(() => import("@/pages/clinicalManagement/Me
 const MedicationDosagePage = lazy(() => import("@/pages/clinicalManagement/MedicationDosage/MainPage/MedicationDosagePage"));
 const ProcedureListPage = lazy(() => import("@/pages/clinicalManagement/ProcedureList/MainPage/ProcedureListPage"));
 const MedicationGenericPage = lazy(() => import("@/pages/clinicalManagement/MedicationGeneric/MainPage/MedicationGenericPage"));
-const InvestigationListPage = lazy(() => import("@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage"));
-const ComponentEntryTypePage = lazy(() => import("@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage"));
 const ForgotPasswordPage = lazy(() => import("@/pages/common/ForgotPasswordPage/ForgotPasswordPage"));
 const IndentProductPage = lazy(() => import("@/pages/inventoryManagement/IndentProduct/MainPage/IndentProductPage"));
 const NotFoundPage = lazy(() => import("@/pages/common/NotFoundPage/NotFoundPage"));
 const AlertManager = lazy(() => import("@/pages/common/AlertManagerPage/MainPage/AlertManager"));
-const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
-const LogModule = lazy(() => import("@/pages/common/LogViewerPage/LogModule"));
 const ProductList = lazy(() => import("@/pages/inventoryManagement/ProductList/MainPage/ProductList"));
 const ProductTransaction = lazy(() => import("@/pages/inventoryManagement/ProductTransaction/ProductTransaction"));
 const PatientRegistrationRouter = lazy(() => import("@/pages/patientAdministration/RegistrationPage/PatientRegistrationRouter"));
@@ -450,36 +451,36 @@ const routeConfig: RouteConfig[] = [
       category: "clinical",
     },
   },
-  {
-    path: "/InvestigationListPage",
-    component: wrapWithSuspense(InvestigationListPage),
-    protected: true,
-    providers: [AlertProvider],
-    metadata: {
-      title: "Investigations",
-      category: "clinical",
-    },
-  },
-  {
-    path: "/ComponentEntryTypePage",
-    component: wrapWithSuspense(ComponentEntryTypePage),
-    protected: true,
-    providers: [AlertProvider],
-    metadata: {
-      title: "Component Entry Types",
-      category: "clinical",
-    },
-  },
-  {
-    path: "/PurchaseOrderPage",
-    component: wrapWithSuspense(PurchaseOrderPage),
-    protected: true,
-    providers: [AlertProvider],
-    metadata: {
-      title: "Purchase Orders",
-      category: "inventory",
-    },
-  },
+  // {
+  //   path: "/InvestigationListPage",
+  //   component: wrapWithSuspense(InvestigationListPage),
+  //   protected: true,
+  //   providers: [AlertProvider],
+  //   metadata: {
+  //     title: "Investigations",
+  //     category: "clinical",
+  //   },
+  // },
+  // {
+  //   path: "/ComponentEntryTypePage",
+  //   component: wrapWithSuspense(ComponentEntryTypePage),
+  //   protected: true,
+  //   providers: [AlertProvider],
+  //   metadata: {
+  //     title: "Component Entry Types",
+  //     category: "clinical",
+  //   },
+  // },
+  // {
+  //   path: "/PurchaseOrderPage",
+  //   component: wrapWithSuspense(PurchaseOrderPage),
+  //   protected: true,
+  //   providers: [AlertProvider],
+  //   metadata: {
+  //     title: "Purchase Orders",
+  //     category: "inventory",
+  //   },
+  // },
   {
     path: "/ForgotPasswordPage",
     component: wrapWithSuspense(ForgotPasswordPage),
@@ -500,16 +501,16 @@ const routeConfig: RouteConfig[] = [
       category: "inventory",
     },
   },
-  {
-    path: "/LogModulePage",
-    component: wrapWithSuspense(LogModule),
-    protected: true,
-    providers: [AlertProvider],
-    metadata: {
-      title: "Log Module",
-      category: "admin",
-    },
-  },
+  // {
+  //   path: "/LogModulePage",
+  //   component: wrapWithSuspense(LogModule),
+  //   protected: true,
+  //   providers: [AlertProvider],
+  //   metadata: {
+  //     title: "Log Module",
+  //     category: "admin",
+  //   },
+  // },
   {
     path: "/ProductTransaction",
     component: wrapWithSuspense(ProductTransaction),

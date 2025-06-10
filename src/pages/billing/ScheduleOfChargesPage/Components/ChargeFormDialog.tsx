@@ -8,7 +8,7 @@ import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import { ChargeWithAllDetailsDto, ChargeCodeGenerationDto } from "@/interfaces/Billing/ChargeDto";
+import { ChargeWithAllDetailsDto, ChargeCodeGenerationDto, BChargeFacultyDto } from "@/interfaces/Billing/ChargeDto";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { useScheduleOfCharges } from "../hooks/useScheduleOfCharges";
 import PriceDetailsComponent from "./PriceDetailsComponent";
@@ -397,6 +397,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
 
   const onFormSubmit = async (data: ChargeFormData) => {
     try {
+      debugger;
       updateAllComponentsData();
       await new Promise((resolve) => setTimeout(resolve, 100));
       const latestFormData = getValues();
@@ -458,15 +459,18 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             pTypeID: alias.pTypeID,
             chargeDesc: alias.chargeDesc,
             chargeDescLang: alias.chargeDescLang,
-            rActiveYN: alias.rActiveYN || "Y",
-            rTransferYN: alias.rTransferYN || "N",
+            rActiveYN: "Y",
+            rTransferYN: "N",
             rNotes: alias.rNotes || "",
           })) || [],
         ChargeFaculties:
-          latestFormData.ChargeFaculties?.map((faculty) => ({
+          latestFormData.ChargeFaculties?.map((faculty: BChargeFacultyDto) => ({
             chFacID: faculty.chFacID || 0,
             chargeID: latestFormData.chargeID || 0,
             aSubID: faculty.aSubID,
+            rActiveYN: "Y",
+            rTransferYN: "N",
+            rNotes: faculty.rNotes || "",
           })) || [],
         ChargePacks:
           latestFormData.ChargePacks?.map((pack) => ({
@@ -694,6 +698,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             </Grid>
           </Paper>
 
+          <AssociatedFacultiesComponent control={control} expanded={facultiesExpanded} onToggleExpand={() => setFacultiesExpanded(!facultiesExpanded)} subModules={subModules} />
+
           <PriceDetailsComponent
             control={control}
             expanded={detailsExpanded}
@@ -721,10 +727,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             pic={pic}
             onUpdateFunction={(updateFn) => handleRegisterUpdateFunction("chargeAliases", updateFn)}
           />
-
-          <AssociatedFacultiesComponent control={control} expanded={facultiesExpanded} onToggleExpand={() => setFacultiesExpanded(!facultiesExpanded)} subModules={subModules} />
-
-          <ChargePacksComponent control={control} expanded={packsExpanded} onToggleExpand={() => setPacksExpanded(!packsExpanded)} />
         </form>
       </Box>
     </GenericDialog>

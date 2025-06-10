@@ -31,17 +31,6 @@ export interface BChargeDto extends BaseDto {
   ChargePacks: BChargePackDto[];
 }
 
-export interface BChargeAliasDto extends BaseDto {
-  chAliasID: number;
-  chargeID: number;
-  pTypeID: number;
-  chargeDesc: string;
-  chargeDescLang: string;
-  rActiveYN?: "Y" | "N";
-  rTransferYN?: "Y" | "N";
-  rNotes?: string;
-}
-
 export interface BChargeDetailDto extends BaseDto {
   chDetID: number;
   chargeID: number;
@@ -55,6 +44,22 @@ export interface BChargeDetailDto extends BaseDto {
   rTransferYN?: "Y" | "N";
   rNotes?: string;
   ChargePacks: BChargePackDto[];
+}
+
+export interface BChargePackDto extends BaseDto {
+  chPackID: number;
+  chargeID: number;
+  chDetID?: number;
+  chargeRevise: string;
+  chargeStatus: string;
+  dcValue?: number;
+  hcValue?: number;
+  chValue: number;
+  effectiveFromDate?: Date;
+  effectiveToDate?: Date;
+  rActiveYN?: "Y" | "N";
+  rTransferYN?: "Y" | "N";
+  rNotes?: string;
 }
 
 export interface BDoctorSharePercShareDto extends BaseDto {
@@ -77,17 +82,12 @@ export interface BChargeFacultyDto extends BaseDto {
   rNotes?: string;
 }
 
-export interface BChargePackDto extends BaseDto {
-  chPackID: number;
+export interface BChargeAliasDto extends BaseDto {
+  chAliasID: number;
   chargeID: number;
-  chDetID?: number;
-  chargeRevise: string;
-  chargeStatus: string;
-  dcValue?: number;
-  hcValue?: number;
-  chValue: number;
-  effectiveFromDate?: Date;
-  effectiveToDate?: Date;
+  pTypeID: number;
+  chargeDesc: string;
+  chargeDescLang: string;
   rActiveYN?: "Y" | "N";
   rTransferYN?: "Y" | "N";
   rNotes?: string;

@@ -1,12 +1,12 @@
 //utils/Common/dateUtils.ts
-import { format } from "date-fns";
+import dayjs from "dayjs";
 
 export function formatDate(isoString: string): string {
-  return format(new Date(isoString), "dd/MM/yyyy");
+  return dayjs(isoString).format("DD/MM/YYYY");
 }
 
 export const formatDt = (date: Date): string => {
-  return format(date, "dd/MM/yyyy");
+  return dayjs(date).format("DD/MM/YYYY");
 };
 // src/utils/Common/dateUtils.ts
 

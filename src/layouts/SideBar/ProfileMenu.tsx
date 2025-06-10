@@ -11,8 +11,8 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/features/auth/selectors";
 import AuthService from "@/services/AuthService/AuthService";
 import { logout } from "@/store/features/auth/authSlice";
-import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import { useAlert } from "@/providers/AlertProvider";
 
 const ProfileMenu: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -56,14 +56,10 @@ const ProfileMenu: React.FC = () => {
         const result = await AuthService.logout(user.token);
         if (result.message) {
           dispatch(logout());
-          notifySuccess("Logged out successfully");
           navigate("/login");
         } else {
-          notifyError(result.errorMessage || "Logout failed");
         }
-      } catch (error) {
-        notifyError(error.message || "Logout failed");
-      }
+      } catch (error) {}
     }
   };
 

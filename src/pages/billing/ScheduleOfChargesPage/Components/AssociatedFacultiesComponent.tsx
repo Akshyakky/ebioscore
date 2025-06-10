@@ -1,8 +1,8 @@
-import React from "react";
-import { Box, Typography, Grid, Paper, Accordion, AccordionSummary, AccordionDetails, Chip, IconButton, Alert, Stack } from "@mui/material";
-import { ExpandMore as ExpandMoreIcon, Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
-import { useFieldArray, Control } from "react-hook-form";
+import React, { useEffect } from "react";
+import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Chip } from "@mui/material";
+import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import { useFieldArray, Control, useWatch } from "react-hook-form";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 
 interface AssociatedFacultiesComponentProps {
   control: Control<any>;
@@ -17,13 +17,32 @@ const AssociatedFacultiesComponent: React.FC<AssociatedFacultiesComponentProps> 
     name: "ChargeFaculties",
   });
 
-  const addFaculty = () => {
-    facultiesArray.append({
-      chFacID: 0,
-      chargeID: 0,
-      aSubID: 0,
-    });
-    onToggleExpand();
+  const selectedFaculties = useWatch({
+    control,
+    name: "selectedFaculties",
+    defaultValue: [],
+  });
+
+  useEffect(() => {
+    if (selectedFaculties && selectedFaculties.length > 0) {
+      facultiesArray.replace(
+        selectedFaculties.map((facultyId) => ({
+          chFacID: 0,
+          chargeID: 0,
+          aSubID: facultyId,
+          rActiveYN: "Y",
+          rTransferYN: "N",
+          rNotes: "",
+        }))
+      );
+    } else {
+      facultiesArray.replace([]);
+    }
+  }, [selectedFaculties, facultiesArray]);
+
+  const getInitialSelectedValues = () => {
+    const fields = facultiesArray.fields || [];
+    return fields.map((field: any) => field.aSubID);
   };
 
   return (
@@ -32,50 +51,21 @@ const AssociatedFacultiesComponent: React.FC<AssociatedFacultiesComponentProps> 
         <Box display="flex" alignItems="center" gap={1} width="100%">
           <Typography variant="subtitle1">Associated Faculties</Typography>
           <Chip label={`${facultiesArray.fields.length} faculties`} size="small" color="secondary" variant="outlined" />
-          <Box sx={{ ml: "auto" }}>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                addFaculty();
-              }}
-              color="primary"
-            >
-              <AddIcon />
-            </IconButton>
-          </Box>
         </Box>
       </AccordionSummary>
       <AccordionDetails>
-        <Stack spacing={2}>
-          {facultiesArray.fields.map((field, index) => (
-            <Paper key={field.id} sx={{ p: 2, backgroundColor: "grey.50" }}>
-              <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
-                <Typography variant="subtitle2">Faculty #{index + 1}</Typography>
-                <IconButton size="small" color="error" onClick={() => facultiesArray.remove(index)}>
-                  <DeleteIcon />
-                </IconButton>
-              </Box>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, md: 12 }}>
-                  <EnhancedFormField
-                    name={`ChargeFaculties.${index}.aSubID`}
-                    control={control}
-                    type="select"
-                    label="Academic Subject/Faculty"
-                    required
-                    size="small"
-                    options={subModules}
-                    helperText="Select the academic subject or faculty this charge is associated with"
-                  />
-                </Grid>
-              </Grid>
-            </Paper>
-          ))}
-          {facultiesArray.fields.length === 0 && (
-            <Alert severity="info">No faculties associated. Click the + button to associate this charge with academic subjects or faculties.</Alert>
-          )}
-        </Stack>
+        <Box sx={{ mb: 2 }}>
+          <FormField
+            name="selectedFaculties"
+            control={control}
+            type="multiselect"
+            label="Academic Subjects/Faculties"
+            options={subModules}
+            defaultValue={getInitialSelectedValues()}
+            helperText="Select one or more  faculties this charge is associated with"
+            size="small"
+          />
+        </Box>
       </AccordionDetails>
     </Accordion>
   );

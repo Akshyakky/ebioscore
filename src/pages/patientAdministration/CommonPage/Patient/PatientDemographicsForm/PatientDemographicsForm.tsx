@@ -3,7 +3,6 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Box, Grid, Typography } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { PatientDemoGraphService } from "@/services/PatientAdministrationServices/RegistrationService/PatientDemoGraphService";
-import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
 import { sanitizeFormData } from "@/utils/Common/sanitizeInput";
@@ -12,6 +11,7 @@ import { PatientDemographicsFormProps } from "./PatientDemographicsFormProps";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { PatientDemoGraph } from "@/interfaces/PatientAdministration/patientDemoGraph";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { useAlert } from "@/providers/AlertProvider";
 
 /**
  * Reusable patient demographics form component
@@ -29,7 +29,7 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false);
-
+  const { showErrorAlert } = useAlert();
   // Determine actual loading state - either controlled externally or internally
   const loading = externalLoading !== undefined ? externalLoading : isLoading;
 
@@ -68,12 +68,12 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
       if (result.success && result.data) {
         reset(result.data);
       } else {
-        notifyError(result.errorMessage || "Failed to fetch patient demographics for editing");
+        showErrorAlert("Error", result.errorMessage || "Failed to fetch patient demographics for editing");
         onClose();
       }
     } catch (error) {
       console.error("Error fetching patient details:", error);
-      notifyError("An error occurred while fetching patient details");
+      showErrorAlert("Error", "An error occurred while fetching patient details");
       onClose();
     } finally {
       setIsLoading(false);
@@ -103,11 +103,11 @@ export const PatientDemographicsForm: React.FC<PatientDemographicsFormProps> = (
         }
         onClose();
       } else {
-        notifyError(result.errorMessage || "Failed to update patient demographics");
+        showErrorAlert("Error", result.errorMessage || "Failed to update patient demographics");
       }
     } catch (error) {
       console.error("Error saving patient demographics:", error);
-      notifyError("An error occurred while saving patient demographics");
+      showErrorAlert("Error", "An error occurred while saving patient demographics");
     } finally {
       setIsLoading(false);
     }
