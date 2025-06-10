@@ -173,7 +173,7 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
     } finally {
       setLoading(false);
     }
-  }, [selectedOption, resourceList, setLoading]);
+  }, [selectedOption, resourceList]);
 
   useEffect(() => {
     if (initialData) {

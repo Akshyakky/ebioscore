@@ -96,7 +96,7 @@ const useFieldsList = (fieldNames: string[]): UseFieldsListResult => {
     } finally {
       setLoading(false);
     }
-  }, [processFieldsData, setLoading]);
+  }, [processFieldsData]);
 
   // Refresh fields data manually
   const refreshFields = useCallback(async () => {

@@ -5,6 +5,7 @@ import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDt
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
 import { dischargeService } from "@/services/PatientAdministrationServices/DischargeService/DischargeService";
 import { useAlert } from "@/providers/AlertProvider";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface PatientAdmissionStatusResponse {
   isAdmitted: boolean;
@@ -302,7 +303,7 @@ export const useDischarge = (): UseDischargeReturn => {
  * Useful for components that only need to check discharge status
  */
 export const useDischargeStatus = () => {
-  const [loading, setLoading] = useState(false);
+  const { isLoading, setLoading } = useLoading();
   const [error, setError] = useState<string | null>(null);
   const { showAlert } = useAlert();
 
@@ -328,7 +329,7 @@ export const useDischargeStatus = () => {
 
   return {
     checkDischargeStatus,
-    loading,
+    isLoading,
     error,
   };
 };

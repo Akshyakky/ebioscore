@@ -29,7 +29,7 @@ export function createEntityHook<T extends { [key: string]: any }>(service: any,
           setLoading(false);
         }
       }
-    }, [setLoading]);
+    }, []);
 
     useEffect(() => {
       if (!initialFetchDone.current) {
@@ -38,27 +38,24 @@ export function createEntityHook<T extends { [key: string]: any }>(service: any,
       }
     }, [fetchEntityList]);
 
-    const getEntityById = useCallback(
-      async (id: number) => {
-        try {
-          setLoading(true);
-          const result = await service.getById(id);
-          if (result.success && result.data) {
-            return result.data;
-          } else {
-            setError(result.errorMessage || "Failed to fetch item");
-            return null;
-          }
-        } catch (err) {
-          console.error("Error fetching item:", err);
-          setError("An unexpected error occurred while fetching item");
+    const getEntityById = useCallback(async (id: number) => {
+      try {
+        setLoading(true);
+        const result = await service.getById(id);
+        if (result.success && result.data) {
+          return result.data;
+        } else {
+          setError(result.errorMessage || "Failed to fetch item");
           return null;
-        } finally {
-          setLoading(false);
         }
-      },
-      [setLoading]
-    );
+      } catch (err) {
+        console.error("Error fetching item:", err);
+        setError("An unexpected error occurred while fetching item");
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    }, []);
 
     const saveEntity = useCallback(
       async (entity: T) => {
@@ -73,7 +70,7 @@ export function createEntityHook<T extends { [key: string]: any }>(service: any,
           setLoading(false);
         }
       },
-      [fetchEntityList, setLoading]
+      [fetchEntityList]
     );
 
     const deleteEntity = useCallback(
@@ -96,7 +93,7 @@ export function createEntityHook<T extends { [key: string]: any }>(service: any,
           setLoading(false);
         }
       },
-      [fetchEntityList, setLoading]
+      [fetchEntityList]
     );
 
     const updateEntityStatus = useCallback(
@@ -119,30 +116,27 @@ export function createEntityHook<T extends { [key: string]: any }>(service: any,
           setLoading(false);
         }
       },
-      [fetchEntityList, setLoading]
+      [fetchEntityList]
     );
 
-    const getNextCode = useCallback(
-      async (prefix: string = "MEDG", padLength: number = 5) => {
-        try {
-          setLoading(true);
-          const result = await service.getNextCode(prefix, padLength);
-          if (result.success && result.data) {
-            return result.data;
-          } else {
-            setError(result.errorMessage || "Failed to generate next code");
-            return null;
-          }
-        } catch (err) {
-          console.error("Error generating next code:", err);
-          setError("An unexpected error occurred while generating code");
+    const getNextCode = useCallback(async (prefix: string = "MEDG", padLength: number = 5) => {
+      try {
+        setLoading(true);
+        const result = await service.getNextCode(prefix, padLength);
+        if (result.success && result.data) {
+          return result.data;
+        } else {
+          setError(result.errorMessage || "Failed to generate next code");
           return null;
-        } finally {
-          setLoading(false);
         }
-      },
-      [setLoading]
-    );
+      } catch (err) {
+        console.error("Error generating next code:", err);
+        setError("An unexpected error occurred while generating code");
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    }, []);
 
     return {
       entityList,

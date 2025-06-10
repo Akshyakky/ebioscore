@@ -8,6 +8,7 @@ import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarr
 import { formatDt } from "@/utils/Common/dateUtils";
 import { useAlert } from "@/providers/AlertProvider";
 import PatientInsuranceManagement from "@/pages/patientAdministration/RegistrationPage/Components/PatientInsuranceManagement";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface InsuranceSelectionForAdmissionProps {
   pChartID: number;
@@ -19,7 +20,7 @@ interface InsuranceSelectionForAdmissionProps {
 
 const InsuranceSelectionForAdmission: React.FC<InsuranceSelectionForAdmissionProps> = ({ pChartID, patientName, selectedInsuranceID, onInsuranceSelect, onManageInsurance }) => {
   const [insuranceList, setInsuranceList] = useState<OPIPInsurancesDto[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { isLoading, setLoading } = useLoading();
   const [selectedInsurance, setSelectedInsurance] = useState<OPIPInsurancesDto | null>(null);
   const [isInsuranceManagementOpen, setIsInsuranceManagementOpen] = useState(false);
 
@@ -149,7 +150,7 @@ const InsuranceSelectionForAdmission: React.FC<InsuranceSelectionForAdmissionPro
     });
   }, [insuranceList, getPolicyStatus, formatPolicyPeriod]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Paper sx={{ p: 2 }}>
         <Typography variant="body2" color="text.secondary">

@@ -9,6 +9,7 @@ import { PatNokService } from "@/services/PatientAdministrationServices/Registra
 import { formatDt } from "@/utils/Common/dateUtils";
 import { useAlert } from "@/providers/AlertProvider";
 import NextOfKinManagement from "@/pages/patientAdministration/RegistrationPage/Components/NextOfKinManagement";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface NokAttendantSelectionProps {
   pChartID: number;
@@ -20,7 +21,7 @@ interface NokAttendantSelectionProps {
 
 const NokAttendantSelection: React.FC<NokAttendantSelectionProps> = ({ pChartID, patientName, selectedNokID, onNokSelect, onManageNok }) => {
   const [nokList, setNokList] = useState<PatNokDetailsDto[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { isLoading, setLoading } = useLoading();
   const [selectedNok, setSelectedNok] = useState<PatNokDetailsDto | null>(null);
   const [isNokManagementOpen, setIsNokManagementOpen] = useState(false);
 
@@ -122,7 +123,7 @@ const NokAttendantSelection: React.FC<NokAttendantSelectionProps> = ({ pChartID,
     }));
   }, [nokList, formatNokName, calculateAge]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Paper sx={{ p: 2 }}>
         <Typography variant="body2" color="text.secondary">
