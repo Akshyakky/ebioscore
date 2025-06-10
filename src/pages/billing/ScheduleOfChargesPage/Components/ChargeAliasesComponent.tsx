@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Chip, Stack, Alert, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Box, Typography, Paper, Chip, Stack, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { useFieldArray, Control, useWatch } from "react-hook-form";
-import { BChargeAliasDto } from "@/interfaces/Billing/ChargeDto";
 
 interface ChargeAliasesComponentProps {
   control: Control<any>;
   pic: { value: string; label: string }[];
   expanded: boolean;
   onToggleExpand: () => void;
+  onUpdateFunction?: (updateFn: () => void) => void;
 }
 
 interface AliasGridRow {
@@ -21,11 +21,11 @@ interface AliasGridRow {
   chargeDescLang: string;
   rActiveYN: "Y" | "N";
   hasAlias: boolean;
-  originalIndex?: number;
 }
 
-const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control, pic, expanded, onToggleExpand }) => {
-  const [gridData, setGridData] = useState<AliasGridRow[]>([]);
+const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control, pic, expanded, onToggleExpand, onUpdateFunction }) => {
+  const [aliasGridData, setAliasGridData] = useState<AliasGridRow[]>([]);
+  const [gridDataUpdated, setGridDataUpdated] = useState(false);
 
   const aliasesArray = useFieldArray({
     control,
@@ -37,12 +37,12 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
       control,
       name: "ChargeAliases",
     }) || [];
-  const initializeGridData = useCallback(() => {
+
+  const initializeAliasGridData = useCallback(() => {
     if (!pic || pic.length === 0) return;
     const gridRows: AliasGridRow[] = pic.map((picOption) => {
       const pTypeID = Number(picOption.value);
-      const existingAliasIndex = watchedAliases.findIndex((alias: any) => Number(alias.pTypeID) === pTypeID);
-      const existingAlias = existingAliasIndex >= 0 ? watchedAliases[existingAliasIndex] : null;
+      const existingAlias = watchedAliases.find((alias: any) => Number(alias.pTypeID) === pTypeID);
       return {
         id: `pic-${pTypeID}`,
         pTypeID: pTypeID,
@@ -50,57 +50,66 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
         chargeDesc: existingAlias?.chargeDesc || "",
         chargeDescLang: existingAlias?.chargeDescLang || "",
         rActiveYN: existingAlias?.rActiveYN || "Y",
-        hasAlias: !!existingAlias && (existingAlias.chargeDesc?.trim() || existingAlias.chargeDescLang?.trim()),
-        originalIndex: existingAliasIndex >= 0 ? existingAliasIndex : undefined,
+        hasAlias: !!(existingAlias?.chargeDesc?.trim() || existingAlias?.chargeDescLang?.trim()),
       };
     });
-
-    setGridData(gridRows);
+    setAliasGridData(gridRows);
   }, [pic, watchedAliases]);
 
   useEffect(() => {
-    initializeGridData();
-  }, [initializeGridData]);
+    initializeAliasGridData();
+  }, [initializeAliasGridData]);
+
+  const updateChargeAliasesFromGrid = useCallback(() => {
+    const chargeAliasesArray = [];
+    for (const row of aliasGridData) {
+      const hasContent = row.chargeDesc?.trim() || row.chargeDescLang?.trim();
+      if (hasContent) {
+        chargeAliasesArray.push({
+          chAliasID: 0,
+          chargeID: 0,
+          pTypeID: row.pTypeID,
+          chargeDesc: row.chargeDesc || "",
+          chargeDescLang: row.chargeDescLang || "",
+          rActiveYN: row.rActiveYN || "Y",
+        });
+      }
+    }
+    aliasesArray.replace(chargeAliasesArray);
+  }, [aliasGridData, aliasesArray]);
+
+  useEffect(() => {
+    if (gridDataUpdated) {
+      updateChargeAliasesFromGrid();
+      setGridDataUpdated(false);
+    }
+  }, [gridDataUpdated, updateChargeAliasesFromGrid]);
 
   const handleFieldChange = useCallback(
     (rowIndex: number, fieldName: string, value: any) => {
-      const gridRow = gridData[rowIndex];
-      if (!gridRow) return;
-
-      const pTypeID = gridRow.pTypeID;
-      const existingAliasIndex = watchedAliases.findIndex((alias: any) => Number(alias.pTypeID) === pTypeID);
-
-      const updatedAlias = {
-        chAliasID: 0,
-        chargeID: 0,
-        pTypeID: pTypeID,
-        chargeDesc: fieldName === "chargeDesc" ? value : gridRow.chargeDesc,
-        chargeDescLang: fieldName === "chargeDescLang" ? value : gridRow.chargeDescLang,
-        rActiveYN: fieldName === "rActiveYN" ? value : gridRow.rActiveYN,
+      const updatedGridData = [...aliasGridData];
+      const row = updatedGridData[rowIndex];
+      if (!row) return;
+      updatedGridData[rowIndex] = {
+        ...row,
+        [fieldName]: value,
+        hasAlias: (fieldName === "chargeDesc" ? !!value?.trim() : !!row.chargeDesc?.trim()) || (fieldName === "chargeDescLang" ? !!value?.trim() : !!row.chargeDescLang?.trim()),
       };
-
-      if (existingAliasIndex >= 0) {
-        aliasesArray.update(existingAliasIndex, updatedAlias);
-      } else {
-        const hasContent = updatedAlias.chargeDesc?.trim() || updatedAlias.chargeDescLang?.trim();
-        if (hasContent) {
-          aliasesArray.append(updatedAlias);
-        }
-      }
-
-      if (fieldName === "chargeDesc" || fieldName === "chargeDescLang") {
-        const hasContent = updatedAlias.chargeDesc?.trim() || updatedAlias.chargeDescLang?.trim();
-        if (!hasContent && existingAliasIndex >= 0) {
-          aliasesArray.remove(existingAliasIndex);
-        }
-      }
+      setAliasGridData(updatedGridData);
+      setGridDataUpdated(true);
     },
-    [gridData, watchedAliases, aliasesArray]
+    [aliasGridData]
   );
 
+  useEffect(() => {
+    if (onUpdateFunction) {
+      onUpdateFunction(updateChargeAliasesFromGrid);
+    }
+  }, [updateChargeAliasesFromGrid, onUpdateFunction]);
+
   const activeAliasCount = useMemo(() => {
-    return gridData.filter((row) => row.hasAlias && row.rActiveYN === "Y").length;
-  }, [gridData]);
+    return aliasGridData.filter((row) => row.hasAlias && row.rActiveYN === "Y").length;
+  }, [aliasGridData]);
 
   const columns: Column<AliasGridRow>[] = useMemo(
     () => [
@@ -132,29 +141,26 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
         width: 300,
         minWidth: 250,
         align: "left",
-        render: (item, rowIndex) => {
-          const existingAliasIndex = watchedAliases.findIndex((alias: any) => Number(alias.pTypeID) === item.pTypeID);
-
-          return (
-            <Box sx={{ py: 1 }}>
-              <EnhancedFormField
-                name={existingAliasIndex >= 0 ? `ChargeAliases.${existingAliasIndex}.chargeDesc` : `temp_chargeDesc_${item.pTypeID}`}
-                control={control}
-                type="text"
-                label=""
-                size="small"
-                variant="standard"
-                fullWidth
-                placeholder="Enter alias description (max 250 characters)"
-                helperText=""
-                inputProps={{
-                  maxLength: 250,
-                }}
-                onChange={(value) => handleFieldChange(rowIndex, "chargeDesc", value)}
-              />
-            </Box>
-          );
-        },
+        render: (item, rowIndex) => (
+          <Box sx={{ py: 1 }}>
+            <EnhancedFormField
+              name={`alias_chargeDesc_${item.pTypeID}`}
+              control={control}
+              type="text"
+              label=""
+              size="small"
+              variant="standard"
+              fullWidth
+              placeholder="Enter alias description (max 250 characters)"
+              helperText=""
+              defaultValue={item.chargeDesc}
+              inputProps={{
+                maxLength: 250,
+              }}
+              onChange={(value) => handleFieldChange(rowIndex, "chargeDesc", value)}
+            />
+          </Box>
+        ),
       },
       {
         key: "chargeDescLang",
@@ -163,29 +169,26 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
         width: 300,
         minWidth: 250,
         align: "left",
-        render: (item, rowIndex) => {
-          const existingAliasIndex = watchedAliases.findIndex((alias: any) => Number(alias.pTypeID) === item.pTypeID);
-
-          return (
-            <Box sx={{ py: 1 }}>
-              <EnhancedFormField
-                name={existingAliasIndex >= 0 ? `ChargeAliases.${existingAliasIndex}.chargeDescLang` : `temp_chargeDescLang_${item.pTypeID}`}
-                control={control}
-                type="text"
-                label=""
-                size="small"
-                variant="standard"
-                fullWidth
-                placeholder="Enter local language description (max 250 characters)"
-                helperText=""
-                inputProps={{
-                  maxLength: 250,
-                }}
-                onChange={(value) => handleFieldChange(rowIndex, "chargeDescLang", value)}
-              />
-            </Box>
-          );
-        },
+        render: (item, rowIndex) => (
+          <Box sx={{ py: 1 }}>
+            <EnhancedFormField
+              name={`alias_chargeDescLang_${item.pTypeID}`}
+              control={control}
+              type="text"
+              label=""
+              size="small"
+              variant="standard"
+              fullWidth
+              placeholder="Enter local language description (max 250 characters)"
+              helperText=""
+              defaultValue={item.chargeDescLang}
+              inputProps={{
+                maxLength: 250,
+              }}
+              onChange={(value) => handleFieldChange(rowIndex, "chargeDescLang", value)}
+            />
+          </Box>
+        ),
       },
       {
         key: "rActiveYN",
@@ -193,30 +196,27 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
         visible: true,
         width: 100,
         align: "center",
-        render: (item, rowIndex) => {
-          const existingAliasIndex = watchedAliases.findIndex((alias: any) => Number(alias.pTypeID) === item.pTypeID);
-
-          return (
-            <Box sx={{ py: 1, display: "flex", justifyContent: "center" }}>
-              <EnhancedFormField
-                name={existingAliasIndex >= 0 ? `ChargeAliases.${existingAliasIndex}.rActiveYN` : `temp_rActiveYN_${item.pTypeID}`}
-                control={control}
-                type="switch"
-                label=""
-                size="small"
-                helperText=""
-                onChange={(value) => handleFieldChange(rowIndex, "rActiveYN", value)}
-              />
-            </Box>
-          );
-        },
+        render: (item, rowIndex) => (
+          <Box sx={{ py: 1, display: "flex", justifyContent: "center" }}>
+            <EnhancedFormField
+              name={`alias_rActiveYN_${item.pTypeID}`}
+              control={control}
+              type="switch"
+              label=""
+              size="small"
+              helperText=""
+              defaultValue={item.rActiveYN === "Y"}
+              onChange={(value) => handleFieldChange(rowIndex, "rActiveYN", value ? "Y" : "N")}
+            />
+          </Box>
+        ),
       },
     ],
-    [control, watchedAliases, handleFieldChange]
+    [control, handleFieldChange]
   );
 
   return (
-    <Accordion expanded={expanded} onChange={onToggleExpand} sx={{ mb: 2 }}>
+    <Accordion expanded={expanded} onChange={onToggleExpand}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Box display="flex" alignItems="center" gap={1} width="100%">
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -228,9 +228,6 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
 
       <AccordionDetails>
         <Stack spacing={2}>
-          {/* Information Alert */}
-
-          {/* Grid Section */}
           <Box
             sx={{
               "& .MuiTableContainer-root": {
@@ -263,21 +260,16 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
           >
             <CustomGrid
               columns={columns}
-              data={gridData}
+              data={aliasGridData}
               maxHeight="600px"
               minHeight="300px"
               emptyStateMessage="No patient types available. Please ensure PIC data is loaded."
               showDensityControls={false}
               density="medium"
               rowKeyField="id"
+              pagination={false}
+              selectable={false}
             />
-          </Box>
-
-          {/* Summary Information */}
-          <Box sx={{ p: 1, backgroundColor: "grey.50", borderRadius: 1 }}>
-            <Typography variant="caption" color="text.secondary">
-              Total patient types: {pic.length} | Configured aliases: {activeAliasCount} | Active aliases: {gridData.filter((row) => row.hasAlias && row.rActiveYN === "Y").length}
-            </Typography>
           </Box>
         </Stack>
       </AccordionDetails>

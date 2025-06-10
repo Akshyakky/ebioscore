@@ -30,12 +30,11 @@ import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
-import { useUserList } from "@/pages/securityManagement/UserListPage/hooks/useUserList";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
-import { toast } from "react-toastify";
 import { ContactMastShortDto } from "@/interfaces/HospitalAdministration/ContactListData";
+import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 
 export type DropdownType =
   | "pic"
@@ -148,7 +147,6 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
 
   // State to track status of each dropdown
   const [dropdownStates, setDropdownStates] = useState<Record<DropdownType, DropdownState>>({} as Record<DropdownType, DropdownState>);
-  const { getUsersWithoutCredentials } = useUserList();
   const { showAlert } = useAlert();
   // Registry of dropdown fetcher functions
   const fetcherRegistry = useMemo<Record<DropdownType, FetcherFunction>>(
@@ -519,7 +517,7 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
         }));
       },
       usersWithoutLogin: async () => {
-        const response = await getUsersWithoutCredentials();
+        const response = await userListServices.getUsersWithoutCredentials();
         const users = Array.isArray(response.data) ? response.data : [];
         return users.map((user: ContactMastShortDto) => ({
           value: user.conID || 0,
