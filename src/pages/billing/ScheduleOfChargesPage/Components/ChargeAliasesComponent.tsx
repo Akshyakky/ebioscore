@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Chip, Stack, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
+import { Box, Typography, Chip, Stack, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { useFieldArray, Control, useWatch } from "react-hook-form";
+import { BChargeAliasDto } from "@/interfaces/Billing/ChargeDto";
 
 interface ChargeAliasesComponentProps {
   control: Control<any>;
@@ -18,15 +19,11 @@ interface AliasGridRow {
   pTypeID: number;
   picName: string;
   chargeDesc: string;
-  chargeDescLang: string;
-  rActiveYN: "Y" | "N";
   hasAlias: boolean;
 }
 
 const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control, pic, expanded, onToggleExpand, onUpdateFunction }) => {
   const [aliasGridData, setAliasGridData] = useState<AliasGridRow[]>([]);
-  const [gridDataUpdated, setGridDataUpdated] = useState(false);
-
   const aliasesArray = useFieldArray({
     control,
     name: "ChargeAliases",
@@ -42,64 +39,84 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
     if (!pic || pic.length === 0) return;
     const gridRows: AliasGridRow[] = pic.map((picOption) => {
       const pTypeID = Number(picOption.value);
-      const existingAlias = watchedAliases.find((alias: any) => Number(alias.pTypeID) === pTypeID);
+      const existingAlias = watchedAliases.find((alias: BChargeAliasDto) => Number(alias.pTypeID) === pTypeID);
       return {
         id: `pic-${pTypeID}`,
         pTypeID: pTypeID,
         picName: picOption.label,
         chargeDesc: existingAlias?.chargeDesc || "",
-        chargeDescLang: existingAlias?.chargeDescLang || "",
-        rActiveYN: existingAlias?.rActiveYN || "Y",
-        hasAlias: !!(existingAlias?.chargeDesc?.trim() || existingAlias?.chargeDescLang?.trim()),
+        hasAlias: Boolean(existingAlias?.chargeDesc),
       };
     });
     setAliasGridData(gridRows);
   }, [pic, watchedAliases]);
 
-  useEffect(() => {
-    initializeAliasGridData();
-  }, [initializeAliasGridData]);
-
   const updateChargeAliasesFromGrid = useCallback(() => {
-    const chargeAliasesArray = [];
+    const chargeAliasesArray: BChargeAliasDto[] = [];
     for (const row of aliasGridData) {
-      const hasContent = row.chargeDesc?.trim() || row.chargeDescLang?.trim();
+      const hasContent = Boolean(row.chargeDesc);
       if (hasContent) {
         chargeAliasesArray.push({
           chAliasID: 0,
           chargeID: 0,
           pTypeID: row.pTypeID,
-          chargeDesc: row.chargeDesc || "",
-          chargeDescLang: row.chargeDescLang || "",
-          rActiveYN: row.rActiveYN || "Y",
+          chargeDesc: row.chargeDesc,
+          chargeDescLang: row.chargeDesc,
+          rActiveYN: "Y",
+          rTransferYN: "N",
+          rNotes: "",
         });
       }
     }
     aliasesArray.replace(chargeAliasesArray);
   }, [aliasGridData, aliasesArray]);
 
-  useEffect(() => {
-    if (gridDataUpdated) {
-      updateChargeAliasesFromGrid();
-      setGridDataUpdated(false);
-    }
-  }, [gridDataUpdated, updateChargeAliasesFromGrid]);
-
   const handleFieldChange = useCallback(
-    (rowIndex: number, fieldName: string, value: any) => {
-      const updatedGridData = [...aliasGridData];
-      const row = updatedGridData[rowIndex];
-      if (!row) return;
-      updatedGridData[rowIndex] = {
-        ...row,
-        [fieldName]: value,
-        hasAlias: (fieldName === "chargeDesc" ? !!value?.trim() : !!row.chargeDesc?.trim()) || (fieldName === "chargeDescLang" ? !!value?.trim() : !!row.chargeDescLang?.trim()),
-      };
-      setAliasGridData(updatedGridData);
-      setGridDataUpdated(true);
+    (rowIndex: number, valueOrEvent: any) => {
+      let actualValue = "";
+      if (typeof valueOrEvent === "string") {
+        actualValue = valueOrEvent;
+      } else if (valueOrEvent && valueOrEvent.target && typeof valueOrEvent.target.value === "string") {
+        actualValue = valueOrEvent.target.value;
+      } else if (valueOrEvent && typeof valueOrEvent.value === "string") {
+        actualValue = valueOrEvent.value;
+      }
+      setAliasGridData((prevData) => {
+        const updatedGridData = [...prevData];
+        const row = updatedGridData[rowIndex];
+        if (!row) return prevData;
+        const updatedRow = {
+          ...row,
+          chargeDesc: actualValue,
+          hasAlias: Boolean(actualValue),
+        };
+        updatedGridData[rowIndex] = updatedRow;
+        const chargeAliasesArray: BChargeAliasDto[] = [];
+        for (const gridRow of updatedGridData) {
+          const hasContent = Boolean(gridRow.chargeDesc);
+          if (hasContent) {
+            chargeAliasesArray.push({
+              chAliasID: 0,
+              chargeID: 0,
+              pTypeID: gridRow.pTypeID,
+              chargeDesc: gridRow.chargeDesc,
+              chargeDescLang: gridRow.chargeDesc,
+              rActiveYN: "Y",
+              rTransferYN: "N",
+              rNotes: "",
+            });
+          }
+        }
+        aliasesArray.replace(chargeAliasesArray);
+        return updatedGridData;
+      });
     },
-    [aliasGridData]
+    [aliasesArray]
   );
+
+  useEffect(() => {
+    initializeAliasGridData();
+  }, [initializeAliasGridData]);
 
   useEffect(() => {
     if (onUpdateFunction) {
@@ -108,7 +125,7 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
   }, [updateChargeAliasesFromGrid, onUpdateFunction]);
 
   const activeAliasCount = useMemo(() => {
-    return aliasGridData.filter((row) => row.hasAlias && row.rActiveYN === "Y").length;
+    return aliasGridData.filter((row) => row.hasAlias).length;
   }, [aliasGridData]);
 
   const columns: Column<AliasGridRow>[] = useMemo(
@@ -117,8 +134,8 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
         key: "picName",
         header: "PIC Name",
         visible: true,
-        width: 350,
-        minWidth: 300,
+        width: 400,
+        minWidth: 350,
         align: "left",
         render: (item) => (
           <Box sx={{ py: 1 }}>
@@ -138,8 +155,8 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
         key: "chargeDesc",
         header: "Alias Name",
         visible: true,
-        width: 300,
-        minWidth: 250,
+        width: 400,
+        minWidth: 350,
         align: "left",
         render: (item, rowIndex) => (
           <Box sx={{ py: 1 }}>
@@ -151,62 +168,10 @@ const ChargeAliasesComponent: React.FC<ChargeAliasesComponentProps> = ({ control
               size="small"
               variant="standard"
               fullWidth
-              placeholder="Enter alias description (max 250 characters)"
+              placeholder="Enter alias name (max 250 characters)"
               helperText=""
               defaultValue={item.chargeDesc}
-              inputProps={{
-                maxLength: 250,
-              }}
-              onChange={(value) => handleFieldChange(rowIndex, "chargeDesc", value)}
-            />
-          </Box>
-        ),
-      },
-      {
-        key: "chargeDescLang",
-        header: "Local Language Description",
-        visible: true,
-        width: 300,
-        minWidth: 250,
-        align: "left",
-        render: (item, rowIndex) => (
-          <Box sx={{ py: 1 }}>
-            <EnhancedFormField
-              name={`alias_chargeDescLang_${item.pTypeID}`}
-              control={control}
-              type="text"
-              label=""
-              size="small"
-              variant="standard"
-              fullWidth
-              placeholder="Enter local language description (max 250 characters)"
-              helperText=""
-              defaultValue={item.chargeDescLang}
-              inputProps={{
-                maxLength: 250,
-              }}
-              onChange={(value) => handleFieldChange(rowIndex, "chargeDescLang", value)}
-            />
-          </Box>
-        ),
-      },
-      {
-        key: "rActiveYN",
-        header: "Active",
-        visible: true,
-        width: 100,
-        align: "center",
-        render: (item, rowIndex) => (
-          <Box sx={{ py: 1, display: "flex", justifyContent: "center" }}>
-            <EnhancedFormField
-              name={`alias_rActiveYN_${item.pTypeID}`}
-              control={control}
-              type="switch"
-              label=""
-              size="small"
-              helperText=""
-              defaultValue={item.rActiveYN === "Y"}
-              onChange={(value) => handleFieldChange(rowIndex, "rActiveYN", value ? "Y" : "N")}
+              onChange={(value) => handleFieldChange(rowIndex, value)}
             />
           </Box>
         ),

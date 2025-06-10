@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Grid, Paper, Divider, Stack } from "@mui/material";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Box, Typography, Grid, Paper, Divider } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -59,13 +59,6 @@ interface PricingGridItem {
     };
   };
 }
-
-interface WardCategory {
-  id: number;
-  name: string;
-  color: string;
-}
-
 interface ChargeFormDialogProps {
   open: boolean;
   onClose: () => void;
@@ -83,6 +76,12 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
   const [packsExpanded, setPacksExpanded] = useState(false);
   const [formDebug, setFormDebug] = useState({ isValid: false, isDirty: false });
   const [pricingGridData, setPricingGridData] = useState<PricingGridItem[]>([]);
+  const updateChargeDetailsFromGridRef = useRef<(() => void) | null>(null);
+  const updateChargeAliasesFromGridRef = useRef<(() => void) | null>(null);
+  const updateDoctorSharesFromGridRef = useRef<(() => void) | null>(null);
+  const updateChargeFacultiesFromGridRef = useRef<(() => void) | null>(null);
+  const updateChargePacksFromGridRef = useRef<(() => void) | null>(null);
+
   const isEditMode = !!charge && charge.chargeID > 0;
   const { generateChargeCode } = useScheduleOfCharges();
 
@@ -95,25 +94,10 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
     subModules = [],
   } = useDropdownValues(["serviceType", "serviceGroup", "pic", "bedCategory", "attendingPhy", "subModules"]);
 
-  // Generate ward categories from bedCategory dropdown with dynamic colors
   const wardCategories = useMemo(() => {
-    const colors = [
-      "#4caf50", // Green
-      "#f44336", // Red
-      "#00bcd4", // Cyan
-      "#3f51b5", // Indigo
-      "#9c27b0", // Purple
-      "#ff9800", // Orange
-      "#795548", // Brown
-      "#607d8b", // Blue Grey
-      "#e91e63", // Pink
-      "#cddc39", // Lime
-    ];
-
     return bedCategory.map((category, index) => ({
       id: Number(category.value),
       name: category.label,
-      color: colors[index % colors.length],
     }));
   }, [bedCategory]);
 
@@ -124,6 +108,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
     setValue,
     watch,
     trigger,
+    getValues,
     formState: { errors, isDirty, isValid, isSubmitting },
   } = useForm<ChargeFormData>({
     resolver: zodResolver(chargeSchema),
@@ -159,7 +144,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
   useEffect(() => {
     setFormDebug({ isValid, isDirty });
     if (process.env.NODE_ENV === "development") {
-      // console log for debugging if needed
     }
   }, [isValid, isDirty, errors]);
 
@@ -288,24 +272,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
     [pic, bedCategory, wardCategories]
   );
 
-  useEffect(() => {
-    if (open) {
-      if (charge) {
-        reset({
-          ChargeDetails: charge.ChargeDetails || [],
-        });
-        initializeGridData(charge.ChargeDetails);
-        setDetailsExpanded(charge.ChargeDetails?.length > 0);
-      } else {
-        reset({
-          // ... default values
-          ChargeDetails: [],
-        });
-        initializeGridData([]);
-      }
-    }
-  }, [open, charge, reset, initializeGridData]);
-
   const getWardCategoryById = (id: number): string => {
     const category = wardCategories.find((wc) => wc.id === id);
     if (category) return category.name;
@@ -316,14 +282,12 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
   const getWardCategoryIdByName = (name: string): number => {
     const category = wardCategories.find((wc) => wc.name === name);
     if (category) return category.id;
-
     const bedCat = bedCategory.find((bc) => bc.label === name);
     return bedCat ? Number(bedCat.value) : 0;
   };
 
   const updateChargeDetailsFromGrid = useCallback(() => {
     const chargeDetailsArray = [];
-
     for (const row of pricingGridData) {
       for (const [wcName, values] of Object.entries(row.wardCategories)) {
         if (values.DcValue === 0 && values.hcValue === 0 && values.chValue === 0) {
@@ -345,9 +309,48 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
         }
       }
     }
-
     setValue("ChargeDetails", chargeDetailsArray, { shouldValidate: true });
   }, [pricingGridData, setValue, getWardCategoryIdByName]);
+
+  const handleRegisterUpdateFunction = useCallback((componentName: string, updateFn: () => void) => {
+    switch (componentName) {
+      case "priceDetails":
+        updateChargeDetailsFromGridRef.current = updateFn;
+        break;
+      case "chargeAliases":
+        updateChargeAliasesFromGridRef.current = updateFn;
+        break;
+      case "doctorShares":
+        updateDoctorSharesFromGridRef.current = updateFn;
+        break;
+      case "chargeFaculties":
+        updateChargeFacultiesFromGridRef.current = updateFn;
+        break;
+      case "chargePacks":
+        updateChargePacksFromGridRef.current = updateFn;
+        break;
+    }
+  }, []);
+
+  const updateAllComponentsData = useCallback(() => {
+    if (updateChargeDetailsFromGridRef.current) {
+      updateChargeDetailsFromGridRef.current();
+    } else {
+      updateChargeDetailsFromGrid();
+    }
+    if (updateChargeAliasesFromGridRef.current) {
+      updateChargeAliasesFromGridRef.current();
+    }
+    if (updateDoctorSharesFromGridRef.current) {
+      updateDoctorSharesFromGridRef.current();
+    }
+    if (updateChargeFacultiesFromGridRef.current) {
+      updateChargeFacultiesFromGridRef.current();
+    }
+    if (updateChargePacksFromGridRef.current) {
+      updateChargePacksFromGridRef.current();
+    }
+  }, [updateChargeDetailsFromGrid]);
 
   const handleGenerateCode = useCallback(async () => {
     if (!watchedBChID || !watchedChargeTo) {
@@ -369,7 +372,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
       }
       trigger();
     } catch (error) {
-      // Error handling would go here
     } finally {
       setIsGeneratingCode(false);
     }
@@ -395,32 +397,33 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
 
   const onFormSubmit = async (data: ChargeFormData) => {
     try {
-      debugger;
-      updateChargeDetailsFromGrid();
+      updateAllComponentsData();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const latestFormData = getValues();
       const formattedData: ChargeWithAllDetailsDto = {
-        chargeID: data.chargeID || 0,
-        chargeCode: data.chargeCode,
-        chargeDesc: data.chargeDesc,
-        chargesHDesc: data.chargesHDesc || "",
-        chargeDescLang: data.chargeDescLang || "",
-        cShortName: data.cShortName || "",
-        chargeType: data.chargeType,
-        chargeTo: data.chargeTo,
-        bChID: data.bChID || 0,
-        chargeStatus: data.chargeStatus || "AC",
-        chargeBreakYN: data.chargeBreakYN || "N",
-        regServiceYN: data.regServiceYN || "N",
-        regDefaultServiceYN: data.regDefaultServiceYN || "N",
-        isBedServiceYN: data.isBedServiceYN || "N",
-        doctorShareYN: data.doctorShareYN || "N",
-        cNhsCode: data.cNhsCode || "",
-        cNhsEnglishName: data.cNhsEnglishName || "",
-        chargeCost: data.chargeCost || 0,
-        serviceGroupID: data.serviceGroupID || 0,
+        chargeID: latestFormData.chargeID || 0,
+        chargeCode: latestFormData.chargeCode,
+        chargeDesc: latestFormData.chargeDesc,
+        chargesHDesc: latestFormData.chargesHDesc || "",
+        chargeDescLang: latestFormData.chargeDescLang || "",
+        cShortName: latestFormData.cShortName || "",
+        chargeType: latestFormData.chargeType,
+        chargeTo: latestFormData.chargeTo,
+        bChID: latestFormData.bChID || 0,
+        chargeStatus: latestFormData.chargeStatus || "AC",
+        chargeBreakYN: latestFormData.chargeBreakYN || "N",
+        regServiceYN: latestFormData.regServiceYN || "N",
+        regDefaultServiceYN: latestFormData.regDefaultServiceYN || "N",
+        isBedServiceYN: latestFormData.isBedServiceYN || "N",
+        doctorShareYN: latestFormData.doctorShareYN || "N",
+        cNhsCode: latestFormData.cNhsCode || "",
+        cNhsEnglishName: latestFormData.cNhsEnglishName || "",
+        chargeCost: latestFormData.chargeCost || 0,
+        serviceGroupID: latestFormData.serviceGroupID || 0,
         ChargeDetails:
-          data.ChargeDetails?.map((detail) => ({
+          latestFormData.ChargeDetails?.map((detail) => ({
             chDetID: detail.chDetID || 0,
-            chargeID: data.chargeID || 0,
+            chargeID: latestFormData.chargeID || 0,
             pTypeID: detail.pTypeID,
             wCatID: detail.wCatID,
             DcValue: detail.DcValue || 0,
@@ -429,7 +432,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             chargeStatus: detail.chargeStatus || "AC",
             ChargePacks: (detail.ChargePacks || []).map((pack) => ({
               chPackID: pack.chPackID || 0,
-              chargeID: pack.chargeID || data.chargeID || 0,
+              chargeID: pack.chargeID || latestFormData.chargeID || 0,
               chDetID: pack.chDetID || detail.chDetID || 0,
               chargeRevise: pack.chargeRevise || "",
               chargeStatus: pack.chargeStatus || "AC",
@@ -441,31 +444,34 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             })),
           })) || [],
         DoctorShares:
-          data.DoctorShares?.map((share) => ({
+          latestFormData.DoctorShares?.map((share) => ({
             docShareID: share.docShareID || 0,
-            chargeID: data.chargeID || 0,
+            chargeID: latestFormData.chargeID || 0,
             conID: share.conID,
             doctorShare: share.doctorShare,
             hospShare: share.hospShare,
           })) || [],
         ChargeAliases:
-          data.ChargeAliases?.map((alias) => ({
+          latestFormData.ChargeAliases?.map((alias) => ({
             chAliasID: alias.chAliasID || 0,
-            chargeID: data.chargeID || 0,
+            chargeID: latestFormData.chargeID || 0,
             pTypeID: alias.pTypeID,
             chargeDesc: alias.chargeDesc,
             chargeDescLang: alias.chargeDescLang,
+            rActiveYN: alias.rActiveYN || "Y",
+            rTransferYN: alias.rTransferYN || "N",
+            rNotes: alias.rNotes || "",
           })) || [],
         ChargeFaculties:
-          data.ChargeFaculties?.map((faculty) => ({
+          latestFormData.ChargeFaculties?.map((faculty) => ({
             chFacID: faculty.chFacID || 0,
-            chargeID: data.chargeID || 0,
+            chargeID: latestFormData.chargeID || 0,
             aSubID: faculty.aSubID,
           })) || [],
         ChargePacks:
-          data.ChargePacks?.map((pack) => ({
+          latestFormData.ChargePacks?.map((pack) => ({
             chPackID: pack.chPackID || 0,
-            chargeID: data.chargeID || 0,
+            chargeID: latestFormData.chargeID || 0,
             chDetID: pack.chDetID,
             chargeRevise: pack.chargeRevise,
             chargeStatus: pack.chargeStatus || "AC",
@@ -478,7 +484,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
       };
       await onSubmit(formattedData);
     } catch (error) {
-      // Error handling would go here
+      throw error;
     }
   };
 
@@ -688,7 +694,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             </Grid>
           </Paper>
 
-          {/* Price Details Component */}
           <PriceDetailsComponent
             control={control}
             expanded={detailsExpanded}
@@ -701,7 +706,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             bedCategory={bedCategory}
           />
 
-          {/* Doctor Shares Component */}
           <DoctorSharesComponent
             control={control}
             expanded={doctorSharesExpanded}
@@ -710,13 +714,16 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             doctorShareEnabled={watchedDoctorShareYN === "Y"}
           />
 
-          {/* Charge Aliases Component */}
-          <ChargeAliasesComponent control={control} expanded={aliasesExpanded} onToggleExpand={() => setAliasesExpanded(!aliasesExpanded)} pic={pic} />
+          <ChargeAliasesComponent
+            control={control}
+            expanded={aliasesExpanded}
+            onToggleExpand={() => setAliasesExpanded(!aliasesExpanded)}
+            pic={pic}
+            onUpdateFunction={(updateFn) => handleRegisterUpdateFunction("chargeAliases", updateFn)}
+          />
 
-          {/* Associated Faculties Component */}
           <AssociatedFacultiesComponent control={control} expanded={facultiesExpanded} onToggleExpand={() => setFacultiesExpanded(!facultiesExpanded)} subModules={subModules} />
 
-          {/* Charge Packs Component */}
           <ChargePacksComponent control={control} expanded={packsExpanded} onToggleExpand={() => setPacksExpanded(!packsExpanded)} />
         </form>
       </Box>
