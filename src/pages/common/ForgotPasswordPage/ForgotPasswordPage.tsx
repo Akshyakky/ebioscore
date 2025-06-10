@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Card, CardContent, Container, Typography, styled, Button, Alert } from "@mui/material";
-import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
+import { Box, Card, CardContent, Container, Typography, styled, Button, Alert, TextField } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EmailIcon from "@mui/icons-material/Email";
 import logo from "../../../assets/images/eBios.png";
@@ -106,16 +105,7 @@ const ForgotPasswordPage: React.FC = () => {
           </Box>
 
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-            <FloatingLabelTextBox
-              ControlID="email"
-              title="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              size="small"
-              isMandatory
-              sx={{ mb: 3 }}
-            />
+            <TextField id="email" label="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} type="email" size="small" required fullWidth sx={{ mb: 3 }} />
 
             {error && (
               <StyledAlert severity="error" sx={{ mb: 2 }}>
