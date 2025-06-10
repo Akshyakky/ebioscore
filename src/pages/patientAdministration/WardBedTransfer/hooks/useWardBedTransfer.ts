@@ -5,6 +5,7 @@ import { BedTransferRequestDto } from "@/interfaces/PatientAdministration/BedTra
 import { wardBedTransferService } from "@/services/PatientAdministrationServices/WardBedTransferService/WardBedTransferService";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
 import { useAlert } from "@/providers/AlertProvider";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface TransferHistoryRecord {
   transferId: number;
@@ -306,7 +307,7 @@ export const useWardBedTransfer = (): UseWardBedTransferReturn => {
  * Useful for components that only need to validate transfers
  */
 export const useTransferValidation = () => {
-  const [loading, setLoading] = useState(false);
+  const { isLoading, setLoading } = useLoading();
   const [error, setError] = useState<string | null>(null);
   const { showAlert } = useAlert();
 
@@ -343,7 +344,7 @@ export const useTransferValidation = () => {
 
   return {
     validateTransfer,
-    loading,
+    isLoading,
     error,
   };
 };

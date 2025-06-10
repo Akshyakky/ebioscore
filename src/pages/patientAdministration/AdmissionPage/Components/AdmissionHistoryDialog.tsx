@@ -19,6 +19,7 @@ import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/Admissio
 import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
 import PeopleIcon from "@mui/icons-material/People";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface AdmissionHistoryDialogProps {
   open: boolean;
@@ -43,7 +44,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other })
 const AdmissionHistoryDialog: React.FC<AdmissionHistoryDialogProps> = ({ open, onClose, admission }) => {
   const [tabValue, setTabValue] = useState(0);
   const [admissionHistory, setAdmissionHistory] = useState<AdmissionHistoryDto[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { isLoading, setLoading } = useLoading();
 
   // Load admission history when dialog opens
   useEffect(() => {
@@ -426,7 +427,7 @@ const AdmissionHistoryDialog: React.FC<AdmissionHistoryDialogProps> = ({ open, o
         Previous Admissions
       </Typography>
 
-      {loading ? (
+      {isLoading ? (
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="150px">
           <CircularProgress size={24} />
         </Box>

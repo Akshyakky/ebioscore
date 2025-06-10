@@ -4,6 +4,7 @@ import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
 import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
 import { useAlert } from "@/providers/AlertProvider";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface PatientAdmissionStatusResponse {
   isAdmitted: boolean;
@@ -276,7 +277,7 @@ export const useAdmission = (): UseAdmissionReturn => {
  * Useful for components that only need to check patient status
  */
 export const useAdmissionStatus = () => {
-  const [loading, setLoading] = useState(false);
+  const { isLoading, setLoading } = useLoading();
   const [error, setError] = useState<string | null>(null);
   const { showAlert } = useAlert();
 
@@ -312,7 +313,7 @@ export const useAdmissionStatus = () => {
 
   return {
     checkStatus,
-    loading,
+    isLoading,
     error,
   };
 };

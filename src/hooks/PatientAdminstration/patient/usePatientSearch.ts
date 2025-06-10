@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { debounce } from "@/utils/Common/debounceUtils";
 import { PatientOption } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface UsePatientSearchProps {
   debounceTimeMs?: number;
@@ -13,7 +14,7 @@ interface UsePatientSearchResult {
   inputValue: string;
   setInputValue: (value: string) => void;
   options: PatientOption[];
-  loading: boolean;
+  isLoading: boolean;
   selectedPatient: PatientOption | null;
   setSelectedPatient: (patient: PatientOption | null) => void;
   clearSearch: () => void;
@@ -27,7 +28,7 @@ interface UsePatientSearchResult {
 export const usePatientSearch = ({ debounceTimeMs = 500, minSearchLength = 2 }: UsePatientSearchProps = {}): UsePatientSearchResult => {
   const [inputValue, setInputValue] = useState<string>("");
   const [options, setOptions] = useState<PatientOption[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const { isLoading, setLoading } = useLoading();
   const [selectedPatient, setSelectedPatient] = useState<PatientOption | null>(null);
 
   // Create a debounced function to avoid excessive API calls
@@ -85,7 +86,7 @@ export const usePatientSearch = ({ debounceTimeMs = 500, minSearchLength = 2 }: 
     inputValue,
     setInputValue,
     options,
-    loading,
+    isLoading,
     selectedPatient,
     setSelectedPatient,
     clearSearch,

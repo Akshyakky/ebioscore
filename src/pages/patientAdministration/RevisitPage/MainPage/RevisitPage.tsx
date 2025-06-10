@@ -375,7 +375,7 @@ const RevisitPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [setLoading, setValue, dropdownValues.department, dropdownValues.pic, primaryIntroducingSource, trigger]
+    [setValue, dropdownValues.department, dropdownValues.pic, primaryIntroducingSource, trigger]
   );
 
   const handleAdvancedPatientSelect = useCallback(
@@ -412,7 +412,7 @@ const RevisitPage: React.FC = () => {
         setLoading(false);
       }
     },
-    [setLoading, setValue, handlePatientSelect, showAlert]
+    [setValue, handlePatientSelect, showAlert]
   );
 
   const handlePhysicianChange = useCallback(

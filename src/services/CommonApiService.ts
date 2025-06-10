@@ -1,7 +1,88 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { format, toZonedTime } from "date-fns-tz";
-import { handleError } from "./CommonServices/HandlerError";
 import CryptoJS from "crypto-js";
+import { toast } from "react-toastify";
+
+interface ApiErrorResponse {
+  message?: string;
+  errors?: { [key: string]: string[] };
+  statusCode?: number;
+}
+
+interface ErrorDetails {
+  message: string;
+  code?: string;
+  status?: number;
+  timestamp: string;
+  path?: string;
+}
+
+const handleError = (error: unknown): void => {
+  const errorDetails: ErrorDetails = {
+    message: "An unexpected error occurred",
+    timestamp: new Date().toISOString(),
+  };
+
+  // Handle Axios errors
+  if (axios.isAxiosError(error)) {
+    const response = error.response?.data as ApiErrorResponse;
+    errorDetails.message = response?.message || error.message;
+    errorDetails.status = error.response?.status;
+    errorDetails.code = error.code;
+    errorDetails.path = error.config?.url;
+
+    // Log detailed error information
+    console.error("API Error:", {
+      message: errorDetails.message,
+      status: errorDetails.status,
+      code: errorDetails.code,
+      path: errorDetails.path,
+      response: error.response?.data,
+      config: {
+        method: error.config?.method,
+        url: error.config?.url,
+        headers: error.config?.headers,
+      },
+    });
+
+    // Show appropriate toast notification based on error type
+    if (errorDetails.status === 401) {
+      toast.error("Session expired. Please log in again.");
+      // You might want to trigger a logout or redirect here
+    } else if (errorDetails.status === 403) {
+      toast.error("You don't have permission to perform this action.");
+    } else if (errorDetails.status === 404) {
+      toast.error("The requested resource was not found.");
+    } else if (errorDetails.status === 500) {
+      toast.error("Server error. Please try again later.");
+    } else {
+      toast.error(errorDetails.message);
+    }
+  } else if (error instanceof Error) {
+    // Handle standard Error objects
+    errorDetails.message = error.message;
+    errorDetails.code = error.name;
+
+    console.error("Standard Error:", {
+      message: errorDetails.message,
+      code: errorDetails.code,
+      stack: error.stack,
+    });
+
+    toast.error(errorDetails.message);
+  } else {
+    // Handle unknown error types
+    console.error("Unknown Error:", error);
+    toast.error("An unexpected error occurred. Please try again.");
+  }
+
+  // Here you could add additional error reporting logic
+  // For example, sending to an error tracking service
+  if (process.env.NODE_ENV === "production") {
+    // Send error to monitoring service
+    // errorReportingService.captureError(errorDetails);
+  }
+};
 
 export interface ApiConfig {
   baseURL: string;

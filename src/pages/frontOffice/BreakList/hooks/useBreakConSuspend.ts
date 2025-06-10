@@ -11,26 +11,23 @@ export const useBreakConSuspend = () => {
   const { setLoading } = useLoading();
   const [suspendData, setSuspendData] = useState<BreakConSuspendData[]>([]);
 
-  const getSuspendDataByBreakAndHP = useCallback(
-    async (bLID: number, hPLID: number | null) => {
-      try {
-        setLoading(true);
-        const result = await breakConSuspendService.getAll();
-        if (result.success && result.data) {
-          const filtered = result.data.filter((item: BreakConSuspendData) => item.bLID === bLID && item.hPLID === hPLID);
-          setSuspendData(filtered);
-          return filtered;
-        }
-        return [];
-      } catch (error) {
-        console.error("Error fetching suspend data:", error);
-        return [];
-      } finally {
-        setLoading(false);
+  const getSuspendDataByBreakAndHP = useCallback(async (bLID: number, hPLID: number | null) => {
+    try {
+      setLoading(true);
+      const result = await breakConSuspendService.getAll();
+      if (result.success && result.data) {
+        const filtered = result.data.filter((item: BreakConSuspendData) => item.bLID === bLID && item.hPLID === hPLID);
+        setSuspendData(filtered);
+        return filtered;
       }
-    },
-    [setLoading]
-  );
+      return [];
+    } catch (error) {
+      console.error("Error fetching suspend data:", error);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const resumeBreak = useCallback(
     async (bCSID: number) => {
@@ -51,7 +48,7 @@ export const useBreakConSuspend = () => {
         setLoading(false);
       }
     },
-    [setLoading, hook]
+    [hook]
   );
 
   return {

@@ -420,7 +420,7 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
         setLoading(false);
       }
     },
-    [viewOnly, selectedSpecialities, switchStates, dropdownValues.speciality, saveContact, isAddMode, setLoading, onClose, initialData, contactDetails]
+    [viewOnly, selectedSpecialities, switchStates, dropdownValues.speciality, saveContact, isAddMode, onClose, initialData, contactDetails]
   );
 
   const handleReset = useCallback(() => {

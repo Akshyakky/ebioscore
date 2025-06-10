@@ -31,11 +31,11 @@ import { ContactService } from "@/services/HospitalAdministrationServices/Contac
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
 import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
 import { useUserList } from "@/pages/securityManagement/UserListPage/hooks/useUserList";
-import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
 import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
 import { toast } from "react-toastify";
+import { ContactMastShortDto } from "@/interfaces/HospitalAdministration/ContactListData";
 
 export type DropdownType =
   | "pic"
@@ -520,9 +520,11 @@ const useDropdownValues = (requiredDropdowns: DropdownType[], options: UseDropdo
       },
       usersWithoutLogin: async () => {
         const response = await getUsersWithoutCredentials();
-        return response.data.map((user: UserListDto) => ({
+        const users = Array.isArray(response.data) ? response.data : [];
+        return users.map((user: ContactMastShortDto) => ({
           value: user.conID || 0,
-          label: user.appUserName || "",
+          label: `${user.conTitle}. ${user.conName} (${user.conCat})` || "",
+          ...user,
         }));
       },
       profiles: async () => {

@@ -7,7 +7,7 @@ import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 import { ProfileDetailDto, ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
-import { UserListDto, UserListPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
+import { SaveUserPermissionsRequest, UserListDto, UserListPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
 import { Add, Book, Cancel, Delete, Edit, FileUpload, Lock, Print, Save } from "@mui/icons-material";
 import { useAlert } from "@/providers/AlertProvider";
 import { CustomUISwitch } from "@/components/Switch/CustomUISwitch";
@@ -236,44 +236,18 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
         const [permissionToSave] = clickedPermission;
         response = await profileDetailService.save(permissionToSave);
       } else {
-        if (type === "M") {
-          const userModulePermissions = clickedPermission.map((permission) => ({
-            auAccessID: permission.accessDetailID,
-            aOprID: permission.accessID,
-            appID: (details as UserListDto).appID,
-            appUName: (details as UserListDto).appUserName,
-            allowYN: permission.allowAccess,
-            profileID: 0,
-            rNotes: "",
-            transferYN: "Y",
-            rActiveYN: "Y",
-          }));
-          response = await userListServices.saveUserListPermissionsByType(userModulePermissions, type);
-        } else if (type === "R") {
-          const userReportPermissions = updatedPermissions.map((permission) => ({
-            apAccessID: permission.accessDetailID,
-            repID: permission.accessID,
-            appID: (details as UserListDto).appID,
-            allowYN: permission.allowAccess,
-            profileID: 0,
-            rNotes: "",
-            transferYN: "Y",
-            rActiveYN: "Y",
-          }));
-          response = await userListServices.saveUserListPermissionsByType(userReportPermissions, type);
-        } else if (type === "D") {
-          const userDepartmentPermissions = updatedPermissions.map((permission) => ({
-            deptUserID: permission.accessDetailID,
-            deptID: permission.accessID,
-            appID: (details as UserListDto).appID,
-            allowYN: permission.allowAccess,
-            profileID: 0,
-            rNotes: "",
-            transferYN: "Y",
-            rActiveYN: "Y",
-          }));
-          response = await userListServices.saveUserListPermissionsByType(userDepartmentPermissions, type);
-        }
+        const saveUserPermissionRequest: SaveUserPermissionsRequest = {
+          permissions: clickedPermission.map((permission) => ({
+            accessDetailID: permission.accessDetailID,
+            accessID: permission.accessID,
+            accessName: permission.accessName,
+            allowAccess: permission.allowAccess,
+          })),
+          permissionType: type,
+          appID: (details as UserListDto).appID,
+          appUserName: (details as UserListDto).appUserName,
+        };
+        response = await userListServices.saveUserListPermissionsByType(saveUserPermissionRequest);
       }
 
       if (response.success) {
@@ -309,32 +283,19 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
       }));
       response = await profileDetailService.bulkSave(updatedPermissions);
     } else {
-      if (type === "M") {
-        const updatedModulePermissions = (permissions as UserListPermissionDto[]).map((permission) => ({
-          auAccessID: permission.accessDetailID,
-          aOprID: permission.accessID,
-          appID: (details as UserListDto).appID,
-          appUName: (details as UserListDto).appUserName,
-          allowYN: selectAllChecked ? "Y" : "N",
-          profileID: 0,
-          rNotes: "",
-          transferYN: "Y",
-          rActiveYN: "Y",
-        }));
-        response = await userListServices.saveUserListPermissionsByType(updatedModulePermissions, type);
-      } else {
-        const updatedReportPermissions = (permissions as UserListPermissionDto[]).map((permission) => ({
-          apAccessID: permission.accessDetailID,
-          repID: permission.accessID,
-          appID: (details as UserListDto).appID,
-          allowYN: selectAllChecked ? "Y" : "N",
-          profileID: 0,
-          rNotes: "",
-          transferYN: "Y",
-          rActiveYN: "Y",
-        }));
-        response = await userListServices.saveUserListPermissionsByType(updatedReportPermissions, type);
-      }
+      const updatedPermissions = (permissions as UserListPermissionDto[]).map((permission) => ({
+        ...permission,
+        allowAccess: selectAllChecked ? "Y" : "N",
+        rNotes: "",
+        transferYN: "Y",
+      }));
+      const saveUserPermissionRequest: SaveUserPermissionsRequest = {
+        permissions: updatedPermissions,
+        permissionType: type,
+        appID: (details as UserListDto).appID,
+        appUserName: (details as UserListDto).appUserName,
+      };
+      response = await userListServices.saveUserListPermissionsByType(saveUserPermissionRequest);
     }
     if (response.success) {
       notifySuccess("Permission applied!");

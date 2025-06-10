@@ -174,7 +174,7 @@ const RoomListForm: React.FC<RoomListFormProps> = ({ open, onClose, initialData,
         setLoading(false);
       }
     },
-    [setLoading, setValue, showAlert]
+    [ setValue, showAlert]
   );
   useEffect(() => {
     if (rgrpID && rgrpID !== 0) {

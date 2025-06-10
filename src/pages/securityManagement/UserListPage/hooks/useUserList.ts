@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
+import { SaveUserPermissionsRequest, UserListDto } from "@/interfaces/SecurityManagement/UserListData";
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
+import { appUserService } from "@/services/SecurityManagementServices/securityManagementServices";
 
 export const useUserList = () => {
   const [userList, setUserList] = useState<UserListDto[]>([]);
@@ -11,9 +12,8 @@ export const useUserList = () => {
   const initialFetchDone = useRef(false);
 
   const fetchUsersList = useCallback(async () => {
-    if (setLoading) {
-      setLoading(true);
-    }
+    setLoading(true);
+
     setError(null);
 
     try {
@@ -28,11 +28,10 @@ export const useUserList = () => {
       console.error("Error fetching User List", err);
       setError("An unexpected error occurred while fetching User List");
     } finally {
-      if (setLoading) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, []);
+
   const getUsersWithoutCredentials = async () => {
     try {
       return await userListServices.getUsersWithoutCredentials();
@@ -51,9 +50,9 @@ export const useUserList = () => {
     }
   };
 
-  const saveUserListPermissionsByType = async (userListPermissionsDto: any[], permissionType: string) => {
+  const saveUserListPermissionsByType = async (userListPermissionsDto: SaveUserPermissionsRequest) => {
     try {
-      return await userListServices.saveUserListPermissionsByType(userListPermissionsDto, permissionType);
+      return await userListServices.saveUserListPermissionsByType(userListPermissionsDto);
     } catch (error) {
       console.error("Error saving user permissions:", error);
       throw error;
@@ -67,33 +66,30 @@ export const useUserList = () => {
     }
   }, [fetchUsersList]);
 
-  const getUserListById = useCallback(
-    async (id: number) => {
-      try {
-        setLoading(true);
-        const result = await userListServices.getById(id);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          setError(result.errorMessage || "Failed to fetch user");
-          return null;
-        }
-      } catch (err) {
-        console.error("Error fetching user:", err);
-        setError("An unexpected error occurred while fetching user");
+  const getUserListById = useCallback(async (id: number) => {
+    try {
+      setLoading(true);
+      const result = await userListServices.getById(id);
+      if (result.success && result.data) {
+        return result.data;
+      } else {
+        setError(result.errorMessage || "Failed to fetch user");
         return null;
-      } finally {
-        setLoading(false);
       }
-    },
-    [setLoading]
-  );
+    } catch (err) {
+      console.error("Error fetching user:", err);
+      setError("An unexpected error occurred while fetching user");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const saveUserList = useCallback(
     async (user: UserListDto) => {
       try {
         setLoading(true);
-        return await userListServices.save(user);
+        return await appUserService.save(user);
       } catch (err) {
         console.error("Error creating user:", err);
         setError("An unexpected error occurred while creating user");
@@ -102,7 +98,7 @@ export const useUserList = () => {
         setLoading(false);
       }
     },
-    [fetchUsersList, setLoading]
+    [fetchUsersList]
   );
 
   const deleteUserList = useCallback(
@@ -125,7 +121,7 @@ export const useUserList = () => {
         setLoading(false);
       }
     },
-    [fetchUsersList, setLoading]
+    [fetchUsersList]
   );
 
   const updateUserListStatus = useCallback(
@@ -148,7 +144,7 @@ export const useUserList = () => {
         setLoading(false);
       }
     },
-    [fetchUsersList, setLoading]
+    [fetchUsersList]
   );
 
   return {

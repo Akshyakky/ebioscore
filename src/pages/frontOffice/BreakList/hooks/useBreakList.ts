@@ -10,9 +10,7 @@ export const useBreakList = () => {
   const initialFetchDone = useRef(false);
 
   const fetchBreakList = useCallback(async () => {
-    if (setLoading) {
-      setLoading(true);
-    }
+    setLoading(true);
     setError(null);
 
     try {
@@ -30,11 +28,9 @@ export const useBreakList = () => {
       console.error("Error fetching breaks:", err);
       setError("An unexpected error occurred while fetching breaks");
     } finally {
-      if (setLoading) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
-  }, [setLoading]);
+  }, []);
 
   useEffect(() => {
     if (!initialFetchDone.current) {
@@ -43,27 +39,24 @@ export const useBreakList = () => {
     }
   }, [fetchBreakList]);
 
-  const getBreakById = useCallback(
-    async (id: number) => {
-      try {
-        setLoading(true);
-        const result = await breakService.getById(id);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          setError(result.errorMessage || "Failed to fetch break");
-          return null;
-        }
-      } catch (err) {
-        console.error("Error fetching break:", err);
-        setError("An unexpected error occurred while fetching break");
+  const getBreakById = useCallback(async (id: number) => {
+    try {
+      setLoading(true);
+      const result = await breakService.getById(id);
+      if (result.success && result.data) {
+        return result.data;
+      } else {
+        setError(result.errorMessage || "Failed to fetch break");
         return null;
-      } finally {
-        setLoading(false);
       }
-    },
-    [setLoading]
-  );
+    } catch (err) {
+      console.error("Error fetching break:", err);
+      setError("An unexpected error occurred while fetching break");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const saveBreak = useCallback(
     async (breakData: BreakListDto) => {
@@ -78,7 +71,7 @@ export const useBreakList = () => {
         setLoading(false);
       }
     },
-    [fetchBreakList, setLoading]
+    [fetchBreakList]
   );
 
   const deleteBreak = useCallback(
@@ -101,7 +94,7 @@ export const useBreakList = () => {
         setLoading(false);
       }
     },
-    [fetchBreakList, setLoading]
+    [fetchBreakList]
   );
 
   const updateBreakStatus = useCallback(
@@ -124,30 +117,27 @@ export const useBreakList = () => {
         setLoading(false);
       }
     },
-    [fetchBreakList, setLoading]
+    [fetchBreakList]
   );
 
-  const getNextCode = useCallback(
-    async (prefix: string = "BRK", padLength: number = 3) => {
-      try {
-        setLoading(true);
-        const result = await breakService.getNextCode(prefix, padLength);
-        if (result.success && result.data) {
-          return result.data;
-        } else {
-          setError(result.errorMessage || "Failed to generate next code");
-          return null;
-        }
-      } catch (err) {
-        console.error("Error generating next code:", err);
-        setError("An unexpected error occurred while generating code");
+  const getNextCode = useCallback(async (prefix: string = "BRK", padLength: number = 3) => {
+    try {
+      setLoading(true);
+      const result = await breakService.getNextCode(prefix, padLength);
+      if (result.success && result.data) {
+        return result.data;
+      } else {
+        setError(result.errorMessage || "Failed to generate next code");
         return null;
-      } finally {
-        setLoading(false);
       }
-    },
-    [setLoading]
-  );
+    } catch (err) {
+      console.error("Error generating next code:", err);
+      setError("An unexpected error occurred while generating code");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   return {
     breakList,

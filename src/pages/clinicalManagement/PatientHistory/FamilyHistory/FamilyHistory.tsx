@@ -83,7 +83,7 @@ export const FamilyHistory: React.FC<FamilyHistoryProps> = ({ pChartID, opipNo, 
         }
       }
     },
-    [historyList, onHistoryChange, fhService, setLoading]
+    [historyList, onHistoryChange, fhService]
   );
 
   const columns: Column<OPIPHistFHDto>[] = useMemo(

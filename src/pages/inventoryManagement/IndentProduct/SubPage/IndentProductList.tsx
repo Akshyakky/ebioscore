@@ -110,7 +110,7 @@ const IndentProductDetails: React.FC<Props> = ({ selectedData, selectedDeptId, s
     } finally {
       setLoading(false);
     }
-  }, [selectedDeptId, selectedDeptName, reset, setLoading, getValues]);
+  }, [selectedDeptId, selectedDeptName, reset, getValues]);
 
   const handleClearPatient = () => {
     setSelectedPatient(null);

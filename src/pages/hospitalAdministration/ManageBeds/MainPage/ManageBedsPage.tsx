@@ -29,6 +29,7 @@ import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import BedFilterDialog from "../Components/BedFilterDialog";
 import BedFormDialog from "../Components/BedFormDialog";
 import BedStatusDialog from "../Components/BedStatusDialog";
+import { useLoading } from "@/hooks/Common/useLoading";
 
 interface EnhancedWrBedDto extends WrBedDto {
   roomName?: string;
@@ -67,7 +68,7 @@ const ManageBedsPage: React.FC = () => {
   const [beds, setBeds] = useState<EnhancedWrBedDto[]>([]);
   const [rooms, setRooms] = useState<RoomListDto[]>([]);
   const [roomGroups, setRoomGroups] = useState<RoomGroupDto[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { isLoading, setLoading } = useLoading();
   const [selectedBed, setSelectedBed] = useState<EnhancedWrBedDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
