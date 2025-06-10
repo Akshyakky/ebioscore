@@ -430,7 +430,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
             </Typography>
 
             <Grid container spacing={2} alignItems="center">
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <FormField
                   name="picFilters"
                   control={control}
@@ -444,7 +444,7 @@ const PriceDetailsComponent: React.FC<PriceDetailsComponentProps> = ({ control, 
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <FormField
                   name="wardCategoryFilters"
                   control={control}
