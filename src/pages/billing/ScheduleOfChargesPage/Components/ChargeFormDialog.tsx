@@ -698,6 +698,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             </Grid>
           </Paper>
 
+          <AssociatedFacultiesComponent control={control} expanded={facultiesExpanded} onToggleExpand={() => setFacultiesExpanded(!facultiesExpanded)} subModules={subModules} />
+
           <PriceDetailsComponent
             control={control}
             expanded={detailsExpanded}
@@ -725,10 +727,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             pic={pic}
             onUpdateFunction={(updateFn) => handleRegisterUpdateFunction("chargeAliases", updateFn)}
           />
-
-          <AssociatedFacultiesComponent control={control} expanded={facultiesExpanded} onToggleExpand={() => setFacultiesExpanded(!facultiesExpanded)} subModules={subModules} />
-
-          <ChargePacksComponent control={control} expanded={packsExpanded} onToggleExpand={() => setPacksExpanded(!packsExpanded)} />
         </form>
       </Box>
     </GenericDialog>
