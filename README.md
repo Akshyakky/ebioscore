@@ -146,14 +146,7 @@ interface IGenericService<T> {
 Uses custom form components with validation:
 
 ```typescript
-<FormField
-  type="text"
-  label="Patient Name"
-  value={patientName}
-  onChange={handleChange}
-  isMandatory
-  errorMessage={errors.patientName}
-/>
+<FormField type="text" label="Patient Name" value={patientName} onChange={handleChange} isMandatory errorMessage={errors.patientName} />
 ```
 
 ## Contributing
@@ -176,7 +169,6 @@ For support, email support@ebios.com or raise an issue in the repository.
 
 - Material-UI Team
 - React Team
-- DevExtreme Team
 - All contributors who have helped shape eBios Core HMIS
 
 ## Security

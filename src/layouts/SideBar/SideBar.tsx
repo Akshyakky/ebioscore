@@ -108,22 +108,22 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
     }
   }, [location.pathname, subModules]);
 
-  useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      const drawer = document.querySelector(".MuiDrawer-root");
-      if (drawer && !drawer.contains(event.target as Node) && isSmallScreen) {
-        handleDrawerClose();
-      }
-    };
+  // useEffect(() => {
+  //   const handleOutsideClick = (event: MouseEvent) => {
+  //     const drawer = document.querySelector(".MuiDrawer-root");
+  //     if (drawer && !drawer.contains(event.target as Node) && isSmallScreen) {
+  //       handleDrawerClose();
+  //     }
+  //   };
 
-    if (open) {
-      document.addEventListener("mousedown", handleOutsideClick);
-    }
+  //   if (open) {
+  //     document.addEventListener("mousedown", handleOutsideClick);
+  //   }
 
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
-  }, [open, handleDrawerClose, isSmallScreen]);
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleOutsideClick);
+  //   };
+  // }, [open, handleDrawerClose, isSmallScreen]);
 
   useEffect(() => {
     const fetchNavigationData = async () => {
