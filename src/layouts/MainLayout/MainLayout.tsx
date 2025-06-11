@@ -1,12 +1,12 @@
-import React, { useCallback, useMemo, useState } from "react";
-import { Box, Fab, Tooltip, Paper, Typography, Button, Alert, Snackbar, Zoom } from "@mui/material";
 import { selectUser } from "@/store/features/auth/selectors";
 import { useAppSelector } from "@/store/hooks";
-import SideBar from "../SideBar/SideBar";
-import Footer from "../Footer";
-import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import { useNavigate, useLocation } from "react-router-dom";
+import { ArrowUpwardSharp } from "@mui/icons-material";
+import { Alert, Box, Button, Fab, Paper, Snackbar, Typography, Zoom } from "@mui/material";
+import React, { useCallback, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import BreadcrumbsNavigation from "../BreadcrumbsNavigations";
+import Footer from "../Footer";
+import SideBar from "../SideBar/SideBar";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -122,7 +122,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 right: (theme) => theme.spacing(2),
               }}
             >
-              <ArrowUpwardIcon />
+              <ArrowUpwardSharp />
             </Fab>
           </Zoom>
         </Box>

@@ -1,12 +1,12 @@
-import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Button, Container, Typography, Box, Paper, styled } from "@mui/material";
+import routeConfig from "@/routes/routeConfig";
+import { RootState } from "@/store";
+import { useAppSelector } from "@/store/hooks";
+import { ArrowBack } from "@mui/icons-material";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import HomeIcon from "@mui/icons-material/Home";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useAppSelector } from "@/store/hooks";
-import { RootState } from "@/store";
-import routeConfig from "@/routes/routeConfig";
+import { Box, Button, Container, Paper, styled, Typography } from "@mui/material";
+import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -61,7 +61,7 @@ const RouteNotFoundBoundary: React.FC<RouteNotFoundBoundaryProps> = ({ children 
             </Typography>
 
             <Box sx={{ display: "flex", gap: 2 }}>
-              <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={handleGoBack}>
+              <Button variant="outlined" startIcon={<ArrowBack />} onClick={handleGoBack}>
                 Go Back
               </Button>
               <Button variant="contained" startIcon={<HomeIcon />} onClick={handleGoHome} color="primary">

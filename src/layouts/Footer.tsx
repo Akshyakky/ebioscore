@@ -1,11 +1,10 @@
-import React from "react";
-import { Box, Container, Typography, Link, Divider, Grid, Stack, IconButton, Tooltip, useMediaQuery, useTheme } from "@mui/material";
+import { BugReport, BusinessOutlined } from "@mui/icons-material";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import BugReportIcon from "@mui/icons-material/BugReport";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import PrivacyTipOutlinedIcon from "@mui/icons-material/PrivacyTipOutlined";
-import BusinessOutlinedIcon from "@mui/icons-material/BusinessOutlined";
 import UpdateIcon from "@mui/icons-material/Update";
+import { Box, Container, Divider, Grid, IconButton, Link, Stack, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
+import React from "react";
 
 interface FooterLinkProps {
   href: string;
@@ -40,7 +39,7 @@ const Footer: React.FC = () => {
           <Grid size={{ xs: 12, md: 4 }}>
             <Box mb={{ xs: 2, md: 0 }}>
               <Box display="flex" alignItems="center" mb={1}>
-                <BusinessOutlinedIcon color="primary" fontSize="small" sx={{ mr: 0.5 }} />
+                <BusinessOutlined color="primary" fontSize="small" sx={{ mr: 0.5 }} />
                 <Typography variant="body2" fontWeight="medium">
                   Biosoft Health Tech Private Ltd.
                 </Typography>
@@ -72,7 +71,7 @@ const Footer: React.FC = () => {
                   <FooterLink href="/help" icon={HelpOutlineIcon}>
                     Help Center
                   </FooterLink>
-                  <FooterLink href="/support" icon={BugReportIcon}>
+                  <FooterLink href="/support" icon={BugReport}>
                     Report an Issue
                   </FooterLink>
                   <FooterLink href="/terms" icon={InfoOutlinedIcon}>

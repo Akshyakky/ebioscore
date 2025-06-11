@@ -1,8 +1,8 @@
+import { ArrowBack } from "@mui/icons-material";
+import EmailIcon from "@mui/icons-material/Email";
+import { Alert, Box, Button, Card, CardContent, Container, TextField, Typography, styled } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Card, CardContent, Container, Typography, styled, Button, Alert, TextField } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import EmailIcon from "@mui/icons-material/Email";
 import logo from "../../../assets/images/eBios.png";
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -122,7 +122,7 @@ const ForgotPasswordPage: React.FC = () => {
               {isSubmitting ? "Sending..." : "Send Reset Link"}
             </StyledButton>
 
-            <StyledButton fullWidth variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate("/login")}>
+            <StyledButton fullWidth variant="outlined" startIcon={<ArrowBack />} onClick={() => navigate("/login")}>
               Back to Login
             </StyledButton>
           </Box>

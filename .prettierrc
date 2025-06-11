@@ -13,23 +13,38 @@
   "jsxBracketSameLine": false,
   "htmlWhitespaceSensitivity": "css",
   "embeddedLanguageFormatting": "auto",
+  "useTabs": false,
+  "insertPragma": false,
+  "requirePragma": false,
+  "proseWrap": "preserve",
   "overrides": [
     {
       "files": "*.{ts,tsx}",
       "options": {
-        "parser": "typescript"
+        "parser": "typescript",
+        "printWidth": 180
       }
     },
     {
-      "files": "*.{css,scss}",
+      "files": "*.{css,scss,less}",
       "options": {
-        "singleQuote": false
+        "singleQuote": false,
+        "printWidth": 120
       }
     },
     {
-      "files": "*.{json,md}",
+      "files": "*.{json,jsonc}",
       "options": {
-        "tabWidth": 2
+        "tabWidth": 2,
+        "printWidth": 80
+      }
+    },
+    {
+      "files": "*.md",
+      "options": {
+        "tabWidth": 2,
+        "printWidth": 80,
+        "proseWrap": "always"
       }
     }
   ]
