@@ -7,7 +7,6 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { LComponentDto } from "@/interfaces/Laboratory/InvestigationListDto";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
 
 interface ComponentFormProps {
@@ -20,72 +19,65 @@ interface ComponentFormProps {
 
 const schema = z.object({
   invID: z.number(),
-  invNameCD: z.string().nonempty("Investigation name is required"),
+  invName: z.string().nonempty("Investigation name is required"),
   mGrpID: z.number().optional().nullable(),
-  mGrpNameCD: z.string().optional().nullable(),
+  mGrpName: z.string().optional().nullable(),
   stitID: z.number().optional().nullable(),
-  stitNameCD: z.string().optional().nullable(),
-  compInterpretCD: z.string().optional().nullable(),
-  compUnitCD: z.string().optional().nullable(),
+  stitName: z.string().optional().nullable(),
+  compInterpret: z.string().optional().nullable(),
+  compUnit: z.string().optional().nullable(),
   compOrder: z.number().optional().nullable(),
   lCentID: z.number().min(1, "Entry type is required"),
-  lCentNameCD: z.string(),
-  lCentTypeCD: z.string(),
+  lCentName: z.string(),
+  lCentType: z.string(),
   compDetailYN: z.string(),
-  deptID: z.number().min(1, "Department is required"),
-  deptNameCD: z.string().optional().nullable(),
   deltaValPercent: z.number().optional().nullable(),
-  compOCodeCD: z.string().optional().nullable(),
+  compoCode: z.string().optional().nullable(),
   compoID: z.number().min(1, "Component is required"),
-  compoNameCD: z.string(),
-  compoTitleCD: z.string().optional().nullable(),
-  invCodeCD: z.string().optional().nullable(),
-  cNHSCodeCD: z.string().optional().nullable(),
-  cNHSEnglishNameCD: z.string().optional().nullable(),
-  cNHSGreekNameCD: z.string().optional().nullable(),
-  cShortNameCD: z.string().optional().nullable(),
+  compoName: z.string(),
+  compoTitle: z.string().optional().nullable(),
+  invCode: z.string().optional().nullable(),
+  cNHSCode: z.string().optional().nullable(),
+  cNHSEnglishName: z.string().optional().nullable(),
+  cNHSGreekName: z.string().optional().nullable(),
+  cShortName: z.string().optional().nullable(),
   rActiveYN: z.string(),
   transferYN: z.string(),
   rNotes: z.string().optional().nullable(),
-  indexID: z.number().optional().nullable(),
 });
 
 type ComponentFormData = z.infer<typeof schema>;
 
 const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, initialData, invID }) => {
-  const { department } = useDropdownValues(["department"]);
   const [entryTypes, setEntryTypes] = React.useState<any[]>([]);
 
   const defaultValues: ComponentFormData = {
     invID: invID,
-    invNameCD: "",
+    invName: "",
     mGrpID: null,
-    mGrpNameCD: "",
+    mGrpName: "",
     stitID: null,
-    stitNameCD: "",
-    compInterpretCD: "",
-    compUnitCD: "",
+    stitName: "",
+    compInterpret: "",
+    compUnit: "",
     compOrder: 1,
     lCentID: 0,
-    lCentNameCD: "",
-    lCentTypeCD: "",
+    lCentName: "",
+    lCentType: "",
     compDetailYN: "N",
-    deptID: 0,
-    deptNameCD: "",
     deltaValPercent: null,
-    compOCodeCD: "",
-    compoID: Date.now(), // Temporary ID for new components
-    compoNameCD: "",
-    compoTitleCD: "",
-    invCodeCD: "",
-    cNHSCodeCD: "",
-    cNHSEnglishNameCD: "",
-    cNHSGreekNameCD: "",
-    cShortNameCD: "",
+    compoCode: "",
+    compoID: 0,
+    compoName: "",
+    compoTitle: "",
+    invCode: "",
+    cNHSCode: "",
+    cNHSEnglishName: "",
+    cNHSGreekName: "",
+    cShortName: "",
     rActiveYN: "Y",
     transferYN: "N",
     rNotes: "",
-    indexID: 0,
   };
 
   const {
@@ -128,12 +120,36 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
   }, []);
 
   const onSubmit = (data: ComponentFormData) => {
-    // const componentData: LComponentDto = {
-    //   ...data,
-    //   invID: invID,
-    //   indexID: data.indexID || 0,
-    // };
-    // onSave(componentData);
+    const componentData: LComponentDto = {
+      ...data,
+      invID: invID,
+      invName: data.invName || "",
+      mGrpID: data.mGrpID || 0,
+      mGrpName: data.mGrpName || "",
+      stitID: data.stitID || 0,
+      stitName: data.stitName || "",
+      compInterpret: data.compInterpret || "",
+      compUnit: data.compUnit || "",
+      compOrder: data.compOrder || 0,
+      lCentID: data.lCentID || 0,
+      lCentName: data.lCentName || "",
+      lCentType: data.lCentType || "",
+      compDetailYN: data.compDetailYN || "",
+      deltaValPercent: data.deltaValPercent || 0,
+      compoCode: data.compoCode || "",
+      compoID: data.compoID || 0,
+      compoName: data.compoName || "",
+      compoTitle: data.compoTitle || "",
+      invCode: data.invCode || "",
+      cNHSCode: data.cNHSCode || "",
+      cNHSEnglishName: data.cNHSEnglishName || "",
+      cNHSGreekName: data.cNHSGreekName || "",
+      cShortName: data.cShortName || "",
+      rActiveYN: data.rActiveYN || "Y",
+      transferYN: data.transferYN || "N",
+      rNotes: data.rNotes || "",
+    };
+    onSave(componentData);
   };
 
   return (
@@ -196,8 +212,8 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
                   onChange={(value) => {
                     const selectedType = entryTypes.find((type) => Number(type.value) === Number(value.value));
                     if (selectedType) {
-                      setValue("lCentNameCD", selectedType.label);
-                      setValue("lCentTypeCD", selectedType.type);
+                      setValue("lCentName", selectedType.label);
+                      setValue("lCentType", selectedType.type);
                     }
                   }}
                 />
@@ -205,22 +221,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
               <Grid size={{ sm: 12, md: 6 }}>
                 <FormField name="compUnitCD" control={control} label="Unit" type="text" size="small" fullWidth />
               </Grid>
-              <Grid size={{ sm: 12, md: 6 }}>
-                <FormField
-                  name="deptID"
-                  control={control}
-                  label="Department"
-                  type="select"
-                  required
-                  size="small"
-                  options={department}
-                  fullWidth
-                  onChange={(value) => {
-                    const selectedDept = department?.find((dept) => Number(dept.value) === Number(value.value));
-                    setValue("deptNameCD", selectedDept?.label || "");
-                  }}
-                />
-              </Grid>
+              <Grid size={{ sm: 12, md: 6 }}></Grid>
               <Grid size={{ sm: 12, md: 6 }}>
                 <FormField name="deltaValPercent" control={control} label="Delta Value (%)" type="number" size="small" fullWidth />
               </Grid>

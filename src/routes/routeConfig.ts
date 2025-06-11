@@ -4,7 +4,6 @@ import { AlertProvider } from "@/providers/AlertProvider";
 
 //const AppointmentPage = lazy(() => import("@/pages/frontOffice/AppointmentPage/MainPage/AppointmentPage"));
 //const LogModule = lazy(() => import("@/pages/common/LogViewerPage/LogModule"));
-//const InvestigationListPage = lazy(() => import("@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage"));
 //const PurchaseOrderPage = lazy(() => import("@/pages/inventoryManagement/PurchaseOrder/MainPage/PurchaseOrderPage"));
 //const ComponentEntryTypePage = lazy(() => import("@/pages/laboratory/ComponentEntryType/MainPage/ComponentEntryTypePage"));
 
@@ -50,6 +49,7 @@ const ProductTransaction = lazy(() => import("@/pages/inventoryManagement/Produc
 const PatientRegistrationRouter = lazy(() => import("@/pages/patientAdministration/RegistrationPage/PatientRegistrationRouter"));
 const DeptUnitAllocationPage = lazy(() => import("@/pages/hospitalAdministration/DeptUnitAllocation/MainPage/DeptUnitAllocationPage"));
 const MedicationRoutePage = lazy(() => import("@/pages/clinicalManagement/MedicationRoute/MainPage/MedicationRoutePage"));
+const InvestigationListPage = lazy(() => import("@/pages/laboratory/InvestigationListPage/MainPage/InvestigationListPage"));
 
 // Wrap components with Suspense
 const wrapWithSuspense = (Component: React.ComponentType<any>) => {
@@ -451,16 +451,16 @@ const routeConfig: RouteConfig[] = [
       category: "clinical",
     },
   },
-  // {
-  //   path: "/InvestigationListPage",
-  //   component: wrapWithSuspense(InvestigationListPage),
-  //   protected: true,
-  //   providers: [AlertProvider],
-  //   metadata: {
-  //     title: "Investigations",
-  //     category: "clinical",
-  //   },
-  // },
+  {
+    path: "/InvestigationListPage",
+    component: wrapWithSuspense(InvestigationListPage),
+    protected: true,
+    providers: [AlertProvider],
+    metadata: {
+      title: "Investigations",
+      category: "clinical",
+    },
+  },
   // {
   //   path: "/ComponentEntryTypePage",
   //   component: wrapWithSuspense(ComponentEntryTypePage),

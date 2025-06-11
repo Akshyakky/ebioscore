@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 import { ProfileDetailDto, ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { SaveUserPermissionsRequest, UserListDto, UserListPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
@@ -322,7 +321,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
     } else {
       setIsSelectAll(!selectAllChecked);
       setValue("selectAll", !selectAllChecked ? "Y" : "N");
-      notifyError("Permission not applied!");
+      showSuccessAlert("Error", "Permission not applied!");
     }
     fetchPermissions(mainId, subId);
   };

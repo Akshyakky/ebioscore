@@ -47,7 +47,6 @@ const InvestigationListPage: React.FC = () => {
   const [showStats, setShowStats] = useState(false);
 
   const { investigationList, isLoading, error, fetchInvestigationList, deleteInvestigation } = useInvestigationList();
-
   const [filters, setFilters] = useState<{
     status: string;
     department: string;
@@ -167,7 +166,6 @@ const InvestigationListPage: React.FC = () => {
         totalComponents: 0,
       };
     }
-
     const activeCount = investigationList.filter((inv) => inv.lInvMastDto?.rActiveYN === "Y").length;
     const withReportCount = investigationList.filter((inv) => inv.lInvMastDto?.invReportYN === "Y").length;
     const withSampleCount = investigationList.filter((inv) => inv.lInvMastDto?.invSampleYN === "Y").length;
@@ -382,16 +380,16 @@ const InvestigationListPage: React.FC = () => {
     },
   ];
 
-  if (error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography color="error" variant="h6">
-          Error loading investigations: {error}
-        </Typography>
-        <SmartButton text="Retry" onClick={handleRefresh} variant="contained" color="primary" />
-      </Box>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <Box sx={{ p: 2 }}>
+  //       <Typography color="error" variant="h6">
+  //         Error loading investigations: {error}
+  //       </Typography>
+  //       <SmartButton text="Retry" onClick={handleRefresh} variant="contained" color="primary" />
+  //     </Box>
+  //   );
+  // }
 
   return (
     <Box sx={{ p: 2 }}>

@@ -32,7 +32,6 @@ import { useAlert } from "@/providers/AlertProvider";
 import { InvestigationListDto, LInvMastDto, LComponentDto } from "@/interfaces/Laboratory/InvestigationListDto";
 import { useInvestigationList } from "../hooks/useInvestigationList";
 import ComponentForm from "./ComponentForm";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 
 interface InvestigationFormProps {
   open: boolean;
@@ -50,8 +49,6 @@ const schema = z.object({
   invTitle: z.string().optional(),
   invSTitle: z.string().optional(),
   invPrintOrder: z.number().min(0),
-  deptID: z.number().min(1, "Department is required"),
-  deptName: z.string().optional(),
   bchID: z.number().min(0),
   invCode: z.string().optional(),
   invType: z.string().optional(),
@@ -72,7 +69,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
   const { setLoading } = useLoading();
   const { showAlert } = useAlert();
   const { saveInvestigation, getNextCode } = useInvestigationList();
-  const { department } = useDropdownValues(["department"]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -95,8 +91,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     invTitle: "",
     invSTitle: "",
     invPrintOrder: 0,
-    deptID: 0,
-    deptName: "",
     bchID: 0,
     invCode: "",
     invType: "",
@@ -208,8 +202,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
         invTitle: data.invTitle,
         invSTitle: data.invSTitle,
         invPrintOrder: data.invPrintOrder,
-        deptID: data.deptID,
-        deptName: data.deptName,
         bchID: data.bchID,
         invCode: data.invCode,
         invType: data.invType,
@@ -353,23 +345,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                     </Grid>
                     <Grid size={{ sm: 12, md: 6 }}>
                       <FormField name="invShortName" control={control} label="Short Name" type="text" disabled={viewOnly} size="small" fullWidth />
-                    </Grid>
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField
-                        name="deptID"
-                        control={control}
-                        label="Department"
-                        type="select"
-                        required
-                        disabled={viewOnly}
-                        size="small"
-                        options={department}
-                        fullWidth
-                        onChange={(value) => {
-                          const selectedDept = department?.find((dept) => Number(dept.value) === Number(value.value));
-                          setValue("deptName", selectedDept?.label || "");
-                        }}
-                      />
                     </Grid>
                     <Grid size={{ sm: 12, md: 4 }}>
                       <FormField name="invPrintOrder" control={control} label="Print Order" type="number" disabled={viewOnly} size="small" fullWidth />

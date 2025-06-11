@@ -16,11 +16,7 @@ export const useInvestigationList = () => {
     try {
       const result = await investigationlistService.getAll();
       if (result.success && result.data) {
-        const validatedData = result.data.map((item: any) => ({
-          lInvMastDto: item.lInvMastDto || item,
-          lComponentsDto: Array.isArray(item.lComponentsDto) ? item.lComponentsDto : [],
-        }));
-        setInvestigationList(validatedData);
+        setInvestigationList(result.data);
       } else {
         setError(result.errorMessage || "Failed to fetch investigations");
       }
