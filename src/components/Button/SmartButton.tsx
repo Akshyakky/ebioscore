@@ -1,7 +1,7 @@
 // src/components/Button/SmartButton.tsx
-import React, { useState } from "react";
-import { CircularProgress, Tooltip, Box } from "@mui/material";
 import { SvgIconComponent } from "@mui/icons-material";
+import { Box, CircularProgress, Tooltip } from "@mui/material";
+import React, { useState } from "react";
 import CustomButton, { CustomButtonProps } from "./CustomButton";
 
 interface SmartButtonProps extends Omit<CustomButtonProps, "icon"> {
@@ -109,7 +109,7 @@ const SmartButton: React.FC<SmartButtonProps> = ({
   const getCurrentColor = () => {
     if (state === "success") return "success" as const;
     if (state === "error") return "error" as const;
-    return rest.color;
+    return rest.color || "primary";
   };
 
   const buttonContent = (

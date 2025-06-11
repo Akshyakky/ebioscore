@@ -1,7 +1,7 @@
-import React, { forwardRef, useMemo } from "react";
-import { FormControl, InputLabel, Select, MenuItem, FormHelperText, IconButton, InputAdornment, CircularProgress } from "@mui/material";
-import { SelectChangeEvent } from "@mui/material/Select";
 import ClearIcon from "@mui/icons-material/Clear";
+import { CircularProgress, FormControl, FormHelperText, IconButton, InputAdornment, InputLabel, MenuItem, Select } from "@mui/material";
+import { SelectChangeEvent } from "@mui/material/Select";
+import React, { forwardRef, useMemo } from "react";
 
 interface DropdownSelectProps {
   label: string;
@@ -41,7 +41,7 @@ const DropdownSelect = forwardRef<HTMLSelectElement, DropdownSelectProps>(
     }
 
     return (
-      <FormControl variant="outlined" size={size} fullWidth className={className} error={hasError} margin="normal">
+      <FormControl variant="outlined" size={size} fullWidth className={className || ""} error={hasError} margin="normal">
         <InputLabel id={`ddl-label-${name}`} htmlFor={`ddl-${name}`}>
           {label}
         </InputLabel>

@@ -1,7 +1,7 @@
 // src/hooks/Common/useLoading.ts
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectIsLoading } from "@/store/features/ui/loadingSelectors";
 import { setLoading } from "@/store/features/ui/loadingSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 export const useLoading = () => {
   const dispatch = useAppDispatch();

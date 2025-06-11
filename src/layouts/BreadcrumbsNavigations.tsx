@@ -1,10 +1,10 @@
-import React, { useMemo } from "react";
-import { Breadcrumbs, Link as MuiLink, Typography, Box, Chip, Tooltip } from "@mui/material";
-import { useLocation, Link as RouterLink } from "react-router-dom";
+import routeConfig from "@/routes/routeConfig";
 import HomeIcon from "@mui/icons-material/Home";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import routeConfig from "@/routes/routeConfig";
+import { Box, Breadcrumbs, Chip, Link as MuiLink, Tooltip } from "@mui/material";
 import { LinkProps as MuiLinkProps } from "@mui/material/Link";
+import React, { useMemo } from "react";
+import { Link as RouterLink, useLocation } from "react-router-dom";
 
 // Custom link component that combines React Router and MUI Link
 interface BreadcrumbLinkProps {

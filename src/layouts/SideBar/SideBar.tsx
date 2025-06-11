@@ -1,39 +1,38 @@
-import React, { useState, useEffect, useCallback, memo } from "react";
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import {
-  Drawer,
-  List,
-  ListItemIcon,
-  ListItemText,
-  IconButton,
-  Typography,
-  TextField,
-  Box,
-  Divider,
-  Collapse,
-  AppBar,
-  Toolbar,
-  CssBaseline,
-  InputAdornment,
-  ListItemButton,
-  Tooltip,
-  useMediaQuery,
-  Fade,
-  useTheme,
-} from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
+import { useTheme as useCustomTheme } from "@/providers/ThemeProvider";
+import moduleService, { ModuleDto, SubModuleDto } from "@/services/NotGenericPaternServices/ModuleService";
+import { Icon } from "@iconify/react";
 import CloseIcon from "@mui/icons-material/Close";
-import SearchIcon from "@mui/icons-material/Search";
 import HomeIcon from "@mui/icons-material/Home";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
-import { Icon } from "@iconify/react";
+import MenuIcon from "@mui/icons-material/Menu";
+import SearchIcon from "@mui/icons-material/Search";
+import {
+  AppBar,
+  Box,
+  Collapse,
+  CssBaseline,
+  Divider,
+  Drawer,
+  Fade,
+  IconButton,
+  InputAdornment,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  TextField,
+  Toolbar,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
+import React, { memo, useCallback, useEffect, useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { MaterialUISwitch } from "../../components/Switch/MaterialUISwitch";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import ProfileMenu from "./ProfileMenu";
-import { MaterialUISwitch } from "../../components/Switch/MaterialUISwitch";
-import moduleService, { ModuleDto, SubModuleDto } from "@/services/NotGenericPaternServices/ModuleService";
-import { useTheme as useCustomTheme } from "@/providers/ThemeProvider";
-import { useAlert } from "@/providers/AlertProvider";
 
 interface SideBarProps {
   userID: number | null;

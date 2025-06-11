@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
-import CircularProgress from "@mui/material/CircularProgress";
-import { Box } from "@mui/material";
-import styles from "./GlobalSpinner.module.css";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { Box } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+import React, { useEffect, useState } from "react";
 
 interface GlobalSpinnerProps {
   delay?: number;
@@ -29,7 +28,7 @@ const GlobalSpinner: React.FC<GlobalSpinnerProps> = ({ delay = 300, color = "pri
   if (!shouldRender) return null;
 
   return (
-    <Box className={styles.spinnerContainer} role="alert" aria-live="assertive">
+    <Box role="alert" aria-live="assertive">
       <CircularProgress color={color} size={size} />
     </Box>
   );

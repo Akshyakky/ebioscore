@@ -1,18 +1,17 @@
-import React, { useState } from "react";
-import { Menu, MenuItem, Divider, Box, Typography, Avatar, ListItemIcon, Tooltip, Button } from "@mui/material";
-import SettingsIcon from "@mui/icons-material/Settings";
-import LogoutIcon from "@mui/icons-material/Logout";
-import HomeIcon from "@mui/icons-material/Home";
-import PersonIcon from "@mui/icons-material/Person";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { selectUser } from "@/store/features/auth/selectors";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import AuthService from "@/services/AuthService/AuthService";
 import { logout } from "@/store/features/auth/authSlice";
-import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import { useAlert } from "@/providers/AlertProvider";
+import { selectUser } from "@/store/features/auth/selectors";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import HomeIcon from "@mui/icons-material/Home";
+import LogoutIcon from "@mui/icons-material/Logout";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import PersonIcon from "@mui/icons-material/Person";
+import SettingsIcon from "@mui/icons-material/Settings";
+import { Avatar, Box, Button, Divider, ListItemIcon, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const ProfileMenu: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -27,8 +26,8 @@ const ProfileMenu: React.FC = () => {
   const getInitials = (name: string) => {
     if (!name) return "U";
     const nameParts = name.split(" ");
-    if (nameParts.length > 1) {
-      return `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase();
+    if (nameParts.length > 1 && nameParts[0] && nameParts[nameParts.length - 1]) {
+      return `${nameParts[0]![0]}${nameParts[nameParts.length - 1]![0]}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
   };

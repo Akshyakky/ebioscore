@@ -1,6 +1,6 @@
-import React from "react";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { CircularProgress } from "@mui/material";
+import React from "react";
 
 interface LoaderProps {
   type?: "skeleton" | "spinner";

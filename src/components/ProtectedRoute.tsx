@@ -1,10 +1,10 @@
-import React, { useEffect, useCallback } from "react";
-import { Navigate, useLocation } from "react-router-dom";
 import useCheckTokenExpiry from "@/hooks/useCheckTokenExpiry";
 import AuthService from "@/services/AuthService/AuthService";
 import { logout } from "@/store/features/auth/authSlice";
 import { selectIsAuthenticated, selectUser } from "@/store/features/auth/selectors";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import React, { useCallback, useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

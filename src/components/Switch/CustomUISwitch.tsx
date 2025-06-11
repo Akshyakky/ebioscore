@@ -1,5 +1,5 @@
-import Switch, { SwitchProps } from "@mui/material/Switch";
 import { styled } from "@mui/material";
+import Switch, { SwitchProps } from "@mui/material/Switch";
 
 interface CustomUISwitchProps extends SwitchProps {
   onSVGPath?: string;

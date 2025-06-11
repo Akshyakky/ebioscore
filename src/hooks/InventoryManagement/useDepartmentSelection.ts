@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
 import { useAlert } from "@/providers/AlertProvider";
+import { useCallback, useState } from "react";
 
 interface DepartmentSelectionState {
   deptId: number;
