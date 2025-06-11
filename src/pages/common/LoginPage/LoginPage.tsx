@@ -342,31 +342,31 @@ const LoginPage: React.FC = () => {
   }, []);
 
   // Keyboard navigation - no state dependencies
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Tab") {
-        const focusableElements = [companySelectRef.current, usernameInputRef.current, passwordInputRef.current, submitButtonRef.current].filter(Boolean);
+  // useEffect(() => {
+  //   const handleKeyDown = (e: KeyboardEvent) => {
+  //     if (e.key === "Tab") {
+  //       const focusableElements = [companySelectRef.current, usernameInputRef.current, passwordInputRef.current, submitButtonRef.current].filter(Boolean);
 
-        const activeElement = document.activeElement as HTMLElement | null;
-        if (!activeElement) return;
+  //       const activeElement = document.activeElement as HTMLElement | null;
+  //       if (!activeElement) return;
 
-        const currentIndex = focusableElements.findIndex((el) => el instanceof HTMLElement && el.isEqualNode(activeElement));
+  //       const currentIndex = focusableElements.findIndex((el) => el instanceof HTMLElement && el.isEqualNode(activeElement));
 
-        if (currentIndex > -1) {
-          const nextIndex = e.shiftKey ? (currentIndex - 1 + focusableElements.length) % focusableElements.length : (currentIndex + 1) % focusableElements.length;
+  //       if (currentIndex > -1) {
+  //         const nextIndex = e.shiftKey ? (currentIndex - 1 + focusableElements.length) % focusableElements.length : (currentIndex + 1) % focusableElements.length;
 
-          const nextElement = focusableElements[nextIndex];
-          if (nextElement instanceof HTMLElement) {
-            nextElement.focus();
-            e.preventDefault();
-          }
-        }
-      }
-    };
+  //         const nextElement = focusableElements[nextIndex];
+  //         if (nextElement instanceof HTMLElement) {
+  //           nextElement.focus();
+  //           e.preventDefault();
+  //         }
+  //       }
+  //     }
+  //   };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  //   document.addEventListener("keydown", handleKeyDown);
+  //   return () => document.removeEventListener("keydown", handleKeyDown);
+  // }, []);
 
   // Check rate limit - no state updates inside
   const checkRateLimit = useCallback(() => {
