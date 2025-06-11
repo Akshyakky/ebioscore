@@ -1,37 +1,37 @@
-import React, { useState, ReactNode, forwardRef, useMemo } from "react";
-import { Controller, Control, FieldValues, Path } from "react-hook-form";
+import ClearIcon from "@mui/icons-material/Clear";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import {
-  TextField,
+  Autocomplete,
+  Box,
   Checkbox,
+  Chip,
+  CircularProgress,
   FormControl,
   FormControlLabel,
+  FormGroup,
   FormHelperText,
   FormLabel,
+  IconButton,
   InputAdornment,
+  InputLabel,
   MenuItem,
   Radio,
   RadioGroup,
   Select,
-  Autocomplete,
-  Box,
-  IconButton,
-  Chip,
-  InputLabel,
-  FormGroup,
   SelectChangeEvent,
-  TextFieldProps,
-  CircularProgress,
   Switch,
+  TextField,
+  TextFieldProps,
 } from "@mui/material";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import ClearIcon from "@mui/icons-material/Clear";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs, { Dayjs } from "dayjs";
+import React, { ReactNode, forwardRef, useMemo, useState } from "react";
+import { Control, Controller, FieldValues, Path } from "react-hook-form";
 
 // Define the date and time format constants
 const DATE_FORMAT = "DD/MM/YYYY";
@@ -646,7 +646,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
                 required={required}
                 size={size}
                 InputLabelProps={{
-                  shrink: field.value ? true : undefined,
+                  shrink: field.value ? true : false,
                 }}
               />
             )}
@@ -906,7 +906,7 @@ const FormField = forwardRef<any, FormFieldProps<any>>(
                     field.onBlur(e);
                     externalOnBlur?.(e);
                   }}
-                  color={switchColor}
+                  color={switchColor ?? "primary"}
                   size={size}
                   disabled={disabled}
                   inputProps={{

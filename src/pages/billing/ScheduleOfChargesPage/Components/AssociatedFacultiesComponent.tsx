@@ -1,8 +1,8 @@
-import React, { useEffect } from "react";
-import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Chip } from "@mui/material";
-import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
-import { useFieldArray, Control, useWatch } from "react-hook-form";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import { ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Chip, Typography } from "@mui/material";
+import React, { useEffect } from "react";
+import { Control, useFieldArray, useWatch } from "react-hook-form";
 
 interface AssociatedFacultiesComponentProps {
   control: Control<any>;
@@ -26,7 +26,7 @@ const AssociatedFacultiesComponent: React.FC<AssociatedFacultiesComponentProps> 
   useEffect(() => {
     if (selectedFaculties && selectedFaculties.length > 0) {
       facultiesArray.replace(
-        selectedFaculties.map((facultyId) => ({
+        selectedFaculties.map((facultyId: number) => ({
           chFacID: 0,
           chargeID: 0,
           aSubID: facultyId,

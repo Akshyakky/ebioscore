@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Box, Chip, Stack, ToggleButton, ToggleButtonGroup, Tooltip } from "@mui/material";
-import { ViewCompact as CompactIcon, ViewStream as MediumIcon, ViewModule as LargeIcon } from "@mui/icons-material";
+import { ViewCompact as CompactIcon, ViewModule as LargeIcon, ViewStream as MediumIcon } from "@mui/icons-material";
+import { Box, SxProps, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Theme, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
+import React, { useMemo, useState } from "react";
 
 export interface ColumnFilter {
   type: "text" | "number" | "date" | "select";
@@ -60,7 +60,7 @@ export interface CustomGridProps<T> {
   emptyStateMessage?: string;
   showColumnCustomization?: boolean;
   initialSortBy?: { field: keyof T; direction: "asc" | "desc" };
-  gridStyle?: React.CSSProperties;
+  gridStyle?: SxProps<Theme>;
   customFilter?: (item: T, searchValue: string) => boolean;
   density?: GridDensity;
   onDensityChange?: (density: GridDensity) => void;
@@ -235,7 +235,7 @@ const CustomGrid = <T extends Record<string, any>>({
       )}
 
       {/* Table Container */}
-      <TableContainer sx={{ maxHeight, minHeight, ...gridStyle }}>
+      <TableContainer sx={{ maxHeight, minHeight, ...(gridStyle || {}) }}>
         <Table stickyHeader size={currentDensityConfig.size}>
           <TableHead>
             <TableRow>
@@ -288,7 +288,7 @@ const CustomGrid = <T extends Record<string, any>>({
                 <TableRow
                   key={rowKeyField ? String(item[rowKeyField]) : rowIndex}
                   onClick={() => onRowClick && onRowClick(item)}
-                  style={customRowStyle ? customRowStyle(item) : undefined}
+                  style={customRowStyle ? customRowStyle(item) : {}}
                   hover={!!onRowClick}
                   sx={{
                     ...(onRowClick ? { cursor: "pointer" } : {}),

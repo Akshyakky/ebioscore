@@ -1,6 +1,6 @@
+import routeConfig from "@/routes/routeConfig";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import routeConfig from "@/routes/routeConfig";
 
 export const usePageTitle = () => {
   const [pageTitle, setPageTitle] = useState("eBios - Healthcare Solution");

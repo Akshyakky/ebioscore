@@ -1,9 +1,9 @@
 // src/hooks/patient/PatientAdministration/usePatientSearch.ts
-import { useState, useCallback, useEffect } from "react";
+import { useLoading } from "@/hooks/Common/useLoading";
+import { PatientOption } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
 import { debounce } from "@/utils/Common/debounceUtils";
-import { PatientOption } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
-import { useLoading } from "@/hooks/Common/useLoading";
+import { useCallback, useEffect, useState } from "react";
 
 interface UsePatientSearchProps {
   debounceTimeMs?: number;

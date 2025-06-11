@@ -1,19 +1,13 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { RootState } from "@/store";
-import { useAppSelector } from "@/store/hooks";
-import { useAlert } from "@/providers/AlertProvider";
-import { DropdownOption } from "@/interfaces/Common/DropdownOption";
-import { BillingService } from "@/services/NotGenericPaternServices/BillingService";
-import { AppModifyListService } from "@/services/NotGenericPaternServices/AppModifyListService";
-import { departmentListService } from "@/services/CommonServices/CommonGenericServices";
+import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
 import { DepartmentDto } from "@/interfaces/Billing/DepartmentDto";
-import { ContactMastService } from "@/services/NotGenericPaternServices/ContactMastService";
-import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
-import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
-import { deptUnitListService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
-import { roomGroupService, roomListService, wardCategoryService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
+import { ContactMastShortDto } from "@/interfaces/HospitalAdministration/ContactListData";
+import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
 import { WardCategoryDto } from "@/interfaces/HospitalAdministration/WardCategoryDto";
-import { productGroupService, productSubGroupService, productTaxService, productUnitService } from "@/services/InventoryManagementService/inventoryManagementService";
+import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { useAlert } from "@/providers/AlertProvider";
+import { serviceGroupService, serviceTypeService } from "@/services/BillingServices/BillingGenericService";
 import {
   consultantRoleService,
   medicationDosageService,
@@ -22,19 +16,24 @@ import {
   medicationGenericService,
   medicationInstructionService,
 } from "@/services/ClinicalManagementServices/clinicalManagementService";
-import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
-import { componentEntryTypeService, templategroupService } from "@/services/Laboratory/LaboratoryService";
-import { appSubModuleService, appUserModuleService, profileMastService } from "@/services/SecurityManagementServices/securityManagementServices";
-import { serviceGroupService, serviceTypeService } from "@/services/BillingServices/BillingGenericService";
-import { ServiceTypeDto } from "@/interfaces/Billing/BChargeDetails";
-import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
+import { departmentListService } from "@/services/CommonServices/CommonGenericServices";
+import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
 import { resourceListService } from "@/services/FrontOfficeServices/FrontOfiiceApiServices";
-import { ResourceListData } from "@/interfaces/FrontOffice/ResourceListData";
-import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
+import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
+import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
+import { deptUnitListService, roomGroupService, roomListService, wardCategoryService, wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
+import { productGroupService, productSubGroupService, productTaxService, productUnitService } from "@/services/InventoryManagementService/inventoryManagementService";
+import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
+import { AppModifyListService } from "@/services/NotGenericPaternServices/AppModifyListService";
 import { AppointmentService } from "@/services/NotGenericPaternServices/AppointmentService";
-import { DeptUnitListDto } from "@/interfaces/HospitalAdministration/DeptUnitListDto";
-import { ContactMastShortDto } from "@/interfaces/HospitalAdministration/ContactListData";
+import { BillingService } from "@/services/NotGenericPaternServices/BillingService";
+import { ContactMastService } from "@/services/NotGenericPaternServices/ContactMastService";
+import { dischargeStatusService } from "@/services/PatientAdministrationServices/patientAdministrationService";
+import { appSubModuleService, appUserModuleService, profileMastService } from "@/services/SecurityManagementServices/securityManagementServices";
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
+import { RootState } from "@/store";
+import { useAppSelector } from "@/store/hooks";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export type DropdownType =
   | "pic"
