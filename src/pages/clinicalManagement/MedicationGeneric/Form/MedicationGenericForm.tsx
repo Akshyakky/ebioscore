@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel, Refresh } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { MedicationGenericDto } from "@/interfaces/ClinicalManagement/MedicationGenericDto";
 import { useAlert } from "@/providers/AlertProvider";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Cancel, Refresh, Save } from "@mui/icons-material";
+import { Alert, Box, Card, CardContent, CircularProgress, Divider, Grid, InputAdornment, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { useMedicationGeneric } from "../hooks/useMedicationGeneric";
 
 interface MedicationGenericFormProps {
@@ -91,7 +91,7 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
     if (initialData) {
       reset({
         mGenID: initialData.mGenID,
-        mGenCode: initialData.mGenCode,
+        mGenCode: initialData.mGenCode || "",
         mGenName: initialData.mGenName,
         modifyYN: initialData.modifyYN || "Y",
         defaultYN: initialData.defaultYN || "N",
@@ -151,7 +151,7 @@ const MedicationGenericForm: React.FC<MedicationGenericFormProps> = ({ open, onC
       initialData
         ? {
             mGenID: initialData.mGenID,
-            mGenCode: initialData.mGenCode,
+            mGenCode: initialData.mGenCode || "",
             mGenName: initialData.mGenName,
             modifyYN: initialData.modifyYN || "Y",
             defaultYN: initialData.defaultYN || "N",

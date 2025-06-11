@@ -1,27 +1,26 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip, Card, CardContent, Avatar } from "@mui/material";
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-  Close as CloseIcon,
-  LocalHospital as ProcedureIcon,
-  CheckCircle as ActiveIcon,
-  Cancel as InactiveIcon,
-  Business as HospitalIcon,
-  Person as DoctorIcon,
-  Transform as TransferIcon,
-} from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { OTProcedureListDto } from "@/interfaces/ClinicalManagement/ProcedureListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
+import {
+  CheckCircle as ActiveIcon,
+  Add as AddIcon,
+  Close as CloseIcon,
+  Delete as DeleteIcon,
+  Person as DoctorIcon,
+  Edit as EditIcon,
+  Business as HospitalIcon,
+  Cancel as InactiveIcon,
+  LocalHospital as ProcedureIcon,
+  Refresh as RefreshIcon,
+  Search as SearchIcon,
+  Visibility as VisibilityIcon,
+} from "@mui/icons-material";
+import { Avatar, Box, Card, CardContent, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import ProcedureForm from "../Form/ProcedureListForm";
 import { useProcedureList } from "../hooks/useProcedureListForm";
 

@@ -4,6 +4,7 @@ import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { IcdDetailDto } from "@/interfaces/ClinicalManagement/IcdDetailDto";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import { useAlert } from "@/providers/AlertProvider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Cancel, Refresh, Save } from "@mui/icons-material";
@@ -187,6 +188,8 @@ const DiagnosisListForm: React.FC<DiagnosisListFormProps> = ({ open, onClose, in
 
   const dialogTitle = viewOnly ? "View Diagnosis Details" : isAddMode ? "Create New Diagnosis" : `Edit Diagnosis - ${initialData?.icddName}`;
 
+  const icdMasterOptions: DropdownOption[] = [];
+
   const dialogActions = viewOnly ? (
     <SmartButton text="Close" onClick={() => onClose()} variant="contained" color="primary" />
   ) : (
@@ -215,8 +218,6 @@ const DiagnosisListForm: React.FC<DiagnosisListFormProps> = ({ open, onClose, in
       generateDiagnosisCode();
     }
   };
-
-  const icdMasterOptions = [];
 
   return (
     <>

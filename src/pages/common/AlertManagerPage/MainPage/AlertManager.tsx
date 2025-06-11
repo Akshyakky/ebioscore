@@ -1,21 +1,21 @@
 // src/pages/common/AlertManagerPage/MainPage/AlertManager.tsx
-import React, { useState, useEffect } from "react";
-import { Box, Typography, Paper, Grid } from "@mui/material";
-import { Add as AddIcon, Refresh as RefreshIcon, Clear as ClearIcon } from "@mui/icons-material";
+import CustomButton from "@/components/Button/CustomButton";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { AlertDto } from "@/interfaces/Common/AlertManager";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { alertService, baseAlertService } from "@/services/CommonServices/CommonModelServices";
-import AlertGrid from "../SubPage/AlertGrid";
-import AlertForm from "../SubPage/AlertForm";
-import CustomButton from "@/components/Button/CustomButton";
-import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
-import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
+import { PatientDemoGraph } from "@/interfaces/PatientAdministration/patientDemoGraph";
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientDemographicsForm } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographicsForm/PatientDemographicsForm";
-import { PatientDemoGraph } from "@/interfaces/PatientAdministration/patientDemoGraph";
+import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
 import { useAlert } from "@/providers/AlertProvider";
+import { alertService, baseAlertService } from "@/services/CommonServices/CommonModelServices";
+import { Add as AddIcon, Clear as ClearIcon, Refresh as RefreshIcon } from "@mui/icons-material";
+import { Box, Grid, Paper, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import AlertForm from "../SubPage/AlertForm";
+import AlertGrid from "../SubPage/AlertGrid";
 
 const AlertManager: React.FC = () => {
   const { setLoading } = useLoading();
@@ -58,7 +58,7 @@ const AlertManager: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching alerts:", error);
-      showErrorAlert("An error occurred while fetching alerts", error.message || "An error occurred while fetching alerts");
+      showErrorAlert("An error occurred while fetching alerts", error instanceof Error ? error.message : "An error occurred while fetching alerts");
     } finally {
       setLoading(false);
     }
@@ -138,7 +138,7 @@ const AlertManager: React.FC = () => {
       }
     } catch (error) {
       console.error("Error deleting alert:", error);
-      showErrorAlert("Error", error.message || "Failed to delete alert");
+      showErrorAlert("Error", error instanceof Error ? error.message : "Failed to delete alert");
     } finally {
       setLoading(false);
     }
@@ -249,7 +249,7 @@ const AlertManager: React.FC = () => {
           <Grid size={{ xs: 12, md: 8 }}>
             {/* Use the reusable PatientDemographics component */}
             <PatientDemographics
-              pChartID={selectedPatient?.pChartID}
+              pChartID={selectedPatient?.pChartID || null}
               showEditButton={!!selectedPatient}
               showRefreshButton={!!selectedPatient}
               onEditClick={handleEditDemographics}

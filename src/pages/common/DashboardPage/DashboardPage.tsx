@@ -1,80 +1,61 @@
-import React, { useState, useEffect, useMemo } from "react";
+import CustomButton from "@/components/Button/CustomButton";
+import { useAlert } from "@/providers/AlertProvider";
+import { DashBoardService } from "@/services/NotGenericPaternServices/DashBoardService";
 import {
+  LocalHospital as AdmissionIcon,
+  TrendingUp as AdvanceIcon,
+  Group as AllUsersIcon,
+  Analytics as AnalyticsIcon,
+  BarChart as BarChartIcon,
+  Payment as CollectionIcon,
+  Receipt as CreditNoteIcon,
+  Dashboard as DashboardIcon,
+  DateRange as DateIcon,
+  ExitToApp as DischargeIcon,
+  ErrorOutline as ErrorIcon,
+  AttachMoney as IncomeIcon,
+  ShowChart as LineChartIcon,
+  PieChart as PieChartIcon,
+  Refresh as RefreshIcon,
+  Undo as RefundIcon,
+  People as RegistrationIcon,
+  Refresh as RevisitIcon,
+  TransferWithinAStation as TransferIcon,
+  SwapHoriz as TransferNoteIcon,
+  AccountBalance as TransferPayIcon,
+  TrendingUp as TrendingUpIcon,
+  Person as UserIcon,
+} from "@mui/icons-material";
+import {
+  Alert,
+  Avatar,
   Box,
   Card,
   CardContent,
-  Typography,
-  Grid,
-  CircularProgress,
-  Alert,
-  Chip,
-  ToggleButton,
-  ToggleButtonGroup,
-  useTheme,
-  useMediaQuery,
-  Divider,
-  Avatar,
-  IconButton,
-  Tooltip,
-  Paper,
-  Stack,
-  Skeleton,
   CardHeader,
+  Chip,
+  CircularProgress,
+  Container,
+  Grid,
+  IconButton,
+  Paper,
+  Skeleton,
   Tab,
   Tabs,
-  Container,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import {
-  People as RegistrationIcon,
-  Refresh as RevisitIcon,
-  LocalHospital as AdmissionIcon,
-  TransferWithinAStation as TransferIcon,
-  ExitToApp as DischargeIcon,
-  AttachMoney as IncomeIcon,
-  Payment as CollectionIcon,
-  Undo as RefundIcon,
-  Receipt as CreditNoteIcon,
-  SwapHoriz as TransferNoteIcon,
-  AccountBalance as TransferPayIcon,
-  TrendingUp as AdvanceIcon,
-  DateRange as DateIcon,
-  Refresh as RefreshIcon,
-  Person as UserIcon,
-  Group as AllUsersIcon,
-  Dashboard as DashboardIcon,
-  TrendingUp as TrendingUpIcon,
-  ErrorOutline as ErrorIcon,
-  BarChart as BarChartIcon,
-  PieChart as PieChartIcon,
-  ShowChart as LineChartIcon,
-  Analytics as AnalyticsIcon,
-} from "@mui/icons-material";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs, { Dayjs } from "dayjs";
 import { useQuery } from "@tanstack/react-query";
-import { DashBoardService } from "@/services/NotGenericPaternServices/DashBoardService";
-import { useAlert } from "@/providers/AlertProvider";
-import CustomButton from "@/components/Button/CustomButton";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  ComposedChart,
-  Area,
-  AreaChart,
-} from "recharts";
+import dayjs, { Dayjs } from "dayjs";
+import React, { useMemo, useState } from "react";
+import { Area, AreaChart, Bar, CartesianGrid, Cell, ComposedChart, Legend, Pie, PieChart, Tooltip as RechartsTooltip, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 interface DashboardMetric {
   id: string;
