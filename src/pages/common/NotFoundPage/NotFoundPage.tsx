@@ -1,10 +1,10 @@
-import React from "react";
-import { Box, Button, Container, Paper, Typography, styled, useTheme } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "@/store/hooks";
+import { ArrowBack } from "@mui/icons-material";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import HomeIcon from "@mui/icons-material/Home";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useAppSelector } from "@/store/hooks";
+import { Box, Button, Container, Paper, Typography, styled } from "@mui/material";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   minHeight: "100vh",
@@ -100,7 +100,7 @@ const NotFoundPage: React.FC = () => {
         </Typography>
 
         <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2 }}>
-          <StyledButton variant="outlined" startIcon={<ArrowBackIcon />} onClick={handleGoBack} color="primary">
+          <StyledButton variant="outlined" startIcon={<ArrowBack />} onClick={handleGoBack} color="primary">
             Go Back
           </StyledButton>
 

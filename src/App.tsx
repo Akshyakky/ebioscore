@@ -1,18 +1,18 @@
-import React, { ReactNode, useMemo } from "react";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { Provider as ReduxProvider } from "react-redux";
-import { PersistGate } from "redux-persist/integration/react";
-import { ToastContainer } from "react-toastify";
 import { Box, CircularProgress } from "@mui/material";
+import React, { ReactNode, useMemo } from "react";
+import { Provider as ReduxProvider } from "react-redux";
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import { PersistGate } from "redux-persist/integration/react";
 import ErrorBoundary from "./components/ErrorBoundary";
+import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RouteNotFoundBoundary from "./components/RouteNotFoundBoundary";
+import MainLayout from "./layouts/MainLayout/MainLayout";
+import { QueryProvider } from "./providers/QueryProvider";
+import ThemeProvider from "./providers/ThemeProvider";
 import routeConfig from "./routes/routeConfig";
 import { persistor, store } from "./store";
-import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
-import { QueryProvider } from "./providers/QueryProvider";
-import RouteNotFoundBoundary from "./components/RouteNotFoundBoundary";
-import ThemeProvider from "./providers/ThemeProvider";
-import MainLayout from "./layouts/MainLayout/MainLayout";
 
 // Types
 interface RouteConfig {

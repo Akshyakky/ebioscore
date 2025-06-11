@@ -1,16 +1,16 @@
-import { Company } from "@/types/Common/Company.type";
-import { useAppDispatch } from "@/store/hooks";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
+import DropdownSelect from "@/components/DropDown/DropdownSelect";
+import { useLoading } from "@/hooks/Common/useLoading";
+import AuthService from "@/services/AuthService/AuthService";
 import { ClientParameterService } from "@/services/NotGenericPaternServices/ClientParameterService";
 import { CompanyService } from "@/services/NotGenericPaternServices/CompanyService";
-import AuthService from "@/services/AuthService/AuthService";
 import { setUserDetails } from "@/store/features/auth/authSlice";
-import DropdownSelect from "@/components/DropDown/DropdownSelect";
+import { useAppDispatch } from "@/store/hooks";
+import { Company } from "@/types/Common/Company.type";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
-import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import {
   Alert,
   alpha,
@@ -18,21 +18,21 @@ import {
   Button,
   CircularProgress,
   Container,
-  Stack,
-  IconButton,
-  InputAdornment,
-  styled,
-  Typography,
-  useMediaQuery,
   Fade,
   Grow,
-  useTheme,
+  IconButton,
+  InputAdornment,
+  Stack,
+  styled,
   TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import logo from "../../../assets/images/eBios.png";
 import backgroundImage from "/src/assets/images/LoginCoverImage.jpg";
-import { useLoading } from "@/hooks/Common/useLoading";
 
 // Styled Components with enhanced animations and effects
 const AnimatedBox = styled(Box)`
