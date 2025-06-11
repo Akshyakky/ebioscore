@@ -1,6 +1,6 @@
+import { ArrowBack, BugReport, RefreshRounded } from "@mui/icons-material";
+import { Box, Button, Container, Paper, Typography } from "@mui/material";
 import { Component, ErrorInfo, ReactNode } from "react";
-import { Box, Button, Paper, Typography, Container } from "@mui/material";
-import { RefreshRounded, BugReport, ArrowBack } from "@mui/icons-material";
 import { toast } from "react-toastify";
 
 interface Props {
