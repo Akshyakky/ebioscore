@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   const isProduction = mode === "production";
 
   return {
+    base: "./",
     server: {
       host: "::",
       port: 3000,
@@ -28,6 +29,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      outDir: "dist",
+      assetsDir: "assets",
       sourcemap: !isProduction,
       minify: isProduction ? "terser" : false,
       terserOptions: isProduction
@@ -45,7 +48,12 @@ export default defineConfig(({ mode }) => {
             "react-vendor": ["react", "react-dom"],
             "react-router": ["react-router-dom"],
             mui: ["@mui/material", "@mui/icons-material"],
+            "react-query": ["@tanstack/react-query"],
+            redux: ["@reduxjs/toolkit", "react-redux", "redux-persist"],
           },
+          chunkFileNames: "assets/js/[name]-[hash].js",
+          entryFileNames: "assets/js/[name]-[hash].js",
+          assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
         },
       },
       chunkSizeWarningLimit: 1000,

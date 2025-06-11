@@ -17,7 +17,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const userInfo = useAppSelector(selectUser);
   const navigate = useNavigate();
   const location = useLocation();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [scrolled, setScrolled] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,14 +35,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   }, []);
 
   // Handle scroll events to show/hide back to top button
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 300);
-    };
+  // useEffect(() => {
+  //   const handleScroll = () => {
+  //     setScrolled(window.scrollY > 300);
+  //   };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  //   window.addEventListener("scroll", handleScroll);
+  //   return () => window.removeEventListener("scroll", handleScroll);
+  // }, []);
 
   // Close error notification
   const handleCloseError = () => {
