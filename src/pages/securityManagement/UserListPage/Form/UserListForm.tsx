@@ -1,23 +1,23 @@
-import React, { useState, useEffect } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, Tabs, Tab, ImageList, ImageListItem, Tooltip } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel, Visibility, Edit } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { UserListDto } from "@/interfaces/SecurityManagement/UserListData";
 import { useAlert } from "@/providers/AlertProvider";
+import { CompanyService } from "@/services/NotGenericPaternServices/CompanyService";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Cancel, Edit, Save, Visibility } from "@mui/icons-material";
+import { Alert, Box, Card, CardContent, Divider, Grid, ImageList, ImageListItem, Tab, Tabs, Tooltip, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import PermissionManager from "../../CommonPage/PermissionManager";
 import { useUserList } from "../hooks/useUserList";
-import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import ProfilePermissionsListModal from "../SubPage/ProfilePermissionsListModal";
 import ProfilePermissionsModifyModal from "../SubPage/ProfilePermissionsModifyModal";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { CompanyService } from "@/services/NotGenericPaternServices/CompanyService";
 
 interface UserListFormProps {
   open: boolean;
@@ -252,8 +252,8 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
     setDigSignImageName("");
   };
 
-  const handleChangeUserName = (item) => {
-    setValue("conID", item.value, { shouldDirty: true });
+  const handleChangeUserName = (item: DropdownOption) => {
+    setValue("conID", Number(item.value), { shouldDirty: true });
     setValue("appUserName", item.label, { shouldDirty: true });
   };
 
@@ -398,7 +398,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
                     disabled={viewOnly || Boolean(watchedData.appID)}
                     size="small"
                     fullWidth
-                    options={usersWithoutLogin}
+                    options={usersWithoutLogin ?? []}
                     defaultText="Select User"
                     onChange={(item) => handleChangeUserName(item)}
                   />
@@ -485,14 +485,14 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
                   disabled={viewOnly}
                   size="small"
                   fullWidth
-                  options={profiles.filter((profile) => profile.rActiveYN === "Y")}
+                  options={profiles?.filter((profile) => profile.rActiveYN === "Y") ?? []}
                   defaultText="Select Profile"
                   onChange={(item) => {
                     setValue("profileID", Number(item.value), { shouldDirty: true });
                   }}
                 />
               </Grid>
-              {watchedData.profileID > 0 && (
+              {watchedData.profileID && watchedData.profileID > 0 && (
                 <Grid size={{ sm: 12, md: 6 }}>
                   <Box display="flex" gap={2}>
                     <Tooltip title="View Profile Permissions">
@@ -656,7 +656,7 @@ const UserListForm: React.FC<UserListFormProps> = ({ open, onClose, initialData,
         maxWidth="sm"
       />
 
-      {watchedData.profileID > 0 && (
+      {watchedData.profileID && watchedData.profileID > 0 && (
         <>
           <ProfilePermissionsListModal profileId={Number(watchedData.profileID)} open={isProfileModalOpen} onClose={handleCloseProfileModal} />
           <ProfilePermissionsModifyModal profileId={Number(watchedData.profileID)} open={isProfileModifyModalOpen} onClose={handleCloseProfileModifyModal} />

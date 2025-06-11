@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, ReactNode, useContext, useState } from "react";
 import CustomAlert, { AlertType } from "../components/Alert/CustomAlert";
 
 // Type definitions
@@ -202,20 +202,20 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ children }) => {
         title={alertState.title}
         message={alertState.message}
         type={alertState.type}
-        showConfirmButton={alertState.options.showConfirmButton}
-        showCancelButton={alertState.options.showCancelButton}
-        showPrintButton={alertState.options.showPrintButton}
-        showCloseButton={alertState.options.showCloseButton}
-        confirmButtonText={alertState.options.confirmButtonText}
-        cancelButtonText={alertState.options.cancelButtonText}
-        printButtonText={alertState.options.printButtonText}
-        closeButtonText={alertState.options.closeButtonText}
+        showConfirmButton={alertState.options.showConfirmButton ?? false}
+        showCancelButton={alertState.options.showCancelButton ?? false}
+        showPrintButton={alertState.options.showPrintButton ?? false}
+        showCloseButton={alertState.options.showCloseButton ?? false}
+        confirmButtonText={alertState.options.confirmButtonText ?? "OK"}
+        cancelButtonText={alertState.options.cancelButtonText ?? "Cancel"}
+        printButtonText={alertState.options.printButtonText ?? "Print"}
+        closeButtonText={alertState.options.closeButtonText ?? "Close"}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
         onPrint={handlePrint}
-        maxWidth={alertState.options.maxWidth}
-        disableBackdropClick={alertState.options.disableBackdropClick}
-        disableEscapeKeyDown={alertState.options.disableEscapeKeyDown}
+        maxWidth={alertState.options.maxWidth ?? "md"}
+        disableBackdropClick={alertState.options.disableBackdropClick ?? false}
+        disableEscapeKeyDown={alertState.options.disableEscapeKeyDown ?? false}
       />
     </AlertContext.Provider>
   );
@@ -231,4 +231,4 @@ export const useAlert = (): AlertContextType => {
 };
 
 // Export types
-export type { AlertType, AlertOptions, SweetAlertIcon };
+export type { AlertOptions, AlertType, SweetAlertIcon };

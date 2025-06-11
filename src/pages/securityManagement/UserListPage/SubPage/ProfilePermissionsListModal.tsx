@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { Button, Box, Tabs, Tab } from "@mui/material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { Box, Button, Tab, Tabs } from "@mui/material";
+import React, { useState } from "react";
 import ProfilePermissionsList from "../../ProfileListPage/SubPage/ProfilePermissionsList";
 
 interface ProfilePermissionsModalProps {

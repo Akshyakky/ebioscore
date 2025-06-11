@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Box, Button, Grid } from "@mui/material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import PermissionManager from "../../CommonPage/PermissionManager";
 import { ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { profileMastService } from "@/services/SecurityManagementServices/securityManagementServices";
+import { Box, Button, Grid } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import PermissionManager from "../../CommonPage/PermissionManager";
 
 interface ProfilePermissionsModifyModalProps {
   profileId: number;
