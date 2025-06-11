@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useLoading } from "@/hooks/Common/useLoading";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import { useAlert } from "@/providers/AlertProvider";
 import { PatientService } from "@/services/PatientAdministrationServices/RegistrationService/PatientService";
 import { RegistrationService } from "@/services/PatientAdministrationServices/RegistrationService/RegistrationService";
-import { useLoading } from "@/hooks/Common/useLoading";
-import { useAlert } from "@/providers/AlertProvider";
-import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import { useCallback, useEffect, useState } from "react";
 
 // Define the interface for patient list display data
 export interface PatientListData {
@@ -140,7 +140,7 @@ export const usePatientRegistration = () => {
           opvisits: {
             ...patientData.opvisits,
           },
-          lastVisit: patientData.lastVisit,
+          lastVisit: patientData.lastVisit || undefined,
         };
 
         const result = await PatientService.savePatient(formattedData);

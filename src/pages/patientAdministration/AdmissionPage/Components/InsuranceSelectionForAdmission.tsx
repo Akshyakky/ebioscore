@@ -1,14 +1,14 @@
 // src/pages/patientAdministration/AdmissionPage/Components/InsuranceSelectionForAdmission.tsx
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Box, Typography, Paper, Card, CardContent, Grid, Chip, Radio, RadioGroup, FormControlLabel, Alert, Avatar, Stack, Divider } from "@mui/material";
-import { AccountBalance as InsuranceIcon, Warning as WarningIcon, CheckCircle as ActiveIcon, Error as ExpiredIcon, Add as AddIcon } from "@mui/icons-material";
 import CustomButton from "@/components/Button/CustomButton";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { OPIPInsurancesDto } from "@/interfaces/PatientAdministration/InsuranceDetails";
+import PatientInsuranceManagement from "@/pages/patientAdministration/RegistrationPage/Components/PatientInsuranceManagement";
+import { useAlert } from "@/providers/AlertProvider";
 import { InsuranceCarrierService } from "@/services/CommonServices/InsuranceCarrierService";
 import { formatDt } from "@/utils/Common/dateUtils";
-import { useAlert } from "@/providers/AlertProvider";
-import PatientInsuranceManagement from "@/pages/patientAdministration/RegistrationPage/Components/PatientInsuranceManagement";
-import { useLoading } from "@/hooks/Common/useLoading";
+import { CheckCircle as ActiveIcon, Add as AddIcon, Error as ExpiredIcon, AccountBalance as InsuranceIcon, Warning as WarningIcon } from "@mui/icons-material";
+import { Alert, Avatar, Box, Card, CardContent, Chip, Divider, FormControlLabel, Grid, Paper, Radio, RadioGroup, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 interface InsuranceSelectionForAdmissionProps {
   pChartID: number;

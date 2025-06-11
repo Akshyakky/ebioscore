@@ -1,25 +1,22 @@
 // src/pages/patientAdministration/DischargePage/Components/CurrentAdmissionDisplayForDischarge.tsx
-import React, { useMemo } from "react";
-import { Box, Typography, Paper, Grid, Chip, Avatar, Stack, Alert, CircularProgress } from "@mui/material";
-import {
-  Person as PatientIcon,
-  Hotel as BedIcon,
-  LocalHospital as AdmissionIcon,
-  MedicalServices as DoctorIcon,
-  CalendarToday as CalendarIcon,
-  ExitToApp as DischargeIcon,
-  History as HistoryIcon,
-  CheckCircle as CheckIcon,
-  Error as ErrorIcon,
-  AccountBalance as InsuranceIcon,
-  Home as HomeIcon,
-  Warning as WarningIcon,
-} from "@mui/icons-material";
 import CustomButton from "@/components/Button/CustomButton";
-import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDto";
-import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { calculateDaysBetween, formatDt } from "@/utils/Common/dateUtils";
+import {
+  LocalHospital as AdmissionIcon,
+  Hotel as BedIcon,
+  CheckCircle as CheckIcon,
+  ExitToApp as DischargeIcon,
+  MedicalServices as DoctorIcon,
+  History as HistoryIcon,
+  Home as HomeIcon,
+  AccountBalance as InsuranceIcon,
+  Person as PatientIcon,
+} from "@mui/icons-material";
+import { Alert, Avatar, Box, Chip, CircularProgress, Grid, Paper, Stack, Typography } from "@mui/material";
+import React, { useMemo } from "react";
 
 interface CurrentAdmissionDisplayForDischargeProps {
   patient: PatientSearchResult | null;

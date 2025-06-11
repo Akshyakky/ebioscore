@@ -1,14 +1,14 @@
 // src/pages/patientAdministration/AdmissionPage/hooks/useAdmission.ts
-import { useState, useCallback, useRef } from "react";
+import { useLoading } from "@/hooks/Common/useLoading";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
-import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
 import { useAlert } from "@/providers/AlertProvider";
-import { useLoading } from "@/hooks/Common/useLoading";
+import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
+import { useCallback, useRef, useState } from "react";
 
 interface PatientAdmissionStatusResponse {
   isAdmitted: boolean;
-  admissionData?: AdmissionDto;
+  admissionData?: AdmissionDto | undefined;
   patientData?: any;
   admissionHistory: AdmissionHistoryDto[];
 }
