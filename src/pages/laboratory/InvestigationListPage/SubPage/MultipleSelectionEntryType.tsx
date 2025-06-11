@@ -178,7 +178,7 @@ const MultipleSelectionEntryType: React.FC<MultipleSelectionFormProps> = ({ invI
               key: "actions",
               header: "Actions",
               visible: true,
-              render: (item, rowIndex) => (
+              render: (_item, rowIndex) => (
                 <Stack direction="row" spacing={1}>
                   <IconButton size="small" color="primary" onClick={() => handleEditMultipleEntry(rowIndex)} disabled={fields.some((field) => field.isEditing)}>
                     <Edit fontSize="small" />

@@ -262,7 +262,7 @@ const InvestigationListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 120,
-      formatter: (value: any, item: InvestigationListDto) => item.lInvMastDto?.invCode || "-",
+      formatter: (_value: any, item: InvestigationListDto) => item.lInvMastDto?.invCode || "-",
     },
     {
       key: "invName",
@@ -271,7 +271,7 @@ const InvestigationListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 250,
-      formatter: (value: any, item: InvestigationListDto) => item.lInvMastDto?.invName || "-",
+      formatter: (_value: any, item: InvestigationListDto) => item.lInvMastDto?.invName || "-",
     },
     {
       key: "invShortName",
@@ -280,7 +280,7 @@ const InvestigationListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 150,
-      formatter: (value: any, item: InvestigationListDto) => item.lInvMastDto?.invShortName || "-",
+      formatter: (_value: any, item: InvestigationListDto) => item.lInvMastDto?.invShortName || "-",
     },
     {
       key: "invType",
@@ -289,7 +289,7 @@ const InvestigationListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 150,
-      formatter: (value: any, item: InvestigationListDto) => item.lInvMastDto?.invType || "-",
+      formatter: (_value: any, item: InvestigationListDto) => item.lInvMastDto?.invType || "-",
     },
     {
       key: "componentCount",
@@ -297,7 +297,7 @@ const InvestigationListPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 120,
-      formatter: (value: any, item: InvestigationListDto) => <Chip size="small" label={`${item.lComponentsDto?.length || 0} items`} color="primary" variant="outlined" />,
+      formatter: (_value: any, item: InvestigationListDto) => <Chip size="small" label={`${item.lComponentsDto?.length || 0} items`} color="primary" variant="outlined" />,
     },
     {
       key: "invReportYN",
@@ -306,7 +306,7 @@ const InvestigationListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 100,
-      formatter: (value: any, item: InvestigationListDto) => (
+      formatter: (_value: any, item: InvestigationListDto) => (
         <Chip size="small" color={item.lInvMastDto?.invReportYN === "Y" ? "success" : "default"} label={item.lInvMastDto?.invReportYN === "Y" ? "Yes" : "No"} />
       ),
     },
@@ -317,7 +317,7 @@ const InvestigationListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 100,
-      formatter: (value: any, item: InvestigationListDto) => (
+      formatter: (_value: any, item: InvestigationListDto) => (
         <Chip size="small" color={item.lInvMastDto?.invSampleYN === "Y" ? "warning" : "default"} label={item.lInvMastDto?.invSampleYN === "Y" ? "Yes" : "No"} />
       ),
     },
@@ -328,7 +328,7 @@ const InvestigationListPage: React.FC = () => {
       sortable: true,
       filterable: true,
       width: 100,
-      formatter: (value: any, item: InvestigationListDto) => (
+      formatter: (_value: any, item: InvestigationListDto) => (
         <Chip size="small" color={item.lInvMastDto?.rActiveYN === "Y" ? "success" : "error"} label={item.lInvMastDto?.rActiveYN === "Y" ? "Active" : "Inactive"} />
       ),
     },
