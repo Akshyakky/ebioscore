@@ -8,6 +8,7 @@ export interface InvestigationListDto extends BaseDto {
 export interface LInvMastDto extends BaseDto {
   invID: number;
   invName?: string;
+  invCode?: string;
   invTypeCode?: string;
   invReportYN: string;
   invSampleYN: string;
@@ -15,7 +16,6 @@ export interface LInvMastDto extends BaseDto {
   invSTitle?: string;
   invPrintOrder: number;
   bchID: number;
-  invCode?: string;
   invType?: string;
   invNHCode?: string;
   invNHEnglishName?: string;
@@ -53,6 +53,7 @@ export interface LComponentDto extends BaseDto {
   rActiveYN: string;
   transferYN: string;
   rNotes?: string;
+  lCompMultipleDto?: LCompMultipleDto[];
 }
 
 export interface LComponentEntryTypeDto extends BaseDto {
@@ -69,7 +70,7 @@ export interface LComponentEntryTypeDto extends BaseDto {
 export interface LCompMultipleDto extends BaseDto {
   cmID: number;
   cmValues?: string;
-  compOID?: number;
+  compoID?: number;
   invID?: number;
   defaultYN?: string;
   rActiveYN: string;
