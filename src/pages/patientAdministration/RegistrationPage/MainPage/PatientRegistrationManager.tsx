@@ -1,33 +1,32 @@
 // src/pages/patientAdministration/RegistrationPage/MainPage/PatientRegistrationManager.tsx
-import React, { useState, useCallback, useMemo, useEffect } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
+import SmartButton from "@/components/Button/SmartButton";
+import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import DropdownSelect from "@/components/DropDown/DropdownSelect";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import { useAlert } from "@/providers/AlertProvider";
+import { formatDt } from "@/utils/Common/dateUtils";
+import { debounce } from "@/utils/Common/debounceUtils";
 import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
+  Cancel as CancelIcon,
   Close as CloseIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
   AccountBalance as InsuranceIcon,
   People as NextOfKinIcon,
   PersonAdd as PersonAddIcon,
+  Refresh as RefreshIcon,
   Save as SaveIcon,
-  Cancel as CancelIcon,
+  Search as SearchIcon,
+  Visibility as VisibilityIcon,
 } from "@mui/icons-material";
-import CustomGrid, { Column, GridDensity } from "@/components/CustomGrid/CustomGrid";
-import SmartButton from "@/components/Button/SmartButton";
-import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import PatientRegistrationForm from "../Form/PatientRegistrationForm";
+import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import NextOfKinManagement from "../Components/NextOfKinManagement";
 import PatientInsuranceManagement from "../Components/PatientInsuranceManagement";
-import { usePatientRegistration, PatientListData } from "../hooks/usePatientRegistration";
-import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
-import { useAlert } from "@/providers/AlertProvider";
-import { debounce } from "@/utils/Common/debounceUtils";
-import { formatDt } from "@/utils/Common/dateUtils";
+import PatientRegistrationForm from "../Form/PatientRegistrationForm";
+import { PatientListData, usePatientRegistration } from "../hooks/usePatientRegistration";
 
 // Filter options for the patient list
 const statusOptions = [

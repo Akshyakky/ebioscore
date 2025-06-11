@@ -1,28 +1,25 @@
 // src/pages/patientAdministration/RegistrationPage/MainPage/PatientRegistrationFormManager.tsx
-import React, { useState, useCallback, useMemo } from "react";
-import { Box, Typography, Paper, Grid, Stack, Chip, Divider, Card, CardContent, IconButton, Tooltip } from "@mui/material";
-import {
-  Search as SearchIcon,
-  Save as SaveIcon,
-  Cancel as CancelIcon,
-  PersonAdd as PersonAddIcon,
-  Refresh as RefreshIcon,
-  Edit as EditIcon,
-  AccountBalance as InsuranceIcon,
-  People as NextOfKinIcon,
-  Visibility as VisibilityIcon,
-} from "@mui/icons-material";
-import PatientRegistrationForm from "../Form/PatientRegistrationForm";
-import NextOfKinManagement from "../Components/NextOfKinManagement";
-import PatientInsuranceManagement from "../Components/PatientInsuranceManagement";
-import { PatientSearch } from "../../CommonPage/Patient/PatientSearch/PatientSearch";
 import SmartButton from "@/components/Button/SmartButton";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { usePatientRegistration } from "../hooks/usePatientRegistration";
-import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
-import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
-import { useAlert } from "@/providers/AlertProvider";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { PatientRegistrationDto } from "@/interfaces/PatientAdministration/PatientFormData";
+import { useAlert } from "@/providers/AlertProvider";
+import {
+  AccountBalance as InsuranceIcon,
+  People as NextOfKinIcon,
+  PersonAdd as PersonAddIcon,
+  Save as SaveIcon,
+  Search as SearchIcon,
+  Visibility as VisibilityIcon,
+} from "@mui/icons-material";
+import { Box, Card, CardContent, Chip, Divider, Grid, IconButton, Paper, Stack, Tooltip, Typography } from "@mui/material";
+import React, { useCallback, useState } from "react";
+import { PatientSearch } from "../../CommonPage/Patient/PatientSearch/PatientSearch";
+import NextOfKinManagement from "../Components/NextOfKinManagement";
+import PatientInsuranceManagement from "../Components/PatientInsuranceManagement";
+import PatientRegistrationForm from "../Form/PatientRegistrationForm";
+import { usePatientRegistration } from "../hooks/usePatientRegistration";
 
 interface PatientRegistrationFormManagerProps {
   showSearchInSidebar?: boolean;

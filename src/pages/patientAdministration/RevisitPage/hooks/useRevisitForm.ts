@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
-import { OPVisitDto, DateFilterType } from "@/interfaces/PatientAdministration/revisitFormData";
-import { RevisitService } from "@/services/PatientAdministrationServices/RevisitService/RevisitService";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
+import { DateFilterType, OPVisitDto } from "@/interfaces/PatientAdministration/revisitFormData";
+import { RevisitService } from "@/services/PatientAdministrationServices/RevisitService/RevisitService";
+import { useCallback, useState } from "react";
 
 interface UseRevisitReturn {
   visitList: OPVisitDto[];
@@ -9,7 +9,7 @@ interface UseRevisitReturn {
   error: string | null;
   fetchVisitList: (dateFilter?: DateFilterType, startDate?: Date | null, endDate?: Date | null) => Promise<void>;
   getVisitById: (opVID: number) => Promise<OPVisitDto | null>;
-  saveVisit: (visitData: OPVisitDto) => Promise<OperationResult<OPVisitDto>>;
+  saveVisit: (visitData: OPVisitDto) => Promise<OperationResult<OPVisitDto | null>>;
   deleteVisit: (opVID: number) => Promise<boolean>;
   cancelVisit: (opVID: number, modifiedBy: string) => Promise<boolean>;
   getWaitingPatients: (attendingPhysicianID?: number, dateFilterType?: DateFilterType, startDate?: Date, endDate?: Date) => Promise<any[]>;
@@ -91,7 +91,7 @@ export const useRevisit = (): UseRevisitReturn => {
     [visitList]
   );
 
-  const saveVisit = useCallback(async (visitData: OPVisitDto): Promise<OperationResult<OPVisitDto>> => {
+  const saveVisit = useCallback(async (visitData: OPVisitDto): Promise<OperationResult<OPVisitDto | null>> => {
     try {
       const result = await RevisitService.saveOPVisits(visitData);
       if (result.success) {

@@ -1,33 +1,32 @@
 // src/pages/patientAdministration/AdmissionPage/MainPage/AdmissionPage.tsx
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, Card, CardContent, Chip, Stack, IconButton, Avatar, Divider, TextField, Collapse } from "@mui/material";
-import {
-  Add,
-  Person as PatientIcon,
-  Hotel as BedIcon,
-  LocalHospital as AdmissionIcon,
-  Refresh as RefreshIcon,
-  Search as SearchIcon,
-  History as HistoryIcon,
-  Edit as EditIcon,
-  Visibility as ViewIcon,
-  AccountBalance,
-  ExpandMore as ExpandIcon,
-  ExpandLess as CollapseIcon,
-} from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
-import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
-import { useAlert } from "@/providers/AlertProvider";
-import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
+import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
+import { useAlert } from "@/providers/AlertProvider";
 import { formatDt } from "@/utils/Common/dateUtils";
-import useAdmission from "../hooks/useAdmission";
+import {
+  AccountBalance,
+  LocalHospital as AdmissionIcon,
+  Hotel as BedIcon,
+  ExpandLess as CollapseIcon,
+  Edit as EditIcon,
+  ExpandMore as ExpandIcon,
+  History as HistoryIcon,
+  Person as PatientIcon,
+  Refresh as RefreshIcon,
+  Search as SearchIcon,
+  Visibility as ViewIcon,
+} from "@mui/icons-material";
+import { Avatar, Box, Card, CardContent, Chip, Collapse, Grid, IconButton, Paper, Stack, TextField, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import AdmissionFormDialog from "../Components/AdmissionFormDialog";
-import AdmissionStatusDialog from "../Components/AdmissionStatusDialog";
 import AdmissionHistoryDialog from "../Components/AdmissionHistoryDialog";
+import AdmissionStatusDialog from "../Components/AdmissionStatusDialog";
+import useAdmission from "../hooks/useAdmission";
 
 interface EnhancedAdmissionDto extends AdmissionDto {
   patientName?: string;
@@ -435,7 +434,7 @@ const AdmissionPage: React.FC = () => {
                   icon={AdmissionIcon}
                   text="New Admission"
                   onClick={handleNewAdmission}
-                  disabled={currentAdmissionStatus?.isAdmitted}
+                  disabled={currentAdmissionStatus?.isAdmitted || false}
                   color="primary"
                   size="small"
                 />
@@ -470,7 +469,7 @@ const AdmissionPage: React.FC = () => {
           loading={loading}
           maxHeight="450px"
           emptyStateMessage="No current admissions found"
-          rowKeyField="admitID"
+          rowKeyField="ipAdmissionDto"
           showDensityControls={false}
           onRowClick={handleViewHistory}
         />

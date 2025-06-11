@@ -1,39 +1,39 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, SelectChangeEvent, Paper, Avatar, Stack } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import {
-  Save as SaveIcon,
-  Cancel as CancelIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  AccountBalance as InsuranceIcon,
-  MedicalServices as VisitIcon,
-  HourglassEmpty as WaitingIcon,
-  CheckCircle as CompletedIcon,
-  Cancel as CancelledIcon,
-  LocalHospital as HospitalIcon,
-  Person as PhysicianIcon,
-} from "@mui/icons-material";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import { OPVisitDto, DateFilterType } from "@/interfaces/PatientAdministration/revisitFormData";
-import { useAlert } from "@/providers/AlertProvider";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { useLoading } from "@/hooks/Common/useLoading";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { DateFilterType, OPVisitDto } from "@/interfaces/PatientAdministration/revisitFormData";
+import { useAlert } from "@/providers/AlertProvider";
 import { ContactMastService } from "@/services/NotGenericPaternServices/ContactMastService";
 import { RevisitService } from "@/services/PatientAdministrationServices/RevisitService/RevisitService";
-import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
 import { useAppSelector } from "@/store/hooks";
-import { PatientSearch } from "../../CommonPage/Patient/PatientSearch/PatientSearch";
-import { PatientDemographics } from "../../CommonPage/Patient/PatientDemographics/PatientDemographics";
-import PatientVisitHistoryDialog from "../Form/RevisitForm";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Cancel as CancelIcon,
+  Cancel as CancelledIcon,
+  CheckCircle as CompletedIcon,
+  LocalHospital as HospitalIcon,
+  AccountBalance as InsuranceIcon,
+  Person as PhysicianIcon,
+  Refresh as RefreshIcon,
+  Save as SaveIcon,
+  Search as SearchIcon,
+  MedicalServices as VisitIcon,
+  HourglassEmpty as WaitingIcon,
+} from "@mui/icons-material";
+import { Alert, Avatar, Box, Card, CardContent, Divider, Grid, Paper, SelectChangeEvent, Stack, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import WaitingPatientSearch from "../../CommonPage/AdvanceSearch/WaitingPatientSearch";
-import { useRevisit } from "../hooks/useRevisitForm";
+import { PatientDemographics } from "../../CommonPage/Patient/PatientDemographics/PatientDemographics";
+import { PatientSearch } from "../../CommonPage/Patient/PatientSearch/PatientSearch";
 import PatientInsuranceManagement from "../../RegistrationPage/Components/PatientInsuranceManagement";
+import PatientVisitHistoryDialog from "../Form/RevisitForm";
+import { useRevisit } from "../hooks/useRevisitForm";
 
 const schema = z.object({
   opVID: z.number().default(0),
@@ -390,7 +390,8 @@ const RevisitPage: React.FC = () => {
         const fullName = parts[1]?.trim() || "";
 
         const pChartIDMatch = selectedSuggestion.match(/\((\d+)\)/);
-        const pChartID = pChartIDMatch ? parseInt(pChartIDMatch[1], 10) : 0;
+        const matchGroup = pChartIDMatch?.[1];
+        const pChartID = matchGroup ? parseInt(matchGroup, 10) : 0;
 
         if (pChartCode && pChartID) {
           const patientResult: PatientSearchResult = {
@@ -430,17 +431,10 @@ const RevisitPage: React.FC = () => {
       }
 
       if (typeof selectedValue === "string" && selectedValue.includes("-")) {
-        const parts = selectedValue.split("-");
-        if (parts.length !== 2) {
-          setFormError("Invalid physician selection format");
-          return;
-        }
-
-        const [conIDStr, cdIDStr] = parts;
-        const conID = parseInt(conIDStr, 10);
-        const cdID = parseInt(cdIDStr, 10);
-
-        if (isNaN(conID) || isNaN(cdID) || conID === 0) {
+        const [conIDStr] = selectedValue.split("-");
+        if (!conIDStr) return;
+        const physicianId = parseInt(conIDStr, 10);
+        if (isNaN(physicianId) || physicianId === 0) {
           setFormError("Invalid physician selection values");
           return;
         }
@@ -461,7 +455,7 @@ const RevisitPage: React.FC = () => {
           }
         }
         setValue("attendingPhysicianId", selectedValue, { shouldValidate: true, shouldDirty: true });
-        setValue("attendingPhysicianSpecialtyId", cdID, { shouldValidate: true, shouldDirty: true });
+        setValue("attendingPhysicianSpecialtyId", physicianId, { shouldValidate: true, shouldDirty: true });
         setValue("attendingPhysicianName", physicianName, { shouldValidate: true, shouldDirty: true });
         setValue("attendingPhysicianSpecialty", physicianSpecialty, { shouldValidate: true, shouldDirty: true });
         setFormError(null);
@@ -481,7 +475,7 @@ const RevisitPage: React.FC = () => {
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const { value } = event.target;
       setValue("pVisitType", value as "H" | "P", { shouldValidate: true, shouldDirty: true });
-      setValue("pVisitTypeText", event.target.labels ? event.target.labels[0].textContent || "" : "");
+      setValue("pVisitTypeText", event.target.labels?.[0]?.textContent || "");
 
       if (value === "P" && selectedPChartID) {
         try {
@@ -528,7 +522,9 @@ const RevisitPage: React.FC = () => {
     }
     if (typeof attendingPhysicianId === "string") {
       if (attendingPhysicianId.includes("-")) {
-        const [conIDStr] = attendingPhysicianId.split("-");
+        const parts = attendingPhysicianId.split("-");
+        const conIDStr = parts[0];
+        if (!conIDStr) return 0;
         const physicianId = parseInt(conIDStr, 10);
         return isNaN(physicianId) ? 0 : physicianId;
       }

@@ -1,21 +1,19 @@
 // src/pages/patientAdministration/WardBedTransfer/Components/TransferHistoryDialog.tsx
-import React, { useMemo } from "react";
-import { Box, Typography, Paper, Grid, Chip, Avatar, Stack, Alert, Divider } from "@mui/material";
-import {
-  History as HistoryIcon,
-  Person as PatientIcon,
-  Hotel as BedIcon,
-  SwapHoriz as TransferIcon,
-  MedicalServices as DoctorIcon,
-  CalendarToday as CalendarIcon,
-  Assignment as NotesIcon,
-} from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
-import { BedTransferRequestDto } from "@/interfaces/PatientAdministration/BedTransferRequestDto";
-import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
+import { calculateDaysBetween, formatDt } from "@/utils/Common/dateUtils";
+import {
+  CalendarToday as CalendarIcon,
+  MedicalServices as DoctorIcon,
+  History as HistoryIcon,
+  Assignment as NotesIcon,
+  Person as PatientIcon,
+  SwapHoriz as TransferIcon,
+} from "@mui/icons-material";
+import { Alert, Avatar, Box, Chip, Divider, Grid, Paper, Typography } from "@mui/material";
+import React, { useMemo } from "react";
 
 interface TransferHistoryRecord {
   transferId: number;

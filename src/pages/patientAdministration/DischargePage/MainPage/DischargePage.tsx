@@ -1,35 +1,33 @@
 // src/pages/patientAdministration/DischargePage/MainPage/DischargePage.tsx
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, Card, CardContent, Chip, Stack, IconButton, Avatar, TextField, Collapse } from "@mui/material";
-import {
-  ExitToApp as DischargeIcon,
-  Person as PatientIcon,
-  Hotel as BedIcon,
-  LocalHospital as AdmissionIcon,
-  Refresh as RefreshIcon,
-  Search as SearchIcon,
-  History as HistoryIcon,
-  Edit as EditIcon,
-  Visibility as ViewIcon,
-  AccountBalance,
-  ExpandMore as ExpandIcon,
-  ExpandLess as CollapseIcon,
-  Home as HomeIcon,
-  CheckCircle as CheckIcon,
-} from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
-import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
-import { useAlert } from "@/providers/AlertProvider";
-import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDto";
-import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
-import useDischarge from "../hooks/useDischarge";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
+import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/PatientSearch/PatientSearch";
+import { useAlert } from "@/providers/AlertProvider";
+import { calculateDaysBetween, formatDt } from "@/utils/Common/dateUtils";
+import {
+  LocalHospital as AdmissionIcon,
+  CheckCircle as CheckIcon,
+  Close as CloseIcon,
+  ExpandLess as CollapseIcon,
+  ExitToApp as DischargeIcon,
+  ExpandMore as ExpandIcon,
+  History as HistoryIcon,
+  Home as HomeIcon,
+  Person as PatientIcon,
+  Refresh as RefreshIcon,
+  Search as SearchIcon,
+  Visibility as ViewIcon,
+} from "@mui/icons-material";
+import { Avatar, Box, Card, CardContent, Chip, Collapse, Grid, IconButton, Paper, Stack, TextField, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import CurrentAdmissionDisplayForDischarge from "../Components/CurrentAdmissionDisplayForDischarge";
 import DischargeFormDialog from "../Components/DischargeFormDialog";
 import DischargeHistoryDialog from "../Components/DischargeHistoryDialog";
-import CurrentAdmissionDisplayForDischarge from "../Components/CurrentAdmissionDisplayForDischarge";
+import useDischarge from "../hooks/useDischarge";
 
 interface EnhancedDischargeDto extends IpDischargeDto {
   patientName?: string;
@@ -313,7 +311,7 @@ const DischargePage: React.FC = () => {
       width: 100,
       render: (discharge) => (
         <Chip
-          icon={discharge.releaseBedYN === "Y" ? <CheckIcon /> : undefined}
+          icon={discharge.releaseBedYN === "Y" ? <CheckIcon /> : <CloseIcon />}
           label={discharge.releaseBedYN === "Y" ? "Yes" : "No"}
           size="small"
           color={discharge.releaseBedYN === "Y" ? "success" : "default"}

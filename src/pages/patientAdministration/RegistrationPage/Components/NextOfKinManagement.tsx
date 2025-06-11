@@ -1,22 +1,22 @@
 // src/pages/patientAdministration/RegistrationPage/Components/NextOfKinManagement.tsx
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Box, Typography, Paper, Grid, Stack, Chip, Alert, IconButton } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Save as SaveIcon, Cancel as CancelIcon, People as NextOfKinIcon } from "@mui/icons-material";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import { useAlert } from "@/providers/AlertProvider";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { PatNokService } from "@/services/PatientAdministrationServices/RegistrationService/PatNokService";
-import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
-import { formatDt } from "@/utils/Common/dateUtils";
 import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { PatNokDetailsDto } from "@/interfaces/PatientAdministration/PatNokDetailsDto";
+import { useAlert } from "@/providers/AlertProvider";
+import { PatNokService } from "@/services/PatientAdministrationServices/RegistrationService/PatNokService";
+import { formatDt } from "@/utils/Common/dateUtils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, People as NextOfKinIcon, Save as SaveIcon } from "@mui/icons-material";
+import { Alert, Box, Chip, Grid, IconButton, Paper, Stack, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 // Validation schema for Next of Kin form
 const nextOfKinSchema = z.object({
@@ -165,16 +165,9 @@ const NextOfKinManagement: React.FC<NextOfKinManagementProps> = ({ pChartID, pat
       setLoading(true);
 
       const nokData: PatNokDetailsDto = {
+        ...data,
         pNokID: data.pNokID || 0,
-        pChartID: data.pChartID,
-        pNokPChartCode: data.pNokPChartCode,
-        pNokRegStatusVal: data.pNokRegStatusVal,
-        pNokRegStatus: data.pNokRegStatus,
         pNokDob: data.pNokDob || serverDate,
-        pNokRelNameVal: data.pNokRelNameVal,
-        pNokRelName: data.pNokRelName,
-        pNokTitleVal: data.pNokTitleVal,
-        pNokTitle: data.pNokTitle,
         pNokFName: data.pNokFName,
         pNokMName: data.pNokMName,
         pNokLName: data.pNokLName,
@@ -182,7 +175,6 @@ const NextOfKinManagement: React.FC<NextOfKinManagementProps> = ({ pChartID, pat
         rActiveYN: data.rActiveYN,
         rNotes: data.rNotes,
         transferYN: data.transferYN,
-        ...data,
       };
 
       const result = await PatNokService.saveNokDetails(nokData);

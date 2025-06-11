@@ -1,8 +1,8 @@
 // src/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics.tsx
-import React, { useEffect } from "react";
-import { PatientDemographicsProps } from "./PatientDemographicsProps";
-import { PatientDemographicsCard } from "./PatientDemographicsCard";
 import { usePatientDemographics } from "@/hooks/PatientAdminstration/patient/usePatientDemographics";
+import React from "react";
+import { PatientDemographicsCard } from "./PatientDemographicsCard";
+import { PatientDemographicsProps } from "./PatientDemographicsProps";
 
 /**
  * Reusable patient demographics component
@@ -53,11 +53,11 @@ export const PatientDemographics: React.FC<PatientDemographicsProps> = ({
       isLoading={isLoading}
       showEditButton={showEditButton && !!pChartID}
       showRefreshButton={showRefreshButton && !!pChartID}
-      onEditClick={onEditClick}
+      onEditClick={onEditClick || (() => {})}
       onRefreshClick={handleRefresh}
       variant={variant}
       emptyStateMessage={effectiveEmptyStateMessage}
-      className={className}
+      className={className || ""}
     />
   );
 };

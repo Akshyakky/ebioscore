@@ -1,15 +1,15 @@
 // src/pages/patientAdministration/commonPage/patient/PatientDemographics/PatientDemographicsCard.tsx
-import React from "react";
-import { Box, Paper, Skeleton, Grid, IconButton } from "@mui/material";
-import { Edit as EditIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 import { PatientDemographicDetails } from "@/interfaces/PatientAdministration/registrationFormData";
+import { Edit as EditIcon, Refresh as RefreshIcon } from "@mui/icons-material";
+import { Box, Grid, IconButton, Paper, Skeleton } from "@mui/material";
+import React from "react";
 
 interface PatientDemographicsCardProps {
   demographicsData: PatientDemographicDetails | null;
   isLoading: boolean;
   showEditButton: boolean;
   showRefreshButton: boolean;
-  onEditClick?: () => void;
+  onEditClick: () => void;
   onRefreshClick?: () => void;
   variant: "compact" | "detailed";
   emptyStateMessage: string;
@@ -29,7 +29,7 @@ export const PatientDemographicsCard: React.FC<PatientDemographicsCardProps> = (
 }) => {
   if (isLoading) {
     return (
-      <Paper sx={{ p: 2 }} className={className}>
+      <Paper sx={{ p: 2 }} className={className || ""}>
         <Grid container spacing={2}>
           {[...Array(variant === "detailed" ? 8 : 4)].map((_, index) => (
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
@@ -44,14 +44,14 @@ export const PatientDemographicsCard: React.FC<PatientDemographicsCardProps> = (
 
   if (!demographicsData) {
     return (
-      <Paper sx={{ p: 2, textAlign: "center", py: 2 }} className={className}>
+      <Paper sx={{ p: 2, textAlign: "center", py: 2 }} className={className || ""}>
         {emptyStateMessage}
       </Paper>
     );
   }
 
   return (
-    <Paper sx={{ p: 2 }} className={className}>
+    <Paper sx={{ p: 2 }} className={className || ""}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         {variant === "detailed" ? (
           // Detailed view in a table-like structure

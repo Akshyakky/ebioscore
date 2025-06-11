@@ -1,22 +1,22 @@
 // src/pages/patientAdministration/WardBedTransfer/Components/BedTransferDialog.tsx
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Grid, Typography, Paper, Chip, Avatar, Alert, Divider } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Save as SaveIcon, Clear as ClearIcon, Person as PatientIcon, Hotel as BedIcon, SwapHoriz as TransferIcon, MedicalServices as DoctorIcon } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import BedSelectionDialog from "@/pages/hospitalAdministration/ManageBeds/BedSelection/BedSelectionDialog";
-import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { useServerDate } from "@/hooks/Common/useServerDate";
+import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
 import { AdmissionDto } from "@/interfaces/PatientAdministration/AdmissionDto";
 import { BedTransferRequestDto } from "@/interfaces/PatientAdministration/BedTransferRequestDto";
-import { WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import BedSelectionDialog from "@/pages/hospitalAdministration/ManageBeds/BedSelection/BedSelectionDialog";
 import { useBedSelection } from "@/pages/hospitalAdministration/ManageBeds/hooks/useBedSelection";
-import { useServerDate } from "@/hooks/Common/useServerDate";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Hotel as BedIcon, Clear as ClearIcon, MedicalServices as DoctorIcon, Person as PatientIcon, SwapHoriz as TransferIcon } from "@mui/icons-material";
+import { Alert, Box, Chip, Grid, Paper, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 // Enhanced transfer schema with comprehensive validation
 const transferSchema = z.object({

@@ -1,24 +1,21 @@
 // src/pages/patientAdministration/DischargePage/Components/DischargeHistoryDialog.tsx
-import React, { useMemo } from "react";
-import { Box, Typography, Paper, Grid, Chip, Avatar, Stack, Alert, Divider, Tab, Tabs } from "@mui/material";
-import {
-  History as HistoryIcon,
-  Person as PatientIcon,
-  ExitToApp as DischargeIcon,
-  MedicalServices as DoctorIcon,
-  CalendarToday as CalendarIcon,
-  Assignment as NotesIcon,
-  Home as HomeIcon,
-  LocalHospital as HospitalIcon,
-  Timeline as TimelineIcon,
-} from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
-import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
-import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDto";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
-import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
+import { IpDischargeDto } from "@/interfaces/PatientAdministration/IpDischargeDto";
+import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
+import { calculateDaysBetween, formatDt } from "@/utils/Common/dateUtils";
+import {
+  ExitToApp as DischargeIcon,
+  MedicalServices as DoctorIcon,
+  History as HistoryIcon,
+  Assignment as NotesIcon,
+  Person as PatientIcon,
+  Timeline as TimelineIcon,
+} from "@mui/icons-material";
+import { Alert, Avatar, Box, Chip, Divider, Grid, Paper, Stack, Tab, Tabs, Typography } from "@mui/material";
+import React, { useMemo } from "react";
 
 interface DischargeHistoryRecord extends IpDischargeDto {
   admissionCode?: string;

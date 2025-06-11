@@ -1,25 +1,25 @@
 // src/pages/patientAdministration/AdmissionPage/Components/AdmissionHistoryDialog.tsx
-import React, { useState, useEffect, useMemo } from "react";
-import { Box, Typography, Paper, Grid, Chip, Avatar, Divider, Tab, Tabs, CircularProgress, Alert, Stack } from "@mui/material";
-import {
-  History as HistoryIcon,
-  Person as PatientIcon,
-  Hotel as BedIcon,
-  LocalHospital as AdmissionIcon,
-  MedicalServices as DoctorIcon,
-  Timeline as TimelineIcon,
-  Receipt as BillingIcon,
-  Assignment as NotesIcon,
-  AccountBalance,
-} from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
-import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
-import { formatDt, calculateDaysBetween } from "@/utils/Common/dateUtils";
-import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
-import PeopleIcon from "@mui/icons-material/People";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
+import { AdmissionHistoryDto } from "@/interfaces/PatientAdministration/AdmissionHistoryDto";
+import { extendedAdmissionService } from "@/services/PatientAdministrationServices/admissionService";
+import { calculateDaysBetween, formatDt } from "@/utils/Common/dateUtils";
+import {
+  AccountBalance,
+  LocalHospital as AdmissionIcon,
+  Hotel as BedIcon,
+  Receipt as BillingIcon,
+  MedicalServices as DoctorIcon,
+  History as HistoryIcon,
+  Assignment as NotesIcon,
+  Person as PatientIcon,
+  Timeline as TimelineIcon,
+} from "@mui/icons-material";
+import PeopleIcon from "@mui/icons-material/People";
+import { Alert, Avatar, Box, Chip, CircularProgress, Grid, Paper, Stack, Tab, Tabs, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
 
 interface AdmissionHistoryDialogProps {
   open: boolean;
