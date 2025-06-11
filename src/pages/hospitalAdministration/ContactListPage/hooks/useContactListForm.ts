@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
-import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
 import { ContactListData, ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
 import { OperationResult } from "@/services/GenericEntityService/GenericEntityService";
+import { ContactListService } from "@/services/HospitalAdministrationServices/ContactListService/ContactListService";
+import { ContactService } from "@/services/HospitalAdministrationServices/ContactListService/ContactService";
+import { useCallback, useState } from "react";
 
 const contactService = new ContactService();
 
@@ -65,7 +65,7 @@ export const useContactList = () => {
         return {
           success: false,
           errorMessage: "Failed to save contact",
-          data: null,
+          data: {} as ContactListData,
         };
       } finally {
         setLoading(false);

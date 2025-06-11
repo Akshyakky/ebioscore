@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, FormGroup, FormControlLabel, Checkbox } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { DeptUnitAllocationDto } from "@/interfaces/HospitalAdministration/DeptUnitAllocationDto";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { useAlert } from "@/providers/AlertProvider";
-import { useDeptUnitAllocation } from "../hooks/useDeptUnitAllocation";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { DeptUnitAllocationDto } from "@/interfaces/HospitalAdministration/DeptUnitAllocationDto";
+import { useAlert } from "@/providers/AlertProvider";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Cancel, Save } from "@mui/icons-material";
+import { Alert, Box, Card, CardContent, Checkbox, Divider, FormControlLabel, FormGroup, Grid, Typography } from "@mui/material";
+import React, { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { useDeptUnitAllocation } from "../hooks/useDeptUnitAllocation";
 
 interface DeptUnitAllocationFormProps {
   open: boolean;
@@ -22,8 +22,9 @@ interface DeptUnitAllocationFormProps {
 }
 
 const formatTimeToString = (date: Date | undefined): string => {
+  if (!date) return "";
   const dateValue = new Date(date);
-  if (!date || isNaN(dateValue.getTime())) return "";
+  if (isNaN(dateValue.getTime())) return "";
   return dateValue.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
@@ -36,7 +37,7 @@ const parseTimeToDate = (time: string): Date => {
     throw new Error(`Invalid time format: ${time}`);
   }
   const [hours, minutes] = time.split(":").map(Number);
-  if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+  if (hours === undefined || minutes === undefined || isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
     throw new Error(`Invalid time values: ${time}`);
   }
   const date = new Date();
@@ -240,21 +241,21 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
       setLoading(true);
 
       const weekDaysFlags = {
-        sunYN: data.weekDays.includes("sun") ? "Y" : "N",
-        monYN: data.weekDays.includes("mon") ? "Y" : "N",
-        tueYN: data.weekDays.includes("tue") ? "Y" : "N",
-        wedYN: data.weekDays.includes("wed") ? "Y" : "N",
-        thuYN: data.weekDays.includes("thu") ? "Y" : "N",
-        friYN: data.weekDays.includes("fri") ? "Y" : "N",
-        satYN: data.weekDays.includes("sat") ? "Y" : "N",
+        sunYN: data.weekDays?.includes("sun") ? "Y" : "N",
+        monYN: data.weekDays?.includes("mon") ? "Y" : "N",
+        tueYN: data.weekDays?.includes("tue") ? "Y" : "N",
+        wedYN: data.weekDays?.includes("wed") ? "Y" : "N",
+        thuYN: data.weekDays?.includes("thu") ? "Y" : "N",
+        friYN: data.weekDays?.includes("fri") ? "Y" : "N",
+        satYN: data.weekDays?.includes("sat") ? "Y" : "N",
       };
 
       const occurrencesFlags = {
-        occurance1YN: data.occurrences.includes("1") ? "Y" : "N",
-        occurance2YN: data.occurrences.includes("2") ? "Y" : "N",
-        occurance3YN: data.occurrences.includes("3") ? "Y" : "N",
-        occurance4YN: data.occurrences.includes("4") ? "Y" : "N",
-        occurance5YN: data.occuranceAllYN === "Y" ? "Y" : data.occurrences.includes("5") ? "Y" : "N",
+        occurance1YN: data.occurrences?.includes("1") ? "Y" : "N",
+        occurance2YN: data.occurrences?.includes("2") ? "Y" : "N",
+        occurance3YN: data.occurrences?.includes("3") ? "Y" : "N",
+        occurance4YN: data.occurrences?.includes("4") ? "Y" : "N",
+        occurance5YN: data.occuranceAllYN === "Y" ? "Y" : data.occurrences?.includes("5") ? "Y" : "N",
       };
 
       const uASTIME = parseTimeToDate(data.uASTIME);
@@ -441,7 +442,7 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
                         required
                         disabled={viewOnly}
                         size="small"
-                        options={department}
+                        options={department || []}
                         fullWidth
                         onChange={(value) => {
                           const selectedDept = department?.find((dept) => Number(dept.value) === Number(value.value));
@@ -460,7 +461,7 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
                         required
                         disabled={viewOnly || !deptID}
                         size="small"
-                        options={filteredUnitList}
+                        options={filteredUnitList || []}
                         fullWidth
                         onChange={(value) => {
                           const selectedUnit = filteredUnitList?.find((unit) => Number(unit.value) === Number(value.value));
@@ -485,10 +486,10 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
                       <FormField name="fullDay" control={control} label="Full Day" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 12, md: 6 }}>
-                      <FormField name="uASTIME" control={control} label="Start Time" type="timepicker" required disabled={viewOnly || fullDay} size="small" fullWidth />
+                      <FormField name="uASTIME" control={control} label="Start Time" type="timepicker" required disabled={viewOnly || fullDay || !isValid} size="small" fullWidth />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 12, md: 6 }}>
-                      <FormField name="uAETIME" control={control} label="End Time" type="timepicker" required disabled={viewOnly || fullDay} size="small" fullWidth />
+                      <FormField name="uAETIME" control={control} label="End Time" type="timepicker" required disabled={viewOnly || fullDay || !isValid} size="small" fullWidth />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 12 }}>
                       <FormField
@@ -499,7 +500,7 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
                         required
                         disabled={viewOnly}
                         size="small"
-                        options={facultyList}
+                        options={facultyList || []}
                         fullWidth
                         onChange={(value) => {
                           const selectedFaculty = facultyList?.find((faculty) => Number(faculty.value) === Number(value.value));
@@ -528,7 +529,7 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
                         type="select"
                         disabled={viewOnly}
                         size="small"
-                        options={roomList}
+                        options={roomList || []}
                         fullWidth
                         onChange={(value) => {
                           const selectedRoom = roomList?.find((room) => Number(room.value) === Number(value.value));
@@ -544,7 +545,7 @@ const DeptUnitAllocationForm: React.FC<DeptUnitAllocationFormProps> = ({ open, o
                         type="select"
                         disabled={viewOnly}
                         size="small"
-                        options={resourceList}
+                        options={resourceList || []}
                         fullWidth
                         onChange={(value) => {
                           const selectedResource = resourceList?.find((resource) => Number(resource.value) === Number(value.value));

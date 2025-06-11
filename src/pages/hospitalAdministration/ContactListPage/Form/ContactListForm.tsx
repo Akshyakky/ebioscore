@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { ContactListData, ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import CustomSwitch from "@/components/Checkbox/ColorSwitch";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { useAlert } from "@/providers/AlertProvider";
 import { useServerDate } from "@/hooks/Common/useServerDate";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import ModifiedFieldDialog from "@/components/ModifiedFieldDailog/ModifiedFieldDailog";
+import { ContactListData, ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
+import { useAlert } from "@/providers/AlertProvider";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Cancel, Save } from "@mui/icons-material";
+import { Alert, Box, Card, CardContent, Divider, Grid, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { useContactList } from "../hooks/useContactListForm";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 
 interface ContactListFormProps {
   open: boolean;
@@ -158,19 +158,19 @@ const ContactListForm: React.FC<ContactListFormProps> = ({ open, onClose, initia
             const contactAddress = details.contactAddressDto;
             reset({
               conID: contactMast.conID,
-              conCode: contactMast.conCode,
-              conTitle: contactMast.conTitle,
-              conFName: contactMast.conFName,
-              conLName: contactMast.conLName,
+              conCode: contactMast.conCode || "",
+              conTitle: contactMast.conTitle || "",
+              conFName: contactMast.conFName || "",
+              conLName: contactMast.conLName || "",
               conMName: contactMast.conMName || "",
               conDob: new Date(contactMast.conDob),
-              conGender: contactMast.conGender,
+              conGender: contactMast.conGender || "",
               conSSNID: contactMast.conSSNID || "",
               conBldGrp: contactMast.conBldGrp || "",
-              conCat: contactMast.conCat,
-              consValue: contactMast.consValue,
-              rActiveYN: contactMast.rActiveYN,
-              transferYN: contactMast.transferYN,
+              conCat: contactMast.conCat || "",
+              consValue: contactMast.consValue || "",
+              rActiveYN: contactMast.rActiveYN || "Y",
+              transferYN: contactMast.transferYN || "N",
               rNotes: contactMast.rNotes || "",
               cAddPhone1: contactAddress?.cAddPhone1 || "",
               cAddCity: contactAddress?.cAddCity || "",

@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
-import { useBreakList } from "./useBreakList";
+import { BreakConSuspendData, BreakDto } from "@/interfaces/FrontOffice/BreakListData";
+import { useAlert } from "@/providers/AlertProvider";
+import { useCallback, useState } from "react";
 import { useBreakConDetails } from "./useBreakConDetails";
 import { useBreakConSuspend } from "./useBreakConSuspend";
-import { BreakDto, BreakConSuspendData } from "@/interfaces/FrontOffice/BreakListData";
-import { useAlert } from "@/providers/AlertProvider";
+import { useBreakList } from "./useBreakList";
 
 /**
  * Composite hook that combines all break-related operations
@@ -46,7 +46,7 @@ export const useBreakListOperations = () => {
         const suspendData = await breakConSuspendHook.getSuspendDataByBreakAndHP(breakItem.bLID, breakItem.hPLID);
 
         const newSuspendData: BreakConSuspendData = {
-          bCSID: suspendData.length > 0 ? suspendData[0].bCSID : 0,
+          bCSID: suspendData.length > 0 ? suspendData[0]?.bCSID || 0 : 0,
           bLID: breakItem.bLID,
           hPLID: breakItem.hPLID,
           bLStartDate: breakItem.bLStartDate,
@@ -99,7 +99,7 @@ export const useBreakListOperations = () => {
           ...breakItem.breakList,
         } as BreakDto;
       })
-      .filter((item) => item.rActiveYN === "Y");
+      .filter((item) => item?.rActiveYN === "Y");
   }, [breakListHook.breakList, breakConSuspendHook.breakConSuspendList]);
 
   return {

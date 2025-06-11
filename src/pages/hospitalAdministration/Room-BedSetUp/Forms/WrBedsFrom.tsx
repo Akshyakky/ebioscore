@@ -1,19 +1,25 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Box, Grid, Typography, Divider, Card, CardContent, Alert, InputAdornment, CircularProgress, Tooltip, TextField } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
-import { Save, Cancel, Refresh } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { useLoading } from "@/hooks/Common/useLoading";
-import { useAlert } from "@/providers/AlertProvider";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { RoomGroupDto, RoomListDto, WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { useAlert } from "@/providers/AlertProvider";
 import { wrBedService } from "@/services/HospitalAdministrationServices/hospitalAdministrationService";
-import { SubdirectoryArrowRight as SubdirectoryArrowRightIcon, FolderSpecial as FolderSpecialIcon, MeetingRoom as MeetingRoomIcon } from "@mui/icons-material";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Cancel,
+  FolderSpecial as FolderSpecialIcon,
+  MeetingRoom as MeetingRoomIcon,
+  Refresh,
+  Save,
+  SubdirectoryArrowRight as SubdirectoryArrowRightIcon,
+} from "@mui/icons-material";
+import { Alert, Box, Card, CardContent, CircularProgress, Divider, Grid, InputAdornment, TextField, Tooltip, Typography } from "@mui/material";
+import React, { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 interface BedFormProps {
   open: boolean;
@@ -240,8 +246,8 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
         bedID: typeof data.bedID === "string" ? parseInt(data.bedID, 10) : data.bedID ?? 0,
         rlID: typeof data.rlID === "string" ? parseInt(data.rlID, 10) : data.rlID,
         rgrpID: typeof data.rgrpID === "string" ? parseInt(data.rgrpID, 10) : data.rgrpID,
-        wbCatID: data.wbCatID ? (typeof data.wbCatID === "string" ? parseInt(data.wbCatID, 10) : data.wbCatID) : null,
-        bchID: data.bchID ? (typeof data.bchID === "string" ? parseInt(data.bchID, 10) : data.bchID) : null,
+        wbCatID: data.wbCatID ? (typeof data.wbCatID === "string" ? parseInt(data.wbCatID, 10) : data.wbCatID) : 0,
+        bchID: data.bchID ? (typeof data.bchID === "string" ? parseInt(data.bchID, 10) : data.bchID) : 0,
         rActiveYN: data.rActiveYN || "Y",
         blockBedYN: data.blockBedYN || "N",
         transferYN: data.transferYN || "N",
@@ -249,8 +255,10 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
         bedStatusValue: data.bedStatusValue || "AVLBL",
         bedStatus: data.bedStatus || "Available",
         bedName: data.bedName.trim(),
-        rNotes: data.rNotes?.trim() || null,
-        bedRemarks: data.bedRemarks?.trim() || null,
+        rNotes: data.rNotes?.trim() || "",
+        bedRemarks: data.bedRemarks?.trim() || "",
+        bchName: data.bchName?.trim() || "",
+        wbCatName: data.wbCatName?.trim() || "",
       };
 
       const response = await wrBedService.save(formData);
@@ -600,7 +608,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
                             label="Room Group"
                             type="select"
                             required
-                            disabled={viewOnly || (isCradle && !isAddMode)}
+                            disabled={viewOnly || (Boolean(isCradle) && !isAddMode)}
                             size="small"
                             fullWidth
                             options={roomGroups.map((group) => ({
@@ -618,7 +626,7 @@ const BedForm: React.FC<BedFormProps> = ({ open, onClose, initialData, viewOnly 
                             label="Room"
                             type="select"
                             required
-                            disabled={viewOnly || (isCradle && !isAddMode) || !rgrpID}
+                            disabled={viewOnly || (Boolean(isCradle) && !isAddMode) || !rgrpID}
                             size="small"
                             fullWidth
                             options={filteredRoomLists.map((room) => ({

@@ -1,10 +1,10 @@
 // src/pages/hospitalAdministration/ManageBeds/Components/BedStatusDialog.tsx
-import React, { useState, useEffect } from "react";
-import { Box, Typography, Grid, Alert, RadioGroup, FormControlLabel, Radio, TextField, Chip, Paper } from "@mui/material";
-import { CheckCircle as AvailableIcon, Person as OccupiedIcon, Block as BlockIcon, Build as MaintenanceIcon, Bed as ReservedIcon } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import CustomButton from "@/components/Button/CustomButton";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { WrBedDto } from "@/interfaces/HospitalAdministration/Room-BedSetUpDto";
+import { CheckCircle as AvailableIcon, Block as BlockIcon, Build as MaintenanceIcon, Person as OccupiedIcon, Bed as ReservedIcon } from "@mui/icons-material";
+import { Alert, Box, Chip, FormControlLabel, Grid, Paper, Radio, RadioGroup, TextField, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
 
 interface BedStatusDialogProps {
   open: boolean;
@@ -256,7 +256,7 @@ const BedStatusDialog: React.FC<BedStatusDialogProps> = ({ open, onClose, onSubm
                 onChange={(e) => setRemarks(e.target.value)}
                 placeholder={statusConfig[selectedStatus]?.requiresReason ? `Please provide a reason for ${selectedStatus} status...` : "Add any additional notes or comments..."}
                 disabled={isSubmitting}
-                error={statusConfig[selectedStatus]?.requiresReason && !remarks.trim() && !!error}
+                error={Boolean(statusConfig[selectedStatus]?.requiresReason && !remarks.trim() && error)}
                 helperText={
                   statusConfig[selectedStatus]?.requiresReason ? "This field is required for the selected status" : "Optional additional information about the status change"
                 }
