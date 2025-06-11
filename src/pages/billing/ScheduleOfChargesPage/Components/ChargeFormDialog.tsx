@@ -1,21 +1,20 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Box, Typography, Grid, Paper, Divider } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Save as SaveIcon, Clear as ClearIcon } from "@mui/icons-material";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomButton from "@/components/Button/CustomButton";
 import SmartButton from "@/components/Button/SmartButton";
-import { ChargeWithAllDetailsDto, ChargeCodeGenerationDto, BChargeFacultyDto } from "@/interfaces/Billing/ChargeDto";
+import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import { BChargeFacultyDto, ChargeCodeGenerationDto, ChargeWithAllDetailsDto } from "@/interfaces/Billing/ChargeDto";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Clear as ClearIcon, Save as SaveIcon } from "@mui/icons-material";
+import { Box, Divider, Grid, Paper, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { useScheduleOfCharges } from "../hooks/useScheduleOfCharges";
-import PriceDetailsComponent from "./PriceDetailsComponent";
-import DoctorSharesComponent from "./DoctorSharesComponent";
-import ChargeAliasesComponent from "./ChargeAliasesComponent";
 import AssociatedFacultiesComponent from "./AssociatedFacultiesComponent";
-import ChargePacksComponent from "./ChargePacksComponent";
+import ChargeAliasesComponent from "./ChargeAliasesComponent";
+import DoctorSharesComponent from "./DoctorSharesComponent";
+import PriceDetailsComponent from "./PriceDetailsComponent";
 
 const chargeSchema = z.object({
   chargeID: z.number().default(0),
@@ -229,17 +228,27 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
     (chargeDetails: any[] = []) => {
       const patientGroups: Record<number, any[]> = {};
       chargeDetails.forEach((detail) => {
-        if (!patientGroups[detail.pTypeID]) {
-          patientGroups[detail.pTypeID] = [];
+        // Check if detail exists and has pTypeID property
+        if (detail && detail.pTypeID != null) {
+          const pTypeID = Number(detail.pTypeID);
+          // Ensure pTypeID is a valid number
+          if (!isNaN(pTypeID)) {
+            if (!patientGroups[pTypeID]) {
+              patientGroups[pTypeID] = [];
+            }
+            patientGroups[pTypeID].push(detail);
+          }
         }
-        patientGroups[detail.pTypeID].push(detail);
       });
+
       const gridData: PricingGridItem[] = [];
       const patientTypes = Object.keys(patientGroups).length > 0 ? Object.keys(patientGroups).map(Number) : pic.slice(0, 5).map((p) => Number(p.value));
+
       patientTypes.forEach((patientTypeId) => {
         const patientType = pic.find((p) => Number(p.value) === patientTypeId);
         const details = patientGroups[patientTypeId] || [];
         const wardCategoriesData: Record<string, any> = {};
+
         wardCategories.forEach((wc) => {
           wardCategoriesData[wc.name] = {
             DcValue: 0,
@@ -247,6 +256,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             chValue: 0,
           };
         });
+
         details.forEach((detail) => {
           const wardCategory = bedCategory.find((wc) => Number(wc.value) === detail.wCatID);
           const wcName = wardCategory?.label || getWardCategoryById(detail.wCatID);
@@ -258,6 +268,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             };
           }
         });
+
         gridData.push({
           id: `pic-${patientTypeId}`,
           picId: patientTypeId,
@@ -363,7 +374,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
       const codeData: ChargeCodeGenerationDto = {
         ChargeType: chargeTypeLabel,
         ChargeTo: watchedChargeTo,
-        ServiceGroupId: watchedServiceGroupID > 0 ? watchedServiceGroupID : undefined,
+        // ServiceGroupId: watchedServiceGroupID > 0 ? watchedServiceGroupID : undefined,
       };
       const newCode = await generateChargeCode(codeData);
       setValue("chargeCode", newCode, { shouldValidate: true, shouldDirty: true });
@@ -431,7 +442,7 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             hcValue: detail.hcValue || 0,
             chValue: detail.chValue,
             chargeStatus: detail.chargeStatus || "AC",
-            ChargePacks: (detail.ChargePacks || []).map((pack) => ({
+            ChargePacks: (detail.ChargePacks || []).map((pack: any) => ({
               chPackID: pack.chPackID || 0,
               chargeID: pack.chargeID || latestFormData.chargeID || 0,
               chDetID: pack.chDetID || detail.chDetID || 0,

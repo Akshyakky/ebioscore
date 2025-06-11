@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Chip, IconButton, FormControl, Select, MenuItem, SelectChangeEvent } from "@mui/material";
-import { ExpandMore as ExpandMoreIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import EnhancedFormField from "@/components/EnhancedFormField/EnhancedFormField";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
-import { useFieldArray, Control, useWatch } from "react-hook-form";
+import { Delete as DeleteIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Chip, FormControl, IconButton, MenuItem, Select, SelectChangeEvent, TextField, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Control, Controller, useFieldArray, useWatch } from "react-hook-form";
 
 interface DoctorShareOption {
   docShareID: number;
   chargeID: number;
   conID: string;
-  doctorShare?: number | null;
+  doctorShare?: number;
   hospShare?: number | null;
   doctorName: string;
   index: number;
@@ -168,16 +167,27 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
       visible: true,
       width: 180,
       render: (item) => (
-        <EnhancedFormField
+        <Controller
           name={`DoctorShares.${item.index}.doctorShare`}
           control={control}
-          type="number"
-          size="small"
-          onChange={(value) => handleDoctorShareChange(item.index, value)}
-          ref={(fieldProps: any) => {
-            if (fieldProps && fieldProps.field) {
-              fieldRefsRef.current.set(`doctorShare_${item.index}`, fieldProps.field);
-            }
+          render={({ field }) => {
+            // Store field reference for cross-field updates
+            fieldRefsRef.current.set(`doctorShare_${item.index}`, field);
+
+            return (
+              <TextField
+                {...field}
+                type="number"
+                size="small"
+                fullWidth
+                value={field.value || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  field.onChange(value);
+                  handleDoctorShareChange(item.index, value);
+                }}
+              />
+            );
           }}
         />
       ),
@@ -188,16 +198,27 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
       visible: true,
       width: 180,
       render: (item) => (
-        <EnhancedFormField
+        <Controller
           name={`DoctorShares.${item.index}.hospShare`}
           control={control}
-          type="number"
-          size="small"
-          onChange={(value) => handleHospitalShareChange(item.index, value)}
-          ref={(fieldProps: any) => {
-            if (fieldProps && fieldProps.field) {
-              fieldRefsRef.current.set(`hospShare_${item.index}`, fieldProps.field);
-            }
+          render={({ field }) => {
+            // Store field reference for cross-field updates
+            fieldRefsRef.current.set(`hospShare_${item.index}`, field);
+
+            return (
+              <TextField
+                {...field}
+                type="number"
+                size="small"
+                fullWidth
+                value={field.value || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  field.onChange(value);
+                  handleHospitalShareChange(item.index, value);
+                }}
+              />
+            );
           }}
         />
       ),
