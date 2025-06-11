@@ -78,7 +78,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
   const [selectedComponent, setSelectedComponent] = useState<LComponentDto | null>(null);
   const [selectedComponentIndex, setSelectedComponentIndex] = useState<number>(-1);
   const [components, setComponents] = useState<LComponentDto[]>([]);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const sampleTypes = [
     { value: 1, code: "LAB", label: "Laboratory" },
     { value: 2, code: "RAD", label: "Radiology" },
@@ -114,7 +113,7 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isDirty, isValid },
+    formState: { isDirty, isValid },
     watch,
   } = useForm<InvestigationFormData>({
     defaultValues,
@@ -126,7 +125,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     if (!isAddMode) return;
 
     try {
-      setIsGeneratingCode(true);
       const nextCode = await getNextCode("INV", 6);
       if (nextCode) {
         setValue("invCode", nextCode, { shouldValidate: true, shouldDirty: true });
@@ -136,7 +134,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     } catch (error) {
       console.error("Error generating investigation code:", error);
     } finally {
-      setIsGeneratingCode(false);
     }
   }, [isAddMode, getNextCode, setValue, showAlert]);
 
@@ -249,6 +246,7 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
       setIsSaving(false);
       setLoading(false);
     }
+    return;
   };
 
   const performReset = () => {
@@ -461,10 +459,10 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                           {components.map((component, index) => (
                             <TableRow key={index}>
                               <TableCell>{index + 1}</TableCell>
-                              <TableCell>{component.compoNameCD}</TableCell>
-                              <TableCell>{component.compUnitCD || "-"}</TableCell>
+                              <TableCell>{component.compoName}</TableCell>
+                              <TableCell>{component.compUnit || "-"}</TableCell>
                               <TableCell>{component.compOrder || "-"}</TableCell>
-                              <TableCell>{component.lCentNameCD || "-"}</TableCell>
+                              <TableCell>{component.lCentName || "-"}</TableCell>
                               <TableCell>
                                 <Chip size="small" color={component.rActiveYN === "Y" ? "success" : "error"} label={component.rActiveYN === "Y" ? "Active" : "Inactive"} />
                               </TableCell>

@@ -1,14 +1,15 @@
 import SmartButton from "@/components/Button/SmartButton";
 import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import { LCompMultipleDto, LComponentDto } from "@/interfaces/Laboratory/InvestigationListDto";
+import { LComponentDto } from "@/interfaces/Laboratory/InvestigationListDto";
+import { LCompMultipleDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Box, Divider, Grid, Typography } from "@mui/material";
 import React, { useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
-import MultipleSelectionForm from "./MultipleSelectionForm";
+import MultipleSelectionEntryType, { multipleEntrySchema } from "../SubPage/MultipleSelectionEntryType";
 
 interface ComponentFormProps {
   open: boolean;
@@ -17,19 +18,6 @@ interface ComponentFormProps {
   initialData: LComponentDto | null;
   invID: number;
 }
-
-// Define schema for multiple values entry
-const multipleEntrySchema = z.object({
-  cmID: z.number(),
-  cmValues: z.string().nonempty("Value is required"),
-  compoID: z.number().optional().nullable(),
-  invID: z.number().optional().nullable(),
-  defaultYN: z.string().optional().nullable(),
-  rActiveYN: z.string().optional().nullable(),
-  transferYN: z.string().optional().nullable(),
-  rNotes: z.string().optional().nullable(),
-  isEditing: z.boolean().optional(),
-});
 
 // Main schema
 const schema = z.object({
@@ -111,6 +99,27 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
     control,
     name: "lCompMultipleDto",
   });
+  const multipleFields = fields.map((field) => ({
+    ...field,
+    cmID: field.cmID || 0,
+    cmValues: field.cmValues || "",
+    compoID: field.compoID || 0,
+    invID: field.invID || 0,
+    defaultYN: field.defaultYN || "N",
+    rActiveYN: field.rActiveYN || "Y",
+    transferYN: field.transferYN || "N",
+    rNotes: field.rNotes || "",
+    isEditing: field.isEditing || false,
+  }));
+
+  // Create typed append/update functions
+  const typedAppend = (value: LCompMultipleDto) => {
+    append(value as any);
+  };
+
+  const typedUpdate = (index: number, value: LCompMultipleDto) => {
+    update(index, value as any);
+  };
 
   // Watch lCentID to show/hide multiple values section
   const watchedLCentID = watch("lCentID");
@@ -172,8 +181,9 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
       rActiveYN: data.rActiveYN || "Y",
       transferYN: data.transferYN || "N",
       rNotes: data.rNotes || "",
-      lCompMultipleDto: (watchedLCentID === 5 ? data.lCompMultipleDto : []) as LCompMultipleDto[],
+      lCompMultipleDto: (watchedLCentID === 5 ? multipleFields : []) as LCompMultipleDto[],
     };
+    console.log(componentData);
     onSave(componentData);
   };
 
@@ -273,7 +283,9 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
           </Grid>
 
           {/* Multiple Values Section */}
-          {watchedLCentID === 5 && <MultipleSelectionForm />}
+          {watchedLCentID === 5 && (
+            <MultipleSelectionEntryType invID={invID} compoID={watch("compoID") || 0} fields={multipleFields} append={typedAppend} update={typedUpdate} remove={remove} />
+          )}
 
           {/* Notes */}
           <Grid size={{ sm: 12 }}>

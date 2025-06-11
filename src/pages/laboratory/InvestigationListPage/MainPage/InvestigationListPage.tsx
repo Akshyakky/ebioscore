@@ -2,7 +2,6 @@ import SmartButton from "@/components/Button/SmartButton";
 import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
 import { InvestigationListDto } from "@/interfaces/Laboratory/InvestigationListDto";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
@@ -37,7 +36,6 @@ const sampleOptions = [
 
 const InvestigationListPage: React.FC = () => {
   const { showAlert } = useAlert();
-  const { department } = useDropdownValues(["department"]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedInvestigation, setSelectedInvestigation] = useState<InvestigationListDto | null>(null);
