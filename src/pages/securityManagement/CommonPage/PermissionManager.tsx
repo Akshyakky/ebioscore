@@ -321,7 +321,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
     } else {
       setIsSelectAll(!selectAllChecked);
       setValue("selectAll", !selectAllChecked ? "Y" : "N");
-      showErrorAlert("Error", "Permission not applied!");
+      showSuccessAlert("Error", "Permission not applied!");
     }
     fetchPermissions(mainId, subId);
   };

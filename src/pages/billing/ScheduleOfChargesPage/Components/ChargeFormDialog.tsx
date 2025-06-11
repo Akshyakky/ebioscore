@@ -712,20 +712,19 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             bedCategory={bedCategory}
           />
 
-          <DoctorSharesComponent
-            control={control}
-            expanded={doctorSharesExpanded}
-            onToggleExpand={() => setDoctorSharesExpanded(!doctorSharesExpanded)}
-            attendingPhy={attendingPhy}
-            doctorShareEnabled={watchedDoctorShareYN === "Y"}
-          />
-
           <ChargeAliasesComponent
             control={control}
             expanded={aliasesExpanded}
             onToggleExpand={() => setAliasesExpanded(!aliasesExpanded)}
             pic={pic}
             onUpdateFunction={(updateFn) => handleRegisterUpdateFunction("chargeAliases", updateFn)}
+          />
+          <DoctorSharesComponent
+            control={control}
+            expanded={doctorSharesExpanded}
+            onToggleExpand={() => setDoctorSharesExpanded(!doctorSharesExpanded)}
+            attendingPhy={attendingPhy}
+            doctorShareEnabled={watchedDoctorShareYN === "Y"}
           />
         </form>
       </Box>

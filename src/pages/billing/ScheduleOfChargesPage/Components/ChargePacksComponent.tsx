@@ -347,15 +347,7 @@ const ChargePacksComponent: React.FC<ChargePacksComponentProps> = ({ control, ex
           )}
 
           {chargePacks.length > 0 ? (
-            <CustomGrid
-              columns={columns}
-              data={chargePacks}
-              maxHeight="400px"
-              density="small"
-              showDensityControls={false}
-              pagination={false}
-              // onRowClick={(item, rowIndex) => editPack(rowIndex)}
-            />
+            <CustomGrid columns={columns} data={chargePacks} maxHeight="400px" density="small" showDensityControls={false} pagination={false} />
           ) : (
             <Alert severity="info">
               No charge packs configured. Charge packs allow you to define different versions of a charge with effective dates for price changes or seasonal rates.
