@@ -18,8 +18,11 @@ interface ComponentFormProps {
 }
 
 const schema = z.object({
-  invID: z.number(),
-  invName: z.string().nonempty("Investigation name is required"),
+  compoID: z.number().optional().nullable(),
+  compoCode: z.string().optional().nullable(),
+  compoName: z.string().nonempty("Component name is required"),
+  compoTitle: z.string().optional().nullable(),
+  invID: z.number().optional().nullable(),
   mGrpID: z.number().optional().nullable(),
   mGrpName: z.string().optional().nullable(),
   stitID: z.number().optional().nullable(),
@@ -27,22 +30,17 @@ const schema = z.object({
   compInterpret: z.string().optional().nullable(),
   compUnit: z.string().optional().nullable(),
   compOrder: z.number().optional().nullable(),
-  lCentID: z.number().min(1, "Entry type is required"),
-  lCentName: z.string(),
-  lCentType: z.string(),
-  compDetailYN: z.string(),
+  lCentID: z.number().optional().nullable(),
+  lCentName: z.string().optional().nullable(),
+  lCentType: z.string().optional().nullable(),
+  compDetailYN: z.string().optional().nullable(),
   deltaValPercent: z.number().optional().nullable(),
-  compoCode: z.string().optional().nullable(),
-  compoID: z.number().min(1, "Component is required"),
-  compoName: z.string(),
-  compoTitle: z.string().optional().nullable(),
-  invCode: z.string().optional().nullable(),
   cNHSCode: z.string().optional().nullable(),
   cNHSEnglishName: z.string().optional().nullable(),
   cNHSGreekName: z.string().optional().nullable(),
   cShortName: z.string().optional().nullable(),
-  rActiveYN: z.string(),
-  transferYN: z.string(),
+  rActiveYN: z.string().optional().nullable(),
+  transferYN: z.string().optional().nullable(),
   rNotes: z.string().optional().nullable(),
 });
 
@@ -52,8 +50,11 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
   const [entryTypes, setEntryTypes] = React.useState<any[]>([]);
 
   const defaultValues: ComponentFormData = {
+    compoID: 0,
+    compoCode: "",
+    compoName: "",
+    compoTitle: "",
     invID: invID,
-    invName: "",
     mGrpID: null,
     mGrpName: "",
     stitID: null,
@@ -66,11 +67,6 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
     lCentType: "",
     compDetailYN: "N",
     deltaValPercent: null,
-    compoCode: "",
-    compoID: 0,
-    compoName: "",
-    compoTitle: "",
-    invCode: "",
     cNHSCode: "",
     cNHSEnglishName: "",
     cNHSGreekName: "",
@@ -122,8 +118,11 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
   const onSubmit = (data: ComponentFormData) => {
     const componentData: LComponentDto = {
       ...data,
+      compoID: data.compoID || 0,
+      compoCode: data.compoCode || "",
+      compoName: data.compoName || "",
+      compoTitle: data.compoTitle || "",
       invID: invID,
-      invName: data.invName || "",
       mGrpID: data.mGrpID || 0,
       mGrpName: data.mGrpName || "",
       stitID: data.stitID || 0,
@@ -136,11 +135,6 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
       lCentType: data.lCentType || "",
       compDetailYN: data.compDetailYN || "",
       deltaValPercent: data.deltaValPercent || 0,
-      compoCode: data.compoCode || "",
-      compoID: data.compoID || 0,
-      compoName: data.compoName || "",
-      compoTitle: data.compoTitle || "",
-      invCode: data.invCode || "",
       cNHSCode: data.cNHSCode || "",
       cNHSEnglishName: data.cNHSEnglishName || "",
       cNHSGreekName: data.cNHSGreekName || "",
@@ -176,17 +170,17 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
             <Divider sx={{ mb: 2 }} />
 
             <Grid container spacing={2}>
+              <Grid size={{ sm: 12, md: 4 }}>
+                <FormField name="compoCode" control={control} label="Component Code" type="text" required size="small" fullWidth />
+              </Grid>
               <Grid size={{ sm: 12, md: 8 }}>
-                <FormField name="compoNameCD" control={control} label="Component Name" type="text" required size="small" fullWidth />
+                <FormField name="compoName" control={control} label="Component Name" type="text" required size="small" fullWidth />
               </Grid>
               <Grid size={{ sm: 12, md: 4 }}>
-                <FormField name="compOrder" control={control} label="Display Order" type="number" size="small" fullWidth />
+                <FormField name="cShortName" control={control} label="Short Name" type="text" size="small" fullWidth />
               </Grid>
-              <Grid size={{ sm: 12, md: 6 }}>
-                <FormField name="compoTitleCD" control={control} label="Component Title" type="text" size="small" fullWidth />
-              </Grid>
-              <Grid size={{ sm: 12, md: 6 }}>
-                <FormField name="cShortNameCD" control={control} label="Short Name" type="text" size="small" fullWidth />
+              <Grid size={{ sm: 12, md: 8 }}>
+                <FormField name="compoTitle" control={control} label="Component Title" type="text" size="small" fullWidth />
               </Grid>
             </Grid>
           </Grid>
@@ -219,9 +213,11 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
                 />
               </Grid>
               <Grid size={{ sm: 12, md: 6 }}>
-                <FormField name="compUnitCD" control={control} label="Unit" type="text" size="small" fullWidth />
+                <FormField name="compInterpret" control={control} label="Interpretation" type="text" size="small" fullWidth />
               </Grid>
-              <Grid size={{ sm: 12, md: 6 }}></Grid>
+              <Grid size={{ sm: 12, md: 6 }}>
+                <FormField name="compoi" control={control} label="Unit" type="text" size="small" fullWidth />
+              </Grid>
               <Grid size={{ sm: 12, md: 6 }}>
                 <FormField name="deltaValPercent" control={control} label="Delta Value (%)" type="number" size="small" fullWidth />
               </Grid>

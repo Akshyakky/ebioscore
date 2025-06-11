@@ -55,7 +55,7 @@ const schema = z.object({
   invNHCode: z.string().optional(),
   invNHEnglishName: z.string().optional(),
   invNHGreekName: z.string().optional(),
-  invSampleType: z.string().optional(),
+  invSampleType: z.number().optional(),
   invShortName: z.string().optional(),
   methods: z.string().optional(),
   coopLabs: z.string().optional(),
@@ -79,7 +79,11 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
   const [selectedComponentIndex, setSelectedComponentIndex] = useState<number>(-1);
   const [components, setComponents] = useState<LComponentDto[]>([]);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
-
+  const sampleTypes = [
+    { value: 1, code: "LAB", label: "Laboratory" },
+    { value: 2, code: "RAD", label: "Radiology" },
+    { value: 3, code: "UTS", label: "Ultrasound" },
+  ];
   const isAddMode = !initialData;
 
   const defaultValues: InvestigationFormData = {
@@ -97,7 +101,7 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     invNHCode: "",
     invNHEnglishName: "",
     invNHGreekName: "",
-    invSampleType: "",
+    invSampleType: 0,
     invShortName: "",
     methods: "",
     coopLabs: "",
@@ -220,7 +224,8 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
         lInvMastDto: investigationData,
         lComponentsDto: components,
       };
-
+      console.log("Save", investigationListData);
+      return;
       const response = await saveInvestigation(investigationListData);
 
       if (response.success) {
@@ -340,14 +345,14 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                     <Grid size={{ sm: 12, md: 8 }}>
                       <FormField name="invName" control={control} label="Investigation Name" type="text" required disabled={viewOnly} size="small" fullWidth />
                     </Grid>
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="invTitle" control={control} label="Title" type="text" disabled={viewOnly} size="small" fullWidth />
-                    </Grid>
-                    <Grid size={{ sm: 12, md: 6 }}>
+                    <Grid size={{ sm: 12, md: 4 }}>
                       <FormField name="invShortName" control={control} label="Short Name" type="text" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
-                    <Grid size={{ sm: 12, md: 4 }}>
-                      <FormField name="invPrintOrder" control={control} label="Print Order" type="number" disabled={viewOnly} size="small" fullWidth />
+                    <Grid size={{ sm: 12, md: 8 }}>
+                      <FormField name="invTitle" control={control} label="Title" type="text" disabled={viewOnly} size="small" fullWidth />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 12 }}>
+                      <FormField name="rNotes" control={control} label="Comments" type="text" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -365,7 +370,7 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
 
                   <Grid container spacing={2}>
                     <Grid size={{ sm: 12, md: 3 }}>
-                      <FormField name="invReportYN" control={control} label="Report Required" type="switch" disabled={viewOnly} size="small" />
+                      <FormField name="invReportYN" control={control} label="Report Entry Required" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="invSampleYN" control={control} label="Sample Required" type="switch" disabled={viewOnly} size="small" />
@@ -373,10 +378,44 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                     <Grid size={{ sm: 12, md: 3 }}>
                       <FormField name="rActiveYN" control={control} label="Active" type="switch" disabled={viewOnly} size="small" />
                     </Grid>
-                    <Grid size={{ sm: 12, md: 6 }}>
-                      <FormField name="invSampleType" control={control} label="Sample Type" type="text" disabled={viewOnly} size="small" fullWidth />
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <FormField
+                        name="bchID"
+                        control={control}
+                        label="Investigation Type"
+                        type="select"
+                        required
+                        disabled={viewOnly}
+                        size="small"
+                        options={sampleTypes}
+                        fullWidth
+                        onChange={(value) => {
+                          const selectedType = sampleTypes.find((type) => Number(type.value) === Number(value.value));
+                          if (selectedType) {
+                            setValue("invType", selectedType.label);
+                            setValue("invTypeCode", selectedType.code);
+                          }
+                        }}
+                      />
                     </Grid>
-                    <Grid size={{ sm: 12, md: 6 }}>
+                    <Grid size={{ sm: 12, md: 4 }}>
+                      <FormField
+                        name="invSampleType"
+                        control={control}
+                        label="Sample Type"
+                        type="select"
+                        required
+                        disabled={viewOnly}
+                        size="small"
+                        options={[
+                          { value: 1, label: "Blood" },
+                          { value: 2, label: "Urine" },
+                          { value: 3, label: "Stool" },
+                        ]}
+                        fullWidth
+                      />
+                    </Grid>
+                    <Grid size={{ sm: 12, md: 4 }}>
                       <FormField name="methods" control={control} label="Methods" type="text" disabled={viewOnly} size="small" fullWidth />
                     </Grid>
                   </Grid>

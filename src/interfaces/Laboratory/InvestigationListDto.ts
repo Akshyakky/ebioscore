@@ -20,7 +20,7 @@ export interface LInvMastDto extends BaseDto {
   invNHCode?: string;
   invNHEnglishName?: string;
   invNHGreekName?: string;
-  invSampleType?: string;
+  invSampleType?: number;
   invShortName?: string;
   methods?: string;
   coopLabs?: string;
@@ -29,8 +29,11 @@ export interface LInvMastDto extends BaseDto {
 }
 
 export interface LComponentDto extends BaseDto {
+  compoID: number;
+  compoCode?: string;
+  compoName: string;
+  compoTitle?: string;
   invID: number;
-  invName: string;
   mGrpID?: number;
   mGrpName?: string;
   stitID?: number;
@@ -43,11 +46,6 @@ export interface LComponentDto extends BaseDto {
   lCentType: string;
   compDetailYN: string;
   deltaValPercent?: number;
-  compoCode?: string;
-  compoID: number;
-  compoName?: string;
-  compoTitle?: string;
-  invCode?: string;
   cNHSCode?: string;
   cNHSEnglishName?: string;
   cNHSGreekName?: string;
