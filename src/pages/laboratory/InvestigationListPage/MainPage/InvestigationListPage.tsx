@@ -1,24 +1,23 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Box, Typography, Paper, Grid, TextField, InputAdornment, IconButton, Chip, Stack, Tooltip } from "@mui/material";
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-  Close as CloseIcon,
-} from "@mui/icons-material";
-import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import SmartButton from "@/components/Button/SmartButton";
+import CustomGrid, { Column } from "@/components/CustomGrid/CustomGrid";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
 import { InvestigationListDto } from "@/interfaces/Laboratory/InvestigationListDto";
-import InvestigationForm from "../Form/InvestigationForm";
-import { useInvestigationList } from "../hooks/useInvestigationList";
 import { useAlert } from "@/providers/AlertProvider";
 import { debounce } from "@/utils/Common/debounceUtils";
-import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
+import {
+  Add as AddIcon,
+  Close as CloseIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  Refresh as RefreshIcon,
+  Search as SearchIcon,
+  Visibility as VisibilityIcon,
+} from "@mui/icons-material";
+import { Box, Chip, Grid, IconButton, InputAdornment, Paper, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import InvestigationForm from "../Form/InvestigationForm";
+import { useInvestigationList } from "../hooks/useInvestigationList";
 
 const statusOptions = [
   { value: "active", label: "Active" },
@@ -37,7 +36,6 @@ const sampleOptions = [
 
 const InvestigationListPage: React.FC = () => {
   const { showAlert } = useAlert();
-  const { department } = useDropdownValues(["department"]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const [selectedInvestigation, setSelectedInvestigation] = useState<InvestigationListDto | null>(null);
@@ -49,12 +47,10 @@ const InvestigationListPage: React.FC = () => {
   const { investigationList, isLoading, error, fetchInvestigationList, deleteInvestigation } = useInvestigationList();
   const [filters, setFilters] = useState<{
     status: string;
-    department: string;
     report: string;
     sample: string;
   }>({
     status: "",
-    department: "",
     report: "",
     sample: "",
   });
@@ -148,15 +144,22 @@ const InvestigationListPage: React.FC = () => {
   const handleClearFilters = useCallback(() => {
     setFilters({
       status: "",
-      department: "",
       report: "",
       sample: "",
     });
   }, []);
 
+  // Ensure investigationList is always an array
+  const normalizedInvestigationList = useMemo(() => {
+    if (!investigationList) return [];
+    if (Array.isArray(investigationList)) return investigationList;
+    // If it's a single object, wrap it in an array
+    return [investigationList];
+  }, [investigationList]);
+
   // Calculate stats for the dashboard
   const stats = useMemo(() => {
-    if (!investigationList.length) {
+    if (!normalizedInvestigationList.length) {
       return {
         totalInvestigations: 0,
         activeInvestigations: 0,
@@ -166,26 +169,26 @@ const InvestigationListPage: React.FC = () => {
         totalComponents: 0,
       };
     }
-    const activeCount = investigationList.filter((inv) => inv.lInvMastDto?.rActiveYN === "Y").length;
-    const withReportCount = investigationList.filter((inv) => inv.lInvMastDto?.invReportYN === "Y").length;
-    const withSampleCount = investigationList.filter((inv) => inv.lInvMastDto?.invSampleYN === "Y").length;
-    const totalComponentsCount = investigationList.reduce((sum, inv) => sum + (inv.lComponentsDto?.length || 0), 0);
+    const activeCount = normalizedInvestigationList.filter((inv) => inv.lInvMastDto?.rActiveYN === "Y").length;
+    const withReportCount = normalizedInvestigationList.filter((inv) => inv.lInvMastDto?.invReportYN === "Y").length;
+    const withSampleCount = normalizedInvestigationList.filter((inv) => inv.lInvMastDto?.invSampleYN === "Y").length;
+    const totalComponentsCount = normalizedInvestigationList.reduce((sum, inv) => sum + (inv.lComponentsDto?.length || 0), 0);
 
     return {
-      totalInvestigations: investigationList.length,
+      totalInvestigations: normalizedInvestigationList.length,
       activeInvestigations: activeCount,
-      inactiveInvestigations: investigationList.length - activeCount,
+      inactiveInvestigations: normalizedInvestigationList.length - activeCount,
       withReport: withReportCount,
       withSample: withSampleCount,
       totalComponents: totalComponentsCount,
     };
-  }, [investigationList]);
+  }, [normalizedInvestigationList]);
 
   // Apply filters to the list
   const filteredInvestigations = useMemo(() => {
-    if (!investigationList.length) return [];
+    if (!normalizedInvestigationList.length) return [];
 
-    return investigationList.filter((investigation) => {
+    return normalizedInvestigationList.filter((investigation) => {
       const inv = investigation.lInvMastDto;
       if (!inv) return false;
 
@@ -198,15 +201,13 @@ const InvestigationListPage: React.FC = () => {
 
       const matchesStatus = filters.status === "" || (filters.status === "active" && inv.rActiveYN === "Y") || (filters.status === "inactive" && inv.rActiveYN === "N");
 
-      const matchesDepartment = filters.department === "" || inv.deptID === Number(filters.department);
-
       const matchesReport = filters.report === "" || (filters.report === "yes" && inv.invReportYN === "Y") || (filters.report === "no" && inv.invReportYN === "N");
 
       const matchesSample = filters.sample === "" || (filters.sample === "yes" && inv.invSampleYN === "Y") || (filters.sample === "no" && inv.invSampleYN === "N");
 
-      return matchesSearch && matchesStatus && matchesDepartment && matchesReport && matchesSample;
+      return matchesSearch && matchesStatus && matchesReport && matchesSample;
     });
-  }, [investigationList, debouncedSearchTerm, filters]);
+  }, [normalizedInvestigationList, debouncedSearchTerm, filters]);
 
   const renderStatsDashboard = () => (
     <Paper sx={{ p: 2, mb: 2 }}>
@@ -249,42 +250,46 @@ const InvestigationListPage: React.FC = () => {
     </Paper>
   );
 
+  console.log("investigationList", investigationList);
+  console.log("normalizedInvestigationList", normalizedInvestigationList);
+  console.log("filteredInvestigations", filteredInvestigations);
+
   const columns: Column<InvestigationListDto>[] = [
     {
-      key: "lInvMastDto.invCode",
+      key: "invCode",
       header: "Code",
       visible: true,
       sortable: true,
       filterable: true,
       width: 120,
-      formatter: (value: any, item: InvestigationListDto) => item.lInvMastDto?.invCode || "-",
+      formatter: (_value: any, item: InvestigationListDto) => item.lInvMastDto?.invCode || "-",
     },
     {
-      key: "lInvMastDto.invName",
+      key: "invName",
       header: "Investigation Name",
       visible: true,
       sortable: true,
       filterable: true,
       width: 250,
-      formatter: (value: any, item: InvestigationListDto) => item.lInvMastDto?.invName || "-",
+      formatter: (_value: any, item: InvestigationListDto) => item.lInvMastDto?.invName || "-",
     },
     {
-      key: "lInvMastDto.invShortName",
+      key: "invShortName",
       header: "Short Name",
       visible: true,
       sortable: true,
       filterable: true,
       width: 150,
-      formatter: (value: any, item: InvestigationListDto) => item.lInvMastDto?.invShortName || "-",
+      formatter: (_value: any, item: InvestigationListDto) => item.lInvMastDto?.invShortName || "-",
     },
     {
-      key: "lInvMastDto.deptName",
-      header: "Department",
+      key: "invType",
+      header: "Type",
       visible: true,
       sortable: true,
       filterable: true,
       width: 150,
-      formatter: (value: any, item: InvestigationListDto) => item.lInvMastDto?.deptName || "-",
+      formatter: (_value: any, item: InvestigationListDto) => item.lInvMastDto?.invType || "-",
     },
     {
       key: "componentCount",
@@ -292,38 +297,38 @@ const InvestigationListPage: React.FC = () => {
       visible: true,
       sortable: true,
       width: 120,
-      formatter: (value: any, item: InvestigationListDto) => <Chip size="small" label={`${item.lComponentsDto?.length || 0} items`} color="primary" variant="outlined" />,
+      formatter: (_value: any, item: InvestigationListDto) => <Chip size="small" label={`${item.lComponentsDto?.length || 0} items`} color="primary" variant="outlined" />,
     },
     {
-      key: "lInvMastDto.invReportYN",
+      key: "invReportYN",
       header: "Report",
       visible: true,
       sortable: true,
       filterable: true,
       width: 100,
-      formatter: (value: any, item: InvestigationListDto) => (
+      formatter: (_value: any, item: InvestigationListDto) => (
         <Chip size="small" color={item.lInvMastDto?.invReportYN === "Y" ? "success" : "default"} label={item.lInvMastDto?.invReportYN === "Y" ? "Yes" : "No"} />
       ),
     },
     {
-      key: "lInvMastDto.invSampleYN",
+      key: "invSampleYN",
       header: "Sample",
       visible: true,
       sortable: true,
       filterable: true,
       width: 100,
-      formatter: (value: any, item: InvestigationListDto) => (
+      formatter: (_value: any, item: InvestigationListDto) => (
         <Chip size="small" color={item.lInvMastDto?.invSampleYN === "Y" ? "warning" : "default"} label={item.lInvMastDto?.invSampleYN === "Y" ? "Yes" : "No"} />
       ),
     },
     {
-      key: "lInvMastDto.rActiveYN",
+      key: "rActiveYN",
       header: "Status",
       visible: true,
       sortable: true,
       filterable: true,
       width: 100,
-      formatter: (value: any, item: InvestigationListDto) => (
+      formatter: (_value: any, item: InvestigationListDto) => (
         <Chip size="small" color={item.lInvMastDto?.rActiveYN === "Y" ? "success" : "error"} label={item.lInvMastDto?.rActiveYN === "Y" ? "Active" : "Inactive"} />
       ),
     },
@@ -380,16 +385,32 @@ const InvestigationListPage: React.FC = () => {
     },
   ];
 
-  // if (error) {
-  //   return (
-  //     <Box sx={{ p: 2 }}>
-  //       <Typography color="error" variant="h6">
-  //         Error loading investigations: {error}
-  //       </Typography>
-  //       <SmartButton text="Retry" onClick={handleRefresh} variant="contained" color="primary" />
-  //     </Box>
-  //   );
-  // }
+  // Custom filter function for CustomGrid
+  const customFilter = useCallback((item: InvestigationListDto, searchValue: string) => {
+    const inv = item.lInvMastDto;
+    if (!inv) return false;
+
+    const searchLower = searchValue.toLowerCase();
+    return (
+      inv.invName?.toLowerCase().includes(searchLower) ||
+      inv.invCode?.toLowerCase().includes(searchLower) ||
+      inv.invShortName?.toLowerCase().includes(searchLower) ||
+      inv.invType?.toLowerCase().includes(searchLower) ||
+      inv.methods?.toLowerCase().includes(searchLower) ||
+      false
+    );
+  }, []);
+
+  if (error) {
+    // return (
+    //   <Box sx={{ p: 2 }}>
+    //     <Typography color="error" variant="h6">
+    //       Error loading investigations: {error}
+    //     </Typography>
+    //     <SmartButton text="Retry" onClick={handleRefresh} variant="contained" color="primary" />
+    //   </Box>
+    // );
+  }
 
   return (
     <Box sx={{ p: 2 }}>
@@ -461,15 +482,6 @@ const InvestigationListPage: React.FC = () => {
                   defaultText="All Status"
                 />
                 <DropdownSelect
-                  label="Department"
-                  name="department"
-                  value={filters.department}
-                  options={department || []}
-                  onChange={(e) => handleFilterChange("department", e.target.value)}
-                  size="small"
-                  defaultText="All Departments"
-                />
-                <DropdownSelect
                   label="Report"
                   name="report"
                   value={filters.report}
@@ -499,7 +511,15 @@ const InvestigationListPage: React.FC = () => {
       </Paper>
 
       <Paper sx={{ p: 2 }}>
-        <CustomGrid columns={columns} data={filteredInvestigations} maxHeight="calc(100vh - 280px)" emptyStateMessage="No investigations found" loading={isLoading} />
+        <CustomGrid
+          columns={columns}
+          data={filteredInvestigations}
+          maxHeight="calc(100vh - 280px)"
+          emptyStateMessage="No investigations found"
+          loading={isLoading}
+          customFilter={customFilter}
+          searchTerm={debouncedSearchTerm}
+        />
       </Paper>
 
       {isFormOpen && <InvestigationForm open={isFormOpen} onClose={handleFormClose} initialData={selectedInvestigation} viewOnly={isViewMode} />}

@@ -228,10 +228,8 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
     (chargeDetails: any[] = []) => {
       const patientGroups: Record<number, any[]> = {};
       chargeDetails.forEach((detail) => {
-        // Check if detail exists and has pTypeID property
         if (detail && detail.pTypeID != null) {
           const pTypeID = Number(detail.pTypeID);
-          // Ensure pTypeID is a valid number
           if (!isNaN(pTypeID)) {
             if (!patientGroups[pTypeID]) {
               patientGroups[pTypeID] = [];
@@ -243,12 +241,10 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
 
       const gridData: PricingGridItem[] = [];
       const patientTypes = Object.keys(patientGroups).length > 0 ? Object.keys(patientGroups).map(Number) : pic.slice(0, 5).map((p) => Number(p.value));
-
       patientTypes.forEach((patientTypeId) => {
         const patientType = pic.find((p) => Number(p.value) === patientTypeId);
         const details = patientGroups[patientTypeId] || [];
         const wardCategoriesData: Record<string, any> = {};
-
         wardCategories.forEach((wc) => {
           wardCategoriesData[wc.name] = {
             DcValue: 0,
@@ -374,7 +370,6 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
       const codeData: ChargeCodeGenerationDto = {
         ChargeType: chargeTypeLabel,
         ChargeTo: watchedChargeTo,
-        // ServiceGroupId: watchedServiceGroupID > 0 ? watchedServiceGroupID : undefined,
       };
       const newCode = await generateChargeCode(codeData);
       setValue("chargeCode", newCode, { shouldValidate: true, shouldDirty: true });
@@ -456,13 +451,20 @@ const ChargeFormDialog: React.FC<ChargeFormDialogProps> = ({ open, onClose, onSu
             })),
           })) || [],
         DoctorShares:
-          latestFormData.DoctorShares?.map((share) => ({
-            docShareID: share.docShareID || 0,
-            chargeID: latestFormData.chargeID || 0,
-            conID: share.conID,
-            doctorShare: share.doctorShare,
-            hospShare: share.hospShare,
-          })) || [],
+          latestFormData.DoctorShares?.map((share) => {
+            let conID = share.conID;
+            let docShareID = share.docShareID || 0;
+            return {
+              docShareID: docShareID,
+              chargeID: latestFormData.chargeID || 0,
+              conID: conID,
+              doctorShare: Number(share.doctorShare) || 0,
+              hospShare: Number(share.hospShare) || 0,
+              rActiveYN: share.rActiveYN || "Y",
+              rTransferYN: share.rTransferYN || "N",
+              rNotes: share.rNotes || "",
+            };
+          }) || [],
         ChargeAliases:
           latestFormData.ChargeAliases?.map((alias) => ({
             chAliasID: alias.chAliasID || 0,

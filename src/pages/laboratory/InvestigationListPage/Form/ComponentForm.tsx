@@ -1,13 +1,15 @@
-import React, { useEffect } from "react";
-import { Box, Grid, Typography, Divider } from "@mui/material";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import SmartButton from "@/components/Button/SmartButton";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import { LComponentDto } from "@/interfaces/Laboratory/InvestigationListDto";
+import { LCompMultipleDto } from "@/interfaces/Laboratory/LInvMastDto";
 import { componentEntryTypeService } from "@/services/Laboratory/LaboratoryService";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Box, Divider, Grid, Typography } from "@mui/material";
+import React, { useEffect } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import * as z from "zod";
+import MultipleSelectionEntryType, { multipleEntrySchema } from "../SubPage/MultipleSelectionEntryType";
 
 interface ComponentFormProps {
   open: boolean;
@@ -17,6 +19,7 @@ interface ComponentFormProps {
   invID: number;
 }
 
+// Main schema
 const schema = z.object({
   compoID: z.number().optional().nullable(),
   compoCode: z.string().optional().nullable(),
@@ -42,6 +45,7 @@ const schema = z.object({
   rActiveYN: z.string().optional().nullable(),
   transferYN: z.string().optional().nullable(),
   rNotes: z.string().optional().nullable(),
+  lCompMultipleDto: z.array(multipleEntrySchema).optional(),
 });
 
 type ComponentFormData = z.infer<typeof schema>;
@@ -74,6 +78,7 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
     rActiveYN: "Y",
     transferYN: "N",
     rNotes: "",
+    lCompMultipleDto: [],
   };
 
   const {
@@ -81,16 +86,50 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isValid },
+    watch,
+    formState: { isValid },
   } = useForm<ComponentFormData>({
     defaultValues,
     resolver: zodResolver(schema),
     mode: "onChange",
   });
 
+  // Use useFieldArray for managing multiple entries
+  const { fields, append, update, remove } = useFieldArray({
+    control,
+    name: "lCompMultipleDto",
+  });
+  const multipleFields = fields.map((field) => ({
+    ...field,
+    cmID: field.cmID || 0,
+    cmValues: field.cmValues || "",
+    compoID: field.compoID || 0,
+    invID: field.invID || 0,
+    defaultYN: field.defaultYN || "N",
+    rActiveYN: field.rActiveYN || "Y",
+    transferYN: field.transferYN || "N",
+    rNotes: field.rNotes || "",
+    isEditing: field.isEditing || false,
+  }));
+
+  // Create typed append/update functions
+  const typedAppend = (value: LCompMultipleDto) => {
+    append(value as any);
+  };
+
+  const typedUpdate = (index: number, value: LCompMultipleDto) => {
+    update(index, value as any);
+  };
+
+  // Watch lCentID to show/hide multiple values section
+  const watchedLCentID = watch("lCentID");
+
   useEffect(() => {
     if (initialData) {
-      reset(initialData);
+      reset({
+        ...initialData,
+        lCompMultipleDto: initialData.lCompMultipleDto || [],
+      });
     } else {
       reset({ ...defaultValues, invID });
     }
@@ -142,7 +181,9 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
       rActiveYN: data.rActiveYN || "Y",
       transferYN: data.transferYN || "N",
       rNotes: data.rNotes || "",
+      lCompMultipleDto: (watchedLCentID === 5 ? multipleFields : []) as LCompMultipleDto[],
     };
+    console.log(componentData);
     onSave(componentData);
   };
 
@@ -156,7 +197,13 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
       actions={
         <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
           <SmartButton text="Cancel" onClick={onClose} variant="outlined" color="inherit" />
-          <SmartButton text={initialData ? "Update" : "Add"} onClick={handleSubmit(onSubmit)} variant="contained" color="primary" disabled={!isValid} />
+          <SmartButton
+            text={initialData ? "Update" : "Add"}
+            onClick={handleSubmit(onSubmit)}
+            variant="contained"
+            color="primary"
+            disabled={!isValid || (watchedLCentID === 5 && fields.length === 0)}
+          />
         </Box>
       }
     >
@@ -194,29 +241,10 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
 
             <Grid container spacing={2}>
               <Grid size={{ sm: 12, md: 6 }}>
-                <FormField
-                  name="lCentID"
-                  control={control}
-                  label="Entry Type"
-                  type="select"
-                  required
-                  size="small"
-                  options={entryTypes}
-                  fullWidth
-                  onChange={(value) => {
-                    const selectedType = entryTypes.find((type) => Number(type.value) === Number(value.value));
-                    if (selectedType) {
-                      setValue("lCentName", selectedType.label);
-                      setValue("lCentType", selectedType.type);
-                    }
-                  }}
-                />
-              </Grid>
-              <Grid size={{ sm: 12, md: 6 }}>
                 <FormField name="compInterpret" control={control} label="Interpretation" type="text" size="small" fullWidth />
               </Grid>
               <Grid size={{ sm: 12, md: 6 }}>
-                <FormField name="compoi" control={control} label="Unit" type="text" size="small" fullWidth />
+                <FormField name="compUnit" control={control} label="Unit" type="text" size="small" fullWidth />
               </Grid>
               <Grid size={{ sm: 12, md: 6 }}>
                 <FormField name="deltaValPercent" control={control} label="Delta Value (%)" type="number" size="small" fullWidth />
@@ -229,6 +257,35 @@ const ComponentForm: React.FC<ComponentFormProps> = ({ open, onClose, onSave, in
               </Grid>
             </Grid>
           </Grid>
+
+          <Grid size={{ sm: 12 }}>
+            <Grid container spacing={2}>
+              <Grid size={{ sm: 12, md: 6 }}>
+                <FormField
+                  name="lCentID"
+                  control={control}
+                  label="Entry Type"
+                  type="select"
+                  required
+                  size="small"
+                  options={entryTypes}
+                  fullWidth
+                  onChange={(value: any) => {
+                    const selectedType = entryTypes.find((type) => Number(type.value) === Number(value.value));
+                    if (selectedType) {
+                      setValue("lCentName", selectedType.label);
+                      setValue("lCentType", selectedType.type);
+                    }
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </Grid>
+
+          {/* Multiple Values Section */}
+          {watchedLCentID === 5 && (
+            <MultipleSelectionEntryType invID={invID} compoID={watch("compoID") || 0} fields={multipleFields} append={typedAppend} update={typedUpdate} remove={remove} />
+          )}
 
           {/* Notes */}
           <Grid size={{ sm: 12 }}>

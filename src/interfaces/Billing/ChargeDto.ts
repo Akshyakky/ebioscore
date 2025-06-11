@@ -41,6 +41,7 @@ export interface BDoctorSharePercShareDto extends BaseDto {
   rTransferYN?: "Y" | "N";
   rNotes?: string;
 }
+
 export interface BChargeDetailDto extends BaseDto {
   chDetID: number;
   chargeID: number;

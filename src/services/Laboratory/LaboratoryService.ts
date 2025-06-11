@@ -7,4 +7,4 @@ export const componentEntryTypeService = createEntityService<LComponentEntryType
 export const templategroupService = createEntityService<LTemplateGroupDto>("LTemplateGroup", "laboratoryURL");
 export const lInvMastService = createEntityService<LInvMastDto>("LInvMast", "laboratoryURL");
 export const lComponentService = createEntityService<LComponentDto>("LComponent", "laboratoryURL");
-export const investigationlistService = createEntityService<InvestigationListDto>("InvList", "laboratoryURL");
+export const investigationlistService = createEntityService<InvestigationListDto>("InvestigationList", "laboratoryURL");

@@ -1,35 +1,35 @@
-import React, { useState, useEffect, useCallback } from "react";
+import SmartButton from "@/components/Button/SmartButton";
+import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
+import GenericDialog from "@/components/GenericDialog/GenericDialog";
+import { useLoading } from "@/hooks/Common/useLoading";
+import { InvestigationListDto, LComponentDto, LInvMastDto } from "@/interfaces/Laboratory/InvestigationListDto";
+import { useAlert } from "@/providers/AlertProvider";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Add as AddIcon, Cancel, Delete as DeleteIcon, Edit as EditIcon, Save } from "@mui/icons-material";
 import {
+  Alert,
   Box,
-  Grid,
-  Typography,
-  Divider,
   Card,
   CardContent,
-  Alert,
+  Chip,
+  Divider,
+  Grid,
+  IconButton,
+  Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  IconButton,
-  Chip,
-  Stack,
   Tooltip,
+  Typography,
 } from "@mui/material";
-import { useForm, useFieldArray } from "react-hook-form";
+import React, { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, Save, Cancel } from "@mui/icons-material";
-import FormField from "@/components/EnhancedFormField/EnhancedFormField";
-import SmartButton from "@/components/Button/SmartButton";
-import GenericDialog from "@/components/GenericDialog/GenericDialog";
-import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import { useLoading } from "@/hooks/Common/useLoading";
-import { useAlert } from "@/providers/AlertProvider";
-import { InvestigationListDto, LInvMastDto, LComponentDto } from "@/interfaces/Laboratory/InvestigationListDto";
 import { useInvestigationList } from "../hooks/useInvestigationList";
 import ComponentForm from "./ComponentForm";
 
@@ -42,25 +42,25 @@ interface InvestigationFormProps {
 
 const schema = z.object({
   invID: z.number(),
+  invCode: z.string(),
   invName: z.string().nonempty("Investigation name is required"),
-  invTypeCode: z.string().optional(),
+  invTypeCode: z.string().default(""),
   invReportYN: z.string(),
   invSampleYN: z.string(),
-  invTitle: z.string().optional(),
-  invSTitle: z.string().optional(),
+  invTitle: z.string().default(""),
+  invSTitle: z.string().default(""),
   invPrintOrder: z.number().min(0),
   bchID: z.number().min(0),
-  invCode: z.string().optional(),
-  invType: z.string().optional(),
-  invNHCode: z.string().optional(),
-  invNHEnglishName: z.string().optional(),
-  invNHGreekName: z.string().optional(),
-  invSampleType: z.number().optional(),
-  invShortName: z.string().optional(),
-  methods: z.string().optional(),
-  coopLabs: z.string().optional(),
-  rActiveYN: z.string(),
-  transferYN: z.string().optional(),
+  invType: z.string().default(""),
+  invNHCode: z.string().default(""),
+  invNHEnglishName: z.string().default(""),
+  invNHGreekName: z.string().default(""),
+  invSampleType: z.number().default(0),
+  invShortName: z.string().default(""),
+  methods: z.string().default(""),
+  coopLabs: z.string().default(""),
+  rActiveYN: z.string().default("Y"),
+  transferYN: z.string().default("N"),
 });
 
 type InvestigationFormData = z.infer<typeof schema>;
@@ -78,7 +78,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
   const [selectedComponent, setSelectedComponent] = useState<LComponentDto | null>(null);
   const [selectedComponentIndex, setSelectedComponentIndex] = useState<number>(-1);
   const [components, setComponents] = useState<LComponentDto[]>([]);
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const sampleTypes = [
     { value: 1, code: "LAB", label: "Laboratory" },
     { value: 2, code: "RAD", label: "Radiology" },
@@ -114,7 +113,7 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isDirty, isValid },
+    formState: { isDirty, isValid },
     watch,
   } = useForm<InvestigationFormData>({
     defaultValues,
@@ -126,7 +125,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     if (!isAddMode) return;
 
     try {
-      setIsGeneratingCode(true);
       const nextCode = await getNextCode("INV", 6);
       if (nextCode) {
         setValue("invCode", nextCode, { shouldValidate: true, shouldDirty: true });
@@ -136,14 +134,20 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
     } catch (error) {
       console.error("Error generating investigation code:", error);
     } finally {
-      setIsGeneratingCode(false);
     }
   }, [isAddMode, getNextCode, setValue, showAlert]);
 
   useEffect(() => {
     if (initialData) {
       const formData: InvestigationFormData = {
+        ...defaultValues,
         ...initialData.lInvMastDto,
+        invName: initialData.lInvMastDto.invName || "",
+        invCode: initialData.lInvMastDto.invCode || "",
+        invTypeCode: initialData.lInvMastDto.invTypeCode || "",
+        invTitle: initialData.lInvMastDto.invTitle || "",
+        invSTitle: initialData.lInvMastDto.invSTitle || "",
+        invType: initialData.lInvMastDto.invType || "",
       };
       reset(formData);
       setComponents(initialData.lComponentsDto || []);
@@ -225,7 +229,6 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
         lComponentsDto: components,
       };
       console.log("Save", investigationListData);
-      return;
       const response = await saveInvestigation(investigationListData);
 
       if (response.success) {
@@ -243,6 +246,7 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
       setIsSaving(false);
       setLoading(false);
     }
+    return;
   };
 
   const performReset = () => {
@@ -455,10 +459,10 @@ const InvestigationForm: React.FC<InvestigationFormProps> = ({ open, onClose, in
                           {components.map((component, index) => (
                             <TableRow key={index}>
                               <TableCell>{index + 1}</TableCell>
-                              <TableCell>{component.compoNameCD}</TableCell>
-                              <TableCell>{component.compUnitCD || "-"}</TableCell>
+                              <TableCell>{component.compoName}</TableCell>
+                              <TableCell>{component.compUnit || "-"}</TableCell>
                               <TableCell>{component.compOrder || "-"}</TableCell>
-                              <TableCell>{component.lCentNameCD || "-"}</TableCell>
+                              <TableCell>{component.lCentName || "-"}</TableCell>
                               <TableCell>
                                 <Chip size="small" color={component.rActiveYN === "Y" ? "success" : "error"} label={component.rActiveYN === "Y" ? "Active" : "Inactive"} />
                               </TableCell>

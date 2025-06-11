@@ -7,11 +7,12 @@ import { Control, Controller, useFieldArray, useWatch } from "react-hook-form";
 interface DoctorShareOption {
   docShareID: number;
   chargeID: number;
-  conID: string;
+  conID: number;
   doctorShare?: number;
   hospShare?: number | null;
   doctorName: string;
   index: number;
+  originalCompositeId: string;
 }
 
 interface DoctorSharesComponentProps {
@@ -23,7 +24,7 @@ interface DoctorSharesComponentProps {
   onUpdateFunction?: (updateFn: () => void) => void;
 }
 
-const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, expanded, onToggleExpand, attendingPhy, doctorShareEnabled, onUpdateFunction }) => {
+const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, expanded, onToggleExpand, attendingPhy, doctorShareEnabled }) => {
   const [selectedDoctor, setSelectedDoctor] = useState<string>("");
   const doctorNamesRef = useRef<Map<string, string>>(new Map());
   const fieldRefsRef = useRef<Map<string, any>>(new Map());
@@ -44,6 +45,13 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
     return parts[0]?.trim() || "Doctor NaN";
   };
 
+  const parseCompositeId = (compositeId: string): { conID: number } => {
+    const parts = compositeId.split("-");
+    return {
+      conID: parts.length > 0 ? Number(parts[0]) : Number(compositeId),
+    };
+  };
+
   useEffect(() => {
     attendingPhy.forEach((doctor) => {
       if (!doctorNamesRef.current.has(doctor.value)) {
@@ -53,14 +61,18 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
   }, [attendingPhy]);
 
   const getDoctorName = useCallback(
-    (doctorId: string): string => {
-      if (doctorNamesRef.current.has(doctorId)) {
-        return doctorNamesRef.current.get(doctorId) || "Doctor undefined";
+    (conID: number, originalCompositeId?: string): string => {
+      if (originalCompositeId && doctorNamesRef.current.has(originalCompositeId)) {
+        return doctorNamesRef.current.get(originalCompositeId) || "Doctor undefined";
       }
-      const doctor = attendingPhy.find((doc) => doc.value === doctorId);
+      const doctor = attendingPhy.find((doc) => {
+        const parsed = parseCompositeId(doc.value);
+        return parsed.conID === conID;
+      });
+
       if (doctor) {
         const name = extractDoctorName(doctor.label);
-        doctorNamesRef.current.set(doctorId, name);
+        doctorNamesRef.current.set(doctor.value, name);
         return name;
       }
       return "Doctor undefined";
@@ -75,43 +87,42 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
       return {
         ...share,
         index,
-        doctorName: getDoctorName(share.conID),
+        doctorName: getDoctorName(share.conID, share.originalCompositeId),
       };
     });
   }, [doctorShares, getDoctorName]);
 
-  const updateFormFromGrid = useCallback(() => {}, []);
-
-  useEffect(() => {
-    if (onUpdateFunction) {
-      onUpdateFunction(updateFormFromGrid);
-    }
-  }, [onUpdateFunction, updateFormFromGrid]);
-
   const isDoctorAdded = useCallback(
-    (doctorId: string) => {
-      return doctorShares?.some((share: any) => share.conID === doctorId);
+    (doctorCompositeId: string) => {
+      const parsed = parseCompositeId(doctorCompositeId);
+      return doctorShares?.some((share: any) => Number(share.conID) === parsed.conID);
     },
     [doctorShares]
   );
 
   const handleDoctorSelect = (event: SelectChangeEvent<string>) => {
-    const doctorId = event.target.value;
-    if (doctorId && !isDoctorAdded(doctorId)) {
-      const doctor = attendingPhy.find((doc) => doc.value === doctorId);
+    const doctorCompositeId = event.target.value;
+    if (doctorCompositeId && !isDoctorAdded(doctorCompositeId)) {
+      const doctor = attendingPhy.find((doc) => doc.value === doctorCompositeId);
       if (doctor) {
-        doctorNamesRef.current.set(doctorId, extractDoctorName(doctor.label));
-      }
-      append({
-        docShareID: 0,
-        chargeID: 0,
-        conID: doctorId,
-        doctorShare: null,
-        hospShare: null,
-      });
-      setSelectedDoctor("");
-      if (!expanded) {
-        onToggleExpand();
+        const parsed = parseCompositeId(doctorCompositeId);
+        doctorNamesRef.current.set(doctorCompositeId, extractDoctorName(doctor.label));
+        const newShare = {
+          docShareID: 0,
+          chargeID: 0,
+          conID: parsed.conID,
+          doctorShare: 0,
+          hospShare: 100,
+          rActiveYN: "Y" as const,
+          rTransferYN: "N" as const,
+          rNotes: "",
+          originalCompositeId: doctorCompositeId,
+        };
+        append(newShare);
+        setSelectedDoctor("");
+        if (!expanded) {
+          onToggleExpand();
+        }
       }
     }
   };
@@ -171,7 +182,6 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
           name={`DoctorShares.${item.index}.doctorShare`}
           control={control}
           render={({ field }) => {
-            // Store field reference for cross-field updates
             fieldRefsRef.current.set(`doctorShare_${item.index}`, field);
 
             return (
@@ -180,10 +190,12 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
                 type="number"
                 size="small"
                 fullWidth
+                inputProps={{ min: 0, max: 100, step: 0.01 }}
                 value={field.value || ""}
                 onChange={(e) => {
                   const value = e.target.value;
-                  field.onChange(value);
+                  const numValue = Number(value);
+                  field.onChange(numValue);
                   handleDoctorShareChange(item.index, value);
                 }}
               />
@@ -202,7 +214,6 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
           name={`DoctorShares.${item.index}.hospShare`}
           control={control}
           render={({ field }) => {
-            // Store field reference for cross-field updates
             fieldRefsRef.current.set(`hospShare_${item.index}`, field);
 
             return (
@@ -211,10 +222,12 @@ const DoctorSharesComponent: React.FC<DoctorSharesComponentProps> = ({ control, 
                 type="number"
                 size="small"
                 fullWidth
+                inputProps={{ min: 0, max: 100, step: 0.01 }}
                 value={field.value || ""}
                 onChange={(e) => {
                   const value = e.target.value;
-                  field.onChange(value);
+                  const numValue = Number(value);
+                  field.onChange(numValue);
                   handleHospitalShareChange(item.index, value);
                 }}
               />
