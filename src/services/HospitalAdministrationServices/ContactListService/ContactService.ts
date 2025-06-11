@@ -1,7 +1,7 @@
 import { APIConfig } from "@/apiConfig";
 import { ContactDropdownData, ContactListData, ContactMastData } from "@/interfaces/HospitalAdministration/ContactListData";
-import { GenericEntityService, OperationResult, PaginatedList } from "@/services/GenericEntityService/GenericEntityService";
 import { CommonApiService } from "@/services/CommonApiService";
+import { GenericEntityService, OperationResult, PaginatedList } from "@/services/GenericEntityService/GenericEntityService";
 
 export class ContactService extends GenericEntityService<ContactMastData> {
   constructor() {

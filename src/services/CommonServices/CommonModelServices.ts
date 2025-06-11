@@ -1,9 +1,9 @@
-import { AlertDto } from "@/interfaces/Common/AlertManager";
-import { createEntityService } from "@/utils/Common/serviceFactory";
-import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "@/apiConfig";
+import { AlertDto } from "@/interfaces/Common/AlertManager";
+import { OperationResult } from "@/interfaces/Common/OperationResult";
 import { store } from "@/store";
+import { createEntityService } from "@/utils/Common/serviceFactory";
+import { CommonApiService } from "../CommonApiService";
 
 // Initialize API service for the custom method
 const commonApiService = new CommonApiService({ baseURL: APIConfig.commonURL });

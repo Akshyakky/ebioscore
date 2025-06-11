@@ -1,9 +1,9 @@
 // src/services/ClinicalManagementServices/pastMedicationService.ts
 
-import { PastMedicationDto } from "@/interfaces/ClinicalManagement/PastMedicationDto";
-import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
-import { CommonApiService } from "../CommonApiService";
 import { APIConfig } from "@/apiConfig";
+import { PastMedicationDto } from "@/interfaces/ClinicalManagement/PastMedicationDto";
+import { CommonApiService } from "../CommonApiService";
+import { GenericEntityService } from "../GenericEntityService/GenericEntityService";
 
 class PastMedicationService extends GenericEntityService<PastMedicationDto> {
   constructor() {

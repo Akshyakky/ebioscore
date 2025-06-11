@@ -36,10 +36,10 @@ export const getWaitingPatientDetails = async (
   }
   params.dateFilterType = dateFilterType ?? DateFilterType.Today;
   if (startDate) {
-    params.startDate = startDate.toISOString().split("T")[0];
+    params.startDate = startDate.toISOString().split("T")[0] ?? "";
   }
   if (endDate) {
-    params.endDate = endDate.toISOString().split("T")[0];
+    params.endDate = endDate.toISOString().split("T")[0] ?? "";
   }
 
   return apiService.get<OperationResult<any[]>>("Revisit/GetWaitingPatientDetails", getToken(), params);
