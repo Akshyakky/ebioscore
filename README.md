@@ -2,7 +2,7 @@
 
 ## Overview
 
-eBios Core HMIS is a comprehensive Hospital Management Information System built with React TypeScript and .NET Core. The system provides end-to-end solutions for hospital operations including patient management, billing, clinical services, and reporting.
+eBios Core HMIS is a comprehensive Hospital Management Information System built with React TypeScript and Vite. The system provides end-to-end solutions for hospital operations including patient management, billing, clinical services, and reporting.
 
 ## Features
 
@@ -37,18 +37,16 @@ eBios Core HMIS is a comprehensive Hospital Management Information System built 
 
 ### Frontend
 
-- React 18.3.1
+- React 18.2.0
 - TypeScript
-- Material-UI (MUI) v6
-- Redux for State Management
+- Material-UI (MUI) v7
+- Redux Toolkit for State Management
 - React Router v6
+- React Query for Data Fetching
+- React Hook Form with Zod Validation
 - Axios for API Communication
-- Various UI Components:
-  - DevExtreme
-  - MUI Data Grid
-  - Date-FNS
-  - React-PDF
-  - SweetAlert2
+- Recharts for Data Visualization
+- React Toastify for Notifications
 
 ### Backend
 
@@ -73,10 +71,10 @@ eBios Core HMIS is a comprehensive Hospital Management Information System built 
 
 ```bash
 git clone [repository-url]
-cd ebios-core
+cd ebioscore
 ```
 
-2. Install frontend dependencies:
+2. Install dependencies:
 
 ```bash
 npm install
@@ -96,19 +94,25 @@ VITE_API_TIMEOUT=30000
 npm run dev
 ```
 
-The application will be available at `http://localhost:3000`
+The application will be available at `http://localhost:3000` (default Vite port)
 
 ## Available Scripts
 
 - `npm run dev` - Starts development server
 - `npm run build` - Creates production build
-- `npm run serve` - Serves production build locally
-- `npm test` - Runs test suite
+- `npm run preview` - Serves production build locally
+- `npm run type-check` - Runs TypeScript type checking
+- `npm run lint` - Runs ESLint
+- `npm run lint:fix` - Fixes ESLint issues
+- `npm run format` - Formats code using Prettier
+- `npm run test` - Runs test suite
+- `npm run test:watch` - Runs test suite in watch mode
+- `npm run test:coverage` - Generates test coverage report
 
 ## Project Structure
 
 ```
-ebios-core/
+ebioscore/
 ├── src/
 │   ├── components/         # Reusable UI components
 │   ├── context/           # React context providers
@@ -121,33 +125,76 @@ ebios-core/
 │   ├── utils/            # Utility functions
 │   └── App.tsx           # Root component
 ├── public/               # Static assets
-└── package.json         # Project dependencies
+├── dist/                # Production build output
+├── .vscode/            # VS Code configuration
+├── vite.config.ts      # Vite configuration
+├── tsconfig.json       # TypeScript configuration
+├── eslint.config.js    # ESLint configuration
+├── .prettierrc         # Prettier configuration
+└── package.json        # Project dependencies
 ```
 
 ## Key Features Implementation
 
-### Generic Architecture
+### State Management
 
-The system implements a generic architecture pattern for standardized CRUD operations:
+The application uses Redux Toolkit for global state management and React Query for server state management:
 
 ```typescript
-// Generic Service Example
-interface IGenericService<T> {
-  getAll(): Promise<T[]>;
-  getById(id: number): Promise<T>;
-  save(entity: T): Promise<T>;
-  update(id: number, entity: T): Promise<T>;
-  delete(id: number): Promise<void>;
-}
+// Redux store configuration
+import { configureStore } from "@reduxjs/toolkit";
+import { setupListeners } from "@reduxjs/toolkit/query";
+
+export const store = configureStore({
+  reducer: {
+    // your reducers
+  },
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(/* your middleware */),
+});
+
+setupListeners(store.dispatch);
 ```
 
 ### Form Management
 
-Uses custom form components with validation:
+Uses React Hook Form with Zod validation:
 
 ```typescript
-<FormField type="text" label="Patient Name" value={patientName} onChange={handleChange} isMandatory errorMessage={errors.patientName} />
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const schema = z.object({
+  // your validation schema
+});
+
+const {
+  register,
+  handleSubmit,
+  formState: { errors },
+} = useForm({
+  resolver: zodResolver(schema),
+});
 ```
+
+## Development Guidelines
+
+1. **Code Style**
+
+   - Follow the ESLint and Prettier configurations
+   - Use TypeScript for type safety
+   - Follow the project's component structure
+
+2. **Git Workflow**
+
+   - Create feature branches from `main`
+   - Use meaningful commit messages
+   - Create pull requests for code review
+
+3. **Testing**
+   - Write unit tests for components
+   - Test critical user flows
+   - Maintain good test coverage
 
 ## Contributing
 

@@ -14,8 +14,6 @@ export interface LInvMastDto extends BaseDto {
   invTitle?: string;
   invSTitle?: string;
   invPrintOrder: number;
-  deptID: number;
-  deptName?: string;
   bchID: number;
   invCode?: string;
   invType?: string;
@@ -32,34 +30,31 @@ export interface LInvMastDto extends BaseDto {
 
 export interface LComponentDto extends BaseDto {
   invID: number;
-  invNameCD: string;
+  invName: string;
   mGrpID?: number;
-  mGrpNameCD?: string;
+  mGrpName?: string;
   stitID?: number;
-  stitNameCD?: string;
-  compInterpretCD?: string;
-  compUnitCD?: string;
+  stitName?: string;
+  compInterpret?: string;
+  compUnit?: string;
   compOrder?: number;
   lCentID: number;
-  lCentNameCD: string;
-  lCentTypeCD: string;
+  lCentName: string;
+  lCentType: string;
   compDetailYN: string;
-  deptID: number;
-  deptNameCD?: string;
   deltaValPercent?: number;
-  compOCodeCD?: string;
+  compoCode?: string;
   compoID: number;
-  compoNameCD?: string;
-  compoTitleCD?: string;
-  invCodeCD?: string;
-  cNHSCodeCD?: string;
-  cNHSEnglishNameCD?: string;
-  cNHSGreekNameCD?: string;
-  cShortNameCD?: string;
+  compoName?: string;
+  compoTitle?: string;
+  invCode?: string;
+  cNHSCode?: string;
+  cNHSEnglishName?: string;
+  cNHSGreekName?: string;
+  cShortName?: string;
   rActiveYN: string;
   transferYN: string;
   rNotes?: string;
-  indexID?: number;
 }
 
 export interface LComponentEntryTypeDto extends BaseDto {

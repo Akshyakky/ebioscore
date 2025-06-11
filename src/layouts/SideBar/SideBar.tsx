@@ -30,10 +30,10 @@ import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import { Icon } from "@iconify/react";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import ProfileMenu from "./ProfileMenu";
-import { notifyError } from "../../utils/Common/toastManager";
 import { MaterialUISwitch } from "../../components/Switch/MaterialUISwitch";
 import moduleService, { ModuleDto, SubModuleDto } from "@/services/NotGenericPaternServices/ModuleService";
 import { useTheme as useCustomTheme } from "@/providers/ThemeProvider";
+import { useAlert } from "@/providers/AlertProvider";
 
 interface SideBarProps {
   userID: number | null;
@@ -76,7 +76,6 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
   const theme = useTheme();
   const { mode, toggleTheme } = useCustomTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
-
   const handleSubModuleClick = useCallback(
     (path: string) => {
       handleDrawerClose();
@@ -135,7 +134,6 @@ const SideBar: React.FC<SideBarProps> = ({ userID, token }) => {
           setSubModules(subModulesData);
         } catch (error) {
           console.error("Error fetching navigation data:", error);
-          notifyError("Error fetching navigation data");
         }
       }
     };

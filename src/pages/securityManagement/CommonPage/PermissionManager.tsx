@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Grid, SelectChangeEvent, Typography } from "@mui/material";
-import FormField from "@/components/FormField/FormField";
+import { Grid, Typography } from "@mui/material";
+import { useForm } from "react-hook-form";
+import FormField from "@/components/EnhancedFormField/EnhancedFormField";
 import { DropdownOption } from "@/interfaces/Common/DropdownOption";
 import useDropdownValues from "@/hooks/PatientAdminstration/useDropdownValues";
-import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
-
 import { userListServices } from "@/services/SecurityManagementServices/UserListServices";
 import { ProfileDetailDto, ProfileMastDto } from "@/interfaces/SecurityManagement/ProfileListData";
 import { SaveUserPermissionsRequest, UserListDto, UserListPermissionDto } from "@/interfaces/SecurityManagement/UserListData";
@@ -14,16 +13,23 @@ import { CustomUISwitch } from "@/components/Switch/CustomUISwitch";
 import { profileDetailService } from "@/services/SecurityManagementServices/securityManagementServices";
 import { profileService } from "@/services/SecurityManagementServices/ProfileListServices";
 
+interface PermissionFormData {
+  mainModuleId: number;
+  subModuleId: number;
+  selectAll: string;
+}
+
 interface DropdownListProps {
   options: DropdownOption[];
-  handleChange: (event: SelectChangeEvent<string>) => void;
+  handleChange: (item: any) => void;
   label: string;
   value: number;
   disabled?: boolean;
   name: string;
+  control: any;
 }
 
-const DropdownList: React.FC<DropdownListProps> = ({ options, handleChange, label, value, disabled = false, name }) => {
+const DropdownList: React.FC<DropdownListProps> = ({ options, handleChange, label, value, disabled = false, name, control }) => {
   const dropdownOptions = options.map((item) => ({
     value: item.value.toString(),
     label: item.label,
@@ -34,15 +40,13 @@ const DropdownList: React.FC<DropdownListProps> = ({ options, handleChange, labe
       type="select"
       label={label}
       name={name}
-      ControlID={name}
-      value={value}
+      control={control}
       options={dropdownOptions}
       onChange={handleChange}
       disabled={disabled}
       defaultText={`Select ${label}`}
-      isMandatory={true}
+      required={true}
       size="small"
-      gridProps={{ xs: 12, sm: 12, md: 12 }}
     />
   );
 };
@@ -51,9 +55,10 @@ interface PermissionsListProps {
   permissions: (ProfileDetailDto | UserListPermissionDto)[];
   selectedPermissions: number[];
   handlePermissionChange: (id: number) => void;
-  handleAllPermissionChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleAllPermissionChange: (value: string) => void;
   disabled?: boolean;
   isSelectAll: boolean;
+  control: any;
 }
 
 const getIconForPermission = (accessName: string) => {
@@ -80,6 +85,7 @@ const PermissionsList: React.FC<PermissionsListProps> = ({
   handleAllPermissionChange,
   disabled = false,
   isSelectAll,
+  control,
 }) => {
   return (
     <Grid container spacing={2}>
@@ -88,15 +94,12 @@ const PermissionsList: React.FC<PermissionsListProps> = ({
           <FormField
             type="switch"
             label="Select all"
-            name={`selectAll`}
-            ControlID={`permission-selectAll`}
-            value={""}
-            checked={isSelectAll}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              handleAllPermissionChange(event);
+            name="selectAll"
+            control={control}
+            onChange={(value: string) => {
+              handleAllPermissionChange(value);
             }}
             disabled={disabled}
-            gridProps={{ xs: 12 }}
           />
         )}
       </Grid>
@@ -151,9 +154,20 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
   const [subId, setSubId] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSelectAll, setIsSelectAll] = useState<boolean>(false);
-  const { showAlert } = useAlert();
+  const { showAlert, showErrorAlert, showSuccessAlert } = useAlert();
 
   const dropdownValues = useDropdownValues(["mainModules", "subModules"]);
+
+  const { control, setValue, watch } = useForm<PermissionFormData>({
+    defaultValues: {
+      mainModuleId: 0,
+      subModuleId: 0,
+      selectAll: "N",
+    },
+    mode: "onChange",
+  });
+
+  const watchedValues = watch();
 
   useEffect(() => {
     setMainModules(dropdownValues.mainModules || []);
@@ -165,16 +179,18 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
       const filteredSubModules = allSubModules.filter((subModule) => subModule.aUGrpID === mainId);
       setSubModules(filteredSubModules);
       setSubId(0);
+      setValue("subModuleId", 0);
       setPermissions([]);
       setSelectedItems([]);
     }
-  }, [mainId, dropdownValues.subModules, useSubModules]);
+  }, [mainId, dropdownValues.subModules, useSubModules, setValue]);
 
   useEffect(() => {
-    setIsSelectAll(
-      permissions.length > 0 && permissions.every((p) => (mode === "profile" ? (p as ProfileDetailDto).rActiveYN === "Y" : (p as UserListPermissionDto).allowAccess === "Y"))
-    );
-  }, [permissions, mode]);
+    const newSelectAllValue =
+      permissions.length > 0 && permissions.every((p) => (mode === "profile" ? (p as ProfileDetailDto).rActiveYN === "Y" : (p as UserListPermissionDto).allowAccess === "Y"));
+    setIsSelectAll(newSelectAllValue);
+    setValue("selectAll", newSelectAllValue ? "Y" : "N");
+  }, [permissions, mode, setValue]);
 
   async function fetchPermissions(mainID: number, subID: number) {
     if (!mainID && type === "R") return;
@@ -251,13 +267,13 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
       }
 
       if (response.success) {
-        notifySuccess("Permission applied!");
+        showSuccessAlert("Success", "Permission applied!");
       } else {
-        notifyError("Permission not applied!");
+        showErrorAlert("Error", "Permission not applied!");
       }
       fetchPermissions(mainId, subId);
     } catch (error) {
-      notifyError("Permission not applied!");
+      showErrorAlert("Error", "Permission not applied!");
       console.error("Error saving permission:", error);
       if (type === "M") {
         fetchPermissions(mainId, subId);
@@ -265,11 +281,14 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
     }
   };
 
-  const handleAllPermissionChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectAllChecked = event.target.checked;
+  const handleAllPermissionChange = async (value: string) => {
+    const selectAllChecked = value === "Y";
     const userConfirmed = await showAlert("Confirm Action", `Are you sure you want to ${selectAllChecked ? "select" : "deselect"} all permissions?`, "warning", true);
     if (!userConfirmed) return;
+
     setIsSelectAll(selectAllChecked);
+    setValue("selectAll", value);
+
     let response;
     if (mode === "profile") {
       const updatedPermissions = (permissions as ProfileDetailDto[]).map((permission) => ({
@@ -277,7 +296,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
         profileID: (details as ProfileMastDto).profileID,
         profileName: (details as ProfileMastDto).profileName,
         profileType: type,
-        rActiveYN: selectAllChecked ? "Y" : "N",
+        rActiveYN: value,
         rNotes: "",
         transferYN: "Y",
       }));
@@ -285,7 +304,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
     } else {
       const updatedPermissions = (permissions as UserListPermissionDto[]).map((permission) => ({
         ...permission,
-        allowAccess: selectAllChecked ? "Y" : "N",
+        allowAccess: value,
         rNotes: "",
         transferYN: "Y",
       }));
@@ -298,17 +317,19 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
       response = await userListServices.saveUserListPermissionsByType(saveUserPermissionRequest);
     }
     if (response.success) {
-      notifySuccess("Permission applied!");
+      showSuccessAlert("Success", "Permission applied!");
     } else {
       setIsSelectAll(!selectAllChecked);
-      notifyError("Permission not applied!");
+      setValue("selectAll", !selectAllChecked ? "Y" : "N");
+      showSuccessAlert("Error", "Permission not applied!");
     }
     fetchPermissions(mainId, subId);
   };
 
-  const handleMainModuleChange = (event: SelectChangeEvent<string>) => {
-    const value = parseInt(event.target.value);
+  const handleMainModuleChange = (item: any) => {
+    const value = parseInt(item.value);
     setMainId(value);
+    setValue("mainModuleId", value);
     if (!value) {
       setPermissions([]);
       setSelectedItems([]);
@@ -319,10 +340,12 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
     }
   };
 
-  const handleSubModuleChange = (event: SelectChangeEvent<string>) => {
-    const value = parseInt(event.target.value);
+  const handleSubModuleChange = (item: any) => {
+    const value = parseInt(item.value);
     setSubId(value);
+    setValue("subModuleId", value);
     setIsSelectAll(false);
+    setValue("selectAll", "N");
     if (!value) {
       setPermissions([]);
       setSelectedItems([]);
@@ -336,13 +359,15 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
   useEffect(() => {
     setMainId(0);
     setSubId(0);
+    setValue("mainModuleId", 0);
+    setValue("subModuleId", 0);
     setPermissions([]);
     setSelectedItems([]);
 
     if (type === "D") {
       fetchPermissions(0, 0);
     }
-  }, [type]);
+  }, [type, setValue]);
 
   return (
     <Grid container spacing={3}>
@@ -359,7 +384,8 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
                 value={mainId}
                 label={type === "M" ? "Main Modules" : "Report Groups"}
                 disabled={isLoading}
-                name={type === "M" ? "main-modules" : "report-groups"}
+                name="mainModuleId"
+                control={control}
               />
             </Grid>
           )}
@@ -371,7 +397,8 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
                 value={subId}
                 label="Sub Modules"
                 disabled={isLoading || mainModules.length === 0}
-                name="sub-modules"
+                name="subModuleId"
+                control={control}
               />
             </Grid>
           )}
@@ -385,6 +412,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ mode, details, ti
           handleAllPermissionChange={handleAllPermissionChange}
           isSelectAll={isSelectAll}
           disabled={isLoading}
+          control={control}
         />
       </Grid>
     </Grid>

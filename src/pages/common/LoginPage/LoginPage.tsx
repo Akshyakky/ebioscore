@@ -5,15 +5,30 @@ import { ClientParameterService } from "@/services/NotGenericPaternServices/Clie
 import { CompanyService } from "@/services/NotGenericPaternServices/CompanyService";
 import AuthService from "@/services/AuthService/AuthService";
 import { setUserDetails } from "@/store/features/auth/authSlice";
-import { notifySuccess } from "@/utils/Common/toastManager";
 import DropdownSelect from "@/components/DropDown/DropdownSelect";
-import FloatingLabelTextBox from "@/components/TextBox/FloatingLabelTextBox/FloatingLabelTextBox";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
-import { Alert, alpha, Box, Button, CircularProgress, Container, Stack, IconButton, InputAdornment, styled, Typography, useMediaQuery, Fade, Grow, useTheme } from "@mui/material";
+import {
+  Alert,
+  alpha,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Stack,
+  IconButton,
+  InputAdornment,
+  styled,
+  Typography,
+  useMediaQuery,
+  Fade,
+  Grow,
+  useTheme,
+  TextField,
+} from "@mui/material";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import logo from "../../../assets/images/eBios.png";
 import backgroundImage from "/src/assets/images/LoginCoverImage.jpg";
@@ -327,31 +342,31 @@ const LoginPage: React.FC = () => {
   }, []);
 
   // Keyboard navigation - no state dependencies
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Tab") {
-        const focusableElements = [companySelectRef.current, usernameInputRef.current, passwordInputRef.current, submitButtonRef.current].filter(Boolean);
+  // useEffect(() => {
+  //   const handleKeyDown = (e: KeyboardEvent) => {
+  //     if (e.key === "Tab") {
+  //       const focusableElements = [companySelectRef.current, usernameInputRef.current, passwordInputRef.current, submitButtonRef.current].filter(Boolean);
 
-        const activeElement = document.activeElement as HTMLElement | null;
-        if (!activeElement) return;
+  //       const activeElement = document.activeElement as HTMLElement | null;
+  //       if (!activeElement) return;
 
-        const currentIndex = focusableElements.findIndex((el) => el instanceof HTMLElement && el.isEqualNode(activeElement));
+  //       const currentIndex = focusableElements.findIndex((el) => el instanceof HTMLElement && el.isEqualNode(activeElement));
 
-        if (currentIndex > -1) {
-          const nextIndex = e.shiftKey ? (currentIndex - 1 + focusableElements.length) % focusableElements.length : (currentIndex + 1) % focusableElements.length;
+  //       if (currentIndex > -1) {
+  //         const nextIndex = e.shiftKey ? (currentIndex - 1 + focusableElements.length) % focusableElements.length : (currentIndex + 1) % focusableElements.length;
 
-          const nextElement = focusableElements[nextIndex];
-          if (nextElement instanceof HTMLElement) {
-            nextElement.focus();
-            e.preventDefault();
-          }
-        }
-      }
-    };
+  //         const nextElement = focusableElements[nextIndex];
+  //         if (nextElement instanceof HTMLElement) {
+  //           nextElement.focus();
+  //           e.preventDefault();
+  //         }
+  //       }
+  //     }
+  //   };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  //   document.addEventListener("keydown", handleKeyDown);
+  //   return () => document.removeEventListener("keydown", handleKeyDown);
+  // }, []);
 
   // Check rate limit - no state updates inside
   const checkRateLimit = useCallback(() => {
@@ -548,7 +563,6 @@ const LoginPage: React.FC = () => {
           })
         );
 
-        notifySuccess("Login successful!");
         navigate("/dashboard");
       } else {
         setLoginAttempts((prev) => {
@@ -788,39 +802,60 @@ const LoginPage: React.FC = () => {
                     </AnimatedInput>
 
                     <AnimatedInput>
-                      <FloatingLabelTextBox
-                        ref={usernameInputRef}
-                        ControlID="username"
-                        title="Username"
+                      <TextField
+                        inputRef={usernameInputRef}
+                        id="username"
+                        label="Username"
                         value={formState.userName}
                         onChange={(e) => setFormState((prev) => ({ ...prev, userName: e.target.value }))}
                         size="small"
-                        isMandatory
-                        loading={fieldLoading.username}
+                        fullWidth
+                        required
+                        variant="outlined"
+                        disabled={fieldLoading.username}
                         aria-label="Username input"
                         aria-required="true"
+                        InputLabelProps={{
+                          shrink: Boolean(formState.userName),
+                        }}
+                        InputProps={{
+                          endAdornment: fieldLoading.username ? (
+                            <InputAdornment position="end">
+                              <CircularProgress size={20} />
+                            </InputAdornment>
+                          ) : null,
+                        }}
                       />
                     </AnimatedInput>
 
                     <AnimatedInput>
-                      <FloatingLabelTextBox
-                        ref={passwordInputRef}
-                        ControlID="password"
-                        title="Password"
+                      <TextField
+                        inputRef={passwordInputRef}
+                        id="password"
+                        label="Password"
                         type={showPassword ? "text" : "password"}
                         value={formState.password}
                         onChange={(e) => setFormState((prev) => ({ ...prev, password: e.target.value }))}
                         size="small"
-                        isMandatory
-                        loading={fieldLoading.password}
+                        fullWidth
+                        required
+                        variant="outlined"
+                        disabled={fieldLoading.password}
                         aria-label="Password input"
                         aria-required="true"
+                        InputLabelProps={{
+                          shrink: Boolean(formState.password),
+                        }}
                         InputProps={{
                           endAdornment: (
                             <InputAdornment position="end">
-                              <IconButton aria-label="toggle password visibility" onClick={() => setShowPassword((prev) => !prev)} edge="end" size="small">
-                                {showPassword ? <VisibilityOff /> : <Visibility />}
-                              </IconButton>
+                              {fieldLoading.password ? (
+                                <CircularProgress size={20} />
+                              ) : (
+                                <IconButton aria-label="toggle password visibility" onClick={() => setShowPassword((prev) => !prev)} edge="end" size="small">
+                                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                              )}
                             </InputAdornment>
                           ),
                         }}

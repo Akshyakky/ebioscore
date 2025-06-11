@@ -30,7 +30,6 @@ import CustomButton from "@/components/Button/CustomButton";
 import { Save, Cancel, ChangeCircle } from "@mui/icons-material";
 import GenericDialog from "@/components/GenericDialog/GenericDialog";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
-import CustomCheckbox from "@/components/Checkbox/Checkbox";
 import { useLoading } from "@/hooks/Common/useLoading";
 import { useAlert } from "@/providers/AlertProvider";
 import { useServerDate } from "@/hooks/Common/useServerDate";
@@ -270,23 +269,6 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
       }
     },
     [selectedOption, resourceData, consultantData]
-  );
-
-  const renderCheckbox = useCallback(
-    (item: any) => {
-      const id = selectedOption === "resource" ? item.rLID : item.conID;
-      return (
-        <CustomCheckbox
-          label=""
-          name={`select-${id}`}
-          checked={selectedItems.includes(id)}
-          onChange={(e: any) => handleCheckboxChange(id, e.target.checked)}
-          size="small"
-          disabled={viewOnly}
-        />
-      );
-    },
-    [selectedOption, selectedItems, handleCheckboxChange, viewOnly]
   );
 
   const renderConsultantName = useCallback((item: any) => {
@@ -652,12 +634,14 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
                               <TableHead>
                                 <TableRow>
                                   <TableCell sx={{ fontWeight: "bold" }}>
-                                    <CustomCheckbox
-                                      label=""
+                                    <FormField
                                       name="selectAll"
-                                      checked={selectedItems.length > 0 && selectedItems.length === (selectedOption === "resource" ? resourceData.length : consultantData.length)}
+                                      control={control}
+                                      type="checkbox"
+                                      defaultValue={
+                                        selectedItems.length > 0 && selectedItems.length === (selectedOption === "resource" ? resourceData.length : consultantData.length)
+                                      }
                                       onChange={(e) => handleSelectAll(e.target.checked)}
-                                      size="small"
                                       disabled={viewOnly}
                                     />
                                   </TableCell>
@@ -669,7 +653,16 @@ const BreakListForm: React.FC<BreakListFormProps> = ({ open, onClose, initialDat
                                   const id = selectedOption === "resource" ? item.rLID : item.conID;
                                   return (
                                     <TableRow key={id}>
-                                      <TableCell>{renderCheckbox(item)}</TableCell>
+                                      <TableCell>
+                                        <FormField
+                                          name={`select-${id}`}
+                                          control={control}
+                                          type="checkbox"
+                                          defaultValue={selectedItems.includes(id)}
+                                          onChange={(e) => handleCheckboxChange(id, e.target.checked)}
+                                          disabled={viewOnly}
+                                        />
+                                      </TableCell>
                                       <TableCell>{selectedOption === "resource" ? item.rLName : renderConsultantName(item)}</TableCell>
                                     </TableRow>
                                   );

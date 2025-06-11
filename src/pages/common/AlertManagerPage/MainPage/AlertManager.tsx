@@ -5,11 +5,9 @@ import { Add as AddIcon, Refresh as RefreshIcon, Clear as ClearIcon } from "@mui
 import { useLoading } from "@/hooks/Common/useLoading";
 import { AlertDto } from "@/interfaces/Common/AlertManager";
 import { OperationResult } from "@/interfaces/Common/OperationResult";
-import { notifyError, notifySuccess } from "@/utils/Common/toastManager";
 import { alertService, baseAlertService } from "@/services/CommonServices/CommonModelServices";
 import AlertGrid from "../SubPage/AlertGrid";
 import AlertForm from "../SubPage/AlertForm";
-import ActionButtonGroup from "@/components/Button/ActionButtonGroup";
 import CustomButton from "@/components/Button/CustomButton";
 import ConfirmationDialog from "@/components/Dialog/ConfirmationDialog";
 import { PatientSearchResult } from "@/interfaces/PatientAdministration/Patient/PatientSearch.interface";
@@ -17,6 +15,7 @@ import { PatientSearch } from "@/pages/patientAdministration/CommonPage/Patient/
 import { PatientDemographics } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographics/PatientDemographics";
 import { PatientDemographicsForm } from "@/pages/patientAdministration/CommonPage/Patient/PatientDemographicsForm/PatientDemographicsForm";
 import { PatientDemoGraph } from "@/interfaces/PatientAdministration/patientDemoGraph";
+import { useAlert } from "@/providers/AlertProvider";
 
 const AlertManager: React.FC = () => {
   const { setLoading } = useLoading();
@@ -28,7 +27,7 @@ const AlertManager: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [refreshDemographics, setRefreshDemographics] = useState(0);
   const [clearSearchTrigger, setClearSearchTrigger] = useState(0);
-
+  const { showErrorAlert, showSuccessAlert } = useAlert();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmDialogProps, setConfirmDialogProps] = useState({
     title: "",
@@ -55,11 +54,11 @@ const AlertManager: React.FC = () => {
       if (result.success) {
         setAlerts(result.data || []);
       } else {
-        notifyError(result.errorMessage || "Failed to fetch alerts");
+        showErrorAlert("Failed to fetch alerts", result.errorMessage || "Failed to fetch alerts");
       }
     } catch (error) {
       console.error("Error fetching alerts:", error);
-      notifyError("An error occurred while fetching alerts");
+      showErrorAlert("An error occurred while fetching alerts", error.message || "An error occurred while fetching alerts");
     } finally {
       setLoading(false);
     }
@@ -73,7 +72,6 @@ const AlertManager: React.FC = () => {
       onConfirm: () => {
         setSelectedPatient(null);
         setClearSearchTrigger((prev) => prev + 1);
-        notifySuccess("Patient selection cleared");
       },
     });
   };
@@ -136,11 +134,11 @@ const AlertManager: React.FC = () => {
 
       if (isSuccess) {
         setAlerts((prev) => prev.filter((a) => a.oPIPAlertID !== alert.oPIPAlertID));
-        notifySuccess("Alert deleted successfully");
+        showSuccessAlert("Success", "Alert deleted successfully");
       }
     } catch (error) {
       console.error("Error deleting alert:", error);
-      notifyError("Failed to delete alert");
+      showErrorAlert("Error", error.message || "Failed to delete alert");
     } finally {
       setLoading(false);
     }
@@ -170,14 +168,14 @@ const AlertManager: React.FC = () => {
           setAlerts((prev) => [...prev, newAlert]);
         }
 
-        notifySuccess(`Alert ${isEditMode ? "updated" : "created"} successfully`);
+        showSuccessAlert("Success", `Alert ${isEditMode ? "updated" : "created"} successfully`);
         setIsAlertFormOpen(false);
       } else {
-        notifyError(result.errorMessage || `Failed to ${isEditMode ? "update" : "create"} alert`);
+        showErrorAlert("Error", result.errorMessage || `Failed to ${isEditMode ? "update" : "create"} alert`);
       }
     } catch (error) {
       console.error(`Error ${isEditMode ? "updating" : "creating"} alert:`, error);
-      notifyError(`Failed to ${isEditMode ? "update" : "create"} alert`);
+      showErrorAlert("Error", `Failed to ${isEditMode ? "update" : "create"} alert`);
     } finally {
       setLoading(false);
     }
@@ -201,13 +199,13 @@ const AlertManager: React.FC = () => {
     if (selectedPatient) {
       fetchPatientAlerts(selectedPatient.pChartID);
       setRefreshDemographics((prev) => prev + 1);
-      notifySuccess("Data refreshed successfully");
+      showSuccessAlert("Success", "Data refreshed successfully");
     }
   };
 
   const handleDemographicsSaved = (data: PatientDemoGraph) => {
     setRefreshDemographics((prev) => prev + 1);
-    notifySuccess("Patient demographics updated successfully");
+    showSuccessAlert("Success", "Patient demographics updated successfully");
   };
 
   const showConfirmDialog = ({ title, message, type, onConfirm }: { title: string; message: string; type: "warning" | "error" | "info" | "success"; onConfirm: () => void }) => {
@@ -270,17 +268,7 @@ const AlertManager: React.FC = () => {
               Alerts for {selectedPatient.fullName} ({selectedPatient.pChartCode})
             </Typography>
 
-            <ActionButtonGroup
-              buttons={[
-                {
-                  text: "Add Alert",
-                  icon: AddIcon,
-                  color: "primary",
-                  variant: "contained",
-                  onClick: handleAddAlert,
-                },
-              ]}
-            />
+            <CustomButton variant="contained" color="primary" text="Add Alert" icon={AddIcon} onClick={handleAddAlert} />
           </Box>
 
           <AlertGrid alerts={alerts} onEditAlert={handleEditAlert} onDeleteAlert={handleDeleteAlert} />

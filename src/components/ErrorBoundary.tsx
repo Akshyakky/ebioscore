@@ -2,7 +2,6 @@ import { Component, ErrorInfo, ReactNode } from "react";
 import { Box, Button, Paper, Typography, Container } from "@mui/material";
 import { RefreshRounded, BugReport, ArrowBack } from "@mui/icons-material";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
 
 interface Props {
   children: ReactNode;

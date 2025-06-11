@@ -1,5 +1,5 @@
 import React, { ReactNode, useMemo } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Provider as ReduxProvider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { ToastContainer } from "react-toastify";
@@ -12,6 +12,7 @@ import GlobalSpinner from "./components/GlobalSpinner/GlobalSpinner";
 import { QueryProvider } from "./providers/QueryProvider";
 import RouteNotFoundBoundary from "./components/RouteNotFoundBoundary";
 import ThemeProvider from "./providers/ThemeProvider";
+import MainLayout from "./layouts/MainLayout/MainLayout";
 
 // Types
 interface RouteConfig {
@@ -21,19 +22,27 @@ interface RouteConfig {
   providers?: React.ComponentType<any>[];
 }
 
-// Components
 const PersistLoadingFallback = () => (
-  <Box
-    sx={{
-      height: "100vh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    }}
-  >
-    <CircularProgress size={60} thickness={4} />
+  <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+    <CircularProgress />
   </Box>
 );
+
+// Layout wrapper for protected routes
+const ProtectedLayout: React.FC = () => {
+  return (
+    <ProtectedRoute>
+      <MainLayout>
+        <Outlet />
+      </MainLayout>
+    </ProtectedRoute>
+  );
+};
+
+// Public layout wrapper (for login, etc.)
+const PublicLayout: React.FC = () => {
+  return <Outlet />;
+};
 
 const App: React.FC = () => {
   const handleAppError = (error: Error, errorInfo: React.ErrorInfo) => {
@@ -41,28 +50,39 @@ const App: React.FC = () => {
     console.error("Error Info:", errorInfo);
   };
 
+  // Separate protected and public routes
+  const { protectedRoutes, publicRoutes } = useMemo(() => {
+    const protectedRoutesArray: RouteConfig[] = [];
+    const publicRoutesArray: RouteConfig[] = [];
+
+    routeConfig.forEach((route) => {
+      if (route.protected) {
+        protectedRoutesArray.push(route);
+      } else {
+        publicRoutesArray.push(route);
+      }
+    });
+
+    return { protectedRoutes: protectedRoutesArray, publicRoutes: publicRoutesArray };
+  }, []);
+
   const renderRoutes = useMemo(() => {
     return (routes: RouteConfig[]) =>
-      routes.map(({ path, component: Component, protected: isProtected, providers }: RouteConfig) => (
+      routes.map(({ path, component: Component, providers }: RouteConfig) => (
         <Route
           key={path}
           path={path}
           element={
             <ErrorBoundary routePath={path} showBackButton>
-              {isProtected ? (
-                <ProtectedRoute>
-                  {providers ? providers.reduceRight<ReactNode>((children, Provider) => <Provider>{children}</Provider>, <Component />) : <Component />}
-                </ProtectedRoute>
-              ) : (
-                <Component />
-              )}
+              {providers ? providers.reduceRight<ReactNode>((children, Provider) => <Provider>{children}</Provider>, <Component />) : <Component />}
             </ErrorBoundary>
           }
         />
       ));
   }, []);
 
-  const memoizedRoutes = useMemo(() => renderRoutes(routeConfig), [renderRoutes]);
+  const memoizedProtectedRoutes = useMemo(() => renderRoutes(protectedRoutes), [renderRoutes, protectedRoutes]);
+  const memoizedPublicRoutes = useMemo(() => renderRoutes(publicRoutes), [renderRoutes, publicRoutes]);
 
   return (
     <ReduxProvider store={store}>
@@ -85,8 +105,18 @@ const App: React.FC = () => {
                 />
                 <RouteNotFoundBoundary>
                   <Routes>
-                    {memoizedRoutes}
-                    <Route path="/" element={<Navigate replace to="/login" />} />
+                    {/* Public routes */}
+                    <Route path="/" element={<PublicLayout />}>
+                      {memoizedPublicRoutes}
+                    </Route>
+
+                    {/* Protected routes wrapped in persistent layout */}
+                    <Route path="/" element={<ProtectedLayout />}>
+                      {memoizedProtectedRoutes}
+                    </Route>
+
+                    {/* Root redirect */}
+                    <Route index element={<Navigate replace to="/login" />} />
                   </Routes>
                 </RouteNotFoundBoundary>
               </BrowserRouter>
