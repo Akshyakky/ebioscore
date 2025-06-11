@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Box, Fab, Tooltip, Paper, Typography, Button, Alert, Snackbar, Zoom, useMediaQuery, useTheme } from "@mui/material";
+import React, { useCallback, useMemo, useState } from "react";
+import { Box, Fab, Tooltip, Paper, Typography, Button, Alert, Snackbar, Zoom } from "@mui/material";
 import { selectUser } from "@/store/features/auth/selectors";
 import { useAppSelector } from "@/store/hooks";
 import SideBar from "../SideBar/SideBar";
@@ -12,19 +12,26 @@ interface MainLayoutProps {
   children: React.ReactNode;
 }
 
+// Memoized layout components to prevent unnecessary re-renders
+const MemoizedSideBar = React.memo(SideBar);
+const MemoizedFooter = React.memo(Footer);
+const MemoizedBreadcrumbs = React.memo(BreadcrumbsNavigation);
+
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  const theme = useTheme();
   const userInfo = useAppSelector(selectUser);
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Calculate effective user ID for admin permissions
+  // Calculate effective user ID for admin permissions - memoized to prevent recalculation
   const effectiveUserID = useMemo(() => {
     if (!userInfo) return -1;
     return userInfo.adminYN === "Y" ? 0 : userInfo.userID;
-  }, [userInfo]);
+  }, [userInfo?.adminYN, userInfo?.userID]);
+
+  // Memoized user token to prevent SideBar re-renders
+  const userToken = useMemo(() => userInfo?.token || null, [userInfo?.token]);
 
   // Scroll to top handler
   const scrollToTop = useCallback(() => {
@@ -34,28 +41,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     });
   }, []);
 
-  // Handle scroll events to show/hide back to top button
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     setScrolled(window.scrollY > 300);
-  //   };
-
-  //   window.addEventListener("scroll", handleScroll);
-  //   return () => window.removeEventListener("scroll", handleScroll);
-  // }, []);
-
   // Close error notification
-  const handleCloseError = () => {
+  const handleCloseError = useCallback(() => {
     setError(null);
-  };
+  }, []);
 
   // Handle expired session
-  const handleReturnToLogin = () => {
+  const handleReturnToLogin = useCallback(() => {
     navigate("/login");
-  };
+  }, [navigate]);
 
-  // Check if we're in the dashboard
-  const isDashboard = location.pathname === "/dashboard";
+  // Check if we're in the dashboard - memoized to prevent unnecessary recalculations
+  const isDashboard = useMemo(() => location.pathname === "/dashboard", [location.pathname]);
 
   // Show login page or error state when not authenticated
   if (!userInfo || !userInfo.token) {
@@ -87,10 +84,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <Box display="flex" flexDirection="column" minHeight="100vh" bgcolor="background.default" color="text.primary">
       <Box display="flex" flex={1}>
-        {userInfo && <SideBar userID={effectiveUserID} token={userInfo.token} />}
+        {/* Memoized SideBar - will only re-render if userID or token changes */}
+        <MemoizedSideBar userID={effectiveUserID} token={userToken} />
+
         <Box component="main" flexGrow={1} width="100%" p={{ xs: 2, sm: 3 }} pt={{ xs: 9, sm: 10 }} pb={3} display="flex" flexDirection="column">
-          {/* Breadcrumbs navigation */}
-          {!isDashboard && <BreadcrumbsNavigation />}
+          {/* Memoized Breadcrumbs navigation */}
+          {!isDashboard && <MemoizedBreadcrumbs />}
 
           {/* Main content area */}
           <Box
@@ -107,8 +106,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             {children}
           </Box>
 
-          {/* Include Footer only for Dashboard */}
-          {isDashboard && <Footer />}
+          {/* Include Footer only for Dashboard - memoized */}
+          {isDashboard && <MemoizedFooter />}
 
           {/* Back to top button */}
           <Zoom in={scrolled}>
@@ -119,8 +118,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               onClick={scrollToTop}
               sx={{
                 position: "fixed",
-                bottom: theme.spacing(8),
-                right: theme.spacing(2),
+                bottom: (theme) => theme.spacing(8),
+                right: (theme) => theme.spacing(2),
               }}
             >
               <ArrowUpwardIcon />
@@ -139,4 +138,5 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   );
 };
 
+// Export memoized component to prevent parent re-renders from affecting layout
 export default React.memo(MainLayout);

@@ -1,12 +1,10 @@
-// src/components/ProtectedRoute/index.tsx
+import React, { useEffect, useCallback } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import useCheckTokenExpiry from "@/hooks/useCheckTokenExpiry";
-import MainLayout from "@/layouts/MainLayout/MainLayout";
 import AuthService from "@/services/AuthService/AuthService";
 import { logout } from "@/store/features/auth/authSlice";
 import { selectIsAuthenticated, selectUser } from "@/store/features/auth/selectors";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import React, { useEffect, useCallback } from "react";
-import { Navigate, useLocation } from "react-router-dom";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -39,7 +37,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return <MainLayout>{children}</MainLayout>;
+  // Just render children without wrapping in MainLayout
+  // MainLayout is now handled at the route level
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;
